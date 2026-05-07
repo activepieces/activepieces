@@ -455,6 +455,13 @@
                         "pages": [
                            "endpoints/worker-machines/queue-metrics"
                         ]
+                     },
+                     {
+                        "group": "Embedding",
+                        "icon": "code",
+                        "pages": [
+                           "endpoints/embedding/add-allowed-embed-origins"
+                        ]
                      }
                   ]
                }

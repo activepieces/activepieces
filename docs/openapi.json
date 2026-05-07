@@ -25819,6 +25819,67 @@
           }
         }
       }
+    },
+    "/v1/embed-subdomain/allowed-embed-origins": {
+      "post": {
+        "tags": [
+          "embedding"
+        ],
+        "description": "Add origins to the list allowed to embed this platform in an iframe. Existing origins are preserved; duplicates are ignored.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "allowedEmbedOrigins": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 50,
+                    "items": {
+                      "type": "string",
+                      "format": "uri",
+                      "maxLength": 300
+                    }
+                  }
+                },
+                "required": [
+                  "allowedEmbedOrigins"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "allowedEmbedOrigins": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "allowedEmbedOrigins"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "servers": [

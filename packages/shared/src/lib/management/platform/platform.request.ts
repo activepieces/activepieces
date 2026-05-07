@@ -76,3 +76,17 @@ export const IncreaseAICreditsForPlatformRequestBody = z.object({
 })
 
 export type IncreaseAICreditsForPlatformRequestBody = z.infer<typeof IncreaseAICreditsForPlatformRequestBody>
+
+export const AddAllowedEmbedOriginsRequestBody = z.object({
+    allowedEmbedOrigins: z.array(allowedEmbedOriginSchema)
+        .min(1, 'invalidEmbedOrigin')
+        .max(MAX_ALLOWED_EMBED_ORIGINS, 'tooManyEmbedOrigins'),
+})
+
+export type AddAllowedEmbedOriginsRequestBody = z.infer<typeof AddAllowedEmbedOriginsRequestBody>
+
+export const AddAllowedEmbedOriginsResponse = z.object({
+    allowedEmbedOrigins: z.array(z.string()),
+})
+
+export type AddAllowedEmbedOriginsResponse = z.infer<typeof AddAllowedEmbedOriginsResponse>
