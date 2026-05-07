@@ -16,6 +16,8 @@ export const apDeleteFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
         execute: async (args) => {
             const { flowId } = z.object({ flowId: z.string() }).parse(args)
             try {
+                const flow = await flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId })
+                const displayName = flow?.version?.displayName ?? flowId
                 await flowService(log).delete({
                     id: flowId,
                     projectId: mcp.projectId,
@@ -23,7 +25,7 @@ export const apDeleteFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                 return {
                     content: [{
                         type: 'text',
-                        text: `✅ Flow "${flowId}" has been permanently deleted.`,
+                        text: `✅ Flow "${displayName}" has been permanently deleted.`,
                     }],
                 }
             }

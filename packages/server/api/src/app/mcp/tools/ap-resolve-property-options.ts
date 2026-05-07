@@ -127,16 +127,6 @@ function extractOptionsArray(options: unknown): Array<{ label: string, value: un
         if (Array.isArray(obj.options)) {
             return obj.options as Array<{ label: string, value: unknown }>
         }
-        return Object.entries(obj)
-            .filter(([key]) => key !== 'disabled' && key !== 'placeholder')
-            .map(([key, val]) => ({
-                label: isObject(val) && typeof (val as Record<string, unknown>).label === 'string'
-                    ? (val as Record<string, unknown>).label as string
-                    : key,
-                value: isObject(val) && (val as Record<string, unknown>).value !== undefined
-                    ? (val as Record<string, unknown>).value
-                    : val,
-            }))
     }
 
     return null
