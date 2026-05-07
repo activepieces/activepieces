@@ -331,7 +331,7 @@ export function useAgentChat({
   }, [hasPending, uiMessages, pendingMessages]);
 
   // Detect project context changes from AI tool calls
-  const buildHadValidateFlowRef = useRef(false);
+  const buildCompleteRef = useRef(false);
   useEffect(() => {
     const lastMsg = uiMessages[uiMessages.length - 1];
     if (!lastMsg || lastMsg.role !== 'assistant') return;
@@ -351,10 +351,10 @@ export function useAgentChat({
         newProjectId = null;
       }
       if (
-        part.toolName === 'ap_validate_flow' &&
+        part.toolName === 'ap_manage_notes' &&
         part.state === 'output-available'
       ) {
-        buildHadValidateFlowRef.current = true;
+        buildCompleteRef.current = true;
       }
     }
     if (newProjectId !== undefined) {
@@ -372,16 +372,21 @@ export function useAgentChat({
     const isNowIdle = status === 'ready' || status === 'error';
     prevStatusRef.current = status;
     if (wasStreaming && isNowIdle && conversationIdRef.current) {
-      if (buildHadValidateFlowRef.current) {
+      if (buildCompleteRef.current) {
         setProjectSetInSession(false);
-        buildHadValidateFlowRef.current = false;
+        buildCompleteRef.current = false;
+      } else {
+        void chatApi
+          .getConversation(conversationIdRef.current)
+          .then((conv) => {
+            const projectId = conv.projectId ?? null;
+            updateSelectedProjectId(projectId);
+            if (projectId) {
+              setProjectSetInSession(true);
+            }
+          })
+          .catch(() => undefined);
       }
-      void chatApi
-        .getConversation(conversationIdRef.current)
-        .then((conv) => {
-          updateSelectedProjectId(conv.projectId ?? null);
-        })
-        .catch(() => undefined);
     }
   }, [status]);
 
