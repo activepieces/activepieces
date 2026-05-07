@@ -10,14 +10,21 @@ import { cn } from '@/lib/utils';
 
 import { BuildProgressData, normalizePieceName } from '../lib/message-parsers';
 
-type StepStatus = 'queued' | 'configuring' | 'validating' | 'ready' | 'error';
+type StepStatus =
+  | 'queued'
+  | 'added'
+  | 'configuring'
+  | 'validating'
+  | 'ready'
+  | 'error';
 
 const STEP_ORDER: Record<StepStatus, number> = {
   queued: 0,
-  configuring: 1,
-  validating: 2,
-  ready: 3,
-  error: 3,
+  added: 1,
+  configuring: 2,
+  validating: 3,
+  ready: 4,
+  error: 4,
 };
 
 const ANIMATION_DELAY_MS = 350;
@@ -60,6 +67,8 @@ function computeTargetStatuses({
     return statuses;
   }
 
+  let completedCount = 0;
+
   for (const tool of buildTools) {
     const name = tool.toolName;
     const isCompleted = tool.state === 'output-available';
@@ -71,7 +80,7 @@ function computeTargetStatuses({
 
     if (name === 'ap_build_flow') {
       if (isCompleted) {
-        statuses.fill('configuring');
+        statuses.fill('added');
       } else if (isRunning) {
         statuses[0] = 'configuring';
       }
@@ -79,23 +88,24 @@ function computeTargetStatuses({
     }
 
     if (isError) {
-      const firstQueued = statuses.indexOf('queued');
-      const idx = firstQueued >= 0 ? firstQueued : statuses.length - 1;
+      const idx = Math.min(completedCount, statuses.length - 1);
       statuses[idx] = 'error';
       continue;
     }
 
-    if (isCompleted || isRunning) {
-      const firstQueued = statuses.indexOf('queued');
-      if (firstQueued >= 0) {
-        statuses[firstQueued] = 'configuring';
-      }
+    if (isCompleted) {
+      const idx = Math.min(completedCount, statuses.length - 1);
+      statuses[idx] = 'ready';
+      completedCount++;
+    } else if (isRunning) {
+      const idx = Math.min(completedCount, statuses.length - 1);
+      statuses[idx] = 'configuring';
     }
   }
 
   if (isValidating) {
     for (let i = 0; i < statuses.length; i++) {
-      if (statuses[i] === 'configuring') {
+      if (statuses[i] === 'added' || statuses[i] === 'configuring') {
         statuses[i] = 'validating';
       }
     }
@@ -122,6 +132,7 @@ function advanceOneStep({
     const next = [...current];
     const progression: StepStatus[] = [
       'queued',
+      'added',
       'configuring',
       'validating',
       'ready',
@@ -250,9 +261,9 @@ export function BuildProgressCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: reduce ? 0 : 0.3 }}
     >
-      <div className="p-4 pb-3">
-        <div className="flex items-center gap-3">
-          <h3 className="font-semibold text-sm flex items-center gap-1.5">
+      <div className="px-3 pt-3 pb-2">
+        <div className="flex items-center gap-2">
+          <h3 className="font-semibold text-xs flex items-center gap-1.5">
             <span>✨</span>
             {progress.title}
           </h3>
@@ -281,7 +292,7 @@ export function BuildProgressCard({
         </div>
       </div>
 
-      <div className="px-4 pb-4">
+      <div className="px-3 pb-3">
         <div className="flex flex-col items-stretch">
           {progress.steps.map((step, index) => {
             const status = stepStatuses[index];
@@ -305,25 +316,28 @@ export function BuildProgressCard({
                     delay: reduce ? 0 : index * 0.06,
                   }}
                   className={cn(
-                    'rounded-lg border border-dashed p-3 transition-all duration-300',
+                    'rounded-lg border border-dashed px-3 py-2 transition-all duration-300',
                     status === 'configuring' &&
                       'border-primary/40 bg-primary/5',
                     status === 'validating' &&
                       'border-amber-500/40 bg-amber-500/5',
                     status === 'error' &&
                       'border-destructive/40 bg-destructive/5',
+                    status === 'added' && 'border-green-500/30 bg-green-500/5',
                     (status === 'ready' || status === 'queued') &&
                       'border-muted-foreground/20 bg-muted/20',
                   )}
                 >
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <div className="flex items-center justify-between gap-2 mb-1">
                     <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                       {typeLabel}
                     </span>
                     <span
                       className={cn(
-                        'inline-flex items-center gap-1 text-sm font-medium transition-all duration-300',
+                        'inline-flex items-center gap-1 text-xs font-medium transition-all duration-300',
                         status === 'ready' && 'text-foreground/70',
+                        status === 'added' &&
+                          'text-green-600 dark:text-green-400',
                         status === 'configuring' && 'text-primary',
                         status === 'validating' &&
                           'text-amber-600 dark:text-amber-400',
@@ -338,14 +352,14 @@ export function BuildProgressCard({
                       {statusLabel(status)}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-2">
                     <PieceIconWithPieceName
                       pieceName={pieceName}
-                      size="sm"
+                      size="xs"
                       border={false}
                       showTooltip={false}
                     />
-                    <span className="text-sm font-medium text-foreground/90 truncate">
+                    <span className="text-xs font-medium text-foreground/90 truncate">
                       {step.label}
                     </span>
                   </div>
@@ -360,14 +374,15 @@ export function BuildProgressCard({
             initial={reduce ? false : { opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: reduce ? 0 : 0.25, delay: 0.1 }}
-            className="mt-4"
+            className="mt-3"
           >
             {flowUrl && (
               <Button
-                className="w-full gap-2"
+                size="sm"
+                className="w-full gap-1.5"
                 onClick={() => window.open(flowUrl, '_blank')}
               >
-                <ExternalLink className="h-4 w-4" />
+                <ExternalLink className="h-3.5 w-3.5" />
                 {t('Open flow')}
               </Button>
             )}
@@ -382,6 +397,8 @@ function statusLabel(status: StepStatus): string {
   switch (status) {
     case 'ready':
       return t('Ready');
+    case 'added':
+      return t('Added');
     case 'configuring':
       return t('Configuring...');
     case 'validating':
@@ -403,7 +420,7 @@ function StepConnector({ index, reduce }: { index: number; reduce: boolean }) {
         duration: reduce ? 0 : 0.16,
         delay: reduce ? 0 : index * 0.06 - 0.02,
       }}
-      className="relative flex h-5 items-center justify-center"
+      className="relative flex h-3 items-center justify-center"
     >
       <span className="h-full w-px bg-border" />
       <ChevronDown className="absolute h-3 w-3 text-muted-foreground/60" />

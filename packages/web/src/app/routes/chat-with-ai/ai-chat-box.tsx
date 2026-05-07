@@ -1,8 +1,13 @@
-import { AIProviderName, ProjectType } from '@activepieces/shared';
+import {
+  AIProviderName,
+  PROJECT_COLOR_PALETTE,
+  Project,
+  ProjectType,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   ChatContainerContent,
@@ -25,7 +30,6 @@ import {
 import { ChatInput } from './components/chat-input';
 import { ChatMessage } from './components/chat-message';
 import { ChatModelSelector } from './components/chat-model-selector';
-import { ChatProjectSelector } from './components/chat-project-selector';
 import { QuickReplies } from './components/message-content';
 import { MultiQuestionForm } from './components/multi-question-form';
 import { ToolApprovalForm } from './components/tool-approval-form';
@@ -73,6 +77,7 @@ function ChatBoxContent({
     messages,
     modelName,
     selectedProjectId,
+    projectSetInSession,
     isStreaming,
     wasCancelled,
     isLoadingHistory,
@@ -85,7 +90,7 @@ function ChatBoxContent({
     pendingApprovalRequest,
   } = useAgentChat({ onTitleUpdate, onConversationCreated });
   const { data: allProjects } = projectCollectionUtils.useAll();
-  const projects = allProjects ?? [];
+  const projects = useMemo(() => allProjects ?? [], [allProjects]);
 
   const handleProjectChange = useCallback(
     (projectId: string | null) => {
@@ -98,22 +103,15 @@ function ChatBoxContent({
     new Set(),
   );
 
-  const didAutoSelectProjectRef = useRef(false);
-  useEffect(() => {
-    if (
-      didAutoSelectProjectRef.current ||
-      selectedProjectId !== null ||
-      initialConversationId
-    )
-      return;
-    const personalProject = projects.find(
-      (p) => p.type === ProjectType.PERSONAL,
-    );
-    if (personalProject) {
-      didAutoSelectProjectRef.current = true;
-      void setProjectContext(personalProject.id);
-    }
-  }, [projects, selectedProjectId, initialConversationId, setProjectContext]);
+  const activeProject = useMemo(
+    () =>
+      resolveActiveProject({
+        selectedProjectId,
+        projectSetInSession,
+        projects,
+      }),
+    [selectedProjectId, projectSetInSession, projects],
+  );
 
   useEffect(() => {
     if (initialConversationId) {
@@ -173,19 +171,13 @@ function ChatBoxContent({
               isStreaming={isStreaming}
               onSend={handleSend}
               onStop={cancelStream}
+              activeProject={activeProject}
               leftActions={
-                <>
-                  <ChatProjectSelector
-                    projects={projects}
-                    selectedProjectId={selectedProjectId}
-                    onProjectChange={handleProjectChange}
-                  />
-                  <ChatModelSelector
-                    chatProviderName={chatProviderName}
-                    selectedModel={modelName}
-                    onModelChange={setModelName}
-                  />
-                </>
+                <ChatModelSelector
+                  chatProviderName={chatProviderName}
+                  selectedModel={modelName}
+                  onModelChange={setModelName}
+                />
               }
             />
           </div>
@@ -269,8 +261,19 @@ function ChatBoxContent({
         <ScrollButton className="absolute bottom-4 right-1/2 translate-x-1/2" />
       </ChatContainerRoot>
 
-      <div className="px-6">
-        <div className="max-w-3xl mx-auto">
+      <div className="px-6 pb-4">
+        <div className="max-w-3xl mx-auto relative">
+          {activeProject && (
+            <div
+              className="absolute top-0 right-3 z-20 -translate-y-1/2 rounded-full px-2.5 py-0.5 text-[10px] font-medium"
+              style={{
+                backgroundColor: activeProject.color,
+                color: activeProject.textColor,
+              }}
+            >
+              {activeProject.name}
+            </div>
+          )}
           {hasActiveApproval ? (
             <ToolApprovalForm
               key={pendingApprovalRequest?.gateId}
@@ -310,19 +313,13 @@ function ChatBoxContent({
               onSend={handleSend}
               onStop={cancelStream}
               placeholder={t('Reply...')}
+              activeProject={activeProject}
               leftActions={
-                <>
-                  <ChatProjectSelector
-                    projects={projects}
-                    selectedProjectId={selectedProjectId}
-                    onProjectChange={handleProjectChange}
-                  />
-                  <ChatModelSelector
-                    chatProviderName={chatProviderName}
-                    selectedModel={modelName}
-                    onModelChange={setModelName}
-                  />
-                </>
+                <ChatModelSelector
+                  chatProviderName={chatProviderName}
+                  selectedModel={modelName}
+                  onModelChange={setModelName}
+                />
               }
             />
           )}
@@ -331,6 +328,43 @@ function ChatBoxContent({
     </div>
   );
 }
+
+function resolveActiveProject({
+  selectedProjectId,
+  projectSetInSession,
+  projects,
+}: {
+  selectedProjectId: string | null;
+  projectSetInSession: boolean;
+  projects: Project[];
+}): ActiveProjectInfo | undefined {
+  if (!selectedProjectId || !projectSetInSession) return undefined;
+  const project = projects.find((p) => p.id === selectedProjectId);
+  if (!project) return undefined;
+
+  if (project.type === ProjectType.PERSONAL) {
+    return {
+      name: t('Personal Project'),
+      color: '#0a0a0a',
+      textColor: '#ffffff',
+    };
+  }
+
+  const palette = project.icon?.color
+    ? PROJECT_COLOR_PALETTE[project.icon.color]
+    : undefined;
+  return {
+    name: project.displayName,
+    color: palette?.color ?? '#0a0a0a',
+    textColor: palette?.textColor ?? '#ffffff',
+  };
+}
+
+type ActiveProjectInfo = {
+  name: string;
+  color: string;
+  textColor: string;
+};
 
 type AIChatBoxProps = {
   incognito: boolean;

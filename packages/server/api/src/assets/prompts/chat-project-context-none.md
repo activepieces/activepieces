@@ -1,1 +1,1 @@
-No project is currently selected. Answer the user's question directly. If a tool call requires project context, select the user's project automatically with `ap_select_project` — do not ask.
+No project is currently selected. If a tool call requires project context, select the most relevant project silently with `ap_select_project` — do not ask unless you are building an automation (Step 3).

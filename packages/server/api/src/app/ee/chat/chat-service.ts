@@ -1,4 +1,5 @@
 import {
+    ACTIVEPIECES_CHAT_TIERS,
     ActivepiecesError,
     AIProviderModelType,
     AIProviderName,
@@ -15,6 +16,7 @@ import {
     spreadIfDefined,
     UpdateChatConversationRequest,
 } from '@activepieces/shared'
+import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { createUIMessageStream, LanguageModel, ModelMessage, stepCountIs, streamText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../ai/ai-provider-service'
@@ -214,11 +216,13 @@ export const chatService = (log: FastifyBaseLogger) => ({
                 const gatedTools = chatMcp.withApprovalGates({ mcpToolSet, writer, log })
                 const tools = { ...localTools, ...gatedTools }
 
+                const sanitizedMessages = stripThinkingBlocks(messagesForLlm)
                 const textStream = streamText({
                     model,
                     system: systemPrompt,
-                    messages: messagesForLlm,
+                    messages: sanitizedMessages,
                     tools,
+                    providerOptions: buildThinkingOptions({ provider: providerConfig.provider, modelId: modelName }),
                     stopWhen: stepCountIs(MAX_STEPS),
                     onStepFinish: ({ finishReason, usage }) => {
                         log.debug({ conversationId, finishReason, usage }, 'Chat step finished')
@@ -353,6 +357,80 @@ async function resolveCompactionState({ conversation, allMessages, systemPromptL
     log.info({ conversationId, summarizedUpToIndex: result.summarizedUpToIndex }, 'Chat compaction completed')
 
     return result
+}
+
+function stripThinkingBlocks(messages: ModelMessage[]): ModelMessage[] {
+    const hasThinking = messages.some(
+        (msg) => msg.role === 'assistant' && Array.isArray(msg.content)
+            && (msg.content as Array<Record<string, unknown>>).some(
+                (part) => part.type === 'reasoning' || part.type === 'thinking',
+            ),
+    )
+    if (!hasThinking) return messages
+
+    return messages
+        .map((msg) => {
+            if (msg.role !== 'assistant' || !Array.isArray(msg.content)) {
+                return msg
+            }
+            const filtered = (msg.content as Array<Record<string, unknown>>).filter(
+                (part) => part.type !== 'reasoning' && part.type !== 'thinking',
+            )
+            if (filtered.length === msg.content.length) {
+                return msg
+            }
+            if (filtered.length === 0) return null
+            return { ...msg, content: filtered }
+        })
+        .filter((msg): msg is ModelMessage => msg !== null)
+}
+
+const TIER_EFFORT: Record<string, { anthropicBudget: number, openrouterEffort: string }> = {
+    fast: { anthropicBudget: 5_000, openrouterEffort: 'low' },
+    smart: { anthropicBudget: 10_000, openrouterEffort: 'medium' },
+    premium: { anthropicBudget: 20_000, openrouterEffort: 'high' },
+}
+
+const DEFAULT_EFFORT = TIER_EFFORT.smart
+
+function resolveEffort({ modelId }: { modelId: string }): { anthropicBudget: number, openrouterEffort: string } {
+    const tier = ACTIVEPIECES_CHAT_TIERS.find((t) => t.modelId === modelId)
+    if (tier) {
+        return TIER_EFFORT[tier.id] ?? DEFAULT_EFFORT
+    }
+    return DEFAULT_EFFORT
+}
+
+const THINKING_CAPABLE_MODELS = new Set([
+    'claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5',
+    'claude-sonnet-4.6', 'claude-opus-4.7', 'claude-haiku-4.5',
+])
+
+function supportsThinking({ modelId }: { modelId: string }): boolean {
+    const bareModel = modelId.replace(/^[^/]+\//, '')
+    return THINKING_CAPABLE_MODELS.has(bareModel)
+}
+
+function buildThinkingOptions({ provider, modelId }: { provider: AIProviderName, modelId: string }): SharedV3ProviderOptions {
+    if (!supportsThinking({ modelId })) return {}
+    const effort = resolveEffort({ modelId })
+    switch (provider) {
+        case AIProviderName.ANTHROPIC:
+            return {
+                anthropic: {
+                    thinking: { type: 'enabled', budgetTokens: effort.anthropicBudget },
+                },
+            }
+        case AIProviderName.ACTIVEPIECES:
+        case AIProviderName.OPENROUTER:
+            return {
+                openrouter: {
+                    reasoning: { effort: effort.openrouterEffort },
+                },
+            }
+        default:
+            return {}
+    }
 }
 
 type CreateConversationParams = {
