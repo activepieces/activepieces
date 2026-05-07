@@ -274,7 +274,9 @@ export function ConnectionPickerCard({
                     className="shrink-0"
                     onClick={() => {
                       setSelectedConnection(conn);
-                      onSelect(`Use ${conn.label}`);
+                      onSelect(
+                        `Use "${conn.label}" from ${conn.project} (${conn.externalId}).`,
+                      );
                     }}
                   >
                     {t('Use')}

@@ -372,6 +372,16 @@ function getMaxContextTokens({ provider }: { provider: AIProviderName | undefine
     return PROVIDER_MAX_CONTEXT_TOKENS[provider] ?? DEFAULT_MAX_CONTEXT_TOKENS
 }
 
+export const ACTIVEPIECES_CHAT_TIERS = [
+    { id: 'fast', label: 'Fast', modelId: 'google/gemini-2.5-flash' },
+    { id: 'smart', label: 'Smart', modelId: 'anthropic/claude-sonnet-4.6' },
+    { id: 'premium', label: 'Premium', modelId: 'anthropic/claude-opus-4.7' },
+] as const
+
+export const DEFAULT_CHAT_TIER_ID = 'smart' as const
+
+export type ActivepiecesChatTier = typeof ACTIVEPIECES_CHAT_TIERS[number]
+
 export const aiProviderUtils = {
     getMaxContextTokens,
 }

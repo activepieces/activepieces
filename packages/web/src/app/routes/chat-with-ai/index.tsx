@@ -128,18 +128,18 @@ export function ChatWithAIPage() {
   ]);
 
   useEffect(() => {
-    if (!selectedConversationId) return;
+    if (!selectedConversationId || conversationTitle) return;
     let cancelled = false;
     chatApi
       .getConversation(selectedConversationId)
       .then((conv) => {
-        if (!cancelled) setConversationTitle(conv.title ?? null);
+        if (!cancelled && conv.title) setConversationTitle(conv.title);
       })
       .catch(() => undefined);
     return () => {
       cancelled = true;
     };
-  }, [selectedConversationId]);
+  }, [selectedConversationId, conversationTitle]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

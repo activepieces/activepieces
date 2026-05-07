@@ -606,6 +606,9 @@
       "@activepieces/piece-hunter": [
         "packages/pieces/community/hunter/src/index.ts"
       ],
+      "@activepieces/piece-iloveapi": [
+        "packages/pieces/community/iloveapi/src/index.ts"
+      ],
       "@activepieces/piece-image-ai": [
         "packages/pieces/community/image-ai/src/index.ts"
       ],
@@ -953,6 +956,9 @@
       ],
       "@activepieces/piece-prompthub": [
         "packages/pieces/community/prompthub/src/index.ts"
+      ],
+      "@activepieces/piece-pubrio": [
+        "packages/pieces/community/pubrio/src/index.ts"
       ],
       "@activepieces/piece-pushover": [
         "packages/pieces/community/pushover/src/index.ts"
@@ -1820,6 +1826,174 @@
         "packages/pieces/custom/one-money/src/index.ts"
       ],
       "@zroswiss/piece-persona": ["packages/pieces/custom/persona/src/index.ts"]
+      "@activepieces/piece-roe-ai": [
+        "packages/pieces/community/roe-ai/src/index.ts"
+      ],
+      "@activepieces/piece-duckdb": [
+        "packages/pieces/community/duckdb/src/index.ts"
+      ],
+      "@activepieces/piece-waitwhile": [
+        "packages/pieces/community/waitwhile/src/index.ts"
+      ],
+      "@activepieces/piece-baremetrics": [
+        "packages/pieces/community/baremetrics/src/index.ts"
+      ],
+      "@activepieces/piece-chartly": [
+        "packages/pieces/community/chartly/src/index.ts"
+      ],
+      "@activepieces/piece-insta-charts": [
+        "packages/pieces/community/insta-charts/src/index.ts"
+      ],
+      "@activepieces/piece-pinch-payments": [
+        "packages/pieces/community/pinch-payments/src/index.ts"
+      ],
+      "@activepieces/piece-just-invoice": [
+        "packages/pieces/community/just-invoice/src/index.ts"
+      ],
+      "@activepieces/piece-billplz": [
+        "packages/pieces/community/billplz/src/index.ts"
+      ],
+      "@activepieces/piece-vouchery-io": [
+        "packages/pieces/community/vouchery-io/src/index.ts"
+      ],
+      "@activepieces/piece-lokalise": [
+        "packages/pieces/community/lokalise/src/index.ts"
+      ],
+      "@activepieces/piece-digital-ocean": [
+        "packages/pieces/community/digital-ocean/src/index.ts"
+      ],
+      "@activepieces/piece-hashi-corp-vault": [
+        "packages/pieces/community/hashi-corp-vault/src/index.ts"
+      ],
+      "@activepieces/piece-leap-ai": [
+        "packages/pieces/community/leap-ai/src/index.ts"
+      ],
+      "@activepieces/piece-time-ops": [
+        "packages/pieces/community/time-ops/src/index.ts"
+      ],
+      "@activepieces/piece-formitable": [
+        "packages/pieces/community/formitable/src/index.ts"
+      ],
+      "@activepieces/piece-gender-api": [
+        "packages/pieces/community/gender-api/src/index.ts"
+      ],
+      "@activepieces/piece-plausible": [
+        "packages/pieces/community/plausible/src/index.ts"
+      ],
+      "@activepieces/piece-woodpecker": [
+        "packages/pieces/community/woodpecker/src/index.ts"
+      ],
+      "@activepieces/piece-visible": [
+        "packages/pieces/community/visible/src/index.ts"
+      ],
+      "@activepieces/piece-paywhirl": [
+        "packages/pieces/community/paywhirl/src/index.ts"
+      ],
+      "@activepieces/piece-smsmode": [
+        "packages/pieces/community/smsmode/src/index.ts"
+      ],
+      "@activepieces/piece-mooninvoice": [
+        "packages/pieces/community/mooninvoice/src/index.ts"
+      ],
+      "@activepieces/piece-chain-aware": [
+        "packages/pieces/community/chain-aware/src/index.ts"
+      ],
+      "@activepieces/piece-detecting-ai": [
+        "packages/pieces/community/detecting-ai/src/index.ts"
+      ],
+      "@activepieces/piece-moveo-ai": [
+        "packages/pieces/community/moveo-ai/src/index.ts"
+      ],
+      "@activepieces/piece-oneclickimpact": [
+        "packages/pieces/community/oneclickimpact/src/index.ts"
+      ],
+      "@activepieces/piece-bokio": [
+        "packages/pieces/community/bokio/src/index.ts"
+      ],
+      "@activepieces/piece-vidnoz": [
+        "packages/pieces/community/vidnoz/src/index.ts"
+      ],
+      "@activepieces/piece-lets-calendar": [
+        "packages/pieces/community/lets-calendar/src/index.ts"
+      ],
+      "@activepieces/piece-predis-ai": [
+        "packages/pieces/community/predis-ai/src/index.ts"
+      ],
+      "@activepieces/piece-week-done": [
+        "packages/pieces/community/week-done/src/index.ts"
+      ],
+      "@activepieces/piece-manual-trigger": [
+        "packages/pieces/core/manual-trigger/src/index.ts"
+      ],
+      "@activepieces/piece-zeplin": [
+        "packages/pieces/community/zeplin/src/index.ts"
+      ],
+      "@activepieces/piece-google-search": [
+        "packages/pieces/community/google-search/src/index.ts"
+      ],
+      "@activepieces/piece-microsoft-copilot": [
+        "packages/pieces/community/microsoft-copilot/src/index.ts"
+      ],
+      "@activepieces/piece-asknews": [
+        "packages/pieces/community/asknews/src/index.ts"
+      ],
+      "@activepieces/piece-valyu": [
+        "packages/pieces/community/valyu/src/index.ts"
+      ],
+      "@activepieces/piece-alai": [
+        "packages/pieces/community/alai/src/index.ts"
+      ],
+      "@activepieces/piece-algolia": [
+        "packages/pieces/community/algolia/src/index.ts"
+      ],
+      "@activepieces/piece-kapso": [
+        "packages/pieces/community/kapso/src/index.ts"
+      ],
+      "@activepieces/piece-pdfcrowd": [
+        "packages/pieces/community/pdfcrowd/src/index.ts"
+      ],
+      "@activepieces/piece-amazon-bedrock": [
+        "packages/pieces/community/amazon-bedrock/src/index.ts"
+      ],
+      "@activepieces/piece-brave-search": [
+        "packages/pieces/community/brave-search/src/index.ts"
+      ],
+      "@activepieces/piece-amazon-secrets-manager": [
+        "packages/pieces/community/amazon-secrets-manager/src/index.ts"
+      ],
+      "@activepieces/piece-validatedmails": [
+        "packages/pieces/community/validatedmails/src/index.ts"
+      ],
+      "@activepieces/piece-coralogix": [
+        "packages/pieces/community/coralogix/src/index.ts"
+      ],
+      "@activepieces/piece-pocketbase": [
+        "packages/pieces/community/pocketbase/src/index.ts"
+      ],
+      "@activepieces/piece-carbone": [
+        "packages/pieces/community/carbone/src/index.ts"
+      ],
+      "@activepieces/piece-emailit": [
+        "packages/pieces/community/emailit/src/index.ts"
+      ],
+      "@activepieces/piece-bland-ai": [
+        "packages/pieces/community/bland-ai/src/index.ts"
+      ],
+      "@activepieces/piece-vapi": [
+        "packages/pieces/community/vapi/src/index.ts"
+      ],
+      "@activepieces/piece-canny": [
+        "packages/pieces/community/canny/src/index.ts"
+      ],
+      "@activepieces/piece-knock": [
+        "packages/pieces/community/knock/src/index.ts"
+      ],
+      "@activepieces/piece-proxycurl": [
+        "packages/pieces/community/proxycurl/src/index.ts"
+      ],
+      "@activepieces/piece-connectuc": [
+        "packages/pieces/community/connectuc/src/index.ts"
+      ]
     },
     "resolveJsonModule": true
   },
