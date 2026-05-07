@@ -1,6 +1,7 @@
 import { ActivepiecesError,
     ApEdition,
     apId,
+    AuthenticationResponse,
     ErrorCode,
     FederatedAuthnProviderConfig,
     FederatedAuthnProviderConfigWithoutSensitiveData,
@@ -10,14 +11,20 @@ import { ActivepiecesError,
     Platform,
     PlatformId,
     PlatformPlanLimits,
+    PlatformRole,
     PlatformUsage,
     PlatformWithoutSensitiveData,
+    ProjectType,
     spreadIfDefined,
+    SsoDomainVerification,
     UpdatePlatformRequestBody,
     UserId,
     UserStatus,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { nanoid } from 'nanoid'
+import { authenticationUtils } from '../authentication/authentication-utils'
+import { userIdentityRepository } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { invalidateSamlClientCache } from '../ee/authentication/saml-authn/saml-client'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
@@ -85,6 +92,30 @@ export const platformService = (log: FastifyBaseLogger) => ({
         log.info({ platformId: savedPlatform.id, ownerId }, 'Platform created')
         return savedPlatform
     },
+    async createPlatformWithProject({ identityId, name, invalidatePreviousTokens }: CreatePlatformWithProjectParams): Promise<AuthenticationResponse> {
+        const newUser = await userService(log).create({
+            identityId,
+            platformRole: PlatformRole.ADMIN,
+            platformId: null,
+        })
+        const platform = await this.create({ ownerId: newUser.id, name })
+        const defaultProject = await projectService(log).create({
+            displayName: `${name}'s Project`,
+            ownerId: newUser.id,
+            platformId: platform.id,
+            type: ProjectType.PERSONAL,
+        })
+        if (invalidatePreviousTokens) {
+            await userIdentityRepository().update(identityId, {
+                tokenVersion: nanoid(),
+            })
+        }
+        return authenticationUtils(log).getProjectAndToken({
+            userId: newUser.id,
+            platformId: platform.id,
+            projectId: defaultProject.id,
+        })
+    },
     async getAll(): Promise<Platform[]> {
         return platformRepo().find()
     },
@@ -119,6 +150,8 @@ export const platformService = (log: FastifyBaseLogger) => ({
                 params.enforceAllowedAuthDomains,
             ),
             ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
+            ...spreadIfDefined('ssoDomain', params.ssoDomain),
+            ...spreadIfDefined('ssoDomainVerification', params.ssoDomainVerification),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
         }
         if (!isNil(params.plan)) {
@@ -236,6 +269,14 @@ type UpdateParams = UpdatePlatformRequestBody & {
     logoIconUrl?: string
     fullLogoUrl?: string
     favIconUrl?: string
+    ssoDomain?: string | null
+    ssoDomainVerification?: SsoDomainVerification | null
+}
+
+type CreatePlatformWithProjectParams = {
+    identityId: string
+    name: string
+    invalidatePreviousTokens: boolean
 }
 
 type ListPlatformsForIdentityParams = {

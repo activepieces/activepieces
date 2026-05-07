@@ -1,9 +1,10 @@
 import { PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
-import { BranchOperator, FlowActionType, flowStructureUtil, isNil, isObject } from '@activepieces/shared'
+import { BranchOperator, FlowActionType, flowStructureUtil, isNil, isObject, singleValueConditions } from '@activepieces/shared'
 import type { RouterAction, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
+import { projectService } from '../../project/project-service'
 
 const NON_INPUT_PROP_TYPES = new Set<PropertyType>([
     PropertyType.OAUTH2,
@@ -112,7 +113,7 @@ function buildPropSummaries(props: PiecePropertyMap, depth = 0): PropSummary[] {
                 summary.options = prop.options.options.map((o: { label: string, value: unknown }) => ({ label: o.label, value: o.value }))
             }
             if (prop.type === PropertyType.DROPDOWN || prop.type === PropertyType.MULTI_SELECT_DROPDOWN) {
-                summary.note = 'Dynamic dropdown — options load from your account via API. Configure in the Activepieces UI, or provide a known value.'
+                summary.note = 'Resolve with ap_resolve_property_options. Use the returned value (ID), not label.'
             }
             if (prop.type === PropertyType.DYNAMIC) {
                 summary.note = 'DYNAMIC — call ap_get_piece_props with auth+input to resolve sub-fields.'
@@ -142,7 +143,11 @@ async function lookupPieceComponent({ pieceName, componentName, componentType, p
     if (isNil(normalized)) {
         return { error: mcpToolError('Validation failed', new Error('pieceName is required')) }
     }
-    const piece = await pieceMetadataService(log).get({ name: normalized, projectId })
+    // Resolve platformId so private (CUSTOM) pieces on this platform are findable by
+    // every tool that uses this helper (ap_add_step, ap_update_step, ap_get_piece_props,
+    // ap_validate_step_config, ap_run_action, etc.).
+    const project = await projectService(log).getOneOrThrow(projectId)
+    const piece = await pieceMetadataService(log).get({ name: normalized, projectId, platformId: project.platformId })
     if (isNil(piece)) {
         return { error: { content: [{ type: 'text', text: `❌ Piece "${normalized}" not found. Use ap_list_pieces to get valid piece names.` }] } }
     }
@@ -166,13 +171,31 @@ function findResolvableProps({ props, componentProps, auth, providedInput }: Fin
     })
 }
 
+const SINGLE_VALUE_OPERATORS_HINT = singleValueConditions.join(', ')
 const BRANCH_CONDITIONS_INPUT_SCHEMA = z.array(
     z.array(
         z.object({
-            firstValue: z.string().describe('Left-hand value (can be a template expression like {{step_1.field}})'),
-            operator: z.enum(Object.values(BranchOperator) as [BranchOperator, ...BranchOperator[]]).optional().describe('Comparison operator. Single-value operators (no secondValue needed): EXISTS, DOES_NOT_EXIST, BOOLEAN_IS_TRUE, BOOLEAN_IS_FALSE, LIST_IS_EMPTY, LIST_IS_NOT_EMPTY'),
-            secondValue: z.string().optional().describe('Right-hand value — required for all operators except single-value ones'),
+            firstValue: z.string().min(1, 'firstValue must be a non-empty string or template expression (e.g. {{trigger.field}})').describe('Left-hand value (template expressions like {{step_1.field}} are allowed). Must be non-empty.'),
+            operator: z.enum(Object.values(BranchOperator) as [BranchOperator, ...BranchOperator[]]).optional().describe(`Comparison operator. Single-value operators (no secondValue needed): ${SINGLE_VALUE_OPERATORS_HINT}.`),
+            secondValue: z.string().min(1, 'secondValue must be a non-empty string when provided').optional().describe('Right-hand value — required (and non-empty) for all operators except single-value ones.'),
             caseSensitive: z.boolean().optional().describe('For text operators: whether to match case sensitively'),
+        }).superRefine((cond, ctx) => {
+            if (cond.operator !== undefined
+                && !(singleValueConditions as BranchOperator[]).includes(cond.operator)
+                && cond.secondValue === undefined) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    path: ['secondValue'],
+                    message: `secondValue is required when operator is "${cond.operator}". Use a single-value operator (${SINGLE_VALUE_OPERATORS_HINT}) if you do not have a secondValue.`,
+                })
+            }
+            if (cond.operator === undefined && cond.secondValue !== undefined) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    path: ['operator'],
+                    message: 'operator is required when secondValue is provided — pick a comparison operator (e.g. TEXT_CONTAINS, TEXT_EXACTLY_MATCHES, NUMBER_IS_EQUAL_TO).',
+                })
+            }
         }),
     ),
 )
@@ -193,6 +216,14 @@ function resolveRouterStep({ stepName, trigger }: { stepName: string, trigger: S
         }
     }
     return { routerStep: step as RouterAction }
+}
+
+function routerInvalidWarning({ stepName, trigger }: { stepName: string, trigger: Step }): string {
+    const step = flowStructureUtil.getStep(stepName, trigger)
+    if (isNil(step) || step.valid) {
+        return ''
+    }
+    return `\n⚠️ The router "${stepName}" is now marked invalid (step.valid=false) — the UI will show "Incomplete" and the flow cannot be published. Inspect the branch conditions with ap_flow_structure: every condition needs a non-empty firstValue, and any non-single-value operator (TEXT_*, NUMBER_*, DATE_*, LIST_CONTAINS/LIST_DOES_NOT_CONTAIN) needs a non-empty secondValue.`
 }
 
 function publishedFlowWarning(publishedVersionId: string | null | undefined): string {
@@ -245,10 +276,21 @@ async function fillDefaultsForMissingOptionalProps({ settings, platformId, log }
     }
 }
 
+function withTimeout<T>({ promise, ms }: { promise: Promise<T>, ms: number }): Promise<T> {
+    let timer: ReturnType<typeof setTimeout>
+    return Promise.race([
+        promise.finally(() => clearTimeout(timer)),
+        new Promise<never>((_resolve, reject) => {
+            timer = setTimeout(() => reject(new Error(`Timed out after ${ms}ms`)), ms)
+        }),
+    ])
+}
+
 export const mcpUtils = {
     mcpToolError,
     truncate,
     resolveRouterStep,
+    routerInvalidWarning,
     publishedFlowWarning,
     diagnosePieceProps,
     buildPropSummaries,
@@ -257,6 +299,7 @@ export const mcpUtils = {
     findResolvableProps,
     validateAuth,
     fillDefaultsForMissingOptionalProps,
+    withTimeout,
     STEP_REFERENCE_HINT,
     BRANCH_CONDITIONS_INPUT_SCHEMA,
 }

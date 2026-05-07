@@ -203,6 +203,7 @@
                      "install/architecture/durable-execution",
                      "install/architecture/waitpoints",
                      "install/architecture/network-security",
+                     "install/architecture/piece-syncing",
                      "install/architecture/benchmark"
                   ]
                }

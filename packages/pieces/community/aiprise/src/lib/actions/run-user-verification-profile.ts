@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { aiprise } from '../common';
-import { aipriseAuth } from '../..';
+import { aipriseAuth } from '../common/auth';
 
 export const runUserVerificationProfileAction = createAction({
   auth: aipriseAuth,
@@ -34,7 +34,7 @@ export const runUserVerificationProfileAction = createAction({
     const body: Record<string, unknown> = { template_id,user_profile_id };
    
     return aiprise.makeRequest<Record<string, unknown>>({
-      apiKey: context.auth.secret_text,
+      auth: context.auth.props,
       method: HttpMethod.POST,
       path: '/verify/run_verification_for_user_profile_id',
       body,

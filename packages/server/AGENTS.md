@@ -59,5 +59,5 @@ Email templates live in `src/assets/emails/`. When creating or modifying email t
 
 - Read existing code before making changes to understand patterns
 - Follow the existing controller/service pattern when adding new endpoints
-- Write database migrations for schema changes, never modify entities directly without a migration
+- Write database migrations for schema changes, never modify entities directly without a migration . use db-migration skill
 - Keep enterprise features isolated in `src/app/ee/`

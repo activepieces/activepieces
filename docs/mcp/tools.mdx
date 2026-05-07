@@ -57,6 +57,24 @@ Get the detailed input property schema for a specific piece action or trigger. R
 | `flowId` | string | No | Flow ID for resolving dependent dropdowns that need step context. |
 | `input` | object | No | Known input values for resolving dependent DYNAMIC properties (e.g., `{"body_type": "json"}`). |
 
+### ap_resolve_property_options
+
+Resolve dropdown options for a single piece property. Returns available choices with labels and internal IDs. Use this to discover valid values for dynamic dropdown fields (e.g., Slack channels, Google Sheets, email labels) before configuring a step.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `pieceName` | string | Yes | Piece name (e.g., `@activepieces/piece-slack`) |
+| `actionOrTriggerName` | string | Yes | Action or trigger name (e.g., `send_channel_message`) |
+| `type` | string | Yes | `action` or `trigger` |
+| `propertyName` | string | Yes | The exact property name to resolve (e.g., `channel`) |
+| `auth` | string | Yes | Connection externalId — required to fetch options from the user's account |
+| `input` | object | No | Values for parent properties that this field depends on (refreshers) |
+| `searchValue` | string | No | Search term to filter results for large dropdown lists (e.g., "sales" to find sales-related channels) |
+
+<Tip>
+Each option in the response has a `label` (human-readable name) and a `value` (internal ID). Always pass the **value** when configuring a step — never use the label. For example, if the response includes `{label: "general", value: "C1234567890"}`, use `"C1234567890"` as the channel value.
+</Tip>
+
 ### ap_validate_step_config
 
 Validate a step configuration before applying it. Returns field-level errors without modifying any flow.
@@ -451,3 +469,23 @@ Retry a failed flow run.
 
 - **FROM_FAILED_STEP**: Resume from where it failed, keeping previous step outputs
 - **ON_LATEST_VERSION**: Re-run the entire flow with the current published version
+
+### ap_run_action
+
+Execute a single piece action once without building or saving a flow. Designed for one-shot tasks like *"check my inbox"* or *"send one Slack message"* where building a full automation would be overkill. Under the hood the tool creates a disposable flow, runs the action, returns the output, and cleans the flow up — the user never sees it in their flow list.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `pieceName` | string | Yes | Piece name (e.g. `slack` or `@activepieces/piece-slack`). Use `ap_list_pieces` to discover. |
+| `actionName` | string | Yes | Action to run (e.g. `send_channel_message`). Use `ap_get_piece_props` for the input shape. |
+| `input` | object | No | Fully-resolved input for the action. Keys must match the piece action's props. Pass raw values — do **not** wrap them in `{{…}}`. Omit entirely if the action has no props. |
+| `connectionExternalId` | string | No | `externalId` from `ap_list_connections`. Required if the piece needs auth. Auto-wrapped server-side as `{{connections['externalId']}}`. Must be a plain ID — special characters are rejected. |
+| `pieceVersion` | string | No | Defaults to the latest installed version. Use `~X.Y.Z` to pin the minor version. |
+
+<Info>
+When to pick this vs. `ap_build_flow`:
+- **`ap_run_action`** — one-off, throwaway, returns a result now.
+- **`ap_build_flow`** — persistent automation that should repeat, run on a schedule, or trigger on external events.
+</Info>
+
+Prefer calling `ap_list_connections` and `ap_get_piece_props` first so you know the exact `actionName`, the expected props, and the right `connectionExternalId` before invoking. Missing required inputs or unknown actions produce a friendly error before dispatch — no run is created and nothing is billed.

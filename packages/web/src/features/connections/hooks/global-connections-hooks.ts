@@ -22,6 +22,7 @@ type UseGlobalConnectionsProps = {
   extraKeys: any[];
   staleTime?: number;
   gcTime?: number;
+  showErrorDialog?: boolean;
 };
 
 const GLOBAL_CONNECTIONS_QUERY_KEY = 'globalConnections';
@@ -35,6 +36,7 @@ export const globalConnectionsQueries = {
     extraKeys,
     staleTime,
     gcTime,
+    showErrorDialog,
   }: UseGlobalConnectionsProps) => {
     const { platform } = platformHooks.useCurrentPlatform();
     return useQuery({
@@ -42,7 +44,9 @@ export const globalConnectionsQueries = {
       staleTime,
       gcTime,
       enabled: platform.plan.globalConnectionsEnabled,
-      meta: { showErrorDialog: true, loadSubsetOptions: {} },
+      meta: showErrorDialog
+        ? { showErrorDialog: true, loadSubsetOptions: {} }
+        : undefined,
       queryFn: () => {
         return globalConnectionsApi.list(request);
       },

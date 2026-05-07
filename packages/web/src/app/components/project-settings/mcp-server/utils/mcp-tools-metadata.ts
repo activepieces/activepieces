@@ -38,6 +38,11 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
           'Get detailed property schema for a specific piece action or trigger',
       },
       {
+        name: 'ap_resolve_property_options',
+        description:
+          'Resolve dropdown options for a specific piece property — returns available choices with labels and IDs',
+      },
+      {
         name: 'ap_validate_step_config',
         description:
           'Validate step configuration before applying — returns field-level errors without modifying any flow',
@@ -196,6 +201,11 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
       {
         name: 'ap_retry_run',
         description: 'Retry a failed flow run',
+      },
+      {
+        name: 'ap_run_action',
+        description:
+          'Run a single piece action once without saving a flow — for one-shot tasks like "check my inbox"',
       },
     ],
   },

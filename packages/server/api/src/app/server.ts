@@ -18,7 +18,7 @@ import { exceptionHandler } from './helper/exception-handler'
 import { rejectedPromiseHandler } from './helper/promise-handler'
 import { system } from './helper/system/system'
 import { AppSystemProp } from './helper/system/system-props'
-import { mcpOAuthHttpController } from './mcp/oauth/mcp-oauth.controller'
+import { mcpOAuthHttpController, mcpPlatformHttpController } from './mcp/oauth/mcp-oauth.controller'
 import { mcpOAuthRootModule } from './mcp/oauth/mcp-oauth.module'
 
 
@@ -31,6 +31,7 @@ export const setupServer = async (): Promise<FastifyInstance> => {
     if (system.isApp()) {
         await app.register(mcpOAuthRootModule)
         await app.register(mcpOAuthHttpController, { prefix: '/mcp' })
+        await app.register(mcpPlatformHttpController, { prefix: '/mcp/platform' })
     }
 
     await app.register(async (apiApp) => {
@@ -64,11 +65,15 @@ export const setupServer = async (): Promise<FastifyInstance> => {
         await app.register(fastifyStatic, {
             root: frontendPath,
             setHeaders: (res, filepath) => {
-                if (filepath.endsWith('.html')) {
-                    void res.setHeader('Cache-Control', 'public, max-age=120')
+                const normalized = filepath.replace(/\\/g, '/')
+                if (normalized.endsWith('.html')) {
+                    void res.setHeader('Cache-Control', 'no-cache')
+                }
+                else if (normalized.includes('/assets/')) {
+                    void res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
                 }
                 else {
-                    void res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+                    void res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate')
                 }
             },
         })

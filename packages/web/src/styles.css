@@ -169,7 +169,9 @@
   --animate-slide-in-from-bottom: slide-in-from-bottom 0.2s ease-out forwards;
   --animate-indeterminate-progress: indeterminate-progress 1.5s ease-in-out
     infinite;
-  --animate-primary-color-pulse: primary-color-pulse 1s ease-in-out infinite
+  --animate-primary-color-pulse: primary-color-pulse 1s ease-in-out infinite;
+  --animate-collapsible-down: collapsible-down 0.2s ease-out;
+  --animate-collapsible-up: collapsible-up 0.2s ease-out
     alternate;
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif,
     'Apple Color Emoji', 'Segoe UI Emoji', Segoe UI Symbol, 'Noto Color Emoji';
@@ -242,6 +244,48 @@
     }
     100% {
       transform: translateX(400%);
+    }
+  }
+
+  @keyframes color-cycle {
+    0% { color: #8b5cf6; }
+    20% { color: #ec4899; }
+    40% { color: #f59e0b; }
+    60% { color: #10b981; }
+    80% { color: #3b82f6; }
+    100% { color: #8b5cf6; }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 50%;
+    }
+    100% {
+      background-position: -200% 50%;
+    }
+  }
+
+  @keyframes blink-cursor {
+    50% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes collapsible-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-collapsible-content-height);
+    }
+  }
+  
+  @keyframes collapsible-up {
+    from {
+      height: var(--radix-collapsible-content-height);
+    }
+    to {
+      height: 0;
     }
   }
 
@@ -818,4 +862,23 @@
 @keyframes boltGlow {
   0%   { filter: drop-shadow(0 0 4px rgba(196, 167, 255, 0.5)); }
   100% { filter: drop-shadow(0 0 10px rgb(110, 65, 226)); }
+}
+
+/* ── Shiki dual theme (light/dark) ── */
+.shiki,
+.shiki span {
+  color: var(--shiki-light);
+  background-color: var(--shiki-light-bg);
+  font-style: var(--shiki-light-font-style);
+  font-weight: var(--shiki-light-font-weight);
+  text-decoration: var(--shiki-light-text-decoration);
+}
+
+.dark .shiki,
+.dark .shiki span {
+  color: var(--shiki-dark);
+  background-color: var(--shiki-dark-bg);
+  font-style: var(--shiki-dark-font-style);
+  font-weight: var(--shiki-dark-font-weight);
+  text-decoration: var(--shiki-dark-text-decoration);
 }

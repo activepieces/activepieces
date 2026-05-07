@@ -4,9 +4,7 @@ import {
 import {
   DynamicPropsValue,
   Property,
-  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
-import { drupalAuth } from '../auth';
 import { DrupalAuthType, makeJsonApiRequest } from './jsonapi';
 
 
@@ -50,7 +48,7 @@ async function fetchEntityTypes(auth: DrupalAuthType, context: 'reading' | 'edit
     const response = await makeJsonApiRequest(auth, `${auth.props.website_url}/jsonapi`, HttpMethod.GET);
 
     if (response.status === 200) {
-      const entityTypes: Array<{label: string; value: any}> = [];
+      const entityTypes: Array<{ label: string; value: any }> = [];
       const data = response.body as any;
 
       if (data.links) {
@@ -255,7 +253,7 @@ export async function isEntitySupportingWorkflow(auth: DrupalAuthType, entityTyp
   try {
     const response = await makeJsonApiRequest(
       auth,
-      `${auth.props.  website_url}/jsonapi/workflow/workflow`,
+      `${auth.props.website_url}/jsonapi/workflow/workflow`,
       HttpMethod.GET
     );
 

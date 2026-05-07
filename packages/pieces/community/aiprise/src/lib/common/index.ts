@@ -1,23 +1,28 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
-const BASE_URL = 'https://api.aiprise.com/api/v1';
+const PRODUCTION_BASE_URL = 'https://api.aiprise.com/api/v1';
+const SANDBOX_BASE_URL = 'https://api-sandbox.aiprise.com/api/v1';
+
+function getBaseUrl(environment: string): string {
+  return environment === 'sandbox' ? SANDBOX_BASE_URL : PRODUCTION_BASE_URL;
+}
 
 async function makeRequest<T>({
-  apiKey,
+  auth,
   method,
   path,
   body,
 }: {
-  apiKey: string;
+  auth: AipriseAuthValue;
   method: HttpMethod;
   path: string;
   body?: Record<string, unknown>;
 }): Promise<T> {
   const response = await httpClient.sendRequest<T>({
     method,
-    url: `${BASE_URL}${path}`,
+    url: `${getBaseUrl(auth.environment)}${path}`,
     headers: {
-      'X-API-KEY': apiKey,
+      'X-API-KEY': auth.secret_text,
       'Content-Type': 'application/json',
     },
     body,
@@ -26,6 +31,13 @@ async function makeRequest<T>({
 }
 
 export const aiprise = {
-  BASE_URL,
+  PRODUCTION_BASE_URL,
+  SANDBOX_BASE_URL,
+  getBaseUrl,
   makeRequest,
+};
+
+export type AipriseAuthValue = {
+  secret_text: string;
+  environment: string;
 };

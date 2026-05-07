@@ -18,6 +18,8 @@ If you'd like to use your own custom Azure app instead of the default Activepiec
 	- User.ReadBasic.All
 	- Presence.Read.All
 	- TeamMember.Read.All
+	- OnlineMeetingTranscript.Read.All
+	- OnlineMeetingRecording.Read.All
 	- openid
 	- email
 	- profile
@@ -44,6 +46,9 @@ export const microsoftTeamsAuth = PieceAuth.OAuth2({
     'TeamMember.Read.All',
     'User.ReadBasic.All',
     'Presence.Read.All',
+    // 'OnlineMeetings.Read',
+    'OnlineMeetingTranscript.Read.All',
+    'OnlineMeetingRecording.Read.All',
   ],
   prompt: 'omit',
   authUrl: 'https://{cloud}/common/oauth2/v2.0/authorize',
