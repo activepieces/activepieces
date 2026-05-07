@@ -131,6 +131,10 @@ function findLastToolForCurrentStep(
       tool.toolName === 'ap_build_flow'
     )
       continue;
+    // Stop at completed apply tools — errors before this belong to previous steps
+    if (APPLY_TOOLS.has(tool.toolName) && tool.state === 'output-available') {
+      return null;
+    }
     if (
       tool.state === 'input-streaming' ||
       tool.state === 'input-available' ||
