@@ -438,12 +438,14 @@ type CellInsertion = {
 }
 
 function isUniqueViolation(error: QueryFailedError): boolean {
-    // Postgres: 23505 (unique_violation). Sqlite: SQLITE_CONSTRAINT_UNIQUE / SQLITE_CONSTRAINT.
+    // Postgres: 23505 (unique_violation). Sqlite: SQLITE_CONSTRAINT_UNIQUE (extended code — available
+    // since 3.7.17, exposed by both node-sqlite3 and better-sqlite3). The generic SQLITE_CONSTRAINT
+    // fallback is intentionally omitted: it also fires for NOT NULL / CHECK / FOREIGN KEY violations,
+    // which should surface as 500s, not be silently translated to 409.
     const driverError = (error as QueryFailedError & { driverError?: { code?: string } }).driverError
     const code = driverError?.code
     return code === '23505'
         || code === 'SQLITE_CONSTRAINT_UNIQUE'
-        || code === 'SQLITE_CONSTRAINT'
 }
 
 function prepareRecordInsertions(
