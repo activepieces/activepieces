@@ -265,10 +265,10 @@ function classifyTool(part: DynamicToolPart): string {
     name.includes('list_pieces') ||
     name.includes('get_piece_props') ||
     name.includes('list_connections') ||
-    name.includes('resolve_property') ||
     name.includes('list_across_projects')
   )
     return 'discover';
+  if (name.includes('resolve_property')) return 'resolve';
   if (
     name.includes('create_flow') ||
     name.includes('build_flow') ||
@@ -376,6 +376,15 @@ function buildStep({
           pieceNames.length > 0
             ? t('Checking {name}', { name: pieceNames.join(', ') })
             : t('Checking integrations'),
+        pieceNames,
+      };
+    case 'resolve':
+      return {
+        summary: t('Resolved configuration options.'),
+        chipLabel:
+          pieceNames.length > 0
+            ? t('Resolving {name} options', { name: pieceNames[0] })
+            : t('Loading options'),
         pieceNames,
       };
     case 'build':

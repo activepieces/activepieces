@@ -262,6 +262,15 @@ export function BuildProgressCard({
   });
 
   const isBuilt = stepStatuses.every((s) => s === 'ready');
+  const notesStatus = useMemo(() => {
+    const noteTools = dynamicParts.filter(
+      (t) => t.toolName === 'ap_manage_notes',
+    );
+    if (noteTools.length === 0) return 'none';
+    const allDone = noteTools.every((t) => t.state === 'output-available');
+    if (allDone) return 'done';
+    return 'adding';
+  }, [dynamicParts]);
   const isValidating = stepStatuses.some((s) => s === 'validating');
   const hasError = stepStatuses.some((s) => s === 'error');
   const flowUrl = useMemo(() => {
@@ -397,6 +406,27 @@ export function BuildProgressCard({
             );
           })}
         </div>
+
+        {notesStatus !== 'none' && (
+          <motion.div
+            initial={reduce ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: reduce ? 0 : 0.2 }}
+            className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground"
+          >
+            {notesStatus === 'adding' ? (
+              <>
+                <Loader2 className="h-3 w-3 animate-spin" />
+                {t('Adding notes...')}
+              </>
+            ) : (
+              <>
+                <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
+                {t('Notes added')}
+              </>
+            )}
+          </motion.div>
+        )}
 
         {isBuilt && (
           <motion.div
