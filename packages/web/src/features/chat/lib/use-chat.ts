@@ -375,18 +375,13 @@ export function useAgentChat({
       if (buildCompleteRef.current) {
         setProjectSetInSession(false);
         buildCompleteRef.current = false;
-      } else {
-        void chatApi
-          .getConversation(conversationIdRef.current)
-          .then((conv) => {
-            const projectId = conv.projectId ?? null;
-            updateSelectedProjectId(projectId);
-            if (projectId) {
-              setProjectSetInSession(true);
-            }
-          })
-          .catch(() => undefined);
       }
+      void chatApi
+        .getConversation(conversationIdRef.current)
+        .then((conv) => {
+          updateSelectedProjectId(conv.projectId ?? null);
+        })
+        .catch(() => undefined);
     }
   }, [status]);
 
