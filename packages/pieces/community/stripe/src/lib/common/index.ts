@@ -7,7 +7,6 @@ import {
 import {
   Property,
   DropdownState,
-  PiecePropValueSchema
 } from '@activepieces/pieces-framework';
 import { Stripe } from 'stripe';
 import { stripeAuth } from '../..';
@@ -22,7 +21,7 @@ const baseUrl = 'https://api.stripe.com/v1';
 
 export const getClient = (apiKey: string): Stripe => {
   return new Stripe(apiKey, {
-    apiVersion: '2025-05-28.basil' as any,
+    apiVersion: '2025-05-28.basil',
   });
 };
 
