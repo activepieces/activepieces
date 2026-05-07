@@ -1,0 +1,67 @@
+import { createPiece, PieceAuth, OAuth2PropertyValue } from "@activepieces/pieces-framework";
+import { httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common";
+import { newRecording } from "./lib/triggers/new-recording";
+import { newCallTranscription } from "./lib/triggers/new-call-transcription";
+import { newCallSummary } from "./lib/triggers/new-call-summary";
+import { newCdr } from "./lib/triggers/new-cdr";
+import { newIncomingCall } from "./lib/triggers/new-incoming-call";
+import { newOutgoingCall } from "./lib/triggers/new-outgoing-call";
+import { newVoicemail } from "./lib/triggers/new-voicemail";
+import { newSms } from "./lib/triggers/new-sms";
+import { createContactAction } from "./lib/actions/create-contact";
+import { doNotDisturbAction } from "./lib/actions/do-not-disturb";
+import { findCdrAction } from "./lib/actions/find-cdr";
+import { initiateCallAction } from "./lib/actions/initiate-call";
+import { sendSmsAction } from "./lib/actions/send-sms";
+import { updateCdrAction } from "./lib/actions/update-cdr";
+
+export const connectucAuth = PieceAuth.OAuth2({
+  authUrl: "https://auth.uc-technologies.com/oauth2/authorize",
+  tokenUrl: "https://auth.uc-technologies.com/oauth2/token",
+  required: true,
+  scope: ['offline_access'],
+  validate: async ({ auth }) => {
+    try {
+      const response = await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: "https://auth.uc-technologies.com/oauth2/userinfo",
+        authentication: {
+          type: AuthenticationType.BEARER_TOKEN,
+          token: (auth as OAuth2PropertyValue).access_token,
+        },
+      });
+
+      if (response.status === 200) {
+        return { valid: true };
+      }
+
+      return {
+        valid: false,
+        error: "Failed to validate ConnectUC credentials"
+      };
+    } catch (error: unknown) {
+      const err = error as { response?: { status?: number }; message?: string };
+      if (err.response?.status === 401) {
+        return {
+          valid: false,
+          error: "Invalid or expired access token. Please reconnect your ConnectUC account."
+        };
+      }
+
+      return {
+        valid: false,
+        error: `Connection validation failed: ${err.message ?? "Unknown error occurred"}`
+      };
+    }
+  },
+});
+
+export const connectuc = createPiece({
+  displayName: "ConnectUC",
+  auth: connectucAuth,
+  minimumSupportedRelease: '0.36.1',
+  logoUrl: "https://cuc-media.s3.us-east-1.amazonaws.com/cuc_logo_120x120.png",
+  authors: ['dranes'],
+  actions: [createContactAction, doNotDisturbAction, findCdrAction, initiateCallAction, sendSmsAction, updateCdrAction],
+  triggers: [newRecording, newCallTranscription, newCallSummary, newCdr, newIncomingCall, newOutgoingCall, newVoicemail, newSms],
+});
