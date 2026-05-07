@@ -3,9 +3,7 @@ import { Check, Copy, Paperclip, RefreshCw } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   forwardRef,
-  useEffect,
   useMemo,
-  useRef,
   useState,
   type ButtonHTMLAttributes,
 } from 'react';
@@ -176,12 +174,12 @@ function AssistantMessage({
   const activityActive =
     isWaiting || hasToolCalls || (isStreaming && hasReasoning && !hasContent);
 
-  const activityEverShownRef = useRef(false);
-  useEffect(() => {
-    if (activityActive || hasToolCalls) {
-      activityEverShownRef.current = true;
-    }
-  }, [activityActive, hasToolCalls]);
+  const [activityEverShown, setActivityEverShown] = useState(
+    activityActive || hasToolCalls,
+  );
+  if ((activityActive || hasToolCalls) && !activityEverShown) {
+    setActivityEverShown(true);
+  }
 
   const fullText = getTextFromParts(message.parts);
   const hasBuildProgress = useMemo(
@@ -189,7 +187,7 @@ function AssistantMessage({
     [fullText],
   );
 
-  const showActivity = activityEverShownRef.current && !hasBuildProgress;
+  const showActivity = activityEverShown && !hasBuildProgress;
 
   const renderableParts = message.parts.filter(
     (p): p is { type: 'text'; text: string } =>

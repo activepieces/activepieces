@@ -377,7 +377,8 @@ function stripThinkingBlocks(messages: ModelMessage[]): ModelMessage[] {
         if (filtered.length === msg.content.length) {
             return msg
         }
-        return { ...msg, content: filtered.length > 0 ? filtered : [{ type: 'text' as const, text: '' }] }
+        if (filtered.length === 0) return msg
+        return { ...msg, content: filtered }
     })
 }
 
@@ -397,7 +398,18 @@ function resolveEffort({ modelId }: { modelId: string }): { anthropicBudget: num
     return DEFAULT_EFFORT
 }
 
+const THINKING_CAPABLE_MODELS = new Set([
+    'claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5',
+    'claude-sonnet-4.6', 'claude-opus-4.7', 'claude-haiku-4.5',
+])
+
+function supportsThinking({ modelId }: { modelId: string }): boolean {
+    const bareModel = modelId.replace(/^[^/]+\//, '')
+    return THINKING_CAPABLE_MODELS.has(bareModel)
+}
+
 function buildThinkingOptions({ provider, modelId }: { provider: AIProviderName, modelId: string }): Record<string, unknown> {
+    if (!supportsThinking({ modelId })) return {}
     const effort = resolveEffort({ modelId })
     switch (provider) {
         case AIProviderName.ANTHROPIC:
