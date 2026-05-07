@@ -9,7 +9,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `packages/server/api/src/app/mcp/mcp-entity.ts` — McpServer entity
 - `packages/server/api/src/app/mcp/tools/index.ts` — static tool exports
 - `packages/server/api/src/app/mcp/oauth/` — OAuth 2.0 PKCE flow for MCP clients that require OAuth
-- `packages/shared/src/lib/automation/mcp/mcp.ts` — McpServer schema, McpToolDefinition type, McpServerStatus enum
+- `packages/shared/src/lib/automation/mcp/mcp.ts` — McpServer schema, McpToolDefinition type
 - `packages/shared/src/lib/automation/mcp/mcp-oauth.ts` — MCP OAuth types
 - `packages/web/src/app/components/project-settings/mcp-server/index.tsx` — project settings panel for MCP
 - `packages/web/src/app/components/project-settings/mcp-server/mcp-credentials.tsx` — token display and rotate UI
@@ -27,7 +27,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - Cloud: available
 
 ## Domain Terms
-- **McpServer** — the per-project MCP server record (status, token, enabledTools)
+- **McpServer** — the per-project MCP server record (token, enabledTools)
 - **Locked tools** — tools that are always active when the MCP server is enabled; cannot be disabled
 - **Controllable tools** — tools that platform or project owners can enable/disable individually
 - **Dynamic flow tools** — flows that use the MCP trigger piece and are registered as callable tools; tool name format is `{toolName}_{flowId[0..4]}`
@@ -37,7 +37,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 
 ## Entity
 
-**McpServer**: id, projectId (UNIQUE — one per project), status (ENABLED/DISABLED), token (72-char auth), enabledTools[] (JSONB, nullable — defaults to ALL_CONTROLLABLE_TOOL_NAMES).
+**McpServer**: id, projectId (UNIQUE — one per project), token (72-char auth), enabledTools[] (JSONB, nullable — defaults to ALL_CONTROLLABLE_TOOL_NAMES).
 
 ## Tools
 
@@ -72,7 +72,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 ## Endpoints
 
 - `GET /v1/mcp/:projectId` — get MCP server config + populated flows
-- `POST /v1/mcp/:projectId` — update status and/or enabledTools
+- `POST /v1/mcp/:projectId` — update enabledTools
 - `POST /v1/mcp/:projectId/rotate` — rotate auth token
 - `POST /v1/mcp/:projectId/http` — StreamableHTTP MCP protocol endpoint (main protocol handler)
 

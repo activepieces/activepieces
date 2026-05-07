@@ -1,4 +1,4 @@
-import { FilterOperator, McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
+import { FilterOperator, McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { recordService } from '../../tables/record/record.service'
@@ -29,7 +29,7 @@ const findRecordsInput = z.object({
     limit: z.number().min(1).max(500).optional().describe('Max records to return (default 50, max 500)'),
 })
 
-export const apFindRecordsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apFindRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_find_records',
         permission: Permission.READ_TABLE,

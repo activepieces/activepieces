@@ -1,11 +1,11 @@
-import { McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
+import { McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { fieldService } from '../../tables/field/field.service'
 import { tableService } from '../../tables/table/table.service'
 import { mcpUtils } from './mcp-utils'
 import { formatFieldInfo } from './table-utils'
 
-export const apListTablesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apListTablesTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_list_tables',
         permission: Permission.READ_TABLE,

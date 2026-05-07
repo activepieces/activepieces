@@ -5,7 +5,6 @@ import {
     FlowActionType,
     FlowRunStatus,
     McpServer,
-    McpServerStatus,
     PackageType,
     PieceType,
     RunEnvironment,
@@ -152,7 +151,6 @@ function makeMcp(projectId: string): McpServer {
         created: new Date().toISOString(),
         updated: new Date().toISOString(),
         projectId,
-        status: McpServerStatus.ENABLED,
         token: apId(),
         enabledTools: null,
     }
@@ -580,7 +578,7 @@ describe('MCP Tools integration', () => {
         expect(text(result)).toContain('✅')
         expect(text(result)).toContain('folder')
         expect(text(result)).toContain('DROPDOWN')
-        expect(text(result)).toContain('Dynamic dropdown')
+        expect(text(result)).toContain('ap_resolve_property_options')
     })
 
     it('23. ap_get_piece_props — schema includes all fields regardless of auth', async () => {
@@ -613,7 +611,7 @@ describe('MCP Tools integration', () => {
 
         expect(text(result)).toContain('✅')
         expect(text(result)).not.toContain('DROPDOWN')
-        expect(text(result)).not.toContain('Dynamic dropdown')
+        expect(text(result)).not.toContain('ap_resolve_property_options')
     })
 
     it('25. ap_get_piece_props — with auth and invalid piece returns error before resolution', async () => {

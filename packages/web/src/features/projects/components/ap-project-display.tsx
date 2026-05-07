@@ -5,9 +5,10 @@ import {
   ProjectType,
 } from '@activepieces/shared';
 import { User } from 'lucide-react';
+import { useContext } from 'react';
 
 import { Avatar } from '@/components/ui/avatar';
-import { useSidebar } from '@/components/ui/sidebar-shadcn';
+import { SidebarContext } from '@/components/ui/sidebar-shadcn';
 import {
   Tooltip,
   TooltipContent,
@@ -16,11 +17,17 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
+function useSidebarSafe(): string {
+  const context = useContext(SidebarContext);
+  return context?.state ?? 'expanded';
+}
+
 type ApProjectDisplayProps = {
   title: string;
   icon?: ProjectIcon;
   containerClassName?: string;
   titleClassName?: string;
+  iconClassName?: string;
   maxLengthToNotShowTooltip?: number;
   projectType: ProjectType;
   inSidebar?: boolean;
@@ -31,15 +38,19 @@ export const ApProjectDisplay = ({
   icon,
   containerClassName = '',
   titleClassName = '',
+  iconClassName,
   maxLengthToNotShowTooltip = 30,
   projectType,
   inSidebar = false,
 }: ApProjectDisplayProps) => {
-  const { state } = useSidebar();
+  const sidebarState = useSidebarSafe();
   const projectAvatar = isNil(icon) ? null : projectType ===
     ProjectType.TEAM ? (
     <Avatar
-      className="size-6 flex items-center justify-center rounded-sm"
+      className={cn(
+        'size-6 flex items-center justify-center rounded-sm',
+        iconClassName,
+      )}
       style={{
         backgroundColor: PROJECT_COLOR_PALETTE[icon.color].color,
         color: PROJECT_COLOR_PALETTE[icon.color].textColor,
@@ -48,7 +59,9 @@ export const ApProjectDisplay = ({
       {title.charAt(0).toUpperCase()}
     </Avatar>
   ) : (
-    <User className="size-5 flex items-center justify-center" />
+    <User
+      className={cn('size-5 flex items-center justify-center', iconClassName)}
+    />
   );
 
   const shouldShowTooltip = title.length > maxLengthToNotShowTooltip;
@@ -59,7 +72,7 @@ export const ApProjectDisplay = ({
   const content = (
     <div className={`flex items-center gap-2 ${containerClassName}`}>
       {projectAvatar}
-      {((inSidebar && state === 'expanded') || !inSidebar) && (
+      {((inSidebar && sidebarState === 'expanded') || !inSidebar) && (
         <span className={cn(titleClassName, 'truncate')}>{displayText}</span>
       )}
     </div>

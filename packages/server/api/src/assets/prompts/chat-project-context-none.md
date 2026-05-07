@@ -1,0 +1,1 @@
+No project is currently selected. Answer the user's question directly. If a tool call requires project context, select the user's project automatically with `ap_select_project` — do not ask.
