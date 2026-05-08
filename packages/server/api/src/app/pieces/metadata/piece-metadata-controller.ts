@@ -12,8 +12,6 @@ import {
     GetPieceRequestWithScopeParams,
     isNil,
     ListPiecesRequestQuery,
-    ListPieceVersionsRequestParams,
-    ListPieceVersionsWithScopeRequestParams,
     LocalesEnum,
     PieceCategory,
     PieceOptionRequest,
@@ -244,28 +242,6 @@ const OptionsPieceRequest = {
         security: securityAccess.project([PrincipalType.USER], undefined, {
             type: ProjectResourceType.BODY,
         }),
-    },
-}
-
-const ListPieceVersionsRequest = {
-    config: {
-        security: securityAccess.project([PrincipalType.USER], undefined, {
-            type: ProjectResourceType.QUERY,
-        }),
-    },
-    schema: {
-        params: ListPieceVersionsRequestParams,
-    },
-}
-
-const ListPieceVersionsWithScopeRequest = {
-    config: {
-        security: securityAccess.project([PrincipalType.USER], undefined, {
-            type: ProjectResourceType.QUERY,
-        }),
-    },
-    schema: {
-        params: ListPieceVersionsWithScopeRequestParams,
     },
 }
 
