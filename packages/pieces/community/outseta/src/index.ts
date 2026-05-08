@@ -9,15 +9,9 @@ import { getPersonAction } from './action/get-person';
 import { getDealAction } from './action/get-deal';
 import { getLastPaymentAction } from './action/get-last-payment';
 
-// Actions — Create
+// Actions — Create / Find or Add
 import { createAccountAction } from './action/create-account';
 import { createDealAction } from './action/create-deal';
-
-// Actions — Delete
-import { deletePersonAction } from './action/delete-person';
-import { deleteAccountAction } from './action/delete-account';
-
-// Actions — Find or Add
 import { findOrAddPersonAction } from './action/find-or-add-person';
 import { findOrAddDealAction } from './action/find-or-add-deal';
 
@@ -26,23 +20,29 @@ import { updateAccountAction } from './action/update-account';
 import { updatePersonAction } from './action/update-person';
 import { updateDealAction } from './action/update-deal';
 
+// Actions — Delete
+import { deleteAccountAction } from './action/delete-account';
+import { deletePersonAction } from './action/delete-person';
+import { deleteDealAction } from './action/delete-deal';
+
 // Actions — List
-import { listPersonsAction } from './action/list-persons';
 import { listAccountsAction } from './action/list-accounts';
+import { listPersonsAction } from './action/list-persons';
 import { listDealsAction } from './action/list-deals';
 
-// Actions — Billing
+// Actions — Billing (Subscription)
 import { changeAccountPlanAction } from './action/change-account-plan';
 import { cancelSubscriptionAction } from './action/cancel-subscription';
 import { removeCancellationAction } from './action/remove-cancellation';
-import { addAddonUsageAction } from './action/add-addon-usage';
 import { addDiscountToSubscriptionAction } from './action/add-discount-to-subscription';
+import { addAddonUsageAction } from './action/add-addon-usage';
+
+// Actions — Billing (Invoice)
 import { addInvoiceAction } from './action/add-invoice';
 import { addInvoicePaymentAction } from './action/add-invoice-payment';
 
-// Actions — CRM
+// Actions — CRM (Membership / Activity)
 import { manageAccountMembershipAction } from './action/manage-account-membership';
-import { deleteDealAction } from './action/delete-deal';
 import { addCustomActivityAction } from './action/add-custom-activity';
 
 // Actions — Email
@@ -83,33 +83,33 @@ export const outseta = createPiece({
     getPersonAction,
     getDealAction,
     getLastPaymentAction,
-    // Create
+    // Create / Find or Add
     createAccountAction,
     createDealAction,
-    // Delete
-    deletePersonAction,
-    deleteAccountAction,
-    deleteDealAction,
-    // Find or Add
     findOrAddPersonAction,
     findOrAddDealAction,
     // Update
     updateAccountAction,
     updatePersonAction,
     updateDealAction,
+    // Delete
+    deleteAccountAction,
+    deletePersonAction,
+    deleteDealAction,
     // List
-    listPersonsAction,
     listAccountsAction,
+    listPersonsAction,
     listDealsAction,
-    // Billing
+    // Billing — Subscription
     changeAccountPlanAction,
     cancelSubscriptionAction,
     removeCancellationAction,
-    addAddonUsageAction,
     addDiscountToSubscriptionAction,
+    addAddonUsageAction,
+    // Billing — Invoice
     addInvoiceAction,
     addInvoicePaymentAction,
-    // CRM
+    // CRM — Membership / Activity
     manageAccountMembershipAction,
     addCustomActivityAction,
     // Email
