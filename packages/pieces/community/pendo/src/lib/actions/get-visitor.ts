@@ -16,7 +16,7 @@ export const getVisitor = createAction({
   },
   async run(context) {
     const { visitorId } = context.propsValue;
-    return await httpClient.sendRequest({
+    const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `https://app.pendo.io/api/v1/visitor/${encodeURIComponent(
         visitorId
@@ -26,5 +26,7 @@ export const getVisitor = createAction({
         'Content-Type': 'application/json',
       },
     });
+
+    return response.body;
   },
 });

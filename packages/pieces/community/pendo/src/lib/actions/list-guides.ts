@@ -9,7 +9,7 @@ export const listGuides = createAction({
   description: 'Retrieve all guides from your Pendo account.',
   props: {},
   async run(context) {
-    return await httpClient.sendRequest({
+    const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: 'https://app.pendo.io/api/v1/guide',
       headers: {
@@ -17,5 +17,7 @@ export const listGuides = createAction({
         'Content-Type': 'application/json',
       },
     });
+
+    return response.body;
   },
 });

@@ -16,7 +16,7 @@ export const getAccount = createAction({
   },
   async run(context) {
     const { accountId } = context.propsValue;
-    return await httpClient.sendRequest({
+    const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `https://app.pendo.io/api/v1/account/${encodeURIComponent(
         accountId
@@ -26,5 +26,7 @@ export const getAccount = createAction({
         'Content-Type': 'application/json',
       },
     });
+
+    return response.body;
   },
 });
