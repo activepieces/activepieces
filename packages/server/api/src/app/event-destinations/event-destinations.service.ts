@@ -32,14 +32,12 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
         applicationEvents(log).registerListeners(log, {
             userEvent: () => async (event) => {
                 await eventDestinationService(log).trigger({
-                    platformId: event.platformId,
                     projectId: event.projectId,
                     event,
                 })
             },
             workerEvent: () => async (projectId, event) => {
                 await eventDestinationService(log).trigger({
-                    platformId: event.platformId,
                     projectId,
                     event,
                 })
@@ -98,7 +96,8 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
 
         return paginationHelper.createPage<EventDestination>(data, cursor)
     },
-    trigger: async ({ platformId, projectId, event }: TriggerParams): Promise<void> => {
+    trigger: async ({ projectId, event }: TriggerParams): Promise<void> => {
+        const platformId = event.platformId
         const conditions: FindOptionsWhere<EventDestinationSchema>[] = [{
             platformId,
             events: ArrayContains([event.action]),
@@ -199,7 +198,6 @@ type ListParams = {
 }
 
 type TriggerParams = {
-    platformId: PlatformId
     projectId?: ProjectId
     event: ApplicationEvent
 }
