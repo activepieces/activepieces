@@ -3080,7 +3080,7 @@
     },
     "packages/pieces/community/google-drive": {
       "name": "@activepieces/piece-google-drive",
-      "version": "0.7.4",
+      "version": "0.7.5",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -5346,6 +5346,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/pendo": {
+      "name": "@activepieces/piece-pendo",
+      "version": "0.1.0",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/perplexity-ai": {
       "name": "@activepieces/piece-perplexity-ai",
       "version": "0.3.3",
@@ -6577,7 +6587,7 @@
     },
     "packages/pieces/community/supabase": {
       "name": "@activepieces/piece-supabase",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7511,7 +7521,7 @@
     },
     "packages/pieces/community/youtube": {
       "name": "@activepieces/piece-youtube",
-      "version": "0.4.6",
+      "version": "0.4.7",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -8310,7 +8320,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.71.6",
+      "version": "0.71.7",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
@@ -9407,6 +9417,8 @@
     "@activepieces/piece-pdfmonkey": ["@activepieces/piece-pdfmonkey@workspace:packages/pieces/community/pdfmonkey"],
 
     "@activepieces/piece-peekshot": ["@activepieces/piece-peekshot@workspace:packages/pieces/community/peekshot"],
+
+    "@activepieces/piece-pendo": ["@activepieces/piece-pendo@workspace:packages/pieces/community/pendo"],
 
     "@activepieces/piece-perplexity-ai": ["@activepieces/piece-perplexity-ai@workspace:packages/pieces/community/perplexity-ai"],
 
