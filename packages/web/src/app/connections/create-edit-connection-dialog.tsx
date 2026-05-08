@@ -70,6 +70,7 @@ function CreateOrEditConnectionSection({
   selectedAuth,
   onTryAnotherMethodButtonClicked,
   showTryAnotherMethodButton,
+  projectId: projectIdOverride,
 }: CreateOrEditConnectionSectionProps) {
   const formSchema = formUtils.buildConnectionSchema(
     selectedAuth.authProperty,
@@ -100,6 +101,7 @@ function CreateOrEditConnectionSection({
           redirectUrl: redirectUrl ?? '',
         }),
         ...(isGlobalConnection ? { scope: AppConnectionScope.PLATFORM } : {}),
+        ...(projectIdOverride ? { projectId: projectIdOverride } : {}),
         projectIds: reconnectConnection?.projectIds ?? [],
         preSelectForNewProjects: false,
         pieceVersion: piece.version,
@@ -357,6 +359,7 @@ function CreateOrEditConnectionDialog({
   reconnectConnection,
   isGlobalConnection,
   externalIdComingFromSdk,
+  projectId: projectIdOverride,
 }: ConnectionDialogProps) {
   const { data: piecesOAuth2AppsMap, isPending: loadingPiecesOAuth2AppsMap } =
     oauthAppsQueries.usePiecesOAuth2AppsMap();
@@ -391,6 +394,7 @@ function CreateOrEditConnectionDialog({
             reconnectConnection={reconnectConnection}
             isGlobalConnection={isGlobalConnection}
             externalIdComingFromSdk={externalIdComingFromSdk}
+            projectId={projectIdOverride}
           />
         )}
       </DialogContent>
@@ -481,6 +485,7 @@ type ConnectionDialogProps = {
   reconnectConnection: AppConnectionWithoutSensitiveData | null;
   isGlobalConnection: boolean;
   externalIdComingFromSdk?: string | null;
+  projectId?: string | null;
 };
 
 type CreateOrEditConnectionDialogContentProps = {
@@ -493,6 +498,7 @@ type CreateOrEditConnectionDialogContentProps = {
     open: boolean,
     connection?: AppConnectionWithoutSensitiveData,
   ) => void;
+  projectId?: string | null;
 };
 
 type CreateOrEditConnectionSectionProps =

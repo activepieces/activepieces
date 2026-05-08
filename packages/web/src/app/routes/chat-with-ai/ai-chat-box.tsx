@@ -16,6 +16,7 @@ import {
 } from '@/components/prompt-kit/chat-container';
 import { ScrollButton } from '@/components/prompt-kit/scroll-button';
 import { Button } from '@/components/ui/button';
+import { ChatUIMessage, DynamicToolPart } from '@/features/chat/lib/chat-types';
 import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { useToolApproval } from '@/features/chat/lib/use-tool-approval';
 import { aiProviderQueries } from '@/features/platform-admin';
@@ -157,6 +158,14 @@ function ChatBoxContent({
     dismiss: dismissApproval,
   } = useToolApproval({ pendingApprovalRequest });
 
+  const allConversationToolParts = useMemo(
+    () =>
+      messages.flatMap((m: ChatUIMessage) =>
+        m.parts.filter((p): p is DynamicToolPart => p.type === 'dynamic-tool'),
+      ),
+    [messages],
+  );
+
   const isEmpty = messages.length === 0 && !isLoadingHistory && !isStreaming;
 
   if (isEmpty) {
@@ -217,6 +226,7 @@ function ChatBoxContent({
                 onRetry={handleRetry}
                 selectedProjectId={selectedProjectId}
                 onSelectProject={handleProjectChange}
+                allConversationToolParts={allConversationToolParts}
               />
             );
           })}

@@ -145,9 +145,17 @@ export function ConnectionPickerCard({
   picker,
   onSelect,
   isInteractive = true,
+  selectedProjectId,
 }: ConnectionPickerCardProps) {
   const queryClient = useQueryClient();
   const pieceName = normalizePieceName(picker.piece);
+  const filteredPicker = useMemo(() => {
+    if (!selectedProjectId) return picker;
+    const filtered = picker.connections.filter(
+      (c) => c.projectId === selectedProjectId,
+    );
+    return { ...picker, connections: filtered };
+  }, [picker, selectedProjectId]);
   const { pieceModel, isLoading: isPieceLoading } = piecesHooks.usePiece({
     name: pieceName,
   });
@@ -163,7 +171,7 @@ export function ConnectionPickerCard({
     fullConnections,
     isLoading: isLoadingStatuses,
   } = useLiveConnections({
-    connections: picker.connections,
+    connections: filteredPicker.connections,
     pieceName,
     enabled: isInteractive && !selectedConnection,
   });
@@ -201,7 +209,9 @@ export function ConnectionPickerCard({
             </div>
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-semibold">{picker.displayName}</div>
+            <div className="text-sm font-semibold">
+              {filteredPicker.displayName}
+            </div>
             <div className="text-xs text-muted-foreground">
               {t('Connected')}
             </div>
@@ -216,7 +226,7 @@ export function ConnectionPickerCard({
       <SelectedState
         pieceName={pieceName}
         connection={selectedConnection}
-        displayName={picker.displayName}
+        displayName={filteredPicker.displayName}
       />
     );
   }
@@ -237,13 +247,13 @@ export function ConnectionPickerCard({
         <div className="p-4 pb-3">
           <h3 className="font-semibold text-base">
             {t('Which {name} account should I use?', {
-              name: picker.displayName,
+              name: filteredPicker.displayName,
             })}
           </h3>
         </div>
 
         <div className="max-h-64 overflow-auto">
-          {picker.connections.map((conn) => {
+          {filteredPicker.connections.map((conn) => {
             const status = liveStatuses[conn.externalId] ?? conn.status;
             const healthy = isConnectionHealthy(status);
             return (
@@ -316,7 +326,7 @@ export function ConnectionPickerCard({
             </div>
             <div className="text-xs text-muted-foreground">
               {t('Connect a new {name} account', {
-                name: picker.displayName,
+                name: filteredPicker.displayName,
               })}
             </div>
           </div>
@@ -336,6 +346,7 @@ export function ConnectionPickerCard({
         <CreateOrEditConnectionDialog
           piece={pieceModel}
           open={connectDialogOpen}
+          projectId={selectedProjectId}
           setOpen={(open, createdConnection) => {
             setConnectDialogOpen(open);
             if (createdConnection) {
@@ -364,4 +375,5 @@ type ConnectionPickerCardProps = {
   picker: ConnectionPickerData;
   onSelect: (text: string) => void;
   isInteractive?: boolean;
+  selectedProjectId?: string | null;
 };
