@@ -6,12 +6,31 @@ export const getPersonAction = createAction({
   name: 'get_person',
   auth: outsetaAuth,
   displayName: 'Retrieve Person',
-  description: 'Retrieve a person by email address, including the linked account.',
+  description:
+    'Retrieve a person by email or by UID, including the linked account.',
   props: {
+    lookupBy: Property.StaticDropdown({
+      displayName: 'Lookup by',
+      description: 'How to find the person to retrieve.',
+      required: true,
+      defaultValue: 'email',
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Email', value: 'email' },
+          { label: 'Person UID', value: 'uid' },
+        ],
+      },
+    }),
     email: Property.ShortText({
       displayName: 'Email',
-      description: 'The email address of the person to retrieve.',
-      required: true,
+      description: 'Used when "Lookup by" is set to Email.',
+      required: false,
+    }),
+    personUid: Property.ShortText({
+      displayName: 'Person UID',
+      description: 'Used when "Lookup by" is set to Person UID.',
+      required: false,
     }),
   },
   async run(context) {
@@ -21,17 +40,30 @@ export const getPersonAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    const email = context.propsValue.email;
-    const items = await client.getAllPages<any>(
-      `/api/v1/crm/people?Email=${encodeURIComponent(email)}&fields=*,PersonAccount.Account.Uid,PersonAccount.Account.Name,PersonAccount.Account.AccountStage`
-    );
+    let person: any;
 
-    const person = items.find(
-      (p: any) => p.Email?.toLowerCase() === email.toLowerCase()
-    );
-
-    if (!person) {
-      throw new Error(`No person found with email "${email}".`);
+    if (context.propsValue.lookupBy === 'uid') {
+      const uid = context.propsValue.personUid;
+      if (!uid) {
+        throw new Error('Person UID is required when looking up by UID.');
+      }
+      person = await client.get<any>(
+        `/api/v1/crm/people/${uid}?fields=*,MailingAddress.*,PersonAccount.Account.Uid,PersonAccount.Account.Name,PersonAccount.Account.AccountStage`
+      );
+    } else {
+      const email = context.propsValue.email;
+      if (!email) {
+        throw new Error('Email is required when looking up by Email.');
+      }
+      const items = await client.getAllPages<any>(
+        `/api/v1/crm/people?Email=${encodeURIComponent(email)}&fields=*,PersonAccount.Account.Uid,PersonAccount.Account.Name,PersonAccount.Account.AccountStage`
+      );
+      person = items.find(
+        (p: any) => p.Email?.toLowerCase() === email.toLowerCase()
+      );
+      if (!person) {
+        throw new Error(`No person found with email "${email}".`);
+      }
     }
 
     return {

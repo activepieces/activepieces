@@ -6,12 +6,32 @@ export const getAccountAction = createAction({
   name: 'get_account',
   auth: outsetaAuth,
   displayName: 'Retrieve Account',
-  description: 'Retrieve an account by its UID, including plan, subscription, and add-on details.',
+  description:
+    'Retrieve an account by its UID, or by the email of its primary contact. Returns plan, subscription, billing address, primary contact and add-on details.',
   props: {
+    lookupBy: Property.StaticDropdown({
+      displayName: 'Lookup by',
+      description: 'How to find the account to retrieve.',
+      required: true,
+      defaultValue: 'uid',
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Account UID', value: 'uid' },
+          { label: 'Primary contact email', value: 'email' },
+        ],
+      },
+    }),
     accountUid: Property.ShortText({
       displayName: 'Account UID',
-      description: 'The UID of the account to retrieve.',
-      required: true,
+      description: 'Used when "Lookup by" is set to Account UID.',
+      required: false,
+    }),
+    primaryContactEmail: Property.ShortText({
+      displayName: 'Primary contact email',
+      description:
+        'Used when "Lookup by" is set to Primary contact email. The action will resolve the email to the linked account.',
+      required: false,
     }),
   },
   async run(context) {
@@ -21,13 +41,40 @@ export const getAccountAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
+    let accountUid = context.propsValue.accountUid;
+
+    if (context.propsValue.lookupBy === 'email') {
+      const email = context.propsValue.primaryContactEmail;
+      if (!email) {
+        throw new Error('Primary contact email is required when looking up by email.');
+      }
+      const people = await client.getAllPages<any>(
+        `/api/v1/crm/people?Email=${encodeURIComponent(email)}&fields=*,PersonAccount.Account.Uid`
+      );
+      const person = people.find(
+        (p: any) => p.Email?.toLowerCase() === email.toLowerCase()
+      );
+      if (!person) {
+        throw new Error(`No person found with email "${email}".`);
+      }
+      const memberships: any[] = Array.isArray(person.PersonAccount)
+        ? person.PersonAccount
+        : (person.PersonAccount?.items ?? person.PersonAccount?.Items ?? []);
+      accountUid = memberships[0]?.Account?.Uid ?? null;
+      if (!accountUid) {
+        throw new Error(`Person "${email}" is not linked to any account.`);
+      }
+    }
+
+    if (!accountUid) {
+      throw new Error('Account UID is required.');
+    }
+
     // The leading `*` is required: when ?fields= is provided, Outseta returns
     // ONLY the listed fields. Without `*`, top-level scalar fields like Name,
-    // AccountStage, BillingAddress, etc. would all come back null. Verified
-    // live: without *, response only contains CurrentSubscription; with *, the
-    // full Account is returned.
+    // AccountStage, BillingAddress, etc. would all come back null.
     const account = await client.get<any>(
-      `/api/v1/crm/accounts/${context.propsValue.accountUid}?fields=*,BillingAddress.*,MailingAddress.*,PrimaryContact.*,CurrentSubscription.*,CurrentSubscription.Plan.*,CurrentSubscription.Plan.PlanFamily.*,CurrentSubscription.SubscriptionAddOns.*,CurrentSubscription.SubscriptionAddOns.AddOn.*`
+      `/api/v1/crm/accounts/${accountUid}?fields=*,BillingAddress.*,MailingAddress.*,PrimaryContact.*,CurrentSubscription.*,CurrentSubscription.Plan.*,CurrentSubscription.Plan.PlanFamily.*,CurrentSubscription.SubscriptionAddOns.*,CurrentSubscription.SubscriptionAddOns.AddOn.*`
     );
 
     const sub = account.CurrentSubscription;

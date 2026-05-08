@@ -7,14 +7,37 @@ export const getDealAction = createAction({
   name: 'get_deal',
   auth: outsetaAuth,
   displayName: 'Retrieve Deal',
-  description: 'Retrieve a deal by contact email and pipeline.',
+  description:
+    'Retrieve a deal by its UID, or by the email of the contact associated with the deal plus the pipeline.',
   props: {
+    lookupBy: Property.StaticDropdown({
+      displayName: 'Lookup by',
+      description: 'How to find the deal to retrieve.',
+      required: true,
+      defaultValue: 'uid',
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Deal UID', value: 'uid' },
+          { label: 'Contact email + pipeline', value: 'email' },
+        ],
+      },
+    }),
+    dealUid: Property.ShortText({
+      displayName: 'Deal UID',
+      description: 'Used when "Lookup by" is set to Deal UID.',
+      required: false,
+    }),
     contactEmail: Property.ShortText({
       displayName: 'Contact Email',
-      description: 'The email address of the contact associated with the deal.',
-      required: true,
+      description: 'Used when "Lookup by" is set to Contact email + pipeline.',
+      required: false,
     }),
-    pipelineUid: pipelineDropdown(),
+    pipelineUid: pipelineDropdown({
+      required: false,
+      description:
+        'Used when "Lookup by" is set to Contact email + pipeline. Required in that mode.',
+    }),
   },
   async run(context) {
     const client = new OutsetaClient({
@@ -23,35 +46,45 @@ export const getDealAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    const contactEmail = context.propsValue.contactEmail.toLowerCase();
-    const pipelineUid = context.propsValue.pipelineUid;
+    let match: any;
 
-    // Outseta supports server-side nested filters on /crm/deals — confirmed
-    // by Outseta support. Note: passing a UID that doesn't exist returns
-    // "Invalid filter specification" (400), but a real but unmatched UID
-    // returns an empty list. We let the OutsetaClient surface the 400 if
-    // the user picks a stale pipeline UID.
-    const items = await client.getAllPages<any>(
-      `/api/v1/crm/deals?DealPipelineStage.DealPipeline.Uid=${encodeURIComponent(pipelineUid)}&fields=Uid,Name,Amount,DueDate,Created,Updated,AssignedToPersonClientIdentifier,DealPipelineStage.Uid,DealPipelineStage.Name,DealPipelineStage.DealPipeline.Uid,DealPeople.Person.Uid,DealPeople.Person.Email,Account.Uid,Account.Name`
-    );
-
-    const match = items.find((deal: any) => {
-      const dealPeople: any[] = deal.DealPeople?.items
-        ?? deal.DealPeople?.Items
-        ?? deal.DealPeople
-        ?? [];
-      const hasContact = dealPeople.some(
-        (dp: any) => dp.Person?.Email?.toLowerCase() === contactEmail
+    if (context.propsValue.lookupBy === 'uid') {
+      const uid = context.propsValue.dealUid;
+      if (!uid) {
+        throw new Error('Deal UID is required when looking up by UID.');
+      }
+      match = await client.get<any>(
+        `/api/v1/crm/deals/${uid}?fields=Uid,Name,Amount,DueDate,Created,Updated,AssignedToPersonClientIdentifier,DealPipelineStage.Uid,DealPipelineStage.Name,DealPipelineStage.DealPipeline.Uid,DealPeople.Person.Uid,DealPeople.Person.Email,Account.Uid,Account.Name`
       );
-      const inPipeline =
-        deal.DealPipelineStage?.DealPipeline?.Uid === pipelineUid;
-      return hasContact && inPipeline;
-    });
-
-    if (!match) {
-      throw new Error(
-        `No deal found for contact "${context.propsValue.contactEmail}" in the selected pipeline.`
+    } else {
+      const contactEmail = context.propsValue.contactEmail?.toLowerCase();
+      const pipelineUid = context.propsValue.pipelineUid;
+      if (!contactEmail || !pipelineUid) {
+        throw new Error(
+          'Contact email and pipeline are both required when looking up by email + pipeline.'
+        );
+      }
+      // Outseta supports server-side nested filters on /crm/deals — confirmed
+      // by Outseta support. A non-existent pipeline UID returns 400 "Invalid
+      // filter specification"; a real but unmatched UID returns an empty list.
+      const items = await client.getAllPages<any>(
+        `/api/v1/crm/deals?DealPipelineStage.DealPipeline.Uid=${encodeURIComponent(pipelineUid)}&fields=Uid,Name,Amount,DueDate,Created,Updated,AssignedToPersonClientIdentifier,DealPipelineStage.Uid,DealPipelineStage.Name,DealPipelineStage.DealPipeline.Uid,DealPeople.Person.Uid,DealPeople.Person.Email,Account.Uid,Account.Name`
       );
+      match = items.find((deal: any) => {
+        const dealPeople: any[] =
+          deal.DealPeople?.items ?? deal.DealPeople?.Items ?? deal.DealPeople ?? [];
+        const hasContact = dealPeople.some(
+          (dp: any) => dp.Person?.Email?.toLowerCase() === contactEmail
+        );
+        const inPipeline =
+          deal.DealPipelineStage?.DealPipeline?.Uid === pipelineUid;
+        return hasContact && inPipeline;
+      });
+      if (!match) {
+        throw new Error(
+          `No deal found for contact "${context.propsValue.contactEmail}" in the selected pipeline.`
+        );
+      }
     }
 
     return {
