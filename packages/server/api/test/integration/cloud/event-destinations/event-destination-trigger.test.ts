@@ -5,12 +5,12 @@ import {
     WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import { createTestContext } from '../../../helpers/test-context'
-import { createMockEventDestination } from '../../../helpers/mocks'
-import { db } from '../../../helpers/db'
 import { eventDestinationService } from '../../../../src/app/event-destinations/event-destinations.service'
 import * as jobQueueModule from '../../../../src/app/workers/job-queue/job-queue'
+import { db } from '../../../helpers/db'
+import { createMockEventDestination } from '../../../helpers/mocks'
+import { createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
 
@@ -54,6 +54,10 @@ describe('Event Destination Trigger', () => {
         await eventDestinationService(app.log).trigger({
             platformId: ctx.platform.id,
             event: {
+                id: apId(),
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
+                platformId: ctx.platform.id,
                 action: ApplicationEventName.FLOW_CREATED,
                 data: { flow: { id: apId(), created: new Date().toISOString(), updated: new Date().toISOString() }, project: { displayName: 'Test' } },
             },
@@ -82,6 +86,10 @@ describe('Event Destination Trigger', () => {
         await eventDestinationService(app.log).trigger({
             platformId: ctx.platform.id,
             event: {
+                id: apId(),
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
+                platformId: ctx.platform.id,
                 action: ApplicationEventName.FLOW_DELETED,
                 data: { flow: { id: apId(), created: new Date().toISOString(), updated: new Date().toISOString() }, project: { displayName: 'Test' } },
             },
@@ -103,6 +111,10 @@ describe('Event Destination Trigger', () => {
         await eventDestinationService(app.log).trigger({
             platformId: ctx2.platform.id,
             event: {
+                id: apId(),
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
+                platformId: ctx2.platform.id,
                 action: ApplicationEventName.FLOW_CREATED,
                 data: { flow: { id: apId(), created: new Date().toISOString(), updated: new Date().toISOString() }, project: { displayName: 'Test' } },
             },
@@ -130,6 +142,10 @@ describe('Event Destination Trigger', () => {
         await eventDestinationService(app.log).trigger({
             platformId: ctx.platform.id,
             event: {
+                id: apId(),
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
+                platformId: ctx.platform.id,
                 action: ApplicationEventName.FLOW_CREATED,
                 data: { flow: { id: apId(), created: new Date().toISOString(), updated: new Date().toISOString() }, project: { displayName: 'Test' } },
             },
@@ -153,6 +169,10 @@ describe('Event Destination Trigger', () => {
         await eventDestinationService(app.log).trigger({
             platformId: ctx.platform.id,
             event: {
+                id: apId(),
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
+                platformId: ctx.platform.id,
                 action: ApplicationEventName.FLOW_DELETED,
                 data: { flow: { id: apId(), created: new Date().toISOString(), updated: new Date().toISOString() }, project: { displayName: 'Test' } },
             },

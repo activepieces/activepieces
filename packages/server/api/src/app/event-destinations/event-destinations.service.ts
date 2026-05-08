@@ -123,7 +123,7 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
                     projectId,
                     webhookId: destination.id,
                     webhookUrl: destination.url,
-                    payload: event.data,
+                    payload: event,
                     jobType: WorkerJobType.EVENT_DESTINATION,
                 },
             }),
@@ -201,7 +201,7 @@ type ListParams = {
 type TriggerParams = {
     platformId: PlatformId
     projectId?: ProjectId
-    event: Pick<ApplicationEvent, 'action' | 'data'>
+    event: ApplicationEvent
 }
 
 type TestParams = {
