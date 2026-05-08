@@ -36,10 +36,11 @@ export function ProjectPickerCard({
   const { data: currentUser } = userHooks.useCurrentUser();
   const projects = useMemo(() => {
     const all = allProjects ?? [];
+    if (!currentUser) return all;
     return all.filter(
-      (p) => p.type !== ProjectType.PERSONAL || p.ownerId === currentUser?.id,
+      (p) => p.type !== ProjectType.PERSONAL || p.ownerId === currentUser.id,
     );
-  }, [allProjects, currentUser?.id]);
+  }, [allProjects, currentUser]);
   const [selected, setSelected] = useState<string | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
