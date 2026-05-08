@@ -71,7 +71,7 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     log,
                 })
 
-                const result = {
+                const textResult = {
                     piece: normalized,
                     name: component.name,
                     displayName: component.displayName,
@@ -80,11 +80,19 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     ...(authHint && { authHint }),
                     props,
                 }
+                const structured = {
+                    piece: normalized,
+                    name: component.name,
+                    displayName: component.displayName,
+                    description: component.description,
+                    requiresAuth,
+                    props,
+                }
 
                 const descLine = component.description ? `\nDescription: ${component.description}\n` : ''
                 return {
-                    content: [{ type: 'text', text: `✅ ${label} schema for "${normalized}/${actionOrTriggerName}":${descLine}\n${JSON.stringify(result, null, 2)}` }],
-                    structuredContent: result,
+                    content: [{ type: 'text', text: `✅ ${label} schema for "${normalized}/${actionOrTriggerName}":${descLine}\n${JSON.stringify(textResult, null, 2)}` }],
+                    structuredContent: structured,
                 }
             }
             catch (err) {
