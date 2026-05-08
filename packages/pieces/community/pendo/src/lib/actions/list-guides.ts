@@ -1,7 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { pendoAuth } from '../auth';
-import { pendoRequest } from '../common/client';
 
 export const listGuides = createAction({
   auth: pendoAuth,
@@ -10,10 +9,13 @@ export const listGuides = createAction({
   description: 'Retrieve all guides from your Pendo account.',
   props: {},
   async run(context) {
-    return await pendoRequest(
-      String(context.auth),
-      HttpMethod.GET,
-      '/guide',
-    );
+    return await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: 'https://app.pendo.io/api/v1/guide',
+      headers: {
+        'x-pendo-integration-key': context.auth.secret_text,
+        'Content-Type': 'application/json',
+      },
+    });
   },
 });

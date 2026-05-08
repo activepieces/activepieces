@@ -8,7 +8,7 @@ export const pendoAuth = PieceAuth.SecretText({
   required: true,
   validate: async ({ auth }) => {
     try {
-      const response = await httpClient.sendRequest({
+      await httpClient.sendRequest({
         method: HttpMethod.GET,
         url: 'https://app.pendo.io/api/v1/feature',
         headers: {
@@ -19,13 +19,8 @@ export const pendoAuth = PieceAuth.SecretText({
           length: '1',
         },
       });
-      if (response.status === 200) {
-        return { valid: true };
-      }
-      return {
-        valid: false,
-        error: `Unexpected status: ${response.status}`,
-      };
+
+      return { valid: true };
     } catch (e: unknown) {
       const err = e as { response?: { status?: number } };
       if (err.response?.status === 401 || err.response?.status === 403) {

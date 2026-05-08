@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { pendoAuth } from '../auth';
-import { pendoRequest } from '../common/client';
 
 export const getAccount = createAction({
   auth: pendoAuth,
@@ -17,10 +16,15 @@ export const getAccount = createAction({
   },
   async run(context) {
     const { accountId } = context.propsValue;
-    return await pendoRequest(
-      String(context.auth),
-      HttpMethod.GET,
-      `/account/${encodeURIComponent(accountId)}`,
-    );
+    return await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: `https://app.pendo.io/api/v1/account/${encodeURIComponent(
+        accountId
+      )}`,
+      headers: {
+        'x-pendo-integration-key': context.auth.secret_text,
+        'Content-Type': 'application/json',
+      },
+    });
   },
 });

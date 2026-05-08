@@ -52,7 +52,7 @@ export const trackEvent = createAction({
       method: HttpMethod.POST,
       url: 'https://app.pendo.io/data/track',
       headers: {
-        'x-pendo-integration-key': String(context.auth),
+        'x-pendo-integration-key': context.auth.secret_text,
         'Content-Type': 'application/json',
       },
       body,
