@@ -288,22 +288,6 @@ export const apFlowStructureTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
         },
-        outputSchema: {
-            flowId: z.string(),
-            displayName: z.string(),
-            steps: z.array(z.object({
-                name: z.string(),
-                type: z.string(),
-                displayName: z.string(),
-                parentName: z.string().nullable(),
-                relationship: z.string(),
-                branchIndex: z.number().optional(),
-                branchName: z.string().optional(),
-                valid: z.boolean(),
-                configStatus: z.string(),
-            })),
-            stepCount: z.number(),
-        },
         annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async ({ flowId }) => {
             try {

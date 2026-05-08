@@ -35,13 +35,6 @@ export const apFindRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
         permission: Permission.READ_TABLE,
         description: 'Query records from a table with optional filtering. Operators: eq, neq, gt, gte, lt, lte, co, exists, not_exists.',
         inputSchema: findRecordsInput.shape,
-        outputSchema: {
-            records: z.array(z.object({
-                id: z.string(),
-                cells: z.record(z.string(), z.unknown()),
-            })),
-            count: z.number(),
-        },
         annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {

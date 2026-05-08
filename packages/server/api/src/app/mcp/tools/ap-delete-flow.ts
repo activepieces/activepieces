@@ -12,10 +12,6 @@ export const apDeleteFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
         inputSchema: {
             flowId: z.string().describe('The ID of the flow to delete'),
         },
-        outputSchema: {
-            flowId: z.string(),
-            deleted: z.boolean(),
-        },
         annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
             const { flowId } = z.object({ flowId: z.string() }).parse(args)

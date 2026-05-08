@@ -26,23 +26,6 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
         title: 'ap_get_piece_props',
         description: 'Get the input property schema for a piece action or trigger. Returns field names, types, required/optional, defaults, and options. Pass auth to resolve dynamic dropdowns and dynamic property sub-fields (e.g. Custom API Call url/body fields).',
         inputSchema: getPiecePropsInput.shape,
-        outputSchema: {
-            piece: z.string(),
-            name: z.string(),
-            displayName: z.string(),
-            description: z.string(),
-            requiresAuth: z.boolean(),
-            props: z.array(z.object({
-                name: z.string(),
-                type: z.string(),
-                required: z.boolean(),
-                displayName: z.string(),
-                description: z.string().optional(),
-                defaultValue: z.unknown().optional(),
-                options: z.array(z.object({ label: z.string(), value: z.unknown() })).optional(),
-                note: z.string().optional(),
-            })),
-        },
         annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {

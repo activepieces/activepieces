@@ -16,10 +16,6 @@ export const apValidateStepConfigTool = (mcp: ProjectScopedMcpServer, log: Fasti
         title: 'ap_validate_step_config',
         description: 'Validate a step configuration before applying it. Returns field-level errors without modifying any flow. Use this to check your config is correct before calling ap_update_step or ap_update_trigger.',
         inputSchema: validateStepConfigInput.shape,
-        outputSchema: {
-            valid: z.boolean(),
-            errors: z.array(z.string()),
-        },
         annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {

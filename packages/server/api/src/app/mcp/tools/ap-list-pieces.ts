@@ -34,16 +34,6 @@ export const apListPiecesTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
             includeActions: z.boolean().optional().describe('When true, include action names and descriptions for each piece'),
             includeTriggers: z.boolean().optional().describe('When true, include trigger names and descriptions for each piece'),
         },
-        outputSchema: {
-            pieces: z.array(z.object({
-                name: z.string(),
-                displayName: z.string(),
-                version: z.string(),
-                description: z.string(),
-            })),
-            count: z.number(),
-            totalCount: z.number(),
-        },
         annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {
