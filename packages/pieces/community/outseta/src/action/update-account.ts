@@ -103,6 +103,18 @@ export const updateAccountAction = createAction({
       throw new Error('At least one field must be provided.');
     }
 
+    // Defensive: ensure PersonAccount is a flat array on the way out, so we
+    // never PUT back a {items: [...]} envelope that the server might
+    // misinterpret as "no memberships" and wipe.
+    if (account.PersonAccount && !Array.isArray(account.PersonAccount)) {
+      account.PersonAccount =
+        account.PersonAccount.items ?? account.PersonAccount.Items ?? [];
+    }
+    if (account.Subscriptions && !Array.isArray(account.Subscriptions)) {
+      account.Subscriptions =
+        account.Subscriptions.items ?? account.Subscriptions.Items ?? [];
+    }
+
     const updatedAccount = await client.put<any>(
       `/api/v1/crm/accounts/${context.propsValue.accountUid}`,
       account

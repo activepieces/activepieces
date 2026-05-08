@@ -44,8 +44,12 @@ export const manageAccountMembershipAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
+    // Expand every nested collection that might be on an Account so the PUT
+    // doesn't echo back a partial body and let the server wipe billing,
+    // subscriptions, addresses, etc. Mirrors the same expansion as
+    // update-account.ts.
     const account = await client.get<any>(
-      `/api/v1/crm/accounts/${context.propsValue.accountUid}?fields=*,PersonAccount.*,PersonAccount.Person.*`
+      `/api/v1/crm/accounts/${context.propsValue.accountUid}?fields=*,BillingAddress.*,MailingAddress.*,PrimaryContact.*,PersonAccount.*,PersonAccount.Person.*,Subscriptions.*`
     );
     const existingMemberships: any[] =
       account.PersonAccount?.items ??
