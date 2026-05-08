@@ -52,6 +52,7 @@ async function connectMcpClient({ mcpCredentials, log }: {
 }
 
 const AP_TOOLS_REQUIRING_APPROVAL = new Set([
+    'ap_delete_flow',
     'ap_delete_table',
     'ap_delete_step',
     'ap_delete_branch',
