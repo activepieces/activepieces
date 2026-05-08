@@ -78,9 +78,17 @@ export const manageAccountMembershipAction = createAction({
           IsPrimary: context.propsValue.isPrimary ?? false,
         },
       ];
+      // Defensive: flatten any enveloped Subscriptions collection before
+      // the PUT so the server doesn't misread {items:[…]} as "no
+      // subscriptions" and wipe billing state. Mirrors update-account.ts.
+      const flatSubscriptions =
+        account.Subscriptions && !Array.isArray(account.Subscriptions)
+          ? (account.Subscriptions.items ?? account.Subscriptions.Items ?? [])
+          : account.Subscriptions;
+
       const result = await client.put<any>(
         `/api/v1/crm/accounts/${context.propsValue.accountUid}`,
-        { ...account, PersonAccount: updatedMemberships }
+        { ...account, PersonAccount: updatedMemberships, Subscriptions: flatSubscriptions }
       );
       return {
         action: 'added',
