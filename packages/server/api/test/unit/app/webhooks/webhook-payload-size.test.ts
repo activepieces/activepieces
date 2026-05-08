@@ -57,6 +57,18 @@ describe('payloadOffloader', () => {
             expect(size).toBeLessThan(fileSize + 1024)
         })
 
+        it('should not under-count when a crafted object claims Buffer shape with non-byte data', () => {
+            const items = 1024 * 1024
+            const payload = {
+                rawBody: { type: 'Buffer', data: Array.from({ length: items }, (_, i) => `item-${i}`) },
+            }
+
+            const size = payloadOffloader.getPayloadSizeInBytes(payload)
+
+            const naiveSize = Buffer.byteLength(JSON.stringify(payload), 'utf8')
+            expect(size).toBeGreaterThanOrEqual(naiveSize)
+        })
+
         it('should not over-count buffer bytes for serialized Buffer JSON shape', () => {
             const fileSize = 1024 * 1024
             const data = Array.from({ length: fileSize }, () => 0xff)

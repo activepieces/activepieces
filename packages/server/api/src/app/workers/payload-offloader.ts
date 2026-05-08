@@ -22,10 +22,15 @@ function getPayloadSizeInBytes(payload: unknown): number {
 }
 
 function isBufferLike(value: unknown): value is { type: 'Buffer', data: number[] } {
-    return typeof value === 'object'
-        && value !== null
-        && (value as { type?: unknown }).type === 'Buffer'
-        && Array.isArray((value as { data?: unknown }).data)
+    if (typeof value !== 'object' || value === null) {
+        return false
+    }
+    if ((value as { type?: unknown }).type !== 'Buffer') {
+        return false
+    }
+    const data = (value as { data?: unknown }).data
+    return Array.isArray(data)
+        && (data.length === 0 || typeof data[0] === 'number')
 }
 
 async function offloadPayload(
