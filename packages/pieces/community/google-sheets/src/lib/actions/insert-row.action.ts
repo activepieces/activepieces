@@ -73,7 +73,9 @@ export const insertRowAction = createAction({
 
 function extractRowNumber(updatedRange: string): number {
 	const rowRange = updatedRange.split('!')[1];
-	return parseInt(rowRange.split(':')[0].substring(1), 10);
+	const match = rowRange.split(':')[0].match(/\d+/);
+	const rowNumber = match ? parseInt(match[0], 10) : 0;
+	return rowNumber;
 }
 
 async function appendGoogleSheetValues(params: AppendGoogleSheetValuesParams) {

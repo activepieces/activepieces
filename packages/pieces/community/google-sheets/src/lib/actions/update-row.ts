@@ -77,10 +77,8 @@ export const updateRowAction = createAction({
         '!'
       );
       const updatedRowRange = updatedRangeParts?.[1];
-      const updatedRowNumber = parseInt(
-        updatedRowRange?.split(':')[0].substring(1) ?? '0',
-        10
-      );
+      const match = updatedRowRange?.split(':')[0].match(/\d+/);
+      const updatedRowNumber = match ? parseInt(match[0], 10) : 0;
 
       return { updates: { ...response.data }, row: updatedRowNumber };
     } else {
