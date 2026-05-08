@@ -11,26 +11,15 @@ import { AppSystemProp } from '../helper/system/system-props'
 
 function getPayloadSizeInBytes(payload: unknown): number {
     let bufferBytes = 0
-    const json = JSON.stringify(payload, (_, value) => {
-        if (isBufferLike(value)) {
-            bufferBytes += value.data.length
+    const json = JSON.stringify(payload, function (this: Record<string, unknown>, key, value) {
+        const original = this[key]
+        if (Buffer.isBuffer(original)) {
+            bufferBytes += original.length
             return ''
         }
         return value
     })
     return Buffer.byteLength(json ?? '', 'utf8') + bufferBytes
-}
-
-function isBufferLike(value: unknown): value is { type: 'Buffer', data: number[] } {
-    if (typeof value !== 'object' || value === null) {
-        return false
-    }
-    if ((value as { type?: unknown }).type !== 'Buffer') {
-        return false
-    }
-    const data = (value as { data?: unknown }).data
-    return Array.isArray(data)
-        && (data.length === 0 || typeof data[0] === 'number')
 }
 
 async function offloadPayload(
