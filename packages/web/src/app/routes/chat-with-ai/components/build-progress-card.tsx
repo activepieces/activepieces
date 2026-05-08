@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import { Check, ChevronDown, ExternalLink, Loader2 } from 'lucide-react';
-import { motion, useReducedMotion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -407,33 +407,12 @@ export function BuildProgressCard({
           })}
         </div>
 
-        {notesStatus !== 'none' && (
-          <motion.div
-            initial={reduce ? false : { opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: reduce ? 0 : 0.2 }}
-            className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground"
-          >
-            {notesStatus === 'adding' ? (
-              <>
-                <Loader2 className="h-3 w-3 animate-spin" />
-                {t('Adding notes...')}
-              </>
-            ) : (
-              <>
-                <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
-                {t('Notes added')}
-              </>
-            )}
-          </motion.div>
-        )}
-
         {isBuilt && (
           <motion.div
             initial={reduce ? false : { opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: reduce ? 0 : 0.25, delay: 0.1 }}
-            className="mt-3"
+            className="mt-3 space-y-2"
           >
             {flowUrl && (
               <Button
@@ -445,6 +424,19 @@ export function BuildProgressCard({
                 {t('Open flow')}
               </Button>
             )}
+            <AnimatePresence>
+              {notesStatus === 'adding' && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.6 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="text-[11px] text-muted-foreground text-center"
+                >
+                  {t('Adding canvas notes...')}
+                </motion.p>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
       </div>
