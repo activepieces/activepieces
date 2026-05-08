@@ -10,7 +10,22 @@ import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 
 function getPayloadSizeInBytes(payload: unknown): number {
-    return Buffer.byteLength(JSON.stringify(payload), 'utf8')
+    let bufferBytes = 0
+    const json = JSON.stringify(payload, (_, value) => {
+        if (isBufferLike(value)) {
+            bufferBytes += value.data.length
+            return ''
+        }
+        return value
+    })
+    return Buffer.byteLength(json ?? '', 'utf8') + bufferBytes
+}
+
+function isBufferLike(value: unknown): value is { type: 'Buffer', data: number[] } {
+    return typeof value === 'object'
+        && value !== null
+        && (value as { type?: unknown }).type === 'Buffer'
+        && Array.isArray((value as { data?: unknown }).data)
 }
 
 async function offloadPayload(
