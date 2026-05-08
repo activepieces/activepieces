@@ -330,6 +330,10 @@ export function useAgentChat({
     return [...withoutEmptyAssistant, createPendingAssistantMessage()];
   }, [hasPending, uiMessages, pendingMessages]);
 
+  // Tracks whether the conversation was loaded from history (resumed).
+  // When true, the server sync should NOT re-enable the project label.
+  const loadedFromHistoryRef = useRef(false);
+
   // Detect project context changes from AI tool calls
   const buildCompleteRef = useRef(false);
   useEffect(() => {
@@ -360,6 +364,7 @@ export function useAgentChat({
     if (newProjectId !== undefined) {
       updateSelectedProjectId(newProjectId);
       setProjectSetInSession(true);
+      loadedFromHistoryRef.current = false;
     }
   }, [uiMessages]);
 
@@ -372,14 +377,19 @@ export function useAgentChat({
     const isNowIdle = status === 'ready' || status === 'error';
     prevStatusRef.current = status;
     if (wasStreaming && isNowIdle && conversationIdRef.current) {
-      if (buildCompleteRef.current) {
+      const wasBuildComplete = buildCompleteRef.current;
+      if (wasBuildComplete) {
         setProjectSetInSession(false);
         buildCompleteRef.current = false;
       }
       void chatApi
         .getConversation(conversationIdRef.current)
         .then((conv) => {
-          updateSelectedProjectId(conv.projectId ?? null);
+          const projectId = conv.projectId ?? null;
+          updateSelectedProjectId(projectId);
+          if (projectId && !wasBuildComplete && !loadedFromHistoryRef.current) {
+            setProjectSetInSession(true);
+          }
         })
         .catch(() => undefined);
     }
@@ -402,6 +412,7 @@ export function useAgentChat({
     setModelNameState(null);
     updateSelectedProjectId(null);
     setProjectSetInSession(false);
+    loadedFromHistoryRef.current = false;
     setUiMessages([]);
     setLocalError(null);
     setWasCancelled(false);
@@ -522,6 +533,7 @@ export function useAgentChat({
         // Set project for backend tool scoping, but don't show it visually (projectSetInSession stays false)
         updateSelectedProjectId(convResult.data.projectId ?? null);
         setProjectSetInSession(false);
+        loadedFromHistoryRef.current = true;
       }
       setIsLoadingHistory(false);
     },
@@ -544,6 +556,7 @@ export function useAgentChat({
     updateSelectedProjectId(projectId);
     if (projectId) {
       setProjectSetInSession(true);
+      loadedFromHistoryRef.current = false;
     }
     const convId = conversationIdRef.current;
     if (!convId) return;

@@ -1,7 +1,8 @@
+import { ProjectType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, Ellipsis } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import {
   Command,
@@ -20,6 +21,7 @@ import {
   getProjectName,
   projectCollectionUtils,
 } from '@/features/projects';
+import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 
 import { ProjectPickerData } from '../lib/message-parsers';
@@ -31,7 +33,14 @@ export function ProjectPickerCard({
   selectedProjectId,
 }: ProjectPickerCardProps) {
   const { data: allProjects } = projectCollectionUtils.useAll();
-  const projects = allProjects ?? [];
+  const { data: currentUser } = userHooks.useCurrentUser();
+  const projects = useMemo(() => {
+    const all = allProjects ?? [];
+    if (!currentUser) return all;
+    return all.filter(
+      (p) => p.type !== ProjectType.PERSONAL || p.ownerId === currentUser.id,
+    );
+  }, [allProjects, currentUser]);
   const [selected, setSelected] = useState<string | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -82,39 +91,41 @@ export function ProjectPickerCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
     >
-      {picker.suggestedProjects.map((suggested, i) => {
-        const resolvedProject = projects.find((p) => p.id === suggested.id);
-        return (
-          <motion.button
-            key={suggested.id}
-            type="button"
-            onClick={() =>
-              handleSelect(
-                suggested.id,
-                resolvedProject
-                  ? getProjectName(resolvedProject)
-                  : suggested.name,
-              )
-            }
-            className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-1.5 text-sm hover:bg-muted transition-colors cursor-pointer"
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2, delay: i * 0.04 }}
-          >
-            {resolvedProject ? (
-              <ApProjectDisplay
-                title={getProjectName(resolvedProject)}
-                icon={resolvedProject.icon}
-                projectType={resolvedProject.type}
-                iconClassName="size-4"
-                titleClassName="text-sm"
-              />
-            ) : (
-              <span>{suggested.name}</span>
-            )}
-          </motion.button>
-        );
-      })}
+      {picker.suggestedProjects
+        .filter((s) => projects.some((p) => p.id === s.id))
+        .map((suggested, i) => {
+          const resolvedProject = projects.find((p) => p.id === suggested.id);
+          return (
+            <motion.button
+              key={suggested.id}
+              type="button"
+              onClick={() =>
+                handleSelect(
+                  suggested.id,
+                  resolvedProject
+                    ? getProjectName(resolvedProject)
+                    : suggested.name,
+                )
+              }
+              className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-1.5 text-sm hover:bg-muted transition-colors cursor-pointer"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, delay: i * 0.04 }}
+            >
+              {resolvedProject ? (
+                <ApProjectDisplay
+                  title={getProjectName(resolvedProject)}
+                  icon={resolvedProject.icon}
+                  projectType={resolvedProject.type}
+                  iconClassName="size-4"
+                  titleClassName="text-sm"
+                />
+              ) : (
+                <span>{suggested.name}</span>
+              )}
+            </motion.button>
+          );
+        })}
 
       <Popover open={dropdownOpen} onOpenChange={setDropdownOpen}>
         <PopoverTrigger asChild>

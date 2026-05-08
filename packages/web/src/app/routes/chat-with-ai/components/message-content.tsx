@@ -128,6 +128,7 @@ export function MessageContentWithAuth({
           picker={connectionPicker}
           onSelect={(text) => onSend?.(text)}
           isInteractive={isLastMessage}
+          selectedProjectId={selectedProjectId}
         />
       )}
       {projectPicker && (
@@ -397,6 +398,7 @@ function ConnectionsRequiredCard({
           key={activeConnection.piece}
           piece={pieceModel}
           open={true}
+          projectId={selectedProjectId}
           setOpen={(open, createdConnection) => {
             if (!open) {
               if (createdConnection) {

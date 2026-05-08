@@ -32,6 +32,7 @@ export function ChatMessage({
   onSend,
   selectedProjectId,
   onSelectProject,
+  allConversationToolParts,
 }: {
   message: ChatUIMessage;
   isStreaming: boolean;
@@ -40,6 +41,7 @@ export function ChatMessage({
   onSend: (text: string, files?: File[]) => void;
   selectedProjectId?: string | null;
   onSelectProject?: (projectId: string) => void;
+  allConversationToolParts?: DynamicToolPart[];
 }) {
   if (message.role === 'user') {
     return <UserMessage message={message} isLastMessage={isLastMessage} />;
@@ -54,6 +56,7 @@ export function ChatMessage({
       onSend={onSend}
       selectedProjectId={selectedProjectId}
       onSelectProject={onSelectProject}
+      allConversationToolParts={allConversationToolParts}
     />
   );
 }
@@ -133,6 +136,7 @@ function AssistantMessage({
   onSend,
   selectedProjectId,
   onSelectProject,
+  allConversationToolParts,
 }: {
   message: ChatUIMessage;
   isStreaming: boolean;
@@ -141,6 +145,7 @@ function AssistantMessage({
   onSend: (text: string, files?: File[]) => void;
   selectedProjectId?: string | null;
   onSelectProject?: (projectId: string) => void;
+  allConversationToolParts?: DynamicToolPart[];
 }) {
   const allToolParts = useMemo(
     () =>
@@ -231,6 +236,7 @@ function AssistantMessage({
                   selectedProjectId,
                   onSelectProject,
                   allParts: message.parts,
+                  allConversationToolParts,
                 })}
               </motion.div>
             )}
@@ -279,6 +285,7 @@ function renderTextParts({
   onSelectProject,
   isLastMessage,
   allParts,
+  allConversationToolParts,
 }: {
   parts: Array<{ type: 'text'; text: string }>;
   isStreaming: boolean;
@@ -287,6 +294,7 @@ function renderTextParts({
   selectedProjectId?: string | null;
   onSelectProject?: (projectId: string) => void;
   allParts: ChatUIMessage['parts'];
+  allConversationToolParts?: DynamicToolPart[];
 }): React.ReactNode[] {
   const fullText = parts.map((p) => p.text).join('');
   const { progress: buildProgress } = parseBuildProgress(fullText);
@@ -294,7 +302,9 @@ function renderTextParts({
   const nodes: React.ReactNode[] = [];
 
   if (buildProgress) {
-    const toolParts = allParts.filter((p) => p.type === 'dynamic-tool');
+    const toolParts =
+      allConversationToolParts ??
+      allParts.filter((p) => p.type === 'dynamic-tool');
     nodes.push(
       <BuildProgressCard
         key="build-progress"
