@@ -98,9 +98,10 @@ const TemplatesPage = () => {
   return (
     <div>
       <div>
-        <div className="sticky top-0 z-10 bg-background mb-6 ">
+        <div className="sticky top-0 z-10 bg-background">
           <PageHeader
             showSidebarToggle={true}
+            className="static"
             title={
               <>
                 <div className="flex flex-row w-full justify-between gap-1">

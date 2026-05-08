@@ -8,6 +8,7 @@ type EmbeddingState = {
   hideFlowsPageNavbar: boolean;
   disableNavigationInBuilder: boolean;
   hideFolders: boolean;
+  hideTables: boolean;
   hideFlowNameInBuilder: boolean;
   hideExportAndImportFlow: boolean;
   sdkVersion?: string;
@@ -28,6 +29,7 @@ const defaultState: EmbeddingState = {
   hideFlowsPageNavbar: false,
   disableNavigationInBuilder: false,
   hideFolders: false,
+  hideTables: false,
   hideFlowNameInBuilder: false,
   hideExportAndImportFlow: false,
   useDarkBackground: window.opener !== null,

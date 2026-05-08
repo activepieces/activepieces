@@ -16,7 +16,9 @@ export const workerModule: FastifyPluginAsyncZod = async (app) => {
         prefix: '/v1/worker-machines',
     })
     await jobQueue(app.log).init()
+
     await runsMetadataQueue(app.log).init()
+
     await setupBullMQBoard(app)
 
     app.addHook('onClose', async () => {

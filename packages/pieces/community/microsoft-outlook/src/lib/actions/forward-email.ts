@@ -1,4 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { BodyType, Message } from '@microsoft/microsoft-graph-types';
 import { microsoftOutlookAuth } from '../common/auth';
@@ -29,10 +30,12 @@ export const forwardEmailAction = createAction({
 		const { messageId, comment } = context.propsValue;
 		const recipients = context.propsValue.recipients as string[];
 
+		const cloud = context.auth.props?.['cloud'] as string | undefined;
 		const client = Client.initWithMiddleware({
 			authProvider: {
 				getAccessToken: () => Promise.resolve(context.auth.access_token),
 			},
+			baseUrl: getGraphBaseUrl(cloud),
 		});
 
 		const message = await client.api(`/me/messages/${messageId}`).get();

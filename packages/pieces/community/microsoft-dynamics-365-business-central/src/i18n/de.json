@@ -1,7 +1,11 @@
 {
   "All-in-one business management solution by Microsoft.": "All-in-One Business Management Lösung von Microsoft.",
+  "Cloud Environment": "Cloud-Umgebung",
   "Environment": "Umgebung",
+  "Select your Microsoft cloud environment.": "Wählen Sie Ihre Microsoft-Cloud-Umgebung.",
   "Name of the environment to connect to, e.g. 'Production' or 'Sandbox'. Environment names can be found in the Business Central Admin Center.": "Name der Umgebung, zu der eine Verbindung hergestellt werden soll, z.B. 'Produktion' oder 'Sandbox'. Umweltnamen finden Sie im Business Central Admin Center.",
+  "Commercial (Global)": "Kommerzielle (Global)",
+  "US Government (GCC High)": "US-Regierung (GCC High)",
   "\nIf you’d like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n set the **Redirect URI** to {{redirectUrl}} and add the following **Dynamics 365 Business Central permissions** under **API permissions**:\n - Financials.ReadWrite.All\n - user_impersonation\n": "\nWenn du deine eigene eigene Azure App anstelle der Standard Activepieces App verwenden möchtest, folge der [Azure App Erstellungsanleitung](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n setzte die **Umleitungs-URI** auf {{redirectUrl}} und füge folgende **Dynamics 365 Business Central Berechtigungen** unter **API Berechtigungen**:\n - Finanzen. eadWrite.Alle\n - user_impersonation\n",
   "Create Record": "Datensatz erstellen",
   "Delete Record": "Datensatz löschen",

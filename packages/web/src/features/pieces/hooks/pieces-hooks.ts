@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-framework';
 import {
   AddPieceRequestBody,
+  ApEdition,
   FlowActionType,
   flowPieceUtil,
   LocalesEnum,
@@ -19,6 +20,7 @@ import {
 import { useMutation, useQueries, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useTranslation } from 'react-i18next';
+import semver from 'semver';
 
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { appConnectionsApi } from '@/features/connections/api/app-connections';
@@ -53,7 +55,6 @@ type UsePieceModelForStepSettings = {
   name: string;
   version: string | undefined;
   enabled?: boolean;
-  getExactVersion: boolean;
 };
 
 type UsePieceProps = {
@@ -70,6 +71,7 @@ type UsePiecesProps = {
   searchQuery?: string;
   includeHidden?: boolean;
   includeTags?: boolean;
+  isTableQuery?: boolean;
 };
 type UsePiecesSearchProps = {
   searchQuery: string;
@@ -99,34 +101,20 @@ export const piecesHooks = {
     name,
     version,
     enabled = true,
-    getExactVersion,
   }: UsePieceModelForStepSettings) => {
     const exactVersion = version
       ? flowPieceUtil.getExactVersion(version)
-      : undefined;
-    const latestPatchVersion = exactVersion
-      ? flowPieceUtil.getMostRecentPatchVersion(exactVersion)
       : undefined;
     const pieceQuery = piecesHooks.usePiece({
       name,
       version: exactVersion,
       enabled,
     });
-    const latestPatchQuery = piecesHooks.usePiece({
-      name,
-      version: latestPatchVersion,
-      enabled,
-    });
     return {
-      pieceModel: getExactVersion
-        ? pieceQuery.pieceModel
-        : latestPatchQuery.pieceModel,
-      isLoading: pieceQuery.isLoading || latestPatchQuery.isLoading,
-      isSuccess: pieceQuery.isSuccess && latestPatchQuery.isSuccess,
-      refetch: () => {
-        pieceQuery.refetch();
-        latestPatchQuery.refetch();
-      },
+      pieceModel: pieceQuery.pieceModel,
+      isLoading: pieceQuery.isLoading,
+      isSuccess: pieceQuery.isSuccess,
+      refetch: pieceQuery.refetch,
     };
   },
   useMultiplePieces: ({ names }: UseMultiplePiecesProps) => {
@@ -148,10 +136,15 @@ export const piecesHooks = {
     searchQuery,
     includeHidden = false,
     includeTags = false,
+    isTableQuery = false,
   }: UsePiecesProps) => {
     const { i18n } = useTranslation();
     const query = useQuery<PieceMetadataModelSummary[], Error>({
-      queryKey: ['pieces', searchQuery, includeHidden],
+      queryKey: [
+        isTableQuery ? 'pieces-table' : 'pieces',
+        searchQuery,
+        includeHidden,
+      ],
       queryFn: () =>
         piecesApi.list({
           projectId: authenticationSession.getProjectId()!,
@@ -161,6 +154,9 @@ export const piecesHooks = {
           locale: i18n.language as LocalesEnum,
         }),
       staleTime: searchQuery ? 0 : Infinity,
+      meta: isTableQuery
+        ? { showErrorDialog: true, loadSubsetOptions: {} }
+        : undefined,
     });
     return {
       pieces: query.data,
@@ -326,6 +322,27 @@ export const piecesHooks = {
       retry: 1,
       retryDelay: 1000,
     });
+  },
+  usePieceVersions: (pieceName: string) => {
+    const { data: release } = flagsHooks.useFlag<string>(
+      ApFlagId.CURRENT_VERSION,
+    );
+    const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+    const query = useQuery({
+      queryKey: ['pieces-registry', release, edition],
+      queryFn: () => piecesApi.registry(release!, edition!),
+      staleTime: Infinity,
+      enabled: !!pieceName && !!release && !!edition,
+      select: (registry) =>
+        registry
+          .filter((entry) => entry.name === pieceName)
+          .map((entry) => ({ version: entry.version }))
+          .sort((a, b) => semver.rcompare(a.version, b.version)),
+    });
+    return {
+      pieceVersions: query.data,
+      isLoading: query.isLoading,
+    };
   },
   usePieceForEmbeddingConnection: ({
     pieceName,

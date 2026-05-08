@@ -1,4 +1,5 @@
 import {
+  ApFlagId,
   isNil,
   PROJECT_COLOR_PALETTE,
   PlatformRole,
@@ -7,15 +8,15 @@ import {
   TemplateTelemetryEventType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Search, Plus } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
-import { NewProjectDialog } from '@/app/routes/platform/projects/new-project-dialog';
 import { SearchInput } from '@/components/custom/search-input';
 import { ChartLineIcon } from '@/components/icons/chart-line';
 import { CompassIcon } from '@/components/icons/compass';
+import { SendIcon } from '@/components/icons/send';
 import { ShieldIcon } from '@/components/icons/shield';
 import { TrophyIcon } from '@/components/icons/trophy';
 import { useEmbedding } from '@/components/providers/embed-provider';
@@ -36,15 +37,15 @@ import {
   SidebarGroupLabel,
   SidebarMenuItem,
 } from '@/components/ui/sidebar-shadcn';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
-import { projectCollectionUtils, getProjectName } from '@/features/projects';
+import {
+  CreateProjectButton,
+  projectCollectionUtils,
+  getProjectName,
+} from '@/features/projects';
 import { templatesTelemetryApi } from '@/features/templates';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
@@ -72,6 +73,7 @@ export function ProjectDashboardSidebar({
   const navigate = useNavigate();
   const { data: currentUser } = userHooks.useCurrentUser();
   const { platform } = platformHooks.useCurrentPlatform();
+  const { data: showChat } = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_CHAT);
 
   useEffect(() => {
     if (!searchOpen) {
@@ -93,15 +95,11 @@ export function ProjectDashboardSidebar({
     return true;
   }, [platform.plan.teamProjectsLimit]);
 
-  const shouldDisableNewProjectButton = useMemo(() => {
-    if (platform.plan.teamProjectsLimit === TeamProjectsLimit.ONE) {
-      const teamProjects = projects.filter(
-        (project) => project.type === ProjectType.TEAM,
-      );
-      return teamProjects.length >= 1;
-    }
-    return false;
-  }, [platform.plan.teamProjectsLimit, projects]);
+  const shouldShowInlineAddButton =
+    platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE &&
+    currentUser?.platformRole === PlatformRole.ADMIN &&
+    projects.filter((project) => project.type === ProjectType.TEAM).length ===
+      0;
 
   const isSearchMode = debouncedSearchQuery.length > 0;
 
@@ -114,7 +112,6 @@ export function ProjectDashboardSidebar({
     }
     return projects;
   }, [isSearchMode, debouncedSearchQuery, projects]);
-
   const handleProjectSelect = useCallback(
     async (projectId: string) => {
       const project = projects.find((p) => p.id === projectId);
@@ -152,6 +149,17 @@ export function ProjectDashboardSidebar({
       userId: currentUser?.id,
     });
   }, []);
+
+  const chatLink: SidebarItemType = {
+    type: 'link',
+    to: '/chat',
+    label: t('Chat'),
+    show: showChat ?? false,
+    icon: SendIcon,
+    hasPermission: true,
+    isSubItem: false,
+    badge: t('Beta'),
+  };
 
   const exploreLink: SidebarItemType = {
     type: 'link',
@@ -214,9 +222,9 @@ export function ProjectDashboardSidebar({
     },
   };
 
-  const items = [exploreLink, impactLink, leaderboardLink].filter(
-    permissionFilter,
-  );
+  const items = [chatLink, exploreLink, impactLink, leaderboardLink]
+    .filter((item) => item.show !== false)
+    .filter(permissionFilter);
 
   return (
     !embedState.hideSideNav && (
@@ -246,56 +254,13 @@ export function ProjectDashboardSidebar({
               <SidebarGroupLabel>{t('Projects')}</SidebarGroupLabel>
               <div className="flex items-center justify-center gap-2">
                 {shouldShowNewProjectButton && (
-                  <>
-                    {!shouldDisableNewProjectButton ? (
-                      <NewProjectDialog
-                        onCreate={(project) => {
-                          navigate(`/projects/${project.id}/flows`);
-                        }}
-                      >
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 hover:bg-accent"
-                        >
-                          <Plus />
-                        </Button>
-                      </NewProjectDialog>
-                    ) : (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              disabled
-                              className="h-6 w-6"
-                            >
-                              <Plus />
-                            </Button>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-[250px]">
-                          <p className="text-xs mb-1">
-                            {t(
-                              'Upgrade your plan to create additional team projects.',
-                            )}{' '}
-                            <button
-                              className="text-xs text-primary underline hover:no-underline"
-                              onClick={() =>
-                                window.open(
-                                  'https://www.activepieces.com/pricing',
-                                  '_blank',
-                                )
-                              }
-                            >
-                              {t('View Plans')}
-                            </button>
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    )}
-                  </>
+                  <CreateProjectButton
+                    variant="icon"
+                    projects={projects ?? []}
+                    onCreate={(project) => {
+                      navigate(`/projects/${project.id}/flows`);
+                    }}
+                  />
                 )}
                 {shouldShowSearchButton && (
                   <Popover open={searchOpen} onOpenChange={setSearchOpen}>
@@ -318,7 +283,7 @@ export function ProjectDashboardSidebar({
                         placeholder={t('Search projects...')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e)}
-                        className="h-9"
+                        className="h-8"
                         autoFocus
                       />
                     </PopoverContent>
@@ -332,14 +297,14 @@ export function ProjectDashboardSidebar({
                 e.stopPropagation();
               }}
             >
-              <div className="flex grow max-h-[100%]">
+              <div className="flex max-h-[100%]">
                 {displayProjects.length > 0 ? (
                   <VirtualizedScrollArea
                     className={cn(
                       'flex-1',
                       state === 'collapsed'
                         ? 'flex flex-col items-center scrollbar-none'
-                        : 'scrollbar-hover',
+                        : '',
                     )}
                     items={displayProjects}
                     estimateSize={() => 35}
@@ -366,6 +331,19 @@ export function ProjectDashboardSidebar({
                   )
                 )}
               </div>
+              {shouldShowInlineAddButton && state === 'expanded' && (
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <CreateProjectButton
+                      variant="sidebar-menu"
+                      projects={projects ?? []}
+                      onCreate={(project) => {
+                        navigate(`/projects/${project.id}/flows`);
+                      }}
+                    />
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              )}
             </div>
           </SidebarGroup>
         </SidebarContent>

@@ -96,7 +96,10 @@ export const microsoftExcel = createPiece({
 		getWorksheetAction,
 		renameWorksheetAction,
 		createCustomApiCallAction({
-			baseUrl: () => excelCommon.baseUrl,
+			baseUrl: (auth) => {
+				const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+				return excelCommon.getBaseUrl(cloud);
+			},
 			auth: excelAuth,
 			authMapping: async (auth) => ({
 				Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,

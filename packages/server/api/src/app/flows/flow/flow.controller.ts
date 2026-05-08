@@ -1,7 +1,6 @@
-import { ActivepiecesError, ApId, ApplicationEventName,
+import { ApId, ApplicationEventName,
     CountFlowsRequest,
     CreateFlowRequest,
-    ErrorCode,
     FlowOperationRequest,
     FlowOperationType,
     FlowStatus,
@@ -10,7 +9,6 @@ import { ActivepiecesError, ApId, ApplicationEventName,
     GetFlowQueryParamsRequest,
     GetFlowTemplateRequestQuery,
     GitPushOperationType,
-    isNil,
     ListFlowsRequest,
     Permission,
     PlatformUsageMetric,
@@ -20,7 +18,6 @@ import { ActivepiecesError, ApId, ApplicationEventName,
     SERVICE_KEY_SECURITY_OPENAPI,
     SharedTemplate,
 } from '@activepieces/shared'
-import dayjs from 'dayjs'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -113,7 +110,6 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
                 PlatformUsageMetric.ACTIVE_FLOWS,
             )
         }
-        await assertThatFlowIsNotBeingUsed(flow, userId)
         const updatedFlow = await flowService(request.log).update({
             id: request.params.id,
             userId: request.principal.type === PrincipalType.SERVICE ? null : userId,
@@ -206,57 +202,25 @@ function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
             sampleDataInputFileId: undefined,
             lastTestDate: undefined,
         }
-        const trigger = flowStructureUtil.transferStep(operation.request.trigger, (step) => {
-            return {
-                ...step,
-                settings: {
-                    ...step.settings,
-                    sampleData: {
-                        ...step.settings.sampleData,
-                        ...clearSampleData,
-                    },
+        const trigger = flowStructureUtil.transferStep(operation.request.trigger, (step) => ({
+            ...step,
+            settings: {
+                ...step.settings,
+                sampleData: {
+                    ...step.settings.sampleData,
+                    ...clearSampleData,
                 },
-            }
-        }) as FlowTrigger
+            },
+        })) as FlowTrigger
         return {
             ...operation,
             request: {
                 ...operation.request,
-                trigger: {
-                    ...trigger,
-                    settings: {
-                        ...trigger.settings,
-                        sampleData: {
-                            ...trigger.settings.sampleData,
-                            ...clearSampleData,
-                        },
-                    },
-                },
+                trigger,
             },
         }
     }
     return operation
-}
-
-async function assertThatFlowIsNotBeingUsed(
-    flow: PopulatedFlow,
-    userId: string,
-): Promise<void> {
-    const currentTime = dayjs()
-    if (
-        !isNil(flow.version.updatedBy) &&
-        flow.version.updatedBy !== userId &&
-        currentTime.diff(dayjs(flow.version.updated), 'minute') <= 1
-    ) {
-        throw new ActivepiecesError({
-            code: ErrorCode.FLOW_IN_USE,
-            params: {
-                flowVersionId: flow.version.id,
-                message:
-                    'Flow is being used by another user in the last minute. Please try again later.',
-            },
-        })
-    }
 }
 
 const CreateFlowRequestOptions = {

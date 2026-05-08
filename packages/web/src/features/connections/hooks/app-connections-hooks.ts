@@ -75,10 +75,11 @@ export const appConnectionsMutations = {
       mutationFn: async () => {
         setErrorMessage('');
         const formValues = form.getValues().request;
-        const isNameUnique = await isConnectionNameUnique(
+        const isNameUnique = await isConnectionNameUnique({
           isGlobalConnection,
-          formValues.displayName,
-        );
+          displayName: formValues.displayName,
+          projectId: formValues.projectId,
+        });
         if (
           !isNameUnique &&
           reconnectConnection?.displayName !== formValues.displayName &&
@@ -209,10 +210,10 @@ export const appConnectionsMutations = {
         connectionId: string;
         displayName: string;
       }) => {
-        const existingConnection = await isConnectionNameUnique(
-          false,
+        const existingConnection = await isConnectionNameUnique({
+          isGlobalConnection: false,
           displayName,
-        );
+        });
         if (!existingConnection && displayName !== currentName) {
           throw new ConnectionNameAlreadyExists();
         }
@@ -268,6 +269,7 @@ type UseConnectionsProps = {
   enabled?: boolean;
   staleTime?: number;
   pieceAuth?: PieceAuthProperty | PieceAuthProperty[] | undefined;
+  showErrorDialog?: boolean;
 };
 
 export const appConnectionsQueries = {
@@ -277,9 +279,13 @@ export const appConnectionsQueries = {
     enabled,
     staleTime,
     pieceAuth,
+    showErrorDialog,
   }: UseConnectionsProps) => {
     return useQuery({
       queryKey: ['app-connections', ...extraKeys],
+      meta: showErrorDialog
+        ? { showErrorDialog: true, loadSubsetOptions: {} }
+        : undefined,
       queryFn: async () => {
         const connections = await appConnectionsApi.list(request);
         if (pieceAuth) {

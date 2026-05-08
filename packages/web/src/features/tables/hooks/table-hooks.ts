@@ -5,7 +5,7 @@ import {
   Table,
   UncategorizedFolderId,
 } from '@activepieces/shared';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { authenticationSession } from '@/lib/authentication-session';
@@ -34,24 +34,6 @@ export const tableMutations = {
 };
 
 export const tableHooks = {
-  useTables: (limit?: number) => {
-    const projectId = authenticationSession.getProjectId() ?? '';
-    const [searchParams] = useSearchParams();
-    return useQuery({
-      queryKey: ['tables', searchParams.toString(), projectId],
-      queryFn: () =>
-        tablesApi.list({
-          projectId,
-          cursor: searchParams.get('cursor') ?? undefined,
-          limit: limit
-            ? limit
-            : searchParams.get('limit')
-            ? parseInt(searchParams.get('limit')!)
-            : undefined,
-          name: searchParams.get('name') ?? undefined,
-        }),
-    });
-  },
   useCreateTable: (folderId: string) => {
     const projectId = authenticationSession.getProjectId() ?? '';
     const navigate = useNavigate();

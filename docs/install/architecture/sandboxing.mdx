@@ -1,0 +1,49 @@
+---
+title: "Sandboxing"
+description: "Choose the right isolation mode for running flow code"
+icon: "box"
+---
+
+Flow code — Code steps and piece actions — always runs inside a **sandbox** that wraps the engine process. `AP_EXECUTION_MODE` decides which sandbox, and it is the most consequential security choice in a self-hosted deployment: it decides whether a malicious flow is contained to one worker pod or can reach the kernel.
+
+## Execution Modes
+
+<Snippet file="execution-mode.mdx" />
+
+<Tip>
+**For enterprise deployments, use `SANDBOX_CODE_ONLY` (V8 isolation).** It is the only mode that is both multi-tenant-safe *and* runs as an unprivileged container — which is what Activepieces Cloud uses, and what fits inside a standard Kubernetes security baseline.
+</Tip>
+
+## Why V8 Sandboxing Exists
+
+`SANDBOX_PROCESS` uses the `isolate` binary, which creates fresh Linux namespaces per run. That needs `CAP_SYS_ADMIN` — in practice, `privileged: true` on the container. V8 Sandboxing exists so you don't have to grant that.
+
+### A concrete K8s example
+
+You run Activepieces in your own Kubernetes cluster, next to a Salesforce-sync service and a finance-analytics pod. A customer ships a malicious Code step.
+
+- **With `SANDBOX_PROCESS`** — the worker pod is privileged. A kernel exploit escapes to the host, reads the service-account token, hits the Kubernetes API, and pivots to the Salesforce pod and the finance DB. Blast radius: **your whole cluster**.
+- **With `SANDBOX_CODE_ONLY`** — the worker has no special capabilities. The Code step runs inside a fresh V8 isolate (no `require`, no filesystem, no npm). Blast radius: **that one worker pod**.
+
+V8 isolation is how you get multi-tenant code safety without handing a workflow engine kernel-level access to everything sharing the cluster.
+
+<Warning>
+Only choose `SANDBOX_PROCESS` if you genuinely need arbitrary `npm` packages in Code steps, and run it on a dedicated node pool. A privileged Activepieces worker should never share a node with unrelated workloads.
+</Warning>
+
+## How Each Mode Works
+
+### `fork()` + V8 — `UNSANDBOXED`, `SANDBOX_CODE_ONLY`
+
+The engine runs as a plain `child_process.fork` with a memory cap. In `SANDBOX_CODE_ONLY`, every Code step is additionally wrapped in a fresh [`isolated-vm`](https://www.npmjs.com/package/isolated-vm) context — 128 MB per isolate, `require` removed, disposed after the step. No Linux-namespace machinery, no `CAP_SYS_ADMIN`, no privileged container. Sandboxes stay warm across jobs, so execution is fast.
+
+- **V8 guarantees:** user code cannot touch `require`, the filesystem, or other steps' memory.
+- **V8 does not:** protect isolates from each other if the host Node process itself is compromised.
+
+### `isolate` binary — `SANDBOX_PROCESS`, `SANDBOX_CODE_AND_PROCESS`
+
+The engine runs inside [ioi/isolate](https://github.com/ioi/isolate), which creates fresh PID, mount, user, and UTS namespaces per run and mounts the engine and code artifacts read-only. Arbitrary `npm` packages are safe inside Code steps because filesystem and process state are scoped to the box. The cost: cold boot per run (not reusable), and the worker container must hold `CAP_SYS_ADMIN` — `--privileged` in Docker, `securityContext.privileged: true` in Kubernetes.
+
+## Network Isolation
+
+Execution mode decides *how* user code runs; `AP_NETWORK_MODE` decides *what it can reach*. See [Network Security](./network-security) for the SSRF guard, egress proxy, and iptables lockdown that layer on top of every sandbox mode.

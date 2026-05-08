@@ -52,7 +52,7 @@ export const stepFileController: FastifyPluginAsyncZod = async (app) => {
             fileName: request.body.fileName,
             flowId: request.body.flowId,
             stepName: request.body.stepName,
-            data: request.body.file?.data as Buffer | undefined,
+            data: extractBufferOrUndefined(request.body.file?.data),
             platformId,
             projectId: request.principal.projectId,
             contentLength: request.body.contentLength,
@@ -83,6 +83,25 @@ async function getFileByToken(token: string, log: FastifyBaseLogger): Promise<Om
             },
         })
     }
+}
+
+function extractBufferOrUndefined(value: unknown): Buffer | undefined {
+    if (value === undefined || value === null) {
+        return undefined
+    }
+    if (Buffer.isBuffer(value)) {
+        return value
+    }
+    if (typeof value === 'string') {
+        return Buffer.from(value, 'utf-8')
+    }
+    if (value instanceof Uint8Array) {
+        return Buffer.from(value)
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: { message: 'File data must be a Buffer' },
+    })
 }
 
 const SignedFileRequest = {

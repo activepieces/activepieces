@@ -17,7 +17,11 @@ if (system.getBoolean(WorkerSystemProp.OTEL_ENABLED)) {
         spanProcessors: [new BatchSpanProcessor(traceExporter)],
         resource,
         instrumentations: [
-            getNodeAutoInstrumentations(),
+            getNodeAutoInstrumentations({
+                '@opentelemetry/instrumentation-fs': { enabled: false },
+                '@opentelemetry/instrumentation-dns': { enabled: false },
+                '@opentelemetry/instrumentation-net': { enabled: false },
+            }),
         ],
     })
 

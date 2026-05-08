@@ -2138,6 +2138,24 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "Veri5ied",
+      "name": "Alvin Okoro",
+      "avatar_url": "https://avatars.githubusercontent.com/u/43749581?v=4",
+      "profile": "https://github.com/Veri5ied",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "Angelebeats",
+      "name": "Angelebeats",
+      "avatar_url": "https://avatars.githubusercontent.com/u/271780508?v=4",
+      "profile": "https://github.com/Angelebeats",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"

@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { ComponentType, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
+import { McpSvg } from '@/assets/img/custom/mcp';
 import { BotIcon } from '@/components/icons/bot';
 import {
   ChevronLeftIcon,
@@ -51,13 +52,17 @@ export function PlatformSidebar() {
   const { checkAccess } = useAuthorization();
   const defaultRoute = determineDefaultRoute(checkAccess);
   const chevronRef = useRef<ChevronLeftIconHandle>(null);
-  const isEmbeddingEnabled = platform.plan.embeddingEnabled;
 
   const setupItems = [
     {
       to: '/platform/setup/ai',
       label: t('AI Providers'),
       icon: BotIcon,
+    },
+    {
+      to: '/platform/setup/mcp',
+      label: t('MCP Server'),
+      icon: McpSvg,
     },
     {
       to: '/platform/setup/branding',
@@ -95,7 +100,7 @@ export function PlatformSidebar() {
       icon: FrameIcon,
       locked: !platform.plan.embeddingEnabled,
     },
-  ].filter((item) => !(item.label === t('AI Providers') && isEmbeddingEnabled));
+  ];
 
   const groups: {
     label: string;
@@ -205,7 +210,7 @@ export function PlatformSidebar() {
           <span className="truncate text-sm">{t('Back to app')}</span>
         </Link>
       </SidebarHeader>
-      <div className="flex-1 overflow-y-auto scrollbar-hover">
+      <div className="flex-1 overflow-y-auto">
         <SidebarContent className="gap-0">
           {groups.map((group, idx) => (
             <SidebarGroup key={group.label} className="cursor-default shrink-0">

@@ -1,6 +1,5 @@
 import { microsoftTeamsAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { Client } from '@microsoft/microsoft-graph-client';
 import { microsoftTeamsCommon } from '../common';
 import { createGraphClient, withGraphRetry } from '../common/graph';
 
@@ -23,7 +22,8 @@ export const createPrivateChannelAction = createAction({
 	async run(context) {
 		const { teamId, channelDescription, channelDisplayName } = context.propsValue;
 
-		const client = createGraphClient(context.auth.access_token);
+		const cloud = context.auth.props?.['cloud'] as string | undefined;
+		const client = createGraphClient(context.auth.access_token, cloud);
 
 		const channel = {
 			displayName: channelDisplayName,

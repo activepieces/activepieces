@@ -131,6 +131,47 @@ Activepieces supports multiple SSO providers to integrate with your existing ide
     </Step>
 </Steps>
 
+### SAML with Microsoft Entra ID (Azure AD)
+
+<Steps>
+    <Step title="Create an Enterprise Application">
+        Go to the [Azure Portal](https://portal.azure.com/) → **Microsoft Entra ID** → **Enterprise applications** → **New application** → **Create your own application**.
+
+        Name it (e.g., "Activepieces") and select **Integrate any other application you don't find in the gallery (Non-gallery)**.
+    </Step>
+    <Step title="Configure SAML Single Sign-On">
+        Open the application → **Single sign-on** → select **SAML**.
+    </Step>
+    <Step title="Set Identifier and Reply URL">
+        Edit **Basic SAML Configuration**:
+        - **Identifier (Entity ID)**: `Activepieces`
+        - **Reply URL (Assertion Consumer Service URL)**: paste the SSO URL from the Activepieces configuration screen
+    </Step>
+    <Step title="Configure User Attributes & Claims">
+        Edit **Attributes & Claims** and add these additional claims (leave **Namespace** empty):
+
+        | Claim name | Source attribute |
+        |------------|------------------|
+        | `firstName` | `user.givenname` |
+        | `lastName` | `user.surname` |
+        | `email` | `user.mail` |
+    </Step>
+    <Step title="Copy the Federation Metadata">
+        In the **SAML Certificates** section, copy the **App Federation Metadata Url**.
+
+        You can paste this URL directly into the **IdP Metadata** field in Activepieces — Activepieces will fetch the metadata XML automatically. Alternatively, open the URL in a browser, save the XML, and paste its contents.
+    </Step>
+    <Step title="Copy the Signing Certificate">
+        Download the **Certificate (Base64)** from the **SAML Certificates** section. Open the file and copy its contents (including the `-----BEGIN CERTIFICATE-----` / `-----END CERTIFICATE-----` markers) into the **Signing Key** field in Activepieces.
+    </Step>
+    <Step title="Assign Users">
+        Go to **Users and groups** in the application and assign the users or groups that should be allowed to sign in.
+    </Step>
+    <Step title="Save Configuration">
+        Click **Save** in Activepieces to complete the setup.
+    </Step>
+</Steps>
+
 ### SAML with JumpCloud
 
 <Steps>
@@ -208,6 +249,7 @@ Activepieces supports multiple SSO providers to integrate with your existing ide
     </Accordion>
     <Accordion title="SAML authentication fails">
         - Confirm the IdP metadata is complete and correctly formatted
+        - If you pasted a metadata URL, make sure it is publicly reachable (Activepieces fetches it server-side)
         - Verify the signing certificate is properly formatted with BEGIN/END markers
         - Ensure all required attributes (firstName, lastName, email) are mapped
     </Accordion>

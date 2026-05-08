@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-kizeo-forms",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
@@ -11,7 +11,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "axios": "1.13.5",
+    "axios": "1.15.0",
     "zod": "4.3.6",
     "tslib": "2.6.2"
   }

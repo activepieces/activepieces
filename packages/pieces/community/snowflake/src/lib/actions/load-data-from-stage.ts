@@ -22,14 +22,16 @@ export const loadDataFromStageAction = createAction({
     stage_path: Property.ShortText({
       displayName: 'Stage Path',
       description:
-        'The stage path to load from. For internal stages use `@stage_name` or `@schema.stage_name/path/`. ' +
-        'For external (S3/GCS/Azure) stages use `@schema.stage_name/prefix/`. ' +
-        'Example: `@my_stage/data/`',
+        'Path to the Snowflake stage (a staging area that holds files before loading). ' +
+        'For **internal stages**: use `@stage_name` or `@schema.stage_name/folder/`. ' +
+        'For **external stages** (S3, GCS, Azure): use `@schema.stage_name/prefix/`. ' +
+        'Example: `@my_stage/data/`. ' +
+        'You can find your stage names under **Data → Databases → [your database] → Stages**.',
       required: true,
     }),
     file_format_type: Property.StaticDropdown({
       displayName: 'File Format',
-      description: 'The format of the files in the stage.',
+      description: 'The file format of the data files in the stage.',
       required: true,
       defaultValue: 'CSV',
       options: {
@@ -46,26 +48,26 @@ export const loadDataFromStageAction = createAction({
     file_pattern: Property.ShortText({
       displayName: 'File Pattern',
       description:
-        'Optional regex pattern to filter files in the stage (e.g. `.*\\.csv` to load only CSV files).',
+        'Optional regular expression to load only files whose names match the pattern (e.g. `.*\\.csv` loads only `.csv` files, `sales_2024.*` loads files that start with `sales_2024`). Leave empty to load all files in the stage path.',
       required: false,
     }),
     skip_header: Property.Number({
       displayName: 'Skip Header Rows',
       description:
-        'Number of header rows to skip at the top of each CSV file (CSV only). Defaults to 0.',
+        'Number of rows to skip at the top of each CSV file (e.g. `1` to skip a column-header row). Only applies to CSV files. Defaults to 0.',
       required: false,
       defaultValue: 0,
     }),
     error_on_column_count_mismatch: Property.Checkbox({
-      displayName: 'Error on Column Count Mismatch',
+      displayName: 'Fail on Column Count Mismatch',
       description:
-        'If enabled, COPY fails when the number of columns in the file does not match the table.',
+        'When enabled, the load fails if the number of columns in a file does not match the number of columns in the target table. Disable to allow files with fewer columns.',
       required: false,
       defaultValue: true,
     }),
     on_error: Property.StaticDropdown({
       displayName: 'On Error',
-      description: 'What to do when a row fails to load.',
+      description: 'What to do when a row fails validation during loading.',
       required: false,
       defaultValue: 'ABORT_STATEMENT',
       options: {

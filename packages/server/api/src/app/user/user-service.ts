@@ -21,8 +21,9 @@ import {
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { In } from 'typeorm'
-import { userIdentityService } from '../authentication/user-identity/user-identity-service'
+import { nanoid } from 'nanoid'
+import { In, IsNull } from 'typeorm'
+import { userIdentityRepository, userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { platformProjectService } from '../ee/projects/platform-project-service'
 import { projectMemberRepo } from '../ee/projects/project-role/project-role.service'
@@ -130,14 +131,11 @@ export const userService = (log: FastifyBaseLogger) => ({
         const usersWithMetaInformation = await Promise.all(data.map(this.getMetaInformation))
         return paginationHelper.createPage<UserWithMetaInformation>(usersWithMetaInformation, cursor)
     },
-    async getOneByIdentityIdOnly({ identityId }: GetOneByIdentityIdOnlyParams): Promise<User | null> {
-        return userRepo().findOneBy({ identityId })
-    },
     async getByIdentityId({ identityId }: GetByIdentityId): Promise<UserSchema[]> {
         return userRepo().find({ where: { identityId } })
     },
     async getOneByIdentityAndPlatform({ identityId, platformId }: GetOneByIdentityIdParams): Promise<User | null> {
-        return userRepo().findOneBy({ identityId, platformId })
+        return userRepo().findOneBy({ identityId, platformId: isNil(platformId) ? IsNull() : platformId })
     },
     async get({ id }: IdParams): Promise<User | null> {
         return userRepo().findOneBy({ id })
@@ -173,7 +171,7 @@ export const userService = (log: FastifyBaseLogger) => ({
         }
     },
     async delete({ id, platformId }: DeleteParams): Promise<void> {
-
+        await assertNotPlatformOwner({ id, platformId, log })
         await platformProjectService(log).deletePersonalProjectForUser({
             userId: id,
             platformId,
@@ -181,6 +179,29 @@ export const userService = (log: FastifyBaseLogger) => ({
         await userRepo().delete({
             id,
             platformId,
+        })
+    },
+    async removeFromPlatform({ id, platformId }: DeleteParams): Promise<void> {
+        await assertNotPlatformOwner({ id, platformId, log })
+        const user = await this.getOneOrFail({ id })
+        await platformProjectService(log).deletePersonalProjectForUser({
+            userId: id,
+            platformId,
+        })
+        await userRepo().update({
+            id,
+            platformId,
+        }, {
+            platformId: null,
+        })
+        await userIdentityRepository().update(user.identityId, {
+            tokenVersion: nanoid(),
+        })
+        await userIdentityRepository().update({
+            id: user.identityId,
+            lastLoggedInPlatformId: platformId,
+        }, {
+            lastLoggedInPlatformId: null,
         })
     },
 
@@ -237,6 +258,18 @@ export const userService = (log: FastifyBaseLogger) => ({
 })
 
 
+async function assertNotPlatformOwner({ id, platformId, log }: DeleteParams & { log: FastifyBaseLogger }): Promise<void> {
+    const platform = await platformService(log).getOneOrThrow(platformId)
+    if (platform.ownerId === id) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'Platform owner cannot be deleted',
+            },
+        })
+    }
+}
+
 async function getUsersForProject(platformId: PlatformId, projectId: string): Promise<UserId[]> {
     const platformAdmins = await userRepo().find({ where: { platformId, platformRole: PlatformRole.ADMIN } }).then((users) => users.map((user) => user.id))
     const edition = system.getEdition()
@@ -273,10 +306,6 @@ type ListParams = {
     limit?: number
 }
 
-type GetOneByIdentityIdOnlyParams = {
-    identityId: string
-}
-
 type GetByIdentityId = {
     identityId: string
 }
@@ -284,7 +313,7 @@ type GetByIdentityId = {
 
 type GetOneByIdentityIdParams = {
     identityId: string
-    platformId: PlatformId
+    platformId: PlatformId | null
 }
 
 type UpdateParams = {

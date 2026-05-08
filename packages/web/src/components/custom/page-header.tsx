@@ -9,7 +9,6 @@ export const PageHeader = ({
   description,
   leftContent,
   rightContent,
-  showBorder = false,
   showSidebarToggle = false,
   className = '',
 }: PageHeaderProps) => {
@@ -22,8 +21,7 @@ export const PageHeader = ({
   return (
     <div
       className={cn(
-        'flex items-center justify-between py-3 px-3 w-full',
-        showBorder && 'border-b',
+        'sticky top-0 z-30 flex items-center justify-between py-3 px-4 w-full bg-background',
         className,
       )}
     >
@@ -31,12 +29,12 @@ export const PageHeader = ({
         {showSidebarToggle && <ApSidebarToggle />}
         <div className="grow">
           {typeof title === 'string' ? (
-            <h1 className="text-sm font-medium">{title}</h1>
+            <h1 className="text-base font-semibold">{title}</h1>
           ) : (
             title
           )}
           {description && (
-            <span className="text-xs text-muted-foreground">{description}</span>
+            <span className="text-sm text-muted-foreground">{description}</span>
           )}
         </div>
         {leftContent}
@@ -51,7 +49,6 @@ interface PageHeaderProps {
   description?: ReactNode;
   leftContent?: ReactNode;
   rightContent?: ReactNode;
-  showBorder?: boolean;
   showSidebarToggle?: boolean;
   className?: string;
 }

@@ -1,7 +1,8 @@
 import {
   AuthenticationResponse,
   isNil,
-  UserPrincipal,
+  Principal,
+  PrincipalType,
 } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { jwtDecode } from 'jwt-decode';
@@ -20,7 +21,9 @@ export const authenticationSession = {
       ApStorage.setInstanceToSessionStorage();
     }
     ApStorage.getInstance().setItem(tokenKey, response.token);
-    ApStorage.getInstance().setItem(projectIdKey, response.projectId);
+    if (!isNil(response.projectId)) {
+      ApStorage.getInstance().setItem(projectIdKey, response.projectId);
+    }
     window.dispatchEvent(new Event('storage'));
   },
   isJwtExpired(token: string): boolean {
@@ -78,7 +81,18 @@ export const authenticationSession = {
       return null;
     }
     const decodedJwt = getDecodedJwt(token);
-    return decodedJwt.platform.id;
+    if ('platform' in decodedJwt && decodedJwt.platform) {
+      return decodedJwt.platform.id;
+    }
+    return null;
+  },
+  isOnboarding(): boolean {
+    const token = this.getToken();
+    if (isNil(token)) {
+      return false;
+    }
+    const decodedJwt = jwtDecode<{ type: string }>(token);
+    return decodedJwt.type === PrincipalType.ONBOARDING;
   },
   async switchToPlatform(platformId: string) {
     if (authenticationSession.getPlatformId() === platformId) {
@@ -88,7 +102,9 @@ export const authenticationSession = {
       platformId,
     });
     ApStorage.getInstance().setItem(tokenKey, result.token);
-    ApStorage.getInstance().setItem(projectIdKey, result.projectId);
+    if (!isNil(result.projectId)) {
+      ApStorage.getInstance().setItem(projectIdKey, result.projectId);
+    }
     window.location.href = '/';
   },
   switchToProject(projectId: string) {
@@ -115,6 +131,6 @@ export const authenticationSession = {
   },
 };
 
-function getDecodedJwt(token: string): UserPrincipal {
-  return jwtDecode<UserPrincipal>(token);
+function getDecodedJwt(token: string): Principal {
+  return jwtDecode<Principal>(token);
 }
