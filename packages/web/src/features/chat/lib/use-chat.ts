@@ -334,49 +334,45 @@ export function useAgentChat({
   // When true, the server sync should NOT re-enable the project label.
   const loadedFromHistoryRef = useRef(false);
 
-  // Scan all messages for project selection and build-complete.
-  // Gives immediate label appearance when AI calls ap_select_project,
-  // and detects ap_manage_notes across all messages (not just last).
+  // Scan the last assistant message for project selection and build-complete.
+  // Runs on every uiMessages change but only inspects the tail message
+  // (the only one that changes during streaming), keeping it O(parts).
   const buildCompleteRef = useRef(false);
   useEffect(() => {
-    let latestProjectId: string | null | undefined;
-    let hasBuildComplete = false;
+    const lastMsg = uiMessages[uiMessages.length - 1];
+    if (!lastMsg || lastMsg.role !== 'assistant') return;
 
-    for (const msg of uiMessages) {
-      if (msg.role !== 'assistant') continue;
-      for (const part of msg.parts) {
-        if (part.type !== 'dynamic-tool') continue;
-        if (
-          part.toolName === 'ap_select_project' &&
-          typeof part.input === 'object' &&
-          part.input !== null &&
-          'projectId' in part.input &&
-          typeof part.input.projectId === 'string'
-        ) {
-          latestProjectId = part.input.projectId;
+    for (const part of lastMsg.parts) {
+      if (part.type !== 'dynamic-tool') continue;
+      if (
+        part.toolName === 'ap_select_project' &&
+        typeof part.input === 'object' &&
+        part.input !== null &&
+        'projectId' in part.input &&
+        typeof part.input.projectId === 'string'
+      ) {
+        const projectId = part.input.projectId;
+        if (projectId !== selectedProjectIdRef.current) {
+          updateSelectedProjectId(projectId);
         }
-        if (part.toolName === 'ap_deselect_project') {
-          latestProjectId = null;
+        if (!projectSetInSession) {
+          setProjectSetInSession(true);
         }
-        if (
-          part.toolName === 'ap_manage_notes' &&
-          part.state === 'output-available'
-        ) {
-          hasBuildComplete = true;
-        }
-      }
-    }
-
-    buildCompleteRef.current = hasBuildComplete;
-
-    if (latestProjectId !== undefined) {
-      updateSelectedProjectId(latestProjectId);
-      if (latestProjectId !== null) {
-        setProjectSetInSession(true);
         loadedFromHistoryRef.current = false;
       }
+      if (part.toolName === 'ap_deselect_project') {
+        if (selectedProjectIdRef.current !== null) {
+          updateSelectedProjectId(null);
+        }
+      }
+      if (
+        part.toolName === 'ap_manage_notes' &&
+        part.state === 'output-available'
+      ) {
+        buildCompleteRef.current = true;
+      }
     }
-  }, [uiMessages]);
+  }, [uiMessages, projectSetInSession]);
 
   // Server sync: single source of truth for project context.
   // After every streaming completion, fetch the conversation's projectId
