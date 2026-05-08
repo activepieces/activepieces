@@ -372,14 +372,19 @@ export function useAgentChat({
     const isNowIdle = status === 'ready' || status === 'error';
     prevStatusRef.current = status;
     if (wasStreaming && isNowIdle && conversationIdRef.current) {
-      if (buildCompleteRef.current) {
+      const wasBuildComplete = buildCompleteRef.current;
+      if (wasBuildComplete) {
         setProjectSetInSession(false);
         buildCompleteRef.current = false;
       }
       void chatApi
         .getConversation(conversationIdRef.current)
         .then((conv) => {
-          updateSelectedProjectId(conv.projectId ?? null);
+          const projectId = conv.projectId ?? null;
+          updateSelectedProjectId(projectId);
+          if (projectId && !wasBuildComplete) {
+            setProjectSetInSession(true);
+          }
         })
         .catch(() => undefined);
     }
