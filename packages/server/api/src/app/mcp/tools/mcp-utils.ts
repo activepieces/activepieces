@@ -1,5 +1,5 @@
 import { PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
-import { BranchOperator, FlowActionType, flowStructureUtil, isNil, isObject, singleValueConditions } from '@activepieces/shared'
+import { BranchOperator, FlowActionType, flowStructureUtil, isNil, isObject, McpToolResult, singleValueConditions } from '@activepieces/shared'
 import type { RouterAction, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -22,14 +22,14 @@ const RESOLVABLE_PROP_TYPES = new Set<PropertyType>([
 
 const STEP_REFERENCE_HINT = 'Use {{stepName.field}} to reference prior steps (no .output. in path).'
 
-function mcpToolError(prefix: string, err: unknown): { content: [{ type: 'text', text: string }] } {
+function mcpToolError(prefix: string, err: unknown): McpToolResult {
     const entityDetail = extractEntityNotFoundDetail(err)
     if (entityDetail) {
-        return { content: [{ type: 'text', text: `❌ ${prefix}: ${entityDetail} not found. Check the ID or name and try again.` }] }
+        return { content: [{ type: 'text', text: `❌ ${prefix}: ${entityDetail} not found. Check the ID or name and try again.` }], isError: true }
     }
     const raw = err instanceof Error ? err.message : String(err)
     const message = sanitizeErrorMessage(raw)
-    return { content: [{ type: 'text', text: `❌ ${prefix}: ${message}` }] }
+    return { content: [{ type: 'text', text: `❌ ${prefix}: ${message}` }], isError: true }
 }
 
 function extractEntityNotFoundDetail(err: unknown): string | null {
@@ -370,9 +370,7 @@ type LookupPieceComponentParams = {
 
 type LookupPieceComponentResult =
     | { piece: PieceMetadataModel, component: { props: PiecePropertyMap, requireAuth: boolean, name: string, displayName: string, description: string }, pieceName: string, error?: never }
-    | { error: { content: [{ type: 'text', text: string }] }, piece?: never, component?: never, pieceName?: never }
-
-type McpToolResult = { content: [{ type: 'text', text: string }] }
+    | { error: McpToolResult, piece?: never, component?: never, pieceName?: never }
 
 type ResolveRouterStepResult =
     | { routerStep: RouterAction, error?: never }
