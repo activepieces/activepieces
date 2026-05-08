@@ -12,6 +12,7 @@ import {
     GetProviderConfigResponse,
     isNil,
     Project,
+    ProjectType,
     SeekPage,
     spreadIfDefined,
     UpdateChatConversationRequest,
@@ -267,11 +268,14 @@ async function getUserProjects({ platformId, userId, log }: {
     log: FastifyBaseLogger
 }): Promise<Project[]> {
     const user = await userService(log).getOneOrFail({ id: userId })
-    return projectService(log).getAllForUser({
+    const allProjects = await projectService(log).getAllForUser({
         platformId,
         userId,
         isPrivileged: userService(log).isUserPrivileged(user),
     })
+    return allProjects.filter(
+        (p) => p.type !== ProjectType.PERSONAL || p.ownerId === userId,
+    )
 }
 
 async function assertUserHasProjectAccess({ platformId, userId, projectId, log }: {
