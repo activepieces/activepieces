@@ -6566,7 +6566,7 @@
     },
     "packages/pieces/community/stripe": {
       "name": "@activepieces/piece-stripe",
-      "version": "0.6.7",
+      "version": "0.6.8",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
