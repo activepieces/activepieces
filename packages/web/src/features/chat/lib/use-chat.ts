@@ -334,41 +334,25 @@ export function useAgentChat({
   // When true, the server sync should NOT re-enable the project label.
   const loadedFromHistoryRef = useRef(false);
 
-  // Detect project context changes from AI tool calls
+  // Detect build-complete from ap_manage_notes tool calls
   const buildCompleteRef = useRef(false);
   useEffect(() => {
     const lastMsg = uiMessages[uiMessages.length - 1];
     if (!lastMsg || lastMsg.role !== 'assistant') return;
-    let newProjectId: string | null | undefined;
     for (const part of lastMsg.parts) {
-      if (part.type !== 'dynamic-tool') continue;
       if (
-        part.toolName === 'ap_select_project' &&
-        typeof part.input === 'object' &&
-        part.input !== null &&
-        'projectId' in part.input &&
-        typeof part.input.projectId === 'string'
-      ) {
-        newProjectId = part.input.projectId;
-      }
-      if (part.toolName === 'ap_deselect_project') {
-        newProjectId = null;
-      }
-      if (
+        part.type === 'dynamic-tool' &&
         part.toolName === 'ap_manage_notes' &&
         part.state === 'output-available'
       ) {
         buildCompleteRef.current = true;
       }
     }
-    if (newProjectId !== undefined) {
-      updateSelectedProjectId(newProjectId);
-      setProjectSetInSession(true);
-      loadedFromHistoryRef.current = false;
-    }
   }, [uiMessages]);
 
-  // Sync project context from server after streaming completes
+  // Server sync: single source of truth for project context.
+  // After every streaming completion, fetch the conversation's projectId
+  // from the backend and derive UI state from it.
   const prevStatusRef = useRef(status);
   useEffect(() => {
     const wasStreaming =
