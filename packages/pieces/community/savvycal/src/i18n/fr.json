@@ -108,5 +108,11 @@
   "Team": "Équipe",
   "Filter scheduling links by team. Leave empty to show all teams.": "Filtrer les liens de réservation par équipe. Laisser vide pour toutes les équipes.",
   "Personal": "Personnel",
-  "Failed to load teams.": "Impossible de charger les équipes."
+  "Failed to load teams.": "Impossible de charger les équipes.",
+  "Custom API Call": "Appel d'API personnalisé",
+  "Make a custom API call to a specific endpoint": "Passer un appel API personnalisé à un endpoint spécifique",
+  "Headers": "En-têtes",
+  "Query Parameters": "Paramètres de requête",
+  "Body": "Corps",
+  "Timeout (in seconds)": "Délai d'expiration (en secondes)"
 }
