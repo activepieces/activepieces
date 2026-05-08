@@ -101,8 +101,9 @@ export const newConnectionUtils = {
     grantType,
     oauth2App,
     redirectUrl,
+    projectId: projectIdOverride,
   }: DefaultValuesParams): Partial<UpsertAppConnectionRequestBody> {
-    const projectId = authenticationSession.getProjectId();
+    const projectId = projectIdOverride ?? authenticationSession.getProjectId();
     assertNotNullOrUndefined(projectId, 'projectId');
     if (!auth) {
       throw new Error(`Unsupported property type: ${auth}`);
@@ -262,4 +263,5 @@ type DefaultValuesParams = {
   auth: PieceAuthProperty;
   oauth2App: OAuth2App | null;
   grantType: OAuth2GrantType | null;
+  projectId?: string;
 };
