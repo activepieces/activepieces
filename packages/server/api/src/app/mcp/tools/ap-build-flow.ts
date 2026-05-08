@@ -59,7 +59,7 @@ export const apBuildFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
             }).describe('Trigger configuration'),
             steps: z.array(stepSpec).describe('Array of steps added sequentially after trigger. Each step supports: PIECE (pieceName+actionName+input), CODE (sourceCode+input), LOOP_ON_ITEMS (loopItems), ROUTER.'),
         },
-        annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
             let flowId: string | undefined
             const projectId = mcp.projectId
@@ -141,10 +141,18 @@ export const apBuildFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
                 const stepWord = allSteps.length === 1 ? 'step' : 'steps'
 
                 const skippedHint = skippedSteps.length > 0 ? ` Skipped: ${skippedSteps.join(', ')}.` : ''
-                if (invalidSteps.length === 0 && skippedSteps.length === 0) {
-                    return { content: [{ type: 'text', text: `✅ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} ${stepWord}, all valid.` }] }
+                const structured = {
+                    flowId: flowId!,
+                    displayName: flowName,
+                    stepCount: allSteps.length,
+                    validCount,
+                    invalidSteps,
+                    skippedSteps,
                 }
-                return { content: [{ type: 'text', text: `⚠️ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} ${stepWord} (${validCount} valid, ${invalidSteps.length} invalid: ${invalidSteps.join(', ')}).${skippedHint} Use ap_update_step or ap_update_trigger to fix.` }] }
+                if (invalidSteps.length === 0 && skippedSteps.length === 0) {
+                    return { content: [{ type: 'text', text: `✅ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} ${stepWord}, all valid.` }], structuredContent: structured }
+                }
+                return { content: [{ type: 'text', text: `⚠️ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} ${stepWord} (${validCount} valid, ${invalidSteps.length} invalid: ${invalidSteps.join(', ')}).${skippedHint} Use ap_update_step or ap_update_trigger to fix.` }], structuredContent: structured }
             }
             catch (err) {
                 if (flowId) {

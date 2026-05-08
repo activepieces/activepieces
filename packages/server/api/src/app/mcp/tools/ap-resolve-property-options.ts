@@ -23,7 +23,7 @@ export const apResolvePropertyOptionsTool = (mcp: ProjectScopedMcpServer, log: F
         title: 'ap_resolve_property_options',
         description: 'Resolve dropdown options for a single piece property. Returns the available options with labels and values (IDs). Use this to discover valid values for DROPDOWN fields (e.g. Slack channels, Google Sheets, email labels). Always use the `value` from the returned options, not the `label`.',
         inputSchema: resolvePropertyOptionsInput.shape,
-        annotations: { readOnlyHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {
                 const { pieceName, actionOrTriggerName, type, propertyName, auth, input: providedInput, searchValue } = resolvePropertyOptionsInput.parse(args)
@@ -87,6 +87,7 @@ export const apResolvePropertyOptionsTool = (mcp: ProjectScopedMcpServer, log: F
                     const dynamicFields = mcpUtils.buildPropSummaries(options as PiecePropertyMap)
                     return {
                         content: [{ type: 'text', text: `✅ Dynamic fields for "${propertyName}":\n${JSON.stringify(dynamicFields, null, 2)}` }],
+                        structuredContent: { propertyName, options: dynamicFields, count: dynamicFields.length },
                     }
                 }
 
@@ -97,10 +98,12 @@ export const apResolvePropertyOptionsTool = (mcp: ProjectScopedMcpServer, log: F
                     if (mapped.length === 0) {
                         return {
                             content: [{ type: 'text', text: `⚠️ No options found for "${propertyName}". The account may have no items. You may use the value the user provided directly, but the dropdown in the flow editor will appear unset.` }],
+                            structuredContent: { propertyName, options: [], count: 0 },
                         }
                     }
                     return {
                         content: [{ type: 'text', text: `✅ Options for "${propertyName}" (${mapped.length} found). IMPORTANT: Use the "value" field (the ID), NOT the "label", when setting this property.\n${JSON.stringify(mapped, null, 2)}` }],
+                        structuredContent: { propertyName, options: mapped, count: mapped.length },
                     }
                 }
 

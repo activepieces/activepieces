@@ -12,7 +12,7 @@ export const apDeleteFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
         inputSchema: {
             flowId: z.string().describe('The ID of the flow to delete'),
         },
-        annotations: { destructiveHint: true, idempotentHint: false, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
             const { flowId } = z.object({ flowId: z.string() }).parse(args)
             try {
@@ -27,6 +27,7 @@ export const apDeleteFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                         type: 'text',
                         text: `✅ Flow "${displayName}" has been permanently deleted.`,
                     }],
+                    structuredContent: { flowId, deleted: true },
                 }
             }
             catch (err) {

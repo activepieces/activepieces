@@ -1,6 +1,7 @@
 import {
     BranchExecutionType,
     McpToolDefinition,
+    McpToolResult,
     ProjectScopedMcpServer,
     RouterActionSettingsWithValidation,
     RouterExecutionType,
@@ -15,7 +16,7 @@ export const apValidateStepConfigTool = (mcp: ProjectScopedMcpServer, log: Fasti
         title: 'ap_validate_step_config',
         description: 'Validate a step configuration before applying it. Returns field-level errors without modifying any flow. Use this to check your config is correct before calling ap_update_step or ap_update_trigger.',
         inputSchema: validateStepConfigInput.shape,
-        annotations: { readOnlyHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {
                 const params = validateStepConfigInput.parse(args)
@@ -69,7 +70,7 @@ const validateStepConfigInput = z.object({
         .describe('For ROUTER: raw router settings including branches and executionType.'),
 })
 
-async function validatePieceComponent({ pieceName, componentName, componentType, input, auth, projectId, log }: ValidatePieceParams): Promise<McpResult> {
+async function validatePieceComponent({ pieceName, componentName, componentType, input, auth, projectId, log }: ValidatePieceParams): Promise<McpToolResult> {
     const lookup = await mcpUtils.lookupPieceComponent({ pieceName, componentName, componentType, projectId, log })
     if (lookup.error) {
         return lookup.error
@@ -89,19 +90,31 @@ async function validatePieceComponent({ pieceName, componentName, componentType,
         const uiHint = diagnosis.uiRequired.length > 0
             ? `\nNote: these fields require configuration in the Activepieces UI: ${diagnosis.uiRequired.join(', ')}.`
             : ''
-        return { content: [{ type: 'text', text: `✅ Valid configuration for ${componentType.toUpperCase()} "${normalized}/${componentName}".${uiHint}` }] }
+        return {
+            content: [{ type: 'text', text: `✅ Valid configuration for ${componentType.toUpperCase()} "${normalized}/${componentName}".${uiHint}` }],
+            structuredContent: { valid: true, errors: [] },
+        }
     }
 
-    return { content: [{ type: 'text', text: `⚠️ Invalid configuration:\n${diagnosis.parts.join('\n')}` }] }
+    return {
+        content: [{ type: 'text', text: `⚠️ Invalid configuration:\n${diagnosis.parts.join('\n')}` }],
+        structuredContent: { valid: false, errors: diagnosis.parts },
+    }
 }
 
-function validateWithSchema({ schema, data, label }: { schema: z.ZodType, data: unknown, label: string }): McpResult {
+function validateWithSchema({ schema, data, label }: { schema: z.ZodType, data: unknown, label: string }): McpToolResult {
     const result = schema.safeParse(data)
     if (result.success) {
-        return { content: [{ type: 'text', text: `✅ Valid ${label} configuration.` }] }
+        return {
+            content: [{ type: 'text', text: `✅ Valid ${label} configuration.` }],
+            structuredContent: { valid: true, errors: [] },
+        }
     }
     const errors = result.error.issues.map(i => `${i.path.join('.')}: ${i.message}`)
-    return { content: [{ type: 'text', text: `⚠️ Invalid ${label} configuration:\n${errors.join('\n')}` }] }
+    return {
+        content: [{ type: 'text', text: `⚠️ Invalid ${label} configuration:\n${errors.join('\n')}` }],
+        structuredContent: { valid: false, errors },
+    }
 }
 
 const codeValidator = z.object({
@@ -120,7 +133,7 @@ function routerEnumHint(): string {
     return `Valid executionType values: ${Object.values(RouterExecutionType).join(', ')}\nBranch types: ${Object.values(BranchExecutionType).join(', ')}`
 }
 
-function validateRouter(settings: Record<string, unknown> | undefined): McpResult {
+function validateRouter(settings: Record<string, unknown> | undefined): McpToolResult {
     if (!settings || !settings.branches || !settings.executionType || (Array.isArray(settings.branches) && settings.branches.length === 0)) {
         const example = JSON.stringify({
             branches: [
@@ -142,11 +155,15 @@ function validateRouter(settings: Record<string, unknown> | undefined): McpResul
                 type: 'text',
                 text: `⚠️ Invalid ROUTER configuration: settings must include branches and executionType.\n\n${routerEnumHint()}\n\nExample:\n${example}`,
             }],
+            structuredContent: { valid: false, errors: ['settings must include branches and executionType'] },
         }
     }
     const result = RouterActionSettingsWithValidation.safeParse(settings)
     if (result.success) {
-        return { content: [{ type: 'text', text: '✅ Valid ROUTER configuration.' }] }
+        return {
+            content: [{ type: 'text', text: '✅ Valid ROUTER configuration.' }],
+            structuredContent: { valid: true, errors: [] },
+        }
     }
     const errors = result.error.issues.map(i => `${i.path.join('.')}: ${i.message}`)
     return {
@@ -154,10 +171,9 @@ function validateRouter(settings: Record<string, unknown> | undefined): McpResul
             type: 'text',
             text: `⚠️ Invalid ROUTER configuration:\n${errors.join('\n')}\n\n${routerEnumHint()}`,
         }],
+        structuredContent: { valid: false, errors },
     }
 }
-
-type McpResult = { content: [{ type: 'text', text: string }] }
 
 type ValidatePieceParams = {
     pieceName: string

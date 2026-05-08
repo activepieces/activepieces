@@ -49,5 +49,11 @@ export type McpToolDefinition = {
         openWorldHint?: boolean
     }
     permission?: Permission
-    execute: (args: Record<string, unknown>) => Promise<{ content: Array<{ type: 'text', text: string }> }>
+    execute: (args: Record<string, unknown>) => Promise<McpToolResult>
+}
+
+export type McpToolResult = {
+    content: Array<{ type: 'text', text: string }>
+    structuredContent?: Record<string, unknown>
+    isError?: boolean
 }
