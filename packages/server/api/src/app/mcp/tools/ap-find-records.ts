@@ -88,7 +88,7 @@ export const apFindRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
                     records: result.data.map(r => ({
                         id: r.id,
                         cells: Object.fromEntries(
-                            Object.values(r.cells).map(c => [c.fieldName ?? c.fieldId, c.value]),
+                            Object.entries(r.cells).map(([fieldId, c]) => [c.fieldName ?? fieldId, c.value]),
                         ),
                     })),
                     count: result.data.length,
