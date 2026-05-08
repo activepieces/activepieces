@@ -334,18 +334,46 @@ export function useAgentChat({
   // When true, the server sync should NOT re-enable the project label.
   const loadedFromHistoryRef = useRef(false);
 
-  // Detect build-complete from ap_manage_notes tool calls
+  // Scan all messages for project selection and build-complete.
+  // Gives immediate label appearance when AI calls ap_select_project,
+  // and detects ap_manage_notes across all messages (not just last).
   const buildCompleteRef = useRef(false);
   useEffect(() => {
-    const lastMsg = uiMessages[uiMessages.length - 1];
-    if (!lastMsg || lastMsg.role !== 'assistant') return;
-    for (const part of lastMsg.parts) {
-      if (
-        part.type === 'dynamic-tool' &&
-        part.toolName === 'ap_manage_notes' &&
-        part.state === 'output-available'
-      ) {
-        buildCompleteRef.current = true;
+    let latestProjectId: string | null | undefined;
+    let hasBuildComplete = false;
+
+    for (const msg of uiMessages) {
+      if (msg.role !== 'assistant') continue;
+      for (const part of msg.parts) {
+        if (part.type !== 'dynamic-tool') continue;
+        if (
+          part.toolName === 'ap_select_project' &&
+          typeof part.input === 'object' &&
+          part.input !== null &&
+          'projectId' in part.input &&
+          typeof part.input.projectId === 'string'
+        ) {
+          latestProjectId = part.input.projectId;
+        }
+        if (part.toolName === 'ap_deselect_project') {
+          latestProjectId = null;
+        }
+        if (
+          part.toolName === 'ap_manage_notes' &&
+          part.state === 'output-available'
+        ) {
+          hasBuildComplete = true;
+        }
+      }
+    }
+
+    buildCompleteRef.current = hasBuildComplete;
+
+    if (latestProjectId !== undefined) {
+      updateSelectedProjectId(latestProjectId);
+      if (latestProjectId !== null) {
+        setProjectSetInSession(true);
+        loadedFromHistoryRef.current = false;
       }
     }
   }, [uiMessages]);

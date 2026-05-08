@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import { Check, ChevronDown, ExternalLink, Loader2 } from 'lucide-react';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -305,10 +305,17 @@ export function BuildProgressCard({
             <span>✨</span>
             {progress.title}
           </h3>
-          {isBuilt ? (
+          {isBuilt &&
+          (notesStatus === 'adding' ||
+            (notesStatus === 'none' && isStreaming)) ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-green-500/30 bg-green-500/10 text-green-600 dark:text-green-400 px-2.5 py-0.5 text-xs font-medium">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              {t('Finishing up...')}
+            </span>
+          ) : isBuilt ? (
             <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400 text-xs font-medium">
               <Check className="h-3.5 w-3.5" />
-              {t('Built')}
+              {t('Done')}
             </span>
           ) : hasError ? (
             <span className="inline-flex items-center gap-1.5 rounded-full border border-destructive/30 bg-destructive/10 text-destructive px-2.5 py-0.5 text-xs font-medium">
@@ -412,7 +419,7 @@ export function BuildProgressCard({
             initial={reduce ? false : { opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: reduce ? 0 : 0.25, delay: 0.1 }}
-            className="mt-3 space-y-2"
+            className="mt-3"
           >
             {flowUrl && (
               <Button
@@ -424,19 +431,6 @@ export function BuildProgressCard({
                 {t('Open flow')}
               </Button>
             )}
-            <AnimatePresence>
-              {notesStatus === 'adding' && (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 0.6 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="text-[11px] text-muted-foreground text-center"
-                >
-                  {t('Adding canvas notes...')}
-                </motion.p>
-              )}
-            </AnimatePresence>
           </motion.div>
         )}
       </div>
