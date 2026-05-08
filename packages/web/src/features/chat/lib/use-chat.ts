@@ -330,6 +330,10 @@ export function useAgentChat({
     return [...withoutEmptyAssistant, createPendingAssistantMessage()];
   }, [hasPending, uiMessages, pendingMessages]);
 
+  // Tracks whether the conversation was loaded from history (resumed).
+  // When true, the server sync should NOT re-enable the project label.
+  const loadedFromHistoryRef = useRef(false);
+
   // Detect project context changes from AI tool calls
   const buildCompleteRef = useRef(false);
   useEffect(() => {
@@ -360,6 +364,7 @@ export function useAgentChat({
     if (newProjectId !== undefined) {
       updateSelectedProjectId(newProjectId);
       setProjectSetInSession(true);
+      loadedFromHistoryRef.current = false;
     }
   }, [uiMessages]);
 
@@ -382,7 +387,7 @@ export function useAgentChat({
         .then((conv) => {
           const projectId = conv.projectId ?? null;
           updateSelectedProjectId(projectId);
-          if (projectId && !wasBuildComplete) {
+          if (projectId && !wasBuildComplete && !loadedFromHistoryRef.current) {
             setProjectSetInSession(true);
           }
         })
@@ -407,6 +412,7 @@ export function useAgentChat({
     setModelNameState(null);
     updateSelectedProjectId(null);
     setProjectSetInSession(false);
+    loadedFromHistoryRef.current = false;
     setUiMessages([]);
     setLocalError(null);
     setWasCancelled(false);
@@ -527,6 +533,7 @@ export function useAgentChat({
         // Set project for backend tool scoping, but don't show it visually (projectSetInSession stays false)
         updateSelectedProjectId(convResult.data.projectId ?? null);
         setProjectSetInSession(false);
+        loadedFromHistoryRef.current = true;
       }
       setIsLoadingHistory(false);
     },
@@ -549,6 +556,7 @@ export function useAgentChat({
     updateSelectedProjectId(projectId);
     if (projectId) {
       setProjectSetInSession(true);
+      loadedFromHistoryRef.current = false;
     }
     const convId = conversationIdRef.current;
     if (!convId) return;
