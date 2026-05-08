@@ -355,9 +355,7 @@ export function useAgentChat({
         if (projectId !== selectedProjectIdRef.current) {
           updateSelectedProjectId(projectId);
         }
-        if (!projectSetInSession) {
-          setProjectSetInSession(true);
-        }
+        setProjectSetInSession((prev) => prev || true);
         loadedFromHistoryRef.current = false;
       }
       if (part.toolName === 'ap_deselect_project') {
@@ -372,7 +370,7 @@ export function useAgentChat({
         buildCompleteRef.current = true;
       }
     }
-  }, [uiMessages, projectSetInSession]);
+  }, [uiMessages]);
 
   // Server sync: single source of truth for project context.
   // After every streaming completion, fetch the conversation's projectId
