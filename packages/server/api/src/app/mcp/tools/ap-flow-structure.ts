@@ -288,7 +288,23 @@ export const apFlowStructureTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
         },
-        annotations: { readOnlyHint: true, openWorldHint: false },
+        outputSchema: {
+            flowId: z.string(),
+            displayName: z.string(),
+            steps: z.array(z.object({
+                name: z.string(),
+                type: z.string(),
+                displayName: z.string(),
+                parentName: z.string().nullable(),
+                relationship: z.string(),
+                branchIndex: z.number().optional(),
+                branchName: z.string().optional(),
+                valid: z.boolean(),
+                configStatus: z.string(),
+            })),
+            stepCount: z.number(),
+        },
+        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async ({ flowId }) => {
             try {
                 const flow = await flowService(log).getOnePopulated({
@@ -301,7 +317,25 @@ export const apFlowStructureTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 const { structure, stepByName } = buildFlowStructure(flow.version.trigger)
                 const positions = flowCanvasUtils.computeStepPositions(flow.version.trigger)
                 const text = formatFlowStructure(flow.version.displayName, flow.id, structure, stepByName, positions, flow.version.notes ?? [])
-                return { content: [{ type: 'text', text }] }
+                return {
+                    content: [{ type: 'text', text }],
+                    structuredContent: {
+                        flowId: flow.id,
+                        displayName: flow.version.displayName,
+                        steps: structure.map(s => ({
+                            name: s.name,
+                            type: s.type,
+                            displayName: s.displayName,
+                            parentName: s.parentName,
+                            relationship: s.relationship,
+                            ...(s.branchIndex !== undefined ? { branchIndex: s.branchIndex } : {}),
+                            ...(s.branchName !== undefined ? { branchName: s.branchName } : {}),
+                            valid: s.valid,
+                            configStatus: s.configStatus,
+                        })),
+                        stepCount: structure.length,
+                    },
+                }
             }
             catch (err) {
                 return mcpUtils.mcpToolError('Failed to get flow structure', err)
