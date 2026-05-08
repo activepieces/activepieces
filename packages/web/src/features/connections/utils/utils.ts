@@ -231,16 +231,21 @@ export const newConnectionUtils = {
   },
 };
 
-export const isConnectionNameUnique = async (
-  isGlobalConnection: boolean,
-  displayName: string,
-) => {
+export const isConnectionNameUnique = async ({
+  isGlobalConnection,
+  displayName,
+  projectId,
+}: {
+  isGlobalConnection: boolean;
+  displayName: string;
+  projectId?: string;
+}) => {
   const connections = isGlobalConnection
     ? await globalConnectionsApi.list({
         limit: 10000,
       })
     : await appConnectionsApi.list({
-        projectId: authenticationSession.getProjectId()!,
+        projectId: projectId ?? authenticationSession.getProjectId()!,
         limit: 10000,
       });
   const existingConnection = connections.data.find(

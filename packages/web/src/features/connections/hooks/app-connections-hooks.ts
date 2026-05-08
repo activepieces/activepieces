@@ -75,10 +75,11 @@ export const appConnectionsMutations = {
       mutationFn: async () => {
         setErrorMessage('');
         const formValues = form.getValues().request;
-        const isNameUnique = await isConnectionNameUnique(
+        const isNameUnique = await isConnectionNameUnique({
           isGlobalConnection,
-          formValues.displayName,
-        );
+          displayName: formValues.displayName,
+          projectId: formValues.projectId,
+        });
         if (
           !isNameUnique &&
           reconnectConnection?.displayName !== formValues.displayName &&
@@ -209,10 +210,10 @@ export const appConnectionsMutations = {
         connectionId: string;
         displayName: string;
       }) => {
-        const existingConnection = await isConnectionNameUnique(
-          false,
+        const existingConnection = await isConnectionNameUnique({
+          isGlobalConnection: false,
           displayName,
-        );
+        });
         if (!existingConnection && displayName !== currentName) {
           throw new ConnectionNameAlreadyExists();
         }
