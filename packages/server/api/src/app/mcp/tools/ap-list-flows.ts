@@ -23,16 +23,6 @@ export const apListFlowsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
             status: z.enum(Object.values(FlowStatus) as [FlowStatus, ...FlowStatus[]]).optional().describe('Filter by status: ENABLED or DISABLED.'),
             name: z.string().optional().describe('Filter by flow name (partial match).'),
         },
-        outputSchema: {
-            flows: z.array(z.object({
-                id: z.string(),
-                displayName: z.string(),
-                status: z.string(),
-                published: z.boolean(),
-                triggerType: z.string(),
-            })),
-            count: z.number(),
-        },
         annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {

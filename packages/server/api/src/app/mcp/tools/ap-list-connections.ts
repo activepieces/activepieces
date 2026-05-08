@@ -44,16 +44,6 @@ export const apListConnectionsTool = (mcp: ProjectScopedMcpServer, log: FastifyB
             displayName: listConnectionsSchema.shape.displayName,
             status: listConnectionsSchema.shape.status,
         },
-        outputSchema: {
-            connections: z.array(z.object({
-                externalId: z.string(),
-                displayName: z.string(),
-                pieceName: z.string(),
-                status: z.string(),
-                scope: z.string(),
-            })),
-            count: z.number(),
-        },
         annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {

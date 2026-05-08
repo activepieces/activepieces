@@ -15,22 +15,6 @@ export const apGetRunTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger
         permission: Permission.READ_RUN,
         description: 'Get detailed results of a flow run including step-by-step outputs, errors, and durations.',
         inputSchema: getRunInput.shape,
-        outputSchema: {
-            id: z.string(),
-            flowId: z.string(),
-            status: z.string(),
-            environment: z.string(),
-            created: z.string(),
-            duration: z.string().nullable(),
-            failedStepName: z.string().nullable(),
-            steps: z.array(z.object({
-                name: z.string(),
-                status: z.string(),
-                duration: z.number().nullable(),
-                output: z.unknown(),
-                errorMessage: z.unknown(),
-            })),
-        },
         annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {

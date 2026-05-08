@@ -19,18 +19,6 @@ export const apValidateFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
         permission: Permission.READ_FLOW,
         description: 'Validate a flow for structural issues without publishing. Checks step validity, template references, and empty branches. Returns a detailed report with all issues found. Use this before ap_lock_and_publish to catch problems early.',
         inputSchema: validateFlowInput.shape,
-        outputSchema: {
-            valid: z.boolean(),
-            totalSteps: z.number(),
-            validSteps: z.number(),
-            invalidSteps: z.number(),
-            skippedSteps: z.number(),
-            issues: z.array(z.object({
-                category: z.string(),
-                stepName: z.string(),
-                message: z.string(),
-            })),
-        },
         annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {

@@ -21,18 +21,6 @@ export const apListRunsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogg
         permission: Permission.READ_RUN,
         description: 'List recent flow runs with optional filters. Returns run ID, status, timestamps, and failed step info.',
         inputSchema: listRunsInput.shape,
-        outputSchema: {
-            runs: z.array(z.object({
-                id: z.string(),
-                flowId: z.string(),
-                status: z.string(),
-                environment: z.string(),
-                created: z.string(),
-                duration: z.string().nullable(),
-                failedStepName: z.string().nullable(),
-            })),
-            count: z.number(),
-        },
         annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {

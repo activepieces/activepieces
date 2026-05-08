@@ -23,14 +23,6 @@ export const apResolvePropertyOptionsTool = (mcp: ProjectScopedMcpServer, log: F
         title: 'ap_resolve_property_options',
         description: 'Resolve dropdown options for a single piece property. Returns the available options with labels and values (IDs). Use this to discover valid values for DROPDOWN fields (e.g. Slack channels, Google Sheets, email labels). Always use the `value` from the returned options, not the `label`.',
         inputSchema: resolvePropertyOptionsInput.shape,
-        outputSchema: {
-            propertyName: z.string(),
-            options: z.array(z.object({
-                label: z.string(),
-                value: z.unknown(),
-            })),
-            count: z.number(),
-        },
         annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {

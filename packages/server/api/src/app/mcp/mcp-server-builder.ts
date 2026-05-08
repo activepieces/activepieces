@@ -231,7 +231,6 @@ function buildToolConfig(tool: McpToolDefinition): Record<string, unknown> {
         description: tool.description,
         inputSchema: tool.inputSchema,
         annotations: tool.annotations,
-        ...(tool.outputSchema ? { outputSchema: tool.outputSchema } : {}),
     }
 }
 

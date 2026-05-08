@@ -1,6 +1,5 @@
 import { McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { z } from 'zod'
 import { fieldService } from '../../tables/field/field.service'
 import { tableService } from '../../tables/table/table.service'
 import { mcpUtils } from './mcp-utils'
@@ -12,19 +11,6 @@ export const apListTablesTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
         permission: Permission.READ_TABLE,
         description: 'List all tables in the current project with their fields (name, type, id) and row counts. Use this to discover available tables before querying or modifying data. Returns table IDs needed by other table tools.',
         inputSchema: {},
-        outputSchema: {
-            tables: z.array(z.object({
-                id: z.string(),
-                name: z.string(),
-                rowCount: z.number(),
-                fields: z.array(z.object({
-                    id: z.string(),
-                    name: z.string(),
-                    type: z.string(),
-                })),
-            })),
-            count: z.number(),
-        },
         annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async () => {
             try {

@@ -59,14 +59,6 @@ export const apBuildFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
             }).describe('Trigger configuration'),
             steps: z.array(stepSpec).describe('Array of steps added sequentially after trigger. Each step supports: PIECE (pieceName+actionName+input), CODE (sourceCode+input), LOOP_ON_ITEMS (loopItems), ROUTER.'),
         },
-        outputSchema: {
-            flowId: z.string(),
-            displayName: z.string(),
-            stepCount: z.number(),
-            validCount: z.number(),
-            invalidSteps: z.array(z.string()),
-            skippedSteps: z.array(z.string()),
-        },
         annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
             let flowId: string | undefined
