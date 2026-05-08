@@ -305,10 +305,17 @@ export function BuildProgressCard({
             <span>✨</span>
             {progress.title}
           </h3>
-          {isBuilt ? (
+          {isBuilt &&
+          (notesStatus === 'adding' ||
+            (notesStatus === 'none' && isStreaming)) ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-green-500/30 bg-green-500/10 text-green-600 dark:text-green-400 px-2.5 py-0.5 text-xs font-medium">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              {t('Finishing up...')}
+            </span>
+          ) : isBuilt ? (
             <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400 text-xs font-medium">
               <Check className="h-3.5 w-3.5" />
-              {t('Built')}
+              {t('Done')}
             </span>
           ) : hasError ? (
             <span className="inline-flex items-center gap-1.5 rounded-full border border-destructive/30 bg-destructive/10 text-destructive px-2.5 py-0.5 text-xs font-medium">
@@ -406,27 +413,6 @@ export function BuildProgressCard({
             );
           })}
         </div>
-
-        {notesStatus !== 'none' && (
-          <motion.div
-            initial={reduce ? false : { opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: reduce ? 0 : 0.2 }}
-            className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground"
-          >
-            {notesStatus === 'adding' ? (
-              <>
-                <Loader2 className="h-3 w-3 animate-spin" />
-                {t('Adding notes...')}
-              </>
-            ) : (
-              <>
-                <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
-                {t('Notes added')}
-              </>
-            )}
-          </motion.div>
-        )}
 
         {isBuilt && (
           <motion.div
