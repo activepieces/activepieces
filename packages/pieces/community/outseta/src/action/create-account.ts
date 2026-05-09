@@ -2,12 +2,14 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
 import { customPropertiesProp, mergeCustomProperties } from '../common/custom-properties';
+import { planUidDropdown } from '../common/dropdowns';
 
 export const createAccountAction = createAction({
   name: 'create_account',
   auth: outsetaAuth,
   displayName: 'Create Account',
-  description: 'Create a new account in Outseta CRM.',
+  description:
+    'Create a new account in Outseta CRM. Optionally start a subscription on a plan in the same call.',
   props: {
     name: Property.ShortText({
       displayName: 'Name',
@@ -62,6 +64,35 @@ export const createAccountAction = createAction({
       displayName: 'Country',
       required: false,
     }),
+    primaryContactPersonUid: Property.ShortText({
+      displayName: 'Primary Contact Person UID',
+      required: false,
+      description:
+        'Optional. UID of an existing person to set as primary contact on the new account. Required by Outseta when starting a subscription with a paid plan.',
+    }),
+    planUid: planUidDropdown({
+      displayName: 'Starting Plan',
+      description:
+        'Optional. If set, the account is created with an active subscription on this plan.',
+      refreshers: [],
+      required: false,
+    }),
+    billingRenewalTerm: Property.StaticDropdown({
+      displayName: 'Billing Renewal Term',
+      required: false,
+      defaultValue: 1,
+      description:
+        'Used only when Starting Plan is set. Defaults to Monthly.',
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Monthly', value: 1 },
+          { label: 'Annual', value: 2 },
+          { label: 'Quarterly', value: 3 },
+          { label: 'One-time', value: 4 },
+        ],
+      },
+    }),
     customProperties: customPropertiesProp('Account'),
   },
   async run(context) {
@@ -88,6 +119,24 @@ export const createAccountAction = createAction({
       if (context.propsValue.postalCode) address['PostalCode'] = context.propsValue.postalCode;
       if (context.propsValue.country) address['Country'] = context.propsValue.country;
       body['BillingAddress'] = address;
+    }
+
+    if (context.propsValue.primaryContactPersonUid) {
+      body['PersonAccount'] = [
+        {
+          Person: { Uid: context.propsValue.primaryContactPersonUid },
+          IsPrimary: true,
+        },
+      ];
+    }
+
+    if (context.propsValue.planUid) {
+      body['Subscriptions'] = [
+        {
+          Plan: { Uid: context.propsValue.planUid },
+          BillingRenewalTerm: context.propsValue.billingRenewalTerm ?? 1,
+        },
+      ];
     }
 
     mergeCustomProperties(body, context.propsValue.customProperties);

@@ -7,6 +7,7 @@ import { outsetaAuth } from './auth';
 import { getAccountAction } from './action/get-account';
 import { getPersonAction } from './action/get-person';
 import { getDealAction } from './action/get-deal';
+import { getSubscriptionAction } from './action/get-subscription';
 import { getLastPaymentAction } from './action/get-last-payment';
 
 // Actions — Create / Find or Add
@@ -32,6 +33,8 @@ import { listDealsAction } from './action/list-deals';
 import { listPlansAction } from './action/list-plans';
 import { listAddOnsAction } from './action/list-addons';
 import { listDiscountsAction } from './action/list-discounts';
+import { listCasesAction } from './action/list-cases';
+import { listTransactionsAction } from './action/list-transactions';
 
 // Actions — Billing (Subscription)
 import { changeAccountPlanAction } from './action/change-account-plan';
@@ -39,6 +42,9 @@ import { cancelSubscriptionAction } from './action/cancel-subscription';
 import { removeCancellationAction } from './action/remove-cancellation';
 import { addDiscountToSubscriptionAction } from './action/add-discount-to-subscription';
 import { addAddonUsageAction } from './action/add-addon-usage';
+import { addAddonToSubscriptionAction } from './action/add-addon-to-subscription';
+import { extendTrialSubscriptionAction } from './action/extend-trial-subscription';
+import { updatePaymentInformationAction } from './action/update-payment-information';
 
 // Actions — Billing (Catalog)
 import { createDiscountAction } from './action/create-discount';
@@ -49,6 +55,7 @@ import { addInvoicePaymentAction } from './action/add-invoice-payment';
 
 // Actions — CRM (Membership / Activity)
 import { manageAccountMembershipAction } from './action/manage-account-membership';
+import { updateAccountMembershipAction } from './action/update-account-membership';
 import { addCustomActivityAction } from './action/add-custom-activity';
 
 // Actions — Email
@@ -88,6 +95,7 @@ export const outseta = createPiece({
     getAccountAction,
     getPersonAction,
     getDealAction,
+    getSubscriptionAction,
     getLastPaymentAction,
     // Create / Find or Add
     createAccountAction,
@@ -109,12 +117,17 @@ export const outseta = createPiece({
     listPlansAction,
     listAddOnsAction,
     listDiscountsAction,
+    listCasesAction,
+    listTransactionsAction,
     // Billing — Subscription
     changeAccountPlanAction,
     cancelSubscriptionAction,
     removeCancellationAction,
     addDiscountToSubscriptionAction,
     addAddonUsageAction,
+    addAddonToSubscriptionAction,
+    extendTrialSubscriptionAction,
+    updatePaymentInformationAction,
     // Billing — Catalog
     createDiscountAction,
     // Billing — Invoice
@@ -122,6 +135,7 @@ export const outseta = createPiece({
     addInvoicePaymentAction,
     // CRM — Membership / Activity
     manageAccountMembershipAction,
+    updateAccountMembershipAction,
     addCustomActivityAction,
     // Email
     manageEmailListSubscriptionAction,
