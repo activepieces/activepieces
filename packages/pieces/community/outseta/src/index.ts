@@ -29,6 +29,9 @@ import { deleteDealAction } from './action/delete-deal';
 import { listAccountsAction } from './action/list-accounts';
 import { listPersonsAction } from './action/list-persons';
 import { listDealsAction } from './action/list-deals';
+import { listPlansAction } from './action/list-plans';
+import { listAddOnsAction } from './action/list-addons';
+import { listDiscountsAction } from './action/list-discounts';
 
 // Actions — Billing (Subscription)
 import { changeAccountPlanAction } from './action/change-account-plan';
@@ -36,6 +39,9 @@ import { cancelSubscriptionAction } from './action/cancel-subscription';
 import { removeCancellationAction } from './action/remove-cancellation';
 import { addDiscountToSubscriptionAction } from './action/add-discount-to-subscription';
 import { addAddonUsageAction } from './action/add-addon-usage';
+
+// Actions — Billing (Catalog)
+import { createDiscountAction } from './action/create-discount';
 
 // Actions — Billing (Invoice)
 import { addInvoiceAction } from './action/add-invoice';
@@ -100,12 +106,17 @@ export const outseta = createPiece({
     listAccountsAction,
     listPersonsAction,
     listDealsAction,
+    listPlansAction,
+    listAddOnsAction,
+    listDiscountsAction,
     // Billing — Subscription
     changeAccountPlanAction,
     cancelSubscriptionAction,
     removeCancellationAction,
     addDiscountToSubscriptionAction,
     addAddonUsageAction,
+    // Billing — Catalog
+    createDiscountAction,
     // Billing — Invoice
     addInvoiceAction,
     addInvoicePaymentAction,
