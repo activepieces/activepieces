@@ -1,9 +1,11 @@
 import { FlowTrigger, flowStructureUtil, isNil } from '@activepieces/shared';
 import { t } from 'i18next';
+import { Info } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { ChatDrawerSource } from '@/app/builder/types';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { triggerEventHooks } from '@/features/flows';
 import { piecesHooks } from '@/features/pieces';
 
@@ -42,6 +44,9 @@ const TestTriggerSection = React.memo(
       pieceModel?.triggers?.[formValues.settings.triggerName]?.sampleData;
 
     const [errorMessage, setErrorMessage] = useState<string | undefined>(
+      undefined,
+    );
+    const [infoMessage, setInfoMessage] = useState<string | undefined>(
       undefined,
     );
 
@@ -86,6 +91,9 @@ const TestTriggerSection = React.memo(
     const { mutate: pollTrigger, isPending: isPollingTesting } =
       testStepHooks.usePollTrigger({
         setErrorMessage,
+        setInfoMessage,
+        pieceDisplayName:
+          pieceModel?.displayName ?? formValues.settings.pieceName,
         onSuccess: onTestSuccess,
       });
 
@@ -162,25 +170,37 @@ const TestTriggerSection = React.memo(
       }
     };
 
+    const emptyResultNotice = infoMessage ? (
+      <Alert className="mb-3">
+        <Info className="h-4 w-4" />
+        <AlertDescription>{infoMessage}</AlertDescription>
+      </Alert>
+    ) : null;
+
     return (
       <div>
         {showFirstTimeTestingSection && !errorMessage && (
-          <FirstTimeTestingSection
-            isValid={isValid}
-            testType={testType}
-            isTesting={isPollingTesting || isSimulating || isTestingDialogOpen}
-            mockData={mockData}
-            isSaving={isSaving || isSavingMockdata}
-            onSimulateTrigger={() => {
-              if (testType === 'chat-trigger') {
-                setChatDrawerOpenSource(ChatDrawerSource.TEST_STEP);
+          <>
+            {emptyResultNotice}
+            <FirstTimeTestingSection
+              isValid={isValid}
+              testType={testType}
+              isTesting={
+                isPollingTesting || isSimulating || isTestingDialogOpen
               }
-              simulateTrigger(abortControllerRef.current.signal);
-            }}
-            onPollTrigger={pollTrigger}
-            onMcpToolTesting={() => setIsTestingDialogOpen(true)}
-            onSaveMockAsSampleData={saveMockAsSampleData}
-          />
+              mockData={mockData}
+              isSaving={isSaving || isSavingMockdata}
+              onSimulateTrigger={() => {
+                if (testType === 'chat-trigger') {
+                  setChatDrawerOpenSource(ChatDrawerSource.TEST_STEP);
+                }
+                simulateTrigger(abortControllerRef.current.signal);
+              }}
+              onPollTrigger={pollTrigger}
+              onMcpToolTesting={() => setIsTestingDialogOpen(true)}
+              onSaveMockAsSampleData={saveMockAsSampleData}
+            />
+          </>
         )}
         {(!showFirstTimeTestingSection || errorMessage) && (
           <>
@@ -197,6 +217,7 @@ const TestTriggerSection = React.memo(
                 lastTestDate={lastTestDate}
                 isSaving={isSaving}
               >
+                {emptyResultNotice}
                 {pollResults?.data && !errorMessage && (
                   <TriggerEventSelect
                     pollResults={pollResults}

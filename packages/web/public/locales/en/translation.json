@@ -264,6 +264,7 @@
   "Action Required": "Action Required",
   "No sample data available": "No sample data available",
   "Old results were removed, retest for new sample data": "Old results were removed, retest for new sample data",
+  "We didn't find any data in {pieceName} yet. Do something there that should start this flow, then test again.": "We didn't find any data in {pieceName} yet. Do something there that should start this flow, then test again.",
   "Result #": "Result #",
   "The sample data can be used in the next steps.": "The sample data can be used in the next steps.",
   "There is no sample data available found for this trigger.": "There is no sample data available found for this trigger.",

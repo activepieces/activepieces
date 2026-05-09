@@ -118,9 +118,13 @@ export const testStepHooks = {
   },
   usePollTrigger: ({
     setErrorMessage,
+    setInfoMessage,
+    pieceDisplayName,
     onSuccess,
   }: {
     setErrorMessage: (msg: string | undefined) => void;
+    setInfoMessage: (msg: string | undefined) => void;
+    pieceDisplayName: string;
     onSuccess: () => void;
   }) => {
     const { form, builderState } = useRequiredStateToTestSteps();
@@ -131,6 +135,7 @@ export const testStepHooks = {
     return useMutation<TriggerEventWithPayload[], Error, void>({
       mutationFn: async () => {
         setErrorMessage(undefined);
+        setInfoMessage(undefined);
         const { data } = await triggerEventsApi.test({
           projectId: authenticationSession.getProjectId()!,
           flowId,
@@ -142,6 +147,13 @@ export const testStepHooks = {
             stepName,
             output: data[0].payload,
           });
+        } else {
+          setInfoMessage(
+            t(
+              "We didn't find any data in {pieceName} yet. Do something there that should start this flow, then test again.",
+              { pieceName: pieceDisplayName },
+            ),
+          );
         }
         return data;
       },
