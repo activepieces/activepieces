@@ -5,8 +5,8 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, isNil, PARENT_RUN_ID_HEADER } from '@activepieces/shared';
-import { CallableFlowRequest, CallableFlowResponse, findFlowByExternalIdOrThrow, listEnabledFlowsWithSubflowTrigger } from '../common';
+import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, FlowStatus, isNil, PARENT_RUN_ID_HEADER } from '@activepieces/shared';
+import { CallableFlowRequest, CallableFlowResponse, findFlowByExternalIdOrThrow, listFlowsWithSubflowTrigger } from '../common';
 
 type FlowValue = {
   externalId: string;
@@ -24,7 +24,7 @@ export const callFlow = createAction({
       description: 'The flow to execute',
       required: true,
       options: async (_, context) => {
-        const flows = await listEnabledFlowsWithSubflowTrigger({
+        const flows = await listFlowsWithSubflowTrigger({
           flowsContext: context.flows,
         });
         return {
@@ -33,7 +33,10 @@ export const callFlow = createAction({
               externalId: flow.externalId ?? flow.id,
               exampleData: flow.version.trigger.settings.input.exampleData,
             },
-            label: flow.version.displayName,
+            label:
+              flow.status === FlowStatus.ENABLED
+                ? flow.version.displayName
+                : `${flow.version.displayName} (inactive)`,
           })),
         };
       },
