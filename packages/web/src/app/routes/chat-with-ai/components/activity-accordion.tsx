@@ -261,11 +261,14 @@ function groupIntoSteps(parts: DynamicToolPart[]): ActivityStep[] {
 
 function classifyTool(part: DynamicToolPart): string {
   const name = (part.title ?? part.toolName).toLowerCase();
-  if (name.includes('list_pieces') || name.includes('get_piece_props'))
-    return 'explore';
-  if (name.includes('list_connections') || name.includes('resolve_property'))
-    return 'connections';
-  if (name.includes('list_across_projects')) return 'connections';
+  if (
+    name.includes('list_pieces') ||
+    name.includes('get_piece_props') ||
+    name.includes('list_connections') ||
+    name.includes('list_across_projects')
+  )
+    return 'discover';
+  if (name.includes('resolve_property')) return 'resolve';
   if (
     name.includes('create_flow') ||
     name.includes('build_flow') ||
@@ -292,6 +295,7 @@ function classifyTool(part: DynamicToolPart): string {
   if (name.includes('run_action') || name.includes('run_one_time'))
     return 'execute';
   if (name.includes('setup_guide')) return 'setup';
+  if (name.includes('manage_notes')) return 'notes';
   if (name.includes('rename_flow') || name.includes('duplicate_flow'))
     return 'flows';
   if (
@@ -301,7 +305,7 @@ function classifyTool(part: DynamicToolPart): string {
     name.includes('delete_step')
   )
     return 'build';
-  return 'explore';
+  return 'discover';
 }
 
 function extractAllPieceNames(tools: DynamicToolPart[]): string[] {
@@ -365,36 +369,24 @@ function buildStep({
   const count = countResults(tools);
 
   switch (action) {
-    case 'explore': {
-      const chipLabel =
-        count > 0
-          ? t('foundIntegrations', { count })
-          : t('Searching integrations');
+    case 'discover':
       return {
-        summary:
-          count > 0
-            ? t('Found the right tools for your task.')
-            : t('Searched available integrations.'),
-        chipLabel,
+        summary: t('Prepared your integrations and accounts.'),
+        chipLabel:
+          pieceNames.length > 0
+            ? t('Checking {name}', { name: pieceNames.join(', ') })
+            : t('Checking integrations'),
         pieceNames,
       };
-    }
-    case 'connections': {
-      const chipLabel =
-        count > 0
-          ? t('foundAccounts', { count })
-          : pieceNames.length > 0
-          ? t('Finding {name} accounts', { name: pieceNames[0] })
-          : t('Checking accounts');
+    case 'resolve':
       return {
-        summary:
-          count > 0
-            ? t('Located your accounts.')
-            : t('Checked available connections.'),
-        chipLabel,
+        summary: t('Resolved configuration options.'),
+        chipLabel:
+          pieceNames.length > 0
+            ? t('Resolving {name} options', { name: pieceNames[0] })
+            : t('Loading options'),
         pieceNames,
       };
-    }
     case 'build':
       return {
         summary: t('Built your automation steps.'),
@@ -454,6 +446,12 @@ function buildStep({
       return {
         summary: t('Found setup instructions.'),
         chipLabel: t('Getting setup guide'),
+        pieceNames: [],
+      };
+    case 'notes':
+      return {
+        summary: t('Added flow documentation.'),
+        chipLabel: t('Adding notes'),
         pieceNames: [],
       };
     default:

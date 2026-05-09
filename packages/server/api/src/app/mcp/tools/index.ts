@@ -7,6 +7,7 @@ import { apChangeFlowStatusTool } from './ap-change-flow-status'
 import { apCreateFlowTool } from './ap-create-flow'
 import { apCreateTableTool } from './ap-create-table'
 import { apDeleteBranchTool } from './ap-delete-branch'
+import { apDeleteFlowTool } from './ap-delete-flow'
 import { apDeleteRecordsTool } from './ap-delete-records'
 import { apDeleteStepTool } from './ap-delete-step'
 import { apDeleteTableTool } from './ap-delete-table'
@@ -73,6 +74,7 @@ export const ALL_CONTROLLABLE_TOOL_NAMES: string[] = [
     'ap_delete_branch',
     'ap_lock_and_publish',
     'ap_change_flow_status',
+    'ap_delete_flow',
     'ap_manage_notes',
     'ap_create_table',
     'ap_delete_table',
@@ -108,6 +110,7 @@ export const activepiecesTools = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
     apDeleteBranchTool(mcp, log),
     apLockAndPublishTool(mcp, log),
     apChangeFlowStatusTool(mcp, log),
+    apDeleteFlowTool(mcp, log),
     apManageNotesTool(mcp, log),
     apListAiModelsTool(mcp, log),
     apListTablesTool(mcp, log),

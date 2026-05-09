@@ -101,6 +101,10 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
         description: 'Enable or disable a flow',
       },
       {
+        name: 'ap_delete_flow',
+        description: 'Permanently delete a flow and all its versions',
+      },
+      {
         name: 'ap_lock_and_publish',
         description: 'Publish the current draft of a flow',
       },

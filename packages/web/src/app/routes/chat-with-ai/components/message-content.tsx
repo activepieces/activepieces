@@ -117,13 +117,18 @@ export function MessageContentWithAuth({
         </div>
       )}
       {connections.length > 0 && (
-        <ConnectionsRequiredCard connections={connections} onSend={onSend} />
+        <ConnectionsRequiredCard
+          connections={connections}
+          onSend={onSend}
+          projectId={selectedProjectId}
+        />
       )}
       {connectionPicker && (
         <ConnectionPickerCard
           picker={connectionPicker}
           onSelect={(text) => onSend?.(text)}
           isInteractive={isLastMessage}
+          selectedProjectId={selectedProjectId}
         />
       )}
       {projectPicker && (
@@ -258,9 +263,11 @@ function ConnectionRow({
 function ConnectionsRequiredCard({
   connections,
   onSend,
+  projectId: selectedProjectId,
 }: {
   connections: ConnectionRequired[];
   onSend?: (text: string) => void;
+  projectId?: string | null;
 }) {
   const queryClient = useQueryClient();
   const [connectedSet, setConnectedSet] = useState<Set<string>>(new Set());
@@ -285,7 +292,7 @@ function ConnectionsRequiredCard({
   );
 
   useEffect(() => {
-    const projectId = authenticationSession.getProjectId();
+    const projectId = selectedProjectId ?? authenticationSession.getProjectId();
     if (!projectId) return;
     let cancelled = false;
 
@@ -329,7 +336,7 @@ function ConnectionsRequiredCard({
     return () => {
       cancelled = true;
     };
-  }, [connectionsKey]);
+  }, [connectionsKey, selectedProjectId]);
 
   const allConnected = connections.every((c) => connectedSet.has(c.piece));
 
@@ -391,6 +398,7 @@ function ConnectionsRequiredCard({
           key={activeConnection.piece}
           piece={pieceModel}
           open={true}
+          projectId={selectedProjectId}
           setOpen={(open, createdConnection) => {
             if (!open) {
               if (createdConnection) {

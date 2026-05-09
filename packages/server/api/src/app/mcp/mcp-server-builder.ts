@@ -1,4 +1,4 @@
-import { FlowStatus, isNil, McpProperty, McpPropertyType, mcpToolNameUtils, McpTrigger, Permission, PopulatedMcpServer, ProjectScopedMcpServer, TelemetryEventName } from '@activepieces/shared'
+import { FlowStatus, isNil, McpProperty, McpPropertyType, McpToolDefinition, mcpToolNameUtils, McpTrigger, Permission, PopulatedMcpServer, ProjectScopedMcpServer, TelemetryEventName } from '@activepieces/shared'
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -84,12 +84,7 @@ function registerPlatformTools({ server, mcp, platformId, userId, resolveProject
     log: FastifyBaseLogger
 }): void {
     const contextTool = apSetProjectContextTool({ platformId, userId, log })
-    server.registerTool(contextTool.title, {
-        title: contextTool.title,
-        description: contextTool.description,
-        inputSchema: contextTool.inputSchema,
-        annotations: contextTool.annotations,
-    }, (args: Record<string, unknown>) => contextTool.execute(args))
+    server.registerTool(contextTool.title, buildToolConfig(contextTool), (args: Record<string, unknown>) => contextTool.execute(args))
 
     const templateMcp: ProjectScopedMcpServer = { ...mcp, projectId: platformId }
     const allTools = activepiecesTools(templateMcp, log)
@@ -97,12 +92,7 @@ function registerPlatformTools({ server, mcp, platformId, userId, resolveProject
     const tools = allTools.filter(t => LOCKED_TOOL_NAMES.includes(t.title) || enabledControllable.has(t.title))
 
     tools.forEach((tool) => {
-        server.registerTool(tool.title, {
-            title: tool.title,
-            description: tool.description,
-            inputSchema: tool.inputSchema,
-            annotations: tool.annotations,
-        }, async (args: Record<string, unknown>) => {
+        server.registerTool(tool.title, buildToolConfig(tool), async (args: Record<string, unknown>) => {
             const selectedProjectId = mcpProjectSelection.get({ platformId, userId })
             if (isNil(selectedProjectId)) {
                 return {
@@ -185,7 +175,7 @@ function registerStaticTools({ server, mcp, projectId, permissionChecker, log }:
 
     tools.forEach((tool) => {
         const execute = permissionChecker.wrapExecute({ execute: tool.execute, permission: tool.permission, toolTitle: tool.title })
-        server.registerTool(tool.title, { title: tool.title, description: tool.description, inputSchema: tool.inputSchema, annotations: tool.annotations }, (args: Record<string, unknown>) => execute(args))
+        server.registerTool(tool.title, buildToolConfig(tool), (args: Record<string, unknown>) => execute(args))
     })
 }
 
@@ -233,6 +223,15 @@ function registerEmptyResourcesAndPrompts(server: McpServer): void {
         async () => ({ contents: [] }),
     )
     server.registerPrompt('_', {}, () => ({ messages: [] }))
+}
+
+function buildToolConfig(tool: McpToolDefinition): Record<string, unknown> {
+    return {
+        title: tool.title,
+        description: tool.description,
+        inputSchema: tool.inputSchema,
+        annotations: tool.annotations,
+    }
 }
 
 type RegisterToolsParams = {

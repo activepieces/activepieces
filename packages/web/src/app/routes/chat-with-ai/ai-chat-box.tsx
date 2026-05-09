@@ -5,7 +5,7 @@ import {
   ProjectType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Square, X } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -16,6 +16,7 @@ import {
 } from '@/components/prompt-kit/chat-container';
 import { ScrollButton } from '@/components/prompt-kit/scroll-button';
 import { Button } from '@/components/ui/button';
+import { ChatUIMessage, DynamicToolPart } from '@/features/chat/lib/chat-types';
 import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { useToolApproval } from '@/features/chat/lib/use-tool-approval';
 import { aiProviderQueries } from '@/features/platform-admin';
@@ -157,6 +158,14 @@ function ChatBoxContent({
     dismiss: dismissApproval,
   } = useToolApproval({ pendingApprovalRequest });
 
+  const allConversationToolParts = useMemo(
+    () =>
+      messages.flatMap((m: ChatUIMessage) =>
+        m.parts.filter((p): p is DynamicToolPart => p.type === 'dynamic-tool'),
+      ),
+    [messages],
+  );
+
   const isEmpty = messages.length === 0 && !isLoadingHistory && !isStreaming;
 
   if (isEmpty) {
@@ -217,6 +226,7 @@ function ChatBoxContent({
                 onRetry={handleRetry}
                 selectedProjectId={selectedProjectId}
                 onSelectProject={handleProjectChange}
+                allConversationToolParts={allConversationToolParts}
               />
             );
           })}
@@ -265,13 +275,20 @@ function ChatBoxContent({
         <div className="max-w-3xl mx-auto relative">
           {activeProject && (
             <div
-              className="absolute top-0 right-3 z-20 -translate-y-1/2 rounded-full px-2.5 py-0.5 text-[10px] font-medium"
+              className="absolute top-0 right-3 z-20 -translate-y-1/2 rounded-full px-2.5 py-0.5 text-[10px] font-medium flex items-center gap-1"
               style={{
                 backgroundColor: activeProject.color,
                 color: activeProject.textColor,
               }}
             >
               {activeProject.name}
+              <button
+                type="button"
+                className="ml-0.5 rounded-full hover:opacity-70 transition-opacity"
+                onClick={() => handleProjectChange(null)}
+              >
+                <X className="h-2.5 w-2.5" />
+              </button>
             </div>
           )}
           {hasActiveApproval ? (

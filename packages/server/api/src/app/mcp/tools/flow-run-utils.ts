@@ -1,4 +1,4 @@
-import { apId, FlowActionType, FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, FlowTriggerType, isFlowRunStateTerminal, isNil, RunEnvironment, SampleDataFileType, StepLocationRelativeToParent, StepOutputStatus, tryCatch, UpdateActionRequest } from '@activepieces/shared'
+import { apId, FlowActionType, FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, FlowTriggerType, isFlowRunStateTerminal, isNil, McpToolResult, RunEnvironment, SampleDataFileType, StepLocationRelativeToParent, StepOutputStatus, tryCatch, UpdateActionRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunService, isOutsideRetentionWindow } from '../../flows/flow-run/flow-run-service'
@@ -17,7 +17,7 @@ export async function executeFlowTest({ flowId, projectId, stepName, triggerTest
     stepName?: string
     triggerTestData?: Record<string, unknown>
     log: FastifyBaseLogger
-}): Promise<{ content: [{ type: 'text', text: string }] }> {
+}): Promise<McpToolResult> {
     let flow = await flowService(log).getOnePopulated({ id: flowId, projectId })
     if (isNil(flow)) {
         return { content: [{ type: 'text', text: '❌ Flow not found' }] }
@@ -111,7 +111,7 @@ export async function executeAdhocAction({
     input?: Record<string, unknown>
     connectionExternalId?: string
     log: FastifyBaseLogger
-}): Promise<{ content: [{ type: 'text', text: string }] }> {
+}): Promise<McpToolResult> {
     const authError = mcpUtils.validateAuth(connectionExternalId)
     if (authError) {
         return authError
