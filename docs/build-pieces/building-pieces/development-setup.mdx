@@ -43,8 +43,14 @@ Password: `12345678`
 
 When [`AP_PIECES_SYNC_MODE`](https://github.com/activepieces/activepieces/blob/main/.env.dev#L14) is set to `OFFICIAL_AUTO`, all pieces are automatically loaded from the cloud API and synced to the database on first launch. This process may take a few seconds to several minutes depending on your internet connection.
 
-For local development, pieces are loaded from your local `dist` folder instead of the database. To enable this, set the [`AP_DEV_PIECES`](https://github.com/activepieces/activepieces/blob/main/.env.dev#L5) environment variable with a comma-separated list of pieces. For example, to develop with `google-sheets` and `cal-com`:
+For local development, pieces are loaded from your local `dist` folder instead of the database. Set [`AP_DEV_PIECES`](https://github.com/activepieces/activepieces/blob/main/.env.dev#L5) inside `.env.dev` as a comma-separated list of pieces. For example, to develop with `google-sheets` and `cal-com`, edit `.env.dev`:
 
 ```sh
-AP_DEV_PIECES=google-sheets,cal-com npm start
+AP_DEV_PIECES=google-sheets,cal-com
 ```
+
+Then run `npm start`.
+
+<Note>
+  Set this variable inside `.env.dev`, not on the command line. Inline shell variables (e.g. `AP_DEV_PIECES=... npm start`) are not picked up by the dev servers.
+</Note>
