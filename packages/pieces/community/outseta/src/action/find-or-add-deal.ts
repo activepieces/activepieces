@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
 import { pipelineDropdown, pipelineStageDropdown } from '../common/dropdowns';
+import { customPropertiesProp, mergeCustomProperties } from '../common/custom-properties';
 
 export const findOrAddDealAction = createAction({
   name: 'find_or_add_deal',
@@ -41,6 +42,7 @@ export const findOrAddDealAction = createAction({
       required: false,
       description: 'Client identifier of the person to assign the deal to.',
     }),
+    customProperties: customPropertiesProp('Deal'),
   },
   async run(context) {
     if (!context.propsValue.pipelineUid) {
@@ -116,6 +118,8 @@ export const findOrAddDealAction = createAction({
         { Person: { Email: context.propsValue.contactEmail } },
       ];
     }
+
+    mergeCustomProperties(body, context.propsValue.customProperties);
 
     const newDeal = await client.post<any>('/api/v1/crm/deals', body);
     return { created: true, deal: newDeal };

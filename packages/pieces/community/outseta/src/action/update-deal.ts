@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
 import { pipelineDropdown, pipelineStageDropdown } from '../common/dropdowns';
+import { customPropertiesProp, mergeCustomProperties } from '../common/custom-properties';
 
 export const updateDealAction = createAction({
   name: 'update_deal',
@@ -45,6 +46,7 @@ export const updateDealAction = createAction({
         'UID of a person to add as a contact on this deal. Existing contacts are preserved.',
       required: false,
     }),
+    customProperties: customPropertiesProp('Deal'),
   },
   async run(context) {
     const client = new OutsetaClient({
@@ -104,6 +106,11 @@ export const updateDealAction = createAction({
         ];
         changed = true;
       }
+    }
+
+    if (context.propsValue.customProperties) {
+      mergeCustomProperties(deal, context.propsValue.customProperties);
+      changed = true;
     }
 
     if (!changed) {

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
+import { customPropertiesProp, mergeCustomProperties } from '../common/custom-properties';
 
 export const createAccountAction = createAction({
   name: 'create_account',
@@ -61,6 +62,7 @@ export const createAccountAction = createAction({
       displayName: 'Country',
       required: false,
     }),
+    customProperties: customPropertiesProp('Account'),
   },
   async run(context) {
     const client = new OutsetaClient({
@@ -87,6 +89,8 @@ export const createAccountAction = createAction({
       if (context.propsValue.country) address['Country'] = context.propsValue.country;
       body['BillingAddress'] = address;
     }
+
+    mergeCustomProperties(body, context.propsValue.customProperties);
 
     return client.post<unknown>('/api/v1/crm/accounts', body);
   },

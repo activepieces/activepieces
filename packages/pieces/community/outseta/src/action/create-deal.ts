@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
 import { pipelineDropdown, pipelineStageDropdown } from '../common/dropdowns';
+import { customPropertiesProp, mergeCustomProperties } from '../common/custom-properties';
 
 export const createDealAction = createAction({
   name: 'create_deal',
@@ -31,6 +32,7 @@ export const createDealAction = createAction({
       required: false,
       description: 'UID of the account to associate with this deal.',
     }),
+    customProperties: customPropertiesProp('Deal'),
   },
   async run(context) {
     const client = new OutsetaClient({
@@ -48,6 +50,8 @@ export const createDealAction = createAction({
     if (context.propsValue.contactEmail) {
       body['DealPeople'] = [{ Person: { Email: context.propsValue.contactEmail } }];
     }
+
+    mergeCustomProperties(body, context.propsValue.customProperties);
 
     return client.post<unknown>('/api/v1/crm/deals', body);
   },
