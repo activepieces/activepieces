@@ -4701,11 +4701,11 @@
     },
     "packages/pieces/community/mistral-ai": {
       "name": "@activepieces/piece-mistral-ai",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
-        "@activepieces/pieces-common": "workspace:*",
-        "@activepieces/pieces-framework": "workspace:*",
-        "@activepieces/shared": "workspace:*",
+        "@activepieces/pieces-common": "0.12.1",
+        "@activepieces/pieces-framework": "0.26.2",
+        "@activepieces/shared": "0.67.1",
         "form-data": "4.0.4",
         "tslib": "2.6.2",
       },
@@ -15578,6 +15578,12 @@
 
     "@activepieces/piece-http-oauth2/https-proxy-agent": ["https-proxy-agent@7.0.4", "", { "dependencies": { "agent-base": "^7.0.2", "debug": "4" } }, "sha512-wlwpilI7YdjSkWaQ/7omYBMTliDcmCN8OLihO6I9B86g06lMyAoqgoDpV0XqoaPOKj+0DIdAvnsWfyAAhmimcg=="],
 
+    "@activepieces/piece-mistral-ai/@activepieces/pieces-common": ["@activepieces/pieces-common@0.12.1", "", { "dependencies": { "@activepieces/pieces-framework": "0.26.2", "@activepieces/shared": "0.53.2", "axios": "1.13.5", "axios-retry": "4.4.1", "form-data": "4.0.4", "mime-types": "2.1.35", "request-filtering-agent": "2.0.1", "tslib": "2.6.2", "zod": "4.3.6" } }, "sha512-2ptt9o8igQxHMuNWBkrX8eInkFDbeQLFg4wO1FlnC1b67jxdGtFjXZQ9zeMPB9PgPWxNUow6koAn0ttL3LPZgg=="],
+
+    "@activepieces/piece-mistral-ai/@activepieces/pieces-framework": ["@activepieces/pieces-framework@0.26.2", "", { "dependencies": { "@activepieces/shared": "0.53.2", "ai": "^6.0.0", "semver": "7.6.0", "tslib": "2.6.2", "zod": "4.3.6" } }, "sha512-1u835arkO4TKGKfKuz9jeT7Ua1exCeSFCR0+stzB5fqQgtqWgACRFKBNpfPdKcTZK4zTuVeungMe0Hvayq6FqA=="],
+
+    "@activepieces/piece-mistral-ai/@activepieces/shared": ["@activepieces/shared@0.67.1", "", { "dependencies": { "dayjs": "1.11.9", "deepmerge-ts": "7.1.0", "ipaddr.js": "2.3.0", "nanoid": "3.3.8", "semver": "7.6.0", "socket.io-client": "4.8.1", "tslib": "2.6.2", "zod": "4.3.6" } }, "sha512-2CBOmqkL3niZoZj4VsbfBO6aVFbwZyBx4/1oGkxJ2SF7slebpqCgwxgvVSexaNNgS4vMMSfxMxfzvEbi1iptDQ=="],
+
     "@activepieces/piece-pdf/@activepieces/pieces-framework": ["@activepieces/pieces-framework@0.26.2", "", { "dependencies": { "@activepieces/shared": "0.53.2", "ai": "^6.0.0", "semver": "7.6.0", "tslib": "2.6.2", "zod": "4.3.6" } }, "sha512-1u835arkO4TKGKfKuz9jeT7Ua1exCeSFCR0+stzB5fqQgtqWgACRFKBNpfPdKcTZK4zTuVeungMe0Hvayq6FqA=="],
 
     "@activepieces/piece-pdf/@activepieces/shared": ["@activepieces/shared@0.67.1", "", { "dependencies": { "dayjs": "1.11.9", "deepmerge-ts": "7.1.0", "ipaddr.js": "2.3.0", "nanoid": "3.3.8", "semver": "7.6.0", "socket.io-client": "4.8.1", "tslib": "2.6.2", "zod": "4.3.6" } }, "sha512-2CBOmqkL3niZoZj4VsbfBO6aVFbwZyBx4/1oGkxJ2SF7slebpqCgwxgvVSexaNNgS4vMMSfxMxfzvEbi1iptDQ=="],
@@ -18176,6 +18182,14 @@
 
     "@activepieces/piece-google-vertexai/google-auth-library/jws": ["jws@4.0.1", "", { "dependencies": { "jwa": "^2.0.1", "safe-buffer": "^5.0.1" } }, "sha512-EKI/M/yqPncGUUh44xz0PxSidXFr/+r0pA70+gIYhjv+et7yxM+s29Y+VGDkovRofQem0fs7Uvf4+YmAdyRduA=="],
 
+    "@activepieces/piece-mistral-ai/@activepieces/pieces-common/@activepieces/shared": ["@activepieces/shared@0.53.2", "", { "dependencies": { "dayjs": "1.11.9", "deepmerge-ts": "7.1.0", "nanoid": "3.3.8", "semver": "7.6.0", "socket.io-client": "4.8.1", "tslib": "2.6.2", "zod": "4.3.6" } }, "sha512-Bt+dY24h0bmdghemB7RmBvS9ve0HwvXUEpH3gHvAJY7iY75dmpkZnX03w0DuIltFe/ztEWAhY9oTEVdDif4x4g=="],
+
+    "@activepieces/piece-mistral-ai/@activepieces/pieces-common/axios": ["axios@1.13.5", "", { "dependencies": { "follow-redirects": "^1.15.11", "form-data": "^4.0.5", "proxy-from-env": "^1.1.0" } }, "sha512-cz4ur7Vb0xS4/KUN0tPWe44eqxrIu31me+fbang3ijiNscE129POzipJJA6zniq2C/Z6sJCjMimjS8Lc/GAs8Q=="],
+
+    "@activepieces/piece-mistral-ai/@activepieces/pieces-common/request-filtering-agent": ["request-filtering-agent@2.0.1", "", { "dependencies": { "ipaddr.js": "^2.1.0" } }, "sha512-QvD3qwthEt9J+2hCdQ3wTn3Z/ZsgyiMECjY9yVJ0F8FtnGfNQG+dRz65eKayYRHIRQ6OGjH8Zuqr1lw7G6pz1Q=="],
+
+    "@activepieces/piece-mistral-ai/@activepieces/pieces-framework/@activepieces/shared": ["@activepieces/shared@0.53.2", "", { "dependencies": { "dayjs": "1.11.9", "deepmerge-ts": "7.1.0", "nanoid": "3.3.8", "semver": "7.6.0", "socket.io-client": "4.8.1", "tslib": "2.6.2", "zod": "4.3.6" } }, "sha512-Bt+dY24h0bmdghemB7RmBvS9ve0HwvXUEpH3gHvAJY7iY75dmpkZnX03w0DuIltFe/ztEWAhY9oTEVdDif4x4g=="],
+
     "@activepieces/piece-pdf/@activepieces/pieces-framework/@activepieces/shared": ["@activepieces/shared@0.53.2", "", { "dependencies": { "dayjs": "1.11.9", "deepmerge-ts": "7.1.0", "nanoid": "3.3.8", "semver": "7.6.0", "socket.io-client": "4.8.1", "tslib": "2.6.2", "zod": "4.3.6" } }, "sha512-Bt+dY24h0bmdghemB7RmBvS9ve0HwvXUEpH3gHvAJY7iY75dmpkZnX03w0DuIltFe/ztEWAhY9oTEVdDif4x4g=="],
 
     "@activepieces/piece-roe-ai/@modelcontextprotocol/sdk/eventsource-parser": ["eventsource-parser@3.0.8", "", {}, "sha512-70QWGkr4snxr0OXLRWsFLeRBIRPuQOvt4s8QYjmUlmlkyTZkRqS7EDVRZtzU3TiyDbXSzaOeF0XUKy8PchzukQ=="],
@@ -19529,6 +19543,10 @@
     "@activepieces/piece-google-vertexai/@activepieces/pieces-common/axios/proxy-from-env": ["proxy-from-env@1.1.0", "", {}, "sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg=="],
 
     "@activepieces/piece-google-vertexai/@google/genai/protobufjs/long": ["long@5.3.2", "", {}, "sha512-mNAgZ1GmyNhD7AuqnTG3/VQ26o760+ZYBPKjPvugO8+nLbYfX6TVpJPseBvopbdY+qpZ/lKUnmEc1LeZYS3QAA=="],
+
+    "@activepieces/piece-mistral-ai/@activepieces/pieces-common/axios/form-data": ["form-data@4.0.5", "", { "dependencies": { "asynckit": "^0.4.0", "combined-stream": "^1.0.8", "es-set-tostringtag": "^2.1.0", "hasown": "^2.0.2", "mime-types": "^2.1.12" } }, "sha512-8RipRLol37bNs2bhoV67fiTEvdTrbMUYcFTiy3+wuuOnUog2QBHCZWXDRijWQfAkhBj2Uf5UnVaiWwA5vdd82w=="],
+
+    "@activepieces/piece-mistral-ai/@activepieces/pieces-common/axios/proxy-from-env": ["proxy-from-env@1.1.0", "", {}, "sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg=="],
 
     "@activepieces/piece-google-vertexai/google-auth-library/gaxios/node-fetch": ["node-fetch@3.3.2", "", { "dependencies": { "data-uri-to-buffer": "^4.0.0", "fetch-blob": "^3.1.4", "formdata-polyfill": "^4.0.10" } }, "sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA=="],
 
