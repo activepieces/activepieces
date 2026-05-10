@@ -3,7 +3,6 @@ import {
     ApplicationEventName,
     PieceInstallFailure,
     PrincipalType,
-    ProjectReplaceApplied,
     ProjectReplacePreflightError,
     ProjectReplaceRequest,
     ProjectReplaceResponse,
@@ -28,47 +27,17 @@ export const projectReplaceController: FastifyPluginAsyncZod = async (app) => {
 
         switch (outcome.kind) {
             case 'LOCKED': {
-                applicationEvents(req.log).sendUserEvent(req, {
-                    action: ApplicationEventName.PROJECT_REPLACED,
-                    data: {
-                        sourceActivepiecesVersion: req.body.sourceActivepiecesVersion,
-                        applied: emptyApplied(),
-                        failedCount: 0,
-                        outcome: 'LOCKED',
-                        durationMs: outcome.durationMs,
-                    },
-                })
                 return reply.status(StatusCodes.CONFLICT).send({
                     error: 'REPLACE_IN_PROGRESS',
                     retryAfter: 5,
                 })
             }
             case 'PREFLIGHT_FAILED': {
-                applicationEvents(req.log).sendUserEvent(req, {
-                    action: ApplicationEventName.PROJECT_REPLACED,
-                    data: {
-                        sourceActivepiecesVersion: req.body.sourceActivepiecesVersion,
-                        applied: emptyApplied(),
-                        failedCount: outcome.errors.length,
-                        outcome: 'PREFLIGHT_FAILED',
-                        durationMs: outcome.durationMs,
-                    },
-                })
                 return reply.status(StatusCodes.UNPROCESSABLE_ENTITY).send({
                     errors: outcome.errors,
                 })
             }
             case 'INSTALL_FAILED': {
-                applicationEvents(req.log).sendUserEvent(req, {
-                    action: ApplicationEventName.PROJECT_REPLACED,
-                    data: {
-                        sourceActivepiecesVersion: req.body.sourceActivepiecesVersion,
-                        applied: emptyApplied(),
-                        failedCount: outcome.failures.length,
-                        outcome: 'INSTALL_FAILED',
-                        durationMs: outcome.durationMs,
-                    },
-                })
                 return reply.status(StatusCodes.BAD_GATEWAY).send({
                     failures: outcome.failures,
                 })
@@ -90,26 +59,6 @@ export const projectReplaceController: FastifyPluginAsyncZod = async (app) => {
             }
         }
     })
-}
-
-function emptyApplied(): ProjectReplaceApplied {
-    return {
-        flowsCreated: 0,
-        flowsUpdated: 0,
-        flowsDeleted: 0,
-        flowsUnchanged: 0,
-        tablesCreated: 0,
-        tablesUpdated: 0,
-        tablesDeleted: 0,
-        tablesUnchanged: 0,
-        foldersCreated: 0,
-        foldersUpdated: 0,
-        foldersDeleted: 0,
-        foldersUnchanged: 0,
-        connectionsCreated: 0,
-        connectionsUpdated: 0,
-        connectionsUnchanged: 0,
-    }
 }
 
 const ReplaceProjectRequest = {

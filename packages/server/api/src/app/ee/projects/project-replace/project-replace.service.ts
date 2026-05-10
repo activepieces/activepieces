@@ -44,10 +44,10 @@ import { fieldService } from '../../../tables/field/field.service'
 import { tableService } from '../../../tables/table/table.service'
 import { connectionDiffService } from '../project-release/project-state/diff/connection-diff.service'
 import { flowDiffService } from '../project-release/project-state/diff/flow-diff.service'
+import { folderDiffService } from '../project-release/project-state/diff/folder-diff.service'
 import { tableDiffService } from '../project-release/project-state/diff/table-diff.service'
 import { projectStateHelper } from '../project-release/project-state/project-state-helper'
 import { projectStateService } from '../project-release/project-state/project-state.service'
-import { folderDiffService } from './folder-diff.service'
 
 export const projectReplaceService = {
     async replace({ projectId, platformId, request, log }: ReplaceParams): Promise<ReplaceOutcome> {
@@ -239,12 +239,15 @@ async function applyReplace({ projectId, platformId, request, log }: ApplyParams
         folders: request.folders,
         connections: request.connections,
     }
-    const currentState = await projectStateService(log).getProjectState(projectId, log)
-    const currentFolders = await loadCurrentFolderStates({ projectId, log })
+    const baseCurrentState = await projectStateService(log).getProjectState(projectId, log)
+    const currentState: ProjectState = {
+        ...baseCurrentState,
+        folders: await loadCurrentFolderStates({ projectId, log }),
+    }
 
     const flowOps = await flowDiffService.diff({ newState, currentState })
     const tableOps = tableDiffService.diff({ newState, currentState })
-    const folderOps = folderDiffService.diff({ newFolders: request.folders, currentFolders })
+    const folderOps = folderDiffService.diff({ newState, currentState })
     const connectionOps = connectionDiffService.diff({ newState, currentState })
 
     const failed: ProjectReplaceItemFailure[] = []

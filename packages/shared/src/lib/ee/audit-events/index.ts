@@ -295,7 +295,7 @@ export const ProjectReplacedEvent = z.object({
             connectionsUnchanged: z.number(),
         }),
         failedCount: z.number(),
-        outcome: z.enum(['SUCCESS', 'PARTIAL_FAILURE', 'PREFLIGHT_FAILED', 'INSTALL_FAILED', 'ABORTED', 'LOCKED']),
+        outcome: z.enum(['SUCCESS', 'PARTIAL_FAILURE']),
         durationMs: z.number(),
     }),
 })

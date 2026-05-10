@@ -1,8 +1,11 @@
-import { FolderOperation, FolderOperationType, FolderState, isNil } from '@activepieces/shared'
+import { FolderOperation, FolderOperationType, FolderState, isNil, ProjectState } from '@activepieces/shared'
 import deepEqual from 'deep-equal'
 
 export const folderDiffService = {
-    diff({ newFolders, currentFolders }: DiffParams): FolderOperation[] {
+    diff({ newState, currentState }: DiffParams): FolderOperation[] {
+        const newFolders = newState.folders ?? []
+        const currentFolders = currentState.folders ?? []
+
         const creates: FolderOperation[] = newFolders
             .filter((folder) => isNil(currentFolders.find((c) => c.externalId === folder.externalId)))
             .map((folder) => ({ type: FolderOperationType.CREATE_FOLDER, folderState: folder }))
@@ -42,6 +45,6 @@ type FolderFingerprint = {
 }
 
 type DiffParams = {
-    newFolders: FolderState[]
-    currentFolders: FolderState[]
+    newState: ProjectState
+    currentState: ProjectState
 }

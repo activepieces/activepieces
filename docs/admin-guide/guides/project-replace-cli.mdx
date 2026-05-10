@@ -38,9 +38,9 @@ The `activepieces` CLI is shipped with each Activepieces release; pin the versio
 ## Command
 
 ```bash
-# tokens via env vars (recommended for CI — keeps secrets out of process args and shell history)
-export AP_SOURCE_TOKEN="$STAGING_API_TOKEN"
-export AP_DEST_TOKEN="$PROD_API_TOKEN"
+# API keys via env vars (recommended for CI — keeps secrets out of process args and shell history)
+export AP_SOURCE_API_KEY="$STAGING_API_KEY"
+export AP_DEST_API_KEY="$PROD_API_KEY"
 
 ap project replace \
   --source-url    https://staging.activepieces.com \
@@ -55,15 +55,15 @@ ap project replace \
 | Flag | Required | Purpose |
 | --- | --- | --- |
 | `--source-url` | yes | Base URL of the source instance (no trailing slash needed). |
-| `--source-token` | flag *or* env | Platform API token for the source. Falls back to `AP_SOURCE_TOKEN`. |
+| `--source-api-key` | flag *or* env | Platform API key for the source. Falls back to `AP_SOURCE_API_KEY`. |
 | `--source-project` | yes | Project id on the source instance. |
 | `--dest-url` | yes | Base URL of the destination instance. |
-| `--dest-token` | flag *or* env | Platform API token for the destination. Falls back to `AP_DEST_TOKEN`. |
+| `--dest-api-key` | flag *or* env | Platform API key for the destination. Falls back to `AP_DEST_API_KEY`. |
 | `--dest-project` | yes | Project id on the destination instance. |
 | `--json` | no | Emit machine-readable JSON instead of a human summary. |
 
 <Warning>
-**Don't pass tokens via `--source-token` / `--dest-token` flags in CI or production scripts.** Process arguments are visible to other users on the host (`ps aux`), get captured in CI log output, and persist in shell history. Use `AP_SOURCE_TOKEN` / `AP_DEST_TOKEN` environment variables instead — they don't show up in any of those places.
+**Don't pass API keys via `--source-api-key` / `--dest-api-key` flags in CI or production scripts.** Process arguments are visible to other users on the host (`ps aux`), get captured in CI log output, and persist in shell history. Use `AP_SOURCE_API_KEY` / `AP_DEST_API_KEY` environment variables instead — they don't show up in any of those places.
 </Warning>
 
 ## Exit codes
@@ -74,7 +74,7 @@ ap project replace \
 | `1` | Apply succeeded but at least one item failed. Inspect `failed[]` in the response. |
 | `2` | Server-side preflight failed (`422`). No writes occurred. |
 | `3` | Server abort: piece install failed (`502`), generic 5xx, **or** another replace was already in progress on the destination project (`409`). |
-| `4` | Local CLI / transport error — bad URL, unreachable host, invalid token. |
+| `4` | Local CLI / transport error — bad URL, unreachable host, invalid API key. |
 
 ## What happens when you run it
 
@@ -86,7 +86,7 @@ ap project replace \
     - For every source connection: if the destination already has one with the same `externalId`, its `pieceName` must match.
 5. **Install phase** — for each entry in `requiredPieces` not already on dest at the exact pinned version, the server installs it from npm (`packageType: REGISTRY`, scope: platform). All installs are attempted; if any fail, the response aborts with `502` listing every failure. **No other writes have happened at this point** — folders, tables, flows, and connections are still untouched.
 6. **Apply phase** — connections, then folders, then tables, then flows are created/updated. Deletes run in reverse order. Each item runs in its own try/catch; per-item failures are collected, systemic 5xx errors abort the run.
-6. **Audit event** `project.replaced` is emitted on every attempt — success, partial failure, preflight failure, lock contention, or abort.
+6. **Audit event** `project.replaced` is emitted only when the apply phase ran — on `SUCCESS` or `PARTIAL_FAILURE`. Rejected attempts (preflight failure, install failure, lock contention) are not audited.
 
 ## Output
 
@@ -207,8 +207,8 @@ jobs:
             --dest-project "${{ vars.PROD_PROJECT_ID }}" \
             --json
         env:
-          AP_SOURCE_TOKEN: ${{ secrets.STAGING_API_TOKEN }}
-          AP_DEST_TOKEN: ${{ secrets.PROD_API_TOKEN }}
+          AP_SOURCE_API_KEY: ${{ secrets.STAGING_API_KEY }}
+          AP_DEST_API_KEY: ${{ secrets.PROD_API_KEY }}
 ```
 
 A non-zero exit code fails the job — preflight errors, server errors, or transport errors all surface naturally to GitHub Actions without extra wiring.

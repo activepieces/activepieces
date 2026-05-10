@@ -26,10 +26,10 @@ const EXIT_TRANSPORT = 4;
 export const replaceProjectCommand = new Command('replace')
     .description(REPLACE_DOC)
     .requiredOption('--source-url <url>', 'Source Activepieces base URL')
-    .option('--source-token <token>', 'Source platform API token (or set AP_SOURCE_TOKEN env var; env recommended for CI)')
+    .option('--source-api-key <key>', 'Source platform API key (or set AP_SOURCE_API_KEY env var; env recommended for CI)')
     .requiredOption('--source-project <projectId>', 'Source project id')
     .requiredOption('--dest-url <url>', 'Destination Activepieces base URL')
-    .option('--dest-token <token>', 'Destination platform API token (or set AP_DEST_TOKEN env var; env recommended for CI)')
+    .option('--dest-api-key <key>', 'Destination platform API key (or set AP_DEST_API_KEY env var; env recommended for CI)')
     .requiredOption('--dest-project <projectId>', 'Destination project id')
     .option('--json', 'Emit machine-readable JSON output')
     .action(async (opts) => {
@@ -56,10 +56,10 @@ export const replaceProjectCommand = new Command('replace')
 function normalizeOptions(opts: Record<string, string | boolean | undefined>): ReplaceConfig {
     return {
         sourceUrl: stripTrailingSlash(stringOpt(opts.sourceUrl, 'source-url')),
-        sourceToken: tokenOpt(opts.sourceToken, 'AP_SOURCE_TOKEN', 'source-token'),
+        sourceApiKey: apiKeyOpt(opts.sourceApiKey, 'AP_SOURCE_API_KEY', 'source-api-key'),
         sourceProjectId: stringOpt(opts.sourceProject, 'source-project'),
         destUrl: stripTrailingSlash(stringOpt(opts.destUrl, 'dest-url')),
-        destToken: tokenOpt(opts.destToken, 'AP_DEST_TOKEN', 'dest-token'),
+        destApiKey: apiKeyOpt(opts.destApiKey, 'AP_DEST_API_KEY', 'dest-api-key'),
         destProjectId: stringOpt(opts.destProject, 'dest-project'),
         json: opts.json === true,
     };
@@ -72,7 +72,7 @@ function stringOpt(value: string | boolean | undefined, name: string): string {
     return value;
 }
 
-function tokenOpt(value: string | boolean | undefined, envName: string, flagName: string): string {
+function apiKeyOpt(value: string | boolean | undefined, envName: string, flagName: string): string {
     if (typeof value === 'string' && value.length > 0) {
         return value;
     }
@@ -80,7 +80,7 @@ function tokenOpt(value: string | boolean | undefined, envName: string, flagName
     if (typeof fromEnv === 'string' && fromEnv.length > 0) {
         return fromEnv;
     }
-    throw new Error(`Missing API token: pass --${flagName} <token> or set ${envName} environment variable. ${envName} is recommended for CI to keep tokens out of process arguments and shell history.`);
+    throw new Error(`Missing API key: pass --${flagName} <key> or set ${envName} environment variable. ${envName} is recommended for CI to keep secrets out of process arguments and shell history.`);
 }
 
 function stripTrailingSlash(url: string): string {
@@ -90,7 +90,7 @@ function stripTrailingSlash(url: string): string {
 async function fetchSourceState(config: ReplaceConfig): Promise<SourceState> {
     const client = axios.create({
         baseURL: config.sourceUrl,
-        headers: { Authorization: `Bearer ${config.sourceToken}` },
+        headers: { Authorization: `Bearer ${config.sourceApiKey}` },
     });
 
     const [versionRes, flowsPage, foldersPage, tablesPage, connectionsPage] = await Promise.all([
@@ -194,7 +194,7 @@ function collectRequiredPieces(flows: FlowState[]): RequiredPiece[] {
 async function postReplace(config: ReplaceConfig, request: ProjectReplaceRequest): Promise<ReplaceResult> {
     const client = axios.create({
         baseURL: config.destUrl,
-        headers: { Authorization: `Bearer ${config.destToken}` },
+        headers: { Authorization: `Bearer ${config.destApiKey}` },
         validateStatus: () => true,
     });
     const response = await client.post<unknown>(
@@ -324,10 +324,10 @@ function handleFailure(config: ReplaceConfig, e: unknown): void {
 
 type ReplaceConfig = {
     sourceUrl: string;
-    sourceToken: string;
+    sourceApiKey: string;
     sourceProjectId: string;
     destUrl: string;
-    destToken: string;
+    destApiKey: string;
     destProjectId: string;
     json: boolean;
 };
