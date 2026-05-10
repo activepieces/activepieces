@@ -20,15 +20,6 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
             flowId: flow.id,
             versionId: undefined,
         })
-        const existingPending = await flowApprovalRequestRepo().findOne({
-            where: { flowId: flow.id, state: FlowApprovalRequestState.PENDING },
-        })
-        if (!isNil(existingPending)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: { message: 'A pending approval request already exists for this flow' },
-            })
-        }
         return transaction(async (entityManager) => {
             const lockedVersion = draft.state === FlowVersionState.LOCKED
                 ? draft
@@ -40,21 +31,35 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
                     userOperation: { type: FlowOperationType.LOCK_FLOW, request: {} },
                     entityManager,
                 })
+            const newId = apId()
             const now = new Date().toISOString()
-            const created = await flowApprovalRequestRepo(entityManager).save({
-                id: apId(),
-                flowId: flow.id,
-                flowVersionId: lockedVersion.id,
-                projectId,
-                platformId,
-                submitterId: userId ?? null,
-                submittedAt: now,
-                approverId: null,
-                decidedAt: null,
-                state: FlowApprovalRequestState.PENDING,
-                requestedStatus,
-                rejectionReason: null,
-            })
+            await flowApprovalRequestRepo(entityManager)
+                .createQueryBuilder()
+                .insert()
+                .into(FlowApprovalRequestEntity)
+                .values({
+                    id: newId,
+                    flowId: flow.id,
+                    flowVersionId: lockedVersion.id,
+                    projectId,
+                    platformId,
+                    submitterId: userId ?? null,
+                    submittedAt: now,
+                    approverId: null,
+                    decidedAt: null,
+                    state: FlowApprovalRequestState.PENDING,
+                    requestedStatus,
+                    rejectionReason: null,
+                })
+                .orIgnore()
+                .execute()
+            const created = await flowApprovalRequestRepo(entityManager).findOneByOrFail({ flowVersionId: lockedVersion.id })
+            if (created.id !== newId) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: { message: 'A pending approval request already exists for this flow' },
+                })
+            }
             applicationEvents(log).sendUserEvent({ platformId, userId: userId ?? undefined, projectId }, {
                 action: ApplicationEventName.FLOW_APPROVAL_REQUESTED,
                 data: {
