@@ -106,8 +106,17 @@ export const FlowStepInputOutput = () => {
       : 'success';
 
   const activeData =
-    activeTab === 'input' ? selectedStepOutput.input : parsedOutput;
-  const activeLabel = activeTab === 'input' ? t('Input') : t('Output');
+    activeTab === 'input'
+      ? selectedStepOutput.input
+      : activeTab === 'timeline'
+      ? selectedStepOutput.output
+      : parsedOutput;
+  const activeLabel =
+    activeTab === 'input'
+      ? t('Input')
+      : activeTab === 'timeline'
+      ? t('Timeline')
+      : t('Output');
 
   return (
     <div className="h-full flex flex-col">

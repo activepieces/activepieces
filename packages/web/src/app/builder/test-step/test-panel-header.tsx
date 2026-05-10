@@ -94,7 +94,7 @@ const TestPanelHeader = ({
 
   return (
     <TooltipProvider>
-      <div className="flex items-center justify-between px-3 py-2 gap-2">
+      <div className="sticky top-0 z-10 flex items-center justify-between px-3 py-2 gap-2 bg-background">
         <div className="flex items-center gap-2 min-w-0">
           <TestPanelStatusBadge status={status} />
           {lastTestDate && status !== 'testing' && (

@@ -1,4 +1,5 @@
 import { FlowActionType, FlowTriggerType } from '@activepieces/shared';
+import { GripVerticalIcon } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -8,7 +9,7 @@ import { FlowStepInputOutput } from '../run-details/flow-step-input-output';
 
 import { TestStepContainer } from '.';
 
-const DRAWER_DEFAULT_HEIGHT_PCT = 65;
+const DRAWER_DEFAULT_HEIGHT_PCT = 33;
 const DRAWER_MIN_HEIGHT_PCT = 25;
 const DRAWER_MAX_HEIGHT_PCT = 95;
 const DRAG_THRESHOLD_PX = 4;
@@ -118,7 +119,7 @@ const TestPanelHost = ({
   return (
     <div
       ref={drawerRef}
-      className="absolute inset-x-0 bottom-0 z-20 bg-background border-t border-border shadow-2xl rounded-t-lg flex flex-col"
+      className="bg-background border-t border-border shadow-2xl rounded-t-lg flex flex-col shrink-0"
       style={{ height: `${drawerHeightPct}%` }}
       role="dialog"
     >
@@ -133,9 +134,11 @@ const TestPanelHost = ({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerCancel}
-        className="flex items-center justify-center px-3 py-2 shrink-0 hover:bg-muted/50 transition-colors cursor-row-resize touch-none select-none"
+        className="relative flex h-2 w-full items-center justify-center shrink-0 cursor-row-resize touch-none select-none outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1"
       >
-        <div className="h-1 w-12 rounded-full bg-muted" />
+        <div className="flex h-3 w-4 items-center justify-center rounded-xs border bg-border">
+          <GripVerticalIcon className="size-2.5 rotate-90 hover:fill-primary" />
+        </div>
       </div>
       <div className="flex-1 min-h-0 overflow-hidden">{body}</div>
     </div>
