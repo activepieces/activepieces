@@ -309,11 +309,11 @@ const StepSettingsContainer = () => {
               orientation="horizontal"
               className="flex-1 min-h-0"
             >
-              <ResizablePanel defaultSize={50} minSize={40} className="min-w-0">
+              <ResizablePanel defaultSize="50%" minSize="40%" className="min-w-0">
                 {settingsForm}
               </ResizablePanel>
               <ResizableHandle withHandle />
-              <ResizablePanel defaultSize={50} minSize={40} className="min-w-0">
+              <ResizablePanel defaultSize="50%" minSize="40%" className="min-w-0">
                 <TestPanelHost
                   mode="split"
                   flowId={flowVersion.flowId}
