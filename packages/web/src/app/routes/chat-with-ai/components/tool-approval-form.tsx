@@ -11,20 +11,17 @@ import { cn } from '@/lib/utils';
 
 const APPROVAL_OPTIONS = [
   { value: 'approve', labelKey: 'Yes, proceed' },
-  { value: 'approve-always', labelKey: "Yes, and don't ask me again" },
   { value: 'reject', labelKey: 'No, cancel' },
 ] as const;
 
 export function ToolApprovalForm({
   displayName,
   onApprove,
-  onApproveAndRemember,
   onReject,
   onDismiss,
 }: {
   displayName: string;
   onApprove: () => void;
-  onApproveAndRemember: () => void;
   onReject: () => void;
   onDismiss: () => void;
 }) {
@@ -33,7 +30,6 @@ export function ToolApprovalForm({
 
   function handleSelect(value: string) {
     if (value === 'approve') onApprove();
-    else if (value === 'approve-always') onApproveAndRemember();
     else if (value === 'reject') onReject();
   }
 

@@ -106,17 +106,19 @@ describe('Event Destination Trigger', () => {
         })
         await db.save('event_destination', destination)
 
+        const event = buildFlowEvent(ApplicationEventName.FLOW_CREATED, { platformId: ctx.platform.id })
         await eventDestinationService(app.log).trigger({
-            platformId: ctx.platform.id,
-            event: buildFlowEvent(ApplicationEventName.FLOW_CREATED, { platformId: ctx.platform.id }),
+            event,
         })
 
         expect(addSpy).toHaveBeenCalledTimes(1)
         expect(addSpy).toHaveBeenCalledWith(
             expect.objectContaining({
                 data: expect.objectContaining({
+                    platformId: ctx.platform.id,
                     webhookUrl: destination.url,
                     jobType: WorkerJobType.EVENT_DESTINATION,
+                    payload: event,
                 }),
             }),
         )
@@ -132,7 +134,6 @@ describe('Event Destination Trigger', () => {
         await db.save('event_destination', destination)
 
         await eventDestinationService(app.log).trigger({
-            platformId: ctx.platform.id,
             event: buildFlowEvent(ApplicationEventName.FLOW_DELETED, { platformId: ctx.platform.id }),
         })
 
@@ -150,7 +151,6 @@ describe('Event Destination Trigger', () => {
         await db.save('event_destination', destination)
 
         await eventDestinationService(app.log).trigger({
-            platformId: ctx2.platform.id,
             event: buildFlowEvent(ApplicationEventName.FLOW_CREATED, { platformId: ctx2.platform.id }),
         })
 
@@ -173,15 +173,17 @@ describe('Event Destination Trigger', () => {
         })
         await db.save('event_destination', [dest1, dest2])
 
+        const event = buildFlowEvent(ApplicationEventName.FLOW_CREATED, { platformId: ctx.platform.id })
         await eventDestinationService(app.log).trigger({
-            platformId: ctx.platform.id,
-            event: buildFlowEvent(ApplicationEventName.FLOW_CREATED, { platformId: ctx.platform.id }),
+            event,
         })
 
         expect(addSpy).toHaveBeenCalledTimes(2)
-        const urls = addSpy.mock.calls.map((call: unknown[]) => (call[0] as Record<string, Record<string, string>>).data.webhookUrl)
-        expect(urls).toContain('https://example.com/hook1')
-        expect(urls).toContain('https://example.com/hook2')
+        const queuedJobs = addSpy.mock.calls.map((call: unknown[]) => (call[0] as { data: { webhookUrl: string, payload: unknown } }).data)
+        expect(queuedJobs.map(j => j.webhookUrl)).toEqual(expect.arrayContaining(['https://example.com/hook1', 'https://example.com/hook2']))
+        for (const job of queuedJobs) {
+            expect(job.payload).toEqual(event)
+        }
     })
 
     it('should match destination when events array has multiple entries', async () => {
@@ -193,17 +195,19 @@ describe('Event Destination Trigger', () => {
         })
         await db.save('event_destination', destination)
 
+        const event = buildFlowEvent(ApplicationEventName.FLOW_DELETED, { platformId: ctx.platform.id })
         await eventDestinationService(app.log).trigger({
-            platformId: ctx.platform.id,
-            event: buildFlowEvent(ApplicationEventName.FLOW_DELETED, { platformId: ctx.platform.id }),
+            event,
         })
 
         expect(addSpy).toHaveBeenCalledTimes(1)
         expect(addSpy).toHaveBeenCalledWith(
             expect.objectContaining({
                 data: expect.objectContaining({
+                    platformId: ctx.platform.id,
                     webhookUrl: destination.url,
                     jobType: WorkerJobType.EVENT_DESTINATION,
+                    payload: event,
                 }),
             }),
         )
@@ -225,7 +229,6 @@ describe('Event Destination Trigger', () => {
         await db.save('event_destination', destination)
 
         await eventDestinationService(app.log).trigger({
-            platformId: ctx.platform.id,
             event: buildFlowRunEvent({ platformId: ctx.platform.id, flowId }),
         })
 
@@ -249,7 +252,6 @@ describe('Event Destination Trigger', () => {
         await db.save('event_destination', destination)
 
         await eventDestinationService(app.log).trigger({
-            platformId: ctx.platform.id,
             event: buildFlowRunEvent({ platformId: ctx.platform.id, flowId: finishedFlowId }),
         })
 
@@ -283,7 +285,6 @@ describe('Event Destination Trigger', () => {
         await db.save('event_destination', [selfTargetingDestination, externalDestination])
 
         await eventDestinationService(app.log).trigger({
-            platformId: ctx.platform.id,
             event: buildFlowRunEvent({ platformId: ctx.platform.id, flowId, status: 'FAILED' }),
         })
 
@@ -324,7 +325,6 @@ describe('Event Destination Trigger', () => {
         await db.save('event_destination', [internalDestinationA, internalDestinationB, externalDestination])
 
         await eventDestinationService(app.log).trigger({
-            platformId: ctx.platform.id,
             event: buildFlowRunEvent({ platformId: ctx.platform.id, flowId: flowAId }),
         })
 
@@ -359,7 +359,6 @@ describe('Event Destination Trigger', () => {
         await db.save('event_destination', [internalDestinationA, internalDestinationB])
 
         await eventDestinationService(app.log).trigger({
-            platformId: ctx.platform.id,
             event: buildFlowRunEvent({ platformId: ctx.platform.id, flowId: flowAId }),
         })
 
@@ -378,7 +377,6 @@ describe('Event Destination Trigger', () => {
         await db.save('event_destination', destination)
 
         await eventDestinationService(app.log).trigger({
-            platformId: ctx.platform.id,
             projectId: ctx.project.id,
             event: buildFlowRunEvent({ platformId: ctx.platform.id, projectId: ctx.project.id }),
         })
@@ -404,7 +402,6 @@ describe('Event Destination Trigger', () => {
         await db.save('event_destination', destination)
 
         await eventDestinationService(app.log).trigger({
-            platformId: ctx.platform.id,
             projectId: otherCtx.project.id,
             event: buildFlowRunEvent({ platformId: ctx.platform.id, projectId: otherCtx.project.id }),
         })
@@ -424,7 +421,6 @@ describe('Event Destination Trigger', () => {
         await db.save('event_destination', destination)
 
         await eventDestinationService(app.log).trigger({
-            platformId: ctx.platform.id,
             projectId: ctx.project.id,
             event: buildFlowEvent(ApplicationEventName.FLOW_CREATED, { platformId: ctx.platform.id, projectId: ctx.project.id }),
         })
@@ -444,7 +440,6 @@ describe('Event Destination Trigger', () => {
         const flowId = apId()
         const event = buildFlowEvent(ApplicationEventName.FLOW_CREATED, { platformId: ctx.platform.id, flowId })
         await eventDestinationService(app.log).trigger({
-            platformId: ctx.platform.id,
             event,
         })
 
@@ -532,7 +527,6 @@ describe('Event Destination Trigger', () => {
         await db.save('event_destination', destination)
 
         await eventDestinationService(app.log).trigger({
-            platformId: ctx.platform.id,
             event: buildFlowEvent(ApplicationEventName.FLOW_CREATED, { platformId: ctx.platform.id, flowId }),
         })
 

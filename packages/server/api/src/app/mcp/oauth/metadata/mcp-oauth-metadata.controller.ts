@@ -1,11 +1,11 @@
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
-import { mcpOAuthTokenService } from '../token/mcp-oauth-token.service'
+import { networkUtils } from '../../../helper/network-utils'
 
 export const mcpOAuthMetadataController: FastifyPluginAsyncZod = async (app) => {
 
-    app.get('/.well-known/oauth-authorization-server', AuthorizationServerMetadataRequest, async (_req, reply) => {
-        const issuer = mcpOAuthTokenService.getIssuerUrl()
+    app.get('/.well-known/oauth-authorization-server', PublicMetadataRequest, async (req, reply) => {
+        const issuer = networkUtils.getRequestBaseUrl(req)
         return reply.status(200).header('Access-Control-Allow-Origin', '*').send({
             issuer,
             authorization_endpoint: `${issuer}/authorize`,
@@ -20,16 +20,16 @@ export const mcpOAuthMetadataController: FastifyPluginAsyncZod = async (app) => 
         })
     })
 
-    app.get('/.well-known/oauth-protected-resource/mcp', ProtectedResourceMetadataRequest, async (_req, reply) => {
-        const issuer = mcpOAuthTokenService.getIssuerUrl()
+    app.get('/.well-known/oauth-protected-resource/mcp', PublicMetadataRequest, async (req, reply) => {
+        const issuer = networkUtils.getRequestBaseUrl(req)
         return reply.status(200).header('Access-Control-Allow-Origin', '*').send({
             resource: `${issuer}/mcp`,
             authorization_servers: [issuer],
         })
     })
 
-    app.get('/.well-known/oauth-protected-resource/mcp/platform', ProtectedResourceMetadataRequest, async (_req, reply) => {
-        const issuer = mcpOAuthTokenService.getIssuerUrl()
+    app.get('/.well-known/oauth-protected-resource/mcp/platform', PublicMetadataRequest, async (req, reply) => {
+        const issuer = networkUtils.getRequestBaseUrl(req)
         return reply.status(200).header('Access-Control-Allow-Origin', '*').send({
             resource: `${issuer}/mcp/platform`,
             authorization_servers: [issuer],
@@ -37,12 +37,7 @@ export const mcpOAuthMetadataController: FastifyPluginAsyncZod = async (app) => 
     })
 }
 
-const AuthorizationServerMetadataRequest = {
-    config: { security: securityAccess.public() },
-    schema: { hide: true },
-}
-
-const ProtectedResourceMetadataRequest = {
+const PublicMetadataRequest = {
     config: { security: securityAccess.public() },
     schema: { hide: true },
 }

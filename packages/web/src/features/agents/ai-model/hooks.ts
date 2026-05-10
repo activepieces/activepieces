@@ -26,7 +26,14 @@ function getAllowedModelsForProvider(
 
       return allowedIds.includes(model.id);
     })
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => {
+      if (isNil(allowedIds)) {
+        return a.name.localeCompare(b.name);
+      }
+      const aIndex = allowedIds.indexOf(a.id);
+      const bIndex = allowedIds.indexOf(b.id);
+      return aIndex - bIndex;
+    });
 }
 
 export const aiModelHooks = {
