@@ -25,7 +25,7 @@ export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
             body: req.body,
             query: req.query,
         })
-        const url = new URL('/authenticate', `${req.protocol}://${req.hostname}`)
+        const url = new URL('/authenticate', networkUtils.getRequestBaseUrl(req))
         url.searchParams.append('response', JSON.stringify(response))
         applicationEvents(req.log).sendUserEvent({
             platformId,

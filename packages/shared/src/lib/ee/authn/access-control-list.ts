@@ -28,8 +28,6 @@ export const rolePermissions: Record<DefaultProjectRole, Permission[]> = {
         Permission.WRITE_MCP,
         Permission.READ_KNOWLEDGE_BASE,
         Permission.WRITE_KNOWLEDGE_BASE,
-        Permission.READ_CHAT,
-        Permission.WRITE_CHAT,
     ],
     [DefaultProjectRole.EDITOR]: [
         Permission.READ_APP_CONNECTION,
@@ -52,8 +50,6 @@ export const rolePermissions: Record<DefaultProjectRole, Permission[]> = {
         Permission.WRITE_MCP,
         Permission.READ_KNOWLEDGE_BASE,
         Permission.WRITE_KNOWLEDGE_BASE,
-        Permission.READ_CHAT,
-        Permission.WRITE_CHAT,
     ],
     [DefaultProjectRole.VIEWER]: [
         Permission.READ_APP_CONNECTION,
@@ -66,6 +62,5 @@ export const rolePermissions: Record<DefaultProjectRole, Permission[]> = {
         Permission.READ_TABLE,
         Permission.READ_MCP,
         Permission.READ_KNOWLEDGE_BASE,
-        Permission.READ_CHAT,
     ],
 }

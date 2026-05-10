@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { savvyCalPaginatedCall, flattenEvent, SavvyCalEvent } from '../common';
-import { savvyCalAuth } from '../../';
+import { savvyCalAuth, getToken } from '../auth';
 
 export const findEventsByEmailAction = createAction({
   auth: savvyCalAuth,
@@ -25,7 +25,7 @@ export const findEventsByEmailAction = createAction({
     }),
   },
   async run(context) {
-    const token = context.auth.secret_text;
+    const token = getToken(context.auth);
     const { attendee_email, start_after, start_before } = context.propsValue;
 
     const queryParams: Record<string, string> = {};

@@ -1042,7 +1042,7 @@
     },
     "packages/pieces/community/baserow": {
       "name": "@activepieces/piece-baserow",
-      "version": "0.9.0",
+      "version": "0.9.1",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -1595,6 +1595,16 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/chess-com": {
+      "name": "@activepieces/piece-chess-com",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/circle": {
       "name": "@activepieces/piece-circle",
       "version": "0.1.4",
@@ -1846,6 +1856,16 @@
         "@types/xml2js": "0.4.14",
       },
     },
+    "packages/pieces/community/connectuc": {
+      "name": "@activepieces/piece-connectuc",
+      "version": "0.0.2",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/constant-contact": {
       "name": "@activepieces/piece-constant-contact",
       "version": "0.2.4",
@@ -2094,6 +2114,16 @@
         "zod": "4.3.6",
       },
     },
+    "packages/pieces/community/deftform": {
+      "name": "@activepieces/piece-deftform",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/denser-ai": {
       "name": "@activepieces/piece-denser-ai",
       "version": "0.1.4",
@@ -2102,6 +2132,16 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "tslib": "^2.3.0",
+      },
+    },
+    "packages/pieces/community/descript": {
+      "name": "@activepieces/piece-descript",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
       },
     },
     "packages/pieces/community/detecting-ai": {
@@ -2948,7 +2988,7 @@
     },
     "packages/pieces/community/gmail": {
       "name": "@activepieces/piece-gmail",
-      "version": "0.12.2",
+      "version": "0.12.3",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -3040,7 +3080,7 @@
     },
     "packages/pieces/community/google-drive": {
       "name": "@activepieces/piece-google-drive",
-      "version": "0.7.4",
+      "version": "0.7.5",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -3495,6 +3535,17 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "tslib": "^2.3.0",
+      },
+    },
+    "packages/pieces/community/iloveapi": {
+      "name": "@activepieces/piece-iloveapi",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "form-data": "4.0.4",
+        "tslib": "2.6.2",
       },
     },
     "packages/pieces/community/image-router": {
@@ -4650,11 +4701,11 @@
     },
     "packages/pieces/community/mistral-ai": {
       "name": "@activepieces/piece-mistral-ai",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
-        "@activepieces/pieces-common": "workspace:*",
-        "@activepieces/pieces-framework": "workspace:*",
-        "@activepieces/shared": "workspace:*",
+        "@activepieces/pieces-common": "0.12.1",
+        "@activepieces/pieces-framework": "0.26.2",
+        "@activepieces/shared": "0.67.1",
         "form-data": "4.0.4",
         "tslib": "2.6.2",
       },
@@ -5186,6 +5237,16 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/parallel": {
+      "name": "@activepieces/piece-parallel",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/parser-expert": {
       "name": "@activepieces/piece-parser-expert",
       "version": "0.1.4",
@@ -5278,6 +5339,16 @@
     "packages/pieces/community/peekshot": {
       "name": "@activepieces/piece-peekshot",
       "version": "0.1.4",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
+    "packages/pieces/community/pendo": {
+      "name": "@activepieces/piece-pendo",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -5560,6 +5631,16 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "tslib": "2.6.2",
+      },
+    },
+    "packages/pieces/community/pubrio": {
+      "name": "@activepieces/piece-pubrio",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "^2.3.0",
       },
     },
     "packages/pieces/community/pushbullet": {
@@ -5967,7 +6048,7 @@
     },
     "packages/pieces/community/savvycal": {
       "name": "@activepieces/piece-savvycal",
-      "version": "0.0.2",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -6370,7 +6451,7 @@
     },
     "packages/pieces/community/snowflake": {
       "name": "@activepieces/piece-snowflake",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -6495,7 +6576,7 @@
     },
     "packages/pieces/community/stripe": {
       "name": "@activepieces/piece-stripe",
-      "version": "0.6.7",
+      "version": "0.6.8",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -6506,7 +6587,7 @@
     },
     "packages/pieces/community/supabase": {
       "name": "@activepieces/piece-supabase",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7440,7 +7521,7 @@
     },
     "packages/pieces/community/youtube": {
       "name": "@activepieces/piece-youtube",
-      "version": "0.4.6",
+      "version": "0.4.7",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -8173,7 +8254,6 @@
         "http-proxy-agent": "7.0.2",
         "https-proxy-agent": "7.0.6",
         "isolated-vm": "6.0.2",
-        "mime-types": "2.1.35",
         "nanoid": "3.3.8",
         "socket.io-client": "4.8.1",
         "tslib": "2.6.2",
@@ -8181,14 +8261,13 @@
         "zod": "4.3.6",
       },
       "devDependencies": {
-        "@types/mime-types": "2.1.1",
         "@types/node": "24.11.0",
         "vitest": "3.0.8",
       },
     },
     "packages/server/utils": {
       "name": "@activepieces/server-utils",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "dependencies": {
         "@activepieces/shared": "workspace:*",
         "async-mutex": "0.4.0",
@@ -8201,6 +8280,7 @@
       },
       "devDependencies": {
         "@types/node": "24.11.0",
+        "pino": "10.1.0",
         "vitest": "3.0.8",
       },
     },
@@ -8240,7 +8320,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.68.6",
+      "version": "0.71.7",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
@@ -8626,6 +8706,8 @@
 
     "@activepieces/piece-checkout": ["@activepieces/piece-checkout@workspace:packages/pieces/community/checkout"],
 
+    "@activepieces/piece-chess-com": ["@activepieces/piece-chess-com@workspace:packages/pieces/community/chess-com"],
+
     "@activepieces/piece-circle": ["@activepieces/piece-circle@workspace:packages/pieces/community/circle"],
 
     "@activepieces/piece-clarifai": ["@activepieces/piece-clarifai@workspace:packages/pieces/community/clarifai"],
@@ -8671,6 +8753,8 @@
     "@activepieces/piece-confluence": ["@activepieces/piece-confluence@workspace:packages/pieces/community/confluence"],
 
     "@activepieces/piece-connections": ["@activepieces/piece-connections@workspace:packages/pieces/core/connections"],
+
+    "@activepieces/piece-connectuc": ["@activepieces/piece-connectuc@workspace:packages/pieces/community/connectuc"],
 
     "@activepieces/piece-constant-contact": ["@activepieces/piece-constant-contact@workspace:packages/pieces/community/constant-contact"],
 
@@ -8728,9 +8812,13 @@
 
     "@activepieces/piece-deepseek": ["@activepieces/piece-deepseek@workspace:packages/pieces/community/deepseek"],
 
+    "@activepieces/piece-deftform": ["@activepieces/piece-deftform@workspace:packages/pieces/community/deftform"],
+
     "@activepieces/piece-delay": ["@activepieces/piece-delay@workspace:packages/pieces/core/delay"],
 
     "@activepieces/piece-denser-ai": ["@activepieces/piece-denser-ai@workspace:packages/pieces/community/denser-ai"],
+
+    "@activepieces/piece-descript": ["@activepieces/piece-descript@workspace:packages/pieces/community/descript"],
 
     "@activepieces/piece-detecting-ai": ["@activepieces/piece-detecting-ai@workspace:packages/pieces/community/detecting-ai"],
 
@@ -8993,6 +9081,8 @@
     "@activepieces/piece-hystruct": ["@activepieces/piece-hystruct@workspace:packages/pieces/community/hystruct"],
 
     "@activepieces/piece-ibm-cognose": ["@activepieces/piece-ibm-cognose@workspace:packages/pieces/community/ibm-cognose"],
+
+    "@activepieces/piece-iloveapi": ["@activepieces/piece-iloveapi@workspace:packages/pieces/community/iloveapi"],
 
     "@activepieces/piece-image-helper": ["@activepieces/piece-image-helper@workspace:packages/pieces/core/image-helper"],
 
@@ -9306,6 +9396,8 @@
 
     "@activepieces/piece-paperform": ["@activepieces/piece-paperform@workspace:packages/pieces/community/paperform"],
 
+    "@activepieces/piece-parallel": ["@activepieces/piece-parallel@workspace:packages/pieces/community/parallel"],
+
     "@activepieces/piece-parser-expert": ["@activepieces/piece-parser-expert@workspace:packages/pieces/community/parser-expert"],
 
     "@activepieces/piece-parseur": ["@activepieces/piece-parseur@workspace:packages/pieces/community/parseur"],
@@ -9325,6 +9417,8 @@
     "@activepieces/piece-pdfmonkey": ["@activepieces/piece-pdfmonkey@workspace:packages/pieces/community/pdfmonkey"],
 
     "@activepieces/piece-peekshot": ["@activepieces/piece-peekshot@workspace:packages/pieces/community/peekshot"],
+
+    "@activepieces/piece-pendo": ["@activepieces/piece-pendo@workspace:packages/pieces/community/pendo"],
 
     "@activepieces/piece-perplexity-ai": ["@activepieces/piece-perplexity-ai@workspace:packages/pieces/community/perplexity-ai"],
 
@@ -9377,6 +9471,8 @@
     "@activepieces/piece-promptmate": ["@activepieces/piece-promptmate@workspace:packages/pieces/community/promptmate"],
 
     "@activepieces/piece-proxycurl": ["@activepieces/piece-proxycurl@workspace:packages/pieces/community/proxycurl"],
+
+    "@activepieces/piece-pubrio": ["@activepieces/piece-pubrio@workspace:packages/pieces/community/pubrio"],
 
     "@activepieces/piece-pushbullet": ["@activepieces/piece-pushbullet@workspace:packages/pieces/community/pushbullet"],
 
@@ -14422,7 +14518,7 @@
 
     "quick-format-unescaped": ["quick-format-unescaped@4.0.4", "", {}, "sha512-tYC1Q1hgyRuHgloV/YXs2w15unPVh8qfu/qCTfhTYamaw7fyhumKa2yGpdSo87vY32rIclj+4fWYQXUMs9EHvg=="],
 
-    "quick-lru": ["quick-lru@5.1.1", "", {}, "sha512-WuyALRjWPDGtt/wzJiadO5AXY+8hZ80hVpe6MyivgraREW751X3SbhRvG3eLKOYN+8VEvqLcf3wdnt44Z4S4SA=="],
+    "quick-lru": ["quick-lru@4.0.1", "", {}, "sha512-ARhCpm70fzdcvNQfPoy49IaanKkTlRWF2JMzqhcJbhSFRZv7nPTvZJdcY7301IPmvW+/p0RgIWnQDLJxifsQ7g=="],
 
     "quick-temp": ["quick-temp@0.1.9", "", { "dependencies": { "mktemp": "^2.0.1", "rimraf": "^5.0.10", "underscore.string": "~3.3.6" } }, "sha512-yI0h7tIhKVObn03kD+Ln9JFi4OljD28lfaOsTdfpTR0xzrhGOod+q66CjGafUqYX2juUfT9oHIGrTBBo22mkRA=="],
 
@@ -15482,6 +15578,12 @@
 
     "@activepieces/piece-http-oauth2/https-proxy-agent": ["https-proxy-agent@7.0.4", "", { "dependencies": { "agent-base": "^7.0.2", "debug": "4" } }, "sha512-wlwpilI7YdjSkWaQ/7omYBMTliDcmCN8OLihO6I9B86g06lMyAoqgoDpV0XqoaPOKj+0DIdAvnsWfyAAhmimcg=="],
 
+    "@activepieces/piece-mistral-ai/@activepieces/pieces-common": ["@activepieces/pieces-common@0.12.1", "", { "dependencies": { "@activepieces/pieces-framework": "0.26.2", "@activepieces/shared": "0.53.2", "axios": "1.13.5", "axios-retry": "4.4.1", "form-data": "4.0.4", "mime-types": "2.1.35", "request-filtering-agent": "2.0.1", "tslib": "2.6.2", "zod": "4.3.6" } }, "sha512-2ptt9o8igQxHMuNWBkrX8eInkFDbeQLFg4wO1FlnC1b67jxdGtFjXZQ9zeMPB9PgPWxNUow6koAn0ttL3LPZgg=="],
+
+    "@activepieces/piece-mistral-ai/@activepieces/pieces-framework": ["@activepieces/pieces-framework@0.26.2", "", { "dependencies": { "@activepieces/shared": "0.53.2", "ai": "^6.0.0", "semver": "7.6.0", "tslib": "2.6.2", "zod": "4.3.6" } }, "sha512-1u835arkO4TKGKfKuz9jeT7Ua1exCeSFCR0+stzB5fqQgtqWgACRFKBNpfPdKcTZK4zTuVeungMe0Hvayq6FqA=="],
+
+    "@activepieces/piece-mistral-ai/@activepieces/shared": ["@activepieces/shared@0.67.1", "", { "dependencies": { "dayjs": "1.11.9", "deepmerge-ts": "7.1.0", "ipaddr.js": "2.3.0", "nanoid": "3.3.8", "semver": "7.6.0", "socket.io-client": "4.8.1", "tslib": "2.6.2", "zod": "4.3.6" } }, "sha512-2CBOmqkL3niZoZj4VsbfBO6aVFbwZyBx4/1oGkxJ2SF7slebpqCgwxgvVSexaNNgS4vMMSfxMxfzvEbi1iptDQ=="],
+
     "@activepieces/piece-pdf/@activepieces/pieces-framework": ["@activepieces/pieces-framework@0.26.2", "", { "dependencies": { "@activepieces/shared": "0.53.2", "ai": "^6.0.0", "semver": "7.6.0", "tslib": "2.6.2", "zod": "4.3.6" } }, "sha512-1u835arkO4TKGKfKuz9jeT7Ua1exCeSFCR0+stzB5fqQgtqWgACRFKBNpfPdKcTZK4zTuVeungMe0Hvayq6FqA=="],
 
     "@activepieces/piece-pdf/@activepieces/shared": ["@activepieces/shared@0.67.1", "", { "dependencies": { "dayjs": "1.11.9", "deepmerge-ts": "7.1.0", "ipaddr.js": "2.3.0", "nanoid": "3.3.8", "semver": "7.6.0", "socket.io-client": "4.8.1", "tslib": "2.6.2", "zod": "4.3.6" } }, "sha512-2CBOmqkL3niZoZj4VsbfBO6aVFbwZyBx4/1oGkxJ2SF7slebpqCgwxgvVSexaNNgS4vMMSfxMxfzvEbi1iptDQ=="],
@@ -15489,6 +15591,8 @@
     "@activepieces/piece-postgres/pg": ["pg@8.11.3", "", { "dependencies": { "buffer-writer": "2.0.0", "packet-reader": "1.0.0", "pg-connection-string": "^2.6.2", "pg-pool": "^3.6.1", "pg-protocol": "^1.6.0", "pg-types": "^2.1.0", "pgpass": "1.x" }, "optionalDependencies": { "pg-cloudflare": "^1.1.1" }, "peerDependencies": { "pg-native": ">=3.0.1" }, "optionalPeers": ["pg-native"] }, "sha512-+9iuvG8QfaaUrrph+kpF24cXkH1YOOUeArRNYIxq1viYHZagBxrTno7cecY1Fa44tJeZvaoG+Djpkc3JwehN5g=="],
 
     "@activepieces/piece-prompthub/zod": ["zod@3.25.76", "", {}, "sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ=="],
+
+    "@activepieces/piece-pubrio/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 
     "@activepieces/piece-rabbitmq/@types/amqplib": ["@types/amqplib@0.10.7", "", { "dependencies": { "@types/node": "*" } }, "sha512-IVj3avf9AQd2nXCx0PGk/OYq7VmHiyNxWFSb5HhU9ATh+i+gHWvVcljFTcTWQ/dyHJCTrzCixde+r/asL2ErDA=="],
 
@@ -16044,7 +16148,7 @@
 
     "@dnd-kit/accessibility/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 
-    "@dust-tt/client/@modelcontextprotocol/sdk": ["@modelcontextprotocol/sdk@github:dust-tt/typescript-sdk#bca26e4", { "dependencies": { "ajv": "^6.12.6", "content-type": "^1.0.5", "cors": "^2.8.5", "cross-spawn": "^7.0.5", "eventsource": "^3.0.2", "express": "^5.0.1", "express-rate-limit": "^7.5.0", "pkce-challenge": "^5.0.0", "raw-body": "^3.0.0", "zod": "^3.23.8", "zod-to-json-schema": "^3.24.1" } }, "dust-tt-typescript-sdk-bca26e4", "sha512-oxLE3SEGCVIhVNbn7xB9YgL7I6zrKujcH9s6e/1KcAj1VOht4lnM/oetqhwh9XhBh02cDHwkqHTzzIEBnBViiw=="],
+    "@dust-tt/client/@modelcontextprotocol/sdk": ["@modelcontextprotocol/sdk@github:dust-tt/typescript-sdk#bca26e4", { "dependencies": { "ajv": "^6.12.6", "content-type": "^1.0.5", "cors": "^2.8.5", "cross-spawn": "^7.0.5", "eventsource": "^3.0.2", "express": "^5.0.1", "express-rate-limit": "^7.5.0", "pkce-challenge": "^5.0.0", "raw-body": "^3.0.0", "zod": "^3.23.8", "zod-to-json-schema": "^3.24.1" } }, "dust-tt-typescript-sdk-bca26e4"],
 
     "@dust-tt/client/eventsource-parser": ["eventsource-parser@1.1.2", "", {}, "sha512-v0eOBUbiaFojBu2s2NPBfYUoRR9GjcDNvCXVaqEf5vVfpIAh9f8RCo4vXTP8c63QRKCFwoLpMpTdPwwhEKVgzA=="],
 
@@ -17060,8 +17164,6 @@
 
     "camelcase-keys/camelcase": ["camelcase@5.3.1", "", {}, "sha512-L28STB170nwWS63UjtlEOE3dldQApaJXZkOI1uMFfzf3rRuPegHaHesyee+YxQ+W6SvRDQV6UrdOdRiR153wJg=="],
 
-    "camelcase-keys/quick-lru": ["quick-lru@4.0.1", "", {}, "sha512-ARhCpm70fzdcvNQfPoy49IaanKkTlRWF2JMzqhcJbhSFRZv7nPTvZJdcY7301IPmvW+/p0RgIWnQDLJxifsQ7g=="],
-
     "checkly/@typescript-eslint/typescript-estree": ["@typescript-eslint/typescript-estree@8.59.1", "", { "dependencies": { "@typescript-eslint/project-service": "8.59.1", "@typescript-eslint/tsconfig-utils": "8.59.1", "@typescript-eslint/types": "8.59.1", "@typescript-eslint/visitor-keys": "8.59.1", "debug": "^4.4.3", "minimatch": "^10.2.2", "semver": "^7.7.3", "tinyglobby": "^0.2.15", "ts-api-utils": "^2.5.0" }, "peerDependencies": { "typescript": ">=4.8.4 <6.1.0" } }, "sha512-OUd+vJS05sSkOip+BkZ/2NS8RMxrAAJemsC6vU3kmfLyeaJT0TftHkV9mcx2107MmsBVXXexhVu4F0TZXyMl4g=="],
 
     "checkly/dotenv": ["dotenv@16.6.1", "", {}, "sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow=="],
@@ -17349,6 +17451,8 @@
     "http-call/is-retry-allowed": ["is-retry-allowed@1.2.0", "", {}, "sha512-RUbUeKwvm3XG2VYamhJL1xFktgjvPzL0Hq8C+6yrWIswDy3BIXGqCxhxkc30N9jqK311gVU137K8Ei55/zVJRg=="],
 
     "http-call/parse-json": ["parse-json@4.0.0", "", { "dependencies": { "error-ex": "^1.3.1", "json-parse-better-errors": "^1.0.1" } }, "sha512-aOIos8bujGN93/8Ox/jPLh7RwVnPEysynVFE+fQZyg6jKELEHwzgKdLRFHUgXJL6kylijVSBC4BvN9OmsB48Rw=="],
+
+    "http2-wrapper/quick-lru": ["quick-lru@5.1.1", "", {}, "sha512-WuyALRjWPDGtt/wzJiadO5AXY+8hZ80hVpe6MyivgraREW751X3SbhRvG3eLKOYN+8VEvqLcf3wdnt44Z4S4SA=="],
 
     "hume/uuid": ["uuid@9.0.1", "", { "bin": { "uuid": "dist/bin/uuid" } }, "sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA=="],
 
@@ -18077,6 +18181,14 @@
     "@activepieces/piece-google-vertexai/google-auth-library/gcp-metadata": ["gcp-metadata@8.1.2", "", { "dependencies": { "gaxios": "^7.0.0", "google-logging-utils": "^1.0.0", "json-bigint": "^1.0.0" } }, "sha512-zV/5HKTfCeKWnxG0Dmrw51hEWFGfcF2xiXqcA3+J90WDuP0SvoiSO5ORvcBsifmx/FoIjgQN3oNOGaQ5PhLFkg=="],
 
     "@activepieces/piece-google-vertexai/google-auth-library/jws": ["jws@4.0.1", "", { "dependencies": { "jwa": "^2.0.1", "safe-buffer": "^5.0.1" } }, "sha512-EKI/M/yqPncGUUh44xz0PxSidXFr/+r0pA70+gIYhjv+et7yxM+s29Y+VGDkovRofQem0fs7Uvf4+YmAdyRduA=="],
+
+    "@activepieces/piece-mistral-ai/@activepieces/pieces-common/@activepieces/shared": ["@activepieces/shared@0.53.2", "", { "dependencies": { "dayjs": "1.11.9", "deepmerge-ts": "7.1.0", "nanoid": "3.3.8", "semver": "7.6.0", "socket.io-client": "4.8.1", "tslib": "2.6.2", "zod": "4.3.6" } }, "sha512-Bt+dY24h0bmdghemB7RmBvS9ve0HwvXUEpH3gHvAJY7iY75dmpkZnX03w0DuIltFe/ztEWAhY9oTEVdDif4x4g=="],
+
+    "@activepieces/piece-mistral-ai/@activepieces/pieces-common/axios": ["axios@1.13.5", "", { "dependencies": { "follow-redirects": "^1.15.11", "form-data": "^4.0.5", "proxy-from-env": "^1.1.0" } }, "sha512-cz4ur7Vb0xS4/KUN0tPWe44eqxrIu31me+fbang3ijiNscE129POzipJJA6zniq2C/Z6sJCjMimjS8Lc/GAs8Q=="],
+
+    "@activepieces/piece-mistral-ai/@activepieces/pieces-common/request-filtering-agent": ["request-filtering-agent@2.0.1", "", { "dependencies": { "ipaddr.js": "^2.1.0" } }, "sha512-QvD3qwthEt9J+2hCdQ3wTn3Z/ZsgyiMECjY9yVJ0F8FtnGfNQG+dRz65eKayYRHIRQ6OGjH8Zuqr1lw7G6pz1Q=="],
+
+    "@activepieces/piece-mistral-ai/@activepieces/pieces-framework/@activepieces/shared": ["@activepieces/shared@0.53.2", "", { "dependencies": { "dayjs": "1.11.9", "deepmerge-ts": "7.1.0", "nanoid": "3.3.8", "semver": "7.6.0", "socket.io-client": "4.8.1", "tslib": "2.6.2", "zod": "4.3.6" } }, "sha512-Bt+dY24h0bmdghemB7RmBvS9ve0HwvXUEpH3gHvAJY7iY75dmpkZnX03w0DuIltFe/ztEWAhY9oTEVdDif4x4g=="],
 
     "@activepieces/piece-pdf/@activepieces/pieces-framework/@activepieces/shared": ["@activepieces/shared@0.53.2", "", { "dependencies": { "dayjs": "1.11.9", "deepmerge-ts": "7.1.0", "nanoid": "3.3.8", "semver": "7.6.0", "socket.io-client": "4.8.1", "tslib": "2.6.2", "zod": "4.3.6" } }, "sha512-Bt+dY24h0bmdghemB7RmBvS9ve0HwvXUEpH3gHvAJY7iY75dmpkZnX03w0DuIltFe/ztEWAhY9oTEVdDif4x4g=="],
 
@@ -19431,6 +19543,10 @@
     "@activepieces/piece-google-vertexai/@activepieces/pieces-common/axios/proxy-from-env": ["proxy-from-env@1.1.0", "", {}, "sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg=="],
 
     "@activepieces/piece-google-vertexai/@google/genai/protobufjs/long": ["long@5.3.2", "", {}, "sha512-mNAgZ1GmyNhD7AuqnTG3/VQ26o760+ZYBPKjPvugO8+nLbYfX6TVpJPseBvopbdY+qpZ/lKUnmEc1LeZYS3QAA=="],
+
+    "@activepieces/piece-mistral-ai/@activepieces/pieces-common/axios/form-data": ["form-data@4.0.5", "", { "dependencies": { "asynckit": "^0.4.0", "combined-stream": "^1.0.8", "es-set-tostringtag": "^2.1.0", "hasown": "^2.0.2", "mime-types": "^2.1.12" } }, "sha512-8RipRLol37bNs2bhoV67fiTEvdTrbMUYcFTiy3+wuuOnUog2QBHCZWXDRijWQfAkhBj2Uf5UnVaiWwA5vdd82w=="],
+
+    "@activepieces/piece-mistral-ai/@activepieces/pieces-common/axios/proxy-from-env": ["proxy-from-env@1.1.0", "", {}, "sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg=="],
 
     "@activepieces/piece-google-vertexai/google-auth-library/gaxios/node-fetch": ["node-fetch@3.3.2", "", { "dependencies": { "data-uri-to-buffer": "^4.0.0", "fetch-blob": "^3.1.4", "formdata-polyfill": "^4.0.10" } }, "sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA=="],
 

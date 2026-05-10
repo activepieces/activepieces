@@ -5,9 +5,9 @@ import {
     FlowOperationType,
     flowStructureUtil,
     isNil,
-    McpServer,
     McpToolDefinition,
     Permission,
+    ProjectScopedMcpServer,
     RouterExecutionType,
     StepLocationRelativeToParent,
     UpdateActionRequest,
@@ -35,7 +35,7 @@ const addStepInput = z.object({
     loopItems: z.string().optional(),
 })
 
-export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apAddStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_add_step',
         permission: Permission.WRITE_FLOW,
@@ -56,7 +56,7 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
             packageJson: z.string().optional().describe('For CODE steps: package.json as JSON string. Defaults to "{}".'),
             loopItems: z.string().optional().describe('For LOOP steps: expression for items to iterate (e.g. "{{step_1.items}}").'),
         },
-        annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
             const { flowId, parentStepName, stepLocationRelativeToParent, branchIndex, stepType, displayName, pieceName, pieceVersion, actionName, input, auth, sourceCode, packageJson, loopItems } = addStepInput.parse(args)
 
@@ -195,12 +195,15 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
                 const draftWarning = mcpUtils.publishedFlowWarning(flow.publishedVersionId)
                 const hasConfig = input !== undefined || auth !== undefined || sourceCode !== undefined || loopItems !== undefined
                 const addedStep = flowStructureUtil.getStep(stepName, updatedFlow.version.trigger)
+                const stepValid = hasConfig && addedStep ? addedStep.valid : false
+                const structured = { stepName, displayName, valid: stepValid }
                 if (hasConfig && addedStep && !addedStep.valid) {
                     return {
                         content: [{
                             type: 'text',
                             text: `⚠️ Step "${displayName}" (${stepName}) added but still invalid. Use ap_get_piece_props to check required fields, then ap_update_step to fix.${draftWarning}`,
                         }],
+                        structuredContent: structured,
                     }
                 }
                 if (hasConfig) {
@@ -209,6 +212,7 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
                             type: 'text',
                             text: `✅ Step "${displayName}" (${stepName}) added and configured.${draftWarning}`,
                         }],
+                        structuredContent: { ...structured, valid: true },
                     }
                 }
                 return {
@@ -216,6 +220,7 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
                         type: 'text',
                         text: `✅ Step "${displayName}" (${stepName}) added. Now use ap_update_step with stepName="${stepName}" to configure its settings.${draftWarning}`,
                     }],
+                    structuredContent: structured,
                 }
             }
             catch (err) {
