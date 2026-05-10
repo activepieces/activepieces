@@ -1,13 +1,6 @@
 import { StepOutputStatus } from '@activepieces/shared';
 import { t } from 'i18next';
-import {
-  ChevronDown,
-  Columns2,
-  Copy,
-  Download,
-  Play,
-  Rows2,
-} from 'lucide-react';
+import { Columns2, Copy, Download, Minus, Play, Rows2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -178,7 +171,7 @@ const TestPanelHeader = ({
                   onClick={() => setTestPanelOpen(false)}
                   aria-label={t('Hide test panel')}
                 >
-                  <ChevronDown className="size-4" />
+                  <Minus className="size-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
