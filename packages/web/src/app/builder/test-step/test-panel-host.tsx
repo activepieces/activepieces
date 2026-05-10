@@ -3,7 +3,6 @@ import { useRef, useState } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils';
 
 import { FlowStepInputOutput } from '../run-details/flow-step-input-output';
 
@@ -119,10 +118,7 @@ const TestPanelHost = ({
   return (
     <div
       ref={drawerRef}
-      className={cn(
-        'absolute inset-x-0 bottom-0 z-20 bg-background border-t border-border shadow-2xl rounded-t-lg flex flex-col',
-        'animate-in slide-in-from-bottom-4 duration-200',
-      )}
+      className="absolute inset-x-0 bottom-0 z-20 bg-background border-t border-border shadow-2xl rounded-t-lg flex flex-col"
       style={{ height: `${drawerHeightPct}%` }}
       role="dialog"
     >
