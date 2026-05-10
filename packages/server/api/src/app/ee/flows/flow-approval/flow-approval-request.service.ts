@@ -298,35 +298,6 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
         }))
         return paginationHelper.createPage(populated, result.cursor)
     },
-
-    async withdrawAllPendingForPlatform(platformId: PlatformId): Promise<number> {
-        const pending = await flowApprovalRequestRepo().find({
-            where: { platformId, state: FlowApprovalRequestState.PENDING },
-            select: ['id', 'flowVersionId'],
-        })
-        if (pending.length === 0) {
-            return 0
-        }
-        await transaction(async (entityManager) => {
-            const ids = pending.map((row) => row.id)
-            const versionIds = pending.map((row) => row.flowVersionId)
-            await flowApprovalRequestRepo(entityManager)
-                .createQueryBuilder()
-                .delete()
-                .where('id IN (:...ids) AND state = :pending', {
-                    ids,
-                    pending: FlowApprovalRequestState.PENDING,
-                })
-                .execute()
-            await flowVersionRepo(entityManager)
-                .createQueryBuilder()
-                .update()
-                .set({ state: FlowVersionState.DRAFT })
-                .where('id IN (:...versionIds)', { versionIds })
-                .execute()
-        })
-        return pending.length
-    },
 })
 
 type SubmitParams = {
