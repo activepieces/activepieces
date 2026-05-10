@@ -1,4 +1,8 @@
-import { flowStructureUtil } from '@activepieces/shared';
+import {
+  FlowAction,
+  FlowTrigger,
+  flowStructureUtil,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 
@@ -48,9 +52,6 @@ const DataSelectorNodeContent = ({
       : depth === 0 && node.data.type === 'test'
       ? flowStructureUtil.getStep(node.data.stepName, flowVersion.trigger)
       : undefined;
-  const stepMetadata = stepForRoot
-    ? stepsHooks.useStepMetadata({ step: stepForRoot }).stepMetadata
-    : undefined;
 
   const isExpandable = !!node.children && node.children.length > 0;
   const isStepRoot = depth === 0;
@@ -114,17 +115,7 @@ const DataSelectorNodeContent = ({
           <div className="size-3.5 shrink-0" aria-hidden />
         )}
 
-        {isStepRoot && stepMetadata && (
-          <div className="shrink-0">
-            <PieceIcon
-              displayName={stepMetadata.displayName}
-              logoUrl={stepMetadata.logoUrl}
-              showTooltip={false}
-              border={false}
-              size="xs"
-            />
-          </div>
-        )}
+        {isStepRoot && stepForRoot && <StepRootIcon step={stepForRoot} />}
 
         <div className="flex items-center gap-1.5 min-w-0 flex-1">
           {node.data.type !== 'test' && (
@@ -189,6 +180,22 @@ const DataSelectorNodeContent = ({
           />
         )}
       </div>
+    </div>
+  );
+};
+
+const StepRootIcon = ({ step }: { step: FlowAction | FlowTrigger }) => {
+  const { stepMetadata } = stepsHooks.useStepMetadata({ step });
+  if (!stepMetadata) return null;
+  return (
+    <div className="shrink-0">
+      <PieceIcon
+        displayName={stepMetadata.displayName}
+        logoUrl={stepMetadata.logoUrl}
+        showTooltip={false}
+        border={false}
+        size="xs"
+      />
     </div>
   );
 };

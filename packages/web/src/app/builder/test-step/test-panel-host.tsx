@@ -109,6 +109,13 @@ const TestPanelHost = ({
     }
   };
 
+  const handlePointerCancel = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    dragStateRef.current = null;
+  };
+
+  const drawerHeightPctRounded = Math.round(drawerHeightPct);
+
   return (
     <div
       ref={drawerRef}
@@ -122,11 +129,14 @@ const TestPanelHost = ({
       <div
         role="separator"
         aria-orientation="horizontal"
+        aria-valuemin={DRAWER_MIN_HEIGHT_PCT}
+        aria-valuemax={DRAWER_MAX_HEIGHT_PCT}
+        aria-valuenow={drawerHeightPctRounded}
         tabIndex={0}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
         className="flex items-center justify-center px-3 py-2 shrink-0 hover:bg-muted/50 transition-colors cursor-row-resize touch-none select-none"
       >
         <div className="h-1 w-12 rounded-full bg-muted" />

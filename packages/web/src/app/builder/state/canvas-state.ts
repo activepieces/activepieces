@@ -198,7 +198,5 @@ function getTestPanelViewFromLocalStorage(): TestPanelView {
 
 const TEST_PANEL_OPEN_KEY_IN_LOCAL_STORAGE = 'ap.builder.testPanelOpen';
 function getTestPanelOpenFromLocalStorage(): boolean {
-  return (
-    localStorage.getItem(TEST_PANEL_OPEN_KEY_IN_LOCAL_STORAGE) !== 'closed'
-  );
+  return localStorage.getItem(TEST_PANEL_OPEN_KEY_IN_LOCAL_STORAGE) === 'open';
 }

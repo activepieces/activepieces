@@ -73,10 +73,10 @@ export const TestSampleDataViewer = React.memo(
     const [activeTab, setActiveTab] = useState<ActiveTab>('Output');
 
     const isFailed =
+      !isNil(errorMessage) ||
       (isRunAgent(currentStep) &&
         (sampleData as AgentResult | undefined)?.status ===
-          AgentTaskStatus.FAILED) ||
-      !isNil(errorMessage);
+          AgentTaskStatus.FAILED);
 
     const status: 'success' | 'failed' | 'testing' | 'idle' = isTesting
       ? 'testing'
