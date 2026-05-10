@@ -32,7 +32,44 @@ interface FreshserviceTicket {
   subject: string;
 }
 
+interface FreshserviceChange {
+  id: number;
+  subject: string;
+}
+
 export const freshserviceCommon = {
+  change: (required = true) =>
+    Property.Dropdown({
+      auth: freshserviceAuth,
+      displayName: 'Change',
+      required,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Connect your account first',
+            options: [],
+          };
+        }
+        const response = await freshserviceApiCall<{
+          changes: FreshserviceChange[];
+        }>({
+          method: HttpMethod.GET,
+          endpoint: 'changes',
+          auth,
+          queryParams: { per_page: '100', order_by: 'created_at', order_type: 'desc' },
+        });
+        return {
+          disabled: false,
+          options: response.body.changes.map((change) => ({
+            label: `#${change.id} — ${change.subject}`,
+            value: change.id,
+          })),
+        };
+      },
+    }),
+
   ticket: (required = true) =>
     Property.Dropdown({
       auth: freshserviceAuth,
@@ -258,6 +295,59 @@ export const freshserviceCommon = {
         { label: 'Chat', value: 7 },
         { label: 'Feedback Widget', value: 9 },
         { label: 'Outbound Email', value: 10 },
+      ],
+    },
+  }),
+
+  changeStatus: Property.StaticDropdown({
+    displayName: 'Status',
+    required: false,
+    options: {
+      options: [
+        { label: 'Open', value: 1 },
+        { label: 'Planning', value: 2 },
+        { label: 'Approval', value: 3 },
+        { label: 'Pending Release', value: 4 },
+        { label: 'Pending Review', value: 5 },
+        { label: 'Closed', value: 6 },
+      ],
+    },
+  }),
+
+  changeRisk: Property.StaticDropdown({
+    displayName: 'Risk',
+    required: false,
+    options: {
+      options: [
+        { label: 'Low', value: 1 },
+        { label: 'Medium', value: 2 },
+        { label: 'High', value: 3 },
+        { label: 'Very High', value: 4 },
+      ],
+    },
+  }),
+
+  changeType: Property.StaticDropdown({
+    displayName: 'Change Type',
+    required: false,
+    options: {
+      options: [
+        { label: 'Minor', value: 1 },
+        { label: 'Standard', value: 2 },
+        { label: 'Major', value: 3 },
+        { label: 'Emergency', value: 4 },
+      ],
+    },
+  }),
+
+  taskStatus: Property.StaticDropdown({
+    displayName: 'Task Status',
+    required: false,
+    options: {
+      options: [
+        { label: 'Open', value: 1 },
+        { label: 'In Progress', value: 2 },
+        { label: 'Completed', value: 3 },
       ],
     },
   }),
