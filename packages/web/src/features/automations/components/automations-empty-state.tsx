@@ -310,8 +310,8 @@ export const AutomationsEmptyState = ({
 
           {!embedState.hideTables && (
             <GetStartedCard
-              icon={<Table2 className="h-5 w-5 text-muted-foreground" />}
-              iconBgClass="bg-muted"
+              icon={<Table2 className="h-5 w-5 text-primary" />}
+              iconBgClass="bg-primary-100"
               title={t('Create a Table')}
               description={t('Organize and manage data')}
             >
