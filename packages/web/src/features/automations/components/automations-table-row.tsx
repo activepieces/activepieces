@@ -106,6 +106,7 @@ export const AutomationsTableRow = ({
   const { embedState } = useEmbedding();
   const [isMoveOpen, setIsMoveOpen] = useState(false);
   const [moveFolderId, setMoveFolderId] = useState('');
+  const [isCreateTooltipOpen, setIsCreateTooltipOpen] = useState(false);
 
   if (item.type === 'load-more-folder') {
     return (
@@ -217,7 +218,10 @@ export const AutomationsTableRow = ({
         onClick={(e) => e.stopPropagation()}
       >
         {item.type === 'folder' && onCreateInFolder && (
-          <Tooltip>
+          <Tooltip
+            open={isCreateTooltipOpen}
+            onOpenChange={setIsCreateTooltipOpen}
+          >
             <CreateNewMenu
               scope="folder"
               align="end"
@@ -230,6 +234,9 @@ export const AutomationsTableRow = ({
               onCreateTable={() => onCreateInFolder(item.id, 'table')}
               onImportFlow={() => onCreateInFolder(item.id, 'import-flow')}
               onImportTable={() => onCreateInFolder(item.id, 'import-table')}
+              onOpenChange={(open) => {
+                if (open) setIsCreateTooltipOpen(false);
+              }}
             >
               <TooltipTrigger asChild>
                 <Button

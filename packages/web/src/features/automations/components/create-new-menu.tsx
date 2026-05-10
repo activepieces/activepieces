@@ -34,6 +34,7 @@ export const CreateNewMenu = ({
   onImportFlow,
   onImportTable,
   onSelectTemplate,
+  onOpenChange,
 }: CreateNewMenuProps) => {
   const { embedState } = useEmbedding();
   const [isOpen, setIsOpen] = useState(false);
@@ -48,6 +49,7 @@ export const CreateNewMenu = ({
       onOpenChange={(next) => {
         if (busy && !next) return;
         setIsOpen(next);
+        onOpenChange?.(next);
       }}
     >
       <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
@@ -105,39 +107,40 @@ export const CreateNewMenu = ({
           </PermissionNeededTooltip>
         )}
 
-        {scope === 'folder' && (
-          <>
-            <DropdownMenuSeparator />
-            {!embedState.hideExportAndImportFlow && (
-              <PermissionNeededTooltip
-                hasPermission={userHasPermissionToWriteFlow}
-              >
-                <DropdownMenuItem
-                  disabled={!userHasPermissionToWriteFlow}
-                  onClick={onImportFlow}
-                  className="cursor-pointer"
+        {scope === 'folder' &&
+          (!embedState.hideExportAndImportFlow || !embedState.hideTables) && (
+            <>
+              <DropdownMenuSeparator />
+              {!embedState.hideExportAndImportFlow && (
+                <PermissionNeededTooltip
+                  hasPermission={userHasPermissionToWriteFlow}
                 >
-                  <Upload className="h-4 w-4 mr-2" />
-                  {t('Import Flow')}
-                </DropdownMenuItem>
-              </PermissionNeededTooltip>
-            )}
-            {!embedState.hideTables && (
-              <PermissionNeededTooltip
-                hasPermission={userHasPermissionToWriteTable}
-              >
-                <DropdownMenuItem
-                  disabled={!userHasPermissionToWriteTable}
-                  onClick={onImportTable}
-                  className="cursor-pointer"
+                  <DropdownMenuItem
+                    disabled={!userHasPermissionToWriteFlow}
+                    onClick={onImportFlow}
+                    className="cursor-pointer"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {t('Import Flow')}
+                  </DropdownMenuItem>
+                </PermissionNeededTooltip>
+              )}
+              {!embedState.hideTables && (
+                <PermissionNeededTooltip
+                  hasPermission={userHasPermissionToWriteTable}
                 >
-                  <Upload className="h-4 w-4 mr-2" />
-                  {t('Import Table')}
-                </DropdownMenuItem>
-              </PermissionNeededTooltip>
-            )}
-          </>
-        )}
+                  <DropdownMenuItem
+                    disabled={!userHasPermissionToWriteTable}
+                    onClick={onImportTable}
+                    className="cursor-pointer"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {t('Import Table')}
+                  </DropdownMenuItem>
+                </PermissionNeededTooltip>
+              )}
+            </>
+          )}
 
         {showFolder && onCreateFolder && (
           <>
@@ -176,6 +179,7 @@ type CreateNewMenuProps = {
   onImportFlow: () => void;
   onImportTable: () => void;
   onSelectTemplate?: () => void;
+  onOpenChange?: (open: boolean) => void;
 };
 
 export type CreateInFolderKind =
