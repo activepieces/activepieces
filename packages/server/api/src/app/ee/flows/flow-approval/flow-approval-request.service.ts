@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ApId, ApplicationEventName, Cursor, ErrorCode, Flow, FlowApprovalRequest, FlowApprovalRequestState, FlowOperationType, FlowStatus, FlowVersionState, isNil, PlatformId, PopulatedFlowApprovalRequest, Principal, ProjectId, SeekPage, UserId } from '@activepieces/shared'
+import { ActivepiecesError, apId, ApId, ApplicationEventName, Cursor, ErrorCode, Flow, FlowApprovalRequest, FlowApprovalRequestState, FlowOperationType, FlowStatus, FlowVersionState, isNil, PlatformId, PopulatedFlowApprovalRequest, Principal, PrincipalType, ProjectId, SeekPage, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { transaction } from '../../../core/db/transaction'
@@ -86,13 +86,14 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
         }
 
         const decidedAt = new Date().toISOString()
+        const approverId = approverPrincipal.type === PrincipalType.SERVICE ? null : approverPrincipal.id
         const result = await transaction(async (entityManager) => {
             const update = await flowApprovalRequestRepo(entityManager)
                 .createQueryBuilder()
                 .update()
                 .set({
                     state: FlowApprovalRequestState.APPROVED,
-                    approverId: approverPrincipal.id,
+                    approverId,
                     decidedAt,
                 })
                 .where('id = :id AND state = :pending', {
@@ -106,7 +107,7 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
                 const row: FlowApprovalRequest = {
                     ...approval,
                     state: FlowApprovalRequestState.APPROVED,
-                    approverId: approverPrincipal.id,
+                    approverId,
                     decidedAt,
                 }
                 return { row, applied: true }
@@ -150,13 +151,14 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
 
         const decidedAt = new Date().toISOString()
         const rejectionReason = reason ?? null
+        const approverId = approverPrincipal.type === PrincipalType.SERVICE ? null : approverPrincipal.id
         const result = await transaction(async (entityManager) => {
             const update = await flowApprovalRequestRepo(entityManager)
                 .createQueryBuilder()
                 .update()
                 .set({
                     state: FlowApprovalRequestState.REJECTED,
-                    approverId: approverPrincipal.id,
+                    approverId,
                     decidedAt,
                     rejectionReason,
                 })
@@ -170,7 +172,7 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
                 const row: FlowApprovalRequest = {
                     ...approval,
                     state: FlowApprovalRequestState.REJECTED,
-                    approverId: approverPrincipal.id,
+                    approverId,
                     decidedAt,
                     rejectionReason,
                 }

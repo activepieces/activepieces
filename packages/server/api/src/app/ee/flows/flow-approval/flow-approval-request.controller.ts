@@ -66,7 +66,7 @@ const ListRequest = {
 
 const ApproveRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER], Permission.PUBLISH_SENSITIVE_FLOW_ACCESS, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.PUBLISH_SENSITIVE_FLOW_ACCESS, {
             type: ProjectResourceType.TABLE,
             tableName: FlowApprovalRequestEntity,
         }),
@@ -81,7 +81,7 @@ const ApproveRequest = {
 
 const RejectRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER], Permission.PUBLISH_SENSITIVE_FLOW_ACCESS, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.PUBLISH_SENSITIVE_FLOW_ACCESS, {
             type: ProjectResourceType.TABLE,
             tableName: FlowApprovalRequestEntity,
         }),
@@ -97,7 +97,7 @@ const RejectRequest = {
 
 const WithdrawRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER], Permission.WRITE_FLOW, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_FLOW, {
             type: ProjectResourceType.TABLE,
             tableName: FlowApprovalRequestEntity,
         }),
