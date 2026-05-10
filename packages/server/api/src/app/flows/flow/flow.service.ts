@@ -493,7 +493,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        const result = await transaction(async (entityManager) => {
+        await transaction(async (entityManager) => {
             const lockedFlowVersion = await lockFlowVersionIfNotLocked({
                 flowVersion: flowVersionToPublish,
                 userId,
@@ -502,27 +502,21 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 entityManager,
                 log,
             })
-            return this.setPublishedVersion({
+            await this.setPublishedVersion({
                 flow: flowToUpdate,
                 lockedVersion: lockedFlowVersion,
                 entityManager,
             })
         })
         await flowExecutionCache(log).invalidate(flowToUpdate.id)
-        return result
+        return this.getOnePopulatedOrThrow({ id: flowToUpdate.id, projectId })
     },
 
-    async setPublishedVersion({ flow, lockedVersion, entityManager }: SetPublishedVersionParams): Promise<PopulatedFlow> {
+    async setPublishedVersion({ flow, lockedVersion, entityManager }: SetPublishedVersionParams): Promise<void> {
         await flowRepo(entityManager).update({ id: flow.id }, {
             publishedVersionId: lockedVersion.id,
             status: FlowStatus.DISABLED,
         })
-        return {
-            ...flow,
-            publishedVersionId: lockedVersion.id,
-            status: FlowStatus.DISABLED,
-            version: lockedVersion,
-        }
     },
 
     async lockFlowVersionIfNotLocked(params: Omit<LockFlowVersionIfNotLockedParams, 'log'>): Promise<FlowVersion> {
