@@ -50,6 +50,7 @@ export type ImportFlowDialogProps =
       insideBuilder: false;
       onRefresh: () => void;
       folderId: string;
+      onClose?: () => void;
     }
   | {
       insideBuilder: true;
@@ -226,6 +227,9 @@ const ImportFlowDialog = (
           setErrorMessage('');
           setTemplates([]);
           setFailedFiles([]);
+          if (!props.insideBuilder) {
+            props.onClose?.();
+          }
         }
       }}
     >

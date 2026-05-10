@@ -366,6 +366,7 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
         insideBuilder={false}
         folderId={dialogs.importTargetFolderId ?? UncategorizedFolderId}
         onRefresh={() => invalidateAll()}
+        onClose={() => dialogs.setImportTargetFolderId(undefined)}
       >
         <button
           className="hidden"

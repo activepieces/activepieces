@@ -113,7 +113,7 @@ export const CreateNewMenu = ({
                 hasPermission={userHasPermissionToWriteFlow}
               >
                 <DropdownMenuItem
-                  disabled={!userHasPermissionToWriteFlow}
+                  disabled={!userHasPermissionToWriteFlow || busy}
                   onClick={onImportFlow}
                   className="cursor-pointer"
                 >
@@ -127,7 +127,7 @@ export const CreateNewMenu = ({
                 hasPermission={userHasPermissionToWriteTable}
               >
                 <DropdownMenuItem
-                  disabled={!userHasPermissionToWriteTable}
+                  disabled={!userHasPermissionToWriteTable || busy}
                   onClick={onImportTable}
                   className="cursor-pointer"
                 >
