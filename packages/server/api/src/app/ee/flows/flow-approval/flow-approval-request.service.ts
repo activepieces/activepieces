@@ -1,5 +1,6 @@
 import { ActivepiecesError, apId, ApId, ApplicationEventName, Cursor, ErrorCode, Flow, FlowApprovalRequest, FlowApprovalRequestState, FlowOperationType, FlowStatus, FlowVersionState, isNil, PlatformId, PopulatedFlowApprovalRequest, Principal, ProjectId, SeekPage, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
+import { repoFactory } from '../../../core/db/repo-factory'
 import { transaction } from '../../../core/db/transaction'
 import { flowExecutionCache } from '../../../flows/flow/flow-execution-cache'
 import { flowService } from '../../../flows/flow/flow.service'
@@ -7,10 +8,11 @@ import { flowVersionRepo, flowVersionService } from '../../../flows/flow-version
 import { applicationEvents } from '../../../helper/application-events'
 import { buildPaginator } from '../../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
-import Paginator, { Order } from '../../../helper/pagination/paginator'
+import { Order } from '../../../helper/pagination/paginator'
 import { triggerSourceService } from '../../../trigger/trigger-source/trigger-source-service'
 import { FlowApprovalRequestEntity } from './flow-approval-request.entity'
-import { flowApprovalRequestRepo } from './flow-approval-request.repo'
+
+const flowApprovalRequestRepo = repoFactory(FlowApprovalRequestEntity)
 
 export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
     async submitForApproval({ flow, userId, projectId, platformId, requestedStatus }: SubmitParams): Promise<FlowApprovalRequest> {
