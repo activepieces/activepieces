@@ -34,7 +34,7 @@ export const apListPiecesTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
             includeActions: z.boolean().optional().describe('When true, include action names and descriptions for each piece'),
             includeTriggers: z.boolean().optional().describe('When true, include trigger names and descriptions for each piece'),
         },
-        annotations: { readOnlyHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {
                 const params = listPiecesSchema.parse(args ?? {})
@@ -66,6 +66,11 @@ export const apListPiecesTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                     const hint = totalCount > LIST_CAP ? ` (showing ${LIST_CAP} of ${totalCount} — use searchQuery to narrow results)` : ''
                     return {
                         content: [{ type: 'text', text: `✅ Successfully listed pieces${hint}:\n${JSON.stringify(capped)}` }],
+                        structuredContent: {
+                            pieces: capped.map(p => ({ name: p.name, displayName: p.displayName, version: p.version, description: p.description })),
+                            count: capped.length,
+                            totalCount,
+                        },
                     }
                 }
 
@@ -91,7 +96,7 @@ export const apListPiecesTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                                 name: a.name,
                                 displayName: a.displayName,
                                 description: a.description,
-                                requireAuth: a.requireAuth,
+                                requiresAuth: a.requireAuth,
                             }))
                         }
                         if (params.includeTriggers) {
@@ -99,7 +104,7 @@ export const apListPiecesTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                                 name: t.name,
                                 displayName: t.displayName,
                                 description: t.description,
-                                requireAuth: t.requireAuth,
+                                requiresAuth: t.requireAuth,
                             }))
                         }
                     }
@@ -111,6 +116,16 @@ export const apListPiecesTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                     : ''
                 return {
                     content: [{ type: 'text', text: `✅ Successfully listed pieces${overflowHint}:\n${JSON.stringify(enrichedPieces)}` }],
+                    structuredContent: {
+                        pieces: enrichedPieces.map(p => ({
+                            name: String(p.name),
+                            displayName: String(p.displayName),
+                            version: String(p.version),
+                            description: String(p.description),
+                        })),
+                        count: enrichedPieces.length,
+                        totalCount,
+                    },
                 }
             }
             catch (err) {

@@ -101,8 +101,9 @@ export const newConnectionUtils = {
     grantType,
     oauth2App,
     redirectUrl,
+    projectId: projectIdOverride,
   }: DefaultValuesParams): Partial<UpsertAppConnectionRequestBody> {
-    const projectId = authenticationSession.getProjectId();
+    const projectId = projectIdOverride ?? authenticationSession.getProjectId();
     assertNotNullOrUndefined(projectId, 'projectId');
     if (!auth) {
       throw new Error(`Unsupported property type: ${auth}`);
@@ -231,16 +232,21 @@ export const newConnectionUtils = {
   },
 };
 
-export const isConnectionNameUnique = async (
-  isGlobalConnection: boolean,
-  displayName: string,
-) => {
+export const isConnectionNameUnique = async ({
+  isGlobalConnection,
+  displayName,
+  projectId,
+}: {
+  isGlobalConnection: boolean;
+  displayName: string;
+  projectId?: string;
+}) => {
   const connections = isGlobalConnection
     ? await globalConnectionsApi.list({
         limit: 10000,
       })
     : await appConnectionsApi.list({
-        projectId: authenticationSession.getProjectId()!,
+        projectId: projectId ?? authenticationSession.getProjectId()!,
         limit: 10000,
       });
   const existingConnection = connections.data.find(
@@ -257,4 +263,5 @@ type DefaultValuesParams = {
   auth: PieceAuthProperty;
   oauth2App: OAuth2App | null;
   grantType: OAuth2GrantType | null;
+  projectId?: string;
 };

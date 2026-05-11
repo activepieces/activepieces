@@ -1,6 +1,22 @@
 import { apId, JobData, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { z } from 'zod'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
+
+const LegacyExecuteFlowFields = z.object({
+    streamStepProgress: z.enum(StreamStepProgress).optional(),
+    progressUpdateType: z.string().optional(),
+    workerHandlerId: z.string().nullish(),
+    synchronousHandlerId: z.string().nullish(),
+})
+
+function deriveExecuteFlowMigrationFields(job: JobData): { streamStepProgress: StreamStepProgress, workerHandlerId: string | null } {
+    const legacy = LegacyExecuteFlowFields.parse(job)
+    return {
+        streamStepProgress: legacy.streamStepProgress ?? migrateProgressUpdateType(legacy.progressUpdateType),
+        workerHandlerId: legacy.workerHandlerId ?? legacy.synchronousHandlerId ?? null,
+    }
+}
 
 function createMigrations(log: FastifyBaseLogger): JobMigration[] {
     const enrichFlowId: JobMigration = {
@@ -39,14 +55,10 @@ function createMigrations(log: FastifyBaseLogger): JobMigration[] {
         runAtSchemaVersion: 5,
         migrate: async (job: JobData) => {
             if (job.jobType === WorkerJobType.EXECUTE_FLOW) {
-                const legacy = job as Record<string, unknown>
-                const streamStepProgress: StreamStepProgress = (legacy['streamStepProgress'] as StreamStepProgress | undefined) ?? migrateProgressUpdateType(legacy['progressUpdateType'] as string | undefined)
-                const workerHandlerId: string | null = (legacy['workerHandlerId'] as string | undefined) ?? (legacy['synchronousHandlerId'] as string | undefined) ?? null
                 return {
                     ...job,
                     schemaVersion: 6,
-                    streamStepProgress,
-                    workerHandlerId,
+                    ...deriveExecuteFlowMigrationFields(job),
                 }
             }
             return { ...job, schemaVersion: 6 }
@@ -66,8 +78,21 @@ function createMigrations(log: FastifyBaseLogger): JobMigration[] {
             }
         },
     }
+    const backfillRequiredExecuteFlowFields: JobMigration = {
+        runAtSchemaVersion: 7,
+        migrate: async (job: JobData) => {
+            if (job.jobType !== WorkerJobType.EXECUTE_FLOW) {
+                return { ...job, schemaVersion: 8 }
+            }
+            return {
+                ...job,
+                schemaVersion: 8,
+                ...deriveExecuteFlowMigrationFields(job),
+            }
+        },
+    }
 
-    return [enrichFlowId, migratePayloadToUnion, renameProgressAndHandlerFields, dropLogsUploadUrl]
+    return [enrichFlowId, migratePayloadToUnion, renameProgressAndHandlerFields, dropLogsUploadUrl, backfillRequiredExecuteFlowFields]
 }
 
 function migrateProgressUpdateType(progressUpdateType: string | undefined): StreamStepProgress {

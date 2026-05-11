@@ -171,6 +171,7 @@ export function useAgentChat({
   const [selectedProjectId, _setSelectedProjectId] = useState<string | null>(
     null,
   );
+  const [projectSetInSession, setProjectSetInSession] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [wasCancelled, setWasCancelled] = useState(false);
@@ -187,6 +188,11 @@ export function useAgentChat({
     selectedProjectIdRef.current = value;
     _setSelectedProjectId(value);
   }, []);
+  const [pendingApprovalRequest, setPendingApprovalRequest] = useState<{
+    gateId: string;
+    toolName: string;
+    displayName: string;
+  } | null>(null);
   const cancelledRef = useRef(false);
   const messageCountRef = useRef(0);
   const onTitleUpdateRef = useRef(onTitleUpdate);
@@ -234,16 +240,32 @@ export function useAgentChat({
   } = useChat({
     transport,
     onData: (dataPart) => {
+      const data = dataPart.data;
       if (
         dataPart.type === 'data-session-title' &&
-        typeof dataPart.data === 'object' &&
-        dataPart.data !== null &&
-        typeof (dataPart.data as Record<string, unknown>)['title'] === 'string'
+        typeof data === 'object' &&
+        data !== null &&
+        typeof (data as Record<string, unknown>)['title'] === 'string'
       ) {
         onTitleUpdateRef.current?.(
-          (dataPart.data as Record<string, unknown>)['title'] as string,
+          (data as Record<string, unknown>)['title'] as string,
           conversationIdRef.current ?? undefined,
         );
+      }
+      if (
+        dataPart.type === 'data-approval-request' &&
+        typeof data === 'object' &&
+        data !== null
+      ) {
+        const d = data as Record<string, unknown>;
+        if (typeof d.gateId === 'string' && typeof d.toolName === 'string') {
+          setPendingApprovalRequest({
+            gateId: d.gateId,
+            toolName: d.toolName,
+            displayName:
+              typeof d.displayName === 'string' ? d.displayName : d.toolName,
+          });
+        }
       }
     },
     onError: () => {
@@ -308,11 +330,18 @@ export function useAgentChat({
     return [...withoutEmptyAssistant, createPendingAssistantMessage()];
   }, [hasPending, uiMessages, pendingMessages]);
 
-  // Detect project context changes from AI tool calls during streaming (optimistic update)
+  // Tracks whether the conversation was loaded from history (resumed).
+  // When true, the server sync should NOT re-enable the project label.
+  const loadedFromHistoryRef = useRef(false);
+
+  // Scan the last assistant message for project selection and build-complete.
+  // Runs on every uiMessages change but only inspects the tail message
+  // (the only one that changes during streaming), keeping it O(parts).
+  const buildCompleteRef = useRef(false);
   useEffect(() => {
     const lastMsg = uiMessages[uiMessages.length - 1];
     if (!lastMsg || lastMsg.role !== 'assistant') return;
-    let newProjectId: string | null | undefined;
+
     for (const part of lastMsg.parts) {
       if (part.type !== 'dynamic-tool') continue;
       if (
@@ -322,18 +351,30 @@ export function useAgentChat({
         'projectId' in part.input &&
         typeof part.input.projectId === 'string'
       ) {
-        newProjectId = part.input.projectId;
+        const projectId = part.input.projectId;
+        if (projectId !== selectedProjectIdRef.current) {
+          updateSelectedProjectId(projectId);
+        }
+        setProjectSetInSession((prev) => prev || true);
+        loadedFromHistoryRef.current = false;
       }
       if (part.toolName === 'ap_deselect_project') {
-        newProjectId = null;
+        if (selectedProjectIdRef.current !== null) {
+          updateSelectedProjectId(null);
+        }
       }
-    }
-    if (newProjectId !== undefined) {
-      updateSelectedProjectId(newProjectId);
+      if (
+        part.toolName === 'ap_manage_notes' &&
+        part.state === 'output-available'
+      ) {
+        buildCompleteRef.current = true;
+      }
     }
   }, [uiMessages]);
 
-  // Sync project context from server after streaming completes (authoritative)
+  // Server sync: single source of truth for project context.
+  // After every streaming completion, fetch the conversation's projectId
+  // from the backend and derive UI state from it.
   const prevStatusRef = useRef(status);
   useEffect(() => {
     const wasStreaming =
@@ -342,10 +383,19 @@ export function useAgentChat({
     const isNowIdle = status === 'ready' || status === 'error';
     prevStatusRef.current = status;
     if (wasStreaming && isNowIdle && conversationIdRef.current) {
+      const wasBuildComplete = buildCompleteRef.current;
+      if (wasBuildComplete) {
+        setProjectSetInSession(false);
+        buildCompleteRef.current = false;
+      }
       void chatApi
         .getConversation(conversationIdRef.current)
         .then((conv) => {
-          updateSelectedProjectId(conv.projectId ?? null);
+          const projectId = conv.projectId ?? null;
+          updateSelectedProjectId(projectId);
+          if (projectId && !wasBuildComplete && !loadedFromHistoryRef.current) {
+            setProjectSetInSession(true);
+          }
         })
         .catch(() => undefined);
     }
@@ -367,6 +417,8 @@ export function useAgentChat({
     setConversationIdState(null);
     setModelNameState(null);
     updateSelectedProjectId(null);
+    setProjectSetInSession(false);
+    loadedFromHistoryRef.current = false;
     setUiMessages([]);
     setLocalError(null);
     setWasCancelled(false);
@@ -396,6 +448,7 @@ export function useAgentChat({
       cancelledRef.current = false;
       setLocalError(null);
       setWasCancelled(false);
+      setPendingApprovalRequest(null);
 
       const fileNames = files?.map((f) => f.name) ?? [];
       lastSentFileNamesRef.current = fileNames;
@@ -441,6 +494,13 @@ export function useAgentChat({
           setPendingMessages([]);
           return;
         }
+        const convId = conversationIdRef.current;
+        const projectId = selectedProjectIdRef.current;
+        if (convId && projectId) {
+          await tryCatch(() =>
+            chatApi.setProjectContext(convId, { projectId }),
+          );
+        }
         if (cancelledRef.current) {
           setPendingMessages([]);
           return;
@@ -476,7 +536,10 @@ export function useAgentChat({
       if (convResult.data) {
         modelNameRef.current = convResult.data.modelName ?? null;
         setModelNameState(convResult.data.modelName ?? null);
+        // Set project for backend tool scoping, but don't show it visually (projectSetInSession stays false)
         updateSelectedProjectId(convResult.data.projectId ?? null);
+        setProjectSetInSession(false);
+        loadedFromHistoryRef.current = true;
       }
       setIsLoadingHistory(false);
     },
@@ -497,6 +560,10 @@ export function useAgentChat({
   const setProjectContext = useCallback(async (projectId: string | null) => {
     const previousProjectId = selectedProjectIdRef.current;
     updateSelectedProjectId(projectId);
+    if (projectId) {
+      setProjectSetInSession(true);
+      loadedFromHistoryRef.current = false;
+    }
     const convId = conversationIdRef.current;
     if (!convId) return;
     const { error: err } = await tryCatch(() =>
@@ -511,6 +578,7 @@ export function useAgentChat({
     conversationId,
     modelName,
     selectedProjectId,
+    projectSetInSession,
     messages,
     isStreaming,
     wasCancelled,
@@ -523,5 +591,6 @@ export function useAgentChat({
     setConversationId,
     setModelName,
     setProjectContext,
+    pendingApprovalRequest,
   };
 }

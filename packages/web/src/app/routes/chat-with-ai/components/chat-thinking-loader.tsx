@@ -8,13 +8,13 @@ import { cn } from '@/lib/utils';
 
 import chatLoadingAnimation from './chat-loading.lottie.json';
 
-function pickRandomIndex(current: number, length: number): number {
+export function pickRandomIndex(current: number, length: number): number {
   let next = Math.floor(Math.random() * (length - 1));
   if (next >= current) next++;
   return next;
 }
 
-const MESSAGES = [
+export const THINKING_MESSAGES = [
   'Hold on, thinking real hard',
   'Hmm let me figure this out',
   'Cooking something up for you',
@@ -62,11 +62,11 @@ function ChatThinkingLoader({
   showText?: boolean;
 }) {
   const [messageIndex, setMessageIndex] = useState(() =>
-    Math.floor(Math.random() * MESSAGES.length),
+    Math.floor(Math.random() * THINKING_MESSAGES.length),
   );
 
   const rotateMessage = useCallback(() => {
-    setMessageIndex((i) => pickRandomIndex(i, MESSAGES.length));
+    setMessageIndex((i) => pickRandomIndex(i, THINKING_MESSAGES.length));
   }, []);
 
   useEffect(() => {
@@ -93,7 +93,7 @@ function ChatThinkingLoader({
               transition={{ duration: 0.2 }}
             >
               <span className="bg-[length:200%_100%] animate-[shimmer_3s_linear_infinite] bg-gradient-to-r from-muted-foreground from-30% via-neutral-300 via-50% to-muted-foreground to-70% bg-clip-text text-transparent dark:via-white">
-                {t(MESSAGES[messageIndex])}
+                {t(THINKING_MESSAGES[messageIndex])}
               </span>
             </motion.span>
           </AnimatePresence>
@@ -114,7 +114,7 @@ function ChatThinkingLoader({
   );
 }
 
-function LottieLoader() {
+export function LottieLoader() {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {

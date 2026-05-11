@@ -1,5 +1,5 @@
-import { FLOW_RUN_LOG_MANIFEST_V2 } from './execution/step-output'
 import { ExecutioOutputFile } from './execution/execution-output'
+import { FLOW_RUN_LOG_MANIFEST_V2 } from './execution/step-output'
 
 export const logSerializer = {
     async serialize(log: ExecutioOutputFile): Promise<Buffer> {
