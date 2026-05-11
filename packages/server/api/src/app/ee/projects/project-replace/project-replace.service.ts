@@ -467,9 +467,9 @@ async function runTableOp({ op, projectId, applied, failed }: RunTableOpParams):
                         projectId,
                     },
                 })
-                for (const field of op.tableState.fields) {
-                    await fieldService.createFromState({ projectId, field, tableId: table.id })
-                }
+                await Promise.all(op.tableState.fields.map((field) =>
+                    fieldService.createFromState({ projectId, field, tableId: table.id }),
+                ))
                 applied.tablesCreated++
                 break
             }
@@ -480,25 +480,23 @@ async function runTableOp({ op, projectId, applied, failed }: RunTableOpParams):
                     request: { name: op.newTableState.name },
                 })
                 const fields = await fieldService.getAll({ projectId, tableId: updated.id })
-                for (const field of op.newTableState.fields) {
+                await Promise.all(op.newTableState.fields.map((field) => {
                     const existingField = fields.find((f) => f.externalId === field.externalId)
                     if (!isNil(existingField)) {
-                        await fieldService.update({
+                        return fieldService.update({
                             projectId,
                             id: existingField.id,
                             request: field,
                         })
                     }
-                    else {
-                        await fieldService.createFromState({ projectId, field, tableId: updated.id })
-                    }
-                }
+                    return fieldService.createFromState({ projectId, field, tableId: updated.id })
+                }))
                 const fieldsToDelete = fields.filter((f) =>
                     !op.newTableState.fields.some((nf) => nf.externalId === f.externalId),
                 )
-                for (const field of fieldsToDelete) {
-                    await fieldService.delete({ id: field.id, projectId })
-                }
+                await Promise.all(fieldsToDelete.map((field) =>
+                    fieldService.delete({ id: field.id, projectId }),
+                ))
                 applied.tablesUpdated++
                 break
             }
