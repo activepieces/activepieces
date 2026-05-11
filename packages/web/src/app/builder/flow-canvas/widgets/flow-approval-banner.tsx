@@ -109,15 +109,6 @@ const FlowApprovalBanner = () => {
       <div className="flex items-center gap-2">
         {isApprover && (
           <>
-            <Button
-              size="sm"
-              variant="default"
-              loading={isApproving}
-              disabled={busy}
-              onClick={() => handleApprove(latestApproval.id)}
-            >
-              {t('Approve')}
-            </Button>
             <Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
               <Button
                 size="sm"
@@ -163,6 +154,15 @@ const FlowApprovalBanner = () => {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            <Button
+              size="sm"
+              variant="default"
+              loading={isApproving}
+              disabled={busy}
+              onClick={() => handleApprove(latestApproval.id)}
+            >
+              {t('Approve')}
+            </Button>
           </>
         )}
         {showWithdraw && (
