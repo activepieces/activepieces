@@ -6,7 +6,7 @@ import { microsoftCloudProperty } from './common/microsoft-cloud';
 import { createGraphClient, withGraphRetry } from './common/graph';
 
 const authDesc = `
-If you'd like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),
+If you'd like to use your own custom Azure app instead of the default app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),
  set the **Redirect URI** to {{redirectUrl}} and add the following **Microsoft Graph (Delegated) permissions** under **API permissions**:
   - User.Read
 	- Channel.Create
