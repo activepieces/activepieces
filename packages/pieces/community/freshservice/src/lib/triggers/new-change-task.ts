@@ -41,6 +41,8 @@ const polling: Polling<
       endpoint: `changes/${propsValue.change_id}/tasks`,
       auth,
       queryParams: {
+        order_by: 'created_at',
+        order_type: 'desc',
         per_page: lastFetchEpochMS === 0 ? '10' : '100',
       },
     });

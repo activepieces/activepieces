@@ -55,6 +55,10 @@ export const updateChangeTask = createAction({
       body['notify_before'] = props.notify_before;
     }
 
+    if (Object.keys(body).length === 0) {
+      throw new Error('At least one field must be provided to update the task.');
+    }
+
     const response = await freshserviceApiCall<{ task: Record<string, unknown> }>({
       method: HttpMethod.PUT,
       endpoint: `changes/${props.change_id}/tasks/${props.task_id}`,

@@ -41,6 +41,8 @@ const polling: Polling<
       endpoint: `changes/${propsValue.change_id}/tasks`,
       auth,
       queryParams: {
+        order_by: 'updated_at',
+        order_type: 'desc',
         per_page: lastFetchEpochMS === 0 ? '10' : '100',
       },
     });
@@ -58,7 +60,7 @@ export const updatedChangeTask = createTrigger({
   auth: freshserviceAuth,
   name: 'updated_change_task',
   displayName: 'Updated Change Task',
-  description: 'Triggers when a task on a specific change request is updated.',
+  description: 'Triggers when a task on a specific change request is updated. Note: newly created tasks may also fire this trigger because their updated_at matches created_at.',
   props: {
     change_id: freshserviceCommon.change(true),
   },

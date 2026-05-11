@@ -61,7 +61,7 @@ export const updatedChange = createTrigger({
   auth: freshserviceAuth,
   name: 'updated_change',
   displayName: 'Updated Change',
-  description: 'Triggers when an existing change request is updated in Freshservice.',
+  description: 'Triggers when an existing change request is updated in Freshservice. Note: newly created changes may also fire this trigger because their updated_at matches created_at.',
   props: {},
   sampleData: {
     id: 1,

@@ -84,6 +84,10 @@ export const updateChange = createAction({
     if (props.item_category) body['item_category'] = props.item_category;
     if (props.custom_fields) body['custom_fields'] = props.custom_fields;
 
+    if (Object.keys(body).length === 0) {
+      throw new Error('At least one field must be provided to update the change.');
+    }
+
     const response = await freshserviceApiCall<{ change: Record<string, unknown> }>({
       method: HttpMethod.PUT,
       endpoint: `changes/${props.change_id}`,
