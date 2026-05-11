@@ -43,12 +43,18 @@ function reconstructChatHistory(messages: ModelMessage[]): ChatHistoryMessage[] 
                 if (lastResult?.role === 'assistant') {
                     // Merge consecutive assistant messages (agentic loop steps)
                     // into a single ChatHistoryMessage to match streaming behavior
-                    lastResult.content += text
+                    if (text) {
+                        lastResult.content = lastResult.content
+                            ? lastResult.content + '\n' + text
+                            : text
+                    }
                     if (toolCalls.length > 0) {
                         lastResult.toolCalls = [...(lastResult.toolCalls ?? []), ...toolCalls]
                     }
                     if (thoughts) {
-                        lastResult.thoughts = (lastResult.thoughts ?? '') + thoughts
+                        lastResult.thoughts = lastResult.thoughts
+                            ? lastResult.thoughts + '\n' + thoughts
+                            : thoughts
                     }
                 }
                 else {
