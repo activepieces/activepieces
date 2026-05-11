@@ -1,5 +1,5 @@
 import { FlowActionType, FlowTriggerType } from '@activepieces/shared';
-import { GripVerticalIcon } from 'lucide-react';
+import { GripHorizontalIcon } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -119,7 +119,7 @@ const TestPanelHost = ({
   return (
     <div
       ref={drawerRef}
-      className="bg-background border-t border-border shadow-2xl rounded-t-lg flex flex-col shrink-0"
+      className="bg-background border-t shadow-2xl flex flex-col shrink-0"
       style={{ height: `${drawerHeightPct}%` }}
       role="dialog"
     >
@@ -134,10 +134,10 @@ const TestPanelHost = ({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerCancel}
-        className="relative flex h-2 w-full items-center justify-center shrink-0 cursor-row-resize touch-none select-none outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1"
+        className="relative flex h-3 w-full items-center justify-center shrink-0 cursor-row-resize touch-none select-none outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1"
       >
-        <div className="flex h-3 w-4 items-center justify-center rounded-xs border bg-border">
-          <GripVerticalIcon className="size-2.5 rotate-90 hover:fill-primary" />
+        <div className="flex h-3 w-4 items-center -translate-y-1 justify-center rounded-xs border bg-border">
+          <GripHorizontalIcon className="size-2.5  hover:fill-primary" />
         </div>
       </div>
       <div className="flex-1 min-h-0 overflow-hidden">{body}</div>

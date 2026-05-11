@@ -114,7 +114,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
         textMentionUtils.dataSelectorCssClassSelector,
       )}
     >
-      <div className="text-lg items-center px-5 py-2 flex gap-2">
+      <div className="text-lg items-center px-3 py-2 flex gap-2">
         {t('Data Selector')} <div className="grow"></div>{' '}
         <DataSelectorSizeTogglers
           state={DataSelectorSize}
@@ -136,7 +136,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
         }}
         className="transition-all overflow-hidden"
       >
-        <div className="flex items-center gap-2 px-5 mb-2 mt-0.5">
+        <div className="flex items-center gap-2 px-3 mb-2 mt-0.5">
           <SearchInput
             onChange={(e) => setSearchTerm(e)}
             value={searchTerm}

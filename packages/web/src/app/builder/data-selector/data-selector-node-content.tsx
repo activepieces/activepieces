@@ -55,11 +55,12 @@ const DataSelectorNodeContent = ({
 
   const isExpandable = !!node.children && node.children.length > 0;
   const isStepRoot = depth === 0;
+  const isPrimitiveStepRoot = isStepRoot && !isExpandable;
   const isLeafValue =
     !isExpandable && node.data.type === 'value' && !isStepRoot;
   const isInsertable =
     node.data.type === 'value' && node.data.insertable && !node.isLoopStepNode;
-  const showInsertButton = isInsertable && !isStepRoot;
+  const showInsertButton = isInsertable && (!isStepRoot || isPrimitiveStepRoot);
 
   const arrayValue =
     node.data.type === 'value' && Array.isArray(node.data.value)
@@ -79,8 +80,9 @@ const DataSelectorNodeContent = ({
     }
   };
 
+  const showValuePreview = (isLeafValue || isPrimitiveStepRoot) && isInsertable;
   const valuePreview =
-    isLeafValue && node.data.type === 'value'
+    showValuePreview && node.data.type === 'value'
       ? formatValuePreview(node.data.value)
       : '';
 
@@ -139,7 +141,7 @@ const DataSelectorNodeContent = ({
             </span>
           )}
 
-          {isLeafValue && valuePreview !== '' && (
+          {showValuePreview && valuePreview !== '' && (
             <>
               <span className="shrink-0 text-muted-foreground">:</span>
               <TextWithTooltip tooltipMessage={String(valuePreview)}>
