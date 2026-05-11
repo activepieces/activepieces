@@ -14,6 +14,7 @@ function reconstructChatHistory(messages: ModelMessage[]): ChatHistoryMessage[] 
         else if (msg.role === 'assistant') {
             const parts = Array.isArray(msg.content) ? msg.content : [{ type: 'text' as const, text: String(msg.content) }]
             let text = ''
+            let thoughts = ''
             const toolCalls: ChatHistoryToolCall[] = []
 
             for (const part of parts) {
@@ -31,14 +32,32 @@ function reconstructChatHistory(messages: ModelMessage[]): ChatHistoryMessage[] 
                         input: typeof part.input === 'object' && part.input !== null ? part.input as Record<string, unknown> : undefined,
                     })
                 }
+                else if ((part.type === 'reasoning' || part.type === 'thinking') && typeof part.text === 'string') {
+                    thoughts += part.text
+                }
             }
 
-            if (text || toolCalls.length > 0) {
-                result.push({
-                    role: 'assistant',
-                    content: text,
-                    ...(toolCalls.length > 0 ? { toolCalls } : {}),
-                })
+            if (text || toolCalls.length > 0 || thoughts) {
+                const lastResult = result[result.length - 1]
+                if (lastResult?.role === 'assistant') {
+                    // Merge consecutive assistant messages (agentic loop steps)
+                    // into a single ChatHistoryMessage to match streaming behavior
+                    lastResult.content += text
+                    if (toolCalls.length > 0) {
+                        lastResult.toolCalls = [...(lastResult.toolCalls ?? []), ...toolCalls]
+                    }
+                    if (thoughts) {
+                        lastResult.thoughts = (lastResult.thoughts ?? '') + thoughts
+                    }
+                }
+                else {
+                    result.push({
+                        role: 'assistant',
+                        content: text,
+                        ...(toolCalls.length > 0 ? { toolCalls } : {}),
+                        ...(thoughts.length > 0 ? { thoughts } : {}),
+                    })
+                }
             }
         }
         else if (msg.role === 'tool') {
