@@ -119,6 +119,13 @@ export class FlowExecutorContext {
         if (stepOutput.type === FlowActionType.LOOP_ON_ITEMS) {
             finalized = stepOutput
         }
+        else if (stepOutput.kind === 'slice') {
+            // Already a slice ref — happens on RESUME when steps are restored from a log file.
+            // The ref payload is tiny (sub-threshold) so re-slicing would no-op and silently
+            // drop the discriminant, leaving downstream variable resolution with a raw
+            // LogSliceRef instead of the materialized output.
+            finalized = stepOutput
+        }
         else {
             const sliced = await maybeSliceOutput(stepOutput.output, this.engineApi)
             finalized = new GenericStepOutput({

@@ -95,3 +95,80 @@ describe('jobMigrations v6 → v7 (dropLogsUploadUrl)', () => {
         expect(migrated.runId).toBe('run-1')
     })
 })
+
+describe('jobMigrations v7 → v8 (backfillRequiredExecuteFlowFields)', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+    })
+
+    it('maps legacy progressUpdateType=TEST_FLOW to streamStepProgress=WEBSOCKET', async () => {
+        const legacy = {
+            ...baseFlowJob({ schemaVersion: 7 }),
+            streamStepProgress: undefined,
+            progressUpdateType: 'TEST_FLOW',
+        } as Record<string, unknown>
+
+        const migrated = await jobMigrations(mockLog).apply(legacy) as ExecuteFlowJobData
+
+        expect(migrated.schemaVersion).toBe(LATEST)
+        expect(migrated.streamStepProgress).toBe(StreamStepProgress.WEBSOCKET)
+    })
+
+    it('maps legacy progressUpdateType=WEBHOOK_RESPONSE to streamStepProgress=WEBSOCKET', async () => {
+        const legacy = {
+            ...baseFlowJob({ schemaVersion: 7 }),
+            streamStepProgress: undefined,
+            progressUpdateType: 'WEBHOOK_RESPONSE',
+        } as Record<string, unknown>
+
+        const migrated = await jobMigrations(mockLog).apply(legacy) as ExecuteFlowJobData
+
+        expect(migrated.streamStepProgress).toBe(StreamStepProgress.WEBSOCKET)
+    })
+
+    it('falls back to streamStepProgress=NONE for unknown legacy progressUpdateType', async () => {
+        const legacy = {
+            ...baseFlowJob({ schemaVersion: 7 }),
+            streamStepProgress: undefined,
+            progressUpdateType: undefined,
+        } as Record<string, unknown>
+
+        const migrated = await jobMigrations(mockLog).apply(legacy) as ExecuteFlowJobData
+
+        expect(migrated.streamStepProgress).toBe(StreamStepProgress.NONE)
+    })
+
+    it('renames legacy synchronousHandlerId to workerHandlerId', async () => {
+        const legacy = {
+            ...baseFlowJob({ schemaVersion: 7 }),
+            workerHandlerId: undefined,
+            synchronousHandlerId: 'handler-7',
+        } as Record<string, unknown>
+
+        const migrated = await jobMigrations(mockLog).apply(legacy) as ExecuteFlowJobData
+
+        expect(migrated.workerHandlerId).toBe('handler-7')
+    })
+
+    it('preserves an explicit workerHandlerId / streamStepProgress already set', async () => {
+        const job = baseFlowJob({
+            schemaVersion: 7,
+            workerHandlerId: 'explicit-handler',
+            streamStepProgress: StreamStepProgress.WEBSOCKET,
+        })
+
+        const migrated = await jobMigrations(mockLog).apply(job) as ExecuteFlowJobData
+
+        expect(migrated.workerHandlerId).toBe('explicit-handler')
+        expect(migrated.streamStepProgress).toBe(StreamStepProgress.WEBSOCKET)
+    })
+
+    it('only bumps schemaVersion for non-EXECUTE_FLOW jobs at v7', async () => {
+        const job = basePollingJob({ schemaVersion: 7 })
+
+        const migrated = await jobMigrations(mockLog).apply(job)
+
+        expect(migrated.schemaVersion).toBe(LATEST)
+        expect(migrated.jobType).toBe(WorkerJobType.EXECUTE_POLLING)
+    })
+})
