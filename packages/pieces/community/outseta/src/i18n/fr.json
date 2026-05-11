@@ -491,5 +491,12 @@
   "How to find the subscription to retrieve.": "Comment trouver l'abonnement à récupérer.",
   "Account UID (current subscription)": "UID du compte (abonnement actif)",
   "Used when \"Lookup by\" is set to Subscription UID.": "Utilisé quand « Rechercher par » est défini sur UID de l'abonnement.",
-  "Used when \"Lookup by\" is set to Account UID. Resolves to the account's current subscription.": "Utilisé quand « Rechercher par » est défini sur UID du compte. Renvoie l'abonnement actif du compte."
+  "Used when \"Lookup by\" is set to Account UID. Resolves to the account's current subscription.": "Utilisé quand « Rechercher par » est défini sur UID du compte. Renvoie l'abonnement actif du compte.",
+  "Send Invoice Email": "Envoyer l'email de facture",
+  "Send (or resend) the invoice email to the customer associated with an invoice.": "Envoie (ou renvoie) l'email de facture au client associé à une facture.",
+  "The UID of the invoice whose email should be sent.": "UID de la facture dont l'email doit être envoyé.",
+  "Process Payment": "Traiter un paiement",
+  "Manually trigger the processing (retry) of a previously recorded payment. Typically used to retry a failed payment after a customer updates their card.": "Déclenche manuellement le traitement (nouvelle tentative) d'un paiement précédemment enregistré. Utilisé en général pour retenter un paiement échoué après mise à jour de la carte par le client.",
+  "Payment UID": "UID du paiement",
+  "The UID of the payment to process. You can get it from a 'Subscription Payment Declined' webhook payload, or from the 'List Account Transactions' / 'Get Last Payment for Account' actions.": "UID du paiement à traiter. Récupérable depuis le payload d'un webhook « Subscription Payment Declined », ou via les actions « Lister les paiements d'un compte » / « Récupérer le dernier paiement d'un compte »."
 }

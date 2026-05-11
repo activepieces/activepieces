@@ -491,5 +491,12 @@
   "How to find the subscription to retrieve.": "How to find the subscription to retrieve.",
   "Account UID (current subscription)": "Account UID (current subscription)",
   "Used when \"Lookup by\" is set to Subscription UID.": "Used when \"Lookup by\" is set to Subscription UID.",
-  "Used when \"Lookup by\" is set to Account UID. Resolves to the account's current subscription.": "Used when \"Lookup by\" is set to Account UID. Resolves to the account's current subscription."
+  "Used when \"Lookup by\" is set to Account UID. Resolves to the account's current subscription.": "Used when \"Lookup by\" is set to Account UID. Resolves to the account's current subscription.",
+  "Send Invoice Email": "Send Invoice Email",
+  "Send (or resend) the invoice email to the customer associated with an invoice.": "Send (or resend) the invoice email to the customer associated with an invoice.",
+  "The UID of the invoice whose email should be sent.": "The UID of the invoice whose email should be sent.",
+  "Process Payment": "Process Payment",
+  "Manually trigger the processing (retry) of a previously recorded payment. Typically used to retry a failed payment after a customer updates their card.": "Manually trigger the processing (retry) of a previously recorded payment. Typically used to retry a failed payment after a customer updates their card.",
+  "Payment UID": "Payment UID",
+  "The UID of the payment to process. You can get it from a 'Subscription Payment Declined' webhook payload, or from the 'List Account Transactions' / 'Get Last Payment for Account' actions.": "The UID of the payment to process. You can get it from a 'Subscription Payment Declined' webhook payload, or from the 'List Account Transactions' / 'Get Last Payment for Account' actions."
 }

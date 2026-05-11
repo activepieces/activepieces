@@ -52,6 +52,8 @@ import { createDiscountAction } from './action/create-discount';
 // Actions — Billing (Invoice)
 import { addInvoiceAction } from './action/add-invoice';
 import { addInvoicePaymentAction } from './action/add-invoice-payment';
+import { sendInvoiceEmailAction } from './action/send-invoice-email';
+import { processPaymentAction } from './action/process-payment';
 
 // Actions — CRM (Membership / Activity)
 import { manageAccountMembershipAction } from './action/manage-account-membership';
@@ -133,6 +135,8 @@ export const outseta = createPiece({
     // Billing — Invoice
     addInvoiceAction,
     addInvoicePaymentAction,
+    sendInvoiceEmailAction,
+    processPaymentAction,
     // CRM — Membership / Activity
     manageAccountMembershipAction,
     updateAccountMembershipAction,
