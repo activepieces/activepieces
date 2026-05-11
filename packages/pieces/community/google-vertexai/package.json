@@ -4,9 +4,9 @@
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
-    "@activepieces/pieces-common": "0.12.1",
-    "@activepieces/pieces-framework": "0.26.2",
-    "@activepieces/shared": "0.57.2",
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "@google/genai": "1.43.0",
     "google-auth-library": "10.6.1",
     "mime-types": "2.1.35"
