@@ -40,7 +40,9 @@ export const FlowStepInputOutput = () => {
         : null,
     ],
   );
-  const [activeTab, setActiveTab] = useState<RunActiveTab>('output');
+  const [activeTab, setActiveTab] = useState<RunActiveTab>(
+    isAgent ? 'timeline' : 'output',
+  );
   const selectedStepOutput = useMemo(() => {
     return run && selectedStep && run.steps
       ? flowRunUtils.extractStepOutput(
