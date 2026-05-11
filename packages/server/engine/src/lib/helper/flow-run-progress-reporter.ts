@@ -2,10 +2,10 @@ import { promisify } from 'node:util'
 import { zstdCompress as zstdCompressCallback } from 'node:zlib'
 import { setTimeout } from 'timers/promises'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { CONTENT_ENCODING_ZSTD, DEFAULT_MCP_DATA, EngineGenericError, FlowActionType, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, tryCatch, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, EngineGenericError, FileCompression, FileType, FlowActionType, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, tryCatch, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
-import fetchRetry from 'fetch-retry'
+import { engineFileApi } from '../engine-file-api'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { utils } from '../utils'
@@ -14,7 +14,6 @@ import { workerSocket } from '../worker-socket'
 
 const zstdCompress = promisify(zstdCompressCallback)
 const stateLock = new Mutex()
-const fetchWithRetry = fetchRetry(global.fetch)
 
 const SNAPSHOT_FLUSH_INTERVAL_MS = 15000
 let latestUpdateParams: UpdateStepProgressParams | null = null
@@ -110,14 +109,18 @@ export const flowRunProgressReporter = {
             })
             const executionState = await zstdCompress(serialized)
 
-            const logsUploadUrl = engineConstants.logsUploadUrl
-            if (isNil(logsUploadUrl)) {
-                throw new EngineGenericError('LogsUploadUrlNotSetError', 'Logs upload URL is not set')
+            const logsFileId = engineConstants.logsFileId
+            if (isNil(logsFileId)) {
+                throw new EngineGenericError('LogsFileIdNotSetError', 'Logs file id is not set')
             }
-            const uploadLogResponse = await uploadExecutionState(logsUploadUrl, executionState)
-            if (!uploadLogResponse.ok) {
-                throw new EngineGenericError('ProgressUpdateError', 'Failed to upload execution state', uploadLogResponse)
-            }
+            await engineFileApi.upload({
+                engineToken: engineConstants.engineToken,
+                apiUrl: engineConstants.internalApiUrl,
+                fileId: logsFileId,
+                type: FileType.FLOW_RUN_LOG,
+                compression: FileCompression.ZSTD,
+                data: executionState,
+            })
 
             const stepResponse = extractStepResponse({
                 steps: flowExecutorContext.steps,
@@ -192,27 +195,6 @@ const sendLogsUpdate = async (request: UploadRunLogsRequest): Promise<void> => {
         throw new EngineGenericError('ProgressUpdateError', 'Failed to send uploadRunLog', result.error)
     }
 }
-
-const uploadExecutionState = async (uploadUrl: string, executionState: Buffer, followRedirects = true): Promise<Response> => {
-    const response = await fetchWithRetry(uploadUrl, {
-        method: 'PUT',
-        body: new Uint8Array(executionState),
-        headers: {
-            'Content-Type': 'application/octet-stream',
-            'Content-Encoding': CONTENT_ENCODING_ZSTD,
-        },
-        redirect: 'manual',
-        retries: 3,
-        retryDelay: 3000,
-    })
-
-    if (followRedirects && response.status >= 300 && response.status < 400) {
-        const location = response.headers.get('location')!
-        return uploadExecutionState(location, executionState, false)
-    }
-    return response
-}
-
 
 const extractStepResponse = (params: ExtractStepResponse): StepRunResponse | undefined => {
     if (isNil(params.stepName)) {

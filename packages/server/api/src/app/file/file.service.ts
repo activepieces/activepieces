@@ -295,7 +295,7 @@ type GetDataResponse = {
     fileName?: string
 }
 
-function getLocationForFile(type: FileType) {
+export function getLocationForFile(type: FileType) {
     const FILE_LOCATION = system.getOrThrow<FileLocation>(AppSystemProp.FILE_STORAGE_LOCATION)
     if (isExecutionDataFileThatExpires(type)) {
         return FILE_LOCATION

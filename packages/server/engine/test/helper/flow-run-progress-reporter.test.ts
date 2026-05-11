@@ -19,7 +19,10 @@ vi.mock('../../src/lib/worker-socket', () => ({
 }))
 
 vi.mock('fetch-retry', () => ({
-    default: () => async () => new Response(null, { status: 200 }),
+    default: () => async () => new Response(JSON.stringify({ readUrl: 'https://mock.read.url/logs' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+    }),
 }))
 
 import { flowRunProgressReporter } from '../../src/lib/helper/flow-run-progress-reporter'
@@ -27,7 +30,9 @@ import { flowRunProgressReporter } from '../../src/lib/helper/flow-run-progress-
 const buildUpdateParams = ({ status }: { status: FlowRunStatus }) => {
     const engineConstants = generateMockEngineConstants({
         streamStepProgress: StreamStepProgress.NONE,
-        logsUploadUrl: 'http://127.0.0.1:65535/upload',
+        engineToken: 'mock-engine-token',
+        internalApiUrl: 'http://127.0.0.1:65535/',
+        logsFileId: 'logs-1',
     })
     const flowExecutorContext = new FlowExecutorContext()
     flowExecutorContext.verdict = status === FlowRunStatus.RUNNING

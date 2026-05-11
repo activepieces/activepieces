@@ -17,14 +17,14 @@ vi.mock('../../src/lib/helper/flow-run-progress-reporter', () => ({
     },
 }))
 
-const { mockDownload, mockUploadLogSlice } = vi.hoisted(() => ({
+const { mockDownload, mockUpload } = vi.hoisted(() => ({
     mockDownload: vi.fn(),
-    mockUploadLogSlice: vi.fn(),
+    mockUpload: vi.fn(),
 }))
 vi.mock('../../src/lib/engine-file-api', () => ({
     engineFileApi: {
         download: mockDownload,
-        uploadLogSlice: mockUploadLogSlice,
+        upload: mockUpload,
     },
 }))
 

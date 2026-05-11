@@ -1,9 +1,11 @@
 import {
+    apId,
     assertEqual,
     BaseStepOutput,
     EngineGenericError,
     executionJournal,
     FailedStep,
+    FileType,
     FlowActionType,
     FlowRunStatus,
     GenericStepOutput,
@@ -203,8 +205,14 @@ async function maybeSliceOutput(value: unknown, engineApi?: EngineApiConfig): Pr
         return undefined
     }
     const data = new TextEncoder().encode(JSON.stringify(value))
-    const { fileId, url } = await engineFileApi.uploadLogSlice({ apiUrl: engineApi.internalApiUrl, engineToken: engineApi.engineToken, data })
-    return { ref: { fileId, size, url } }
+    const { fileId, readUrl } = await engineFileApi.upload({
+        apiUrl: engineApi.internalApiUrl,
+        engineToken: engineApi.engineToken,
+        fileId: apId(),
+        type: FileType.FLOW_RUN_LOG_SLICE,
+        data,
+    })
+    return { ref: { fileId, size, url: readUrl } }
 }
 
 async function materializeStep(step: StepOutput, engineApi?: EngineApiConfig): Promise<unknown> {

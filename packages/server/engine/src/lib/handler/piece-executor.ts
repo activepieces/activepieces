@@ -111,8 +111,6 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             files: createFileUploader({
                 apiUrl: constants.internalApiUrl,
                 engineToken: constants.engineToken,
-                stepName: action.name,
-                flowId: constants.flowId,
             }),
             server: {
                 token: constants.engineToken,
