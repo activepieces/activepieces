@@ -114,8 +114,8 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/assets/:id', GetAssetRequest, async (req, reply) => {
         const [file, data] = await Promise.all([
-            fileService(app.log).getFileOrThrow({ fileId: req.params.id }),
-            fileService(app.log).getDataOrThrow({ fileId: req.params.id })])
+            fileService(app.log).getFileOrThrow({ fileId: req.params.id, type: FileType.PLATFORM_ASSET }),
+            fileService(app.log).getDataOrThrow({ fileId: req.params.id, type: FileType.PLATFORM_ASSET })])
 
         return reply
             .header(
