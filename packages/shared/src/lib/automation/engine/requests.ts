@@ -50,6 +50,21 @@ export const UploadLogsToken = z.object({
 
 export type UploadLogsToken = z.infer<typeof UploadLogsToken>
 
+export const UploadLogsBlobToken = z.object({
+    parentLogsFileId: z.string(),
+    projectId: z.string(),
+    flowRunId: z.string(),
+})
+
+export type UploadLogsBlobToken = z.infer<typeof UploadLogsBlobToken>
+
+export const UploadLogsBlobQueryParams = z.object({
+    token: z.string(),
+    blobFileId: z.string(),
+})
+
+export type UploadLogsBlobQueryParams = z.infer<typeof UploadLogsBlobQueryParams>
+
 export const SendFlowResponseRequest = z.object({
     workerHandlerId: z.string(),
     httpRequestId: z.string(),

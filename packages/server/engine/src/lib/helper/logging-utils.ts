@@ -1,5 +1,6 @@
 import { FlowActionType, StepOutput } from '@activepieces/shared'
 import { utils } from '../utils'
+import { sizeofUtils } from './sizeof'
 
 const TRUNCATION_TEXT_PLACEHOLDER = '(truncated)'
 const ERROR_OFFSET = 256 * 1024
@@ -61,7 +62,7 @@ export const loggingUtils = {
 }
 
 function getTotalStepsSize(steps: Record<string, StepOutput>): number {
-    return utils.sizeof(steps)
+    return sizeofUtils.recursiveSizeof(steps)
 }
 
 function traverseStepsAndCollectKeys(

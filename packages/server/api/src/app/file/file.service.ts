@@ -17,11 +17,14 @@ import { FastifyBaseLogger } from 'fastify'
 import { In, LessThanOrEqual } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { exceptionHandler } from '../helper/exception-handler'
+import { jwtUtils } from '../helper/jwt-utils'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { fileCompressor } from './file-compressor'
 import { FileEntity } from './file.entity'
 import { s3Helper } from './s3-helper'
+
+const ALLOWED_SIGNED_FILE_TYPES: FileType[] = [FileType.FLOW_STEP_FILE, FileType.FLOW_RUN_LOG_SLICE]
 
 const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/tiff', 'image/bmp', 'image/ico', 'image/avif', 'image/apng']
 
@@ -193,6 +196,48 @@ export const fileService = (log: FastifyBaseLogger) => ({
             types,
         }, '[FileService#deleteStaleBulk] completed')
     },
+    async getFileByToken(token: string): Promise<Omit<File, 'data'>> {
+        try {
+            const decodedToken = await jwtUtils.decodeAndVerify<FileToken>({
+                jwt: token,
+                key: await jwtUtils.getJwtSecret(),
+            })
+            const fileType = decodedToken.fileType ?? FileType.FLOW_STEP_FILE
+            if (!ALLOWED_SIGNED_FILE_TYPES.includes(fileType)) {
+                throw new Error(`File type ${fileType} not allowed for signed download`)
+            }
+            return await this.getFileOrThrow({
+                fileId: decodedToken.fileId,
+                type: fileType,
+            })
+        }
+        catch (e) {
+            throw new ActivepiecesError({
+                code: ErrorCode.INVALID_BEARER_TOKEN,
+                params: {
+                    message: 'invalid token or expired for the step file',
+                },
+            })
+        }
+    },
+    extractBufferOrUndefined(value: unknown): Buffer | undefined {
+        if (value === undefined || value === null) {
+            return undefined
+        }
+        if (Buffer.isBuffer(value)) {
+            return value
+        }
+        if (typeof value === 'string') {
+            return Buffer.from(value, 'utf-8')
+        }
+        if (value instanceof Uint8Array) {
+            return Buffer.from(value)
+        }
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: 'File data must be a Buffer' },
+        })
+    },
     async uploadPublicAsset(params: UploadPublicAssetParams): Promise<string | undefined> {
         const { file, type, platformId, allowedMimeTypes = IMAGE_MIME_TYPES, maxFileSizeInBytes, metadata } = params
 
@@ -261,6 +306,7 @@ function getLocationForFile(type: FileType) {
 function isExecutionDataFileThatExpires(type: FileType) {
     switch (type) {
         case FileType.FLOW_RUN_LOG:
+        case FileType.FLOW_RUN_LOG_SLICE:
         case FileType.FLOW_STEP_FILE:
         case FileType.TRIGGER_PAYLOAD:
         case FileType.TRIGGER_EVENT_FILE:
@@ -296,6 +342,11 @@ type GetOneParams = {
     fileId?: FileId
     projectId?: ProjectId
     type?: FileType
+}
+
+type FileToken = {
+    fileId: string
+    fileType?: FileType
 }
 
 type UploadPublicAssetParams = {

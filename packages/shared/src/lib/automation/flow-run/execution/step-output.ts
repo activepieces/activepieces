@@ -15,6 +15,7 @@ type BaseStepOutputParams<T extends FlowActionType | FlowTriggerType, OUTPUT> = 
     status: StepOutputStatus
     input: unknown
     output?: OUTPUT
+    kind?: StepOutputKind
     duration?: number
     errorMessage?: unknown
 }
@@ -24,6 +25,12 @@ export class GenericStepOutput<T extends FlowActionType | FlowTriggerType, OUTPU
     status: StepOutputStatus
     input: unknown
     output?: OUTPUT
+    /**
+     * When `'slice'`, `output` carries a LogSliceRef instead of inline data —
+     * the step's payload was large enough to be stored as FileType.FLOW_RUN_LOG_SLICE.
+     * Absent in the common case.
+     */
+    kind?: StepOutputKind
     duration?: number
     errorMessage?: unknown
 
@@ -32,6 +39,7 @@ export class GenericStepOutput<T extends FlowActionType | FlowTriggerType, OUTPU
         this.status = step.status
         this.input = step.input
         this.output = step.output
+        this.kind = step.kind
         this.duration = step.duration
         this.errorMessage = step.errorMessage
     }
@@ -83,6 +91,21 @@ export class GenericStepOutput<T extends FlowActionType | FlowTriggerType, OUTPU
         })
     }
 }
+
+export type StepOutputKind = 'slice'
+
+/**
+ * Payload stored in `StepOutput.output` when the host step has `kind: 'slice'`.
+ * Distinguished structurally by the step's `kind` field, so the ref itself
+ * carries no marker.
+ */
+export type LogSliceRef = {
+    fileId: string
+    size: number
+    url: string
+}
+
+export const FLOW_RUN_LOG_MANIFEST_V2 = 2
 
 export type BaseStepOutput = GenericStepOutput<FlowActionType | FlowTriggerType, unknown>
 

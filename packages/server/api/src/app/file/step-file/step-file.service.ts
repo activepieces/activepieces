@@ -1,5 +1,4 @@
 import {
-    File,
     FileCompression,
     FileType,
     isNil,
@@ -32,8 +31,11 @@ export const stepFileService = (log: FastifyBaseLogger) => ({
         })
         return {
             uploadUrl: await constructUploadUrl(log, file.s3Key ?? undefined, params.data, params.contentLength),
-            url: await constructDownloadUrl(params.platformId, file),
+            url: await constructDownloadUrl({ platformId: params.platformId, fileId: file.id }),
         }
+    },
+    async signedUrlFor({ platformId, fileId, fileType }: SignedUrlForParams): Promise<string> {
+        return constructDownloadUrl({ platformId, fileId, fileType })
     },
 })
 
@@ -46,10 +48,11 @@ async function constructUploadUrl(log: FastifyBaseLogger, s3Key: string | undefi
     return s3Helper(log).putS3SignedUrl({ s3Key, contentLength })
 }
 
-async function constructDownloadUrl(platformId: string, file: File): Promise<string> {
+async function constructDownloadUrl({ platformId, fileId, fileType }: ConstructDownloadUrlParams): Promise<string> {
     const accessToken = await jwtUtils.sign({
         payload: {
-            fileId: file.id,
+            fileId,
+            fileType,
         },
         expiresInSeconds: dayjs.duration(executionRetentionInDays, 'days').asSeconds(),
         key: await jwtUtils.getJwtSecret(),
@@ -69,4 +72,16 @@ type SaveParams = {
     contentLength: number
     projectId: string
     platformId: string
+}
+
+type SignedUrlForParams = {
+    platformId: string
+    fileId: string
+    fileType: FileType
+}
+
+type ConstructDownloadUrlParams = {
+    platformId: string
+    fileId: string
+    fileType?: FileType
 }

@@ -1,17 +1,11 @@
 import {
-    ActivepiecesError,
-    ErrorCode,
-    File,
     FileLocation,
-    FileType,
     StepFileUpsertRequest,
 } from '@activepieces/shared'
-import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { jwtUtils } from '../../helper/jwt-utils'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { projectService } from '../../project/project-service'
@@ -23,7 +17,7 @@ const useS3SignedUrls = system.getBoolean(AppSystemProp.S3_USE_SIGNED_URLS)
 
 export const stepFileController: FastifyPluginAsyncZod = async (app) => {
     app.get('/signed', SignedFileRequest, async (request, reply) => {
-        const file = await getFileByToken(request.query.token, request.log)
+        const file = await fileService(request.log).getFileByToken(request.query.token)
 
         if (useS3SignedUrls && file.location === FileLocation.S3) {
             const url = await s3Helper(request.log).getS3SignedUrl(file.s3Key!, file.fileName ?? 'unknown')
@@ -34,12 +28,12 @@ export const stepFileController: FastifyPluginAsyncZod = async (app) => {
         }
         const { data } = await fileService(request.log).getDataOrThrow({
             fileId: file.id,
-            type: FileType.FLOW_STEP_FILE,
+            type: file.type,
         })
         return reply
             .header(
                 'Content-Disposition',
-                `attachment; filename="${encodeURI(file.fileName ?? '')}"`,
+                `attachment; filename="${encodeURI(file.fileName ?? `${file.id}.json`)}"`,
             )
             .type('application/octet-stream')
             .status(StatusCodes.OK)
@@ -52,55 +46,11 @@ export const stepFileController: FastifyPluginAsyncZod = async (app) => {
             fileName: request.body.fileName,
             flowId: request.body.flowId,
             stepName: request.body.stepName,
-            data: extractBufferOrUndefined(request.body.file?.data),
+            data: fileService(request.log).extractBufferOrUndefined(request.body.file?.data),
             platformId,
             projectId: request.principal.projectId,
             contentLength: request.body.contentLength,
         })
-    })
-}
-
-type FileToken = {
-    fileId: string
-}
-
-async function getFileByToken(token: string, log: FastifyBaseLogger): Promise<Omit<File, 'data'>> {
-    try {
-        const decodedToken = await jwtUtils.decodeAndVerify<FileToken>({
-            jwt: token,
-            key: await jwtUtils.getJwtSecret(),
-        })
-        return await fileService(log).getFileOrThrow({
-            fileId: decodedToken.fileId,
-            type: FileType.FLOW_STEP_FILE,
-        })
-    }
-    catch (e) {
-        throw new ActivepiecesError({
-            code: ErrorCode.INVALID_BEARER_TOKEN,
-            params: {
-                message: 'invalid token or expired for the step file',
-            },
-        })
-    }
-}
-
-function extractBufferOrUndefined(value: unknown): Buffer | undefined {
-    if (value === undefined || value === null) {
-        return undefined
-    }
-    if (Buffer.isBuffer(value)) {
-        return value
-    }
-    if (typeof value === 'string') {
-        return Buffer.from(value, 'utf-8')
-    }
-    if (value instanceof Uint8Array) {
-        return Buffer.from(value)
-    }
-    throw new ActivepiecesError({
-        code: ErrorCode.VALIDATION,
-        params: { message: 'File data must be a Buffer' },
     })
 }
 
