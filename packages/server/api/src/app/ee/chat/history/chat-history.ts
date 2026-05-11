@@ -18,22 +18,23 @@ function reconstructChatHistory(messages: ModelMessage[]): ChatHistoryMessage[] 
             const toolCalls: ChatHistoryToolCall[] = []
 
             for (const part of parts) {
+                const p = part as unknown as Record<string, unknown>
                 if (typeof part === 'string') {
                     text += part
                 }
-                else if (part.type === 'text') {
-                    text += part.text
+                else if (p.type === 'text' && typeof p.text === 'string') {
+                    text += p.text
                 }
-                else if (part.type === 'tool-call') {
+                else if (p.type === 'tool-call') {
                     toolCalls.push({
-                        toolCallId: part.toolCallId,
-                        title: part.toolName,
+                        toolCallId: p.toolCallId as string,
+                        title: p.toolName as string,
                         status: 'completed',
-                        input: typeof part.input === 'object' && part.input !== null ? part.input as Record<string, unknown> : undefined,
+                        input: typeof p.input === 'object' && p.input !== null ? p.input as Record<string, unknown> : undefined,
                     })
                 }
-                else if ((part.type === 'reasoning' || part.type === 'thinking') && typeof part.text === 'string') {
-                    thoughts += part.text
+                else if ((p.type === 'reasoning' || p.type === 'thinking') && typeof p.text === 'string') {
+                    thoughts += p.text
                 }
             }
 

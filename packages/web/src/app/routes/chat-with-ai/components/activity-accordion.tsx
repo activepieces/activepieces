@@ -57,6 +57,8 @@ export function ThinkingBlock({
       : t('Thought for a few seconds');
   const collapsedLabel = isStreaming ? null : doneLabel;
 
+  const hasExpandableContent = hasReasoning || steps.length > 0;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
@@ -64,7 +66,14 @@ export function ThinkingBlock({
       transition={{ duration: 0.3, ease: 'easeOut' }}
     >
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CollapsibleTrigger className="flex flex-col gap-0.5 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer text-left">
+        <CollapsibleTrigger
+          disabled={!hasExpandableContent}
+          className={cn(
+            'flex flex-col gap-0.5 text-sm text-muted-foreground text-left',
+            hasExpandableContent &&
+              'hover:text-foreground transition-colors cursor-pointer',
+          )}
+        >
           <div className="flex items-center gap-1">
             {isStreaming ? (
               <TextShimmer className="text-sm" duration={3}>
@@ -73,12 +82,14 @@ export function ThinkingBlock({
             ) : (
               <span>{collapsedLabel}</span>
             )}
-            <ChevronDown
-              className={cn(
-                'size-4 shrink-0 transition-transform duration-300',
-                isOpen && 'rotate-180',
-              )}
-            />
+            {hasExpandableContent && (
+              <ChevronDown
+                className={cn(
+                  'size-4 shrink-0 transition-transform duration-300',
+                  isOpen && 'rotate-180',
+                )}
+              />
+            )}
           </div>
         </CollapsibleTrigger>
 
