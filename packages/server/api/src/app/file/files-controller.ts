@@ -4,6 +4,7 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { AppSystemProp } from '../helper/system/system-props'
 import { fileService } from './file.service'
 import { ENGINE_WRITABLE_FILE_TYPES, filesService, fileTransportHeaders } from './files-service'
 import { signedFileTransport } from './signed-file-transport'
@@ -48,12 +49,20 @@ export const filesController: FastifyPluginAsyncZod = async (app) => {
                 size: contentLength,
                 data: null,
             })
-            await signedFileTransport.maybeRedirectToS3Put({
+            const redirected = await signedFileTransport.maybeRedirectToS3Put({
                 reply,
                 log: request.log,
                 file,
                 contentEncoding: compression === FileCompression.ZSTD ? 'zstd' : undefined,
             })
+            if (!redirected) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.SYSTEM_PROP_INVALID,
+                    params: {
+                        prop: AppSystemProp.S3_USE_SIGNED_URLS,
+                    },
+                }, 'S3 signed-URL redirect expected but the file row was not eligible (location or s3Key missing). Aborting to avoid a double save.')
+            }
         },
     }, async (request, reply) => {
         const { fileId } = request.params

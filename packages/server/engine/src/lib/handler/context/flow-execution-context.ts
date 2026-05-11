@@ -26,7 +26,6 @@ const DEFAULT_THRESHOLD_KB = 32
 const SLICE_THRESHOLD_BYTES = Number(
     process.env.AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB ?? DEFAULT_THRESHOLD_KB,
 ) * 1024
-const materializeCache = new Map<string, Promise<unknown>>()
 
 export class FlowExecutorContext {
     tags: readonly string[]
@@ -36,6 +35,7 @@ export class FlowExecutorContext {
     stepNameToTest?: boolean
     stepsCount: number
     engineApi?: EngineApiConfig
+    materializeCache: Map<string, Promise<unknown>>
 
     /**
      * Execution time in milliseconds
@@ -51,6 +51,7 @@ export class FlowExecutorContext {
         this.stepNameToTest = copyFrom?.stepNameToTest ?? false
         this.stepsCount = copyFrom?.stepsCount ?? 0
         this.engineApi = copyFrom?.engineApi
+        this.materializeCache = copyFrom?.materializeCache ?? new Map()
     }
 
     static empty(engineApi?: EngineApiConfig): FlowExecutorContext {
@@ -178,7 +179,7 @@ export class FlowExecutorContext {
             }, {} as Record<string, StepOutput>)
             : this.steps
 
-        let flattenedSteps: Record<string, unknown> = await materializeSteps(referencedSteps, this.engineApi)
+        let flattenedSteps: Record<string, unknown> = await materializeSteps(referencedSteps, this.engineApi, this.materializeCache)
         let targetMap = this.steps
 
         for (const [stepName, iteration] of this.currentPath.path) {
@@ -189,7 +190,7 @@ export class FlowExecutorContext {
             targetMap = stepOutput.output.iterations[iteration]
             flattenedSteps = {
                 ...flattenedSteps,
-                ...await materializeSteps(targetMap, this.engineApi),
+                ...await materializeSteps(targetMap, this.engineApi, this.materializeCache),
             }
         }
         return flattenedSteps
@@ -215,7 +216,7 @@ async function maybeSliceOutput(value: unknown, engineApi?: EngineApiConfig): Pr
     return { ref: { fileId, size, url: readUrl } }
 }
 
-async function materializeStep(step: StepOutput, engineApi?: EngineApiConfig): Promise<unknown> {
+async function materializeStep(step: StepOutput, engineApi: EngineApiConfig | undefined, cache: Map<string, Promise<unknown>>): Promise<unknown> {
     if (step.kind !== 'slice') {
         return step.output
     }
@@ -223,20 +224,20 @@ async function materializeStep(step: StepOutput, engineApi?: EngineApiConfig): P
         throw new EngineGenericError('MissingEngineApiConfigError', 'Cannot materialize log slice ref without engine api config')
     }
     const ref = step.output as LogSliceRef
-    const existing = materializeCache.get(ref.fileId)
+    const existing = cache.get(ref.fileId)
     if (!isNil(existing)) {
         return existing
     }
     const promise = engineFileApi.download({ apiUrl: engineApi.internalApiUrl, engineToken: engineApi.engineToken, fileId: ref.fileId })
         .then((bytes) => JSON.parse(new TextDecoder('utf-8').decode(bytes)))
-    materializeCache.set(ref.fileId, promise)
+    cache.set(ref.fileId, promise)
     return promise
 }
 
-async function materializeSteps(steps: Record<string, StepOutput>, engineApi?: EngineApiConfig): Promise<Record<string, unknown>> {
+async function materializeSteps(steps: Record<string, StepOutput>, engineApi: EngineApiConfig | undefined, cache: Map<string, Promise<unknown>>): Promise<Record<string, unknown>> {
     const result: Record<string, unknown> = {}
     for (const [stepName, step] of Object.entries(steps)) {
-        result[stepName] = await materializeStep(step, engineApi)
+        result[stepName] = await materializeStep(step, engineApi, cache)
     }
     return result
 }
