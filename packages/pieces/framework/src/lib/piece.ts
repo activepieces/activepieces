@@ -31,6 +31,7 @@ export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | u
     public readonly minimumSupportedRelease: string = MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION,
     public readonly maximumSupportedRelease?: string,
     public readonly description = '',
+    public readonly requiresFreshSandbox?: boolean,
   ) {
     if (!isValidSimpleSemver(minimumSupportedRelease) || isSemverLessThan(minimumSupportedRelease, MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION)) {
       this.minimumSupportedRelease = MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION;
@@ -52,6 +53,7 @@ export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | u
       auth: this.auth,
       minimumSupportedRelease: this.minimumSupportedRelease,
       maximumSupportedRelease: this.maximumSupportedRelease,
+      requiresFreshSandbox: this.requiresFreshSandbox,
       contextInfo: this.getContextInfo?.()
     };
   }
@@ -96,6 +98,7 @@ export const createPiece = <PieceAuth extends PieceAuthProperty | PieceAuthPrope
     params.minimumSupportedRelease,
     params.maximumSupportedRelease,
     params.description,
+    params.requiresFreshSandbox,
   );
 };
 
@@ -113,6 +116,10 @@ type CreatePieceParams<
   actions: Action[];
   triggers: Trigger[];
   categories?: PieceCategory[];
+  // When true, every worker job running this piece gets a freshly-forked Node.js process
+  // and the sandbox is invalidated after the job finishes. Use for pieces with
+  // process-global state that cannot safely be shared across jobs.
+  requiresFreshSandbox?: boolean;
 };
 
 type PieceEventProcessors = {

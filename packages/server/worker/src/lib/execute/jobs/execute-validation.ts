@@ -21,7 +21,11 @@ export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData, Synchr
             codeSteps: [],
         })
 
-        const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
+        const sandbox = ctx.sandboxManager.acquire({
+            log: ctx.log,
+            apiClient: ctx.apiClient,
+            requiresFreshSandbox: data.requiresFreshSandbox,
+        })
         try {
             await sandbox.start({
                 flowVersionId: undefined,
@@ -63,7 +67,9 @@ export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData, Synchr
             throw e
         }
         finally {
-            await ctx.sandboxManager.release(ctx.log)
+            await ctx.sandboxManager.release(ctx.log, {
+                invalidateAfter: data.requiresFreshSandbox === true,
+            })
         }
     },
 }

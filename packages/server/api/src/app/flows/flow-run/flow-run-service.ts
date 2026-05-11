@@ -5,6 +5,7 @@ import {
     Cursor,
     ErrorCode,
     ExecutionType,
+    FlowActionType,
     FlowId,
     FlowRetryStrategy,
     FlowRun,
@@ -12,6 +13,9 @@ import {
     FlowRunId,
     FlowRunStatus,
     FlowRunWithRetryError,
+    flowStructureUtil,
+    FlowTriggerType,
+    FlowVersion,
     FlowVersionId,
     isFlowRunStateTerminal,
     isNil,
@@ -26,6 +30,7 @@ import {
     UploadLogsBehavior,
     WorkerJobType,
 } from '@activepieces/shared'
+import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { context, propagation, trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
@@ -567,6 +572,12 @@ export async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogge
         jobPayload = await payloadOffloader.maybeOffloadPayload(log, params.payload, params.flowRun.projectId, params.platformId)
     }
 
+    const requiresFreshSandbox = await flowRequiresFreshSandbox({
+        flowVersionId: params.flowRun.flowVersionId,
+        platformId: params.platformId,
+        log,
+    })
+
     await jobQueue(log).add({
         id: params.flowRun.id,
         type: JobType.ONE_TIME,
@@ -590,9 +601,42 @@ export async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogge
             logsUploadUrl,
             logsFileId,
             traceContext,
+            requiresFreshSandbox,
         },
     })
     return params.flowRun
+}
+
+async function flowRequiresFreshSandbox({ flowVersionId, platformId, log }: { flowVersionId: FlowVersionId, platformId: PlatformId, log: FastifyBaseLogger }): Promise<boolean> {
+    const flowVersion = await flowVersionService(log).getOne(flowVersionId)
+    if (isNil(flowVersion)) {
+        return false
+    }
+    const pieceRefs = extractPieceReferences(flowVersion)
+    if (pieceRefs.length === 0) {
+        return false
+    }
+    const metadataResults = await Promise.all(
+        pieceRefs.map((ref) =>
+            pieceMetadataService(log).getOrThrow({
+                name: ref.name,
+                version: ref.version,
+                platformId,
+            }),
+        ),
+    )
+    return metadataResults.some((m) => m.requiresFreshSandbox === true)
+}
+
+function extractPieceReferences(flowVersion: FlowVersion): Array<{ name: string, version: string }> {
+    const refs = new Map<string, { name: string, version: string }>()
+    for (const step of flowStructureUtil.getAllSteps(flowVersion.trigger)) {
+        if (step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE) {
+            const { pieceName, pieceVersion } = step.settings
+            refs.set(`${pieceName}@${pieceVersion}`, { name: pieceName, version: pieceVersion })
+        }
+    }
+    return [...refs.values()]
 }
 
 export async function findFlowRunOrThrow(flowRunId: FlowRunId): Promise<FlowRun> {

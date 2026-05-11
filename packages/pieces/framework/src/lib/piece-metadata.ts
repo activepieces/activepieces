@@ -23,6 +23,7 @@ export const PieceBase = z.object({
   minimumSupportedRelease: z.string().optional(),
   maximumSupportedRelease: z.string().optional(),
   i18n: I18nForPiece,
+  requiresFreshSandbox: z.boolean().optional(),
 })
 
 export type PieceBase = {
@@ -40,6 +41,10 @@ export type PieceBase = {
   minimumSupportedRelease?: string;
   maximumSupportedRelease?: string;
   i18n?: Partial<Record<LocalesEnum, Record<string, string>>>
+  // When true, every worker job running this piece gets a freshly-forked Node.js process
+  // and the sandbox is invalidated after release. Use for pieces with process-global state
+  // that cannot safely be shared across jobs (e.g. node-oracledb's one-way Thin/Thick lock).
+  requiresFreshSandbox?: boolean;
   // this method didn't exist in older version
   getContextInfo: (() => { version: ContextVersion }) | undefined;
 }

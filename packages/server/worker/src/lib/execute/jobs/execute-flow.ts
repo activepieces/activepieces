@@ -51,7 +51,11 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
             }, 'logsFileId is missing for RESUME operation')
         }
 
-        const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
+        const sandbox = ctx.sandboxManager.acquire({
+            log: ctx.log,
+            apiClient: ctx.apiClient,
+            requiresFreshSandbox: data.requiresFreshSandbox,
+        })
         try {
             await sandbox.start({
                 flowVersionId: flowVersion.id,
@@ -98,7 +102,9 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
             throw e
         }
         finally {
-            await ctx.sandboxManager.release(ctx.log)
+            await ctx.sandboxManager.release(ctx.log, {
+                invalidateAfter: data.requiresFreshSandbox === true,
+            })
         }
     },
 }

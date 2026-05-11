@@ -129,6 +129,7 @@ export const ExecuteFlowJobData = z.object({
     logsUploadUrl: z.string(),
     logsFileId: z.string(),
     traceContext: z.record(z.string(), z.string()).optional(),
+    requiresFreshSandbox: z.boolean().optional(),
 })
 export type ExecuteFlowJobData = z.infer<typeof ExecuteFlowJobData>
 
@@ -159,6 +160,7 @@ export const ExecuteValidateAuthJobData = z.object({
     connectionValue: z.unknown(),
     requestId: z.string(),
     webserverId: z.string(),
+    requiresFreshSandbox: z.boolean().optional(),
 })
 export type ExecuteValidateAuthJobData = z.infer<typeof ExecuteValidateAuthJobData>
 

@@ -9,17 +9,25 @@ export function createSandboxManager({ boxId, proxyPort }: { boxId: number, prox
     let currentSandbox: Sandbox | null = null
 
     return {
-        acquire(params: { log: Logger, apiClient: WorkerToApiContract }): Sandbox {
-            if (canReuseSandbox() && currentSandbox && currentSandbox.isReady()) {
+        acquire(params: AcquireParams): Sandbox {
+            const needsFresh = params.requiresFreshSandbox === true
+
+            if (!needsFresh && canReuseSandbox() && currentSandbox && currentSandbox.isReady()) {
                 return currentSandbox
             }
             if (currentSandbox) {
-                params.log.info('Sandbox not ready or not reusable, creating fresh one')
+                params.log.info(
+                    { needsFresh },
+                    needsFresh
+                        ? 'Piece requires fresh sandbox; invalidating current and spawning new'
+                        : 'Sandbox not ready or not reusable, creating fresh one',
+                )
                 currentSandbox.shutdown().catch((err) =>
                     params.log.error({ err }, 'Error shutting down previous sandbox'),
                 )
             }
-            currentSandbox = createSandboxForJob({ ...params, boxId, reusable: canReuseSandbox(), proxyPort })
+            const reusable = canReuseSandbox() && !needsFresh
+            currentSandbox = createSandboxForJob({ ...params, boxId, reusable, proxyPort })
             return currentSandbox
         },
         async invalidate(log: Logger): Promise<void> {
@@ -30,8 +38,8 @@ export function createSandboxManager({ boxId, proxyPort }: { boxId: number, prox
                 await sb.shutdown()
             }
         },
-        async release(log: Logger): Promise<void> {
-            if (!canReuseSandbox()) {
+        async release(log: Logger, opts?: ReleaseOptions): Promise<void> {
+            if (!canReuseSandbox() || opts?.invalidateAfter === true) {
                 await this.invalidate(log)
             }
         },
@@ -57,9 +65,19 @@ function canReuseSandbox(): boolean {
     return false
 }
 
+type AcquireParams = {
+    log: Logger
+    apiClient: WorkerToApiContract
+    requiresFreshSandbox?: boolean
+}
+
+type ReleaseOptions = {
+    invalidateAfter?: boolean
+}
+
 export type SandboxManager = {
-    acquire(params: { log: Logger, apiClient: WorkerToApiContract }): Sandbox
+    acquire(params: AcquireParams): Sandbox
     invalidate(log: Logger): Promise<void>
-    release(log: Logger): Promise<void>
+    release(log: Logger, opts?: ReleaseOptions): Promise<void>
     shutdown(log: Logger): Promise<void>
 }

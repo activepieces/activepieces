@@ -17,6 +17,10 @@ export const oracleDatabase = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/oracle-database.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   authors: ['Prabhukiran161', 'onyedikachi-david', 'sanket-a11y'],
+  // node-oracledb locks each Node.js process to Thin or Thick mode on first successful
+  // connection. Reusing a Thin-locked worker process for a Thick init throws NJS-118.
+  // This flag tells the sandbox manager to give every Oracle job a fresh forked process.
+  requiresFreshSandbox: true,
   actions: [
     insertRowAction,
     insertRowsAction,

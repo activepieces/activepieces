@@ -524,6 +524,7 @@ const engineValidateAuth = async (
         platformId,
         connectionValue: auth,
         jobType: WorkerJobType.EXECUTE_VALIDATION,
+        requiresFreshSandbox: pieceMetadata.requiresFreshSandbox === true,
     }, log)
 
     if (engineResponse.status !== EngineResponseStatus.OK) {
