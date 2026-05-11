@@ -12,7 +12,6 @@ import { AutomationsPagination } from '@/features/automations/components/automat
 import { AutomationsSelectionBar } from '@/features/automations/components/automations-selection-bar';
 import { AutomationsTable } from '@/features/automations/components/automations-table';
 import { CreateFolderDialog } from '@/features/automations/components/create-folder-dialog';
-import { ImportFlowDialog } from '@/features/automations/components/import-flow-dialog';
 import { MoveToFolderDialog } from '@/features/automations/components/move-to-folder-dialog';
 import { RenameDialog } from '@/features/automations/components/rename-dialog';
 import { useAutomationsData } from '@/features/automations/hooks/use-automations-data';
@@ -26,6 +25,7 @@ import {
 import { usePinnedItems } from '@/features/automations/hooks/use-pinned-items';
 import { TreeItem } from '@/features/automations/lib/types';
 import { appConnectionsQueries } from '@/features/connections';
+import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { projectMembersHooks } from '@/features/members';
 import { piecesHooks } from '@/features/pieces';
 import { projectCollectionUtils, getProjectName } from '@/features/projects';

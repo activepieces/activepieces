@@ -12,7 +12,6 @@ import { platformAnalyticsModule } from './analytics/platform-analytics.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { authenticationModule } from './authentication/authentication.module'
-import { chatModule } from './chat/chat.module'
 import { canaryRoutingMiddleware } from './core/canary/canary-routing.middleware'
 import { collaborativeModule } from './core/collaborative/collaborative.module'
 import { rateLimitModule } from './core/security/rate-limit'
@@ -30,6 +29,7 @@ import { federatedAuthModule } from './ee/authentication/federated-authn/federat
 import { otpModule } from './ee/authentication/otp/otp-module'
 import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware'
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
+import { chatModule } from './ee/chat/chat.module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
 import { customDomainModule } from './ee/custom-domains/custom-domain.module'
 import { domainHelper } from './ee/custom-domains/domain-helper'
@@ -228,7 +228,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(licenseKeysModule)
     await app.register(tablesModule)
     await app.register(knowledgeBaseModule)
-    await app.register(chatModule)
     await app.register(userModule)
     await app.register(templateModule)
     await app.register(userBadgeModule)
@@ -289,6 +288,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(globalConnectionModule)
             await app.register(secretManagersModule)
             await app.register(scimModule)
+            await app.register(chatModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
@@ -318,6 +318,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(globalConnectionModule)
             await app.register(secretManagersModule)
             await app.register(scimModule)
+            await app.register(chatModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)

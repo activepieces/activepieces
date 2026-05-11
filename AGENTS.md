@@ -72,11 +72,17 @@ API tests: `setupTestEnvironment()` + `createTestContext(app)` → `ctx.post()`,
 
 ## Commands
 
+This monorepo uses **turbo** (see `turbo.json`). There is no Nx — never invoke `nx` or `npx nx`.
+
 ```bash
-npm start             # Setup dev + start all
-npm run dev           # Frontend + backend
-npm run lint-dev      # Lint with auto-fix (ALWAYS before done)
+npm start                                       # Setup dev + start all
+npm run dev                                     # Frontend + backend
+npm run lint-dev                                # Lint with auto-fix (ALWAYS before done)
+npx turbo run lint --filter=<package>           # Lint a single package, e.g. --filter=web
+npx turbo run serve --filter=web -- --mode=cloud # Run local frontend against the cloud backend
 ```
+
+When running in `--mode=cloud`, do not use OAuth2 connections — the OAuth provider will redirect back to `cloud.activepieces.com` after sign-in instead of your local frontend, breaking the flow. Use API-key / basic-auth connections, or test OAuth2 against a fully local backend.
 
 ## Git Push
 
