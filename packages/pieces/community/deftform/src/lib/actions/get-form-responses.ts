@@ -26,12 +26,13 @@ export const getFormResponses = createAction({
                 for (const r of responses) {
                     const value = r.value;
                     responseFields[r.key] = Array.isArray(value)
-                        ? value.join(', ')
+                        ? value.map((v) => (typeof v === 'object' && v !== null ? JSON.stringify(v) : String(v))).join(', ')
                         : value ?? null;
                 }
             }
             return {
                 ...responseFields,
+                id: i['id'] ?? null,
                 uuid: i['uuid'] ?? null,
                 number: i['number'] ?? null,
                 number_formatted: i['number_formatted'] ?? null,
