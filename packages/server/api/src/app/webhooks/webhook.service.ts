@@ -127,7 +127,10 @@ export const webhookService = {
 
                 const resolvedPayload = payload ?? await data(flow.projectId)
 
-                const payloadSize = payloadOffloader.getPayloadSizeInBytes(resolvedPayload)
+                // rawBody is a string copy of body added by convertRequest — exclude it
+                // from size measurement so the same content isn't counted twice.
+                const { rawBody: _rawBody, ...sizePayload } = resolvedPayload as Record<string, unknown>
+                const payloadSize = payloadOffloader.getPayloadSizeInBytes(sizePayload)
                 if (payloadSize > MAX_PAYLOAD_SIZE_BYTES) {
                     pinoLogger.warn({ payloadSize, maxPayloadSizeBytes: MAX_PAYLOAD_SIZE_BYTES }, 'Webhook payload too large')
                     span.setAttribute('webhook.payloadTooLarge', true)
