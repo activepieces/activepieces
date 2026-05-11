@@ -245,8 +245,8 @@ export const chatService = (log: FastifyBaseLogger) => ({
                             conversationId,
                             inputTokens: usage.inputTokens,
                             outputTokens: usage.outputTokens,
-                            cacheReadTokens: usage.inputTokenDetails.cacheReadTokens,
-                            cacheWriteTokens: usage.inputTokenDetails.cacheWriteTokens,
+                            ...spreadIfDefined('cacheReadTokens', usage.inputTokenDetails.cacheReadTokens),
+                            ...spreadIfDefined('cacheWriteTokens', usage.inputTokenDetails.cacheWriteTokens),
                             provider: providerConfig.provider,
                         }, 'Chat message completed')
                     },
