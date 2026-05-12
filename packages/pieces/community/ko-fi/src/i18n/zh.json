@@ -1,0 +1,17 @@
+{
+  "Receive triggers for donations, subscriptions, commissions, and shop orders from Ko-fi.": "从 Ko-fi接收捐款、订阅、佣金和商店订单。",
+  "Your Ko-fi webhook verification token. Find it in Ko-fi Dashboard > Settings > API/Webhooks > Advanced Settings > Webhook verification token.": "您的 Ko-fi webhook 验证令牌。在 Ko-fi Dashboard > 设置 > API/Webhooks > 高级设置 > Webhook 验证令牌中查找。",
+  "New Donation": "新的捐款",
+  "New Subscription": "新建订阅",
+  "New Commission": "新建委员会",
+  "New Shop Order": "新商店订单",
+  "Triggers when a new one-time donation is received on Ko-fi.": "当收到新的 Ko-fi一次性捐款时触发事件。",
+  "Triggers when a new subscription is received on Ko-fi.": "在 Ko-fi上收到新订阅时触发事件。",
+  "Triggers when a new commission is received on Ko-fi.": "在 Ko-fi上收到新佣金时触发事件。",
+  "Triggers when a new shop order is received on Ko-fi.": "在 Ko-fi上收到新商店订单时触发事件。",
+  "Markdown": "Markdown",
+  "To receive donation events, set up a webhook in your Ko-fi Dashboard: go to Settings > API/Webhooks, paste the URL {{webhookUrl}}, and select the \"Donation\" event type.": "To receive donation events, set up a webhook in your Ko-fi Dashboard: go to Settings > API/Webhooks, paste the URL {{webhookUrl}}, and select the \"Donation\" event type.",
+  "To receive subscription events, set up a webhook in your Ko-fi Dashboard: go to Settings > API/Webhooks, paste the URL {{webhookUrl}}, and select the \"Subscription\" event type.": "To receive subscription events, set up a webhook in your Ko-fi Dashboard: go to Settings > API/Webhooks, paste the URL {{webhookUrl}}, and select the \"Subscription\" event type.",
+  "To receive commission events, set up a webhook in your Ko-fi Dashboard: go to Settings > API/Webhooks, paste the URL {{webhookUrl}}, and select the \"Commission\" event type.": "To receive commission events, set up a webhook in your Ko-fi Dashboard: go to Settings > API/Webhooks, paste the URL {{webhookUrl}}, and select the \"Commission\" event type.",
+  "To receive shop order events, set up a webhook in your Ko-fi Dashboard: go to Settings > API/Webhooks, paste the URL {{webhookUrl}}, and select the \"Shop Order\" event type.": "To receive shop order events, set up a webhook in your Ko-fi Dashboard: go to Settings > API/Webhooks, paste the URL {{webhookUrl}}, and select the \"Shop Order\" event type."
+}
