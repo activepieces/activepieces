@@ -1,4 +1,4 @@
-import { FlowRunStatus, StreamStepProgress, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { FlowActionType, FlowRunStatus, GenericStepOutput, StepOutputStatus, StreamStepProgress, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { generateMockEngineConstants } from '../handler/test-helper'
@@ -113,5 +113,51 @@ describe('flow-run-progress-reporter backup ordering', () => {
         await flowRunProgressReporter.sendUpdate(buildUpdateParams({ status: FlowRunStatus.RUNNING }))
         await flowRunProgressReporter.backup()
         expect(lastUploadStatus()).toBe(FlowRunStatus.RUNNING)
+    })
+})
+
+describe('flow-run-progress-reporter slicing in single-step test mode', () => {
+    beforeEach(() => {
+        uploadRunLogMock.mockClear()
+        updateRunProgressMock.mockClear()
+    })
+
+    afterEach(async () => {
+        await flowRunProgressReporter.shutdown()
+    })
+
+    it('does not slice step outputs when slicingEnabled is false', async () => {
+        const engineConstants = generateMockEngineConstants({
+            streamStepProgress: StreamStepProgress.WEBSOCKET,
+            engineToken: 'mock-engine-token',
+            internalApiUrl: 'http://127.0.0.1:65535/',
+            logsFileId: 'logs-1',
+            stepNameToTest: 'step_emit_big',
+        })
+
+        let flowExecutorContext = FlowExecutorContext.empty({
+            engineApi: { engineToken: engineConstants.engineToken, internalApiUrl: engineConstants.internalApiUrl },
+            slicingEnabled: false,
+        })
+        flowExecutorContext.verdict = { status: FlowRunStatus.SUCCEEDED, stopResponse: undefined }
+
+        const big = { big: 'x'.repeat(40_000) }
+        flowExecutorContext = await flowExecutorContext.upsertStep('step_emit_big', GenericStepOutput.create({
+            type: FlowActionType.CODE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: big,
+        }))
+
+        const stored = flowExecutorContext.steps['step_emit_big']
+        expect(stored.kind).toBeUndefined()
+        expect(stored.output).toEqual(big)
+
+        flowRunProgressReporter.init()
+        await flowRunProgressReporter.sendUpdate({ engineConstants, flowExecutorContext })
+        await flowRunProgressReporter.backup()
+
+        const stepResponse = uploadRunLogMock.mock.calls.at(-1)![0].stepResponse
+        expect(stepResponse!.output).toEqual(big)
     })
 })

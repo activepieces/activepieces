@@ -36,6 +36,7 @@ export class FlowExecutorContext {
     stepsCount: number
     engineApi?: EngineApiConfig
     materializeCache: Map<string, Promise<unknown>>
+    slicingEnabled: boolean
 
     /**
      * Execution time in milliseconds
@@ -52,10 +53,11 @@ export class FlowExecutorContext {
         this.stepsCount = copyFrom?.stepsCount ?? 0
         this.engineApi = copyFrom?.engineApi
         this.materializeCache = copyFrom?.materializeCache ?? new Map()
+        this.slicingEnabled = copyFrom?.slicingEnabled ?? true
     }
 
-    static empty(engineApi?: EngineApiConfig): FlowExecutorContext {
-        return new FlowExecutorContext({ engineApi })
+    static empty(params?: FlowExecutorContextInit): FlowExecutorContext {
+        return new FlowExecutorContext({ engineApi: params?.engineApi, slicingEnabled: params?.slicingEnabled })
     }
 
     public finishExecution(): FlowExecutorContext {
@@ -127,7 +129,9 @@ export class FlowExecutorContext {
             finalized = stepOutput
         }
         else {
-            const sliced = await maybeSliceOutput(stepOutput.output, this.engineApi)
+            const sliced = this.slicingEnabled
+                ? await maybeSliceOutput(stepOutput.output, this.engineApi)
+                : undefined
             finalized = new GenericStepOutput({
                 type: stepOutput.type,
                 status: stepOutput.status,
@@ -264,4 +268,9 @@ export type FlowVerdict = {
 export type EngineApiConfig = {
     engineToken: string
     internalApiUrl: string
+}
+
+export type FlowExecutorContextInit = {
+    engineApi?: EngineApiConfig
+    slicingEnabled?: boolean
 }

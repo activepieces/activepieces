@@ -26,8 +26,8 @@ export const testExecutionContext = {
         engineConstants,
     }: TestExecutionParams): Promise<FlowExecutorContext> {
         let flowExecutionContext = FlowExecutorContext.empty({
-            engineToken,
-            internalApiUrl: apiUrl,
+            engineApi: { engineToken, internalApiUrl: apiUrl },
+            slicingEnabled: false,
         })
         if (isNil(flowVersion)) {
             return flowExecutionContext

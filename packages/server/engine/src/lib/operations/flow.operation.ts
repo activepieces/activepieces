@@ -68,8 +68,10 @@ const executieSingleStepOrFlowOperation = async (input: ResolvedExecuteFlowOpera
     }
     return flowExecutor.executeFromTrigger({
         executionState: await getFlowExecutionState(input, constants, FlowExecutorContext.empty({
-            engineToken: constants.engineToken,
-            internalApiUrl: constants.internalApiUrl,
+            engineApi: {
+                engineToken: constants.engineToken,
+                internalApiUrl: constants.internalApiUrl,
+            },
         })),
         constants,
         input,

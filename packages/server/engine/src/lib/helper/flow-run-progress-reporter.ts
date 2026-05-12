@@ -2,7 +2,7 @@ import { promisify } from 'node:util'
 import { zstdCompress as zstdCompressCallback } from 'node:zlib'
 import { setTimeout } from 'timers/promises'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, EngineGenericError, FileCompression, FileType, FlowActionType, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, tryCatch, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, EngineGenericError, FileCompression, FileType, FlowActionType, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, RunEnvironment, StepOutputStatus, StepRunResponse, tryCatch, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
 import { engineFileApi } from '../engine-file-api'
@@ -72,10 +72,9 @@ export const flowRunProgressReporter = {
             update: async (params: { data: unknown }) => {
                 const updated = await flowExecutorContext
                     .upsertStep(stepName, stepOutput.setOutput(params.data))
-                const steps = updated.steps
 
                 const stepResponse = extractStepResponse({
-                    steps,
+                    flowExecutorContext: updated,
                     runId: engineConstants.flowRunId,
                     stepName,
                 })
@@ -123,7 +122,7 @@ export const flowRunProgressReporter = {
             })
 
             const stepResponse = extractStepResponse({
-                steps: flowExecutorContext.steps,
+                flowExecutorContext,
                 runId: engineConstants.flowRunId,
                 stepName: engineConstants.stepNameToTest,
             })
@@ -201,14 +200,17 @@ const extractStepResponse = (params: ExtractStepResponse): StepRunResponse | und
         return undefined
     }
 
-    const stepOutput = params.steps?.[params.stepName]
-    const isSuccess = stepOutput?.status === StepOutputStatus.SUCCEEDED || stepOutput?.status === StepOutputStatus.PAUSED
+    const stepOutput = params.flowExecutorContext.getStepOutput(params.stepName)
+    if (isNil(stepOutput)) {
+        return undefined
+    }
+    const isSuccess = stepOutput.status === StepOutputStatus.SUCCEEDED || stepOutput.status === StepOutputStatus.PAUSED
     return {
         runId: params.runId,
         success: isSuccess,
-        input: stepOutput?.input,
-        output: stepOutput?.output,
-        standardError: isSuccess ? '' : (stepOutput?.errorMessage as string),
+        input: stepOutput.input,
+        output: stepOutput.output,
+        standardError: isSuccess ? '' : (stepOutput.errorMessage as string),
         standardOutput: '',
     }
 }
@@ -228,7 +230,7 @@ type CreateOutputContextParams = {
 }
 
 type ExtractStepResponse = {
-    steps: Record<string, StepOutput>
+    flowExecutorContext: FlowExecutorContext
     runId: string
     stepName?: string
 }
