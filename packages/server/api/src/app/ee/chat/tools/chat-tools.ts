@@ -1,4 +1,4 @@
-import { FlowRunStatus, FlowStatus, isNil, Project, RunEnvironment } from '@activepieces/shared'
+import { AppConnectionKind, FlowRunStatus, FlowStatus, isNil, Project, RunEnvironment } from '@activepieces/shared'
 import { tool } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -177,6 +177,7 @@ async function findConnectionsForPiece({ pieceName, projects, platformId, log }:
                 status: undefined,
                 limit: CROSS_PROJECT_CONNECTION_LIMIT,
                 scope: undefined,
+                kind: undefined,
                 externalIds: undefined,
             })
             return result.data.map((c) => ({
@@ -259,16 +260,17 @@ async function listConnectionsAcrossProjects({ projects, platformId, log }: {
                 status: undefined,
                 limit: CROSS_PROJECT_CONNECTION_LIMIT,
                 scope: undefined,
+                kind: AppConnectionKind.CONNECTION,
                 externalIds: undefined,
             })
-            return result.data.map((c) => ({
+            return result.data.flatMap((c) => isNil(c.pieceName) ? [] : [{
                 displayName: c.displayName,
                 pieceName: c.pieceName,
                 externalId: c.externalId,
                 status: c.status,
                 project: chatPrompt.projectDisplayName(project),
                 projectId: project.id,
-            }))
+            }])
         }),
     )
 

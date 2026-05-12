@@ -215,6 +215,7 @@ async function validateAuthOwnership({ auth, pieceName, projectId, log }: {
             scope: undefined,
             displayName: undefined,
             status: undefined,
+            kind: undefined,
             limit: 1,
             externalIds: [auth],
         })
