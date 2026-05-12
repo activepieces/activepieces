@@ -1,5 +1,11 @@
 {
   "KYC, KYB, and fraud prevention platform — verify user identities, onboard businesses, run AML/sanctions checks, and detect fraud signals.": "KYC, KYB und Betrugsplattform — überprüfen Sie Benutzeridentitäten, an Bord von Unternehmen, führen Sie AML/Sanktionskontrollen aus und entdecken Sie Betrugssignale.",
+  "API Key": "API-Schlüssel",
+  "Environment": "Umgebung",
+  "Your AiPrise API key": "Ihr AiPrise API-Schlüssel",
+  "Select the AiPrise environment to use": "Wählen Sie die zu verwendende AiPrise Umgebung",
+  "Production": "Produktion",
+  "Sandbox": "Sandbox",
   "To get your AiPrise API key:\n1. Log in to your [AiPrise dashboard](https://app.aiprise.com)\n2. Go to **Settings > API Keys**\n3. Copy your API key and paste it here\n": "Um Ihren AiPrise API-Schlüssel zu erhalten:\n1. Melden Sie sich bei Ihrem [AiPrise Dashboard](https://app.aiprise.com)\n2. Gehen Sie zu **Einstellungen > API-Schlüssel**\n3. Kopieren Sie Ihren API-Schlüssel und fügen Sie ihn hier\n ein",
   "Start Identity Verification for profile": "Identitätsüberprüfung für Profil starten",
   "Get Identity Verification Link": "Identitätsüberprüfungs-Link erhalten",
