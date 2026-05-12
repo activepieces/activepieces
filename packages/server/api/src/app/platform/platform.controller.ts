@@ -113,18 +113,19 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.get('/assets/:id', GetAssetRequest, async (req, reply) => {
-        const [file, data] = await Promise.all([
-            fileService(app.log).getFileOrThrow({ fileId: req.params.id, type: FileType.PLATFORM_ASSET }),
-            fileService(app.log).getDataOrThrow({ fileId: req.params.id, type: FileType.PLATFORM_ASSET })])
+        const { fileName, metadata, data } = await fileService(app.log).getDataOrThrow({
+            fileId: req.params.id,
+            type: [FileType.PLATFORM_ASSET, FileType.USER_PROFILE_PICTURE],
+        })
 
         return reply
             .header(
                 'Content-Disposition',
-                `attachment; filename="${encodeURI(file.fileName ?? '')}"`,
+                `attachment; filename="${encodeURI(fileName ?? '')}"`,
             )
-            .type(file.metadata?.mimetype ?? 'application/octet-stream')
+            .type(metadata?.mimetype ?? 'application/octet-stream')
             .status(StatusCodes.OK)
-            .send(data.data)
+            .send(data)
     })
 
 

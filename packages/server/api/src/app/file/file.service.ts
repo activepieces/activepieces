@@ -84,7 +84,7 @@ export const fileService = (log: FastifyBaseLogger) => ({
         const file = await fileRepo().findOneBy({
             projectId: params.projectId,
             id: params.fileId,
-            type: params.type,
+            type: normalizeTypeFilter(params.type),
         })
         return !isNil(file)
     },
@@ -92,7 +92,7 @@ export const fileService = (log: FastifyBaseLogger) => ({
         const file = await fileRepo().findOneBy({
             projectId,
             id: fileId,
-            type,
+            type: normalizeTypeFilter(type),
         })
         return file
     },
@@ -126,7 +126,7 @@ export const fileService = (log: FastifyBaseLogger) => ({
         const file = await fileRepo().findOneBy({
             projectId,
             id: fileId,
-            type,
+            type: normalizeTypeFilter(type),
         })
         if (isNil(file)) {
             throw new ActivepiecesError({
@@ -295,6 +295,10 @@ type GetDataResponse = {
     fileName?: string
 }
 
+function normalizeTypeFilter(type: FileType | FileType[] | undefined) {
+    return Array.isArray(type) ? In(type) : type
+}
+
 export function getLocationForFile(type: FileType) {
     const FILE_LOCATION = system.getOrThrow<FileLocation>(AppSystemProp.FILE_STORAGE_LOCATION)
     if (isExecutionDataFileThatExpires(type)) {
@@ -341,7 +345,7 @@ type SaveParams = {
 type GetOneParams = {
     fileId?: FileId
     projectId?: ProjectId
-    type?: FileType
+    type?: FileType | FileType[]
 }
 
 type FileToken = {

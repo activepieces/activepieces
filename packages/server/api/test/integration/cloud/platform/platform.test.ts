@@ -790,6 +790,34 @@ describe('Platform API', () => {
             expect(response?.rawPayload.equals(assetData)).toBe(true)
         })
 
+        it('serves a public user profile picture', async () => {
+            // arrange
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const pictureData = Buffer.from('user-profile-picture-bytes')
+            const pictureFile = createMockFile({
+                platformId: mockPlatform.id,
+                projectId: null,
+                type: FileType.USER_PROFILE_PICTURE,
+                compression: FileCompression.NONE,
+                location: FileLocation.DB,
+                data: pictureData,
+                fileName: 'avatar.png',
+                metadata: { mimetype: 'image/png' },
+            })
+            await db.save('file', pictureFile)
+
+            // act — public endpoint, no auth
+            const response = await app?.inject({
+                method: 'GET',
+                url: `/api/v1/platforms/assets/${pictureFile.id}`,
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.headers['content-type']).toContain('image/png')
+            expect(response?.rawPayload.equals(pictureData)).toBe(true)
+        })
+
         it('rejects access to non-PLATFORM_ASSET files (IDOR via public asset endpoint)', async () => {
             // arrange — a sensitive flow run log file stored under a project
             const { mockProject } = await mockAndSaveBasicSetup()
