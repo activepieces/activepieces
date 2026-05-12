@@ -5,35 +5,40 @@ import { Fragment, useEffect, useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { ChatUIMessage, DynamicToolPart } from '@/features/chat/lib/chat-types';
+import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
 import { cn } from '@/lib/utils';
 
 import { BuildProgressData, normalizePieceName } from '../lib/message-parsers';
 
-type StepStatus = 'queued' | 'configuring' | 'validating' | 'ready' | 'error';
+type StepStatus =
+  | 'queued'
+  | 'added'
+  | 'configuring'
+  | 'validating'
+  | 'ready'
+  | 'error';
 
 const STEP_ORDER: Record<StepStatus, number> = {
   queued: 0,
-  configuring: 1,
-  validating: 2,
-  ready: 3,
-  error: 3,
+  added: 1,
+  configuring: 2,
+  validating: 3,
+  ready: 4,
+  error: 4,
 };
 
 const ANIMATION_DELAY_MS = 350;
 
-const BUILD_TOOL_NAMES = new Set([
-  'ap_create_flow',
-  'ap_build_flow',
+function isBuildTool(name: string): boolean {
+  return chatUtils.BUILD_TOOL_NAMES.has(name);
+}
+
+const APPLY_TOOLS = new Set([
   'ap_update_trigger',
   'ap_add_step',
   'ap_update_step',
-  'ap_validate_flow',
 ]);
-
-function isBuildTool(name: string): boolean {
-  return BUILD_TOOL_NAMES.has(name);
-}
 
 function computeTargetStatuses({
   steps,
@@ -46,62 +51,90 @@ function computeTargetStatuses({
   if (buildTools.length === 0) return steps.map(() => 'queued');
 
   const statuses: StepStatus[] = steps.map(() => 'queued');
-  const validateTool = buildTools.find(
+
+  const validateFlowTool = buildTools.find(
     (t) => t.toolName === 'ap_validate_flow',
   );
-  const isValidated = validateTool?.state === 'output-available';
-  const isValidating =
-    validateTool !== undefined &&
-    (validateTool.state === 'input-streaming' ||
-      validateTool.state === 'input-available');
-
-  if (isValidated) {
+  if (validateFlowTool?.state === 'output-available') {
     statuses.fill('ready');
     return statuses;
   }
 
+  // Count fully applied steps (trigger + actions that completed successfully)
+  let completedSteps = 0;
   for (const tool of buildTools) {
-    const name = tool.toolName;
-    const isCompleted = tool.state === 'output-available';
-    const isError = tool.state === 'output-error';
-    const isRunning =
-      tool.state === 'input-streaming' || tool.state === 'input-available';
+    if (APPLY_TOOLS.has(tool.toolName) && tool.state === 'output-available') {
+      completedSteps++;
+    }
+  }
 
-    if (name === 'ap_validate_flow') continue;
+  // Mark completed steps as ready
+  for (let i = 0; i < Math.min(completedSteps, statuses.length); i++) {
+    statuses[i] = 'ready';
+  }
 
-    if (name === 'ap_build_flow') {
-      if (isCompleted) {
-        statuses.fill('configuring');
+  // Determine the current step's status from the LAST relevant tool call
+  const currentIdx = Math.min(completedSteps, statuses.length - 1);
+  if (completedSteps < statuses.length) {
+    const lastRelevantTool = findLastToolForCurrentStep(buildTools);
+    if (lastRelevantTool) {
+      const isRunning =
+        lastRelevantTool.state === 'input-streaming' ||
+        lastRelevantTool.state === 'input-available';
+      const isError = lastRelevantTool.state === 'output-error';
+
+      if (isError) {
+        statuses[currentIdx] = 'error';
       } else if (isRunning) {
-        statuses[0] = 'configuring';
-      }
-      continue;
-    }
-
-    if (isError) {
-      const firstQueued = statuses.indexOf('queued');
-      const idx = firstQueued >= 0 ? firstQueued : statuses.length - 1;
-      statuses[idx] = 'error';
-      continue;
-    }
-
-    if (isCompleted || isRunning) {
-      const firstQueued = statuses.indexOf('queued');
-      if (firstQueued >= 0) {
-        statuses[firstQueued] = 'configuring';
+        if (lastRelevantTool.toolName === 'ap_validate_step_config') {
+          statuses[currentIdx] = 'validating';
+        } else {
+          statuses[currentIdx] = 'configuring';
+        }
       }
     }
   }
 
-  if (isValidating) {
+  // Final flow validation overrides current step
+  if (
+    validateFlowTool &&
+    (validateFlowTool.state === 'input-streaming' ||
+      validateFlowTool.state === 'input-available')
+  ) {
     for (let i = 0; i < statuses.length; i++) {
-      if (statuses[i] === 'configuring') {
+      if (statuses[i] !== 'ready' && statuses[i] !== 'error') {
         statuses[i] = 'validating';
       }
     }
   }
 
   return statuses;
+}
+
+function findLastToolForCurrentStep(
+  buildTools: DynamicToolPart[],
+): DynamicToolPart | null {
+  for (let i = buildTools.length - 1; i >= 0; i--) {
+    const tool = buildTools[i];
+    if (
+      tool.toolName === 'ap_validate_flow' ||
+      tool.toolName === 'ap_create_flow' ||
+      tool.toolName === 'ap_build_flow'
+    )
+      continue;
+    // Stop at completed apply tools — errors before this belong to previous steps
+    if (APPLY_TOOLS.has(tool.toolName) && tool.state === 'output-available') {
+      return null;
+    }
+    if (
+      tool.state === 'input-streaming' ||
+      tool.state === 'input-available' ||
+      tool.state === 'output-error'
+    ) {
+      return tool;
+    }
+  }
+  return null;
 }
 
 function advanceOneStep({
@@ -113,15 +146,13 @@ function advanceOneStep({
 }): StepStatus[] | null {
   for (let i = 0; i < current.length; i++) {
     if (current[i] === target[i]) continue;
-    if (STEP_ORDER[current[i]] >= STEP_ORDER[target[i]]) {
-      const next = [...current];
-      next[i] = target[i];
-      return next;
-    }
+    // Never go backward — once ready, stay ready
+    if (STEP_ORDER[current[i]] > STEP_ORDER[target[i]]) continue;
 
     const next = [...current];
     const progression: StepStatus[] = [
       'queued',
+      'added',
       'configuring',
       'validating',
       'ready',
@@ -173,15 +204,24 @@ function stepTypeLabel({
 function useAnimatedStatuses({
   targetStatuses,
   stepCount,
+  isStreaming,
 }: {
   targetStatuses: StepStatus[];
   stepCount: number;
+  isStreaming: boolean;
 }): StepStatus[] {
   const [displayed, setDisplayed] = useState<StepStatus[]>(() =>
-    Array.from({ length: stepCount }, () => 'queued' as StepStatus),
+    isStreaming
+      ? Array.from({ length: stepCount }, () => 'queued' as StepStatus)
+      : targetStatuses,
   );
 
   useEffect(() => {
+    if (!isStreaming) {
+      setDisplayed(targetStatuses);
+      return;
+    }
+
     const next = advanceOneStep({ current: displayed, target: targetStatuses });
     if (!next) return;
 
@@ -192,7 +232,7 @@ function useAnimatedStatuses({
 
     const timer = setTimeout(() => setDisplayed(next), delay);
     return () => clearTimeout(timer);
-  }, [targetStatuses, displayed]);
+  }, [targetStatuses, displayed, isStreaming]);
 
   return displayed;
 }
@@ -219,9 +259,19 @@ export function BuildProgressCard({
   const stepStatuses = useAnimatedStatuses({
     targetStatuses,
     stepCount: progress.steps.length,
+    isStreaming,
   });
 
   const isBuilt = stepStatuses.every((s) => s === 'ready');
+  const notesStatus = useMemo(() => {
+    const noteTools = dynamicParts.filter(
+      (t) => t.toolName === 'ap_manage_notes',
+    );
+    if (noteTools.length === 0) return 'none';
+    const allDone = noteTools.every((t) => t.state === 'output-available');
+    if (allDone) return 'done';
+    return 'adding';
+  }, [dynamicParts]);
   const isValidating = stepStatuses.some((s) => s === 'validating');
   const hasError = stepStatuses.some((s) => s === 'error');
   const flowUrl = useMemo(() => {
@@ -250,16 +300,23 @@ export function BuildProgressCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: reduce ? 0 : 0.3 }}
     >
-      <div className="p-4 pb-3">
-        <div className="flex items-center gap-3">
-          <h3 className="font-semibold text-sm flex items-center gap-1.5">
+      <div className="px-3 pt-3 pb-2">
+        <div className="flex items-center gap-2">
+          <h3 className="font-semibold text-xs flex items-center gap-1.5">
             <span>✨</span>
             {progress.title}
           </h3>
-          {isBuilt ? (
+          {isBuilt &&
+          (notesStatus === 'adding' ||
+            (notesStatus === 'none' && isStreaming)) ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-green-500/30 bg-green-500/10 text-green-600 dark:text-green-400 px-2.5 py-0.5 text-xs font-medium">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              {t('Finishing up...')}
+            </span>
+          ) : isBuilt ? (
             <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400 text-xs font-medium">
               <Check className="h-3.5 w-3.5" />
-              {t('Built')}
+              {t('Done')}
             </span>
           ) : hasError ? (
             <span className="inline-flex items-center gap-1.5 rounded-full border border-destructive/30 bg-destructive/10 text-destructive px-2.5 py-0.5 text-xs font-medium">
@@ -281,7 +338,7 @@ export function BuildProgressCard({
         </div>
       </div>
 
-      <div className="px-4 pb-4">
+      <div className="px-3 pb-3">
         <div className="flex flex-col items-stretch">
           {progress.steps.map((step, index) => {
             const status = stepStatuses[index];
@@ -305,25 +362,28 @@ export function BuildProgressCard({
                     delay: reduce ? 0 : index * 0.06,
                   }}
                   className={cn(
-                    'rounded-lg border border-dashed p-3 transition-all duration-300',
+                    'rounded-lg border border-dashed px-3 py-2 transition-all duration-300',
                     status === 'configuring' &&
                       'border-primary/40 bg-primary/5',
                     status === 'validating' &&
                       'border-amber-500/40 bg-amber-500/5',
                     status === 'error' &&
                       'border-destructive/40 bg-destructive/5',
+                    status === 'added' && 'border-green-500/30 bg-green-500/5',
                     (status === 'ready' || status === 'queued') &&
                       'border-muted-foreground/20 bg-muted/20',
                   )}
                 >
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <div className="flex items-center justify-between gap-2 mb-1">
                     <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                       {typeLabel}
                     </span>
                     <span
                       className={cn(
-                        'inline-flex items-center gap-1 text-sm font-medium transition-all duration-300',
+                        'inline-flex items-center gap-1 text-xs font-medium transition-all duration-300',
                         status === 'ready' && 'text-foreground/70',
+                        status === 'added' &&
+                          'text-green-600 dark:text-green-400',
                         status === 'configuring' && 'text-primary',
                         status === 'validating' &&
                           'text-amber-600 dark:text-amber-400',
@@ -338,14 +398,14 @@ export function BuildProgressCard({
                       {statusLabel(status)}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-2">
                     <PieceIconWithPieceName
                       pieceName={pieceName}
-                      size="sm"
+                      size="xs"
                       border={false}
                       showTooltip={false}
                     />
-                    <span className="text-sm font-medium text-foreground/90 truncate">
+                    <span className="text-xs font-medium text-foreground/90 truncate">
                       {step.label}
                     </span>
                   </div>
@@ -360,14 +420,15 @@ export function BuildProgressCard({
             initial={reduce ? false : { opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: reduce ? 0 : 0.25, delay: 0.1 }}
-            className="mt-4"
+            className="mt-3"
           >
             {flowUrl && (
               <Button
-                className="w-full gap-2"
+                size="sm"
+                className="w-full gap-1.5"
                 onClick={() => window.open(flowUrl, '_blank')}
               >
-                <ExternalLink className="h-4 w-4" />
+                <ExternalLink className="h-3.5 w-3.5" />
                 {t('Open flow')}
               </Button>
             )}
@@ -382,10 +443,12 @@ function statusLabel(status: StepStatus): string {
   switch (status) {
     case 'ready':
       return t('Ready');
+    case 'added':
+      return t('Added');
     case 'configuring':
-      return t('Configuring...');
+      return t('Setting up...');
     case 'validating':
-      return t('Validating...');
+      return t('Checking...');
     case 'error':
       return t('Error');
     case 'queued':
@@ -403,7 +466,7 @@ function StepConnector({ index, reduce }: { index: number; reduce: boolean }) {
         duration: reduce ? 0 : 0.16,
         delay: reduce ? 0 : index * 0.06 - 0.02,
       }}
-      className="relative flex h-5 items-center justify-center"
+      className="relative flex h-3 items-center justify-center"
     >
       <span className="h-full w-px bg-border" />
       <ChevronDown className="absolute h-3 w-3 text-muted-foreground/60" />

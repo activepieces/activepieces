@@ -26,7 +26,7 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
         title: 'ap_get_piece_props',
         description: 'Get the input property schema for a piece action or trigger. Returns field names, types, required/optional, defaults, and options. Pass auth to resolve dynamic dropdowns and dynamic property sub-fields (e.g. Custom API Call url/body fields).',
         inputSchema: getPiecePropsInput.shape,
-        annotations: { readOnlyHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {
                 const { pieceName, actionOrTriggerName, type, auth, flowId, input: providedInput } = getPiecePropsInput.parse(args)
@@ -48,6 +48,12 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 const requiresAuth = component.requireAuth && !isNil(piece.auth)
 
                 let authHint: AuthHint | undefined
+                if (requiresAuth && auth) {
+                    const authOwnership = await validateAuthOwnership({ auth, pieceName: normalized, projectId: mcp.projectId, log })
+                    if (authOwnership) {
+                        return authOwnership
+                    }
+                }
                 if (requiresAuth && !auth) {
                     authHint = await discoverAvailableConnections({ pieceName: normalized, projectId: mcp.projectId, log })
                 }
@@ -65,7 +71,7 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     log,
                 })
 
-                const result = {
+                const textResult = {
                     piece: normalized,
                     name: component.name,
                     displayName: component.displayName,
@@ -74,10 +80,19 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     ...(authHint && { authHint }),
                     props,
                 }
+                const structured = {
+                    piece: normalized,
+                    name: component.name,
+                    displayName: component.displayName,
+                    description: component.description,
+                    requiresAuth,
+                    props,
+                }
 
                 const descLine = component.description ? `\nDescription: ${component.description}\n` : ''
                 return {
-                    content: [{ type: 'text', text: `✅ ${label} schema for "${normalized}/${actionOrTriggerName}":${descLine}\n${JSON.stringify(result, null, 2)}` }],
+                    content: [{ type: 'text', text: `✅ ${label} schema for "${normalized}/${actionOrTriggerName}":${descLine}\n${JSON.stringify(textResult, null, 2)}` }],
+                    structuredContent: structured,
                 }
             }
             catch (err) {
@@ -181,6 +196,41 @@ async function discoverAvailableConnections({ pieceName, projectId, log }: {
         log.debug({ err, pieceName }, 'Failed to discover connections')
         return { message: 'Use ap_list_connections to find connections.', connections: [] }
     }
+}
+
+async function validateAuthOwnership({ auth, pieceName, projectId, log }: {
+    auth: string
+    pieceName: string
+    projectId: string
+    log: FastifyBaseLogger
+}): Promise<{ content: [{ type: 'text', text: string }] } | null> {
+    try {
+        const project = await projectService(log).getOneOrThrow(projectId)
+        const connections = await appConnectionService(log).list({
+            projectId,
+            platformId: project.platformId,
+            pieceName,
+            cursorRequest: null,
+            scope: undefined,
+            displayName: undefined,
+            status: undefined,
+            limit: 1,
+            externalIds: [auth],
+        })
+        const match = connections.data[0]
+        if (!match) {
+            return {
+                content: [{
+                    type: 'text',
+                    text: `⚠️ Connection "${auth}" does not belong to piece "${pieceName}". Use ap_list_connections to find the correct connection for this piece.`,
+                }],
+            }
+        }
+    }
+    catch {
+        // If lookup fails, proceed anyway — don't block the user
+    }
+    return null
 }
 
 const { withTimeout } = mcpUtils
