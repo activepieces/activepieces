@@ -448,7 +448,7 @@ const validateConnectionValue = async (
             assertNotNullOrUndefined(pieceName, 'pieceName')
             const tokenUrl = await oauth2Util(log).getOAuth2TokenUrl({
                 pieceName,
-                pieceVersion,
+                pieceVersion: pieceVersion ?? undefined,
                 platformId,
                 props: value.props,
             })
@@ -472,7 +472,7 @@ const validateConnectionValue = async (
             assertNotNullOrUndefined(pieceName, 'pieceName')
             const tokenUrl = await oauth2Util(log).getOAuth2TokenUrl({
                 pieceName,
-                pieceVersion,
+                pieceVersion: pieceVersion ?? undefined,
                 platformId,
                 props: value.props,
             })
@@ -495,7 +495,7 @@ const validateConnectionValue = async (
             assertNotNullOrUndefined(pieceName, 'pieceName')
             const tokenUrl = await oauth2Util(log).getOAuth2TokenUrl({
                 pieceName,
-                pieceVersion,
+                pieceVersion: pieceVersion ?? undefined,
                 platformId,
                 props: value.props,
             })
@@ -711,6 +711,7 @@ type DeleteParams = {
 type ValidateConnectionValueParams = {
     value: UpsertAppConnectionRequestBody['value']
     pieceName: string | null
+    pieceVersion: string | null
     projectId: ProjectId | undefined
     platformId: string
 }
