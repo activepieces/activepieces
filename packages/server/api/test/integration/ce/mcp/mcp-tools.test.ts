@@ -231,7 +231,6 @@ describe('MCP Tools integration', () => {
             stepType: FlowActionType.PIECE,
             displayName: 'Send Email',
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
         })
 
         expect(text(result)).toContain('✅')
@@ -254,7 +253,6 @@ describe('MCP Tools integration', () => {
             stepType: FlowActionType.PIECE,
             displayName: 'Send Email',
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
         })
 
         // Update the step: set skip=true. The step is still invalid (no actionName configured)
@@ -479,7 +477,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -514,7 +511,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -525,7 +521,6 @@ describe('MCP Tools integration', () => {
             stepType: FlowActionType.PIECE,
             displayName: 'Unconfigured Piece',
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
         })
 
         const result = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
@@ -545,7 +540,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -703,7 +697,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -739,7 +732,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -749,7 +741,6 @@ describe('MCP Tools integration', () => {
         const renameResult = await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
             displayName: 'Renamed Trigger',
         })
@@ -768,7 +759,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
             input: { customField: 'should-be-discarded' },
         })
@@ -776,7 +766,6 @@ describe('MCP Tools integration', () => {
         const switchResult = await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_attachment',
         })
         expect(text(switchResult)).toContain('✅')
@@ -794,14 +783,12 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
         const addFieldResult = await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
             input: { extraField: 'value' },
         })
@@ -864,7 +851,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -896,7 +882,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -957,7 +942,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1041,7 +1025,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1123,7 +1106,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1131,7 +1113,6 @@ describe('MCP Tools integration', () => {
             await apUpdateTriggerTool(mcp, mockLog).execute({
                 flowId,
                 pieceName: '@activepieces/piece-test-email',
-                pieceVersion: '~0.1.0',
                 triggerName: 'new_email',
                 displayName: `Attempt ${i + 1}`,
             })
@@ -1155,7 +1136,6 @@ describe('MCP Tools integration', () => {
             flowName: 'Build Test 1',
             trigger: {
                 pieceName: '@activepieces/piece-test-email',
-                pieceVersion: '~0.1.0',
                 triggerName: 'new_email',
             },
             steps: [
@@ -1181,7 +1161,6 @@ describe('MCP Tools integration', () => {
             flowName: 'Build Test 2',
             trigger: {
                 pieceName: '@activepieces/piece-test-email',
-                pieceVersion: '~0.1.0',
                 triggerName: 'new_email',
             },
             steps: [
@@ -1229,7 +1208,6 @@ describe('MCP Tools integration', () => {
             flowName: 'Build Test Partial',
             trigger: {
                 pieceName: '@activepieces/piece-test-email',
-                pieceVersion: '~0.1.0',
                 triggerName: 'new_email',
             },
             steps: [
@@ -1243,7 +1221,6 @@ describe('MCP Tools integration', () => {
                     type: FlowActionType.PIECE,
                     displayName: 'Invalid Piece',
                     pieceName: '@activepieces/piece-test-email',
-                    pieceVersion: '~0.1.0',
                 },
             ],
         })
@@ -1261,7 +1238,6 @@ describe('MCP Tools integration', () => {
             flowName: 'Build Test Empty',
             trigger: {
                 pieceName: '@activepieces/piece-test-email',
-                pieceVersion: '~0.1.0',
                 triggerName: 'new_email',
             },
             steps: [],
@@ -1279,7 +1255,6 @@ describe('MCP Tools integration', () => {
             flowName: 'Build Test Lifecycle',
             trigger: {
                 pieceName: '@activepieces/piece-test-email',
-                pieceVersion: '~0.1.0',
                 triggerName: 'new_email',
             },
             steps: [
@@ -1311,7 +1286,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1347,7 +1321,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1379,7 +1352,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1422,7 +1394,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1490,7 +1461,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1512,7 +1482,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1562,7 +1531,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1605,7 +1573,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1639,7 +1606,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1671,7 +1637,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1702,7 +1667,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1733,7 +1697,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1764,7 +1727,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1794,7 +1756,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1853,7 +1814,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1994,7 +1954,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 

@@ -21,7 +21,7 @@ import { TagWithBright } from '@/components/custom/tag-with-bright';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ImportFlowDialog } from '@/features/automations/components/import-flow-dialog';
+import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { flowHooks } from '@/features/flows/hooks/flow-hooks';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { ImportTableDialog } from '@/features/tables/components/import-table-dialog';
