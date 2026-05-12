@@ -8,6 +8,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { toast } from 'sonner';
 
+import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -51,6 +52,7 @@ export const flowApprovalsHooks = {
   },
   usePendingApprovalsBadge: () => {
     const { platform } = platformHooks.useCurrentPlatform();
+    const { project } = projectCollectionUtils.useCurrentProject();
     const { checkAccess } = useAuthorization();
     const projectId = authenticationSession.getProjectId();
     const canApprove = checkAccess(Permission.PUBLISH_SENSITIVE_FLOW_ACCESS);
@@ -62,7 +64,11 @@ export const flowApprovalsHooks = {
           limit: PENDING_BADGE_PROBE_LIMIT,
           projectId: projectId ?? undefined,
         }),
-      enabled: !!projectId && platform.plan.environmentsEnabled && canApprove,
+      enabled:
+        !!projectId &&
+        platform.plan.environmentsEnabled &&
+        canApprove &&
+        !!project.sensitive,
     });
   },
   useApprovalForVersion: (flowVersionId: string | undefined) => {
