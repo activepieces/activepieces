@@ -65,7 +65,12 @@ export const FlowApprovalRequestEntity = new EntitySchema<FlowApprovalRequestSch
         {
             name: 'idx_flow_approval_request_flow_version_id',
             columns: ['flowVersionId'],
+        },
+        {
+            name: 'idx_flow_approval_request_flow_id_pending',
+            columns: ['flowId'],
             unique: true,
+            where: '"state" = \'PENDING\'',
         },
         {
             name: 'idx_flow_approval_request_project_id_state_created',

@@ -17,4 +17,8 @@ export const db = {
     findOneBy<T>(entity: string, where: Record<string, unknown>): Promise<T | null> {
         return databaseConnection().getRepository(entity).findOneBy(where) as Promise<T | null>
     },
+
+    findBy<T>(entity: string, where: Record<string, unknown>): Promise<T[]> {
+        return databaseConnection().getRepository(entity).findBy(where) as Promise<T[]>
+    },
 }

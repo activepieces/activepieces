@@ -20,10 +20,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { flowApprovalsHooks } from '@/features/flow-approvals';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { formatUtils } from '@/lib/format-utils';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 
@@ -100,11 +106,30 @@ const FlowApprovalBanner = () => {
   const showWithdraw = !isApprover || isOwnRequest;
   const busy = isApproving || isRejecting || isWithdrawing;
 
+  const submittedAtDate = new Date(latestApproval.submittedAt);
+  const submittedAgo = formatUtils.formatDate(submittedAtDate);
+  const submittedFullDateTime = formatUtils.formatDateWithTime(
+    submittedAtDate,
+    false,
+  );
+
   return (
     <LargeWidgetWrapper>
       <div className="flex items-center gap-2">
         <ShieldAlert className="size-5" />
-        <span>{t('Awaiting approval to publish this flow.')}</span>
+        <div className="flex flex-col">
+          <span>{t('Awaiting approval to publish this flow.')}</span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="text-xs text-muted-foreground">
+                {t('Submitted {time}', { time: submittedAgo })}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{submittedFullDateTime}</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
       </div>
       <div className="flex items-center gap-2">
         {isApprover && (

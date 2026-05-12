@@ -19,6 +19,7 @@
   "Flow": "Flow",
   "State": "State",
   "Submitted": "Submitted",
+  "Submitted {time}": "Submitted {time}",
   "Actions": "Actions",
   "Review": "Review",
   "No pending approvals.": "No pending approvals.",

@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ReactFlowProvider } from '@xyflow/react';
 import { t } from 'i18next';
 import { FileX } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 
 import { BuilderPage } from '@/app/builder';
 import { BuilderStateProvider } from '@/app/builder/state/builder-state-provider';
@@ -15,14 +15,16 @@ import { cn } from '@/lib/utils';
 
 const FlowBuilderPage = () => {
   const { flowId } = useParams();
+  const [searchParams] = useSearchParams();
+  const versionId = searchParams.get('versionId') ?? undefined;
 
   const {
     data: flow,
     isLoading,
     isError,
   } = useQuery<PopulatedFlow, Error>({
-    queryKey: ['flow', flowId, authenticationSession.getProjectId()],
-    queryFn: () => flowsApi.get(flowId!),
+    queryKey: ['flow', flowId, versionId, authenticationSession.getProjectId()],
+    queryFn: () => flowsApi.get(flowId!, versionId ? { versionId } : undefined),
     gcTime: 0,
     retry: false,
     refetchOnWindowFocus: false,

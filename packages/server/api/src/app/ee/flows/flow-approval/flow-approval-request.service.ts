@@ -31,14 +31,13 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
                     userOperation: { type: FlowOperationType.LOCK_FLOW, request: {} },
                     entityManager,
                 })
-            const newId = apId()
             const now = new Date().toISOString()
             await flowApprovalRequestRepo(entityManager)
                 .createQueryBuilder()
                 .insert()
                 .into(FlowApprovalRequestEntity)
                 .values({
-                    id: newId,
+                    id: apId(),
                     flowId: flow.id,
                     flowVersionId: lockedVersion.id,
                     projectId,
@@ -51,25 +50,26 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
                     requestedStatus,
                     rejectionReason: null,
                 })
-                .orIgnore()
+                .orUpdate(
+                    ['flowVersionId', 'submitterId', 'submittedAt', 'requestedStatus'],
+                    ['flowId'],
+                    { indexPredicate: '"state" = \'PENDING\'' },
+                )
                 .execute()
-            const created = await flowApprovalRequestRepo(entityManager).findOneByOrFail({ flowVersionId: lockedVersion.id })
-            if (created.id !== newId) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.VALIDATION,
-                    params: { message: 'A pending approval request already exists for this flow' },
-                })
-            }
+            const persisted = await flowApprovalRequestRepo(entityManager).findOneByOrFail({
+                flowId: flow.id,
+                state: FlowApprovalRequestState.PENDING,
+            })
             applicationEvents(log).sendUserEvent({ platformId, userId: userId ?? undefined, projectId }, {
                 action: ApplicationEventName.FLOW_APPROVAL_REQUESTED,
                 data: {
-                    approvalRequestId: created.id,
+                    approvalRequestId: persisted.id,
                     flowId: flow.id,
                     flowVersionId: lockedVersion.id,
                     flowDisplayName: lockedVersion.displayName,
                 },
             })
-            return created
+            return persisted
         })
     },
 

@@ -167,15 +167,54 @@ describe('flow-approval — submitForApproval race', () => {
         ])
 
         const fulfilled = results.filter((r) => r.status === 'fulfilled')
-        const rejected = results.filter((r) => r.status === 'rejected')
-        expect(fulfilled).toHaveLength(1)
-        expect(rejected).toHaveLength(1)
+        expect(fulfilled).toHaveLength(2)
 
-        const rows = await db.findOneBy<FlowApprovalRequest>('flow_approval_request', {
+        const rows = await db.findBy<FlowApprovalRequest>('flow_approval_request', {
             flowId: flow.id,
             state: FlowApprovalRequestState.PENDING,
         })
-        expect(rows).not.toBeNull()
+        expect(rows).toHaveLength(1)
+    })
+})
+
+describe('flow-approval — submitForApproval supersession', () => {
+    it('resubmitting updates the existing PENDING row in place and re-points it at the newly locked version', async () => {
+        const ctx = await setupSensitiveCtx()
+        const { flow } = await createDraftFlow(ctx)
+
+        const first = await flowApprovalRequestService(app!.log).submitForApproval({
+            flow,
+            userId: ctx.user.id,
+            projectId: ctx.project.id,
+            platformId: ctx.platform.id,
+            requestedStatus: FlowStatus.DISABLED,
+        })
+
+        const newDraft = createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.DRAFT,
+            valid: true,
+        })
+        await db.save('flow_version', newDraft)
+
+        const second = await flowApprovalRequestService(app!.log).submitForApproval({
+            flow,
+            userId: ctx.user.id,
+            projectId: ctx.project.id,
+            platformId: ctx.platform.id,
+            requestedStatus: FlowStatus.ENABLED,
+        })
+
+        expect(second.id).toBe(first.id)
+        expect(second.flowVersionId).toBe(newDraft.id)
+        expect(second.flowVersionId).not.toBe(first.flowVersionId)
+        expect(second.requestedStatus).toBe(FlowStatus.ENABLED)
+
+        const rows = await db.findBy<FlowApprovalRequest>('flow_approval_request', {
+            flowId: flow.id,
+            state: FlowApprovalRequestState.PENDING,
+        })
+        expect(rows).toHaveLength(1)
     })
 })
 
