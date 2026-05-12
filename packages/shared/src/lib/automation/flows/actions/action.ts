@@ -93,6 +93,8 @@ export const PieceActionSchema = z.object({
 export const LoopOnItemsActionSettings = z.object({
     ...commonActionSettings,
     items: z.string(),
+    executeAsync: z.boolean().optional(),
+    concurrency: z.number().int().min(1).max(100).optional(),
 })
 export type LoopOnItemsActionSettings = z.infer<
   typeof LoopOnItemsActionSettings
@@ -363,3 +365,7 @@ export const emptyCondition: ValidBranchCondition = {
     operator: BranchOperator.TEXT_CONTAINS,
     caseSensitive: false,
 }
+
+export const LOOP_DEFAULT_CONCURRENCY = 5
+export const LOOP_MAX_CONCURRENCY = 100
+export const LOOP_MIN_CONCURRENCY = 1
