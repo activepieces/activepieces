@@ -167,7 +167,7 @@ export const FlowUpdatedEvent = z.object({
     ...BaseAuditEventProps,
     action: z.literal(ApplicationEventName.FLOW_UPDATED),
     data: z.object({
-        flow: Flow.pick({ id: true, externalId: true }),
+        flow: Flow.pick({ id: true, externalId: true, created: true, updated: true }),
         flowVersion: FlowVersion.pick({
             id: true,
             displayName: true,
