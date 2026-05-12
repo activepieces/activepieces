@@ -79,7 +79,10 @@ function normalizePemKey(rawKey: string): string {
     return escapedNewlinesReplaced;
   }
   const [, header, body, footer] = match;
-  const wrappedBody = body.replace(/\s+/g, '').match(/.{1,64}/g)?.join('\n');
+  const wrappedBody = body
+    .replace(/\s+/g, '')
+    .match(/.{1,64}/g)
+    ?.join('\n');
   return `${header}\n${wrappedBody}\n${footer}`;
 }
 
