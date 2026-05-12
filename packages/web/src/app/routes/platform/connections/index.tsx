@@ -1,5 +1,4 @@
 import {
-  AppConnectionScope,
   AppConnectionStatus,
   PlatformAppConnectionsListItem,
 } from '@activepieces/shared';
@@ -10,7 +9,6 @@ import {
   CheckIcon,
   Clock,
   Folder,
-  Globe,
   Puzzle,
   Unplug,
   User,
@@ -28,7 +26,6 @@ import { DataTableColumnHeader } from '@/components/custom/data-table/data-table
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
-import { Badge } from '@/components/ui/badge';
 import {
   Tooltip,
   TooltipContent,
@@ -37,7 +34,7 @@ import {
 import { appConnectionUtils } from '@/features/connections';
 import { PieceIconWithPieceName, piecesHooks } from '@/features/pieces';
 import { platformAppConnectionsQueries } from '@/features/platform-admin/hooks/platform-app-connections-hooks';
-import { projectCollectionUtils } from '@/features/projects';
+import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { formatUtils } from '@/lib/format-utils';
 
 export default function PlatformConnectionsPage() {
@@ -80,7 +77,7 @@ export default function PlatformConnectionsPage() {
       accessorKey: 'projectIds',
       icon: Folder,
       options: (projects ?? []).map((project) => ({
-        label: project.displayName,
+        label: getProjectName(project),
         value: project.id,
       })),
     },
@@ -187,25 +184,6 @@ export default function PlatformConnectionsPage() {
       },
     },
     {
-      accessorKey: 'scope',
-      size: 110,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Scope')}
-          icon={Globe}
-        />
-      ),
-      cell: ({ row }) => {
-        const isPlatform = row.original.scope === AppConnectionScope.PLATFORM;
-        return (
-          <Badge variant={isPlatform ? 'default' : 'secondary'}>
-            {isPlatform ? t('Global') : t('Project')}
-          </Badge>
-        );
-      },
-    },
-    {
       accessorKey: 'updated',
       size: 150,
       header: ({ column }) => (
@@ -254,11 +232,12 @@ const ProjectsCell = ({
   }
   if (projects.length === 1) {
     const project = projects[0];
+    const name = getProjectName(project);
     return (
       <Link to={`/projects/${project.id}`}>
-        <TextWithTooltip tooltipMessage={project.displayName}>
+        <TextWithTooltip tooltipMessage={name}>
           <span className="truncate max-w-[200px] text-primary hover:underline">
-            {project.displayName}
+            {name}
           </span>
         </TextWithTooltip>
       </Link>
@@ -278,7 +257,7 @@ const ProjectsCell = ({
         <ul className="flex flex-col gap-1 max-w-[260px]">
           {projects.map((project) => (
             <li key={project.id} className="truncate">
-              {project.displayName}
+              {getProjectName(project)}
             </li>
           ))}
         </ul>

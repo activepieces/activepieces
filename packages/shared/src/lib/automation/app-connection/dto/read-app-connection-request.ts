@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { OptionalArrayFromQuery } from '../../../core/common/base-model'
+import { ProjectType } from '../../../management/project/project'
 import { AppConnectionScope, AppConnectionStatus, AppConnectionWithoutSensitiveData } from '../app-connection'
 
 export const ListAppConnectionsRequestQuery = z.object({
@@ -46,6 +47,7 @@ export type ListPlatformAppConnectionsRequestQuery = z.infer<typeof ListPlatform
 export const PlatformAppConnectionProjectInfo = z.object({
     id: z.string(),
     displayName: z.string(),
+    type: z.nativeEnum(ProjectType),
 })
 export type PlatformAppConnectionProjectInfo = z.infer<typeof PlatformAppConnectionProjectInfo>
 

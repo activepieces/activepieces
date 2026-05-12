@@ -77,9 +77,9 @@ const fetchProjectsForPlatform = async (projectIds: string[], platformId: string
     }
     const projects = await projectRepo().find({
         where: { id: In(projectIds), platformId },
-        select: ['id', 'displayName'],
+        select: ['id', 'displayName', 'type'],
     })
-    return new Map(projects.map((project) => [project.id, { id: project.id, displayName: project.displayName }]))
+    return new Map(projects.map((project) => [project.id, { id: project.id, displayName: project.displayName, type: project.type }]))
 }
 
 const ListPlatformAppConnectionsRequest = {
