@@ -5,6 +5,7 @@ import { Fragment, useEffect, useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { ChatUIMessage, DynamicToolPart } from '@/features/chat/lib/chat-types';
+import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
 import { cn } from '@/lib/utils';
 
@@ -29,18 +30,8 @@ const STEP_ORDER: Record<StepStatus, number> = {
 
 const ANIMATION_DELAY_MS = 350;
 
-const BUILD_TOOL_NAMES = new Set([
-  'ap_create_flow',
-  'ap_build_flow',
-  'ap_update_trigger',
-  'ap_add_step',
-  'ap_update_step',
-  'ap_validate_step_config',
-  'ap_validate_flow',
-]);
-
 function isBuildTool(name: string): boolean {
-  return BUILD_TOOL_NAMES.has(name);
+  return chatUtils.BUILD_TOOL_NAMES.has(name);
 }
 
 const APPLY_TOOLS = new Set([
@@ -213,15 +204,24 @@ function stepTypeLabel({
 function useAnimatedStatuses({
   targetStatuses,
   stepCount,
+  isStreaming,
 }: {
   targetStatuses: StepStatus[];
   stepCount: number;
+  isStreaming: boolean;
 }): StepStatus[] {
   const [displayed, setDisplayed] = useState<StepStatus[]>(() =>
-    Array.from({ length: stepCount }, () => 'queued' as StepStatus),
+    isStreaming
+      ? Array.from({ length: stepCount }, () => 'queued' as StepStatus)
+      : targetStatuses,
   );
 
   useEffect(() => {
+    if (!isStreaming) {
+      setDisplayed(targetStatuses);
+      return;
+    }
+
     const next = advanceOneStep({ current: displayed, target: targetStatuses });
     if (!next) return;
 
@@ -232,7 +232,7 @@ function useAnimatedStatuses({
 
     const timer = setTimeout(() => setDisplayed(next), delay);
     return () => clearTimeout(timer);
-  }, [targetStatuses, displayed]);
+  }, [targetStatuses, displayed, isStreaming]);
 
   return displayed;
 }
@@ -259,6 +259,7 @@ export function BuildProgressCard({
   const stepStatuses = useAnimatedStatuses({
     targetStatuses,
     stepCount: progress.steps.length,
+    isStreaming,
   });
 
   const isBuilt = stepStatuses.every((s) => s === 'ready');

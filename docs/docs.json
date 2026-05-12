@@ -512,6 +512,7 @@
                      "handbook/engineering/playbooks/canary-deployment",
                      "handbook/engineering/playbooks/infrastructure",
                      "handbook/engineering/playbooks/database-migration",
+                     "handbook/engineering/playbooks/security-advisory-response",
                      "handbook/engineering/playbooks/product-announcement",
                      "handbook/engineering/playbooks/frontend-best-practices",
                      "handbook/engineering/playbooks/e2e-tests",

@@ -58,7 +58,6 @@ export const apListPiecesTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                     const capped = pieces.slice(0, LIST_CAP).map(p => ({
                         name: p.name,
                         displayName: p.displayName,
-                        version: p.version,
                         description: p.description,
                         actions: p.actions,
                         triggers: p.triggers,
@@ -67,7 +66,7 @@ export const apListPiecesTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                     return {
                         content: [{ type: 'text', text: `✅ Successfully listed pieces${hint}:\n${JSON.stringify(capped)}` }],
                         structuredContent: {
-                            pieces: capped.map(p => ({ name: p.name, displayName: p.displayName, version: p.version, description: p.description })),
+                            pieces: capped.map(p => ({ name: p.name, displayName: p.displayName, description: p.description })),
                             count: capped.length,
                             totalCount,
                         },
@@ -81,7 +80,6 @@ export const apListPiecesTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                     const base: Record<string, unknown> = {
                         name: piece.name,
                         displayName: piece.displayName,
-                        version: piece.version,
                         description: piece.description,
                     }
                     const fullPiece = await pieceMetadataService(log).get({
@@ -120,7 +118,6 @@ export const apListPiecesTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                         pieces: enrichedPieces.map(p => ({
                             name: String(p.name),
                             displayName: String(p.displayName),
-                            version: String(p.version),
                             description: String(p.description),
                         })),
                         count: enrichedPieces.length,

@@ -26,13 +26,14 @@ const addStepInput = z.object({
     stepType: z.enum([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.LOOP_ON_ITEMS, FlowActionType.ROUTER]),
     displayName: z.string(),
     pieceName: z.string().optional(),
-    pieceVersion: z.string().optional(),
     actionName: z.string().optional(),
     input: z.record(z.string(), z.unknown()).optional(),
     auth: z.string().optional(),
     sourceCode: z.string().optional(),
     packageJson: z.string().optional(),
     loopItems: z.string().optional(),
+    continueOnFailure: z.boolean().optional(),
+    retryOnFailure: z.boolean().optional(),
 })
 
 export const apAddStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
@@ -48,17 +49,18 @@ export const apAddStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogge
             stepType: z.enum([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.LOOP_ON_ITEMS, FlowActionType.ROUTER]).describe('The type of step to add. Prefer PIECE over CODE — only use CODE when no piece exists for the task.'),
             displayName: z.string().describe('Display name for the step'),
             pieceName: z.string().optional().describe('For PIECE steps: the piece name (e.g. "@activepieces/piece-gmail"). Use ap_list_pieces to get valid values.'),
-            pieceVersion: z.string().optional().describe('For PIECE steps: the piece version (e.g. "~0.1.0"). Use ap_list_pieces to get valid values.'),
             actionName: z.string().optional().describe('For PIECE steps: the action name within the piece. Use ap_list_pieces with includeActions=true to get valid values.'),
             input: z.record(z.string(), z.unknown()).optional().describe(`For PIECE/CODE steps: input config (key-value pairs). ${mcpUtils.STEP_REFERENCE_HINT}`),
             auth: z.string().optional().describe('Connection externalId from ap_list_connections. Auto-wrapped as {{connections[\'externalId\']}}.'),
             sourceCode: z.string().optional().describe('For CODE steps: JavaScript/TypeScript source. Must export a `code` function.'),
             packageJson: z.string().optional().describe('For CODE steps: package.json as JSON string. Defaults to "{}".'),
             loopItems: z.string().optional().describe('For LOOP steps: expression for items to iterate (e.g. "{{step_1.items}}").'),
+            continueOnFailure: z.boolean().optional().describe('For CODE/PIECE steps: whether to continue the flow if this step fails. Defaults to false.'),
+            retryOnFailure: z.boolean().optional().describe('For CODE/PIECE steps: whether to retry this step on failure. Defaults to false.'),
         },
         annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
-            const { flowId, parentStepName, stepLocationRelativeToParent, branchIndex, stepType, displayName, pieceName, pieceVersion, actionName, input, auth, sourceCode, packageJson, loopItems } = addStepInput.parse(args)
+            const { flowId, parentStepName, stepLocationRelativeToParent, branchIndex, stepType, displayName, pieceName, actionName, input, auth, sourceCode, packageJson, loopItems, continueOnFailure, retryOnFailure } = addStepInput.parse(args)
 
             const [flow, project] = await Promise.all([
                 flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId }),
@@ -94,26 +96,30 @@ export const apAddStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogge
                                 packageJson: packageJson ?? '{}',
                             },
                             input: resolvedInput,
-                            errorHandlingOptions: { continueOnFailure: { value: false }, retryOnFailure: { value: false } },
+                            errorHandlingOptions: mcpUtils.buildErrorHandlingOptions({ continueOnFailure, retryOnFailure }),
                         },
                     }
                     break
                 case FlowActionType.PIECE: {
-                    if (!pieceName || !pieceVersion) {
+                    if (!pieceName) {
                         return {
                             content: [{
                                 type: 'text',
-                                text: '❌ pieceName and pieceVersion are required for PIECE steps. Use ap_list_pieces to get valid values.',
+                                text: '❌ pieceName is required for PIECE steps. Use ap_list_pieces to get valid values.',
                             }],
                         }
                     }
+                    const versionResult = await mcpUtils.resolveLatestPieceVersion({ pieceName, projectId: mcp.projectId, platformId: project.platformId, log })
+                    if (versionResult.error) {
+                        return versionResult.error
+                    }
                     const pieceSettings: Record<string, unknown> = {
-                        pieceName,
-                        pieceVersion,
+                        pieceName: versionResult.normalizedPieceName,
+                        pieceVersion: versionResult.pieceVersion,
                         actionName: actionName ?? '',
                         input: resolvedInput,
                         propertySettings: {},
-                        errorHandlingOptions: { continueOnFailure: { value: false }, retryOnFailure: { value: false } },
+                        errorHandlingOptions: mcpUtils.buildErrorHandlingOptions({ continueOnFailure, retryOnFailure }),
                     }
                     if (input !== undefined) {
                         await mcpUtils.fillDefaultsForMissingOptionalProps({ settings: pieceSettings, platformId: project.platformId, log })
