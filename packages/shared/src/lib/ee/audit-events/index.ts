@@ -193,7 +193,7 @@ export const FlowLifecycleEvent = z.object({
         z.literal(ApplicationEventName.FLOW_DEACTIVATED),
     ]),
     data: z.object({
-        flow: Flow.pick({ id: true, created: true, updated: true }),
+        flow: Flow.pick({ id: true, externalId: true, created: true, updated: true }),
         flowVersion: FlowVersion.pick({
             id: true,
             displayName: true,
@@ -203,6 +203,7 @@ export const FlowLifecycleEvent = z.object({
         }),
         project: z.object({
             displayName: z.string(),
+            externalId: Nullable(z.string()),
         }).optional(),
     }),
 })
