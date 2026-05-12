@@ -1,4 +1,4 @@
-import { isNil, PopulatedFlow } from '@activepieces/shared';
+import { FlowVersionState, isNil, PopulatedFlow } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { ReactFlowProvider } from '@xyflow/react';
 import { t } from 'i18next';
@@ -72,7 +72,7 @@ const FlowBuilderPage = () => {
       <BuilderStateProvider
         flow={flow}
         flowVersion={flow!.version}
-        readonly={false}
+        readonly={flow!.version.state === FlowVersionState.LOCKED}
         hideTestWidget={false}
         run={null}
         outputSampleData={sampleData ?? {}}
