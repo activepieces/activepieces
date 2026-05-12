@@ -207,7 +207,7 @@ export const updateFormSettings = createAction({
         }),
     },
     async run(context) {
-        const body: Record<string, unknown> = {};
+        const body: any = {};
 
         if (context.propsValue.name !== undefined) body.name = context.propsValue.name;
         if (context.propsValue.description !== undefined) body.description = context.propsValue.description;
