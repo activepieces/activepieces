@@ -120,6 +120,7 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
         applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.FLOW_UPDATED,
             data: {
+                flow,
                 request: request.body,
                 flowVersion: flow.version,
             },
