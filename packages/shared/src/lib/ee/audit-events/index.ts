@@ -132,9 +132,10 @@ export const FlowCreatedEvent = z.object({
     ...BaseAuditEventProps,
     action: z.literal(ApplicationEventName.FLOW_CREATED),
     data: z.object({
-        flow: Flow.pick({ id: true, created: true, updated: true }),
+        flow: Flow.pick({ id: true, externalId: true, created: true, updated: true }),
         project: z.object({
             displayName: z.string(),
+            externalId: Nullable(z.string()),
         }).optional(),
     }),
 })
@@ -145,7 +146,7 @@ export const FlowDeletedEvent = z.object({
     ...BaseAuditEventProps,
     action: z.literal(ApplicationEventName.FLOW_DELETED),
     data: z.object({
-        flow: Flow.pick({ id: true, created: true, updated: true }),
+        flow: Flow.pick({ id: true, externalId: true, created: true, updated: true }),
         flowVersion: FlowVersion.pick({
             id: true,
             displayName: true,
@@ -155,6 +156,7 @@ export const FlowDeletedEvent = z.object({
         }),
         project: z.object({
             displayName: z.string(),
+            externalId: Nullable(z.string()),
         }).optional(),
     }),
 })
@@ -165,6 +167,7 @@ export const FlowUpdatedEvent = z.object({
     ...BaseAuditEventProps,
     action: z.literal(ApplicationEventName.FLOW_UPDATED),
     data: z.object({
+        flow: Flow.pick({ id: true, externalId: true, created: true, updated: true }),
         flowVersion: FlowVersion.pick({
             id: true,
             displayName: true,
@@ -175,6 +178,7 @@ export const FlowUpdatedEvent = z.object({
         request: FlowOperationRequest,
         project: z.object({
             displayName: z.string(),
+            externalId: Nullable(z.string()),
         }).optional(),
     }),
 })
@@ -189,7 +193,7 @@ export const FlowLifecycleEvent = z.object({
         z.literal(ApplicationEventName.FLOW_DEACTIVATED),
     ]),
     data: z.object({
-        flow: Flow.pick({ id: true, created: true, updated: true }),
+        flow: Flow.pick({ id: true, externalId: true, created: true, updated: true }),
         flowVersion: FlowVersion.pick({
             id: true,
             displayName: true,
@@ -199,6 +203,7 @@ export const FlowLifecycleEvent = z.object({
         }),
         project: z.object({
             displayName: z.string(),
+            externalId: Nullable(z.string()),
         }).optional(),
     }),
 })
