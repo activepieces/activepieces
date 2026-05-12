@@ -53,22 +53,30 @@ sitting in worker memory.
 | Limit | Cloud | Env var | Self-hosted default |
 |---|---|---|---|
 | Step file size | 10 MB | `AP_MAX_FILE_SIZE_MB` | `25` |
-| Flow run log size (combined inputs + outputs) | 25 MB | `AP_MAX_FLOW_RUN_LOG_SIZE_MB` | `50` |
+| Flow run log size (combined inputs + outputs, includes sliced payloads) | 25 MB | `AP_MAX_FLOW_RUN_LOG_SIZE_MB` | `10` |
 | Step output slice threshold | 32 KB | `AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB` | `32` |
 | Step input truncate threshold | 2 KB | `AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB` | `2` |
 
-<Tip>
-**Slice threshold** controls when an individual step output is offloaded to its
-own `FLOW_RUN_LOG_SLICE` file instead of being inlined into the run's log
-manifest. Lower values reduce worker memory pressure during large runs; higher
-values reduce the number of object-storage requests per run.
+#### How it works
 
-**Input truncate threshold** controls when an individual step input value is
-replaced with a placeholder (`(truncated, original size <N>)`) before being
-stored in the run log. Inputs that exceed the threshold are dropped from the
-log — the source data still lives in the upstream step's output, which is
-recoverable when sliced.
-</Tip>
+- **Input** — values above `AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB` are
+  replaced with a placeholder in the log; the step still receives the full
+  value at runtime.
+- **Output** — outputs above `AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB` are offloaded
+  to object storage and replaced with a reference in the log; the payload is
+  re-hydrated on demand.
+- **Total** — the cumulative size of inputs and outputs (counting the
+  **original** size of offloaded outputs) is capped by
+  `AP_MAX_FLOW_RUN_LOG_SIZE_MB`. Runs that exceed it end with status
+  `LOG_SIZE_EXCEEDED`.
+
+<Warning>
+A run that produces enough cumulative output to exceed
+`AP_MAX_FLOW_RUN_LOG_SIZE_MB` ends with status `LOG_SIZE_EXCEEDED`, regardless
+of how many individual outputs were offloaded to object storage. Lowering
+`AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB` will not buy more log headroom — only
+raising `AP_MAX_FLOW_RUN_LOG_SIZE_MB` does.
+</Warning>
 
 ---
 
