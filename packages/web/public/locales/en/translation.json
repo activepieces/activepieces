@@ -142,6 +142,8 @@
   "Input": "Input",
   "Timeline": "",
   "Output": "Output",
+  "Output is too large to display inline ({size}). Download to inspect.": "Output is too large to display inline ({size}). Download to inspect.",
+  "Download output": "Download output",
   "There are no logs captured for this run, because of an internal error, please contact support.": "",
   "Logs are kept for {days} days after execution and then deleted.": "",
   "Show child steps output on round ({iteration}/{totalIterations})": "Show child steps output on round ({iteration}/{totalIterations})",
