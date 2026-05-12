@@ -1,5 +1,9 @@
-import { EngineGenericError, FileCompression, FileType } from '@activepieces/shared'
+import { promisify } from 'node:util'
+import { zstdDecompress as zstdDecompressCallback } from 'node:zlib'
+import { EngineGenericError, FileCompression, FileType, isZstdCompressed } from '@activepieces/shared'
 import fetchRetry from 'fetch-retry'
+
+const zstdDecompress = promisify(zstdDecompressCallback)
 
 const RETRY_CONFIG = {
     retries: 3,
@@ -79,7 +83,18 @@ export const engineFileApi = {
                 `Failed to download file ${fileId}: ${response.status} ${response.statusText}`,
             )
         }
-        return new Uint8Array(await response.arrayBuffer())
+        const raw = new Uint8Array(await response.arrayBuffer())
+        // The server's proxy path runs the file through fileCompressor.decompress before
+        // streaming it back, but the S3 signed-URL redirect path serves the stored bytes
+        // straight from S3 — which for FLOW_RUN_LOG is zstd-compressed. Native fetch does
+        // not auto-decompress zstd, so callers (RESUME hydration, slice materialization)
+        // would crash on JSON.parse. Detect the magic bytes and decompress here so the
+        // download contract is "always returns the original payload" regardless of which
+        // server path served it.
+        if (isZstdCompressed(raw)) {
+            return new Uint8Array(await zstdDecompress(Buffer.from(raw)))
+        }
+        return raw
     },
 }
 
