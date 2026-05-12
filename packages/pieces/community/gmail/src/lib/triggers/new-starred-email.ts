@@ -11,20 +11,18 @@ import {
   convertAttachment,
   getFirstFiveOrAll,
 } from '../common/data';
-import { GmailLabel } from '../common/models';
 
 type Props = {
   from?: string;
   to?: string;
   subject?: string;
-  label?: GmailLabel;
 };
 
 export const gmailNewStarredEmailTrigger = createTrigger({
   auth: gmailAuth,
   name: 'new_starred_email',
   displayName: 'New Starred Email',
-  description: 'Triggers when an email is starred (within the last 2 days).',
+  description: 'Triggers when a new email is starred.',
   props: {
     from: {
       ...GmailProps.from,

@@ -6,8 +6,8 @@ import { GmailProps } from '../common/props';
 export const gmailDeleteEmailAction = createAction({
   auth: gmailAuth,
   name: 'delete_email',
-  displayName: 'Delete Email',
-  description: 'Permanently move an email to the Trash.',
+  displayName: 'Move Email to Trash',
+  description: 'Move an email to the Trash (can be recovered from Trash within 30 days).',
   props: {
     message_id: GmailProps.message,
   },
