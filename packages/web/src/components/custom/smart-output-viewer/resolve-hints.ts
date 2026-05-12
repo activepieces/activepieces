@@ -1,6 +1,6 @@
 import { stringUtils } from '@/lib/string-utils';
 
-import type { HintField, OutputDisplayHints } from './types';
+import type { HintField } from './types';
 
 function resolveFieldLabel(field: HintField): string {
   return field.label ?? stringUtils.titleCase(field.key);
@@ -16,16 +16,6 @@ function resolveItemFieldPath(field: HintField): string {
   return field.value ?? field.key;
 }
 
-function visibleFields(hints: OutputDisplayHints): {
-  hero: HintField[];
-  secondary: HintField[];
-} {
-  return {
-    hero: hints.hero ?? [],
-    secondary: hints.secondary ?? [],
-  };
-}
-
 function isPrimitiveArray(value: unknown): value is Array<unknown> {
   if (!Array.isArray(value)) return false;
   return value.every((item) => item === null || typeof item !== 'object');
@@ -35,6 +25,5 @@ export const hintUtils = {
   resolveFieldLabel,
   resolveFieldPath,
   resolveItemFieldPath,
-  visibleFields,
   isPrimitiveArray,
 };

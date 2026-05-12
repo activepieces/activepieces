@@ -10,8 +10,7 @@ import type { OutputDisplayHints } from '@/components/custom/smart-output-viewer
 describe('hintsTreeUtils.buildTreeFromHints — primitive arrays', () => {
   it('expands a primitive array hint into per-item insertable nodes', () => {
     const hints: OutputDisplayHints = {
-      hero: [],
-      secondary: [
+      fields: [
         {
           key: 'labelIds',
           label: 'Labels',
@@ -65,7 +64,7 @@ describe('hintsTreeUtils.buildTreeFromHints — primitive arrays', () => {
 
   it('returns no children for an empty primitive array', () => {
     const hints: OutputDisplayHints = {
-      hero: [{ key: 'tags', value: 'tags' }],
+      fields: [{ key: 'tags', value: 'tags' }],
     };
 
     const tree = hintsTreeUtils.buildTreeFromHints({
@@ -87,7 +86,7 @@ describe('hintsTreeUtils.buildTreeFromHints — primitive arrays', () => {
 
   it('still uses listItems when explicitly provided (object array)', () => {
     const hints: OutputDisplayHints = {
-      hero: [
+      fields: [
         {
           key: 'attachments',
           value: 'attachments',
@@ -122,7 +121,7 @@ describe('hintsTreeUtils.buildTreeFromHints — primitive arrays', () => {
 
   it('does not auto-expand arrays that contain objects when no listItems is set', () => {
     const hints: OutputDisplayHints = {
-      hero: [{ key: 'rows', value: 'rows' }],
+      fields: [{ key: 'rows', value: 'rows' }],
     };
 
     const tree = hintsTreeUtils.buildTreeFromHints({

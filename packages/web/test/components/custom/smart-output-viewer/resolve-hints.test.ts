@@ -1,10 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 import { hintUtils } from '@/components/custom/smart-output-viewer/resolve-hints';
-import type {
-  HintField,
-  OutputDisplayHints,
-} from '@/components/custom/smart-output-viewer/types';
+import type { HintField } from '@/components/custom/smart-output-viewer/types';
 import { stringUtils } from '@/lib/string-utils';
 
 describe('stringUtils.titleCase', () => {
@@ -68,24 +65,6 @@ describe('hintUtils.resolveItemFieldPath', () => {
   it('falls back to key', () => {
     const field: HintField = { key: 'id' };
     expect(hintUtils.resolveItemFieldPath(field)).toBe('id');
-  });
-});
-
-describe('hintUtils.visibleFields', () => {
-  it('returns hero and secondary arrays', () => {
-    const hints: OutputDisplayHints = {
-      hero: [{ key: 'a' }],
-      secondary: [{ key: 'b' }],
-    };
-    expect(hintUtils.visibleFields(hints)).toEqual({
-      hero: [{ key: 'a' }],
-      secondary: [{ key: 'b' }],
-    });
-  });
-
-  it('defaults secondary to an empty array when missing', () => {
-    const hints: OutputDisplayHints = { hero: [{ key: 'a' }] };
-    expect(hintUtils.visibleFields(hints).secondary).toEqual([]);
   });
 });
 

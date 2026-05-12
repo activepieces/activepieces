@@ -42,8 +42,7 @@ export const HintField: z.ZodType<HintField> = z.lazy(() =>
 );
 
 export const OutputDisplayHints = z.object({
-  hero: z.array(HintField),
-  secondary: z.array(HintField).optional(),
+  fields: z.array(HintField),
   label: z.string().optional(),
 });
 export type OutputDisplayHints = z.infer<typeof OutputDisplayHints>;

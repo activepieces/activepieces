@@ -249,8 +249,8 @@ function buildTreeFromHints({
   hints: OutputDisplayHints;
   sampleData: unknown;
 }): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
-  const allFields = [...(hints.hero ?? []), ...(hints.secondary ?? [])];
-  const children = allFields.map((field) =>
+  const fields = hints.fields ?? [];
+  const children = fields.map((field) =>
     buildFieldNode({ stepName, field, sampleData }),
   );
 
