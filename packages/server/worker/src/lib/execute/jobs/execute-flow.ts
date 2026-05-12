@@ -7,23 +7,19 @@ import {
     EngineResponseStatus,
     ErrorCode,
     ExecuteFlowJobData,
-    ExecutionState,
     ExecutionType,
     FlowRunStatus,
     FlowVersion,
     isNil,
     ResumeExecuteFlowOperation,
-    ResumePayload,
     tryCatch,
     WorkerJobType,
-    WorkerToApiContract,
 } from '@activepieces/shared'
 import { flowCache } from '../../cache/flow/flow-cache'
 import { system, WorkerSystemProp } from '../../config/configs'
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 import { provisionFlowPieces } from '../utils/flow-helpers'
-import { resolvePayload } from '../utils/resolve-payload'
 
 export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_FLOW,
@@ -47,6 +43,14 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
         }
 
+        if (data.executionType === ExecutionType.RESUME && isNil(data.logsFileId)) {
+            await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR)
+            throw new ActivepiecesError({
+                code: ErrorCode.RESUME_LOGS_FILE_MISSING,
+                params: { runId: data.runId },
+            }, 'logsFileId is missing for RESUME operation')
+        }
+
         const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
         try {
             await sandbox.start({
@@ -55,8 +59,7 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
                 mounts: [],
             })
 
-            const resolvedPayload = await resolvePayload(data.payload, data.projectId, ctx.apiClient)
-            const operation = await buildFlowOperation(ctx, data, resolvedPayload, flowVersion, timeoutInSeconds)
+            const operation = buildFlowOperation(ctx, data, flowVersion, timeoutInSeconds)
             const result = await sandbox.execute(
                 EngineOperationType.EXECUTE_FLOW,
                 operation,
@@ -100,13 +103,12 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
     },
 }
 
-async function buildFlowOperation(
+function buildFlowOperation(
     ctx: JobContext,
     data: ExecuteFlowJobData,
-    resolvedPayload: unknown,
     flowVersion: FlowVersion,
     timeoutInSeconds: number,
-): Promise<BeginExecuteFlowOperation | ResumeExecuteFlowOperation> {
+): BeginExecuteFlowOperation | ResumeExecuteFlowOperation {
     const base = {
         flowVersion,
         flowRunId: data.runId,
@@ -126,50 +128,20 @@ async function buildFlowOperation(
     }
 
     if (data.executionType === ExecutionType.RESUME) {
-        const executionState = await fetchExecutionState({ apiClient: ctx.apiClient, data })
-        if (Object.keys(executionState.steps).length === 0) {
-            ctx.log.error({ runId: data.runId, executionType: data.executionType }, 'RESUME operation has empty execution state — this is a bug that would cause an infinite loop')
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'RESUME operation received with empty execution state',
-                },
-            })
-        }
         return {
             ...base,
             executionType: ExecutionType.RESUME,
-            executionState,
-            resumePayload: resolvedPayload as ResumePayload,
+            resumePayload: data.payload,
         }
     }
 
     return {
         ...base,
         executionType: ExecutionType.BEGIN,
-        executionState: { steps: {}, tags: [] },
-        triggerPayload: resolvedPayload,
+        triggerPayload: data.payload,
         executeTrigger: data.executeTrigger ?? false,
         sampleData: data.sampleData,
     }
-}
-
-async function fetchExecutionState({ apiClient, data }: { apiClient: WorkerToApiContract, data: ExecuteFlowJobData }): Promise<ExecutionState> {
-    if (isNil(data.logsFileId)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.RESUME_LOGS_FILE_MISSING,
-            params: { runId: data.runId },
-        }, 'logsFileId is missing for RESUME operation')
-    }
-    const buffer = await apiClient.getPayloadFile({ fileId: data.logsFileId, projectId: data.projectId })
-    const parsed = JSON.parse(buffer.toString('utf-8'))
-    if (isNil(parsed.executionState)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.EXECUTION_STATE_MISSING,
-            params: { logsFileId: data.logsFileId },
-        }, 'executionState is missing in logs file')
-    }
-    return parsed.executionState
 }
 
 async function reportFlowStatus(

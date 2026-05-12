@@ -9,7 +9,6 @@ import { PieceBase, PieceMetadata} from './piece-metadata';
 import { PieceAuthProperty } from './property/authentication';
 import { ServerContext } from './context';
 import { ContextVersion, LATEST_CONTEXT_VERSION, MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION } from './context/versioning';
-import * as semver from 'semver';
 
 
 
@@ -33,7 +32,7 @@ export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | u
     public readonly maximumSupportedRelease?: string,
     public readonly description = '',
   ) {
-    if(!semver.valid(minimumSupportedRelease) || semver.lt(minimumSupportedRelease, MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION)) {
+    if (!isValidSimpleSemver(minimumSupportedRelease) || isSemverLessThan(minimumSupportedRelease, MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION)) {
       this.minimumSupportedRelease = MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION;
     }
     actions.forEach((action) => (this._actions[action.name] = action));
@@ -128,5 +127,17 @@ type PieceEventProcessors = {
 type BackwardCompatiblePieceMetadata = Omit<PieceMetadata, 'name' | 'version' | 'authors' | 'i18n' | 'getContextInfo'> & {
   authors?: PieceMetadata['authors']
   i18n?: PieceMetadata['i18n']
+}
+
+function isValidSimpleSemver(version: string): boolean {
+  return /^\d+\.\d+\.\d+$/.test(version);
+}
+
+function isSemverLessThan(a: string, b: string): boolean {
+  const [a1, a2, a3] = a.split('.').map(Number);
+  const [b1, b2, b3] = b.split('.').map(Number);
+  if (a1 !== b1) return a1 < b1;
+  if (a2 !== b2) return a2 < b2;
+  return a3 < b3;
 }
 

@@ -1,4 +1,5 @@
 import {
+  ApFlagId,
   isNil,
   PROJECT_COLOR_PALETTE,
   PlatformRole,
@@ -15,6 +16,7 @@ import { useDebounce } from 'use-debounce';
 import { SearchInput } from '@/components/custom/search-input';
 import { ChartLineIcon } from '@/components/icons/chart-line';
 import { CompassIcon } from '@/components/icons/compass';
+import { SendIcon } from '@/components/icons/send';
 import { ShieldIcon } from '@/components/icons/shield';
 import { TrophyIcon } from '@/components/icons/trophy';
 import { useEmbedding } from '@/components/providers/embed-provider';
@@ -43,6 +45,7 @@ import {
 } from '@/features/projects';
 import { templatesTelemetryApi } from '@/features/templates';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
@@ -70,6 +73,7 @@ export function ProjectDashboardSidebar({
   const navigate = useNavigate();
   const { data: currentUser } = userHooks.useCurrentUser();
   const { platform } = platformHooks.useCurrentPlatform();
+  const { data: showChat } = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_CHAT);
 
   useEffect(() => {
     if (!searchOpen) {
@@ -146,6 +150,17 @@ export function ProjectDashboardSidebar({
     });
   }, []);
 
+  const chatLink: SidebarItemType = {
+    type: 'link',
+    to: '/chat',
+    label: t('Chat'),
+    show: showChat ?? false,
+    icon: SendIcon,
+    hasPermission: true,
+    isSubItem: false,
+    badge: t('Beta'),
+  };
+
   const exploreLink: SidebarItemType = {
     type: 'link',
     to: '/templates',
@@ -207,9 +222,9 @@ export function ProjectDashboardSidebar({
     },
   };
 
-  const items = [exploreLink, impactLink, leaderboardLink].filter(
-    permissionFilter,
-  );
+  const items = [chatLink, exploreLink, impactLink, leaderboardLink]
+    .filter((item) => item.show !== false)
+    .filter(permissionFilter);
 
   return (
     !embedState.hideSideNav && (

@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { BaseModelSchema, DateOrString, Nullable } from '../../core/common/base-model'
 import { ApId } from '../../core/common/id-generator'
 import { FederatedAuthnProviderConfig, FederatedAuthnProviderConfigWithoutSensitiveData } from '../../core/federated-authn'
+import { SsoDomainVerification } from './sso-domain-verification'
 
 export type PlatformId = ApId
 
@@ -127,6 +128,8 @@ export const Platform = z.object({
     cloudAuthEnabled: z.boolean(),
     enforceAllowedAuthDomains: z.boolean(),
     allowedAuthDomains: z.array(z.string()),
+    ssoDomain: Nullable(z.string()),
+    ssoDomainVerification: Nullable(SsoDomainVerification),
     federatedAuthProviders: FederatedAuthnProviderConfig,
     emailAuthEnabled: z.boolean(),
     pinnedPieces: z.array(z.string()),
@@ -151,6 +154,8 @@ export const PlatformWithoutSensitiveData = z.object({
     cloudAuthEnabled: z.boolean(),
     enforceAllowedAuthDomains: z.boolean(),
     allowedAuthDomains: z.array(z.string()),
+    ssoDomain: Nullable(z.string()),
+    ssoDomainVerification: Nullable(SsoDomainVerification),
     emailAuthEnabled: z.boolean(),
     pinnedPieces: z.array(z.string()),
 })

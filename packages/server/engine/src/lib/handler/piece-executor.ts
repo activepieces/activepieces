@@ -3,6 +3,7 @@ import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, ExecutionType, FlowAc
 import type { ToolSet } from 'ai'
 import dayjs from 'dayjs'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
+import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
 import { pieceLoader } from '../helper/piece-loader'
 import { createFileUploader } from '../piece-context/file-uploader'
 import { createFlowsContext } from '../piece-context/flows'
@@ -14,7 +15,6 @@ import { propsProcessor } from '../variables/props-processor'
 import { workerSocket } from '../worker-socket'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
-import { runProgressService } from './run-progress'
 
 const AP_PAUSED_FLOW_TIMEOUT_DAYS = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS)
 
@@ -73,7 +73,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 tags: [],
             },
         }
-        const outputContext = runProgressService.createOutputContext({
+        const outputContext = flowRunProgressReporter.createOutputContext({
             engineConstants: constants,
             flowExecutorContext: executionState,
             stepName: action.name,
@@ -82,7 +82,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
 
         const isPaused = executionState.isPaused({ stepName: action.name })
         if (!isPaused) {
-            await runProgressService.sendUpdate({
+            await flowRunProgressReporter.sendUpdate({
                 engineConstants: constants,
                 flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
                 stepNameToUpdate: action.name,
