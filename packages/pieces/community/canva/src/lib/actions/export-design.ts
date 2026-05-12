@@ -50,8 +50,6 @@ export const exportDesignAction = createAction({
     const maxAttempts = 20;
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-
       const statusResponse = await canvaApiCall<{
         job: { id: string; status: string; urls?: string[] };
       }>({
@@ -69,6 +67,8 @@ export const exportDesignAction = createAction({
       if (status === 'failed') {
         throw new Error(`Export job ${jobId} failed.`);
       }
+
+      await new Promise((resolve) => setTimeout(resolve, 3000));
     }
 
     throw new Error(`Export job ${jobId} timed out after ${maxAttempts} attempts.`);

@@ -45,9 +45,12 @@ export const createDesignAction = createAction({
 
     const body: Record<string, unknown> = {};
 
-    if (design_type === 'CUSTOM' && width && height) {
+    if (design_type === 'CUSTOM') {
+      if (!width || !height) {
+        throw new Error('Width and Height are required when Design Type is "Custom Size".');
+      }
       body['design_type'] = { type: 'CUSTOM', width, height };
-    } else if (design_type && design_type !== 'CUSTOM') {
+    } else if (design_type) {
       body['design_type'] = { type: design_type };
     }
 
