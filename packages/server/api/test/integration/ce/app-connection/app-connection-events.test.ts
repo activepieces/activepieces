@@ -8,6 +8,7 @@ import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import * as applicationEventsModule from '../../../../src/app/helper/application-events'
 import { pieceMetadataService } from '../../../../src/app/pieces/metadata/piece-metadata-service'
+import { actionsEmitted } from '../../../helpers/application-events'
 import { db } from '../../../helpers/db'
 import { createMockPieceMetadata } from '../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
@@ -108,6 +109,3 @@ async function seedPieceMetadata(ctx: TestContext): Promise<{ name: string, vers
     return { name: piece.name, version: piece.version }
 }
 
-function actionsEmitted(spy: ReturnType<typeof vi.fn>): ApplicationEventName[] {
-    return spy.mock.calls.map((call) => (call[1] as { action: ApplicationEventName }).action)
-}

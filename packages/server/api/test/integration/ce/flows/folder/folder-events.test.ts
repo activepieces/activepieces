@@ -2,6 +2,7 @@ import { ApplicationEventName } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import * as applicationEventsModule from '../../../../../src/app/helper/application-events'
+import { actionsEmitted } from '../../../../helpers/application-events'
 import { db } from '../../../../helpers/db'
 import { createMockFolder } from '../../../../helpers/mocks'
 import { createTestContext } from '../../../../helpers/test-context'
@@ -79,6 +80,3 @@ describe('Folder application events', () => {
     })
 })
 
-function actionsEmitted(spy: ReturnType<typeof vi.fn>): ApplicationEventName[] {
-    return spy.mock.calls.map((call) => (call[1] as { action: ApplicationEventName }).action)
-}

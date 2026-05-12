@@ -18,6 +18,7 @@ import {
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import * as applicationEventsModule from '../../../../../src/app/helper/application-events'
+import { actionsEmitted } from '../../../../helpers/application-events'
 import { db } from '../../../../helpers/db'
 import { createMockFlow, createMockFlowVersion, createMockPieceMetadata } from '../../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../../helpers/test-context'
@@ -195,6 +196,25 @@ describe('Flow application events', () => {
             expect(actionsEmitted(sendUserEventSpy)).not.toContain(ApplicationEventName.FLOW_DEACTIVATED)
         })
 
+        it('emits only FLOW_PUBLISHED when re-publishing an already-ENABLED flow with no explicit status (defaults to ENABLED)', async () => {
+            const ctx = await createTestContext(app)
+            const { flow } = await seedPublishableFlow({ ctx, initialStatus: FlowStatus.ENABLED })
+            await seedAdditionalDraftVersion({ flowId: flow.id, userId: ctx.user.id })
+
+            const response = await ctx.post(`/v1/flows/${flow.id}`, {
+                type: FlowOperationType.LOCK_AND_PUBLISH,
+                request: {},
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(actionsEmitted(sendUserEventSpy)).toEqual([
+                ApplicationEventName.FLOW_UPDATED,
+                ApplicationEventName.FLOW_PUBLISHED,
+            ])
+            expect(actionsEmitted(sendUserEventSpy)).not.toContain(ApplicationEventName.FLOW_ACTIVATED)
+            expect(actionsEmitted(sendUserEventSpy)).not.toContain(ApplicationEventName.FLOW_DEACTIVATED)
+        })
+
         it('emits FLOW_PUBLISHED and FLOW_DEACTIVATED when publishing with explicit DISABLED status from an ENABLED flow', async () => {
             const ctx = await createTestContext(app)
             const { flow } = await seedPublishableFlow({ ctx, initialStatus: FlowStatus.ENABLED })
@@ -328,6 +348,3 @@ function scheduleTrigger(): FlowTrigger {
     }
 }
 
-function actionsEmitted(spy: ReturnType<typeof vi.fn>): ApplicationEventName[] {
-    return spy.mock.calls.map((call) => (call[1] as { action: ApplicationEventName }).action)
-}
