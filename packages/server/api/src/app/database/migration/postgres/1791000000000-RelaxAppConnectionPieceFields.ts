@@ -4,16 +4,14 @@ import { AppSystemProp } from '../../../helper/system/system-props'
 import { DatabaseType } from '../../database-type'
 import { Migration } from '../../migration'
 
-const isPGlite = system.get(AppSystemProp.DB_TYPE) === DatabaseType.PGLITE
-
-export class RelaxAppConnectionPieceFields1787000000000 implements Migration {
-    name = 'RelaxAppConnectionPieceFields1787000000000'
+export class RelaxAppConnectionPieceFields1791000000000 implements Migration {
+    name = 'RelaxAppConnectionPieceFields1791000000000'
     breaking = false
     release = '0.83.0'
     transaction = false
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        const concurrently = isPGlite ? '' : 'CONCURRENTLY'
+        const concurrently = system.get(AppSystemProp.DB_TYPE) === DatabaseType.PGLITE ? '' : 'CONCURRENTLY'
 
         await queryRunner.query(`
             ALTER TABLE "app_connection"
@@ -30,7 +28,7 @@ export class RelaxAppConnectionPieceFields1787000000000 implements Migration {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        const concurrently = isPGlite ? '' : 'CONCURRENTLY'
+        const concurrently = system.get(AppSystemProp.DB_TYPE) === DatabaseType.PGLITE ? '' : 'CONCURRENTLY'
 
         await queryRunner.query(`DROP INDEX ${concurrently} IF EXISTS "idx_app_connection_piece_name"`)
 
