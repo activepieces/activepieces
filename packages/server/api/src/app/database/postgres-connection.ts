@@ -372,6 +372,7 @@ import { AddSsoDomainVerification1787100000000 } from './migration/postgres/1787
 import { AddPlatformMcpServer1788000000000 } from './migration/postgres/1788000000000-AddPlatformMcpServer'
 import { MakeMcpOAuthProjectIdNullable1789000000000 } from './migration/postgres/1789000000000-MakeMcpOAuthProjectIdNullable'
 import { RemoveMcpServerStatus1790000000000 } from './migration/postgres/1790000000000-RemoveMcpServerStatus'
+import { RelaxAppConnectionPieceFields1791000000000 } from './migration/postgres/1791000000000-RelaxAppConnectionPieceFields'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -754,12 +755,12 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddLastLoggedInPlatformIdToUserIdentity1777491000474,
         ReplacesSandboxWithVercelAiSdk1785000000000,
         AddChatCompactionColumns1786000000000,
-        RelaxAppConnectionPieceFields1787000000000,
         AddSsoDomainVerification1787100000000,
         AddPlatformMcpServer1788000000000,
         MakeMcpOAuthProjectIdNullable1789000000000,
         MakeChatConversationPlatformWide1787000000000,
         RemoveMcpServerStatus1790000000000,
+        RelaxAppConnectionPieceFields1791000000000,
     ]
     return migrations
 }
