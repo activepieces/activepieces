@@ -84,7 +84,9 @@ export const apBuildFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
 
                 const triggerVersionResult = await mcpUtils.resolveLatestPieceVersion({ pieceName: trigger.pieceName, projectId, platformId, log })
                 if (triggerVersionResult.error) {
-                    await flowService(log).delete({ id: flowId, projectId }).catch(() => undefined)
+                    await flowService(log).delete({ id: flowId, projectId }).catch((deleteErr) => {
+                        log.warn({ err: deleteErr, flowId }, 'Failed to clean up orphaned flow after trigger version resolution error')
+                    })
                     return triggerVersionResult.error
                 }
 
@@ -120,7 +122,11 @@ export const apBuildFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
 
                     let resolvedPieceVersion: string | undefined
                     let resolvedPieceName: string | undefined
-                    if (step.type === FlowActionType.PIECE && step.pieceName) {
+                    if (step.type === FlowActionType.PIECE) {
+                        if (!step.pieceName) {
+                            skippedSteps.push(step.displayName)
+                            continue
+                        }
                         const versionResult = await mcpUtils.resolveLatestPieceVersion({ pieceName: step.pieceName, projectId, platformId, log })
                         if (versionResult.error) {
                             skippedSteps.push(step.displayName)
