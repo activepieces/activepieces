@@ -81,7 +81,10 @@ export const flowRunProgressReporter = {
                 if (stepResponse) {
                     await workerSocket.getWorkerClient().updateStepProgress({
                         projectId: engineConstants.projectId,
-                        stepResponse,
+                        stepResponse: {
+                            ...stepResponse,
+                            output: params.data,
+                        },
                     })
                 }
             },

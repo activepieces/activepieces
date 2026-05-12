@@ -1,11 +1,12 @@
-import { FlowActionType, FlowRunStatus, GenericStepOutput, StepOutputStatus, StreamStepProgress, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { FlowActionType, FlowRunStatus, GenericStepOutput, StepOutputStatus, StepRunResponse, StreamStepProgress, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { generateMockEngineConstants } from '../handler/test-helper'
 
-const { uploadRunLogMock, updateRunProgressMock } = vi.hoisted(() => ({
+const { uploadRunLogMock, updateRunProgressMock, updateStepProgressMock } = vi.hoisted(() => ({
     uploadRunLogMock: vi.fn<(request: UploadRunLogsRequest) => Promise<void>>(async () => undefined),
     updateRunProgressMock: vi.fn<(request: UpdateRunProgressRequest) => Promise<void>>(async () => undefined),
+    updateStepProgressMock: vi.fn<(request: { projectId: string, stepResponse: StepRunResponse }) => Promise<void>>(async () => undefined),
 }))
 
 vi.mock('../../src/lib/worker-socket', () => ({
@@ -13,7 +14,7 @@ vi.mock('../../src/lib/worker-socket', () => ({
         getWorkerClient: () => ({
             uploadRunLog: uploadRunLogMock,
             updateRunProgress: updateRunProgressMock,
-            updateStepProgress: vi.fn(),
+            updateStepProgress: updateStepProgressMock,
         }),
     },
 }))
@@ -159,5 +160,44 @@ describe('flow-run-progress-reporter slicing in single-step test mode', () => {
 
         const stepResponse = uploadRunLogMock.mock.calls.at(-1)![0].stepResponse
         expect(stepResponse!.output).toEqual(big)
+    })
+
+    it('streams the original payload via updateStepProgress even when upsertStep slices the output', async () => {
+        const engineConstants = generateMockEngineConstants({
+            streamStepProgress: StreamStepProgress.WEBSOCKET,
+            engineToken: 'mock-engine-token',
+            internalApiUrl: 'http://127.0.0.1:65535/',
+            logsFileId: 'logs-1',
+        })
+
+        let flowExecutorContext = FlowExecutorContext.empty({
+            engineApi: { engineToken: engineConstants.engineToken, internalApiUrl: engineConstants.internalApiUrl },
+            slicingEnabled: true,
+        })
+
+        const seedStep = GenericStepOutput.create({
+            type: FlowActionType.PIECE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: undefined,
+        }) as GenericStepOutput<FlowActionType.PIECE, unknown>
+
+        // Seed the journal so we can read it back and inspect what was stored
+        flowExecutorContext = await flowExecutorContext.upsertStep('streaming_step', seedStep)
+
+        const outputContext = flowRunProgressReporter.createOutputContext({
+            engineConstants,
+            flowExecutorContext,
+            stepName: 'streaming_step',
+            stepOutput: seedStep,
+        })
+
+        const big = { big: 'x'.repeat(40_000) }
+        await outputContext.update({ data: big })
+
+        const lastCall = updateStepProgressMock.mock.calls.at(-1)
+        expect(lastCall).toBeDefined()
+        // The live UI update must carry the actual payload, never the LogSliceRef
+        expect(lastCall![0].stepResponse.output).toEqual(big)
     })
 })
