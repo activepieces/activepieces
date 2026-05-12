@@ -1,4 +1,5 @@
 import {
+    AppConnectionKind,
     AppConnectionStatus,
     McpToolDefinition,
     Permission,
@@ -59,7 +60,7 @@ export const apListConnectionsTool = (mcp: ProjectScopedMcpServer, log: FastifyB
                     pieceName: mcpUtils.normalizePieceName(params.pieceName),
                     limit: 200,
                     externalIds: undefined,
-                    kind: undefined,
+                    kind: AppConnectionKind.CONNECTION,
                 })
                 const lines = connections.data.map(c => `- externalId: ${c.externalId} | displayName: "${c.displayName}" | piece: ${c.pieceName} | status: ${c.status} | scope: ${c.scope}`)
                 const structured = {
