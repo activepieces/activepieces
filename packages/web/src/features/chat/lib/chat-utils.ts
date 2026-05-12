@@ -4,11 +4,25 @@ import { formatUtils } from '@/lib/format-utils';
 
 import { DynamicToolPart } from './chat-types';
 
+function stripPiecePrefix(name: string): string {
+  return name.replace(/^@activepieces\/piece-/, '');
+}
+
 function humanizePieceName(raw: string): string {
   return formatUtils.convertEnumToHumanReadable(
-    raw.replace(/^@activepieces\/piece-/, '').replace(/-/g, '_'),
+    stripPiecePrefix(raw).replace(/-/g, '_'),
   );
 }
+
+const BUILD_TOOL_NAMES = new Set([
+  'ap_create_flow',
+  'ap_build_flow',
+  'ap_update_trigger',
+  'ap_add_step',
+  'ap_update_step',
+  'ap_validate_step_config',
+  'ap_validate_flow',
+]);
 
 function formatToolName({
   part,
@@ -76,4 +90,7 @@ export const chatUtils = {
   formatToolActionName: ({ part }: { part: DynamicToolPart }) =>
     formatToolName({ part, includeContext: false }),
   extractToolContext,
+  stripPiecePrefix,
+  humanizePieceName,
+  BUILD_TOOL_NAMES,
 };

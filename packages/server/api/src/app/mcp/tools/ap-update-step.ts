@@ -28,6 +28,8 @@ const updateStepInput = z.object({
     skip: z.boolean().optional(),
     sourceCode: z.string().optional(),
     packageJson: z.string().optional(),
+    continueOnFailure: z.boolean().optional(),
+    retryOnFailure: z.boolean().optional(),
 })
 
 export const apUpdateStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
@@ -46,10 +48,12 @@ export const apUpdateStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
             skip: z.boolean().optional().describe('Whether to skip this step during execution'),
             sourceCode: z.string().optional().describe('For CODE steps only: the JavaScript/TypeScript source code. Must export a `code` function: `export const code = async (inputs) => { ... }`.'),
             packageJson: z.string().optional().describe('For CODE steps only: package.json content as a JSON string for npm dependencies. Defaults to "{}".'),
+            continueOnFailure: z.boolean().optional().describe('For CODE/PIECE steps: whether to continue the flow if this step fails.'),
+            retryOnFailure: z.boolean().optional().describe('For CODE/PIECE steps: whether to retry this step on failure.'),
         },
         annotations: { destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
-            const { flowId, stepName, displayName, input, auth, actionName, loopItems, skip, sourceCode, packageJson } = updateStepInput.parse(args)
+            const { flowId, stepName, displayName, input, auth, actionName, loopItems, skip, sourceCode, packageJson, continueOnFailure, retryOnFailure } = updateStepInput.parse(args)
 
             const [flow, project] = await Promise.all([
                 flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId }),
@@ -117,6 +121,17 @@ export const apUpdateStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                     code: sourceCode ?? existingCode,
                     packageJson: packageJson ?? existingPkg,
                 }
+            }
+
+            if (continueOnFailure !== undefined || retryOnFailure !== undefined) {
+                if (step.type !== FlowActionType.CODE && step.type !== FlowActionType.PIECE) {
+                    return { content: [{ type: 'text', text: `❌ continueOnFailure/retryOnFailure can only be set on CODE or PIECE steps, but "${stepName}" is type ${step.type}.` }] }
+                }
+                const currentErrorHandling = (currentSettings.errorHandlingOptions as { continueOnFailure?: { value?: boolean }, retryOnFailure?: { value?: boolean } }) ?? {}
+                updatedSettings.errorHandlingOptions = mcpUtils.buildErrorHandlingOptions({
+                    continueOnFailure: continueOnFailure ?? currentErrorHandling.continueOnFailure?.value,
+                    retryOnFailure: retryOnFailure ?? currentErrorHandling.retryOnFailure?.value,
+                })
             }
 
             if (step.type === FlowActionType.PIECE && input !== undefined) {
