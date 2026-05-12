@@ -34,8 +34,6 @@ import { ImportTableDialog } from '@/features/tables/components/import-table-dia
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
-import { ImportFlowDialog } from '@/features/automations/components/import-flow-dialog';
-
 export const AutomationsPage = () => {
   const { projectId: projectIdFromUrl } = useParams<{ projectId: string }>();
   const projectId = projectIdFromUrl ?? authenticationSession.getProjectId()!;
