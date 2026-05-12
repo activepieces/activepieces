@@ -117,36 +117,36 @@ export class FlowExecutorContext {
     }
 
     public async upsertStep(stepName: string, stepOutput: BaseStepOutput): Promise<FlowExecutorContext> {
+        const truncated = withTruncatedInput(stepOutput)
         let finalized: BaseStepOutput
-        if (stepOutput.type === FlowActionType.LOOP_ON_ITEMS) {
-            finalized = stepOutput
+        if (truncated.type === FlowActionType.LOOP_ON_ITEMS) {
+            finalized = truncated
         }
-        else if (stepOutput.kind === 'slice') {
+        else if (truncated.kind === 'slice') {
             // Already a slice ref — happens on RESUME when steps are restored from a log file.
             // The ref payload is tiny (sub-threshold) so re-slicing would no-op and silently
             // drop the discriminant, leaving downstream variable resolution with a raw
             // LogSliceRef instead of the materialized output.
-            finalized = stepOutput
+            finalized = truncated
         }
         else {
             const sliced = this.slicingEnabled
-                ? await maybeSliceOutput(stepOutput.output, this.engineApi)
+                ? await maybeSliceOutput(truncated.output, this.engineApi)
                 : undefined
             finalized = new GenericStepOutput({
-                type: stepOutput.type,
-                status: stepOutput.status,
-                input: stepOutput.input,
-                output: sliced?.ref ?? stepOutput.output,
+                type: truncated.type,
+                status: truncated.status,
+                input: truncated.input,
+                output: sliced?.ref ?? truncated.output,
                 kind: sliced ? 'slice' : undefined,
-                duration: stepOutput.duration,
-                errorMessage: stepOutput.errorMessage,
+                duration: truncated.duration,
+                errorMessage: truncated.errorMessage,
             })
         }
         const steps = executionJournal.upsertStep({ stepName, stepOutput: finalized, path: this.currentPath.path, steps: this.steps })
-        const trimmedSteps = this.currentPath.path.length === 0 ? loggingUtils.trimExecutionInput(steps) : steps
         return new FlowExecutorContext({
             ...this,
-            steps: trimmedSteps,
+            steps,
         })
     }
 
@@ -251,6 +251,18 @@ async function materializeSteps(steps: Record<string, StepOutput>, engineApi: En
         result[stepName] = await materializeStep(step, engineApi, cache)
     }
     return result
+}
+
+function withTruncatedInput<T extends BaseStepOutput>(stepOutput: T): T {
+    const truncated = loggingUtils.maybeTruncateInput(stepOutput.input)
+    if (truncated === stepOutput.input) {
+        return stepOutput
+    }
+    return Object.assign(
+        Object.create(Object.getPrototypeOf(stepOutput)),
+        stepOutput,
+        { input: truncated },
+    )
 }
 
 export type FlowVerdict = {

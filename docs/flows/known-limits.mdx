@@ -55,12 +55,19 @@ sitting in worker memory.
 | Step file size | 10 MB | `AP_MAX_FILE_SIZE_MB` | `25` |
 | Flow run log size (combined inputs + outputs) | 25 MB | `AP_MAX_FLOW_RUN_LOG_SIZE_MB` | `50` |
 | Step output slice threshold | 32 KB | `AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB` | `32` |
+| Step input truncate threshold | 2 KB | `AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB` | `2` |
 
 <Tip>
 **Slice threshold** controls when an individual step output is offloaded to its
 own `FLOW_RUN_LOG_SLICE` file instead of being inlined into the run's log
 manifest. Lower values reduce worker memory pressure during large runs; higher
 values reduce the number of object-storage requests per run.
+
+**Input truncate threshold** controls when an individual step input value is
+replaced with a placeholder (`(truncated, original size <N>)`) before being
+stored in the run log. Inputs that exceed the threshold are dropped from the
+log — the source data still lives in the upstream step's output, which is
+recoverable when sliced.
 </Tip>
 
 ---

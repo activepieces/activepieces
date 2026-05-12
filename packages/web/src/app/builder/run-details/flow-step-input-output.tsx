@@ -151,7 +151,11 @@ export const FlowStepInputOutput = () => {
                   <span>
                     {t(
                       'Output is too large to display inline ({size}). Download to inspect.',
-                      { size: formatUtils.formatStorageSize(slicedOutputRef.size) },
+                      {
+                        size: formatUtils.formatStorageSize(
+                          slicedOutputRef.size,
+                        ),
+                      },
                     )}
                   </span>
                 </div>
