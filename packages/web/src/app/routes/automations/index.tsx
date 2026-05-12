@@ -13,7 +13,6 @@ import { AutomationsSelectionBar } from '@/features/automations/components/autom
 import { AutomationsTable } from '@/features/automations/components/automations-table';
 import { CreateFolderDialog } from '@/features/automations/components/create-folder-dialog';
 import { CreateInFolderKind } from '@/features/automations/components/create-new-menu';
-import { ImportFlowDialog } from '@/features/automations/components/import-flow-dialog';
 import { MoveToFolderDialog } from '@/features/automations/components/move-to-folder-dialog';
 import { RenameDialog } from '@/features/automations/components/rename-dialog';
 import { useAutomationsData } from '@/features/automations/hooks/use-automations-data';
@@ -34,6 +33,8 @@ import { projectCollectionUtils, getProjectName } from '@/features/projects';
 import { ImportTableDialog } from '@/features/tables/components/import-table-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+
+import { ImportFlowDialog } from '@/features/automations/components/import-flow-dialog';
 
 export const AutomationsPage = () => {
   const { projectId: projectIdFromUrl } = useParams<{ projectId: string }>();
