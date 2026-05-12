@@ -9,7 +9,7 @@ import { platformPlanRepo } from './platform-plan.service'
 export const CANARY_WORKER_GROUP_ID = 'canary'
 
 const NO_WORKER_GROUP_SENTINEL = '__none__'
-const CACHE_TTL_SECONDS = apDayjsDuration(7, 'day').asSeconds()
+const CACHE_TTL_SECONDS = apDayjsDuration(5, 'minute').asSeconds()
 const getWorkerGroupCacheKey = (platformId: string): string => `platform:${platformId}:worker_group_id`
 
 export const workerGroupService = (log: FastifyBaseLogger) => ({
