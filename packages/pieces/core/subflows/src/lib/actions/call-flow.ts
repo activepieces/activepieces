@@ -21,7 +21,7 @@ export const callFlow = createAction({
     flow: Property.Dropdown<FlowValue>({
       auth: PieceAuth.None(),
       displayName: 'Flow',
-      description: 'The flow to execute',
+      description: 'The flow to execute. Only published flows with a "Callable Flow" trigger appear here — unpublished or disabled subflows are hidden.',
       required: true,
       options: async (_, context) => {
         const flows = await listEnabledFlowsWithSubflowTrigger({
