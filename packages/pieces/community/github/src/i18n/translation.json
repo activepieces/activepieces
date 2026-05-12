@@ -34,7 +34,7 @@
   "Finds a branch by name and returns its details.": "Finds a branch by name and returns its details.",
   "Finds an issue based title.": "Finds an issue based title.",
   "Finds a user by their login name.": "Finds a user by their login name.",
-  "Create a GitHub Gist": "Create a GitHub Gist",
+  "Create a GitHub Gist. Requires an OAuth connection — Gists cannot be created with GitHub App authentication.": "Create a GitHub Gist. Requires an OAuth connection — Gists cannot be created with GitHub App authentication.",
   "Make a custom API call to a specific endpoint": "Make a custom API call to a specific endpoint",
   "Repository": "Repository",
   "Title": "Title",
@@ -152,5 +152,14 @@
   "Triggers when a new release is added.": "Triggers when a new release is added.",
   "Triggers when a new commit is pushed.": "Triggers when a new commit is pushed.",
   "Triggers when you are requested to review a pull request.": "Triggers when you are requested to review a pull request.",
-  "Triggers when you are mentioned in a comment.": "Triggers when you are mentioned in a comment."
+  "Triggers when you are mentioned in a comment.": "Triggers when you are mentioned in a comment.",
+  "Authenticate to GitHub. Platform admins can configure this with either OAuth App credentials or GitHub App credentials (Apps use the same authorize/token endpoints — only the client_id differs). When using a GitHub App, the listed scopes are ignored and the App's installation permissions apply instead.": "Authenticate to GitHub. Platform admins can configure this with either OAuth App credentials or GitHub App credentials (Apps use the same authorize/token endpoints — only the client_id differs). When using a GitHub App, the listed scopes are ignored and the App's installation permissions apply instead.",
+  "GitHub App": "GitHub App",
+  "Authenticate as a GitHub App installation. Calls are made by the App's bot identity (e.g. `app-name[bot]`). The App must be installed on the target repos with the permissions required by the actions you intend to run (e.g. Issues: Read & write, Contents: Read & write, Administration: Read & write for webhook triggers).": "Authenticate as a GitHub App installation. Calls are made by the App's bot identity (e.g. `app-name[bot]`). The App must be installed on the target repos with the permissions required by the actions you intend to run (e.g. Issues: Read & write, Contents: Read & write, Administration: Read & write for webhook triggers).",
+  "App ID or Client ID": "App ID or Client ID",
+  "Either the numeric App ID (e.g. `12345`) or the Client ID (e.g. `Iv23li...`) of your GitHub App. The Client ID is recommended for new Apps. Found at Settings → Developer settings → GitHub Apps → your app.": "Either the numeric App ID (e.g. `12345`) or the Client ID (e.g. `Iv23li...`) of your GitHub App. The Client ID is recommended for new Apps. Found at Settings → Developer settings → GitHub Apps → your app.",
+  "Installation ID": "Installation ID",
+  "The installation ID for the org/user where the App is installed. Visible in the installation URL: `…/installations/{id}`.": "The installation ID for the org/user where the App is installed. Visible in the installation URL: `…/installations/{id}`.",
+  "Private Key": "Private Key",
+  "The PEM-encoded RSA private key generated for your GitHub App (paste the contents of the `.pem` file).": "The PEM-encoded RSA private key generated for your GitHub App (paste the contents of the `.pem` file)."
 }

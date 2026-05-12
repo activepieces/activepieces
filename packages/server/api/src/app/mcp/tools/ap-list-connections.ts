@@ -1,8 +1,8 @@
 import {
     AppConnectionStatus,
-    McpServer,
     McpToolDefinition,
     Permission,
+    ProjectScopedMcpServer,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -33,7 +33,7 @@ const listConnectionsSchema = z.object({
         ),
 })
 
-export const apListConnectionsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apListConnectionsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_list_connections',
         permission: Permission.READ_APP_CONNECTION,
@@ -44,7 +44,7 @@ export const apListConnectionsTool = (mcp: McpServer, log: FastifyBaseLogger): M
             displayName: listConnectionsSchema.shape.displayName,
             status: listConnectionsSchema.shape.status,
         },
-        annotations: { readOnlyHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {
                 const params = listConnectionsSchema.parse(args ?? {})
@@ -62,11 +62,22 @@ export const apListConnectionsTool = (mcp: McpServer, log: FastifyBaseLogger): M
                     kind: undefined,
                 })
                 const lines = connections.data.map(c => `- externalId: ${c.externalId} | displayName: "${c.displayName}" | piece: ${c.pieceName} | status: ${c.status} | scope: ${c.scope}`)
+                const structured = {
+                    connections: connections.data.map(c => ({
+                        externalId: c.externalId,
+                        displayName: c.displayName,
+                        pieceName: c.pieceName,
+                        status: c.status,
+                        scope: c.scope,
+                    })),
+                    count: connections.data.length,
+                }
                 return {
                     content: [{
                         type: 'text',
                         text: `✅ Listed ${lines.length} connection(s):\n${lines.join('\n')}`,
                     }],
+                    structuredContent: structured,
                 }
             }
             catch (err) {

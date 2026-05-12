@@ -1,4 +1,4 @@
-import { FieldType, isNil, McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
+import { FieldType, isNil, McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { fieldService } from '../../tables/field/field.service'
@@ -14,7 +14,7 @@ const manageFieldsInput = z.object({
     options: z.array(z.string()).optional().describe('Dropdown options (required for ADD with STATIC_DROPDOWN type)'),
 })
 
-export const apManageFieldsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apManageFieldsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_manage_fields',
         permission: Permission.WRITE_TABLE,
