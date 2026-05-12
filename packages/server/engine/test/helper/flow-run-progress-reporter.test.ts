@@ -150,7 +150,7 @@ describe('flow-run-progress-reporter slicing in single-step test mode', () => {
         }))
 
         const stored = flowExecutorContext.steps['step_emit_big']
-        expect(stored.kind).toBeUndefined()
+        expect(stored.outputType).toBeUndefined()
         expect(stored.output).toEqual(big)
 
         flowRunProgressReporter.init()

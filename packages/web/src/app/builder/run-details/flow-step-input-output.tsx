@@ -8,6 +8,7 @@ import {
   isNil,
   ApFlagId,
   LogSliceRef,
+  StepOutputType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Download, Info, Timer } from 'lucide-react';
@@ -51,7 +52,8 @@ export const FlowStepInputOutput = () => {
   }, [run, selectedStep?.name, loopsIndexes, flowVersion.trigger]);
   const isAgent = isRunAgent(selectedStep);
   const isStepRunning = selectedStepOutput?.status === StepOutputStatus.RUNNING;
-  const isSlicedOutput = selectedStepOutput?.kind === 'slice';
+  const isSlicedOutput =
+    selectedStepOutput?.outputType === StepOutputType.SLICE;
   const slicedOutputRef = isSlicedOutput
     ? (selectedStepOutput?.output as LogSliceRef | undefined)
     : undefined;

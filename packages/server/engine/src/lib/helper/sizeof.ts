@@ -1,3 +1,4 @@
+import { StepOutputType } from '@activepieces/shared'
 import { utils } from '../utils'
 
 function recursiveSizeof(value: unknown): number {
@@ -13,7 +14,7 @@ function recursiveSizeof(value: unknown): number {
     }
     if (typeof value === 'object') {
         const obj = value as Record<string, unknown>
-        if (obj.kind === 'slice' && isSliceRefShape(obj.output)) {
+        if (obj.outputType === StepOutputType.SLICE && isSliceRefShape(obj.output)) {
             return sizeofStepShell(obj) + obj.output.size
         }
         let total = 2

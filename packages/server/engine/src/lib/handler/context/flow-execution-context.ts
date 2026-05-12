@@ -16,6 +16,7 @@ import {
     RespondResponse,
     StepOutput,
     StepOutputStatus,
+    StepOutputType,
 } from '@activepieces/shared'
 import { engineFileApi } from '../../engine-file-api'
 import { loggingUtils } from '../../helper/logging-utils'
@@ -122,7 +123,7 @@ export class FlowExecutorContext {
         if (truncated.type === FlowActionType.LOOP_ON_ITEMS) {
             finalized = truncated
         }
-        else if (truncated.kind === 'slice') {
+        else if (truncated.outputType === StepOutputType.SLICE) {
             // Already a slice ref — happens on RESUME when steps are restored from a log file.
             // The ref payload is tiny (sub-threshold) so re-slicing would no-op and silently
             // drop the discriminant, leaving downstream variable resolution with a raw
@@ -138,7 +139,7 @@ export class FlowExecutorContext {
                 status: truncated.status,
                 input: truncated.input,
                 output: sliced?.ref ?? truncated.output,
-                kind: sliced ? 'slice' : undefined,
+                outputType: sliced ? StepOutputType.SLICE : undefined,
                 duration: truncated.duration,
                 errorMessage: truncated.errorMessage,
             })
@@ -228,7 +229,7 @@ async function maybeSliceOutput(value: unknown, engineApi?: EngineApiConfig): Pr
 }
 
 async function materializeStep(step: StepOutput, engineApi: EngineApiConfig | undefined, cache: Map<string, Promise<unknown>>): Promise<unknown> {
-    if (step.kind !== 'slice') {
+    if (step.outputType !== StepOutputType.SLICE) {
         return step.output
     }
     if (isNil(engineApi)) {
