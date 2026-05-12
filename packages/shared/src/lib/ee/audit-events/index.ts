@@ -25,6 +25,9 @@ export enum ApplicationEventName {
     FLOW_CREATED = 'flow.created',
     FLOW_DELETED = 'flow.deleted',
     FLOW_UPDATED = 'flow.updated',
+    FLOW_PUBLISHED = 'flow.published',
+    FLOW_ACTIVATED = 'flow.activated',
+    FLOW_DEACTIVATED = 'flow.deactivated',
     FLOW_RUN_RESUMED = 'flow.run.resumed',
     FLOW_RUN_STARTED = 'flow.run.started',
     FLOW_RUN_FINISHED = 'flow.run.finished',
@@ -178,6 +181,30 @@ export const FlowUpdatedEvent = z.object({
 
 export type FlowUpdatedEvent = z.infer<typeof FlowUpdatedEvent>
 
+export const FlowLifecycleEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.union([
+        z.literal(ApplicationEventName.FLOW_PUBLISHED),
+        z.literal(ApplicationEventName.FLOW_ACTIVATED),
+        z.literal(ApplicationEventName.FLOW_DEACTIVATED),
+    ]),
+    data: z.object({
+        flow: Flow.pick({ id: true, created: true, updated: true }),
+        flowVersion: FlowVersion.pick({
+            id: true,
+            displayName: true,
+            flowId: true,
+            created: true,
+            updated: true,
+        }),
+        project: z.object({
+            displayName: z.string(),
+        }).optional(),
+    }),
+})
+
+export type FlowLifecycleEvent = z.infer<typeof FlowLifecycleEvent>
+
 export const AuthenticationEvent = z.object({
     ...BaseAuditEventProps,
     action: z.union([
@@ -276,6 +303,7 @@ export const ApplicationEvent = z.union([
     FlowCreatedEvent,
     FlowDeletedEvent,
     FlowUpdatedEvent,
+    FlowLifecycleEvent,
     FlowRunEvent,
     AuthenticationEvent,
     FolderEvent,
@@ -307,6 +335,12 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return `Flow ${event.data.flow.id} is created`
         case ApplicationEventName.FLOW_DELETED:
             return `Flow ${event.data.flow.id} (${event.data.flowVersion.displayName}) is deleted`
+        case ApplicationEventName.FLOW_PUBLISHED:
+            return `Flow "${event.data.flowVersion.displayName}" was published`
+        case ApplicationEventName.FLOW_ACTIVATED:
+            return `Flow "${event.data.flowVersion.displayName}" was activated`
+        case ApplicationEventName.FLOW_DEACTIVATED:
+            return `Flow "${event.data.flowVersion.displayName}" was deactivated`
         case ApplicationEventName.FOLDER_CREATED:
             return `${event.data.folder.displayName} is created`
         case ApplicationEventName.FOLDER_UPDATED:
