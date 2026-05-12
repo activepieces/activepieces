@@ -1,5 +1,5 @@
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import { apId, ApEdition, FilteredPieceBehavior,
+import { apId, ApEdition, FileCompression, FileLocation, FileType, FilteredPieceBehavior,
     FlowOperationStatus,
     FlowStatus,
     PlanName,
@@ -16,7 +16,7 @@ import { system } from '../../../../src/app/helper/system/system'
 import { systemJobsQueue } from '../../../../src/app/helper/system-jobs/system-job'
 import { db } from '../../../helpers/db'
 import { generateMockToken } from '../../../helpers/auth'
-import { checkIfSolutionExistsInDb, createMockConnection, createMockFlow, createMockFlowRun, createMockFlowVersion, createMockSolutionAndSave, createMockUser, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
+import { checkIfSolutionExistsInDb, createMockConnection, createMockFile, createMockFlow, createMockFlowRun, createMockFlowVersion, createMockSolutionAndSave, createMockUser, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
@@ -759,5 +759,69 @@ describe('Platform API', () => {
         })
         // assert
         expect(response?.statusCode).toBe(StatusCodes.OK)
+    })
+
+    describe('get platform asset endpoint', () => {
+        it('serves a public platform asset', async () => {
+            // arrange
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const assetData = Buffer.from('public-logo-bytes')
+            const assetFile = createMockFile({
+                platformId: mockPlatform.id,
+                projectId: null,
+                type: FileType.PLATFORM_ASSET,
+                compression: FileCompression.NONE,
+                location: FileLocation.DB,
+                data: assetData,
+                fileName: 'logo.png',
+                metadata: { mimetype: 'image/png' },
+            })
+            await db.save('file', assetFile)
+
+            // act — public endpoint, no auth
+            const response = await app?.inject({
+                method: 'GET',
+                url: `/api/v1/platforms/assets/${assetFile.id}`,
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.headers['content-type']).toContain('image/png')
+            expect(response?.rawPayload.equals(assetData)).toBe(true)
+        })
+
+        it('rejects access to non-PLATFORM_ASSET files (IDOR via public asset endpoint)', async () => {
+            // arrange — a sensitive flow run log file stored under a project
+            const { mockProject } = await mockAndSaveBasicSetup()
+            const sensitiveData = Buffer.from(JSON.stringify({ secret: 'super-secret-api-key' }))
+            const sensitiveFile = createMockFile({
+                projectId: mockProject.id,
+                type: FileType.FLOW_RUN_LOG,
+                compression: FileCompression.NONE,
+                location: FileLocation.DB,
+                data: sensitiveData,
+                fileName: 'flow-run.json',
+                metadata: { mimetype: 'application/json' },
+            })
+            await db.save('file', sensitiveFile)
+
+            // act — unauthenticated attacker hits the public asset endpoint
+            const response = await app?.inject({
+                method: 'GET',
+                url: `/api/v1/platforms/assets/${sensitiveFile.id}`,
+            })
+
+            // assert — non-asset file types must NOT be served by this endpoint
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            expect(response?.rawPayload.includes(sensitiveData)).toBe(false)
+        })
+
+        it('returns 404 for unknown asset ids', async () => {
+            const response = await app?.inject({
+                method: 'GET',
+                url: `/api/v1/platforms/assets/${apId()}`,
+            })
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
     })
 })

@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-github",
-  "version": "0.7.3",
+  "version": "0.8.0",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
@@ -12,6 +12,10 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "axios": "1.15.0",
+    "jsonwebtoken": "9.0.1",
     "tslib": "2.6.2"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "9.0.10"
   }
 }

@@ -72,6 +72,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         const validatedConnectionValue = await validateConnectionValue({
             value: await secretManagersService(log).resolveObject({ value, platformId, projectIds }),
             pieceName,
+            pieceVersion,
             projectId: projectIds[0],
             platformId,
         }, log)
@@ -413,12 +414,13 @@ const validateConnectionValue = async (
     params: ValidateConnectionValueParams,
     log: FastifyBaseLogger,
 ): Promise<AppConnectionValue> => {
-    const { value, pieceName, projectId, platformId } = params
+    const { value, pieceName, pieceVersion, projectId, platformId } = params
 
     switch (value.type) {
         case AppConnectionType.PLATFORM_OAUTH2: {
             const tokenUrl = await oauth2Util(log).getOAuth2TokenUrl({
                 pieceName,
+                pieceVersion,
                 platformId,
                 props: value.props,
             })
@@ -441,6 +443,7 @@ const validateConnectionValue = async (
         case AppConnectionType.CLOUD_OAUTH2: {
             const tokenUrl = await oauth2Util(log).getOAuth2TokenUrl({
                 pieceName,
+                pieceVersion,
                 platformId,
                 props: value.props,
             })
@@ -462,6 +465,7 @@ const validateConnectionValue = async (
         case AppConnectionType.OAUTH2: {
             const tokenUrl = await oauth2Util(log).getOAuth2TokenUrl({
                 pieceName,
+                pieceVersion,
                 platformId,
                 props: value.props,
             })
@@ -675,6 +679,7 @@ type DeleteParams = {
 type ValidateConnectionValueParams = {
     value: UpsertAppConnectionRequestBody['value']
     pieceName: string
+    pieceVersion: string
     projectId: ProjectId | undefined
     platformId: string
 }

@@ -42,7 +42,7 @@ export const githubLockIssueAction = createAction({
     const { owner, repo } = propsValue.repository!;
 
     const response = await githubApiCall({
-      accessToken: auth.access_token,
+      auth,
       method: HttpMethod.PUT,
       resourceUri: `/repos/${owner}/${repo}/issues/${issue_number}/lock`,
       body: {
