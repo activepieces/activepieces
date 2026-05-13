@@ -59,15 +59,17 @@ const TestPanelHeader = ({
 
   const handleDownload = () => {
     if (copyableData === undefined) return;
-    const text =
-      typeof copyableData === 'string'
-        ? copyableData
-        : JSON.stringify(copyableData, null, 2);
-    const blob = new Blob([text], { type: 'application/json' });
+    const isPlainString = typeof copyableData === 'string';
+    const text = isPlainString
+      ? copyableData
+      : JSON.stringify(copyableData, null, 2);
+    const mimeType = isPlainString ? 'text/plain' : 'application/json';
+    const extension = isPlainString ? 'txt' : 'json';
+    const blob = new Blob([text], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${downloadFileName}.json`;
+    link.download = `${downloadFileName}.${extension}`;
     link.click();
     URL.revokeObjectURL(url);
   };
