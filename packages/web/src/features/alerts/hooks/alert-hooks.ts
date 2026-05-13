@@ -7,7 +7,6 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
-import pLimit from 'p-limit';
 import { UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -18,10 +17,10 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { alertsApi } from '../api/alerts-api';
 
 export const alertMutations = {
-  useCreateAlert: (options?: Options) => {
+  useCreateAlert: (params?: CreateAlertParams) => {
     const queryClient = useQueryClient();
     const projectId = authenticationSession.getProjectId()!;
-    return useMutation<Alert, Error, Params>({
+    return useMutation<Alert, Error, { email: string }>({
       mutationFn: async (params) =>
         alertsApi.create({
           receiver: params.email,
@@ -35,13 +34,13 @@ export const alertMutations = {
         toast.success(t('Your changes have been saved.'), {
           duration: 3000,
         });
-        options?.onSuccess?.();
+        params?.onSuccess?.();
       },
       onError: (error) => {
         if (api.isError(error)) {
           switch (error.response?.status) {
             case HttpStatusCode.Conflict:
-              options?.form?.setError('root.serverError', {
+              params?.form?.setError('root.serverError', {
                 message: t('The email is already added.'),
               });
               break;
@@ -77,34 +76,14 @@ export const alertMutations = {
       { toastId: string | number }
     >({
       mutationFn: async ({ email, projects }) => {
-        const limit = pLimit(MAX_PARALLEL_REQUESTS);
         const results = await Promise.allSettled(
-          projects.map(
-            (project): Promise<SubscribeOutcome> =>
-              limit(async () => {
-                try {
-                  await alertsApi.create({
-                    channel: AlertChannel.EMAIL,
-                    projectId: project.id,
-                    receiver: email,
-                  });
-                  return 'subscribed';
-                } catch (error) {
-                  if (api.isApError(error, ErrorCode.EXISTING_ALERT_CHANNEL)) {
-                    return 'already-subscribed';
-                  }
-                  throw error;
-                }
-              }),
+          projects.map((project) =>
+            subscribeProjectToEmail({ projectId: project.id, email }),
           ),
         );
         return {
-          subscribed: results.filter(
-            (r) => r.status === 'fulfilled' && r.value === 'subscribed',
-          ).length,
-          alreadySubscribed: results.filter(
-            (r) => r.status === 'fulfilled' && r.value === 'already-subscribed',
-          ).length,
+          subscribed: countOutcome(results, 'subscribed'),
+          alreadySubscribed: countOutcome(results, 'already-subscribed'),
           failed: results.filter((r) => r.status === 'rejected').length,
         };
       },
@@ -140,47 +119,15 @@ export const alertMutations = {
       { toastId: string | number }
     >({
       mutationFn: async ({ email, projects }) => {
-        const limit = pLimit(MAX_PARALLEL_REQUESTS);
         const lowerEmail = email.toLowerCase();
         const results = await Promise.allSettled(
-          projects.map(
-            (project): Promise<UnsubscribeOutcome> =>
-              limit(async () => {
-                const myAlerts: Alert[] = [];
-                let cursor: string | undefined = undefined;
-                do {
-                  const page = await alertsApi.list({
-                    projectId: project.id,
-                    limit: ALERTS_LIST_LIMIT,
-                    cursor,
-                  });
-                  for (const alert of page.data) {
-                    if (
-                      alert.channel === AlertChannel.EMAIL &&
-                      alert.receiver.toLowerCase() === lowerEmail
-                    ) {
-                      myAlerts.push(alert);
-                    }
-                  }
-                  cursor = page.next ?? undefined;
-                } while (cursor);
-                if (myAlerts.length === 0) {
-                  return 'not-subscribed';
-                }
-                await Promise.all(
-                  myAlerts.map((alert) => alertsApi.delete(alert.id)),
-                );
-                return 'unsubscribed';
-              }),
+          projects.map((project) =>
+            unsubscribeProjectFromEmail({ projectId: project.id, lowerEmail }),
           ),
         );
         return {
-          unsubscribed: results.filter(
-            (r) => r.status === 'fulfilled' && r.value === 'unsubscribed',
-          ).length,
-          notSubscribed: results.filter(
-            (r) => r.status === 'fulfilled' && r.value === 'not-subscribed',
-          ).length,
+          unsubscribed: countOutcome(results, 'unsubscribed'),
+          notSubscribed: countOutcome(results, 'not-subscribed'),
           failed: results.filter((r) => r.status === 'rejected').length,
         };
       },
@@ -227,14 +174,60 @@ export const alertQueries = {
 const createAlertQueryKey = (projectId: string) =>
   ['alerts-email-list', projectId] as const;
 
-const MAX_PARALLEL_REQUESTS = 5;
-const ALERTS_LIST_LIMIT = 100;
-
-type Params = {
+const subscribeProjectToEmail = async ({
+  projectId,
+  email,
+}: {
+  projectId: string;
   email: string;
+}): Promise<SubscribeOutcome> => {
+  try {
+    await alertsApi.create({
+      channel: AlertChannel.EMAIL,
+      projectId,
+      receiver: email,
+    });
+    return 'subscribed';
+  } catch (error) {
+    if (api.isApError(error, ErrorCode.EXISTING_ALERT_CHANNEL)) {
+      return 'already-subscribed';
+    }
+    throw error;
+  }
 };
 
-type Options = {
+const unsubscribeProjectFromEmail = async ({
+  projectId,
+  lowerEmail,
+}: {
+  projectId: string;
+  lowerEmail: string;
+}): Promise<UnsubscribeOutcome> => {
+  const page = await alertsApi.list({ projectId, limit: ALERTS_LIST_LIMIT });
+  const matches = page.data.filter(
+    (alert) =>
+      alert.channel === AlertChannel.EMAIL &&
+      alert.receiver.toLowerCase() === lowerEmail,
+  );
+  if (matches.length === 0) {
+    return 'not-subscribed';
+  }
+  await Promise.all(matches.map((alert) => alertsApi.delete(alert.id)));
+  return 'unsubscribed';
+};
+
+const countOutcome = <T extends string>(
+  results: PromiseSettledResult<T>[],
+  outcome: T,
+): number =>
+  results.reduce(
+    (n, r) => n + (r.status === 'fulfilled' && r.value === outcome ? 1 : 0),
+    0,
+  );
+
+const ALERTS_LIST_LIMIT = 100;
+
+type CreateAlertParams = {
   onSuccess?: () => void;
   form?: UseFormReturn<any>;
 };
