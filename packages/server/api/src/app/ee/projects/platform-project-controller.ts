@@ -46,6 +46,7 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
             metadata: request.body.metadata ?? undefined,
             maxConcurrentJobs: request.body.maxConcurrentJobs ?? undefined,
             globalConnectionExternalIds: request.body.globalConnectionExternalIds ?? undefined,
+            alertReceiverEmail: request.body.alertReceiverEmail ?? undefined,
         })
         await reply.status(StatusCodes.CREATED).send(projectWithUsage)
     })

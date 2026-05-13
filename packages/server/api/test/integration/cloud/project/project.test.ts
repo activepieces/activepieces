@@ -1,4 +1,3 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     ApiKeyResponseWithValue,
     DefaultProjectRole,
@@ -16,8 +15,8 @@ import {
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { generateMockToken } from '../../../helpers/auth'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import {
     createMockApiKey,
@@ -30,6 +29,7 @@ import {
     mockAndSaveBasicSetup,
     mockBasicUser,
 } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -102,6 +102,79 @@ describe('Project API', () => {
             expect(responseBody.displayName).toBe(displayName)
             expect(responseBody.ownerId).toBe(mockUser.id)
             expect(responseBody.platformId).toBe(mockPlatform.id)
+        })
+
+        it('subscribes alertReceiverEmail when provided on team project create', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const alertReceiverEmail = faker.internet.email()
+            const createResponse = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/projects',
+                body: {
+                    displayName: faker.animal.bird(),
+                    alertReceiverEmail,
+                },
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+            expect(createResponse?.statusCode).toBe(StatusCodes.CREATED)
+            const createdProjectId: string = createResponse!.json().id
+
+            const projectScopedToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                projectId: createdProjectId,
+                platform: { id: mockPlatform.id },
+            })
+            const listResponse = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/alerts',
+                query: { projectId: createdProjectId },
+                headers: { authorization: `Bearer ${projectScopedToken}` },
+            })
+            expect(listResponse?.statusCode).toBe(StatusCodes.OK)
+            const receivers = listResponse!.json().data.map((alert: { receiver: string }) => alert.receiver)
+            expect(receivers).toEqual([alertReceiverEmail.toLowerCase()])
+        })
+
+        it('does not auto-subscribe anyone when alertReceiverEmail is omitted on team project create', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const createResponse = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/projects',
+                body: { displayName: faker.animal.bird() },
+                headers: { authorization: `Bearer ${testToken}` },
+            })
+            expect(createResponse?.statusCode).toBe(StatusCodes.CREATED)
+            const createdProjectId: string = createResponse!.json().id
+
+            const projectScopedToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                projectId: createdProjectId,
+                platform: { id: mockPlatform.id },
+            })
+            const listResponse = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/alerts',
+                query: { projectId: createdProjectId },
+                headers: { authorization: `Bearer ${projectScopedToken}` },
+            })
+            expect(listResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(listResponse!.json().data).toEqual([])
         })
     })
 
