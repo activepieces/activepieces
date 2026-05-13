@@ -1,4 +1,4 @@
-import { FlowRunStatus, FlowStatus, isNil, Project, RunEnvironment } from '@activepieces/shared'
+import { FlowRunStatus, FlowStatus, isNil, parseToJsonIfPossible, Project, RunEnvironment } from '@activepieces/shared'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { LanguageModel, tool, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -78,11 +78,14 @@ function createChatTools({ onSessionTitle, onSetProjectContext, projects, platfo
                 if (!availableProjectIds.includes(input.projectId)) {
                     return { content: [{ type: 'text', text: `❌ Project ${input.projectId} is not accessible.` }] }
                 }
+                const parsedInput = typeof input.input === 'string'
+                    ? parseToJsonIfPossible(input.input) as Record<string, unknown>
+                    : input.input
                 return executeAdhocAction({
                     projectId: input.projectId,
                     pieceName: input.pieceName,
                     actionName: input.actionName,
-                    input: input.input,
+                    input: parsedInput,
                     connectionExternalId: input.connectionExternalId,
                     log,
                 })

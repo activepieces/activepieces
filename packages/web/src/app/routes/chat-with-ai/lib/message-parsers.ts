@@ -362,12 +362,39 @@ export function parseBuildProgress(content: string): {
   progress: BuildProgressData | null;
   cleanContent: string;
 } {
-  const { block, cleanContent } = parseCodeBlock(content, 'build-progress');
-  if (!block) return { progress: null, cleanContent: content };
+  const result = parseAllBuildProgress(content);
+  return {
+    progress: result.progressList[0] ?? null,
+    cleanContent: result.cleanContent,
+  };
+}
 
+export function parseAllBuildProgress(content: string): {
+  progressList: BuildProgressData[];
+  cleanContent: string;
+} {
+  const regex = /```\s*build-progress\s*\r?\n([\s\S]*?)\r?\n?\s*```/g;
+  const progressList: BuildProgressData[] = [];
+  let cleanContent = content;
+  let match;
+
+  while ((match = regex.exec(content)) !== null) {
+    const block = match[1];
+    const parsed = parseBuildBlock(block);
+    if (parsed) progressList.push(parsed);
+    cleanContent = cleanContent
+      .replace(match[0], '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
+  return { progressList, cleanContent };
+}
+
+function parseBuildBlock(block: string): BuildProgressData | null {
   const titleMatch = /^title:\s*(.+)$/m.exec(block);
+  if (!titleMatch) return null;
   const projectMatch = /^project:\s*(.+)$/m.exec(block);
-  if (!titleMatch) return { progress: null, cleanContent: content };
 
   const steps: BuildProgressData['steps'] = [];
   const stepBlocks = block.split(/^-\s+type:\s*/m).slice(1);
@@ -388,15 +415,12 @@ export function parseBuildProgress(content: string): {
     });
   }
 
-  if (steps.length === 0) return { progress: null, cleanContent: content };
+  if (steps.length === 0) return null;
 
   return {
-    progress: {
-      title: titleMatch[1].trim(),
-      project: projectMatch?.[1].trim() ?? '',
-      steps,
-    },
-    cleanContent,
+    title: titleMatch[1].trim(),
+    project: projectMatch?.[1].trim() ?? '',
+    steps,
   };
 }
 

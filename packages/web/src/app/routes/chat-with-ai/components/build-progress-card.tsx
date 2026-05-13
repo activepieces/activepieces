@@ -336,7 +336,8 @@ function useAnimatedStatuses({
 
   useEffect(() => {
     if (!isStreaming) {
-      setDisplayed(targetStatuses);
+      const changed = targetStatuses.some((s, i) => s !== displayed[i]);
+      if (changed) setDisplayed(targetStatuses);
       return;
     }
 

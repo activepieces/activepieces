@@ -139,6 +139,11 @@ export async function executeAdhocAction({
         ...(connectionExternalId !== undefined && { auth: `{{connections['${connectionExternalId}']}}` }),
     }
 
+    // custom_api_call expects url as nested { url: string } from DynamicProperties
+    if (actionName === 'custom_api_call' && typeof resolvedInput.url === 'string') {
+        resolvedInput.url = { url: resolvedInput.url }
+    }
+
     const diagnosis = mcpUtils.diagnosePieceProps({
         props: action.props,
         input: resolvedInput,
