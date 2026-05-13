@@ -35,8 +35,8 @@ export const updateChangeTask = createAction({
       required: false,
     }),
     notify_before: Property.Number({
-      displayName: 'Notify Before (hours)',
-      description: 'Number of hours before the due date to send a reminder notification.',
+      displayName: 'Notify Before (seconds)',
+      description: 'Time in seconds before the due date to send a reminder notification.',
       required: false,
     }),
   },

@@ -32,11 +32,6 @@ interface FreshserviceTicket {
   subject: string;
 }
 
-interface FreshserviceChange {
-  id: number;
-  subject: string;
-}
-
 export const freshserviceCommon = {
   change: (required = true) =>
     Property.Dropdown({
@@ -352,3 +347,35 @@ export const freshserviceCommon = {
     },
   }),
 };
+
+export interface FreshserviceChange {
+  id: number;
+  subject: string;
+  description: string;
+  status: number;
+  priority: number;
+  impact: number;
+  risk: number;
+  change_type: number;
+  requester_id: number;
+  agent_id: number | null;
+  department_id: number | null;
+  group_id: number | null;
+  planned_start_date: string | null;
+  planned_end_date: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FreshserviceChangeTask {
+  id: number;
+  title: string;
+  description: string;
+  status: number;
+  agent_id: number | null;
+  group_id: number | null;
+  due_date: string | null;
+  notify_before: number;
+  created_at: string;
+  updated_at: string;
+}

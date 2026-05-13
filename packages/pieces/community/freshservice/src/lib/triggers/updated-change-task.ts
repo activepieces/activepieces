@@ -11,22 +11,9 @@ import {
 } from '@activepieces/pieces-common';
 import { freshserviceAuth } from '../../';
 import { freshserviceApiCall } from '../common/client';
-import { freshserviceCommon } from '../common/props';
+import { freshserviceCommon, FreshserviceChangeTask } from '../common/props';
 
-interface FreshserviceChangeTask {
-  id: number;
-  title: string;
-  description: string;
-  status: number;
-  agent_id: number | null;
-  group_id: number | null;
-  due_date: string | null;
-  notify_before: number;
-  created_at: string;
-  updated_at: string;
-}
-
-type Props = { change_id: number };
+type Props = { change_id: number | undefined };
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof freshserviceAuth>,
@@ -34,6 +21,7 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   async items({ auth, lastFetchEpochMS, propsValue }) {
+    if (!propsValue.change_id) return [];
     const response = await freshserviceApiCall<{
       tasks: FreshserviceChangeTask[];
     }>({
@@ -47,12 +35,10 @@ const polling: Polling<
       },
     });
 
-    return response.body.tasks
-      .map((task) => ({
-        epochMilliSeconds: new Date(task.updated_at).getTime(),
-        data: task,
-      }))
-      .sort((a, b) => b.epochMilliSeconds - a.epochMilliSeconds);
+    return response.body.tasks.map((task) => ({
+      epochMilliSeconds: new Date(task.updated_at).getTime(),
+      data: task,
+    }));
   },
 };
 
