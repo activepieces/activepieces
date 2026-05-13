@@ -11,6 +11,7 @@ const SAFE_IN_RESEARCH_PHASE = new Set([
     'ap_set_session_title',
     'ap_select_project',
     'ap_list_across_projects',
+    'ap_research',
 ])
 
 const BUILD_TOOL_NAMES = new Set([

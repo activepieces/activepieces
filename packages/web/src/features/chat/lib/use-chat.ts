@@ -539,6 +539,7 @@ export function useAgentChat({
       setConversationIdState(id);
       setLocalError(null);
       setPendingMessages([]);
+      setBuildProgressUpdates([]);
       pendingFilesRef.current = undefined;
       lastSentFileNamesRef.current = [];
 
