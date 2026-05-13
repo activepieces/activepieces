@@ -1,5 +1,7 @@
 import {
+  AppConnectionScope,
   AppConnectionStatus,
+  MAX_PLATFORM_APP_CONNECTION_OWNERS,
   PlatformAppConnectionsListItem,
 } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
@@ -9,7 +11,9 @@ import {
   CheckIcon,
   Clock,
   Folder,
+  Globe,
   Puzzle,
+  Shield,
   Unplug,
   User,
 } from 'lucide-react';
@@ -26,6 +30,7 @@ import { DataTableColumnHeader } from '@/components/custom/data-table/data-table
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { Badge } from '@/components/ui/badge';
 import {
   Tooltip,
   TooltipContent,
@@ -44,7 +49,9 @@ export default function PlatformConnectionsPage() {
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
   const { pieces } = piecesHooks.usePieces({});
 
-  const filters: DataTableFilters<keyof PlatformAppConnectionsListItem>[] = [
+  const filters: DataTableFilters<
+    keyof PlatformAppConnectionsListItem | 'ownerIds'
+  >[] = [
     {
       type: 'input',
       title: t('Name'),
@@ -84,7 +91,7 @@ export default function PlatformConnectionsPage() {
     {
       type: 'select',
       title: t('Owner'),
-      accessorKey: 'ownerId',
+      accessorKey: 'ownerIds',
       icon: User,
       options: (owners?.data ?? []).map((owner) => ({
         label: owner.email,
@@ -162,6 +169,18 @@ export default function PlatformConnectionsPage() {
       cell: ({ row }) => <ProjectsCell projects={row.original.projects} />,
     },
     {
+      accessorKey: 'scope',
+      size: 120,
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title={t('Scope')}
+          icon={Shield}
+        />
+      ),
+      cell: ({ row }) => <ScopeBadge scope={row.original.scope} />,
+    },
+    {
       accessorKey: 'owner',
       size: 200,
       header: ({ column }) => (
@@ -207,6 +226,13 @@ export default function PlatformConnectionsPage() {
           'All app connections across every project on this platform',
         )}
       />
+      {owners?.truncated && (
+        <div className="px-6 pb-2 text-xs text-muted-foreground">
+          {t('Owner filter is limited to the first {count} owners', {
+            count: MAX_PLATFORM_APP_CONNECTION_OWNERS,
+          })}
+        </div>
+      )}
       <DataTable
         emptyStateTextTitle={t('No connections found')}
         emptyStateTextDescription={t(
@@ -221,6 +247,18 @@ export default function PlatformConnectionsPage() {
     </div>
   );
 }
+
+const ScopeBadge = ({ scope }: { scope: AppConnectionScope }) => {
+  if (scope === AppConnectionScope.PLATFORM) {
+    return (
+      <Badge variant="accent">
+        <Globe />
+        {t('Global')}
+      </Badge>
+    );
+  }
+  return <Badge variant="outline">{t('Project')}</Badge>;
+};
 
 const ProjectsCell = ({
   projects,

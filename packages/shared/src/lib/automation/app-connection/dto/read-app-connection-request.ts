@@ -63,3 +63,11 @@ export const PlatformAppConnectionOwner = z.object({
     email: z.string(),
 })
 export type PlatformAppConnectionOwner = z.infer<typeof PlatformAppConnectionOwner>
+
+export const PlatformAppConnectionOwnersResponse = z.object({
+    data: z.array(PlatformAppConnectionOwner),
+    truncated: z.boolean(),
+})
+export type PlatformAppConnectionOwnersResponse = z.infer<typeof PlatformAppConnectionOwnersResponse>
+
+export const MAX_PLATFORM_APP_CONNECTION_OWNERS = 1000

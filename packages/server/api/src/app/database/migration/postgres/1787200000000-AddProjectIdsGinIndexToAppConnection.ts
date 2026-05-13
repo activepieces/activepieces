@@ -4,8 +4,6 @@ import { AppSystemProp } from '../../../helper/system/system-props'
 import { DatabaseType } from '../../database-type'
 import { Migration } from '../../migration'
 
-const isPGlite = system.get(AppSystemProp.DB_TYPE) === DatabaseType.PGLITE
-
 export class AddProjectIdsGinIndexToAppConnection1787200000000 implements Migration {
     name = 'AddProjectIdsGinIndexToAppConnection1787200000000'
     breaking = false
@@ -13,7 +11,7 @@ export class AddProjectIdsGinIndexToAppConnection1787200000000 implements Migrat
     transaction = false
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        if (isPGlite) {
+        if (isPGlite()) {
             await queryRunner.query(`
                 CREATE INDEX IF NOT EXISTS "idx_app_connection_project_ids_gin"
                 ON "app_connection" USING gin ("projectIds")
@@ -28,7 +26,7 @@ export class AddProjectIdsGinIndexToAppConnection1787200000000 implements Migrat
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        if (isPGlite) {
+        if (isPGlite()) {
             await queryRunner.query('DROP INDEX IF EXISTS "idx_app_connection_project_ids_gin"')
         }
         else {
@@ -36,3 +34,5 @@ export class AddProjectIdsGinIndexToAppConnection1787200000000 implements Migrat
         }
     }
 }
+
+const isPGlite = (): boolean => system.get(AppSystemProp.DB_TYPE) === DatabaseType.PGLITE

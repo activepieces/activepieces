@@ -1,6 +1,6 @@
 import {
   ListPlatformAppConnectionsRequestQuery,
-  PlatformAppConnectionOwner,
+  PlatformAppConnectionOwnersResponse,
   PlatformAppConnectionsListItem,
   SeekPage,
 } from '@activepieces/shared';
@@ -15,7 +15,7 @@ export const platformAppConnectionsApi = {
     );
   },
   listOwners() {
-    return api.get<SeekPage<PlatformAppConnectionOwner>>(
+    return api.get<PlatformAppConnectionOwnersResponse>(
       '/v1/platform-app-connections/owners',
     );
   },

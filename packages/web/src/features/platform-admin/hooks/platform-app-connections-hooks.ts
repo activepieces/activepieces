@@ -28,7 +28,7 @@ export const platformAppConnectionsQueries = {
         const limit = searchParams.get(LIMIT_QUERY_PARAM);
         const status = searchParams.getAll('status') as AppConnectionStatus[];
         const projectIds = searchParams.getAll('projectIds');
-        const ownerIds = searchParams.getAll('ownerId');
+        const ownerIds = searchParams.getAll('ownerIds');
         return platformAppConnectionsApi.list({
           cursor: cursor ?? undefined,
           limit: limit ? parseInt(limit) : undefined,

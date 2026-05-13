@@ -1,6 +1,8 @@
 import {
     ListPlatformAppConnectionsRequestQuery,
+    MAX_PLATFORM_APP_CONNECTION_OWNERS,
     PlatformAppConnectionOwner,
+    PlatformAppConnectionOwnersResponse,
     PlatformAppConnectionProjectInfo,
     PlatformAppConnectionsListItem,
     PrincipalType,
@@ -20,7 +22,8 @@ export const platformAppConnectionController: FastifyPluginAsyncZod = async (app
         const platformId = request.principal.platform.id
         const { displayName, pieceName, status, scope, cursor, limit, projectIds, ownerIds } = request.query
 
-        const appConnections = await appConnectionService(request.log).list({
+        const connectionService = appConnectionService(request.log)
+        const appConnections = await connectionService.list({
             pieceName,
             displayName,
             status,
@@ -38,7 +41,7 @@ export const platformAppConnectionController: FastifyPluginAsyncZod = async (app
         const projectsById = await fetchProjectsForPlatform(projectIdsToLookUp, platformId)
 
         const data: PlatformAppConnectionsListItem[] = appConnections.data.map((connection) => {
-            const sanitized = appConnectionService(request.log).removeSensitiveData(connection)
+            const sanitized = connectionService.removeSensitiveData(connection)
             const projects: PlatformAppConnectionProjectInfo[] = connection.projectIds
                 .map((id) => projectsById.get(id))
                 .filter((project): project is PlatformAppConnectionProjectInfo => project !== undefined)
@@ -48,9 +51,9 @@ export const platformAppConnectionController: FastifyPluginAsyncZod = async (app
         return { ...appConnections, data }
     })
 
-    app.get('/owners', ListPlatformAppConnectionOwnersRequest, async (request): Promise<SeekPage<PlatformAppConnectionOwner>> => {
+    app.get('/owners', ListPlatformAppConnectionOwnersRequest, async (request): Promise<PlatformAppConnectionOwnersResponse> => {
         const platformId = request.principal.platform.id
-        const owners = await appConnectionsRepo()
+        const rows = await appConnectionsRepo()
             .createQueryBuilder('app_connection')
             .innerJoin('app_connection.owner', 'owner')
             .innerJoin('owner.identity', 'identity')
@@ -61,15 +64,16 @@ export const platformAppConnectionController: FastifyPluginAsyncZod = async (app
             .addSelect('identity.email', 'email')
             .distinct(true)
             .orderBy('identity.email', 'ASC')
-            .limit(MAX_OWNERS)
+            .limit(MAX_PLATFORM_APP_CONNECTION_OWNERS + 1)
             .getRawMany<PlatformAppConnectionOwner>()
 
-        return { data: owners, next: null, previous: null }
+        const truncated = rows.length > MAX_PLATFORM_APP_CONNECTION_OWNERS
+        const data = truncated ? rows.slice(0, MAX_PLATFORM_APP_CONNECTION_OWNERS) : rows
+        return { data, truncated }
     })
 }
 
 const DEFAULT_PAGE_SIZE = 10
-const MAX_OWNERS = 1000
 
 const fetchProjectsForPlatform = async (projectIds: string[], platformId: string): Promise<Map<string, PlatformAppConnectionProjectInfo>> => {
     if (projectIds.length === 0) {
@@ -106,7 +110,7 @@ const ListPlatformAppConnectionOwnersRequest = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'List distinct connection owners across every project on the platform',
         response: {
-            [StatusCodes.OK]: SeekPage(PlatformAppConnectionOwner),
+            [StatusCodes.OK]: PlatformAppConnectionOwnersResponse,
         },
     },
 }
