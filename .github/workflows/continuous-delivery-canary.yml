@@ -3,6 +3,14 @@ name: Continuous Delivery — Canary
 on:
   schedule:
     - cron: '0 9 * * *'  # Daily 9 AM UTC
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        type: choice
+        options:
+          - deploy-canary
 
 jobs:
   build-image:
