@@ -7606,6 +7606,19 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/xquik": {
+      "name": "@activepieces/piece-xquik",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+      "devDependencies": {
+        "vitest": "3.0.8",
+      },
+    },
     "packages/pieces/community/youcanbookme": {
       "name": "@activepieces/piece-youcanbookme",
       "version": "0.1.4",
@@ -9983,6 +9996,8 @@
     "@activepieces/piece-wufoo": ["@activepieces/piece-wufoo@workspace:packages/pieces/community/wufoo"],
 
     "@activepieces/piece-xero": ["@activepieces/piece-xero@workspace:packages/pieces/community/xero"],
+
+    "@activepieces/piece-xquik": ["@activepieces/piece-xquik@workspace:packages/pieces/community/xquik"],
 
     "@activepieces/piece-xml": ["@activepieces/piece-xml@workspace:packages/pieces/core/xml"],
 
