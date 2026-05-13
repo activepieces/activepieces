@@ -120,7 +120,7 @@ export default function PlatformConnectionsPage() {
         >
           <div className="flex items-center gap-2 w-fit min-w-0">
             <PieceIconWithPieceName
-              pieceName={row.original.pieceName}
+              pieceName={row.original.pieceName ?? ''}
               showTooltip={false}
               size="sm"
             />
