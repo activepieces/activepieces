@@ -1,90 +1,40 @@
 import {
     ListPlatformAppConnectionsRequestQuery,
-    MAX_PLATFORM_APP_CONNECTION_OWNERS,
-    PlatformAppConnectionOwner,
     PlatformAppConnectionOwnersResponse,
-    PlatformAppConnectionProjectInfo,
     PlatformAppConnectionsListItem,
     PrincipalType,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
-    unique,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
-import { In } from 'typeorm'
 import { securityAccess } from '../core/security/authorization/fastify-security'
-import { projectRepo } from '../project/project-service'
-import { appConnectionService, appConnectionsRepo } from './app-connection-service/app-connection-service'
+import { appConnectionService } from './app-connection-service/app-connection-service'
 
 export const platformAppConnectionController: FastifyPluginAsyncZod = async (app) => {
     app.get('/', ListPlatformAppConnectionsRequest, async (request): Promise<SeekPage<PlatformAppConnectionsListItem>> => {
-        const platformId = request.principal.platform.id
         const { displayName, pieceName, status, scope, cursor, limit, projectIds, ownerIds } = request.query
-
-        const connectionService = appConnectionService(request.log)
-        const appConnections = await connectionService.list({
+        return appConnectionService(request.log).listForPlatform({
+            platformId: request.principal.platform.id,
             pieceName,
             displayName,
             status,
             scope,
-            platformId,
-            projectId: null,
             projectIds,
             ownerIds,
             cursorRequest: cursor ?? null,
             limit: limit ?? DEFAULT_PAGE_SIZE,
-            externalIds: undefined,
         })
-
-        const projectIdsToLookUp = unique(appConnections.data.flatMap((connection) => connection.projectIds))
-        const projectsById = await fetchProjectsForPlatform(projectIdsToLookUp, platformId)
-
-        const data: PlatformAppConnectionsListItem[] = appConnections.data.map((connection) => {
-            const sanitized = connectionService.removeSensitiveData(connection)
-            const projects: PlatformAppConnectionProjectInfo[] = connection.projectIds
-                .map((id) => projectsById.get(id))
-                .filter((project): project is PlatformAppConnectionProjectInfo => project !== undefined)
-            return { ...sanitized, projects }
-        })
-
-        return { ...appConnections, data }
     })
 
     app.get('/owners', ListPlatformAppConnectionOwnersRequest, async (request): Promise<PlatformAppConnectionOwnersResponse> => {
-        const platformId = request.principal.platform.id
-        const rows = await appConnectionsRepo()
-            .createQueryBuilder('app_connection')
-            .innerJoin('app_connection.owner', 'owner')
-            .innerJoin('owner.identity', 'identity')
-            .where('app_connection.platformId = :platformId', { platformId })
-            .select('owner.id', 'id')
-            .addSelect('identity.firstName', 'firstName')
-            .addSelect('identity.lastName', 'lastName')
-            .addSelect('identity.email', 'email')
-            .distinct(true)
-            .orderBy('identity.email', 'ASC')
-            .limit(MAX_PLATFORM_APP_CONNECTION_OWNERS + 1)
-            .getRawMany<PlatformAppConnectionOwner>()
-
-        const truncated = rows.length > MAX_PLATFORM_APP_CONNECTION_OWNERS
-        const data = truncated ? rows.slice(0, MAX_PLATFORM_APP_CONNECTION_OWNERS) : rows
-        return { data, truncated }
+        return appConnectionService(request.log).listOwnersForPlatform({
+            platformId: request.principal.platform.id,
+        })
     })
 }
 
 const DEFAULT_PAGE_SIZE = 10
-
-const fetchProjectsForPlatform = async (projectIds: string[], platformId: string): Promise<Map<string, PlatformAppConnectionProjectInfo>> => {
-    if (projectIds.length === 0) {
-        return new Map()
-    }
-    const projects = await projectRepo().find({
-        where: { id: In(projectIds), platformId },
-        select: ['id', 'displayName', 'type'],
-    })
-    return new Map(projects.map((project) => [project.id, { id: project.id, displayName: project.displayName, type: project.type }]))
-}
 
 const ListPlatformAppConnectionsRequest = {
     config: {
