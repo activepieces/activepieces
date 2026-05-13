@@ -15,13 +15,13 @@ import {
   MessageContent,
 } from '@/components/prompt-kit/message';
 import { ChatUIMessage, DynamicToolPart } from '@/features/chat/lib/chat-types';
+import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { cn } from '@/lib/utils';
 
 import { getTextFromParts, parseBuildProgress } from '../lib/message-parsers';
 
-import { ActivityAccordion } from './activity-accordion';
+import { ThinkingBlock } from './activity-accordion';
 import { BuildProgressCard } from './build-progress-card';
-import { ChatThinkingLoader } from './chat-thinking-loader';
 import { MessageContentWithAuth } from './message-content';
 
 export function ChatMessage({
@@ -167,11 +167,11 @@ function AssistantMessage({
     [message.parts],
   );
   const hasReasoning = reasoningText.length > 0;
-  const textParts = message.parts.filter(
+  const renderableParts = message.parts.filter(
     (p): p is { type: 'text'; text: string } =>
       p.type === 'text' && p.text.length > 0,
   );
-  const hasContent = textParts.length > 0;
+  const hasContent = renderableParts.length > 0;
   const hasToolCalls = allToolParts.length > 0;
   const hasAnyVisible = hasToolCalls || hasContent || hasReasoning;
 
@@ -192,11 +192,14 @@ function AssistantMessage({
     [fullText],
   );
 
-  const showActivity = activityEverShown && !hasBuildProgress;
-
-  const renderableParts = message.parts.filter(
-    (p): p is { type: 'text'; text: string } =>
-      p.type === 'text' && p.text.length > 0,
+  const thinkingToolParts = useMemo(
+    () =>
+      hasBuildProgress
+        ? allToolParts.filter(
+            (p) => !chatUtils.BUILD_TOOL_NAMES.has(p.toolName),
+          )
+        : allToolParts,
+    [allToolParts, hasBuildProgress],
   );
 
   if (!isStreaming && !isLastMessage && !hasContent) {
@@ -212,12 +215,11 @@ function AssistantMessage({
     >
       <Message>
         <div className="min-w-0 space-y-2 flex-1">
-          {showActivity && (
-            <ActivityAccordion
-              toolParts={allToolParts}
+          {activityEverShown && (
+            <ThinkingBlock
+              toolParts={thinkingToolParts}
               reasoningText={reasoningText}
               isStreaming={isStreaming}
-              hasContent={hasContent}
             />
           )}
 
@@ -241,10 +243,6 @@ function AssistantMessage({
               </motion.div>
             )}
           </AnimatePresence>
-
-          {isStreaming && !isWaiting && !showActivity && !hasContent && (
-            <ChatThinkingLoader showText={false} />
-          )}
 
           <MessageActions
             className={cn(

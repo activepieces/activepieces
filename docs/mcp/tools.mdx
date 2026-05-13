@@ -26,6 +26,19 @@ Get the full structure of a flow: step tree, configuration status, step input va
 |-------|------|----------|-------------|
 | `flowId` | string | Yes | The flow ID |
 
+### ap_read_step_code
+
+Read the full source code, package.json, and input mappings of a CODE step. Returns untruncated content — unlike `ap_flow_structure` which truncates code to 300 characters.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowId` | string | Yes | The flow ID |
+| `stepName` | string | Yes | The name of the CODE step (e.g., `step_1`) |
+
+<Tip>
+Use this tool when you need to read or edit a CODE step's full source. `ap_flow_structure` truncates code for overview purposes, so always call `ap_read_step_code` before modifying a code step.
+</Tip>
+
 ### ap_validate_flow
 
 Validate a flow for structural issues without publishing. Checks step validity, template references, and empty branches.
@@ -231,12 +244,12 @@ Create a complete flow in one call — trigger plus any number of steps. Steps a
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
 | `flowName` | string | Yes | Name for the new flow |
-| `trigger` | object | Yes | `{pieceName, pieceVersion, triggerName, input?, auth?}` |
+| `trigger` | object | Yes | `{pieceName, triggerName, input?, auth?}` |
 | `steps` | array | Yes | Array of step specs, each with `type`, `displayName`, and type-specific fields |
 
 **Step types in the array:**
-- **PIECE**: `pieceName`, `pieceVersion`, `actionName`, `input`, `auth`
-- **CODE**: `sourceCode`, `input`
+- **PIECE**: `pieceName`, `actionName`, `input`, `auth`, `continueOnFailure`, `retryOnFailure`
+- **CODE**: `sourceCode`, `input`, `continueOnFailure`, `retryOnFailure`
 - **LOOP_ON_ITEMS**: `loopItems`
 - **ROUTER**: creates a router with Branch 1 + Otherwise
 
@@ -248,7 +261,6 @@ Set or update the trigger for a flow.
 |-------|------|----------|-------------|
 | `flowId` | string | Yes | The flow ID |
 | `pieceName` | string | Yes | Piece name (e.g., `@activepieces/piece-gmail`) |
-| `pieceVersion` | string | Yes | Piece version (e.g., `~0.11.6`) |
 | `triggerName` | string | Yes | Trigger name from the piece |
 | `input` | object | No | Trigger configuration |
 | `auth` | string | No | Connection externalId |
@@ -266,7 +278,6 @@ Add a new step to a flow. Optionally configure it in the same call by providing 
 | `stepType` | string | Yes | `CODE`, `PIECE`, `LOOP_ON_ITEMS`, or `ROUTER` |
 | `displayName` | string | Yes | Step display name |
 | `pieceName` | string | No | For PIECE steps |
-| `pieceVersion` | string | No | For PIECE steps |
 | `actionName` | string | No | For PIECE steps |
 | `branchIndex` | number | No | For INSIDE_BRANCH |
 | `input` | object | No | Step input config (key-value pairs) |
@@ -274,6 +285,8 @@ Add a new step to a flow. Optionally configure it in the same call by providing 
 | `sourceCode` | string | No | For CODE steps: JavaScript/TypeScript source |
 | `packageJson` | string | No | For CODE steps: npm dependencies |
 | `loopItems` | string | No | For LOOP steps: items expression |
+| `continueOnFailure` | boolean | No | For CODE/PIECE steps: continue flow if this step fails (default: false) |
+| `retryOnFailure` | boolean | No | For CODE/PIECE steps: retry this step on failure (default: false) |
 
 ### ap_update_step
 
@@ -291,6 +304,8 @@ Update an existing step's settings. Auto-fills default values for optional prope
 | `sourceCode` | string | No | For CODE steps: JavaScript/TypeScript source code |
 | `packageJson` | string | No | For CODE steps: npm dependencies as JSON string |
 | `skip` | boolean | No | Skip this step |
+| `continueOnFailure` | boolean | No | For CODE/PIECE steps: continue flow if this step fails |
+| `retryOnFailure` | boolean | No | For CODE/PIECE steps: retry this step on failure |
 
 <Tip>
 Use `{{stepName.field}}` syntax in input values to reference data from previous steps (e.g., `{{trigger.body.email}}`, `{{step_1.id}}`). Do NOT include `.output.` in the path.
@@ -488,7 +503,6 @@ Execute a single piece action once without building or saving a flow. Designed f
 | `actionName` | string | Yes | Action to run (e.g. `send_channel_message`). Use `ap_get_piece_props` for the input shape. |
 | `input` | object | No | Fully-resolved input for the action. Keys must match the piece action's props. Pass raw values — do **not** wrap them in `{{…}}`. Omit entirely if the action has no props. |
 | `connectionExternalId` | string | No | `externalId` from `ap_list_connections`. Required if the piece needs auth. Auto-wrapped server-side as `{{connections['externalId']}}`. Must be a plain ID — special characters are rejected. |
-| `pieceVersion` | string | No | Defaults to the latest installed version. Use `~X.Y.Z` to pin the minor version. |
 
 <Info>
 When to pick this vs. `ap_build_flow`:

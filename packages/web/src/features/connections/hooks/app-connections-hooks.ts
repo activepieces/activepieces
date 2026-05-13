@@ -9,6 +9,7 @@ import {
   ErrorCode,
   isNil,
   ListAppConnectionsRequestQuery,
+  PLACEHOLDER_CONNECTION_TYPE,
   ReplaceAppConnectionsRequestBody,
   UpsertAppConnectionRequestBody,
 } from '@activepieces/shared';
@@ -90,6 +91,11 @@ export const appConnectionsMutations = {
         if (isGlobalConnection) {
           if (formValues.projectIds.length === 0) {
             throw new NoProjectSelected();
+          }
+          if (formValues.type === PLACEHOLDER_CONNECTION_TYPE) {
+            throw new Error(
+              'Placeholder connections are only supported at the project scope.',
+            );
           }
           return globalConnectionsApi.upsert({
             ...formValues,
