@@ -41,7 +41,7 @@ function filterBuildTools({ allTools, rawMcpTools }: { allTools: ToolSet, rawMcp
     const gatedBuildTools = chatToolCategories.filterTools({ allTools, predicate: chatToolCategories.isBuildTool })
     // Use ungated test tools so the builder can test without user approval
     const ungatedTestTools = chatToolCategories.filterTools({ allTools: rawMcpTools, predicate: (name) => TEST_TOOL_NAMES.has(name) })
-    return { ...gatedBuildTools, ...ungatedTestTools }
+    return Object.assign({}, gatedBuildTools, ungatedTestTools)
 }
 
 function builderPrepareStep({ steps }: { steps: ReadonlyArray<BuilderStepInfo> }): BuilderPrepareStepReturn {
