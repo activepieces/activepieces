@@ -332,7 +332,13 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             break
     }
 
-    await systemJobsSchedule(app.log).startWorker()
+    const isCanaryApp = system.getBoolean(AppSystemProp.IS_CANARY_APP) ?? false
+    if (isCanaryApp) {
+        app.log.info('[setupApp] Skipping system jobs worker on canary app instance')
+    }
+    else {
+        await systemJobsSchedule(app.log).startWorker()
+    }
 
     app.addHook('onClose', async () => {
         app.log.info('Shutting down')
