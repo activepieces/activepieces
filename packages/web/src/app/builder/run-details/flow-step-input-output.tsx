@@ -8,6 +8,7 @@ import {
   isNil,
   ApFlagId,
   LogSliceRef,
+  StepOutput,
   StepOutputType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -52,12 +53,8 @@ export const FlowStepInputOutput = () => {
   }, [run, selectedStep?.name, loopsIndexes, flowVersion.trigger]);
   const isAgent = isRunAgent(selectedStep);
   const isStepRunning = selectedStepOutput?.status === StepOutputStatus.RUNNING;
-  const isSlicedOutput =
-    selectedStepOutput?.outputType === StepOutputType.SLICE;
-  const slicedOutputRef = isSlicedOutput
-    ? (selectedStepOutput?.output as LogSliceRef | undefined)
-    : undefined;
-  const parsedOutput = isSlicedOutput
+  const slicedOutputRef = extractSlicedOutputRef(selectedStepOutput);
+  const parsedOutput = slicedOutputRef
     ? undefined
     : selectedStepOutput?.errorMessage ??
       selectedStepOutput?.output ??
@@ -187,6 +184,15 @@ export const FlowStepInputOutput = () => {
     </ScrollArea>
   );
 };
+
+function extractSlicedOutputRef(
+  stepOutput: StepOutput | null | undefined,
+): LogSliceRef | undefined {
+  if (stepOutput?.outputType !== StepOutputType.SLICE) {
+    return undefined;
+  }
+  return stepOutput.output as LogSliceRef | undefined;
+}
 
 function handleRunFailureOrEmptyLog(
   run: FlowRun | null,

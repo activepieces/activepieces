@@ -18,7 +18,11 @@ import { ChatUIMessage, DynamicToolPart } from '@/features/chat/lib/chat-types';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { cn } from '@/lib/utils';
 
-import { getTextFromParts, parseBuildProgress } from '../lib/message-parsers';
+import {
+  getTextFromParts,
+  parseAllBuildProgress,
+  parseBuildProgress,
+} from '../lib/message-parsers';
 
 import { ThinkingBlock } from './activity-accordion';
 import { BuildProgressCard } from './build-progress-card';
@@ -33,6 +37,7 @@ export function ChatMessage({
   selectedProjectId,
   onSelectProject,
   allConversationToolParts,
+  buildProgressUpdates,
 }: {
   message: ChatUIMessage;
   isStreaming: boolean;
@@ -42,6 +47,11 @@ export function ChatMessage({
   selectedProjectId?: string | null;
   onSelectProject?: (projectId: string) => void;
   allConversationToolParts?: DynamicToolPart[];
+  buildProgressUpdates?: Array<{
+    phase: string;
+    stepIndex?: number;
+    status?: string;
+  }>;
 }) {
   if (message.role === 'user') {
     return <UserMessage message={message} isLastMessage={isLastMessage} />;
@@ -57,6 +67,7 @@ export function ChatMessage({
       selectedProjectId={selectedProjectId}
       onSelectProject={onSelectProject}
       allConversationToolParts={allConversationToolParts}
+      buildProgressUpdates={buildProgressUpdates}
     />
   );
 }
@@ -137,6 +148,7 @@ function AssistantMessage({
   selectedProjectId,
   onSelectProject,
   allConversationToolParts,
+  buildProgressUpdates,
 }: {
   message: ChatUIMessage;
   isStreaming: boolean;
@@ -146,6 +158,11 @@ function AssistantMessage({
   selectedProjectId?: string | null;
   onSelectProject?: (projectId: string) => void;
   allConversationToolParts?: DynamicToolPart[];
+  buildProgressUpdates?: Array<{
+    phase: string;
+    stepIndex?: number;
+    status?: string;
+  }>;
 }) {
   const allToolParts = useMemo(
     () =>
@@ -239,6 +256,7 @@ function AssistantMessage({
                   onSelectProject,
                   allParts: message.parts,
                   allConversationToolParts,
+                  buildProgressUpdates,
                 })}
               </motion.div>
             )}
@@ -284,6 +302,7 @@ function renderTextParts({
   isLastMessage,
   allParts,
   allConversationToolParts,
+  buildProgressUpdates,
 }: {
   parts: Array<{ type: 'text'; text: string }>;
   isStreaming: boolean;
@@ -293,25 +312,35 @@ function renderTextParts({
   onSelectProject?: (projectId: string) => void;
   allParts: ChatUIMessage['parts'];
   allConversationToolParts?: DynamicToolPart[];
+  buildProgressUpdates?: Array<{
+    phase: string;
+    stepIndex?: number;
+    status?: string;
+  }>;
 }): React.ReactNode[] {
   const fullText = parts.map((p) => p.text).join('');
-  const { progress: buildProgress } = parseBuildProgress(fullText);
+  const { progressList } = parseAllBuildProgress(fullText);
 
   const nodes: React.ReactNode[] = [];
 
-  if (buildProgress) {
+  if (progressList.length > 0) {
     const toolParts =
       allConversationToolParts ??
       allParts.filter((p) => p.type === 'dynamic-tool');
-    nodes.push(
-      <BuildProgressCard
-        key="build-progress"
-        progress={buildProgress}
-        toolParts={toolParts}
-        allParts={allParts}
-        isStreaming={isStreaming}
-      />,
-    );
+    for (let idx = 0; idx < progressList.length; idx++) {
+      nodes.push(
+        <BuildProgressCard
+          key={`build-progress-${idx}`}
+          progress={progressList[idx]}
+          toolParts={toolParts}
+          allParts={allParts}
+          buildStepUpdates={
+            idx === progressList.length - 1 ? buildProgressUpdates : undefined
+          }
+          isStreaming={isStreaming}
+        />,
+      );
+    }
   }
 
   for (let i = 0; i < parts.length; i++) {

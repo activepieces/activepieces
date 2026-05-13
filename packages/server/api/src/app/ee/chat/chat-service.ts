@@ -18,7 +18,7 @@ import {
     UpdateChatConversationRequest,
 } from '@activepieces/shared'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
-import { createUIMessageStream, LanguageModel, ModelMessage, stepCountIs, streamText, SystemModelMessage } from 'ai'
+import { createUIMessageStream, LanguageModel, ModelMessage, stepCountIs, streamText, SystemModelMessage, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -34,10 +34,11 @@ import { chatCompaction } from './chat-compaction'
 import { ChatConversationEntity } from './chat-conversation-entity'
 import { buildUserContentWithFiles } from './chat-file-utils'
 import { createChatModel } from './chat-model-factory'
+import { chatPrepareStep } from './chat-prepare-step'
 import { chatHistory } from './history/chat-history'
 import { chatMcp } from './mcp/chat-mcp'
 import { chatPrompt } from './prompt/chat-prompt'
-import { createChatTools } from './tools/chat-tools'
+import { createBuilderTool, createChatTools, createResearcherTool } from './tools/chat-tools'
 
 const conversationRepo = repoFactory(ChatConversationEntity)
 
@@ -215,15 +216,39 @@ export const chatService = (log: FastifyBaseLogger) => ({
         const stream = createUIMessageStream({
             execute: ({ writer }) => {
                 const gatedTools = chatMcp.withApprovalGates({ mcpToolSet, writer, log })
-                const tools = { ...localTools, ...gatedTools }
+                const currentProviderOptions = buildProviderOptions({ provider: providerConfig.provider, modelId: modelName })
+                const baseTools: ToolSet = { ...localTools, ...gatedTools }
+                const builderTool = createBuilderTool({
+                    model,
+                    allTools: baseTools,
+                    rawMcpTools: mcpToolSet,
+                    providerOptions: currentProviderOptions,
+                    writer,
+                    log,
+                })
+                const researcherTool = createResearcherTool({
+                    model,
+                    allTools: baseTools,
+                    providerOptions: currentProviderOptions,
+                    log,
+                })
+                const tools: ToolSet = { ...baseTools, ...builderTool, ...researcherTool }
+                const allToolNames = Object.keys(tools)
 
+                const thinkingCapable = chatPrepareStep.isThinkingCapable({ modelId: modelName })
                 const sanitizedMessages = stripThinkingBlocks(messagesForLlm)
                 const textStream = streamText({
                     model,
                     system: buildSystemPromptWithCaching({ systemPrompt, provider: providerConfig.provider }),
                     messages: sanitizedMessages,
                     tools,
-                    providerOptions: buildProviderOptions({ provider: providerConfig.provider, modelId: modelName }),
+                    providerOptions: currentProviderOptions,
+                    prepareStep: chatPrepareStep.createPrepareStep({
+                        provider: providerConfig.provider,
+                        allToolNames,
+                        log,
+                        supportsThinking: thinkingCapable,
+                    }),
                     stopWhen: stepCountIs(MAX_STEPS),
                     onStepFinish: ({ finishReason, usage }) => {
                         log.debug({ conversationId, finishReason, usage }, 'Chat step finished')
@@ -407,18 +432,8 @@ function resolveEffort({ modelId }: { modelId: string }): { anthropicBudget: num
     return DEFAULT_EFFORT
 }
 
-const THINKING_CAPABLE_MODELS = new Set([
-    'claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5',
-    'claude-sonnet-4.6', 'claude-opus-4.7', 'claude-haiku-4.5',
-])
-
-function supportsThinking({ modelId }: { modelId: string }): boolean {
-    const bareModel = modelId.replace(/^[^/]+\//, '')
-    return THINKING_CAPABLE_MODELS.has(bareModel)
-}
-
 function buildProviderOptions({ provider, modelId }: { provider: AIProviderName, modelId: string }): SharedV3ProviderOptions {
-    const effort = supportsThinking({ modelId }) ? resolveEffort({ modelId }) : null
+    const effort = chatPrepareStep.isThinkingCapable({ modelId }) ? resolveEffort({ modelId }) : null
 
     switch (provider) {
         case AIProviderName.ANTHROPIC:
