@@ -26,6 +26,7 @@ class Runner {
   private readonly child: ChildProcess;
   private readonly pending = new Map<string, Pending>();
   private dead = false;
+  private initLogsCache: string[] = [];
 
   constructor(child: ChildProcess) {
     this.child = child;
@@ -41,6 +42,16 @@ class Runner {
       this.dead = true;
       this.rejectAllPending(err);
     });
+  }
+
+  public setInitLogs(logs: string[]): void {
+    this.initLogsCache = logs;
+  }
+
+  public consumeInitLogs(): string[] {
+    const logs = this.initLogsCache;
+    this.initLogsCache = [];
+    return logs;
   }
 
   public invoke<T>(
@@ -87,36 +98,42 @@ class Runner {
   }
 }
 
-const cache: { thin?: Runner; thick?: Runner } = {};
+const cache: { thin?: Promise<Runner>; thick?: Promise<Runner> } = {};
 
 async function acquire(
   mode: RunnerMode
 ): Promise<{ runner: RunnerHandle; initLogs: string[] }> {
-  const existing = cache[mode];
-  if (existing) return { runner: existing, initLogs: [] };
+  let promise = cache[mode];
+  if (!promise) {
+    promise = (async () => {
+      const runnerScript = path.join(__dirname, 'oracle-runner.js');
+      const child = fork(runnerScript, [], {
+        stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
+      });
+      const runner = new Runner(child);
 
-  const runnerScript = path.join(__dirname, 'oracle-runner.js');
-  const child = fork(runnerScript, [], {
-    stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
-  });
-  const runner = new Runner(child);
-  cache[mode] = runner;
+      child.once('exit', () => {
+        if (cache[mode] === promise) delete cache[mode];
+      });
 
-  child.once('exit', () => {
-    if (cache[mode] === runner) delete cache[mode];
-  });
-
-  try {
-    const { logs } = await runner.invoke<{ ready: boolean }>({
-      cmd: 'init',
-      thickMode: mode === 'thick',
-    });
-    return { runner, initLogs: logs ?? [] };
-  } catch (err) {
-    runner.kill();
-    delete cache[mode];
-    throw err;
+      try {
+        const { logs } = await runner.invoke<{ ready: boolean }>({
+          cmd: 'init',
+          thickMode: mode === 'thick',
+        });
+        runner.setInitLogs(logs ?? []);
+        return runner;
+      } catch (err) {
+        runner.kill();
+        if (cache[mode] === promise) delete cache[mode];
+        throw err;
+      }
+    })();
+    cache[mode] = promise;
   }
+
+  const runner = await promise;
+  return { runner, initLogs: runner.consumeInitLogs() };
 }
 
 export const runnerPool = { acquire };

@@ -109,6 +109,9 @@ async function handle(
       });
     }
     case 'insertRows': {
+      if (req.rows.length === 0) {
+        throw new Error('Rows must be a non-empty array');
+      }
       return await withConnection(req.auth, async (conn) => {
         const columns = Object.keys(req.rows[0]);
         const placeholders = columns.map((_, i) => `:${i + 1}`).join(', ');
@@ -200,9 +203,9 @@ function send(msg: RunnerResponse): void {
   if (process.send) process.send(msg);
 }
 
-process.on('message', (raw: RunnerRequest) => {
+function processMessage(raw: RunnerRequest): Promise<void> {
   const logs: string[] = [];
-  handle(raw, logs).then(
+  return handle(raw, logs).then(
     (result) => {
       send({
         id: raw.id,
@@ -220,6 +223,17 @@ process.on('message', (raw: RunnerRequest) => {
       });
     }
   );
+}
+
+let initGate: Promise<void> | null = null;
+
+process.on('message', (raw: RunnerRequest) => {
+  if (raw.cmd === 'init') {
+    initGate = processMessage(raw);
+    return;
+  }
+  const wait = initGate ?? Promise.resolve();
+  wait.then(() => processMessage(raw));
 });
 
 process.on('disconnect', () => {
