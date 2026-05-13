@@ -102,6 +102,18 @@ export const createInvoiceAction = createAction({
       description: 'URL for the external payment page.',
       required: false,
     }),
+    invoicePdfContent: Property.LongText({
+      displayName: 'Invoice PDF (Base64)',
+      description:
+        'Base64-encoded PDF file content. When provided, the file is attached to the invoice as the default PDF.',
+      required: false,
+    }),
+    invoicePdfFilename: Property.ShortText({
+      displayName: 'Invoice PDF Filename',
+      description: 'Filename for the attached PDF (e.g. invoice.pdf).',
+      required: false,
+      defaultValue: 'invoice.pdf',
+    }),
 
     organization: organizationDropdown,
     owner: userDropdown,
@@ -259,6 +271,21 @@ export const createInvoiceAction = createAction({
     if (internalStatusId) {
       relationships['internal_status'] = {
         data: { type: 'invoiceinternalstatuses', id: internalStatusId },
+      };
+    }
+
+    if (p.invoicePdfContent) {
+      included.push({
+        type: 'files',
+        id: 'invoiceDefaultPdfFile',
+        attributes: {
+          mimeType: 'application/pdf',
+          originalFilename: p.invoicePdfFilename || 'invoice.pdf',
+          content: p.invoicePdfContent,
+        },
+      });
+      relationships['invoiceDefaultPdfFile'] = {
+        data: { type: 'files', id: 'invoiceDefaultPdfFile' },
       };
     }
 
