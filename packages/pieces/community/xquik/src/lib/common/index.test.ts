@@ -10,6 +10,7 @@ describe('xquikCommon.utils', () => {
         count: 30,
         cursor: undefined,
         includeReplies: false,
+        maxId: null,
         q: 'AI',
         sinceTime: '',
       })

@@ -1,12 +1,12 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
 function cleanQueryParams(
-  params: Record<string, boolean | number | string | undefined>
+  params: Record<string, boolean | number | string | null | undefined>
 ): Record<string, string> {
   const queryParams: Record<string, string> = {};
 
   for (const [key, value] of Object.entries(params)) {
-    if (value === undefined || value === '') {
+    if (value === undefined || value === null || value === '') {
       continue;
     }
 
