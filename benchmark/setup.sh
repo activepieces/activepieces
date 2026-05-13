@@ -48,6 +48,23 @@ if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
   echo "$SIGNUP_RESPONSE" >&2
   exit 1
 fi
+
+# Cloud edition returns an ONBOARDING token with projectId=null.
+# Complete onboarding by creating a platform + project, which returns a fresh USER token.
+if [ "$PROJECT_ID" = "null" ] || [ -z "$PROJECT_ID" ]; then
+  echo "Completing onboarding (creating platform + project)..." >&2
+  PLATFORM_RESPONSE=$(curl -s --fail-with-body "$BASE_URL/platforms" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $TOKEN" \
+    -d '{"name":"Benchmark"}')
+  TOKEN=$(echo "$PLATFORM_RESPONSE" | jq -r '.token')
+  PROJECT_ID=$(echo "$PLATFORM_RESPONSE" | jq -r '.projectId')
+  if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ] || [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" = "null" ]; then
+    echo "ERROR: Failed to complete onboarding" >&2
+    echo "$PLATFORM_RESPONSE" >&2
+    exit 1
+  fi
+fi
 echo "Signed up. Project: $PROJECT_ID" >&2
 
 AUTH="Authorization: Bearer $TOKEN"

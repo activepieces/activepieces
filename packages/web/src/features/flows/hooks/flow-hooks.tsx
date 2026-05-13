@@ -253,7 +253,7 @@ export const flowHooks = {
   },
   useGetFlow: (flowId: string) => {
     return useQuery({
-      queryKey: ['flow', flowId],
+      queryKey: flowHooks.createFlowQueryKeys(flowId),
       queryFn: async () => {
         try {
           return await flowsApi.get(flowId);
@@ -411,7 +411,7 @@ export const flowHooks = {
     return await flowsApi.update(flow.id, {
       type: FlowOperationType.IMPORT_FLOW,
       request: {
-        displayName: templateFlow.displayName,
+        displayName: flow.version.displayName,
         trigger: updatedTrigger,
         schemaVersion: templateFlow.schemaVersion,
       },
@@ -515,6 +515,7 @@ export const flowHooks = {
       onError,
     });
   },
+  createFlowQueryKeys: (flowId: string) => ['flow', flowId],
 };
 
 type UseChangeFlowStatusParams = {

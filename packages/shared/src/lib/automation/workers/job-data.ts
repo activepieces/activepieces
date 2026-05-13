@@ -126,7 +126,6 @@ export const ExecuteFlowJobData = z.object({
     streamStepProgress: z.nativeEnum(StreamStepProgress),
     stepNameToTest: z.string().optional(),
     sampleData: z.record(z.string(), z.unknown()).optional(),
-    logsUploadUrl: z.string(),
     logsFileId: z.string(),
     traceContext: z.record(z.string(), z.string()).optional(),
 })
