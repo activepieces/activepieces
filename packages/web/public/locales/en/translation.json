@@ -1752,5 +1752,22 @@
   "TXT record not found yet — DNS can take a few minutes.": "TXT record not found yet — DNS can take a few minutes.",
   "Add this TXT record at your DNS provider. We'll detect it once it propagates — this usually takes a few minutes.": "Add this TXT record at your DNS provider. We'll detect it once it propagates — this usually takes a few minutes.",
   "When a user enters this domain on the sign-in page, they will be redirected to your SAML identity provider.": "When a user enters this domain on the sign-in page, they will be redirected to your SAML identity provider.",
-  "invalidSsoDomain": "Must be a valid lowercase domain (e.g. acme.com)"
+  "invalidSsoDomain": "Must be a valid lowercase domain (e.g. acme.com)",
+  "Alert Receiver Email": "Alert Receiver Email",
+  "Receives flow failure emails for this project.": "Receives flow failure emails for this project.",
+  "Email me when my flows fail": "Email me when my flows fail",
+  "Turn off to stop receiving emails when flows in this project fail.": "Turn off to stop receiving emails when flows in this project fail.",
+  "Subscribe to alerts": "Subscribe to alerts",
+  "Unsubscribe from alerts": "Unsubscribe from alerts",
+  "Unsubscribe from alerts on selected projects?": "Unsubscribe from alerts on selected projects?",
+  "Unsubscribe": "Unsubscribe",
+  "subscribingToAlertsOnProjects": "Subscribing you to alerts on {count, plural, =1 {1 project} other {# projects}}…",
+  "unsubscribingFromAlertsOnProjects": "Unsubscribing you from alerts on {count, plural, =1 {1 project} other {# projects}}…",
+  "alertSubscriptionsSubscribedSummary": "Subscribed to {count, plural, =1 {1 project} other {# projects}}.",
+  "alertSubscriptionsSubscribedSummaryWithFailures": "Subscribed to {subscribed, plural, =1 {1 project} other {# projects}}, {failed, plural, =1 {1 failed} other {# failed}}.",
+  "alertSubscriptionsUnsubscribedSummary": "Unsubscribed from {count, plural, =1 {1 project} other {# projects}}.",
+  "alertSubscriptionsUnsubscribedSummaryWithFailures": "Unsubscribed from {unsubscribed, plural, =1 {1 project} other {# projects}}, {failed, plural, =1 {1 failed} other {# failed}}.",
+  "alertSubscriptionsAlreadySubscribed": "{count, plural, =1 {1 was already subscribed} other {# were already subscribed}}.",
+  "alertSubscriptionsNotSubscribed": "{count, plural, =1 {1 was not subscribed} other {# were not subscribed}}.",
+  "unsubscribeAlertsConfirmDescription": "Your email ({email}) will be removed as an alert receiver from {count, plural, =1 {1 project} other {# projects}}. Other receivers stay in place."
 }

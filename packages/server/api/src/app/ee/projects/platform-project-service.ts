@@ -133,7 +133,9 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             return savedProject
         })
 
-        await projectService(log).callProjectPostCreateHooks(project)
+        await projectService(log).callProjectPostCreateHooks(project, {
+            alertReceiverEmail: params.alertReceiverEmail,
+        })
 
         return this.getWithPlanAndUsageOrThrow(project.id)
     },
@@ -382,6 +384,7 @@ type CreateProjectParams = {
     metadata?: Metadata
     maxConcurrentJobs?: number
     globalConnectionExternalIds?: string[]
+    alertReceiverEmail?: string | null
 }
 
 type DeleteProjectParams = {
