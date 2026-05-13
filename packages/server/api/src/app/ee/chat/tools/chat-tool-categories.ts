@@ -73,10 +73,11 @@ function isMutationTool(name: string): boolean {
     return MUTATION_TOOL_NAMES.has(name)
 }
 
-function filterTools({ allTools, predicate }: { allTools: Record<string, unknown>, predicate: (name: string) => boolean }): Record<string, unknown> {
+// Object.fromEntries returns Record<string, unknown>; the generic preserves the caller's type
+function filterTools<T extends Record<string, unknown>>({ allTools, predicate }: { allTools: T, predicate: (name: string) => boolean }): T {
     return Object.fromEntries(
         Object.entries(allTools).filter(([name]) => predicate(name)),
-    )
+    ) as T
 }
 
 const FIX_TOOL_LIST = [...FIX_TOOL_NAMES]

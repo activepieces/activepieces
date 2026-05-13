@@ -153,8 +153,8 @@ function extractFlowId({ steps, flowCreation }: {
         if (hasArrayProp(output, 'content')) {
             for (const part of output.content) {
                 if (hasStringProp(part, 'text')) {
-                    // apId() generates 21-char nanoid strings
-                    const match = part.text.match(/[a-zA-Z0-9]{21,}/)
+                    // apId() generates 21-char nanoid strings (URL-safe alphabet: A-Za-z0-9_-)
+                    const match = part.text.match(/[a-zA-Z0-9_-]{21,}/)
                     if (match) return match[0]
                 }
             }

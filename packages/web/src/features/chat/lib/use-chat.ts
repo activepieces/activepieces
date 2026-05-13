@@ -268,11 +268,7 @@ export function useAgentChat({
             : {}),
           ...(typeof d.status === 'string' ? { status: d.status } : {}),
         };
-        if (update.phase === 'done') {
-          setBuildProgressUpdates((prev) => [...prev, update]);
-        } else {
-          setBuildProgressUpdates((prev) => [...prev, update]);
-        }
+        setBuildProgressUpdates((prev) => [...prev, update]);
       }
       if (
         dataPart.type === 'data-approval-request' &&
