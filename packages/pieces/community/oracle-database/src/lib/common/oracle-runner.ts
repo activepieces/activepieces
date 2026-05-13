@@ -52,67 +52,74 @@ function friendlyOracleError(err: unknown): string {
   return message;
 }
 
-async function handle(
-  req: RunnerRequest,
-  logs: string[]
-): Promise<unknown> {
+async function handle(req: RunnerRequest): Promise<HandleResult> {
   switch (req.cmd) {
     case 'init': {
-      await ensureOracleClient({ thickMode: req.thickMode, logs });
-      return { ready: true };
+      const logs: string[] = [];
+      try {
+        await ensureOracleClient({ thickMode: req.thickMode, logs });
+        return { result: { ready: true }, logs };
+      } catch (err) {
+        const wrapped =
+          err instanceof Error ? err : new Error(String(err));
+        throw Object.assign(wrapped, { logs });
+      }
     }
     case 'validate': {
       await withConnection(req.auth, async () => undefined);
-      return { valid: true };
+      return { result: { valid: true } };
     }
     case 'getTables': {
-      return await withConnection(req.auth, async (conn) => {
+      const rows = await withConnection(req.auth, async (conn) => {
         const result = await conn.execute<{ TABLE_NAME: string }>(
           `SELECT table_name FROM user_tables ORDER BY table_name`,
           [],
           { outFormat: oracledb.OUT_FORMAT_OBJECT }
         );
-        const rows: DropdownEntry[] = (result.rows ?? []).map((row) => ({
+        const entries: DropdownEntry[] = (result.rows ?? []).map((row) => ({
           label: row.TABLE_NAME,
           value: row.TABLE_NAME,
         }));
-        return rows;
+        return entries;
       });
+      return { result: rows };
     }
     case 'getColumns': {
-      return await withConnection(req.auth, async (conn) => {
+      const rows = await withConnection(req.auth, async (conn) => {
         const result = await conn.execute<{ COLUMN_NAME: string }>(
           `SELECT column_name FROM user_tab_columns WHERE table_name = :tableName ORDER BY column_id`,
           { tableName: req.tableName },
           { outFormat: oracledb.OUT_FORMAT_OBJECT }
         );
-        const rows: DropdownEntry[] = (result.rows ?? []).map((row) => ({
+        const entries: DropdownEntry[] = (result.rows ?? []).map((row) => ({
           label: row.COLUMN_NAME,
           value: row.COLUMN_NAME,
         }));
-        return rows;
+        return entries;
       });
+      return { result: rows };
     }
     case 'insertRow': {
-      return await withConnection(req.auth, async (conn) => {
+      const out = await withConnection(req.auth, async (conn) => {
         const columns = Object.keys(req.row);
         const values = Object.values(req.row);
         const placeholders = columns.map((_, i) => `:${i + 1}`).join(', ');
         const quotedColumns = columns.map((c) => `"${c}"`).join(', ');
         const sql = `INSERT INTO "${req.tableName}" (${quotedColumns}) VALUES (${placeholders})`;
         const result = await conn.execute(sql, values, { autoCommit: true });
-        const out: AffectedResult = {
+        const affected: AffectedResult = {
           success: true,
           rowsAffected: result.rowsAffected ?? 0,
         };
-        return out;
+        return affected;
       });
+      return { result: out };
     }
     case 'insertRows': {
       if (req.rows.length === 0) {
         throw new Error('Rows must be a non-empty array');
       }
-      return await withConnection(req.auth, async (conn) => {
+      const out = await withConnection(req.auth, async (conn) => {
         const columns = Object.keys(req.rows[0]);
         const placeholders = columns.map((_, i) => `:${i + 1}`).join(', ');
         const quotedColumns = columns.map((c) => `"${c}"`).join(', ');
@@ -121,15 +128,16 @@ async function handle(
         const result = await conn.executeMany(sql, bindData, {
           autoCommit: true,
         });
-        const out: AffectedResult = {
+        const affected: AffectedResult = {
           success: true,
           rowsAffected: result.rowsAffected ?? 0,
         };
-        return out;
+        return affected;
       });
+      return { result: out };
     }
     case 'updateRow': {
-      return await withConnection(req.auth, async (conn) => {
+      const out = await withConnection(req.auth, async (conn) => {
         const valueKeys = Object.keys(req.values);
         const filterKeys = Object.keys(req.filter);
         const setClause = valueKeys
@@ -144,15 +152,16 @@ async function handle(
         let sql = `UPDATE "${req.tableName}" SET ${setClause}`;
         if (whereClause) sql += ` WHERE ${whereClause}`;
         const result = await conn.execute(sql, binds as oracledb.BindParameters, { autoCommit: true });
-        const out: AffectedResult = {
+        const affected: AffectedResult = {
           success: true,
           rowsAffected: result.rowsAffected ?? 0,
         };
-        return out;
+        return affected;
       });
+      return { result: out };
     }
     case 'deleteRow': {
-      return await withConnection(req.auth, async (conn) => {
+      const out = await withConnection(req.auth, async (conn) => {
         const filterKeys = Object.keys(req.filter);
         const whereClause = filterKeys
           .map((k) => `"${k}" = :whr_${k}`)
@@ -161,15 +170,16 @@ async function handle(
         for (const k of filterKeys) binds[`whr_${k}`] = req.filter[k];
         const sql = `DELETE FROM "${req.tableName}" WHERE ${whereClause}`;
         const result = await conn.execute(sql, binds as oracledb.BindParameters, { autoCommit: true });
-        const out: AffectedResult = {
+        const affected: AffectedResult = {
           success: true,
           rowsAffected: result.rowsAffected ?? 0,
         };
-        return out;
+        return affected;
       });
+      return { result: out };
     }
     case 'findRow': {
-      return await withConnection(req.auth, async (conn) => {
+      const rows = await withConnection(req.auth, async (conn) => {
         const filterKeys = Object.keys(req.filter);
         const whereClause = filterKeys
           .map((k) => `"${k}" = :whr_${k}`)
@@ -182,19 +192,21 @@ async function handle(
         });
         return (result.rows as unknown[]) ?? [];
       });
+      return { result: rows };
     }
     case 'execute': {
-      return await withConnection(req.auth, async (conn) => {
+      const out = await withConnection(req.auth, async (conn) => {
         const result = await conn.execute(req.sql, req.binds as oracledb.BindParameters, {
           autoCommit: true,
           outFormat: oracledb.OUT_FORMAT_OBJECT,
         });
-        const out: ExecuteResult = {
+        const payload: ExecuteResult = {
           rows: (result.rows as unknown[]) ?? [],
           rowsAffected: result.rowsAffected,
         };
-        return out;
+        return payload;
       });
+      return { result: out };
     }
   }
 }
@@ -204,22 +216,22 @@ function send(msg: RunnerResponse): void {
 }
 
 function processMessage(raw: RunnerRequest): Promise<void> {
-  const logs: string[] = [];
-  return handle(raw, logs).then(
-    (result) => {
+  return handle(raw).then(
+    ({ result, logs }) => {
       send({
         id: raw.id,
         ok: true,
         result,
-        logs: logs.length > 0 ? logs : undefined,
+        logs: logs && logs.length > 0 ? logs : undefined,
       });
     },
     (err: unknown) => {
+      const partialLogs = (err as { logs?: string[] })?.logs;
       send({
         id: raw.id,
         ok: false,
         error: { message: friendlyOracleError(err) },
-        logs: logs.length > 0 ? logs : undefined,
+        logs: partialLogs && partialLogs.length > 0 ? partialLogs : undefined,
       });
     }
   );
@@ -232,10 +244,22 @@ process.on('message', (raw: RunnerRequest) => {
     initGate = processMessage(raw);
     return;
   }
-  const wait = initGate ?? Promise.resolve();
-  wait.then(() => processMessage(raw));
+  if (!initGate) {
+    send({
+      id: raw.id,
+      ok: false,
+      error: {
+        message: `Oracle runner received '${raw.cmd}' before init`,
+      },
+    });
+    return;
+  }
+  initGate.then(() => processMessage(raw));
 });
 
 process.on('disconnect', () => {
   process.exit(0);
 });
+
+type HandleResult = { result: unknown; logs?: string[] };
+
