@@ -1,42 +1,32 @@
+import { apDayjsDuration } from '@activepieces/server-utils'
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { distributedLock, distributedStore } from '../../../database/redis-connections'
+import { distributedStore } from '../../../database/redis-connections'
 import { getWorkerGroupQueueName, QueueName } from '../../../workers/job'
 import { platformQueueMigrationService } from '../../../workers/platform-queue-migration.service'
 import { platformPlanRepo } from './platform-plan.service'
 
 export const CANARY_WORKER_GROUP_ID = 'canary'
 
+const NO_WORKER_GROUP_SENTINEL = '__none__'
+const CACHE_TTL_SECONDS = apDayjsDuration(5, 'minute').asSeconds()
 const getWorkerGroupCacheKey = (platformId: string): string => `platform:${platformId}:worker_group_id`
 
 export const workerGroupService = (log: FastifyBaseLogger) => ({
     async getWorkerGroupId({ platformId }: { platformId: string }): Promise<string | null> {
         const cached = await distributedStore.get<string>(getWorkerGroupCacheKey(platformId))
         if (!isNil(cached)) {
-            return cached
+            return cached === NO_WORKER_GROUP_SENTINEL ? null : cached
         }
 
-        return distributedLock(log).runExclusive({
-            key: `worker_group_lock:${platformId}`,
-            timeoutInSeconds: 10,
-            fn: async () => {
-                const cachedAfterLock = await distributedStore.get<string>(getWorkerGroupCacheKey(platformId))
-                if (!isNil(cachedAfterLock)) {
-                    return cachedAfterLock
-                }
-
-                const plan = await platformPlanRepo().findOne({
-                    select: ['workerGroupId'],
-                    where: { platformId },
-                })
-
-                const groupId = plan?.workerGroupId ?? null
-                if (!isNil(groupId)) {
-                    await distributedStore.put(getWorkerGroupCacheKey(platformId), groupId)
-                }
-                return groupId
-            },
+        const plan = await platformPlanRepo().findOne({
+            select: ['workerGroupId'],
+            where: { platformId },
         })
+
+        const groupId = plan?.workerGroupId ?? null
+        await distributedStore.put(getWorkerGroupCacheKey(platformId), groupId ?? NO_WORKER_GROUP_SENTINEL, CACHE_TTL_SECONDS)
+        return groupId
     },
 
     async isCanaryPlatform({ platformId }: { platformId: string }): Promise<boolean> {

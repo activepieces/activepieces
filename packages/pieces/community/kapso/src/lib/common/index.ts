@@ -18,10 +18,10 @@ export const kapsoAuth = PieceAuth.SecretText({
       return {
         valid: true,
       };
-    } catch {
+    } catch(e) {
       return {
         valid: false,
-        error: 'Invalid API Key',
+        error: e instanceof Error ? e.message : String(e),
       };
     }
   },

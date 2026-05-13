@@ -197,7 +197,7 @@ export async function executeAdhocAction({
             actionName: action.name,
             input: resolvedInput,
             propertySettings: {},
-            errorHandlingOptions: { continueOnFailure: { value: false }, retryOnFailure: { value: false } },
+            errorHandlingOptions: mcpUtils.buildErrorHandlingOptions({}),
         }
         await mcpUtils.fillDefaultsForMissingOptionalProps({ settings: pieceSettings, platformId: project.platformId, log })
 
@@ -300,7 +300,7 @@ function formatAdhocActionResult(run: FlowRun, stepName: string, displayName: st
         const outStr = output === undefined
             ? '(no output)'
             : typeof output === 'string' ? output : JSON.stringify(output)
-        const base = `✅ ${displayName} completed (run ${run.id}).\n\n${mcpUtils.truncate(outStr, 4000)}`
+        const base = `✅ ${displayName} completed (run ${run.id}).\n\n${outStr}`
         if (looksEmpty(output)) {
             return `${base}\n\nNote: No results matched. If the user expected data, try broader parameters (e.g., wider date range, fewer filters).`
         }
@@ -309,7 +309,7 @@ function formatAdhocActionResult(run: FlowRun, stepName: string, displayName: st
     const errStr = errorMessage === undefined
         ? `status: ${String(status)}`
         : typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage)
-    return `❌ ${displayName} failed (run ${run.id}): ${mcpUtils.truncate(errStr, 2000)}\n\nRetry suggestion: Check the error above. If it mentions missing criteria, try adding a broad filter (e.g., after_date with a recent date, or a common search term). If it mentions auth, verify the connection.`
+    return `❌ ${displayName} failed (run ${run.id}): ${errStr}\n\nRetry suggestion: Check the error above. If it mentions missing criteria, try adding a broad filter (e.g., after_date with a recent date, or a common search term). If it mentions auth, verify the connection.`
 }
 
 export async function pollForRunCompletion(log: FastifyBaseLogger, runId: string, projectId: string): Promise<FlowRun> {
@@ -388,11 +388,11 @@ function formatStepOutput(name: string, step: unknown): string {
 
     if (status === StepOutputStatus.FAILED && errorMessage !== undefined) {
         const errStr = typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage)
-        parts.push(`    Error: ${mcpUtils.truncate(errStr, 300)}`)
+        parts.push(`    Error: ${errStr}`)
     }
     else if (output !== undefined) {
         const outStr = typeof output === 'string' ? output : JSON.stringify(output)
-        parts.push(`    Output: ${mcpUtils.truncate(outStr, 500)}`)
+        parts.push(`    Output: ${outStr}`)
     }
 
     return parts.join('\n')

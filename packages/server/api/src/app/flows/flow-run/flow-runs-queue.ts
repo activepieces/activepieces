@@ -212,7 +212,7 @@ async function markParentRunAsFailed({
         resumePayload: errorPayload,
     })
 
-    if (result.completedExisting) {
+    if (result.completedExisting && !isNil(result.waitpoint)) {
         await resumeService(log).resumeFromWaitpoint({
             flowRunId: parentRunId,
             waitpointId: result.waitpoint.id,

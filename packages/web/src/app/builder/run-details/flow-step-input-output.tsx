@@ -7,6 +7,7 @@ import {
   FlowRunStatus,
   isNil,
   ApFlagId,
+  StepOutputType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Info } from 'lucide-react';
@@ -40,6 +41,7 @@ export const FlowStepInputOutput = () => {
         : null,
     ],
   );
+  const isAgent = isRunAgent(selectedStep);
   const [activeTab, setActiveTab] = useState<RunActiveTab>(
     isAgent ? 'timeline' : 'output',
   );
@@ -52,12 +54,14 @@ export const FlowStepInputOutput = () => {
         )
       : null;
   }, [run, selectedStep?.name, loopsIndexes, flowVersion.trigger]);
-  const isAgent = isRunAgent(selectedStep);
   const isStepRunning = selectedStepOutput?.status === StepOutputStatus.RUNNING;
-  const parsedOutput =
-    selectedStepOutput?.errorMessage ??
-    selectedStepOutput?.output ??
-    'No output';
+  const isSlicedOutput =
+    selectedStepOutput?.outputType === StepOutputType.SLICE;
+  const parsedOutput = isSlicedOutput
+    ? undefined
+    : selectedStepOutput?.errorMessage ??
+      selectedStepOutput?.output ??
+      'No output';
 
   const tabCount = isAgent ? 3 : 2;
   const gridCols = tabCount === 3 ? 'grid-cols-3' : 'grid-cols-2';

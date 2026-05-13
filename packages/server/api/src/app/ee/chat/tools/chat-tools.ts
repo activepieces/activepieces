@@ -1,4 +1,4 @@
-import { FlowRunStatus, FlowStatus, Project, RunEnvironment } from '@activepieces/shared'
+import { FlowRunStatus, FlowStatus, isNil, Project, RunEnvironment } from '@activepieces/shared'
 import { tool } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -8,6 +8,7 @@ import { flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { formatFlowLine } from '../../../mcp/tools/ap-list-flows'
 import { executeAdhocAction, formatRunSummary } from '../../../mcp/tools/flow-run-utils'
 import { mcpUtils } from '../../../mcp/tools/mcp-utils'
+import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { tableService } from '../../../tables/table/table.service'
 import { chatPrompt } from '../prompt/chat-prompt'
 
@@ -146,6 +147,24 @@ async function findConnectionsForPiece({ pieceName, projects, platformId, log }:
     log: FastifyBaseLogger
 }): Promise<{ content: { type: string, text: string }[] }> {
     const normalizedPiece = mcpUtils.normalizePieceName(pieceName) ?? pieceName
+
+    const projectId = projects[0]?.id
+    if (projectId) {
+        const project = projects[0]
+        const piece = await pieceMetadataService(log).get({
+            name: normalizedPiece,
+            projectId,
+            platformId: project.platformId,
+        })
+        if (piece && isNil(piece.auth)) {
+            return {
+                content: [{
+                    type: 'text',
+                    text: `${pieceDisplayLabel(pieceShortName(normalizedPiece))} does not require a connection. No authentication is needed — you can use it directly.`,
+                }],
+            }
+        }
+    }
 
     const allConnections = await Promise.all(
         projects.map(async (project) => {
