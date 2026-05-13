@@ -8,7 +8,6 @@ import {
   isNil,
   ApFlagId,
   LogSliceRef,
-  StepOutput,
   StepOutputType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -61,8 +60,12 @@ export const FlowStepInputOutput = () => {
       : null;
   }, [run, selectedStep?.name, loopsIndexes, flowVersion.trigger]);
   const isStepRunning = selectedStepOutput?.status === StepOutputStatus.RUNNING;
-  const slicedOutputRef = extractSlicedOutputRef(selectedStepOutput);
-  const parsedOutput = slicedOutputRef
+  const isSlicedOutput =
+    selectedStepOutput?.outputType === StepOutputType.SLICE;
+  const slicedOutputRef = isSlicedOutput
+    ? (selectedStepOutput?.output as LogSliceRef | undefined)
+    : undefined;
+  const parsedOutput = isSlicedOutput
     ? undefined
     : selectedStepOutput?.errorMessage ??
       selectedStepOutput?.output ??
