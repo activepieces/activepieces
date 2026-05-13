@@ -60,7 +60,7 @@ export const connectuc = createPiece({
   displayName: "ConnectUC",
   auth: connectucAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: "https://cuc-media.s3.us-east-1.amazonaws.com/cuc_logo_120x120.png",
+  logoUrl: "https://cdn.activepieces.com/pieces/connectuc.png",
   authors: ['dranes'],
   actions: [createContactAction, doNotDisturbAction, findCdrAction, initiateCallAction, sendSmsAction, updateCdrAction],
   triggers: [newRecording, newCallTranscription, newCallSummary, newCdr, newIncomingCall, newOutgoingCall, newVoicemail, newSms],

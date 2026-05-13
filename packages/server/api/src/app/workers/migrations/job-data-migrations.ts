@@ -1,9 +1,7 @@
-import { apId, JobData, StreamStepProgress, UploadLogsBehavior, UploadLogsToken, WorkerJobType } from '@activepieces/shared'
+import { apId, JobData, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { flowRunLogsService } from '../../flows/flow-run/logs/flow-run-logs-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
-import { jwtUtils } from '../../helper/jwt-utils'
 
 const LegacyExecuteFlowFields = z.object({
     streamStepProgress: z.enum(StreamStepProgress).optional(),
@@ -21,24 +19,17 @@ function deriveExecuteFlowMigrationFields(job: JobData): { streamStepProgress: S
 }
 
 function createMigrations(log: FastifyBaseLogger): JobMigration[] {
-    const enrichFlowIdAndLogsUrl: JobMigration = {
+    const enrichFlowId: JobMigration = {
         runAtSchemaVersion: 0,
         migrate: async (job: JobData) => {
             if (job.jobType === WorkerJobType.EXECUTE_FLOW) {
                 const flowVersion = await flowVersionService(log).getOne(job.flowVersionId)
                 const logsFileId = 'logsFileId' in job ? job.logsFileId : apId()
-                const logsUploadUrl = await flowRunLogsService(log).constructUploadUrl({
-                    logsFileId,
-                    projectId: job.projectId,
-                    flowRunId: job.runId,
-                    behavior: UploadLogsBehavior.UPLOAD_DIRECTLY,
-                })
                 return {
                     ...job,
                     flowId: flowVersion!.flowId,
                     schemaVersion: 4,
                     logsFileId,
-                    logsUploadUrl,
                 }
             }
             return {
@@ -73,23 +64,17 @@ function createMigrations(log: FastifyBaseLogger): JobMigration[] {
             return { ...job, schemaVersion: 6 }
         },
     }
-    const reSignLogsUploadUrlWithAudience: JobMigration = {
+    const dropLogsUploadUrl: JobMigration = {
         runAtSchemaVersion: 6,
         migrate: async (job: JobData) => {
             if (job.jobType !== WorkerJobType.EXECUTE_FLOW) {
                 return { ...job, schemaVersion: 7 }
             }
-            const behavior = extractLogsBehaviorFromUrl(job.logsUploadUrl) ?? UploadLogsBehavior.UPLOAD_DIRECTLY
-            const logsUploadUrl = await flowRunLogsService(log).constructUploadUrl({
-                logsFileId: job.logsFileId,
-                projectId: job.projectId,
-                flowRunId: job.runId,
-                behavior,
-            })
+            const legacy = job as Record<string, unknown>
+            delete legacy['logsUploadUrl']
             return {
                 ...job,
                 schemaVersion: 7,
-                logsUploadUrl,
             }
         },
     }
@@ -107,21 +92,7 @@ function createMigrations(log: FastifyBaseLogger): JobMigration[] {
         },
     }
 
-    return [enrichFlowIdAndLogsUrl, migratePayloadToUnion, renameProgressAndHandlerFields, reSignLogsUploadUrlWithAudience, backfillRequiredExecuteFlowFields]
-}
-
-function extractLogsBehaviorFromUrl(url: string): UploadLogsBehavior | null {
-    const queryIndex = url.indexOf('?')
-    if (queryIndex === -1) {
-        return null
-    }
-    const token = new URLSearchParams(url.slice(queryIndex + 1)).get('token')
-    if (token === null) {
-        return null
-    }
-    const decoded = jwtUtils.decode<UploadLogsToken>({ jwt: token })
-    const parsed = UploadLogsToken.safeParse(decoded?.payload)
-    return parsed.success ? parsed.data.behavior : null
+    return [enrichFlowId, migratePayloadToUnion, renameProgressAndHandlerFields, dropLogsUploadUrl, backfillRequiredExecuteFlowFields]
 }
 
 function migrateProgressUpdateType(progressUpdateType: string | undefined): StreamStepProgress {

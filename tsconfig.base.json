@@ -606,6 +606,9 @@
       "@activepieces/piece-hunter": [
         "packages/pieces/community/hunter/src/index.ts"
       ],
+      "@activepieces/piece-iloveapi": [
+        "packages/pieces/community/iloveapi/src/index.ts"
+      ],
       "@activepieces/piece-image-ai": [
         "packages/pieces/community/image-ai/src/index.ts"
       ],
@@ -906,6 +909,9 @@
       "@activepieces/piece-peekshot": [
         "packages/pieces/community/peekshot/src/index.ts"
       ],
+      "@activepieces/piece-pendo": [
+        "packages/pieces/community/pendo/src/index.ts"
+      ],
       "@activepieces/piece-perplexity-ai": [
         "packages/pieces/community/perplexity-ai/src/index.ts"
       ],
@@ -953,6 +959,9 @@
       ],
       "@activepieces/piece-prompthub": [
         "packages/pieces/community/prompthub/src/index.ts"
+      ],
+      "@activepieces/piece-pubrio": [
+        "packages/pieces/community/pubrio/src/index.ts"
       ],
       "@activepieces/piece-pushover": [
         "packages/pieces/community/pushover/src/index.ts"
