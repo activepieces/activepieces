@@ -7,13 +7,16 @@ import {
   FlowRunStatus,
   isNil,
   ApFlagId,
+  LogSliceRef,
+  StepOutputType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Info, Timer } from 'lucide-react';
+import { Download, Info, Timer } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { StepOutputSkeleton } from '@/app/components/step-output-skeleton';
 import { JsonViewer } from '@/components/custom/json-viewer';
+import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AgentTimeline } from '@/features/agents';
@@ -49,10 +52,16 @@ export const FlowStepInputOutput = () => {
   }, [run, selectedStep?.name, loopsIndexes, flowVersion.trigger]);
   const isAgent = isRunAgent(selectedStep);
   const isStepRunning = selectedStepOutput?.status === StepOutputStatus.RUNNING;
-  const parsedOutput =
-    selectedStepOutput?.errorMessage ??
-    selectedStepOutput?.output ??
-    'No output';
+  const isSlicedOutput =
+    selectedStepOutput?.outputType === StepOutputType.SLICE;
+  const slicedOutputRef = isSlicedOutput
+    ? (selectedStepOutput?.output as LogSliceRef | undefined)
+    : undefined;
+  const parsedOutput = isSlicedOutput
+    ? undefined
+    : selectedStepOutput?.errorMessage ??
+      selectedStepOutput?.output ??
+      'No output';
 
   const tabCount = isAgent ? 3 : 2;
   const gridCols = tabCount === 3 ? 'grid-cols-3' : 'grid-cols-2';
@@ -137,6 +146,38 @@ export const FlowStepInputOutput = () => {
           <TabsContent value="output">
             {isStepRunning ? (
               <StepOutputSkeleton className="p-4" />
+            ) : slicedOutputRef ? (
+              <div className="flex flex-col gap-3 p-4 bg-muted rounded-md">
+                <div className="flex items-start gap-2 text-sm">
+                  <Info className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+                  <span>
+                    {t(
+                      'Output is too large to display inline ({size}). Download to inspect.',
+                      {
+                        size: formatUtils.formatStorageSize(
+                          slicedOutputRef.size,
+                        ),
+                      },
+                    )}
+                  </span>
+                </div>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="w-fit gap-2"
+                >
+                  <a
+                    href={slicedOutputRef.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download
+                  >
+                    <Download className="w-4 h-4" />
+                    {t('Download output')}
+                  </a>
+                </Button>
+              </div>
             ) : (
               <JsonViewer json={parsedOutput} title={t('Output')} />
             )}

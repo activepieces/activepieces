@@ -336,20 +336,18 @@ describe('Engine Services Integration', () => {
             process.env.AP_MAX_FILE_SIZE_MB = '10'
 
             try {
-                const filesService = createFileUploader({
+                const uploader = createFileUploader({
                     apiUrl,
-                    stepName: 'step_1',
-                    flowId: apId(),
                     engineToken,
                 })
 
-                const result = await filesService.write({
+                const result = await uploader.write({
                     fileName: 'test.txt',
                     data: Buffer.from('hello world'),
                 })
 
                 expect(typeof result).toBe('string')
-                expect(result).toContain('/v1/step-files/signed?token=')
+                expect(result).toContain('/v1/files/')
             }
             finally {
                 if (originalMaxFileSize === undefined) {
@@ -366,15 +364,13 @@ describe('Engine Services Integration', () => {
             process.env.AP_MAX_FILE_SIZE_MB = '0.000001'
 
             try {
-                const filesService = createFileUploader({
+                const uploader = createFileUploader({
                     apiUrl,
-                    stepName: 'step_1',
-                    flowId: apId(),
                     engineToken,
                 })
 
                 await expect(
-                    filesService.write({
+                    uploader.write({
                         fileName: 'large.txt',
                         data: Buffer.from('this data is too large for the limit'),
                     }),

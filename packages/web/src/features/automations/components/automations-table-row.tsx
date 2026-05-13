@@ -12,6 +12,7 @@ import {
   Loader2,
   MoreHorizontal,
   Pencil,
+  Plus,
   Share2,
   Star,
   Table2,
@@ -49,6 +50,8 @@ import { cn } from '@/lib/utils';
 
 import { TreeItem } from '../lib/types';
 
+import { CreateNewMenu, CreateInFolderKind } from './create-new-menu';
+
 type AutomationsTableRowProps = {
   item: TreeItem;
   isSelected: boolean;
@@ -66,6 +69,11 @@ type AutomationsTableRowProps = {
   onMoveTo: (item: TreeItem, folderId: string) => void;
   onExportFlow: (flow: PopulatedFlow) => void;
   onExportTable: (table: Table) => void;
+  onCreateInFolder?: (folderId: string, kind: CreateInFolderKind) => void;
+  userHasPermissionToWriteFlow?: boolean;
+  userHasPermissionToWriteTable?: boolean;
+  isCreatingFlow?: boolean;
+  isCreatingTable?: boolean;
   isMoving: boolean;
   isDuplicating: boolean;
   onLoadMore?: () => void;
@@ -86,6 +94,11 @@ export const AutomationsTableRow = ({
   onMoveTo,
   onExportFlow,
   onExportTable,
+  onCreateInFolder,
+  userHasPermissionToWriteFlow = true,
+  userHasPermissionToWriteTable = true,
+  isCreatingFlow,
+  isCreatingTable,
   isMoving,
   isDuplicating,
   onLoadMore,
@@ -93,6 +106,7 @@ export const AutomationsTableRow = ({
   const { embedState } = useEmbedding();
   const [isMoveOpen, setIsMoveOpen] = useState(false);
   const [moveFolderId, setMoveFolderId] = useState('');
+  const [isCreateTooltipOpen, setIsCreateTooltipOpen] = useState(false);
 
   if (item.type === 'load-more-folder') {
     return (
@@ -200,9 +214,46 @@ export const AutomationsTableRow = ({
         )}
       </div>
       <div
-        className="w-[50px] shrink-0 px-2 flex items-center"
+        className="w-[80px] shrink-0 px-2 flex items-center justify-end gap-1"
         onClick={(e) => e.stopPropagation()}
       >
+        {item.type === 'folder' && onCreateInFolder && (
+          <Tooltip
+            open={isCreateTooltipOpen}
+            onOpenChange={setIsCreateTooltipOpen}
+          >
+            <CreateNewMenu
+              scope="folder"
+              align="end"
+              userHasPermissionToWriteFlow={userHasPermissionToWriteFlow}
+              userHasPermissionToWriteTable={userHasPermissionToWriteTable}
+              userHasPermissionToWriteFolder={false}
+              isCreatingFlow={isCreatingFlow}
+              isCreatingTable={isCreatingTable}
+              onCreateFlow={() => onCreateInFolder(item.id, 'flow')}
+              onCreateTable={() => onCreateInFolder(item.id, 'table')}
+              onImportFlow={() => onCreateInFolder(item.id, 'import-flow')}
+              onImportTable={() => onCreateInFolder(item.id, 'import-table')}
+              onOpenChange={(open) => {
+                if (open) setIsCreateTooltipOpen(false);
+              }}
+            >
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 transition-opacity"
+                  aria-label={t('Create inside folder')}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+            </CreateNewMenu>
+            <TooltipContent side="top">
+              {t('Create inside folder')}
+            </TooltipContent>
+          </Tooltip>
+        )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8">
