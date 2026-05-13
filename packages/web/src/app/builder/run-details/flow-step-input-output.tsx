@@ -8,6 +8,7 @@ import {
   isNil,
   ApFlagId,
   LogSliceRef,
+  StepOutput,
   StepOutputType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -52,12 +53,8 @@ export const FlowStepInputOutput = () => {
   }, [run, selectedStep?.name, loopsIndexes, flowVersion.trigger]);
   const isAgent = isRunAgent(selectedStep);
   const isStepRunning = selectedStepOutput?.status === StepOutputStatus.RUNNING;
-  const isSlicedOutput =
-    selectedStepOutput?.outputType === StepOutputType.SLICE;
-  const slicedOutputRef = isSlicedOutput
-    ? (selectedStepOutput?.output as LogSliceRef | undefined)
-    : undefined;
-  const parsedOutput = isSlicedOutput
+  const slicedOutputRef = extractSlicedOutputRef(selectedStepOutput);
+  const parsedOutput = slicedOutputRef
     ? undefined
     : selectedStepOutput?.errorMessage ??
       selectedStepOutput?.output ??
@@ -187,6 +184,40 @@ export const FlowStepInputOutput = () => {
     </ScrollArea>
   );
 };
+
+function extractSlicedOutputRef(
+  stepOutput: StepOutput | null | undefined,
+): LogSliceRef | undefined {
+  if (isNil(stepOutput)) {
+    return undefined;
+  }
+  const discriminant =
+    stepOutput.outputType ??
+    (stepOutput as unknown as { kind?: StepOutputType }).kind;
+  if (
+    discriminant === StepOutputType.SLICE &&
+    isLogSliceRef(stepOutput.output)
+  ) {
+    return stepOutput.output;
+  }
+  if (isLogSliceRef(stepOutput.output)) {
+    return stepOutput.output;
+  }
+  return undefined;
+}
+
+function isLogSliceRef(value: unknown): value is LogSliceRef {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  const ref = value as Record<string, unknown>;
+  return (
+    typeof ref.fileId === 'string' &&
+    typeof ref.size === 'number' &&
+    typeof ref.url === 'string' &&
+    Object.keys(ref).length === 3
+  );
+}
 
 function handleRunFailureOrEmptyLog(
   run: FlowRun | null,
