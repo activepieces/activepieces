@@ -48,6 +48,8 @@ jobs:
     if: needs.guard.result == 'success'
     runs-on: ubuntu-24.04
     permissions:
+      contents: read
+      packages: write
       id-token: write
     outputs:
       image_tag: ${{ steps.set-tag.outputs.image_tag }}

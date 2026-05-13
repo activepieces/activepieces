@@ -8,6 +8,8 @@ jobs:
   build-image:
     runs-on: ubuntu-24.04
     permissions:
+      contents: read
+      packages: write
       id-token: write
     concurrency:
       group: canary-deploy
