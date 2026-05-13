@@ -88,10 +88,12 @@ const BuilderPage = () => {
     preferredSize,
   );
   useEffect(() => {
-    if (!isSplitForPiece) return;
     const currentSize = rightHandleRef.current?.getSize()?.asPercentage ?? 0;
-    if (currentSize > 0 && currentSize < 50) {
+    if (currentSize === 0) return;
+    if (isSplitForPiece && currentSize < 50) {
       rightHandleRef.current?.resize(SPLIT_MODE_SIDEBAR_SIZE);
+    } else if (!isSplitForPiece && currentSize > 50) {
+      rightHandleRef.current?.resize(DEFAULT_SIDEBAR_SIZE);
     }
   }, [isSplitForPiece, rightHandleRef]);
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
