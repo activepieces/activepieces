@@ -10,6 +10,7 @@ import {
     ConnectionEvent,
     FlowCreatedEvent,
     FlowDeletedEvent,
+    FlowLifecycleEvent,
     FlowRunEvent,
     FlowUpdatedEvent,
     FolderEvent,
@@ -31,7 +32,7 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
         userId: apId(),
     }
     const project = { displayName: 'Dream Department' }
-    const flow = { id: apId(), created: isoNow, updated: isoNow }
+    const flow = { id: apId(), externalId: apId(), created: isoNow, updated: isoNow }
     const flowVersion = {
         id: apId(),
         displayName: 'Sample flow',
@@ -92,6 +93,7 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
                 ...baseEnvelope,
                 action: ApplicationEventName.FLOW_UPDATED,
                 data: {
+                    flow,
                     flowVersion,
                     request: {
                         type: FlowOperationType.LOCK_AND_PUBLISH,
@@ -99,6 +101,16 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
                     },
                     project,
                 },
+            }
+            return mock
+        }
+        case ApplicationEventName.FLOW_PUBLISHED:
+        case ApplicationEventName.FLOW_ACTIVATED:
+        case ApplicationEventName.FLOW_DEACTIVATED: {
+            const mock: FlowLifecycleEvent = {
+                ...baseEnvelope,
+                action: event,
+                data: { flow, flowVersion, project },
             }
             return mock
         }
