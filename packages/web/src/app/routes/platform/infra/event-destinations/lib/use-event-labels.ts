@@ -45,6 +45,15 @@ export const useEventLabels = (): EventLabelsMap => {
     [ApplicationEventName.PROJECT_RELEASE_CREATED]: {
       label: t('Project release created'),
     },
+    [ApplicationEventName.FLOW_PUBLISHED]: {
+      label: t('Flow published'),
+    },
+    [ApplicationEventName.FLOW_ACTIVATED]: {
+      label: t('Flow activated'),
+    },
+    [ApplicationEventName.FLOW_DEACTIVATED]: {
+      label: t('Flow deactivated'),
+    },
   };
 };
 
