@@ -65,3 +65,21 @@ c. If any fields couldn't be resolved or tests failed, add an **orange** note li
 
 Resolve parent fields before dependent children (e.g., select Spreadsheet before Sheet).
 </property_filling_guide>
+
+<custom_api_call>
+When a piece does not have a built-in action for what the user needs, use that piece's `custom_api_call` action instead.
+
+How to configure:
+1. **URL**: Use a **relative path** — the piece's base URL is prepended automatically.
+   - Each piece has a base URL (e.g. Gmail: `https://gmail.googleapis.com/gmail/v1`, Slack: `https://slack.com/api`).
+   - Set only the path: `/users/me/messages/{{trigger.message.id}}/modify` — the system builds the full URL.
+   - A full URL starting with `https://` is also accepted but used as-is without prepending — only use this when calling a completely different service.
+2. **Method**: Set to the correct HTTP method (GET, POST, PUT, PATCH, DELETE).
+3. **Headers**: Not needed — the piece injects auth headers automatically from the connection.
+4. **Query params**: Pass as key-value pairs if the endpoint needs query parameters.
+5. **Body**: For POST/PUT/PATCH, pass the request body as JSON. Use step references like `{{trigger.field}}` for dynamic values.
+
+When to use custom_api_call:
+- The user asks for an action that the piece doesn't have as a named action (e.g. "mark as spam" in Gmail, "archive a card" in Trello).
+- You searched with `ap_get_piece_props` and the specific action doesn't exist.
+</custom_api_call>
