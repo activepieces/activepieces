@@ -17,6 +17,7 @@ function humanizePieceName(raw: string): string {
 const BUILD_TOOL_NAMES = new Set([
   'ap_create_flow',
   'ap_build_flow',
+  'ap_build_automation',
   'ap_update_trigger',
   'ap_add_step',
   'ap_update_step',

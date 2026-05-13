@@ -12,7 +12,11 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `packages/server/api/src/app/ee/chat/chat-compaction.ts` — long-conversation context management via summarization
 - `packages/server/api/src/app/ee/chat/chat-approval-gate.ts` — Redis pub/sub gate for tool execution approval (5-min timeout)
 - `packages/server/api/src/app/ee/chat/chat-file-utils.ts` — file attachment processing (base64, MIME validation, 10MB limit)
-- `packages/server/api/src/app/ee/chat/tools/chat-tools.ts` — local LLM tools (title, project selection, action execution, cross-project listing)
+- `packages/server/api/src/app/ee/chat/tools/chat-tools.ts` — local LLM tools (title, project selection, action execution, cross-project listing) + subagent tool wrappers (builder, researcher)
+- `packages/server/api/src/app/ee/chat/tools/chat-tool-categories.ts` — consolidated tool classification predicates (build, research, mutation, approval-required) as single source of truth
+- `packages/server/api/src/app/ee/chat/agents/builder-agent.ts` — builder subagent: ToolLoopAgent build loop, structured evaluation, and iterative fix loop
+- `packages/server/api/src/app/ee/chat/agents/researcher-agent.ts` — researcher subagent: read-only ToolLoopAgent for piece discovery, failure investigation, and cross-flow analysis
+- `packages/server/api/src/app/ee/chat/chat-prepare-step.ts` — phase detection and per-step thinking-budget / tool-filter overrides via AI SDK `prepareStep`
 - `packages/server/api/src/app/ee/chat/mcp/chat-mcp.ts` — connects to Activepieces MCP server for project-scoped tools with approval wrapping
 - `packages/server/api/src/app/ee/chat/history/chat-history.ts` — reconstructs chat history from AI SDK `ModelMessage` format
 - `packages/server/api/src/app/ee/chat/prompt/chat-prompt.ts` — builds system prompt from markdown templates in `src/assets/prompts/`
@@ -38,6 +42,10 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - **MCP tools** — project-scoped tools loaded from the Activepieces MCP server when a project is selected; destructive ones are wrapped with the approval gate
 - **AI provider** — a platform-configured LLM provider with an `enabledForChat` flag; the chat resolves the first enabled provider and its default model
 - **Project context** — the currently selected project for a conversation; determines which MCP tools are available and scopes resource access
+- **Builder agent** — an isolated `ToolLoopAgent` (max 30 steps) owning the full flow-construction pipeline with step-by-step validation, testing, evaluation, and iterative fix
+- **Researcher agent** — a read-only `ToolLoopAgent` (max 15 steps) for investigation tasks (piece discovery, failure debugging, cross-flow analysis)
+- **Phase-aware execution** — the main chat agent detects conversation phase (research/planning/building/finalizing) and dynamically adjusts available tools and thinking budget
+- **Build evaluation** — LLM evaluation step comparing built flow against spec; verdict: `pass`, `fixable`, or `needs_user_input`
 
 ## Data Model
 
@@ -53,13 +61,15 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `deleteConversation()` — deletes a conversation after ownership check
 - `getMessages()` — reconstructs `ChatHistoryMessage[]` from stored `ModelMessage[]`
 - `setProjectContext()` — sets or clears the project scope, verifying user has access
-- `sendMessage()` — the main streaming flow: resolves provider, connects MCP, builds prompt, runs `streamText()` with compaction, persists assistant response on completion
+- `sendMessage()` — the main streaming flow: resolves provider, connects MCP, builds prompt, runs `streamText()` with phase-aware `prepareStep` and two subagent tools (`ap_build_automation`, `ap_research`); persists assistant response on completion
 
 ## Local Tools
 - `ap_set_session_title` — auto-names the conversation after the first exchange
 - `ap_select_project` — switches project context (scopes MCP tools to that project)
 - `ap_run_one_time_action` — executes a single piece action ad-hoc (e.g. "check my inbox"); auto-discovers connections across projects
 - `ap_list_across_projects` — lists flows, tables, runs, or connections across all user-accessible projects
+- `ap_build_automation` — delegates flow building to the builder subagent; emits real-time `data-build-progress` SSE events
+- `ap_research` — delegates investigation tasks to the researcher subagent
 
 ## Endpoints
 - `POST /v1/chat/conversations` — create conversation
