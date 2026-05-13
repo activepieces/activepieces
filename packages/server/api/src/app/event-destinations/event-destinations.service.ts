@@ -139,11 +139,13 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
             data: {
                 flow: {
                     id: apId(),
+                    externalId: apId(),
                     created: new Date().toISOString(),
                     updated: new Date().toISOString(),
                 },
                 project: {
                     displayName: 'Dream Department',
+                    externalId: null,
                 },
             },
             projectId,

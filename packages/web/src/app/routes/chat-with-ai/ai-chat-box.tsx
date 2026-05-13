@@ -89,6 +89,7 @@ function ChatBoxContent({
     setModelName,
     setProjectContext,
     pendingApprovalRequest,
+    buildProgressUpdates,
   } = useAgentChat({ onTitleUpdate, onConversationCreated });
   const { data: allProjects } = projectCollectionUtils.useAll();
   const projects = useMemo(() => allProjects ?? [], [allProjects]);
@@ -227,6 +228,13 @@ function ChatBoxContent({
                 selectedProjectId={selectedProjectId}
                 onSelectProject={handleProjectChange}
                 allConversationToolParts={allConversationToolParts}
+                buildProgressUpdates={
+                  idx === messages.length - 1 &&
+                  msg.role === 'assistant' &&
+                  buildProgressUpdates.length > 0
+                    ? buildProgressUpdates
+                    : undefined
+                }
               />
             );
           })}
