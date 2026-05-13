@@ -15,6 +15,8 @@ const commonAuthProps = {
 
 export const BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE = 'both_client_credentials_and_authorization_code'
 
+export const PLACEHOLDER_CONNECTION_TYPE = 'PLACEHOLDER'
+
 export enum OAuth2GrantType {
     AUTHORIZATION_CODE = 'authorization_code',
     CLIENT_CREDENTIALS = 'client_credentials',
@@ -37,6 +39,11 @@ export const UpsertNoAuthRequest = z.object({
         type: z.literal(AppConnectionType.NO_AUTH),
     }),
 }).describe('No Auth')
+
+export const UpsertPlaceholderConnectionRequest = z.object({
+    ...commonAuthProps,
+    type: z.literal(PLACEHOLDER_CONNECTION_TYPE),
+}).describe('Placeholder')
 
 const commonOAuth2ValueProps = {
     client_id: z.string().min(1),
@@ -109,6 +116,7 @@ export const UpsertAppConnectionRequestBody = z.union([
     UpsertBasicAuthRequest,
     UpsertCustomAuthRequest,
     UpsertNoAuthRequest,
+    UpsertPlaceholderConnectionRequest,
 ])
 
 export type UpsertCloudOAuth2Request = z.infer<typeof UpsertCloudOAuth2Request>
@@ -118,6 +126,7 @@ export type UpsertSecretTextRequest = z.infer<typeof UpsertSecretTextRequest>
 export type UpsertBasicAuthRequest = z.infer<typeof UpsertBasicAuthRequest>
 export type UpsertCustomAuthRequest = z.infer<typeof UpsertCustomAuthRequest>
 export type UpsertNoAuthRequest = z.infer<typeof UpsertNoAuthRequest>
+export type UpsertPlaceholderConnectionRequest = z.infer<typeof UpsertPlaceholderConnectionRequest>
 export type UpsertAppConnectionRequestBody = z.infer<typeof UpsertAppConnectionRequestBody>
 
 

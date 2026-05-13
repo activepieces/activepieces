@@ -18,7 +18,6 @@ import { mcpUtils } from './mcp-utils'
 const updateTriggerInput = z.object({
     flowId: z.string(),
     pieceName: z.string(),
-    pieceVersion: z.string(),
     triggerName: z.string(),
     input: z.record(z.string(), z.unknown()).optional(),
     auth: z.string().optional(),
@@ -33,7 +32,6 @@ export const apUpdateTriggerTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
             pieceName: z.string().describe('The piece name for the trigger (e.g. "@activepieces/piece-gmail"). Use ap_list_pieces to get valid values.'),
-            pieceVersion: z.string().describe('The piece version (e.g. "~0.1.0"). Use ap_list_pieces to get valid values.'),
             triggerName: z.string().describe('The trigger name within the piece (e.g. "new_email"). Use ap_list_pieces with includeTriggers=true to get valid values.'),
             input: z.record(z.string(), z.unknown()).optional().describe(`Input settings for the trigger (key-value pairs). ${mcpUtils.STEP_REFERENCE_HINT}`),
             auth: z.string().optional().describe('Connection `externalId` from `ap_list_connections`. The tool wraps it automatically as `{{connections[\'externalId\']}}`.'),
@@ -41,7 +39,7 @@ export const apUpdateTriggerTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
         },
         annotations: { destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
-            const { flowId, pieceName, pieceVersion, triggerName, input: rawInput, auth, displayName: rawDisplayName } = updateTriggerInput.parse(args)
+            const { flowId, pieceName, triggerName, input: rawInput, auth, displayName: rawDisplayName } = updateTriggerInput.parse(args)
 
             const authError = mcpUtils.validateAuth(auth)
             if (authError) {
@@ -58,9 +56,16 @@ export const apUpdateTriggerTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 return { content: [{ type: 'text', text: '❌ Flow not found' }] }
             }
 
+            const versionResult = await mcpUtils.resolveLatestPieceVersion({ pieceName, projectId: mcp.projectId, platformId: project.platformId, log })
+            if (versionResult.error) {
+                return versionResult.error
+            }
+            const pieceVersion = versionResult.pieceVersion
+            const resolvedPieceName = versionResult.normalizedPieceName
+
             const existingTrigger = flow.version.trigger
             const existingPieceSettings = existingTrigger.type === FlowTriggerType.PIECE
-                && existingTrigger.settings.pieceName === pieceName
+                && existingTrigger.settings.pieceName === resolvedPieceName
                 && existingTrigger.settings.triggerName === triggerName
                 ? existingTrigger.settings
                 : null
@@ -79,7 +84,7 @@ export const apUpdateTriggerTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 lastUpdatedDate: new Date().toISOString(),
                 type: FlowTriggerType.PIECE,
                 settings: {
-                    pieceName,
+                    pieceName: resolvedPieceName,
                     pieceVersion,
                     triggerName,
                     input,
@@ -111,7 +116,7 @@ export const apUpdateTriggerTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 const trigger = updatedFlow.version.trigger
                 const draftWarning = mcpUtils.publishedFlowWarning(flow.publishedVersionId)
                 if (!trigger.valid) {
-                    const diagnosis = await diagnoseMissingTriggerInputs({ pieceName, pieceVersion, triggerName, input, platformId: project.platformId, log })
+                    const diagnosis = await diagnoseMissingTriggerInputs({ pieceName: resolvedPieceName, pieceVersion, triggerName, input, platformId: project.platformId, log })
                     const hint = diagnosis ?? 'Check that triggerName is correct and all required inputs are provided. Use ap_list_connections to get a valid connection externalId for auth.'
                     return {
                         content: [{
@@ -121,7 +126,7 @@ export const apUpdateTriggerTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     }
                 }
                 return {
-                    content: [{ type: 'text', text: `✅ Successfully updated trigger to "${pieceName}/${triggerName}".${draftWarning}` }],
+                    content: [{ type: 'text', text: `✅ Successfully updated trigger to "${resolvedPieceName}/${triggerName}".${draftWarning}` }],
                 }
             }
             catch (err) {

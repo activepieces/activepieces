@@ -22,20 +22,20 @@ const stepSpec = z.object({
     type: z.enum([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.LOOP_ON_ITEMS, FlowActionType.ROUTER]),
     displayName: z.string(),
     pieceName: z.string().optional(),
-    pieceVersion: z.string().optional(),
     actionName: z.string().optional(),
     input: z.record(z.string(), z.unknown()).optional(),
     auth: z.string().optional(),
     sourceCode: z.string().optional(),
     packageJson: z.string().optional(),
     loopItems: z.string().optional(),
+    continueOnFailure: z.boolean().optional(),
+    retryOnFailure: z.boolean().optional(),
 })
 
 const buildFlowInput = z.object({
     flowName: z.string(),
     trigger: z.object({
         pieceName: z.string(),
-        pieceVersion: z.string(),
         triggerName: z.string(),
         input: z.record(z.string(), z.unknown()).optional(),
         auth: z.string().optional(),
@@ -52,7 +52,6 @@ export const apBuildFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
             flowName: z.string().describe('Name for the new flow'),
             trigger: z.object({
                 pieceName: z.string().describe('Trigger piece name (e.g. "@activepieces/piece-webhook")'),
-                pieceVersion: z.string().describe('Piece version (e.g. "~0.1.32")'),
                 triggerName: z.string().describe('Trigger name (e.g. "catch_webhook")'),
                 input: z.record(z.string(), z.unknown()).optional().describe('Trigger input config'),
                 auth: z.string().optional().describe('Connection externalId for trigger auth'),
@@ -65,9 +64,6 @@ export const apBuildFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
             const projectId = mcp.projectId
             try {
                 const { flowName, trigger, steps } = buildFlowInput.parse(args)
-                const project = await projectService(log).getOneOrThrow(projectId)
-                const platformId = project.platformId
-
                 const triggerAuthError = mcpUtils.validateAuth(trigger.auth)
                 if (triggerAuthError) {
                     return triggerAuthError
@@ -79,11 +75,20 @@ export const apBuildFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
                     }
                 }
 
-                const flow = await flowService(log).create({
-                    projectId,
-                    request: { displayName: flowName, projectId },
-                })
+                const [project, flow] = await Promise.all([
+                    projectService(log).getOneOrThrow(projectId),
+                    flowService(log).create({ projectId, request: { displayName: flowName, projectId } }),
+                ])
+                const platformId = project.platformId
                 flowId = flow.id
+
+                const triggerVersionResult = await mcpUtils.resolveLatestPieceVersion({ pieceName: trigger.pieceName, projectId, platformId, log })
+                if (triggerVersionResult.error) {
+                    await flowService(log).delete({ id: flowId, projectId }).catch((deleteErr) => {
+                        log.warn({ err: deleteErr, flowId }, 'Failed to clean up orphaned flow after trigger version resolution error')
+                    })
+                    return triggerVersionResult.error
+                }
 
                 const triggerInput = {
                     ...(trigger.input ?? {}),
@@ -96,8 +101,8 @@ export const apBuildFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
                     lastUpdatedDate: new Date().toISOString(),
                     type: FlowTriggerType.PIECE,
                     settings: {
-                        pieceName: trigger.pieceName,
-                        pieceVersion: trigger.pieceVersion,
+                        pieceName: triggerVersionResult.normalizedPieceName,
+                        pieceVersion: triggerVersionResult.pieceVersion,
                         triggerName: trigger.triggerName,
                         input: triggerInput,
                         propertySettings: {},
@@ -115,7 +120,23 @@ export const apBuildFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
                     const allSteps = flowStructureUtil.getAllSteps(latestTrigger)
                     const lastStep = allSteps[allSteps.length - 1]
 
-                    const skeleton = buildSkeleton({ step, name: stepName })
+                    let resolvedPieceVersion: string | undefined
+                    let resolvedPieceName: string | undefined
+                    if (step.type === FlowActionType.PIECE) {
+                        if (!step.pieceName) {
+                            skippedSteps.push(step.displayName)
+                            continue
+                        }
+                        const versionResult = await mcpUtils.resolveLatestPieceVersion({ pieceName: step.pieceName, projectId, platformId, log })
+                        if (versionResult.error) {
+                            skippedSteps.push(step.displayName)
+                            continue
+                        }
+                        resolvedPieceVersion = versionResult.pieceVersion
+                        resolvedPieceName = versionResult.normalizedPieceName
+                    }
+
+                    const skeleton = buildSkeleton({ step, name: stepName, resolvedPieceVersion, resolvedPieceName })
                     const parseResult = UpdateActionRequest.safeParse(skeleton)
                     if (!parseResult.success) {
                         skippedSteps.push(step.displayName)
@@ -164,9 +185,11 @@ export const apBuildFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
     }
 }
 
-function buildSkeleton({ step, name }: {
+function buildSkeleton({ step, name, resolvedPieceVersion, resolvedPieceName }: {
     step: z.infer<typeof stepSpec>
     name: string
+    resolvedPieceVersion?: string
+    resolvedPieceName?: string
 }): Record<string, unknown> {
     const resolvedInput = {
         ...(step.input ?? {}),
@@ -186,7 +209,7 @@ function buildSkeleton({ step, name }: {
                         packageJson: step.packageJson ?? '{}',
                     },
                     input: step.input ?? {},
-                    errorHandlingOptions: { continueOnFailure: { value: false }, retryOnFailure: { value: false } },
+                    errorHandlingOptions: mcpUtils.buildErrorHandlingOptions({ continueOnFailure: step.continueOnFailure, retryOnFailure: step.retryOnFailure }),
                 },
             }
         case FlowActionType.PIECE:
@@ -196,12 +219,12 @@ function buildSkeleton({ step, name }: {
                 displayName: step.displayName,
                 valid: false,
                 settings: {
-                    pieceName: step.pieceName ?? '',
-                    pieceVersion: step.pieceVersion ?? '',
+                    pieceName: resolvedPieceName ?? step.pieceName ?? '',
+                    pieceVersion: resolvedPieceVersion ?? '',
                     actionName: step.actionName ?? '',
                     input: resolvedInput,
                     propertySettings: {},
-                    errorHandlingOptions: { continueOnFailure: { value: false }, retryOnFailure: { value: false } },
+                    errorHandlingOptions: mcpUtils.buildErrorHandlingOptions({ continueOnFailure: step.continueOnFailure, retryOnFailure: step.retryOnFailure }),
                 },
             }
         case FlowActionType.LOOP_ON_ITEMS:

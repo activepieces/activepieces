@@ -36,7 +36,7 @@ for i in $(seq 1 "$NUM_REQUESTS"); do
     -d '{"test":true}' \
     "http://$BASE_URL/api/v1/webhooks/$FLOW_ID/sync")
 
-  BODY=$(echo "$RESPONSE" | head -n -1)
+  BODY=$(echo "$RESPONSE" | sed '$d')
   STATUS=$(echo "$RESPONSE" | tail -n 1)
 
   if [ "$STATUS" = "200" ] && [ "$BODY" = "$EXPECTED_BODY" ]; then

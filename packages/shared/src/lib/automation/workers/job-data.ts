@@ -8,7 +8,7 @@ import { FlowVersion } from '../flows/flow-version'
 import { FlowTriggerType } from '../flows/triggers/trigger'
 import { PiecePackage } from '../pieces/piece'
 
-export const LATEST_JOB_DATA_SCHEMA_VERSION = 8
+export const LATEST_JOB_DATA_SCHEMA_VERSION = 9
 
 export const InlineJobPayload = z.object({
     type: z.literal('inline'),
@@ -126,7 +126,6 @@ export const ExecuteFlowJobData = z.object({
     streamStepProgress: z.nativeEnum(StreamStepProgress),
     stepNameToTest: z.string().optional(),
     sampleData: z.record(z.string(), z.unknown()).optional(),
-    logsUploadUrl: z.string(),
     logsFileId: z.string(),
     traceContext: z.record(z.string(), z.string()).optional(),
 })

@@ -295,6 +295,33 @@ async function fillDefaultsForMissingOptionalProps({ settings, platformId, log }
     }
 }
 
+function buildErrorHandlingOptions({ continueOnFailure, retryOnFailure }: {
+    continueOnFailure?: boolean
+    retryOnFailure?: boolean
+}): { continueOnFailure: { value: boolean }, retryOnFailure: { value: boolean } } {
+    return {
+        continueOnFailure: { value: continueOnFailure ?? false },
+        retryOnFailure: { value: retryOnFailure ?? false },
+    }
+}
+
+async function resolveLatestPieceVersion({ pieceName, projectId, platformId, log }: {
+    pieceName: string
+    projectId: string
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<ResolveLatestPieceVersionResult> {
+    const normalized = normalizePieceName(pieceName)
+    if (isNil(normalized)) {
+        return { error: mcpToolError('Validation failed', new Error('pieceName is required')) }
+    }
+    const piece = await pieceMetadataService(log).get({ name: normalized, projectId, platformId })
+    if (isNil(piece)) {
+        return { error: { content: [{ type: 'text', text: `❌ Piece "${normalized}" not found. Use ap_list_pieces to get valid piece names.` }] } }
+    }
+    return { pieceVersion: `~${piece.version}`, normalizedPieceName: normalized }
+}
+
 function withTimeout<T>({ promise, ms }: { promise: Promise<T>, ms: number }): Promise<T> {
     let timer: ReturnType<typeof setTimeout>
     return Promise.race([
@@ -318,6 +345,8 @@ export const mcpUtils = {
     findResolvableProps,
     validateAuth,
     fillDefaultsForMissingOptionalProps,
+    buildErrorHandlingOptions,
+    resolveLatestPieceVersion,
     withTimeout,
     STEP_REFERENCE_HINT,
     BRANCH_CONDITIONS_INPUT_SCHEMA,
@@ -375,3 +404,7 @@ type LookupPieceComponentResult =
 type ResolveRouterStepResult =
     | { routerStep: RouterAction, error?: never }
     | { error: McpToolResult, routerStep?: never }
+
+type ResolveLatestPieceVersionResult =
+    | { pieceVersion: string, normalizedPieceName: string, error?: never }
+    | { error: McpToolResult, pieceVersion?: never, normalizedPieceName?: never }
