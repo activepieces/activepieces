@@ -118,7 +118,7 @@ const TestPanelHeader = ({
                   <Play className="size-4 fill-current" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom">{t('Re-test step')}</TooltipContent>
+              <TooltipContent side="top">{t('Re-test step')}</TooltipContent>
             </Tooltip>
           )}
           <Tooltip>
@@ -133,7 +133,7 @@ const TestPanelHeader = ({
                 <Copy className="size-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom">{copyTooltip}</TooltipContent>
+            <TooltipContent side="top">{copyTooltip}</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -147,7 +147,7 @@ const TestPanelHeader = ({
                 <Download className="size-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom">{downloadTooltip}</TooltipContent>
+            <TooltipContent side="top">{downloadTooltip}</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -160,7 +160,7 @@ const TestPanelHeader = ({
                 <ToggleIcon className="size-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom">{toggleLabel}</TooltipContent>
+            <TooltipContent side="top">{toggleLabel}</TooltipContent>
           </Tooltip>
           {!hideClose && (
             <Tooltip>
@@ -169,14 +169,12 @@ const TestPanelHeader = ({
                   variant="ghost"
                   size="sm"
                   onClick={() => setTestPanelOpen(false)}
-                  aria-label={t('Hide test panel')}
+                  aria-label={t('Minimize')}
                 >
                   <Minus className="size-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom">
-                {t('Hide test panel')}
-              </TooltipContent>
+              <TooltipContent side="top">{t('Minimize')}</TooltipContent>
             </Tooltip>
           )}
         </div>

@@ -111,8 +111,10 @@ const PieceActionCTAButton = ({
     testStepHooks.useTestAction({ currentStep });
 
   const isTesting = stepIsRunning || isWaitingTestResult;
-  const disabled = !stepIsValid || saving || isLoadingDynamicProperties;
   const showsViewState = sampleDataExists || hasRun;
+  const disabled = showsViewState
+    ? saving
+    : !stepIsValid || saving || isLoadingDynamicProperties;
   const canAutoFireTest = !isReturnResponseAndWaitWebhook && !showsViewState;
 
   const handleClick = () => {
@@ -136,7 +138,10 @@ const PieceActionCTAButton = ({
 
   return (
     <CTAShell>
-      <TestButtonTooltip saving={saving} invalid={!stepIsValid}>
+      <TestButtonTooltip
+        saving={saving}
+        invalid={!showsViewState && !stepIsValid}
+      >
         <Button
           onClick={handleClick}
           disabled={disabled}
