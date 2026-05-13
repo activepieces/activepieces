@@ -78,9 +78,13 @@ function createChatTools({ onSessionTitle, onSetProjectContext, projects, platfo
                 if (!availableProjectIds.includes(input.projectId)) {
                     return { content: [{ type: 'text', text: `❌ Project ${input.projectId} is not accessible.` }] }
                 }
-                const parsedInput = typeof input.input === 'string'
-                    ? parseToJsonIfPossible(input.input) as Record<string, unknown>
-                    : input.input
+                let parsedInput = input.input
+                if (typeof parsedInput === 'string') {
+                    const parsed = parseToJsonIfPossible(parsedInput)
+                    if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+                        parsedInput = parsed as Record<string, unknown>
+                    }
+                }
                 return executeAdhocAction({
                     projectId: input.projectId,
                     pieceName: input.pieceName,

@@ -175,7 +175,7 @@ async function lookupPieceComponent({ pieceName, componentName, componentType, p
     const component = componentMap[componentName]
     if (isNil(component)) {
         const available = Object.keys(componentMap)
-        const suggestion = available.find((name) => name.includes(componentName) || componentName.includes(name))
+        const suggestion = available.find((name) => name.includes(componentName))
         const hint = suggestion ? ` Did you mean "${suggestion}"?` : ''
         return { error: { content: [{ type: 'text', text: `❌ ${label} "${componentName}" not found in "${normalized}".${hint} Available: ${available.join(', ')}` }] } }
     }
