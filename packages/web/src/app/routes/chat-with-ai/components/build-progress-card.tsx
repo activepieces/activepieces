@@ -40,16 +40,134 @@ const APPLY_TOOLS = new Set([
   'ap_update_step',
 ]);
 
+type BuildStepUpdate = {
+  phase: string;
+  stepIndex?: number;
+  status?: string;
+};
+
 function computeTargetStatuses({
   steps,
   toolParts,
+  buildStepUpdates,
 }: {
   steps: BuildProgressData['steps'];
   toolParts: DynamicToolPart[];
+  buildStepUpdates?: BuildStepUpdate[];
 }): StepStatus[] {
+  if (buildStepUpdates && buildStepUpdates.length > 0) {
+    return computeFromProgressEvents({ steps, updates: buildStepUpdates });
+  }
+
   const buildTools = toolParts.filter((t) => isBuildTool(t.toolName));
   if (buildTools.length === 0) return steps.map(() => 'queued');
 
+  // ap_build_automation wraps the entire build in a single tool call (subagent pattern)
+  const buildAutomationTool = buildTools.find(
+    (t) => t.toolName === 'ap_build_automation',
+  );
+  if (buildAutomationTool) {
+    return computeSubagentStatuses({ steps, buildAutomationTool });
+  }
+
+  // Legacy: individual build tool calls (inline building)
+  return computeInlineStatuses({ steps, buildTools });
+}
+
+function computeFromProgressEvents({
+  steps,
+  updates,
+}: {
+  steps: BuildProgressData['steps'];
+  updates: BuildStepUpdate[];
+}): StepStatus[] {
+  const statuses: StepStatus[] = steps.map(() => 'queued');
+  const lastUpdate = updates[updates.length - 1];
+
+  if (lastUpdate.phase === 'done') {
+    statuses.fill(lastUpdate.status === 'error' ? 'error' : 'ready');
+    return statuses;
+  }
+
+  for (const update of updates) {
+    if (
+      update.stepIndex !== undefined &&
+      update.stepIndex < statuses.length &&
+      update.status
+    ) {
+      const mapped =
+        update.status === 'ready'
+          ? 'ready'
+          : update.status === 'validating'
+          ? 'validating'
+          : update.status === 'error'
+          ? 'error'
+          : 'configuring';
+      statuses[update.stepIndex] = mapped;
+    }
+  }
+
+  const firstQueued = statuses.indexOf('queued');
+  if (firstQueued > 0 && lastUpdate.phase === 'building') {
+    statuses[firstQueued] = 'configuring';
+  }
+
+  if (lastUpdate.phase === 'validating') {
+    for (let i = 0; i < statuses.length; i++) {
+      if (statuses[i] !== 'ready' && statuses[i] !== 'error') {
+        statuses[i] = 'validating';
+      }
+    }
+  }
+
+  if (lastUpdate.phase === 'testing') {
+    for (let i = 0; i < statuses.length; i++) {
+      if (statuses[i] !== 'ready' && statuses[i] !== 'error') {
+        statuses[i] = 'validating';
+      }
+    }
+  }
+
+  return statuses;
+}
+
+function computeSubagentStatuses({
+  steps,
+  buildAutomationTool,
+}: {
+  steps: BuildProgressData['steps'];
+  buildAutomationTool: DynamicToolPart;
+}): StepStatus[] {
+  const statuses: StepStatus[] = steps.map(() => 'queued');
+
+  if (buildAutomationTool.state === 'output-error') {
+    statuses.fill('error');
+    return statuses;
+  }
+
+  if (buildAutomationTool.state === 'output-available') {
+    const output = buildAutomationTool.output;
+    const hasFailed =
+      typeof output === 'object' &&
+      output !== null &&
+      'success' in output &&
+      output.success === false;
+    statuses.fill(hasFailed ? 'error' : 'ready');
+    return statuses;
+  }
+
+  // Tool is running (input-streaming or input-available) — animate progress
+  statuses.fill('configuring');
+  return statuses;
+}
+
+function computeInlineStatuses({
+  steps,
+  buildTools,
+}: {
+  steps: BuildProgressData['steps'];
+  buildTools: DynamicToolPart[];
+}): StepStatus[] {
   const statuses: StepStatus[] = steps.map(() => 'queued');
 
   const validateFlowTool = buildTools.find(
@@ -119,7 +237,7 @@ function findLastToolForCurrentStep(
     if (
       tool.toolName === 'ap_validate_flow' ||
       tool.toolName === 'ap_create_flow' ||
-      tool.toolName === 'ap_build_flow'
+      tool.toolName === 'ap_build_automation'
     )
       continue;
     // Stop at completed apply tools — errors before this belong to previous steps
@@ -241,6 +359,7 @@ export function BuildProgressCard({
   progress,
   toolParts,
   allParts,
+  buildStepUpdates,
   isStreaming = false,
 }: BuildProgressCardProps) {
   const reduce = useReducedMotion();
@@ -252,8 +371,12 @@ export function BuildProgressCard({
 
   const targetStatuses = useMemo(
     () =>
-      computeTargetStatuses({ steps: progress.steps, toolParts: dynamicParts }),
-    [progress.steps, dynamicParts],
+      computeTargetStatuses({
+        steps: progress.steps,
+        toolParts: dynamicParts,
+        buildStepUpdates,
+      }),
+    [progress.steps, dynamicParts, buildStepUpdates],
   );
 
   const stepStatuses = useAnimatedStatuses({
@@ -478,5 +601,6 @@ type BuildProgressCardProps = {
   progress: BuildProgressData;
   toolParts: ChatUIMessage['parts'];
   allParts?: ChatUIMessage['parts'];
+  buildStepUpdates?: BuildStepUpdate[];
   isStreaming?: boolean;
 };

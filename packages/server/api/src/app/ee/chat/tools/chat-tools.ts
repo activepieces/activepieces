@@ -1,5 +1,6 @@
 import { FlowRunStatus, FlowStatus, isNil, Project, RunEnvironment } from '@activepieces/shared'
-import { tool } from 'ai'
+import { SharedV3ProviderOptions } from '@ai-sdk/provider'
+import { LanguageModel, tool, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
@@ -10,6 +11,8 @@ import { executeAdhocAction, formatRunSummary } from '../../../mcp/tools/flow-ru
 import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { tableService } from '../../../tables/table/table.service'
+import { builderAgent } from '../agents/builder-agent'
+import { researcherAgent } from '../agents/researcher-agent'
 import { chatPrompt } from '../prompt/chat-prompt'
 
 const RESOURCE_TYPES = ['flows', 'tables', 'runs', 'connections'] as const
@@ -328,6 +331,123 @@ async function listResourceForProject({ resource, projectId, status, log }: {
     }
 }
 
+const MAX_REFINEMENT_ITERATIONS = 2
+const MIN_STEPS_FOR_EVALUATION = 3
+
+function createBuilderTool({ model, allTools, rawMcpTools, providerOptions, writer, log }: CreateBuilderToolParams) {
+    const buildTools = builderAgent.filterBuildTools({ allTools, rawMcpTools })
+
+    return {
+        ap_build_automation: tool({
+            description: 'Delegate automation building to the builder agent. Use after the user approves an automation-proposal and connections are resolved. Provide the full build specification with flow name, project ID, and all steps with their piece names, action/trigger names, connection external IDs, and any configuration the user provided.',
+            inputSchema: z.object({
+                flowName: z.string().describe('Name for the new flow'),
+                projectId: z.string().describe('Project ID to build in'),
+                steps: z.array(z.object({
+                    type: z.enum(['trigger', 'action']).describe('Whether this is the trigger or an action step'),
+                    pieceName: z.string().describe('Full piece name, e.g. "@activepieces/piece-gmail"'),
+                    actionName: z.string().optional().describe('Action name for action steps'),
+                    triggerName: z.string().optional().describe('Trigger name for trigger steps'),
+                    connectionExternalId: z.string().optional().describe('Connection externalId for auth'),
+                    config: z.record(z.string(), z.unknown()).optional().describe('Pre-filled configuration values from user input'),
+                })).min(1).describe('Steps in order: trigger first, then actions'),
+            }),
+            execute: async (input) => {
+                log.info({ flowName: input.flowName, stepCount: input.steps.length }, 'Builder agent starting')
+                const buildResult = await builderAgent.executeBuild({
+                    model,
+                    buildTools,
+                    providerOptions,
+                    spec: input,
+                    writer,
+                    log,
+                })
+                log.info({ flowId: buildResult.flowId, success: buildResult.success, stepsUsed: buildResult.stepsUsed }, 'Builder agent finished')
+
+                if (!buildResult.success || !buildResult.flowId || input.steps.length < MIN_STEPS_FOR_EVALUATION) {
+                    return {
+                        success: buildResult.success,
+                        flowId: buildResult.flowId,
+                        summary: buildResult.summary,
+                        stepsUsed: buildResult.stepsUsed,
+                        evaluation: null,
+                    }
+                }
+
+                let evaluation = await builderAgent.evaluateBuild({
+                    model,
+                    spec: input,
+                    builderSteps: buildResult.builderSteps,
+                    log,
+                })
+
+                for (let i = 0; i < MAX_REFINEMENT_ITERATIONS; i++) {
+                    if (!evaluation || evaluation.overallVerdict !== 'fixable') break
+
+                    const fixableIssues = evaluation.misconfiguredSteps.filter((s) => s.fixable)
+                    if (fixableIssues.length === 0) break
+
+                    log.info({ iteration: i + 1, issueCount: fixableIssues.length }, 'Builder fix iteration starting')
+                    const fixResult = await builderAgent.executeFix({
+                        model,
+                        buildTools,
+                        providerOptions,
+                        flowId: buildResult.flowId,
+                        issues: fixableIssues,
+                        log,
+                    })
+                    log.info({ iteration: i + 1, stepsUsed: fixResult.stepsUsed }, 'Builder fix iteration finished')
+
+                    evaluation = await builderAgent.evaluateBuild({
+                        model,
+                        spec: input,
+                        builderSteps: buildResult.builderSteps,
+                        log,
+                    })
+                }
+
+                return {
+                    success: buildResult.success,
+                    flowId: buildResult.flowId,
+                    summary: buildResult.summary,
+                    stepsUsed: buildResult.stepsUsed,
+                    evaluation,
+                }
+            },
+        }),
+    }
+}
+
+function createResearcherTool({ model, allTools, providerOptions, log }: CreateSubagentToolParams) {
+    const researchTools = researcherAgent.filterResearchTools({ allTools })
+
+    return {
+        ap_research: tool({
+            description: 'Delegate complex investigation to the research agent. Use for deep piece discovery ("What CRM integrations exist?"), flow debugging ("Why is my flow failing?"), or multi-flow analysis ("Which flows use Slack?"). Do NOT use for simple lookups that need just 1-2 tool calls.',
+            inputSchema: z.object({
+                task: z.string().describe('What to investigate, e.g. "find all integrations for CRM" or "debug why flow X is failing"'),
+                context: z.string().optional().describe('Additional context from the conversation to help the researcher'),
+            }),
+            execute: async (input) => {
+                const fullTask = input.context
+                    ? `${input.task}\n\nContext: ${input.context}`
+                    : input.task
+
+                log.info({ task: input.task }, 'Researcher agent starting')
+                const result = await researcherAgent.executeResearch({
+                    model,
+                    researchTools,
+                    providerOptions,
+                    task: fullTask,
+                    log,
+                })
+                log.info({ stepsUsed: result.stepsUsed }, 'Researcher agent finished')
+                return result
+            },
+        }),
+    }
+}
+
 type CreateChatToolsParams = {
     onSessionTitle: (title: string) => void
     onSetProjectContext: (projectId: string | null) => Promise<void>
@@ -336,4 +456,20 @@ type CreateChatToolsParams = {
     log: FastifyBaseLogger
 }
 
-export { createChatTools }
+type CreateBuilderToolParams = {
+    model: LanguageModel
+    allTools: ToolSet
+    rawMcpTools: Record<string, unknown>
+    providerOptions: SharedV3ProviderOptions
+    writer: { write(part: Record<string, unknown>): void }
+    log: FastifyBaseLogger
+}
+
+type CreateSubagentToolParams = {
+    model: LanguageModel
+    allTools: ToolSet
+    providerOptions: SharedV3ProviderOptions
+    log: FastifyBaseLogger
+}
+
+export { createChatTools, createBuilderTool, createResearcherTool }
