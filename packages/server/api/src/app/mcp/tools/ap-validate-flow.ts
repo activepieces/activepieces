@@ -19,7 +19,7 @@ export const apValidateFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
         permission: Permission.READ_FLOW,
         description: 'Validate a flow for structural issues without publishing. Checks step validity, template references, and empty branches. Returns a detailed report with all issues found. Use this before ap_lock_and_publish to catch problems early.',
         inputSchema: validateFlowInput.shape,
-        annotations: { readOnlyHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {
                 const { flowId } = validateFlowInput.parse(args)
@@ -30,7 +30,17 @@ export const apValidateFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                 }
 
                 const result = validateFlow({ trigger: flow.version.trigger })
-                return { content: [{ type: 'text', text: formatValidationResult({ result, flowDisplayName: flow.version.displayName }) }] }
+                return {
+                    content: [{ type: 'text', text: formatValidationResult({ result, flowDisplayName: flow.version.displayName }) }],
+                    structuredContent: {
+                        valid: result.issues.length === 0 && result.validSteps > 0,
+                        totalSteps: result.totalSteps,
+                        validSteps: result.validSteps,
+                        invalidSteps: result.invalidSteps,
+                        skippedSteps: result.skippedSteps,
+                        issues: result.issues.map(i => ({ category: i.category, stepName: i.stepName, message: i.message })),
+                    },
+                }
             }
             catch (err) {
                 return mcpUtils.mcpToolError('Flow validation failed', err)
@@ -174,9 +184,13 @@ const CATEGORY_LABELS: Record<ValidationIssue['category'], string> = {
 }
 
 function formatValidationResult({ result, flowDisplayName }: { result: ValidationResult, flowDisplayName: string }): string {
-    if (result.issues.length === 0) {
+    if (result.issues.length === 0 && result.validSteps > 0) {
         const skippedNote = result.skippedSteps > 0 ? `, ${result.skippedSteps} skipped` : ''
         return `✅ Flow "${flowDisplayName}" is ready to publish (${result.totalSteps} steps, ${result.validSteps} valid${skippedNote}).`
+    }
+
+    if (result.issues.length === 0 && result.validSteps === 0) {
+        return `⚠️ Flow "${flowDisplayName}" has no valid steps (${result.totalSteps} total). Configure the trigger and actions before publishing.`
     }
 
     const grouped = new Map<ValidationIssue['category'], ValidationIssue[]>()

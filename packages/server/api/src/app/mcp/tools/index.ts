@@ -7,6 +7,7 @@ import { apChangeFlowStatusTool } from './ap-change-flow-status'
 import { apCreateFlowTool } from './ap-create-flow'
 import { apCreateTableTool } from './ap-create-table'
 import { apDeleteBranchTool } from './ap-delete-branch'
+import { apDeleteFlowTool } from './ap-delete-flow'
 import { apDeleteRecordsTool } from './ap-delete-records'
 import { apDeleteStepTool } from './ap-delete-step'
 import { apDeleteTableTool } from './ap-delete-table'
@@ -25,7 +26,9 @@ import { apListTablesTool } from './ap-list-tables'
 import { apLockAndPublishTool } from './ap-lock-and-publish'
 import { apManageFieldsTool } from './ap-manage-fields'
 import { apManageNotesTool } from './ap-manage-notes'
+import { apReadStepCodeTool } from './ap-read-step-code'
 import { apRenameFlowTool } from './ap-rename-flow'
+import { apResolvePropertyOptionsTool } from './ap-resolve-property-options'
 import { apRetryRunTool } from './ap-retry-run'
 import { apRunActionTool } from './ap-run-action'
 import { apSetupGuideTool } from './ap-setup-guide'
@@ -41,9 +44,11 @@ import { apValidateStepConfigTool } from './ap-validate-step-config'
 export const LOCKED_TOOL_NAMES: string[] = [
     'ap_list_flows',
     'ap_flow_structure',
+    'ap_read_step_code',
     'ap_validate_flow',
     'ap_list_pieces',
     'ap_get_piece_props',
+    'ap_resolve_property_options',
     'ap_validate_step_config',
     'ap_list_connections',
     'ap_list_ai_models',
@@ -71,6 +76,7 @@ export const ALL_CONTROLLABLE_TOOL_NAMES: string[] = [
     'ap_delete_branch',
     'ap_lock_and_publish',
     'ap_change_flow_status',
+    'ap_delete_flow',
     'ap_manage_notes',
     'ap_create_table',
     'ap_delete_table',
@@ -91,9 +97,11 @@ export const activepiecesTools = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
     apRenameFlowTool(mcp, log),
     apListFlowsTool(mcp, log),
     apFlowStructureTool(mcp, log),
+    apReadStepCodeTool(mcp, log),
     apValidateFlowTool(mcp, log),
     apListPiecesTool(mcp, log),
     apGetPiecePropsTool(mcp, log),
+    apResolvePropertyOptionsTool(mcp, log),
     apValidateStepConfigTool(mcp, log),
     apListConnectionsTool(mcp, log),
     apUpdateTriggerTool(mcp, log),
@@ -105,6 +113,7 @@ export const activepiecesTools = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
     apDeleteBranchTool(mcp, log),
     apLockAndPublishTool(mcp, log),
     apChangeFlowStatusTool(mcp, log),
+    apDeleteFlowTool(mcp, log),
     apManageNotesTool(mcp, log),
     apListAiModelsTool(mcp, log),
     apListTablesTool(mcp, log),

@@ -23,7 +23,7 @@ export const apListFlowsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
             status: z.enum(Object.values(FlowStatus) as [FlowStatus, ...FlowStatus[]]).optional().describe('Filter by status: ENABLED or DISABLED.'),
             name: z.string().optional().describe('Filter by flow name (partial match).'),
         },
-        annotations: { readOnlyHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {
                 const { limit, status, name } = listFlowsInput.parse(args)
@@ -36,11 +36,24 @@ export const apListFlowsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
                 })
                 const lines = flows.data.map((flow) => formatFlowLine(flow))
                 const filterNote = (status || name) ? ' (filtered)' : ''
+                const structured = {
+                    flows: flows.data.map((flow) => ({
+                        id: flow.id,
+                        displayName: flow.version.displayName,
+                        status: flow.status,
+                        published: !isNil(flow.publishedVersionId),
+                        triggerType: flow.version.trigger.type === FlowTriggerType.PIECE
+                            ? (flow.version.trigger.settings.pieceName ?? 'piece (unconfigured)')
+                            : flow.version.trigger.type,
+                    })),
+                    count: flows.data.length,
+                }
                 return {
                     content: [{
                         type: 'text',
                         text: `✅ Listed ${lines.length} flow(s)${filterNote}:\n${lines.join('\n')}`,
                     }],
+                    structuredContent: structured,
                 }
             }
             catch (err) {

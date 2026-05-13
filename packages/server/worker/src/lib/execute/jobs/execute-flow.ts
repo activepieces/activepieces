@@ -118,7 +118,6 @@ function buildFlowOperation(
         httpRequestId: data.httpRequestId ?? null,
         streamStepProgress: data.streamStepProgress,
         stepNameToTest: data.stepNameToTest ?? null,
-        logsUploadUrl: data.logsUploadUrl,
         logsFileId: data.logsFileId,
         timeoutInSeconds,
         platformId: data.platformId,

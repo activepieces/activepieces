@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { API_URL } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -32,36 +32,18 @@ export function useToolApproval({
 }: {
   pendingApprovalRequest: ApprovalRequest | null;
 }) {
-  const autoApproveRef = useRef(false);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     if (!pendingApprovalRequest) return;
     setDismissed(false);
-    if (autoApproveRef.current) {
-      void sendApprovalDecision({
-        gateId: pendingApprovalRequest.gateId,
-        approved: true,
-      });
-    }
   }, [pendingApprovalRequest]);
 
-  const hasActiveApproval =
-    pendingApprovalRequest !== null && !autoApproveRef.current && !dismissed;
+  const hasActiveApproval = pendingApprovalRequest !== null && !dismissed;
 
   const approve = useCallback(() => {
     if (!pendingApprovalRequest) return;
     setDismissed(true);
-    void sendApprovalDecision({
-      gateId: pendingApprovalRequest.gateId,
-      approved: true,
-    });
-  }, [pendingApprovalRequest]);
-
-  const approveAndRemember = useCallback(() => {
-    if (!pendingApprovalRequest) return;
-    setDismissed(true);
-    autoApproveRef.current = true;
     void sendApprovalDecision({
       gateId: pendingApprovalRequest.gateId,
       approved: true,
@@ -90,7 +72,6 @@ export function useToolApproval({
     hasActiveApproval,
     approvalDisplayName: pendingApprovalRequest?.displayName ?? null,
     approve,
-    approveAndRemember,
     reject,
     dismiss,
   };
