@@ -61,17 +61,26 @@ describe('workerGroupService', () => {
             const result = await service.getWorkerGroupId({ platformId: 'p1' })
 
             expect(result).toBe('canary')
-            expect(mockDistributedStorePut).toHaveBeenCalledWith('platform:p1:worker_group_id', 'canary')
+            expect(mockDistributedStorePut).toHaveBeenCalledWith('platform:p1:worker_group_id', 'canary', expect.any(Number))
         })
 
-        it('returns null when platform has no worker group', async () => {
+        it('returns null and caches sentinel when platform has no worker group', async () => {
             mockDistributedStoreGet.mockResolvedValue(null)
             mockFindOne.mockResolvedValue({ workerGroupId: null })
 
             const result = await service.getWorkerGroupId({ platformId: 'p2' })
 
             expect(result).toBeNull()
-            expect(mockDistributedStorePut).not.toHaveBeenCalled()
+            expect(mockDistributedStorePut).toHaveBeenCalledWith('platform:p2:worker_group_id', '__none__', expect.any(Number))
+        })
+
+        it('returns null without hitting DB when sentinel is cached', async () => {
+            mockDistributedStoreGet.mockResolvedValue('__none__')
+
+            const result = await service.getWorkerGroupId({ platformId: 'p3' })
+
+            expect(result).toBeNull()
+            expect(mockFindOne).not.toHaveBeenCalled()
         })
 
         it('returns cached value without hitting DB', async () => {

@@ -373,7 +373,7 @@ function getMaxContextTokens({ provider }: { provider: AIProviderName | undefine
 }
 
 export const ACTIVEPIECES_CHAT_TIERS = [
-    { id: 'fast', label: 'Fast', modelId: 'google/gemini-2.5-flash' },
+    { id: 'fast', label: 'Fast', modelId: 'deepseek/deepseek-v4-flash:atlascloud' },
     { id: 'smart', label: 'Smart', modelId: 'anthropic/claude-sonnet-4.6' },
     { id: 'premium', label: 'Premium', modelId: 'anthropic/claude-opus-4.7' },
 ] as const

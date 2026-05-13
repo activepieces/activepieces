@@ -1,6 +1,8 @@
 import { ApId,
     AppConnectionOwners,
     AppConnectionScope,
+    AppConnectionStatus,
+    AppConnectionType,
     AppConnectionWithoutSensitiveData,
     ApplicationEventName,
     GetOAuth2AuthorizationUrlRequestBody,
@@ -8,6 +10,7 @@ import { ApId,
     ListAppConnectionOwnersRequestQuery,
     ListAppConnectionsRequestQuery,
     Permission,
+    PLACEHOLDER_CONNECTION_TYPE,
     PrincipalType,
     ReplaceAppConnectionsRequestBody,
     SeekPage,
@@ -28,19 +31,30 @@ import { AppConnectionEntity } from './app-connection.entity'
 
 export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, done) => {
     app.post('/', UpsertAppConnectionRequest, async (request, reply) => {
-        const appConnection = await appConnectionService(request.log).upsert({
+        const ownerId = await securityHelper.getUserIdFromRequest(request)
+        const baseUpsert = {
             platformId: request.principal.platform.id,
             projectIds: [request.projectId],
-            type: request.body.type,
             externalId: request.body.externalId,
-            value: request.body.value,
             displayName: request.body.displayName,
             pieceName: request.body.pieceName,
-            ownerId: await securityHelper.getUserIdFromRequest(request),
+            ownerId,
             scope: AppConnectionScope.PROJECT,
             metadata: request.body.metadata,
             pieceVersion: request.body.pieceVersion,
-        })
+        }
+        const appConnection = request.body.type === PLACEHOLDER_CONNECTION_TYPE
+            ? await appConnectionService(request.log).upsert({
+                ...baseUpsert,
+                type: AppConnectionType.NO_AUTH,
+                value: { type: AppConnectionType.NO_AUTH },
+                status: AppConnectionStatus.MISSING,
+            })
+            : await appConnectionService(request.log).upsert({
+                ...baseUpsert,
+                type: request.body.type,
+                value: request.body.value,
+            })
         applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.CONNECTION_UPSERTED,
             data: {

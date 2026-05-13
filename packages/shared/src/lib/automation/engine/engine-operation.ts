@@ -104,7 +104,6 @@ type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     streamStepProgress: StreamStepProgress
     stepNameToTest: string | null
     sampleData?: Record<string, unknown>
-    logsUploadUrl?: string
     logsFileId?: string
 }
 
