@@ -6,9 +6,12 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Eye, Play } from 'lucide-react';
+import { useContext } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
+
+import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
 
 import { TestButtonTooltip } from './test-step-tooltip';
 import { testStepHooks } from './utils/test-step-hooks';
@@ -103,17 +106,23 @@ const PieceActionCTAButton = ({
     currentStep.settings.actionName ===
       'return_response_and_wait_for_next_webhook';
   const stepIsValid = currentStep.valid !== false;
+  const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
   const { mutate: testAction, isPending: isWaitingTestResult } =
     testStepHooks.useTestAction({ currentStep });
 
   const isTesting = stepIsRunning || isWaitingTestResult;
-  const disabled = !stepIsValid || saving;
+  const disabled = !stepIsValid || saving || isLoadingDynamicProperties;
   const showsViewState = sampleDataExists || hasRun;
   const canAutoFireTest = !isReturnResponseAndWaitWebhook && !showsViewState;
 
   const handleClick = () => {
     onOpenPanel();
-    if (canAutoFireTest && !isTesting && stepIsValid) {
+    if (
+      canAutoFireTest &&
+      !isTesting &&
+      stepIsValid &&
+      !isLoadingDynamicProperties
+    ) {
       testAction(undefined);
     }
   };

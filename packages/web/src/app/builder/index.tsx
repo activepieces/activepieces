@@ -49,6 +49,7 @@ const BuilderPage = () => {
     removeAllStepTestsListeners,
     selectedStep,
     testPanelView,
+    isTestPanelOpen,
   ] = useBuilderStateContext((state) => [
     state.flowVersion,
     state.rightSidebar,
@@ -59,6 +60,7 @@ const BuilderPage = () => {
       state.flowVersion.trigger,
     ),
     state.testPanelView,
+    state.isTestPanelOpen,
   ]);
   useEffect(() => {
     return () => {
@@ -76,7 +78,8 @@ const BuilderPage = () => {
   }, []);
   const isSplitForPiece =
     rightSidebar === RightSideBarType.PIECE_SETTINGS &&
-    testPanelView === 'split';
+    testPanelView === 'split' &&
+    isTestPanelOpen;
   const preferredSize = isSplitForPiece
     ? SPLIT_MODE_SIDEBAR_SIZE
     : DEFAULT_SIDEBAR_SIZE;

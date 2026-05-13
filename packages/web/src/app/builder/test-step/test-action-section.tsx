@@ -133,7 +133,7 @@ const TestStepSectionImplementation = React.memo(
         )}
         {(sampleDataExists || isTesting) && (
           <TestSampleDataViewer
-            isValid={currentStep.valid || isLoadingDynamicProperties}
+            isValid={currentStep.valid && !isLoadingDynamicProperties}
             currentStep={currentStep}
             isTesting={isTesting}
             sampleData={sampleData}

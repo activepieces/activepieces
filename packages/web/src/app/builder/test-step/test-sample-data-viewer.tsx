@@ -70,7 +70,14 @@ export const TestSampleDataViewer = React.memo(
       sampleDataInput,
       consoleLogs,
     } = props;
-    const [activeTab, setActiveTab] = useState<ActiveTab>('Output');
+    const [requestedTab, setActiveTab] = useState<ActiveTab>('Output');
+    const hasInput = !isNil(sampleDataInput);
+    const hasLogs = isConsoleLogsValid(consoleLogs);
+    const activeTab: ActiveTab =
+      (requestedTab === 'Input' && !hasInput) ||
+      (requestedTab === 'Logs' && !hasLogs)
+        ? 'Output'
+        : requestedTab;
 
     const isFailed =
       !isNil(errorMessage) ||

@@ -7,18 +7,21 @@ import {
   FlowRunStatus,
   isNil,
   ApFlagId,
+  LogSliceRef,
   StepOutputType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Info } from 'lucide-react';
+import { Download, Info } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { StepOutputSkeleton } from '@/app/components/step-output-skeleton';
+import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AgentTimeline } from '@/features/agents';
 import { flowRunUtils } from '@/features/flow-runs';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { formatUtils } from '@/lib/format-utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { DataDisplayTabs } from '../data-display/data-display-tabs';
@@ -57,6 +60,9 @@ export const FlowStepInputOutput = () => {
   const isStepRunning = selectedStepOutput?.status === StepOutputStatus.RUNNING;
   const isSlicedOutput =
     selectedStepOutput?.outputType === StepOutputType.SLICE;
+  const slicedOutputRef = isSlicedOutput
+    ? (selectedStepOutput?.output as LogSliceRef | undefined)
+    : undefined;
   const parsedOutput = isSlicedOutput
     ? undefined
     : selectedStepOutput?.errorMessage ??
@@ -114,15 +120,15 @@ export const FlowStepInputOutput = () => {
   const activeData =
     activeTab === 'input'
       ? selectedStepOutput.input
-      : activeTab === 'timeline'
-      ? selectedStepOutput.output
-      : parsedOutput;
+      : activeTab === 'output'
+      ? parsedOutput
+      : undefined;
   const activeLabel =
     activeTab === 'input'
       ? t('Input')
-      : activeTab === 'timeline'
-      ? t('Timeline')
-      : t('Output');
+      : activeTab === 'output'
+      ? t('Output')
+      : undefined;
 
   return (
     <div className="h-full flex flex-col">
@@ -165,6 +171,8 @@ export const FlowStepInputOutput = () => {
           <TabsContent value="output">
             {isStepRunning ? (
               <StepOutputSkeleton className="p-4" />
+            ) : slicedOutputRef ? (
+              <SlicedOutputDownload slicedOutputRef={slicedOutputRef} />
             ) : (
               <DataDisplayTabs data={parsedOutput} title={t('Output')} />
             )}
@@ -174,6 +182,35 @@ export const FlowStepInputOutput = () => {
     </div>
   );
 };
+
+const SlicedOutputDownload = ({
+  slicedOutputRef,
+}: {
+  slicedOutputRef: LogSliceRef;
+}) => (
+  <div className="flex flex-col gap-3 p-4 bg-muted rounded-md">
+    <div className="flex items-start gap-2 text-sm">
+      <Info className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+      <span>
+        {t(
+          'Output is too large to display inline ({size}). Download to inspect.',
+          { size: formatUtils.formatStorageSize(slicedOutputRef.size) },
+        )}
+      </span>
+    </div>
+    <Button asChild variant="outline" size="sm" className="w-fit gap-2">
+      <a
+        href={slicedOutputRef.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        download
+      >
+        <Download className="w-4 h-4" />
+        {t('Download output')}
+      </a>
+    </Button>
+  </div>
+);
 
 function handleRunFailureOrEmptyLog(
   run: FlowRun | null,
