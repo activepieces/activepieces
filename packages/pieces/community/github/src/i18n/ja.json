@@ -152,14 +152,5 @@
   "Triggers when a new release is added.": "新しいリリースが追加されたときにトリガーします。",
   "Triggers when a new commit is pushed.": "新しいコミットがプッシュされたときにトリガーされます。",
   "Triggers when you are requested to review a pull request.": "プルリクエストを確認するよう要求されたときにトリガーします。",
-  "Triggers when you are mentioned in a comment.": "コメントで言及されたときにトリガーします。",
-  "Authenticate to GitHub. Platform admins can configure this with either OAuth App credentials or GitHub App credentials (Apps use the same authorize/token endpoints — only the client_id differs). When using a GitHub App, the listed scopes are ignored and the App's installation permissions apply instead.": "GitHub に認証します。 プラットフォーム管理者は、OAuth App 資格情報または GitHub App 資格情報を使用してこれを構成できます (アプリでは、同じ authorize/token エンドポイントを使用します — client_id のみが異なります)。 GitHub App を使用している場合、リストされたスコープは無視され、アプリのインストール権限が代わりに適用されます。",
-  "GitHub App": "GitHub App",
-  "Authenticate as a GitHub App installation. Calls are made by the App's bot identity (e.g. `app-name[bot]`). The App must be installed on the target repos with the permissions required by the actions you intend to run (e.g. Issues: Read & write, Contents: Read & write, Administration: Read & write for webhook triggers).": "GitHub アプリのインストールとして認証します。呼び出しは、アプリのボットID (例えば `app-name[bot]`)によって行われます。 アプリは、実行しようとしているアクションによって必要な権限を持つターゲットリポジトリにインストールされている必要があります (e. をクリックします。 問題: 読み取りと書き込み、コンテンツ: 読み取りと書き込み、管理: Webフックトリガーの読み取りと書き込み)。",
-  "App ID or Client ID": "アプリIDまたはクライアントID",
-  "Either the numeric App ID (e.g. `12345`) or the Client ID (e.g. `Iv23li...`) of your GitHub App. The Client ID is recommended for new Apps. Found at Settings → Developer settings → GitHub Apps → your app.": "GitHub アプリのアプリ ID (例 `12345`)またはクライアント ID (例 `Iv23li...`)のいずれかです。 クライアント ID は、新規のアプリケーションに推奨されます。設定 → 開発者設定 → GitHub アプリ → お使いのアプリで見つけられます。",
-  "Installation ID": "インストールID",
-  "The installation ID for the org/user where the App is installed. Visible in the installation URL: `…/installations/{id}`.": "アプリがインストールされているorg/userのインストールID。インストールURLに表示されます。`…/installations/{id}`。",
-  "Private Key": "プライベートキー",
-  "The PEM-encoded RSA private key generated for your GitHub App (paste the contents of the `.pem` file).": "GitHub アプリケーション用に生成された PEM エンコードされた RSA 秘密鍵(`.pem` ファイルの内容を貼り付けます)。"
+  "Triggers when you are mentioned in a comment.": "コメントで言及されたときにトリガーします。"
 }
