@@ -160,7 +160,6 @@ export const UpsertGlobalConnectionRequestBody =
         UpsertBasicAuthRequest.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
         UpsertCustomAuthRequest.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
         UpsertNoAuthRequest.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
-        UpsertPlaceholderConnectionRequest.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
     ])
 export type UpsertGlobalConnectionRequestBody = z.infer<typeof UpsertGlobalConnectionRequestBody>
 
