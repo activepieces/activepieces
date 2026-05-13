@@ -1,4 +1,4 @@
-import { FlowRunStatus, FlowStatus, isNil, parseToJsonIfPossible, Project, RunEnvironment } from '@activepieces/shared'
+import { AppConnectionKind, FlowRunStatus, FlowStatus, isNil, parseToJsonIfPossible, Project, RunEnvironment } from '@activepieces/shared'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { LanguageModel, tool, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'

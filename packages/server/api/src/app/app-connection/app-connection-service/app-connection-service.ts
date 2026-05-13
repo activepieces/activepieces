@@ -463,6 +463,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             cursorRequest: params.cursorRequest,
             limit: params.limit,
             externalIds: undefined,
+            kind: undefined,
         })
 
         const projectIdsToLookUp = unique(page.data.flatMap((connection) => connection.projectIds))
