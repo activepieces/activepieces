@@ -216,31 +216,32 @@ const NewProjectForm = ({
               {form.formState.errors.root.serverError.message}
             </FormMessage>
           )}
+          <DialogFooter>
+            <Button
+              variant={'outline'}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setOpen(false);
+              }}
+            >
+              {t('Cancel')}
+            </Button>
+            <Button
+              disabled={isPending}
+              loading={isPending}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                form.handleSubmit(handleCreate)(e);
+              }}
+            >
+              {t('Create Project')}
+            </Button>
+          </DialogFooter>
         </form>
       </Form>
-      <DialogFooter>
-        <Button
-          variant={'outline'}
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            setOpen(false);
-          }}
-        >
-          {t('Cancel')}
-        </Button>
-        <Button
-          disabled={isPending}
-          loading={isPending}
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            form.handleSubmit(handleCreate)(e);
-          }}
-        >
-          {t('Create Project')}
-        </Button>
-      </DialogFooter>
     </>
   );
 };
