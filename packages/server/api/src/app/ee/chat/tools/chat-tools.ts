@@ -374,11 +374,10 @@ function createBuilderTool({ model, allTools, rawMcpTools, providerOptions, writ
                     }
                 }
 
-                let currentSteps = buildResult.builderSteps
                 let evaluation = await builderAgent.evaluateBuild({
                     model,
                     spec: input,
-                    builderSteps: currentSteps,
+                    builderSteps: buildResult.builderSteps,
                     log,
                 })
 
@@ -399,11 +398,10 @@ function createBuilderTool({ model, allTools, rawMcpTools, providerOptions, writ
                     })
                     log.info({ iteration: i + 1, stepsUsed: fixResult.stepsUsed }, 'Builder fix iteration finished')
 
-                    currentSteps = fixResult.fixSteps
                     evaluation = await builderAgent.evaluateBuild({
                         model,
                         spec: input,
-                        builderSteps: currentSteps,
+                        builderSteps: buildResult.builderSteps,
                         log,
                     })
                 }
