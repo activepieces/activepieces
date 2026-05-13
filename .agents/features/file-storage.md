@@ -9,8 +9,7 @@ The File Storage Service is the central infrastructure for persisting binary fil
 - `packages/server/api/src/app/file/file.module.ts` — module registration, cleanup job scheduling
 - `packages/server/api/src/app/file/s3-helper.ts` — S3 client wrapper (upload, download, delete, signed URLs)
 - `packages/server/api/src/app/file/file-compressor.ts` — Zstd compress/decompress utilities
-- `packages/server/api/src/app/file/step-file/step-file.controller.ts` — step file upsert (engine) and signed download (public)
-- `packages/server/api/src/app/file/step-file/step-file.service.ts` — step file enrichment (generates download token)
+- `packages/server/api/src/app/file/files-controller.ts` — primary file upload/download (`/v1/files`) and legacy `signedStepFileController` redirect for `/v1/step-files/signed`
 - `packages/shared/src/lib/core/file/index.ts` — `File`, `FileType`, `FileCompression`, `FileLocation`, `FileId`
 
 ## Edition Availability
@@ -74,10 +73,9 @@ Relation: many-to-one with `project` (CASCADE on delete, FK `fk_file_project_id`
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| POST | `/` | engine | Upload a step output file during flow execution |
-| GET | `/signed` | public | Download a step file using a JWT token |
+| GET | `/signed` | public | Legacy signed download — validates the JWT token, then 302 redirects to `/v1/files/{fileId}?token=...` |
 
-The POST endpoint is called by piece runners to persist files produced during a step. The GET endpoint is used by end users to download the file; it validates the JWT token, then either streams data from DB/S3 or redirects to an S3 pre-signed URL.
+Step file uploads are handled by the engine via the unified `PUT /v1/files/:fileId` endpoint. The legacy `/signed` route remains as a thin redirect so older execution outputs continue to resolve through the canonical `/v1/files/:fileId` path (which handles DB streaming or S3 pre-signed redirect).
 
 ## Service Methods
 

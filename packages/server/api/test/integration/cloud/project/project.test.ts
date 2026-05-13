@@ -488,6 +488,77 @@ describe('Project API', () => {
             expect(responseBody?.code).toBe('AUTHORIZATION')
         })
 
+        it('Returns 404 and leaves data intact when a platform admin tries to delete a project from another platform', async () => {
+            // arrange — two independent platforms
+            const { mockOwner: attackerOwner, mockPlatform: attackerPlatform } = await mockAndSaveBasicSetup()
+            const { mockOwner: victimOwner, mockPlatform: victimPlatform } = await mockAndSaveBasicSetup()
+
+            const victimProject = createMockProject({ ownerId: victimOwner.id, platformId: victimPlatform.id })
+            await db.save('project', victimProject)
+
+            const victimFlow = createMockFlow({ projectId: victimProject.id })
+            await db.save('flow', victimFlow)
+
+            const attackerToken = await generateMockToken({
+                id: attackerOwner.id,
+                type: PrincipalType.USER,
+                platform: { id: attackerPlatform.id },
+            })
+
+            // act — attempt cross-tenant delete
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/api/v1/projects/${victimProject.id}`,
+                headers: { authorization: `Bearer ${attackerToken}` },
+            })
+
+            // assert — denied with ENTITY_NOT_FOUND (avoids cross-tenant existence enumeration)
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            expect(response?.json()?.code).toBe('ENTITY_NOT_FOUND')
+
+            // assert — victim project NOT soft-deleted
+            const victimProjectAfter = await databaseConnection().getRepository('project').findOne({
+                where: { id: victimProject.id },
+                withDeleted: true,
+            })
+            expect(victimProjectAfter?.deleted).toBeNull()
+
+            // assert — victim flow still exists
+            const victimFlowAfter = await databaseConnection().getRepository('flow').findOne({
+                where: { id: victimFlow.id },
+            })
+            expect(victimFlowAfter).not.toBeNull()
+        })
+
+        it('Returns 404 when a platform-scoped API key tries to delete a project from another platform', async () => {
+            // arrange — attacker has a SERVICE API key on platform A; victim project lives on platform B
+            const { mockPlatform: attackerPlatform } = await mockAndSaveBasicSetup()
+            const { mockOwner: victimOwner, mockPlatform: victimPlatform } = await mockAndSaveBasicSetup()
+
+            const attackerApiKey = createMockApiKey({ platformId: attackerPlatform.id })
+            await db.save('api_key', attackerApiKey)
+
+            const victimProject = createMockProject({ ownerId: victimOwner.id, platformId: victimPlatform.id })
+            await db.save('project', victimProject)
+
+            // act — SERVICE principal bypasses the admin-only middleware
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/api/v1/projects/${victimProject.id}`,
+                headers: { authorization: `Bearer ${attackerApiKey.value}` },
+            })
+
+            // assert — the new platform check still blocks it
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            expect(response?.json()?.code).toBe('ENTITY_NOT_FOUND')
+
+            const victimProjectAfter = await databaseConnection().getRepository('project').findOne({
+                where: { id: victimProject.id },
+                withDeleted: true,
+            })
+            expect(victimProjectAfter?.deleted).toBeNull()
+        })
+
     })
 
     describe('Platform Operator Access', () => {

@@ -69,9 +69,24 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         })).version
         validatePieceVersion(pieceVersion)
         await assertProjectIds(projectIds, platformId)
+
+        if (status === AppConnectionStatus.MISSING) {
+            const existingForPlaceholder = await appConnectionsRepo().findOneBy({
+                externalId,
+                scope,
+                platformId,
+                ...(projectIds ? { projectIds: ArrayContains(projectIds) } : {}),
+            })
+            if (!isNil(existingForPlaceholder) && existingForPlaceholder.status !== AppConnectionStatus.MISSING) {
+                log.info({ connectionId: existingForPlaceholder.id, pieceName, platformId, existingStatus: existingForPlaceholder.status }, 'Placeholder upsert skipped — non-missing connection already exists')
+                return this.removeSensitiveData(existingForPlaceholder)
+            }
+        }
+
         const validatedConnectionValue = await validateConnectionValue({
             value: await secretManagersService(log).resolveObject({ value, platformId, projectIds }),
             pieceName,
+            pieceVersion,
             projectId: projectIds[0],
             platformId,
         }, log)
@@ -405,12 +420,13 @@ const validateConnectionValue = async (
     params: ValidateConnectionValueParams,
     log: FastifyBaseLogger,
 ): Promise<AppConnectionValue> => {
-    const { value, pieceName, projectId, platformId } = params
+    const { value, pieceName, pieceVersion, projectId, platformId } = params
 
     switch (value.type) {
         case AppConnectionType.PLATFORM_OAUTH2: {
             const tokenUrl = await oauth2Util(log).getOAuth2TokenUrl({
                 pieceName,
+                pieceVersion,
                 platformId,
                 props: value.props,
             })
@@ -433,6 +449,7 @@ const validateConnectionValue = async (
         case AppConnectionType.CLOUD_OAUTH2: {
             const tokenUrl = await oauth2Util(log).getOAuth2TokenUrl({
                 pieceName,
+                pieceVersion,
                 platformId,
                 props: value.props,
             })
@@ -454,6 +471,7 @@ const validateConnectionValue = async (
         case AppConnectionType.OAUTH2: {
             const tokenUrl = await oauth2Util(log).getOAuth2TokenUrl({
                 pieceName,
+                pieceVersion,
                 platformId,
                 props: value.props,
             })
@@ -630,7 +648,7 @@ type UpsertParams = {
     platformId: string
     scope: AppConnectionScope
     externalId: string
-    value: UpsertAppConnectionRequestBody['value']
+    value: Extract<UpsertAppConnectionRequestBody, { value: unknown }>['value']
     displayName: string
     type: AppConnectionType
     status?: AppConnectionStatus
@@ -665,8 +683,9 @@ type DeleteParams = {
 }
 
 type ValidateConnectionValueParams = {
-    value: UpsertAppConnectionRequestBody['value']
+    value: Extract<UpsertAppConnectionRequestBody, { value: unknown }>['value']
     pieceName: string
+    pieceVersion: string
     projectId: ProjectId | undefined
     platformId: string
 }

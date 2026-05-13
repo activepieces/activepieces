@@ -92,7 +92,7 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.delete('/:id', DeleteProjectRequest, async (req, res) => {
-        await assertProjectToDeleteIsNotPersonalProject(req.params.id, req.log)
+        await assertProjectIsSafeToDelete(req.params.id, req.principal.platform.id, req.log)
         await platformProjectService(req.log).markForDeletion({
             id: req.params.id,
             platformId: req.principal.platform.id,
@@ -130,8 +130,17 @@ async function isPlatformAdmin(principal: {
 
 
 
-async function assertProjectToDeleteIsNotPersonalProject(projectId: string, log: FastifyBaseLogger): Promise<void> {
+async function assertProjectIsSafeToDelete(projectId: string, callerPlatformId: string, log: FastifyBaseLogger): Promise<void> {
     const project = await projectService(log).getOneOrThrow(projectId)
+    if (project.platformId !== callerPlatformId) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: {
+                entityType: 'project',
+                entityId: projectId,
+            },
+        })
+    }
     if (project.type === ProjectType.PERSONAL) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,

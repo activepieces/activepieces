@@ -18,7 +18,7 @@ import {
     UpdateChatConversationRequest,
 } from '@activepieces/shared'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
-import { createUIMessageStream, LanguageModel, ModelMessage, stepCountIs, streamText } from 'ai'
+import { createUIMessageStream, LanguageModel, ModelMessage, stepCountIs, streamText, SystemModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -220,10 +220,10 @@ export const chatService = (log: FastifyBaseLogger) => ({
                 const sanitizedMessages = stripThinkingBlocks(messagesForLlm)
                 const textStream = streamText({
                     model,
-                    system: systemPrompt,
+                    system: buildSystemPromptWithCaching({ systemPrompt, provider: providerConfig.provider }),
                     messages: sanitizedMessages,
                     tools,
-                    providerOptions: buildThinkingOptions({ provider: providerConfig.provider, modelId: modelName }),
+                    providerOptions: buildProviderOptions({ provider: providerConfig.provider, modelId: modelName }),
                     stopWhen: stepCountIs(MAX_STEPS),
                     onStepFinish: ({ finishReason, usage }) => {
                         log.debug({ conversationId, finishReason, usage }, 'Chat step finished')
@@ -245,6 +245,8 @@ export const chatService = (log: FastifyBaseLogger) => ({
                             conversationId,
                             inputTokens: usage.inputTokens,
                             outputTokens: usage.outputTokens,
+                            ...spreadIfDefined('cacheReadTokens', usage.inputTokenDetails.cacheReadTokens),
+                            ...spreadIfDefined('cacheWriteTokens', usage.inputTokenDetails.cacheWriteTokens),
                             provider: providerConfig.provider,
                         }, 'Chat message completed')
                     },
@@ -415,25 +417,44 @@ function supportsThinking({ modelId }: { modelId: string }): boolean {
     return THINKING_CAPABLE_MODELS.has(bareModel)
 }
 
-function buildThinkingOptions({ provider, modelId }: { provider: AIProviderName, modelId: string }): SharedV3ProviderOptions {
-    if (!supportsThinking({ modelId })) return {}
-    const effort = resolveEffort({ modelId })
+function buildProviderOptions({ provider, modelId }: { provider: AIProviderName, modelId: string }): SharedV3ProviderOptions {
+    const effort = supportsThinking({ modelId }) ? resolveEffort({ modelId }) : null
+
     switch (provider) {
         case AIProviderName.ANTHROPIC:
+        case AIProviderName.BEDROCK:
             return {
                 anthropic: {
-                    thinking: { type: 'enabled', budgetTokens: effort.anthropicBudget },
+                    ...(effort ? { thinking: { type: 'enabled', budgetTokens: effort.anthropicBudget } } : {}),
                 },
             }
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER:
             return {
                 openrouter: {
-                    reasoning: { effort: effort.openrouterEffort },
+                    cache_control: { type: 'ephemeral' },
+                    ...(effort ? { reasoning: { effort: effort.openrouterEffort } } : {}),
                 },
             }
         default:
             return {}
+    }
+}
+
+function buildSystemPromptWithCaching({ systemPrompt, provider }: {
+    systemPrompt: string
+    provider: AIProviderName
+}): string | SystemModelMessage {
+    switch (provider) {
+        case AIProviderName.ANTHROPIC:
+        case AIProviderName.BEDROCK:
+            return {
+                role: 'system',
+                content: systemPrompt,
+                providerOptions: { anthropic: { cacheControl: { type: 'ephemeral' } } },
+            }
+        default:
+            return systemPrompt
     }
 }
 

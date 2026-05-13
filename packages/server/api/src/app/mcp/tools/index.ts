@@ -26,6 +26,7 @@ import { apListTablesTool } from './ap-list-tables'
 import { apLockAndPublishTool } from './ap-lock-and-publish'
 import { apManageFieldsTool } from './ap-manage-fields'
 import { apManageNotesTool } from './ap-manage-notes'
+import { apReadStepCodeTool } from './ap-read-step-code'
 import { apRenameFlowTool } from './ap-rename-flow'
 import { apResolvePropertyOptionsTool } from './ap-resolve-property-options'
 import { apRetryRunTool } from './ap-retry-run'
@@ -43,6 +44,7 @@ import { apValidateStepConfigTool } from './ap-validate-step-config'
 export const LOCKED_TOOL_NAMES: string[] = [
     'ap_list_flows',
     'ap_flow_structure',
+    'ap_read_step_code',
     'ap_validate_flow',
     'ap_list_pieces',
     'ap_get_piece_props',
@@ -95,6 +97,7 @@ export const activepiecesTools = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
     apRenameFlowTool(mcp, log),
     apListFlowsTool(mcp, log),
     apFlowStructureTool(mcp, log),
+    apReadStepCodeTool(mcp, log),
     apValidateFlowTool(mcp, log),
     apListPiecesTool(mcp, log),
     apGetPiecePropsTool(mcp, log),

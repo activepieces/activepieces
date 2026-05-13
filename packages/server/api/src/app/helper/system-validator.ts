@@ -182,6 +182,7 @@ const systemPropValidators: {
 
     // Canary
     [AppSystemProp.CANARY_APP_URL]: urlValidator,
+    [AppSystemProp.IS_CANARY_APP]: booleanValidator,
     // SSRF protection
     [AppSystemProp.SSRF_ALLOW_LIST]: stringValidator,
     [AppSystemProp.NETWORK_MODE]: enumValidator(Object.values(NetworkMode)),

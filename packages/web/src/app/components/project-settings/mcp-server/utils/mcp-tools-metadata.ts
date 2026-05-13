@@ -23,6 +23,11 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
           'Get the structure of a flow: step tree, configuration status, and valid insert locations',
       },
       {
+        name: 'ap_read_step_code',
+        description:
+          'Read full source code, package.json, and input of a CODE step',
+      },
+      {
         name: 'ap_validate_flow',
         description:
           'Validate a flow for structural issues without publishing — checks step validity, template references, and empty branches',

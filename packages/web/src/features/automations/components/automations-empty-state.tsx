@@ -21,7 +21,7 @@ import { TagWithBright } from '@/components/custom/tag-with-bright';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ImportFlowDialog } from '@/features/automations/components/import-flow-dialog';
+import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { flowHooks } from '@/features/flows/hooks/flow-hooks';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { ImportTableDialog } from '@/features/tables/components/import-table-dialog';
@@ -260,8 +260,8 @@ export const AutomationsEmptyState = ({
         </h2>
         <div className="flex gap-4">
           <GetStartedCard
-            icon={<Workflow className="h-5 w-5 text-purple-600" />}
-            iconBgClass="bg-purple-100"
+            icon={<Workflow className="h-5 w-5 text-primary" />}
+            iconBgClass="bg-primary-100"
             title={t('Build a Flow')}
             description={t('Create automated workflows')}
           >
@@ -310,8 +310,8 @@ export const AutomationsEmptyState = ({
 
           {!embedState.hideTables && (
             <GetStartedCard
-              icon={<Table2 className="h-5 w-5 text-emerald-600" />}
-              iconBgClass="bg-emerald-100"
+              icon={<Table2 className="h-5 w-5 text-primary" />}
+              iconBgClass="bg-primary-100"
               title={t('Create a Table')}
               description={t('Organize and manage data')}
             >

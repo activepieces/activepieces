@@ -233,7 +233,16 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
     },
 
     async markForDeletion({ id, platformId }: DeleteProjectParams): Promise<void> {
-        await projectRepo().softDelete({ id, platformId })
+        const result = await projectRepo().softDelete({ id, platformId })
+        if (result.affected === 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'project',
+                    entityId: id,
+                },
+            })
+        }
         await systemJobsSchedule(log).upsertJob({
             job: {
                 name: SystemJobName.HARD_DELETE_PROJECT,
