@@ -1,21 +1,22 @@
 import { z } from 'zod'
 import { OptionalArrayFromQuery } from '../../../core/common/base-model'
 import { ProjectType } from '../../../management/project/project'
-import { AppConnectionScope, AppConnectionStatus, AppConnectionWithoutSensitiveData } from '../app-connection'
-
-export enum AppConnectionKind {
-    CONNECTION = 'connection',
-    SECRET = 'secret',
-}
+import {
+    AppConnectionKind,
+    AppConnectionScope,
+    AppConnectionStatus,
+    CredentialAppConnectionWithoutSensitiveData,
+    PieceAppConnectionWithoutSensitiveData,
+} from '../app-connection'
 
 export const ListAppConnectionsRequestQuery = z.object({
     cursor: z.string().optional(),
     projectId: z.string(),
-    scope: z.nativeEnum(AppConnectionScope).optional(),
+    scope: z.enum(AppConnectionScope).optional(),
     pieceName: z.string().optional(),
     displayName: z.string().optional(),
-    status: OptionalArrayFromQuery(z.nativeEnum(AppConnectionStatus)),
-    kind: z.nativeEnum(AppConnectionKind).optional(),
+    status: OptionalArrayFromQuery(z.enum(AppConnectionStatus)),
+    kind: z.enum(AppConnectionKind).optional(),
     limit: z.coerce.number().optional(),
 })
 
@@ -43,23 +44,32 @@ export const ListPlatformAppConnectionsRequestQuery = z.object({
     limit: z.coerce.number().optional(),
     displayName: z.string().optional(),
     pieceName: z.string().optional(),
-    scope: z.nativeEnum(AppConnectionScope).optional(),
-    status: OptionalArrayFromQuery(z.nativeEnum(AppConnectionStatus)),
+    scope: z.enum(AppConnectionScope).optional(),
+    status: OptionalArrayFromQuery(z.enum(AppConnectionStatus)),
     projectIds: OptionalArrayFromQuery(z.string()),
     ownerIds: OptionalArrayFromQuery(z.string()),
+    kind: z.enum(AppConnectionKind).optional(),
 })
 export type ListPlatformAppConnectionsRequestQuery = z.infer<typeof ListPlatformAppConnectionsRequestQuery>
 
 export const PlatformAppConnectionProjectInfo = z.object({
     id: z.string(),
     displayName: z.string(),
-    type: z.nativeEnum(ProjectType),
+    type: z.enum(ProjectType),
 })
 export type PlatformAppConnectionProjectInfo = z.infer<typeof PlatformAppConnectionProjectInfo>
 
-export const PlatformAppConnectionsListItem = AppConnectionWithoutSensitiveData.extend({
+const PlatformPieceConnectionListItem = PieceAppConnectionWithoutSensitiveData.extend({
     projects: z.array(PlatformAppConnectionProjectInfo),
 })
+const PlatformCredentialListItem = CredentialAppConnectionWithoutSensitiveData.extend({
+    projects: z.array(PlatformAppConnectionProjectInfo),
+})
+
+export const PlatformAppConnectionsListItem = z.discriminatedUnion('kind', [
+    PlatformPieceConnectionListItem,
+    PlatformCredentialListItem,
+])
 export type PlatformAppConnectionsListItem = z.infer<typeof PlatformAppConnectionsListItem>
 
 export const PlatformAppConnectionOwner = z.object({
