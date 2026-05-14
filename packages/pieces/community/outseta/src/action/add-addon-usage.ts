@@ -4,7 +4,7 @@ import { OutsetaClient } from '../common/client';
 import { addOnUidDropdown } from '../common/dropdowns';
 
 export const addAddonUsageAction = createAction({
-  name: 'add_usage',
+  name: 'add_addon_usage',
   auth: outsetaAuth,
   displayName: 'Add Usage for Add-on',
   description:

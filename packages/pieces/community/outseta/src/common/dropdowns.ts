@@ -169,10 +169,12 @@ export function addOnUidDropdown(options?: {
             : (rawAddOns?.items ?? rawAddOns?.Items ?? []);
           return {
             disabled: false,
-            options: subscriptionAddOns.map((sa: any) => ({
-              label: sa.AddOn?.Name ?? sa.Uid,
-              value: sa.AddOn?.Uid ?? sa.Uid,
-            })),
+            options: subscriptionAddOns
+              .filter((sa: any) => sa.AddOn?.Uid)
+              .map((sa: any) => ({
+                label: sa.AddOn.Name ?? sa.AddOn.Uid,
+                value: sa.AddOn.Uid,
+              })),
           };
         } catch {
           return { disabled: true, options: [], placeholder: 'Failed to load account. Check the Account UID.' };

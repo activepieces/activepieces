@@ -4,7 +4,7 @@ import { OutsetaClient } from '../common/client';
 import { planUidDropdown } from '../common/dropdowns';
 
 export const changeAccountPlanAction = createAction({
-  name: 'change_subscription',
+  name: 'change_account_plan',
   auth: outsetaAuth,
   displayName: 'Change Account Plan',
   description:
