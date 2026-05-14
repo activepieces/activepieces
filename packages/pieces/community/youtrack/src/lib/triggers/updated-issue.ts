@@ -9,7 +9,7 @@ const polling: Polling<{ baseUrl: string; apiToken: string }, Record<string, nev
   items: async ({ auth, lastFetchEpochMS }) => {
     const url = auth.baseUrl.replace(/\/+$/, '') + '/api/issues?fields=' +
       encodeURIComponent(ISSUE_FIELDS) +
-      '&query=' + encodeURIComponent('updated: {after ' + lastFetchEpochMS + '}') +
+      '&query=' + encodeURIComponent('updated: {after ' + new Date(lastFetchEpochMS).toISOString() + '}') +
       '&$top=50';
     const r = await fetch(url, {
       headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + auth.apiToken },

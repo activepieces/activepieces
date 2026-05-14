@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // YouTrack Piece - Common Helpers & Dropdowns
 // =============================================================================
 
@@ -84,10 +84,6 @@ export function flattenObject(
   return result;
 }
 
-// -----------------------------------------------------------------------------
-// Shared Dropdowns
-// -----------------------------------------------------------------------------
-
 export const projectDropdown = Property.Dropdown({
   displayName: 'Project',
   description: 'Select the YouTrack project to work with.',
@@ -121,18 +117,17 @@ export const issueDropdown = Property.Dropdown({
   displayName: 'Issue',
   description: 'Select the issue to work with.',
   required: true,
-  refreshers: ['project'],
-  options: async ({ auth, project }) => {
+  refreshers: [],
+  options: async ({ auth }) => {
     if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
-    if (!project) return { disabled: true, options: [], placeholder: 'Please select a project first' };
     const a = auth as unknown as { baseUrl: string; apiToken: string };
     try {
       const r = await youtrackApiCall<Array<{ id: string; idReadable: string; summary: string }>>({
         baseUrl: a.baseUrl, token: a.apiToken, method: HttpMethod.GET, path: '/issues',
-        queryParams: { fields: 'id,idReadable,summary', query: 'project: {' + project + '}', '$top': '100' },
+        queryParams: { fields: 'id,idReadable,summary', '$top': '100' },
       });
       if (!r.body || r.body.length === 0) {
-        return { disabled: false, options: [], placeholder: 'No issues found in this project.' };
+        return { disabled: false, options: [], placeholder: 'No issues found.' };
       }
       return {
         disabled: false,
@@ -198,10 +193,6 @@ export const userDropdown = Property.Dropdown({
     }
   },
 });
-
-// -----------------------------------------------------------------------------
-// Standard issue fields string
-// -----------------------------------------------------------------------------
 
 export const ISSUE_FIELDS =
   'id,idReadable,summary,description,created,updated,resolved,' +
