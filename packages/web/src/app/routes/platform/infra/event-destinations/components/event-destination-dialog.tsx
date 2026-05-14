@@ -188,6 +188,17 @@ const EventDestinationForm = ({
         runStatusRouterDisplayName: t('Run status check'),
         failedRunBranchName: t('Failed run'),
         otherwiseBranchName: t('Otherwise'),
+        noteContent: t(
+          '**Audit event handler**\n\nThis flow runs whenever any of these events fire:\n\n{events}\n\n**Add your channel** (Slack, Gmail, Teams, HTTP…) inside each branch below.\n\nOnce you are done:\n\n1. **Publish this flow** so it can receive events.\n2. Head back to the **Event Streaming** tab and create the destination to start sending events here.',
+          {
+            events: selectedEvents
+              .map((name) => `- ${eventLabels[name].label}`)
+              .join('\n'),
+          },
+        ),
+        sampleDataNoteContent: t(
+          '**Test different scenarios**\n\nOpen the trigger and edit its **Sample Data** to swap in a different event payload (for example, a failed run) and test each branch without firing real audit events.',
+        ),
       },
     });
     importHandlerFlow({ template, selectedEvents });
