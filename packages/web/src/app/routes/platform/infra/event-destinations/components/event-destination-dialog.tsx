@@ -195,10 +195,13 @@ const EventDestinationForm = ({
 
   const availableEvents = Object.values(ApplicationEventName);
   const isSubmitDisabled = isCreating || isImporting;
+
   const isTestingButtonDisabled =
     isTesting ||
+    !watchedUrl ||
     !isNil(form.formState.errors.url) ||
     watchedEvents.length === 0;
+
   return (
     <>
       <DialogTitle>
