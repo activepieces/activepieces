@@ -20,8 +20,24 @@ export const pageRenderCreated = createTrigger({
   type: TriggerStrategy.WEBHOOK,
 
   async onEnable(context) {
+    // Best-effort cleanup of stale registration from a prior lifecycle
+    const oldUrl = await context.store.get<string>('webhookUrl');
+    if (oldUrl) {
+      try {
+        await sendrApiCall({
+          token: context.auth as unknown as string,
+          method: HttpMethod.DELETE,
+          path: '/webhook',
+          body: { url: oldUrl },
+        });
+      } catch {
+        // Swallow — cleanup is best-effort
+      }
+      await context.store.delete('webhookUrl');
+    }
+    // Register new webhook
     try {
-      await sendrApiCall({
+      const resp = await sendrApiCall<{ url?: string }>({
         token: context.auth as unknown as string,
         method: HttpMethod.POST,
         path: '/webhook',
@@ -32,6 +48,20 @@ export const pageRenderCreated = createTrigger({
         },
       });
       await context.store.put('webhookUrl', context.webhookUrl);
+      // Fetch webhook secret for payload verification
+      try {
+        const secretResp = await sendrApiCall<{ secret: string }>({
+          token: context.auth as unknown as string,
+          method: HttpMethod.POST,
+          path: '/webhook/reveal-secret',
+          body: { url: context.webhookUrl },
+        });
+        if (secretResp.body?.secret) {
+          await context.store.put('webhookSecret', secretResp.body.secret);
+        }
+      } catch {
+        // Reveal may fail if not supported — webhook still works without verification
+      }
     } catch (e) {
       throw new Error('Failed to register Sendr webhook: ' + (e as Error).message);
     }
@@ -52,10 +82,20 @@ export const pageRenderCreated = createTrigger({
       throw new Error('Failed to unregister Sendr webhook: ' + (e as Error).message);
     } finally {
       await context.store.delete('webhookUrl');
+      await context.store.delete('webhookSecret');
     }
   },
 
   async run(context) {
+    // Verify webhook signature if secret is available
+    const webhookSecret = await context.store.get<string>('webhookSecret');
+    if (webhookSecret) {
+      const headers = (context.payload.headers || {}) as Record<string, string>;
+      const receivedSecret = headers['x-webhook-secret'];
+      if (receivedSecret !== webhookSecret) {
+        return []; // Silent rejection — signature mismatch
+      }
+    }
     const body = context.payload.body as Record<string, unknown>;
     return [{
       event_type: body.event ?? 'page_render:created',
