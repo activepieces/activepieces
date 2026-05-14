@@ -1,4 +1,8 @@
-import { AppConnectionScope, PopulatedFlow } from '@activepieces/shared';
+import {
+  AppConnectionScope,
+  isPieceConnection,
+  PopulatedFlow,
+} from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { GlobeIcon, WorkflowIcon } from 'lucide-react';
@@ -135,8 +139,10 @@ const ReplaceConnectionsDialog = ({
 
   const selectedPiece = form.watch('pieceName');
 
+  const pieceConnections = (connections?.data ?? []).filter(isPieceConnection);
+
   const connectionPieceNames = new Set(
-    connections?.data.map((conn) => conn.pieceName),
+    pieceConnections.map((conn) => conn.pieceName),
   );
 
   const piecesOptions =
@@ -152,8 +158,9 @@ const ReplaceConnectionsDialog = ({
         value: piece.name,
       })) ?? [];
 
-  const filteredConnections =
-    connections?.data.filter((conn) => conn.pieceName === selectedPiece) ?? [];
+  const filteredConnections = pieceConnections.filter(
+    (conn) => conn.pieceName === selectedPiece,
+  );
 
   const sourceConnectionId = useWatch({
     control: form.control,

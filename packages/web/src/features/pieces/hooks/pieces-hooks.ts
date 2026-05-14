@@ -9,6 +9,7 @@ import {
   ApEdition,
   FlowActionType,
   flowPieceUtil,
+  isPieceConnection,
   LocalesEnum,
   PieceOptionRequest,
   PlatformWithoutSensitiveData,
@@ -363,12 +364,12 @@ export const piecesHooks = {
         ).data.find(
           (connection) => connection.externalId === connectionExternalId,
         );
-        if (!appConnection) {
+        if (!appConnection || !isPieceConnection(appConnection)) {
           return piecesApi.get({ name: pieceName });
         }
         return piecesApi.get({
           name: pieceName,
-          version: appConnection.pieceVersion ?? undefined,
+          version: appConnection.pieceVersion,
         });
       },
       staleTime: Infinity,

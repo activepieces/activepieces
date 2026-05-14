@@ -1,6 +1,7 @@
 import {
   AppConnectionScope,
   AppConnectionStatus,
+  isPieceConnection,
   MAX_PLATFORM_APP_CONNECTION_OWNERS,
   PlatformAppConnectionsListItem,
 } from '@activepieces/shared';
@@ -50,7 +51,7 @@ export default function PlatformConnectionsPage() {
   const { pieces } = piecesHooks.usePieces({});
 
   const filters: DataTableFilters<
-    keyof PlatformAppConnectionsListItem | 'ownerIds'
+    keyof PlatformAppConnectionsListItem | 'ownerIds' | 'pieceName'
   >[] = [
     {
       type: 'input',
@@ -120,7 +121,9 @@ export default function PlatformConnectionsPage() {
         >
           <div className="flex items-center gap-2 w-fit min-w-0">
             <PieceIconWithPieceName
-              pieceName={row.original.pieceName ?? ''}
+              pieceName={
+                isPieceConnection(row.original) ? row.original.pieceName : ''
+              }
               showTooltip={false}
               size="sm"
             />

@@ -2,8 +2,9 @@ import {
   AppConnectionKind,
   AppConnectionScope,
   AppConnectionStatus,
-  AppConnectionWithoutSensitiveData,
+  isPieceConnection,
   Permission,
+  PieceAppConnectionWithoutSensitiveData,
   PlatformRole,
 } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
@@ -65,7 +66,7 @@ function AppConnectionsPage() {
   const navigate = useNavigate();
   const [refresh, setRefresh] = useState(0);
   const [selectedRows, setSelectedRows] = useState<
-    Array<AppConnectionWithoutSensitiveData>
+    Array<PieceAppConnectionWithoutSensitiveData>
   >([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { checkAccess } = useAuthorization();
@@ -112,11 +113,18 @@ function AppConnectionsPage() {
     if (!connections?.data) return undefined;
     const searchParams = new URLSearchParams(location.search);
     const ownerEmails = searchParams.getAll('owner');
+    const pieceConnections = connections.data.filter(isPieceConnection);
 
-    if (ownerEmails.length === 0) return connections;
+    if (ownerEmails.length === 0) {
+      return {
+        data: pieceConnections,
+        next: connections.next,
+        previous: connections.previous,
+      };
+    }
 
     return {
-      data: connections.data.filter(
+      data: pieceConnections.filter(
         (conn) => conn.owner && ownerEmails.includes(conn.owner.email),
       ),
       next: connections.next,
@@ -128,8 +136,10 @@ function AppConnectionsPage() {
     Permission.WRITE_APP_CONNECTION,
   );
   const { data: owners } = appConnectionsQueries.useConnectionsOwners();
-  const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] =
-    ownerColumnHooks.useOwnerColumnFilter<AppConnectionWithoutSensitiveData>(
+  const filters: DataTableFilters<
+    keyof PieceAppConnectionWithoutSensitiveData
+  >[] =
+    ownerColumnHooks.useOwnerColumnFilter<PieceAppConnectionWithoutSensitiveData>(
       [
         {
           type: 'select',
@@ -162,9 +172,9 @@ function AppConnectionsPage() {
     );
 
   const columns: ColumnDef<
-    RowDataWithActions<AppConnectionWithoutSensitiveData>,
+    RowDataWithActions<PieceAppConnectionWithoutSensitiveData>,
     unknown
-  >[] = ownerColumnHooks.useOwnerColumn<AppConnectionWithoutSensitiveData>(
+  >[] = ownerColumnHooks.useOwnerColumn<PieceAppConnectionWithoutSensitiveData>(
     [
       {
         accessorKey: 'displayName',
@@ -330,49 +340,52 @@ function AppConnectionsPage() {
     4,
   );
 
-  const bulkActions: BulkAction<AppConnectionWithoutSensitiveData>[] = useMemo(
-    () => [
-      {
-        render: (_, resetSelection) => {
-          return (
-            <>
-              {selectedRows.length > 0 && (
-                <ConfirmationDeleteDialog
-                  title={t('Delete Connections')}
-                  message={t(
-                    'The selected connections will be permanently deleted.',
-                  )}
-                  warning={<DeleteConnectionWarning />}
-                  mutationFn={async () => {
-                    await deleteConnections(selectedRows.map((row) => row.id));
-                    refetch();
-                    resetSelection();
-                    setSelectedRows([]);
-                  }}
-                  entityName={t('connection')}
-                  buttonText={t('Delete')}
-                  open={showDeleteDialog}
-                  onOpenChange={setShowDeleteDialog}
-                  showToast
-                >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive hover:text-destructive"
-                    onClick={() => setShowDeleteDialog(true)}
+  const bulkActions: BulkAction<PieceAppConnectionWithoutSensitiveData>[] =
+    useMemo(
+      () => [
+        {
+          render: (_, resetSelection) => {
+            return (
+              <>
+                {selectedRows.length > 0 && (
+                  <ConfirmationDeleteDialog
+                    title={t('Delete Connections')}
+                    message={t(
+                      'The selected connections will be permanently deleted.',
+                    )}
+                    warning={<DeleteConnectionWarning />}
+                    mutationFn={async () => {
+                      await deleteConnections(
+                        selectedRows.map((row) => row.id),
+                      );
+                      refetch();
+                      resetSelection();
+                      setSelectedRows([]);
+                    }}
+                    entityName={t('connection')}
+                    buttonText={t('Delete')}
+                    open={showDeleteDialog}
+                    onOpenChange={setShowDeleteDialog}
+                    showToast
                   >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    {t('Delete')} ({selectedRows.length})
-                  </Button>
-                </ConfirmationDeleteDialog>
-              )}
-            </>
-          );
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => setShowDeleteDialog(true)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      {t('Delete')} ({selectedRows.length})
+                    </Button>
+                  </ConfirmationDeleteDialog>
+                )}
+              </>
+            );
+          },
         },
-      },
-    ],
-    [selectedRows, showDeleteDialog],
-  );
+      ],
+      [selectedRows, showDeleteDialog],
+    );
 
   const toolbarButtons = useMemo(
     () => [

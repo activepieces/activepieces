@@ -27,7 +27,7 @@ const CredentialsTab = () => {
     request: {
       projectId: projectId ?? '',
       limit: 200,
-      kind: AppConnectionKind.SECRET,
+      kind: AppConnectionKind.CREDENTIAL,
     },
     extraKeys: ['data-selector-secrets', projectId ?? ''],
     enabled: !!projectId && canRead,

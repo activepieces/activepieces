@@ -103,7 +103,7 @@ function CredentialsPage() {
       cursor,
       limit,
       displayName,
-      kind: AppConnectionKind.SECRET,
+      kind: AppConnectionKind.CREDENTIAL,
     },
     extraKeys: ['credentials', location.search, projectId],
     showErrorDialog: true,
