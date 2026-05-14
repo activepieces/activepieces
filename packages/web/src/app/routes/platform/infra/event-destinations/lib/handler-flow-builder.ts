@@ -5,6 +5,8 @@ import {
   BranchOperator,
   FlowActionType,
   FlowTriggerType,
+  Note,
+  NoteColorVariant,
   PropertyExecutionType,
   RouterAction,
   RouterExecutionType,
@@ -30,6 +32,14 @@ export const handlerFlowBuilder = {
 
     const topRouter = buildTopRouter(events, labels);
     const lastUpdatedDate = new Date().toISOString();
+    const onboardingNote = buildOnboardingNote({
+      content: labels.noteContent,
+      timestamp: lastUpdatedDate,
+    });
+    const sampleDataNote = buildSampleDataNote({
+      content: labels.sampleDataNoteContent,
+      timestamp: lastUpdatedDate,
+    });
 
     return {
       id: apId(),
@@ -53,7 +63,7 @@ export const handlerFlowBuilder = {
           displayName: labels.flowDisplayName,
           schemaVersion: SCHEMA_VERSION,
           valid: true,
-          notes: [],
+          notes: [onboardingNote, sampleDataNote],
           trigger: {
             name: 'trigger',
             type: FlowTriggerType.PIECE,
@@ -137,6 +147,44 @@ function buildTopRouter(
   };
 }
 
+function buildOnboardingNote({
+  content,
+  timestamp,
+}: {
+  content: string;
+  timestamp: string;
+}): Note {
+  return {
+    id: apId(),
+    content,
+    ownerId: null,
+    color: NoteColorVariant.YELLOW,
+    position: { x: -375, y: -105 },
+    size: { width: 300, height: 298 },
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+}
+
+function buildSampleDataNote({
+  content,
+  timestamp,
+}: {
+  content: string;
+  timestamp: string;
+}): Note {
+  return {
+    id: apId(),
+    content,
+    ownerId: null,
+    color: NoteColorVariant.BLUE,
+    position: { x: 300, y: -105 },
+    size: { width: 239, height: 242 },
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+}
+
 function buildFlowRunFinishedStatusRouter({
   stepName,
   lastUpdatedDate,
@@ -195,6 +243,8 @@ export type HandlerFlowLabels = {
   runStatusRouterDisplayName: string;
   failedRunBranchName: string;
   otherwiseBranchName: string;
+  noteContent: string;
+  sampleDataNoteContent: string;
 };
 
 type BuildParams = {
