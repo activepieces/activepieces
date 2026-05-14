@@ -3,7 +3,7 @@ import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { discordAddRoleToMember } from './lib/actions/add-role-to-member';
 import { discordFindChannel } from './lib/actions/find-channel';
-import { discordFindGuildMemberByUsername } from './lib/actions/find-guild-member';
+import { discordFindGuildMemberByUsername, discordListGuildMembers } from './lib/actions/find-guild-member';
 import { discordRemoveMemberFromGuild } from './lib/actions/remove-member-from-guild';
 import { discordRemoveRoleFromMember } from './lib/actions/remove-role-from-member';
 import { discordRenameChannel } from './lib/actions/rename-channel';
@@ -43,6 +43,7 @@ export const discord = createPiece({
     discordRemoveRoleFromMember,
     discordRemoveMemberFromGuild,
     discordFindGuildMemberByUsername,
+    discordListGuildMembers,
     discordRenameChannel,
     discordCreateChannel,
     discordDeleteChannel,
