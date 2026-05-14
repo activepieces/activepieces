@@ -19,7 +19,7 @@ export const McpServer = z.object({
     projectId: ApId.nullable(),
     type: z.enum([McpServerType.PLATFORM, McpServerType.PROJECT]),
     token: ApId,
-    enabledTools: z.array(z.string()).nullable(),
+    disabledTools: z.array(z.string()).nullable(),
 })
 
 export const PopulatedMcpServer = McpServer.extend({
@@ -32,7 +32,7 @@ export type McpServer = z.infer<typeof McpServer>
 export type ProjectScopedMcpServer = McpServer & { projectId: string }
 
 export const UpdateMcpServerRequest = z.object({
-    enabledTools: z.array(z.string()).optional(),
+    disabledTools: z.array(z.string()).optional(),
 })
 
 export type UpdateMcpServerRequest = z.infer<typeof UpdateMcpServerRequest>
