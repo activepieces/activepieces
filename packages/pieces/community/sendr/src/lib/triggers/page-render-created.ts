@@ -50,8 +50,9 @@ export const pageRenderCreated = createTrigger({
       }
     } catch (e) {
       throw new Error('Failed to unregister Sendr webhook: ' + (e as Error).message);
+    } finally {
+      await context.store.delete('webhookUrl');
     }
-    await context.store.delete('webhookUrl');
   },
 
   async run(context) {

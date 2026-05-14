@@ -30,9 +30,10 @@ export async function sendrApiCall<T extends HttpMessageBody>({
 
 // Helper to flatten nested API responses into flat keys with underscores
 export function flattenObject(
-  obj: Record<string, unknown>,
+  obj: Record<string, unknown> | null | undefined,
   prefix = '',
 ): Record<string, unknown> {
+  if (obj == null) return {};
   const result: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(obj)) {
@@ -99,7 +100,7 @@ export const campaignDropdown = Property.Dropdown<string>({
         token: auth as string,
         method: HttpMethod.GET,
         path: '/campaigns',
-        queryParams: { limit: '50' },
+        queryParams: { limit: '200' },
       });
       const items = response.body?.items ?? [];
       return {
