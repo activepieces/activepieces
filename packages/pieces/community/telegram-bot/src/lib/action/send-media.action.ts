@@ -57,6 +57,7 @@ export const telegramSendMediaAction = createAction({
           { label: 'Video', value: 'video' },
           { label: 'Sticker', value: 'sticker' },
           { label: 'GIF', value: 'animation' },
+          { label: 'Document', value: 'document' },
         ],
       },
     }),
@@ -132,6 +133,19 @@ export const telegramSendMediaAction = createAction({
               required: false,
             }),
           }),
+          document: () => ({
+            document: Property.File({
+              displayName: 'Document',
+              description: 'The document to be uploaded as a file',
+              required: false,
+            }),
+            documentId: Property.ShortText({
+              displayName: 'Document Id',
+              description:
+                "The document id previously uploaded to Telegram's servers",
+              required: false,
+            }),
+          }),
         };
         return propsBuilders[media_type as unknown as string]();
       },
@@ -186,6 +200,7 @@ export const telegramSendMediaAction = createAction({
         video: 'sendVideo',
         sticker: 'sendSticker',
         animation: 'sendAnimation',
+        document: 'sendDocument',
       };
 
       const mediaMethod = methods[mediaType];

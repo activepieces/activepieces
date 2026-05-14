@@ -10,14 +10,14 @@ import { Member } from '../common/models';
 
 export const discordFindGuildMemberByUsername = createAction({
   auth: discordAuth,
-  name: 'list_guild_members',
-  description: 'List Guild Members',
-  displayName: 'List guild members',
+  name: 'find_guild_member',
+  description: 'Find a Guild Member by username',
+  displayName: 'Find Guild Member',
   props: {
     guild_id: discordCommon.guilds,
-    shortText: Property.ShortText({
-      displayName: 'Search',
-      description: 'Search for a member',
+    username: Property.ShortText({
+      displayName: 'Username',
+      description: 'The username to search for',
       required: true,
     }),
   },
@@ -25,7 +25,11 @@ export const discordFindGuildMemberByUsername = createAction({
   async run(configValue) {
     const request: HttpRequest<any> = {
       method: HttpMethod.GET,
-      url: `https://discord.com/api/v9/guilds/${configValue.propsValue.guild_id}/members`,
+      url: `https://discord.com/api/v9/guilds/${configValue.propsValue.guild_id}/members/search`,
+      queryParams: {
+        query: configValue.propsValue.username,
+        limit: '1',
+      },
       headers: {
         authorization: `Bot ${configValue.auth.secret_text}`,
         'Content-Type': 'application/json',
@@ -34,26 +38,10 @@ export const discordFindGuildMemberByUsername = createAction({
 
     const res = await httpClient.sendRequest<Member[]>(request);
 
-    const options: { options: { value: string; label: string }[] } = {
-      options: [],
-    };
+    if (res.body.length === 0) {
+      return null;
+    }
 
-    if (res.body.length === 0)
-      return {
-        disabled: true,
-        options: [],
-        placeholder: 'No members found, please add the bot to a guild first',
-      };
-
-    await Promise.all(
-      res.body.map(async (member) => {
-        options.options.push({
-          value: member.user.id,
-          label: member.user.username,
-        });
-      })
-    );
-
-    return options;
+    return res.body[0];
   },
 });
