@@ -8,9 +8,11 @@ import {
     ApplicationEventName,
     AuthenticationEvent,
     ConnectionEvent,
+    FlowActivatedEvent,
     FlowCreatedEvent,
+    FlowDeactivatedEvent,
     FlowDeletedEvent,
-    FlowLifecycleEvent,
+    FlowPublishedEvent,
     FlowRunEvent,
     FlowUpdatedEvent,
     FolderEvent,
@@ -104,12 +106,26 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
             }
             return mock
         }
-        case ApplicationEventName.FLOW_PUBLISHED:
-        case ApplicationEventName.FLOW_ACTIVATED:
-        case ApplicationEventName.FLOW_DEACTIVATED: {
-            const mock: FlowLifecycleEvent = {
+        case ApplicationEventName.FLOW_PUBLISHED: {
+            const mock: FlowPublishedEvent = {
                 ...baseEnvelope,
-                action: event,
+                action: ApplicationEventName.FLOW_PUBLISHED,
+                data: { flow, flowVersion, project },
+            }
+            return mock
+        }
+        case ApplicationEventName.FLOW_ACTIVATED: {
+            const mock: FlowActivatedEvent = {
+                ...baseEnvelope,
+                action: ApplicationEventName.FLOW_ACTIVATED,
+                data: { flow, flowVersion, project },
+            }
+            return mock
+        }
+        case ApplicationEventName.FLOW_DEACTIVATED: {
+            const mock: FlowDeactivatedEvent = {
+                ...baseEnvelope,
+                action: ApplicationEventName.FLOW_DEACTIVATED,
                 data: { flow, flowVersion, project },
             }
             return mock
