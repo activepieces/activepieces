@@ -1,0 +1,32 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": true,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "es2021",
+    "module": "esnext",
+    "lib": ["es2021", "dom"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "baseUrl": ".",
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "resolveJsonModule": true,
+    "types": ["node"],
+    "paths": {
+      "@activepieces/shared": ["packages/shared/src/index.ts"],
+      "@activepieces/pieces-common": ["packages/pieces/common/src/index.ts"],
+      "@activepieces/pieces-framework": ["packages/pieces/framework/src/index.ts"],
+      "@activepieces/piece-youtrack": ["packages/pieces/community/youtrack/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "tmp", "dist", "coverage"]
+}
