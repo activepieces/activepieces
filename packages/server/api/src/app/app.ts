@@ -1,17 +1,19 @@
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, AuthenticationEvent, ConnectionEvent, Flow, FlowCreatedEvent, FlowDeletedEvent, FlowLifecycleEvent, FlowRun, FlowRunEvent, FlowUpdatedEvent, Folder, FolderEvent, GitRepoWithoutSensitiveData, isNil, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserInvitation, UserWithMetaInformation } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, ConnectionDeletedEvent, ConnectionUpsertedEvent, Flow, FlowActivatedEvent, FlowCreatedEvent, FlowDeactivatedEvent, FlowDeletedEvent, FlowPublishedEvent, FlowRun, FlowRunFinishedEvent, FlowRunRetriedEvent, FlowRunStartedEvent, FlowUpdatedEvent, Folder, FolderCreatedEvent, FolderDeletedEvent, FolderUpdatedEvent, GitRepoWithoutSensitiveData, isNil, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserEmailVerifiedEvent, UserInvitation, UserPasswordResetEvent, UserSignedInEvent, UserWithMetaInformation } from '@activepieces/shared'
 import replyFrom from '@fastify/reply-from'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
 import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
+import { jsonSchemaTransform, jsonSchemaTransformObject } from 'fastify-type-provider-zod'
 import Mustache from 'mustache'
+import { globalRegistry } from 'zod/v4/core'
 import { agentsModule } from './agents/agents-module'
 import { aiProviderService } from './ai/ai-provider-service'
 import { aiProviderModule } from './ai/ai-provider.module'
 import { platformAnalyticsModule } from './analytics/platform-analytics.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
-import { platformAppConnectionController } from './app-connection/platform-app-connection.controller'
+import { platformAppConnectionModule } from './app-connection/platform-app-connection.module'
 import { authenticationModule } from './authentication/authentication.module'
 import { canaryRoutingMiddleware } from './core/canary/canary-routing.middleware'
 import { collaborativeModule } from './core/collaborative/collaborative.module'
@@ -103,10 +105,15 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         return payload as Buffer
     })
 
+    registerOpenApiSchemas()
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await app.register(swagger as any, {
         hideUntagged: true,
+        transform: jsonSchemaTransform,
+        transformObject: jsonSchemaTransformObject,
         openapi: {
+            openapi: '3.1.0',
             servers: [
                 {
                     url: 'https://cloud.activepieces.com/api',
@@ -122,41 +129,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
                     },
                 },
                 schemas: {
-                    [ApplicationEventName.FLOW_CREATED]: FlowCreatedEvent,
-                    [ApplicationEventName.FLOW_UPDATED]: FlowUpdatedEvent,
-                    [ApplicationEventName.FLOW_DELETED]: FlowDeletedEvent,
-                    [ApplicationEventName.FLOW_PUBLISHED]: FlowLifecycleEvent,
-                    [ApplicationEventName.FLOW_ACTIVATED]: FlowLifecycleEvent,
-                    [ApplicationEventName.FLOW_DEACTIVATED]: FlowLifecycleEvent,
-                    [ApplicationEventName.CONNECTION_UPSERTED]: ConnectionEvent,
-                    [ApplicationEventName.CONNECTION_DELETED]: ConnectionEvent,
-                    [ApplicationEventName.FOLDER_CREATED]: FolderEvent,
-                    [ApplicationEventName.FOLDER_UPDATED]: FolderEvent,
-                    [ApplicationEventName.FOLDER_DELETED]: FolderEvent,
-                    [ApplicationEventName.FLOW_RUN_STARTED]: FlowRunEvent,
-                    [ApplicationEventName.FLOW_RUN_FINISHED]: FlowRunEvent,
-                    [ApplicationEventName.FLOW_RUN_RETRIED]: FlowRunEvent,
-                    [ApplicationEventName.USER_SIGNED_UP]: SignUpEvent,
-                    [ApplicationEventName.USER_SIGNED_IN]: AuthenticationEvent,
-                    [ApplicationEventName.USER_PASSWORD_RESET]: AuthenticationEvent,
-                    [ApplicationEventName.USER_EMAIL_VERIFIED]: AuthenticationEvent,
-                    [ApplicationEventName.SIGNING_KEY_CREATED]: SigningKeyEvent,
-                    [ApplicationEventName.PROJECT_ROLE_CREATED]: ProjectRoleEvent,
-                    [ApplicationEventName.PROJECT_RELEASE_CREATED]: ProjectReleaseEvent,
-                    'template': Template,
-                    'folder': Folder,
-                    'user': UserWithMetaInformation,
-                    'user-invitation': UserInvitation,
-                    'project-member': ProjectMember,
-                    project: ProjectWithLimits,
-                    flow: Flow,
-                    'flow-run': FlowRun,
-                    'app-connection': AppConnectionWithoutSensitiveData,
-                    piece: PieceMetadata,
-                    'git-repo': GitRepoWithoutSensitiveData,
-                    'project-release': ProjectRelease,
-                    'global-connection': AppConnectionWithoutSensitiveData,
-
+                    'global-connection': { $ref: '#/components/schemas/app-connection' },
                 },
             },
             info: {
@@ -213,7 +186,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(flowRunModule)
     await app.register(webhookModule)
     await app.register(appConnectionModule)
-    await app.register(platformAppConnectionController, { prefix: '/v1/platform-app-connections' })
+    await app.register(platformAppConnectionModule)
     await app.register(openapiModule)
     await app.register(appEventRoutingModule)
     await app.register(authenticationModule)
@@ -391,6 +364,42 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
         )
     }
     void startDevPieceWatcher(app)
+}
+
+function registerOpenApiSchemas() {
+    globalRegistry.add(FlowCreatedEvent, { id: ApplicationEventName.FLOW_CREATED })
+    globalRegistry.add(FlowUpdatedEvent, { id: ApplicationEventName.FLOW_UPDATED })
+    globalRegistry.add(FlowDeletedEvent, { id: ApplicationEventName.FLOW_DELETED })
+    globalRegistry.add(FlowPublishedEvent, { id: ApplicationEventName.FLOW_PUBLISHED })
+    globalRegistry.add(FlowActivatedEvent, { id: ApplicationEventName.FLOW_ACTIVATED })
+    globalRegistry.add(FlowDeactivatedEvent, { id: ApplicationEventName.FLOW_DEACTIVATED })
+    globalRegistry.add(ConnectionUpsertedEvent, { id: ApplicationEventName.CONNECTION_UPSERTED })
+    globalRegistry.add(ConnectionDeletedEvent, { id: ApplicationEventName.CONNECTION_DELETED })
+    globalRegistry.add(FolderCreatedEvent, { id: ApplicationEventName.FOLDER_CREATED })
+    globalRegistry.add(FolderUpdatedEvent, { id: ApplicationEventName.FOLDER_UPDATED })
+    globalRegistry.add(FolderDeletedEvent, { id: ApplicationEventName.FOLDER_DELETED })
+    globalRegistry.add(FlowRunStartedEvent, { id: ApplicationEventName.FLOW_RUN_STARTED })
+    globalRegistry.add(FlowRunFinishedEvent, { id: ApplicationEventName.FLOW_RUN_FINISHED })
+    globalRegistry.add(FlowRunRetriedEvent, { id: ApplicationEventName.FLOW_RUN_RETRIED })
+    globalRegistry.add(SignUpEvent, { id: ApplicationEventName.USER_SIGNED_UP })
+    globalRegistry.add(UserSignedInEvent, { id: ApplicationEventName.USER_SIGNED_IN })
+    globalRegistry.add(UserPasswordResetEvent, { id: ApplicationEventName.USER_PASSWORD_RESET })
+    globalRegistry.add(UserEmailVerifiedEvent, { id: ApplicationEventName.USER_EMAIL_VERIFIED })
+    globalRegistry.add(SigningKeyEvent, { id: ApplicationEventName.SIGNING_KEY_CREATED })
+    globalRegistry.add(ProjectRoleEvent, { id: ApplicationEventName.PROJECT_ROLE_CREATED })
+    globalRegistry.add(ProjectReleaseEvent, { id: ApplicationEventName.PROJECT_RELEASE_CREATED })
+    globalRegistry.add(Template, { id: 'template' })
+    globalRegistry.add(Folder, { id: 'folder' })
+    globalRegistry.add(UserWithMetaInformation, { id: 'user' })
+    globalRegistry.add(UserInvitation, { id: 'user-invitation' })
+    globalRegistry.add(ProjectMember, { id: 'project-member' })
+    globalRegistry.add(ProjectWithLimits, { id: 'project' })
+    globalRegistry.add(Flow, { id: 'flow' })
+    globalRegistry.add(FlowRun, { id: 'flow-run' })
+    globalRegistry.add(AppConnectionWithoutSensitiveData, { id: 'app-connection' })
+    globalRegistry.add(PieceMetadata, { id: 'piece' })
+    globalRegistry.add(GitRepoWithoutSensitiveData, { id: 'git-repo' })
+    globalRegistry.add(ProjectRelease, { id: 'project-release' })
 }
 
 const REDIRECT_HTML_TEMPLATE = `<!DOCTYPE html>
