@@ -134,11 +134,5 @@
   "Team": "Team",
   "Filter scheduling links by team. Leave empty to show all teams.": "Filter scheduling links by team. Leave empty to show all teams.",
   "Personal": "Personal",
-  "Failed to load teams.": "Failed to load teams.",
-  "Custom API Call": "Custom API Call",
-  "Make a custom API call to a specific endpoint": "Make a custom API call to a specific endpoint",
-  "Headers": "Headers",
-  "Query Parameters": "Query Parameters",
-  "Body": "Body",
-  "Timeout (in seconds)": "Timeout (in seconds)"
+  "Failed to load teams.": "Failed to load teams."
 }
