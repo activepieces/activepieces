@@ -8,7 +8,6 @@ import { discordAuth } from '../auth';
 import { discordCommon } from '../common';
 import { Member } from '../common/models';
 
-// Deprecated: Kept for backward compatibility
 export const discordListGuildMembers = createAction({
   auth: discordAuth,
   name: 'list_guild_members',
@@ -16,12 +15,20 @@ export const discordListGuildMembers = createAction({
   displayName: 'List guild members',
   props: {
     guild_id: discordCommon.guilds,
+    shortText: Property.ShortText({
+      displayName: 'Search',
+      description: 'Search for a member',
+      required: true,
+    }),
   },
 
   async run(configValue) {
     const request: HttpRequest<any> = {
       method: HttpMethod.GET,
       url: `https://discord.com/api/v9/guilds/${configValue.propsValue.guild_id}/members`,
+      queryParams: {
+        limit: '1000',
+      },
       headers: {
         authorization: `Bot ${configValue.auth.secret_text}`,
         'Content-Type': 'application/json',
@@ -30,7 +37,27 @@ export const discordListGuildMembers = createAction({
 
     const res = await httpClient.sendRequest<Member[]>(request);
 
-    return res.body;
+    const options: { options: { value: string; label: string }[] } = {
+      options: [],
+    };
+
+    if (res.body.length === 0)
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'No members found, please add the bot to a guild first',
+      };
+
+    await Promise.all(
+      res.body.map(async (member) => {
+        options.options.push({
+          value: member.user.id,
+          label: member.user.username,
+        });
+      })
+    );
+
+    return options;
   },
 });
 
@@ -54,7 +81,7 @@ export const discordFindGuildMemberByUsername = createAction({
       url: `https://discord.com/api/v9/guilds/${configValue.propsValue.guild_id}/members/search`,
       queryParams: {
         query: configValue.propsValue.username,
-        limit: '10', // Search more to find exact match
+        limit: '10',
       },
       headers: {
         authorization: `Bot ${configValue.auth.secret_text}`,
@@ -64,7 +91,6 @@ export const discordFindGuildMemberByUsername = createAction({
 
     const res = await httpClient.sendRequest<Member[]>(request);
 
-    // Filter for exact match to resolve the "wrong user" concern
     const member = res.body.find(
       (m) =>
         m.user.username.toLowerCase() ===
