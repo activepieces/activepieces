@@ -1,7 +1,7 @@
 import { flowStructureUtil, isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import { SearchXIcon } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
 import { SearchInput } from '@/components/custom/search-input';
@@ -18,9 +18,9 @@ import {
 import { DataSelectorTreeNode } from './type';
 import { dataSelectorUtils } from './utils';
 
-const getDataSelectorStructure: (
+const buildDataSelectorStructure = (
   state: BuilderState,
-) => DataSelectorTreeNode[] = (state) => {
+): DataSelectorTreeNode[] => {
   const { selectedStep, flowVersion } = state;
   if (!selectedStep || !flowVersion || !flowVersion.trigger) {
     return [];
@@ -76,11 +76,11 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
     useState<DataSelectorSizeState>(DataSelectorSizeState.DOCKED);
   const [searchTerm, setSearchTerm] = useState('');
   const dataSelectorStructure = useBuilderStateContext(
-    getDataSelectorStructure,
+    buildDataSelectorStructure,
   );
-  const filteredNodes = dataSelectorUtils.filterBy(
-    dataSelectorStructure,
-    searchTerm,
+  const filteredNodes = useMemo(
+    () => dataSelectorUtils.filterBy(dataSelectorStructure, searchTerm),
+    [dataSelectorStructure, searchTerm],
   );
   const [showDataSelector, setShowDataSelector] = useState(false);
 
@@ -114,7 +114,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
         textMentionUtils.dataSelectorCssClassSelector,
       )}
     >
-      <div className="text-lg items-center px-5 py-2 flex gap-2">
+      <div className="text-lg items-center px-3 py-2 flex gap-2">
         {t('Data Selector')} <div className="grow"></div>{' '}
         <DataSelectorSizeTogglers
           state={DataSelectorSize}
@@ -136,7 +136,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
         }}
         className="transition-all overflow-hidden"
       >
-        <div className="flex items-center gap-2 px-5 mb-2 mt-0.5">
+        <div className="flex items-center gap-2 px-3 mb-2 mt-0.5">
           <SearchInput
             onChange={(e) => setSearchTerm(e)}
             value={searchTerm}

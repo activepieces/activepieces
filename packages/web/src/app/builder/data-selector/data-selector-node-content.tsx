@@ -1,23 +1,23 @@
-import { flowStructureUtil } from '@activepieces/shared';
+import {
+  FlowAction,
+  FlowTrigger,
+  flowStructureUtil,
+} from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { useApRipple } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
 import { PieceIcon, stepsHooks } from '@/features/pieces';
+import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
 import { DataSelectorTreeNode } from './type';
 
-const ToggleIcon = ({ expanded }: { expanded: boolean }) => {
-  const toggleIconSize = 15;
-  return expanded ? (
-    <ChevronUp height={toggleIconSize} width={toggleIconSize}></ChevronUp>
-  ) : (
-    <ChevronDown height={toggleIconSize} width={toggleIconSize}></ChevronDown>
-  );
-};
+const INDENT_PER_DEPTH = 14;
+const VALUE_PREVIEW_MAX_LENGTH = 60;
 
 type DataSelectorNodeContentProps = {
   expanded: boolean;
@@ -25,6 +25,7 @@ type DataSelectorNodeContentProps = {
   depth: number;
   node: DataSelectorTreeNode;
 };
+
 const handleKeyPress = (event: React.KeyboardEvent<HTMLDivElement>) => {
   if (event.key === 'Enter' || event.key === ' ') {
     event.preventDefault();
@@ -44,98 +45,179 @@ const DataSelectorNodeContent = ({
   const insertMention = useBuilderStateContext((state) => state.insertMention);
 
   const [ripple, rippleEvent] = useApRipple();
-  const step =
-    node.data.type === 'value'
+
+  const stepForRoot =
+    depth === 0 && node.data.type === 'value'
       ? flowStructureUtil.getStep(node.data.propertyPath, flowVersion.trigger)
-      : node.data.type === 'test'
+      : depth === 0 && node.data.type === 'test'
       ? flowStructureUtil.getStep(node.data.stepName, flowVersion.trigger)
       : undefined;
-  const stepMetadata = step
-    ? stepsHooks.useStepMetadata({ step }).stepMetadata
-    : undefined;
-  const showInsertButton =
+
+  const isExpandable = !!node.children && node.children.length > 0;
+  const isStepRoot = depth === 0;
+  const isPrimitiveStepRoot = isStepRoot && !isExpandable;
+  const isLeafValue =
+    !isExpandable && node.data.type === 'value' && !isStepRoot;
+  const isInsertable =
     node.data.type === 'value' && node.data.insertable && !node.isLoopStepNode;
-  const showNodeValue = !node.children && node.data.type === 'value';
-  const depthMultiplier = 23 / (1 + depth * 0.05);
+  const showInsertButton = isInsertable && (!isStepRoot || isPrimitiveStepRoot);
+
+  const arrayValue =
+    node.data.type === 'value' && Array.isArray(node.data.value)
+      ? (node.data.value as unknown[])
+      : null;
+  const showArrayCount = isExpandable && arrayValue !== null;
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (isExpandable) {
+      rippleEvent(e);
+      setExpanded(!expanded);
+      return;
+    }
+    if (isInsertable && insertMention && node.data.type === 'value') {
+      rippleEvent(e);
+      insertMention(node.data.propertyPath);
+    }
+  };
+
+  const showValuePreview = (isLeafValue || isPrimitiveStepRoot) && isInsertable;
+  const valuePreview =
+    showValuePreview && node.data.type === 'value'
+      ? formatValuePreview(node.data.value)
+      : '';
+
   return (
     <div
       tabIndex={0}
       onKeyDown={handleKeyPress}
       ref={ripple}
-      onClick={(e) => {
-        if (node.children && node.children.length > 0) {
-          rippleEvent(e);
-          setExpanded(!expanded);
-        } else if (
-          insertMention &&
-          node.data.type === 'value' &&
-          node.data.insertable
-        ) {
-          rippleEvent(e);
-          insertMention(node.data.propertyPath);
-        }
-      }}
-      className="w-full max-w-full select-none focus:outline-hidden hover:bg-accent dark:hover:bg-accent/20 focus:bg-accent focus:bg-opacity-75 cursor-pointer group"
+      onClick={handleClick}
+      className={cn(
+        'w-full max-w-full select-none focus:outline-hidden cursor-pointer group transition-colors',
+        'hover:bg-accent/60 focus:bg-accent dark:hover:bg-accent/20',
+      )}
+      data-depth={depth}
     >
-      <div className="grow  max-w-full flex items-center gap-2 min-h-[48px] pr-3 select-none">
-        <div
-          style={{
-            minWidth: `${
-              depth * depthMultiplier + (depth === 0 ? 0 : 12) + 18
-            }px`,
-          }}
-        ></div>
-        {stepMetadata && (
-          <div className="shrink-0">
-            <PieceIcon
-              displayName={stepMetadata.displayName}
-              logoUrl={stepMetadata.logoUrl}
-              showTooltip={false}
-              border={false}
-              size="sm"
-            ></PieceIcon>
-          </div>
+      <div
+        className={cn(
+          'flex items-center gap-1.5 pr-2 min-w-0',
+          isStepRoot ? 'min-h-[40px] py-1.5' : 'min-h-[32px]',
         )}
-        {node.data.type !== 'test' && (
-          <div className=" truncate">{node.data.displayName}</div>
+        style={{ paddingLeft: depth * INDENT_PER_DEPTH + 12 }}
+      >
+        {!isStepRoot && isExpandable && (
+          <ChevronRight
+            className={cn(
+              'size-3.5 shrink-0 text-muted-foreground transition-transform',
+              expanded && 'rotate-90',
+            )}
+          />
+        )}
+        {!isStepRoot && !isExpandable && (
+          <div className="size-3.5 shrink-0" aria-hidden />
         )}
 
-        {showNodeValue && (
-          <>
-            <div className="shrink-0">:</div>
-            <div className="flex-1 text-primary truncate">
-              {`${node.data.type === 'value' ? node.data.value : ''}`}
-            </div>
-          </>
-        )}
+        {isStepRoot && stepForRoot && <StepRootIcon step={stepForRoot} />}
 
-        <div className="ml-auto flex shrink-0 gap-2 items-center">
-          {showInsertButton && (
-            <Button
-              className="z-50 hover:opacity-100  opacity-0 p-0  group-hover:p-1  group-hover:opacity-100 focus:opacity-100"
-              variant="basic"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (insertMention) {
-                  insertMention(
-                    node.data.type === 'value' ? node.data.propertyPath : '',
-                  );
-                }
-              }}
+        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+          {node.data.type !== 'test' && (
+            <span
+              className={cn(
+                'truncate min-w-0 shrink-0 max-w-[40%]',
+                isStepRoot
+                  ? 'font-medium text-foreground text-sm'
+                  : 'text-foreground text-sm',
+              )}
             >
-              {t('Insert')}
-            </Button>
+              {node.data.displayName}
+            </span>
           )}
-          {node.children && node.children.length > 0 && (
-            <div className="shrink-0 pr-5">
-              <ToggleIcon expanded={expanded}></ToggleIcon>
-            </div>
+
+          {showArrayCount && (
+            <span className="shrink-0 text-xs text-muted-foreground">
+              {t('{count, plural, =1 {1 item} other {# items}}', {
+                count: arrayValue?.length ?? 0,
+              })}
+            </span>
+          )}
+
+          {showValuePreview && valuePreview !== '' && (
+            <>
+              <span className="shrink-0 text-muted-foreground">:</span>
+              <TextWithTooltip tooltipMessage={String(valuePreview)}>
+                <span className="min-w-0 truncate text-primary text-sm flex-1">
+                  {valuePreview}
+                </span>
+              </TextWithTooltip>
+            </>
           )}
         </div>
+
+        {showInsertButton && (
+          <Button
+            variant="basic"
+            size="sm"
+            tabIndex={-1}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (insertMention && node.data.type === 'value') {
+                insertMention(node.data.propertyPath);
+              }
+            }}
+            className={cn(
+              'h-6 px-2 text-xs text-primary shrink-0 opacity-0 transition-opacity',
+              'group-hover:opacity-100 focus-visible:opacity-100',
+            )}
+          >
+            {t('Insert')}
+          </Button>
+        )}
+
+        {isStepRoot && isExpandable && (
+          <ChevronDown
+            className={cn(
+              'size-4 shrink-0 text-muted-foreground transition-transform',
+              !expanded && '-rotate-90',
+            )}
+          />
+        )}
       </div>
     </div>
   );
 };
+
+const StepRootIcon = ({ step }: { step: FlowAction | FlowTrigger }) => {
+  const { stepMetadata } = stepsHooks.useStepMetadata({ step });
+  if (!stepMetadata) return null;
+  return (
+    <div className="shrink-0">
+      <PieceIcon
+        displayName={stepMetadata.displayName}
+        logoUrl={stepMetadata.logoUrl}
+        showTooltip={false}
+        border={false}
+        size="xs"
+      />
+    </div>
+  );
+};
+
+const formatValuePreview = (value: unknown): string => {
+  if (value === null || value === undefined) return '—';
+  if (typeof value === 'string') {
+    const trimmed = value.replace(/\s+/g, ' ').trim();
+    return trimmed.length > VALUE_PREVIEW_MAX_LENGTH
+      ? `${trimmed.slice(0, VALUE_PREVIEW_MAX_LENGTH)}…`
+      : trimmed;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  const json = JSON.stringify(value);
+  return json.length > VALUE_PREVIEW_MAX_LENGTH
+    ? `${json.slice(0, VALUE_PREVIEW_MAX_LENGTH)}…`
+    : json;
+};
+
 DataSelectorNodeContent.displayName = 'DataSelectorNodeContent';
 export { DataSelectorNodeContent };

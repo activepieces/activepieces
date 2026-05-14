@@ -174,7 +174,10 @@ async function lookupPieceComponent({ pieceName, componentName, componentType, p
     const label = componentType === 'action' ? 'Action' : 'Trigger'
     const component = componentMap[componentName]
     if (isNil(component)) {
-        return { error: { content: [{ type: 'text', text: `❌ ${label} "${componentName}" not found in "${normalized}". Available: ${Object.keys(componentMap).join(', ')}` }] } }
+        const available = Object.keys(componentMap)
+        const suggestion = available.find((name) => name.includes(componentName))
+        const hint = suggestion ? ` Did you mean "${suggestion}"?` : ''
+        return { error: { content: [{ type: 'text', text: `❌ ${label} "${componentName}" not found in "${normalized}".${hint} Available: ${available.join(', ')}` }] } }
     }
     return { piece, component, pieceName: normalized }
 }
