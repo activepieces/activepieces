@@ -34,7 +34,7 @@ export const sendr = createPiece({
   displayName: 'Sendr',
   description: 'Create personalized landing pages, dynamic audio, video, and manage campaigns with Sendr.',
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/sendr.png',
+  logoUrl: 'packages/pieces/community/sendr/logo.svg',
   categories: [PieceCategory.MARKETING],
   auth: sendrAuth,
   authors: ['simon-reitinger'],
