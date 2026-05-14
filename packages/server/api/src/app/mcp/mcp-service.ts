@@ -4,7 +4,6 @@ import { repoFactory } from '../core/db/repo-factory'
 import { flowService } from '../flows/flow/flow.service'
 import { McpServerEntity } from './mcp-entity'
 import { buildMcpServer } from './mcp-server-builder'
-import { ALL_CONTROLLABLE_TOOL_NAMES } from './tools'
 
 export const mcpServerRepository = repoFactory(McpServerEntity)
 
@@ -46,18 +45,18 @@ export const mcpServerService = (log: FastifyBaseLogger) => ({
         return mcpServerService(log).getByPlatformId(platformId)
     },
 
-    update: async ({ projectId, enabledTools }: UpdateParams): Promise<PopulatedMcpServer> => {
+    update: async ({ projectId, disabledTools }: UpdateParams): Promise<PopulatedMcpServer> => {
         const mcp = await mcpServerService(log).getByProjectId(projectId)
-        if (!isNil(enabledTools)) {
-            await mcpServerRepository().update(mcp.id, { enabledTools })
+        if (!isNil(disabledTools)) {
+            await mcpServerRepository().update(mcp.id, { disabledTools })
         }
         return mcpServerService(log).getPopulatedByProjectId(projectId)
     },
 
-    updatePlatform: async ({ platformId, enabledTools }: UpdatePlatformParams): Promise<McpServerSchema> => {
+    updatePlatform: async ({ platformId, disabledTools }: UpdatePlatformParams): Promise<McpServerSchema> => {
         const mcp = await mcpServerService(log).getByPlatformId(platformId)
-        if (!isNil(enabledTools)) {
-            await mcpServerRepository().update(mcp.id, { enabledTools })
+        if (!isNil(disabledTools)) {
+            await mcpServerRepository().update(mcp.id, { disabledTools })
         }
         return mcpServerService(log).getByPlatformId(platformId)
     },
@@ -83,7 +82,7 @@ async function getOrCreate({ where, defaults }: {
             id: apId(),
             ...defaults,
             token: apId(72),
-            enabledTools: ALL_CONTROLLABLE_TOOL_NAMES,
+            disabledTools: [],
         }),
     )
     if (error) {
@@ -108,10 +107,10 @@ async function listMcpFlows(projectId: string, logger: FastifyBaseLogger): Promi
 
 type UpdateParams = {
     projectId: string
-    enabledTools?: string[]
+    disabledTools?: string[]
 }
 
 type UpdatePlatformParams = {
     platformId: string
-    enabledTools?: string[]
+    disabledTools?: string[]
 }

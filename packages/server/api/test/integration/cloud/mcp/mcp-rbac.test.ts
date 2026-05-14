@@ -35,7 +35,7 @@ function makeMcp(projectId: string): ProjectScopedMcpServer {
         platformId: null,
         type: McpServerType.PROJECT,
         token: apId(),
-        enabledTools: null,
+        disabledTools: null,
     }
 }
 
