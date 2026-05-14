@@ -1,0 +1,22 @@
+import { createAction } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { sendrAuth } from '../auth';
+import { campaignDropdown, sendrApiCall, flattenObject } from '../common';
+
+export const getCampaign = createAction({
+  auth: sendrAuth,
+  name: 'get_campaign',
+  displayName: 'Get Campaign',
+  description: 'Returns detailed information about a specific campaign.',
+  props: {
+    campaign: campaignDropdown,
+  },
+  async run(context) {
+    const response = await sendrApiCall<Record<string, unknown>>({
+      token: context.auth as unknown as string,
+      method: HttpMethod.GET,
+      path: `/campaigns/${context.propsValue.campaign}`,
+    });
+    return flattenObject(response.body);
+  },
+});
