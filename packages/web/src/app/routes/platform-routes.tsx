@@ -42,6 +42,7 @@ const SSOPage = React.lazy(() =>
   import('./platform/security/sso').then((m) => ({ default: m.SSOPage })),
 );
 const AIProvidersPage = React.lazy(() => import('./platform/setup/ai'));
+const PlatformMcpPage = React.lazy(() => import('./platform/setup/mcp'));
 const BrandingPage = React.lazy(() =>
   import('./platform/setup/branding').then((m) => ({
     default: m.BrandingPage,
@@ -63,6 +64,9 @@ const PlatformTemplatesPage = React.lazy(() =>
   })),
 );
 const UsersPage = React.lazy(() => import('./platform/users'));
+const PlatformConnectionsPage = React.lazy(
+  () => import('./platform/connections'),
+);
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<RouteLoadingBar />}>{children}</Suspense>;
@@ -104,6 +108,18 @@ export const platformRoutes = [
     ),
   },
   {
+    path: '/platform/connections',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Connections">
+          <SuspenseWrapper>
+            <PlatformConnectionsPage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
     path: '/platform/setup',
     element: (
       <PlatformLayout>
@@ -120,6 +136,18 @@ export const platformRoutes = [
         <PageTitle title="AI">
           <SuspenseWrapper>
             <AIProvidersPage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/setup/mcp',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="MCP Server">
+          <SuspenseWrapper>
+            <PlatformMcpPage />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>

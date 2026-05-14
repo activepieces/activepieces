@@ -1,5 +1,5 @@
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, AuthenticationEvent, ConnectionEvent, Flow, FlowCreatedEvent, FlowDeletedEvent, FlowRun, FlowRunEvent, FlowUpdatedEvent, Folder, FolderEvent, GitRepoWithoutSensitiveData, isNil, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserInvitation, UserWithMetaInformation } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, AuthenticationEvent, ConnectionEvent, Flow, FlowCreatedEvent, FlowDeletedEvent, FlowLifecycleEvent, FlowRun, FlowRunEvent, FlowUpdatedEvent, Folder, FolderEvent, GitRepoWithoutSensitiveData, isNil, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserInvitation, UserWithMetaInformation } from '@activepieces/shared'
 import replyFrom from '@fastify/reply-from'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
@@ -11,8 +11,8 @@ import { aiProviderModule } from './ai/ai-provider.module'
 import { platformAnalyticsModule } from './analytics/platform-analytics.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
+import { platformAppConnectionController } from './app-connection/platform-app-connection.controller'
 import { authenticationModule } from './authentication/authentication.module'
-import { chatModule } from './chat/chat.module'
 import { canaryRoutingMiddleware } from './core/canary/canary-routing.middleware'
 import { collaborativeModule } from './core/collaborative/collaborative.module'
 import { rateLimitModule } from './core/security/rate-limit'
@@ -30,6 +30,7 @@ import { federatedAuthModule } from './ee/authentication/federated-authn/federat
 import { otpModule } from './ee/authentication/otp/otp-module'
 import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware'
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
+import { chatModule } from './ee/chat/chat.module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
 import { customDomainModule } from './ee/custom-domains/custom-domain.module'
 import { domainHelper } from './ee/custom-domains/domain-helper'
@@ -124,6 +125,9 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
                     [ApplicationEventName.FLOW_CREATED]: FlowCreatedEvent,
                     [ApplicationEventName.FLOW_UPDATED]: FlowUpdatedEvent,
                     [ApplicationEventName.FLOW_DELETED]: FlowDeletedEvent,
+                    [ApplicationEventName.FLOW_PUBLISHED]: FlowLifecycleEvent,
+                    [ApplicationEventName.FLOW_ACTIVATED]: FlowLifecycleEvent,
+                    [ApplicationEventName.FLOW_DEACTIVATED]: FlowLifecycleEvent,
                     [ApplicationEventName.CONNECTION_UPSERTED]: ConnectionEvent,
                     [ApplicationEventName.CONNECTION_DELETED]: ConnectionEvent,
                     [ApplicationEventName.FOLDER_CREATED]: FolderEvent,
@@ -209,6 +213,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(flowRunModule)
     await app.register(webhookModule)
     await app.register(appConnectionModule)
+    await app.register(platformAppConnectionController, { prefix: '/v1/platform-app-connections' })
     await app.register(openapiModule)
     await app.register(appEventRoutingModule)
     await app.register(authenticationModule)
@@ -228,7 +233,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(licenseKeysModule)
     await app.register(tablesModule)
     await app.register(knowledgeBaseModule)
-    await app.register(chatModule)
     await app.register(userModule)
     await app.register(templateModule)
     await app.register(userBadgeModule)
@@ -289,6 +293,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(globalConnectionModule)
             await app.register(secretManagersModule)
             await app.register(scimModule)
+            await app.register(chatModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
@@ -318,6 +323,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(globalConnectionModule)
             await app.register(secretManagersModule)
             await app.register(scimModule)
+            await app.register(chatModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
@@ -328,7 +334,13 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             break
     }
 
-    await systemJobsSchedule(app.log).startWorker()
+    const isCanaryApp = system.getBoolean(AppSystemProp.IS_CANARY_APP) ?? false
+    if (isCanaryApp) {
+        app.log.info('[setupApp] Skipping system jobs worker on canary app instance')
+    }
+    else {
+        await systemJobsSchedule(app.log).startWorker()
+    }
 
     app.addHook('onClose', async () => {
         app.log.info('Shutting down')

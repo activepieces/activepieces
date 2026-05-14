@@ -2,13 +2,16 @@ import {
     ApMultipartFile,
     EventPayload,
     FAIL_PARENT_ON_FAILURE_HEADER,
+    FileCompression,
+    FileType,
     FlowRun,
     isMultipartFile,
     PARENT_RUN_ID_HEADER,
 } from '@activepieces/shared'
-import { FastifyRequest } from 'fastify'
+import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import mime from 'mime-types'
-import { stepFileService } from '../file/step-file/step-file.service'
+import { fileService } from '../file/file.service'
+import { filesService } from '../file/files-service'
 import { projectService } from '../project/project-service'
 
 const BINARY_CONTENT_TYPE_PATTERNS = [
@@ -94,17 +97,17 @@ async function convertBody(
         const extension = mime.extension(contentType?.split(';')[0] || '') || 'bin'
         const fileName = `file.${extension}`
 
-        const file = await stepFileService(request.log).saveAndEnrich({
+        const url = await saveStepFileAndConstructUrl({
+            log: request.log,
             data: request.body,
             fileName,
-            stepName: 'trigger',
             flowId,
             contentLength: request.body.length,
             platformId,
             projectId,
         })
         return {
-            fileUrl: file.url,
+            fileUrl: url,
         }
     }
 
@@ -113,16 +116,34 @@ async function convertBody(
 
 async function saveMultipartFileAsUrl(params: SaveMultipartFileAsUrlParams): Promise<string> {
     const { file, request, flowId, projectId, platformId } = params
-    const saved = await stepFileService(request.log).saveAndEnrich({
+    return saveStepFileAndConstructUrl({
+        log: request.log,
         data: file.data,
         fileName: file.filename,
-        stepName: 'trigger',
         flowId,
         contentLength: file.data.length,
         platformId,
         projectId,
     })
-    return saved.url
+}
+
+async function saveStepFileAndConstructUrl(params: SaveStepFileParams): Promise<string> {
+    const { log, data, fileName, flowId, contentLength, platformId, projectId } = params
+    const file = await fileService(log).save({
+        data,
+        metadata: { stepName: 'trigger', flowId },
+        fileName,
+        type: FileType.FLOW_STEP_FILE,
+        compression: FileCompression.NONE,
+        projectId,
+        platformId,
+        size: contentLength,
+    })
+    return filesService.constructReadUrl({
+        fileId: file.id,
+        fileType: FileType.FLOW_STEP_FILE,
+        platformId,
+    })
 }
 
 type SaveMultipartFileAsUrlParams = {
@@ -131,4 +152,14 @@ type SaveMultipartFileAsUrlParams = {
     flowId: string
     projectId: string
     platformId: string
+}
+
+type SaveStepFileParams = {
+    log: FastifyBaseLogger
+    data: Buffer
+    fileName: string
+    flowId: string
+    contentLength: number
+    platformId: string
+    projectId: string
 }

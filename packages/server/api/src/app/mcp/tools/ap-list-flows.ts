@@ -1,4 +1,4 @@
-import { FlowStatus, FlowTriggerType, isNil, McpServer, McpToolDefinition, Permission, PopulatedFlow } from '@activepieces/shared'
+import { FlowStatus, FlowTriggerType, isNil, McpToolDefinition, Permission, PopulatedFlow, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -13,7 +13,7 @@ const listFlowsInput = z.object({
     name: z.string().optional(),
 })
 
-export const apListFlowsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apListFlowsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_list_flows',
         permission: Permission.READ_FLOW,
@@ -23,7 +23,7 @@ export const apListFlowsTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
             status: z.enum(Object.values(FlowStatus) as [FlowStatus, ...FlowStatus[]]).optional().describe('Filter by status: ENABLED or DISABLED.'),
             name: z.string().optional().describe('Filter by flow name (partial match).'),
         },
-        annotations: { readOnlyHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {
                 const { limit, status, name } = listFlowsInput.parse(args)
@@ -36,11 +36,24 @@ export const apListFlowsTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
                 })
                 const lines = flows.data.map((flow) => formatFlowLine(flow))
                 const filterNote = (status || name) ? ' (filtered)' : ''
+                const structured = {
+                    flows: flows.data.map((flow) => ({
+                        id: flow.id,
+                        displayName: flow.version.displayName,
+                        status: flow.status,
+                        published: !isNil(flow.publishedVersionId),
+                        triggerType: flow.version.trigger.type === FlowTriggerType.PIECE
+                            ? (flow.version.trigger.settings.pieceName ?? 'piece (unconfigured)')
+                            : flow.version.trigger.type,
+                    })),
+                    count: flows.data.length,
+                }
                 return {
                     content: [{
                         type: 'text',
                         text: `✅ Listed ${lines.length} flow(s)${filterNote}:\n${lines.join('\n')}`,
                     }],
+                    structuredContent: structured,
                 }
             }
             catch (err) {
@@ -50,7 +63,7 @@ export const apListFlowsTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
     }
 }
 
-function formatFlowLine(flow: PopulatedFlow): string {
+export function formatFlowLine(flow: PopulatedFlow): string {
     const trigger = flow.version.trigger
     const triggerLabel = trigger.type === FlowTriggerType.PIECE
         ? (trigger.settings.pieceName ?? 'piece (unconfigured)')

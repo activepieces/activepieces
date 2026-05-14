@@ -1,4 +1,4 @@
-import { McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
+import { McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { executeAdhocAction } from './flow-run-utils'
@@ -9,10 +9,9 @@ const runActionInput = z.object({
     actionName: z.string().describe('Action to run, e.g. "send_channel_message". Use ap_get_piece_props for the input shape.'),
     input: z.record(z.string(), z.unknown()).optional().describe('Fully-resolved input for the action. Keys must match the piece action\'s props. Pass raw values — do NOT wrap in {{...}}. Omit if the action has no props.'),
     connectionExternalId: z.string().optional().describe('externalId from ap_list_connections. Required if the piece needs auth. Auto-wrapped as {{connections[\'externalId\']}}.'),
-    pieceVersion: z.string().optional().describe('Defaults to the latest installed version. Use "~X.Y.Z" for minor-version pinning.'),
 })
 
-export const apRunActionTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apRunActionTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_run_action',
         permission: Permission.WRITE_RUN,
@@ -21,11 +20,10 @@ export const apRunActionTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
         annotations: { destructiveHint: true, idempotentHint: false, openWorldHint: true },
         execute: async (args) => {
             try {
-                const { pieceName, actionName, input, connectionExternalId, pieceVersion } = runActionInput.parse(args)
+                const { pieceName, actionName, input, connectionExternalId } = runActionInput.parse(args)
                 return await executeAdhocAction({
                     projectId: mcp.projectId,
                     pieceName,
-                    pieceVersion,
                     actionName,
                     input,
                     connectionExternalId,
