@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/shared",
-  "version": "0.72.2", (fix(mcp): switch from enabledTools to disabledTools so new tools auto-appear)
+  "version": "0.72.2",
   "type": "commonjs",
   "sideEffects": false,
   "main": "./dist/src/index.js",
