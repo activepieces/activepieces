@@ -5,62 +5,57 @@ import { pubsub } from '../../helper/pubsub'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
-import { filterPieceBasedOnType, isSupportedRelease, loadDevPiecesIfEnabled } from './utils'
+import { loadDevPiecesIfEnabled } from './utils'
 
 const repo = repoFactory(PieceMetadataEntity)
 const environment = system.get<ApEnvironment>(AppSystemProp.ENVIRONMENT)
 const isTestingEnvironment = environment === ApEnvironment.TESTING
 
 let cachedRegistry: PieceRegistryEntry[] | null = null
-let inflightRegistry: Promise<PieceRegistryEntry[]> | null = null
+let registryGeneration = 0
 
 export const pieceCache = (log: FastifyBaseLogger) => {
     return {
         async setup(): Promise<void> {
             log.info('[pieceCache] Registry cache initialized')
             if (!isTestingEnvironment) {
-                await pubsub.subscribe(PIECE_METADATA_REFRESH_CHANNEL, (message: string) => {
-                    const parsed = JSON.parse(message) as PieceMetadataRefreshMessage
-                    handleRefreshMessage(parsed)
-                    log.debug({ type: parsed.type }, '[pieceCache] Handled piece metadata refresh message')
+                await pubsub.subscribe(PIECE_REGISTRY_INVALIDATION_CHANNEL, () => {
+                    cachedRegistry = null
+                    registryGeneration++
+                    log.debug('[pieceCache] Registry invalidated via pubsub')
                 })
             }
         },
 
-        async getRegistry(params: GetRegistryParams): Promise<PieceRegistryEntry[]> {
-            const { release, platformId } = params
-            const allRegistry = await getCachedRegistry()
-
+        async loadRegistry(): Promise<PieceRegistryEntry[]> {
+            const persistedRegistry = await loadPersistedRegistry()
             const devPieces = (await loadDevPiecesIfEnabled(log)).map(toRegistryEntry)
+            return [...persistedRegistry, ...devPieces]
+        },
 
-            return [...allRegistry, ...devPieces]
-                .filter((piece) => filterPieceBasedOnType(platformId, piece))
-                .filter((piece) => isNil(release) || isSupportedRelease(release, piece))
+        async invalidate(): Promise<void> {
+            cachedRegistry = null
+            registryGeneration++
+            if (!isTestingEnvironment) {
+                await pubsub.publish(PIECE_REGISTRY_INVALIDATION_CHANNEL, '1')
+            }
         },
     }
 }
 
-async function getCachedRegistry(): Promise<PieceRegistryEntry[]> {
+async function loadPersistedRegistry(): Promise<PieceRegistryEntry[]> {
     if (isTestingEnvironment) {
         return fetchRegistryFromDB()
     }
     if (!isNil(cachedRegistry)) {
         return cachedRegistry
     }
-    if (!isNil(inflightRegistry)) {
-        return inflightRegistry
+    const startGeneration = registryGeneration
+    const result = await fetchRegistryFromDB()
+    if (registryGeneration === startGeneration) {
+        cachedRegistry = result
     }
-    inflightRegistry = (async () => {
-        try {
-            const result = await fetchRegistryFromDB()
-            cachedRegistry = result
-            return result
-        }
-        finally {
-            inflightRegistry = null
-        }
-    })()
-    return inflightRegistry
+    return result
 }
 
 function toRegistryEntry(piece: PieceMetadataSchema): PieceRegistryEntry {
@@ -81,28 +76,7 @@ async function fetchRegistryFromDB(): Promise<PieceRegistryEntry[]> {
         .getRawMany<PieceRegistryEntry>()
 }
 
-function handleRefreshMessage(message: PieceMetadataRefreshMessage): void {
-    switch (message.type) {
-        case PieceMetadataRefreshType.CREATE:
-        case PieceMetadataRefreshType.DELETE:
-        case PieceMetadataRefreshType.BULK_SYNC:
-            cachedRegistry = null
-            break
-    }
-}
-
-export const PIECE_METADATA_REFRESH_CHANNEL = 'piece-metadata-refresh'
-
-export enum PieceMetadataRefreshType {
-    CREATE = 'CREATE',
-    DELETE = 'DELETE',
-    BULK_SYNC = 'BULK_SYNC',
-}
-
-export type PieceMetadataRefreshMessage =
-    | { type: PieceMetadataRefreshType.CREATE, piece: PieceMetadataSchema }
-    | { type: PieceMetadataRefreshType.DELETE, pieces: { name: string, version: string }[] }
-    | { type: PieceMetadataRefreshType.BULK_SYNC }
+export const PIECE_REGISTRY_INVALIDATION_CHANNEL = 'piece-registry-invalidation'
 
 export type PieceRegistryEntry = {
     platformId?: string
@@ -111,9 +85,4 @@ export type PieceRegistryEntry = {
     version: string
     minimumSupportedRelease?: string
     maximumSupportedRelease?: string
-}
-
-type GetRegistryParams = {
-    release: string | undefined
-    platformId?: string
 }
