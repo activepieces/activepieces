@@ -1,0 +1,38 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.17",
+  "version": "1.0.0",
+  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "packageName": "com.activepieces.teamsbot",
+  "developer": {
+    "name": "Activepieces",
+    "websiteUrl": "https://activepieces.com",
+    "privacyUrl": "https://activepieces.com/privacy",
+    "termsOfUseUrl": "https://activepieces.com/terms"
+  },
+  "name": {
+    "short": "Activepieces",
+    "full": "Activepieces Automation"
+  },
+  "description": {
+    "short": "Automate workflows with Activepieces",
+    "full": "Send automated messages to Teams channels from your Activepieces workflows."
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "accentColor": "#8142E3",
+  "bots": [
+    {
+      "botId": "<AP_TEAMS_BOT_APP_ID>",
+      "scopes": ["team"],
+      "isNotificationOnly": true,
+      "supportsCalling": false,
+      "supportsVideo": false,
+      "supportsFiles": false
+    }
+  ],
+  "permissions": ["messageTeamMembers"],
+  "validDomains": ["activepieces.com"]
+}

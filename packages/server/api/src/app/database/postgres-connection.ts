@@ -363,6 +363,7 @@ import { DropWaitpointTimeoutSeconds1776342514732 } from './migration/postgres/1
 import { AddMcpServerTokenIndex1776400000000 } from './migration/postgres/1776400000000-AddMcpServerTokenIndex'
 import { AddRunStatusCoverIndex1777370308000 } from './migration/postgres/1777370308000-AddRunStatusCoverIndex'
 import { AddLastLoggedInPlatformIdToUserIdentity1777491000474 } from './migration/postgres/1777491000474-AddLastLoggedInPlatformIdToUserIdentity'
+import { AddTeamsBotInstallation1778753444131 } from './migration/postgres/1778753444131-AddTeamsBotInstallation'
 import { DropChatTokenColumns1782000000000 } from './migration/postgres/1782000000000-DropChatTokenColumns'
 import { AddUserSandboxTable1784000000000 } from './migration/postgres/1784000000000-AddUserSandboxTable'
 import { ReplacesSandboxWithVercelAiSdk1785000000000 } from './migration/postgres/1785000000000-ReplacesSandboxWithVercelAiSdk'
@@ -761,6 +762,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         MakeMcpOAuthProjectIdNullable1789000000000,
         MakeChatConversationPlatformWide1787000000000,
         RemoveMcpServerStatus1790000000000,
+        AddTeamsBotInstallation1778753444131,
     ]
     return migrations
 }

@@ -19,6 +19,7 @@ import { replyToChannelMessageAction } from './lib/actions/reply-to-channel-mess
 import { requestApprovalInChannel } from './lib/actions/request-approval-channel-message';
 import { requestApprovalDirectMessage } from './lib/actions/request-approval-direct-message';
 import { sendChannelMessageAction } from './lib/actions/send-channel-message';
+import { sendChannelMessageAsBotAction } from './lib/actions/send-channel-message-as-bot';
 import { sendChatMessageAction } from './lib/actions/send-chat-message';
 import { microsoftTeamsAuth } from './lib/auth';
 import { newChannelTrigger } from './lib/triggers/new-channel';
@@ -39,6 +40,7 @@ export const microsoftTeams = createPiece({
   actions: [
     createChannelAction,
     sendChannelMessageAction,
+    sendChannelMessageAsBotAction,
     sendChatMessageAction,
     replyToChannelMessageAction,
     createChatAndSendMessageAction,
