@@ -125,6 +125,11 @@ export function PlatformSidebar() {
           label: t('Users'),
           icon: UsersIcon,
         },
+        {
+          to: '/platform/connections',
+          label: t('Connections'),
+          icon: UnplugIcon,
+        },
       ],
     },
     {

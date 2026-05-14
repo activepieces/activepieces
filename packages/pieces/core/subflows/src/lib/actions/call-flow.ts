@@ -5,8 +5,8 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, isNil, PARENT_RUN_ID_HEADER } from '@activepieces/shared';
-import { CallableFlowRequest, CallableFlowResponse, findFlowByExternalIdOrThrow, listEnabledFlowsWithSubflowTrigger } from '../common';
+import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, FlowStatus, isNil, PARENT_RUN_ID_HEADER } from '@activepieces/shared';
+import { CallableFlowRequest, CallableFlowResponse, findFlowByExternalIdOrThrow, listFlowsWithSubflowTrigger } from '../common';
 
 type FlowValue = {
   externalId: string;
@@ -21,10 +21,10 @@ export const callFlow = createAction({
     flow: Property.Dropdown<FlowValue>({
       auth: PieceAuth.None(),
       displayName: 'Flow',
-      description: 'The flow to execute. Only published flows with a "Callable Flow" trigger appear here — unpublished or disabled subflows are hidden.',
+      description: 'The flow to execute. Published flows with a "Callable Flow" trigger appear here; disabled flows are marked "(inactive)" and cannot be executed until they are enabled.',
       required: true,
       options: async (_, context) => {
-        const flows = await listEnabledFlowsWithSubflowTrigger({
+        const flows = await listFlowsWithSubflowTrigger({
           flowsContext: context.flows,
         });
         return {
@@ -33,7 +33,10 @@ export const callFlow = createAction({
               externalId: flow.externalId ?? flow.id,
               exampleData: flow.version.trigger.settings.input.exampleData,
             },
-            label: flow.version.displayName,
+            label:
+              flow.status === FlowStatus.ENABLED
+                ? flow.version.displayName
+                : `${flow.version.displayName} (inactive)`,
           })),
         };
       },
@@ -114,6 +117,14 @@ export const callFlow = createAction({
       flowsContext: context.flows,
       externalId: context.propsValue.flow?.externalId,
     });
+
+    if (flow.status !== FlowStatus.ENABLED) {
+      throw new Error(JSON.stringify({
+        message: 'The selected subflow is disabled. Enable it before calling it from a parent flow.',
+        externalId: context.propsValue.flow?.externalId,
+        flowName: flow.version.displayName,
+      }));
+    }
 
     let callbackUrl: string | undefined
     if (context.propsValue.waitForResponse) {

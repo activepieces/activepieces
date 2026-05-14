@@ -11,6 +11,7 @@ import { aiProviderModule } from './ai/ai-provider.module'
 import { platformAnalyticsModule } from './analytics/platform-analytics.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
+import { platformAppConnectionController } from './app-connection/platform-app-connection.controller'
 import { authenticationModule } from './authentication/authentication.module'
 import { canaryRoutingMiddleware } from './core/canary/canary-routing.middleware'
 import { collaborativeModule } from './core/collaborative/collaborative.module'
@@ -212,6 +213,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(flowRunModule)
     await app.register(webhookModule)
     await app.register(appConnectionModule)
+    await app.register(platformAppConnectionController, { prefix: '/v1/platform-app-connections' })
     await app.register(openapiModule)
     await app.register(appEventRoutingModule)
     await app.register(authenticationModule)
@@ -332,7 +334,13 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             break
     }
 
-    await systemJobsSchedule(app.log).startWorker()
+    const isCanaryApp = system.getBoolean(AppSystemProp.IS_CANARY_APP) ?? false
+    if (isCanaryApp) {
+        app.log.info('[setupApp] Skipping system jobs worker on canary app instance')
+    }
+    else {
+        await systemJobsSchedule(app.log).startWorker()
+    }
 
     app.addHook('onClose', async () => {
         app.log.info('Shutting down')

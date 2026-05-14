@@ -193,6 +193,9 @@ export function useAgentChat({
     toolName: string;
     displayName: string;
   } | null>(null);
+  const [buildProgressUpdates, setBuildProgressUpdates] = useState<
+    Array<{ phase: string; stepIndex?: number; status?: string }>
+  >([]);
   const cancelledRef = useRef(false);
   const messageCountRef = useRef(0);
   const onTitleUpdateRef = useRef(onTitleUpdate);
@@ -251,6 +254,21 @@ export function useAgentChat({
           (data as Record<string, unknown>)['title'] as string,
           conversationIdRef.current ?? undefined,
         );
+      }
+      if (
+        dataPart.type === 'data-build-progress' &&
+        typeof data === 'object' &&
+        data !== null
+      ) {
+        const d = data as Record<string, unknown>;
+        const update = {
+          phase: typeof d.phase === 'string' ? d.phase : 'building',
+          ...(typeof d.stepIndex === 'number'
+            ? { stepIndex: d.stepIndex }
+            : {}),
+          ...(typeof d.status === 'string' ? { status: d.status } : {}),
+        };
+        setBuildProgressUpdates((prev) => [...prev, update]);
       }
       if (
         dataPart.type === 'data-approval-request' &&
@@ -449,6 +467,7 @@ export function useAgentChat({
       setLocalError(null);
       setWasCancelled(false);
       setPendingApprovalRequest(null);
+      setBuildProgressUpdates([]);
 
       const fileNames = files?.map((f) => f.name) ?? [];
       lastSentFileNamesRef.current = fileNames;
@@ -520,6 +539,7 @@ export function useAgentChat({
       setConversationIdState(id);
       setLocalError(null);
       setPendingMessages([]);
+      setBuildProgressUpdates([]);
       pendingFilesRef.current = undefined;
       lastSentFileNamesRef.current = [];
 
@@ -592,5 +612,6 @@ export function useAgentChat({
     setModelName,
     setProjectContext,
     pendingApprovalRequest,
+    buildProgressUpdates,
   };
 }
