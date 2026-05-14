@@ -360,7 +360,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             .leftJoinAndSelect('app_connection.owner', 'owner')
             .leftJoinAndSelect('owner.identity', 'owner_identity')
             .where(querySelector)
-        if (kind === AppConnectionKind.SECRET) {
+        if (kind === AppConnectionKind.CREDENTIAL) {
             queryBuilder.andWhere('app_connection.pieceName IS NULL')
         }
         else if (kind === AppConnectionKind.CONNECTION) {
