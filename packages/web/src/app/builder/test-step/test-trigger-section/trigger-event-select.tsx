@@ -31,7 +31,7 @@ export const TriggerEventSelect = React.memo(
     );
 
     return (
-      <div className="mb-3">
+      <div className="mb-3 px-3 pt-3">
         <Select
           value={selectedId}
           onValueChange={(value: string) => {

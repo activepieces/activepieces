@@ -88,8 +88,8 @@ function registerPlatformTools({ server, mcp, platformId, userId, resolveProject
 
     const templateMcp: ProjectScopedMcpServer = { ...mcp, projectId: platformId }
     const allTools = activepiecesTools(templateMcp, log)
-    const enabledControllable = new Set(mcp.enabledTools ?? ALL_CONTROLLABLE_TOOL_NAMES)
-    const tools = allTools.filter(t => LOCKED_TOOL_NAMES.includes(t.title) || enabledControllable.has(t.title))
+    const disabledToolSet = new Set(mcp.disabledTools ?? [])
+    const tools = allTools.filter(t => LOCKED_TOOL_NAMES.includes(t.title) || !disabledToolSet.has(t.title))
 
     tools.forEach((tool) => {
         server.registerTool(tool.title, buildToolConfig(tool), async (args: Record<string, unknown>) => {
@@ -170,8 +170,8 @@ function registerFlowTools({ server, mcp, projectId, permissionChecker, log }: R
 
 function registerStaticTools({ server, mcp, projectId, permissionChecker, log }: RegisterToolsParams): void {
     const allTools = activepiecesTools({ ...mcp, projectId }, log)
-    const enabledControllable = new Set(mcp.enabledTools ?? ALL_CONTROLLABLE_TOOL_NAMES)
-    const tools = allTools.filter(t => LOCKED_TOOL_NAMES.includes(t.title) || enabledControllable.has(t.title))
+    const disabledToolSet = new Set(mcp.disabledTools ?? [])
+    const tools = allTools.filter(t => LOCKED_TOOL_NAMES.includes(t.title) || !disabledToolSet.has(t.title))
 
     tools.forEach((tool) => {
         const execute = permissionChecker.wrapExecute({ execute: tool.execute, permission: tool.permission, toolTitle: tool.title })

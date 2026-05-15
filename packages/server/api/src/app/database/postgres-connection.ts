@@ -374,6 +374,8 @@ import { AddPlatformMcpServer1788000000000 } from './migration/postgres/17880000
 import { MakeMcpOAuthProjectIdNullable1789000000000 } from './migration/postgres/1789000000000-MakeMcpOAuthProjectIdNullable'
 import { RemoveMcpServerStatus1790000000000 } from './migration/postgres/1790000000000-RemoveMcpServerStatus'
 import { RelaxAppConnectionPieceFields1791000000000 } from './migration/postgres/1791000000000-RelaxAppConnectionPieceFields'
+import { RenameEnabledToolsToDisabledTools1791000000000 } from './migration/postgres/1791000000000-RenameEnabledToolsToDisabledTools'
+import { AddTriggerSourceFlowVersionIdIndex1792000000000 } from './migration/postgres/1792000000000-AddTriggerSourceFlowVersionIdIndex'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -763,6 +765,8 @@ export const getMigrations = (): (new () => Migration)[] => {
         MakeChatConversationPlatformWide1787000000000,
         RemoveMcpServerStatus1790000000000,
         RelaxAppConnectionPieceFields1791000000000,
+        RenameEnabledToolsToDisabledTools1791000000000,
+        AddTriggerSourceFlowVersionIdIndex1792000000000,
     ]
     return migrations
 }

@@ -1,6 +1,7 @@
 
 import { z } from 'zod'
 import { isNil } from '../../core/common'
+import { ApplicationEvent } from '../../ee/audit-events'
 import { StreamStepProgress, TriggerHookType, TriggerPayload } from '../engine'
 import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
@@ -227,7 +228,7 @@ export const EventDestinationJobData = z.object({
     projectId: z.string().optional(),
     webhookId: z.string(),
     webhookUrl: z.string(),
-    payload: z.unknown(),
+    payload: ApplicationEvent,
     jobType: z.literal(WorkerJobType.EVENT_DESTINATION),
 })
 

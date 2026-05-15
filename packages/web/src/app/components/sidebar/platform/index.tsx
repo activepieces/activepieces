@@ -140,12 +140,6 @@ export function PlatformSidebar() {
       label: t('Security'),
       items: [
         {
-          to: '/platform/security/audit-logs',
-          label: t('Audit Logs'),
-          icon: SquareDashedBottomCodeIcon,
-          locked: !platform.plan.auditLogEnabled,
-        },
-        {
           to: '/platform/security/sso',
           label: t('Single Sign On'),
           icon: LogInIcon,
@@ -172,6 +166,23 @@ export function PlatformSidebar() {
       ],
     },
     {
+      label: t('Observability'),
+      items: [
+        {
+          to: '/platform/security/audit-logs',
+          label: t('Audit Logs'),
+          icon: SquareDashedBottomCodeIcon,
+          locked: !platform.plan.auditLogEnabled,
+        },
+        {
+          to: '/platform/infrastructure/event-destinations',
+          label: t('Event Streaming'),
+          icon: WebhookIcon,
+          locked: !platform.plan.eventStreamingEnabled,
+        },
+      ],
+    },
+    {
       label: t('Infrastructure'),
       items: [
         {
@@ -188,12 +199,6 @@ export function PlatformSidebar() {
           to: '/platform/infrastructure/triggers',
           label: t('Triggers'),
           icon: MousePointerClickIcon,
-        },
-        {
-          to: '/platform/infrastructure/event-destinations',
-          label: t('Event Streaming'),
-          icon: WebhookIcon,
-          locked: !platform.plan.eventStreamingEnabled,
         },
       ],
     },
