@@ -5,6 +5,7 @@ import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { mcpOAuthTokenService } from '../../../mcp/oauth/token/mcp-oauth-token.service'
 import { chatApprovalGate } from '../chat-approval-gate'
+import { chatToolCategories } from '../tools/chat-tool-categories'
 
 type StreamWriter = {
     write(part: Record<string, unknown>): void
@@ -33,14 +34,15 @@ async function connectMcpClient({ mcpCredentials, log }: {
     mcpCredentials: McpCredentials
     log: FastifyBaseLogger
 }): Promise<McpConnection> {
-    if (isNil(mcpCredentials.mcpServerUrl) || isNil(mcpCredentials.mcpToken)) {
+    const { mcpServerUrl, mcpToken } = mcpCredentials
+    if (isNil(mcpServerUrl) || isNil(mcpToken)) {
         return { mcpClient: null, mcpToolSet: {} }
     }
     const { data: client, error } = await tryCatch(async () => createMCPClient({
         transport: {
             type: 'http',
-            url: mcpCredentials.mcpServerUrl!,
-            headers: { 'Authorization': `Bearer ${mcpCredentials.mcpToken}` },
+            url: mcpServerUrl,
+            headers: { 'Authorization': `Bearer ${mcpToken}` },
         },
     }))
     if (isNil(client)) {
@@ -51,27 +53,11 @@ async function connectMcpClient({ mcpCredentials, log }: {
     return { mcpClient: client, mcpToolSet }
 }
 
-const AP_TOOLS_REQUIRING_APPROVAL = new Set([
-    'ap_delete_flow',
-    'ap_delete_table',
-    'ap_delete_step',
-    'ap_delete_branch',
-    'ap_delete_records',
-    'ap_run_action',
-    'ap_test_step',
-    'ap_test_flow',
-    'ap_change_flow_status',
-])
-
 function humanizeToolName(name: string): string {
     return name
         .replace(/^ap_/, '')
         .replace(/_/g, ' ')
         .replace(/\b\w/g, (c) => c.toUpperCase())
-}
-
-function requiresApproval(name: string): boolean {
-    return AP_TOOLS_REQUIRING_APPROVAL.has(name) || !name.startsWith('ap_')
 }
 
 function hasExecute(tool: object): tool is object & { execute: (args: unknown) => Promise<unknown> } {
@@ -86,7 +72,7 @@ function withApprovalGates({ mcpToolSet, writer, log }: {
     const result: Record<string, unknown> = {}
 
     for (const [name, tool] of Object.entries(mcpToolSet)) {
-        if (!requiresApproval(name) || typeof tool !== 'object' || tool === null || !hasExecute(tool)) {
+        if (!chatToolCategories.requiresApproval(name) || typeof tool !== 'object' || tool === null || !hasExecute(tool)) {
             result[name] = tool
             continue
         }

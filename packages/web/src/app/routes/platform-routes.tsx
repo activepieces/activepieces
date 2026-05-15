@@ -64,6 +64,9 @@ const PlatformTemplatesPage = React.lazy(() =>
   })),
 );
 const UsersPage = React.lazy(() => import('./platform/users'));
+const PlatformConnectionsPage = React.lazy(
+  () => import('./platform/connections'),
+);
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<RouteLoadingBar />}>{children}</Suspense>;
@@ -99,6 +102,18 @@ export const platformRoutes = [
         <PageTitle title="Users">
           <SuspenseWrapper>
             <UsersPage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/connections',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Connections">
+          <SuspenseWrapper>
+            <PlatformConnectionsPage />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
