@@ -3,6 +3,7 @@ import {
   httpClient,
   HttpMethod,
   HttpRequest,
+  HttpError,
 } from '@activepieces/pieces-common';
 import { x402Auth } from '../auth';
 import {
@@ -96,40 +97,45 @@ export const callPaidApi = createAction({
       request.body = body;
     }
 
-    let response = await httpClient.sendRequest(request);
-
-    // Handle 402 Payment Required
-    if (response.status === 402) {
-      const paymentRequired: X402PaymentRequired = response.body;
-
-      if (paymentRequired.maxAmountRequired > maxPrice) {
-        throw new Error(
-          `Payment required (${paymentRequired.maxAmountRequired} USDC) exceeds maximum price (${maxPrice} USDC)`
-        );
-      }
-
-      const usdcMintPubkey = new PublicKey(
-        paymentRequired.extra?.mint || 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
-      );
-      const decimals = paymentRequired.extra?.decimals ?? 6;
-
-      // Build signed payment envelope (do NOT broadcast)
-      const paymentEnvelope = await buildSignedPaymentEnvelope(
-        connection,
-        keypair,
-        paymentRequired,
-        usdcMintPubkey,
-        decimals
-      );
-
-      // Retry request with X-Payment header (server verifies and submits)
-      const paymentHeader = Buffer.from(JSON.stringify(paymentEnvelope)).toString('base64');
-      request.headers = {
-        ...headers,
-        'X-Payment': paymentHeader,
-      };
-
+    let response;
+    try {
       response = await httpClient.sendRequest(request);
+    } catch (error) {
+      // Handle 402 Payment Required
+      if (error instanceof HttpError && error.response.status === 402) {
+        const paymentRequired: X402PaymentRequired = error.response.body;
+
+        if (paymentRequired.maxAmountRequired > maxPrice) {
+          throw new Error(
+            `Payment required (${paymentRequired.maxAmountRequired} USDC) exceeds maximum price (${maxPrice} USDC)`
+          );
+        }
+
+        const usdcMintPubkey = new PublicKey(
+          paymentRequired.extra?.mint || 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+        );
+        const decimals = paymentRequired.extra?.decimals ?? 6;
+
+        // Build signed payment envelope (do NOT broadcast)
+        const paymentEnvelope = await buildSignedPaymentEnvelope(
+          connection,
+          keypair,
+          paymentRequired,
+          usdcMintPubkey,
+          decimals
+        );
+
+        // Retry request with X-Payment header (server verifies and submits)
+        const paymentHeader = Buffer.from(JSON.stringify(paymentEnvelope)).toString('base64');
+        request.headers = {
+          ...headers,
+          'X-Payment': paymentHeader,
+        };
+
+        response = await httpClient.sendRequest(request);
+      } else {
+        throw error;
+      }
     }
 
     return {
