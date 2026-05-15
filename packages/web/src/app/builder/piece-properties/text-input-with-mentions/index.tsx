@@ -1,4 +1,4 @@
-import { flowStructureUtil, isNil } from '@activepieces/shared';
+import { AppConnectionKind, flowStructureUtil, isNil } from '@activepieces/shared';
 import { Extensions } from '@tiptap/core';
 import { Document } from '@tiptap/extension-document';
 import { HardBreak } from '@tiptap/extension-hard-break';
@@ -9,9 +9,12 @@ import { Placeholder } from '@tiptap/extension-placeholder';
 import { Text } from '@tiptap/extension-text';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import { useMemo } from 'react';
 
 import { inputClass } from '@/components/ui/input';
+import { appConnectionsQueries } from '@/features/connections';
 import { stepsHooks } from '@/features/pieces';
+import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../../builder-hooks';
@@ -110,6 +113,24 @@ export const TextInputWithMentions = ({
       return undefined;
     });
 
+  const projectId = authenticationSession.getProjectId();
+  const { data: credentialsPage } = appConnectionsQueries.useAppConnections({
+    request: {
+      projectId: projectId ?? '',
+      limit: 100,
+      kind: AppConnectionKind.CREDENTIAL,
+    },
+    extraKeys: ['mention-resolver-credentials', projectId ?? ''],
+    enabled: !!projectId,
+  });
+  const credentialByExternalId = useMemo(
+    () =>
+      new Map(
+        (credentialsPage?.data ?? []).map((c) => [c.externalId, c.displayName]),
+      ),
+    [credentialsPage],
+  );
+
   const setInsertMentionHandler = useBuilderStateContext(
     (state) => state.setInsertMentionHandler,
   );
@@ -119,6 +140,7 @@ export const TextInputWithMentions = ({
       `{{${propertyPath}}}`,
       steps,
       stepsMetadata,
+      credentialByExternalId,
     );
     editor?.chain().focus().insertContent(mentionNode).run();
   };
@@ -132,6 +154,7 @@ export const TextInputWithMentions = ({
         convertToText(initialValue),
         steps,
         stepsMetadata,
+        credentialByExternalId,
       ),
     },
     editorProps: {

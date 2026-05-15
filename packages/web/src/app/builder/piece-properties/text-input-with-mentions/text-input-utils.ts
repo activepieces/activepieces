@@ -66,6 +66,7 @@ function convertTextToTipTapJsonContent(
   userInputText: string,
   steps: (FlowAction | FlowTrigger)[],
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
+  credentialByExternalId?: Map<string, string>,
 ): {
   type: TipTapNodeTypes.paragraph;
   content: JSONContent[];
@@ -84,7 +85,7 @@ function convertTextToTipTapJsonContent(
         });
       } else if (isMentionNodeText(node)) {
         result[result.length - 1].content.push(
-          createMentionNodeFromText(node, steps, stepsMetadata),
+          createMentionNodeFromText(node, steps, stepsMetadata, credentialByExternalId),
         );
       } else {
         result[result.length - 1].content.push({
@@ -165,12 +166,14 @@ function parseLabelFromMention(
   mention: string,
   steps: (FlowAction | FlowTrigger)[],
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
+  credentialByExternalId?: Map<string, string>,
 ) {
   const { stepName, path } = parseStepAndNameFromMention(mention);
   if (stepName === 'connections') {
     const externalId = path[0] ?? '';
+    const displayName = credentialByExternalId?.get(externalId) ?? externalId;
     return {
-      displayText: `Credential · ${externalId}`,
+      displayText: `Credential · ${displayName}`,
       serverValue: mention,
       logoUrl: undefined,
     };
@@ -197,13 +200,14 @@ function createMentionNodeFromText(
   mention: string,
   steps: (FlowAction | FlowTrigger)[],
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
+  credentialByExternalId?: Map<string, string>,
 ) {
   return {
     type: TipTapNodeTypes.mention,
     attrs: {
       id: mention,
       label: JSON.stringify(
-        parseLabelFromMention(mention, steps, stepsMetadata),
+        parseLabelFromMention(mention, steps, stepsMetadata, credentialByExternalId),
       ),
     },
   };
