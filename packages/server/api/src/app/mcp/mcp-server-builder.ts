@@ -85,7 +85,7 @@ function registerPlatformTools({ server, mcp, userId, selectionScope, resolvePro
     log: FastifyBaseLogger
 }): void {
     const platformId = mcp.platformId!
-    const contextTool = apSetProjectContextTool({ platformId, userId, log })
+    const contextTool = apSetProjectContextTool({ platformId, userId, selectionScope, log })
     server.registerTool(contextTool.title, buildToolConfig(contextTool), (args: Record<string, unknown>) => contextTool.execute(args))
 
     const templateMcp: ProjectScopedMcpServer = { ...mcp, projectId: platformId }
