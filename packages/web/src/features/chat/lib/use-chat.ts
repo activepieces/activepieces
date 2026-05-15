@@ -440,6 +440,7 @@ export function useAgentChat({
         tryCatch(async () => chatApi.getMessages(id)),
         tryCatch(async () => chatApi.getConversation(id)),
       ]);
+      if (conversationIdRef.current !== id) return;
       if (historyResult.error) {
         updateSendStatus({
           type: 'error',
