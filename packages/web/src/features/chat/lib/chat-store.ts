@@ -5,8 +5,7 @@ import {
 } from '@activepieces/shared';
 import { StoreApi, create } from 'zustand';
 
-import { API_URL } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
+import { api } from '@/lib/api';
 
 import { MultiQuestion, PlanProgressData } from './chat-store-types';
 import { AnyToolPart, ChatUIMessage, chatPartUtils } from './chat-types';
@@ -18,15 +17,7 @@ function sendApprovalDecision({
   gateId: string;
   approved: boolean;
 }): void {
-  const token = authenticationSession.getToken();
-  void fetch(`${API_URL}/v1/chat/tool-approvals/${gateId}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ approved }),
-  });
+  void api.post(`/v1/chat/tool-approvals/${gateId}`, { approved });
 }
 
 function extractQuestionsFromToolParts(
