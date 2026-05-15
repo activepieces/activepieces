@@ -86,6 +86,7 @@ export async function frillPaginatedApiCall<T>({
       },
     });
 
+    if (response.body.data.length === 0) break;
     results.push(...response.body.data);
     hasNextPage = response.body.pagination.hasNextPage;
     after = response.body.pagination.endCursor;

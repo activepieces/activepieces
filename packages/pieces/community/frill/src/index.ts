@@ -22,7 +22,7 @@ export const frill = createPiece({
   displayName: 'Frill',
   description: 'Collect feedback, manage ideas, and publish announcements with Frill.',
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'frill.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/frill.png',
   categories: [PieceCategory.CUSTOMER_SUPPORT],
   auth: frillAuth,
   authors: ['simonmann2'],
