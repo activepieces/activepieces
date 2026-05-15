@@ -268,6 +268,20 @@ export function useAgentChat({
         });
         optimisticIdRef.current = null;
       }
+      const convId = conversationIdRef.current;
+      if (convId) {
+        setTimeout(async () => {
+          if (conversationIdRef.current !== convId) return;
+          const { data: result } = await tryCatch(() =>
+            chatApi.getMessages(convId),
+          );
+          if (result && conversationIdRef.current === convId) {
+            (sdkSetMessages as (msgs: ChatUIMessage[]) => void)(
+              chatUtils.mapHistoryToUIMessages(result.data),
+            );
+          }
+        }, 3000);
+      }
     },
   });
 
