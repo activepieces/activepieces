@@ -394,10 +394,25 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
     removeSensitiveData: (
         appConnection: AppConnection | AppConnectionSchema,
     ): AppConnectionWithoutSensitiveData => {
-        const { value, ...appConnectionWithoutSensitiveData } = appConnection
+        const { value, ...rest } = appConnection
+        const usingSecretManager = containsSecretManagerReference(value)
+        const pieceName = 'pieceName' in appConnection ? appConnection.pieceName : null
+        const pieceVersion = 'pieceVersion' in appConnection ? appConnection.pieceVersion : null
+        if (isNil(pieceName)) {
+            return {
+                ...rest,
+                kind: AppConnectionKind.CREDENTIAL,
+                type: AppConnectionType.SECRET_TEXT,
+                usingSecretManager,
+            }
+        }
+        assertNotNullOrUndefined(pieceVersion, `pieceVersion missing for piece connection ${appConnection.id}`)
         return {
-            ...appConnectionWithoutSensitiveData,
-            usingSecretManager: containsSecretManagerReference(value),
+            ...rest,
+            kind: AppConnectionKind.CONNECTION,
+            pieceName,
+            pieceVersion,
+            usingSecretManager,
         }
     },
 

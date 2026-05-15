@@ -1,6 +1,10 @@
 import {
-    AppConnection,
+    AppConnectionId,
+    AppConnectionScope,
     AppConnectionStatus,
+    AppConnectionType,
+    BaseModel,
+    Metadata,
     User,
     UserIdentity,
 } from '@activepieces/shared'
@@ -10,8 +14,20 @@ import {
 } from '../database/database-common'
 import { EncryptedObject } from '../helper/encryption'
 
-export type AppConnectionSchema = Omit<AppConnection, 'value'> & {
+export type AppConnectionSchema = BaseModel<AppConnectionId> & {
+    displayName: string
+    externalId: string
+    type: AppConnectionType
+    status: AppConnectionStatus
+    platformId: string
+    pieceName: string | null
+    pieceVersion: string | null
+    ownerId: string | null
+    projectIds: string[]
+    scope: AppConnectionScope
     value: EncryptedObject
+    metadata: Metadata | null
+    preSelectForNewProjects: boolean
     owner?: (User & { identity?: UserIdentity })
 }
 
