@@ -4,9 +4,10 @@ import {
     apId,
     FlowActionType,
     FlowRunStatus,
-    McpServer,
+    McpServerType,
     PackageType,
     PieceType,
+    ProjectScopedMcpServer,
     RunEnvironment,
     StepLocationRelativeToParent,
 } from '@activepieces/shared'
@@ -145,14 +146,16 @@ afterAll(async () => {
     await teardownTestEnvironment()
 })
 
-function makeMcp(projectId: string): McpServer {
+function makeMcp(projectId: string): ProjectScopedMcpServer {
     return {
         id: apId(),
         created: new Date().toISOString(),
         updated: new Date().toISOString(),
         projectId,
+        platformId: null,
+        type: McpServerType.PROJECT,
         token: apId(),
-        enabledTools: null,
+        disabledTools: null,
     }
 }
 
@@ -160,7 +163,7 @@ function text(result: { content: Array<{ type: 'text', text: string }> }): strin
     return result.content.map(c => c.text).join('\n')
 }
 
-async function createFlowAndGetId(mcp: McpServer, flowName: string): Promise<string> {
+async function createFlowAndGetId(mcp: ProjectScopedMcpServer, flowName: string): Promise<string> {
     const result = await apCreateFlowTool(mcp, mockLog).execute({ flowName })
     const match = text(result).match(/\(id: (\S+?)\)/)
     if (!match) throw new Error(`Could not extract flowId from: ${text(result)}`)

@@ -3,9 +3,10 @@ import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import {
     apId,
     FilteredPieceBehavior,
-    McpServer,
+    McpServerType,
     PackageType,
     PieceType,
+    ProjectScopedMcpServer,
 } from '@activepieces/shared'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { createTestContext } from '../../../helpers/test-context'
@@ -88,14 +89,16 @@ describe('MCP piece visibility', () => {
     })
 })
 
-function makeMcp(projectId: string): McpServer {
+function makeMcp(projectId: string): ProjectScopedMcpServer {
     return {
         id: apId(),
         created: new Date().toISOString(),
         updated: new Date().toISOString(),
         projectId,
+        platformId: null,
+        type: McpServerType.PROJECT,
         token: apId(),
-        enabledTools: null,
+        disabledTools: null,
     }
 }
 
