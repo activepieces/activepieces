@@ -28,7 +28,7 @@ All mount under `/v1/global-connections`. All require `platformAdminOnly` (`USER
 | GET | `/v1/global-connections` | Platform admin (USER or SERVICE) | `SeekPage<AppConnectionWithoutSensitiveData>` | List global connections for platform |
 | DELETE | `/v1/global-connections/:id` | Platform admin (USER or SERVICE) | 204 No Content | Delete a global connection |
 
-Query parameters for list: `{ displayName?, pieceName?, status?, cursor?, limit? }`.
+Query parameters for list: `{ displayName?, pieceName?, status?, cursor?, limit?, kind? }`. `kind` filters between `CONNECTION` (piece-bound) and `CREDENTIAL` (piece-less SECRET_TEXT).
 
 ## Service Integration
 
@@ -42,3 +42,4 @@ The module delegates all operations to `appConnectionService` with `scope: AppCo
 ## Notes
 - Global connections are stored in the same `app_connection` table as project-scoped connections; the `scope` column distinguishes them.
 - When displaying global connections to project users (in the builder connection picker), the shared `appConnectionService.list` call is made with the project's ID and scope filtering handles visibility.
+- Global credentials (`pieceName = null`, `type = SECRET_TEXT`, `kind = CREDENTIAL`) can be upserted via the same endpoints; they are platform-scoped and skip engine auth validation since they hold raw secrets rather than piece-bound auth.

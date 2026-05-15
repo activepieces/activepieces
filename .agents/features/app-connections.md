@@ -28,9 +28,10 @@ App Connections store encrypted authentication credentials (OAuth2 tokens, API k
 - **Cloud**: Available — same as EE; cloud OAuth2 uses `secrets.activepieces.com` for token exchange.
 
 ## Domain Terms
-- **AppConnection**: An encrypted credential record bound to a platform and optionally scoped to one or more projects.
+- **AppConnection**: An encrypted credential record bound to a platform and optionally scoped to one or more projects. Discriminated union: a `PieceAppConnection` (piece-bound, the historical default) or a `CredentialAppConnection` (opaque secret, `pieceName = null`, `type = SECRET_TEXT`, referenced inline via `{{connections['externalId'].secret_text}}`), keyed on `kind` (`AppConnectionKind.CONNECTION` vs `AppConnectionKind.CREDENTIAL`).
 - **AppConnectionScope**: `PROJECT` (restricted to projects in `projectIds[]`) or `PLATFORM` (available to all projects).
 - **AppConnectionType**: One of `OAUTH2`, `CLOUD_OAUTH2`, `PLATFORM_OAUTH2`, `SECRET_TEXT`, `BASIC_AUTH`, `CUSTOM_AUTH`, `NO_AUTH`.
+- **Credential externalId convention**: Credential externalIds are prefixed with `cred_` (e.g. `cred_STRIPE_PROD`) so they cannot collide with piece-connection externalIds in the same project. The friendly displayName remains unprefixed.
 - **externalId**: The stable identifier for a connection within a project; referenced in flow step settings (survives rename).
 - **preSelectForNewProjects**: Boolean flag on platform-scope connections; when true, auto-added to `projectIds` for every new project.
 - **Global connection**: A `PLATFORM`-scope connection managed from the platform admin UI, shared across all (or selected) projects.
@@ -69,11 +70,12 @@ Automatic on connection retrieval:
 
 ## Endpoints
 
-- `POST /v1/app-connections` — create/upsert connection (validates via worker EXECUTE_VALIDATION job)
+- `POST /v1/app-connections` — create/upsert connection (validates via worker EXECUTE_VALIDATION job; credentials skip engine validation since `pieceName` is null)
 - `POST /v1/app-connections/:id` — update displayName, metadata, preSelectForNewProjects
-- `GET /v1/app-connections` — list with filters (pieceName, displayName ILIKE, status, scope, externalIds)
+- `GET /v1/app-connections` — list with filters (pieceName, displayName ILIKE, status, scope, externalIds, kind — `CONNECTION` for piece-bound, `CREDENTIAL` for opaque secrets)
 - `GET /v1/app-connections/owners` — list connection owners (platform admins + project members)
-- `POST /v1/app-connections/replace` — replace source connection with target across all flows
+- `POST /v1/app-connections/replace` — replace source connection with target across all flows (piece connections only — credentials are not replaceable)
+- `POST /v1/app-connections/:id/reveal` — reveal a credential's plaintext value; requires `WRITE_APP_CONNECTION`, USER principal only, emits `CONNECTION_VALUE_REVEALED` audit event; rejects piece connections
 - `DELETE /v1/app-connections/:id` — hard delete
 - `POST /v1/app-connections/oauth2/authorization-url` — generate OAuth redirect URL from piece metadata
 
