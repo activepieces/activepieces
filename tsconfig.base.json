@@ -436,6 +436,9 @@
       "@activepieces/piece-fireflies-ai": [
         "packages/pieces/community/fireflies-ai/src/index.ts"
       ],
+      "@activepieces/piece-frill": [
+        "packages/pieces/community/frill/src/index.ts"
+      ],
       "@activepieces/piece-fliqr-ai": [
         "packages/pieces/community/fliqr-ai/src/index.ts"
       ],

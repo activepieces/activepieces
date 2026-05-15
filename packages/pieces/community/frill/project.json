@@ -1,0 +1,27 @@
+{
+  "name": "piece-frill",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/frill/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/frill",
+        "tsConfig": "packages/pieces/community/frill/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/frill/package.json",
+        "main": "packages/pieces/community/frill/src/index.ts",
+        "assets": ["packages/pieces/community/frill/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/community/frill/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}
