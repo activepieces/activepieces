@@ -59,7 +59,7 @@ export const searchIssuesAction = createAction({
 
     const parts: string[] = [];
     if (context.propsValue.project) {
-      parts.push('project: ' + context.propsValue.project);
+      parts.push('project: {' + context.propsValue.project + '}');
     }
     if (context.propsValue.query) {
       parts.push(context.propsValue.query);
