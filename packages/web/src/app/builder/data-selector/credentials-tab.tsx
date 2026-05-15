@@ -2,6 +2,7 @@ import { AppConnectionKind, Permission } from '@activepieces/shared';
 import { t } from 'i18next';
 import { KeyRound, Plus, SearchXIcon } from 'lucide-react';
 import { useState } from 'react';
+import { useDebounce } from 'use-debounce';
 
 import { CredentialDialog } from '@/app/connections/credential-dialog';
 import { SearchInput } from '@/components/custom/search-input';
@@ -17,6 +18,7 @@ import { useBuilderStateContext } from '../builder-hooks';
 const CredentialsTab = () => {
   const insertMention = useBuilderStateContext((state) => state.insertMention);
   const [search, setSearch] = useState('');
+  const [debouncedSearch] = useDebounce(search, 250);
   const [createOpen, setCreateOpen] = useState(false);
   const projectId = authenticationSession.getProjectId();
   const { checkAccess } = useAuthorization();
@@ -26,20 +28,15 @@ const CredentialsTab = () => {
   const { data, isLoading, refetch } = appConnectionsQueries.useAppConnections({
     request: {
       projectId: projectId ?? '',
-      limit: 200,
+      limit: 50,
+      displayName: debouncedSearch || undefined,
       kind: AppConnectionKind.CREDENTIAL,
     },
-    extraKeys: ['data-selector-secrets', projectId ?? ''],
+    extraKeys: ['data-selector-secrets', projectId ?? '', debouncedSearch],
     enabled: !!projectId && canRead,
   });
 
-  const secrets = (data?.data ?? []).filter((secret) =>
-    search
-      ? secret.displayName.toLowerCase().includes(search.toLowerCase())
-      : true,
-  );
-
-  const hasAny = (data?.data ?? []).length > 0;
+  const secrets = data?.data ?? [];
 
   return (
     <div className="flex flex-col gap-2 h-full">
@@ -49,7 +46,7 @@ const CredentialsTab = () => {
           value={search}
           placeholder={t('Search credentials')}
         />
-        {canWrite && hasAny && (
+        {canWrite && (
           <Button
             type="button"
             size="sm"
@@ -72,7 +69,7 @@ const CredentialsTab = () => {
 
         {!isLoading && secrets.length === 0 && (
           <div className="flex items-center justify-center gap-2 mt-5 flex-col px-6">
-            {search ? (
+            {debouncedSearch ? (
               <>
                 <SearchXIcon className="w-[35px] h-[35px]" />
                 <div className="text-center font-semibold text-md">
