@@ -4,8 +4,8 @@ import { AppSystemProp } from '../../../helper/system/system-props'
 import { DatabaseType } from '../../database-type'
 import { Migration } from '../../migration'
 
-export class RelaxAppConnectionPieceFields1791000000000 implements Migration {
-    name = 'RelaxAppConnectionPieceFields1791000000000'
+export class RelaxAppConnectionPieceFields1791000000001 implements Migration {
+    name = 'RelaxAppConnectionPieceFields1791000000001'
     breaking = false
     release = '0.83.0'
     transaction = false
@@ -24,6 +24,12 @@ export class RelaxAppConnectionPieceFields1791000000000 implements Migration {
         await queryRunner.query(`
             CREATE INDEX ${concurrently} IF NOT EXISTS "idx_app_connection_piece_name"
             ON "app_connection" ("pieceName")
+        `)
+        await queryRunner.query(`
+            UPDATE "app_connection"
+            SET "externalId" = 'cred_' || "externalId"
+            WHERE "pieceName" IS NULL
+              AND LEFT("externalId", 5) <> 'cred_'
         `)
     }
 
