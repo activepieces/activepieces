@@ -336,11 +336,16 @@ function selectShouldShowPlan({
   lastAssistantMessage: ChatUIMessage | undefined;
 }): boolean {
   const progress = selectPlanProgress({ state, lastAssistantMessage });
+  if (progress === null) return false;
+
   const planWasExecuted =
     selectEffectivePlanUpdates({ state, lastAssistantMessage }).length > 0;
+
+  if (!isLastAssistant) {
+    return !isStreaming && planWasExecuted;
+  }
+
   return (
-    isLastAssistant &&
-    progress !== null &&
     !selectHasPlanApproval(state) &&
     !state.planRejected &&
     (!isStreaming || planWasExecuted)
@@ -356,6 +361,7 @@ export const chatStoreSelectors = {
   planProgress: selectPlanProgress,
   effectivePlanUpdates: selectEffectivePlanUpdates,
   shouldShowPlan: selectShouldShowPlan,
+  deriveStepStatus,
 };
 
 export type SetChatStore = StoreApi<ChatStoreState>['setState'];

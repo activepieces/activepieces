@@ -1,3 +1,4 @@
+import { PlanStepUpdate } from '@activepieces/shared';
 import { t } from 'i18next';
 import { RefreshCw } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -75,26 +76,22 @@ export const AssistantMessage = memo(function AssistantMessage({
           if (chatPartUtils.isDisplayTool(toolName)) {
             rendered.push({ kind: 'display-tool', part: p });
           } else if (toolName === 'ap_request_plan_approval') {
-            rendered.push({ kind: 'plan-marker' });
+            rendered.push({ kind: 'plan-marker', part: p });
           } else {
             thinkingTools.push(p);
           }
         }
       }
 
-      const planMarkerIdx = rendered.findIndex((r) => r.kind === 'plan-marker');
-      if (planMarkerIdx > -1) {
-        const [marker] = rendered.splice(planMarkerIdx, 1);
-        rendered.unshift(marker);
-      }
-
-      const lastDisplayIdx = rendered.findLastIndex(
-        (r) => r.kind === 'display-tool',
-      );
-      if (lastDisplayIdx > -1) {
-        for (let j = rendered.length - 1; j >= 0; j--) {
-          if (rendered[j].kind === 'display-tool' && j !== lastDisplayIdx) {
-            rendered.splice(j, 1);
+      if (isStreaming) {
+        const lastDisplayIdx = rendered.findLastIndex(
+          (r) => r.kind === 'display-tool',
+        );
+        if (lastDisplayIdx > -1) {
+          for (let j = rendered.length - 1; j >= 0; j--) {
+            if (rendered[j].kind === 'display-tool' && j !== lastDisplayIdx) {
+              rendered.splice(j, 1);
+            }
           }
         }
       }
@@ -113,31 +110,24 @@ export const AssistantMessage = memo(function AssistantMessage({
   );
 
   const openThinkingDetails = useChatStoreContext((s) => s.openThinkingDetails);
-  const showPlanCard = useChatStoreContext((s) =>
-    chatStoreSelectors.shouldShowPlan({
-      state: s,
-      isStreaming,
-      isLastAssistant: isLastMessage,
-      lastAssistantMessage,
-    }),
-  );
-  const planProgress = useChatStoreContext((s) =>
-    chatStoreSelectors.planProgress({ state: s, lastAssistantMessage }),
-  );
-  const planProgressUpdates = useChatStoreContext((s) =>
-    chatStoreSelectors.effectivePlanUpdates({ state: s, lastAssistantMessage }),
-  );
 
+  const hasPlanMarker = renderedParts.some((p) => p.kind === 'plan-marker');
   const hasRenderedContent = renderedParts.some(
     (p) => p.kind !== 'plan-marker',
   );
-  if (!hasContent && !hasRenderedContent && !isStreaming && !showPlanCard) {
+  const hasThinkingContent =
+    thinkingToolParts.length > 0 || reasoningText.length > 0;
+  const showThinking = isStreaming || hasThinkingContent;
+
+  if (
+    !hasContent &&
+    !hasRenderedContent &&
+    !isStreaming &&
+    !hasPlanMarker &&
+    !hasThinkingContent
+  ) {
     return null;
   }
-
-  const showThinking =
-    isStreaming ||
-    ((thinkingToolParts.length > 0 || reasoningText.length > 0) && hasContent);
 
   return (
     <motion.div
@@ -166,23 +156,24 @@ export const AssistantMessage = memo(function AssistantMessage({
                   </div>
                 );
               case 'display-tool':
-                return isLastMessage ? (
+                return (
                   <DisplayToolCard
                     key={part.part.toolCallId}
                     part={part.part}
                     onSend={onSend}
-                    isInteractive={true}
+                    isInteractive={isLastMessage}
                   />
-                ) : null;
+                );
               case 'plan-marker':
-                return showPlanCard && planProgress ? (
-                  <PlanProgressCard
+                return (
+                  <InlinePlanCard
                     key={`plan-${i}`}
-                    progress={planProgress}
-                    updates={planProgressUpdates ?? []}
+                    planPart={part.part}
+                    message={message}
+                    lastAssistantMessage={lastAssistantMessage}
                     isStreaming={isStreaming}
                   />
-                ) : null;
+                );
               default:
                 return null;
             }
@@ -218,6 +209,59 @@ export const AssistantMessage = memo(function AssistantMessage({
     </motion.div>
   );
 });
+
+function InlinePlanCard({
+  planPart,
+  message,
+  lastAssistantMessage,
+  isStreaming,
+}: {
+  planPart: AnyToolPart;
+  message: ChatUIMessage;
+  lastAssistantMessage?: ChatUIMessage;
+  isStreaming: boolean;
+}) {
+  const storePlanProgress = useChatStoreContext((s) =>
+    chatStoreSelectors.planProgress({ state: s, lastAssistantMessage }),
+  );
+  const storePlanUpdates = useChatStoreContext((s) =>
+    chatStoreSelectors.effectivePlanUpdates({ state: s, lastAssistantMessage }),
+  );
+
+  const input = planPart.input as
+    | { planSummary?: string; steps?: string[] }
+    | undefined;
+  const steps = input?.steps ?? [];
+  const localPlan =
+    steps.length > 0 ? { title: input?.planSummary ?? '', steps } : null;
+
+  const progress = storePlanProgress ?? localPlan;
+
+  const updates = useMemo(() => {
+    if (storePlanUpdates.length > 0) return storePlanUpdates;
+    if (!progress) return [];
+    const toolParts = message.parts.filter((p): p is AnyToolPart =>
+      chatPartUtils.isAnyToolPart(p),
+    );
+    if (toolParts.length === 0) return [];
+    return progress.steps.map(
+      (stepText, i): PlanStepUpdate => ({
+        stepIndex: i,
+        status: chatStoreSelectors.deriveStepStatus({ stepText, toolParts }),
+      }),
+    );
+  }, [storePlanUpdates, progress, message.parts]);
+
+  if (!progress) return null;
+
+  return (
+    <PlanProgressCard
+      progress={progress}
+      updates={updates}
+      isStreaming={isStreaming}
+    />
+  );
+}
 
 function DisplayToolCard({
   part,
@@ -266,4 +310,4 @@ function DisplayToolCard({
 type RenderedPart =
   | { kind: 'text'; text: string }
   | { kind: 'display-tool'; part: AnyToolPart }
-  | { kind: 'plan-marker' };
+  | { kind: 'plan-marker'; part: AnyToolPart };

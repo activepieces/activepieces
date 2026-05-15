@@ -61,24 +61,32 @@ export function ProjectPickerCard({
       : picker.suggestedProjects[0]?.name ?? '';
     return (
       <motion.div
-        className="flex flex-wrap gap-2 my-2"
+        className="rounded-xl border bg-background overflow-hidden my-2"
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.2 }}
       >
-        <div className="inline-flex items-center gap-2 rounded-full border bg-muted/60 px-3 py-1.5 text-sm">
-          {resolvedProject ? (
-            <ApProjectDisplay
-              title={getProjectName(resolvedProject)}
-              icon={resolvedProject.icon}
-              projectType={resolvedProject.type}
-              iconClassName="size-4"
-              titleClassName="text-sm"
-            />
-          ) : (
-            displayName && <span className="text-sm">{displayName}</span>
-          )}
-          <Check className="size-3.5 text-green-600 dark:text-green-400" />
+        <div className="p-4 flex items-center gap-3">
+          <div className="relative">
+            {resolvedProject ? (
+              <ApProjectDisplay
+                title={getProjectName(resolvedProject)}
+                icon={resolvedProject.icon}
+                projectType={resolvedProject.type}
+                iconClassName="size-5"
+                titleClassName="text-sm font-semibold"
+              />
+            ) : (
+              displayName && (
+                <span className="text-sm font-semibold">{displayName}</span>
+              )
+            )}
+          </div>
+          <div className="ml-auto">
+            <div className="bg-green-100 dark:bg-green-500/20 rounded-full p-1">
+              <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
+            </div>
+          </div>
         </div>
       </motion.div>
     );

@@ -118,6 +118,25 @@ function mapHistoryToUIMessages(data: ChatHistoryMessage[]): ChatUIMessage[] {
   });
 }
 
+function extractQuickRepliesFromHistory(messages: ChatUIMessage[]): string[] {
+  const lastMessage = messages[messages.length - 1];
+  if (!lastMessage || lastMessage.role !== 'assistant') return [];
+
+  for (let i = lastMessage.parts.length - 1; i >= 0; i--) {
+    const p = lastMessage.parts[i];
+    if (
+      chatPartUtils.isAnyToolPart(p) &&
+      chatPartUtils.getToolPartName(p) === 'ap_show_quick_replies'
+    ) {
+      const input = p.input as { replies?: string[] } | undefined;
+      if (input?.replies) {
+        return input.replies;
+      }
+    }
+  }
+  return [];
+}
+
 export const chatUtils = {
   formatToolLabel: ({ part }: { part: AnyToolPart }) =>
     formatToolName({ part }),
@@ -127,4 +146,5 @@ export const chatUtils = {
   stripPiecePrefix,
   humanizePieceName,
   mapHistoryToUIMessages,
+  extractQuickRepliesFromHistory,
 };

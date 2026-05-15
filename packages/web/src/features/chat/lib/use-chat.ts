@@ -447,9 +447,15 @@ export function useAgentChat({
           message: 'Failed to load conversation history',
         });
       } else {
-        setUiMessages(
-          chatUtils.mapHistoryToUIMessages(historyResult.data.data),
+        const uiMessages = chatUtils.mapHistoryToUIMessages(
+          historyResult.data.data,
         );
+        setUiMessages(uiMessages);
+        const restoredReplies =
+          chatUtils.extractQuickRepliesFromHistory(uiMessages);
+        if (restoredReplies.length > 0) {
+          store.setState({ quickReplies: restoredReplies });
+        }
       }
       if (convResult.data) {
         modelNameRef.current = convResult.data.modelName ?? null;
