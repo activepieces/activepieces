@@ -13,7 +13,8 @@ import {
 } from '@solana/web3.js';
 import * as bs58 from 'bs58';
 import {
-  createTransferInstruction,
+  createTransferCheckedInstruction,
+  getAssociatedTokenAddressSync,
 } from '@solana/spl-token';
 
 interface X402PaymentRequired {
@@ -29,21 +30,15 @@ interface X402PaymentRequired {
   };
 }
 
-interface X402PaymentEnvelope {
-  transaction: string;
-  signature: string;
-  network: string;
-}
-
 export const callPaidApi = createAction({
   name: 'call_paid_api',
   auth: x402Auth,
   displayName: 'Call Paid API with x402',
-  description: 'Call an API endpoint that requires x402 payment',
+  description: 'Call an API endpoint that requires x402 payment. Uses the x402 open protocol — pay per API call with on-chain USDC.',
   props: {
     url: Property.ShortText({
       displayName: 'API Endpoint URL',
-      description: 'The URL of the paid API endpoint',
+      description: 'The URL of the paid API endpoint (must implement x402 protocol)',
       required: true,
     }),
     method: Property.StaticDropdown({
@@ -73,7 +68,7 @@ export const callPaidApi = createAction({
     }),
     maxPrice: Property.Number({
       displayName: 'Maximum Price (USDC)',
-      description: 'Maximum amount in USDC you are willing to pay',
+      description: 'Maximum amount in USDC you are willing to pay per call',
       required: true,
     }),
   },
@@ -81,7 +76,6 @@ export const callPaidApi = createAction({
     const { url, method, headers, body, maxPrice } = propsValue;
     const { privateKey, network } = auth;
 
-    // Initialize connection based on network
     const rpcUrl = network === 'mainnet-beta'
       ? 'https://api.mainnet-beta.solana.com'
       : network === 'devnet'
@@ -89,8 +83,6 @@ export const callPaidApi = createAction({
       : 'https://api.testnet.solana.com';
 
     const connection = new Connection(rpcUrl, 'confirmed');
-
-    // Load wallet from private key
     const keypair = Keypair.fromSecretKey(bs58.decode(privateKey));
 
     // Initial request
@@ -110,25 +102,27 @@ export const callPaidApi = createAction({
     if (response.status === 402) {
       const paymentRequired: X402PaymentRequired = response.body;
 
-      // Validate payment requirements
       if (paymentRequired.maxAmountRequired > maxPrice) {
         throw new Error(
           `Payment required (${paymentRequired.maxAmountRequired} USDC) exceeds maximum price (${maxPrice} USDC)`
         );
       }
 
-      // For now, we only support mainnet USDC
-      const usdcMint = paymentRequired.extra?.mint || 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+      const usdcMintPubkey = new PublicKey(
+        paymentRequired.extra?.mint || 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+      );
+      const decimals = paymentRequired.extra?.decimals ?? 6;
 
-      // Build payment transaction
-      const paymentEnvelope = await buildAndSendPayment(
+      // Build signed payment envelope (do NOT broadcast)
+      const paymentEnvelope = await buildSignedPaymentEnvelope(
         connection,
         keypair,
         paymentRequired,
-        usdcMint
+        usdcMintPubkey,
+        decimals
       );
 
-      // Retry request with X-Payment header
+      // Retry request with X-Payment header (server verifies and submits)
       const paymentHeader = Buffer.from(JSON.stringify(paymentEnvelope)).toString('base64');
       request.headers = {
         ...headers,
@@ -142,57 +136,67 @@ export const callPaidApi = createAction({
       status: response.status,
       headers: response.headers,
       body: response.body,
-      paymentInfo: response.status === 200 ? {
-        paid: true,
-        transaction: 'Payment successful',
-      } : null,
+      paymentInfo: response.status === 200
+        ? { paid: true }
+        : { paid: false },
     };
   },
 });
 
-async function buildAndSendPayment(
+/**
+ * Build and SIGN a Solana USDC transfer — but do NOT broadcast.
+ * The x402 server receives the signed envelope, verifies it, and submits.
+ * This prevents funds from being spent if the API rejects the proof.
+ */
+async function buildSignedPaymentEnvelope(
   connection: Connection,
   keypair: Keypair,
   paymentRequired: X402PaymentRequired,
-  usdcMint: string
-): Promise<X402PaymentEnvelope> {
-  try {
-    // For USDC transfers, we use SPL Token
-    const amount = paymentRequired.maxAmountRequired * Math.pow(10, paymentRequired.extra?.decimals || 6);
+  usdcMint: PublicKey,
+  decimals: number
+): Promise<{ transaction: string; signature: string; network: string }> {
+  // Derive sender's Associated Token Account for USDC
+  const senderAta = getAssociatedTokenAddressSync(
+    usdcMint,
+    keypair.publicKey
+  );
 
-    // Get token accounts
-    const fromTokenAccount = await connection.getTokenAccountsByOwner(
-      keypair.publicKey,
-      { mint: usdcMint }
-    );
+  // Derive recipient's Associated Token Account for USDC
+  const recipientWallet = new PublicKey(paymentRequired.payTo);
+  const recipientAta = getAssociatedTokenAddressSync(
+    usdcMint,
+    recipientWallet
+  );
 
-    if (fromTokenAccount.value.length === 0) {
-      throw new Error('No USDC token account found. Please create a token account first.');
-    }
+  // Use raw integer amount to avoid floating-point rounding issues
+  const rawAmount = BigInt(
+    Math.round(paymentRequired.maxAmountRequired * Math.pow(10, decimals))
+  );
 
-    const fromAddress = fromTokenAccount.value[0].pubkey;
-    const toAddress = new PublicKey(paymentRequired.payTo);
+  const { blockhash } = await connection.getLatestBlockhash();
 
-    // Create transfer instruction
-    const transaction = new Transaction().add(
-      createTransferInstruction(
-        fromAddress,
-        toAddress,
+  const transaction = new Transaction()
+    .setRecentBlockhash(blockhash)
+    .add(
+      createTransferCheckedInstruction(
+        senderAta,     // from: sender's USDC token account (ATA)
+        usdcMint,      // mint: USDC mint address
+        recipientAta,  // to: recipient's USDC token account (ATA)
         keypair.publicKey,
-        amount
+        rawAmount,     // amount: raw integer with decimals
+        decimals       // decimals: 6 for USDC
       )
     );
 
-    // Send and confirm transaction
-    const signature = await connection.sendTransaction(transaction, [keypair]);
-    await connection.confirmTransaction(signature, 'confirmed');
+  // Sign the transaction — but do NOT send it
+  transaction.sign(keypair);
 
-    return {
-      transaction: signature,
-      signature,
-      network: paymentRequired.network,
-    };
-  } catch (error) {
-    throw new Error(`Failed to process payment: ${error}`);
-  }
+  // Serialize the signed transaction for the server to submit
+  const serialized = transaction.serialize().toString('base64');
+
+  return {
+    transaction: serialized,
+    signature: Buffer.from(transaction.signature!).toString('base64'),
+    network: paymentRequired.network,
+  };
 }
