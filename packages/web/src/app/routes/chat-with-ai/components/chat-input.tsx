@@ -21,14 +21,12 @@ export function ChatInput({
   onStop,
   placeholder,
   leftActions,
-  activeProject,
 }: {
   isStreaming: boolean;
   onSend: (text: string, files?: File[]) => void;
   onStop?: () => void;
   placeholder?: string;
   leftActions?: React.ReactNode;
-  activeProject?: { name: string; color: string; textColor: string };
 }) {
   const [value, setValue] = useState('');
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
@@ -58,7 +56,6 @@ export function ChatInput({
         onValueChange={setValue}
         onSubmit={handleSubmit}
         className="relative z-10 rounded-2xl border shadow-none transition-colors border-foreground/20 hover:border-foreground/40 focus-within:border-foreground/40"
-        style={activeProject ? { borderColor: activeProject.color } : undefined}
       >
         {attachedFiles.length > 0 && (
           <div className="flex flex-wrap gap-2 px-3 pt-2">

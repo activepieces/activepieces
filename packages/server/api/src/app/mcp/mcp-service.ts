@@ -3,6 +3,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
 import { flowService } from '../flows/flow/flow.service'
 import { McpServerEntity } from './mcp-entity'
+import { ProjectSelectionScope } from './mcp-project-selection'
 import { buildMcpServer } from './mcp-server-builder'
 
 export const mcpServerRepository = repoFactory(McpServerEntity)
@@ -61,10 +62,11 @@ export const mcpServerService = (log: FastifyBaseLogger) => ({
         return mcpServerService(log).getByPlatformId(platformId)
     },
 
-    buildServer: async ({ mcp, userId }: { mcp: PopulatedMcpServer, userId: string | null }) => {
+    buildServer: async ({ mcp, userId, selectionScope }: { mcp: PopulatedMcpServer, userId: string | null, selectionScope?: ProjectSelectionScope | null }) => {
         return buildMcpServer({
             mcp,
             userId,
+            selectionScope: selectionScope ?? null,
             log,
             resolveProjectMcp: (projectId: string) => mcpServerService(log).getPopulatedByProjectId(projectId),
         })

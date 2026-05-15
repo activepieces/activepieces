@@ -1,6 +1,5 @@
-import { FlowRunStatus, FlowStatus, isNil, parseToJsonIfPossible, Project, RunEnvironment } from '@activepieces/shared'
-import { SharedV3ProviderOptions } from '@ai-sdk/provider'
-import { LanguageModel, tool, ToolSet } from 'ai'
+import { apId, ChatStreamWriter, FlowRunStatus, FlowStatus, isNil, parseToJsonIfPossible, Project, RunEnvironment } from '@activepieces/shared'
+import { tool } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
@@ -11,8 +10,7 @@ import { executeAdhocAction, formatRunSummary } from '../../../mcp/tools/flow-ru
 import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { tableService } from '../../../tables/table/table.service'
-import { builderAgent } from '../agents/builder-agent'
-import { researcherAgent } from '../agents/researcher-agent'
+import { chatApprovalGate } from '../chat-approval-gate'
 import { chatPrompt } from '../prompt/chat-prompt'
 
 const RESOURCE_TYPES = ['flows', 'tables', 'runs', 'connections'] as const
@@ -63,20 +61,20 @@ function createChatTools({ onSessionTitle, onSetProjectContext, projects, platfo
             },
         }),
         ap_run_one_time_action: tool({
-            description: 'Execute a single piece action once for one-time tasks like "check my inbox" or "send a Slack message". If the piece needs auth and no connectionExternalId is provided, this tool automatically finds all matching connections across projects and returns a connection-picker block for the user to choose — paste it in your reply EXACTLY as returned. After the user picks (they send "Use <name>"), call this tool again with the connectionExternalId and projectId.',
+            description: 'Execute a single piece action once for one-time tasks like "check my inbox" or "send a Slack message". If the piece needs auth and no connectionExternalId is provided, this tool returns structured connection data. If no connections exist, call ap_show_connection_required. If multiple exist, call ap_show_connection_picker with the returned data. After the user picks, call this tool again with connectionExternalId and projectId.',
             inputSchema: z.object({
                 pieceName: z.string().describe('Piece name, e.g. "@activepieces/piece-gmail". Use ap_list_pieces to discover.'),
                 actionName: z.string().describe('Action to run, e.g. "gmail_search_mail". Use ap_get_piece_props for the input shape.'),
                 input: z.record(z.string(), z.unknown()).optional().describe('Fully-resolved input for the action. Keys must match the piece action props. Pass raw values — do NOT wrap in {{...}}.'),
-                connectionExternalId: z.string().optional().describe('externalId of the connection to use. Omit on first call — the tool will return a picker. Provide after the user selects.'),
-                projectId: z.string().optional().describe('Project ID where the connection lives. Provide together with connectionExternalId after the user selects.'),
+                connectionExternalId: z.string().optional().describe('externalId of the connection to use. Omit on first call if unknown.'),
+                projectId: z.string().optional().describe('Project ID where the connection lives. Provide together with connectionExternalId.'),
             }),
             execute: async (input) => {
                 if (!input.connectionExternalId || !input.projectId) {
                     return findConnectionsForPiece({ pieceName: input.pieceName, projects, platformId, log })
                 }
                 if (!availableProjectIds.includes(input.projectId)) {
-                    return { content: [{ type: 'text', text: `❌ Project ${input.projectId} is not accessible.` }] }
+                    return { success: false, error: `Project ${input.projectId} is not accessible.` }
                 }
                 let parsedInput = input.input
                 if (typeof parsedInput === 'string') {
@@ -139,23 +137,12 @@ function pieceDisplayLabel(shortName: string): string {
     return shortName.charAt(0).toUpperCase() + shortName.slice(1)
 }
 
-function buildConnectionPickerBlock({ shortName, displayName, connections }: {
-    shortName: string
-    displayName: string
-    connections: Array<{ displayName: string, project: string, externalId: string, projectId: string, status: string }>
-}): string {
-    const connLines = connections.map((c) =>
-        `- label: ${c.displayName}\n  project: ${c.project}\n  externalId: ${c.externalId}\n  projectId: ${c.projectId}\n  status: ${c.status}`,
-    ).join('\n')
-    return `\`\`\`connection-picker\npiece: ${shortName}\ndisplayName: ${displayName}\nconnections:\n${connLines}\n\`\`\``
-}
-
 async function findConnectionsForPiece({ pieceName, projects, platformId, log }: {
     pieceName: string
     projects: Project[]
     platformId: string
     log: FastifyBaseLogger
-}): Promise<{ content: { type: string, text: string }[] }> {
+}): Promise<FindConnectionsResult> {
     const normalizedPiece = mcpUtils.normalizePieceName(pieceName) ?? pieceName
 
     const projectId = projects[0]?.id
@@ -167,12 +154,7 @@ async function findConnectionsForPiece({ pieceName, projects, platformId, log }:
             platformId: project.platformId,
         })
         if (piece && isNil(piece.auth)) {
-            return {
-                content: [{
-                    type: 'text',
-                    text: `${pieceDisplayLabel(pieceShortName(normalizedPiece))} does not require a connection. No authentication is needed — you can use it directly.`,
-                }],
-            }
+            return { noAuthRequired: true, piece: normalizedPiece }
         }
     }
 
@@ -190,7 +172,7 @@ async function findConnectionsForPiece({ pieceName, projects, platformId, log }:
                 externalIds: undefined,
             })
             return result.data.map((c) => ({
-                displayName: c.displayName,
+                label: c.displayName,
                 externalId: c.externalId,
                 project: chatPrompt.projectDisplayName(project),
                 projectId: project.id,
@@ -205,19 +187,17 @@ async function findConnectionsForPiece({ pieceName, projects, platformId, log }:
 
     if (flat.length === 0) {
         return {
-            content: [{
-                type: 'text',
-                text: `No ${displayName} connections found. Show this block to let the user connect:\n\n\`\`\`connection-required\npiece: ${shortName}\ndisplayName: ${displayName}\n\`\`\``,
-            }],
+            needsConnection: true,
+            piece: shortName,
+            displayName,
         }
     }
 
-    const pickerBlock = buildConnectionPickerBlock({ shortName, displayName, connections: flat })
     return {
-        content: [{
-            type: 'text',
-            text: `Found ${flat.length} ${displayName} connection(s). Show this picker to the user — paste it EXACTLY as-is in your reply:\n\n${pickerBlock}`,
-        }],
+        pickConnection: true,
+        piece: shortName,
+        displayName,
+        connections: flat,
     }
 }
 
@@ -271,14 +251,7 @@ async function listConnectionsAcrossProjects({ projects, platformId, log }: {
                 scope: undefined,
                 externalIds: undefined,
             })
-            return result.data.map((c) => ({
-                displayName: c.displayName,
-                pieceName: c.pieceName,
-                externalId: c.externalId,
-                status: c.status,
-                project: chatPrompt.projectDisplayName(project),
-                projectId: project.id,
-            }))
+            return result.data.map((c) => `- ${c.displayName} (${pieceShortName(c.pieceName)}, ${c.status}) — ${chatPrompt.projectDisplayName(project)}`)
         }),
     )
 
@@ -287,21 +260,7 @@ async function listConnectionsAcrossProjects({ projects, platformId, log }: {
         return { content: [{ type: 'text', text: 'No connections found across any project.' }] }
     }
 
-    const byPiece = new Map<string, typeof flat>()
-    for (const conn of flat) {
-        const list = byPiece.get(conn.pieceName) ?? []
-        list.push(conn)
-        byPiece.set(conn.pieceName, list)
-    }
-
-    const pickerBlocks: string[] = []
-    for (const [pieceName, conns] of byPiece) {
-        const shortName = pieceShortName(pieceName)
-        const displayName = pieceDisplayLabel(shortName)
-        pickerBlocks.push(buildConnectionPickerBlock({ shortName, displayName, connections: conns }))
-    }
-
-    return { content: [{ type: 'text', text: `Found ${flat.length} connection(s) across ${projects.length} project(s). Paste the appropriate block below EXACTLY as-is:\n\n${pickerBlocks.join('\n\n')}` }] }
+    return { content: [{ type: 'text', text: `Found ${flat.length} connection(s):\n${flat.join('\n')}` }] }
 }
 
 async function listResourceForProject({ resource, projectId, status, log }: {
@@ -338,118 +297,33 @@ async function listResourceForProject({ resource, projectId, status, log }: {
     }
 }
 
-const MAX_REFINEMENT_ITERATIONS = 2
-const MIN_STEPS_FOR_EVALUATION = 3
-
-function createBuilderTool({ model, allTools, rawMcpTools, providerOptions, writer, log }: CreateBuilderToolParams) {
-    const buildTools = builderAgent.filterBuildTools({ allTools, rawMcpTools })
-
+function createPlanApprovalTool({ writer, onPlanApproved }: {
+    writer: ChatStreamWriter
+    onPlanApproved: () => void
+}) {
     return {
-        ap_build_automation: tool({
-            description: 'Delegate automation building to the builder agent. Use after the user approves an automation-proposal and connections are resolved. Provide the full build specification with flow name, project ID, and all steps with their piece names, action/trigger names, connection external IDs, and any configuration the user provided.',
+        ap_request_plan_approval: tool({
+            description: 'Request user approval for a multi-step plan before executing destructive operations. Present the plan in your message first, then call this tool. If approved, all subsequent tool calls in this response execute without individual approval prompts. Use for bulk deletes, multi-step destructive changes, etc. Do NOT use for single operations.',
             inputSchema: z.object({
-                flowName: z.string().describe('Name for the new flow'),
-                projectId: z.string().describe('Project ID to build in'),
-                steps: z.array(z.object({
-                    type: z.enum(['trigger', 'action']).describe('Whether this is the trigger or an action step'),
-                    pieceName: z.string().describe('Full piece name, e.g. "@activepieces/piece-gmail"'),
-                    actionName: z.string().optional().describe('Action name for action steps'),
-                    triggerName: z.string().optional().describe('Trigger name for trigger steps'),
-                    connectionExternalId: z.string().optional().describe('Connection externalId for auth'),
-                    config: z.record(z.string(), z.unknown()).optional().describe('Pre-filled configuration values from user input'),
-                })).min(1).describe('Steps in order: trigger first, then actions'),
+                planSummary: z.string().describe('A brief 1-3 sentence summary of what you will do'),
+                steps: z.array(z.string()).describe('List of concrete actions, e.g. ["Delete flow Test Flow A", "Delete flow Test Flow B"]'),
             }),
             execute: async (input) => {
-                log.info({ flowName: input.flowName, stepCount: input.steps.length }, 'Builder agent starting')
-                const buildResult = await builderAgent.executeBuild({
-                    model,
-                    buildTools,
-                    providerOptions,
-                    spec: input,
-                    writer,
-                    log,
+                const gateId = apId()
+                writer.write({
+                    type: 'data-plan-approval-request',
+                    data: { gateId, planSummary: input.planSummary, steps: input.steps },
+                    transient: true,
                 })
-                log.info({ flowId: buildResult.flowId, success: buildResult.success, stepsUsed: buildResult.stepsUsed }, 'Builder agent finished')
-
-                if (!buildResult.success || !buildResult.flowId || input.steps.length < MIN_STEPS_FOR_EVALUATION) {
+                const approved = await chatApprovalGate.waitForApproval({ gateId })
+                if (approved) {
+                    onPlanApproved()
                     return {
-                        success: buildResult.success,
-                        flowId: buildResult.flowId,
-                        summary: buildResult.summary,
-                        stepsUsed: buildResult.stepsUsed,
-                        evaluation: null,
+                        success: true,
+                        message: 'Plan approved by the user. Execute each step in order now.',
                     }
                 }
-
-                let evaluation = await builderAgent.evaluateBuild({
-                    model,
-                    spec: input,
-                    builderSteps: buildResult.builderSteps,
-                    log,
-                })
-
-                for (let i = 0; i < MAX_REFINEMENT_ITERATIONS; i++) {
-                    if (!evaluation || evaluation.overallVerdict !== 'fixable') break
-
-                    const fixableIssues = evaluation.misconfiguredSteps.filter((s) => s.fixable)
-                    if (fixableIssues.length === 0) break
-
-                    log.info({ iteration: i + 1, issueCount: fixableIssues.length }, 'Builder fix iteration starting')
-                    const fixResult = await builderAgent.executeFix({
-                        model,
-                        buildTools,
-                        providerOptions,
-                        flowId: buildResult.flowId,
-                        issues: fixableIssues,
-                        log,
-                    })
-                    log.info({ iteration: i + 1, stepsUsed: fixResult.stepsUsed }, 'Builder fix iteration finished')
-
-                    evaluation = await builderAgent.evaluateBuild({
-                        model,
-                        spec: input,
-                        builderSteps: buildResult.builderSteps,
-                        log,
-                    })
-                }
-
-                return {
-                    success: buildResult.success,
-                    flowId: buildResult.flowId,
-                    summary: buildResult.summary,
-                    stepsUsed: buildResult.stepsUsed,
-                    evaluation,
-                }
-            },
-        }),
-    }
-}
-
-function createResearcherTool({ model, allTools, providerOptions, log }: CreateSubagentToolParams) {
-    const researchTools = researcherAgent.filterResearchTools({ allTools })
-
-    return {
-        ap_research: tool({
-            description: 'Delegate complex investigation to the research agent. Use for deep piece discovery ("What CRM integrations exist?"), flow debugging ("Why is my flow failing?"), or multi-flow analysis ("Which flows use Slack?"). Do NOT use for simple lookups that need just 1-2 tool calls.',
-            inputSchema: z.object({
-                task: z.string().describe('What to investigate, e.g. "find all integrations for CRM" or "debug why flow X is failing"'),
-                context: z.string().optional().describe('Additional context from the conversation to help the researcher'),
-            }),
-            execute: async (input) => {
-                const fullTask = input.context
-                    ? `${input.task}\n\nContext: ${input.context}`
-                    : input.task
-
-                log.info({ task: input.task }, 'Researcher agent starting')
-                const result = await researcherAgent.executeResearch({
-                    model,
-                    researchTools,
-                    providerOptions,
-                    task: fullTask,
-                    log,
-                })
-                log.info({ stepsUsed: result.stepsUsed }, 'Researcher agent finished')
-                return result
+                return { success: false, message: 'Plan rejected by user. Do not proceed.' }
             },
         }),
     }
@@ -463,20 +337,9 @@ type CreateChatToolsParams = {
     log: FastifyBaseLogger
 }
 
-type CreateBuilderToolParams = {
-    model: LanguageModel
-    allTools: ToolSet
-    rawMcpTools: Record<string, unknown>
-    providerOptions: SharedV3ProviderOptions
-    writer: { write(part: Record<string, unknown>): void }
-    log: FastifyBaseLogger
-}
+type FindConnectionsResult =
+    | { noAuthRequired: true, piece: string }
+    | { needsConnection: true, piece: string, displayName: string }
+    | { pickConnection: true, piece: string, displayName: string, connections: Array<{ label: string, project: string, externalId: string, projectId: string, status: string }> }
 
-type CreateSubagentToolParams = {
-    model: LanguageModel
-    allTools: ToolSet
-    providerOptions: SharedV3ProviderOptions
-    log: FastifyBaseLogger
-}
-
-export { createChatTools, createBuilderTool, createResearcherTool }
+export { createChatTools, createPlanApprovalTool }

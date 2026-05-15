@@ -3,6 +3,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { CONVERSATION_ID_HEADER } from '../../ee/chat/mcp/chat-mcp'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { telemetry } from '../../helper/telemetry.utils'
 import { mcpServerService } from '../mcp-service'
@@ -69,7 +70,9 @@ function registerMcpEndpoint(app: Parameters<FastifyPluginAsyncZod>[0], scope: M
             })
         }
 
-        const { server } = await mcpServerService(req.log).buildServer({ mcp, userId })
+        const conversationId = req.headers[CONVERSATION_ID_HEADER] as string | undefined
+        const selectionScope = conversationId ? { conversationId } : null
+        const { server } = await mcpServerService(req.log).buildServer({ mcp, userId, selectionScope })
 
         const transport = new StreamableHTTPServerTransport({
             sessionIdGenerator: undefined,

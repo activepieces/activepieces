@@ -9,20 +9,20 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { DynamicToolPart } from '@/features/chat/lib/chat-types';
+import { AnyToolPart } from '@/features/chat/lib/chat-types';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { cn } from '@/lib/utils';
 
 type ToolStatus = 'running' | 'completed' | 'failed' | 'stopped';
 
-function deriveStatus(part: DynamicToolPart): ToolStatus {
+function deriveStatus(part: AnyToolPart): ToolStatus {
   if (part.state === 'output-available') return 'completed';
   if (part.state === 'output-error') return 'failed';
   if (part.state === 'output-denied') return 'stopped';
   return 'running';
 }
 
-function extractOutput(part: DynamicToolPart): string | undefined {
+function extractOutput(part: AnyToolPart): string | undefined {
   if (part.state === 'output-available' && part.output !== undefined) {
     return typeof part.output === 'string'
       ? part.output
@@ -60,7 +60,7 @@ function StatusIcon({ status }: { status: ToolStatus }) {
   }
 }
 
-export function ToolCallCard({ toolPart }: { toolPart: DynamicToolPart }) {
+export function ToolCallCard({ toolPart }: { toolPart: AnyToolPart }) {
   const status = deriveStatus(toolPart);
   const output = extractOutput(toolPart);
   const input = isObject(toolPart.input) ? toolPart.input : undefined;
