@@ -21,8 +21,10 @@ import { UseFormReturn } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { CURSOR_QUERY_PARAM, LIMIT_QUERY_PARAM } from '@/components/custom/data-table';
-
+import {
+  CURSOR_QUERY_PARAM,
+  LIMIT_QUERY_PARAM,
+} from '@/components/custom/data-table';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { projectMembersApi } from '@/features/members/api/project-members-api';

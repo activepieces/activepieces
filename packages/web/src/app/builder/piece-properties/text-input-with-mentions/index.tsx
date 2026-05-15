@@ -1,4 +1,8 @@
-import { AppConnectionKind, flowStructureUtil, isNil } from '@activepieces/shared';
+import {
+  AppConnectionKind,
+  flowStructureUtil,
+  isNil,
+} from '@activepieces/shared';
 import { Extensions } from '@tiptap/core';
 import { Document } from '@tiptap/extension-document';
 import { HardBreak } from '@tiptap/extension-hard-break';

@@ -85,7 +85,12 @@ function convertTextToTipTapJsonContent(
         });
       } else if (isMentionNodeText(node)) {
         result[result.length - 1].content.push(
-          createMentionNodeFromText(node, steps, stepsMetadata, credentialByExternalId),
+          createMentionNodeFromText(
+            node,
+            steps,
+            stepsMetadata,
+            credentialByExternalId,
+          ),
         );
       } else {
         result[result.length - 1].content.push({
@@ -207,7 +212,12 @@ function createMentionNodeFromText(
     attrs: {
       id: mention,
       label: JSON.stringify(
-        parseLabelFromMention(mention, steps, stepsMetadata, credentialByExternalId),
+        parseLabelFromMention(
+          mention,
+          steps,
+          stepsMetadata,
+          credentialByExternalId,
+        ),
       ),
     },
   };

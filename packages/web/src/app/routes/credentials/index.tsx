@@ -96,7 +96,13 @@ function CredentialsPage() {
       displayName,
       kind: AppConnectionKind.CREDENTIAL,
     },
-    extraKeys: ['credentials', cursor ?? '', String(limit), displayName ?? '', projectId],
+    extraKeys: [
+      'credentials',
+      cursor ?? '',
+      String(limit),
+      displayName ?? '',
+      projectId,
+    ],
     showErrorDialog: true,
   });
 
