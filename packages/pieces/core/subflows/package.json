@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-subflows",
-  "version": "0.4.13",
+  "version": "0.4.14",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {

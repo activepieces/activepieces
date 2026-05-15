@@ -1,6 +1,7 @@
 
 import { z } from 'zod'
 import { isNil } from '../../core/common'
+import { ApplicationEvent } from '../../ee/audit-events'
 import { StreamStepProgress, TriggerHookType, TriggerPayload } from '../engine'
 import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
@@ -8,7 +9,7 @@ import { FlowVersion } from '../flows/flow-version'
 import { FlowTriggerType } from '../flows/triggers/trigger'
 import { PiecePackage } from '../pieces/piece'
 
-export const LATEST_JOB_DATA_SCHEMA_VERSION = 8
+export const LATEST_JOB_DATA_SCHEMA_VERSION = 9
 
 export const InlineJobPayload = z.object({
     type: z.literal('inline'),
@@ -227,7 +228,7 @@ export const EventDestinationJobData = z.object({
     projectId: z.string().optional(),
     webhookId: z.string(),
     webhookUrl: z.string(),
-    payload: z.unknown(),
+    payload: ApplicationEvent,
     jobType: z.literal(WorkerJobType.EVENT_DESTINATION),
 })
 
