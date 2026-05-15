@@ -2,6 +2,8 @@ import { z } from 'zod'
 import { BaseModel, BaseModelSchema, Nullable } from '../../core/common/base-model'
 import { ApId } from '../../core/common/id-generator'
 import { Metadata } from '../../core/common/metadata'
+import { assertNotNullOrUndefined } from '../../core/common/utils/assertions'
+import { isNil } from '../../core/common/utils/utils'
 import { UserWithMetaInformation } from '../../core/user'
 import { OAuth2GrantType } from './dto/upsert-app-connection-request'
 import { OAuth2AuthorizationMethod } from './oauth2-authorization-method'
@@ -189,6 +191,27 @@ export function isCredential<T extends { kind: AppConnectionKind }>(
     connection: T,
 ): connection is Extract<T, { kind: AppConnectionKind.CREDENTIAL }> {
     return connection.kind === AppConnectionKind.CREDENTIAL
+}
+
+export type AppConnectionKindFields =
+    | { kind: AppConnectionKind.CONNECTION, type: AppConnectionType, pieceName: string, pieceVersion: string }
+    | { kind: AppConnectionKind.CREDENTIAL, type: AppConnectionType.SECRET_TEXT }
+
+export function resolveAppConnectionKind(input: {
+    id: string
+    type: AppConnectionType
+    pieceName: string | null
+    pieceVersion: string | null
+}): AppConnectionKindFields {
+    const { id, type, pieceName, pieceVersion } = input
+    if (isNil(pieceName)) {
+        if (type !== AppConnectionType.SECRET_TEXT) {
+            throw new Error(`Credential ${id} has unexpected type ${type}; expected SECRET_TEXT`)
+        }
+        return { kind: AppConnectionKind.CREDENTIAL, type: AppConnectionType.SECRET_TEXT }
+    }
+    assertNotNullOrUndefined(pieceVersion, `pieceVersion missing for piece connection ${id}`)
+    return { kind: AppConnectionKind.CONNECTION, type, pieceName, pieceVersion }
 }
 
 /**i.e props: {projectId: "123"} and value: "{{projectId}}" will return "123" */
