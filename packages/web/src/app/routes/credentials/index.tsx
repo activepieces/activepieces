@@ -14,17 +14,14 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { CredentialDialog } from '@/app/connections/credential-dialog';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
 import {
   BulkAction,
-  CURSOR_QUERY_PARAM,
   DataTable,
   DataTableFilters,
-  LIMIT_QUERY_PARAM,
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
@@ -68,7 +65,6 @@ const copyValueToClipboard = async (id: string) => {
 };
 
 function CredentialsPage() {
-  const location = useLocation();
   const projectId = authenticationSession.getProjectId()!;
   const { checkAccess } = useAuthorization();
   const canWrite = checkAccess(Permission.WRITE_APP_CONNECTION);
@@ -85,13 +81,8 @@ function CredentialsPage() {
   >([]);
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
 
-  const searchParams = new URLSearchParams(location.search);
-  const cursor = searchParams.get(CURSOR_QUERY_PARAM) ?? undefined;
-  const limit = searchParams.get(LIMIT_QUERY_PARAM)
-    ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
-    : 10;
-  const displayName = searchParams.get('displayName') ?? undefined;
-  const ownerEmails = searchParams.getAll('owner');
+  const { cursor, limit, displayName, ownerEmails } =
+    appConnectionsQueries.useListSearchParams();
 
   const {
     data: credentials,
@@ -105,7 +96,7 @@ function CredentialsPage() {
       displayName,
       kind: AppConnectionKind.CREDENTIAL,
     },
-    extraKeys: ['credentials', location.search, projectId],
+    extraKeys: ['credentials', cursor ?? '', String(limit), displayName ?? '', projectId],
     showErrorDialog: true,
   });
 
@@ -122,7 +113,7 @@ function CredentialsPage() {
       next: credentials.next,
       previous: credentials.previous,
     };
-  }, [credentials, location.search]);
+  }, [credentials, ownerEmails]);
 
   const { data: owners } = appConnectionsQueries.useConnectionsOwners();
 

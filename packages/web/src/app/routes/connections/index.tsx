@@ -19,7 +19,7 @@ import {
   Puzzle,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
@@ -28,10 +28,8 @@ import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
 import {
   BulkAction,
-  CURSOR_QUERY_PARAM,
   DataTable,
   DataTableFilters,
-  LIMIT_QUERY_PARAM,
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
@@ -71,7 +69,6 @@ function AppConnectionsPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { checkAccess } = useAuthorization();
   const userPlatformRole = userHooks.getCurrentUserPlatformRole();
-  const location = useLocation();
   const { pieces } = piecesHooks.usePieces({});
   const pieceOptions = (pieces ?? []).map((piece) => ({
     label: piece.displayName,
@@ -79,14 +76,8 @@ function AppConnectionsPage() {
   }));
   const projectId = authenticationSession.getProjectId()!;
 
-  const searchParams = new URLSearchParams(location.search);
-  const cursor = searchParams.get(CURSOR_QUERY_PARAM) ?? undefined;
-  const limit = searchParams.get(LIMIT_QUERY_PARAM)
-    ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
-    : 10;
-  const status = (searchParams.getAll('status') as AppConnectionStatus[]) ?? [];
-  const pieceName = searchParams.get('pieceName') ?? undefined;
-  const displayName = searchParams.get('displayName') ?? undefined;
+  const { cursor, limit, displayName, ownerEmails, status, pieceName } =
+    appConnectionsQueries.useListSearchParams();
 
   const {
     data: connections,
@@ -102,7 +93,14 @@ function AppConnectionsPage() {
       displayName,
       kind: AppConnectionKind.CONNECTION,
     },
-    extraKeys: [location.search, projectId],
+    extraKeys: [
+      cursor ?? '',
+      String(limit),
+      displayName ?? '',
+      pieceName ?? '',
+      status.join(','),
+      projectId,
+    ],
     showErrorDialog: true,
   });
 
@@ -111,8 +109,6 @@ function AppConnectionsPage() {
 
   const filteredData = useMemo(() => {
     if (!connections?.data) return undefined;
-    const searchParams = new URLSearchParams(location.search);
-    const ownerEmails = searchParams.getAll('owner');
     const pieceConnections = connections.data.filter(isPieceConnection);
 
     if (ownerEmails.length === 0) {
@@ -130,7 +126,7 @@ function AppConnectionsPage() {
       next: connections.next,
       previous: connections.previous,
     };
-  }, [connections, location.search]);
+  }, [connections, ownerEmails]);
 
   const userHasPermissionToWriteAppConnection = checkAccess(
     Permission.WRITE_APP_CONNECTION,
