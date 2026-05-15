@@ -85,6 +85,10 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
             columns: ['projectIds'],
             synchronize: false,
         },
+        {
+            name: 'idx_app_connection_piece_name',
+            columns: ['pieceName'],
+        },
     ],
     relations: {
         owner: {
