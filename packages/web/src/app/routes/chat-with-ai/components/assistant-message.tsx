@@ -228,12 +228,19 @@ function InlinePlanCard({
     chatStoreSelectors.effectivePlanUpdates({ state: s, lastAssistantMessage }),
   );
 
-  const input = planPart.input as
-    | { planSummary?: string; steps?: string[] }
-    | undefined;
-  const steps = input?.steps ?? [];
-  const localPlan =
-    steps.length > 0 ? { title: input?.planSummary ?? '', steps } : null;
+  const localPlan = (() => {
+    const toolOutput = chatPartUtils.parseTypedToolOutput(
+      planPart,
+      'ap_request_plan_approval',
+    );
+    if (toolOutput.state === 'success' && !toolOutput.data.success) return null;
+    const input = planPart.input as
+      | { planSummary?: string; steps?: string[] }
+      | undefined;
+    const steps = input?.steps ?? [];
+    if (steps.length === 0) return null;
+    return { title: input?.planSummary ?? '', steps };
+  })();
 
   const progress = storePlanProgress ?? localPlan;
 
