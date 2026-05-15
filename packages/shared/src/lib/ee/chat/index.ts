@@ -48,11 +48,6 @@ export const UpdateChatConversationRequest = z.object({
 })
 export type UpdateChatConversationRequest = z.infer<typeof UpdateChatConversationRequest>
 
-export const SetProjectContextRequest = z.object({
-    projectId: Nullable(z.string()),
-})
-export type SetProjectContextRequest = z.infer<typeof SetProjectContextRequest>
-
 export const SendChatMessageRequest = z.object({
     content: z.string().max(51200),
     files: z.array(ChatMessageFile).max(10).optional(),
@@ -76,6 +71,56 @@ export type ChatHistoryMessage = {
     toolCalls?: ChatHistoryToolCall[]
     thoughts?: string
 }
+
+export type ToolApprovalRequest = {
+    gateId: string
+    toolName: string
+    displayName: string
+}
+
+export type PlanApprovalRequest = {
+    gateId: string
+    planSummary: string
+    steps: string[]
+}
+
+export type PlanStepStatus = 'pending' | 'executing' | 'done' | 'error'
+
+export type PlanStepUpdate = {
+    stepIndex: number
+    status: PlanStepStatus
+}
+
+export type ChatStreamWriter = {
+    write(part: Record<string, unknown>): void
+}
+
+export type ChatToolOutputs = {
+    ap_set_session_title: { success: boolean }
+    ap_select_project: { success: boolean, message?: string, error?: string }
+    ap_request_plan_approval: { success: boolean, message: string }
+    ap_list_across_projects: { content: { type: string, text: string }[] }
+    ap_run_one_time_action:
+    | { noAuthRequired: true, piece: string }
+    | { needsConnection: true, piece: string, displayName: string }
+    | { pickConnection: true, piece: string, displayName: string, connections: ConnectionOption[] }
+    | { success: boolean, error?: string, output?: unknown }
+    ap_show_connection_required: { displayed: boolean }
+    ap_show_connection_picker: { displayed: boolean }
+    ap_show_project_picker: { displayed: boolean }
+    ap_show_questions: { displayed: boolean }
+    ap_show_quick_replies: { displayed: boolean }
+}
+
+export type ConnectionOption = {
+    label: string
+    project: string
+    externalId: string
+    projectId: string
+    status: string
+}
+
+export type ChatToolName = keyof ChatToolOutputs
 
 export type ChatAllowedMimeType = typeof CHAT_ALLOWED_MIME_TYPES[number]
 export { CHAT_ALLOWED_MIME_TYPES }

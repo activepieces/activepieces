@@ -6,7 +6,7 @@ import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { telemetry } from '../helper/telemetry.utils'
 import { WebhookFlowVersionToRun, webhookService } from '../webhooks/webhook.service'
 import { ALLOW_ALL, PermissionChecker, resolvePermissionChecker } from './mcp-permissions'
-import { mcpProjectSelection } from './mcp-project-selection'
+import { mcpProjectSelection, ProjectSelectionScope } from './mcp-project-selection'
 import { activepiecesTools, ALL_CONTROLLABLE_TOOL_NAMES, LOCKED_TOOL_NAMES } from './tools'
 import { apSetProjectContextTool } from './tools/ap-set-project-context'
 
@@ -28,9 +28,10 @@ const MCP_SERVER_INSTRUCTIONS = `## Activepieces MCP Server
 - **CODE steps**: export a \`code\` fn; access inputs via \`inputs.key\`.
 - **Tables**: use field names, not IDs.`
 
-export async function buildMcpServer({ mcp, userId, log, resolveProjectMcp }: {
+export async function buildMcpServer({ mcp, userId, selectionScope, log, resolveProjectMcp }: {
     mcp: PopulatedMcpServer
     userId: string | null
+    selectionScope: ProjectSelectionScope | null
     log: FastifyBaseLogger
     resolveProjectMcp?: (projectId: string) => Promise<PopulatedMcpServer>
 }): Promise<McpServer> {
@@ -65,7 +66,7 @@ export async function buildMcpServer({ mcp, userId, log, resolveProjectMcp }: {
         registerStaticTools({ server, mcp, projectId, permissionChecker, log })
     }
     else if (!isNil(mcp.platformId) && !isNil(userId) && !isNil(resolveProjectMcp)) {
-        registerPlatformTools({ server, mcp, platformId: mcp.platformId, userId, resolveProjectMcp, log })
+        registerPlatformTools({ server, mcp, userId, selectionScope: selectionScope ?? { platformId: mcp.platformId, userId }, resolveProjectMcp, log })
     }
     else {
         registerPlaceholderTools(server)
@@ -75,15 +76,16 @@ export async function buildMcpServer({ mcp, userId, log, resolveProjectMcp }: {
     return server
 }
 
-function registerPlatformTools({ server, mcp, platformId, userId, resolveProjectMcp, log }: {
+function registerPlatformTools({ server, mcp, userId, selectionScope, resolveProjectMcp, log }: {
     server: McpServer
     mcp: PopulatedMcpServer
-    platformId: string
     userId: string
+    selectionScope: ProjectSelectionScope
     resolveProjectMcp: (projectId: string) => Promise<PopulatedMcpServer>
     log: FastifyBaseLogger
 }): void {
-    const contextTool = apSetProjectContextTool({ platformId, userId, log })
+    const platformId = mcp.platformId!
+    const contextTool = apSetProjectContextTool({ platformId, userId, selectionScope, log })
     server.registerTool(contextTool.title, buildToolConfig(contextTool), (args: Record<string, unknown>) => contextTool.execute(args))
 
     const templateMcp: ProjectScopedMcpServer = { ...mcp, projectId: platformId }
@@ -93,7 +95,7 @@ function registerPlatformTools({ server, mcp, platformId, userId, resolveProject
 
     tools.forEach((tool) => {
         server.registerTool(tool.title, buildToolConfig(tool), async (args: Record<string, unknown>) => {
-            const selectedProjectId = mcpProjectSelection.get({ platformId, userId })
+            const selectedProjectId = await mcpProjectSelection.get(selectionScope)
             if (isNil(selectedProjectId)) {
                 return {
                     content: [{
