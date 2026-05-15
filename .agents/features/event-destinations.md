@@ -1,13 +1,13 @@
 # Event Destinations Module
 
 ## Summary
-Event Destinations streams platform and project activity events to webhook URLs in real time. Internal Activepieces flow webhooks are valid targets, so operators can route events into a flow and fan them out to Slack, Gmail, Teams, or any HTTP endpoint without leaving the platform. Each destination subscribes to a configurable subset of the 24 `ApplicationEventName` events (flow CRUD, flow lifecycle, run lifecycle, user auth, connections, security, releases) and receives a structured JSON payload via a BullMQ-backed delivery queue. The feature is gated behind the `auditLogEnabled` plan flag and is only available in Enterprise/Cloud editions.
+Event Destinations streams platform and project activity events to webhook URLs in real time. Internal Activepieces flow webhooks are valid targets, so operators can route events into a flow and fan them out to Slack, Gmail, Teams, or any HTTP endpoint without leaving the platform. Each destination subscribes to a configurable subset of the 25 `ApplicationEventName` events (flow CRUD, flow lifecycle, run lifecycle, user auth, connections, security, releases) and receives a structured JSON payload via a BullMQ-backed delivery queue. The feature is gated behind the `auditLogEnabled` plan flag and is only available in Enterprise/Cloud editions.
 
 ## Key Files
 - `packages/server/api/src/app/event-destinations/` — controller, service, entity
 - `packages/shared/src/lib/ee/event-destinations/dto.ts` — request/response Zod schemas (test endpoint accepts optional `event`)
 - `packages/shared/src/lib/ee/event-destinations/index.ts` — barrel export
-- `packages/shared/src/lib/ee/audit-events/` — `ApplicationEventName` enum (24 event types)
+- `packages/shared/src/lib/ee/audit-events/` — `ApplicationEventName` enum (25 event types)
 - `packages/shared/src/lib/ee/audit-events/mock-event-builder.ts` — `buildMockEvent()` shared helper that returns a typed `ApplicationEvent` mock for any event name
 - `packages/web/src/app/routes/platform/infra/event-destinations/index.tsx` — `EventDestinationsPage`
 - `packages/web/src/app/routes/platform/infra/event-destinations/lib/event-destinations-collection.ts` — TanStack DB live collection + mutations (incl. `useImportHandlerFlow`)
@@ -25,7 +25,7 @@ Event Destinations streams platform and project activity events to webhook URLs 
 
 ## Domain Terms
 - **EventDestination**: A persisted webhook subscription — one URL receiving a chosen set of events for a platform or project scope.
-- **ApplicationEventName**: The 24-value enum that names every auditable action in the system.
+- **ApplicationEventName**: The 25-value enum that names every auditable action in the system.
 - **Scope**: PLATFORM (all platform-level events) or PROJECT (currently only `FLOW_RUN_FINISHED`).
 - **Event Delivery**: Async BullMQ `ONE_TIME` job that POSTs the event payload to the destination URL.
 - **Test Delivery**: Sends a mock payload for a selected event type (defaults to `FLOW_CREATED`) synchronously so the operator can verify connectivity. Backed by `buildMockEvent()`.
@@ -40,12 +40,12 @@ Event Destinations streams platform and project activity events to webhook URLs 
 - **PLATFORM**: Receives all platform-level events (flow CRUD, user auth, connections, folders, security)
 - **PROJECT**: Currently only receives `FLOW_RUN_FINISHED` events for that project
 
-## Available Events (ApplicationEventName — 24 types)
+## Available Events (ApplicationEventName — 25 types)
 
 - Flow: FLOW_CREATED, FLOW_UPDATED, FLOW_DELETED, FLOW_PUBLISHED, FLOW_ACTIVATED, FLOW_DEACTIVATED
 - Runs: FLOW_RUN_STARTED, FLOW_RUN_FINISHED, FLOW_RUN_RESUMED, FLOW_RUN_RETRIED
 - Folders: FOLDER_CREATED, FOLDER_UPDATED, FOLDER_DELETED
-- Connections: CONNECTION_UPSERTED, CONNECTION_DELETED
+- Connections: CONNECTION_UPSERTED, CONNECTION_DELETED, CONNECTION_VALUE_REVEALED
 - Users: USER_SIGNED_UP, USER_SIGNED_IN, USER_PASSWORD_RESET, USER_EMAIL_VERIFIED
 - Security: SIGNING_KEY_CREATED, PROJECT_ROLE_CREATED, PROJECT_ROLE_UPDATED, PROJECT_ROLE_DELETED
 - Releases: PROJECT_RELEASE_CREATED
