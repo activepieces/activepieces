@@ -1,4 +1,4 @@
-import { AppConnectionKind, FlowRunStatus, FlowStatus, isNil, parseToJsonIfPossible, Project, RunEnvironment } from '@activepieces/shared'
+import { AppConnectionKind, FlowRunStatus, FlowStatus, isNil, isPieceConnection, parseToJsonIfPossible, Project, RunEnvironment } from '@activepieces/shared'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { LanguageModel, tool, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -273,14 +273,14 @@ async function listConnectionsAcrossProjects({ projects, platformId, log }: {
                 kind: AppConnectionKind.CONNECTION,
                 externalIds: undefined,
             })
-            return result.data.flatMap((c) => isNil(c.pieceName) ? [] : [{
+            return result.data.flatMap((c) => isPieceConnection(c) ? [{
                 displayName: c.displayName,
                 pieceName: c.pieceName,
                 externalId: c.externalId,
                 status: c.status,
                 project: chatPrompt.projectDisplayName(project),
                 projectId: project.id,
-            }])
+            }] : [])
         }),
     )
 

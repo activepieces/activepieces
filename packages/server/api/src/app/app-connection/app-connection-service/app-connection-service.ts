@@ -20,6 +20,7 @@ import {
     ErrorCode,
     ExecuteValidateAuthResponse,
     isNil,
+    isPieceConnection,
     MAX_PLATFORM_APP_CONNECTION_OWNERS,
     Metadata,
     OAuth2GrantType,
@@ -266,6 +267,14 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             platformId,
         })
         
+        if (!isPieceConnection(sourceAppConnection) || !isPieceConnection(targetAppConnection)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Replace is only supported for piece connections',
+                },
+            })
+        }
         if (sourceAppConnection.pieceName !== targetAppConnection.pieceName) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,

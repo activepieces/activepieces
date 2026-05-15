@@ -1,4 +1,4 @@
-import { AppConnection, AppConnectionKind, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, assertNotNullOrUndefined, Flow, FlowOperationType, flowStructureUtil, FlowVersion, FlowVersionState, isNil, PlatformId, PopulatedFlow, ProjectId, UserId } from '@activepieces/shared'
+import { AppConnection, AppConnectionKind, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, assertNotNullOrUndefined, Flow, FlowOperationType, flowStructureUtil, FlowVersion, FlowVersionState, isNil, isPieceConnection, PlatformId, PopulatedFlow, ProjectId, UserId } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains } from 'typeorm'
@@ -30,9 +30,11 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
     },
 
     async refresh(connection: AppConnection, projectId: ProjectId, log: FastifyBaseLogger): Promise<AppConnection> {
+        if (!isPieceConnection(connection)) {
+            return connection
+        }
         switch (connection.value.type) {
             case AppConnectionType.PLATFORM_OAUTH2:
-                assertNotNullOrUndefined(connection.pieceName, 'pieceName')
                 connection.value = await oauth2Handler[connection.value.type](log).refresh({
                     pieceName: connection.pieceName,
                     platformId: connection.platformId,
@@ -41,7 +43,6 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                 })
                 break
             case AppConnectionType.CLOUD_OAUTH2:
-                assertNotNullOrUndefined(connection.pieceName, 'pieceName')
                 connection.value = await oauth2Handler[connection.value.type](log).refresh({
                     pieceName: connection.pieceName,
                     platformId: connection.platformId,
@@ -50,7 +51,6 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                 })
                 break
             case AppConnectionType.OAUTH2:
-                assertNotNullOrUndefined(connection.pieceName, 'pieceName')
                 connection.value = await oauth2Handler[connection.value.type](log).refresh({
                     pieceName: connection.pieceName,
                     platformId: connection.platformId,
