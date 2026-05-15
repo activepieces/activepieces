@@ -97,6 +97,6 @@ export const discordFindGuildMemberByUsername = createAction({
         configValue.propsValue.username.toLowerCase()
     );
 
-    return member || res.body[0] || null;
+    return member || null;
   },
 });
