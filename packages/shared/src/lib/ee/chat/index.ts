@@ -97,14 +97,14 @@ export type ChatStreamWriter = {
 
 export type ChatToolOutputs = {
     ap_set_session_title: { success: boolean }
-    ap_select_project: { success: boolean; message?: string; error?: string }
-    ap_request_plan_approval: { success: boolean; message: string }
-    ap_list_across_projects: { content: { type: string; text: string }[] }
+    ap_select_project: { success: boolean, message?: string, error?: string }
+    ap_request_plan_approval: { success: boolean, message: string }
+    ap_list_across_projects: { content: { type: string, text: string }[] }
     ap_run_one_time_action:
-        | { noAuthRequired: true; piece: string }
-        | { needsConnection: true; piece: string; displayName: string }
-        | { pickConnection: true; piece: string; displayName: string; connections: ConnectionOption[] }
-        | { success: boolean; error?: string; output?: unknown }
+    | { noAuthRequired: true, piece: string }
+    | { needsConnection: true, piece: string, displayName: string }
+    | { pickConnection: true, piece: string, displayName: string, connections: ConnectionOption[] }
+    | { success: boolean, error?: string, output?: unknown }
     ap_show_connection_required: { displayed: boolean }
     ap_show_connection_picker: { displayed: boolean }
     ap_show_project_picker: { displayed: boolean }
