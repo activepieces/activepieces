@@ -198,7 +198,7 @@ function ChatBoxContent({
                 onRetry={handleRetry}
                 onSend={handleSend}
                 lastAssistantMessage={
-                  isLastAssistant ? lastAssistantMessage : undefined
+                  isLastAssistant ? lastAssistantMessage : msg
                 }
               />
             );
