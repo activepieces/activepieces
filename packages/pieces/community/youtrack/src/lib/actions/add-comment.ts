@@ -47,8 +47,8 @@ export const addCommentAction = createAction({
       headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + a.apiToken, 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
+    if (!r.ok) { const errText = await r.text().catch(() => String(r.status)); throw new Error('Failed to add comment: ' + errText); }
     const data = await r.json();
-    if (!r.ok) throw new Error('Failed to add comment: ' + JSON.stringify(data));
     return {
       id: data.id, text: data.text,
       author_name: (data.author as Record<string, unknown>)?.name ?? null,

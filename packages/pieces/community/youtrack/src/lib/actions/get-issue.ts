@@ -17,8 +17,8 @@ export const getIssueAction = createAction({
       method: HttpMethod.GET,
       headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + a.apiToken },
     });
+    if (!r.ok) { const errText = await r.text().catch(() => String(r.status)); throw new Error('Failed to get issue: ' + errText); }
     const data = await r.json();
-    if (!r.ok) throw new Error('Failed to get issue: ' + JSON.stringify(data));
     return flattenObject(data);
   },
   sampleData: {

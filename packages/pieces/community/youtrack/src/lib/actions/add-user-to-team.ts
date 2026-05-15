@@ -19,8 +19,8 @@ export const addUserToTeamAction = createAction({
       headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + a.apiToken, 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: context.propsValue.user }),
     });
+    if (!r.ok) { const errText = await r.text().catch(() => String(r.status)); throw new Error('Failed to add user to team: ' + errText); }
     const data = await r.json();
-    if (!r.ok) throw new Error('Failed to add user to team: ' + JSON.stringify(data));
     return flattenObject(data);
   },
   sampleData: { id: '1-7', login: 'Mad_Max', name: 'Mad Max' },

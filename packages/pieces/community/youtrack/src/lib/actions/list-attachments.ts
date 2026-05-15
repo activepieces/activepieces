@@ -22,8 +22,8 @@ export const listAttachmentsAction = createAction({
       method: HttpMethod.GET,
       headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + a.apiToken },
     });
+    if (!r.ok) { const errText = await r.text().catch(() => String(r.status)); throw new Error('Failed to list attachments: ' + errText); }
     const data = await r.json() as Array<Record<string, unknown>>;
-    if (!r.ok) throw new Error('Failed to list attachments: ' + JSON.stringify(data));
     return (data || []).map((att) => ({
       id: att.id,
       name: att.name,

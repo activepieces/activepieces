@@ -17,8 +17,8 @@ export const addTagToIssueAction = createAction({
       headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + a.apiToken, 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: context.propsValue.tag }),
     });
+    if (!r.ok) { const errText = await r.text().catch(() => String(r.status)); throw new Error('Failed: ' + errText); }
     const data = await r.json();
-    if (!r.ok) throw new Error('Failed: ' + JSON.stringify(data));
     return flattenObject(data);
   },
   sampleData: { id: '6-4', name: 'To deploy' },

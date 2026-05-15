@@ -31,8 +31,8 @@ export const updateIssueAction = createAction({
       headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + a.apiToken, 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
+    if (!r.ok) { const errText = await r.text().catch(() => String(r.status)); throw new Error('Failed: ' + errText); }
     const data = await r.json();
-    if (!r.ok) throw new Error('Failed: ' + JSON.stringify(data));
     return flattenObject(data);
   },
   sampleData: { idReadable: 'SP-42', summary: 'Fixed login page crash', project_name: 'Sample Project', updated: 1648110830229 },

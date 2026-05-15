@@ -46,8 +46,8 @@ export const createIssueAction = createAction({
       headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + a.apiToken, 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
+    if (!r.ok) { const errText = await r.text().catch(() => String(r.status)); throw new Error('Failed to create issue: ' + errText); }
     const data = await r.json();
-    if (!r.ok) throw new Error('Failed to create issue: ' + JSON.stringify(data));
     return flattenObject(data);
   },
   sampleData: {

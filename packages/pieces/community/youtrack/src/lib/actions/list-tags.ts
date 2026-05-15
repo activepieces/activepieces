@@ -21,8 +21,8 @@ export const listTagsAction = createAction({
       method: HttpMethod.GET,
       headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + a.apiToken },
     });
+    if (!r.ok) { const errText = await r.text().catch(() => String(r.status)); throw new Error('Failed: ' + errText); }
     const data = await r.json() as Array<Record<string, unknown>>;
-    if (!r.ok) throw new Error('Failed: ' + JSON.stringify(data));
     return (data || []).map((tag) => ({
       id: tag.id, name: tag.name,
       owner_name: (tag.owner as Record<string, unknown>)?.name ?? null,

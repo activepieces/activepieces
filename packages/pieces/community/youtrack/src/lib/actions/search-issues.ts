@@ -72,8 +72,8 @@ export const searchIssuesAction = createAction({
       method: HttpMethod.GET,
       headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + a.apiToken },
     });
+    if (!r.ok) { const errText = await r.text().catch(() => String(r.status)); throw new Error('Failed to search: ' + errText); }
     const data = await r.json() as Array<Record<string, unknown>>;
-    if (!r.ok) throw new Error('Failed to search: ' + JSON.stringify(data));
     return (data || []).map(flattenObject);
   },
   sampleData: [
