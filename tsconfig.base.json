@@ -1380,6 +1380,9 @@
       "@activepieces/piece-youtube": [
         "packages/pieces/community/youtube/src/index.ts"
       ],
+      "@activepieces/piece-youtrack": [
+        "packages/pieces/community/youtrack/src/index.ts"
+      ],
       "@activepieces/piece-zagomail": [
         "packages/pieces/community/zagomail/src/index.ts"
       ],
