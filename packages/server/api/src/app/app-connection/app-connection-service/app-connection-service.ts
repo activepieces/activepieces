@@ -547,10 +547,6 @@ const validateConnectionValue = async (
 ): Promise<AppConnectionValue> => {
     const { value, pieceName, pieceVersion, projectId, platformId } = params
 
-    if (isNil(pieceName)) {
-        return value
-    }
-
     switch (value.type) {
         case AppConnectionType.PLATFORM_OAUTH2: {
             assertNotNullOrUndefined(pieceName, 'pieceName')
@@ -638,12 +634,14 @@ const validateConnectionValue = async (
         case AppConnectionType.CUSTOM_AUTH:
         case AppConnectionType.BASIC_AUTH:
         case AppConnectionType.SECRET_TEXT:
-            await engineValidateAuth({
-                platformId,
-                pieceName,
-                projectId,
-                auth: value,
-            }, log)
+            if (!isNil(pieceName)) {
+                await engineValidateAuth({
+                    platformId,
+                    pieceName,
+                    projectId,
+                    auth: value,
+                }, log)
+            }
     }
 
     return value
