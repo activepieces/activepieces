@@ -99,7 +99,7 @@ function CredentialForm(props: CredentialFormProps) {
       }
       return appConnectionsApi.upsert({
         projectId,
-        externalId: existing?.externalId ?? values.displayName,
+        externalId: existing?.externalId ?? `cred_${values.displayName}`,
         displayName: values.displayName,
         type: AppConnectionType.SECRET_TEXT,
         value: {
@@ -136,7 +136,7 @@ function CredentialForm(props: CredentialFormProps) {
           </DialogTitle>
           <DialogDescription>
             {t('Encrypted at rest. Reference it via {ref}.', {
-              ref: "{{connections['NAME']}}",
+              ref: "{{connections['cred_NAME']}}",
             })}
           </DialogDescription>
         </DialogHeader>
