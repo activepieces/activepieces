@@ -9,13 +9,13 @@ const polling: Polling<{ baseUrl: string; apiToken: string }, Record<string, nev
   items: async ({ auth, lastFetchEpochMS }) => {
     const url = auth.baseUrl.replace(/\/+$/, '') + '/api/issues?fields=' +
       encodeURIComponent(ISSUE_FIELDS) +
-      '&query=' + encodeURIComponent('updated: {after ' + lastFetchEpochMS + '}') +
+      '&query=' + encodeURIComponent('updated: {after ' + lastFetchEpochMS + '} AND created: {before ' + lastFetchEpochMS + '}') +
       '&$top=50';
     const r = await fetch(url, {
       headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + auth.apiToken },
     });
+    if (!r.ok) { const errText = await r.text().catch(() => String(r.status)); throw new Error('Failed to fetch updated issues: ' + errText); }
     const data = await r.json() as Array<Record<string, unknown>>;
-    if (!r.ok) throw new Error('Failed to fetch updated issues: ' + JSON.stringify(data));
     return (data || []).map((issue) => ({
       epochMilliSeconds: (issue.updated as number) || (issue.created as number) || 0,
       data: flattenObject(issue),

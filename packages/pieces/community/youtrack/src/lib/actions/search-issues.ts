@@ -28,7 +28,7 @@ export const searchIssuesAction = createAction({
             disabled: false,
             options: [
               { label: '[All projects]', value: '' },
-              ...projects.map((p) => ({ label: p.name + ' (' + p.shortName + ')', value: p.id })),
+              ...projects.map((p) => ({ label: p.name + ' (' + p.shortName + ')', value: p.shortName })),
             ],
           };
         } catch {
@@ -59,7 +59,7 @@ export const searchIssuesAction = createAction({
 
     const parts: string[] = [];
     if (context.propsValue.project) {
-      parts.push('project: {' + context.propsValue.project + '}');
+      parts.push('project: ' + context.propsValue.project);
     }
     if (context.propsValue.query) {
       parts.push(context.propsValue.query);

@@ -40,7 +40,7 @@ export const uploadAttachmentAction = createAction({
 
       parts.push(Buffer.from(
         '--' + boundary + '\r\n' +
-        'Content-Disposition: form-data; name="upload"; filename="' + file.fileName + '"\r\n' +
+        'Content-Disposition: form-data; name="upload"; filename="' + file.fileName.replace(/"/g, '\\"').replace(/\r/g, '').replace(/\n/g, '') + '"\r\n' +
         'Content-Type: application/octet-stream\r\n\r\n',
         'utf-8',
       ));

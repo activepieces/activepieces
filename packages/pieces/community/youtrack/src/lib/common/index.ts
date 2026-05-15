@@ -124,8 +124,27 @@ export const issueDropdown = Property.Dropdown({
   refreshers: ['project'],
   options: async ({ auth, project }) => {
     if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
-    if (!project) return { disabled: true, options: [], placeholder: 'Please select a project first' };
     const a = auth as unknown as { baseUrl: string; apiToken: string };
+    if (!project) {
+      try {
+        const r = await youtrackApiCall<Array<{ id: string; idReadable: string; summary: string }>>({
+          baseUrl: a.baseUrl, token: a.apiToken, method: HttpMethod.GET, path: '/issues',
+          queryParams: { fields: 'id,idReadable,summary', '$top': '50' },
+        });
+        if (!r.body || r.body.length === 0) {
+          return { disabled: false, options: [], placeholder: 'No issues found.' };
+        }
+        return {
+          disabled: false,
+          options: r.body.map((i) => ({
+            label: i.idReadable + ': ' + i.summary,
+            value: i.id,
+          })),
+        };
+      } catch {
+        return { disabled: true, options: [], placeholder: 'Failed to load issues. Check your connection.' };
+      }
+    }
     try {
       const r = await youtrackApiCall<Array<{ id: string; idReadable: string; summary: string }>>({
         baseUrl: a.baseUrl, token: a.apiToken, method: HttpMethod.GET, path: '/issues',

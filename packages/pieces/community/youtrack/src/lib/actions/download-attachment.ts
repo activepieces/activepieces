@@ -19,20 +19,33 @@ export const downloadAttachmentAction = createAction({
   },
   async run(context) {
     const a = context.auth as unknown as { baseUrl: string; apiToken: string };
-    const url = a.baseUrl.replace(/\/+$/, '') + '/api/issues/' + context.propsValue.issue +
-      '/attachments/' + context.propsValue.attachmentId;
-    const r = await fetch(url, {
+    const base = a.baseUrl.replace(/\/+$/, '');
+
+    // Step 1: get attachment metadata to find the actual download URL
+    const metaUrl = base + '/api/issues/' + context.propsValue.issue +
+      '/attachments/' + context.propsValue.attachmentId + '?fields=id,name,url,size,contentType';
+    const metaR = await fetch(metaUrl, {
+      method: HttpMethod.GET,
+      headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + a.apiToken },
+    });
+    if (!metaR.ok) { const e = await metaR.json().catch(() => ({})); throw new Error('Failed to get attachment metadata: ' + JSON.stringify(e)); }
+    const meta = await metaR.json() as { url?: string; name?: string; size?: number; contentType?: string };
+
+    // Step 2: download the actual file binary via the signed URL
+    const downloadUrl = meta.url || (base + '/api/issues/' + context.propsValue.issue + '/attachments/' + context.propsValue.attachmentId + '/file');
+    const r = await fetch(downloadUrl, {
       method: HttpMethod.GET,
       headers: { 'Authorization': 'Bearer ' + a.apiToken },
     });
-    if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error('Failed to download attachment: ' + JSON.stringify(e)); }
+    if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error('Failed to download attachment file: ' + JSON.stringify(e)); }
 
     const buffer = await r.arrayBuffer();
     const base64 = Buffer.from(buffer).toString('base64');
-    const contentType = r.headers.get('content-type') || 'application/octet-stream';
+    const contentType = meta.contentType || r.headers.get('content-type') || 'application/octet-stream';
 
     return {
       attachment_id: context.propsValue.attachmentId,
+      file_name: meta.name,
       content_type: contentType,
       base64_content: base64,
       size_bytes: buffer.byteLength,
