@@ -40,7 +40,7 @@ export const apSetProjectContextTool = ({ platformId, userId, log }: {
                     }],
                 }
             }
-            mcpProjectSelection.set({ platformId, userId, projectId })
+            await mcpProjectSelection.set({ scope: { platformId, userId }, projectId })
             const projectList = projects.map(p => {
                 const marker = p.id === projectId ? '>' : ' '
                 return `${marker} ${p.displayName} (${p.id})`
@@ -53,7 +53,7 @@ export const apSetProjectContextTool = ({ platformId, userId, log }: {
             }
         }
 
-        mcpProjectSelection.clear({ platformId, userId })
+        await mcpProjectSelection.clear({ platformId, userId })
         const projectList = projects.map(p => `- ${p.displayName} (${p.id})`).join('\n')
         return {
             content: [{

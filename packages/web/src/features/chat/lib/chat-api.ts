@@ -3,7 +3,6 @@ import {
   ChatConversation,
   CreateChatConversationRequest,
   SeekPage,
-  SetProjectContextRequest,
   UpdateChatConversationRequest,
 } from '@activepieces/shared';
 
@@ -51,16 +50,6 @@ async function deleteConversation(id: string): Promise<void> {
   return api.delete<void>(`/v1/chat/conversations/${id}`);
 }
 
-async function setProjectContext(
-  conversationId: string,
-  request: SetProjectContextRequest,
-): Promise<ChatConversation> {
-  return api.post<ChatConversation>(
-    `/v1/chat/conversations/${conversationId}/project-context`,
-    request,
-  );
-}
-
 export const chatApi = {
   createConversation,
   listConversations,
@@ -68,5 +57,4 @@ export const chatApi = {
   getMessages,
   updateConversation,
   deleteConversation,
-  setProjectContext,
 };

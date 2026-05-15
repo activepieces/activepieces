@@ -1,8 +1,8 @@
-import { isObject } from '@activepieces/shared';
+import { ChatHistoryMessage, isObject } from '@activepieces/shared';
 
 import { formatUtils } from '@/lib/format-utils';
 
-import { DynamicToolPart } from './chat-types';
+import { AnyToolPart, ChatUIMessage, chatPartUtils } from './chat-types';
 
 function stripPiecePrefix(name: string): string {
   return name.replace(/^@activepieces\/piece-/, '');
@@ -14,25 +14,14 @@ function humanizePieceName(raw: string): string {
   );
 }
 
-const BUILD_TOOL_NAMES = new Set([
-  'ap_create_flow',
-  'ap_build_flow',
-  'ap_build_automation',
-  'ap_update_trigger',
-  'ap_add_step',
-  'ap_update_step',
-  'ap_validate_step_config',
-  'ap_validate_flow',
-]);
-
 function formatToolName({
   part,
   includeContext = true,
 }: {
-  part: DynamicToolPart;
+  part: AnyToolPart;
   includeContext?: boolean;
 }): string {
-  const raw = part.title ?? part.toolName;
+  const raw = chatPartUtils.getToolPartName(part);
   const mcpMatch = /^mcp__[^_]+__(.+)$/.exec(raw);
   const name = mcpMatch ? mcpMatch[1] : raw;
   const baseName = formatUtils.convertEnumToHumanReadable(
@@ -85,13 +74,57 @@ function extractToolContext({
   return parts.length > 0 ? parts.join(' ') : null;
 }
 
+function mapHistoryToUIMessages(data: ChatHistoryMessage[]): ChatUIMessage[] {
+  return data.map((msg, idx) => {
+    const parts: ChatUIMessage['parts'] = [];
+    if (msg.thoughts) {
+      parts.push({ type: 'reasoning', text: msg.thoughts });
+    }
+    if (msg.content) {
+      parts.push({ type: 'text', text: msg.content });
+    }
+    if (msg.toolCalls) {
+      for (const tc of msg.toolCalls) {
+        if (tc.status === 'completed') {
+          parts.push({
+            type: 'dynamic-tool',
+            toolCallId: tc.toolCallId,
+            toolName: tc.title,
+            title: tc.title,
+            state: 'output-available',
+            input: tc.input ?? {},
+            output: tc.output,
+          });
+        } else {
+          parts.push({
+            type: 'dynamic-tool',
+            toolCallId: tc.toolCallId,
+            toolName: tc.title,
+            title: tc.title,
+            state: 'output-error',
+            input: tc.input ?? {},
+            errorText:
+              typeof tc.output === 'string' ? tc.output : 'Tool call failed',
+          });
+        }
+      }
+    }
+
+    return {
+      id: `hist-${idx}`,
+      role: msg.role,
+      parts,
+    };
+  });
+}
+
 export const chatUtils = {
-  formatToolLabel: ({ part }: { part: DynamicToolPart }) =>
+  formatToolLabel: ({ part }: { part: AnyToolPart }) =>
     formatToolName({ part }),
-  formatToolActionName: ({ part }: { part: DynamicToolPart }) =>
+  formatToolActionName: ({ part }: { part: AnyToolPart }) =>
     formatToolName({ part, includeContext: false }),
   extractToolContext,
   stripPiecePrefix,
   humanizePieceName,
-  BUILD_TOOL_NAMES,
+  mapHistoryToUIMessages,
 };
