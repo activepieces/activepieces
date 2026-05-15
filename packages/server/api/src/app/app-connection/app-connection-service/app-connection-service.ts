@@ -31,6 +31,7 @@ import {
     PlatformId,
     PlatformRole,
     ProjectId,
+    resolveAppConnectionKind,
     SeekPage,
     spreadIfDefined,
     unique,
@@ -407,20 +408,9 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         const usingSecretManager = containsSecretManagerReference(value)
         const pieceName = 'pieceName' in appConnection ? appConnection.pieceName : null
         const pieceVersion = 'pieceVersion' in appConnection ? appConnection.pieceVersion : null
-        if (isNil(pieceName)) {
-            return {
-                ...rest,
-                kind: AppConnectionKind.CREDENTIAL,
-                type: AppConnectionType.SECRET_TEXT,
-                usingSecretManager,
-            }
-        }
-        assertNotNullOrUndefined(pieceVersion, `pieceVersion missing for piece connection ${appConnection.id}`)
         return {
             ...rest,
-            kind: AppConnectionKind.CONNECTION,
-            pieceName,
-            pieceVersion,
+            ...resolveAppConnectionKind({ id: appConnection.id, type: appConnection.type, pieceName, pieceVersion }),
             usingSecretManager,
         }
     },
@@ -557,6 +547,10 @@ const validateConnectionValue = async (
 ): Promise<AppConnectionValue> => {
     const { value, pieceName, pieceVersion, projectId, platformId } = params
 
+    if (isNil(pieceName)) {
+        return value
+    }
+
     switch (value.type) {
         case AppConnectionType.PLATFORM_OAUTH2: {
             assertNotNullOrUndefined(pieceName, 'pieceName')
@@ -644,14 +638,12 @@ const validateConnectionValue = async (
         case AppConnectionType.CUSTOM_AUTH:
         case AppConnectionType.BASIC_AUTH:
         case AppConnectionType.SECRET_TEXT:
-            if (!isNil(pieceName)) {
-                await engineValidateAuth({
-                    platformId,
-                    pieceName,
-                    projectId,
-                    auth: value,
-                }, log)
-            }
+            await engineValidateAuth({
+                platformId,
+                pieceName,
+                projectId,
+                auth: value,
+            }, log)
     }
 
     return value
