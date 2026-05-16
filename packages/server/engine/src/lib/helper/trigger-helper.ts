@@ -180,8 +180,6 @@ export const triggerHelper = {
                     files: createFileUploader({
                         apiUrl: constants.internalApiUrl,
                         engineToken: params.engineToken!,
-                        stepName: triggerName,
-                        flowId: params.flowVersion.flowId,
                     }),
                 }))
 
@@ -224,8 +222,6 @@ export const triggerHelper = {
                         files: createFileUploader({
                             apiUrl: constants.internalApiUrl,
                             engineToken: params.engineToken!,
-                            flowId: params.flowVersion.flowId,
-                            stepName: triggerName,
                         }),
                     })
                     return {

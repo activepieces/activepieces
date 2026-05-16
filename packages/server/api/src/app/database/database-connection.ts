@@ -13,6 +13,7 @@ import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entit
 import { AppSumoEntity } from '../ee/appsumo/appsumo.entity'
 import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
 import { OtpEntity } from '../ee/authentication/otp/otp-entity'
+import { ChatConversationEntity } from '../ee/chat/chat-conversation-entity'
 import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
 import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
@@ -100,6 +101,7 @@ function getEntities(): EntitySchema<unknown>[] {
         McpOAuthTokenEntity,
         KnowledgeBaseFileEntity,
         KnowledgeBaseChunkEntity,
+        ChatConversationEntity,
         TriggerSourceEntity,
         UserBadgeEntity,
         WaitpointEntity,

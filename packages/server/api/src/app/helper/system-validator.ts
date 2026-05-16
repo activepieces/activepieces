@@ -167,8 +167,6 @@ const systemPropValidators: {
     [AppSystemProp.MAX_RECORDS_PER_TABLE]: numberValidator,
     [AppSystemProp.MAX_FIELDS_PER_TABLE]: numberValidator,
 
-    // MCP
-    [AppSystemProp.MCP_OAUTH_ISSUER_URL]: urlValidator,
     [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: booleanValidator,
     [AppSystemProp.ISSUE_ARCHIVE_DAYS]: (value: string) => {
         const days = parseInt(value)
@@ -184,6 +182,7 @@ const systemPropValidators: {
 
     // Canary
     [AppSystemProp.CANARY_APP_URL]: urlValidator,
+    [AppSystemProp.IS_CANARY_APP]: booleanValidator,
     // SSRF protection
     [AppSystemProp.SSRF_ALLOW_LIST]: stringValidator,
     [AppSystemProp.NETWORK_MODE]: enumValidator(Object.values(NetworkMode)),

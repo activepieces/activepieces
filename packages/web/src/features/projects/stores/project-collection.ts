@@ -220,7 +220,9 @@ export const projectCollectionUtils = {
   },
 };
 
-export const getProjectName = (project: ProjectWithLimits): string => {
+export const getProjectName = (
+  project: Pick<ProjectWithLimits, 'type' | 'displayName'>,
+): string => {
   return project.type === ProjectType.PERSONAL
     ? 'Personal Project'
     : project.displayName;

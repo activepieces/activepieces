@@ -1,6 +1,6 @@
 ---
 title: "Event Streaming"
-description: "Configure webhook destinations to receive real-time platform events"
+description: "Forward audit events to a webhook and build fully customizable alerts on top"
 icon: "webhook"
 ---
 
@@ -8,66 +8,58 @@ icon: "webhook"
 
 ## Overview
 
-Event Streaming allows you to configure webhook destinations that receive real-time notifications when specific events occur in your Activepieces platform. This enables you to integrate Activepieces with external systems, monitoring tools, analytics platforms, or custom applications.
+Event Streaming forwards platform [audit events](/admin-guide/security/audit-logs/overview) to a webhook URL of your choice. The most common pattern is to point that webhook at a flow inside Activepieces — your flow then routes each event to the channel you care about (Slack, Gmail, Microsoft Teams, custom HTTP, etc.).
 
-## Use Cases
+Use it to react to flow run failures, new sign-ins, project releases, or any other audit event with the alerting tool of your choice.
 
-- **Monitoring & Analytics**: Track flow executions, user activity, and system changes in real-time
-- **Integration**: Sync events with external systems like SIEM tools, data warehouses, or custom dashboards
-- **Compliance**: Maintain audit trails in external systems for compliance requirements
-- **Automation**: Trigger downstream processes based on platform events
+## Quick start
 
-## Available Events
+The fastest way to get going is the **Generate handler flow** button in the New destination dialog. It builds a webhook-triggered flow with one router branch per event you select, plus a nested branch for failed runs when you pick `flow.run.finished`.
 
-You can configure destinations to receive the following event types:
+1. Open **Platform Admin → Event Streaming**.
+2. Click **New Destination**, pick the events you want to handle, and click **Generate handler flow**.
+3. The flow lands in your personal project with a webhook trigger and a router branch per selected event. Sample data is pre-baked so you can hit Test right away.
+4. Customize the branches with whatever pieces you like — Slack, Gmail, Microsoft Teams, custom HTTP, and so on.
+5. Publish the flow, then go back to the New destination dialog and click **Create** to save the destination.
+6. Use the **Test webhook** dropdown in the dialog to fire a sample of any selected event and confirm the round-trip.
 
-### Flow Events
-- **Flow Created**: When a new flow is created
-- **Flow Updated**: When a flow is modified
-- **Flow Deleted**: When a flow is removed
-- **Flow Run Started**: When a flow execution begins
-- **Flow Run Finished**: When a flow execution completes
-- **Flow Run Resumed**: When a paused flow execution resumes
+## Available events
 
-### Folder Events
-- **Folder Created**: When a new folder is created
-- **Folder Updated**: When a folder is modified
-- **Folder Deleted**: When a folder is removed
+You can subscribe a destination to any audit event — flow lifecycle, run status, folder/connection changes, user activity, and platform admin actions. See the [Audit Log Events catalog](/admin-guide/security/audit-logs/overview#event-catalog) for the full list and per-event payload details.
 
-### Connection Events
-- **Connection Upserted**: When a connection is created or updated
-- **Connection Deleted**: When a connection is removed
+## Use your own webhook URL
 
-### User Events
-- **User Signed Up**: When a new user registers
-- **User Signed In**: When a user logs in
-- **User Password Reset**: When a password reset is requested
-- **User Email Verified**: When a user verifies their email
+If you already have a webhook URL — or you want to point Event Streaming at a SIEM, data warehouse, or any other external system — you can skip the handler flow and configure the destination by hand:
 
-### Security Events
-- **Signing Key Created**: When a new signing key is generated
-- **Project Role Created**: When a project role is created
-- **Project Role Updated**: When a project role is modified
-- **Project Role Deleted**: When a project role is removed
-- **Project Release Created**: When a project release is created
+1. Go to **Platform Admin → Event Streaming**.
+2. Click **New Destination**.
+3. Select the **Events** you want to forward.
+4. Paste your **Webhook URL** (must be a valid HTTPS endpoint).
+5. Use the **Test webhook** dropdown to fire a sample payload for any selected event.
+6. Click **Create** to save.
 
-## How to Configure
+## Payload shape
 
-1. Go to **Platform Admin → Infrastructure → Event Destinations**
-2. Click **Create Destination**
-3. Enter your **Webhook URL** (must be a valid HTTPS endpoint)
-4. Select the **Events** you want to receive
-5. Click **Test Destination** to verify the connection (optional)
-6. Click **Create Destination** to save
+Every event is delivered as an HTTP POST with a JSON body. The top-level fields are:
+
+- `action` — the event name (for example `flow.run.finished`).
+- `data` — event-specific payload, including details like the flow id, run id, status, or affected user.
+- `id`, `created`, `updated` — event identifiers and timestamps.
+- `platformId`, `projectId`, `userId` — context fields shared across all events.
 
 ## Requirements
 
-- **Enterprise Edition**: Event Streaming requires an enterprise plan with Audit Logs enabled
-- **HTTPS Endpoint**: Webhook URLs must use HTTPS
-- **Publicly Accessible**: Your endpoint must be accessible from the internet
+- **Enterprise Edition**: Event Streaming requires an enterprise plan with Audit Logs enabled.
+- **Platform admin**: only platform admins can configure destinations.
+- **HTTPS endpoint**: webhook URLs must use HTTPS.
+- **Publicly accessible**: your endpoint must be reachable from the internet.
 
 ## Troubleshooting
 
-- **Events Not Received**: Verify your endpoint is publicly accessible and returns 2xx status codes
-- **Test Fails**: Check that your URL is valid and uses HTTPS
-- **Missing Events**: Ensure the event type is selected in your destination configuration
+- **Events not received**: verify your endpoint is publicly accessible and returns 2xx status codes.
+- **Test fails**: check that your URL is valid and uses HTTPS.
+- **Missing events**: make sure the event type is selected in your destination configuration.
+
+## See also
+
+- [Audit Logs](/admin-guide/security/audit-logs/overview) — view every event recorded on your platform

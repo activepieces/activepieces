@@ -33,6 +33,38 @@ interface FreshserviceTicket {
 }
 
 export const freshserviceCommon = {
+  change: (required = true) =>
+    Property.Dropdown({
+      auth: freshserviceAuth,
+      displayName: 'Change',
+      required,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Connect your account first',
+            options: [],
+          };
+        }
+        const response = await freshserviceApiCall<{
+          changes: FreshserviceChange[];
+        }>({
+          method: HttpMethod.GET,
+          endpoint: 'changes',
+          auth,
+          queryParams: { per_page: '100', order_by: 'created_at', order_type: 'desc' },
+        });
+        return {
+          disabled: false,
+          options: response.body.changes.map((change) => ({
+            label: `#${change.id} — ${change.subject}`,
+            value: change.id,
+          })),
+        };
+      },
+    }),
+
   ticket: (required = true) =>
     Property.Dropdown({
       auth: freshserviceAuth,
@@ -261,4 +293,89 @@ export const freshserviceCommon = {
       ],
     },
   }),
+
+  changeStatus: Property.StaticDropdown({
+    displayName: 'Status',
+    required: false,
+    options: {
+      options: [
+        { label: 'Open', value: 1 },
+        { label: 'Planning', value: 2 },
+        { label: 'Approval', value: 3 },
+        { label: 'Pending Release', value: 4 },
+        { label: 'Pending Review', value: 5 },
+        { label: 'Closed', value: 6 },
+      ],
+    },
+  }),
+
+  changeRisk: Property.StaticDropdown({
+    displayName: 'Risk',
+    required: false,
+    options: {
+      options: [
+        { label: 'Low', value: 1 },
+        { label: 'Medium', value: 2 },
+        { label: 'High', value: 3 },
+        { label: 'Very High', value: 4 },
+      ],
+    },
+  }),
+
+  changeType: Property.StaticDropdown({
+    displayName: 'Change Type',
+    required: false,
+    options: {
+      options: [
+        { label: 'Minor', value: 1 },
+        { label: 'Standard', value: 2 },
+        { label: 'Major', value: 3 },
+        { label: 'Emergency', value: 4 },
+      ],
+    },
+  }),
+
+  taskStatus: Property.StaticDropdown({
+    displayName: 'Task Status',
+    required: false,
+    options: {
+      options: [
+        { label: 'Open', value: 1 },
+        { label: 'In Progress', value: 2 },
+        { label: 'Completed', value: 3 },
+      ],
+    },
+  }),
 };
+
+export interface FreshserviceChange {
+  id: number;
+  subject: string;
+  description: string;
+  status: number;
+  priority: number;
+  impact: number;
+  risk: number;
+  change_type: number;
+  requester_id: number;
+  agent_id: number | null;
+  department_id: number | null;
+  group_id: number | null;
+  planned_start_date: string | null;
+  planned_end_date: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FreshserviceChangeTask {
+  id: number;
+  title: string;
+  description: string;
+  status: number;
+  agent_id: number | null;
+  group_id: number | null;
+  due_date: string | null;
+  notify_before: number;
+  created_at: string;
+  updated_at: string;
+}

@@ -1,6 +1,6 @@
 import { UserIdentity } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import { BaseColumnSchemaPart } from '../../database/database-common'
+import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
 export const UserIdentityEntity = new EntitySchema<UserIdentity>({
     name: 'user_identity',
@@ -45,6 +45,10 @@ export const UserIdentityEntity = new EntitySchema<UserIdentity>({
         },
         imageUrl: {
             type: String,
+            nullable: true,
+        },
+        lastLoggedInPlatformId: {
+            ...ApIdSchema,
             nullable: true,
         },
     },

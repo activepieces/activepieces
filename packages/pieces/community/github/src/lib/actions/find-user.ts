@@ -21,7 +21,7 @@ export const githubFindUserAction = createAction({
 
     try {
       const response = await githubApiCall({
-        accessToken: auth.access_token,
+        auth,
         method: HttpMethod.GET,
         resourceUri: `/users/${username}`,
       });

@@ -74,6 +74,9 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: Boolean,
             default: false,
         },
+        chatEnabled: {
+            type: Boolean,
+        },
         managePiecesEnabled: {
             type: Boolean,
         },

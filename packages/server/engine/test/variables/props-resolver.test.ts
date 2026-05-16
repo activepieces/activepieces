@@ -13,8 +13,8 @@ const propsResolverService = createPropsResolver({
     stepNames: ['trigger', 'step_1', 'step_2', 'step_3', 'step_4', 'step_5', 'step_6', 'step_7', 'step_8'],
 })
 
-const executionState = FlowExecutorContext.empty()
-    .upsertStep(
+const buildExecutionState = async (): Promise<FlowExecutorContext> => {
+    let state = await FlowExecutorContext.empty().upsertStep(
         'trigger',
         GenericStepOutput.create({
             type: FlowTriggerType.PIECE,
@@ -39,7 +39,7 @@ const executionState = FlowExecutorContext.empty()
             },
         }),
     )
-    .upsertStep('step_1',
+    state = await state.upsertStep('step_1',
         GenericStepOutput.create({
 
             type: FlowActionType.PIECE,
@@ -49,12 +49,18 @@ const executionState = FlowExecutorContext.empty()
                 success: true,
             },
         }))
-    .upsertStep('step_2', GenericStepOutput.create({
+    state = await state.upsertStep('step_2', GenericStepOutput.create({
         type: FlowActionType.PIECE,
         status: StepOutputStatus.SUCCEEDED,
         input: {},
         output: 'memory://{"fileName":"hello.png","data":"iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z"}',
     }))
+    return state
+}
+let executionState: FlowExecutorContext
+beforeAll(async () => {
+    executionState = await buildExecutionState()
+})
 
 
 
@@ -63,7 +69,7 @@ describe('Props resolver', () => {
 
     test('Test resolve inside nested loops', async () => {
 
-        const modifiedExecutionState = executionState.upsertStep('step_3', GenericStepOutput.create({
+        const upserted = await executionState.upsertStep('step_3', GenericStepOutput.create({
             type: FlowActionType.LOOP_ON_ITEMS,
             status: StepOutputStatus.SUCCEEDED,
             input: {},
@@ -109,7 +115,8 @@ describe('Props resolver', () => {
                 item: 1,
                 index: 0,
             },
-        })).setCurrentPath(StepExecutionPath.empty()
+        }))
+        const modifiedExecutionState = upserted.setCurrentPath(StepExecutionPath.empty()
             .loopIteration({
                 loopName: 'step_3',
                 iteration: 0,
