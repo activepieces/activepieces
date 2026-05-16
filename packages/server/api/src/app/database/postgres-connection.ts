@@ -375,6 +375,7 @@ import { MakeMcpOAuthProjectIdNullable1789000000000 } from './migration/postgres
 import { RemoveMcpServerStatus1790000000000 } from './migration/postgres/1790000000000-RemoveMcpServerStatus'
 import { RenameEnabledToolsToDisabledTools1791000000000 } from './migration/postgres/1791000000000-RenameEnabledToolsToDisabledTools'
 import { AddTriggerSourceFlowVersionIdIndex1792000000000 } from './migration/postgres/1792000000000-AddTriggerSourceFlowVersionIdIndex'
+import { AddDataManipulationEnabledToPlatformPlan1793000000000 } from './migration/postgres/1793000000000-AddDataManipulationEnabledToPlatformPlan'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -765,6 +766,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         RemoveMcpServerStatus1790000000000,
         RenameEnabledToolsToDisabledTools1791000000000,
         AddTriggerSourceFlowVersionIdIndex1792000000000,
+        AddDataManipulationEnabledToPlatformPlan1793000000000,
     ]
     return migrations
 }

@@ -11,11 +11,11 @@ import { JSONContent } from '@tiptap/react';
 
 import { StepMetadata } from '@/features/pieces';
 
-import { FUNCTION_SEP_NODE_TYPE } from './extensions/function-sep-node';
 import {
   FUNCTION_END_NODE_TYPE,
+  FUNCTION_SEP_NODE_TYPE,
   FUNCTION_START_NODE_TYPE,
-} from './extensions/function-start-node';
+} from './extensions/bracket-nodes';
 
 const removeQuotes = (text: string) => {
   if (
@@ -60,14 +60,14 @@ type StepMetadataWithDisplayName = StepMetadata & { stepDisplayName: string };
 const ZWS = '\u200B';
 
 type ExprToken =
-  | { kind: 'fn_open'; name: string }
+  | { kind: 'fn_open'; name: string; known: boolean }
   | { kind: 'fn_close' }
   | { kind: 'fn_sep' }
   | { kind: 'variable'; value: string }
   | { kind: 'newline' }
   | { kind: 'text'; value: string };
 
-function tokenizeExpression(expr: string): ExprToken[] {
+function tokenizeExpression(expr: string, allowBroken: boolean): ExprToken[] {
   const tokens: ExprToken[] = [];
   const fnNames = new Set(AP_FUNCTIONS.map((f) => f.name));
   let i = 0;
@@ -90,8 +90,12 @@ function tokenizeExpression(expr: string): ExprToken[] {
     }
 
     const fnMatch = expr.slice(i).match(/^([a-z_][a-z0-9_]*)\(/i);
-    if (fnMatch && fnNames.has(fnMatch[1])) {
-      tokens.push({ kind: 'fn_open', name: fnMatch[1] });
+    if (fnMatch && (fnNames.has(fnMatch[1]) || allowBroken)) {
+      tokens.push({
+        kind: 'fn_open',
+        name: fnMatch[1],
+        known: fnNames.has(fnMatch[1]),
+      });
       fnDepth++;
       i += fnMatch[1].length + 1;
       continue;
@@ -134,7 +138,7 @@ function tokenizeExpression(expr: string): ExprToken[] {
       if (ch === ')') break;
       if (ch === ';' && fnDepth > 0) break;
       const ahead = expr.slice(i).match(/^([a-z_][a-z0-9_]*)\(/i);
-      if (ahead && fnNames.has(ahead[1])) break;
+      if (ahead && (fnNames.has(ahead[1]) || allowBroken)) break;
       text += ch;
       i++;
     }
@@ -152,7 +156,14 @@ function convertTextToTipTapJsonContent(
   // Strip ap-formula-v1::{...} wrappers before tokenizing so the editor can
   // reconstruct function nodes from the inner expression. Saved values use the
   // wrapper; the editor's internal tree does not.
-  const tokens = tokenizeExpression(formulaEvaluator.unwrap(userInputText));
+  // `allowBroken` only kicks in when the saved value really did contain a
+  // formula wrapper — otherwise typing literal "foo()" in a plain text field
+  // would render as a broken-function badge.
+  const allowBroken = formulaEvaluator.containsWrapper(userInputText);
+  const tokens = tokenizeExpression(
+    formulaEvaluator.unwrap(userInputText),
+    allowBroken,
+  );
   const paragraphs: {
     type: TipTapNodeTypes.paragraph;
     content: JSONContent[];
@@ -167,7 +178,7 @@ function convertTextToTipTapJsonContent(
         fnStack.push(id);
         para.content.push({
           type: FUNCTION_START_NODE_TYPE,
-          attrs: { id, functionName: token.name },
+          attrs: { id, functionName: token.name, broken: !token.known },
         });
         // ZWS anchors the cursor visually between the start badge and arg content
         para.content.push({ type: TipTapNodeTypes.text, text: ZWS });

@@ -1,27 +1,27 @@
 import { evaluateRaw } from './function-implementations'
 import { AP_FUNCTIONS } from './function-registry'
 
-const FORMULA_PREFIX = 'ap-formula-v1::{'
-const FORMULA_SUFFIX = '}::ap-formula-v1'
+const CURRENT_FORMULA_VERSION = 1
+const FORMULA_PREFIX = `ap-formula-v${CURRENT_FORMULA_VERSION}::{`
+const FORMULA_SUFFIX = `}::ap-formula-v${CURRENT_FORMULA_VERSION}`
 // Mirrored close marker means tokenization is a plain regex split — no
 // brace-counting or string-literal tracking needed at the wrapper level.
 // `[\s\S]*?` matches any character including newlines, non-greedy so adjacent
-// formulas don't merge into one capture.
-const FORMULA_REGEX = new RegExp(
-    `${escapeRegex(FORMULA_PREFIX)}([\\s\\S]*?)${escapeRegex(FORMULA_SUFFIX)}`,
-    'g',
-)
+// formulas don't merge into one capture. The `v(\d+)` lets us route saved
+// flows from older format versions to the right evaluator after we ship v2,
+// without a data migration.
+const FORMULA_REGEX = /ap-formula-v(\d+)::\{([\s\S]*?)\}::ap-formula-v\1/g
 
 function wrap(expression: string): string {
     return `${FORMULA_PREFIX}${expression}${FORMULA_SUFFIX}`
 }
 
 function containsWrapper(input: string): boolean {
-    return input.includes(FORMULA_PREFIX)
+    return /ap-formula-v\d+::\{/.test(input)
 }
 
 function unwrap(template: string): string {
-    return template.replace(FORMULA_REGEX, (_, expr: string) => expr)
+    return template.replace(FORMULA_REGEX, (_, _version: string, expr: string) => expr)
 }
 
 function evaluate({ expression, sampleData }: EvaluateExpressionParams): EvaluateExpressionResult {
@@ -56,7 +56,7 @@ function tokenizeFormulaTemplate(template: string): Segment[] {
         if (start > lastIndex) {
             segments.push({ type: 'text', value: template.slice(lastIndex, start) })
         }
-        segments.push({ type: 'formula', value: match[1] })
+        segments.push({ type: 'formula', value: match[2], version: Number(match[1]) })
         lastIndex = start + match[0].length
     }
     if (lastIndex < template.length) {
@@ -447,10 +447,6 @@ function findMatchingSquareBracket(text: string, openPos: number): number {
     return -1
 }
 
-function escapeRegex(s: string): string {
-    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-}
-
 export const formulaEvaluator = {
     evaluate,
     wrap,
@@ -470,4 +466,6 @@ export type EvaluateExpressionResult = {
     error: string | null
 }
 
-type Segment = { type: 'text' | 'formula', value: string }
+type Segment =
+    | { type: 'text', value: string }
+    | { type: 'formula', value: string, version: number }

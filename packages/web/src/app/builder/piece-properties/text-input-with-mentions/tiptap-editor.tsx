@@ -24,6 +24,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { inputClass } from '@/components/ui/input';
 import { stepsHooks } from '@/features/pieces';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../../builder-hooks';
@@ -33,22 +34,20 @@ import {
   FunctionEditorTooltip,
 } from './components/function-hover-popover';
 import { FunctionSearchPopover } from './components/function-search-popover';
-import { FunctionEndNode } from './extensions/function-end-node';
 import {
+  FunctionStartNode,
+  FunctionEndNode,
   FunctionArgSeparatorNode,
+  FUNCTION_START_NODE_TYPE,
+  FUNCTION_END_NODE_TYPE,
   FUNCTION_SEP_NODE_TYPE,
-} from './extensions/function-sep-node';
+} from './extensions/bracket-nodes';
 import {
   FunctionSlashExtension,
   SlashCommandState,
   insertFunctionAtPos,
   setSlashCommandHandler,
 } from './extensions/function-slash-extension';
-import {
-  FunctionStartNode,
-  FUNCTION_START_NODE_TYPE,
-  FUNCTION_END_NODE_TYPE,
-} from './extensions/function-start-node';
 import { textMentionUtils } from './text-input-utils';
 
 type TiptapEditorProps = {
@@ -70,9 +69,11 @@ const INITIAL_SLASH_STATE: SlashCommandState = {
 function getExtensions({
   enableMarkdown,
   placeholder,
+  formulaEnabled,
 }: {
   placeholder?: string;
   enableMarkdown?: boolean;
+  formulaEnabled: boolean;
 }): Extensions {
   const baseExtensions = [
     Placeholder.configure({
@@ -87,10 +88,12 @@ function getExtensions({
         return textMentionUtils.generateMentionHtmlElement(mentionAttrs);
       },
     }),
+    // Structure nodes stay registered so saved formulas render as read-only
+    // badges even when the feature is disabled.
     FunctionStartNode,
     FunctionEndNode,
     FunctionArgSeparatorNode,
-    FunctionSlashExtension,
+    ...(formulaEnabled ? [FunctionSlashExtension] : []),
   ];
 
   if (enableMarkdown) {
@@ -118,6 +121,8 @@ export const TiptapEditor = ({
   placeholder,
   enableMarkdown,
 }: TiptapEditorProps) => {
+  const { platform } = platformHooks.useCurrentPlatform();
+  const formulaEnabled = platform.plan.dataManipulationEnabled;
   const steps = useBuilderStateContext((state) =>
     flowStructureUtil.getAllSteps(state.flowVersion.trigger),
   );
@@ -181,7 +186,7 @@ export const TiptapEditor = ({
 
   const editor = useEditor({
     editable: !disabled,
-    extensions: getExtensions({ placeholder, enableMarkdown }),
+    extensions: getExtensions({ placeholder, enableMarkdown, formulaEnabled }),
     content: {
       type: 'doc',
       content: textMentionUtils.convertTextToTipTapJsonContent(
@@ -400,7 +405,7 @@ export const TiptapEditor = ({
   }, [editor]);
 
   useEffect(() => {
-    if (!editor) return;
+    if (!editor || !formulaEnabled) return;
     setSlashCommandHandler({
       editor,
       handler: {
@@ -411,7 +416,7 @@ export const TiptapEditor = ({
     return () => {
       setSlashCommandHandler({ editor, handler: null });
     };
-  }, [editor]);
+  }, [editor, formulaEnabled]);
 
   const updatePreview = useCallback(
     (expression: string) => {
@@ -428,7 +433,7 @@ export const TiptapEditor = ({
 
   if (!editor) return null;
 
-  const showPreview = isFocused && hasFunctions;
+  const showPreview = formulaEnabled && isFocused && hasFunctions;
 
   return (
     <div className="relative w-full" ref={editorWrapperRef}>
@@ -489,9 +494,14 @@ export const TiptapEditor = ({
         </div>
       )}
 
-      <FunctionEditorTooltip editorRef={editorWrapperRef} activeFn={activeFn} />
+      {formulaEnabled && (
+        <FunctionEditorTooltip
+          editorRef={editorWrapperRef}
+          activeFn={activeFn}
+        />
+      )}
 
-      {slashState.open && (
+      {formulaEnabled && slashState.open && (
         <FunctionSearchPopover
           query={slashState.query}
           position={slashState.position}

@@ -3,6 +3,7 @@ import relativeTimeDayjs from 'dayjs/plugin/relativeTime'
 import timezoneDayjs from 'dayjs/plugin/timezone'
 import utcDayjs from 'dayjs/plugin/utc'
 import { Parser } from 'expr-eval'
+import { AP_FUNCTIONS } from './function-registry'
 
 dayjs.extend(relativeTimeDayjs)
 dayjs.extend(timezoneDayjs)
@@ -307,6 +308,24 @@ parser.functions.ap_or = (a: unknown, b: unknown) => Boolean(a) || Boolean(b)
 parser.functions.ap_not = (a: unknown) => !a
 parser.functions.coalesce = (...args: unknown[]) =>
     args.find((a) => a !== '' && a != null) ?? ''
+
+// After every impl is registered above, wrap any function whose registry entry
+// declares `argCompatibility.defaultArgs` so older saved flows that were saved
+// before a new arg was added keep working at runtime instead of throwing a
+// "wrong number of arguments" error.
+for (const fn of AP_FUNCTIONS) {
+    const defaults = fn.argCompatibility?.defaultArgs
+    if (!defaults || defaults.length === 0) continue
+    const impl = parser.functions[fn.name] as ((...args: unknown[]) => unknown) | undefined
+    if (!impl) continue
+    parser.functions[fn.name] = (...args: unknown[]) => {
+        const padded = [...args]
+        for (let i = padded.length; i < fn.minArgs; i++) {
+            padded.push(defaults[i - args.length] ?? defaults[defaults.length - 1])
+        }
+        return impl(...padded)
+    }
+}
 
 function toArray(value: unknown): unknown[] {
     if (Array.isArray(value)) return value

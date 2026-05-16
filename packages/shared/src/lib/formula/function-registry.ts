@@ -976,6 +976,15 @@ export const AP_FUNCTIONS: ApFunction[] = [
 export type ApFunctionBaseType = 'string' | 'number' | 'boolean' | 'date' | 'list'
 export type ApFunctionArgType = ApFunctionBaseType | ApFunctionBaseType[]
 
+export type ApFunctionDeprecation = {
+    replacement?: string
+    removeAfter: string
+}
+
+export type ApFunctionArgCompatibility = {
+    defaultArgs?: unknown[]
+}
+
 export type ApFunction = {
     name: string
     category: 'text' | 'number' | 'date' | 'list' | 'logic'
@@ -987,4 +996,6 @@ export type ApFunction = {
     maxArgs: number
     argTypes: ApFunctionArgType[]
     returnType: ApFunctionArgType
+    deprecated?: ApFunctionDeprecation
+    argCompatibility?: ApFunctionArgCompatibility
 }

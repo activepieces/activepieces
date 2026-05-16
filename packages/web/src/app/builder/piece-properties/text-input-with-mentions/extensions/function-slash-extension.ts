@@ -2,11 +2,11 @@ import { ApFunction } from '@activepieces/shared';
 import { Editor, Extension } from '@tiptap/core';
 import { JSONContent } from '@tiptap/react';
 
-import { FUNCTION_SEP_NODE_TYPE } from './function-sep-node';
 import {
   FUNCTION_END_NODE_TYPE,
+  FUNCTION_SEP_NODE_TYPE,
   FUNCTION_START_NODE_TYPE,
-} from './function-start-node';
+} from './bracket-nodes';
 
 export type SlashCommandState = {
   open: boolean;

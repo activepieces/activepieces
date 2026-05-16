@@ -45,6 +45,23 @@ span.ap-fn-badge.ap-fn-unclosed {
     text-underline-offset: 2px;
 }
 
+/* Unknown function name — referenced in a saved formula but not in the registry */
+span.ap-fn-badge.ap-fn-broken {
+    background-color: rgba(239, 68, 68, 0.15) !important;
+    border-color: #ef4444 !important;
+    color: #b91c1c !important;
+    text-decoration: line-through;
+}
+
+/* Deprecated function — still resolves at runtime, but should be replaced */
+span.ap-fn-badge.ap-fn-deprecated {
+    background-color: rgba(245, 158, 11, 0.15) !important;
+    border-color: #f59e0b !important;
+    color: #b45309 !important;
+    text-decoration: underline dashed #b45309;
+    text-underline-offset: 2px;
+}
+
 /* Formula Editor */
 .ap-variable-pill {
     display: inline-flex;
