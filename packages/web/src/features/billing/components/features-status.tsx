@@ -63,6 +63,9 @@ const LICENSE_PROPS_MAP = {
   aiProvidersEnabled: {
     label: 'AI Providers',
   },
+  chatEnabled: {
+    label: 'Chat',
+  },
 };
 
 export const FeatureStatus = ({
