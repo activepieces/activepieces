@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-const isTtsSupported = 'speechSynthesis' in window;
+const isTtsSupported =
+  typeof window !== 'undefined' && 'speechSynthesis' in window;
 
 function useTts() {
   const [isSpeaking, setIsSpeaking] = useState(false);
