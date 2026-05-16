@@ -163,7 +163,16 @@ async function lookupPieceComponent({ pieceName, componentName, componentType, p
         return { error: mcpToolError('Validation failed', new Error('pieceName is required')) }
     }
     // platformId is needed so private (CUSTOM) pieces on this platform are discoverable.
-    const resolvedPlatformId = platformId ?? (await projectService(log).getOneOrThrow(projectId)).platformId
+    let resolvedPlatformId: string
+    if (!isNil(platformId)) {
+        resolvedPlatformId = platformId
+    }
+    else if (!isNil(projectId)) {
+        resolvedPlatformId = (await projectService(log).getOneOrThrow(projectId)).platformId
+    }
+    else {
+        return { error: mcpToolError('Validation failed', new Error('Either platformId or projectId is required to look up a piece')) }
+    }
     const piece = await pieceMetadataService(log).get({ name: normalized, projectId, platformId: resolvedPlatformId })
     if (isNil(piece)) {
         return { error: { content: [{ type: 'text', text: `❌ Piece "${normalized}" not found. Use ap_research_pieces to get valid piece names.` }] } }
