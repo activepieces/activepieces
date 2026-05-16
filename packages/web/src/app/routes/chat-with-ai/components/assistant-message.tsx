@@ -1,6 +1,6 @@
 import { PlanStepUpdate } from '@activepieces/shared';
 import { t } from 'i18next';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Volume2, VolumeOff } from 'lucide-react';
 import { motion } from 'motion/react';
 import { memo, useMemo } from 'react';
 
@@ -17,6 +17,7 @@ import {
   ChatUIMessage,
   chatPartUtils,
 } from '@/features/chat/lib/chat-types';
+import { useTts } from '@/features/chat/lib/use-tts';
 import { cn } from '@/lib/utils';
 
 import {
@@ -37,6 +38,9 @@ import { ProjectPickerCard } from './project-picker-card';
 
 const PROSE_CLASSES =
   'max-w-none break-words text-sm [&_p]:mb-4 [&_p:last-child]:mb-0 [&_table]:mb-4 [&_h1]:text-[18px] [&_h2]:text-[18px] [&_h3]:text-[18px]';
+
+const ACTION_BUTTON_CLASS =
+  'flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground';
 
 export const AssistantMessage = memo(function AssistantMessage({
   message,
@@ -109,6 +113,7 @@ export const AssistantMessage = memo(function AssistantMessage({
     [isStreaming, message.parts],
   );
 
+  const { isSpeaking, isSupported: isTtsSupported, speak, stop } = useTts();
   const openThinkingDetails = useChatStoreContext((s) => s.openThinkingDetails);
 
   const hasPlanMarker = renderedParts.some((p) => p.kind === 'plan-marker');
@@ -192,11 +197,31 @@ export const AssistantMessage = memo(function AssistantMessage({
                 <MessageAction tooltip={t('Copy')}>
                   <CopyIconButton textToCopy={fullText} className="h-6 w-6" />
                 </MessageAction>
+                {isTtsSupported && (
+                  <MessageAction
+                    tooltip={isSpeaking ? t('Stop reading') : t('Read aloud')}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => (isSpeaking ? stop() : speak(fullText))}
+                      className={cn(
+                        ACTION_BUTTON_CLASS,
+                        isSpeaking && 'text-foreground',
+                      )}
+                    >
+                      {isSpeaking ? (
+                        <VolumeOff className="h-3.5 w-3.5" />
+                      ) : (
+                        <Volume2 className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                  </MessageAction>
+                )}
                 <MessageAction tooltip={t('Regenerate')}>
                   <button
                     type="button"
                     onClick={onRetry}
-                    className="p-1 rounded-md hover:bg-muted transition-colors"
+                    className={ACTION_BUTTON_CLASS}
                   >
                     <RefreshCw className="h-3.5 w-3.5" />
                   </button>
