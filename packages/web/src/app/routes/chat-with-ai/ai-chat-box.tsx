@@ -145,7 +145,7 @@ function ChatBoxContent({
               isStreaming={isStreaming}
               onSend={handleSend}
               onStop={cancelStream}
-              leftActions={
+              rightActions={
                 <ChatModelSelector
                   selectedModel={modelName}
                   onModelChange={setModelName}
