@@ -156,8 +156,8 @@ function useVoiceInput({
     };
 
     recognition.onend = () => {
-      playStopSound();
       if (!isCancellingRef.current) {
+        playStopSound();
         const finalText = accumulatedTranscriptRef.current.trim();
         if (finalText) {
           onTranscript(finalText);
