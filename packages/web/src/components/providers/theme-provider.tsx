@@ -5,6 +5,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { colorsUtils } from '@/lib/color-utils';
 
 type Theme = 'dark' | 'light' | 'system';
+type ResolvedTheme = 'dark' | 'light';
 
 type ThemeProviderProps = {
   children: React.ReactNode;
@@ -28,6 +29,14 @@ const initialState: ThemeProviderState = {
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
+const SYSTEM_DARK_QUERY = '(prefers-color-scheme: dark)';
+
+const getSystemTheme = (): ResolvedTheme =>
+  typeof window !== 'undefined' &&
+  window.matchMedia(SYSTEM_DARK_QUERY).matches
+    ? 'dark'
+    : 'light';
+
 const setFavicon = (url: string) => {
   document.querySelectorAll("link[rel*='icon']").forEach((el) => el.remove());
   const link = document.createElement('link');
@@ -45,8 +54,19 @@ export function ThemeProvider({
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
   );
+  const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(getSystemTheme);
   const [forceLightMode, setForceLightMode] = useState(false);
   const branding = flagsHooks.useWebsiteBranding();
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(SYSTEM_DARK_QUERY);
+    const handleChange = (event: MediaQueryListEvent) => {
+      setSystemTheme(event.matches ? 'dark' : 'light');
+    };
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
   useEffect(() => {
     if (!branding) {
       console.warn('Website brand is not defined');
@@ -54,10 +74,10 @@ export function ThemeProvider({
     }
     const root = window.document.documentElement;
 
-    const resolvedTheme = forceLightMode
+    const resolvedTheme: ResolvedTheme = forceLightMode
       ? 'light'
       : theme === 'system'
-      ? 'light'
+      ? systemTheme
       : theme;
     root.classList.remove('light', 'dark');
     document.title = branding.websiteName;
@@ -95,7 +115,7 @@ export function ThemeProvider({
     }
 
     root.classList.add(resolvedTheme);
-  }, [theme, branding, forceLightMode]);
+  }, [theme, branding, forceLightMode, systemTheme]);
 
   const value = {
     theme,
