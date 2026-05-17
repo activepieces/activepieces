@@ -970,10 +970,6 @@ export const AP_FUNCTIONS: ApFunction[] = [
         maxArgs: -1,
         argTypes: [['string', 'number', 'boolean']],
         returnType: ['string', 'number', 'boolean'],
-        deprecated: {
-            removeAfter: '10.3.3',
-            replacement: 'helllo',
-        },
     },
 ]
 
