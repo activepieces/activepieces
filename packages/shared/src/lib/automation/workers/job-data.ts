@@ -2,7 +2,7 @@
 import { z } from 'zod'
 import { isNil } from '../../core/common'
 import { ApplicationEvent } from '../../ee/audit-events'
-import { StreamStepProgress, TriggerHookType, TriggerPayload } from '../engine'
+import { ResumeReason, StreamStepProgress, TriggerHookType, TriggerPayload } from '../engine'
 import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
@@ -124,6 +124,9 @@ export const ExecuteFlowJobData = z.object({
     payload: JobPayload,
     executeTrigger: z.boolean().optional(),
     executionType: z.nativeEnum(ExecutionType),
+    // Only meaningful when executionType === RESUME. Optional for backward compat with
+    // jobs queued before this field existed; the worker defaults missing values to WAITPOINT.
+    resumeReason: z.nativeEnum(ResumeReason).optional(),
     streamStepProgress: z.nativeEnum(StreamStepProgress),
     stepNameToTest: z.string().optional(),
     sampleData: z.record(z.string(), z.unknown()).optional(),

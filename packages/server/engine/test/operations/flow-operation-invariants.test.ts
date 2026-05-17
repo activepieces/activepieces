@@ -5,6 +5,7 @@ import {
     FlowActionType,
     FlowTriggerType,
     FlowVersionState,
+    ResumeReason,
     StreamStepProgress,
     RunEnvironment,
     StepOutputStatus,
@@ -152,6 +153,7 @@ function makeResumeOperation(overrides?: Partial<ResumeExecuteFlowOperation>): R
         streamStepProgress: StreamStepProgress.NONE,
         stepNameToTest: null,
         resumePayload: { type: 'inline', value: { data: {} } },
+        resumeReason: ResumeReason.WAITPOINT,
         logsFileId: 'logs-file-1',
         ...overrides,
     }
@@ -281,11 +283,11 @@ describe('flow operation invariants', () => {
             expect(mockCreateWaitpoint).not.toHaveBeenCalled()
         })
 
-        it('drops FAILED steps on a retry resume (resumePayload absent — FlowRetryStrategy.FROM_FAILED_STEP)', async () => {
+        it('drops FAILED steps on a retry resume (resumeReason=RETRY — FlowRetryStrategy.FROM_FAILED_STEP)', async () => {
             // The retry-from-failed-step feature (flow-run-service.ts FlowRetryStrategy.FROM_FAILED_STEP)
-            // re-enqueues the run as executionType=RESUME with NO payload, expecting the engine to
-            // replay the failed step. Preserving FAILED on this path would silently turn retry into
-            // a no-op. The discriminator is `isNil(resumePayload)`.
+            // re-enqueues the run as executionType=RESUME with resumeReason=RETRY, expecting the
+            // engine to replay the failed step. Preserving FAILED on this path would silently turn
+            // retry into a no-op. The discriminator is the explicit `resumeReason` field.
             mockDownload.mockReset()
             mockCreateWaitpoint.mockReset()
             mockCreateWaitpoint.mockResolvedValue({
@@ -319,11 +321,12 @@ describe('flow operation invariants', () => {
                 ...makeResumeOperation(),
                 flowVersion: makeFlowVersionWithTwoApprovals(),
                 resumePayload: { type: 'inline', value: null },
+                resumeReason: ResumeReason.RETRY,
             }
 
             await flowOperation.execute(operation)
 
-            // step_1 (FAILED) was dropped because no resumePayload → engine replayed it from
+            // step_1 (FAILED) was dropped because resumeReason=RETRY → engine replayed it from
             // BEGIN, which creates a waitpoint via the approval piece.
             expect(mockCreateWaitpoint).toHaveBeenCalled()
         })
@@ -379,6 +382,59 @@ describe('flow operation invariants', () => {
             await flowOperation.execute(operation)
 
             expect(mockCreateWaitpoint).toHaveBeenCalledTimes(1)
+        })
+
+        it('preserves FAILED steps on a delay-piece waitpoint resume even though resumePayload is null', async () => {
+            // The Delay piece's scheduled resume (`flow-run-module.ts` RESUME_DELAY_WAITPOINT
+            // handler) calls `resumeFromWaitpoint` with `resumePayload: null`. Prior to the
+            // explicit `resumeReason` field this looked indistinguishable from a retry, and the
+            // engine would drop FAILED — replaying any `continueOnFailure` step that preceded
+            // the delay. With `resumeReason: WAITPOINT`, FAILED is preserved correctly.
+            mockDownload.mockReset()
+            mockCreateWaitpoint.mockReset()
+            mockCreateWaitpoint.mockResolvedValue({
+                id: 'wp-delay',
+                resumeUrl: 'http://localhost:4200/api/v1/flow-runs/run-1/waitpoints/wp-delay',
+            })
+
+            mockDownload.mockResolvedValue(
+                new TextEncoder().encode(JSON.stringify({
+                    executionState: {
+                        steps: {
+                            trigger_1: {
+                                type: FlowTriggerType.EMPTY,
+                                status: StepOutputStatus.SUCCEEDED,
+                                input: {},
+                                output: {},
+                            },
+                            step_1: {
+                                type: FlowActionType.PIECE,
+                                status: StepOutputStatus.FAILED,
+                                input: {},
+                                errorMessage: 'Subflow execution failed',
+                            },
+                            step_2: {
+                                type: FlowActionType.PIECE,
+                                status: StepOutputStatus.PAUSED,
+                                input: {},
+                                output: {},
+                            },
+                        },
+                        tags: [],
+                    },
+                })),
+            )
+
+            const operation: ResumeExecuteFlowOperation = {
+                ...makeResumeOperation(),
+                flowVersion: makeFlowVersionWithTwoApprovals(),
+                resumePayload: { type: 'inline', value: null },
+                resumeReason: ResumeReason.WAITPOINT,
+            }
+
+            await flowOperation.execute(operation)
+
+            expect(mockCreateWaitpoint).not.toHaveBeenCalled()
         })
     })
 

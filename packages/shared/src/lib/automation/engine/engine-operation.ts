@@ -110,9 +110,19 @@ export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.B
 
 export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.RESUME> & {
     resumePayload: JobPayload
+    resumeReason: ResumeReason
 }
 
 export type ExecuteFlowOperation = BeginExecuteFlowOperation | ResumeExecuteFlowOperation
+
+export enum ResumeReason {
+    // A waitpoint produced a resume signal: HTTP callback (Slack click, subflow Return Response),
+    // delay timer firing, scheduled job, or `markParentRunAsFailed` completing a parent waitpoint.
+    WAITPOINT = 'WAITPOINT',
+    // User-triggered retry of a terminated run via `FlowRetryStrategy.FROM_FAILED_STEP`.
+    // Carries no payload; the engine must re-execute the originally-failed step.
+    RETRY = 'RETRY',
+}
 
 
 export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOperation & {

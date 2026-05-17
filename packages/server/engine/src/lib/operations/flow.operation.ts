@@ -14,6 +14,7 @@ import {
     JobPayload,
     LoopStepOutput,
     ResumePayload,
+    ResumeReason,
     StepOutput,
     StepOutputStatus,
     TriggerHookType,
@@ -89,7 +90,7 @@ async function getFlowExecutionState(input: ResolvedExecuteFlowOperation, consta
             }).setOutput(newPayload))
     }
     flowContext = flowContext.addTags(input.executionState.tags)
-    const isWaitpointResume = !isNil(input.resumePayload)
+    const isWaitpointResume = input.resumeReason === ResumeReason.WAITPOINT
     for (const [step, output] of Object.entries(input.executionState.steps)) {
         if (isStepRestorable({ status: output.status, isWaitpointResume })) {
             const newOutput = await insertSuccessStepsOrPausedRecursively({ stepOutput: output, isWaitpointResume })
@@ -191,7 +192,8 @@ async function fetchExecutionStateFromLogs(logsFileId: string | undefined, opera
 // Waitpoint resumes preserve FAILED so a `continueOnFailure` step isn't replayed,
 // which would re-fire its waitpoint and let the global `constants.resumePayload`
 // pollute the new output. Retry resumes (FlowRetryStrategy.FROM_FAILED_STEP) drop
-// FAILED so the engine re-executes the failed step.
+// FAILED so the engine re-executes the failed step. The discriminator is the
+// explicit `resumeReason` set when the run is enqueued.
 function isStepRestorable({ status, isWaitpointResume }: IsStepRestorableParams): boolean {
     if (status === StepOutputStatus.SUCCEEDED || status === StepOutputStatus.PAUSED) {
         return true

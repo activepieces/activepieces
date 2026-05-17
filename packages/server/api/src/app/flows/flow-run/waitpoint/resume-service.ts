@@ -6,6 +6,7 @@ import {
     FlowRunId,
     FlowRunStatus,
     isFlowRunStateTerminal,
+    ResumeReason,
     RunEnvironment,
     StreamStepProgress,
 } from '@activepieces/shared'
@@ -121,6 +122,7 @@ async function enqueueResume(params: EnqueueResumeParams, log: FastifyBaseLogger
             : StreamStepProgress.NONE,
         executeTrigger: false,
         executionType: ExecutionType.RESUME,
+        resumeReason: ResumeReason.WAITPOINT,
     }, log)
     await flowRunSideEffects(log).onResume(flowRun)
 }

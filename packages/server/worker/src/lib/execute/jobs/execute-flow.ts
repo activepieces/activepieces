@@ -12,6 +12,7 @@ import {
     FlowVersion,
     isNil,
     ResumeExecuteFlowOperation,
+    ResumeReason,
     tryCatch,
     WorkerJobType,
 } from '@activepieces/shared'
@@ -131,6 +132,11 @@ function buildFlowOperation(
             ...base,
             executionType: ExecutionType.RESUME,
             resumePayload: data.payload,
+            // Pre-existing in-flight jobs lack this field; default to WAITPOINT so the
+            // engine preserves FAILED steps (the safe behavior — retries are user-driven
+            // and rare, so the worst case here is a one-off "retry didn't replay" that
+            // resolves on next deploy when all in-flight jobs carry the field).
+            resumeReason: data.resumeReason ?? ResumeReason.WAITPOINT,
         }
     }
 

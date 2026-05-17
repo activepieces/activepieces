@@ -21,6 +21,7 @@ import {
     LATEST_JOB_DATA_SCHEMA_VERSION,
     PlatformId,
     ProjectId,
+    ResumeReason,
     RunEnvironment,
     SampleDataFileType,
     SeekPage,
@@ -174,6 +175,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     streamStepProgress: StreamStepProgress.NONE,
                     executeTrigger: false,
                     executionType: ExecutionType.RESUME,
+                    resumeReason: ResumeReason.RETRY,
                     workerHandlerId: undefined,
                     httpRequestId: undefined,
                 }, log)
@@ -585,6 +587,9 @@ export async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogge
             executeTrigger: params.executeTrigger,
             httpRequestId: params.httpRequestId,
             executionType: params.executionType,
+            resumeReason: params.executionType === ExecutionType.RESUME
+                ? (params.resumeReason ?? ResumeReason.WAITPOINT)
+                : undefined,
             streamStepProgress: params.streamStepProgress,
             stepNameToTest: params.flowRun.stepNameToTest ?? undefined,
             sampleData: params.sampleData,
@@ -698,6 +703,7 @@ export type AddToQueueParams = {
     payload?: unknown
     executeTrigger: boolean
     executionType: ExecutionType
+    resumeReason?: ResumeReason
     workerHandlerId: string | undefined
     httpRequestId: string | undefined
     streamStepProgress: StreamStepProgress
