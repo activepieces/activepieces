@@ -188,6 +188,16 @@ export function ConnectionPickerCard({
     setConnectDialogOpen(true);
   };
 
+  if (selectedConnection) {
+    return (
+      <SelectedState
+        pieceName={pieceName}
+        connection={selectedConnection}
+        displayName={filteredPicker.displayName}
+      />
+    );
+  }
+
   if (!isInteractive) {
     return (
       <motion.div
@@ -220,16 +230,6 @@ export function ConnectionPickerCard({
           </div>
         </div>
       </motion.div>
-    );
-  }
-
-  if (selectedConnection) {
-    return (
-      <SelectedState
-        pieceName={pieceName}
-        connection={selectedConnection}
-        displayName={filteredPicker.displayName}
-      />
     );
   }
 

@@ -171,15 +171,24 @@ export function useAgentChat({
 
         case 'data-plan-progress':
           if (typeof d.stepIndex === 'number' && typeof d.status === 'string') {
-            store.setState((prev) => ({
-              planProgressUpdates: [
-                ...prev.planProgressUpdates,
-                {
-                  stepIndex: d.stepIndex as number,
-                  status: d.status as PlanStepUpdate['status'],
-                },
-              ],
-            }));
+            store.setState((prev) => {
+              const stepIndex = d.stepIndex as number;
+              const status = d.status as PlanStepUpdate['status'];
+              const existing = prev.planProgressUpdates.findIndex(
+                (u) => u.stepIndex === stepIndex,
+              );
+              if (existing >= 0) {
+                const updated = [...prev.planProgressUpdates];
+                updated[existing] = { stepIndex, status };
+                return { planProgressUpdates: updated };
+              }
+              return {
+                planProgressUpdates: [
+                  ...prev.planProgressUpdates,
+                  { stepIndex, status },
+                ],
+              };
+            });
           }
           break;
 
