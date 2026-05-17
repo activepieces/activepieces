@@ -26,17 +26,6 @@ const DataTableInputPopover = ({
   filterValue,
   handleFilterChange,
 }: DataTableInputPopoverProps) => {
-  const [searchQuery, setSearchQuery] = useState(filterValue);
-  const debouncedFilterChange = useDebouncedCallback(
-    handleFilterChange,
-    DEBOUNCE_MS,
-  );
-
-  const onSearchChange = (value: string) => {
-    setSearchQuery(value);
-    debouncedFilterChange(value);
-  };
-
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -57,14 +46,38 @@ const DataTableInputPopover = ({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0" align="start">
-        <SearchInput
-          placeholder={t('Search')}
-          value={searchQuery}
-          onChange={onSearchChange}
-        />
+        <SearchPopoverContent
+          key={filterValue}
+          filterValue={filterValue}
+          handleFilterChange={handleFilterChange}
+        ></SearchPopoverContent>
       </PopoverContent>
     </Popover>
   );
 };
 
+const SearchPopoverContent = ({
+  filterValue,
+  handleFilterChange,
+}: Pick<DataTableInputPopoverProps, 'filterValue' | 'handleFilterChange'>) => {
+  const [searchQuery, setSearchQuery] = useState(filterValue);
+  const debouncedFilterChange = useDebouncedCallback(
+    handleFilterChange,
+    DEBOUNCE_MS,
+  );
+
+  const onSearchChange = (value: string) => {
+    setSearchQuery(value);
+    debouncedFilterChange(value);
+  };
+
+  return (
+    <SearchInput
+      key={filterValue}
+      placeholder={t('Search')}
+      value={searchQuery}
+      onChange={onSearchChange}
+    />
+  );
+};
 export { DataTableInputPopover };

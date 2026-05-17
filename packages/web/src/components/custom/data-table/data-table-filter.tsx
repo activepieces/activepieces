@@ -22,6 +22,8 @@ type DropdownFilterProps = {
     icon?: React.ComponentType<{ className?: string }> | string;
   }[];
   onChange?: (values: string[], params: URLSearchParams) => void;
+  disabled?: boolean;
+  disabledTooltip?: React.ReactNode;
 };
 
 type InputFilterProps = {
@@ -144,6 +146,8 @@ export function DataTableFilter<TData, TValue>({
           options={props.options}
           handleFilterChange={handleFilterChange}
           facets={facets}
+          disabled={props.disabled}
+          disabledTooltip={props.disabledTooltip}
         />
       );
     }

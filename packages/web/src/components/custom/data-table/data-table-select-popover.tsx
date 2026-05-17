@@ -12,6 +12,11 @@ import {
   CommandSeparator,
 } from '@/components/ui/command';
 import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/components/ui/hover-card';
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -30,6 +35,8 @@ type DataTableSelectPopoverProps = {
   }[];
   facets?: Map<any, number>;
   handleFilterChange: (filterValue: string[]) => void;
+  disabled?: boolean;
+  disabledTooltip?: React.ReactNode;
 };
 
 const DataTableSelectPopover = ({
@@ -38,48 +45,66 @@ const DataTableSelectPopover = ({
   options,
   handleFilterChange,
   facets,
+  disabled,
+  disabledTooltip,
 }: DataTableSelectPopoverProps) => {
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" className="border-dashed">
-          <ListFilterIcon className="mr-2 size-4" />
-          {title}
-          {selectedValues?.size > 0 && (
-            <>
-              <Separator orientation="vertical" className="mx-2 h-4" />
-              <Badge
-                variant="accent"
-                className="rounded-sm px-1 font-normal lg:hidden"
-              >
-                {selectedValues.size}
+  const triggerButton = (
+    <Button variant="outline" className="border-dashed" disabled={disabled}>
+      <ListFilterIcon className="mr-2 size-4" />
+      {title}
+      {selectedValues?.size > 0 && (
+        <>
+          <Separator orientation="vertical" className="mx-2 h-4" />
+          <Badge
+            variant="accent"
+            className="rounded-sm px-1 font-normal lg:hidden"
+          >
+            {selectedValues.size}
+          </Badge>
+          <div className="hidden space-x-1 lg:flex">
+            {selectedValues.size > 2 ? (
+              <Badge variant="accent" className="rounded-sm px-1 font-normal">
+                {selectedValues.size} selected
               </Badge>
-              <div className="hidden space-x-1 lg:flex">
-                {selectedValues.size > 2 ? (
+            ) : (
+              options
+                .filter((option) => selectedValues.has(option.value))
+                .map((option) => (
                   <Badge
                     variant="accent"
+                    key={option.value}
                     className="rounded-sm px-1 font-normal"
                   >
-                    {selectedValues.size} selected
+                    {option.label}
                   </Badge>
-                ) : (
-                  options
-                    .filter((option) => selectedValues.has(option.value))
-                    .map((option) => (
-                      <Badge
-                        variant="accent"
-                        key={option.value}
-                        className="rounded-sm px-1 font-normal"
-                      >
-                        {option.label}
-                      </Badge>
-                    ))
-                )}
-              </div>
-            </>
-          )}
-        </Button>
-      </PopoverTrigger>
+                ))
+            )}
+          </div>
+        </>
+      )}
+    </Button>
+  );
+
+  if (disabled) {
+    return (
+      <HoverCard openDelay={150} closeDelay={150}>
+        <HoverCardTrigger asChild>
+          <span className="inline-block cursor-not-allowed">
+            <span className="pointer-events-none">{triggerButton}</span>
+          </span>
+        </HoverCardTrigger>
+        {disabledTooltip && (
+          <HoverCardContent align="start" className="w-auto max-w-xs">
+            {disabledTooltip}
+          </HoverCardContent>
+        )}
+      </HoverCard>
+    );
+  }
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>{triggerButton}</PopoverTrigger>
       <PopoverContent
         className="min-w-[200px] max-w-[250px] break-all p-0"
         align="start"

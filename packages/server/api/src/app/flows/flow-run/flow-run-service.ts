@@ -96,12 +96,9 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 flowId: In(params.flowId),
             })
         }
-        const narrowedStatus = isNil(params.failedStepMessage)
-            ? params.status
-            : [FlowRunStatus.FAILED]
-        if (narrowedStatus) {
+        if (params.status) {
             query = query.andWhere({
-                status: In(narrowedStatus),
+                status: In(params.status),
             })
         }
         if (params.createdAfter) {
