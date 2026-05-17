@@ -1,11 +1,11 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddUiMessagesToChatConversation1760500000000 implements MigrationInterface {
-    name = 'AddUiMessagesToChatConversation1760500000000'
+export class AddUiMessagesToChatConversation1778983371000 implements MigrationInterface {
+    name = 'AddUiMessagesToChatConversation1778983371000'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            ALTER TABLE "chat_conversation" ADD COLUMN "uiMessages" jsonb
+            ALTER TABLE "chat_conversation" ADD COLUMN IF NOT EXISTS "uiMessages" jsonb
         `)
     }
 
