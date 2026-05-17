@@ -139,7 +139,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
                     createdAt,
                     runUrl,
                     failedStepDisplayName,
-                    failedStepNumber: `${failedStepNumber}`,
+                    failedStepNumber: failedStepNumber ? `${failedStepNumber}` : '',
                     failedStepMessage: failedStepMessage ?? '',
                 },
             },
@@ -280,6 +280,6 @@ type IssueCreatedArgs = {
     runUrl: string
     createdAt: string
     failedStepDisplayName: string
-    failedStepNumber: number
+    failedStepNumber?: number
     failedStepMessage?: string
 }

@@ -63,7 +63,7 @@ export const alertsService = (log: FastifyBaseLogger) => ({
                 .tz('America/Los_Angeles')
                 .format('DD MMM YYYY, HH:mm [PT]'),
             failedStepDisplayName: failedStep.displayName,
-            failedStepNumber,
+            failedStepNumber: failedStepNumber > 0 ? failedStepNumber : undefined,
             failedStepMessage: failedStep.message,
         }
 
@@ -168,7 +168,7 @@ type IssueParams = {
     flowName: string
     createdAt: string
     failedStepDisplayName: string
-    failedStepNumber: number
+    failedStepNumber?: number
     failedStepMessage?: string
 }
 

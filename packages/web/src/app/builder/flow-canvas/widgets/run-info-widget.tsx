@@ -67,10 +67,7 @@ function getStatusText({
 }
 
 const RunInfoWidget = () => {
-  const [run, selectedStep, goToFailedStep] = useBuilderStateContext(
-    (state) => [state.run, state.selectedStep, state.goToFailedStep],
-  );
-  const { fitView } = useReactFlow();
+  const run = useBuilderStateContext((state) => state.run);
   const { variant, Icon } = run
     ? flowRunUtils.getStatusIcon(run.status)
     : { variant: 'default' as const, Icon: CircleHelp };
@@ -90,13 +87,6 @@ const RunInfoWidget = () => {
     status: run.status,
     ignoreInternalError: false,
   });
-  const showJumpToFailedStep =
-    !!run.failedStep && selectedStep !== run.failedStep.name;
-  const handleJumpToFailedStep = () => {
-    if (!run.failedStep) return;
-    goToFailedStep();
-    fitView(flowCanvasUtils.createFocusStepInGraphParams(run.failedStep.name));
-  };
   return (
     <LargeWidgetWrapper
       containerClassName={cn(
@@ -146,16 +136,8 @@ const RunInfoWidget = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          {showJumpToFailedStep && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleJumpToFailedStep}
-              className="text-destructive-700 hover:text-destructive-700 dark:text-destructive-200 dark:hover:text-destructive-200"
-            >
-              <ArrowRight className="size-4" />
-              {t('Failed step')}
-            </Button>
+          {run.failedStep && (
+            <JumpToFailedStepButton failedStepName={run.failedStep.name} />
           )}
           <EditFlowOrViewDraftButton
             onCanvas={false}
@@ -180,5 +162,37 @@ const DateSection = ({
       <span>{`${text}: `}</span>
       <span>{`${dateOrDuration}`}</span>
     </>
+  );
+};
+
+const JumpToFailedStepButton = ({
+  failedStepName,
+}: {
+  failedStepName: string;
+}) => {
+  const [selectedStep, goToFailedStep] = useBuilderStateContext((state) => [
+    state.selectedStep,
+    state.goToFailedStep,
+  ]);
+  const { fitView } = useReactFlow();
+  if (selectedStep === failedStepName) {
+    return null;
+  }
+  const handleClick = () => {
+    goToFailedStep();
+    requestAnimationFrame(() => {
+      fitView(flowCanvasUtils.createFocusStepInGraphParams(failedStepName));
+    });
+  };
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={handleClick}
+      className="text-destructive-700 hover:text-destructive-700 dark:text-destructive-200 dark:hover:text-destructive-200"
+    >
+      <ArrowRight className="size-4" />
+      {t('Failed step')}
+    </Button>
   );
 };
