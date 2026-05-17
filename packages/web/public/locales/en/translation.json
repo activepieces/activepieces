@@ -1685,6 +1685,8 @@
   "Use a different account": "Use a different account",
   "Connect a new {name} account": "Connect a new {name} account",
   "Use": "Use",
+  "Deprecated": "Deprecated",
+  "instead": "instead",
   "Using this {name} account": "Using this {name} account",
   "Change": "Change",
   "Connect another": "Connect another",

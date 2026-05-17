@@ -237,7 +237,9 @@ export function FunctionTooltipCard({
 
   const badgeCenterX =
     anchorRight != null ? (anchorLeft + anchorRight) / 2 : anchorLeft;
-  const idealLeft = badgeCenterX - TOOLTIP_WIDTH / 2;
+  // In centered (side-anchored) mode, callers pass `anchorLeft` as the desired
+  // left edge of the tooltip itself, so don't re-center on the anchor.
+  const idealLeft = centered ? anchorLeft : badgeCenterX - TOOLTIP_WIDTH / 2;
   const left = Math.min(
     Math.max(idealLeft, SCREEN_MARGIN),
     window.innerWidth - TOOLTIP_WIDTH - SCREEN_MARGIN,
@@ -265,6 +267,22 @@ export function FunctionTooltipCard({
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
+      {fnDef.deprecated && (
+        <div className="flex items-center gap-1.5 text-[11px]">
+          <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold uppercase tracking-wide text-[10px]">
+            {t('Deprecated')}
+          </span>
+          {fnDef.deprecated.replacement && (
+            <span className="text-gray-300">
+              {t('Use')}{' '}
+              <code className="font-mono text-amber-300">
+                {fnDef.deprecated.replacement}
+              </code>{' '}
+              {t('instead')}
+            </span>
+          )}
+        </div>
+      )}
       <p className="text-[12px] text-gray-100 leading-snug">
         {t(fnDef.description)}
       </p>

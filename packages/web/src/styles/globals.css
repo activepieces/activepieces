@@ -58,8 +58,7 @@ span.ap-fn-badge.ap-fn-deprecated {
     background-color: rgba(245, 158, 11, 0.15) !important;
     border-color: #f59e0b !important;
     color: #b45309 !important;
-    text-decoration: underline dashed #b45309;
-    text-underline-offset: 2px;
+    text-decoration: line-through solid #b45309;
 }
 
 /* Formula Editor */
