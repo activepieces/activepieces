@@ -80,8 +80,28 @@ export const telegramSendPollAction = createAction({
   },
   async run(ctx) {
     const options = (ctx.propsValue.options ?? []).map((option) => String(option));
-    if (options.length < 2) {
-      throw new Error('A poll requires at least 2 options.');
+    if (options.length < 2 || options.length > 10) {
+      throw new Error('A poll requires between 2 and 10 options.');
+    }
+    const pollType = ctx.propsValue.type ?? 'regular';
+    const correctOptionId = ctx.propsValue.correct_option_id;
+    if (pollType === 'quiz') {
+      if (correctOptionId === undefined || correctOptionId === null) {
+        throw new Error('Quiz polls require "Correct Option Id".');
+      }
+      if (correctOptionId < 0 || correctOptionId >= options.length) {
+        throw new Error(
+          `"Correct Option Id" must be between 0 and ${options.length - 1} (the index of an option).`
+        );
+      }
+      if (ctx.propsValue.allows_multiple_answers) {
+        throw new Error('Quiz polls cannot allow multiple answers.');
+      }
+    } else if (correctOptionId !== undefined && correctOptionId !== null) {
+      throw new Error('"Correct Option Id" is only valid for quiz polls. Set "Poll Type" to Quiz or clear this field.');
+    }
+    if (ctx.propsValue.open_period && ctx.propsValue.close_date) {
+      throw new Error('"Open Period" and "Close Date" are mutually exclusive — set at most one.');
     }
     const explanationParseMode = telegramCommons.resolveParseMode(
       ctx.propsValue.explanation_parse_mode

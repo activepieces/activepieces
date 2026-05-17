@@ -21,7 +21,6 @@ import { telegramSendMessageAction } from './lib/action/send-text-message.action
 import { telegramSendPollAction } from './lib/action/send-poll.action';
 import { telegramUnpinMessageAction } from './lib/action/unpin-message.action';
 import { telegramCommons } from './lib/common';
-import { telegramNewCallbackQuery } from './lib/trigger/new-callback-query';
 import { telegramNewMessage } from './lib/trigger/new-message';
 
 const markdownDescription = `
@@ -74,5 +73,5 @@ export const telegramBot = createPiece({
     }),
   ],
   authors: ["abdullahranginwala","tanoggy","alerdenisov","Abdallah-Alwarawreh","kishanprmr","MoShizzle","khaledmashaly","abuaboud",'sanket-a11y'],
-  triggers: [telegramNewMessage, telegramNewCallbackQuery],
+  triggers: [telegramNewMessage],
 });
