@@ -29,7 +29,6 @@ export const filesService = {
         })
         return domainHelper.getPublicApiUrl({
             path: `v1/files/${params.fileId}?token=${token}`,
-            platformId: params.platformId,
         })
     },
 }

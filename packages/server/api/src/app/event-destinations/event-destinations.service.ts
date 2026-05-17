@@ -169,7 +169,6 @@ const skipInternalDestinationsOnFlowCycle = async ({
     }
     const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
         path: 'v1/webhooks',
-        platformId,
     })
     const destinationsWithFlowIds = destinations.map((destination) => ({
         destination,
