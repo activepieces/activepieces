@@ -1,13 +1,27 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
+import { telegramAnswerCallbackQueryAction } from './lib/action/answer-callback-query.action';
 import { telegramCreateInviteLinkAction } from './lib/action/create-invite-link';
+import { telegramDeleteMessageAction } from './lib/action/delete-message.action';
+import { telegramEditMessageTextAction } from './lib/action/edit-message-text.action';
+import { telegramForwardMessageAction } from './lib/action/forward-message.action';
+import { telegramGetChatAction } from './lib/action/get-chat.action';
 import { telegramGetChatMemberAction } from './lib/action/get-chat-member';
 import { telegramGetFileAction } from './lib/action/get-file.action';
-import { telegramSendMediaAction } from './lib/action/send-media.action';
-import { telegramSendMessageAction } from './lib/action/send-text-message.action';
+import { telegramPinMessageAction } from './lib/action/pin-message.action';
 import { telegramRequestApprovalMessageAction } from './lib/action/request-approval-message';
+import { telegramSendAudioAction } from './lib/action/send-audio.action';
+import { telegramSendChatActionAction } from './lib/action/send-chat-action.action';
+import { telegramSendDocumentAction } from './lib/action/send-document.action';
+import { telegramSendLocationAction } from './lib/action/send-location.action';
+import { telegramSendMediaAction } from './lib/action/send-media.action';
+import { telegramSendMediaGroupAction } from './lib/action/send-media-group.action';
+import { telegramSendMessageAction } from './lib/action/send-text-message.action';
+import { telegramSendPollAction } from './lib/action/send-poll.action';
+import { telegramUnpinMessageAction } from './lib/action/unpin-message.action';
 import { telegramCommons } from './lib/common';
+import { telegramNewCallbackQuery } from './lib/trigger/new-callback-query';
 import { telegramNewMessage } from './lib/trigger/new-message';
 
 const markdownDescription = `
@@ -37,9 +51,22 @@ export const telegramBot = createPiece({
   actions: [
     telegramSendMessageAction,
     telegramSendMediaAction,
+    telegramSendDocumentAction,
+    telegramSendAudioAction,
+    telegramSendLocationAction,
+    telegramSendMediaGroupAction,
+    telegramSendPollAction,
+    telegramSendChatActionAction,
+    telegramEditMessageTextAction,
+    telegramDeleteMessageAction,
+    telegramForwardMessageAction,
+    telegramPinMessageAction,
+    telegramUnpinMessageAction,
+    telegramGetChatAction,
     telegramGetChatMemberAction,
     telegramGetFileAction,
     telegramCreateInviteLinkAction,
+    telegramAnswerCallbackQueryAction,
     telegramRequestApprovalMessageAction,
     createCustomApiCallAction({
       baseUrl: (auth) => auth ? telegramCommons.getApiUrl(auth, '') : '',
@@ -47,5 +74,5 @@ export const telegramBot = createPiece({
     }),
   ],
   authors: ["abdullahranginwala","tanoggy","alerdenisov","Abdallah-Alwarawreh","kishanprmr","MoShizzle","khaledmashaly","abuaboud",'sanket-a11y'],
-  triggers: [telegramNewMessage],
+  triggers: [telegramNewMessage, telegramNewCallbackQuery],
 });
