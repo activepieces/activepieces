@@ -101,10 +101,10 @@ export const emailService = (log: FastifyBaseLogger) => ({
 
     async sendIssueCreatedNotification({
         projectId,
+        projectName,
         flowName,
         platformId,
-        issueOrRunsPath,
-        isIssue,
+        runUrl,
         createdAt,
         failedStepDisplayName,
         failedStepNumber,
@@ -134,12 +134,12 @@ export const emailService = (log: FastifyBaseLogger) => ({
             templateData: {
                 name: 'issue-created',
                 vars: {
+                    projectName,
                     flowName,
                     createdAt,
-                    isIssue: isIssue.toString(),
-                    issueUrl: issueOrRunsPath,
-                    failedStepDisplayName: failedStepDisplayName ?? '',
-                    failedStepNumber: failedStepNumber ? `${failedStepNumber}` : '',
+                    runUrl,
+                    failedStepDisplayName,
+                    failedStepNumber: `${failedStepNumber}`,
                     failedStepMessage: failedStepMessage ?? '',
                 },
             },
@@ -274,12 +274,12 @@ type SendScimUserWelcomeArgs = {
 
 type IssueCreatedArgs = {
     projectId: string
+    projectName: string
     flowName: string
     platformId: string
-    isIssue: boolean
-    issueOrRunsPath: string
+    runUrl: string
     createdAt: string
-    failedStepDisplayName?: string
-    failedStepNumber?: number
+    failedStepDisplayName: string
+    failedStepNumber: number
     failedStepMessage?: string
 }

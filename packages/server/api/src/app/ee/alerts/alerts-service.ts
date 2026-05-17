@@ -1,5 +1,5 @@
 import { apDayjsDuration } from '@activepieces/server-utils'
-import { ActivepiecesError, Alert, AlertChannel, ApEdition, ApId, apId, ErrorCode, FailedStep, flowStructureUtil, isNil, ListAlertsParams, ProjectType, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, Alert, AlertChannel, ApEdition, ApId, apId, ErrorCode, FailedStep, flowStructureUtil, ListAlertsParams, ProjectType, SeekPage } from '@activepieces/shared'
 
 import dayjs from 'dayjs'
 import timezone from 'dayjs/plugin/timezone'
@@ -32,7 +32,7 @@ export const alertsService = (log: FastifyBaseLogger) => ({
     }: {
         issueToAlert: IssueToAlert
         flowRunId: string
-        failedStep?: FailedStep
+        failedStep: FailedStep
     }): Promise<void> {
         if (!paidEditions) {
             return
@@ -48,12 +48,10 @@ export const alertsService = (log: FastifyBaseLogger) => ({
         }
 
         const project = await projectService(log).getOneOrThrow(issueToAlert.projectId)
-        const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(issueToAlert.flowId)
+        const flowVersion = await flowVersionService(log).getOneOrThrow(issueToAlert.flowVersionId)
 
-        const failedStepNumber = isNil(failedStep)
-            ? undefined
-            : flowStructureUtil.getStepNumber(flowVersion.trigger, failedStep.name) || undefined
-        const alertsInfo = {
+        const failedStepNumber = flowStructureUtil.getStepNumber(flowVersion.trigger, failedStep.name)
+        const alertsInfo: IssueParams = {
             flowVersionId: flowVersion.id,
             flowRunId,
             projectId: issueToAlert.projectId,
@@ -64,9 +62,9 @@ export const alertsService = (log: FastifyBaseLogger) => ({
             createdAt: dayjs(issueToAlert.created)
                 .tz('America/Los_Angeles')
                 .format('DD MMM YYYY, HH:mm [PT]'),
-            failedStepDisplayName: failedStep?.displayName,
+            failedStepDisplayName: failedStep.displayName,
             failedStepNumber,
-            failedStepMessage: failedStep?.message,
+            failedStepMessage: failedStep.message,
         }
 
         await sendAlertOnFlowFailure(log, alertsInfo)
@@ -143,15 +141,14 @@ export const alertsService = (log: FastifyBaseLogger) => ({
 async function sendAlertOnFlowFailure(log: FastifyBaseLogger, params: IssueParams): Promise<void> {
     const { platformId, flowRunId, projectId } = params
 
-    const issueUrl = await domainHelper.getInternalUrl({
+    const runUrl = await domainHelper.getInternalUrl({
         platformId,
         path: `projects/${projectId}/runs/${flowRunId}`,
     })
 
     await emailService(log).sendIssueCreatedNotification({
         ...params,
-        issueOrRunsPath: issueUrl,
-        isIssue: true,
+        runUrl,
     })
 }
 
@@ -170,7 +167,8 @@ type IssueParams = {
     flowRunId: string
     flowName: string
     createdAt: string
-    failedStepDisplayName?: string
+    failedStepDisplayName: string
+    failedStepNumber: number
     failedStepMessage?: string
 }
 

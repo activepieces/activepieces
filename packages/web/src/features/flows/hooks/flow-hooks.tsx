@@ -261,7 +261,7 @@ export const flowHooks = {
     enabled?: boolean;
   }) => {
     return useQuery({
-      queryKey: flowHooks.createFlowQueryKeys({flowId, versionId}),
+      queryKey: flowHooks.createFlowQueryKeys({ flowId, versionId }),
       queryFn: async () => {
         try {
           return await flowsApi.get(
@@ -527,7 +527,13 @@ export const flowHooks = {
       onError,
     });
   },
-  createFlowQueryKeys: ({flowId, versionId}: {flowId: string, versionId?: string}) => ['flow', flowId, versionId],
+  createFlowQueryKeys: ({
+    flowId,
+    versionId,
+  }: {
+    flowId: string;
+    versionId: string | undefined;
+  }) => ['flow', flowId, versionId],
 };
 
 type UseChangeFlowStatusParams = {
