@@ -119,7 +119,6 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
         const destinationsToDispatch = await skipInternalDestinationsOnFlowCycle({
             destinations,
             event,
-            platformId,
             log,
         })
         await Promise.all(destinationsToDispatch.map(destination =>
@@ -161,7 +160,6 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
 const skipInternalDestinationsOnFlowCycle = async ({
     destinations,
     event,
-    platformId,
     log,
 }: SkipDestinationsParams): Promise<EventDestinationSchema[]> => {
     if (destinations.length === 0 || !isFlowRunEvent(event)) {
