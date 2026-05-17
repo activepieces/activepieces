@@ -9,6 +9,10 @@ on:
 jobs:
   build-image:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
     concurrency:
       group: canary-deploy
       cancel-in-progress: true
@@ -43,6 +47,12 @@ jobs:
           push: true
           no-cache: true
           tags: ghcr.io/activepieces/activepieces-cloud:${{ steps.set-tag.outputs.image_tag }}
+
+      - uses: ./.github/actions/sbom
+        with:
+          image: ghcr.io/activepieces/activepieces-cloud:${{ steps.set-tag.outputs.image_tag }}
+          version: ${{ steps.set-tag.outputs.image_tag }}
+          upload-sarif: 'true'
 
   check-migrations:
     needs: build-image

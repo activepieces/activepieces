@@ -64,3 +64,12 @@ jobs:
           publish: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Internal-only for now.
+      # To expose them on the GitHub Release for supply-chain audits,
+      # set upload-release: 'true'
+      # and pass github-token: ${{ secrets.GITHUB_TOKEN }}.
+      - uses: ./.github/actions/sbom
+        with:
+          image: ghcr.io/activepieces/activepieces:${{ inputs.tag }}
+          version: ${{ inputs.tag }}
