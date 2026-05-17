@@ -12,7 +12,6 @@ import {
     FlowVersion,
     isNil,
     ResumeExecuteFlowOperation,
-    ResumeReason,
     tryCatch,
     WorkerJobType,
 } from '@activepieces/shared'
@@ -132,7 +131,7 @@ function buildFlowOperation(
             ...base,
             executionType: ExecutionType.RESUME,
             resumePayload: data.payload,
-            resumeReason: data.resumeReason ?? legacyResumeReason(data),
+            resumeReason: data.resumeReason,
         }
     }
 
@@ -169,14 +168,4 @@ async function reportFlowStatus(
 
 function isDedicatedWorker(): boolean {
     return !isNil(system.get(WorkerSystemProp.WORKER_GROUP_ID))
-}
-
-// Resolves resumeReason for jobs queued before schemaVersion 10. The retry path is
-// the only producer of an inline-null payload; every other resume signal (HTTP
-// callback, markParentRunAsFailed) carries a real body. Pre-existing delay-piece
-// resumes are misclassified here as RETRY — same buggy behavior they had pre-fix,
-// limited to the brief deploy window before legacy jobs drain.
-function legacyResumeReason(data: ExecuteFlowJobData): ResumeReason {
-    const isLegacyRetry = data.payload.type === 'inline' && isNil(data.payload.value)
-    return isLegacyRetry ? ResumeReason.RETRY : ResumeReason.WAITPOINT
 }

@@ -110,7 +110,7 @@ export const PollingJobData = z.object({
 })
 export type PollingJobData = z.infer<typeof PollingJobData>
 
-export const ExecuteFlowJobData = z.object({
+const ExecuteFlowJobDataCommon = z.object({
     projectId: z.string(),
     platformId: z.string(),
     jobType: z.literal(WorkerJobType.EXECUTE_FLOW),
@@ -122,15 +122,26 @@ export const ExecuteFlowJobData = z.object({
     workerHandlerId: z.union([z.string(), z.null()]).optional(),
     httpRequestId: z.string().optional(),
     payload: JobPayload,
-    executeTrigger: z.boolean().optional(),
-    executionType: z.nativeEnum(ExecutionType),
-    resumeReason: z.nativeEnum(ResumeReason).optional(),
     streamStepProgress: z.nativeEnum(StreamStepProgress),
     stepNameToTest: z.string().optional(),
     sampleData: z.record(z.string(), z.unknown()).optional(),
     logsFileId: z.string(),
     traceContext: z.record(z.string(), z.string()).optional(),
 })
+
+export const BeginExecuteFlowJobData = ExecuteFlowJobDataCommon.extend({
+    executionType: z.literal(ExecutionType.BEGIN),
+    executeTrigger: z.boolean().optional(),
+})
+export type BeginExecuteFlowJobData = z.infer<typeof BeginExecuteFlowJobData>
+
+export const ResumeExecuteFlowJobData = ExecuteFlowJobDataCommon.extend({
+    executionType: z.literal(ExecutionType.RESUME),
+    resumeReason: z.nativeEnum(ResumeReason),
+})
+export type ResumeExecuteFlowJobData = z.infer<typeof ResumeExecuteFlowJobData>
+
+export const ExecuteFlowJobData = z.discriminatedUnion('executionType', [BeginExecuteFlowJobData, ResumeExecuteFlowJobData])
 export type ExecuteFlowJobData = z.infer<typeof ExecuteFlowJobData>
 
 export const WebhookJobData = z.object({

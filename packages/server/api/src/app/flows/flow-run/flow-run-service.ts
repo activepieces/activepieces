@@ -4,6 +4,7 @@ import {
     apId,
     Cursor,
     ErrorCode,
+    ExecuteFlowJobData,
     ExecutionType,
     ExecutioOutputFile,
     FileType,
@@ -570,32 +571,39 @@ export async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogge
         jobPayload = await payloadOffloader.maybeOffloadPayload(log, params.payload, params.flowRun.projectId, params.platformId)
     }
 
+    const commonJobData = {
+        schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+        workerHandlerId: params.workerHandlerId ?? null,
+        projectId: params.flowRun.projectId,
+        platformId: params.platformId,
+        environment: params.flowRun.environment,
+        flowId: params.flowRun.flowId,
+        runId: params.flowRun.id,
+        jobType: WorkerJobType.EXECUTE_FLOW as const,
+        flowVersionId: params.flowRun.flowVersionId,
+        payload: jobPayload,
+        httpRequestId: params.httpRequestId,
+        streamStepProgress: params.streamStepProgress,
+        stepNameToTest: params.flowRun.stepNameToTest ?? undefined,
+        sampleData: params.sampleData,
+        logsFileId,
+        traceContext,
+    }
+    const data: ExecuteFlowJobData = params.executionType === ExecutionType.RESUME
+        ? {
+            ...commonJobData,
+            executionType: ExecutionType.RESUME,
+            resumeReason: params.resumeReason ?? ResumeReason.WAITPOINT,
+        }
+        : {
+            ...commonJobData,
+            executionType: ExecutionType.BEGIN,
+            executeTrigger: params.executeTrigger,
+        }
     await jobQueue(log).add({
         id: params.flowRun.id,
         type: JobType.ONE_TIME,
-        data: {
-            schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-            workerHandlerId: params.workerHandlerId ?? null,
-            projectId: params.flowRun.projectId,
-            platformId: params.platformId,
-            environment: params.flowRun.environment,
-            flowId: params.flowRun.flowId,
-            runId: params.flowRun.id,
-            jobType: WorkerJobType.EXECUTE_FLOW,
-            flowVersionId: params.flowRun.flowVersionId,
-            payload: jobPayload,
-            executeTrigger: params.executeTrigger,
-            httpRequestId: params.httpRequestId,
-            executionType: params.executionType,
-            resumeReason: params.executionType === ExecutionType.RESUME
-                ? (params.resumeReason ?? ResumeReason.WAITPOINT)
-                : undefined,
-            streamStepProgress: params.streamStepProgress,
-            stepNameToTest: params.flowRun.stepNameToTest ?? undefined,
-            sampleData: params.sampleData,
-            logsFileId,
-            traceContext,
-        },
+        data,
     })
     return params.flowRun
 }
