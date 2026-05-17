@@ -43,7 +43,6 @@ import { flowRunsApi } from '@/features/flow-runs/api/flow-runs-api';
 import {
   DEFAULT_DATE_PRESET,
   flowRunMutations,
-  flowRunQueries,
 } from '@/features/flow-runs/hooks/flow-run-hooks';
 import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
 import { flowHooks } from '@/features/flows/hooks/flow-hooks';
@@ -58,7 +57,7 @@ import {
   RetriedRunsSnackbar,
   RUN_IDS_QUERY_PARAM,
 } from './retried-runs-snackbar';
-import { RunsRefreshButton, RunsStatusChart } from './runs-status-chart';
+import { RunsStatusChart } from './runs-status-chart';
 
 type SelectedRow = {
   id: string;
@@ -96,8 +95,6 @@ export const RunsTable = () => {
     );
     setHasSeededDefaultRange(true);
   }, [hasSeededDefaultRange, setSearchParams]);
-
-  const { refetch: statsRefetch, dataUpdatedAt } = flowRunQueries.useRunStats();
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['flow-run-table', searchParams.toString(), projectId],
@@ -566,15 +563,7 @@ export const RunsTable = () => {
         bulkActions={bulkActions}
         onRowClick={(row, newWindow) => handleRowClick(row, newWindow)}
         customFilters={customFilters}
-        toolbarButtons={[
-          <RunsRefreshButton
-            key="refresh"
-            statsRefetch={statsRefetch}
-            tableRefetch={refetch}
-            dataUpdatedAt={dataUpdatedAt}
-          />,
-          <RunsStatusChart key="status-chart" />,
-        ]}
+        toolbarButtons={[<RunsStatusChart key="status-chart" />]}
         hidePagination={retriedRunsInQueryParams.length > 0}
       />
       <RetriedRunsSnackbar
