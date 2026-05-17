@@ -15,7 +15,7 @@ const pieceTriggerSettingsFields = {
     pieceName: z.string(),
     pieceVersion: VersionType,
     triggerName: z.string().optional(),
-    input: z.record(z.string(), z.any()),
+    input: z.record(z.string(), z.unknown()),
 }
 
 export const PieceTriggerSettings = z.object({
@@ -34,7 +34,7 @@ const commonProps = {
     name: z.string().regex(STEP_NAME_REGEX),
     valid: z.boolean(),
     displayName: z.string(),
-    nextAction: z.any().optional(),
+    nextAction: z.unknown().optional(),
     lastUpdatedDate: z.string(),
 }
 
@@ -42,7 +42,7 @@ const commonProps = {
 export const EmptyTrigger = z.object({
     ...commonProps,
     type: z.literal(FlowTriggerType.EMPTY),
-    settings: z.any(),
+    settings: z.unknown(),
 })
 
 export type EmptyTrigger = z.infer<typeof EmptyTrigger>
