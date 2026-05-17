@@ -2,18 +2,20 @@ import { describe, it, expect, vi } from 'vitest'
 import {
     EngineGenericError,
     ExecutionType,
+    FlowActionType,
     FlowTriggerType,
     FlowVersionState,
     StreamStepProgress,
     RunEnvironment,
     StepOutputStatus,
 } from '@activepieces/shared'
-import type { BeginExecuteFlowOperation, FlowVersion, ResumeExecuteFlowOperation } from '@activepieces/shared'
+import type { BeginExecuteFlowOperation, FlowAction, FlowVersion, ResumeExecuteFlowOperation } from '@activepieces/shared'
 
 vi.mock('../../src/lib/helper/flow-run-progress-reporter', () => ({
     flowRunProgressReporter: {
         sendUpdate: vi.fn().mockResolvedValue(undefined),
         backup: vi.fn().mockResolvedValue(undefined),
+        createOutputContext: vi.fn().mockReturnValue({ update: vi.fn().mockResolvedValue(undefined) }),
     },
 }))
 
@@ -25,6 +27,15 @@ vi.mock('../../src/lib/engine-file-api', () => ({
     engineFileApi: {
         download: mockDownload,
         upload: mockUpload,
+    },
+}))
+
+const { mockCreateWaitpoint } = vi.hoisted(() => ({
+    mockCreateWaitpoint: vi.fn(),
+}))
+vi.mock('../../src/lib/piece-context/waitpoint-client', () => ({
+    waitpointClient: {
+        create: mockCreateWaitpoint,
     },
 }))
 
@@ -74,6 +85,53 @@ function makeBeginOperation(overrides?: Partial<BeginExecuteFlowOperation>): Beg
         triggerPayload: { type: 'inline', value: {} },
         executeTrigger: false,
         ...overrides,
+    }
+}
+
+function makeFlowVersionWithTwoApprovals(): FlowVersion {
+    const step2: FlowAction = {
+        name: 'step_2',
+        displayName: 'Step 2 — Wait for Approval',
+        type: FlowActionType.PIECE,
+        skip: false,
+        valid: true,
+        settings: {
+            input: {},
+            pieceName: '@activepieces/piece-approval',
+            pieceVersion: '1.0.0',
+            actionName: 'wait_for_approval',
+            propertySettings: {},
+        },
+    }
+    const step1: FlowAction = {
+        name: 'step_1',
+        displayName: 'Step 1 — Wait for Approval',
+        type: FlowActionType.PIECE,
+        skip: false,
+        valid: true,
+        settings: {
+            input: {},
+            pieceName: '@activepieces/piece-approval',
+            pieceVersion: '1.0.0',
+            actionName: 'wait_for_approval',
+            propertySettings: {},
+            errorHandlingOptions: {
+                continueOnFailure: { value: true },
+                retryOnFailure: { value: false },
+            },
+        },
+        nextAction: step2,
+    }
+    return {
+        ...makeFlowVersion(),
+        trigger: {
+            name: 'trigger_1',
+            valid: true,
+            displayName: 'Test Trigger',
+            type: FlowTriggerType.EMPTY,
+            settings: {},
+            nextAction: step1,
+        },
     }
 }
 
@@ -159,6 +217,168 @@ describe('flow operation invariants', () => {
                 expect((e as Error).message).not.toContain('logsFileId is missing')
                 expect((e as Error).message).not.toContain('executionState is missing')
             }
+        })
+    })
+
+    describe('RESUME step-restoration semantics', () => {
+        it('preserves FAILED steps on a waitpoint resume (resumePayload present)', async () => {
+            // Regression for the Slack/webhook-resume bug: a FAILED step preserved by
+            // `continueOnFailure` was being dropped from the restored journal on resume.
+            // The engine then re-executed it from BEGIN, creating a fresh waitpoint and
+            // (for Call Flow) re-invoking the subflow. That cascade is what eventually
+            // let the global resumePayload pollute downstream paused steps.
+            //
+            // Setup: trigger → step_1 (FAILED with continueOnFailure) → step_2 (PAUSED waiting
+            // for a webhook click). Resume is fired for step_2 with a non-null resumePayload
+            // (waitpoint path). With the fix, step_1 stays FAILED in the restored state,
+            // `isCompleted` short-circuits piece-executor, and no new waitpoint is created.
+            mockDownload.mockReset()
+            mockCreateWaitpoint.mockReset()
+            mockCreateWaitpoint.mockResolvedValue({
+                id: 'wp-new',
+                resumeUrl: 'http://localhost:4200/api/v1/flow-runs/run-1/waitpoints/wp-new',
+            })
+
+            mockDownload.mockResolvedValue(
+                new TextEncoder().encode(JSON.stringify({
+                    executionState: {
+                        steps: {
+                            trigger_1: {
+                                type: FlowTriggerType.EMPTY,
+                                status: StepOutputStatus.SUCCEEDED,
+                                input: {},
+                                output: {},
+                            },
+                            step_1: {
+                                type: FlowActionType.PIECE,
+                                status: StepOutputStatus.FAILED,
+                                input: {},
+                                errorMessage: 'Subflow execution failed',
+                            },
+                            step_2: {
+                                type: FlowActionType.PIECE,
+                                status: StepOutputStatus.PAUSED,
+                                input: {},
+                                output: { approved: true },
+                            },
+                        },
+                        tags: [],
+                    },
+                })),
+            )
+
+            const operation: ResumeExecuteFlowOperation = {
+                ...makeResumeOperation(),
+                flowVersion: makeFlowVersionWithTwoApprovals(),
+                resumePayload: {
+                    type: 'inline',
+                    value: { queryParams: { action: 'approve' }, body: {}, headers: {} },
+                },
+            }
+
+            await flowOperation.execute(operation)
+
+            expect(mockCreateWaitpoint).not.toHaveBeenCalled()
+        })
+
+        it('drops FAILED steps on a retry resume (resumePayload absent — FlowRetryStrategy.FROM_FAILED_STEP)', async () => {
+            // The retry-from-failed-step feature (flow-run-service.ts FlowRetryStrategy.FROM_FAILED_STEP)
+            // re-enqueues the run as executionType=RESUME with NO payload, expecting the engine to
+            // replay the failed step. Preserving FAILED on this path would silently turn retry into
+            // a no-op. The discriminator is `isNil(resumePayload)`.
+            mockDownload.mockReset()
+            mockCreateWaitpoint.mockReset()
+            mockCreateWaitpoint.mockResolvedValue({
+                id: 'wp-retry',
+                resumeUrl: 'http://localhost:4200/api/v1/flow-runs/run-1/waitpoints/wp-retry',
+            })
+
+            mockDownload.mockResolvedValue(
+                new TextEncoder().encode(JSON.stringify({
+                    executionState: {
+                        steps: {
+                            trigger_1: {
+                                type: FlowTriggerType.EMPTY,
+                                status: StepOutputStatus.SUCCEEDED,
+                                input: {},
+                                output: {},
+                            },
+                            step_1: {
+                                type: FlowActionType.PIECE,
+                                status: StepOutputStatus.FAILED,
+                                input: {},
+                                errorMessage: 'transient error',
+                            },
+                        },
+                        tags: [],
+                    },
+                })),
+            )
+
+            const operation: ResumeExecuteFlowOperation = {
+                ...makeResumeOperation(),
+                flowVersion: makeFlowVersionWithTwoApprovals(),
+                resumePayload: { type: 'inline', value: null },
+            }
+
+            await flowOperation.execute(operation)
+
+            // step_1 (FAILED) was dropped because no resumePayload → engine replayed it from
+            // BEGIN, which creates a waitpoint via the approval piece.
+            expect(mockCreateWaitpoint).toHaveBeenCalled()
+        })
+
+        it('drops non-terminal statuses (e.g. RUNNING from a mid-step crash) on any resume', async () => {
+            // Sanity check on the inverse direction: a step left in RUNNING (engine crash mid-step,
+            // never reached a terminal status) should still be replayed on resume, regardless of
+            // whether resumePayload is present. Only SUCCEEDED, PAUSED, and FAILED (the last
+            // conditionally) survive restoration.
+            mockDownload.mockReset()
+            mockCreateWaitpoint.mockReset()
+            mockCreateWaitpoint.mockResolvedValue({
+                id: 'wp-replay',
+                resumeUrl: 'http://localhost:4200/api/v1/flow-runs/run-1/waitpoints/wp-replay',
+            })
+
+            mockDownload.mockResolvedValue(
+                new TextEncoder().encode(JSON.stringify({
+                    executionState: {
+                        steps: {
+                            trigger_1: {
+                                type: FlowTriggerType.EMPTY,
+                                status: StepOutputStatus.SUCCEEDED,
+                                input: {},
+                                output: {},
+                            },
+                            step_1: {
+                                type: FlowActionType.PIECE,
+                                status: StepOutputStatus.RUNNING,
+                                input: {},
+                            },
+                            step_2: {
+                                type: FlowActionType.PIECE,
+                                status: StepOutputStatus.PAUSED,
+                                input: {},
+                                output: { approved: true },
+                            },
+                        },
+                        tags: [],
+                    },
+                })),
+            )
+
+            const operation: ResumeExecuteFlowOperation = {
+                ...makeResumeOperation(),
+                flowVersion: makeFlowVersionWithTwoApprovals(),
+                resumePayload: {
+                    type: 'inline',
+                    value: { queryParams: { action: 'approve' }, body: {}, headers: {} },
+                },
+            }
+
+            await flowOperation.execute(operation)
+
+            expect(mockCreateWaitpoint).toHaveBeenCalledTimes(1)
         })
     })
 
