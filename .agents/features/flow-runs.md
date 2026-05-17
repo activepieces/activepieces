@@ -94,7 +94,7 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
 
 ### Runs Table Filters
 
-The runs table surfaces a Status multi-select and an "Error message" text input (`failedStepMessage` URL param). The two are mutually exclusive in the UI: while `failedStepMessage` is set, the Status filter renders disabled with a `HoverCard` containing a "Clear filter" button that removes `failedStepMessage` and re-enables Status. Conversely, the moment the user types into the error-message input, any selected statuses are removed from the URL. The empty-status state is intentional — `failedStep.message` only exists on `FAILED_STATES` runs, so dropping the status filter naturally broadens the search across all failure modes (FAILED, TIMEOUT, INTERNAL_ERROR, etc.) rather than narrowing to just `FAILED`. The `disabled` / `disabledTooltip?: ReactNode` props on `DataTableSelectPopover` (wired through `DataTableFilter`) are generic and can be reused for similar "this filter is paused — here's why and how to undo it" cases on other tables.
+The runs table surfaces a Status multi-select and an "Error message" text input (`failedStepMessage` URL param). Filters are independent AND'd dimensions — the backend applies them with no implicit narrowing. Combining a non-failure status with `failedStepMessage` returns empty (only `FAILED_STATES` runs carry `failedStep.message`); the conflict is left for the user to resolve via the visible chips.
 
 ### Failed-Step Surfaces
 

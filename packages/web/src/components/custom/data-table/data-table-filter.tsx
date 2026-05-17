@@ -21,14 +21,10 @@ type DropdownFilterProps = {
     value: string;
     icon?: React.ComponentType<{ className?: string }> | string;
   }[];
-  onChange?: (values: string[], params: URLSearchParams) => void;
-  disabled?: boolean;
-  disabledTooltip?: React.ReactNode;
 };
 
 type InputFilterProps = {
   type: 'input';
-  onChange?: (value: string | undefined, params: URLSearchParams) => void;
 };
 type DateFilterProps = {
   type: 'date';
@@ -96,17 +92,6 @@ export function DataTableFilter<TData, TValue>({
             }
           }
 
-          if (props.type === 'input') {
-            const stringValue =
-              typeof filterValue === 'string' ? filterValue : '';
-            props.onChange?.(
-              stringValue.length > 0 ? stringValue : undefined,
-              newParams,
-            );
-          } else if (props.type === 'select' && Array.isArray(filterValue)) {
-            props.onChange?.(filterValue, newParams);
-          }
-
           return newParams;
         },
         { replace: true },
@@ -122,7 +107,7 @@ export function DataTableFilter<TData, TValue>({
         column?.setFilterValue(filterValue ? filterValue : undefined);
       }
     },
-    [paramKey, column, setSearchParams, props],
+    [paramKey, column, setSearchParams],
   );
 
   switch (props.type) {
@@ -146,8 +131,6 @@ export function DataTableFilter<TData, TValue>({
           options={props.options}
           handleFilterChange={handleFilterChange}
           facets={facets}
-          disabled={props.disabled}
-          disabledTooltip={props.disabledTooltip}
         />
       );
     }

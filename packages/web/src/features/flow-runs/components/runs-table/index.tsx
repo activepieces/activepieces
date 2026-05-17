@@ -175,30 +175,6 @@ export const RunsTable = () => {
   const { checkAccess } = useAuthorization();
   const userHasPermissionToRetryRun = checkAccess(Permission.WRITE_RUN);
 
-  const clearStatusWhenErrorMessageBecomesActive = useCallback(
-    (newMessage: string | undefined, params: URLSearchParams) => {
-      if (!newMessage) return;
-      if (params.getAll('status').length === 0) return;
-      params.delete('status');
-      params.delete(CURSOR_QUERY_PARAM);
-    },
-    [],
-  );
-
-  const clearErrorMessage = useCallback(() => {
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        next.delete('failedStepMessage');
-        next.delete(CURSOR_QUERY_PARAM);
-        return next;
-      },
-      { replace: true },
-    );
-  }, [setSearchParams]);
-
-  const isErrorMessageActive = !!searchParams.get('failedStepMessage');
-
   const filters: DataTableFilters<keyof FlowRun | 'failedStepMessage'>[] =
     useMemo(
       () => [
@@ -225,22 +201,12 @@ export const RunsTable = () => {
             };
           }),
           icon: CheckIcon,
-          disabled: isErrorMessageActive,
-          disabledTooltip: (
-            <div className="flex gap-2 items-center">
-              <p className="text-sm">{t('Must clear error message filter.')}</p>
-              <Button size="sm" variant="outline" onClick={clearErrorMessage}>
-                {t('Clear')}
-              </Button>
-            </div>
-          ),
         },
         {
           type: 'input',
           title: t('Error message'),
           accessorKey: 'failedStepMessage',
           icon: SearchIcon,
-          onChange: clearStatusWhenErrorMessageBecomesActive,
         },
         {
           type: 'date',
@@ -255,12 +221,7 @@ export const RunsTable = () => {
           accessorKey: 'archivedAt',
         },
       ],
-      [
-        flows,
-        clearStatusWhenErrorMessageBecomesActive,
-        isErrorMessageActive,
-        clearErrorMessage,
-      ],
+      [flows],
     );
 
   const retryRuns = flowRunMutations.useBulkRetryRuns({
