@@ -8,7 +8,7 @@ Flows are the core automation primitive in Activepieces. Each flow is a versione
 - `packages/server/api/src/app/flows/flow/flow.controller.ts` — REST controller
 - `packages/server/api/src/app/flows/folder/` — folder CRUD
 - `packages/server/api/src/app/flows/step-run/` — sample data capture and test-step execution
-- `packages/server/api/src/app/flows/human-input/` — form and chat public endpoints
+- `packages/server/api/src/app/flows/flow/human-input/` — form and chat public endpoints
 - `packages/shared/src/lib/automation/flows/flow.ts` — `Flow`, `PopulatedFlow` types
 - `packages/shared/src/lib/automation/flows/flow-version.ts` — `FlowVersion`, `FlowVersionState`
 - `packages/shared/src/lib/automation/flows/operations/` — `FlowOperationRequest` union and all 26 op types
@@ -94,12 +94,13 @@ When CHANGE_STATUS to DISABLED:
 
 ## Frontend Builder Architecture
 
-The visual builder (`packages/web/src/app/builder/`) uses XYFlow for the canvas. State is split into focused Zustand slices:
+The visual builder (`packages/web/src/app/builder/`) uses XYFlow for the canvas. State is split into focused Zustand slices, composed by `builder-state-provider.tsx`:
 - `flow-state.ts` — current flow and version, pending operations
-- `run-state.ts` — active test run, step results
+- `run-state.ts` — active test run, step results, focused/failed step (used by the run-info widget's "Jump to failed step" affordance)
 - `canvas-state.ts` — viewport, selected node, drag state
 - `step-form-state.ts` — open/focused step configuration
 - `piece-selector-state.ts` — piece browser visibility and search
 - `notes-state.tsx` — sticky notes overlay
+- `chat-state.ts` — embedded chat drawer state for testing `chat_submission`-trigger flows from the builder
 
 `flowHooks.useChangeFlowStatus` handles both publish and enable/disable, surfaces `TRIGGER_UPDATE_STATUS` errors via an `ApErrorDialog`, and maps gateway timeout errors to a user-readable message. `flowHooks.importFlowsFromTemplates` replaces `externalId` references across a multi-flow template import to maintain cross-flow links.
