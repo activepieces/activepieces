@@ -105,16 +105,17 @@ description: 'Look up rows in a worksheet based on a column value.',
 			if (keys.length <= columnNumber) continue;
 			const entry_value = row[keys[columnNumber]];
 
-			if (entry_value === undefined) {
+			if (entry_value === undefined || entry_value === null) {
 				continue;
 			}
+			const entryAsString = String(entry_value);
 			if (propsValue.matchCase) {
-				if (entry_value === searchValue) {
+				if (entryAsString === searchValue) {
 					matchedRowCount += 1;
 					matchingRows.push(rows[i]);
 				}
 			} else {
-				if (entry_value.toLowerCase().includes(searchValue.toLowerCase())) {
+				if (entryAsString.toLowerCase().includes(searchValue.toLowerCase())) {
 					matchedRowCount += 1;
 					matchingRows.push(rows[i]);
 				}

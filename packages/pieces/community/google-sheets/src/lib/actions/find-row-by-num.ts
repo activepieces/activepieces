@@ -1,4 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
+import { HttpError } from '@activepieces/pieces-common';
 import { areSheetIdsValid, googleSheetsCommon } from '../common/common';
 import { googleSheetsAuth } from '../common/common';
 import { commonProps } from '../common/props';
@@ -29,14 +30,52 @@ export const findRowByNumAction = createAction({
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
 
-		const row = await googleSheetsCommon.getGoogleSheetRows({
-			auth: context.auth,
-			sheetId: sheetId as number,
-			spreadsheetId: spreadsheetId as string,
-			rowIndex_s: rowNumber,
-			rowIndex_e: rowNumber,
-			headerRow: headerRow,
-		});
-		return row[0];
+		let row: Awaited<ReturnType<typeof googleSheetsCommon.getGoogleSheetRows>>;
+		try {
+			row = await googleSheetsCommon.getGoogleSheetRows({
+				auth: context.auth,
+				sheetId: sheetId as number,
+				spreadsheetId: spreadsheetId as string,
+				rowIndex_s: rowNumber,
+				rowIndex_e: rowNumber,
+				headerRow: headerRow,
+			});
+		} catch (error) {
+			if (isRowOutOfGridError(error)) {
+				return {
+					found: false,
+					row: null,
+				};
+			}
+			throw error;
+		}
+
+		if (row.length === 0) {
+			return {
+				found: false,
+				row: null,
+			};
+		}
+
+		return {
+			found: true,
+			row: row[0].row,
+			values: row[0].values,
+		};
 	},
 });
+
+function isRowOutOfGridError(error: unknown): boolean {
+	if (error instanceof HttpError) {
+		const status = error.response?.status;
+		if (status === 400) {
+			const body = error.response?.body as { error?: { message?: string } } | undefined;
+			const message = body?.error?.message ?? '';
+			return /exceeds grid limits/i.test(message);
+		}
+	}
+	if (error instanceof Error) {
+		return /exceeds grid limits/i.test(error.message);
+	}
+	return false;
+}
