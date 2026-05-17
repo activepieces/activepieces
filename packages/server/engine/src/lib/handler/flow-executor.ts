@@ -76,7 +76,6 @@ export const flowExecutor = {
 
         while (!isNil(currentAction)) {
             if (currentAction.skip && !testSingleStepMode) {
-                previousAction = currentAction
                 currentAction = currentAction.nextAction
                 continue
             }
