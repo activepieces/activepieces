@@ -38,6 +38,7 @@ type ApMentionNodeAttrs = {
   logoUrl?: string;
   displayText: string;
   serverValue: string;
+  isCredential?: boolean;
 };
 const flattenNestedKeysRegex = /^flattenNestedKeys\((\w+),\s*\[(.*?)\]\)$/;
 enum TipTapNodeTypes {
@@ -181,6 +182,7 @@ function parseLabelFromMention(
       displayText: `Credential · ${displayName}`,
       serverValue: mention,
       logoUrl: undefined,
+      isCredential: true,
     };
   }
   const stepIdx = steps.findIndex((step) => step.name === stepName);
@@ -249,6 +251,33 @@ function convertTiptapJsonToText(nodes: JSONContent[]): string {
   return res.join('');
 }
 
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+const buildCredentialIconElement = (): SVGSVGElement => {
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '2');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.classList.add('w-4', 'h-4', 'shrink-0', 'text-primary');
+  const path = document.createElementNS(SVG_NS, 'path');
+  path.setAttribute(
+    'd',
+    'M2 18v3c0 .6.4 1 1 1h4v-3h3v-3h2l1.4-1.4a6.5 6.5 0 1 0-4-4Z',
+  );
+  const circle = document.createElementNS(SVG_NS, 'circle');
+  circle.setAttribute('cx', '16.5');
+  circle.setAttribute('cy', '7.5');
+  circle.setAttribute('r', '.5');
+  circle.setAttribute('fill', 'currentColor');
+  svg.appendChild(path);
+  svg.appendChild(circle);
+  return svg;
+};
+
 const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
   const mentionElement = document.createElement('span');
   const apMentionNodeAttrs: ApMentionNodeAttrs = JSON.parse(
@@ -268,7 +297,9 @@ const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
   mentionElement.dataset.type = TipTapNodeTypes.mention;
   mentionElement.contentEditable = 'false';
 
-  if (apMentionNodeAttrs.logoUrl) {
+  if (apMentionNodeAttrs.isCredential) {
+    mentionElement.appendChild(buildCredentialIconElement());
+  } else if (apMentionNodeAttrs.logoUrl) {
     const imgElement = document.createElement('img');
     imgElement.src = apMentionNodeAttrs.logoUrl;
     imgElement.className = 'object-contain w-4 h-4';

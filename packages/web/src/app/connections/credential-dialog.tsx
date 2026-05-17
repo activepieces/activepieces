@@ -135,9 +135,9 @@ function CredentialForm(props: CredentialFormProps) {
             {isEdit ? t('Edit credential') : t('New credential')}
           </DialogTitle>
           <DialogDescription>
-            {t('Encrypted at rest. Reference it via {ref}.', {
-              ref: "{{connections['cred_NAME']}}",
-            })}
+            {t(
+              'Store an API key, token, or other secret you can reuse across flow steps without exposing the value.',
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormField

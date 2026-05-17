@@ -7,7 +7,9 @@ import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
   Copy,
+  Info,
   KeyRound,
+  Link2,
   MoreVertical,
   Pencil,
   Search,
@@ -17,7 +19,6 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { CredentialDialog } from '@/app/connections/credential-dialog';
-import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
 import {
   BulkAction,
   DataTable,
@@ -29,6 +30,7 @@ import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { PlusIcon } from '@/components/icons/plus';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -61,6 +63,17 @@ const copyValueToClipboard = async (id: string) => {
     toast.success(t('Value copied to clipboard'));
   } catch {
     toast.error(t('Could not copy value'));
+  }
+};
+
+const copyReferenceToClipboard = async (externalId: string) => {
+  try {
+    await navigator.clipboard.writeText(
+      `{{connections['${externalId}'].secret_text}}`,
+    );
+    toast.success(t('Reference copied to clipboard'));
+  } catch {
+    toast.error(t('Could not copy reference'));
   }
 };
 
@@ -157,14 +170,9 @@ function CredentialsPage() {
             <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-md bg-primary/10 text-primary">
               <KeyRound className="w-4 h-4" />
             </div>
-            <CopyTextTooltip
-              title={t('Copy reference')}
-              text={`{{connections['${row.original.externalId}'].secret_text}}`}
-            >
-              <span className="font-mono text-sm truncate">
-                {row.original.displayName}
-              </span>
-            </CopyTextTooltip>
+            <span className="font-mono text-sm truncate">
+              {row.original.displayName}
+            </span>
           </div>
         ),
       },
@@ -194,7 +202,7 @@ function CredentialsPage() {
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem
                   disabled={!canWrite}
                   onSelect={(e) => {
@@ -204,6 +212,15 @@ function CredentialsPage() {
                 >
                   <Pencil className="h-4 w-4 mr-2" />
                   {t('Edit')}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    void copyReferenceToClipboard(row.original.externalId);
+                  }}
+                >
+                  <Link2 className="h-4 w-4 mr-2" />
+                  {t('Copy reference')}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   disabled={!canWrite}
@@ -292,7 +309,15 @@ function CredentialsPage() {
   ];
 
   return (
-    <div className="flex-col w-full">
+    <div className="flex flex-col gap-4 w-full">
+      <Alert variant="primary">
+        <Info className="h-4 w-4" />
+        <AlertDescription>
+          {t(
+            'Credentials are encrypted secrets — like API keys or tokens — that you create once and reference inside any flow step. The value stays hidden; only the reference travels with your flows.',
+          )}
+        </AlertDescription>
+      </Alert>
       <DataTable
         emptyStateTextTitle={t('No credentials yet')}
         emptyStateTextDescription={t(
