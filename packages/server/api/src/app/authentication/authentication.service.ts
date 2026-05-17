@@ -69,7 +69,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                 platformId: preferredPlatformId,
                 projectId: null,
             })
-            await authenticationUtils(log).sendTelemetry({ identity: userIdentity, user, projectId: authResponse.projectId ?? "" })
+            await authenticationUtils(log).sendTelemetry({ identity: userIdentity, user, projectId: authResponse.projectId ?? '' })
             return authResponse
         }
         log.info({ email: params.email, provider: params.provider }, 'User signed up without platform')
