@@ -15,7 +15,7 @@ export const x402 = createPiece({
   auth: x402Auth,
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/x402.png',
-  authors: ['activepieces'],
+  authors: ['sunbei597226617'],
   actions: [
     callPaidApi,
   ],

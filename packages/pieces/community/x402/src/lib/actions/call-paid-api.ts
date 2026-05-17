@@ -18,17 +18,87 @@ import {
   getAssociatedTokenAddressSync,
 } from '@solana/spl-token';
 
-interface X402PaymentRequired {
-  maxAmountRequired: number;
-  asset: string;
-  payTo: string;
-  network: string;
+// Known USDC mint addresses for Solana networks
+const USDC_MINTS = {
+  'mainnet-beta': 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+  'devnet': '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
+  'testnet': '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
+} as const;
+
+interface X402PaymentRequirement {
   scheme: string;
+  price: number | string;
+  network: string;
+  payTo: string;
+  asset?: string;
   extra?: {
     decimals?: number;
     computeUnits?: number;
     mint?: string;
   };
+}
+
+interface X402PaymentRequired {
+  // V2 format: accepts[] array of payment options
+  accepts?: X402PaymentRequirement[];
+  // V1 format: top-level fields (backward compatibility)
+  maxAmountRequired?: number | string;
+  asset?: string;
+  payTo?: string;
+  network?: string;
+  scheme?: string;
+  extra?: {
+    decimals?: number;
+    computeUnits?: number;
+    mint?: string;
+  };
+}
+
+/**
+ * Parse x402 V2 accepts[] array or fall back to V1 top-level fields.
+ * Selects a Solana payment requirement compatible with the configured network.
+ */
+function parsePaymentRequirement(
+  paymentRequired: X402PaymentRequired,
+  configuredNetwork: string
+): X402PaymentRequirement {
+  // V2 format: accepts[] array
+  if (paymentRequired.accepts && paymentRequired.accepts.length > 0) {
+    // Filter for Solana requirements matching the configured network
+    const solanaRequirements = paymentRequired.accepts.filter(
+      (req) => req.network === configuredNetwork && req.scheme === 'solana'
+    );
+
+    if (solanaRequirements.length === 0) {
+      throw new Error(
+        `No compatible Solana payment requirement found for network '${configuredNetwork}'. Available options: ${paymentRequired.accepts.map((req) => req.network).join(', ')}`
+      );
+    }
+
+    // Use the first matching requirement
+    return solanaRequirements[0];
+  }
+
+  // V1 format: top-level fields (backward compatibility)
+  if (
+    paymentRequired.maxAmountRequired &&
+    paymentRequired.payTo &&
+    paymentRequired.network &&
+    paymentRequired.scheme
+  ) {
+    return {
+      scheme: paymentRequired.scheme,
+      price: paymentRequired.maxAmountRequired,
+      network: paymentRequired.network,
+      payTo: paymentRequired.payTo,
+      asset: paymentRequired.asset,
+      extra: paymentRequired.extra,
+    };
+  }
+
+  throw new Error(
+    'Invalid x402 payment response: missing payment requirement details. Expected accepts[] (V2) or top-level fields (V1).'
+  );
 }
 
 export const callPaidApi = createAction({
@@ -105,24 +175,41 @@ export const callPaidApi = createAction({
       if (error instanceof HttpError && error.response.status === 402) {
         const paymentRequired: X402PaymentRequired = error.response.body;
 
-        if (paymentRequired.maxAmountRequired > maxPrice) {
+        // Parse V2 accepts[] or V1 top-level fields
+        const requirement = parsePaymentRequirement(paymentRequired, network);
+
+        // Validate mint address against known USDC mints
+        const expectedMint = USDC_MINTS[network as keyof typeof USDC_MINTS];
+        const providedMint = requirement.extra?.mint || requirement.asset;
+        if (providedMint && providedMint !== expectedMint) {
           throw new Error(
-            `Payment required (${paymentRequired.maxAmountRequired} USDC) exceeds maximum price (${maxPrice} USDC)`
+            `Invalid USDC mint address. Expected ${expectedMint} for ${network}, got ${providedMint}`
           );
         }
 
-        const usdcMintPubkey = new PublicKey(
-          paymentRequired.extra?.mint || 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
-        );
-        const decimals = paymentRequired.extra?.decimals ?? 6;
+        const usdcMintPubkey = new PublicKey(expectedMint);
+        const decimals = requirement.extra?.decimals ?? 6;
+
+        // Convert maxAmountRequired to atomic units (it may be a number or string)
+        const maxAmountAtomic = BigInt(requirement.price);
+
+        // Convert user's maxPrice (USDC) to atomic units for comparison
+        const maxPriceAtomic = BigInt(Math.round(maxPrice * Math.pow(10, decimals)));
+
+        if (maxAmountAtomic > maxPriceAtomic) {
+          // Convert back to USDC for user-friendly error message
+          const requiredUsdc = Number(maxAmountAtomic) / Math.pow(10, decimals);
+          throw new Error(
+            `Payment required (${requiredUsdc.toFixed(6)} USDC) exceeds maximum price (${maxPrice} USDC)`
+          );
+        }
 
         // Build signed payment envelope (do NOT broadcast)
         const paymentEnvelope = await buildSignedPaymentEnvelope(
           connection,
           keypair,
-          paymentRequired,
-          usdcMintPubkey,
-          decimals
+          requirement,
+          usdcMintPubkey
         );
 
         // Retry request with X-Payment header (server verifies and submits)
@@ -157,9 +244,8 @@ export const callPaidApi = createAction({
 async function buildSignedPaymentEnvelope(
   connection: Connection,
   keypair: Keypair,
-  paymentRequired: X402PaymentRequired,
-  usdcMint: PublicKey,
-  decimals: number
+  requirement: X402PaymentRequirement,
+  usdcMint: PublicKey
 ): Promise<{ transaction: string; signature: string; network: string }> {
   // Derive sender's Associated Token Account for USDC
   const senderAta = getAssociatedTokenAddressSync(
@@ -168,16 +254,15 @@ async function buildSignedPaymentEnvelope(
   );
 
   // Derive recipient's Associated Token Account for USDC
-  const recipientWallet = new PublicKey(paymentRequired.payTo);
+  const recipientWallet = new PublicKey(requirement.payTo);
   const recipientAta = getAssociatedTokenAddressSync(
     usdcMint,
     recipientWallet
   );
 
-  // Use raw integer amount to avoid floating-point rounding issues
-  const rawAmount = BigInt(
-    Math.round(paymentRequired.maxAmountRequired * Math.pow(10, decimals))
-  );
+  // price is already in atomic units (e.g., micro-USDC), use directly
+  const rawAmount = BigInt(requirement.price);
+  const decimals = requirement.extra?.decimals ?? 6;
 
   const { blockhash } = await connection.getLatestBlockhash();
 
@@ -189,7 +274,7 @@ async function buildSignedPaymentEnvelope(
         usdcMint,      // mint: USDC mint address
         recipientAta,  // to: recipient's USDC token account (ATA)
         keypair.publicKey,
-        rawAmount,     // amount: raw integer with decimals
+        rawAmount,     // amount: raw integer in atomic units (already scaled)
         decimals       // decimals: 6 for USDC
       )
     );
@@ -203,6 +288,6 @@ async function buildSignedPaymentEnvelope(
   return {
     transaction: serialized,
     signature: Buffer.from(transaction.signature!).toString('base64'),
-    network: paymentRequired.network,
+    network: requirement.network,
   };
 }
