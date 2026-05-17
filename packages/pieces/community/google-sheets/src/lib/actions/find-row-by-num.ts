@@ -66,16 +66,31 @@ export const findRowByNumAction = createAction({
 });
 
 function isRowOutOfGridError(error: unknown): boolean {
+	const pattern = /exceeds grid limits/i;
+
 	if (error instanceof HttpError) {
-		const status = error.response?.status;
-		if (status === 400) {
-			const body = error.response?.body as { error?: { message?: string } } | undefined;
-			const message = body?.error?.message ?? '';
-			return /exceeds grid limits/i.test(message);
+		const apiMessage = extractApiErrorMessage(error.response?.body);
+		if (apiMessage !== undefined && pattern.test(apiMessage)) {
+			return true;
 		}
 	}
 	if (error instanceof Error) {
-		return /exceeds grid limits/i.test(error.message);
+		return pattern.test(error.message);
 	}
 	return false;
+}
+
+function extractApiErrorMessage(body: unknown): string | undefined {
+	if (typeof body === 'string') {
+		return body;
+	}
+	if (!body || typeof body !== 'object' || !('error' in body)) {
+		return undefined;
+	}
+	const inner = body.error;
+	if (!inner || typeof inner !== 'object' || !('message' in inner)) {
+		return undefined;
+	}
+	const message = inner.message;
+	return typeof message === 'string' ? message : undefined;
 }

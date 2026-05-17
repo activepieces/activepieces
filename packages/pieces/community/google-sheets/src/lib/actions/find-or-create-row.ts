@@ -14,7 +14,7 @@ import {
 	ValueInputOption,
 } from '../common/common';
 import { columnNameProp, commonProps, isFirstRowHeaderProp, rowValuesProp } from '../common/props';
-import { getWorkSheetName } from '../triggers/helpers';
+import { getWorkSheetName, mapRowsToColumnLabels } from '../triggers/helpers';
 
 export const findOrCreateRowAction = createAction({
 	auth: googleSheetsAuth,
@@ -123,24 +123,39 @@ export const findOrCreateRowAction = createAction({
 			? objectToArray(values).map((val) => (isNil(val) ? '' : val))
 			: (values.values as unknown[]);
 
+		const stringifiedValues = stringifyArray(formattedValues);
+
 		const appendResponse = await sheets.spreadsheets.values.append({
 			spreadsheetId,
 			range: `${sheetName}!A:A`,
 			valueInputOption: as_string ? ValueInputOption.RAW : ValueInputOption.USER_ENTERED,
 			requestBody: {
 				majorDimension: Dimension.ROWS,
-				values: [stringifyArray(formattedValues)],
+				values: [stringifiedValues],
 			},
 		});
 
 		const updatedRange = appendResponse.data.updates?.updatedRange ?? '';
 		const updatedRowNumber = extractRowNumber(updatedRange);
 
+		const labeledCreatedRow = mapRowsToColumnLabels(
+			[stringifiedValues],
+			updatedRowNumber - 1,
+			stringifiedValues.length,
+		);
+		const [createdMapped] = await mapRowsToHeaderNames(
+			labeledCreatedRow,
+			useHeaderNames as boolean,
+			spreadsheetId,
+			sheetId,
+			headerRow,
+			auth,
+		);
+
 		return {
 			found: false,
 			created: true,
-			row: updatedRowNumber,
-			updates: appendResponse.data,
+			...createdMapped,
 		};
 	},
 });
