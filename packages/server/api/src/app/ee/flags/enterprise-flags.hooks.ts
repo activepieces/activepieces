@@ -12,8 +12,13 @@ import { appearanceHelper } from '../helper/appearance-helper'
 
 export const enterpriseFlagsHooks: FlagsServiceHooks = {
     async modify({ flags, request }) {
-        const modifiedFlags: Record<string, string | boolean | number | string[] | Record<string, unknown>> = { ...flags }
-        const platformIdFromPrincipal = !request.principal || request.principal.type === PrincipalType.UNKNOWN || request.principal.type === PrincipalType.WORKER ? null : request.principal.platform.id
+        const modifiedFlags: Record<string, string | boolean | number | Record<string, unknown>> = { ...flags }
+        const platformIdFromPrincipal = !request.principal
+            || request.principal.type === PrincipalType.UNKNOWN
+            || request.principal.type === PrincipalType.WORKER
+            || request.principal.type === PrincipalType.ONBOARDING
+            ? null
+            : request.principal.platform.id
         const platformId = platformIdFromPrincipal ?? await platformUtils.getPlatformIdForRequest(request)
         const edition = system.getEdition()
         const googleAuthEnabled = !isNil(system.get(AppSystemProp.GOOGLE_CLIENT_ID)) && !isNil(system.get(AppSystemProp.GOOGLE_CLIENT_SECRET))

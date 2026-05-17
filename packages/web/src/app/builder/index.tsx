@@ -33,8 +33,12 @@ import { FlowVersionsList } from './flow-versions';
 import { RunsList } from './run-list';
 import { CursorPositionProvider } from './state/cursor-position-context';
 import { StepSettingsContainer } from './step-settings';
-import { ResizableVerticalPanelsProvider } from './step-settings/resizable-vertical-panels-context';
 const animateResizeClassName = `transition-all `;
+
+const SPLIT_MODE_SIDEBAR_SIZE = '55%';
+const DEFAULT_SIDEBAR_SIZE = '25%';
+const SPLIT_MODE_MIN_SIZE = '700px';
+const DEFAULT_MIN_SIZE = '400px';
 
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -44,6 +48,8 @@ const BuilderPage = () => {
     selectedStepName,
     removeAllStepTestsListeners,
     selectedStep,
+    testPanelView,
+    isTestPanelOpen,
   ] = useBuilderStateContext((state) => [
     state.flowVersion,
     state.rightSidebar,
@@ -53,6 +59,8 @@ const BuilderPage = () => {
       state.selectedStep ?? '',
       state.flowVersion.trigger,
     ),
+    state.testPanelView,
+    state.isTestPanelOpen,
   ]);
   useEffect(() => {
     return () => {
@@ -68,7 +76,26 @@ const BuilderPage = () => {
     window.addEventListener('pointerup', handlePointerUp);
     return () => window.removeEventListener('pointerup', handlePointerUp);
   }, []);
-  const rightHandleRef = flowCanvasHooks.useAnimateSidebar(rightSidebar);
+  const isSplitForPiece =
+    rightSidebar === RightSideBarType.PIECE_SETTINGS &&
+    testPanelView === 'split' &&
+    isTestPanelOpen;
+  const preferredSize = isSplitForPiece
+    ? SPLIT_MODE_SIDEBAR_SIZE
+    : DEFAULT_SIDEBAR_SIZE;
+  const rightHandleRef = flowCanvasHooks.useAnimateSidebar(
+    rightSidebar,
+    preferredSize,
+  );
+  useEffect(() => {
+    const currentSize = rightHandleRef.current?.getSize()?.asPercentage ?? 0;
+    if (currentSize === 0) return;
+    if (isSplitForPiece && currentSize < 50) {
+      rightHandleRef.current?.resize(SPLIT_MODE_SIDEBAR_SIZE);
+    } else if (!isSplitForPiece && currentSize > 50) {
+      rightHandleRef.current?.resize(DEFAULT_SIDEBAR_SIZE);
+    }
+  }, [isSplitForPiece, rightHandleRef]);
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
   const { pieceModel, refetch: refetchPiece } =
     piecesHooks.usePieceModelForStepSettings({
@@ -134,8 +161,20 @@ const BuilderPage = () => {
           id="right-sidebar"
           collapsedSize="0%"
           defaultSize="0%"
-          minSize={rightSidebar === RightSideBarType.NONE ? '0%' : '400px'}
-          maxSize={rightSidebar === RightSideBarType.NONE ? '0%' : '60%'}
+          minSize={
+            rightSidebar === RightSideBarType.NONE
+              ? '0%'
+              : isSplitForPiece
+              ? SPLIT_MODE_MIN_SIZE
+              : DEFAULT_MIN_SIZE
+          }
+          maxSize={
+            rightSidebar === RightSideBarType.NONE
+              ? '0%'
+              : isSplitForPiece
+              ? '80%'
+              : '60%'
+          }
           className={cn('min-w-0 bg-background z-30', {
             [animateResizeClassName]: !isDraggingHandle,
           })}
@@ -148,19 +187,17 @@ const BuilderPage = () => {
           <div ref={rightSidePanelRef} className="h-full w-full">
             {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
               selectedStep && (
-                <ResizableVerticalPanelsProvider>
-                  <StepSettingsProvider
-                    pieceModel={pieceModel}
-                    selectedStep={selectedStep}
-                    key={constructContainerKey({
-                      flowVersionId: flowVersion.id,
-                      step: selectedStep,
-                      hasPieceModelLoaded: !!pieceModel,
-                    })}
-                  >
-                    <StepSettingsContainer />
-                  </StepSettingsProvider>
-                </ResizableVerticalPanelsProvider>
+                <StepSettingsProvider
+                  pieceModel={pieceModel}
+                  selectedStep={selectedStep}
+                  key={constructContainerKey({
+                    flowVersionId: flowVersion.id,
+                    step: selectedStep,
+                    hasPieceModelLoaded: !!pieceModel,
+                  })}
+                >
+                  <StepSettingsContainer />
+                </StepSettingsProvider>
               )}
             {rightSidebar === RightSideBarType.RUNS && <RunsList />}
             {rightSidebar === RightSideBarType.VERSIONS && <FlowVersionsList />}

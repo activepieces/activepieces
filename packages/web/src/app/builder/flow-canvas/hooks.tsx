@@ -26,7 +26,10 @@ import { textMentionUtils } from '../piece-properties/text-input-with-mentions/t
 
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 
-export const useAnimateSidebar = (sidebarValue: RightSideBarType) => {
+export const useAnimateSidebar = (
+  sidebarValue: RightSideBarType,
+  preferredSize: string = '25%',
+) => {
   const handleRef = useRef<PanelImperativeHandle>(null);
   const sidebarClosed = sidebarValue === RightSideBarType.NONE;
   useEffect(() => {
@@ -34,9 +37,9 @@ export const useAnimateSidebar = (sidebarValue: RightSideBarType) => {
     if (sidebarClosed) {
       handleRef.current?.collapse();
     } else if (sidebarSize === 0) {
-      handleRef.current?.resize('25%');
+      handleRef.current?.resize(preferredSize);
     }
-  }, [handleRef, sidebarValue, sidebarClosed]);
+  }, [handleRef, sidebarValue, sidebarClosed, preferredSize]);
   return handleRef;
 };
 

@@ -4,10 +4,10 @@ import {
     apId,
     FlowActionType,
     FlowRunStatus,
-    McpServer,
-    McpServerStatus,
+    McpServerType,
     PackageType,
     PieceType,
+    ProjectScopedMcpServer,
     RunEnvironment,
     StepLocationRelativeToParent,
 } from '@activepieces/shared'
@@ -21,7 +21,7 @@ import { apListFlowsTool } from '../../../../src/app/mcp/tools/ap-list-flows'
 import { apBuildFlowTool } from '../../../../src/app/mcp/tools/ap-build-flow'
 import { apCreateFlowTool } from '../../../../src/app/mcp/tools/ap-create-flow'
 import { apFlowStructureTool } from '../../../../src/app/mcp/tools/ap-flow-structure'
-import { apListPiecesTool } from '../../../../src/app/mcp/tools/ap-list-pieces'
+import { apResearchPiecesTool } from '../../../../src/app/mcp/tools/ap-research-pieces'
 import { apAddStepTool } from '../../../../src/app/mcp/tools/ap-add-step'
 import { apUpdateStepTool } from '../../../../src/app/mcp/tools/ap-update-step'
 import { apRenameFlowTool } from '../../../../src/app/mcp/tools/ap-rename-flow'
@@ -146,15 +146,16 @@ afterAll(async () => {
     await teardownTestEnvironment()
 })
 
-function makeMcp(projectId: string): McpServer {
+function makeMcp(projectId: string): ProjectScopedMcpServer {
     return {
         id: apId(),
         created: new Date().toISOString(),
         updated: new Date().toISOString(),
         projectId,
-        status: McpServerStatus.ENABLED,
+        platformId: null,
+        type: McpServerType.PROJECT,
         token: apId(),
-        enabledTools: null,
+        disabledTools: null,
     }
 }
 
@@ -162,7 +163,7 @@ function text(result: { content: Array<{ type: 'text', text: string }> }): strin
     return result.content.map(c => c.text).join('\n')
 }
 
-async function createFlowAndGetId(mcp: McpServer, flowName: string): Promise<string> {
+async function createFlowAndGetId(mcp: ProjectScopedMcpServer, flowName: string): Promise<string> {
     const result = await apCreateFlowTool(mcp, mockLog).execute({ flowName })
     const match = text(result).match(/\(id: (\S+?)\)/)
     if (!match) throw new Error(`Could not extract flowId from: ${text(result)}`)
@@ -211,11 +212,11 @@ describe('MCP Tools integration', () => {
         expect(text(result)).toContain('unconfigured')
     })
 
-    it('4. ap_list_pieces — lists pieces matching search query', async () => {
+    it('4. ap_research_pieces — lists pieces matching search query', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        const result = await apListPiecesTool(mcp, mockLog).execute({ searchQuery: 'test-email' })
+        const result = await apResearchPiecesTool(mcp, mockLog).execute({ searchQuery: 'test-email' })
 
         expect(text(result)).toContain('✅')
         expect(text(result).toLowerCase()).toContain('test-email')
@@ -233,7 +234,6 @@ describe('MCP Tools integration', () => {
             stepType: FlowActionType.PIECE,
             displayName: 'Send Email',
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
         })
 
         expect(text(result)).toContain('✅')
@@ -256,7 +256,6 @@ describe('MCP Tools integration', () => {
             stepType: FlowActionType.PIECE,
             displayName: 'Send Email',
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
         })
 
         // Update the step: set skip=true. The step is still invalid (no actionName configured)
@@ -481,7 +480,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -516,7 +514,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -527,7 +524,6 @@ describe('MCP Tools integration', () => {
             stepType: FlowActionType.PIECE,
             displayName: 'Unconfigured Piece',
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
         })
 
         const result = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
@@ -547,7 +543,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -580,7 +575,7 @@ describe('MCP Tools integration', () => {
         expect(text(result)).toContain('✅')
         expect(text(result)).toContain('folder')
         expect(text(result)).toContain('DROPDOWN')
-        expect(text(result)).toContain('Dynamic dropdown')
+        expect(text(result)).toContain('ap_resolve_property_options')
     })
 
     it('23. ap_get_piece_props — schema includes all fields regardless of auth', async () => {
@@ -613,7 +608,7 @@ describe('MCP Tools integration', () => {
 
         expect(text(result)).toContain('✅')
         expect(text(result)).not.toContain('DROPDOWN')
-        expect(text(result)).not.toContain('Dynamic dropdown')
+        expect(text(result)).not.toContain('ap_resolve_property_options')
     })
 
     it('25. ap_get_piece_props — with auth and invalid piece returns error before resolution', async () => {
@@ -705,7 +700,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -741,7 +735,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -751,7 +744,6 @@ describe('MCP Tools integration', () => {
         const renameResult = await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
             displayName: 'Renamed Trigger',
         })
@@ -770,7 +762,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
             input: { customField: 'should-be-discarded' },
         })
@@ -778,7 +769,6 @@ describe('MCP Tools integration', () => {
         const switchResult = await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_attachment',
         })
         expect(text(switchResult)).toContain('✅')
@@ -796,14 +786,12 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
         const addFieldResult = await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
             input: { extraField: 'value' },
         })
@@ -866,7 +854,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -898,7 +885,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -959,7 +945,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1043,7 +1028,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1125,7 +1109,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1133,7 +1116,6 @@ describe('MCP Tools integration', () => {
             await apUpdateTriggerTool(mcp, mockLog).execute({
                 flowId,
                 pieceName: '@activepieces/piece-test-email',
-                pieceVersion: '~0.1.0',
                 triggerName: 'new_email',
                 displayName: `Attempt ${i + 1}`,
             })
@@ -1157,7 +1139,6 @@ describe('MCP Tools integration', () => {
             flowName: 'Build Test 1',
             trigger: {
                 pieceName: '@activepieces/piece-test-email',
-                pieceVersion: '~0.1.0',
                 triggerName: 'new_email',
             },
             steps: [
@@ -1183,7 +1164,6 @@ describe('MCP Tools integration', () => {
             flowName: 'Build Test 2',
             trigger: {
                 pieceName: '@activepieces/piece-test-email',
-                pieceVersion: '~0.1.0',
                 triggerName: 'new_email',
             },
             steps: [
@@ -1231,7 +1211,6 @@ describe('MCP Tools integration', () => {
             flowName: 'Build Test Partial',
             trigger: {
                 pieceName: '@activepieces/piece-test-email',
-                pieceVersion: '~0.1.0',
                 triggerName: 'new_email',
             },
             steps: [
@@ -1245,7 +1224,6 @@ describe('MCP Tools integration', () => {
                     type: FlowActionType.PIECE,
                     displayName: 'Invalid Piece',
                     pieceName: '@activepieces/piece-test-email',
-                    pieceVersion: '~0.1.0',
                 },
             ],
         })
@@ -1263,7 +1241,6 @@ describe('MCP Tools integration', () => {
             flowName: 'Build Test Empty',
             trigger: {
                 pieceName: '@activepieces/piece-test-email',
-                pieceVersion: '~0.1.0',
                 triggerName: 'new_email',
             },
             steps: [],
@@ -1281,7 +1258,6 @@ describe('MCP Tools integration', () => {
             flowName: 'Build Test Lifecycle',
             trigger: {
                 pieceName: '@activepieces/piece-test-email',
-                pieceVersion: '~0.1.0',
                 triggerName: 'new_email',
             },
             steps: [
@@ -1313,7 +1289,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1349,7 +1324,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1381,7 +1355,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1424,7 +1397,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1492,7 +1464,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1514,7 +1485,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1564,7 +1534,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1607,7 +1576,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1641,7 +1609,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1673,7 +1640,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1704,7 +1670,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1735,7 +1700,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1766,7 +1730,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1796,7 +1759,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1855,7 +1817,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1996,7 +1957,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -2337,7 +2297,7 @@ describe('MCP Tools integration', () => {
 
         expect(text(result)).toContain('❌')
         expect(text(result)).toContain('not found')
-        expect(text(result)).toContain('ap_list_pieces')
+        expect(text(result)).toContain('ap_research_pieces')
     })
 
     it('85. ap_run_action — returns error for non-existent action on a valid piece', async () => {
@@ -2412,5 +2372,117 @@ describe('MCP Tools integration', () => {
         })
 
         expect(text(result)).not.toContain('special characters')
+    })
+
+    // ── Private (CUSTOM) pieces visibility ───────────────────────────
+    // MCP tools must resolve the caller's platformId so pieces created
+    // on that platform (pieceType: CUSTOM) are discoverable. Without the
+    // platformId filter, `pieceCache.filterPieceBasedOnType` drops them.
+
+    it('90. ap_research_pieces — includes CUSTOM pieces belonging to the caller\'s platform', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const privatePiece = createMockPieceMetadata({
+            name: '@activepieces/piece-private-custom',
+            displayName: 'Private Custom Piece',
+            version: '0.1.0',
+            pieceType: PieceType.CUSTOM,
+            packageType: PackageType.REGISTRY,
+            platformId: ctx.platform.id,
+            actions: {
+                run: {
+                    name: 'run',
+                    displayName: 'Run',
+                    description: 'Runs the private action',
+                    requireAuth: false,
+                    props: {},
+                },
+            },
+            triggers: {},
+        })
+        await db.save('piece_metadata', privatePiece)
+
+        const result = await apResearchPiecesTool(mcp, mockLog).execute({
+            searchQuery: 'private-custom',
+        })
+
+        expect(text(result)).toContain('✅')
+        expect(text(result)).toContain('@activepieces/piece-private-custom')
+    })
+
+    it('91. ap_get_piece_props — resolves CUSTOM pieces on the caller\'s platform via lookupPieceComponent', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const privatePiece = createMockPieceMetadata({
+            name: '@activepieces/piece-private-lookup',
+            displayName: 'Private Lookup Piece',
+            version: '0.1.0',
+            pieceType: PieceType.CUSTOM,
+            packageType: PackageType.REGISTRY,
+            platformId: ctx.platform.id,
+            actions: {
+                do_thing: {
+                    name: 'do_thing',
+                    displayName: 'Do Thing',
+                    description: 'Does a thing on the private piece',
+                    requireAuth: false,
+                    props: {
+                        note: { type: 'SHORT_TEXT', displayName: 'Note', required: false },
+                    },
+                },
+            },
+            triggers: {},
+        })
+        await db.save('piece_metadata', privatePiece)
+
+        const result = await apGetPiecePropsTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-private-lookup',
+            actionOrTriggerName: 'do_thing',
+            type: 'action',
+        })
+
+        // If the platformId resolution is broken, lookupPieceComponent returns
+        // "Piece not found" here. With the fix, the schema is returned.
+        expect(text(result)).not.toContain('not found')
+        expect(text(result)).toContain('do_thing')
+    })
+
+    it('92. ap_research_pieces — does NOT include CUSTOM pieces from a different platform', async () => {
+        // Two independent projects on two different platforms. Each platform's
+        // private piece must stay invisible to the other.
+        const ctxA = await createTestContext(app)
+        const ctxB = await createTestContext(app)
+        const mcpA = makeMcp(ctxA.project.id)
+
+        const privateOfB = createMockPieceMetadata({
+            name: '@activepieces/piece-private-only-b',
+            displayName: 'Private Piece Only for Platform B',
+            version: '0.1.0',
+            pieceType: PieceType.CUSTOM,
+            packageType: PackageType.REGISTRY,
+            platformId: ctxB.platform.id,
+            actions: {
+                run: {
+                    name: 'run',
+                    displayName: 'Run',
+                    description: 'Only visible on platform B',
+                    requireAuth: false,
+                    props: {},
+                },
+            },
+            triggers: {},
+        })
+        await db.save('piece_metadata', privateOfB)
+
+        const result = await apResearchPiecesTool(mcpA, mockLog).execute({
+            searchQuery: 'private-only-b',
+        })
+
+        // Require the call to have succeeded — otherwise an error response
+        // (which also wouldn't contain the piece name) would falsely pass.
+        expect(text(result)).toContain('✅')
+        expect(text(result)).not.toContain('@activepieces/piece-private-only-b')
     })
 })

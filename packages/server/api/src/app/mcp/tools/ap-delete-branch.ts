@@ -2,9 +2,9 @@ import {
     FlowOperationRequest,
     FlowOperationType,
     isNil,
-    McpServer,
     McpToolDefinition,
     Permission,
+    ProjectScopedMcpServer,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -18,7 +18,7 @@ const deleteBranchInput = z.object({
     branchIndex: z.number().int().min(0),
 })
 
-export const apDeleteBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apDeleteBranchTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_delete_branch',
         permission: Permission.WRITE_FLOW,
@@ -27,6 +27,7 @@ export const apDeleteBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
             flowId: z.string().describe('The id of the flow'),
             routerStepName: z.string().describe('The name of the ROUTER step. Use ap_flow_structure to get valid values.'),
             branchIndex: z.number().describe('The index of the branch to delete (0-based). Cannot delete the fallback/last branch.'),
+            displayName: z.string().optional().describe('Short approval prompt shown to the user (e.g. "Delete branch 2 from router"). Must include what the action does and the target name.'),
         },
         annotations: { destructiveHint: true, openWorldHint: false },
         execute: async (args) => {

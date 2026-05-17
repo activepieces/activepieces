@@ -3,8 +3,7 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
-import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-props'
+import { networkUtils } from '../../../helper/network-utils'
 import { mcpOAuthClientService } from '../client/mcp-oauth-client.service'
 
 const AUTH_REQUEST_TTL_10_MINUTES_SECONDS = 10 * 60
@@ -12,7 +11,7 @@ const AUTH_REQUEST_TTL_10_MINUTES_SECONDS = 10 * 60
 export const mcpOAuthAuthorizeController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/authorize', AuthorizeRequest, async (req, reply) => {
-        const { client_id, redirect_uri, response_type, code_challenge, code_challenge_method, state, scope } = req.query
+        const { client_id, redirect_uri, response_type, code_challenge, code_challenge_method, state, scope, resource } = req.query
 
         if (response_type !== 'code') {
             return reply.status(400).send({ error: 'unsupported_response_type' })
@@ -41,6 +40,7 @@ export const mcpOAuthAuthorizeController: FastifyPluginAsyncZod = async (app) =>
                 codeChallengeMethod: code_challenge_method,
                 state: state ?? null,
                 scopes: scope ? scope.split(' ') : ['mcp'],
+                resource: resource ?? null,
                 type: 'mcp_auth_request',
             },
             key,
@@ -48,8 +48,7 @@ export const mcpOAuthAuthorizeController: FastifyPluginAsyncZod = async (app) =>
             audience: JwtAudience.MCP_OAUTH_AUTH_REQUEST,
         })
 
-        const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
-        const authorizePageUrl = new URL('/mcp-authorize', frontendUrl)
+        const authorizePageUrl = new URL('/mcp-authorize', networkUtils.getRequestBaseUrl(req))
         authorizePageUrl.searchParams.set('authRequestId', authRequestToken)
 
         return reply.redirect(authorizePageUrl.toString())

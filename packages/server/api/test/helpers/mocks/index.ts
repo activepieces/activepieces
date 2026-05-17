@@ -725,16 +725,22 @@ export const mockAndSaveBasicSetupWithApiKey = async (params?: MockBasicSetupPar
 }
 
 export const createMockFile = (file?: Partial<File>): File => {
+    const hasExplicitProjectId = file !== undefined && 'projectId' in file
+    const hasExplicitPlatformId = file !== undefined && 'platformId' in file
     return {
         id: file?.id ?? apId(),
         created: file?.created ?? faker.date.recent().toISOString(),
         updated: file?.updated ?? faker.date.recent().toISOString(),
-        platformId: file?.platformId ?? apId(),
-        projectId: file?.projectId ?? apId(),
+        platformId: hasExplicitPlatformId ? (file?.platformId ?? null) : apId(),
+        projectId: hasExplicitProjectId ? (file?.projectId ?? null) : apId(),
         location: file?.location ?? FileLocation.DB,
         compression: file?.compression ?? faker.helpers.enumValue(FileCompression),
         data: file?.data ?? Buffer.from(faker.lorem.paragraphs()),
         type: file?.type ?? faker.helpers.enumValue(FileType),
+        fileName: file?.fileName ?? null,
+        metadata: file?.metadata ?? null,
+        s3Key: file?.s3Key ?? null,
+        size: file?.size ?? null,
     }
 }
 
@@ -813,6 +819,7 @@ export const createMockEventDestination = (eventDestination?: Partial<{
     created: string
     updated: string
     platformId: string
+    projectId: string | null
     events: ApplicationEventName[]
     url: string
     scope: EventDestinationScope
@@ -821,6 +828,7 @@ export const createMockEventDestination = (eventDestination?: Partial<{
     created: string
     updated: string
     platformId: string
+    projectId: string | null
     events: ApplicationEventName[]
     url: string
     scope: EventDestinationScope
@@ -830,6 +838,7 @@ export const createMockEventDestination = (eventDestination?: Partial<{
         created: eventDestination?.created ?? faker.date.recent().toISOString(),
         updated: eventDestination?.updated ?? faker.date.recent().toISOString(),
         platformId: eventDestination?.platformId ?? apId(),
+        projectId: eventDestination?.projectId ?? null,
         events: eventDestination?.events ?? [faker.helpers.enumValue(ApplicationEventName)],
         url: eventDestination?.url ?? faker.internet.url(),
         scope: eventDestination?.scope ?? EventDestinationScope.PLATFORM,
