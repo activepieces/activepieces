@@ -310,8 +310,8 @@ function CredentialsPage() {
 
   return (
     <div className="flex flex-col gap-4 w-full">
-      <Alert variant="primary">
-        <Info className="h-4 w-4" />
+      <Alert variant="default" className="mt-4 mx-4 w-auto">
+        <Info className="h-4 w-4 text-primary!" />
         <AlertDescription>
           {t(
             'Credentials are encrypted secrets — like API keys or tokens — that you create once and reference inside any flow step. The value stays hidden; only the reference travels with your flows.',
