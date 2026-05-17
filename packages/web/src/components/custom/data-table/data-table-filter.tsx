@@ -66,30 +66,31 @@ export function DataTableFilter<TData, TValue>({
           newParams.delete(`${paramKey}After`);
           newParams.delete(`${paramKey}Before`);
           newParams.delete(CURSOR_QUERY_PARAM);
-          if (filterValue) {
-            if (Array.isArray(filterValue)) {
-              filterValue.forEach((value) =>
-                newParams.append(paramKey as string, value),
+          if (!filterValue) {
+            return newParams;
+          }
+
+          if (Array.isArray(filterValue)) {
+            filterValue.forEach((value) => {
+              if (paramKey) {
+                newParams.append(paramKey, value);
+              }
+            });
+          } else if (typeof filterValue === 'object' && filterValue !== null) {
+            if (filterValue.from) {
+              newParams.append(
+                `${paramKey}After`,
+                filterValue.from.toISOString(),
               );
-            } else if (
-              typeof filterValue === 'object' &&
-              filterValue !== null
-            ) {
-              if (filterValue.from) {
-                newParams.append(
-                  `${paramKey}After`,
-                  filterValue.from.toISOString(),
-                );
-              }
-              if (filterValue.to) {
-                newParams.append(
-                  `${paramKey}Before`,
-                  filterValue.to.toISOString(),
-                );
-              }
-            } else {
-              newParams.append(paramKey as string, filterValue);
             }
+            if (filterValue.to) {
+              newParams.append(
+                `${paramKey}Before`,
+                filterValue.to.toISOString(),
+              );
+            }
+          } else {
+            newParams.append(paramKey as string, filterValue);
           }
 
           return newParams;
