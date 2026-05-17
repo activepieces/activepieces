@@ -269,9 +269,24 @@ function InlinePlanCard({
 
   const progress = storePlanProgress ?? localPlan;
 
+  const planCompleted =
+    !isStreaming &&
+    (() => {
+      const output = chatPartUtils.parseTypedToolOutput(
+        planPart,
+        'ap_request_plan_approval',
+      );
+      return output.state === 'success' && output.data.success;
+    })();
+
   const updates = useMemo(() => {
-    if (storePlanUpdates.length > 0) return storePlanUpdates;
     if (!progress) return [];
+    if (planCompleted) {
+      return progress.steps.map(
+        (_stepText, i): PlanStepUpdate => ({ stepIndex: i, status: 'done' }),
+      );
+    }
+    if (storePlanUpdates.length > 0) return storePlanUpdates;
     const toolParts = message.parts.filter((p): p is AnyToolPart =>
       chatPartUtils.isAnyToolPart(p),
     );
@@ -282,7 +297,7 @@ function InlinePlanCard({
         status: chatStoreSelectors.deriveStepStatus({ stepText, toolParts }),
       }),
     );
-  }, [storePlanUpdates, progress, message.parts]);
+  }, [storePlanUpdates, progress, message.parts, planCompleted]);
 
   if (!progress) return null;
 

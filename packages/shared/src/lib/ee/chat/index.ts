@@ -23,6 +23,59 @@ const ChatMessageFile = z.object({
     data: z.string().max(MAX_FILE_BASE64_CHARS),
 })
 
+export enum PersistedChatPartType {
+    TEXT = 'text',
+    REASONING = 'reasoning',
+    TOOL_CALL = 'tool-call',
+}
+
+export enum PersistedToolCallStatus {
+    COMPLETED = 'completed',
+    ERROR = 'error',
+}
+
+export enum PersistedChatRole {
+    USER = 'user',
+    ASSISTANT = 'assistant',
+}
+
+const PersistedTextPartSchema = z.object({
+    type: z.literal(PersistedChatPartType.TEXT),
+    text: z.string(),
+})
+
+const PersistedReasoningPartSchema = z.object({
+    type: z.literal(PersistedChatPartType.REASONING),
+    text: z.string(),
+})
+
+const PersistedToolCallPartSchema = z.object({
+    type: z.literal(PersistedChatPartType.TOOL_CALL),
+    toolCallId: z.string(),
+    toolName: z.string(),
+    input: z.record(z.string(), z.unknown()),
+    output: z.unknown().optional(),
+    status: z.enum([PersistedToolCallStatus.COMPLETED, PersistedToolCallStatus.ERROR]),
+    errorText: z.string().optional(),
+})
+
+const PersistedChatPartSchema = z.discriminatedUnion('type', [
+    PersistedTextPartSchema,
+    PersistedReasoningPartSchema,
+    PersistedToolCallPartSchema,
+])
+
+export const PersistedChatMessageSchema = z.object({
+    role: z.enum([PersistedChatRole.USER, PersistedChatRole.ASSISTANT]),
+    parts: z.array(PersistedChatPartSchema),
+})
+
+export type PersistedTextPart = z.infer<typeof PersistedTextPartSchema>
+export type PersistedReasoningPart = z.infer<typeof PersistedReasoningPartSchema>
+export type PersistedToolCallPart = z.infer<typeof PersistedToolCallPartSchema>
+export type PersistedChatPart = z.infer<typeof PersistedChatPartSchema>
+export type PersistedChatMessage = z.infer<typeof PersistedChatMessageSchema>
+
 export const ChatConversation = z.object({
     ...BaseModelSchema,
     platformId: z.string(),
@@ -31,6 +84,7 @@ export const ChatConversation = z.object({
     title: Nullable(z.string()),
     modelName: Nullable(z.string()),
     messages: z.array(z.record(z.string(), z.unknown())).default([]),
+    uiMessages: z.array(PersistedChatMessageSchema).nullable().default(null),
     summary: Nullable(z.string()),
     summarizedUpToIndex: Nullable(z.number().int()),
 })
@@ -121,6 +175,20 @@ export type ConnectionOption = {
 }
 
 export type ChatToolName = keyof ChatToolOutputs
+
+function unwrapToolOutput(output: unknown): unknown {
+    if (typeof output !== 'object' || output === null) return output
+    if (!('type' in output) || !('value' in output)) return output
+    const record = output as Record<string, unknown>
+    if (record['type'] === 'json') {
+        return record['value']
+    }
+    return output
+}
+
+export const chatPersistenceUtils = {
+    unwrapToolOutput,
+}
 
 export type ChatAllowedMimeType = typeof CHAT_ALLOWED_MIME_TYPES[number]
 export { CHAT_ALLOWED_MIME_TYPES }
