@@ -1,13 +1,12 @@
 import { SsoDomainVerificationStatus } from '@activepieces/shared';
 import { t } from 'i18next';
-import { CheckCircle, Globe, LockIcon, MailIcon, Earth } from 'lucide-react';
+import { CheckCircle, LockIcon, MailIcon, Earth } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { CenteredPage } from '@/app/components/centered-page';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { AllowedDomainDialog } from '@/app/routes/platform/security/sso/allowed-domain';
 import { ConfigureSamlDialog } from '@/app/routes/platform/security/sso/saml-dialog';
-import { SsoDomainDialog } from '@/app/routes/platform/security/sso/sso-domain-dialog';
 import {
   Item,
   ItemMedia,
@@ -120,30 +119,9 @@ const SSOPage = () => {
             <ItemContent>
               <ItemTitle>{t('SAML 2.0')}</ItemTitle>
               <ItemDescription>
-                {ssoDomainVerified
-                  ? t(
-                      "Allow logins through saml 2.0's single sign-on functionality.",
-                    )
-                  : t('Verify your SSO domain below before enabling SAML.')}
-              </ItemDescription>
-            </ItemContent>
-            <ItemActions>
-              <ConfigureSamlDialog
-                platform={platform}
-                refetch={refetch}
-                connected={samlConnected}
-              />
-            </ItemActions>
-          </Item>
-
-          <Item variant="outline">
-            <ItemMedia variant="icon">
-              <Globe />
-            </ItemMedia>
-            <ItemContent>
-              <ItemTitle>{t('SSO Domain')}</ItemTitle>
-              <ItemDescription>
-                {t('Maps an email domain to your SAML provider.')}
+                {t(
+                  "Allow logins through saml 2.0's single sign-on functionality.",
+                )}
               </ItemDescription>
               {platform.ssoDomain && (
                 <div className="mt-1 gap-2 flex items-center">
@@ -162,7 +140,11 @@ const SSOPage = () => {
               )}
             </ItemContent>
             <ItemActions>
-              <SsoDomainDialog platform={platform} refetch={refetch} />
+              <ConfigureSamlDialog
+                platform={platform}
+                refetch={refetch}
+                connected={samlConnected}
+              />
             </ItemActions>
           </Item>
 

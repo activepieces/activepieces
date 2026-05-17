@@ -123,6 +123,12 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                 imageUrl: params.imageUrl,
             })
         }
+
+        await authenticationUtils(log).assertEmailMatchesSsoDomain({
+            email: params.email,
+            platformId,
+        })
+
         if (isNil(userIdentity)) {
             return authenticationService(log).signUp({
                 email: params.email,
@@ -134,16 +140,6 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                 platformId,
                 password: await cryptoUtils.generateRandomPassword(),
                 imageUrl: params.imageUrl,
-            })
-        }
-        const existingUser = await userService(log).getOneByIdentityAndPlatform({
-            identityId: userIdentity.id,
-            platformId,
-        })
-        if (isNil(existingUser)) {
-            await authenticationUtils(log).assertUserIsInvitedToPlatformOrProject({
-                email: params.email,
-                platformId,
             })
         }
         const user = await userService(log).getOrCreateWithProject({
