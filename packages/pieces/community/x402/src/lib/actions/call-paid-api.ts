@@ -64,9 +64,19 @@ function parsePaymentRequirement(
 ): X402PaymentRequirement {
   // V2 format: accepts[] array
   if (paymentRequired.accepts && paymentRequired.accepts.length > 0) {
-    // Filter for Solana requirements matching the configured network
+    // Filter for Solana requirements matching the configured network.
+    // x402 V2 uses CAIP-2 network IDs (e.g., "solana:mainnet-beta"),
+    // V1 may use simple names (e.g., "mainnet-beta").
+    // scheme is "exact"/"upto"/"batch-settlement", NOT "solana".
     const solanaRequirements = paymentRequired.accepts.filter(
-      (req) => req.network === configuredNetwork && req.scheme === 'solana'
+      (req) => {
+        const net = (req.network || '').toLowerCase();
+        const isSolana = net.includes('solana') ||
+          net === configuredNetwork ||
+          net === `solana:${configuredNetwork}`;
+        const hasValidScheme = ['exact', 'upto', 'batch-settlement', 'solana'].includes(req.scheme || '');
+        return isSolana && hasValidScheme;
+      }
     );
 
     if (solanaRequirements.length === 0) {
