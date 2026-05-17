@@ -17,10 +17,14 @@ vi.mock('../../src/lib/helper/flow-run-progress-reporter', () => ({
     },
 }))
 
-const { mockGetPayloadFile } = vi.hoisted(() => ({ mockGetPayloadFile: vi.fn() }))
-vi.mock('../../src/lib/helper/payload-file-client', () => ({
-    payloadFileClient: {
-        get: mockGetPayloadFile,
+const { mockDownload, mockUpload } = vi.hoisted(() => ({
+    mockDownload: vi.fn(),
+    mockUpload: vi.fn(),
+}))
+vi.mock('../../src/lib/engine-file-api', () => ({
+    engineFileApi: {
+        download: mockDownload,
+        upload: mockUpload,
     },
 }))
 
@@ -98,9 +102,9 @@ function makeResumeOperation(overrides?: Partial<ResumeExecuteFlowOperation>): R
 describe('flow operation invariants', () => {
     describe('RESUME execution state hydration', () => {
         it('throws EngineGenericError when RESUME has empty execution state in logs file', async () => {
-            mockGetPayloadFile.mockReset()
-            mockGetPayloadFile.mockResolvedValue(
-                Buffer.from(JSON.stringify({ executionState: { steps: {}, tags: [] } })),
+            mockDownload.mockReset()
+            mockDownload.mockResolvedValue(
+                new TextEncoder().encode(JSON.stringify({ executionState: { steps: {}, tags: [] } })),
             )
 
             const operation = makeResumeOperation()
@@ -110,7 +114,7 @@ describe('flow operation invariants', () => {
         })
 
         it('throws when logsFileId is missing on RESUME', async () => {
-            mockGetPayloadFile.mockReset()
+            mockDownload.mockReset()
             const operation = makeResumeOperation({ logsFileId: undefined })
 
             await expect(flowOperation.execute(operation)).rejects.toThrow(EngineGenericError)
@@ -118,8 +122,8 @@ describe('flow operation invariants', () => {
         })
 
         it('throws when executionState is missing in logs file', async () => {
-            mockGetPayloadFile.mockReset()
-            mockGetPayloadFile.mockResolvedValue(Buffer.from(JSON.stringify({})))
+            mockDownload.mockReset()
+            mockDownload.mockResolvedValue(new TextEncoder().encode(JSON.stringify({})))
 
             const operation = makeResumeOperation()
 
@@ -128,9 +132,9 @@ describe('flow operation invariants', () => {
         })
 
         it('proceeds past hydration when logs file has non-empty execution state', async () => {
-            mockGetPayloadFile.mockReset()
-            mockGetPayloadFile.mockResolvedValue(
-                Buffer.from(JSON.stringify({
+            mockDownload.mockReset()
+            mockDownload.mockResolvedValue(
+                new TextEncoder().encode(JSON.stringify({
                     executionState: {
                         steps: {
                             trigger_1: {
@@ -160,7 +164,7 @@ describe('flow operation invariants', () => {
 
     describe('BEGIN payload hydration', () => {
         it('inline payload is forwarded without calling getPayloadFile', async () => {
-            mockGetPayloadFile.mockReset()
+            mockDownload.mockReset()
             const operation = makeBeginOperation({
                 triggerPayload: { type: 'inline', value: { hello: 'world' } },
             })
@@ -172,12 +176,12 @@ describe('flow operation invariants', () => {
                 // downstream may fail; we only assert RPC call shape
             }
 
-            expect(mockGetPayloadFile).not.toHaveBeenCalled()
+            expect(mockDownload).not.toHaveBeenCalled()
         })
 
         it('ref payload is fetched via the engine HTTP client', async () => {
-            mockGetPayloadFile.mockReset()
-            mockGetPayloadFile.mockResolvedValue(Buffer.from(JSON.stringify({ hello: 'ref' })))
+            mockDownload.mockReset()
+            mockDownload.mockResolvedValue(new TextEncoder().encode(JSON.stringify({ hello: 'ref' })))
             const operation = makeBeginOperation({
                 triggerPayload: { type: 'ref', fileId: 'payload-file-1' },
             })
@@ -189,7 +193,7 @@ describe('flow operation invariants', () => {
                 // downstream may fail; we only assert RPC call shape
             }
 
-            expect(mockGetPayloadFile).toHaveBeenCalledWith({
+            expect(mockDownload).toHaveBeenCalledWith({
                 apiUrl: 'http://localhost:3000/',
                 engineToken: 'test-token',
                 fileId: 'payload-file-1',

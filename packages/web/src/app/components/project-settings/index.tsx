@@ -129,10 +129,7 @@ export function ProjectSettingsDialog({
       id: 'alerts' as TabId,
       label: t('Alert Emails'),
       icon: <Bell className="w-4 h-4" />,
-      disabled:
-        project.type !== ProjectType.TEAM ||
-        !checkAccess(Permission.READ_ALERT) ||
-        !showAlerts,
+      disabled: !checkAccess(Permission.READ_ALERT) || !showAlerts,
     },
     {
       id: 'mcp' as TabId,

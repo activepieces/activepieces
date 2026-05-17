@@ -1,9 +1,11 @@
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     apId,
+    AppConnectionStatus,
     AppConnectionType,
     PackageType,
     PieceType,
+    PLACEHOLDER_CONNECTION_TYPE,
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -87,6 +89,121 @@ describe('AppConnection CE API', () => {
             expect(response?.statusCode).toBe(StatusCodes.CREATED)
             const body = response?.json()
             expect(body.displayName).toBe('Test No Auth')
+        })
+
+        it('should create a placeholder connection with status MISSING', async () => {
+            const ctx = await setup()
+
+            const mockPiece = createMockPieceMetadata({
+                platformId: ctx.platform.id,
+                packageType: PackageType.REGISTRY,
+                pieceType: PieceType.OFFICIAL,
+            })
+            await db.save('piece_metadata', mockPiece)
+            pieceMetadataService(mockLog).getOrThrow = vi.fn().mockResolvedValue(mockPiece)
+
+            const response = await ctx.post('/v1/app-connections', {
+                externalId: 'test-placeholder-connection',
+                displayName: 'Placeholder Slack',
+                pieceName: mockPiece.name,
+                projectId: ctx.project.id,
+                type: PLACEHOLDER_CONNECTION_TYPE,
+                pieceVersion: mockPiece.version,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
+            const body = response?.json()
+            expect(body.displayName).toBe('Placeholder Slack')
+            expect(body.type).toBe(AppConnectionType.NO_AUTH)
+            expect(body.status).toBe(AppConnectionStatus.MISSING)
+            expect(body.pieceName).toBe(mockPiece.name)
+            expect(body.externalId).toBe('test-placeholder-connection')
+        })
+
+        it('should not overwrite an active connection with a placeholder', async () => {
+            const ctx = await setup()
+
+            const mockPiece = createMockPieceMetadata({
+                platformId: ctx.platform.id,
+                packageType: PackageType.REGISTRY,
+                pieceType: PieceType.OFFICIAL,
+            })
+            await db.save('piece_metadata', mockPiece)
+            pieceMetadataService(mockLog).getOrThrow = vi.fn().mockResolvedValue(mockPiece)
+
+            const active = await ctx.post('/v1/app-connections', {
+                externalId: 'placeholder-no-clobber',
+                displayName: 'Active Secret',
+                pieceName: mockPiece.name,
+                projectId: ctx.project.id,
+                type: AppConnectionType.SECRET_TEXT,
+                value: {
+                    type: AppConnectionType.SECRET_TEXT,
+                    secret_text: 'real-secret',
+                },
+                pieceVersion: mockPiece.version,
+            })
+            expect(active?.statusCode).toBe(StatusCodes.CREATED)
+            const activeBody = active?.json()
+            expect(activeBody.status).toBe(AppConnectionStatus.ACTIVE)
+            expect(activeBody.type).toBe(AppConnectionType.SECRET_TEXT)
+
+            const placeholder = await ctx.post('/v1/app-connections', {
+                externalId: 'placeholder-no-clobber',
+                displayName: 'Should Not Win',
+                pieceName: mockPiece.name,
+                projectId: ctx.project.id,
+                type: PLACEHOLDER_CONNECTION_TYPE,
+                pieceVersion: mockPiece.version,
+            })
+            expect(placeholder?.statusCode).toBe(StatusCodes.CREATED)
+            const placeholderBody = placeholder?.json()
+            expect(placeholderBody.id).toBe(activeBody.id)
+            expect(placeholderBody.status).toBe(AppConnectionStatus.ACTIVE)
+            expect(placeholderBody.type).toBe(AppConnectionType.SECRET_TEXT)
+            expect(placeholderBody.displayName).toBe('Active Secret')
+        })
+
+        it('should transition a placeholder to ACTIVE on real upsert', async () => {
+            const ctx = await setup()
+
+            const mockPiece = createMockPieceMetadata({
+                platformId: ctx.platform.id,
+                packageType: PackageType.REGISTRY,
+                pieceType: PieceType.OFFICIAL,
+            })
+            await db.save('piece_metadata', mockPiece)
+            pieceMetadataService(mockLog).getOrThrow = vi.fn().mockResolvedValue(mockPiece)
+
+            const placeholder = await ctx.post('/v1/app-connections', {
+                externalId: 'placeholder-fill-in',
+                displayName: 'Pending',
+                pieceName: mockPiece.name,
+                projectId: ctx.project.id,
+                type: PLACEHOLDER_CONNECTION_TYPE,
+                pieceVersion: mockPiece.version,
+            })
+            expect(placeholder?.statusCode).toBe(StatusCodes.CREATED)
+            const placeholderId = placeholder?.json().id
+
+            const filled = await ctx.post('/v1/app-connections', {
+                externalId: 'placeholder-fill-in',
+                displayName: 'Filled In',
+                pieceName: mockPiece.name,
+                projectId: ctx.project.id,
+                type: AppConnectionType.SECRET_TEXT,
+                value: {
+                    type: AppConnectionType.SECRET_TEXT,
+                    secret_text: 'real-secret',
+                },
+                pieceVersion: mockPiece.version,
+            })
+            expect(filled?.statusCode).toBe(StatusCodes.CREATED)
+            const filledBody = filled?.json()
+            expect(filledBody.id).toBe(placeholderId)
+            expect(filledBody.type).toBe(AppConnectionType.SECRET_TEXT)
+            expect(filledBody.status).toBe(AppConnectionStatus.ACTIVE)
+            expect(filledBody.displayName).toBe('Filled In')
         })
 
         it('should upsert on duplicate externalId', async () => {

@@ -25,7 +25,6 @@ type EngineConstantsParams = {
     resumePayload?: ResumePayload
     runEnvironment?: RunEnvironment
     stepNameToTest?: string
-    logsUploadUrl?: string
     logsFileId?: string
     timeoutInSeconds: number
     platformId: PlatformId
@@ -66,7 +65,6 @@ export class EngineConstants {
     public readonly resumePayload?: ResumePayload
     public readonly runEnvironment?: RunEnvironment
     public readonly stepNameToTest?: string
-    public readonly logsUploadUrl?: string
     public readonly logsFileId?: string
     public readonly stepNames: string[] = []
     private project: Project | null = null
@@ -111,7 +109,6 @@ export class EngineConstants {
         this.resumePayload = params.resumePayload
         this.runEnvironment = params.runEnvironment
         this.stepNameToTest = params.stepNameToTest
-        this.logsUploadUrl = params.logsUploadUrl
         this.logsFileId = params.logsFileId
         this.platformId = params.platformId
         this.timeoutInSeconds = params.timeoutInSeconds
@@ -136,7 +133,6 @@ export class EngineConstants {
             resumePayload: input.executionType === ExecutionType.RESUME ? input.resumePayload : undefined,
             runEnvironment: input.runEnvironment,
             stepNameToTest: input.stepNameToTest ?? undefined,
-            logsUploadUrl: input.logsUploadUrl,
             logsFileId: input.logsFileId,
             timeoutInSeconds: input.timeoutInSeconds,
             platformId: input.platformId,

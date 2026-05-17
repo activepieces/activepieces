@@ -1,20 +1,6 @@
-import { ExecuteFlowJobData, ExecutionType, JobData, RunEnvironment, StreamStepProgress, UploadLogsBehavior, WorkerJobType } from '@activepieces/shared'
+import { ExecuteFlowJobData, ExecutionType, FlowTriggerType, PollingJobData, RunEnvironment, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-
-const TARGET_SCHEMA_VERSION = 8
-
-const SECRET = 'job-data-migrations-test-secret'
-
-const mockConstructUploadUrl = vi.fn(async (req: { flowRunId: string, behavior: UploadLogsBehavior }) => {
-    return `https://new-api.example.com/v1/flow-runs/logs?token=NEW_${req.behavior}_${req.flowRunId}`
-})
-
-vi.mock('../../../../../src/app/flows/flow-run/logs/flow-run-logs-service', () => ({
-    flowRunLogsService: () => ({
-        constructUploadUrl: mockConstructUploadUrl,
-    }),
-}))
 
 vi.mock('../../../../../src/app/flows/flow-version/flow-version.service', () => ({
     flowVersionService: () => ({
@@ -23,7 +9,6 @@ vi.mock('../../../../../src/app/flows/flow-version/flow-version.service', () => 
     flowVersionRepo: () => ({}),
 }))
 
-const { jwtUtils } = await import('../../../../../src/app/helper/jwt-utils')
 const { jobMigrations } = await import('../../../../../src/app/workers/migrations/job-data-migrations')
 
 const mockLog: FastifyBaseLogger = {
@@ -38,19 +23,7 @@ const mockLog: FastifyBaseLogger = {
     level: 'info',
 } as unknown as FastifyBaseLogger
 
-async function makeLegacyLogsUrl(behavior: UploadLogsBehavior): Promise<string> {
-    const legacyToken = await jwtUtils.sign({
-        payload: {
-            logsFileId: 'file-1',
-            projectId: 'proj-1',
-            flowRunId: 'run-1',
-            behavior,
-        },
-        key: SECRET,
-        expiresInSeconds: 3600,
-    })
-    return `https://old-api.example.com/v1/flow-runs/logs?token=${legacyToken}`
-}
+const LATEST = 8
 
 function baseFlowJob(overrides: Partial<ExecuteFlowJobData> = {}): ExecuteFlowJobData {
     return {
@@ -65,189 +38,137 @@ function baseFlowJob(overrides: Partial<ExecuteFlowJobData> = {}): ExecuteFlowJo
         executionType: ExecutionType.BEGIN,
         streamStepProgress: StreamStepProgress.NONE,
         payload: { type: 'inline', value: {} },
-        logsUploadUrl: 'placeholder',
         logsFileId: 'file-1',
         ...overrides,
     }
 }
 
-describe('jobMigrations reSignLogsUploadUrlWithAudience', () => {
+function basePollingJob(overrides: Partial<PollingJobData> = {}): PollingJobData {
+    return {
+        jobType: WorkerJobType.EXECUTE_POLLING,
+        schemaVersion: 6,
+        projectId: 'proj-1',
+        platformId: 'plat-1',
+        flowVersionId: 'fv-1',
+        flowId: 'flow-1',
+        triggerType: FlowTriggerType.PIECE,
+        ...overrides,
+    }
+}
+
+describe('jobMigrations v6 → v7 (dropLogsUploadUrl)', () => {
     beforeEach(() => {
         vi.clearAllMocks()
     })
 
-    it('re-signs logsUploadUrl for EXECUTE_FLOW at schemaVersion 6 and bumps to latest', async () => {
-        const logsUploadUrl = await makeLegacyLogsUrl(UploadLogsBehavior.UPLOAD_DIRECTLY)
+    it('strips logsUploadUrl from EXECUTE_FLOW at v6 and bumps to latest', async () => {
+        const legacy = {
+            ...baseFlowJob({ schemaVersion: 6 }),
+            logsUploadUrl: 'https://old-api.example.com/v1/flow-runs/logs?token=ABC',
+        }
 
-        const migrated = await jobMigrations(mockLog).apply(baseFlowJob({ logsUploadUrl }))
+        const migrated = await jobMigrations(mockLog).apply(legacy) as ExecuteFlowJobData & Record<string, unknown>
 
-        expect(mockConstructUploadUrl).toHaveBeenCalledWith({
-            logsFileId: 'file-1',
-            projectId: 'proj-1',
-            flowRunId: 'run-1',
-            behavior: UploadLogsBehavior.UPLOAD_DIRECTLY,
-        })
-        expect(migrated).toMatchObject({
-            schemaVersion: TARGET_SCHEMA_VERSION,
-            logsUploadUrl: expect.stringContaining('new-api.example.com'),
-        })
+        expect(migrated.schemaVersion).toBe(LATEST)
+        expect(migrated.logsUploadUrl).toBeUndefined()
+        // Other identifying fields preserved
+        expect(migrated.runId).toBe('run-1')
+        expect(migrated.logsFileId).toBe('file-1')
     })
 
-    it('preserves REDIRECT_TO_S3 behavior from the legacy token', async () => {
-        const logsUploadUrl = await makeLegacyLogsUrl(UploadLogsBehavior.REDIRECT_TO_S3)
-        const job = baseFlowJob({ logsUploadUrl })
+    it('passes through non-EXECUTE_FLOW jobs at v6 without mutating shape, bumps to latest', async () => {
+        const job = basePollingJob({ schemaVersion: 6 })
 
-        await jobMigrations(mockLog).apply(job)
+        const migrated = await jobMigrations(mockLog).apply(job)
 
-        expect(mockConstructUploadUrl).toHaveBeenCalledWith(expect.objectContaining({
-            behavior: UploadLogsBehavior.REDIRECT_TO_S3,
-        }))
+        expect(migrated.schemaVersion).toBe(LATEST)
+        expect(migrated.jobType).toBe(WorkerJobType.EXECUTE_POLLING)
+        expect((migrated as PollingJobData).triggerType).toBe(FlowTriggerType.PIECE)
     })
 
-    it('falls back to UPLOAD_DIRECTLY when token cannot be parsed', async () => {
-        const job = baseFlowJob({ logsUploadUrl: 'not-a-url-with-token' })
+    it('is a no-op for jobs already at the latest schemaVersion', async () => {
+        const job = baseFlowJob({ schemaVersion: LATEST })
 
-        await jobMigrations(mockLog).apply(job)
+        const migrated = await jobMigrations(mockLog).apply(job)
 
-        expect(mockConstructUploadUrl).toHaveBeenCalledWith(expect.objectContaining({
-            behavior: UploadLogsBehavior.UPLOAD_DIRECTLY,
-        }))
-    })
-
-    it('falls back to UPLOAD_DIRECTLY when legacy token has an invalid behavior value', async () => {
-        const tamperedToken = await jwtUtils.sign({
-            payload: {
-                logsFileId: 'file-1',
-                projectId: 'proj-1',
-                flowRunId: 'run-1',
-                behavior: 'EVIL_BEHAVIOR',
-            },
-            key: SECRET,
-            expiresInSeconds: 3600,
-        })
-        const job = baseFlowJob({
-            logsUploadUrl: `https://old-api.example.com/v1/flow-runs/logs?token=${tamperedToken}`,
-        })
-
-        await jobMigrations(mockLog).apply(job)
-
-        expect(mockConstructUploadUrl).toHaveBeenCalledWith(expect.objectContaining({
-            behavior: UploadLogsBehavior.UPLOAD_DIRECTLY,
-        }))
-    })
-
-    it('bumps schemaVersion without re-signing for non-EXECUTE_FLOW jobs', async () => {
-        const migrated = await jobMigrations(mockLog).apply({
-            jobType: WorkerJobType.EXECUTE_WEBHOOK,
-            schemaVersion: 6,
-            projectId: 'proj-1',
-            platformId: 'plat-1',
-            flowId: 'flow-1',
-            requestId: 'req-1',
-            payload: { type: 'inline', value: {} },
-        })
-
-        expect(mockConstructUploadUrl).not.toHaveBeenCalled()
-        expect(migrated).toMatchObject({ schemaVersion: TARGET_SCHEMA_VERSION })
-    })
-
-    it('is a no-op when job is already at latest schemaVersion', async () => {
-        const migrated = await jobMigrations(mockLog).apply(baseFlowJob({
-            schemaVersion: TARGET_SCHEMA_VERSION,
-            logsUploadUrl: 'https://ok/v1?token=x',
-        }))
-
-        expect(mockConstructUploadUrl).not.toHaveBeenCalled()
-        expect(migrated).toMatchObject({ schemaVersion: TARGET_SCHEMA_VERSION })
+        expect(migrated.schemaVersion).toBe(LATEST)
+        expect(migrated.runId).toBe('run-1')
     })
 })
 
-describe('jobMigrations backfillRequiredExecuteFlowFields (v7 -> v8)', () => {
+describe('jobMigrations v7 → v8 (backfillRequiredExecuteFlowFields)', () => {
     beforeEach(() => {
         vi.clearAllMocks()
     })
 
-    it('backfills missing streamStepProgress to NONE on v7 EXECUTE_FLOW jobs and bumps to v8', async () => {
-        const { streamStepProgress: _omit, ...withoutProgress } = baseFlowJob({ schemaVersion: 7, logsUploadUrl: 'https://ok/v1?token=x' })
+    it('maps legacy progressUpdateType=TEST_FLOW to streamStepProgress=WEBSOCKET', async () => {
+        const legacy = {
+            ...baseFlowJob({ schemaVersion: 7 }),
+            streamStepProgress: undefined,
+            progressUpdateType: 'TEST_FLOW',
+        } as Record<string, unknown>
 
-        const migrated = await jobMigrations(mockLog).apply(withoutProgress)
+        const migrated = await jobMigrations(mockLog).apply(legacy) as ExecuteFlowJobData
 
-        expect(migrated).toMatchObject({
-            schemaVersion: TARGET_SCHEMA_VERSION,
-            streamStepProgress: StreamStepProgress.NONE,
-        })
-        expect(JobData.safeParse(migrated).success).toBe(true)
+        expect(migrated.schemaVersion).toBe(LATEST)
+        expect(migrated.streamStepProgress).toBe(StreamStepProgress.WEBSOCKET)
     })
 
-    it('backfills streamStepProgress from legacy progressUpdateType on v7 jobs', async () => {
-        const { streamStepProgress: _omit, ...withoutProgress } = baseFlowJob({ schemaVersion: 7, logsUploadUrl: 'https://ok/v1?token=x' })
+    it('maps legacy progressUpdateType=WEBHOOK_RESPONSE to streamStepProgress=WEBSOCKET', async () => {
+        const legacy = {
+            ...baseFlowJob({ schemaVersion: 7 }),
+            streamStepProgress: undefined,
+            progressUpdateType: 'WEBHOOK_RESPONSE',
+        } as Record<string, unknown>
 
-        const migrated = await jobMigrations(mockLog).apply({ ...withoutProgress, progressUpdateType: 'TEST_FLOW' })
+        const migrated = await jobMigrations(mockLog).apply(legacy) as ExecuteFlowJobData
 
-        expect(migrated).toMatchObject({
-            schemaVersion: TARGET_SCHEMA_VERSION,
+        expect(migrated.streamStepProgress).toBe(StreamStepProgress.WEBSOCKET)
+    })
+
+    it('falls back to streamStepProgress=NONE for unknown legacy progressUpdateType', async () => {
+        const legacy = {
+            ...baseFlowJob({ schemaVersion: 7 }),
+            streamStepProgress: undefined,
+            progressUpdateType: undefined,
+        } as Record<string, unknown>
+
+        const migrated = await jobMigrations(mockLog).apply(legacy) as ExecuteFlowJobData
+
+        expect(migrated.streamStepProgress).toBe(StreamStepProgress.NONE)
+    })
+
+    it('renames legacy synchronousHandlerId to workerHandlerId', async () => {
+        const legacy = {
+            ...baseFlowJob({ schemaVersion: 7 }),
+            workerHandlerId: undefined,
+            synchronousHandlerId: 'handler-7',
+        } as Record<string, unknown>
+
+        const migrated = await jobMigrations(mockLog).apply(legacy) as ExecuteFlowJobData
+
+        expect(migrated.workerHandlerId).toBe('handler-7')
+    })
+
+    it('preserves an explicit workerHandlerId / streamStepProgress already set', async () => {
+        const job = baseFlowJob({
+            schemaVersion: 7,
+            workerHandlerId: 'explicit-handler',
             streamStepProgress: StreamStepProgress.WEBSOCKET,
         })
+
+        const migrated = await jobMigrations(mockLog).apply(job) as ExecuteFlowJobData
+
+        expect(migrated.workerHandlerId).toBe('explicit-handler')
+        expect(migrated.streamStepProgress).toBe(StreamStepProgress.WEBSOCKET)
     })
 
-    it('backfills missing workerHandlerId from legacy synchronousHandlerId on v7 jobs', async () => {
-        const { workerHandlerId: _omit, ...withoutWorker } = baseFlowJob({ schemaVersion: 7, logsUploadUrl: 'https://ok/v1?token=x' })
+    it('only bumps schemaVersion for non-EXECUTE_FLOW jobs at v7', async () => {
+        const job = basePollingJob({ schemaVersion: 7 })
 
-        const migrated = await jobMigrations(mockLog).apply({ ...withoutWorker, synchronousHandlerId: 'handler-1' })
+        const migrated = await jobMigrations(mockLog).apply(job)
 
-        expect(migrated).toMatchObject({
-            schemaVersion: TARGET_SCHEMA_VERSION,
-            workerHandlerId: 'handler-1',
-        })
-    })
-
-    it('preserves existing streamStepProgress when already present on v7 jobs', async () => {
-        const migrated = await jobMigrations(mockLog).apply(baseFlowJob({
-            schemaVersion: 7,
-            streamStepProgress: StreamStepProgress.WEBSOCKET,
-            logsUploadUrl: 'https://ok/v1?token=x',
-        }))
-
-        expect(migrated).toMatchObject({ streamStepProgress: StreamStepProgress.WEBSOCKET })
-    })
-
-    it('bumps schemaVersion without backfilling for non-EXECUTE_FLOW v7 jobs', async () => {
-        const migrated = await jobMigrations(mockLog).apply({
-            jobType: WorkerJobType.EXECUTE_WEBHOOK,
-            schemaVersion: 7,
-            projectId: 'proj-1',
-            platformId: 'plat-1',
-            flowId: 'flow-1',
-            requestId: 'req-1',
-            payload: { type: 'inline', value: {} },
-        })
-
-        expect(mockConstructUploadUrl).not.toHaveBeenCalled()
-        expect(migrated).toMatchObject({ schemaVersion: TARGET_SCHEMA_VERSION })
-        expect(migrated).not.toHaveProperty('streamStepProgress')
-    })
-
-    it('repairs the production poison case (v7 EXECUTE_FLOW with no streamStepProgress nor legacy field) so JobData.parse succeeds', async () => {
-        const productionPoisonShape = {
-            jobType: WorkerJobType.EXECUTE_FLOW,
-            schemaVersion: 7,
-            projectId: 'RgJbQBPvuKsHxEf8pYvWH',
-            platformId: 'e6o1zp3Md80n0m9zPKs2c',
-            flowVersionId: 'z9NHiAw5LYzU3fyl0W6oN',
-            flowId: 'flow-x',
-            runId: '7o88bEwi3MuYCUJXYer9J',
-            environment: RunEnvironment.PRODUCTION,
-            executionType: ExecutionType.BEGIN,
-            payload: { type: 'inline', value: {} },
-            logsFileId: 'file-1',
-            logsUploadUrl: 'https://ok/v1?token=x',
-        }
-
-        expect(JobData.safeParse(productionPoisonShape).success).toBe(false)
-
-        const migrated = await jobMigrations(mockLog).apply(productionPoisonShape)
-
-        expect(migrated).toMatchObject({ schemaVersion: TARGET_SCHEMA_VERSION })
-        expect(JobData.safeParse(migrated).success).toBe(true)
+        expect(migrated.schemaVersion).toBe(LATEST)
+        expect(migrated.jobType).toBe(WorkerJobType.EXECUTE_POLLING)
     })
 })
