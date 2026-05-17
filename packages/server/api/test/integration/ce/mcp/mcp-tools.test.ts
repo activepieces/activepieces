@@ -21,7 +21,7 @@ import { apListFlowsTool } from '../../../../src/app/mcp/tools/ap-list-flows'
 import { apBuildFlowTool } from '../../../../src/app/mcp/tools/ap-build-flow'
 import { apCreateFlowTool } from '../../../../src/app/mcp/tools/ap-create-flow'
 import { apFlowStructureTool } from '../../../../src/app/mcp/tools/ap-flow-structure'
-import { apListPiecesTool } from '../../../../src/app/mcp/tools/ap-list-pieces'
+import { apResearchPiecesTool } from '../../../../src/app/mcp/tools/ap-research-pieces'
 import { apAddStepTool } from '../../../../src/app/mcp/tools/ap-add-step'
 import { apUpdateStepTool } from '../../../../src/app/mcp/tools/ap-update-step'
 import { apRenameFlowTool } from '../../../../src/app/mcp/tools/ap-rename-flow'
@@ -212,11 +212,11 @@ describe('MCP Tools integration', () => {
         expect(text(result)).toContain('unconfigured')
     })
 
-    it('4. ap_list_pieces — lists pieces matching search query', async () => {
+    it('4. ap_research_pieces — lists pieces matching search query', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        const result = await apListPiecesTool(mcp, mockLog).execute({ searchQuery: 'test-email' })
+        const result = await apResearchPiecesTool(mcp, mockLog).execute({ searchQuery: 'test-email' })
 
         expect(text(result)).toContain('✅')
         expect(text(result).toLowerCase()).toContain('test-email')
@@ -2297,7 +2297,7 @@ describe('MCP Tools integration', () => {
 
         expect(text(result)).toContain('❌')
         expect(text(result)).toContain('not found')
-        expect(text(result)).toContain('ap_list_pieces')
+        expect(text(result)).toContain('ap_research_pieces')
     })
 
     it('85. ap_run_action — returns error for non-existent action on a valid piece', async () => {
@@ -2379,7 +2379,7 @@ describe('MCP Tools integration', () => {
     // on that platform (pieceType: CUSTOM) are discoverable. Without the
     // platformId filter, `pieceCache.filterPieceBasedOnType` drops them.
 
-    it('90. ap_list_pieces — includes CUSTOM pieces belonging to the caller\'s platform', async () => {
+    it('90. ap_research_pieces — includes CUSTOM pieces belonging to the caller\'s platform', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
@@ -2403,7 +2403,7 @@ describe('MCP Tools integration', () => {
         })
         await db.save('piece_metadata', privatePiece)
 
-        const result = await apListPiecesTool(mcp, mockLog).execute({
+        const result = await apResearchPiecesTool(mcp, mockLog).execute({
             searchQuery: 'private-custom',
         })
 
@@ -2449,7 +2449,7 @@ describe('MCP Tools integration', () => {
         expect(text(result)).toContain('do_thing')
     })
 
-    it('92. ap_list_pieces — does NOT include CUSTOM pieces from a different platform', async () => {
+    it('92. ap_research_pieces — does NOT include CUSTOM pieces from a different platform', async () => {
         // Two independent projects on two different platforms. Each platform's
         // private piece must stay invisible to the other.
         const ctxA = await createTestContext(app)
@@ -2476,7 +2476,7 @@ describe('MCP Tools integration', () => {
         })
         await db.save('piece_metadata', privateOfB)
 
-        const result = await apListPiecesTool(mcpA, mockLog).execute({
+        const result = await apResearchPiecesTool(mcpA, mockLog).execute({
             searchQuery: 'private-only-b',
         })
 

@@ -35,3 +35,8 @@ jobs:
           push: true
           tags: |
             ghcr.io/activepieces/activepieces-cloud:${{ env.RELEASE }}.${{ github.sha }}.beta
+
+      - uses: ./.github/actions/sbom
+        with:
+          image: ghcr.io/activepieces/activepieces-cloud:${{ env.RELEASE }}.${{ github.sha }}.beta
+          version: ${{ env.RELEASE }}.${{ github.sha }}.beta

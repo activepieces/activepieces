@@ -6,12 +6,18 @@ import {
     apId,
     ChatConversation,
     ChatHistoryMessage,
+    chatPersistenceUtils,
     ChatStreamWriter,
     CreateChatConversationRequest,
     DEFAULT_CHAT_TIER_ID,
     ErrorCode,
     GetProviderConfigResponse,
     isNil,
+    PersistedChatMessage,
+    PersistedChatPart,
+    PersistedChatPartType,
+    PersistedChatRole,
+    PersistedToolCallStatus,
     Project,
     ProjectType,
     SeekPage,
@@ -111,8 +117,11 @@ export const chatService = (log: FastifyBaseLogger) => ({
         await conversationRepo().delete(conversation.id)
     },
 
-    async getMessages({ id, platformId, userId }: ConversationIdentifier): Promise<{ data: ChatHistoryMessage[] }> {
+    async getMessages({ id, platformId, userId }: ConversationIdentifier): Promise<{ data: PersistedChatMessage[] | ChatHistoryMessage[] }> {
         const conversation = await this.getConversationOrThrow({ id, platformId, userId })
+        if (conversation.uiMessages) {
+            return { data: conversation.uiMessages }
+        }
         const messages = chatHistory.reconstruct(conversation.messages as ModelMessage[])
         return { data: messages }
     },
@@ -199,6 +208,8 @@ export const chatService = (log: FastifyBaseLogger) => ({
 
         const planApproved = { approved: false }
         const planStepCounter = { current: 0 }
+        const uiParts: PersistedChatPart[] = []
+        const previousUiMessages = conversation.uiMessages ?? []
         const stream = createUIMessageStream({
             execute: ({ writer }) => {
                 const localTools = createChatTools({
@@ -230,14 +241,21 @@ export const chatService = (log: FastifyBaseLogger) => ({
                     providerOptions: currentProviderOptions,
                     prepareStep: chatPrepareStep.createPrepareStep({ log }),
                     stopWhen: stepCountIs(MAX_STEPS),
-                    onStepFinish: ({ finishReason, usage }) => {
+                    onStepFinish: ({ text, reasoning, toolCalls, toolResults, finishReason, usage }) => {
+                        uiParts.push(...buildStepParts({ text, reasoning, toolCalls, toolResults }))
                         log.debug({ conversationId, finishReason, usage }, 'Chat step finished')
                     },
                     onFinish: async ({ response, usage }) => {
                         const updatedMessages = [...allMessages, ...response.messages]
+                        const updatedUiMessages: PersistedChatMessage[] = [
+                            ...previousUiMessages,
+                            { role: PersistedChatRole.USER, parts: [{ type: PersistedChatPartType.TEXT, text: content }] },
+                            { role: PersistedChatRole.ASSISTANT, parts: uiParts },
+                        ]
                         try {
                             await conversationRepo().update(conversationId, {
                                 messages: updatedMessages,
+                                uiMessages: JSON.parse(JSON.stringify(updatedUiMessages)),
                                 ...(pendingTitle ? { title: pendingTitle } : {}),
                                 ...(isNil(conversation.modelName) ? { modelName: tier.id } : {}),
                             })
@@ -448,6 +466,41 @@ function buildSystemPromptWithCaching({ systemPrompt, provider }: {
         default:
             return systemPrompt
     }
+}
+
+function toRecord(value: unknown): Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value) ? value as Record<string, unknown> : {}
+}
+
+function buildStepParts({ text, reasoning, toolCalls, toolResults }: {
+    text: string
+    reasoning: Array<{ text: string }>
+    toolCalls: Array<{ toolCallId: string, toolName: string, input: unknown }>
+    toolResults: Array<{ toolCallId: string, output: unknown }>
+}): PersistedChatPart[] {
+    const parts: PersistedChatPart[] = []
+    for (const r of reasoning) {
+        if (r.text) {
+            parts.push({ type: PersistedChatPartType.REASONING, text: r.text })
+        }
+    }
+    if (text) {
+        parts.push({ type: PersistedChatPartType.TEXT, text })
+    }
+    const resultMap = new Map(toolResults.map((tr) => [tr.toolCallId, tr]))
+    for (const tc of toolCalls) {
+        const result = resultMap.get(tc.toolCallId)
+        const rawOutput = result ? chatPersistenceUtils.unwrapToolOutput(result.output) : undefined
+        parts.push({
+            type: PersistedChatPartType.TOOL_CALL,
+            toolCallId: tc.toolCallId,
+            toolName: tc.toolName,
+            input: toRecord(tc.input),
+            output: rawOutput,
+            status: result ? PersistedToolCallStatus.COMPLETED : PersistedToolCallStatus.ERROR,
+        })
+    }
+    return parts
 }
 
 type CreateConversationParams = {

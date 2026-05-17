@@ -1,5 +1,6 @@
 import {
   type ChatHistoryMessage,
+  type PersistedChatMessage,
   ChatConversation,
   CreateChatConversationRequest,
   SeekPage,
@@ -33,8 +34,8 @@ async function getConversation(id: string): Promise<ChatConversation> {
 
 async function getMessages(
   conversationId: string,
-): Promise<{ data: ChatHistoryMessage[] }> {
-  return api.get<{ data: ChatHistoryMessage[] }>(
+): Promise<{ data: PersistedChatMessage[] | ChatHistoryMessage[] }> {
+  return api.get<{ data: PersistedChatMessage[] | ChatHistoryMessage[] }>(
     `/v1/chat/conversations/${conversationId}/messages`,
   );
 }
