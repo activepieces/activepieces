@@ -24,7 +24,7 @@ import { ActivepiecesError,
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { authenticationUtils } from '../authentication/authentication-utils'
-import { userIdentityRepository } from '../authentication/user-identity/user-identity-service'
+import { userIdentityRepository, userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { invalidateSamlClientCache } from '../ee/authentication/saml-authn/saml-client'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
@@ -110,6 +110,11 @@ export const platformService = (log: FastifyBaseLogger) => ({
                 tokenVersion: nanoid(),
             })
         }
+        await authenticationUtils(log).sendTelemetry({
+            identity: await userIdentityService(log).getOneOrFail({ id: identityId }),
+            user: newUser,
+            projectId: defaultProject.id,
+        })
         return authenticationUtils(log).getProjectAndToken({
             userId: newUser.id,
             platformId: platform.id,
