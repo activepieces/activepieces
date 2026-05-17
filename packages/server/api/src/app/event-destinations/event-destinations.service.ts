@@ -9,7 +9,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, FindOptionsWhere } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
-import { domainHelper } from '../ee/custom-domains/domain-helper'
+import { domainHelper } from '../helper/domain-helper'
 import { applicationEvents } from '../helper/application-events'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
@@ -260,4 +260,3 @@ type ExtractFlowIdParams = {
     destinationUrl: string
     webhookUrlPrefix: string
 }
-

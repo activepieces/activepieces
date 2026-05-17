@@ -1,6 +1,6 @@
 import { FileReadToken, FileType } from '@activepieces/shared'
 import dayjs from 'dayjs'
-import { domainHelper } from '../ee/custom-domains/domain-helper'
+import { domainHelper } from '../helper/domain-helper'
 import { JwtAudience, JwtSignAlgorithm, jwtUtils } from '../helper/jwt-utils'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
