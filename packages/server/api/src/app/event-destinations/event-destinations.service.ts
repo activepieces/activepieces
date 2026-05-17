@@ -249,7 +249,6 @@ type TestParams = {
 type SkipDestinationsParams = {
     destinations: EventDestinationSchema[]
     event: ApplicationEvent
-    platformId: PlatformId
     log: FastifyBaseLogger
 }
 
