@@ -10,7 +10,6 @@ import { jwtDecode } from 'jwt-decode';
 import { authenticationApi } from '@/api/authentication-api';
 
 import { ApStorage } from './ap-browser-storage';
-import { queryClient } from '@/app/app';
 const tokenKey = 'token';
 const projectIdKey = 'projectId';
 export const authenticationSession = {
@@ -25,7 +24,6 @@ export const authenticationSession = {
     if (!isNil(response.projectId)) {
       ApStorage.getInstance().setItem(projectIdKey, response.projectId);
     }
-    queryClient.invalidateQueries({ queryKey: ['flags'] });
     window.dispatchEvent(new Event('storage'));
   },
   isJwtExpired(token: string): boolean {
