@@ -497,7 +497,7 @@ function buildStepParts({ text, reasoning, toolCalls, toolResults }: {
             toolName: tc.toolName,
             input: toRecord(tc.input),
             output: rawOutput,
-            status: PersistedToolCallStatus.COMPLETED,
+            status: result ? PersistedToolCallStatus.COMPLETED : PersistedToolCallStatus.ERROR,
         })
     }
     return parts
