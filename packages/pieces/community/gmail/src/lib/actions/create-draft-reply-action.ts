@@ -211,7 +211,7 @@ export const gmailCreateDraftReplyAction = createAction({
 
       const quotedContent =
         context.propsValue.body_type === 'html'
-          ? originalMessageContent.replace(/\n/g, '<br>')
+          ? escapeHtml(originalMessageContent).replace(/\n/g, '<br>')
           : originalMessageContent;
 
       draftBody = draftBody
@@ -304,3 +304,12 @@ export const gmailCreateDraftReplyAction = createAction({
     };
   },
 });
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}

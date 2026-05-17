@@ -92,45 +92,43 @@ async function enrichNewConversation({
   };
 }
 
-function extractParticipants(messages: any[]): {
-  from: Set<string>;
-  to: Set<string>;
-  cc: Set<string>;
+function extractParticipants(messages: GmailMessageLike[]): {
+  from: string[];
+  to: string[];
+  cc: string[];
 } {
-  const participants = {
-    from: new Set<string>(),
-    to: new Set<string>(),
-    cc: new Set<string>(),
-  };
+  const from = new Set<string>();
+  const to = new Set<string>();
+  const cc = new Set<string>();
 
-  messages.forEach((message) => {
-    const headers = message.payload?.headers || [];
-    headers.forEach((header: any) => {
-      if (header.name && header.value) {
-        const name = header.name.toLowerCase();
-        const value = header.value;
-
-        if (name === 'from') {
-          participants.from.add(value);
-        } else if (name === 'to') {
-          value
-            .split(',')
-            .forEach((email: string) => participants.to.add(email.trim()));
-        } else if (name === 'cc') {
-          value
-            .split(',')
-            .forEach((email: string) => participants.cc.add(email.trim()));
-        }
+  for (const message of messages) {
+    const headers = message.payload?.headers ?? [];
+    for (const header of headers) {
+      if (!header.name || !header.value) continue;
+      const name = header.name.toLowerCase();
+      const value = header.value;
+      if (name === 'from') {
+        from.add(value);
+      } else if (name === 'to') {
+        value.split(',').forEach((email) => to.add(email.trim()));
+      } else if (name === 'cc') {
+        value.split(',').forEach((email) => cc.add(email.trim()));
       }
-    });
-  });
+    }
+  }
 
   return {
-    from: participants.from,
-    to: participants.to,
-    cc: participants.cc,
+    from: Array.from(from),
+    to: Array.from(to),
+    cc: Array.from(cc),
   };
 }
+
+type GmailMessageLike = {
+  payload?: {
+    headers?: { name?: string | null; value?: string | null }[] | null;
+  };
+};
 
 export const gmailNewConversationTrigger = createTrigger({
   auth: gmailAuth,

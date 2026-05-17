@@ -71,6 +71,30 @@ export const GmailProps = {
       };
     },
   }),
+  labelIds: Property.MultiSelectDropdown<string, true, typeof gmailAuth>({
+    auth: gmailAuth,
+    displayName: 'Labels',
+    description: 'Select one or more labels (or paste label IDs)',
+    required: true,
+    refreshers: [],
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please authenticate first',
+        };
+      }
+      const response = await GmailRequests.getLabels(auth);
+      return {
+        disabled: false,
+        options: response.body.labels.map((label) => ({
+          label: label.name,
+          value: label.id,
+        })),
+      };
+    },
+  }),
   unread: (required = false) =>
     Property.Checkbox({
       displayName: 'Is unread?',

@@ -6,11 +6,18 @@ import { gmailReplyToEmailAction } from './lib/actions/reply-to-email-action';
 import { gmailCreateDraftReplyAction } from './lib/actions/create-draft-reply-action';
 import { gmailNewEmailTrigger } from './lib/triggers/new-email';
 import { gmailNewLabeledEmailTrigger } from './lib/triggers/new-labeled-email';
+import { gmailNewConversationTrigger } from './lib/triggers/new-conversation';
 import { requestApprovalInEmail } from './lib/actions/request-approval-in-email';
 import { gmailNewAttachmentTrigger } from './lib/triggers/new-attachment';
 import { gmailNewLabelTrigger } from './lib/triggers/new-label';
 import { gmailSearchMailAction } from './lib/actions/search-email-action';
 import { gmailGetEmailAction } from './lib/actions/get-mail-action';
+import { gmailGetThread } from './lib/actions/get-thread-action';
+import { gmailAddLabelAction } from './lib/actions/add-label-action';
+import { gmailRemoveLabelAction } from './lib/actions/remove-label-action';
+import { gmailModifyEmailStateAction } from './lib/actions/modify-email-state-action';
+import { gmailCreateLabelAction } from './lib/actions/create-label-action';
+import { gmailMarkReadUnreadAction } from './lib/actions/mark-read-unread-action';
 import { gmailAuth, getAccessToken, GmailAuthValue } from './lib/auth';
 
 export {
@@ -29,11 +36,17 @@ export const gmail = createPiece({
   ],
   actions: [
     gmailSendEmailAction,
-    requestApprovalInEmail,
     gmailReplyToEmailAction,
     gmailCreateDraftReplyAction,
+    requestApprovalInEmail,
     gmailGetEmailAction,
+    gmailGetThread,
     gmailSearchMailAction,
+    gmailAddLabelAction,
+    gmailRemoveLabelAction,
+    gmailModifyEmailStateAction,
+    gmailMarkReadUnreadAction,
+    gmailCreateLabelAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://gmail.googleapis.com/gmail/v1',
       auth: gmailAuth,
@@ -62,6 +75,7 @@ export const gmail = createPiece({
   triggers: [
     gmailNewEmailTrigger,
     gmailNewLabeledEmailTrigger,
+    gmailNewConversationTrigger,
     gmailNewAttachmentTrigger,
     gmailNewLabelTrigger,
   ],
