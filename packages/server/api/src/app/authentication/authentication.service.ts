@@ -53,7 +53,6 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         })
         await sendVerificationOrAutoVerify(userIdentity, log)
         await flagService(log).save({ id: ApFlagId.USER_CREATED, value: true })
-        await authenticationUtils(log).sendTelemetry({ identity: userIdentity })
         await authenticationUtils(log).saveNewsLetterSubscriber(userIdentity)
         await userInvitationsService(log).provisionUserInvitation({ email: params.email })
 
@@ -64,11 +63,13 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                 platformId: preferredPlatformId,
             })
             log.info({ email: params.email, provider: params.provider, preferredPlatformId }, 'User signed up with invitation, returning preferred platform token')
-            return authenticationUtils(log).getProjectAndToken({
+            const authResponse =  await authenticationUtils(log).getProjectAndToken({
                 userId: user.id,
                 platformId: preferredPlatformId,
                 projectId: null,
             })
+            await authenticationUtils(log).sendTelemetry({ identity: userIdentity, user, projectId: authResponse.projectId ?? '' })
+            return authResponse
         }
         log.info({ email: params.email, provider: params.provider }, 'User signed up without platform')
         return authenticationUtils(log).getOnboardingResponse({ identityId: userIdentity.id })
