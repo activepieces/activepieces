@@ -132,11 +132,7 @@ function buildFlowOperation(
             ...base,
             executionType: ExecutionType.RESUME,
             resumePayload: data.payload,
-            // Pre-existing in-flight jobs lack this field; default to WAITPOINT so the
-            // engine preserves FAILED steps (the safe behavior — retries are user-driven
-            // and rare, so the worst case here is a one-off "retry didn't replay" that
-            // resolves on next deploy when all in-flight jobs carry the field).
-            resumeReason: data.resumeReason ?? ResumeReason.WAITPOINT,
+            resumeReason: data.resumeReason ?? legacyResumeReason(data),
         }
     }
 
@@ -173,4 +169,14 @@ async function reportFlowStatus(
 
 function isDedicatedWorker(): boolean {
     return !isNil(system.get(WorkerSystemProp.WORKER_GROUP_ID))
+}
+
+// Resolves resumeReason for jobs queued before schemaVersion 10. The retry path is
+// the only producer of an inline-null payload; every other resume signal (HTTP
+// callback, markParentRunAsFailed) carries a real body. Pre-existing delay-piece
+// resumes are misclassified here as RETRY — same buggy behavior they had pre-fix,
+// limited to the brief deploy window before legacy jobs drain.
+function legacyResumeReason(data: ExecuteFlowJobData): ResumeReason {
+    const isLegacyRetry = data.payload.type === 'inline' && isNil(data.payload.value)
+    return isLegacyRetry ? ResumeReason.RETRY : ResumeReason.WAITPOINT
 }

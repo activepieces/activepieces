@@ -9,7 +9,7 @@ import { FlowVersion } from '../flows/flow-version'
 import { FlowTriggerType } from '../flows/triggers/trigger'
 import { PiecePackage } from '../pieces/piece'
 
-export const LATEST_JOB_DATA_SCHEMA_VERSION = 9
+export const LATEST_JOB_DATA_SCHEMA_VERSION = 10
 
 export const InlineJobPayload = z.object({
     type: z.literal('inline'),
@@ -124,8 +124,6 @@ export const ExecuteFlowJobData = z.object({
     payload: JobPayload,
     executeTrigger: z.boolean().optional(),
     executionType: z.nativeEnum(ExecutionType),
-    // Only meaningful when executionType === RESUME. Optional for backward compat with
-    // jobs queued before this field existed; the worker defaults missing values to WAITPOINT.
     resumeReason: z.nativeEnum(ResumeReason).optional(),
     streamStepProgress: z.nativeEnum(StreamStepProgress),
     stepNameToTest: z.string().optional(),
