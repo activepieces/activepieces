@@ -96,7 +96,7 @@ export const visionPrompt = createAction({
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      temperature: z.number().min(0).max(1),
+      temperature: z.number().min(0).max(2).optional(),
     });
 
     const openai = new OpenAI({
