@@ -1,4 +1,4 @@
-import { ChatHistoryMessage, ChatHistoryToolCall } from '@activepieces/shared'
+import { ChatHistoryMessage, ChatHistoryToolCall, chatPersistenceUtils } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 
 function reconstructChatHistory(messages: ModelMessage[]): ChatHistoryMessage[] {
@@ -40,14 +40,8 @@ function reconstructChatHistory(messages: ModelMessage[]): ChatHistoryMessage[] 
 
             if (text || toolCalls.length > 0 || thoughts) {
                 const lastResult = result[result.length - 1]
-                if (lastResult?.role === 'assistant') {
-                    // Merge consecutive assistant messages (agentic loop steps)
-                    // into a single ChatHistoryMessage to match streaming behavior
-                    if (text) {
-                        lastResult.content = lastResult.content
-                            ? lastResult.content + '\n' + text
-                            : text
-                    }
+                const hasText = text.length > 0
+                if (!hasText && lastResult?.role === 'assistant') {
                     if (toolCalls.length > 0) {
                         lastResult.toolCalls = [...(lastResult.toolCalls ?? []), ...toolCalls]
                     }
@@ -76,9 +70,10 @@ function reconstructChatHistory(messages: ModelMessage[]): ChatHistoryMessage[] 
                         const tr = toolResult as { toolCallId: string, output: unknown }
                         const existing = lastAssistant.toolCalls.find((tc) => tc.toolCallId === tr.toolCallId)
                         if (existing) {
-                            existing.output = typeof tr.output === 'string'
-                                ? tr.output
-                                : JSON.stringify(tr.output)
+                            const unwrapped = chatPersistenceUtils.unwrapToolOutput(tr.output)
+                            existing.output = typeof unwrapped === 'string'
+                                ? unwrapped
+                                : JSON.stringify(unwrapped)
                             existing.status = 'completed'
                         }
                     }

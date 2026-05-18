@@ -19,7 +19,7 @@ elif [ -n "${CI:-}" ] && [ "$CI" != "false" ] && [ "$CI" != "0" ]; then
   RUN_CHECKS="n"
 elif [ -t 1 ]; then
   # IDE / CI Git runs with stdout on a pipe, not a TTY — do not prompt (avoids blocking forever on read /dev/tty)
-  printf "Run lint and tests before pushing? [Y/n] " > /dev/tty
+  printf "Run checks before pushing? [Y]es (lint + tests) / [n]o / [l]int only " > /dev/tty
   if read -r RUN_CHECKS < /dev/tty; then
     :
   else
@@ -32,6 +32,16 @@ fi
 case "$RUN_CHECKS" in
   [nN][oO]|[nN])
     echo "Skipping lint and tests."
+    ;;
+  [lL][iI][nN][tT]|[lL])
+    echo "Running lint-dev (with auto-fix)..."
+    npm run lint-dev || { echo ""; echo "Lint failed. Fix the remaining issues and try again."; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then
+      echo ""
+      echo "lint-dev auto-fixed files. Commit the changes before pushing:"
+      git status --short
+      exit 1
+    fi
     ;;
   *)
     echo "Running lint..."

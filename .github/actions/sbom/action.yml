@@ -1,0 +1,71 @@
+name: SBOM
+description: Generates CycloneDX + SPDX SBOMs for a Docker image, scans them with Grype, and conditionally uploads to GitHub Releases and the Security tab.
+
+inputs:
+  image:
+    description: Full image reference with tag (e.g. ghcr.io/activepieces/activepieces:0.83.0).
+    required: true
+  version:
+    description: Version string used to name the SBOM files and as the Grype SARIF category.
+    required: true
+  upload-release:
+    description: If 'true', attach both SBOMs as assets to the GitHub Release named after `version`.
+    required: false
+    default: 'false'
+  upload-sarif:
+    description: "If 'true', upload the Grype SARIF report to the GitHub Security tab. Requires security-events write permission on the calling job."
+    required: false
+    default: 'false'
+  github-token:
+    description: Token used for `gh release upload`. Required when `upload-release` is true.
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+
+    - name: Generate SBOMs (CycloneDX + SPDX)
+      shell: bash
+      run: |
+        syft "${{ inputs.image }}" \
+          -o "cyclonedx-json=activepieces-${{ inputs.version }}.cdx.json" \
+          -o "spdx-json=activepieces-${{ inputs.version }}.spdx.json"
+
+    - name: Scan SBOM with Grype
+      id: grype
+      uses: anchore/scan-action@1638637db639e0ade3258b51db49a9a137574c3e # v6.5.1
+      with:
+        sbom: activepieces-${{ inputs.version }}.cdx.json
+        output-format: sarif
+        fail-build: false
+        severity-cutoff: high
+
+    - name: Upload SARIF to GitHub Security tab
+      if: inputs.upload-sarif == 'true'
+      uses: github/codeql-action/upload-sarif@1521896cd211af95be3f02edf6f436e10b819c27 # v3.35.4
+      with:
+        sarif_file: ${{ steps.grype.outputs.sarif }}
+        category: grype-${{ inputs.version }}
+
+    - name: Attach SBOMs to GitHub Release
+      if: inputs.upload-release == 'true'
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      run: |
+        gh release upload "${{ inputs.version }}" \
+          "activepieces-${{ inputs.version }}.cdx.json" \
+          "activepieces-${{ inputs.version }}.spdx.json"
+
+    - name: Upload SBOMs + SARIF as workflow artifact
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: sbom-${{ inputs.version }}-${{ github.run_id }}-${{ github.run_attempt }}
+        path: |
+          activepieces-${{ inputs.version }}.cdx.json
+          activepieces-${{ inputs.version }}.spdx.json
+          ${{ steps.grype.outputs.sarif }}
+        retention-days: 30
+        if-no-files-found: error
