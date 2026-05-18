@@ -29,7 +29,7 @@ export const textToSpeech = createAction({
 				],
 			},
 		}),
-		input: Property.LongText({
+		text: Property.LongText({
 			displayName: 'Input',
 			description: 'The text to convert to audio.',
 			required: true,
@@ -79,7 +79,7 @@ export const textToSpeech = createAction({
 		}),
 	},
 	async run({ auth, propsValue, files }) {
-		const { model, input, voice, format, speed, fileName, baseUrl } = propsValue;
+		const { model, text, voice, format, speed, fileName, baseUrl } = propsValue;
 		const openai = new OpenAI({
 			apiKey: auth as string,
 			baseURL: baseUrl || undefined,
@@ -87,7 +87,7 @@ export const textToSpeech = createAction({
 
 		const audio = await openai.audio.speech.create({
 			model: model,
-			input: input,
+			input: text,
 			voice: voice as Voice,
 			speed: speed,
 			response_format: format as Format,

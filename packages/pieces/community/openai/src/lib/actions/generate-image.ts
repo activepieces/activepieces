@@ -39,7 +39,7 @@ export const generateImage = createAction({
       required: false,
       defaultValue: 1,
     }),
-    size: Property.StaticDropdown({
+    resolution: Property.StaticDropdown({
       displayName: 'Size',
       description: 'The size of the generated images.',
       required: false,

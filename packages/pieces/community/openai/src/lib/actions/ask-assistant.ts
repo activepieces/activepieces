@@ -20,7 +20,7 @@ export const askAssistant = createAction({
       description: 'The base URL for the OpenAI API. Default is https://api.openai.com/v1',
       required: false,
     }),
-    assistantId: Property.Dropdown({
+    assistant: Property.Dropdown({
       displayName: 'Assistant',
       required: true,
       description: 'The assistant which will generate the completion.',
@@ -77,7 +77,7 @@ export const askAssistant = createAction({
       apiKey: auth as string,
       baseURL: propsValue.baseUrl || undefined,
     });
-    const { assistantId, prompt, memoryKey } = propsValue;
+    const { assistant, prompt, memoryKey } = propsValue;
 
     let threadId: string | null = null;
     if (memoryKey) {
@@ -98,7 +98,7 @@ export const askAssistant = createAction({
     });
 
     const run = await openai.beta.threads.runs.create(threadId, {
-      assistant_id: assistantId,
+      assistant_id: assistant,
     });
 
     let response: any = null;

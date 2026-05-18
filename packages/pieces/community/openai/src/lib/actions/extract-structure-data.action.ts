@@ -5,7 +5,7 @@ import { notLLMs } from '../common/common';
 
 export const extractStructuredDataAction = createAction({
 	auth: openaiAuth,
-	name: 'extract_structured_data',
+	name: 'extract-structured-data',
 	displayName: 'Extract Structured Data',
 	description: 'Extract structured data from text using OpenAI.',
 	props: {
@@ -61,7 +61,7 @@ export const extractStructuredDataAction = createAction({
 			description: 'The text to extract data from.',
 			required: true,
 		}),
-		extractionSchema: Property.Array({
+		params: Property.Array({
 			displayName: 'Extraction Schema',
 			description: 'The schema for the data to be extracted.',
 			required: true,
@@ -98,12 +98,12 @@ export const extractStructuredDataAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { model, text, extractionSchema, baseUrl } = context.propsValue;
+		const { model, text, params, baseUrl } = context.propsValue;
 
 		const properties: Record<string, any> = {};
 		const required: string[] = [];
 
-		(extractionSchema as ParamInput[]).forEach((param) => {
+		(params as ParamInput[]).forEach((param) => {
 			properties[param.propName] = {
 				type: param.propDataType,
 				description: param.propDescription,

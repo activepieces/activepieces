@@ -47,6 +47,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `ap_read_step_code` — read full source code of a CODE step
 - `ap_list_pieces` — browse available pieces
 - `ap_list_connections` — list app connections
+- `ap_store_get` — read a value from the persistent key-value store
 
 **Controllable tools** (can be toggled per-project):
 - `ap_create_flow`, `ap_rename_flow` — flow management
@@ -58,6 +59,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `ap_manage_notes` — add/update flow annotations
 - `ap_create_table`, `ap_delete_table`, `ap_list_tables` — table management
 - `ap_manage_fields`, `ap_insert_records`, `ap_find_records`, `ap_update_record`, `ap_delete_records` — record operations
+- `ap_store_put`, `ap_store_delete` — manage persistent key-value storage
 - `ap_test_flow`, `ap_test_step`, `ap_validate_flow`, `ap_validate_step_config`, `ap_get_piece_props` — build/test helpers
 - `ap_list_runs`, `ap_get_run`, `ap_retry_run` — run management
 - `ap_list_ai_models`, `ap_setup_guide` — discovery
