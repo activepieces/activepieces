@@ -2,6 +2,7 @@ import {
   ApFlagId,
   FlowRunStatus,
   isFlowRunStateTerminal,
+  StepOutputStatus,
 } from '@activepieces/shared';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
@@ -192,19 +193,31 @@ const JumpToFailedStepButton = ({
 }: {
   failedStepName: string;
 }) => {
-  const [selectedStep, goToFailedStep] = useBuilderStateContext((state) => [
-    state.selectedStep,
-    state.goToFailedStep,
-  ]);
+  const [selectedStep, selectFailedStep, run, loopsIndexes] =
+    useBuilderStateContext((state) => [
+      state.selectedStep,
+      state.selectFailedStep,
+      state.run,
+      state.loopsIndexes,
+    ]);
   const { fitView } = useReactFlow();
-  if (selectedStep === failedStepName) {
+  const selectedStepOutput =
+    run && selectedStep
+      ? flowRunUtils.extractStepOutput(
+          selectedStep,
+          loopsIndexes,
+          run.steps ?? {},
+        )
+      : null;
+  if (
+    selectedStep === failedStepName &&
+    selectedStepOutput?.status === StepOutputStatus.FAILED
+  ) {
     return null;
   }
   const handleClick = () => {
-    goToFailedStep();
-    requestAnimationFrame(() => {
-      fitView(flowCanvasUtils.createFocusStepInGraphParams(failedStepName));
-    });
+    selectFailedStep();
+    fitView(flowCanvasUtils.createFocusStepInGraphParams(failedStepName));
   };
   return (
     <Button
