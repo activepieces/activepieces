@@ -17,6 +17,7 @@ import {
   History,
   X,
   Archive,
+  SearchIcon,
 } from 'lucide-react';
 import { useEffect, useMemo, useCallback, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -53,6 +54,7 @@ import { useNewWindow } from '@/lib/navigation-utils';
 
 import { runsTableColumns } from './columns';
 import { FailedRetryRunsDialog } from './failed-retry-runs-dialog';
+import { FailedStepDialog } from './failed-step-dialog';
 import {
   RetriedRunsSnackbar,
   RUN_IDS_QUERY_PARAM,
@@ -75,6 +77,7 @@ export const RunsTable = () => {
     Required<FlowRunWithRetryError>[]
   >([]);
   const [failedRetryDialogOpen, setFailedRetryDialogOpen] = useState(false);
+  const [errorDialogRun, setErrorDialogRun] = useState<FlowRun | null>(null);
 
   const [hasSeededDefaultRange, setHasSeededDefaultRange] = useState(() =>
     searchParams.has('createdAfter'),
@@ -108,6 +111,8 @@ export const RunsTable = () => {
       const cursor = searchParams.get(CURSOR_QUERY_PARAM);
       const flowRunIds = searchParams.getAll(RUN_IDS_QUERY_PARAM);
       const failedStepName = searchParams.get('failedStepName') || undefined;
+      const failedStepMessage =
+        searchParams.get('failedStepMessage') || undefined;
       const limit = searchParams.get(LIMIT_QUERY_PARAM)
         ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
         : 10;
@@ -126,6 +131,7 @@ export const RunsTable = () => {
         createdAfter: createdAfter ?? undefined,
         createdBefore: createdBefore ?? undefined,
         failedStepName,
+        failedStepMessage,
         flowRunIds,
       });
     },
@@ -141,6 +147,7 @@ export const RunsTable = () => {
       return runningRuns?.length ? 15 * 1000 : false;
     },
   });
+  const navigate = useNavigate();
   const columns = runsTableColumns({
     data,
     selectedRows,
@@ -149,9 +156,13 @@ export const RunsTable = () => {
     setSelectedAll,
     excludedRows,
     setExcludedRows,
+    onViewError: setErrorDialogRun,
+    onViewRun: (run) =>
+      navigate(
+        authenticationSession.appendProjectRoutePrefix(`/runs/${run.id}`),
+      ),
   });
 
-  const navigate = useNavigate();
   const { data: flowsData, isFetching: isFetchingFlows } = flowHooks.useFlows({
     limit: 1000,
     cursor: undefined,
@@ -161,47 +172,54 @@ export const RunsTable = () => {
   const { checkAccess } = useAuthorization();
   const userHasPermissionToRetryRun = checkAccess(Permission.WRITE_RUN);
 
-  const filters: DataTableFilters<keyof FlowRun>[] = useMemo(
-    () => [
-      {
-        type: 'select',
-        title: t('Flow name'),
-        accessorKey: 'flowId',
-        options:
-          flows?.map((flow) => ({
-            label: flow.version.displayName,
-            value: flow.id,
-          })) || [],
-        icon: CheckIcon,
-      },
-      {
-        type: 'select',
-        title: t('Status'),
-        accessorKey: 'status',
-        options: Object.values(FlowRunStatus).map((status) => {
-          return {
-            label: formatUtils.convertEnumToHumanReadable(status),
-            value: status,
-            icon: flowRunUtils.getStatusIcon(status).Icon,
-          };
-        }),
-        icon: CheckIcon,
-      },
-      {
-        type: 'date',
-        title: t('Created'),
-        accessorKey: 'created',
-        icon: CheckIcon,
-        defaultPresetName: DEFAULT_DATE_PRESET,
-      },
-      {
-        type: 'checkbox',
-        title: t('Show archived'),
-        accessorKey: 'archivedAt',
-      },
-    ],
-    [flows],
-  );
+  const filters: DataTableFilters<keyof FlowRun | 'failedStepMessage'>[] =
+    useMemo(
+      () => [
+        {
+          type: 'select',
+          title: t('Flow name'),
+          accessorKey: 'flowId',
+          options:
+            flows?.map((flow) => ({
+              label: flow.version.displayName,
+              value: flow.id,
+            })) || [],
+          icon: CheckIcon,
+        },
+        {
+          type: 'select',
+          title: t('Status'),
+          accessorKey: 'status',
+          options: Object.values(FlowRunStatus).map((status) => {
+            return {
+              label: formatUtils.convertEnumToHumanReadable(status),
+              value: status,
+              icon: flowRunUtils.getStatusIcon(status).Icon,
+            };
+          }),
+          icon: CheckIcon,
+        },
+        {
+          type: 'input',
+          title: t('Error message'),
+          accessorKey: 'failedStepMessage',
+          icon: SearchIcon,
+        },
+        {
+          type: 'date',
+          title: t('Created'),
+          accessorKey: 'created',
+          icon: CheckIcon,
+          defaultPresetName: DEFAULT_DATE_PRESET,
+        },
+        {
+          type: 'checkbox',
+          title: t('Show archived'),
+          accessorKey: 'archivedAt',
+        },
+      ],
+      [flows],
+    );
 
   const retryRuns = flowRunMutations.useBulkRetryRuns({
     onSuccess: (runs) => {
@@ -281,6 +299,8 @@ export const RunsTable = () => {
                       searchParams.get('createdBefore') || undefined,
                     failedStepName:
                       searchParams.get('failedStepName') || undefined,
+                    failedStepMessage:
+                      searchParams.get('failedStepMessage') || undefined,
                   });
                   resetSelection();
                   setSelectedRows([]);
@@ -438,6 +458,9 @@ export const RunsTable = () => {
                               searchParams.get('createdBefore') || undefined,
                             failedStepName:
                               searchParams.get('failedStepName') || undefined,
+                            failedStepMessage:
+                              searchParams.get('failedStepMessage') ||
+                              undefined,
                           });
                           resetSelection();
                           setSelectedRows([]);
@@ -479,6 +502,9 @@ export const RunsTable = () => {
                                 searchParams.get('createdBefore') || undefined,
                               failedStepName:
                                 searchParams.get('failedStepName') || undefined,
+                              failedStepMessage:
+                                searchParams.get('failedStepMessage') ||
+                                undefined,
                             });
                             resetSelection();
                             setSelectedRows([]);
@@ -574,6 +600,13 @@ export const RunsTable = () => {
         open={failedRetryDialogOpen}
         onOpenChange={setFailedRetryDialogOpen}
         failedRuns={failedRetryRuns}
+      />
+      <FailedStepDialog
+        run={errorDialogRun}
+        open={errorDialogRun !== null}
+        onOpenChange={(open) => {
+          if (!open) setErrorDialogRun(null);
+        }}
       />
     </div>
   );

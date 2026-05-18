@@ -101,9 +101,6 @@ const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs):
         primaryColorLight,
         fullLogoUrl,
         platformName,
-        checkIssuesEnabled() {
-            return templateData.name === 'issue-created' && templateData.vars.isIssue === 'true'
-        },
         footerContent: edition === ApEdition.CLOUD ? 'Activepieces, Inc. 398 11th Street, 2nd floor, San Francisco, CA 94103' : '',
     },
     {
@@ -132,7 +129,7 @@ const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<s
         'badge-awarded': 'Congratulations, you earned a new badge! 🎉',
         'verify-email': 'Verify your email address ✅',
         'reset-password': 'Reset your password 🔑',
-        'issue-created': `Flow has an issue "${vars.flowName}" ⚠️`,
+        'issue-created': `[${vars.projectName}] Flow has an issue "${vars.flowName}" ⚠️`,
         'scim-user-welcome': 'Welcome! Your account has been created 🎉',
     }
 
