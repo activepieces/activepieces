@@ -52,9 +52,10 @@ async function loadPersistedRegistry(): Promise<PieceRegistryEntry[]> {
     }
     const startGeneration = registryGeneration
     const result = await fetchRegistryFromDB()
-    if (registryGeneration === startGeneration) {
-        cachedRegistry = result
+    if (registryGeneration !== startGeneration) {
+        return loadPersistedRegistry()
     }
+    cachedRegistry = result
     return result
 }
 
