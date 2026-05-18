@@ -24,8 +24,10 @@ export const extractStructuredDataAction = createAction({
 					};
 				}
 				try {
+					const { apiKey, baseUrl: customBaseUrl } = (auth as any).props;
 					const openai = new OpenAI({
-						apiKey: auth.secret_text,
+						apiKey: apiKey,
+						baseURL: customBaseUrl || undefined,
 					});
 					const response = await openai.models.list();
 					// We need to get only LLM models
@@ -105,8 +107,10 @@ export const extractStructuredDataAction = createAction({
 			}
 		}
 		const prompt = 'Extract the following data from the provided text'
+		const { apiKey, baseUrl: customBaseUrl } = (context.auth as any).props;
 		const openai = new OpenAI({
-			apiKey: context.auth.secret_text,
+			apiKey: apiKey,
+			baseURL: customBaseUrl || undefined,
 		});
 
 		const response = await openai.chat.completions.create({

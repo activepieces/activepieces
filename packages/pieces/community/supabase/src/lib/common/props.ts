@@ -1,4 +1,4 @@
-import { Property, DynamicPropsValue } from "@activepieces/pieces-framework";
+import { Property, DynamicPropsValue, ShortTextProperty, CheckboxProperty, DateTimeProperty, JsonProperty, ArrayProperty, LongTextProperty, NumberProperty } from "@activepieces/pieces-framework";
 import { createClient } from "@supabase/supabase-js";
 import { supabaseAuth } from '../auth';
 
@@ -51,6 +51,117 @@ async function getColumnOptions(auth: any, table_name: string) {
   } catch (error) {
     return [];
   }
+}
+
+function createPropertyForColumn(column: any): ShortTextProperty<boolean> | CheckboxProperty<boolean> | DateTimeProperty<boolean> | JsonProperty<boolean> | ArrayProperty<boolean> | LongTextProperty<boolean> | NumberProperty<boolean> | undefined {
+    if (!column.data_type) {
+        return undefined;
+    }
+    
+    const isRequired = column.is_nullable === 'NO' && column.column_default === null;
+    const description = `Type: ${column.data_type}${isRequired ? ' (required)' : ''}`;
+
+    switch (column.data_type.toLowerCase()) {
+      case 'integer':
+      case 'bigint':
+      case 'smallint':
+      case 'numeric':
+      case 'decimal':
+      case 'real':
+      case 'double precision':
+        return Property.Number({
+          displayName: column.column_name,
+          description,
+          required: false
+        });
+      
+      case 'boolean':
+        return Property.Checkbox({
+          displayName: column.column_name,
+          description,
+          required: false
+        });
+      
+      case 'date':
+      case 'timestamp':
+      case 'timestamp with time zone':
+      case 'timestamp without time zone':
+        // Handle auto-timestamps (created_at, updated_at) differently
+        if (column.column_name.includes('created_at') || column.column_name.includes('updated_at')) {
+          return Property.ShortText({
+            displayName: `${column.column_name} (auto-generated)`,
+            description: `${description} - Leave empty for auto-generation`,
+            required: false
+          });
+        } else {
+          return Property.DateTime({
+            displayName: column.column_name,
+            description,
+            required: false
+          });
+        }
+      
+      case 'json':
+      case 'jsonb':
+      case 'object':
+        return Property.Json({
+          displayName: column.column_name,
+          description,
+          required: false
+        });
+      
+      case 'array':
+      case '_text':
+      case 'text[]':
+        return Property.Array({
+          displayName: column.column_name,
+          description: `${description} - Enter each item separately`,
+          required: false
+        });
+      
+      case 'uuid':
+        // UUID fields - offer auto-generation option
+        if (column.column_name === 'id' || column.column_name.endsWith('_id')) {
+          return Property.ShortText({
+            displayName: `${column.column_name} (auto-generated)`,
+            description: `${description} - Leave empty for auto-generation`,
+            required: false
+          });
+        } else {
+          return Property.ShortText({
+            displayName: column.column_name,
+            description,
+            required: false
+          });
+        }
+      
+      case 'string':
+      case 'text':
+      case 'varchar':
+      case 'character varying':
+      case 'char':
+      case 'character':
+      default:
+        if (column.column_name.toLowerCase().includes('email')) {
+          return Property.ShortText({
+            displayName: column.column_name,
+            description: `${description} - Enter email address`,
+            required: false
+          });
+        } else if (column.column_name.toLowerCase().includes('id')) {
+          return Property.ShortText({
+            displayName: `${column.column_name} (auto-generated)`,
+            description: `${description} - Leave empty for auto-generation`,
+            required: false
+          });
+        } else {
+          return Property.LongText({
+            displayName: column.column_name,
+            description,
+            required: false
+          });
+        }
+    }
 }
 
 export const supabaseCommon = {
@@ -254,120 +365,9 @@ export const supabaseCommon = {
         }
 
         for (const column of columns) {
-          if (!column.data_type) {
-            continue;
-          }
-          
-          const isRequired = column.is_nullable === 'NO' && column.column_default === null;
-          const description = `Type: ${column.data_type}${isRequired ? ' (required)' : ''}`;
-
-          switch (column.data_type.toLowerCase()) {
-            case 'integer':
-            case 'bigint':
-            case 'smallint':
-            case 'numeric':
-            case 'decimal':
-            case 'real':
-            case 'double precision':
-              properties[column.column_name] = Property.Number({
-                displayName: column.column_name,
-                description,
-                required: false
-              });
-              break;
-            
-            case 'boolean':
-              properties[column.column_name] = Property.Checkbox({
-                displayName: column.column_name,
-                description,
-                required: false
-              });
-              break;
-            
-            case 'date':
-            case 'timestamp':
-            case 'timestamp with time zone':
-            case 'timestamp without time zone':
-              // Handle auto-timestamps (created_at, updated_at) differently
-              if (column.column_name.includes('created_at') || column.column_name.includes('updated_at')) {
-                properties[column.column_name] = Property.ShortText({
-                  displayName: `${column.column_name} (auto-generated)`,
-                  description: `${description} - Leave empty for auto-generation`,
-                  required: false
-                });
-              } else {
-                properties[column.column_name] = Property.DateTime({
-                  displayName: column.column_name,
-                  description,
-                  required: false
-                });
-              }
-              break;
-            
-            case 'json':
-            case 'jsonb':
-            case 'object':
-              properties[column.column_name] = Property.Json({
-                displayName: column.column_name,
-                description,
-                required: false
-              });
-              break;
-            
-            case 'array':
-            case '_text':
-            case 'text[]':
-              properties[column.column_name] = Property.Array({
-                displayName: column.column_name,
-                description: `${description} - Enter each item separately`,
-                required: false
-              });
-              break;
-            
-            case 'uuid':
-              // UUID fields - offer auto-generation option
-              if (column.column_name === 'id' || column.column_name.endsWith('_id')) {
-                properties[column.column_name] = Property.ShortText({
-                  displayName: `${column.column_name} (auto-generated)`,
-                  description: `${description} - Leave empty for auto-generation`,
-                  required: false
-                });
-              } else {
-                properties[column.column_name] = Property.ShortText({
-                  displayName: column.column_name,
-                  description,
-                  required: false
-                });
-              }
-              break;
-            
-            case 'string':
-            case 'text':
-            case 'varchar':
-            case 'character varying':
-            case 'char':
-            case 'character':
-            default:
-              if (column.column_name.toLowerCase().includes('email')) {
-                properties[column.column_name] = Property.ShortText({
-                  displayName: column.column_name,
-                  description: `${description} - Enter email address`,
-                  required: false
-                });
-              } else if (column.column_name.toLowerCase().includes('id')) {
-                properties[column.column_name] = Property.ShortText({
-                  displayName: `${column.column_name} (auto-generated)`,
-                  description: `${description} - Leave empty for auto-generation`,
-                  required: false
-                });
-              } else {
-                properties[column.column_name] = Property.LongText({
-                  displayName: column.column_name,
-                  description,
-                  required: false
-                });
-              }
-              break;
+          const prop = createPropertyForColumn(column);
+          if (prop) {
+              properties[column.column_name] = prop;
           }
         }
 
@@ -477,8 +477,6 @@ export const supabaseCommon = {
         }
 
         for (const column of columns) {
-          if (!column.data_type) continue;
-          
           if (
             column.column_name === 'id' ||
             column.column_name.includes('created_at') ||
@@ -488,77 +486,9 @@ export const supabaseCommon = {
             continue;
           }
           
-          const description = `Type: ${column.data_type} - Update this field`;
-
-          switch (column.data_type.toLowerCase()) {
-            case 'integer':
-            case 'bigint':
-            case 'smallint':
-            case 'numeric':
-            case 'decimal':
-            case 'real':
-            case 'double precision':
-              properties[column.column_name] = Property.Number({
-                displayName: column.column_name,
-                description,
-                required: false
-              });
-              break;
-            
-            case 'boolean':
-              properties[column.column_name] = Property.Checkbox({
-                displayName: column.column_name,
-                description,
-                required: false
-              });
-              break;
-            
-            case 'date':
-            case 'timestamp':
-            case 'timestamp with time zone':
-            case 'timestamp without time zone':
-              properties[column.column_name] = Property.DateTime({
-                displayName: column.column_name,
-                description,
-                required: false
-              });
-              break;
-            
-            case 'json':
-            case 'jsonb':
-            case 'object':
-              properties[column.column_name] = Property.Json({
-                displayName: column.column_name,
-                description,
-                required: false
-              });
-              break;
-            
-            case 'array':
-            case '_text':
-            case 'text[]':
-              properties[column.column_name] = Property.Array({
-                displayName: column.column_name,
-                description: `${description} - Enter each item separately`,
-                required: false
-              });
-              break;
-            
-            default:
-              if (column.column_name.toLowerCase().includes('email')) {
-                properties[column.column_name] = Property.ShortText({
-                  displayName: column.column_name,
-                  description: `${description} - Enter email address`,
-                  required: false
-                });
-              } else {
-                properties[column.column_name] = Property.LongText({
-                  displayName: column.column_name,
-                  description,
-                  required: false
-                });
-              }
-              break;
+          const prop = createPropertyForColumn(column);
+          if (prop) {
+              properties[column.column_name] = prop;
           }
         }
 
@@ -630,14 +560,12 @@ export const supabaseCommon = {
         }
 
         for (const column of columns) {
-          if (!column.data_type || column.column_name === on_conflict) continue;
+          if (column.column_name === on_conflict) continue;
           
-          const description = `Type: ${column.data_type}`;
-          properties[column.column_name] = Property.LongText({
-            displayName: column.column_name,
-            description,
-            required: false
-          });
+          const prop = createPropertyForColumn(column);
+          if (prop) {
+              properties[column.column_name] = prop;
+          }
         }
       } catch (error) {
         properties['error'] = Property.MarkDown({

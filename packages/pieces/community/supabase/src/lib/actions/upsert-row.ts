@@ -139,6 +139,21 @@ export const upsertRow = createAction({
 
         const supabase = createClient(url, apiKey);
         
+        // Ensure JSON fields are parsed if they are strings
+        const processedRowData = { ...row_data };
+        for (const key in processedRowData) {
+            const value = processedRowData[key];
+            if (typeof value === 'string') {
+                try {
+                    if ((value.startsWith('{') && value.endsWith('}')) || (value.startsWith('[') && value.endsWith(']'))) {
+                        processedRowData[key] = JSON.parse(value);
+                    }
+                } catch (e) {
+                    // Not valid JSON
+                }
+            }
+        }
+
         const upsertOptions: any = {
             onConflict: on_conflict,
             count: count_upserted ? 'exact' : undefined
@@ -146,7 +161,7 @@ export const upsertRow = createAction({
 
         const upsertQuery = supabase
             .from(table_name as string)
-            .upsert(row_data, upsertOptions);
+            .upsert(processedRowData, upsertOptions);
 
         const { data, error, count } = return_upserted 
             ? await upsertQuery.select()

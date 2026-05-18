@@ -57,7 +57,11 @@ export const editImage = createAction({
     }),
   },
   async run(context) {
-    const openai = new OpenAI({ apiKey: context.auth.secret_text });
+    const { apiKey, baseUrl: customBaseUrl } = (context.auth as any).props;
+    const openai = new OpenAI({
+      apiKey: apiKey,
+      baseURL: customBaseUrl || undefined,
+    });
     const { image, prompt, mask, size, quality } = context.propsValue;
 
     const imageMimeType = mime.lookup(image.extension ?? '') || 'image/png';

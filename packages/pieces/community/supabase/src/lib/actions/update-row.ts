@@ -143,9 +143,24 @@ export const updateRow = createAction({
 
         const supabase = createClient(url, apiKey);
         
+        // Ensure JSON fields are parsed if they are strings
+        const processedUpdateData = { ...update_data };
+        for (const key in processedUpdateData) {
+            const value = processedUpdateData[key];
+            if (typeof value === 'string') {
+                try {
+                    if ((value.startsWith('{') && value.endsWith('}')) || (value.startsWith('[') && value.endsWith(']'))) {
+                        processedUpdateData[key] = JSON.parse(value);
+                    }
+                } catch (e) {
+                    // Not valid JSON
+                }
+            }
+        }
+
         let updateQuery = supabase
             .from(table_name as string)
-            .update(update_data, { 
+            .update(processedUpdateData, { 
                 count: count_updated ? 'exact' : undefined 
             });
 

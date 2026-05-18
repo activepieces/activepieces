@@ -37,8 +37,10 @@ export const askOpenAI = createAction({
           };
         }
         try {
+          const { apiKey, baseUrl: customBaseUrl } = (auth as any).props;
           const openai = new OpenAI({
-            apiKey: auth.secret_text,
+            apiKey: apiKey,
+            baseURL: customBaseUrl || undefined,
           });
           const response = await openai.models.list();
           // We need to get only LLM models
@@ -121,8 +123,10 @@ export const askOpenAI = createAction({
       temperature: z.number().min(0).max(1).optional(),
       memoryKey: z.string().max(128).optional(),
     });
+    const { apiKey, baseUrl: customBaseUrl } = (auth as any).props;
     const openai = new OpenAI({
-      apiKey: auth.secret_text,
+      apiKey: apiKey,
+      baseURL: customBaseUrl || undefined,
     });
     const {
       model,

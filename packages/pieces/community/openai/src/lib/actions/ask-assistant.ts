@@ -30,8 +30,10 @@ export const askAssistant = createAction({
           };
         }
         try {
+          const { apiKey, baseUrl: customBaseUrl } = (auth as any).props;
           const openai = new OpenAI({
-            apiKey: auth.secret_text,
+            apiKey: apiKey,
+            baseURL: customBaseUrl || undefined,
           });
           const assistants = await openai.beta.assistants.list();
 
@@ -69,8 +71,10 @@ export const askAssistant = createAction({
       memoryKey: z.string().max(128).optional(),
     });
 
+    const { apiKey, baseUrl: customBaseUrl } = (auth as any).props;
     const openai = new OpenAI({
-      apiKey: auth.secret_text,
+      apiKey: apiKey,
+      baseURL: customBaseUrl || undefined,
     });
     const { assistant, prompt, memoryKey } = propsValue;
     const runCheckDelay = 1000;

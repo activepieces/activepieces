@@ -48,12 +48,13 @@ export const transcribeAction = createAction({
     form.append('language', language);
 
     const headers = {
-      Authorization: `Bearer ${context.auth.secret_text}`,
+      Authorization: `Bearer ${(context.auth as any).props.apiKey}`,
     };
 
+    const baseUrlFromAuth = (context.auth as any).props.baseUrl || baseUrl;
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${baseUrl}/audio/transcriptions`,
+      url: `${baseUrlFromAuth}/audio/transcriptions`,
       body: form,
       headers: {
         ...form.getHeaders(),
