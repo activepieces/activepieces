@@ -17,7 +17,7 @@ jobs:
       NX_NO_CLOUD: true 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
 
       - name: Configure SSH
         run: |

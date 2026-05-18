@@ -1,4 +1,4 @@
-import { apId, isNil, tryCatch } from '@activepieces/shared'
+import { apId, ChatStreamWriter, isNil, tryCatch } from '@activepieces/shared'
 import { createMCPClient } from '@ai-sdk/mcp'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../helper/system/system'
@@ -7,9 +7,7 @@ import { mcpOAuthTokenService } from '../../../mcp/oauth/token/mcp-oauth-token.s
 import { chatApprovalGate } from '../chat-approval-gate'
 import { chatToolCategories } from '../tools/chat-tool-categories'
 
-type StreamWriter = {
-    write(part: Record<string, unknown>): void
-}
+const CONVERSATION_ID_HEADER = 'x-ap-conversation-id'
 
 async function getMcpCredentials({ platformId, userId, log }: {
     platformId: string
@@ -30,8 +28,9 @@ async function getMcpCredentials({ platformId, userId, log }: {
     }
 }
 
-async function connectMcpClient({ mcpCredentials, log }: {
+async function connectMcpClient({ mcpCredentials, conversationId, log }: {
     mcpCredentials: McpCredentials
+    conversationId: string
     log: FastifyBaseLogger
 }): Promise<McpConnection> {
     const { mcpServerUrl, mcpToken } = mcpCredentials
@@ -42,7 +41,10 @@ async function connectMcpClient({ mcpCredentials, log }: {
         transport: {
             type: 'http',
             url: mcpServerUrl,
-            headers: { 'Authorization': `Bearer ${mcpToken}` },
+            headers: {
+                'Authorization': `Bearer ${mcpToken}`,
+                [CONVERSATION_ID_HEADER]: conversationId,
+            },
         },
     }))
     if (isNil(client)) {
@@ -64,22 +66,31 @@ function hasExecute(tool: object): tool is object & { execute: (args: unknown) =
     return 'execute' in tool && typeof tool.execute === 'function'
 }
 
-function withApprovalGates({ mcpToolSet, writer, log }: {
+function withApprovalGates({ mcpToolSet, writer, log, planExecution }: {
     mcpToolSet: Record<string, unknown>
-    writer: StreamWriter
+    writer: ChatStreamWriter
     log: FastifyBaseLogger
+    planExecution: PlanExecution
 }): Record<string, unknown> {
     const result: Record<string, unknown> = {}
 
     for (const [name, tool] of Object.entries(mcpToolSet)) {
-        if (!chatToolCategories.requiresApproval(name) || typeof tool !== 'object' || tool === null || !hasExecute(tool)) {
+        if (typeof tool !== 'object' || tool === null || !hasExecute(tool)) {
             result[name] = tool
             continue
         }
 
         const originalExecute = tool.execute.bind(tool)
+        const needsApproval = chatToolCategories.requiresApproval(name)
+
         result[name] = Object.assign({}, tool, {
             execute: async (args: unknown) => {
+                if (planExecution.isApproved()) {
+                    return planExecution.trackStep({ execute: () => originalExecute(args) })
+                }
+                if (!needsApproval) {
+                    return originalExecute(args)
+                }
                 const gateId = apId()
                 const displayName = typeof args === 'object' && args !== null && 'displayName' in args && typeof args.displayName === 'string'
                     ? args.displayName
@@ -117,6 +128,13 @@ type McpConnection = {
     mcpClient: Awaited<ReturnType<typeof createMCPClient>> | null
     mcpToolSet: Record<string, unknown>
 }
+
+export type PlanExecution = {
+    isApproved: () => boolean
+    trackStep: (params: { execute: () => Promise<unknown> }) => Promise<unknown>
+}
+
+export { CONVERSATION_ID_HEADER }
 
 export const chatMcp = {
     getCredentials: getMcpCredentials,

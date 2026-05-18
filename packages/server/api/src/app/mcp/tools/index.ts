@@ -20,7 +20,6 @@ import { apInsertRecordsTool } from './ap-insert-records'
 import { apListAiModelsTool } from './ap-list-ai-models'
 import { apListConnectionsTool } from './ap-list-connections'
 import { apListFlowsTool } from './ap-list-flows'
-import { apListPiecesTool } from './ap-list-pieces'
 import { apListRunsTool } from './ap-list-runs'
 import { apListTablesTool } from './ap-list-tables'
 import { apLockAndPublishTool } from './ap-lock-and-publish'
@@ -28,6 +27,7 @@ import { apManageFieldsTool } from './ap-manage-fields'
 import { apManageNotesTool } from './ap-manage-notes'
 import { apReadStepCodeTool } from './ap-read-step-code'
 import { apRenameFlowTool } from './ap-rename-flow'
+import { apResearchPiecesTool } from './ap-research-pieces'
 import { apResolvePropertyOptionsTool } from './ap-resolve-property-options'
 import { apRetryRunTool } from './ap-retry-run'
 import { apRunActionTool } from './ap-run-action'
@@ -46,7 +46,7 @@ export const LOCKED_TOOL_NAMES: string[] = [
     'ap_flow_structure',
     'ap_read_step_code',
     'ap_validate_flow',
-    'ap_list_pieces',
+    'ap_research_pieces',
     'ap_get_piece_props',
     'ap_resolve_property_options',
     'ap_validate_step_config',
@@ -57,6 +57,12 @@ export const LOCKED_TOOL_NAMES: string[] = [
     'ap_list_runs',
     'ap_get_run',
     'ap_setup_guide',
+]
+
+export const PLATFORM_LEVEL_TOOL_NAMES: string[] = [
+    'ap_research_pieces',
+    'ap_list_ai_models',
+    'ap_get_piece_props',
 ]
 
 // NOTE: Keep this list in sync with TOOL_CATEGORIES in
@@ -99,7 +105,7 @@ export const activepiecesTools = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
     apFlowStructureTool(mcp, log),
     apReadStepCodeTool(mcp, log),
     apValidateFlowTool(mcp, log),
-    apListPiecesTool(mcp, log),
+    apResearchPiecesTool(mcp, log),
     apGetPiecePropsTool(mcp, log),
     apResolvePropertyOptionsTool(mcp, log),
     apValidateStepConfigTool(mcp, log),

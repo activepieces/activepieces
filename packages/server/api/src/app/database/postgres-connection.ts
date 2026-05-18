@@ -49,6 +49,7 @@ import { SplitUpPieceMetadataIntoTools1752004202722 } from './migration/common/1
 import { AddIndexToIssues1756775080449 } from './migration/common/1756775080449-AddIndexToIssues'
 import { AddFlowIndexToTriggerSource1757555419075 } from './migration/common/1757555283659-AddFlowIndexToTriggerSource'
 import { AddIndexForAppEvents1759392852559 } from './migration/common/1759392852559-AddIndexForAppEvents'
+import { AddUiMessagesToChatConversation1778983371000 } from './migration/common/1778983371000-AddUiMessagesToChatConversation'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -765,6 +766,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         RemoveMcpServerStatus1790000000000,
         RenameEnabledToolsToDisabledTools1791000000000,
         AddTriggerSourceFlowVersionIdIndex1792000000000,
+        AddUiMessagesToChatConversation1778983371000,
     ]
     return migrations
 }
