@@ -11,7 +11,6 @@ import {
     ProjectId,
     SeekPage,
     spreadIfDefined,
-    unique,
     User,
     UserId,
     UserIdentity,
@@ -110,25 +109,20 @@ export const variableService = (log: FastifyBaseLogger) => ({
 
     async getOwners(params: { projectId: ProjectId, platformId: PlatformId }): Promise<AppConnectionOwners[]> {
         const { projectId, platformId } = params
-        const rows = await variableRepo()
+        // Bounded SELECT DISTINCT on the joined identity tuple so this endpoint
+        // doesn't hydrate every variable row to surface the owner filter.
+        return variableRepo()
             .createQueryBuilder('variable')
-            .leftJoinAndSelect('variable.owner', 'owner')
-            .leftJoinAndSelect('owner.identity', 'owner_identity')
-            .where({ projectId: Equal(projectId), platformId: Equal(platformId) })
-            .getMany()
-        const owners: AppConnectionOwners[] = []
-        for (const row of rows) {
-            const identity = row.owner?.identity
-            if (isNil(identity)) {
-                continue
-            }
-            owners.push({
-                firstName: identity.firstName,
-                lastName: identity.lastName,
-                email: identity.email,
-            })
-        }
-        return unique(owners)
+            .innerJoin('variable.owner', 'owner')
+            .innerJoin('owner.identity', 'owner_identity')
+            .select('owner_identity.firstName', 'firstName')
+            .addSelect('owner_identity.lastName', 'lastName')
+            .addSelect('owner_identity.email', 'email')
+            .where('variable.projectId = :projectId', { projectId })
+            .andWhere('variable.platformId = :platformId', { platformId })
+            .distinct(true)
+            .limit(MAX_VARIABLE_OWNERS)
+            .getRawMany<AppConnectionOwners>()
     },
 
     async getOneOrThrowWithoutValue(params: GetOneParams): Promise<VariableWithoutSensitiveData> {
@@ -223,9 +217,13 @@ async function fetchFlowIdsForVariables(
     const projectIds = Array.from(new Set(variables.map((v) => v.projectId)))
     const variableNames = new Set(variables.map((v) => v.name))
 
+    // Bounded scan: in projects with many flows we sample the most recent
+    // page and surface a "Used in N+" hint client-side if needed. The cap
+    // keeps the variables list endpoint within predictable latency.
     const flowsPage = await flowService(log).list({
         projectIds,
         cursorRequest: null,
+        limit: MAX_FLOWS_SCANNED_FOR_VARIABLE_REFERENCES,
     })
 
     for (const flow of flowsPage.data) {
@@ -247,6 +245,9 @@ async function fetchFlowIdsForVariables(
 
     return flowIdsByName
 }
+
+const MAX_VARIABLE_OWNERS = 200
+const MAX_FLOWS_SCANNED_FOR_VARIABLE_REFERENCES = 500
 
 function mapToUserWithMetaInformation(owner: (User & { identity?: UserIdentity }) | null): UserWithMetaInformation | null {
     if (isNil(owner)) {
