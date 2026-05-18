@@ -1,0 +1,18 @@
+{
+  "Math Helper": "Помощник по математике",
+  "\nPerform mathematical operations.\n": "\nPerform mathematical operations.\n",
+  "Addition": "Добавление",
+  "Subtraction": "Вычитание",
+  "Multiplication": "Умножение",
+  "Division": "Дивизион",
+  "Modulo": "Modulo",
+  "Generate Random Number": "Генерировать случайный номер",
+  "Add the first number and the second number": "Добавить первый номер и второй номер",
+  "Subtract the first number from the second number": "Вычесть первое число из второго числа",
+  "Multiply first number by the second number": "Умножение первого числа на второе число",
+  "Divide first number by the second number": "Деление первого числа на второе число",
+  "Get the remainder of the first number divided by second number": "Получить остаток от первого числа, разделенного на второе число",
+  "Generate random number between two numbers (inclusive)": "Сгенерировать случайное число между двумя числами (включительно)",
+  "First Number": "Первый номер",
+  "Second Number": "Второй номер"
+}

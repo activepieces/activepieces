@@ -1,0 +1,112 @@
+---
+title: Handling Downtime
+icon: turn-down
+---
+
+![Downtime Incident](https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExdTZnbGxjc3k5d3NxeXQwcmhxeTRsbnNybnd4NG41ZnkwaDdsa3MzeSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/2UCt7zbmsLoCXybx6t/giphy.gif)
+
+## 📋 What You Need Before Starting
+
+Make sure these are ready:
+- **[BetterStack Setup](../playbooks/setup-betterstack)**: For managing incidents and on-call alerts.
+- **[BetterStack Logs](https://telemetry.betterstack.com)**: For checking logs and errors.
+- **[BetterStack Monitors](https://uptime.betterstack.com)**: For e2e test results and uptime monitoring.
+- **[BetterStack Errors](https://errors.betterstack.com)**: For thrown errors.
+
+
+---
+
+## 🚨 Stay Calm and Take Action
+
+<Warning>
+  Don’t panic! Follow these steps to fix the issue.
+</Warning>
+
+1. **Tell Your Users**:
+   - Let your users know there’s an issue. Post on [Community](https://community.activepieces.com) and Discord.
+   - Example message: *“We’re looking into a problem with our services. Thanks for your patience!”*
+
+2. **Find Out What’s Wrong**:
+   - Gather details. What’s not working? When did it start?
+
+3. **Update the Status Page**:
+   - Use [BetterStack](https://uptime.betterstack.com) and create an incident to update the status page. Set it to *”Investigating”* or *”Partial Outage”*.
+
+---
+
+## 🔍 Check for Infrastructure Problems
+
+1. **Look at DigitalOcean**:
+   - Check if the CPU, memory, or disk usage is too high.
+   - If it is:
+     - **Increase the machine size** temporarily to fix the issue.
+     - Keep looking for the root cause.
+
+---
+
+## 📜 Check Logs and Errors
+
+1. **Use BetterStack Logs**:
+   - Go to [https://telemetry.betterstack.com](https://telemetry.betterstack.com).
+   - Search for recent errors in the logs.
+
+2. **Check BetterStack errors**:
+   - Go to [https://errors.betterstack.com](https://errors.betterstack.com).
+   - Look for grouped errors (errors that happen a lot).
+   - Try to **reproduce the error** and fix it if possible.
+
+---
+
+## 🛠️ Debugging with Playwright / BetterStack Monitors
+
+1. **Check BetterStack Monitor Logs**:
+   - Go to [https://uptime.betterstack.com](https://uptime.betterstack.com) and review recent monitor failures.
+   - If the issue is a **timeout**, it might mean there’s a bigger performance problem.
+
+2. **Check Playwright E2E Results**:
+   - Review the latest Playwright test run in CI for failed checks.
+   - If it’s an E2E test failure due to UI changes, it’s likely not urgent.
+   - Fix the test file packages/tests-e2e/scenarios/betterstack/webhook-should-return-response.flat.spec.js and the issue will go away once pushed to main and Sync Playwright test to BetterStack ci runs.
+
+---
+
+## 🎭 Debugging Incidents via Playwright Artifacts
+
+1. Go to the [BetterStack Incidents list](https://uptime.betterstack.com/team/t142339/incidents?m=4211060).
+2. Choose the relevant incident.
+3. Scroll down and open the **Artifacts** tab.
+4. You’ll find **screenshots** of the failed Playwright tests and **logs** that help pinpoint what went wrong.
+
+---
+
+## 🚨 When Should You Ask for Help?
+
+Ask for help right away if:
+- Flows are failing.
+- The whole platform is down.
+- There's a lot of data loss or corruption.
+- You're not sure what is causing the issue.
+- You've spent **more than 5 minutes** and still don't know what's wrong.
+
+💡 **How to Ask for Help**:
+- Use **BetterStack** to create a **critical alert**.
+- Go to the **Slack incident channel** and escalate the issue to the engineering team.
+
+<Warning>
+  If you’re unsure, **ask for help!** It’s better to be safe than sorry.
+</Warning>
+
+---
+
+## 💡 Helpful Tips
+
+1. **Stay Organized**:
+   - Keep a list of steps to follow during downtime.
+   - Write down everything you do so you can refer to it later.
+
+2. **Communicate Clearly**:
+   - Keep your team and users updated.
+   - Use simple language in your updates.
+
+3. **Take Care of Yourself**:
+   - If you feel stressed, take a short break. Grab a coffee ☕, take a deep breath, and tackle the problem step by step.

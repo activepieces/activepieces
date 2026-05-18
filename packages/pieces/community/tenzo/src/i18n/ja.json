@@ -1,0 +1,15 @@
+{
+  "Extract data and insights from the Tenzo platform for sales, forecasting, and analytics.": "販売、予測、分析のためのTensoプラットフォームからデータと洞察を抽出します。",
+  "New Daily Forecast": "新しい日々の予測",
+  "New Summary Payments": "新しい概要支払い",
+  "New Summary Sales": "新しい概要の販売",
+  "Triggers when there is a new daily forecast for a selected location.": "選択したロケーションに毎日の新しい天気予報がある場合に発生します。",
+  "Triggers when there is new daily sales and payments data.": "日々の新しい売上と支払いデータがある場合にトリガーします。",
+  "Triggers when there is new daily sales data.": "日々の新しい販売データがある場合にトリガーします。",
+  "Location": "場所",
+  "Area": "エリア",
+  "Include Deleted": "削除を含める",
+  "Select the location to filter data": "データをフィルタリングする場所を選択します",
+  "Select the area to filter data": "データをフィルタリングする領域を選択します",
+  "Include data that has been deleted": "削除されたデータを含める"
+}

@@ -1,0 +1,7 @@
+{
+  "Receive form submissions from Tally forms": "Tally フォームからフォームの提出を受信する",
+  "Your Tally API key. Go to **Settings > API keys** in your Tally dashboard to create one.": "Tally APIキー。タリーダッシュボードの**Settings > APIキー**に移動して作成します。",
+  "New Submission": "新しい提出",
+  "Triggers when a form receives a new submission": "フォームが新しい提出物を受け取ったときにトリガーします",
+  "Form": "フォーム"
+}

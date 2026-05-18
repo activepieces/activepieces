@@ -1,0 +1,123 @@
+import { ActivepiecesError, ALL_PRINCIPAL_TYPES, apId, EnginePrincipal, ErrorCode, PlatformId, Principal, PrincipalType, ProjectId, UserStatus, WorkerPrincipal } from '@activepieces/shared'
+import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
+import { jwtUtils } from '../../helper/jwt-utils'
+import { userService } from '../../user/user-service'
+import { userIdentityService } from '../user-identity/user-identity-service'
+
+export const accessTokenManager = (log: FastifyBaseLogger) => ({
+    async generateToken(principal: Principal, expiresInSeconds: number = dayjs.duration(7, 'day').asSeconds()): Promise<string> {
+        const secret = await jwtUtils.getJwtSecret()
+        return jwtUtils.sign({
+            payload: principal,
+            key: secret,
+            expiresInSeconds,
+        })
+    },
+
+    async generateEngineToken({ jobId, projectId, platformId }: GenerateEngineTokenParams): Promise<string> {
+        const enginePrincipal: EnginePrincipal = {
+            id: jobId ?? apId(),
+            type: PrincipalType.ENGINE,
+            projectId,
+            platform: {
+                id: platformId,
+            },
+        }
+
+        const secret = await jwtUtils.getJwtSecret()
+
+        return jwtUtils.sign({
+            payload: enginePrincipal,
+            key: secret,
+            expiresInSeconds: dayjs.duration(100, 'year').asSeconds(),
+        })
+    },
+
+    async generateWorkerToken(): Promise<string> {
+        const workerPrincipal: WorkerPrincipal = {
+            id: apId(),
+            type: PrincipalType.WORKER,
+        }
+
+        const secret = await jwtUtils.getJwtSecret()
+
+        return jwtUtils.sign({
+            payload: workerPrincipal,
+            key: secret,
+            expiresInSeconds: dayjs.duration(100, 'year').asSeconds(),
+        })
+    },
+
+
+    async verifyPrincipal(token: string): Promise<Principal> {
+        const secret = await jwtUtils.getJwtSecret()
+
+        try {
+            const decoded = await jwtUtils.decodeAndVerify<Principal>({
+                jwt: token,
+                key: secret,
+            })
+            if (!ALL_PRINCIPAL_TYPES.includes(decoded.type)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.INVALID_BEARER_TOKEN,
+                    params: {
+                        message: 'invalid principal type',
+                    },
+                })
+            }
+            await assertUserSession(log, decoded)
+            return decoded
+        }
+        catch (e) {
+            if (e instanceof ActivepiecesError) {
+                throw e
+            }
+            throw new ActivepiecesError({
+                code: ErrorCode.INVALID_BEARER_TOKEN,
+                params: {
+                    message: 'invalid access token or session expired',
+                },
+            })
+        }
+    },
+})
+
+async function assertUserSession(log: FastifyBaseLogger, decoded: Principal | Principal): Promise<void> {
+    if (decoded.type !== PrincipalType.USER && decoded.type !== PrincipalType.ONBOARDING) return
+
+    if (decoded.type === PrincipalType.ONBOARDING) {
+        const identity = await userIdentityService(log).getOneOrFail({ id: decoded.id })
+        const isExpired = (identity.tokenVersion ?? null) !== (decoded.tokenVersion ?? null)
+        if (isExpired || !identity.verified) {
+            throw new ActivepiecesError({
+                code: ErrorCode.SESSION_EXPIRED,
+                params: {
+                    message: 'The session has expired or the user is not verified.',
+                },
+            })
+        }
+        return
+    }
+
+    const user = await userService(log).getOneOrFail({ id: decoded.id })
+    const identity = await userIdentityService(log).getOneOrFail({ id: user.identityId })
+    const isExpired = (identity.tokenVersion ?? null) !== (decoded.tokenVersion ?? null)
+    if (isExpired || user.status === UserStatus.INACTIVE || !identity.verified) {
+        throw new ActivepiecesError({
+            code: ErrorCode.SESSION_EXPIRED,
+            params: {
+                message: 'The session has expired or the user is not verified.',
+            },
+        })
+    }
+    if (identity.lastLoggedInPlatformId !== decoded.platform.id) {
+        await userIdentityService(log).updateLastLoggedInPlatformId({ id: identity.id, lastLoggedInPlatformId: decoded.platform.id })
+    }
+}
+
+type GenerateEngineTokenParams = {
+    projectId: ProjectId
+    jobId?: string
+    platformId: PlatformId
+}

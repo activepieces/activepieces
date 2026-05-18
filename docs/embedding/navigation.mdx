@@ -1,0 +1,87 @@
+---
+title: "Navigation"
+description: ""
+icon: "signs-post"
+---
+
+By default, navigating within your embedded instance of Activepieces doesn't affect the client's browser history or viewed URL. Activepieces only provide a **handler**, that trigger on every route change in the **iframe**.
+
+## Automatically Sync URL 
+
+You can use the following snippet when configuring the SDK, which will implement a handler that syncs the Activepieces iframe with your browser:
+
+<Tip>
+The following snippet listens when the user clicks backward, so it syncs the route back to the iframe using `activepieces.navigate` and in the handler, it updates the URL of the browser.
+</Tip>
+
+```js
+const instanceUrl = 'YOUR_INSTANCE_URL';
+const jwtToken = 'YOUR_GENERATED_JWT_TOKEN';
+const containerId = 'YOUR_CONTAINER_ID';
+activepieces.configure({
+  instanceUrl,
+  jwtToken,
+  embedding: {
+    containerId,
+    builder: {
+      disableNavigation: false,
+      hideFlowName: false
+    },
+    dashboard: {
+      hideSidebar: false
+    },
+    hideFolders: false,
+    navigation: {
+      handler: ({ route }) => {
+        //route can include search params at the end of it
+        if (!window.location.href.endsWith(route)) {
+          window.history.pushState({}, "", window.location.origin + route);
+        }
+      }
+    }
+  },
+});
+
+window.addEventListener("popstate", () => {
+  const route = activepieces.extractActivepiecesRouteFromUrl({ vendorUrl: window.location.href });
+  activepieces.navigate({ route });
+});
+```
+
+## Navigate Method
+
+If you use `activepieces.navigate({ route: '/flows' })` this will tell the embedded sdk where to navigate to.
+
+Here is the list for routes the sdk can navigate to:
+
+| Route | Description |
+| --- | --- |
+| `/flows` | Flows table
+| `/flows/{flowId}` | Opens up a flow in the builder
+| `/runs` | Runs table
+| `/runs/{runId}` | Opens up a run in the builder
+| `/connections` | Connections table
+| `/tables` | Tables table
+| `/tables/{tableId}` | Opens up a table
+| `todos` | Todos table
+| `todos/{todoId}` | Opens up a todo
+
+
+## Navigate to Initial Route
+
+You can call the `navigate` method after initializing the sdk using the `configure` sdk:
+
+```js
+const flowId = '1234';
+const instanceUrl = 'YOUR_INSTANCE_URL';
+const jwtToken = 'YOUR_GENERATED_JWT_TOKEN';
+activepieces.configure({
+	instanceUrl,
+	jwtToken,
+}).then(() => {
+	activepieces.navigate({
+		route: `/flows/${flowId}`
+	})
+});
+```
+

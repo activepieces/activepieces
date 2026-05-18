@@ -1,0 +1,7 @@
+{
+  "Receive form submissions from Tally forms": "Receive form submissions from Tally forms",
+  "Your Tally API key. Go to **Settings > API keys** in your Tally dashboard to create one.": "Your Tally API key. Go to **Settings > API keys** in your Tally dashboard to create one.",
+  "New Submission": "New Submission",
+  "Triggers when a form receives a new submission": "Triggers when a form receives a new submission",
+  "Form": "Form"
+}

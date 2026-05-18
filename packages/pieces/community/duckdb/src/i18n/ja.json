@@ -1,0 +1,13 @@
+{
+  "Run SQL queries on an in-memory DuckDB database.": "In-memory DuckDB データベースで SQL クエリを実行します。",
+  "Create and Query DB": "データベースの作成とクエリ",
+  "Create DB from data and run query": "データからDBを作成し、クエリを実行する",
+  "Markdown": "Markdown",
+  "Tables": "テーブル",
+  "Query": "クエリ",
+  "Arguments": "引数",
+  "\n      **DO NOT** insert dynamic input directly into the query string. Instead, use $1, $2, $3 and add them in args for parameterized queries to prevent **SQL injection.**": "\n      **動的入力を直接クエリ文字列に挿入しない** 。 代わりに、$1、$2、$3を使用して、**SQLインジェクション** を防ぐためにパラメータ化されたクエリのために引数に追加します。",
+  "List of tables to create in the database": "データベースに作成するテーブルのリスト",
+  "Please use $1, $2, etc. for parameterized queries to avoid SQL injection.": "SQLインジェクションを避けるためにパラメータ化されたクエリには、$1、$2などを使用してください。",
+  "Arguments to be used in the query": "クエリで使用する引数"
+}

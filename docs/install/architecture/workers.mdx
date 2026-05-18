@@ -1,0 +1,39 @@
+---
+title: "Workers"
+description: "Run, scale, and tune the container that executes your flows"
+icon: "gears"
+---
+
+The **worker** is the container that actually runs flows. It pulls jobs from Redis, executes each one inside a sandbox, and streams results back to the app. This page is about operating it: how many to run, how to size them, and what happens when one dies mid-flow.
+
+## What a Worker Does
+
+Each worker pulls jobs off the BullMQ queue in Redis, hands them to a sandboxed engine process, and posts progress and results back to the app over HTTP. Workers are **stateless** — they hold no per-flow memory, which is what makes horizontal scaling and crash recovery straightforward.
+
+## Scaling
+
+There are two independent knobs:
+
+- **Replicas** — scale horizontally. Workers are stateless, so adding replicas is safe behind any orchestrator (Docker Compose, Kubernetes, Nomad). The default Docker Compose setup starts 5 replicas.
+- **`AP_WORKER_CONCURRENCY`** — concurrent jobs per replica. Default `5`. Each concurrent job uses one sandbox instance, so this also sets the peak sandbox count per worker.
+
+Size replicas for throughput, and concurrency for how much a single replica can chew on. If flows are CPU-bound, lower concurrency and add replicas. If flows are I/O-bound (most automation workloads), raise concurrency before adding replicas.
+
+See [Hardware Requirements](../configuration/hardware) for per-replica memory and CPU sizing.
+
+<Tip>
+In `UNSANDBOXED` and `SANDBOX_CODE_ONLY` modes, sandboxes stay warm across jobs, so steady-state execution is fast. `SANDBOX_PROCESS` spins up a fresh sandbox per run, which trades latency for kernel-level isolation.
+</Tip>
+
+## Failure Behaviour
+
+If a worker crashes, is evicted, or loses its Redis lease mid-run, BullMQ requeues the job and another worker picks it up. The engine's durable-execution layer replays already-completed steps from persisted state rather than re-running them, so side effects are not duplicated. This means a worker restart or OOM kill during a flow is survivable — you do not need to drain traffic before rolling workers.
+
+See [Durable Execution](./durable-execution) for exactly what is persisted and how replay works.
+
+## Sandbox & Network Isolation
+
+How flows are isolated from the worker container and the outside world is two independent choices:
+
+- [**Sandboxing**](./sandboxing) — `AP_EXECUTION_MODE` decides how user code is isolated from the host kernel. This is the most important security decision for multi-tenant deployments.
+- [**Network Security**](./network-security) — `AP_NETWORK_MODE` decides what the sandbox is allowed to reach on the network.
