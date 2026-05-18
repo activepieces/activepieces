@@ -11,43 +11,44 @@ export const visionPrompt = createAction({
   auth: openaiAuth,
   name: 'vision_prompt',
   displayName: 'Vision Prompt',
-  description: 'Ask GPT a question about an image',
+  description: 'Ask GPT-4 Vision anything you want about an image!',
   props: {
-    image: Property.File({
-      displayName: 'Image',
-      description: "The image URL or file you want GPT's vision to read.",
+    baseUrl: Property.ShortText({
+      displayName: 'Base URL',
+      description: 'The base URL for the OpenAI API. Default is https://api.openai.com/v1',
+      required: false,
+    }),
+    model: Property.StaticDropdown({
+      displayName: 'Model',
       required: true,
+      description: 'The model to use for vision.',
+      defaultValue: 'gpt-4o',
+      options: {
+        options: [
+          { label: 'gpt-4o', value: 'gpt-4o' },
+          { label: 'gpt-4-vision-preview', value: 'gpt-4-vision-preview' },
+        ],
+      },
     }),
     prompt: Property.LongText({
       displayName: 'Question',
-      description: 'What do you want ChatGPT to tell you about the image?',
       required: true,
     }),
-    detail: Property.Dropdown({
-      auth: openaiAuth,
+    image: Property.File({
+      displayName: 'Image',
+      required: true,
+    }),
+    detail: Property.StaticDropdown({
       displayName: 'Detail',
       required: false,
-      description:
-        'Control how the model processes the image and generates textual understanding.',
+      description: 'The level of detail to use for the image.',
       defaultValue: 'auto',
-      refreshers: [],
-      options: async () => {
-        return {
-          options: [
-            {
-              label: 'low',
-              value: 'low',
-            },
-            {
-              label: 'high',
-              value: 'high',
-            },
-            {
-              label: 'auto',
-              value: 'auto',
-            },
-          ],
-        };
+      options: {
+        options: [
+          { label: 'Auto', value: 'auto' },
+          { label: 'Low', value: 'low' },
+          { label: 'High', value: 'high' },
+        ],
       },
     }),
     temperature: Property.Number({
@@ -55,13 +56,13 @@ export const visionPrompt = createAction({
       required: false,
       description:
         'Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.',
-      defaultValue: 0.9,
+      defaultValue: 1,
     }),
     maxTokens: Property.Number({
       displayName: 'Maximum Tokens',
-      required: false,
+      required: true,
       description:
-        "The maximum number of tokens to generate. Requests can use up to 2,048 or 4,096 tokens shared between prompt and completion, don't set the value to maximum and leave some tokens for the input. The exact limit varies by model. (One token is roughly 4 characters for normal English text)",
+        "The maximum number of tokens to generate. Requests can use up to 2,048 or 4,096 tokens shared between prompt and completion depending on the model. Don't set the value to maximum and leave some tokens for the input. (One token is roughly 4 characters for normal English text)",
       defaultValue: 2048,
     }),
     topP: Property.Number({
@@ -83,15 +84,7 @@ export const visionPrompt = createAction({
       required: false,
       description:
         "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the mode's likelihood to talk about new topics.",
-      defaultValue: 0.6,
-    }),
-    roles: Property.Json({
-      displayName: 'Roles',
-      required: false,
-      description: 'Array of roles to specify more accurate response',
-      defaultValue: [
-        { role: 'system', content: 'You are a helpful assistant.' },
-      ],
+      defaultValue: 0,
     }),
   },
   async run({ auth, propsValue }) {
@@ -99,44 +92,34 @@ export const visionPrompt = createAction({
       temperature: z.number().min(0).max(1),
     });
 
-    const { apiKey, baseUrl: customBaseUrl } = (auth as any).props;
     const openai = new OpenAI({
-      apiKey: apiKey,
-      baseURL: customBaseUrl || undefined,
+      apiKey: auth as string,
+      baseURL: propsValue.baseUrl || undefined,
     });
-    const { temperature, maxTokens, topP, frequencyPenalty, presencePenalty } =
-      propsValue;
-
-    const rolesArray = propsValue.roles ? (propsValue.roles as any) : [];
-    const roles = rolesArray.map((item: any) => {
-      const rolesEnum = ['system', 'user', 'assistant'];
-      if (!rolesEnum.includes(item.role)) {
-        throw new Error(
-          'The only available roles are: [system, user, assistant]'
-        );
-      }
-
-      return {
-        role: item.role,
-        content: item.content,
-      };
-    });
+    const {
+      model,
+      temperature,
+      maxTokens,
+      topP,
+      frequencyPenalty,
+      presencePenalty,
+      prompt,
+      image,
+      detail,
+    } = propsValue;
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: model,
       messages: [
-        ...roles,
         {
           role: 'user',
           content: [
-            {
-              type: 'text',
-              text: propsValue['prompt'],
-            },
+            { type: 'text', text: prompt },
             {
               type: 'image_url',
               image_url: {
-                url: `data:image/${propsValue.image.extension};base64,${propsValue.image.base64}`,
+                url: `data:image/png;base64,${image.data.toString('base64')}`,
+                detail: detail as any,
               },
             },
           ],

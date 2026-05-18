@@ -1,9 +1,10 @@
 import { StoreScope } from '@activepieces/pieces-framework'
-import { McpToolDefinition, Permission, ProjectScopedMcpServer, STORE_KEY_MAX_LENGTH } from '@activepieces/shared'
+import { McpToolDefinition, Permission, ProjectScopedMcpServer, STORE_KEY_MAX_LENGTH, STORE_VALUE_MAX_SIZE } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { storeEntryService } from '../../store-entry/store-entry.service'
 import { mcpUtils } from './mcp-utils'
+import sizeof from 'object-sizeof'
 
 const scopeSchema = z.enum(['PROJECT', 'FLOW'])
 
@@ -74,6 +75,13 @@ export const apStorePutTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogg
         execute: async (args) => {
             try {
                 const { key, value, scope, flowId } = storePutInput.parse(args)
+                const sizeOfValue = sizeof(value)
+                if (sizeOfValue > STORE_VALUE_MAX_SIZE) {
+                    return {
+                        content: [{ type: 'text', text: `❌ Value too large (${sizeOfValue} bytes). Maximum allowed is ${STORE_VALUE_MAX_SIZE} bytes.` }],
+                        isError: true,
+                    }
+                }
                 const modifiedKey = createKey(scope, flowId, key)
                 await storeEntryService.upsert({
                     projectId: mcp.projectId,

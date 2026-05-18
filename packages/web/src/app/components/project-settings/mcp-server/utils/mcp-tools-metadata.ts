@@ -79,6 +79,10 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
           'Get detailed results of a flow run including step outputs and errors',
       },
       {
+        name: 'ap_store_get',
+        description: 'Read a value by key from the persistent key-value store',
+      },
+      {
         name: 'ap_setup_guide',
         description:
           'Get instructions for setting up connections or AI providers',
@@ -193,6 +197,19 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
       {
         name: 'ap_delete_records',
         description: 'Delete records by their IDs',
+      },
+    ],
+  },
+  {
+    label: 'Storage',
+    tools: [
+      {
+        name: 'ap_store_put',
+        description: 'Write or update a value in the persistent key-value store',
+      },
+      {
+        name: 'ap_store_delete',
+        description: 'Delete a key from the persistent key-value store',
       },
     ],
   },

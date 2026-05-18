@@ -9,90 +9,85 @@ export const editImage = createAction({
   auth: openaiAuth,
   name: 'edit_image',
   displayName: 'Edit Image',
-  description: 'Edit an existing image using a text prompt with gpt-image-2',
+  description: 'Edit an existing image using OpenAI.',
   props: {
+    baseUrl: Property.ShortText({
+      displayName: 'Base URL',
+      description: 'The base URL for the OpenAI API. Default is https://api.openai.com/v1',
+      required: false,
+    }),
     image: Property.File({
       displayName: 'Image',
-      description: 'The image to edit (PNG, JPEG, or WebP).',
-      required: true,
-    }),
-    prompt: Property.LongText({
-      displayName: 'Prompt',
-      description: 'A description of the desired edits or the new image.',
+      description: 'The image to edit.',
       required: true,
     }),
     mask: Property.File({
-      displayName: 'Mask',
-      description:
-        'Optional mask image. Transparent areas indicate where to apply edits. Must match the input image dimensions.',
+      displayName: 'Mask (Optional)',
+      description: 'An additional image whose fully transparent areas indicate where image should be edited.',
       required: false,
+    }),
+    prompt: Property.LongText({
+      displayName: 'Prompt',
+      description: 'A text description of the desired image(s).',
+      required: true,
+    }),
+    n: Property.Number({
+      displayName: 'Number of Images',
+      description: 'The number of images to generate. Must be between 1 and 10.',
+      required: false,
+      defaultValue: 1,
     }),
     size: Property.StaticDropdown({
       displayName: 'Size',
-      description: 'The size of the generated image.',
+      description: 'The size of the generated images.',
       required: false,
-      defaultValue: 'auto',
+      defaultValue: '1024x1024',
       options: {
         options: [
-          { label: 'Auto', value: 'auto' },
+          { label: '256x256', value: '256x256' },
+          { label: '512x512', value: '512x512' },
           { label: '1024x1024', value: '1024x1024' },
-          { label: '1536x1024 (landscape)', value: '1536x1024' },
-          { label: '1024x1536 (portrait)', value: '1024x1536' },
         ],
       },
     }),
-    quality: Property.StaticDropdown({
-      displayName: 'Quality',
-      description: 'Image quality level.',
+    response_format: Property.StaticDropdown({
+      displayName: 'Response Format',
+      description: 'The format in which the generated images are returned.',
       required: false,
-      defaultValue: 'auto',
+      defaultValue: 'b64_json',
       options: {
         options: [
-          { label: 'Auto', value: 'auto' },
-          { label: 'Low', value: 'low' },
-          { label: 'Medium', value: 'medium' },
-          { label: 'High', value: 'high' },
+          { label: 'URL', value: 'url' },
+          { label: 'Base64 JSON', value: 'b64_json' },
         ],
       },
     }),
   },
   async run(context) {
-    const { apiKey, baseUrl: customBaseUrl } = (context.auth as any).props;
     const openai = new OpenAI({
-      apiKey: apiKey,
-      baseURL: customBaseUrl || undefined,
+      apiKey: context.auth as string,
+      baseURL: context.propsValue.baseUrl || undefined,
     });
-    const { image, prompt, mask, size, quality } = context.propsValue;
+    const { image, mask, prompt, n, size, response_format } = context.propsValue;
 
-    const imageMimeType = mime.lookup(image.extension ?? '') || 'image/png';
-    const imageFile = await toFile(image.data, image.filename ?? 'image.png', {
-      type: imageMimeType,
-    });
+    const imageFile = await horrorToFile(image);
+    const maskFile = mask ? await horrorToFile(mask) : undefined;
 
-    const params = {
-      model: 'gpt-image-2',
+    const result = await openai.images.edit({
       image: imageFile,
+      mask: maskFile,
       prompt,
-      ...(size && { size }),
-      ...(quality && { quality }),
-      ...(mask && {
-        mask: await toFile(mask.data, mask.filename ?? 'mask.png', {
-          type: mime.lookup(mask.extension ?? '') || 'image/png',
-        }),
-      }),
-    };
+      n: n ?? undefined,
+      size: size as any,
+      response_format: response_format as any,
+    });
 
-    // quality and extended size values (auto, 1536x1024, 1024x1536) are not yet in SDK
-    // types for images.edit but are accepted by the gpt-image-2 API
-    const result = await openai.images.edit(
-      params as Parameters<typeof openai.images.edit>[0]
-    );
-
-    const images = result.data ?? [];
     const savedImages = await Promise.all(
-      images.map(async (img, index) => {
-        if (!img.b64_json) throw new Error(`Image ${index + 1} has no base64 data`);
-        const fileName = `${randomBytes(8).toString('hex')}-${kebabCase(prompt).slice(0, 40)}-${index + 1}.png`;
+      result.data.map(async (img: any, index) => {
+        if (response_format === 'url') {
+          return { url: img.url };
+        }
+        const fileName = `${kebabCase(prompt)}-${index}.png`;
         const fileUrl = await context.files.write({
           fileName,
           data: Buffer.from(img.b64_json, 'base64'),
@@ -104,3 +99,8 @@ export const editImage = createAction({
     return { ...result, images: savedImages };
   },
 });
+
+async function horrorToFile(apFile: any) {
+  const extension = mime.extension(apFile.extension || 'image/png') || 'png';
+  return await toFile(apFile.data, `image-${randomBytes(4).toString('hex')}.${extension}`);
+}

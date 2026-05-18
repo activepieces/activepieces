@@ -24,24 +24,7 @@ export const createRow = createAction({
 
         const supabase = createClient(url, apiKey);
         
-        // Ensure JSON fields are parsed if they are strings
-        const processedRowData = { ...row_data };
-        for (const key in processedRowData) {
-            const value = processedRowData[key];
-            if (typeof value === 'string') {
-                try {
-                    // Try parsing as JSON. If it's a valid JSON string, parse it.
-                    // This is important for fields that are intended to be json/jsonb.
-                    if ((value.startsWith('{') && value.endsWith('}')) || (value.startsWith('[') && value.endsWith(']'))) {
-                        processedRowData[key] = JSON.parse(value);
-                    }
-                } catch (e) {
-                    // Not valid JSON or already a string, keep as is
-                }
-            }
-        }
-
-        const baseQuery = supabase.from(table_name as string).insert(processedRowData);
+        const baseQuery = supabase.from(table_name as string).insert(row_data);
         
         const { data, error } = return_row 
             ? await baseQuery.select()

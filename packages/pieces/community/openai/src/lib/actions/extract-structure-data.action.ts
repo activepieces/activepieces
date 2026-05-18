@@ -5,17 +5,22 @@ import { notLLMs } from '../common/common';
 
 export const extractStructuredDataAction = createAction({
 	auth: openaiAuth,
-	name: 'extract-structured-data',
-	displayName: 'Extract Structured Data from Text',
-	description: 'Returns structured data from provided unstructured text.',
+	name: 'extract_structured_data',
+	displayName: 'Extract Structured Data',
+	description: 'Extract structured data from text using OpenAI.',
 	props: {
+		baseUrl: Property.ShortText({
+			displayName: 'Base URL',
+			description: 'The base URL for the OpenAI API. Default is https://api.openai.com/v1',
+			required: false,
+		}),
 		model: Property.Dropdown({
-  auth: openaiAuth,
 			displayName: 'Model',
 			required: true,
-			refreshers: [],
+			description: 'The model which will generate the completion.',
+			refreshers: ['baseUrl'],
 			defaultValue: 'gpt-3.5-turbo',
-			options: async ({ auth }) => {
+			options: async ({ auth, propsValue }) => {
 				if (!auth) {
 					return {
 						disabled: true,
@@ -24,14 +29,15 @@ export const extractStructuredDataAction = createAction({
 					};
 				}
 				try {
-					const { apiKey, baseUrl: customBaseUrl } = (auth as any).props;
 					const openai = new OpenAI({
-						apiKey: apiKey,
-						baseURL: customBaseUrl || undefined,
+						apiKey: auth as string,
+						baseURL: (propsValue['baseUrl'] as string) || undefined,
 					});
 					const response = await openai.models.list();
 					// We need to get only LLM models
-					const models = response.data.filter((model) => !notLLMs.includes(model.id));
+					const models = response.data.filter(
+						(model) => !notLLMs.includes(model.id)
+					);
 					return {
 						disabled: false,
 						options: models.map((model) => {
@@ -51,90 +57,98 @@ export const extractStructuredDataAction = createAction({
 			},
 		}),
 		text: Property.LongText({
-			displayName: 'Unstructured Text',
+			displayName: 'Text',
+			description: 'The text to extract data from.',
 			required: true,
 		}),
-		params: Property.Array({
-			displayName: 'Data Definition',
+		extractionSchema: Property.Array({
+			displayName: 'Extraction Schema',
+			description: 'The schema for the data to be extracted.',
 			required: true,
 			properties: {
 				propName: Property.ShortText({
-					displayName: 'Name',
-					description:
-						'Provide the name of the value you want to extract from the unstructured text. The name should be unique and short. ',
+					displayName: 'Property Name',
+					description: 'The name of the property to be extracted.',
 					required: true,
 				}),
-				propDescription: Property.LongText({
-					displayName: 'Description',
-					description:
-						'Brief description of the data, this hints for the AI on what to look for',
-					required: false,
+				propDescription: Property.ShortText({
+					displayName: 'Property Description',
+					description: 'The description of the property to be extracted.',
+					required: true,
 				}),
 				propDataType: Property.StaticDropdown({
-					displayName: 'Data Type',
-					description: 'Type of parameter.',
+					displayName: 'Property Data Type',
+					description: 'The data type of the property to be extracted.',
 					required: true,
-					defaultValue: 'string',
 					options: {
-						disabled: false,
 						options: [
-							{ label: 'Text', value: 'string' },
+							{ label: 'String', value: 'string' },
 							{ label: 'Number', value: 'number' },
 							{ label: 'Boolean', value: 'boolean' },
 						],
 					},
 				}),
 				propIsRequired: Property.Checkbox({
-					displayName: 'Fail if Not present?',
+					displayName: 'Is Required',
+					description: 'Whether the property is required.',
 					required: true,
-					defaultValue: false,
+					defaultValue: true,
 				}),
 			},
 		}),
 	},
 	async run(context) {
-		const { model, text } = context.propsValue;
-		const paramInputArray = context.propsValue.params as ParamInput[];
-		const functionParams: Record<string, unknown> = {};
-		const requiredFunctionParams: string[] = [];
-		for (const param of paramInputArray) {
-			functionParams[param.propName] = {
+		const { model, text, extractionSchema, baseUrl } = context.propsValue;
+
+		const properties: Record<string, any> = {};
+		const required: string[] = [];
+
+		(extractionSchema as ParamInput[]).forEach((param) => {
+			properties[param.propName] = {
 				type: param.propDataType,
-				description: param.propDescription ?? param.propName,
+				description: param.propDescription,
 			};
 			if (param.propIsRequired) {
-				requiredFunctionParams.push(param.propName);
+				required.push(param.propName);
 			}
-		}
+		});
+
 		const prompt = 'Extract the following data from the provided text'
-		const { apiKey, baseUrl: customBaseUrl } = (context.auth as any).props;
 		const openai = new OpenAI({
-			apiKey: apiKey,
-			baseURL: customBaseUrl || undefined,
+			apiKey: context.auth as string,
+			baseURL: baseUrl || undefined,
 		});
 
 		const response = await openai.chat.completions.create({
 			model: model,
-			messages: [{ role: 'user', content: text }],
-			tools: [
+			messages: [
 				{
-					type: 'function',
-					function: {
-						name: 'extract_structured_data',
-						description: prompt,
-						parameters: {
-							type: 'object',
-							properties: functionParams,
-							required: requiredFunctionParams,
-						},
+					role: 'system',
+					content: 'You are a helpful assistant that extracts data from text.',
+				},
+				{
+					role: 'user',
+					content: `${prompt}:\n\n${text}`,
+				},
+			],
+			functions: [
+				{
+					name: 'extract_data',
+					description: 'Extract data from text',
+					parameters: {
+						type: 'object',
+						properties,
+						required,
 					},
 				},
 			],
+			function_call: { name: 'extract_data' },
 		});
 
-		const toolCallsResponse = response.choices[0].message.tool_calls;
-		if (toolCallsResponse) {
-			return JSON.parse(toolCallsResponse[0].function.arguments);
+		const extractedData = response.choices[0].message.function_call?.arguments;
+
+		if (extractedData) {
+			return JSON.parse(extractedData);
 		} else {
 			throw new Error(JSON.stringify({
 				message: "OpenAI couldn't extract the fields from the above text."

@@ -1,8 +1,8 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { baseUrl as defaultBaseUrl } from './common/common';
+import { baseUrl } from './common/common';
 
-export const openaiAuth = PieceAuth.CustomAuth({
+export const openaiAuth = PieceAuth.SecretText({
   description: `Follow these instructions to get your OpenAI API Key:
 
 1. Visit the following website: https://platform.openai.com/account/api-keys.
@@ -10,20 +10,10 @@ export const openaiAuth = PieceAuth.CustomAuth({
 
 It is strongly recommended that you add your credit card information to your OpenAI account and upgrade to the paid plan **before** generating the API Key. This will help you prevent 429 errors.
 `,
-  props: {
-    apiKey: Property.SecretText({
-      displayName: 'API Key',
-      required: true,
-    }),
-    baseUrl: Property.ShortText({
-      displayName: 'Base URL',
-      description: 'The base URL for the OpenAI API. Default is https://api.openai.com/v1',
-      required: false,
-    }),
-  },
+  displayName: 'API Key',
+  required: true,
   validate: async (auth) => {
     try {
-      const baseUrl = auth.props.baseUrl || defaultBaseUrl;
       await httpClient.sendRequest<{
         data: { id: string }[];
       }>({
@@ -31,7 +21,7 @@ It is strongly recommended that you add your credit card information to your Ope
         method: HttpMethod.GET,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth.props.apiKey,
+          token: auth.auth,
         },
       });
       return {
@@ -40,7 +30,7 @@ It is strongly recommended that you add your credit card information to your Ope
     } catch (e) {
       return {
         valid: false,
-        error: 'Invalid API key or base URL',
+        error: 'Invalid API key',
       };
     }
   },

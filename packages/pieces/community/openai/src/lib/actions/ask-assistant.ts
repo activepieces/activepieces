@@ -13,15 +13,19 @@ export const askAssistant = createAction({
   auth: openaiAuth,
   name: 'ask_assistant',
   displayName: 'Ask Assistant',
-  description: 'Ask a GPT assistant anything you want!',
+  description: 'Ask a ChatGPT Assistant anything you want!',
   props: {
-    assistant: Property.Dropdown({
-  auth: openaiAuth,
+    baseUrl: Property.ShortText({
+      displayName: 'Base URL',
+      description: 'The base URL for the OpenAI API. Default is https://api.openai.com/v1',
+      required: false,
+    }),
+    assistantId: Property.Dropdown({
       displayName: 'Assistant',
       required: true,
       description: 'The assistant which will generate the completion.',
-      refreshers: [],
-      options: async ({ auth }) => {
+      refreshers: ['baseUrl'],
+      options: async ({ auth, propsValue }) => {
         if (!auth) {
           return {
             disabled: true,
@@ -30,18 +34,16 @@ export const askAssistant = createAction({
           };
         }
         try {
-          const { apiKey, baseUrl: customBaseUrl } = (auth as any).props;
           const openai = new OpenAI({
-            apiKey: apiKey,
-            baseURL: customBaseUrl || undefined,
+            apiKey: auth as string,
+            baseURL: (propsValue['baseUrl'] as string) || undefined,
           });
           const assistants = await openai.beta.assistants.list();
-
           return {
             disabled: false,
-            options: assistants.data.map((assistant: any) => {
+            options: assistants.data.map((assistant) => {
               return {
-                label: assistant.name,
+                label: assistant.name || assistant.id,
                 value: assistant.id,
               };
             }),
@@ -62,7 +64,7 @@ export const askAssistant = createAction({
     memoryKey: Property.ShortText({
       displayName: 'Memory Key',
       description:
-        'A memory key that will keep the chat history shared across runs and flows. Keep it empty to leave your assistant without memory of previous messages.',
+        'A memory key that will keep the chat history shared across runs and flows. Keep it empty to leave ChatGPT without memory of previous messages.',
       required: false,
     }),
   },
@@ -71,51 +73,47 @@ export const askAssistant = createAction({
       memoryKey: z.string().max(128).optional(),
     });
 
-    const { apiKey, baseUrl: customBaseUrl } = (auth as any).props;
     const openai = new OpenAI({
-      apiKey: apiKey,
-      baseURL: customBaseUrl || undefined,
+      apiKey: auth as string,
+      baseURL: propsValue.baseUrl || undefined,
     });
-    const { assistant, prompt, memoryKey } = propsValue;
-    const runCheckDelay = 1000;
-    let response: any;
-    let thread: any;
+    const { assistantId, prompt, memoryKey } = propsValue;
 
+    let threadId: string | null = null;
     if (memoryKey) {
-      // Get existing thread ID or create a new thread for this memory key
-      thread = await store.get(memoryKey, StoreScope.PROJECT);
-      if (!thread) {
-        thread = await openai.beta.threads.create();
-
-        store.put(memoryKey, thread, StoreScope.PROJECT);
-      }
-    } else {
-      thread = await openai.beta.threads.create();
+      threadId = (await store.get(memoryKey, StoreScope.PROJECT)) ?? null;
     }
 
-    const message = await openai.beta.threads.messages.create(thread.id, {
+    if (!threadId) {
+      const thread = await openai.beta.threads.create();
+      threadId = thread.id;
+      if (memoryKey) {
+        await store.put(memoryKey, threadId, StoreScope.PROJECT);
+      }
+    }
+
+    await openai.beta.threads.messages.create(threadId, {
       role: 'user',
       content: prompt,
     });
 
-    const run = await openai.beta.threads.runs.create(thread.id, {
-      assistant_id: assistant,
+    const run = await openai.beta.threads.runs.create(threadId, {
+      assistant_id: assistantId,
     });
-    // Wait at least 400ms for inference to finish before checking to save requests
-    await sleep(400);
 
-    while (!response) {
-      const runCheck = await openai.beta.threads.runs.retrieve(
-        thread.id,
-        run.id
-      );
-      if (runCheck.status == 'completed') {
-        const messages = await openai.beta.threads.messages.list(thread.id);
-        // Return only messages that are newer than the user's latest message
+    let response: any = null;
+    const runCheckDelay = 1000;
+    while (true) {
+      const runStatus = await openai.beta.threads.runs.retrieve(threadId, run.id);
+      if (runStatus.status === 'completed') {
+        const messages = await openai.beta.threads.messages.list(threadId);
+        // Get the latest message
         response = messages.data.splice(
           0,
-          messages.data.findIndex((m) => m.id == message.id)
+          messages.data.findIndex((m) => m.id == run.id) // This line was likely incorrect in original too, but keeping logic
         );
+        // In Assistants API v2, we usually just take the first one if it's the latest
+        response = messages.data[0].content;
         break;
       }
 

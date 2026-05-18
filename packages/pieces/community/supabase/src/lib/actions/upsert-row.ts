@@ -12,8 +12,8 @@ export const upsertRow = createAction({
         table_name: supabaseCommon.table_name,
         on_conflict: Property.Dropdown({
             auth: supabaseAuth,
-            displayName: 'Conflict Column',
-            description: 'Select the unique column to determine duplicates (required for upsert to work)',
+            displayName: 'Conflict Column(s)',
+            description: 'The column(s) to use for conflict detection (e.g., "id" or "email"). Separate multiple with commas.',
             required: true,
             refreshers: ['table_name'],
             options: async ({ auth, table_name }) => {
@@ -35,24 +35,12 @@ export const upsertRow = createAction({
                         });
                         
                         if (!error && columns && columns.length > 0) {
-                            const options = columns.map((col: any) => ({
-                                label: `${col.column_name} (${col.data_type})`,
-                                value: col.column_name
-                            }));
-                            
-                            options.sort((a: any, b: any) => {
-                                if (a.value === 'id') return -1;
-                                if (b.value === 'id') return 1;
-                                if (a.value.includes('_id')) return -1;
-                                if (b.value.includes('_id')) return 1;
-                                if (a.value === 'email') return -1;
-                                if (b.value === 'email') return 1;
-                                return 0;
-                            });
-                            
                             return {
                                 disabled: false,
-                                options
+                                options: columns.map((col: any) => ({
+                                    label: `${col.column_name} (${col.data_type})`,
+                                    value: col.column_name
+                                }))
                             };
                         }
                     } catch (rpcError) {
@@ -82,16 +70,6 @@ export const upsertRow = createAction({
                                 };
                             });
                             
-                            options.sort((a: any, b: any) => {
-                                if (a.value === 'id') return -1;
-                                if (b.value === 'id') return 1;
-                                if (a.value.includes('_id')) return -1;
-                                if (b.value.includes('_id')) return 1;
-                                if (a.value === 'email') return -1;
-                                if (b.value === 'email') return 1;
-                                return 0;
-                            });
-                            
                             return {
                                 disabled: false,
                                 options
@@ -116,13 +94,13 @@ export const upsertRow = createAction({
         row_data: supabaseCommon.upsert_fields,
         count_upserted: Property.Checkbox({
             displayName: 'Count Upserted Rows',
-            description: 'Whether to count the number of upserted rows',
+            description: 'Whether to count the number of affected rows',
             required: false,
             defaultValue: false,
         }),
         return_upserted: Property.Checkbox({
             displayName: 'Return Upserted Rows',
-            description: 'Whether to return the upserted rows data',
+            description: 'Whether to return the affected rows data',
             required: false,
             defaultValue: false,
         })
@@ -139,21 +117,6 @@ export const upsertRow = createAction({
 
         const supabase = createClient(url, apiKey);
         
-        // Ensure JSON fields are parsed if they are strings
-        const processedRowData = { ...row_data };
-        for (const key in processedRowData) {
-            const value = processedRowData[key];
-            if (typeof value === 'string') {
-                try {
-                    if ((value.startsWith('{') && value.endsWith('}')) || (value.startsWith('[') && value.endsWith(']'))) {
-                        processedRowData[key] = JSON.parse(value);
-                    }
-                } catch (e) {
-                    // Not valid JSON
-                }
-            }
-        }
-
         const upsertOptions: any = {
             onConflict: on_conflict,
             count: count_upserted ? 'exact' : undefined
@@ -161,7 +124,7 @@ export const upsertRow = createAction({
 
         const upsertQuery = supabase
             .from(table_name as string)
-            .upsert(processedRowData, upsertOptions);
+            .upsert(row_data, upsertOptions);
 
         const { data, error, count } = return_upserted 
             ? await upsertQuery.select()

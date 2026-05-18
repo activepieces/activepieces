@@ -4,99 +4,93 @@ import { openaiAuth } from '../auth';
 import { streamToBuffer } from '../common/common';
 
 type Voice = 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer';
-type ResponseFormat = 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm';
-type Model = 'tts-1' | 'tts-1-hd';
+type Format = 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm';
 
 export const textToSpeech = createAction({
 	auth: openaiAuth,
 	name: 'text_to_speech',
-	displayName: 'Text-to-Speech',
-	description: 'Generate an audio recording from text',
+	displayName: 'Text to Speech',
+	description: 'Convert text to audio using OpenAI.',
 	props: {
-		text: Property.LongText({
-			displayName: 'Text',
-			description: 'The text you want to hear.',
-			required: true,
+		baseUrl: Property.ShortText({
+			displayName: 'Base URL',
+			description: 'The base URL for the OpenAI API. Default is https://api.openai.com/v1',
+			required: false,
 		}),
 		model: Property.StaticDropdown({
 			displayName: 'Model',
+			description: 'The model to use for text to speech.',
 			required: true,
-			description: 'The model which will generate the audio.',
 			defaultValue: 'tts-1',
 			options: {
-				disabled: false,
 				options: [
-					{
-						label: 'tts-1',
-						value: 'tts-1',
-					},
-					{
-						label: 'tts-1-hd',
-						value: 'tts-1-hd',
-					},
+					{ label: 'tts-1', value: 'tts-1' },
+					{ label: 'tts-1-hd', value: 'tts-1-hd' },
+				],
+			},
+		}),
+		input: Property.LongText({
+			displayName: 'Input',
+			description: 'The text to convert to audio.',
+			required: true,
+		}),
+		voice: Property.StaticDropdown({
+			displayName: 'Voice',
+			description: 'The voice to use for audio generation.',
+			required: true,
+			defaultValue: 'alloy',
+			options: {
+				options: [
+					{ label: 'Alloy', value: 'alloy' },
+					{ label: 'Echo', value: 'echo' },
+					{ label: 'Fable', value: 'fable' },
+					{ label: 'Onyx', value: 'onyx' },
+					{ label: 'Nova', value: 'nova' },
+					{ label: 'Shimmer', value: 'shimmer' },
+				],
+			},
+		}),
+		format: Property.StaticDropdown({
+			displayName: 'Format',
+			description: 'The format of the generated audio.',
+			required: false,
+			defaultValue: 'mp3',
+			options: {
+				options: [
+					{ label: 'MP3', value: 'mp3' },
+					{ label: 'Opus', value: 'opus' },
+					{ label: 'AAC', value: 'aac' },
+					{ label: 'FLAC', value: 'flac' },
+					{ label: 'WAV', value: 'wav' },
+					{ label: 'PCM', value: 'pcm' },
 				],
 			},
 		}),
 		speed: Property.Number({
 			displayName: 'Speed',
-			description: 'The speed of the audio. Minimum is 0.25 and maximum is 4.00.',
-			defaultValue: 1.0,
+			description: 'The speed of the generated audio. Must be between 0.25 and 4.0.',
 			required: false,
-		}),
-		voice: Property.StaticDropdown({
-			displayName: 'Voice',
-			description: 'The voice to generate the audio in.',
-			required: true,
-			defaultValue: 'alloy',
-			options: {
-				disabled: false,
-				options: [
-					{ label: 'alloy', value: 'alloy' },
-					{ label: 'echo', value: 'echo' },
-					{ label: 'fable', value: 'fable' },
-					{ label: 'onyx', value: 'onyx' },
-					{ label: 'nova', value: 'nova' },
-					{ label: 'shimmer', value: 'shimmer' },
-				],
-			},
-		}),
-		format: Property.StaticDropdown({
-			displayName: 'Output Format',
-			required: true,
-			description: 'The format you want the audio file in.',
-			defaultValue: 'mp3',
-			options: {
-				disabled: false,
-				options: [
-					{ label: 'mp3', value: 'mp3' },
-					{ label: 'opus', value: 'opus' },
-					{ label: 'aac', value: 'aac' },
-					{ label: 'flac', value: 'flac' },
-				],
-			},
+			defaultValue: 1.0,
 		}),
 		fileName: Property.ShortText({
 			displayName: 'File Name',
-			description: 'The name of the output audio file (without extension).',
+			description: 'The name of the generated audio file.',
 			required: false,
-			defaultValue: 'audio',
 		}),
 	},
 	async run({ auth, propsValue, files }) {
-		const { apiKey, baseUrl: customBaseUrl } = (auth as any).props;
+		const { model, input, voice, format, speed, fileName, baseUrl } = propsValue;
 		const openai = new OpenAI({
-			apiKey: apiKey,
-			baseURL: customBaseUrl || undefined,
+			apiKey: auth as string,
+			baseURL: baseUrl || undefined,
 		});
 
-		const { voice, format, model, text, speed, fileName } = propsValue;
-		
 		const audio = await openai.audio.speech.create({
-			model: model as Model,
-			input: text,
-			response_format: format as ResponseFormat,
+			model: model,
+			input: input,
 			voice: voice as Voice,
 			speed: speed,
+			response_format: format as Format,
 		});
 		const result = await streamToBuffer(audio.body);
 

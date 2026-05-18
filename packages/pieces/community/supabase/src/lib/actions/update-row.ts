@@ -1,4 +1,4 @@
-import { createAction, Property, DynamicPropsValue } from "@activepieces/pieces-framework";
+import { createAction, Property } from "@activepieces/pieces-framework";
 import { supabaseAuth } from '../auth';
 import { createClient } from "@supabase/supabase-js";
 import { supabaseCommon } from "../common/props";
@@ -136,31 +136,16 @@ export const updateRow = createAction({
             filter_value, 
             filter_values, 
             update_data,
-            count_updated, 
-            return_updated 
+            count_updated,
+            return_updated
         } = context.propsValue;
         const { url, apiKey } = context.auth.props;
 
         const supabase = createClient(url, apiKey);
-        
-        // Ensure JSON fields are parsed if they are strings
-        const processedUpdateData = { ...update_data };
-        for (const key in processedUpdateData) {
-            const value = processedUpdateData[key];
-            if (typeof value === 'string') {
-                try {
-                    if ((value.startsWith('{') && value.endsWith('}')) || (value.startsWith('[') && value.endsWith(']'))) {
-                        processedUpdateData[key] = JSON.parse(value);
-                    }
-                } catch (e) {
-                    // Not valid JSON
-                }
-            }
-        }
 
         let updateQuery = supabase
             .from(table_name as string)
-            .update(processedUpdateData, { 
+            .update(update_data, { 
                 count: count_updated ? 'exact' : undefined 
             });
 

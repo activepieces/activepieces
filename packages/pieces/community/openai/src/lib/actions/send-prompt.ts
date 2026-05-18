@@ -20,15 +20,20 @@ export const askOpenAI = createAction({
   displayName: 'Ask ChatGPT',
   description: 'Ask ChatGPT anything you want!',
   props: {
+    baseUrl: Property.ShortText({
+      displayName: 'Base URL',
+      description: 'The base URL for the OpenAI API. Default is https://api.openai.com/v1',
+      required: false,
+    }),
     model: Property.Dropdown({
-  auth: openaiAuth,
+      auth: openaiAuth,
       displayName: 'Model',
       required: true,
       description:
         'The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.',
-      refreshers: [],
+      refreshers: ['baseUrl'],
       defaultValue: 'gpt-3.5-turbo',
-      options: async ({ auth }) => {
+      options: async ({ auth, propsValue }) => {
         if (!auth) {
           return {
             disabled: true,
@@ -37,10 +42,9 @@ export const askOpenAI = createAction({
           };
         }
         try {
-          const { apiKey, baseUrl: customBaseUrl } = (auth as any).props;
           const openai = new OpenAI({
-            apiKey: apiKey,
-            baseURL: customBaseUrl || undefined,
+            apiKey: auth as string,
+            baseURL: (propsValue['baseUrl'] as string) || undefined,
           });
           const response = await openai.models.list();
           // We need to get only LLM models
@@ -123,10 +127,9 @@ export const askOpenAI = createAction({
       temperature: z.number().min(0).max(1).optional(),
       memoryKey: z.string().max(128).optional(),
     });
-    const { apiKey, baseUrl: customBaseUrl } = (auth as any).props;
     const openai = new OpenAI({
-      apiKey: apiKey,
-      baseURL: customBaseUrl || undefined,
+      apiKey: auth as string,
+      baseURL: propsValue.baseUrl || undefined,
     });
     const {
       model,
