@@ -7,13 +7,15 @@ import { telemetry } from '../helper/telemetry.utils'
 import { WebhookFlowVersionToRun, webhookService } from '../webhooks/webhook.service'
 import { ALLOW_ALL, PermissionChecker, resolvePermissionChecker } from './mcp-permissions'
 import { mcpProjectSelection, ProjectSelectionScope } from './mcp-project-selection'
-import { activepiecesTools, ALL_CONTROLLABLE_TOOL_NAMES, LOCKED_TOOL_NAMES } from './tools'
+import { activepiecesTools, ALL_CONTROLLABLE_TOOL_NAMES, LOCKED_TOOL_NAMES, PLATFORM_LEVEL_TOOL_NAMES } from './tools'
 import { apSetProjectContextTool } from './tools/ap-set-project-context'
+
+const PLATFORM_LEVEL_TOOL_SET = new Set(PLATFORM_LEVEL_TOOL_NAMES)
 
 const MCP_SERVER_INSTRUCTIONS = `## Activepieces MCP Server
 
 ### Workflow
-1. Discover: ap_list_pieces, ap_list_connections, ap_list_ai_models
+1. Discover: ap_research_pieces, ap_list_connections, ap_list_ai_models
 2. Schema: ap_get_piece_props (get field names/types before configuring)
 3. Build: ap_build_flow (one call for new flows) OR ap_create_flow → ap_update_trigger → ap_add_step (granular)
 4. Validate: ap_validate_flow
@@ -94,6 +96,11 @@ function registerPlatformTools({ server, mcp, userId, selectionScope, resolvePro
     const tools = allTools.filter(t => LOCKED_TOOL_NAMES.includes(t.title) || !disabledToolSet.has(t.title))
 
     tools.forEach((tool) => {
+        if (PLATFORM_LEVEL_TOOL_SET.has(tool.title)) {
+            server.registerTool(tool.title, buildToolConfig(tool), (args: Record<string, unknown>) => tool.execute(args))
+            return
+        }
+
         server.registerTool(tool.title, buildToolConfig(tool), async (args: Record<string, unknown>) => {
             const selectedProjectId = await mcpProjectSelection.get(selectionScope)
             if (isNil(selectedProjectId)) {

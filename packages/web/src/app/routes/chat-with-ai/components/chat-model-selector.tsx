@@ -1,10 +1,18 @@
 import { ACTIVEPIECES_CHAT_TIERS } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Check, ChevronDown, Crown, Sparkles, Zap } from 'lucide-react';
-import React, { useState } from 'react';
+import {
+  ArrowDown,
+  ArrowUp,
+  Check,
+  ChevronDown,
+  CornerDownLeft,
+  Equal,
+  Lightbulb,
+  Rocket,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { Command, CommandGroup, CommandItem } from '@/components/ui/command';
 import {
   Popover,
   PopoverContent,
@@ -12,13 +20,29 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
-const TIER_ICONS: Record<
+const TIER_CONFIG: Record<
   string,
-  React.ComponentType<{ className?: string }>
+  {
+    icon: React.ComponentType<{ className?: string }>;
+    displayLabel: string;
+    description: string;
+  }
 > = {
-  fast: Zap,
-  smart: Sparkles,
-  premium: Crown,
+  fast: {
+    icon: Equal,
+    displayLabel: 'Fast',
+    description: 'Quick replies for simple tasks',
+  },
+  smart: {
+    icon: Lightbulb,
+    displayLabel: 'Expert',
+    description: 'Best for everyday use',
+  },
+  premium: {
+    icon: Rocket,
+    displayLabel: 'Heavy',
+    description: 'Highest quality, a bit slower',
+  },
 };
 
 export function ChatModelSelector({
@@ -29,13 +53,45 @@ export function ChatModelSelector({
   onModelChange: (modelId: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
+  const listRef = useRef<HTMLDivElement>(null);
 
-  const selectedTier = ACTIVEPIECES_CHAT_TIERS.find(
-    (tier) => tier.id === selectedModel,
+  const selectedTierId = selectedModel ?? 'smart';
+  const selectedConfig = TIER_CONFIG[selectedTierId] ?? TIER_CONFIG.smart;
+
+  useEffect(() => {
+    if (!open) return;
+    const idx = ACTIVEPIECES_CHAT_TIERS.findIndex(
+      (tier) => tier.id === selectedTierId,
+    );
+    setFocusedIndex(idx >= 0 ? idx : 0);
+    const rafId = requestAnimationFrame(() => listRef.current?.focus());
+    return () => cancelAnimationFrame(rafId);
+  }, [open, selectedTierId]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setFocusedIndex((prev) =>
+          prev < ACTIVEPIECES_CHAT_TIERS.length - 1 ? prev + 1 : 0,
+        );
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setFocusedIndex((prev) =>
+          prev > 0 ? prev - 1 : ACTIVEPIECES_CHAT_TIERS.length - 1,
+        );
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const tier = ACTIVEPIECES_CHAT_TIERS[focusedIndex];
+        if (tier) {
+          onModelChange(tier.id);
+          setOpen(false);
+        }
+      }
+    },
+    [focusedIndex, onModelChange],
   );
-  const SelectedIcon = selectedTier
-    ? TIER_ICONS[selectedTier.id]
-    : TIER_ICONS.smart;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -47,39 +103,81 @@ export function ChatModelSelector({
           aria-expanded={open}
           className="h-7 gap-1 rounded-full px-2.5 text-xs text-muted-foreground hover:text-foreground"
         >
-          {SelectedIcon && <SelectedIcon className="size-3" />}
-          <span>{selectedTier ? t(selectedTier.label) : t('Smart')}</span>
+          <span>{t(selectedConfig.displayLabel)}</span>
           <ChevronDown className="size-3 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="p-0 w-40" align="start">
-        <Command>
-          <CommandGroup>
-            {ACTIVEPIECES_CHAT_TIERS.map((tier) => {
-              const Icon = TIER_ICONS[tier.id];
+      <PopoverContent
+        className="w-[330px] p-0"
+        align="end"
+        side="top"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
+        <div
+          ref={listRef}
+          tabIndex={0}
+          onKeyDown={handleKeyDown}
+          className="outline-none"
+        >
+          <div className="py-1">
+            {ACTIVEPIECES_CHAT_TIERS.map((tier, index) => {
+              const config = TIER_CONFIG[tier.id];
+              if (!config) return null;
+              const Icon = config.icon;
+              const isSelected = selectedTierId === tier.id;
+              const isFocused = focusedIndex === index;
               return (
-                <CommandItem
+                <div
                   key={tier.id}
-                  value={tier.id}
-                  onSelect={() => {
+                  onClick={() => {
                     onModelChange(tier.id);
                     setOpen(false);
                   }}
-                  className="cursor-pointer"
+                  onMouseEnter={() => setFocusedIndex(index)}
+                  className={cn(
+                    'flex items-center gap-3 px-3 py-3.5 cursor-pointer transition-colors',
+                    isFocused && 'bg-accent',
+                  )}
                 >
-                  {Icon && <Icon className="size-3.5" />}
-                  <span className="flex-1">{t(tier.label)}</span>
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border bg-background">
+                    <Icon className="size-4 text-foreground" />
+                  </div>
+                  <div className="flex flex-1 flex-col gap-0.5">
+                    <span className="text-sm font-medium">
+                      {t(config.displayLabel)}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {t(config.description)}
+                    </span>
+                  </div>
                   <Check
                     className={cn(
-                      'ml-auto size-4',
-                      selectedModel === tier.id ? 'opacity-100' : 'opacity-0',
+                      'size-4 shrink-0',
+                      isSelected ? 'opacity-100' : 'opacity-0',
                     )}
                   />
-                </CommandItem>
+                </div>
               );
             })}
-          </CommandGroup>
-        </Command>
+          </div>
+          <div className="flex items-center gap-3 border-t px-3 py-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-muted">
+                <ArrowUp className="size-3" />
+              </kbd>
+              <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-muted">
+                <ArrowDown className="size-3" />
+              </kbd>
+              <span>{t('to navigate')}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-muted">
+                <CornerDownLeft className="size-3" />
+              </kbd>
+              <span>{t('to select')}</span>
+            </div>
+          </div>
+        </div>
       </PopoverContent>
     </Popover>
   );

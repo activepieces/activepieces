@@ -9,13 +9,17 @@ on:
 jobs:
   build-image:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
     concurrency:
       group: canary-deploy
       cancel-in-progress: true
     outputs:
       image_tag: ${{ steps.set-tag.outputs.image_tag }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set image tag
         id: set-tag
@@ -44,6 +48,12 @@ jobs:
           no-cache: true
           tags: ghcr.io/activepieces/activepieces-cloud:${{ steps.set-tag.outputs.image_tag }}
 
+      - uses: ./.github/actions/sbom
+        with:
+          image: ghcr.io/activepieces/activepieces-cloud:${{ steps.set-tag.outputs.image_tag }}
+          version: ${{ steps.set-tag.outputs.image_tag }}
+          upload-sarif: 'true'
+
   check-migrations:
     needs: build-image
     runs-on: ubuntu-latest
@@ -51,7 +61,7 @@ jobs:
       has_breaking: ${{ steps.check.outputs.has_breaking }}
       breaking_names: ${{ steps.check.outputs.breaking_names }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: actions/setup-node@v4
         with:

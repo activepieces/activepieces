@@ -29,6 +29,9 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `packages/web/src/features/chat/lib/chat-store-context.tsx` — React context provider and `useChatStoreContext` selector hook
 - `packages/web/src/features/chat/lib/use-chat.ts` — `useAgentChat()` hook bridging AI SDK transport to Zustand store
 - `packages/web/src/features/chat/lib/chat-types.ts` — frontend type definitions, tool output parsing, display/hidden tool name sets
+- `packages/web/src/features/chat/lib/use-voice-input.ts` — `useVoiceInput()` hook for speech-to-text via the Web Speech API (`SpeechRecognition`)
+- `packages/web/src/features/chat/lib/use-tts.ts` — `useTts()` hook for text-to-speech via the `SpeechSynthesis` API
+- `packages/web/src/features/chat/components/voice-waveform.tsx` — animated waveform bars shown on the stop-recording button
 
 ## Edition Availability
 - Community (CE): not available (module not registered)
@@ -45,7 +48,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - **MCP tools** — project-scoped tools loaded from the Activepieces MCP server when a project is selected; destructive ones are wrapped with the approval gate
 - **AI provider** — a platform-configured LLM provider with an `enabledForChat` flag; the chat resolves the first enabled provider and its default model
 - **Project context** — the currently selected project for a conversation; determines which MCP tools are available and scopes resource access
-- **Chat tiers** — model configurations (fast/smart/premium) with different thinking budgets
+- **Chat tiers** — model configurations (fast/smart/premium) with different thinking budgets; displayed as Fast/Expert/Heavy in the UI with per-tier descriptions
 
 ## Data Model
 

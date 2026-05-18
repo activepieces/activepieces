@@ -13,7 +13,7 @@ import { createTestContext } from '../../../helpers/test-context'
 import { db } from '../../../helpers/db'
 import { createMockPieceMetadata } from '../../../helpers/mocks'
 import { pieceCache } from '../../../../src/app/pieces/metadata/piece-cache'
-import { apListPiecesTool } from '../../../../src/app/mcp/tools/ap-list-pieces'
+import { apResearchPiecesTool } from '../../../../src/app/mcp/tools/ap-research-pieces'
 
 let app: FastifyInstance
 let mockLog: FastifyBaseLogger
@@ -28,7 +28,7 @@ afterAll(async () => {
 })
 
 describe('MCP piece visibility', () => {
-    it('ap_list_pieces — does NOT return pieces hidden by platform admin (BLOCKED behavior)', async () => {
+    it('ap_research_pieces — does NOT return pieces hidden by platform admin (BLOCKED behavior)', async () => {
         const blockedPieceName = '@activepieces/piece-hidden-by-admin'
 
         const ctx = await createTestContext(app, {
@@ -52,13 +52,13 @@ describe('MCP piece visibility', () => {
         await db.save('piece_metadata', blockedPiece)
         await pieceCache(mockLog).setup()
 
-        const result = await apListPiecesTool(mcp, mockLog).execute({})
+        const result = await apResearchPiecesTool(mcp, mockLog).execute({})
 
         expect(text(result)).toContain('✅')
         expect(text(result)).not.toContain(blockedPieceName)
     })
 
-    it('ap_list_pieces — returns pieces NOT in the platform blocklist', async () => {
+    it('ap_research_pieces — returns pieces NOT in the platform blocklist', async () => {
         const visiblePieceName = '@activepieces/piece-visible'
 
         const ctx = await createTestContext(app, {
@@ -82,7 +82,7 @@ describe('MCP piece visibility', () => {
         await db.save('piece_metadata', visiblePiece)
         await pieceCache(mockLog).setup()
 
-        const result = await apListPiecesTool(mcp, mockLog).execute({})
+        const result = await apResearchPiecesTool(mcp, mockLog).execute({})
 
         expect(text(result)).toContain('✅')
         expect(text(result)).toContain(visiblePieceName)

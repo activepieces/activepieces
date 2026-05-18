@@ -64,12 +64,26 @@ export function ThinkingDetailsPanel({
   messageParts: ChatUIMessage['parts'];
   onClose: () => void;
 }) {
-  const steps: ThinkingStep[] = [];
+  const lastThinkingIndex = messageParts.findLastIndex((p) => {
+    if (p.type === 'reasoning' && p.text.length > 0) return true;
+    if (!chatPartUtils.isAnyToolPart(p)) return false;
+    const name = chatPartUtils.getToolPartName(p);
+    return (
+      !chatPartUtils.HIDDEN_TOOL_NAMES.has(name) &&
+      !chatPartUtils.isDisplayTool(name)
+    );
+  });
 
-  for (const p of messageParts) {
+  const steps: ThinkingStep[] = [];
+  for (let i = 0; i < messageParts.length; i++) {
+    const p = messageParts[i];
     if (p.type === 'reasoning' && p.text.length > 0) {
       steps.push({ kind: 'reasoning', text: p.text });
-    } else if (p.type === 'text' && p.text.length > 0) {
+    } else if (
+      p.type === 'text' &&
+      p.text.length > 0 &&
+      i < lastThinkingIndex
+    ) {
       steps.push({ kind: 'text', text: p.text });
     } else if (chatPartUtils.isAnyToolPart(p)) {
       const name = chatPartUtils.getToolPartName(p);

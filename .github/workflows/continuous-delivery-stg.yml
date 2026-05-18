@@ -22,7 +22,7 @@ jobs:
     outputs:
       is_hotfix_merge: ${{ steps.check.outputs.is_hotfix_merge }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 2
       - name: Check if merge from deploy/cloud branch
@@ -70,7 +70,7 @@ jobs:
     outputs:
       image_tag: ${{ steps.set-tag.outputs.image_tag }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set image tag
         id: set-tag
         run: |
@@ -139,7 +139,7 @@ jobs:
       contents: write
       packages: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}

@@ -96,7 +96,7 @@ export function ChatBottomBar({
       onSend={onSend}
       onStop={onStop}
       placeholder={t('Reply...')}
-      leftActions={
+      rightActions={
         <ChatModelSelector
           selectedModel={selectedModel}
           onModelChange={onModelChange}

@@ -12,7 +12,7 @@ jobs:
   release:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Fail if tag already exists
         run: '! docker manifest inspect activepieces/activepieces:${{ inputs.tag }}'
@@ -64,3 +64,12 @@ jobs:
           publish: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Internal-only for now.
+      # To expose them on the GitHub Release for supply-chain audits,
+      # set upload-release: 'true'
+      # and pass github-token: ${{ secrets.GITHUB_TOKEN }}.
+      - uses: ./.github/actions/sbom
+        with:
+          image: ghcr.io/activepieces/activepieces:${{ inputs.tag }}
+          version: ${{ inputs.tag }}
