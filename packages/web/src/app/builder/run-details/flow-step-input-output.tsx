@@ -9,6 +9,7 @@ import {
   ApFlagId,
   LogSliceRef,
   StepOutputType,
+  tryParseFriendlyPieceError,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Download, Info } from 'lucide-react';
@@ -25,6 +26,7 @@ import { formatUtils } from '@/lib/format-utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { DataDisplayTabs } from '../data-display/data-display-tabs';
+import { FriendlyErrorView } from '../data-display/friendly-error-view';
 import { isRunAgent } from '../test-step/agent-test-step';
 import { TestPanelHeader } from '../test-step/test-panel-header';
 import { TestPanelViewToggle } from '../test-step/test-panel-view-toggle';
@@ -66,6 +68,9 @@ export const FlowStepInputOutput = () => {
   const slicedOutputRef = isSlicedOutput
     ? (selectedStepOutput?.output as LogSliceRef | undefined)
     : undefined;
+  const friendlyError = tryParseFriendlyPieceError(
+    selectedStepOutput?.errorMessage,
+  );
   const parsedOutput = isSlicedOutput
     ? undefined
     : selectedStepOutput?.errorMessage ??
@@ -179,6 +184,8 @@ export const FlowStepInputOutput = () => {
               <StepOutputSkeleton className="p-4" />
             ) : slicedOutputRef ? (
               <SlicedOutputDownload slicedOutputRef={slicedOutputRef} />
+            ) : friendlyError ? (
+              <FriendlyErrorView error={friendlyError} />
             ) : (
               <DataDisplayTabs
                 data={parsedOutput}

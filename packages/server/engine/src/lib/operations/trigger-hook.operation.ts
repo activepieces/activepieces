@@ -1,9 +1,9 @@
-import { inspect } from 'util'
 import {
     EngineResponse,
     EngineResponseStatus,
     ExecuteTriggerOperation,
     ExecuteTriggerResponse,
+    formatPieceError,
     TriggerHookType,
 } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
@@ -24,7 +24,7 @@ export const triggerHookOperation = {
             return {
                 status: EngineResponseStatus.USER_FAILURE,
                 response: undefined as unknown as ExecuteTriggerResponse<TriggerHookType>,
-                error: inspect(error),
+                error: JSON.stringify(formatPieceError(error)),
             }
         }
         return {
