@@ -96,8 +96,8 @@ When CHANGE_STATUS to DISABLED:
 
 The visual builder (`packages/web/src/app/builder/`) uses XYFlow for the canvas. State is split into focused Zustand slices, composed by `builder-state-provider.tsx`:
 - `flow-state.ts` — current flow and version, pending operations
-- `run-state.ts` — active test run, step results, focused/failed step (used by the run-info widget's "Jump to failed step" affordance)
-- `canvas-state.ts` — viewport, selected node, drag state
+- `run-state.ts` — active test run, step results, focused/failed step (used by the run-info widget's "See error" affordance); `setRun` resets `userManuallySelectedStepDuringRun` whenever a new run id arrives
+- `canvas-state.ts` — viewport, selected node, drag state, plus the `userManuallySelectedStepDuringRun` flag and `resumeLiveFollow` action that gate auto-follow: `selectStepByName` accepts `{ fromAutoFocus }` so user-initiated step changes mid-run pause live-follow, while auto-focus updates don't
 - `step-form-state.ts` — open/focused step configuration
 - `piece-selector-state.ts` — piece browser visibility and search
 - `notes-state.tsx` — sticky notes overlay
