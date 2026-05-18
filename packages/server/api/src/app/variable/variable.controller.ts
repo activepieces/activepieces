@@ -1,5 +1,6 @@
 import {
     ApId,
+    AppConnectionOwners,
     ApplicationEventName,
     ListVariablesRequestQuery,
     Permission,
@@ -46,6 +47,14 @@ export const variableController: FastifyPluginCallbackZod = (app, _opts, done) =
             limit: request.query.limit,
             name: request.query.name,
         })
+    })
+
+    app.get('/owners', ListVariableOwnersRequest, async (request): Promise<SeekPage<AppConnectionOwners>> => {
+        const owners = await variableService(request.log).getOwners({
+            projectId: request.projectId,
+            platformId: request.principal.platform.id,
+        })
+        return { data: owners, next: null, previous: null }
     })
 
     app.post('/:id/reveal', RevealVariableRequest, async (request) => {
@@ -116,6 +125,29 @@ const ListVariablesRequest = {
         description: 'List project variables',
         response: {
             [StatusCodes.OK]: SeekPage(VariableWithoutSensitiveData),
+        },
+    },
+}
+
+const ListVariableOwnersRequest = {
+    config: {
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.READ_VARIABLE,
+            { type: ProjectResourceType.QUERY },
+        ),
+    },
+    schema: {
+        tags: ['variables'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        querystring: z.object({ projectId: z.string() }),
+        description: 'List users who own at least one variable in the project',
+        response: {
+            [StatusCodes.OK]: SeekPage(z.object({
+                firstName: z.string(),
+                lastName: z.string(),
+                email: z.string(),
+            })),
         },
     },
 }

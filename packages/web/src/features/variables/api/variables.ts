@@ -1,4 +1,5 @@
 import {
+  AppConnectionOwners,
   ListVariablesRequestQuery,
   RevealVariableResponse,
   SeekPage,
@@ -27,5 +28,13 @@ export const variablesApi = {
   },
   reveal(id: string): Promise<RevealVariableResponse> {
     return api.post<RevealVariableResponse>(`/v1/variables/${id}/reveal`, {});
+  },
+  getOwners(request: {
+    projectId: string;
+  }): Promise<SeekPage<AppConnectionOwners>> {
+    return api.get<SeekPage<AppConnectionOwners>>(
+      '/v1/variables/owners',
+      request,
+    );
   },
 };

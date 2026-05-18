@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { BaseModel, BaseModelSchema, Nullable } from '../../core/common/base-model'
+import { ApId } from '../../core/common/id-generator'
 import { Metadata } from '../../core/common/metadata'
 import { UserWithMetaInformation } from '../../core/user'
 
@@ -29,5 +30,6 @@ export const VariableWithoutSensitiveData = z.object({
     ownerId: Nullable(z.string()),
     owner: Nullable(UserWithMetaInformation),
     metadata: Nullable(Metadata),
+    flowIds: Nullable(z.array(ApId)),
 }).describe('A project-scoped encrypted variable that flows can reference via {{variables[\'NAME\']}}.')
 export type VariableWithoutSensitiveData = z.infer<typeof VariableWithoutSensitiveData>

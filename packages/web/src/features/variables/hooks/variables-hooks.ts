@@ -46,8 +46,20 @@ export const variablesQueries = {
         cursor: sp.get(CURSOR_QUERY_PARAM) ?? undefined,
         limit: limitParam ? parseInt(limitParam) : 10,
         name: sp.get('name') ?? undefined,
+        ownerEmails: sp.getAll('owner'),
       };
     }, [search]);
+  },
+
+  useVariableOwners: (projectId: string) => {
+    return useQuery({
+      queryKey: ['variable-owners', projectId],
+      queryFn: async () => {
+        const page = await variablesApi.getOwners({ projectId });
+        return page.data;
+      },
+      enabled: !!projectId,
+    });
   },
 };
 
