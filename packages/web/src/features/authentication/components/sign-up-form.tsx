@@ -5,7 +5,6 @@ import {
   ErrorCode,
   isNil,
 } from '@activepieces/shared';
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Eye, EyeOff } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -54,7 +53,6 @@ const SignUpForm = ({
   const [searchParams] = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
-  const queryClient = useQueryClient();
 
   const form = useForm<SignUpSchema>({
     defaultValues: {
@@ -96,7 +94,6 @@ const SignUpForm = ({
     onSuccess: (data) => {
       if (data.verified) {
         authenticationSession.saveResponse(data, false);
-        queryClient.invalidateQueries({ queryKey: ['flags'] });
 
         if (isNil(data.projectId)) {
           navigate('/create-platform');
