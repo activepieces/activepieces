@@ -123,6 +123,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         }
         mutatedFlowVersion.connectionIds = flowStructureUtil.extractConnectionIds(mutatedFlowVersion)
         mutatedFlowVersion.agentIds = flowStructureUtil.extractAgentIds(mutatedFlowVersion)
+        mutatedFlowVersion.variableNames = flowStructureUtil.extractVariableNames(mutatedFlowVersion)
         return flowVersionRepo(entityManager).save(sanitizeObjectForPostgresql(mutatedFlowVersion))
     },
 
@@ -296,6 +297,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             schemaVersion: LATEST_FLOW_SCHEMA_VERSION,
             connectionIds: [],
             agentIds: [],
+            variableNames: [],
             valid: false,
             state: FlowVersionState.DRAFT,
             notes: request.notes,

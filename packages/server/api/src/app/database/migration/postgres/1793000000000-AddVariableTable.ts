@@ -37,9 +37,20 @@ export class AddVariableTable1793000000000 implements Migration {
             ADD CONSTRAINT "fk_variable_owner_id"
             FOREIGN KEY ("ownerId") REFERENCES "user"("id") ON DELETE SET NULL
         `)
+
+        await queryRunner.query(`
+            ALTER TABLE "flow_version"
+            ADD "variableNames" character varying array
+        `)
+        await queryRunner.query('UPDATE "flow_version" SET "variableNames" = $1', [[]])
+        await queryRunner.query(`
+            ALTER TABLE "flow_version"
+            ALTER COLUMN "variableNames" SET NOT NULL
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query('ALTER TABLE "flow_version" DROP COLUMN "variableNames"')
         await queryRunner.query('ALTER TABLE "variable" DROP CONSTRAINT IF EXISTS "fk_variable_owner_id"')
         await queryRunner.query('DROP INDEX IF EXISTS "idx_variable_owner_id"')
         await queryRunner.query('DROP INDEX IF EXISTS "idx_variable_project_id_and_name"')

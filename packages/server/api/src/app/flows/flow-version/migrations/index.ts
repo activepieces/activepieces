@@ -69,6 +69,7 @@ export const migrateFlowVersionTemplate = async ({ trigger, schemaVersion, notes
     return flowMigrations.apply({
         agentIds: [],
         connectionIds: [],
+        variableNames: [],
         created: new Date().toISOString(),
         displayName,
         flowId: '',

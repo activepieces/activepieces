@@ -109,6 +109,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         name,
         connectionExternalIds,
         agentExternalIds,
+        variableNames,
         externalIds,
         versionState = FlowVersionState.DRAFT,
         includeTriggerSource = true,
@@ -199,6 +200,10 @@ export const flowService = (log: FastifyBaseLogger) => ({
 
         if (agentExternalIds !== undefined) {
             queryBuilder.andWhere('latest_version."agentIds" && :agentExternalIds', { agentExternalIds })
+        }
+
+        if (variableNames !== undefined && variableNames.length > 0) {
+            queryBuilder.andWhere('latest_version."variableNames" && :variableNames', { variableNames })
         }
 
         const paginationResult = await paginator.paginate<Flow & { version: FlowVersion | null, triggerSource?: TriggerSource }>(queryBuilder)
@@ -765,6 +770,7 @@ type ListParamsBase = {
     externalIds?: string[]
     connectionExternalIds?: string[]
     agentExternalIds?: string[]
+    variableNames?: string[]
     includeTriggerSource?: boolean
 }
 

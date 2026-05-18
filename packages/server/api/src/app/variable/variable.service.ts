@@ -32,47 +32,21 @@ export const variableRepo = repoFactory(VariableEntity)
 export const variableService = (log: FastifyBaseLogger) => ({
     async upsert(params: UpsertParams): Promise<VariableWithoutSensitiveData> {
         const { projectId, platformId, name, value, ownerId, metadata } = params
-        const encryptedValue = await encryptUtils.encryptObject({ secret_text: value })
-
-        const existing = await variableRepo().findOneBy({ projectId, name })
-        if (existing) {
-            await variableRepo().update(existing.id, {
-                value: encryptedValue,
-                ...spreadIfDefined('metadata', metadata),
-            })
-            log.info({ id: existing.id, projectId, name }, 'Variable updated')
-            return getOneOrThrowWithoutValue({ id: existing.id, projectId, platformId })
-        }
-
-        // Insert under the unique (projectId, name) constraint. If a concurrent
-        // caller wins the race, re-resolve to their row and update it instead
-        // of bubbling up a 500.
-        const id = apId()
-        try {
-            await variableRepo().insert({
-                id,
+        await variableRepo().upsert(
+            {
+                id: apId(),
                 projectId,
                 platformId,
                 name,
                 ownerId: ownerId ?? null,
-                value: encryptedValue,
+                value: await encryptUtils.encryptObject({ secret_text: value }),
                 ...spreadIfDefined('metadata', metadata),
-            })
-            log.info({ id, projectId, name }, 'Variable created')
-            return await getOneOrThrowWithoutValue({ id, projectId, platformId })
-        }
-        catch (error) {
-            const concurrent = await variableRepo().findOneBy({ projectId, name })
-            if (isNil(concurrent)) {
-                throw error
-            }
-            await variableRepo().update(concurrent.id, {
-                value: encryptedValue,
-                ...spreadIfDefined('metadata', metadata),
-            })
-            log.info({ id: concurrent.id, projectId, name }, 'Variable upsert resolved race')
-            return getOneOrThrowWithoutValue({ id: concurrent.id, projectId, platformId })
-        }
+            },
+            ['projectId', 'name'],
+        )
+        const row = await variableRepo().findOneByOrFail({ projectId, name })
+        log.info({ id: row.id, projectId, name }, 'Variable upserted')
+        return getOneOrThrowWithoutValue({ id: row.id, projectId, platformId })
     },
 
     async list(params: ListParams): Promise<SeekPage<VariableWithoutSensitiveData>> {
@@ -99,7 +73,7 @@ export const variableService = (log: FastifyBaseLogger) => ({
             })
 
         const { data, cursor: nextCursor } = await paginator.paginate(queryBuilder)
-        const flowIdsByName = await fetchFlowIdsForVariables(log, data)
+        const flowIdsByName = await fetchFlowIdsForVariables(log, projectId, data)
         const sanitized = data.map((row) => ({
             ...stripSensitiveData(row),
             flowIds: flowIdsByName.get(row.name) ?? [],
@@ -109,8 +83,6 @@ export const variableService = (log: FastifyBaseLogger) => ({
 
     async getOwners(params: { projectId: ProjectId, platformId: PlatformId }): Promise<AppConnectionOwners[]> {
         const { projectId, platformId } = params
-        // Bounded SELECT DISTINCT on the joined identity tuple so this endpoint
-        // doesn't hydrate every variable row to surface the owner filter.
         return variableRepo()
             .createQueryBuilder('variable')
             .innerJoin('variable.owner', 'owner')
@@ -204,39 +176,28 @@ function stripSensitiveData(row: VariableSchema): VariableWithoutSensitiveData {
     }
 }
 
-const VARIABLE_MENTION_REGEX = /variables\['([^']+)'\]/g
-
 async function fetchFlowIdsForVariables(
     log: FastifyBaseLogger,
+    projectId: ProjectId,
     variables: VariableSchema[],
 ): Promise<Map<string, string[]>> {
     const flowIdsByName = new Map<string, string[]>()
     if (variables.length === 0) {
         return flowIdsByName
     }
-    const projectIds = Array.from(new Set(variables.map((v) => v.projectId)))
-    const variableNames = new Set(variables.map((v) => v.name))
+    const variableNames = variables.map((v) => v.name)
 
-    // Bounded scan: in projects with many flows we sample the most recent
-    // page and surface a "Used in N+" hint client-side if needed. The cap
-    // keeps the variables list endpoint within predictable latency.
     const flowsPage = await flowService(log).list({
-        projectIds,
+        projectIds: [projectId],
         cursorRequest: null,
-        limit: MAX_FLOWS_SCANNED_FOR_VARIABLE_REFERENCES,
+        variableNames,
     })
 
     for (const flow of flowsPage.data) {
-        const triggerJson = JSON.stringify(flow.version?.trigger ?? {})
-        const matched = new Set<string>()
-        let match: RegExpExecArray | null
-        VARIABLE_MENTION_REGEX.lastIndex = 0
-        while ((match = VARIABLE_MENTION_REGEX.exec(triggerJson)) !== null) {
-            if (variableNames.has(match[1])) {
-                matched.add(match[1])
+        for (const name of flow.version?.variableNames ?? []) {
+            if (!variableNames.includes(name)) {
+                continue
             }
-        }
-        for (const name of matched) {
             const ids = flowIdsByName.get(name) ?? []
             ids.push(flow.id)
             flowIdsByName.set(name, ids)
@@ -247,7 +208,6 @@ async function fetchFlowIdsForVariables(
 }
 
 const MAX_VARIABLE_OWNERS = 200
-const MAX_FLOWS_SCANNED_FOR_VARIABLE_REFERENCES = 500
 
 function mapToUserWithMetaInformation(owner: (User & { identity?: UserIdentity }) | null): UserWithMetaInformation | null {
     if (isNil(owner)) {
