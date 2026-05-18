@@ -33,23 +33,47 @@ export const variableRepo = repoFactory(VariableEntity)
 export const variableService = (log: FastifyBaseLogger) => ({
     async upsert(params: UpsertParams): Promise<VariableWithoutSensitiveData> {
         const { projectId, platformId, name, value, ownerId, metadata } = params
-
-        const existing = await variableRepo().findOneBy({ projectId, name })
         const encryptedValue = await encryptUtils.encryptObject({ secret_text: value })
 
-        const id = existing?.id ?? apId()
-        const row = {
-            id,
-            projectId,
-            platformId,
-            name,
-            ownerId: existing?.ownerId ?? ownerId ?? null,
-            value: encryptedValue,
-            ...spreadIfDefined('metadata', metadata ?? existing?.metadata ?? undefined),
+        const existing = await variableRepo().findOneBy({ projectId, name })
+        if (existing) {
+            await variableRepo().update(existing.id, {
+                value: encryptedValue,
+                ...spreadIfDefined('metadata', metadata),
+            })
+            log.info({ id: existing.id, projectId, name }, 'Variable updated')
+            return getOneOrThrowWithoutValue({ id: existing.id, projectId, platformId })
         }
-        await variableRepo().upsert(row, ['id'])
-        log.info({ id, projectId, name }, 'Variable upserted')
-        return getOneOrThrowWithoutValue({ id, projectId, platformId })
+
+        // Insert under the unique (projectId, name) constraint. If a concurrent
+        // caller wins the race, re-resolve to their row and update it instead
+        // of bubbling up a 500.
+        const id = apId()
+        try {
+            await variableRepo().insert({
+                id,
+                projectId,
+                platformId,
+                name,
+                ownerId: ownerId ?? null,
+                value: encryptedValue,
+                ...spreadIfDefined('metadata', metadata),
+            })
+            log.info({ id, projectId, name }, 'Variable created')
+            return await getOneOrThrowWithoutValue({ id, projectId, platformId })
+        }
+        catch (error) {
+            const concurrent = await variableRepo().findOneBy({ projectId, name })
+            if (isNil(concurrent)) {
+                throw error
+            }
+            await variableRepo().update(concurrent.id, {
+                value: encryptedValue,
+                ...spreadIfDefined('metadata', metadata),
+            })
+            log.info({ id: concurrent.id, projectId, name }, 'Variable upsert resolved race')
+            return getOneOrThrowWithoutValue({ id: concurrent.id, projectId, platformId })
+        }
     },
 
     async list(params: ListParams): Promise<SeekPage<VariableWithoutSensitiveData>> {
