@@ -207,7 +207,7 @@ const getStatusPresentation = (
       Icon: ShieldOff,
       headline: t('Permission denied'),
       hint: t(
-        "The connected account does not have permission for this action. Verify the account's role and permissions for this integration, and check any optional safety toggles on the step (for example, a built-in sanitize / safe-mode setting) — they may need to be disabled for accounts without administrative scope.",
+        "The connected account does not have permission for this action. Verify the account's role and permissions for this integration, and check any optional safety toggles on the step (for example, a built-in sanitize / safe-mode setting) they may need to be disabled for accounts without administrative scope.",
       ),
       tone: DESTRUCTIVE_TONE,
     };
