@@ -32,6 +32,7 @@ import { apResolvePropertyOptionsTool } from './ap-resolve-property-options'
 import { apRetryRunTool } from './ap-retry-run'
 import { apRunActionTool } from './ap-run-action'
 import { apSetupGuideTool } from './ap-setup-guide'
+import { apStoreDeleteTool, apStoreGetTool, apStorePutTool } from './ap-manage-store'
 import { apTestFlowTool } from './ap-test-flow'
 import { apTestStepTool } from './ap-test-step'
 import { apUpdateBranchTool } from './ap-update-branch'
@@ -56,6 +57,7 @@ export const LOCKED_TOOL_NAMES: string[] = [
     'ap_find_records',
     'ap_list_runs',
     'ap_get_run',
+    'ap_store_get',
     'ap_setup_guide',
 ]
 
@@ -84,6 +86,8 @@ export const ALL_CONTROLLABLE_TOOL_NAMES: string[] = [
     'ap_insert_records',
     'ap_update_record',
     'ap_delete_records',
+    'ap_store_put',
+    'ap_store_delete',
     'ap_test_flow',
     'ap_test_step',
     'ap_retry_run',
@@ -124,6 +128,9 @@ export const activepiecesTools = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
     apInsertRecordsTool(mcp, log),
     apUpdateRecordTool(mcp, log),
     apDeleteRecordsTool(mcp, log),
+    apStoreGetTool(mcp, log),
+    apStorePutTool(mcp, log),
+    apStoreDeleteTool(mcp, log),
     apListRunsTool(mcp, log),
     apGetRunTool(mcp, log),
     apTestFlowTool(mcp, log),
