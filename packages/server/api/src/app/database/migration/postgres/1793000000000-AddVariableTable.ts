@@ -40,9 +40,9 @@ export class AddVariableTable1793000000000 implements Migration {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`ALTER TABLE "variable" DROP CONSTRAINT IF EXISTS "fk_variable_owner_id"`)
-        await queryRunner.query(`DROP INDEX IF EXISTS "idx_variable_owner_id"`)
-        await queryRunner.query(`DROP INDEX IF EXISTS "idx_variable_project_id_and_name"`)
-        await queryRunner.query(`DROP TABLE IF EXISTS "variable"`)
+        await queryRunner.query('ALTER TABLE "variable" DROP CONSTRAINT IF EXISTS "fk_variable_owner_id"')
+        await queryRunner.query('DROP INDEX IF EXISTS "idx_variable_owner_id"')
+        await queryRunner.query('DROP INDEX IF EXISTS "idx_variable_project_id_and_name"')
+        await queryRunner.query('DROP TABLE IF EXISTS "variable"')
     }
 }
