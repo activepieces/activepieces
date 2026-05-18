@@ -60,7 +60,7 @@ const DataSelectorNodeContent = ({
     !isExpandable && node.data.type === 'value' && !isStepRoot;
   const isInsertable =
     node.data.type === 'value' && node.data.insertable && !node.isLoopStepNode;
-  const showInsertButton = isInsertable && (!isStepRoot || isPrimitiveStepRoot);
+  const showInsertButton = isInsertable;
 
   const arrayValue =
     node.data.type === 'value' && Array.isArray(node.data.value)
