@@ -34,7 +34,7 @@ export type RunState = {
   clearRun: (userHasPermissionToEditFlow: boolean) => void;
   loopsIndexes: Record<string, number>;
   setLoopIndex: (stepName: string, index: number) => void;
-  goToFailedStep: () => void;
+  selectFailedStep: () => void;
   addActionTestListener: ({
     runId,
     stepName,
@@ -93,7 +93,7 @@ export const createRunState = (
           readonly: true,
         };
       }),
-    goToFailedStep: () => {
+    selectFailedStep: () => {
       const { run, selectStepByName } = get();
       if (isNil(run) || isNil(run.failedStep)) {
         return;
