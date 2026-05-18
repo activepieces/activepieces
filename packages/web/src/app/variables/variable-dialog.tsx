@@ -129,7 +129,7 @@ function VariableForm(props: VariableFormProps) {
           </DialogTitle>
           <DialogDescription>
             {t(
-              'Store an API key, token, or other secret you can reuse across flow steps without exposing the value.',
+              'Store an API key, token, or other value you can reuse across flow steps without exposing it.',
             )}
           </DialogDescription>
         </DialogHeader>
@@ -161,14 +161,14 @@ function VariableForm(props: VariableFormProps) {
                       autoComplete="new-password"
                       className="pr-10"
                       placeholder={
-                        isEdit ? t('Enter new value') : t('Enter the secret')
+                        isEdit ? t('Enter new value') : t('Enter the value')
                       }
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="absolute right-1 top-1/2 h-7 w-7 p-0"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
                       onClick={() => setValueVisible((v) => !v)}
                       aria-label={
                         valueVisible ? t('Hide value') : t('Show value')

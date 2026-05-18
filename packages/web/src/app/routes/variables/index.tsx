@@ -3,13 +3,12 @@ import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
   Copy,
-  Info,
-  KeyRound,
   Link2,
   MoreVertical,
   Pencil,
   Search,
   Trash2,
+  Variable,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -26,7 +25,6 @@ import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { PlusIcon } from '@/components/icons/plus';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -128,13 +126,13 @@ function VariablesPage() {
         <DataTableColumnHeader
           column={column}
           title={t('Name')}
-          icon={KeyRound}
+          icon={Variable}
         />
       ),
       cell: ({ row }) => (
         <div className="flex items-center gap-2 min-w-0">
           <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-md bg-primary/10 text-primary">
-            <KeyRound className="w-4 h-4" />
+            <Variable className="w-4 h-4" />
           </div>
           <span className="font-mono text-sm truncate">
             {row.original.name}
@@ -273,21 +271,13 @@ function VariablesPage() {
   ];
 
   return (
-    <div className="flex flex-col gap-4 w-full">
-      <Alert variant="primary">
-        <Info className="h-4 w-4" />
-        <AlertDescription>
-          {t(
-            'Variables are encrypted secrets — like API keys or tokens — that you create once and reference inside any flow step. The value stays hidden; only the reference travels with your flows.',
-          )}
-        </AlertDescription>
-      </Alert>
+    <div className="flex flex-col w-full">
       <DataTable
         emptyStateTextTitle={t('No variables yet')}
         emptyStateTextDescription={t(
-          'Create one to securely reference a value from any step input.',
+          'Create one to reference a value from any step input.',
         )}
-        emptyStateIcon={<KeyRound className="size-14" />}
+        emptyStateIcon={<Variable className="size-14" />}
         columns={columns}
         page={filteredData}
         isLoading={isLoading}

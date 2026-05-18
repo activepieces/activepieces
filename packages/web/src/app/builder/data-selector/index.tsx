@@ -1,6 +1,6 @@
 import { flowStructureUtil, isNil } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Database, KeyRound, SearchXIcon } from 'lucide-react';
+import { Database, SearchXIcon, Variable } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
@@ -156,7 +156,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
               variant="outline"
               className="gap-2 px-3 py-2 hover:text-foreground rounded-none"
             >
-              <KeyRound className="w-4 h-4" />
+              <Variable className="w-4 h-4" />
               {t('Variables')}
             </TabsTrigger>
           </TabsList>

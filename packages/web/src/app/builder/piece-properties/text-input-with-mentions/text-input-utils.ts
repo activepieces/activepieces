@@ -253,18 +253,29 @@ const buildVariableIconElement = (): SVGSVGElement => {
   svg.setAttribute('stroke-linejoin', 'round');
   svg.setAttribute('aria-hidden', 'true');
   svg.classList.add('w-4', 'h-4', 'shrink-0', 'text-primary');
-  const path = document.createElementNS(SVG_NS, 'path');
-  path.setAttribute(
-    'd',
-    'M2 18v3c0 .6.4 1 1 1h4v-3h3v-3h2l1.4-1.4a6.5 6.5 0 1 0-4-4Z',
-  );
-  const circle = document.createElementNS(SVG_NS, 'circle');
-  circle.setAttribute('cx', '16.5');
-  circle.setAttribute('cy', '7.5');
-  circle.setAttribute('r', '.5');
-  circle.setAttribute('fill', 'currentColor');
-  svg.appendChild(path);
-  svg.appendChild(circle);
+  const segments: Array<
+    ['path', string] | ['line', [string, string, string, string]]
+  > = [
+    ['path', 'M8 21s-4-3-4-9 4-9 4-9'],
+    ['path', 'M16 3s4 3 4 9-4 9-4 9'],
+    ['line', ['15', '9', '9', '15']],
+    ['line', ['9', '9', '15', '15']],
+  ];
+  for (const segment of segments) {
+    if (segment[0] === 'path') {
+      const path = document.createElementNS(SVG_NS, 'path');
+      path.setAttribute('d', segment[1]);
+      svg.appendChild(path);
+    } else {
+      const [x1, y1, x2, y2] = segment[1];
+      const line = document.createElementNS(SVG_NS, 'line');
+      line.setAttribute('x1', x1);
+      line.setAttribute('y1', y1);
+      line.setAttribute('x2', x2);
+      line.setAttribute('y2', y2);
+      svg.appendChild(line);
+    }
+  }
   return svg;
 };
 

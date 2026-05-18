@@ -1,6 +1,6 @@
 import { Permission } from '@activepieces/shared';
 import { t } from 'i18next';
-import { KeyRound, Plus, SearchXIcon } from 'lucide-react';
+import { Plus, SearchXIcon, Variable } from 'lucide-react';
 import { useState } from 'react';
 import { useDebounce } from 'use-debounce';
 
@@ -81,14 +81,14 @@ const VariablesTab = () => {
             ) : (
               <>
                 <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary">
-                  <KeyRound className="w-5 h-5" />
+                  <Variable className="w-5 h-5" />
                 </div>
                 <div className="text-center font-semibold text-md">
                   {t('No variables yet')}
                 </div>
                 <div className="text-center text-sm text-muted-foreground max-w-[280px]">
                   {t(
-                    'Create a variable to securely reference a value from any step input.',
+                    'Create a variable to reference a value from any step input.',
                   )}
                 </div>
                 {canWrite && (
@@ -133,7 +133,7 @@ const VariablesTab = () => {
                 )}
               >
                 <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-md bg-primary/10 text-primary">
-                  <KeyRound className="w-4 h-4" />
+                  <Variable className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-mono text-sm truncate">

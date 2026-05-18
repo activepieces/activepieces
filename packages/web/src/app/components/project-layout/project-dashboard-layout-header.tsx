@@ -6,7 +6,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { BoxIcon } from '@/components/icons/box';
 import { ConnectIcon } from '@/components/icons/connect';
 import { HistoryIcon } from '@/components/icons/history';
-import { KeyRoundIcon } from '@/components/icons/key-round';
+import { VariableIcon } from '@/components/icons/variable';
 import { WorkflowIcon } from '@/components/icons/workflow';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Separator } from '@/components/ui/separator';
@@ -98,7 +98,7 @@ export const ProjectDashboardLayoutHeader = () => {
     {
       to: authenticationSession.appendProjectRoutePrefix('/variables'),
       label: t('Variables'),
-      icon: KeyRoundIcon,
+      icon: VariableIcon,
       hasPermission: checkAccess(Permission.READ_VARIABLE),
       show: true,
     },
