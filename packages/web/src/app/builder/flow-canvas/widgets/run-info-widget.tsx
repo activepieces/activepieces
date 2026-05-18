@@ -2,10 +2,13 @@ import {
   ApFlagId,
   FlowRunStatus,
   isFlowRunStateTerminal,
+  StepOutputStatus,
 } from '@activepieces/shared';
+import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { CircleHelp } from 'lucide-react';
+import { ArrowRight, CircleHelp } from 'lucide-react';
 
+import { Button } from '@/components/ui/button';
 import { flowRunUtils } from '@/features/flow-runs';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { formatUtils } from '@/lib/format-utils';
@@ -13,6 +16,7 @@ import { cn } from '@/lib/utils';
 
 import { EditFlowOrViewDraftButton } from '../../builder-header/flow-status/view-draft-or-edit-flow-button';
 import { useBuilderStateContext } from '../../builder-hooks';
+import { flowCanvasUtils } from '../utils/flow-canvas-utils';
 
 import LargeWidgetWrapper from './large-widget-wrapper';
 
@@ -64,7 +68,7 @@ function getStatusText({
 }
 
 const RunInfoWidget = () => {
-  const [run] = useBuilderStateContext((state) => [state.run]);
+  const run = useBuilderStateContext((state) => state.run);
   const { variant, Icon } = run
     ? flowRunUtils.getStatusIcon(run.status)
     : { variant: 'default' as const, Icon: CircleHelp };
@@ -132,7 +136,14 @@ const RunInfoWidget = () => {
           </div>
         </div>
 
-        <EditFlowOrViewDraftButton onCanvas={false}></EditFlowOrViewDraftButton>
+        <div className="flex items-center gap-2">
+          {run.failedStep && (
+            <JumpToFailedStepButton failedStepName={run.failedStep.name} />
+          )}
+          <EditFlowOrViewDraftButton
+            onCanvas={false}
+          ></EditFlowOrViewDraftButton>
+        </div>
       </div>
     </LargeWidgetWrapper>
   );
@@ -152,5 +163,49 @@ const DateSection = ({
       <span>{`${text}: `}</span>
       <span>{`${dateOrDuration}`}</span>
     </>
+  );
+};
+
+const JumpToFailedStepButton = ({
+  failedStepName,
+}: {
+  failedStepName: string;
+}) => {
+  const [selectedStep, selectFailedStep, run, loopsIndexes] =
+    useBuilderStateContext((state) => [
+      state.selectedStep,
+      state.selectFailedStep,
+      state.run,
+      state.loopsIndexes,
+    ]);
+  const { fitView } = useReactFlow();
+  const selectedStepOutput =
+    run && selectedStep
+      ? flowRunUtils.extractStepOutput(
+          selectedStep,
+          loopsIndexes,
+          run.steps ?? {},
+        )
+      : null;
+  if (
+    selectedStep === failedStepName &&
+    selectedStepOutput?.status === StepOutputStatus.FAILED
+  ) {
+    return null;
+  }
+  const handleClick = () => {
+    selectFailedStep();
+    fitView(flowCanvasUtils.createFocusStepInGraphParams(failedStepName));
+  };
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={handleClick}
+      className="text-destructive-700 hover:text-destructive-700 dark:text-destructive-200 dark:hover:text-destructive-200"
+    >
+      <ArrowRight className="size-4" />
+      {t('Failed step')}
+    </Button>
   );
 };

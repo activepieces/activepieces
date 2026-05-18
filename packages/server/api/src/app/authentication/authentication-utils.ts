@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, AuthenticationResponse, EndpointScope, ErrorCode, isNil, PlatformRole, PrincipalType, Project, ProjectType, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, AuthenticationResponse, EndpointScope, ErrorCode, isNil, PlatformRole, PrincipalType, Project, ProjectType, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
@@ -172,9 +172,15 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
     async sendTelemetry({
         user,
         identity,
+        projectId,
     }: SendTelemetryParams): Promise<void> {
         try {
+            const { email, firstName, lastName } = identity
             await telemetry(log).identify(identity, user)
+            await telemetry(log).trackProject(projectId, {
+                name: TelemetryEventName.SIGNED_UP,
+                payload: { userId: user.id, email, firstName, lastName, projectId },
+            })
         }
         catch (e) {
             log.warn({ err: e }, '[authenticationUtils#sendTelemetry] Failed to send telemetry')
@@ -221,7 +227,8 @@ function findPersonalProject(projects: Project[], userId: string): Project | und
 
 type SendTelemetryParams = {
     identity: UserIdentity
-    user?: User
+    user: User
+    projectId: string
 }
 
 type AssertDomainIsAllowedParams = {

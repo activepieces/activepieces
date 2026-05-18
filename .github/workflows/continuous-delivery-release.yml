@@ -100,6 +100,15 @@ jobs:
             --tag ghcr.io/activepieces/activepieces:latest \
             ghcr.io/activepieces/activepieces-cloud:release-candidate
 
+      # Internal-only for now.
+      # To expose them on the GitHub Release for supply-chain audits,
+      # set upload-release: 'true'
+      # and pass github-token: ${{ secrets.GITHUB_TOKEN }}.
+      - uses: ./.github/actions/sbom
+        with:
+          image: ghcr.io/activepieces/activepieces:${{ steps.version.outputs.release }}
+          version: ${{ steps.version.outputs.release }}
+
       - name: Add breaking migration note to release
         if: steps.migration-check.outputs.has_breaking == 'true'
         run: |
