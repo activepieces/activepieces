@@ -147,7 +147,7 @@ async function resolveSingleToken(params: ResolveSingleTokenParams): Promise<unk
 
 async function handleVariable(params: ResolveSingleTokenParams): Promise<unknown> {
     const { variableName, engineToken, projectId, apiUrl, censoredInput } = params
-    const name = parseSquareBracketName(variableName, VARIABLES) ?? parseDotName(variableName, VARIABLES)
+    const name = parseVariableName(variableName)
     if (isNil(name)) {
         return ''
     }
@@ -157,19 +157,15 @@ async function handleVariable(params: ResolveSingleTokenParams): Promise<unknown
     return createVariableResolver({ engineToken, projectId, apiUrl }).obtain(name)
 }
 
-function parseSquareBracketName(variableName: string, identifier: string): string | null {
-    if (!variableName.startsWith(`${identifier}[`)) {
-        return null
+function parseVariableName(variableName: string): string | null {
+    if (variableName.startsWith(`${VARIABLES}[`)) {
+        const match = variableName.match(/\['([^']+)'\]/)
+        return match ? match[1] : null
     }
-    const match = variableName.match(/\['([^']+)'\]/)
-    return match ? match[1] : null
-}
-
-function parseDotName(variableName: string, identifier: string): string | null {
-    if (!variableName.startsWith(`${identifier}.`)) {
-        return null
+    if (variableName.startsWith(`${VARIABLES}.`)) {
+        return variableName.split('.')[1] ?? null
     }
-    return variableName.split('.')[1] ?? null
+    return null
 }
 
 async function handleConnection(params: ResolveSingleTokenParams): Promise<unknown> {
@@ -191,8 +187,7 @@ async function handleConnection(params: ResolveSingleTokenParams): Promise<unkno
 
 function parsePathAfterConnectionName(variableName: string, connectionName: string): string | null {
     if (variableName.includes('[')) {
-        const cp = variableName.substring(`connections['${connectionName}']`.length)
-        return cp.length === 0 ? cp : `connection${cp}`
+        return variableName.substring(`connections.['${connectionName}']`.length)
     }
     const cp = variableName.substring(`connections.${connectionName}`.length)
     if (cp.length === 0) {

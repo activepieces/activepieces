@@ -1,10 +1,8 @@
 import {
-  AppConnectionKind,
   AppConnectionScope,
   AppConnectionStatus,
-  isPieceConnection,
+  AppConnectionWithoutSensitiveData,
   Permission,
-  PieceAppConnectionWithoutSensitiveData,
   PlatformRole,
 } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
@@ -19,7 +17,7 @@ import {
   Puzzle,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
@@ -28,8 +26,10 @@ import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
 import {
   BulkAction,
+  CURSOR_QUERY_PARAM,
   DataTable,
   DataTableFilters,
+  LIMIT_QUERY_PARAM,
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
@@ -64,11 +64,12 @@ function AppConnectionsPage() {
   const navigate = useNavigate();
   const [refresh, setRefresh] = useState(0);
   const [selectedRows, setSelectedRows] = useState<
-    Array<PieceAppConnectionWithoutSensitiveData>
+    Array<AppConnectionWithoutSensitiveData>
   >([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { checkAccess } = useAuthorization();
   const userPlatformRole = userHooks.getCurrentUserPlatformRole();
+  const location = useLocation();
   const { pieces } = piecesHooks.usePieces({});
   const pieceOptions = (pieces ?? []).map((piece) => ({
     label: piece.displayName,
@@ -76,8 +77,14 @@ function AppConnectionsPage() {
   }));
   const projectId = authenticationSession.getProjectId()!;
 
-  const { cursor, limit, displayName, ownerEmails, status, pieceName } =
-    appConnectionsQueries.useListSearchParams();
+  const searchParams = new URLSearchParams(location.search);
+  const cursor = searchParams.get(CURSOR_QUERY_PARAM) ?? undefined;
+  const limit = searchParams.get(LIMIT_QUERY_PARAM)
+    ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
+    : 10;
+  const status = (searchParams.getAll('status') as AppConnectionStatus[]) ?? [];
+  const pieceName = searchParams.get('pieceName') ?? undefined;
+  const displayName = searchParams.get('displayName') ?? undefined;
 
   const {
     data: connections,
@@ -91,16 +98,8 @@ function AppConnectionsPage() {
       status,
       pieceName,
       displayName,
-      kind: AppConnectionKind.CONNECTION,
     },
-    extraKeys: [
-      cursor ?? '',
-      String(limit),
-      displayName ?? '',
-      pieceName ?? '',
-      status.join(','),
-      projectId,
-    ],
+    extraKeys: [location.search, projectId],
     showErrorDialog: true,
   });
 
@@ -109,33 +108,26 @@ function AppConnectionsPage() {
 
   const filteredData = useMemo(() => {
     if (!connections?.data) return undefined;
-    const pieceConnections = connections.data.filter(isPieceConnection);
+    const searchParams = new URLSearchParams(location.search);
+    const ownerEmails = searchParams.getAll('owner');
 
-    if (ownerEmails.length === 0) {
-      return {
-        data: pieceConnections,
-        next: connections.next,
-        previous: connections.previous,
-      };
-    }
+    if (ownerEmails.length === 0) return connections;
 
     return {
-      data: pieceConnections.filter(
+      data: connections.data.filter(
         (conn) => conn.owner && ownerEmails.includes(conn.owner.email),
       ),
       next: connections.next,
       previous: connections.previous,
     };
-  }, [connections, ownerEmails]);
+  }, [connections, location.search]);
 
   const userHasPermissionToWriteAppConnection = checkAccess(
     Permission.WRITE_APP_CONNECTION,
   );
   const { data: owners } = appConnectionsQueries.useConnectionsOwners();
-  const filters: DataTableFilters<
-    keyof PieceAppConnectionWithoutSensitiveData
-  >[] =
-    ownerColumnHooks.useOwnerColumnFilter<PieceAppConnectionWithoutSensitiveData>(
+  const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] =
+    ownerColumnHooks.useOwnerColumnFilter<AppConnectionWithoutSensitiveData>(
       [
         {
           type: 'select',
@@ -168,9 +160,9 @@ function AppConnectionsPage() {
     );
 
   const columns: ColumnDef<
-    RowDataWithActions<PieceAppConnectionWithoutSensitiveData>,
+    RowDataWithActions<AppConnectionWithoutSensitiveData>,
     unknown
-  >[] = ownerColumnHooks.useOwnerColumn<PieceAppConnectionWithoutSensitiveData>(
+  >[] = ownerColumnHooks.useOwnerColumn<AppConnectionWithoutSensitiveData>(
     [
       {
         accessorKey: 'displayName',
@@ -192,7 +184,7 @@ function AppConnectionsPage() {
               >
                 <div className="flex items-center gap-2 w-fit">
                   <PieceIconWithPieceName
-                    pieceName={row.original.pieceName ?? ''}
+                    pieceName={row.original.pieceName}
                     showTooltip={false}
                     size="sm"
                   />
@@ -336,52 +328,49 @@ function AppConnectionsPage() {
     4,
   );
 
-  const bulkActions: BulkAction<PieceAppConnectionWithoutSensitiveData>[] =
-    useMemo(
-      () => [
-        {
-          render: (_, resetSelection) => {
-            return (
-              <>
-                {selectedRows.length > 0 && (
-                  <ConfirmationDeleteDialog
-                    title={t('Delete Connections')}
-                    message={t(
-                      'The selected connections will be permanently deleted.',
-                    )}
-                    warning={<DeleteConnectionWarning />}
-                    mutationFn={async () => {
-                      await deleteConnections(
-                        selectedRows.map((row) => row.id),
-                      );
-                      refetch();
-                      resetSelection();
-                      setSelectedRows([]);
-                    }}
-                    entityName={t('connection')}
-                    buttonText={t('Delete')}
-                    open={showDeleteDialog}
-                    onOpenChange={setShowDeleteDialog}
-                    showToast
+  const bulkActions: BulkAction<AppConnectionWithoutSensitiveData>[] = useMemo(
+    () => [
+      {
+        render: (_, resetSelection) => {
+          return (
+            <>
+              {selectedRows.length > 0 && (
+                <ConfirmationDeleteDialog
+                  title={t('Delete Connections')}
+                  message={t(
+                    'The selected connections will be permanently deleted.',
+                  )}
+                  warning={<DeleteConnectionWarning />}
+                  mutationFn={async () => {
+                    await deleteConnections(selectedRows.map((row) => row.id));
+                    refetch();
+                    resetSelection();
+                    setSelectedRows([]);
+                  }}
+                  entityName={t('connection')}
+                  buttonText={t('Delete')}
+                  open={showDeleteDialog}
+                  onOpenChange={setShowDeleteDialog}
+                  showToast
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => setShowDeleteDialog(true)}
                   >
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => setShowDeleteDialog(true)}
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      {t('Delete')} ({selectedRows.length})
-                    </Button>
-                  </ConfirmationDeleteDialog>
-                )}
-              </>
-            );
-          },
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    {t('Delete')} ({selectedRows.length})
+                  </Button>
+                </ConfirmationDeleteDialog>
+              )}
+            </>
+          );
         },
-      ],
-      [selectedRows, showDeleteDialog],
-    );
+      },
+    ],
+    [selectedRows, showDeleteDialog],
+  );
 
   const toolbarButtons = useMemo(
     () => [

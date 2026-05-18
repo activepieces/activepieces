@@ -150,8 +150,7 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
             return mock
         }
         case ApplicationEventName.CONNECTION_UPSERTED:
-        case ApplicationEventName.CONNECTION_DELETED:
-        case ApplicationEventName.CONNECTION_VALUE_REVEALED: {
+        case ApplicationEventName.CONNECTION_DELETED: {
             const mock: ConnectionEvent = {
                 ...baseEnvelope,
                 action: event,

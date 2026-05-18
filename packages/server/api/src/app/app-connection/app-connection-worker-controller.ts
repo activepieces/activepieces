@@ -1,13 +1,11 @@
 import {
     ActivepiecesError,
     AppConnection,
-    AppConnectionType,
     assertNotNullOrUndefined,
     EnginePrincipal,
     ErrorCode,
     GetAppConnectionForWorkerRequestQuery,
     isNil,
-    isPieceConnection,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
@@ -35,19 +33,9 @@ export const appConnectionWorkerController: FastifyPluginAsyncZod = async (app) 
             })
         }
 
-        const resolvedValue = await secretManagersService(request.log).resolveObject({ value: appConnection.value, projectIds: [enginePrincipal.projectId], platformId: enginePrincipal.platform.id, throwOnFailure: false })
-        if (isPieceConnection(appConnection)) {
-            return {
-                ...appConnection,
-                value: resolvedValue,
-            }
-        }
-        if (resolvedValue.type !== AppConnectionType.SECRET_TEXT) {
-            throw new Error(`Credential ${appConnection.id} resolved to unexpected value type ${resolvedValue.type}`)
-        }
         return {
             ...appConnection,
-            value: resolvedValue,
+            value: await secretManagersService(request.log).resolveObject({ value: appConnection.value, projectIds: [enginePrincipal.projectId], platformId: enginePrincipal.platform.id, throwOnFailure: false }),
         }
     },
     )

@@ -22,9 +22,6 @@ export const useEventLabels = (): EventLabelsMap => {
     [ApplicationEventName.CONNECTION_DELETED]: {
       label: t('Connection deleted'),
     },
-    [ApplicationEventName.CONNECTION_VALUE_REVEALED]: {
-      label: t('Credential value revealed'),
-    },
     [ApplicationEventName.VARIABLE_UPSERTED]: {
       label: t('Variable saved'),
     },

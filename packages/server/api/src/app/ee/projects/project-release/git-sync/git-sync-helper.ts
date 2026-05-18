@@ -1,7 +1,7 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { fileSystemUtils } from '@activepieces/server-utils'
-import { AppConnectionScope, ConnectionState, FlowState, GitRepo, isPieceConnection, PopulatedFlow, PopulatedTable, ProjectState, TableState } from '@activepieces/shared'
+import { AppConnectionScope, ConnectionState, FlowState, GitRepo, PopulatedFlow, PopulatedTable, ProjectState, TableState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { SimpleGit } from 'simple-git'
 import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
@@ -79,9 +79,8 @@ export const gitSyncHelper = (log: FastifyBaseLogger) => ({
             pieceName: undefined,
             displayName: undefined,
             status: undefined,
-            kind: undefined,
         })
-        await Promise.all(currentConnections.data.filter(isPieceConnection).map(async (connection) => {
+        await Promise.all(currentConnections.data.map(async (connection) => {
             await this.upsertConnectionToGit({
                 fileName: connection.externalId,
                 connection: {

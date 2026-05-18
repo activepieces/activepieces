@@ -1,6 +1,6 @@
 import {
   AppConnectionScope,
-  PieceAppConnectionWithoutSensitiveData,
+  AppConnectionWithoutSensitiveData,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { RefreshCw } from 'lucide-react';
@@ -16,7 +16,7 @@ import {
 import { piecesHooks } from '@/features/pieces';
 
 type ReconnectButtonDialogProps = {
-  connection: PieceAppConnectionWithoutSensitiveData;
+  connection: AppConnectionWithoutSensitiveData;
   onConnectionCreated: () => void;
   hasPermission: boolean;
 };

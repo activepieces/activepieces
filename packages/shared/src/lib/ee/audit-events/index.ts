@@ -37,7 +37,6 @@ export enum ApplicationEventName {
     FOLDER_DELETED = 'folder.deleted',
     CONNECTION_UPSERTED = 'connection.upserted',
     CONNECTION_DELETED = 'connection.deleted',
-    CONNECTION_VALUE_REVEALED = 'connection.value.revealed',
     VARIABLE_UPSERTED = 'variable.upserted',
     VARIABLE_DELETED = 'variable.deleted',
     VARIABLE_VALUE_REVEALED = 'variable.value.revealed',
@@ -66,7 +65,7 @@ const ConnectionEventData = z.object({
     connection: z.object({
         displayName: z.string(),
         externalId: z.string(),
-        pieceName: z.string().optional(),
+        pieceName: z.string(),
         status: z.string(),
         type: z.string(),
         id: z.string(),
@@ -83,7 +82,6 @@ export const ConnectionEvent = z.object({
     action: z.union([
         z.literal(ApplicationEventName.CONNECTION_DELETED),
         z.literal(ApplicationEventName.CONNECTION_UPSERTED),
-        z.literal(ApplicationEventName.CONNECTION_VALUE_REVEALED),
     ]),
     data: ConnectionEventData,
 })
@@ -507,8 +505,6 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return `${event.data.connection.displayName} (${event.data.connection.externalId}) is updated`
         case ApplicationEventName.CONNECTION_DELETED:
             return `${event.data.connection.displayName} (${event.data.connection.externalId}) is deleted`
-        case ApplicationEventName.CONNECTION_VALUE_REVEALED:
-            return `${event.data.connection.displayName} (${event.data.connection.externalId}) value was revealed`
         case ApplicationEventName.VARIABLE_UPSERTED:
             return `Variable ${event.data.variable.name} is created or updated`
         case ApplicationEventName.VARIABLE_DELETED:

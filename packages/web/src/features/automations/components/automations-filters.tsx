@@ -3,7 +3,6 @@ import {
   AppConnectionWithoutSensitiveData,
   FlowStatus,
   FolderDto,
-  isPieceConnection,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
@@ -122,20 +121,18 @@ export const AutomationsFilters = ({
     label: folder.displayName,
   }));
 
-  const connectionOptions = (connections || [])
-    .filter(isPieceConnection)
-    .map((connection) => {
-      const pieceIcon = pieces?.find(
-        (p) => p.name === connection.pieceName,
-      )?.logoUrl;
-      return {
-        value: connection.externalId,
-        label: connection.displayName,
-        icon: pieceIcon ? (
-          <img src={pieceIcon} alt="" className="h-4 w-4 object-contain" />
-        ) : undefined,
-      };
-    });
+  const connectionOptions = (connections || []).map((connection) => {
+    const pieceIcon = pieces?.find(
+      (p) => p.name === connection.pieceName,
+    )?.logoUrl;
+    return {
+      value: connection.externalId,
+      label: connection.displayName,
+      icon: pieceIcon ? (
+        <img src={pieceIcon} alt="" className="h-4 w-4 object-contain" />
+      ) : undefined,
+    };
+  });
 
   return (
     <>

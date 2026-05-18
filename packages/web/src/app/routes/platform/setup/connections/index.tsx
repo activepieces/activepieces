@@ -1,8 +1,7 @@
 import {
   AppConnectionStatus,
-  isPieceConnection,
+  AppConnectionWithoutSensitiveData,
   Permission,
-  PieceAppConnectionWithoutSensitiveData,
 } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
@@ -55,9 +54,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/format-utils';
 
 const STATUS_QUERY_PARAM = 'status';
-const filters: DataTableFilters<
-  keyof PieceAppConnectionWithoutSensitiveData
->[] = [
+const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] = [
   {
     type: 'input',
     title: t('Search'),
@@ -81,14 +78,14 @@ const filters: DataTableFilters<
 const GlobalConnectionsTable = () => {
   const [refresh, setRefresh] = useState(0);
   const [selectedRows, setSelectedRows] = useState<
-    Array<PieceAppConnectionWithoutSensitiveData>
+    Array<AppConnectionWithoutSensitiveData>
   >([]);
   const { checkAccess } = useAuthorization();
   const location = useLocation();
   const { platform } = platformHooks.useCurrentPlatform();
 
   const columns: ColumnDef<
-    RowDataWithActions<PieceAppConnectionWithoutSensitiveData>,
+    RowDataWithActions<AppConnectionWithoutSensitiveData>,
     unknown
   >[] = [
     {
@@ -109,7 +106,7 @@ const GlobalConnectionsTable = () => {
           >
             <div className="flex items-center gap-2 w-fit">
               <PieceIconWithPieceName
-                pieceName={row.original.pieceName ?? ''}
+                pieceName={row.original.pieceName}
                 showTooltip={false}
                 size="sm"
               />
@@ -233,15 +230,6 @@ const GlobalConnectionsTable = () => {
     showErrorDialog: true,
   });
 
-  const globalPieceConnections = useMemo(() => {
-    if (!globalConnections) return undefined;
-    return {
-      data: globalConnections.data.filter(isPieceConnection),
-      next: globalConnections.next,
-      previous: globalConnections.previous,
-    };
-  }, [globalConnections]);
-
   const userHasPermissionToWriteAppConnection = checkAccess(
     Permission.WRITE_APP_CONNECTION,
   );
@@ -251,55 +239,54 @@ const GlobalConnectionsTable = () => {
       refetchGlobalConnections,
     );
 
-  const bulkActions: BulkAction<PieceAppConnectionWithoutSensitiveData>[] =
-    useMemo(
-      () => [
-        {
-          render: (
-            _selectedRows: RowDataWithActions<PieceAppConnectionWithoutSensitiveData>[],
-            resetSelection: () => void,
-          ) => {
-            return (
-              <div onClick={(e) => e.stopPropagation()}>
-                <ConfirmationDeleteDialog
-                  title={t('Delete Connections')}
-                  message={t(
-                    'The selected connections will be permanently deleted.',
-                  )}
-                  warning={<DeleteConnectionWarning />}
-                  entityName="connections"
-                  buttonText={t('Delete')}
-                  mutationFn={async () => {
-                    try {
-                      await bulkDeleteGlobalConnections.mutateAsync(
-                        selectedRows.map((row) => row.id),
-                      );
-                      resetSelection();
-                      setSelectedRows([]);
-                    } catch (error) {
-                      console.error('Error deleting connections:', error);
-                    }
-                  }}
-                >
-                  {selectedRows.length > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:text-destructive"
-                      disabled={!userHasPermissionToWriteAppConnection}
-                    >
-                      <Trash className="mr-1 w-4" />
-                      {`${t('Delete')} (${selectedRows.length})`}
-                    </Button>
-                  )}
-                </ConfirmationDeleteDialog>
-              </div>
-            );
-          },
+  const bulkActions: BulkAction<AppConnectionWithoutSensitiveData>[] = useMemo(
+    () => [
+      {
+        render: (
+          _selectedRows: RowDataWithActions<AppConnectionWithoutSensitiveData>[],
+          resetSelection: () => void,
+        ) => {
+          return (
+            <div onClick={(e) => e.stopPropagation()}>
+              <ConfirmationDeleteDialog
+                title={t('Delete Connections')}
+                message={t(
+                  'The selected connections will be permanently deleted.',
+                )}
+                warning={<DeleteConnectionWarning />}
+                entityName="connections"
+                buttonText={t('Delete')}
+                mutationFn={async () => {
+                  try {
+                    await bulkDeleteGlobalConnections.mutateAsync(
+                      selectedRows.map((row) => row.id),
+                    );
+                    resetSelection();
+                    setSelectedRows([]);
+                  } catch (error) {
+                    console.error('Error deleting connections:', error);
+                  }
+                }}
+              >
+                {selectedRows.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive"
+                    disabled={!userHasPermissionToWriteAppConnection}
+                  >
+                    <Trash className="mr-1 w-4" />
+                    {`${t('Delete')} (${selectedRows.length})`}
+                  </Button>
+                )}
+              </ConfirmationDeleteDialog>
+            </div>
+          );
         },
-      ],
-      [bulkDeleteGlobalConnections, selectedRows],
-    );
+      },
+    ],
+    [bulkDeleteGlobalConnections, selectedRows],
+  );
 
   const toolbarButtons = useMemo(
     () => [
@@ -343,7 +330,7 @@ const GlobalConnectionsTable = () => {
           )}
           emptyStateIcon={<Globe className="size-14" />}
           columns={columns}
-          page={globalPieceConnections}
+          page={globalConnections}
           isLoading={isLoadingGlobalConnections}
           filters={filters}
           selectColumn={true}

@@ -1,4 +1,4 @@
-import { apId, AppConnectionKind, ChatStreamWriter, FlowRunStatus, FlowStatus, isNil, isPieceConnection, parseToJsonIfPossible, Project, RunEnvironment } from '@activepieces/shared'
+import { apId, ChatStreamWriter, FlowRunStatus, FlowStatus, isNil, parseToJsonIfPossible, Project, RunEnvironment } from '@activepieces/shared'
 import { tool } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -63,7 +63,7 @@ function createChatTools({ onSessionTitle, onSetProjectContext, projects, platfo
         ap_run_one_time_action: tool({
             description: 'Execute a single piece action once for one-time tasks like "check my inbox" or "send a Slack message". If the piece needs auth and no connectionExternalId is provided, this tool returns structured connection data. If no connections exist, call ap_show_connection_required. If multiple exist, call ap_show_connection_picker with the returned data. After the user picks, call this tool again with connectionExternalId and projectId.',
             inputSchema: z.object({
-                pieceName: z.string().describe('Piece name, e.g. "@activepieces/piece-gmail". Use ap_list_pieces to discover.'),
+                pieceName: z.string().describe('Piece name, e.g. "@activepieces/piece-gmail". Use ap_research_pieces to discover.'),
                 actionName: z.string().describe('Action to run, e.g. "gmail_search_mail". Use ap_get_piece_props for the input shape.'),
                 input: z.record(z.string(), z.unknown()).optional().describe('Fully-resolved input for the action. Keys must match the piece action props. Pass raw values — do NOT wrap in {{...}}.'),
                 connectionExternalId: z.string().optional().describe('externalId of the connection to use. Omit on first call if unknown.'),
@@ -169,7 +169,6 @@ async function findConnectionsForPiece({ pieceName, projects, platformId, log }:
                 status: undefined,
                 limit: CROSS_PROJECT_CONNECTION_LIMIT,
                 scope: undefined,
-                kind: undefined,
                 externalIds: undefined,
             })
             return result.data.map((c) => ({
@@ -250,12 +249,9 @@ async function listConnectionsAcrossProjects({ projects, platformId, log }: {
                 status: undefined,
                 limit: CROSS_PROJECT_CONNECTION_LIMIT,
                 scope: undefined,
-                kind: AppConnectionKind.CONNECTION,
                 externalIds: undefined,
             })
-            return result.data
-                .filter(isPieceConnection)
-                .map((c) => `- ${c.displayName} (${pieceShortName(c.pieceName)}, ${c.status}) — ${chatPrompt.projectDisplayName(project)}`)
+            return result.data.map((c) => `- ${c.displayName} (${pieceShortName(c.pieceName)}, ${c.status}) — ${chatPrompt.projectDisplayName(project)}`)
         }),
     )
 

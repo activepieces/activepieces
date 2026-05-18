@@ -24,7 +24,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         projectIds: [projectId],
                         externalId: state.connectionState.externalId,
                         displayName: state.connectionState.displayName,
-                        pieceName: state.connectionState.pieceName ?? null,
+                        pieceName: state.connectionState.pieceName,
                         type: AppConnectionType.NO_AUTH,
                         status: AppConnectionStatus.MISSING,
                         value: {

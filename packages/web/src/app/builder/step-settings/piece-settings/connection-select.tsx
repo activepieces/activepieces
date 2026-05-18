@@ -4,8 +4,7 @@ import {
 } from '@activepieces/pieces-framework';
 import {
   AppConnectionScope,
-  isPieceConnection,
-  PieceAppConnectionWithoutSensitiveData,
+  AppConnectionWithoutSensitiveData,
   Permission,
   PieceAction,
   PieceTrigger,
@@ -44,7 +43,7 @@ function ConnectionSelect(params: ConnectionSelectProps) {
   const [connectionDialogOpen, setConnectionDialogOpen] = useState(false);
   const [selectConnectionOpen, setSelectConnectionOpen] = useState(false);
   const [reconnectConnection, setReconnectConnection] =
-    useState<PieceAppConnectionWithoutSensitiveData | null>(null);
+    useState<AppConnectionWithoutSensitiveData | null>(null);
   //in case of reconnection we need to use the piece version from the connection
   const { pieceModel: pieceWithCorrectVersion, isLoading: isLoadingPiece } =
     piecesHooks.usePiece({
@@ -69,13 +68,11 @@ function ConnectionSelect(params: ConnectionSelectProps) {
     extraKeys: [params.piece.name, authenticationSession.getProjectId()!],
     staleTime: 0,
   });
-  const selectedConnection = connections?.data
-    ?.filter(isPieceConnection)
-    .find(
-      (connection) =>
-        connection.externalId ===
-        removeBrackets(form.getValues().settings.input.auth ?? ''),
-    );
+  const selectedConnection = connections?.data?.find(
+    (connection) =>
+      connection.externalId ===
+      removeBrackets(form.getValues().settings.input.auth ?? ''),
+  );
   const isGlobalConnection =
     selectedConnection?.scope === AppConnectionScope.PLATFORM;
   const dynamicInputModeToggled =

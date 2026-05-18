@@ -10,11 +10,9 @@ import {
 } from '../database/database-common'
 import { EncryptedObject } from '../helper/encryption'
 
-export type AppConnectionSchema = Omit<AppConnection, 'value' | 'pieceName' | 'pieceVersion'> & {
+export type AppConnectionSchema = Omit<AppConnection, 'value'> & {
     value: EncryptedObject
     owner?: (User & { identity?: UserIdentity })
-    pieceName: string | null
-    pieceVersion: string | null
 }
 
 export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
@@ -40,7 +38,6 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
         },
         pieceName: {
             type: String,
-            nullable: true,
         },
         ownerId: {
             type: String,
@@ -63,7 +60,6 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
         },
         pieceVersion: {
             type: String,
-            nullable: true,
         },
         preSelectForNewProjects: {
             type: Boolean,
@@ -84,10 +80,6 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
             name: 'idx_app_connection_project_ids_gin',
             columns: ['projectIds'],
             synchronize: false,
-        },
-        {
-            name: 'idx_app_connection_piece_name',
-            columns: ['pieceName'],
         },
     ],
     relations: {

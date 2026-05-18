@@ -37,7 +37,7 @@ export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, do
             projectIds: [request.projectId],
             externalId: request.body.externalId,
             displayName: request.body.displayName,
-            pieceName: request.body.pieceName ?? null,
+            pieceName: request.body.pieceName,
             ownerId,
             scope: AppConnectionScope.PROJECT,
             metadata: request.body.metadata,
@@ -82,14 +82,13 @@ export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, do
     })
 
     app.get('/', ListAppConnectionsRequest, async (request): Promise<SeekPage<AppConnectionWithoutSensitiveData>> => {
-        const { displayName, pieceName, status, cursor, limit, scope, kind } = request.query
+        const { displayName, pieceName, status, cursor, limit, scope } = request.query
 
         const appConnections = await appConnectionService(request.log).list({
             pieceName,
             displayName,
             status,
             scope,
-            kind,
             platformId: request.principal.platform.id,
             projectId: request.projectId,
             cursorRequest: cursor ?? null,
@@ -127,26 +126,6 @@ export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, do
             userId: request.principal.id,
         })
         await reply.status(StatusCodes.NO_CONTENT).send()
-    })
-
-    app.post('/:id/reveal', RevealCredentialRequest, async (request) => {
-        const connection = await appConnectionService(request.log).getOneOrThrowWithoutValue({
-            id: request.params.id,
-            platformId: request.principal.platform.id,
-            projectId: request.projectId,
-        })
-        const value = await appConnectionService(request.log).revealCredentialValue({
-            id: request.params.id,
-            platformId: request.principal.platform.id,
-            projectId: request.projectId,
-        })
-        applicationEvents(request.log).sendUserEvent(request, {
-            action: ApplicationEventName.CONNECTION_VALUE_REVEALED,
-            data: {
-                connection,
-            },
-        })
-        return { value }
     })
 
     app.delete('/:id', DeleteAppConnectionRequest, async (request, reply): Promise<void> => {
@@ -287,25 +266,6 @@ const ListAppConnectionOwnersRequest = {
         description: 'List app connection owners',
         response: {
             [StatusCodes.OK]: SeekPage(AppConnectionOwners),
-        },
-    },
-}
-
-const RevealCredentialRequest = {
-    config: {
-        security: securityAccess.project(
-            [PrincipalType.USER],
-            Permission.WRITE_APP_CONNECTION,
-            { type: ProjectResourceType.TABLE, tableName: AppConnectionEntity },
-        ),
-    },
-    schema: {
-        tags: ['app-connections'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        description: 'Reveal a credential value (piece-less SECRET_TEXT only)',
-        params: z.object({ id: ApId }),
-        response: {
-            [StatusCodes.OK]: z.object({ value: z.string() }),
         },
     },
 }

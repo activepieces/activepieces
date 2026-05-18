@@ -1,4 +1,4 @@
-import { AppConnection, AppConnectionKind, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, assertNotNullOrUndefined, Flow, FlowOperationType, flowStructureUtil, FlowVersion, FlowVersionState, isNil, isPieceConnection, PlatformId, PopulatedFlow, ProjectId, UserId } from '@activepieces/shared'
+import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, assertNotNullOrUndefined, Flow, FlowOperationType, flowStructureUtil, FlowVersion, FlowVersionState, isNil, PlatformId, PopulatedFlow, ProjectId, UserId } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains } from 'typeorm'
@@ -30,9 +30,6 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
     },
 
     async refresh(connection: AppConnection, projectId: ProjectId, log: FastifyBaseLogger): Promise<AppConnection> {
-        if (!isPieceConnection(connection)) {
-            return connection
-        }
         switch (connection.value.type) {
             case AppConnectionType.PLATFORM_OAUTH2:
                 connection.value = await oauth2Handler[connection.value.type](log).refresh({
@@ -122,26 +119,11 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
         encryptedConnection: AppConnectionSchema,
     ): Promise<AppConnection> {
         const value = await encryptUtils.decryptObject<AppConnectionValue>(encryptedConnection.value)
-        const { pieceName, pieceVersion, ...rest } = encryptedConnection
-        if (isNil(pieceName)) {
-            if (value.type !== AppConnectionType.SECRET_TEXT) {
-                throw new Error(`Credential ${encryptedConnection.id} has unexpected value type ${value.type}; expected SECRET_TEXT`)
-            }
-            return {
-                ...rest,
-                kind: AppConnectionKind.CREDENTIAL,
-                type: AppConnectionType.SECRET_TEXT,
-                value,
-            }
-        }
-        assertNotNullOrUndefined(pieceVersion, `pieceVersion missing for piece connection ${encryptedConnection.id}`)
-        return {
-            ...rest,
-            kind: AppConnectionKind.CONNECTION,
-            pieceName,
-            pieceVersion,
+        const connection: AppConnection = {
+            ...encryptedConnection,
             value,
         }
+        return connection
     },
     needRefresh(connection: AppConnection, log: FastifyBaseLogger): boolean {
         if (connection.status === AppConnectionStatus.ERROR) {
