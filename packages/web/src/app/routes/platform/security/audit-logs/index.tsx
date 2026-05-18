@@ -367,10 +367,16 @@ function convertToIcon(event: ApplicationEvent) {
       };
     case ApplicationEventName.CONNECTION_DELETED:
     case ApplicationEventName.CONNECTION_UPSERTED:
-    case ApplicationEventName.CONNECTION_VALUE_REVEALED:
       return {
         icon: <Link2 className="size-4" />,
         tooltip: t('Connection'),
+      };
+    case ApplicationEventName.VARIABLE_UPSERTED:
+    case ApplicationEventName.VARIABLE_DELETED:
+    case ApplicationEventName.VARIABLE_VALUE_REVEALED:
+      return {
+        icon: <Link2 className="size-4" />,
+        tooltip: t('Variable'),
       };
     case ApplicationEventName.USER_SIGNED_UP:
     case ApplicationEventName.USER_SIGNED_IN:
@@ -463,8 +469,7 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
     case ApplicationEventName.FLOW_DEACTIVATED:
       return [{ label: t('Flow'), value: event.data.flowVersion.displayName }];
     case ApplicationEventName.CONNECTION_UPSERTED:
-    case ApplicationEventName.CONNECTION_DELETED:
-    case ApplicationEventName.CONNECTION_VALUE_REVEALED: {
+    case ApplicationEventName.CONNECTION_DELETED: {
       const { connection } = event.data;
       return [
         { label: t('Connection'), value: connection.displayName },
@@ -478,6 +483,12 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
           value: formatUtils.convertEnumToHumanReadable(connection.status),
         },
       ];
+    }
+    case ApplicationEventName.VARIABLE_UPSERTED:
+    case ApplicationEventName.VARIABLE_DELETED:
+    case ApplicationEventName.VARIABLE_VALUE_REVEALED: {
+      const { variable } = event.data;
+      return [{ label: t('Variable'), value: variable.name }];
     }
     case ApplicationEventName.FOLDER_CREATED:
     case ApplicationEventName.FOLDER_UPDATED:

@@ -1,8 +1,4 @@
-import {
-  AppConnectionKind,
-  flowStructureUtil,
-  isNil,
-} from '@activepieces/shared';
+import { flowStructureUtil, isNil } from '@activepieces/shared';
 import { Extensions } from '@tiptap/core';
 import { Document } from '@tiptap/extension-document';
 import { HardBreak } from '@tiptap/extension-hard-break';
@@ -16,8 +12,8 @@ import StarterKit from '@tiptap/starter-kit';
 import { useMemo } from 'react';
 
 import { inputClass } from '@/components/ui/input';
-import { appConnectionsQueries } from '@/features/connections';
 import { stepsHooks } from '@/features/pieces';
+import { variablesQueries } from '@/features/variables/hooks/variables-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
@@ -118,21 +114,17 @@ export const TextInputWithMentions = ({
     });
 
   const projectId = authenticationSession.getProjectId();
-  const { data: credentialsPage } = appConnectionsQueries.useAppConnections({
+  const { data: variablesPage } = variablesQueries.useVariables({
     request: {
       projectId: projectId ?? '',
       limit: 100,
-      kind: AppConnectionKind.CREDENTIAL,
     },
-    extraKeys: ['mention-resolver-credentials', projectId ?? ''],
+    extraKeys: ['mention-resolver-variables', projectId ?? ''],
     enabled: !!projectId,
   });
-  const credentialByExternalId = useMemo(
-    () =>
-      new Map(
-        (credentialsPage?.data ?? []).map((c) => [c.externalId, c.displayName]),
-      ),
-    [credentialsPage],
+  const variableByName = useMemo(
+    () => new Map((variablesPage?.data ?? []).map((v) => [v.name, v.name])),
+    [variablesPage],
   );
 
   const setInsertMentionHandler = useBuilderStateContext(
@@ -144,7 +136,7 @@ export const TextInputWithMentions = ({
       `{{${propertyPath}}}`,
       steps,
       stepsMetadata,
-      credentialByExternalId,
+      variableByName,
     );
     editor?.chain().focus().insertContent(mentionNode).run();
   };
@@ -158,7 +150,7 @@ export const TextInputWithMentions = ({
         convertToText(initialValue),
         steps,
         stepsMetadata,
-        credentialByExternalId,
+        variableByName,
       ),
     },
     editorProps: {

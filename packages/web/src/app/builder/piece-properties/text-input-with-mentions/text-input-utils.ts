@@ -38,7 +38,7 @@ type ApMentionNodeAttrs = {
   logoUrl?: string;
   displayText: string;
   serverValue: string;
-  isCredential?: boolean;
+  isVariable?: boolean;
 };
 const flattenNestedKeysRegex = /^flattenNestedKeys\((\w+),\s*\[(.*?)\]\)$/;
 enum TipTapNodeTypes {
@@ -56,7 +56,7 @@ const isMentionNodeText = (item: string) => {
     if (itemIsFlattenedArray) {
       return true;
     }
-    return /^(step_\d+|trigger|connections)/.test(content);
+    return /^(step_\d+|trigger|connections|variables)/.test(content);
   }
   return false;
 };
@@ -67,7 +67,7 @@ function convertTextToTipTapJsonContent(
   userInputText: string,
   steps: (FlowAction | FlowTrigger)[],
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
-  credentialByExternalId?: Map<string, string>,
+  variableByName?: Map<string, string>,
 ): {
   type: TipTapNodeTypes.paragraph;
   content: JSONContent[];
@@ -86,12 +86,7 @@ function convertTextToTipTapJsonContent(
         });
       } else if (isMentionNodeText(node)) {
         result[result.length - 1].content.push(
-          createMentionNodeFromText(
-            node,
-            steps,
-            stepsMetadata,
-            credentialByExternalId,
-          ),
+          createMentionNodeFromText(node, steps, stepsMetadata, variableByName),
         );
       } else {
         result[result.length - 1].content.push({
@@ -172,17 +167,17 @@ function parseLabelFromMention(
   mention: string,
   steps: (FlowAction | FlowTrigger)[],
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
-  credentialByExternalId?: Map<string, string>,
+  variableByName?: Map<string, string>,
 ) {
   const { stepName, path } = parseStepAndNameFromMention(mention);
-  if (stepName === 'connections') {
-    const externalId = path[0] ?? '';
-    const displayName = credentialByExternalId?.get(externalId) ?? externalId;
+  if (stepName === 'variables') {
+    const name = path[0] ?? '';
+    const displayName = variableByName?.get(name) ?? name;
     return {
-      displayText: `Credential · ${displayName}`,
+      displayText: `Variable · ${displayName}`,
       serverValue: mention,
       logoUrl: undefined,
-      isCredential: true,
+      isVariable: true,
     };
   }
   const stepIdx = steps.findIndex((step) => step.name === stepName);
@@ -207,19 +202,14 @@ function createMentionNodeFromText(
   mention: string,
   steps: (FlowAction | FlowTrigger)[],
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
-  credentialByExternalId?: Map<string, string>,
+  variableByName?: Map<string, string>,
 ) {
   return {
     type: TipTapNodeTypes.mention,
     attrs: {
       id: mention,
       label: JSON.stringify(
-        parseLabelFromMention(
-          mention,
-          steps,
-          stepsMetadata,
-          credentialByExternalId,
-        ),
+        parseLabelFromMention(mention, steps, stepsMetadata, variableByName),
       ),
     },
   };
@@ -253,7 +243,7 @@ function convertTiptapJsonToText(nodes: JSONContent[]): string {
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-const buildCredentialIconElement = (): SVGSVGElement => {
+const buildVariableIconElement = (): SVGSVGElement => {
   const svg = document.createElementNS(SVG_NS, 'svg');
   svg.setAttribute('viewBox', '0 0 24 24');
   svg.setAttribute('fill', 'none');
@@ -297,8 +287,8 @@ const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
   mentionElement.dataset.type = TipTapNodeTypes.mention;
   mentionElement.contentEditable = 'false';
 
-  if (apMentionNodeAttrs.isCredential) {
-    mentionElement.appendChild(buildCredentialIconElement());
+  if (apMentionNodeAttrs.isVariable) {
+    mentionElement.appendChild(buildVariableIconElement());
   } else if (apMentionNodeAttrs.logoUrl) {
     const imgElement = document.createElement('img');
     imgElement.src = apMentionNodeAttrs.logoUrl;

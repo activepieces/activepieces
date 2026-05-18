@@ -1,7 +1,7 @@
 import {
-  AppConnectionType,
-  AppConnectionWithoutSensitiveData,
   formErrors,
+  VARIABLE_NAME_REGEX,
+  VariableWithoutSensitiveData,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
@@ -32,40 +32,38 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { appConnectionsApi } from '@/features/connections/api/app-connections';
+import { variablesApi } from '@/features/variables/api/variables';
 import { authenticationSession } from '@/lib/authentication-session';
 
-const CREDENTIAL_NAME_REGEX = /^[a-zA-Z0-9_]+$/;
-
 const FormSchema = z.object({
-  displayName: z
+  name: z
     .string()
     .min(1, formErrors.required)
-    .regex(CREDENTIAL_NAME_REGEX, 'invalidCredentialName'),
+    .regex(VARIABLE_NAME_REGEX, 'invalidVariableName'),
   value: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof FormSchema>;
 
-type CredentialDialogProps = {
+type VariableDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  existing?: AppConnectionWithoutSensitiveData;
-  onSaved?: (credential: AppConnectionWithoutSensitiveData) => void;
+  existing?: VariableWithoutSensitiveData;
+  onSaved?: (variable: VariableWithoutSensitiveData) => void;
 };
 
-type CredentialFormProps = {
-  existing?: AppConnectionWithoutSensitiveData;
+type VariableFormProps = {
+  existing?: VariableWithoutSensitiveData;
   onOpenChange: (open: boolean) => void;
-  onSaved?: (credential: AppConnectionWithoutSensitiveData) => void;
+  onSaved?: (variable: VariableWithoutSensitiveData) => void;
 };
 
-export function CredentialDialog(props: CredentialDialogProps) {
+export function VariableDialog(props: VariableDialogProps) {
   const { open, onOpenChange, existing, onSaved } = props;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
-        <CredentialForm
+        <VariableForm
           key={open ? `${existing?.id ?? 'new'}-open` : 'closed'}
           existing={existing}
           onOpenChange={onOpenChange}
@@ -76,7 +74,7 @@ export function CredentialDialog(props: CredentialDialogProps) {
   );
 }
 
-function CredentialForm(props: CredentialFormProps) {
+function VariableForm(props: VariableFormProps) {
   const { existing, onOpenChange, onSaved } = props;
   const isEdit = !!existing;
   const projectId = authenticationSession.getProjectId();
@@ -87,7 +85,7 @@ function CredentialForm(props: CredentialFormProps) {
     resolver: zodResolver(FormSchema),
     mode: 'onChange',
     defaultValues: {
-      displayName: existing?.displayName ?? '',
+      name: existing?.name ?? '',
       value: '',
     },
   });
@@ -97,20 +95,15 @@ function CredentialForm(props: CredentialFormProps) {
       if (!projectId) {
         throw new Error('No project');
       }
-      return appConnectionsApi.upsert({
+      return variablesApi.upsert({
         projectId,
-        externalId: existing?.externalId ?? `cred_${values.displayName}`,
-        displayName: values.displayName,
-        type: AppConnectionType.SECRET_TEXT,
-        value: {
-          type: AppConnectionType.SECRET_TEXT,
-          secret_text: values.value ?? '',
-        },
+        name: values.name,
+        value: values.value ?? '',
       });
     },
-    onSuccess: (credential) => {
-      toast.success(isEdit ? t('Credential updated') : t('Credential created'));
-      onSaved?.(credential);
+    onSuccess: (variable) => {
+      toast.success(isEdit ? t('Variable updated') : t('Variable created'));
+      onSaved?.(variable);
       onOpenChange(false);
     },
     onError: () => internalErrorToast(),
@@ -132,7 +125,7 @@ function CredentialForm(props: CredentialFormProps) {
       >
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? t('Edit credential') : t('New credential')}
+            {isEdit ? t('Edit variable') : t('New variable')}
           </DialogTitle>
           <DialogDescription>
             {t(
@@ -142,7 +135,7 @@ function CredentialForm(props: CredentialFormProps) {
         </DialogHeader>
         <FormField
           control={form.control}
-          name="displayName"
+          name="name"
           render={({ field }) => (
             <FormItem>
               <FormLabel>{t('Name')}</FormLabel>
@@ -175,7 +168,7 @@ function CredentialForm(props: CredentialFormProps) {
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                      className="absolute right-1 top-1/2 h-7 w-7 p-0"
                       onClick={() => setValueVisible((v) => !v)}
                       aria-label={
                         valueVisible ? t('Hide value') : t('Show value')

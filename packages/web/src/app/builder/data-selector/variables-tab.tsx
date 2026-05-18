@@ -1,42 +1,41 @@
-import { AppConnectionKind, Permission } from '@activepieces/shared';
+import { Permission } from '@activepieces/shared';
 import { t } from 'i18next';
 import { KeyRound, Plus, SearchXIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useDebounce } from 'use-debounce';
 
-import { CredentialDialog } from '@/app/connections/credential-dialog';
+import { VariableDialog } from '@/app/variables/variable-dialog';
 import { SearchInput } from '@/components/custom/search-input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { appConnectionsQueries } from '@/features/connections';
+import { variablesQueries } from '@/features/variables/hooks/variables-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
-const CredentialsTab = () => {
+const VariablesTab = () => {
   const insertMention = useBuilderStateContext((state) => state.insertMention);
   const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebounce(search, 250);
   const [createOpen, setCreateOpen] = useState(false);
   const projectId = authenticationSession.getProjectId();
   const { checkAccess } = useAuthorization();
-  const canRead = checkAccess(Permission.READ_APP_CONNECTION);
-  const canWrite = checkAccess(Permission.WRITE_APP_CONNECTION);
+  const canRead = checkAccess(Permission.READ_VARIABLE);
+  const canWrite = checkAccess(Permission.WRITE_VARIABLE);
 
-  const { data, isLoading, refetch } = appConnectionsQueries.useAppConnections({
+  const { data, isLoading, refetch } = variablesQueries.useVariables({
     request: {
       projectId: projectId ?? '',
       limit: 50,
-      displayName: debouncedSearch || undefined,
-      kind: AppConnectionKind.CREDENTIAL,
+      name: debouncedSearch || undefined,
     },
-    extraKeys: ['data-selector-secrets', projectId ?? '', debouncedSearch],
+    extraKeys: ['data-selector-variables', projectId ?? '', debouncedSearch],
     enabled: !!projectId && canRead,
   });
 
-  const secrets = data?.data ?? [];
+  const variables = data?.data ?? [];
 
   return (
     <div className="flex flex-col gap-2 h-full">
@@ -44,7 +43,7 @@ const CredentialsTab = () => {
         <SearchInput
           onChange={setSearch}
           value={search}
-          placeholder={t('Search credentials')}
+          placeholder={t('Search variables')}
         />
         {canWrite && (
           <Button
@@ -67,13 +66,13 @@ const CredentialsTab = () => {
           </div>
         )}
 
-        {!isLoading && secrets.length === 0 && (
+        {!isLoading && variables.length === 0 && (
           <div className="flex items-center justify-center gap-2 mt-5 flex-col px-6">
             {debouncedSearch ? (
               <>
                 <SearchXIcon className="w-[35px] h-[35px]" />
                 <div className="text-center font-semibold text-md">
-                  {t('No matching credentials')}
+                  {t('No matching variables')}
                 </div>
                 <div className="text-center text-sm text-muted-foreground">
                   {t('Try adjusting your search')}
@@ -85,11 +84,11 @@ const CredentialsTab = () => {
                   <KeyRound className="w-5 h-5" />
                 </div>
                 <div className="text-center font-semibold text-md">
-                  {t('No credentials yet')}
+                  {t('No variables yet')}
                 </div>
                 <div className="text-center text-sm text-muted-foreground max-w-[280px]">
                   {t(
-                    'Create a credential to securely reference a value from any step input.',
+                    'Create a variable to securely reference a value from any step input.',
                   )}
                 </div>
                 {canWrite && (
@@ -100,7 +99,7 @@ const CredentialsTab = () => {
                     onClick={() => setCreateOpen(true)}
                   >
                     <Plus className="w-4 h-4" />
-                    {t('New credential')}
+                    {t('New variable')}
                   </Button>
                 )}
               </>
@@ -108,27 +107,23 @@ const CredentialsTab = () => {
           </div>
         )}
 
-        {!isLoading && secrets.length > 0 && (
+        {!isLoading && variables.length > 0 && (
           <div className="flex flex-col">
-            {secrets.map((secret) => (
+            {variables.map((variable) => (
               <div
-                key={secret.id}
+                key={variable.id}
                 tabIndex={0}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
                     if (insertMention) {
-                      insertMention(
-                        `connections['${secret.externalId}'].secret_text`,
-                      );
+                      insertMention(`variables['${variable.name}']`);
                     }
                   }
                 }}
                 onClick={() => {
                   if (insertMention) {
-                    insertMention(
-                      `connections['${secret.externalId}'].secret_text`,
-                    );
+                    insertMention(`variables['${variable.name}']`);
                   }
                 }}
                 className={cn(
@@ -142,7 +137,7 @@ const CredentialsTab = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-mono text-sm truncate">
-                    {secret.displayName}
+                    {variable.name}
                   </div>
                 </div>
               </div>
@@ -151,7 +146,7 @@ const CredentialsTab = () => {
         )}
       </ScrollArea>
 
-      <CredentialDialog
+      <VariableDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
         onSaved={() => refetch()}
@@ -160,5 +155,5 @@ const CredentialsTab = () => {
   );
 };
 
-CredentialsTab.displayName = 'CredentialsTab';
-export { CredentialsTab };
+VariablesTab.displayName = 'VariablesTab';
+export { VariablesTab };

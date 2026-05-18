@@ -11,7 +11,6 @@ import { cn } from '@/lib/utils';
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { BuilderState, useBuilderStateContext } from '../builder-hooks';
 
-import { CredentialsTab } from './credentials-tab';
 import { DataSelectorNode } from './data-selector-node';
 import {
   DataSelectorSizeState,
@@ -19,6 +18,7 @@ import {
 } from './data-selector-size-togglers';
 import { DataSelectorTreeNode } from './type';
 import { dataSelectorUtils } from './utils';
+import { VariablesTab } from './variables-tab';
 
 const buildDataSelectorStructure = (
   state: BuilderState,
@@ -152,12 +152,12 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
               {t('Data')}
             </TabsTrigger>
             <TabsTrigger
-              value="credentials"
+              value="variables"
               variant="outline"
               className="gap-2 px-3 py-2 hover:text-foreground rounded-none"
             >
               <KeyRound className="w-4 h-4" />
-              {t('Credentials')}
+              {t('Variables')}
             </TabsTrigger>
           </TabsList>
 
@@ -195,8 +195,8 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
             </ScrollArea>
           </TabsContent>
 
-          <TabsContent value="credentials" className="flex-1 min-h-0 mt-2">
-            <CredentialsTab />
+          <TabsContent value="variables" className="flex-1 min-h-0 mt-2">
+            <VariablesTab />
           </TabsContent>
         </Tabs>
       </div>

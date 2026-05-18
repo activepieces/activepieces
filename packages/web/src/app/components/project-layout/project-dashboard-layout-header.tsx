@@ -96,10 +96,10 @@ export const ProjectDashboardLayoutHeader = () => {
       show: true,
     },
     {
-      to: authenticationSession.appendProjectRoutePrefix('/credentials'),
-      label: t('Credentials'),
+      to: authenticationSession.appendProjectRoutePrefix('/variables'),
+      label: t('Variables'),
       icon: KeyRoundIcon,
-      hasPermission: checkAccess(Permission.READ_APP_CONNECTION),
+      hasPermission: checkAccess(Permission.READ_VARIABLE),
       show: true,
     },
     {

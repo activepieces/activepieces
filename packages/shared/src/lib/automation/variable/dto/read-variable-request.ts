@@ -12,3 +12,8 @@ export const RevealVariableResponse = z.object({
     value: z.string(),
 })
 export type RevealVariableResponse = z.infer<typeof RevealVariableResponse>
+
+export const GetVariableForWorkerRequestParams = z.object({
+    name: z.string(),
+})
+export type GetVariableForWorkerRequestParams = z.infer<typeof GetVariableForWorkerRequestParams>
