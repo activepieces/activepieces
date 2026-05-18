@@ -45,8 +45,8 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `ap_list_flows` — list all flows in project
 - `ap_flow_structure` — get flow definition and structure
 - `ap_read_step_code` — read full source code of a CODE step
-- `ap_list_pieces` — browse available pieces
-- `ap_list_connections` — list piece-bound app connections (credentials are excluded; they are not addressable via MCP tools, only via the `{{connections['…'].secret_text}}` mention syntax in flow steps)
+- `ap_research_pieces` — browse available pieces
+- `ap_list_connections` — list app connections
 
 **Controllable tools** (can be toggled per-project):
 - `ap_create_flow`, `ap_rename_flow` — flow management
