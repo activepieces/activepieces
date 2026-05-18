@@ -50,6 +50,7 @@ export const findSpreadsheets = createAction({
 					q: queries.join(' and '),
 					includeItemsFromAllDrives: propsValue.includeTeamDrives ? 'true' : 'false',
 					supportsAllDrives: 'true',
+					corpora: propsValue.includeTeamDrives ? 'allDrives' : 'user',
 					fields: 'files(id,name,webViewLink,createdTime,modifiedTime),nextPageToken',
 				},
 				authentication: {
