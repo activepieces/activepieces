@@ -171,10 +171,10 @@ const JumpToFailedStepButton = ({
 }: {
   failedStepName: string;
 }) => {
-  const [selectedStep, goToFailedStep, run, loopsIndexes] =
+  const [selectedStep, selectFailedStep, run, loopsIndexes] =
     useBuilderStateContext((state) => [
       state.selectedStep,
-      state.goToFailedStep,
+      state.selectFailedStep,
       state.run,
       state.loopsIndexes,
     ]);
@@ -194,8 +194,8 @@ const JumpToFailedStepButton = ({
     return null;
   }
   const handleClick = () => {
+    selectFailedStep();
     fitView(flowCanvasUtils.createFocusStepInGraphParams(failedStepName));
-    goToFailedStep();
   };
   return (
     <Button
