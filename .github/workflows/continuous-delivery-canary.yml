@@ -19,7 +19,7 @@ jobs:
     outputs:
       image_tag: ${{ steps.set-tag.outputs.image_tag }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set image tag
         id: set-tag
@@ -61,7 +61,7 @@ jobs:
       has_breaking: ${{ steps.check.outputs.has_breaking }}
       breaking_names: ${{ steps.check.outputs.breaking_names }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: actions/setup-node@v4
         with:
