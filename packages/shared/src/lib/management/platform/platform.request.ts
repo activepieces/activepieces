@@ -9,11 +9,17 @@ import { FilteredPieceBehavior } from './platform.model'
 export const MAX_ALLOWED_EMBED_ORIGINS = 50
 export const MAX_EMBED_ORIGIN_LENGTH = 300
 
-export const allowedEmbedOriginSchema = z.httpUrl()
+const ALLOWED_EMBED_ORIGIN_PROTOCOLS = new Set(['http:', 'https:'])
+const WILDCARD_EMBED_ORIGIN_PATTERN = /^https?:\/\/\*\.[^*\s/?#]+$/
+
+export const allowedEmbedOriginSchema = z.string()
     .max(MAX_EMBED_ORIGIN_LENGTH, 'invalidEmbedOrigin')
     .refine((value) => {
+        const isWildcard = WILDCARD_EMBED_ORIGIN_PATTERN.test(value)
+        const probe = isWildcard ? value.replace('://*.', '://wildcard.') : value
         try {
-            return new URL(value).origin === value
+            const url = new URL(probe)
+            return ALLOWED_EMBED_ORIGIN_PROTOCOLS.has(url.protocol) && url.origin === probe
         }
         catch {
             return false
