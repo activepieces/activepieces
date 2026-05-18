@@ -128,7 +128,6 @@ function VariablesPage() {
           title: t('Name'),
           accessorKey: 'name',
           icon: Search,
-          options: [],
         },
       ],
       1,
@@ -143,6 +142,7 @@ function VariablesPage() {
       {
         accessorKey: 'name',
         size: 280,
+        cellClassName: 'pl-0',
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
