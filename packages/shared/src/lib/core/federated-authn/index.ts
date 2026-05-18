@@ -17,18 +17,6 @@ export const ClaimTokenRequest = z.object({
 
 export type ClaimTokenRequest = z.infer<typeof ClaimTokenRequest>
 
-export const GoogleAuthnProviderConfig = z.object({
-    clientId: z.string(),
-    clientSecret: z.string(),
-})
-export type GoogleAuthnProviderConfig = z.infer<typeof GoogleAuthnProviderConfig>
-
-export const GithubAuthnProviderConfig = z.object({
-    clientId: z.string(),
-    clientSecret: z.string(),
-})
-export type GithubAuthnProviderConfig = z.infer<typeof GithubAuthnProviderConfig>
-
 export const SAMLAttributeMapping = z.object({
     email: z.string(),
     firstName: z.string(),
@@ -44,15 +32,11 @@ export const SAMLAuthnProviderConfig = z.object({
 export type SAMLAuthnProviderConfig = z.infer<typeof SAMLAuthnProviderConfig>
 
 export const FederatedAuthnProviderConfig = z.object({
-    google: Nullable(GoogleAuthnProviderConfig),
-    github: Nullable(GithubAuthnProviderConfig),
     saml: Nullable(SAMLAuthnProviderConfig),
 })
 export type FederatedAuthnProviderConfig = z.infer<typeof FederatedAuthnProviderConfig>
 
 export const FederatedAuthnProviderConfigWithoutSensitiveData = z.object({
-    google: Nullable(GoogleAuthnProviderConfig.pick({ clientId: true })),
-    github: Nullable(GithubAuthnProviderConfig.pick({ clientId: true })),
     saml: Nullable(z.object({})),
 })
 
