@@ -1,4 +1,4 @@
-import { SAFE_STRING_PATTERN } from '@activepieces/shared/src';
+import { SAFE_STRING_PATTERN } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { SubmitHandler, useForm } from 'react-hook-form';
