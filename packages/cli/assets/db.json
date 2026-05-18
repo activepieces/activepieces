@@ -1,0 +1,2467 @@
+{
+  "Airtable": {
+    "swagger": "2.0",
+    "info": {
+      "title": "AirtableTest",
+      "description": "Connector to read and write data in Airtable. Airtable is a cloud-based spreadsheet-like service that enables users to collaborate and manage different types of data. It is easy-to-use and can act as database or CRM (Customer Relationship Management). It can also be used as project planning, tracking inventory.",
+      "version": "1.0",
+      "contact": {
+        "name": "Woong Choi",
+        "url": "https://last72.tistory.com/entry/Airtable-Connector-Support",
+        "email": "Woong.Choi@sevensigma.com.au"
+      }
+    },
+    "host": "api.airtable.com",
+    "basePath": "/v0",
+    "schemes": ["https"],
+    "consumes": [],
+    "produces": [],
+    "paths": {
+      "/{Base ID}/{Table}": {
+        "get": {
+          "responses": {
+            "200": {
+              "description": "default",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "records": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Record ID"
+                        },
+                        "createdTime": {
+                          "type": "string",
+                          "description": "Record Created Time"
+                        }
+                      }
+                    },
+                    "description": "Records"
+                  }
+                }
+              }
+            }
+          },
+          "parameters": [
+            {
+              "name": "Base ID",
+              "in": "path",
+              "required": true,
+              "type": "string",
+              "description": "Base ID",
+              "x-ms-summary": "Base ID",
+              "x-ms-url-encoding": "single"
+            },
+            {
+              "name": "Table",
+              "in": "path",
+              "required": true,
+              "type": "string",
+              "description": "Table name",
+              "x-ms-summary": "Table",
+              "x-ms-url-encoding": "single"
+            },
+            {
+              "name": "filterByFormula",
+              "in": "query",
+              "required": false,
+              "type": "string",
+              "x-ms-visibility": "advanced",
+              "description": "A formula used to filter records.",
+              "x-ms-summary": "Formula filter"
+            },
+            {
+              "name": "maxRecords",
+              "in": "query",
+              "required": false,
+              "type": "integer",
+              "x-ms-visibility": "advanced",
+              "description": "The maximum total number of records that will be returned in your requests.",
+              "x-ms-summary": "Maximum number of records."
+            },
+            {
+              "name": "pageSize",
+              "in": "query",
+              "required": false,
+              "type": "integer",
+              "x-ms-visibility": "advanced",
+              "description": "The number of records returned in each request. Must be less than or equal to 100.",
+              "x-ms-summary": "Page size per request"
+            },
+            {
+              "name": "view",
+              "in": "query",
+              "required": false,
+              "type": "string",
+              "x-ms-visibility": "advanced",
+              "description": "The name or ID of a view in the table. If set, only the records in that view will be returned.",
+              "x-ms-summary": "View"
+            },
+            {
+              "name": "cellFormat",
+              "in": "query",
+              "required": false,
+              "type": "string",
+              "x-ms-visibility": "advanced",
+              "description": "The format that should be used for cell values. Supported values are: json: cells will be formatted as JSON, depending on the field type. string: cells will be formatted as user-facing strings, regardless of the field type.",
+              "x-ms-summary": "Cell format"
+            },
+            {
+              "name": "timeZone",
+              "in": "query",
+              "required": false,
+              "type": "string",
+              "x-ms-visibility": "advanced",
+              "description": "The time zone that should be used to format dates when using string as the cellFormat. This parameter is required when using string as the cellFormat.",
+              "x-ms-summary": "Time zone"
+            },
+            {
+              "name": "userLocale",
+              "in": "query",
+              "required": false,
+              "type": "string",
+              "x-ms-visibility": "advanced",
+              "description": "The user locale that should be used to format dates when using string as the cellFormat. This parameter is required when using string as the cellFormat.",
+              "x-ms-summary": "User locale"
+            }
+          ],
+          "summary": "List Records",
+          "description": "List Records in table. Returned records do not include any fields with empty values. You can filter, sort, and format the results with the parameters.",
+          "operationId": "ListRecords"
+        },
+        "post": {
+          "responses": {
+            "200": {
+              "description": "default",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Record ID"
+                  },
+                  "createdTime": {
+                    "type": "string",
+                    "description": "Record Created Time"
+                  }
+                }
+              }
+            }
+          },
+          "summary": "Create a record",
+          "description": "Create a record in a table. JSON record needs to be passed.",
+          "operationId": "CreateaRecord",
+          "consumes": ["application/json"],
+          "parameters": [
+            {
+              "name": "Base ID",
+              "in": "path",
+              "required": true,
+              "type": "string",
+              "description": "Base ID",
+              "x-ms-summary": "Base ID",
+              "x-ms-url-encoding": "single"
+            },
+            {
+              "name": "Table",
+              "in": "path",
+              "required": true,
+              "type": "string",
+              "description": "Table name",
+              "x-ms-summary": "Table",
+              "x-ms-url-encoding": "single"
+            },
+            {
+              "name": "Content-Type",
+              "in": "header",
+              "required": true,
+              "type": "string",
+              "default": "application/json",
+              "x-ms-visibility": "internal",
+              "description": "Content-Type for the body of the request. It is defaulted to JSON.",
+              "x-ms-summary": "Content-Type"
+            },
+            {
+              "name": "body",
+              "in": "body",
+              "required": true,
+              "schema": {
+                "type": "object"
+              }
+            }
+          ]
+        }
+      },
+      "/{Base ID}/{Table}/{Record ID}": {
+        "get": {
+          "responses": {
+            "200": {
+              "description": "default",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Record ID"
+                  },
+                  "createdTime": {
+                    "type": "string",
+                    "description": "Record Created Time"
+                  }
+                }
+              }
+            }
+          },
+          "parameters": [
+            {
+              "name": "Base ID",
+              "in": "path",
+              "required": true,
+              "type": "string",
+              "description": "Base ID",
+              "x-ms-summary": "Base ID",
+              "x-ms-url-encoding": "single"
+            },
+            {
+              "name": "Table",
+              "in": "path",
+              "required": true,
+              "type": "string",
+              "description": "Table name",
+              "x-ms-summary": "Table",
+              "x-ms-url-encoding": "single"
+            },
+            {
+              "name": "Record ID",
+              "in": "path",
+              "required": true,
+              "type": "string",
+              "description": "Record ID to be retrieved.",
+              "x-ms-summary": "Record ID",
+              "x-ms-url-encoding": "single"
+            }
+          ],
+          "summary": "Retrieve a record",
+          "description": "Retrieve a record in a table. Any empty fields (e.g. [], or false) in the record will not be returned.",
+          "operationId": "RetrieveaRecord"
+        },
+        "delete": {
+          "responses": {
+            "200": {
+              "description": "default",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "id"
+                  },
+                  "deleted": {
+                    "type": "boolean",
+                    "description": "deleted"
+                  },
+                  "error": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "type"
+                      },
+                      "message": {
+                        "type": "string",
+                        "description": "message"
+                      }
+                    },
+                    "description": "error"
+                  }
+                }
+              }
+            }
+          },
+          "summary": "Delete a record",
+          "description": "Delete a record in a table. Provide Record ID to select a record.",
+          "operationId": "DeleteaRecord",
+          "parameters": [
+            {
+              "name": "Base ID",
+              "in": "path",
+              "required": true,
+              "type": "string",
+              "description": "Base ID",
+              "x-ms-summary": "Base ID",
+              "x-ms-url-encoding": "single"
+            },
+            {
+              "name": "Table",
+              "in": "path",
+              "required": true,
+              "type": "string",
+              "description": "Table name",
+              "x-ms-summary": "Table",
+              "x-ms-url-encoding": "single"
+            },
+            {
+              "name": "Record ID",
+              "in": "path",
+              "required": true,
+              "type": "string",
+              "description": "Record ID to be deleted.",
+              "x-ms-summary": "Record ID",
+              "x-ms-url-encoding": "single"
+            }
+          ]
+        },
+        "patch": {
+          "responses": {
+            "200": {
+              "description": "default",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "id"
+                  },
+                  "createdTime": {
+                    "type": "string",
+                    "description": "Record Created Time"
+                  }
+                }
+              }
+            }
+          },
+          "summary": "Update a record",
+          "description": "Update a record in a table. It will only update the fields provided and leave the rest as they were.",
+          "operationId": "UpdateaRecord",
+          "consumes": ["application/json"],
+          "parameters": [
+            {
+              "name": "Base ID",
+              "in": "path",
+              "required": true,
+              "type": "string",
+              "description": "Base ID",
+              "x-ms-summary": "Base ID",
+              "x-ms-url-encoding": "single"
+            },
+            {
+              "name": "Table",
+              "in": "path",
+              "required": true,
+              "type": "string",
+              "description": "Table name",
+              "x-ms-summary": "Table",
+              "x-ms-url-encoding": "single"
+            },
+            {
+              "name": "Record ID",
+              "in": "path",
+              "required": true,
+              "type": "string",
+              "description": "Record ID to be updated",
+              "x-ms-summary": "Record ID",
+              "x-ms-url-encoding": "single"
+            },
+            {
+              "name": "Content-Type",
+              "in": "header",
+              "required": false,
+              "type": "string",
+              "description": "Content-Type for the body of the request. It is defaulted to JSON.",
+              "x-ms-summary": "Content-Type",
+              "x-ms-url-encoding": "single"
+            },
+            {
+              "name": "body",
+              "in": "body",
+              "required": true,
+              "schema": {
+                "type": "object"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "definitions": {},
+    "parameters": {},
+    "responses": {},
+    "securityDefinitions": {
+      "API Key": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "Generate a personal access token from https://airtable.com/create/tokens. Prefix your token with 'Bearer ', e.g. 'Bearer abcdefg'"
+      }
+    },
+    "security": [
+      {
+        "API Key": []
+      }
+    ],
+    "tags": [],
+    "x-ms-connector-metadata": [
+      {
+        "propertyName": "Website",
+        "propertyValue": "https://airtable.com/"
+      },
+      {
+        "propertyName": "Privacy policy",
+        "propertyValue": "https://airtable.com/privacy"
+      },
+      {
+        "propertyName": "Categories",
+        "propertyValue": "Data"
+      }
+    ]
+  },
+  "Slack": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "SlackTest",
+      "version": "1.0",
+      "description": "OpenAPI specification generated from the Slack piece."
+    },
+    "servers": [
+      {
+        "url": "https://slack.com/api"
+      }
+    ],
+    "components": {
+      "securitySchemes": {
+        "OAuth2": {
+          "type": "oauth2",
+          "flows": {
+            "authorizationCode": {
+              "authorizationUrl": "https://slack.com/oauth/v2/authorize",
+              "tokenUrl": "https://slack.com/api/oauth.v2.access",
+              "scopes": {
+                "channels:read": "Read channels",
+                "channels:manage": "Manage channels",
+                "channels:history": "View channel history",
+                "chat:write": "Write messages",
+                "groups:read": "Read groups",
+                "groups:write": "Write to groups",
+                "reactions:read": "Read reactions",
+                "mpim:read": "Read multi-party IMs",
+                "mpim:write": "Write to multi-party IMs",
+                "im:write": "Write to IMs",
+                "users:read": "Read user information",
+                "files:write": "Write files",
+                "files:read": "Read files",
+                "users:read.email": "Read user email",
+                "reactions:write": "Write reactions"
+              }
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "OAuth2": [
+          "channels:read",
+          "channels:manage",
+          "channels:history",
+          "chat:write",
+          "groups:read",
+          "groups:write",
+          "reactions:read",
+          "mpim:read",
+          "mpim:write",
+          "im:write",
+          "users:read",
+          "files:write",
+          "files:read",
+          "users:read.email",
+          "reactions:write"
+        ]
+      }
+    ],
+    "paths": {
+      "/chat.postMessage": {
+        "post": {
+          "summary": "Send Message to a Channel",
+          "operationId": "send_channel_message",
+          "description": "Send a message to a specified channel",
+          "parameters": [
+            {
+              "name": "channel",
+              "in": "query",
+              "description": "Channel ID to send the message to",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "text",
+              "in": "query",
+              "description": "Text of the message",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "thread_ts",
+              "in": "query",
+              "description": "Thread timestamp for reply",
+              "required": false,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "channel": {
+                      "type": "string",
+                      "description": "Channel ID to send the message to"
+                    },
+                    "text": {
+                      "type": "string",
+                      "description": "Text of the message"
+                    },
+                    "thread_ts": {
+                      "type": "string",
+                      "description": "Thread timestamp for reply"
+                    }
+                  },
+                  "required": ["channel", "text"]
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "Message sent successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "channel": {
+                        "type": "string"
+                      },
+                      "ts": {
+                        "type": "string"
+                      },
+                      "message": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "default": {
+              "description": "Error response"
+            }
+          }
+        }
+      },
+      "/chat.update": {
+        "post": {
+          "summary": "Update Message",
+          "operationId": "update_message",
+          "description": "Update an existing message",
+          "parameters": [
+            {
+              "name": "channel",
+              "in": "query",
+              "description": "Channel ID of the message to update",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "ts",
+              "in": "query",
+              "description": "Timestamp of the message to update",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "text",
+              "in": "query",
+              "description": "Updated text of the message",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "channel": {
+                      "type": "string",
+                      "description": "Channel ID of the message to update"
+                    },
+                    "ts": {
+                      "type": "string",
+                      "description": "Timestamp of the message to update"
+                    },
+                    "text": {
+                      "type": "string",
+                      "description": "Updated text of the message"
+                    }
+                  },
+                  "required": ["channel", "ts", "text"]
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "Message updated successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "channel": {
+                        "type": "string"
+                      },
+                      "ts": {
+                        "type": "string"
+                      },
+                      "message": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "default": {
+              "description": "Error response"
+            }
+          }
+        }
+      }
+    }
+  },
+  "Postman": {
+    "swagger": "2.0",
+    "info": {
+      "version": "1.0.0",
+      "title": "Postman",
+      "description": "Postman is a platform for building and using APIs. Postman simplifies each step of the API lifecycle and streamlines collaboration.",
+      "contact": {
+        "name": "Fördős András",
+        "email": "fordosa90+ipc_postm@gmail.com"
+      }
+    },
+    "host": "api.getpostman.com",
+    "basePath": "/",
+    "schemes": ["https"],
+    "consumes": [],
+    "produces": ["application/json"],
+    "paths": {
+      "/workspaces": {
+        "get": {
+          "summary": "List all workspaces",
+          "description": "List all workspaces available for the authenticated user.",
+          "operationId": "ListWorkspaces",
+          "parameters": [
+            {
+              "name": "type",
+              "in": "query",
+              "type": "string",
+              "required": false,
+              "description": "Optional, define the type of workspace to return, e.g. 'personal'.",
+              "x-ms-summary": "Type",
+              "enum": ["personal", "private", "team", "partner", "public"]
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "workspaces": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "Details of a Postman workspace.",
+                      "title": "Workspace",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Unique identifier of a workspace.",
+                          "title": "Id"
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "Name of the workspace.",
+                          "title": "Name"
+                        },
+                        "type": {
+                          "type": "string",
+                          "description": "Type of the workspace, e.g. 'personal'.",
+                          "title": "Type"
+                        },
+                        "visibility": {
+                          "type": "string",
+                          "description": "Visibility of the workspace, e.g. 'personal'.",
+                          "title": "Visibility"
+                        }
+                      }
+                    },
+                    "description": "Details of Postman workspaces.",
+                    "title": "Workspaces"
+                  }
+                }
+              }
+            },
+            "429": {
+              "description": "Service limit exhausted. Please contact your team admin."
+            }
+          }
+        },
+        "post": {
+          "summary": "Create a workspace",
+          "description": "Creates a new workspace for the authenticated user.",
+          "operationId": "CreateAWorkspace",
+          "consumes": ["application/json"],
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "in": "header",
+              "required": true,
+              "type": "string",
+              "default": "application/json",
+              "description": "Content-Type",
+              "x-ms-visibility": "internal"
+            },
+            {
+              "name": "body",
+              "in": "body",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "workspace": {
+                    "type": "object",
+                    "required": ["name", "type"],
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "Name of the workspace.",
+                        "title": "Name"
+                      },
+                      "description": {
+                        "type": "string",
+                        "description": "Description of the workspace.",
+                        "title": "Description"
+                      },
+                      "type": {
+                        "type": "string",
+                        "description": "Type of the workspace, e.g. 'personal'",
+                        "title": "Type",
+                        "enum": [
+                          "personal",
+                          "private",
+                          "team",
+                          "partner",
+                          "public"
+                        ]
+                      }
+                    },
+                    "description": "Details of the workspace."
+                  }
+                }
+              },
+              "required": true
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "workspace": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Unique identifier of the workspace.",
+                        "title": "Id"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Name of the workspace.",
+                        "title": "Name"
+                      }
+                    },
+                    "description": "Details of the workspace.",
+                    "title": "Workspace"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request."
+            },
+            "429": {
+              "description": "Service limit exhausted. Please contact your team admin."
+            }
+          }
+        }
+      },
+      "/workspaces/{workspaceId}": {
+        "get": {
+          "summary": "Get workspace",
+          "description": "Gets information about a specific workspace.",
+          "operationId": "GetWorkspace",
+          "parameters": [
+            {
+              "name": "workspaceId",
+              "in": "path",
+              "required": true,
+              "type": "string",
+              "x-ms-url-encoding": "single",
+              "x-ms-summary": "Workspace ID",
+              "description": "Unique ID of a Postman workspace."
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "workspace": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Unique identifier of the workspace.",
+                        "title": "Id"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Name of the workspace.",
+                        "title": "Name"
+                      },
+                      "type": {
+                        "type": "string",
+                        "description": "Type of the workspace, e.g. 'personal'.",
+                        "title": "Type"
+                      },
+                      "description": {
+                        "type": "string",
+                        "description": "Description of the workspace.",
+                        "title": "Description"
+                      },
+                      "visibility": {
+                        "type": "string",
+                        "description": "Visibility of the workspace, e.g. 'personal'.",
+                        "title": "Visibility"
+                      },
+                      "createdBy": {
+                        "type": "string",
+                        "description": "Unique identifier of user, who created the workspace.",
+                        "title": "Created By"
+                      },
+                      "updatedBy": {
+                        "type": "string",
+                        "description": "Unique identifier of user, who last updated the workspace.",
+                        "title": "Updated By"
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "description": "Timestamp of the workspace creation in UTC format.",
+                        "title": "Created At"
+                      },
+                      "updatedAt": {
+                        "type": "string",
+                        "description": "Timestamp of last update in UTC format.",
+                        "title": "Updated At"
+                      },
+                      "collections": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "title": "Collection",
+                          "description": "Details of the collection.",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Unique identifier of the collection within workspace.",
+                              "title": "Id"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Name of the collection within workspace.",
+                              "title": "Name"
+                            },
+                            "uid": {
+                              "type": "string",
+                              "description": "Globally unique ID of the collection within workspace",
+                              "title": "UID"
+                            }
+                          }
+                        },
+                        "description": "Array of collections within the workspace."
+                      },
+                      "environments": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "title": "Environment",
+                          "description": "Details of the environment.",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Identifier of the environment within workspace.",
+                              "title": "Id"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Name of the environment within workspace.",
+                              "title": "Name"
+                            },
+                            "uid": {
+                              "type": "string",
+                              "description": "Globally unique identifier of the environment within workspace.",
+                              "title": "UID"
+                            }
+                          }
+                        },
+                        "description": "Array of environments within the workspace."
+                      },
+                      "mocks": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "title": "Mock",
+                          "description": "Details of the mock.",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Identifier of the mock within workspace.",
+                              "title": "Id"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Name of the mock within workspace.",
+                              "title": "Name"
+                            },
+                            "uid": {
+                              "type": "string",
+                              "description": "Globally unique identifier of the mock within workspace.",
+                              "title": "UID"
+                            }
+                          }
+                        },
+                        "description": "Array of mocks within the workspace."
+                      },
+                      "monitors": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "title": "Monitor",
+                          "description": "Details of the monitor.",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Identifier of the monitor within workspace.",
+                              "title": "Id"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Name of the monitor within workspace.",
+                              "title": "Name"
+                            },
+                            "uid": {
+                              "type": "string",
+                              "description": "Globally unique identifier of the monitor within workspace.",
+                              "title": "UID"
+                            }
+                          }
+                        },
+                        "description": "Array of monitors within the workspace."
+                      },
+                      "apis": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "title": "API",
+                          "description": "Details of the API.",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Identifier of the API within workspace.",
+                              "title": "Id"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Name of the API within workspace.",
+                              "title": "Name"
+                            },
+                            "uid": {
+                              "type": "string",
+                              "description": "Globally unique identifier of the API within workspace.",
+                              "title": "UID"
+                            }
+                          }
+                        },
+                        "description": "Array of APIs within the workspace."
+                      }
+                    },
+                    "description": "Detailed information about the workspace.",
+                    "title": "Workspace"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not found."
+            },
+            "429": {
+              "description": "Service limit exhausted. Please contact your team admin."
+            }
+          }
+        }
+      },
+      "/me": {
+        "get": {
+          "summary": "Get authenticated user",
+          "description": "Gets information and usage details about the authenticated user.",
+          "operationId": "GetAuthenticatedUser",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "OK",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Unique identifier of the user.",
+                        "title": "Id"
+                      },
+                      "username": {
+                        "type": "string",
+                        "description": "Username for the authenticated user.",
+                        "title": "Username"
+                      },
+                      "email": {
+                        "type": "string",
+                        "description": "Email address of the user.",
+                        "title": "Email"
+                      },
+                      "fullName": {
+                        "type": "string",
+                        "description": "Full name of the user.",
+                        "title": "Full name"
+                      },
+                      "avatar": {
+                        "type": "string",
+                        "description": "Avatar of the user.",
+                        "title": "Avatar"
+                      },
+                      "isPublic": {
+                        "type": "boolean",
+                        "description": "Boolean, whether the user is public or not.",
+                        "title": "Is Public"
+                      }
+                    },
+                    "description": "Details about the authenticated user.",
+                    "title": "User"
+                  },
+                  "operations": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "title": "Operation",
+                      "description": "Details of the specific usage or operation.",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "Name of the operation.",
+                          "title": "Name"
+                        },
+                        "limit": {
+                          "type": "integer",
+                          "format": "int32",
+                          "description": "Applicable limit for the operation.",
+                          "title": "Limit"
+                        },
+                        "usage": {
+                          "type": "integer",
+                          "format": "int32",
+                          "description": "Usage details for the operation.",
+                          "title": "Usage"
+                        },
+                        "overage": {
+                          "type": "integer",
+                          "format": "int32",
+                          "description": "Overage details for the operation.",
+                          "title": "Overage"
+                        }
+                      }
+                    },
+                    "description": "Details of operations and usage for the user.",
+                    "title": "Operations"
+                  }
+                }
+              }
+            },
+            "429": {
+              "description": "Service limit exhausted. Please contact your team admin."
+            }
+          }
+        }
+      },
+      "/environments": {
+        "get": {
+          "summary": "List all environments",
+          "description": "Get information about all of your environments.",
+          "operationId": "ListEnvironments",
+          "parameters": [
+            {
+              "name": "workspace",
+              "in": "query",
+              "type": "string",
+              "required": false,
+              "description": "Optional value, defining the workspace ID to check for environments.",
+              "x-ms-summary": "Workspace Id"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "environments": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "title": "Environment",
+                      "description": "Details of the environment.",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Identifier of the environment.",
+                          "title": "Id"
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "Name of the environment.",
+                          "title": "Name"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "description": "Timestamp when the environment was created, in UTC format.",
+                          "title": "Created At"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "description": "Timestamp when the environment was last updated, in UTC format.",
+                          "title": "Updated At"
+                        },
+                        "owner": {
+                          "type": "string",
+                          "description": "Identifier of the owning user of the environment.",
+                          "title": "Owner"
+                        },
+                        "uid": {
+                          "type": "string",
+                          "description": "Globally unique identifier of the environment.",
+                          "title": "UID"
+                        },
+                        "isPublic": {
+                          "type": "boolean",
+                          "description": "Boolean indicating, whether the environment is public or not.",
+                          "title": "Is Public"
+                        }
+                      }
+                    },
+                    "description": "Array of environments.",
+                    "title": "Environments"
+                  }
+                }
+              }
+            },
+            "429": {
+              "description": "Service limit exhausted. Please contact your team admin."
+            }
+          }
+        }
+      },
+      "/environments/{environmentId}": {
+        "get": {
+          "summary": "Get environment",
+          "description": "Gets information about a specific environment.",
+          "operationId": "GetEnvironment",
+          "parameters": [
+            {
+              "name": "environmentId",
+              "in": "path",
+              "required": true,
+              "type": "string",
+              "x-ms-url-encoding": "single",
+              "x-ms-summary": "Environment ID",
+              "description": "Unique ID of a Postman environment."
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "environment": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Identifier of the environment.",
+                        "title": "Id"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Name of the environment.",
+                        "title": "Name"
+                      },
+                      "owner": {
+                        "type": "string",
+                        "description": "Identifier of the owner of the environment.",
+                        "title": "Owner"
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "description": "Timestamp of the creation of the environment, in UTC format.",
+                        "title": "Created At"
+                      },
+                      "updatedAt": {
+                        "type": "string",
+                        "description": "Timestamp of the last update, in UTC format.",
+                        "title": "Updated At"
+                      },
+                      "values": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "title": "Variable",
+                          "description": "Details of the environment variable.",
+                          "properties": {
+                            "key": {
+                              "type": "string",
+                              "description": "Key of the environment variable.",
+                              "title": "Key"
+                            },
+                            "value": {
+                              "type": "string",
+                              "description": "Value of the environment variable.",
+                              "title": "Value"
+                            },
+                            "enabled": {
+                              "type": "boolean",
+                              "description": "Boolean, whether the environment variable is enabled.",
+                              "title": "Enabled"
+                            },
+                            "type": {
+                              "type": "string",
+                              "description": "Type of the environment variable.",
+                              "title": "Type"
+                            }
+                          }
+                        },
+                        "description": "Array of environment variable values.",
+                        "title": "variables"
+                      },
+                      "isPublic": {
+                        "type": "boolean",
+                        "description": "Boolean indicating, whether the environment is public or not.",
+                        "title": "Is Public"
+                      }
+                    },
+                    "description": "Details of the environment.",
+                    "title": "Environment"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not found."
+            },
+            "429": {
+              "description": "Service limit exhausted. Please contact your team admin."
+            }
+          }
+        }
+      },
+      "/collections": {
+        "get": {
+          "summary": "List all collections",
+          "description": "List all of your subscribed collections.",
+          "operationId": "ListCollections",
+          "parameters": [
+            {
+              "name": "workspace",
+              "in": "query",
+              "type": "string",
+              "required": false,
+              "description": "Optional value, defining the workspace ID to check for collections.",
+              "x-ms-summary": "Workspace Id"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "collections": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "title": "Collection",
+                      "description": "Details of the collection.",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Identifier of the collection.",
+                          "title": "Id"
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "Name of the collection.",
+                          "title": "Name"
+                        },
+                        "owner": {
+                          "type": "string",
+                          "description": "Unique identifier of the owner of the collection.",
+                          "title": "Owner"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "description": "Timestamp indicating the creation of the collection, in UTC format.",
+                          "title": "Created At"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "description": "Timestampt, indicating last update of the collection, in UTC format.",
+                          "title": "Updated At"
+                        },
+                        "uid": {
+                          "type": "string",
+                          "description": "Globally unique identifier of the collection.",
+                          "title": "UID"
+                        },
+                        "isPublic": {
+                          "type": "boolean",
+                          "description": "Boolean indicating, whether the collection is public.",
+                          "title": "Is Public"
+                        }
+                      }
+                    },
+                    "description": "Array of collections.",
+                    "title": "Collections"
+                  }
+                }
+              }
+            },
+            "429": {
+              "description": "Service limit exhausted. Please contact your team admin."
+            }
+          }
+        }
+      },
+      "/collections/{collectionId}": {
+        "get": {
+          "summary": "Get collection",
+          "description": "Gets information about a specific postman collection.",
+          "operationId": "GetCollection",
+          "parameters": [
+            {
+              "name": "collectionId",
+              "in": "path",
+              "required": true,
+              "type": "string",
+              "x-ms-url-encoding": "single",
+              "x-ms-summary": "Collection ID",
+              "description": "Unique ID of a Postman collection."
+            },
+            {
+              "name": "access_key",
+              "in": "query",
+              "type": "string",
+              "required": false,
+              "description": "Optional value, defining an access key providing read only access to a collection.",
+              "x-ms-summary": "Access Key"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "collection": {
+                    "type": "object",
+                    "description": "Object representing a Postman collection.",
+                    "title": "Collection"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not found."
+            },
+            "429": {
+              "description": "Service limit exhausted. Please contact your team admin."
+            }
+          }
+        }
+      },
+      "/import/openapi": {
+        "post": {
+          "summary": "Import OpenAPI",
+          "description": "Import an OpenAPI (or swagger) definition to your workspace.",
+          "operationId": "ImportOpenApi",
+          "consumes": ["application/json"],
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "in": "header",
+              "required": true,
+              "type": "string",
+              "default": "application/json",
+              "description": "Content-Type",
+              "x-ms-visibility": "internal"
+            },
+            {
+              "name": "workspace",
+              "in": "query",
+              "type": "string",
+              "required": false,
+              "description": "Optional value, defining the workspace ID to import into.",
+              "x-ms-summary": "Workspace Id"
+            },
+            {
+              "name": "body",
+              "in": "body",
+              "schema": {
+                "type": "object",
+                "required": ["type", "input"],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "default": "json",
+                    "description": "Type of input provided.",
+                    "title": "Type",
+                    "x-ms-visibility": "internal"
+                  },
+                  "input": {
+                    "type": "object",
+                    "properties": {},
+                    "description": "The definition to be imported in JSON.",
+                    "title": "Input"
+                  }
+                }
+              },
+              "required": true
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "collections": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "title": "Collection",
+                      "description": "Details of the collection.",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Identifier of the collection.",
+                          "title": "Id"
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "Name of the collection.",
+                          "title": "Name"
+                        },
+                        "uid": {
+                          "type": "string",
+                          "description": "Global unique identifier of the collection.",
+                          "title": "UID"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request."
+            }
+          }
+        }
+      }
+    },
+    "definitions": {},
+    "parameters": {},
+    "responses": {},
+    "securityDefinitions": {
+      "api_key": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key"
+      }
+    },
+    "security": [],
+    "tags": [],
+    "x-ms-connector-metadata": [
+      {
+        "propertyName": "Website",
+        "propertyValue": "https://www.postman.com/"
+      },
+      {
+        "propertyName": "Privacy policy",
+        "propertyValue": "https://www.postman.com/legal/privacy-policy/"
+      },
+      {
+        "propertyName": "Categories",
+        "propertyValue": "IT Operations;Productivity"
+      }
+    ]
+  },
+  "Telegram": {
+    "swagger": "2.0",
+    "info": {
+      "title": "Telegram Bot",
+      "description": "The Telegram Bot API is an HTTP-based interface created for developers keen on building bots for Telegram.",
+      "version": "1.0",
+      "contact": {
+        "name": "Woong Choi",
+        "url": "https://www.linkedin.com/in/woongchoi/",
+        "email": "woong.choi@rapidcircle.com"
+      }
+    },
+    "x-ms-connector-metadata": [
+      {
+        "propertyName": "Website",
+        "propertyValue": "https://telegram.org/"
+      },
+      {
+        "propertyName": "Privacy policy",
+        "propertyValue": "https://telegram.org/privacy"
+      },
+      {
+        "propertyName": "Categories",
+        "propertyValue": "Communication"
+      }
+    ],
+    "host": "api.telegram.org",
+    "basePath": "/",
+    "schemes": ["https"],
+    "consumes": [],
+    "produces": [],
+    "paths": {
+      "/bot{token}/getupdates": {
+        "get": {
+          "responses": {
+            "200": {
+              "description": "default",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "x-ms-summary": "OK",
+                    "description": "Request successful"
+                  },
+                  "result": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/definitions/Update"
+                    },
+                    "description": "result"
+                  }
+                }
+              }
+            }
+          },
+          "summary": "Get Updates",
+          "description": "Use this method to receive incoming updates using long polling",
+          "operationId": "GetUpdates",
+          "parameters": [
+            {
+              "$ref": "#/parameters/TelegramBotToken"
+            }
+          ]
+        }
+      },
+      "/bot{token}/getMe": {
+        "get": {
+          "responses": {
+            "200": {
+              "description": "default",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "x-ms-summary": "OK",
+                    "description": "Request successful"
+                  },
+                  "result": {
+                    "$ref": "#/definitions/User"
+                  }
+                }
+              }
+            }
+          },
+          "summary": "Get Me",
+          "description": "Returns basic information about the bot in form of a User object. A simple method for testing your bot's auth token.",
+          "operationId": "GetMe",
+          "parameters": [
+            {
+              "$ref": "#/parameters/TelegramBotToken"
+            }
+          ]
+        }
+      },
+      "/bot{token}/sendMessage": {
+        "post": {
+          "responses": {
+            "200": {
+              "description": "default",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "description": "ok"
+                  },
+                  "result": {
+                    "$ref": "#/definitions/Message"
+                  }
+                }
+              }
+            }
+          },
+          "summary": "Send Message",
+          "description": "Use this method to send text messages",
+          "operationId": "SendMessage",
+          "consumes": ["application/json"],
+          "parameters": [
+            {
+              "$ref": "#/parameters/TelegramBotToken"
+            },
+            {
+              "name": "body",
+              "in": "body",
+              "required": false,
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "chat_id": {
+                    "$ref": "#/definitions/chat_id"
+                  },
+                  "text": {
+                    "$ref": "#/definitions/text"
+                  },
+                  "parse_mode": {
+                    "$ref": "#/definitions/parse_mode"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "/bot{token}/sendPhoto": {
+        "post": {
+          "responses": {
+            "200": {
+              "description": "default",
+              "schema": {
+                "$ref": "#/definitions/Message"
+              }
+            }
+          },
+          "summary": "Send Photo",
+          "description": "Use this method to send photos.",
+          "operationId": "SendPhoto",
+          "consumes": ["application/json"],
+          "parameters": [
+            {
+              "$ref": "#/parameters/TelegramBotToken"
+            },
+            {
+              "name": "body",
+              "in": "body",
+              "required": false,
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "chat_id": {
+                    "$ref": "#/definitions/chat_id"
+                  },
+                  "photo": {
+                    "$ref": "#/definitions/photo"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "/bot{token}/getChat": {
+        "get": {
+          "responses": {
+            "200": {
+              "description": "default",
+              "schema": {
+                "$ref": "#/definitions/Message"
+              }
+            }
+          },
+          "summary": "Get Chat",
+          "description": "Use this method to get up to date information about the chat",
+          "operationId": "GetChat",
+          "consumes": ["application/json"],
+          "parameters": [
+            {
+              "$ref": "#/parameters/TelegramBotToken"
+            },
+            {
+              "name": "body",
+              "in": "body",
+              "required": false,
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "chat_id": {
+                    "$ref": "#/definitions/chat_id"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "definitions": {
+      "Chat": {
+        "type": "object",
+        "x-ms-summary": "Chat",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32",
+            "x-ms-summary": "Chat ID",
+            "description": "Unique identifier for this chat"
+          },
+          "first_name": {
+            "type": "string",
+            "x-ms-summary": "First Name",
+            "description": "First name of the other party in a private chat"
+          },
+          "last_name": {
+            "type": "string",
+            "x-ms-summary": "Last Name",
+            "description": "Last name of the other party in a private chat"
+          },
+          "username": {
+            "type": "string",
+            "x-ms-summary": "User Name",
+            "description": "Username, for private chats, supergroups and channels if available"
+          },
+          "type": {
+            "type": "string",
+            "x-ms-summary": "Chat",
+            "description": "Type of chat, can be either “private”, “group”, “supergroup” or “channel”"
+          }
+        },
+        "description": "This object represents a chat"
+      },
+      "chat_id": {
+        "type": "string",
+        "description": "chat_id",
+        "x-ms-summary": "Chat ID"
+      },
+      "photo": {
+        "type": "string",
+        "description": "Phototo send",
+        "x-ms-summary": "Photo"
+      },
+      "text": {
+        "type": "string",
+        "description": "Text to send",
+        "x-ms-summary": "Text"
+      },
+      "Update": {
+        "type": "object",
+        "x-ms-summary": "Update",
+        "description": "This object represents an incoming update.",
+        "properties": {
+          "update_id": {
+            "type": "integer",
+            "format": "int32",
+            "x-ms-summary": "Update ID",
+            "description": "The update's unique identifier."
+          },
+          "message": {
+            "$ref": "#/definitions/Message"
+          }
+        }
+      },
+      "Message": {
+        "type": "object",
+        "x-ms-summary": "Message",
+        "description": "This object represents a message.",
+        "properties": {
+          "message_id": {
+            "type": "integer",
+            "format": "int32",
+            "x-ms-summary": "Message ID",
+            "description": "Unique message identifier inside this chat"
+          },
+          "from": {
+            "$ref": "#/definitions/User"
+          },
+          "chat": {
+            "$ref": "#/definitions/Chat"
+          },
+          "date": {
+            "type": "integer",
+            "format": "int32",
+            "x-ms-summary": "Date",
+            "description": "Date the message was sent in Unix time"
+          },
+          "text": {
+            "type": "string",
+            "x-ms-summary": "Text",
+            "description": "For text messages, the actual UTF-8 text of the message, 0-4096 characters"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32",
+            "x-ms-summary": "ID",
+            "description": "Unique identifier for this user or bot"
+          },
+          "is_bot": {
+            "type": "boolean",
+            "x-ms-summary": "Is Bot",
+            "description": "True, if this user is a bot"
+          },
+          "first_name": {
+            "type": "string",
+            "x-ms-summary": "First Name",
+            "description": "User's or bot's first name"
+          },
+          "last_name": {
+            "type": "string",
+            "x-ms-summary": "Last Name",
+            "description": "User's or bot's last name"
+          },
+          "username": {
+            "type": "string",
+            "x-ms-summary": "User Name",
+            "description": "User's or bot's username"
+          },
+          "language_code": {
+            "type": "string",
+            "x-ms-summary": "Language Code",
+            "description": "IETF language tag of the user's language"
+          },
+          "can_join_groups": {
+            "type": "boolean",
+            "x-ms-summary": "Can join groups",
+            "description": "True, if the bot can be invited to groups."
+          },
+          "can_read_all_group_messages": {
+            "type": "boolean",
+            "x-ms-summary": "Can read all group messages",
+            "description": "True, if privacy mode is disabled for the bot."
+          },
+          "supports_inline_queries": {
+            "type": "boolean",
+            "x-ms-summary": "Supports inline queries",
+            "description": "True, if the bot supports inline queries."
+          }
+        },
+        "x-ms-summary": "User",
+        "description": "This object represents a Telegram user or bot"
+      },
+      "parse_mode": {
+        "type": "string",
+        "description": "Mode for parsing entities in the message text.",
+        "x-ms-summary": "Parse Mode"
+      }
+    },
+    "parameters": {
+      "TelegramBotToken": {
+        "name": "token",
+        "in": "path",
+        "required": true,
+        "type": "string",
+        "x-ms-summary": "Bot Token",
+        "description": "Telegram Bot Token. e.g. 123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11",
+        "x-ms-url-encoding": "single"
+      }
+    },
+    "responses": {},
+    "securityDefinitions": {},
+    "security": [],
+    "tags": []
+  },
+  "Whatsapp": {
+    "swagger": "2.0",
+    "info": {
+      "version": "1.0.0",
+      "title": "WhatsApp-Test",
+      "description": "This WhatsApp connector will allow you to send some message templates from the test WhatsApp business account to a phone number registered on this Meta Developer App.",
+      "contact": {
+        "name": "Zakariya Fakira",
+        "url": "https://business.facebook.com/",
+        "email": "zakariyafakira08@gmail.com"
+      }
+    },
+    "x-ms-connector-metadata": [
+      {
+        "propertyName": "Website",
+        "propertyValue": "https://www.whatsapp.com/"
+      },
+      {
+        "propertyName": "Privacy policy",
+        "propertyValue": "https://www.whatsapp.com/legal/privacy-policy/?lang=en"
+      },
+      {
+        "propertyName": "Categories",
+        "propertyValue": "Social Media"
+      }
+    ],
+    "host": "graph.facebook.com",
+    "basePath": "/",
+    "schemes": ["https"],
+    "consumes": [],
+    "produces": ["application/json"],
+    "paths": {
+      "/%7B%7BVersion%7D%7D/%7B%7BPhone-Number-ID%7D%7D/messages": {},
+      "/{Version}/{Phone-Number-ID}/messages": {
+        "post": {
+          "summary": "Send a Message",
+          "description": "Send a message of a specific template to a registered user phone number.",
+          "operationId": "SendMessage",
+          "parameters": [
+            {
+              "name": "Version",
+              "in": "path",
+              "required": true,
+              "type": "string",
+              "default": "v15.0",
+              "description": "Version of API",
+              "x-ms-summary": "Version of the WhatsApp Business API being used.",
+              "x-ms-url-encoding": "single"
+            },
+            {
+              "name": "Phone-Number-ID",
+              "in": "path",
+              "required": true,
+              "type": "integer",
+              "default": 104545025835246,
+              "description": "Phone Number ID of Business",
+              "x-ms-summary": "Use your Business Phone Number ID.",
+              "x-ms-url-encoding": "single"
+            },
+            {
+              "name": "body",
+              "in": "body",
+              "required": false,
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "messaging_product": {
+                    "type": "string",
+                    "description": "messaging_product"
+                  },
+                  "to": {
+                    "type": "string",
+                    "description": "to"
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "type"
+                  },
+                  "template": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "name"
+                      },
+                      "language": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "string",
+                            "description": "code"
+                          }
+                        },
+                        "description": "language"
+                      },
+                      "components": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "description": "type"
+                            },
+                            "parameters": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "description": "type"
+                                  },
+                                  "image": {
+                                    "type": "object",
+                                    "properties": {
+                                      "link": {
+                                        "type": "string",
+                                        "description": "link"
+                                      }
+                                    },
+                                    "description": "image"
+                                  },
+                                  "text": {
+                                    "type": "string",
+                                    "description": "text"
+                                  }
+                                }
+                              },
+                              "description": "parameters"
+                            }
+                          }
+                        },
+                        "description": "components"
+                      }
+                    },
+                    "description": "template"
+                  }
+                }
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK"
+            },
+            "400": {
+              "description": "Bad request"
+            }
+          }
+        }
+      }
+    },
+    "definitions": {},
+    "parameters": {},
+    "responses": {},
+    "securityDefinitions": {
+      "api_key": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization"
+      }
+    },
+    "security": [],
+    "tags": []
+  },
+  "SendSMS": {
+    "swagger": "2.0",
+    "info": {
+      "title": "SendSMSTest",
+      "description": "sendSMS is a leading European Communications Platform as a Service (CPaaS) known for its reliability. Established in 2008, the platform has expanded its services globally. Specializing in seamless no-code and low-code integrations, sendSMS has effectively integrated with over 30 eCommerce platforms, CRMs, ERPs, and various integrators, streamlining communications and operational efficiency.",
+      "version": "1.0",
+      "contact": {
+        "name": "sendSms",
+        "url": "https://www.sendsms.ro",
+        "email": "support@sendsms.ro"
+      }
+    },
+    "host": "api.sendsms.ro",
+    "basePath": "/integration/powerautomate/",
+    "schemes": ["https"],
+    "consumes": ["application/json"],
+    "produces": ["application/json"],
+    "paths": {
+      "/message_send": {
+        "post": {
+          "responses": {
+            "200": {
+              "description": "Message sent successfully",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "integer",
+                    "format": "int32",
+                    "description": "Status code"
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "Status message"
+                  },
+                  "message_id": {
+                    "type": "string",
+                    "description": "Unique identifier for the message"
+                  },
+                  "details": {
+                    "type": "string",
+                    "description": "Additional details"
+                  },
+                  "mcc": {
+                    "type": "string",
+                    "description": "Mobile country code"
+                  },
+                  "mnc": {
+                    "type": "string",
+                    "description": "Mobile network code"
+                  },
+                  "parts": {
+                    "type": "integer",
+                    "format": "int32",
+                    "description": "Parts"
+                  },
+                  "length": {
+                    "type": "integer",
+                    "format": "int32",
+                    "description": "Length of the OTP; max length is 10"
+                  },
+                  "shortlink": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "shortlink"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request - Required parameter missing or invalid",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "errors": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "description": "Error message"
+                        },
+                        "details": {
+                          "type": "string",
+                          "description": "Detailed error message"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized - Authentication failed",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "errors": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "description": "Error message indicating authentication failure"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "parameters": [
+            {
+              "name": "body",
+              "in": "body",
+              "required": true,
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "to": {
+                    "type": "string",
+                    "description": "Recipient phone number",
+                    "title": "To",
+                    "x-ms-visibility": "important"
+                  },
+                  "text": {
+                    "type": "string",
+                    "description": "Text of the message",
+                    "title": "Text",
+                    "x-ms-visibility": "important"
+                  },
+                  "from": {
+                    "type": "string",
+                    "description": "Sender",
+                    "title": "Sender (From)",
+                    "x-ms-visibility": "important"
+                  },
+                  "short": {
+                    "type": "string",
+                    "description": "Shortened URL"
+                  }
+                },
+                "x-ms-visibility": "important"
+              },
+              "x-ms-visibility": "important"
+            }
+          ],
+          "operationId": "message_send",
+          "summary": "Message Send",
+          "x-ms-visibility": "important",
+          "description": "This method is designed to activate the process of sending a Short Message Service (SMS) message to a pre-determined phone number upon receiving a specific request. It seamlessly facilitates the communication by ensuring that the SMS is transmitted efficiently to the designated recipient.",
+          "x-ms-openai-data": {
+            "openai-enabled": true,
+            "operations": [
+              {
+                "operationId": "message_send",
+                "x-ms-require-user-confirmation": true
+              }
+            ]
+          }
+        }
+      },
+      "/message_status": {
+        "post": {
+          "responses": {
+            "200": {
+              "description": "Message status retrieved successfully",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "integer",
+                    "format": "int32",
+                    "description": "Status code of the message"
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "Status message"
+                  },
+                  "details": {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Status of the message"
+                      },
+                      "message": {
+                        "type": "string",
+                        "description": "Message"
+                      },
+                      "cost": {
+                        "type": "number",
+                        "format": "float",
+                        "description": "Cost"
+                      },
+                      "parts": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Parts"
+                      },
+                      "timestamp_created": {
+                        "type": "string",
+                        "description": "Timestamp when the message was created"
+                      },
+                      "timestamp_delivered": {
+                        "type": "string",
+                        "description": "Timestamp when the message was delivered"
+                      },
+                      "timestamp_failed": {
+                        "type": "string",
+                        "description": "Timestamp when the message failed"
+                      },
+                      "failover_id": {
+                        "type": "string",
+                        "description": "Failover Id"
+                      },
+                      "ctype": {
+                        "type": "string",
+                        "description": "1 = SMS (Default), 2 = RCS - (not active yet), 3 = Viber (failover to SMS if undelivered)"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request - Required parameter missing",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "errors": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "description": "Error message for missing parameter"
+                        },
+                        "details": {
+                          "type": "string",
+                          "description": "Details of the missing parameter"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found - Message does not exist",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "errors": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "description": "Error message indicating the message does not exist"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "summary": "Message Status",
+          "description": "The Message Status method is designed to retrieve the current status of a message that has been sent through a communication platform. This method plays a critical role in message delivery systems, offering developers and users insights into the message lifecycle, including whether a message has been sent, delivered or encountered any errors during the process.",
+          "x-ms-visibility": "important",
+          "operationId": "message_status",
+          "parameters": [
+            {
+              "name": "body",
+              "in": "body",
+              "required": true,
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "message_id": {
+                    "type": "string",
+                    "description": "Unique identifier for the message to retrieve status",
+                    "title": "Message ID",
+                    "x-ms-visibility": "important"
+                  }
+                },
+                "x-ms-visibility": "important"
+              },
+              "x-ms-visibility": "important"
+            }
+          ],
+          "x-ms-openai-data": {
+            "openai-enabled": true,
+            "operations": [
+              {
+                "operationId": "message_status",
+                "x-ms-require-user-confirmation": true
+              }
+            ]
+          }
+        }
+      }
+    },
+    "definitions": {},
+    "parameters": {},
+    "responses": {},
+    "securityDefinitions": {
+      "oauth2-auth": {
+        "type": "oauth2",
+        "flow": "accessCode",
+        "authorizationUrl": "https://api.sendsms.ro/oauth2/authorize",
+        "tokenUrl": "https://api.sendsms.ro/oauth2/token",
+        "scopes": {
+          "PowerAutomate": "PowerAutomate"
+        }
+      }
+    },
+    "security": [
+      {
+        "oauth2-auth": ["PowerAutomate"]
+      }
+    ],
+    "x-ms-connector-metadata": [
+      {
+        "propertyName": "Website",
+        "propertyValue": "https://www.sendsms.ro/"
+      },
+      {
+        "propertyName": "Privacy policy",
+        "propertyValue": "https://www.sendsms.ro/en/gdpr/"
+      },
+      {
+        "propertyName": "Categories",
+        "propertyValue": "Communication;Marketing"
+      }
+    ]
+  }
+}

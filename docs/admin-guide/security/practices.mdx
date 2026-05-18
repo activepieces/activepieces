@@ -1,0 +1,56 @@
+---
+title: "Security & Data Practices"
+description: "We prioritize security and follow these practices to keep information safe."
+icon: 'lock'
+---
+
+## External Systems Credentials
+
+**Storing Credentials**
+
+All credentials are stored with 256-bit encryption keys, and there is no API to retrieve them for the user. They are sent only during processing, after which access is revoked from the engine.
+
+**Data Masking**
+
+We implement a robust data masking mechanism where third-party credentials or any sensitive information are systematically censored within the logs, guaranteeing that sensitive information is never stored or documented.
+
+**OAuth2**
+
+Integrations with third parties are always done using OAuth2, with a limited number of scopes when third-party support allows.
+
+## Vulnerability Disclosure
+
+Activepieces is an open-source project that welcomes contributors to test and report security issues.
+
+For detailed information about our security policy, please refer to our GitHub Security Policy at: [https://github.com/activepieces/activepieces/security/policy](https://github.com/activepieces/activepieces/security/policy)
+
+## Access and Authentication 
+
+**Role-Based Access Control (RBAC)**
+
+To manage user access, we utilize Role-Based Access Control (RBAC). Team admins assign roles to users, granting them specific permissions to access and interact with projects, folders, and resources. RBAC allows for fine-grained control, enabling administrators to define and enforce access policies based on user roles.
+
+**Single Sign-On (SSO)**
+
+Implementing Single Sign-On (SSO) serves as a pivotal component of our security strategy. SSO streamlines user authentication by allowing them to access Activepieces with a single set of credentials. This not only enhances user convenience but also strengthens security by reducing the potential attack surface associated with managing multiple login credentials.
+
+**Audit Logs**
+
+We maintain comprehensive audit logs to track and monitor all access activities within Activepieces. This includes user interactions, system changes, and other relevant events. Our meticulous logging helps identify security threats and ensures transparency and accountability in our security measures.
+
+**Password Policy Enforcement**
+
+Users log in to Activepieces using a password known only to them. Activepieces enforces password length and complexity standards. Passwords are not stored; instead, only a secure hash of the password is stored in the database. For more information.
+
+## Privacy & Data 
+
+**Supported Cloud Regions**
+
+Presently, our cloud services are available in Germany as the supported data region. 
+
+We have plans to expand to additional regions in the near future. 
+If you opt for **self-hosting**, the available regions will depend on where you choose to host.
+
+**Policy**
+
+To better understand how we handle your data and prioritize your privacy, please take a moment to review our [Privacy Policy](https://www.activepieces.com/privacy). This document outlines in detail the measures we take to safeguard your information and the principles guiding our approach to privacy and data protection.

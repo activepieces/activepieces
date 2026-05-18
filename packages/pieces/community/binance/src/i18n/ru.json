@@ -1,0 +1,10 @@
+{
+  "Binance": "Бинанс",
+  "Fetch the price of a crypto pair from Binance": "Получить цену пары криптовалют с Binance",
+  "Fetch Pair Price": "Получить цену на пару",
+  "Fetch the current price of a pair (e.g. BTC/USDT)": "Получить текущую цену пары (например, BTC/USDT)",
+  "First Coin Symbol": "Символ первой монеты",
+  "Second Coin Symbol": "Вторая монета",
+  "The currency to fetch the price for (e.g. 'BTC' in 'BTC/USDT')": "Валюта для получения цены (например, 'BTC' в 'BTC/USDT')",
+  "The currency to fetch the price in (e.g. 'USDT' in 'BTC/USDT')": "Валюта для получения цены (например 'USDT' в 'BTC/USDT')"
+}

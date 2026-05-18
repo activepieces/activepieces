@@ -1,0 +1,8 @@
+{
+  "AI-powered social media analytics and customer experience management": "AI-powered social media analytics and customer experience management",
+  "To get your API Key:\n\n1. Log in to your Lucidya account\n2. Navigate to **Settings**\n3. Select **Lucidya API** from the left menu\n4. Click **Generate API Key** and select \"Social Listening API\"\n5. Copy and securely store your API token": "To get your API Key:\n\n1. Log in to your Lucidya account\n2. Navigate to **Settings**\n3. Select **Lucidya API** from the left menu\n4. Click **Generate API Key** and select \"Social Listening API\"\n5. Copy and securely store your API token",
+  "New Alert Notification": "New Alert Notification",
+  "Triggers when a new alert notification is generated (hourly or instant).": "Triggers when a new alert notification is generated (hourly or instant).",
+  "Markdown": "Markdown",
+  "\nTo use this trigger, set up a webhook in Lucidya:\n\n1. Navigate to the **Alerts** section in Lucidya\n2. Click **Create an Alert** and fill in the alert details\n3. Enable the **Webhook** feature\n4. Paste the webhook URL below into the webhook URL field:\n   ```text\n   {{webhookUrl}}\n   ```\n5. Test the webhook URL before saving\n6. Save your alert\n\n**Note:** Webhook will be paused if no response is received for 15 days.\n      ": "\nTo use this trigger, set up a webhook in Lucidya:\n\n1. Navigate to the **Alerts** section in Lucidya\n2. Click **Create an Alert** and fill in the alert details\n3. Enable the **Webhook** feature\n4. Paste the webhook URL below into the webhook URL field:\n   ```text\n   {{webhookUrl}}\n   ```\n5. Test the webhook URL before saving\n6. Save your alert\n\n**Note:** Webhook will be paused if no response is received for 15 days.\n      "
+}

@@ -1,0 +1,28 @@
+import {
+  createAction,
+  PiecePropValueSchema,
+} from '@activepieces/pieces-framework';
+import { flowluAuth } from '../../auth';
+import { flowluCommon, makeClient } from '../../common';
+import { FlowluEntity, FlowluModule } from '../../common/constants';
+
+export const deleteTaskAction = createAction({
+  auth: flowluAuth,
+  name: 'flowlu_delete_task',
+  displayName: 'Delete Task',
+  description: 'Deletes an existing task.',
+  props: {
+    task_id: flowluCommon.task_id(true),
+  },
+  async run(context) {
+    const task_id = context.propsValue.task_id!;
+    const client = makeClient(
+      context.auth
+    );
+    return await client.deleteAction(
+      FlowluModule.TASK,
+      FlowluEntity.TASKS,
+      task_id
+    );
+  },
+});

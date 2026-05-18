@@ -1,0 +1,7 @@
+{
+  "Receive form submissions from Tally forms": "Receber envios de formulário de formulários de Tally",
+  "Your Tally API key. Go to **Settings > API keys** in your Tally dashboard to create one.": "Sua chave de Tally API. Vá para **Configurações > Chaves de API** no seu Painel de Tally para criar uma.",
+  "New Submission": "Nova Submissão",
+  "Triggers when a form receives a new submission": "Aciona quando um formulário recebe uma nova submissão",
+  "Form": "Formulário"
+}

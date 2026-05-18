@@ -1,0 +1,167 @@
+import { FlowState, FlowVersionState,
+    GitRepo,
+    PopulatedTable,
+    PushFlowsGitRepoRequest,
+    PushTablesGitRepoRequest,
+} from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { SimpleGit } from 'simple-git'
+import { flowService } from '../../../../flows/flow/flow.service'
+import { fieldService } from '../../../../tables/field/field.service'
+import { tableService } from '../../../../tables/table/table.service'
+import { gitHelper } from './git-helper'
+import { gitSyncHelper } from './git-sync-helper'
+import { gitRepoService } from './git-sync.service'
+
+export const gitSyncHandler = (log: FastifyBaseLogger) => ({
+    flows: {
+        async push({ id, platformId, userId, request }: FlowOperationParams): Promise<void> {
+            const gitRepo = await gitRepoService(log).getOrThrow({ id })
+            const { git, flowFolderPath, connectionsFolderPath } = await gitHelper.createGitRepoAndReturnPaths(log, gitRepo, userId)
+
+            const flows = await listFlowsByExternalIds(log, gitRepo.projectId, request.externalFlowIds)
+
+            for (const flow of flows) {
+                const flowName = flow.externalId
+                await gitSyncHelper(log).upsertFlowToGit({
+                    fileName: flowName,
+                    flow,
+                    flowFolderPath,
+                })
+            }
+            await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: updated flows ${request.externalFlowIds.join(', ')}`)
+
+            // This is important to make sure no connections are left behind
+            await pushConnectionsWithContext(log, { git, flowFolderPath, connectionsFolderPath, gitRepo, platformId })
+        },
+
+        async delete({ id, platformId, userId, request }: FlowOperationParams): Promise<void> {
+            const gitRepo = await gitRepoService(log).getOrThrow({ id })
+            const { git, flowFolderPath, connectionsFolderPath } = await gitHelper.createGitRepoAndReturnPaths(log, gitRepo, userId)
+
+            const flows = await listFlowsByExternalIds(log, gitRepo.projectId, request.externalFlowIds)
+
+            for (const flow of flows) {
+                const fileName = flow.externalId || flow.id
+                await gitSyncHelper(log).deleteFromGit({
+                    fileName,
+                    folderPath: flowFolderPath,
+                })
+            }
+            await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: deleted flow ${request.externalFlowIds.join(', ')} from user interface`)
+            await pushConnectionsWithContext(log, { git, flowFolderPath, connectionsFolderPath, gitRepo, platformId })
+        },
+    },
+
+    connections: {
+        async push({ id, platformId, userId }: ConnectionOperationParams): Promise<void> {
+            const gitRepo = await gitRepoService(log).getOrThrow({ id })
+            const { git, connectionsFolderPath, flowFolderPath } = await gitHelper.createGitRepoAndReturnPaths(log, gitRepo, userId)
+            await pushConnectionsWithContext(log, { git, flowFolderPath, connectionsFolderPath, gitRepo, platformId })
+        },
+    },
+
+    tables: {
+        async push({ id, userId, request }: TableOperationParams): Promise<void> {
+            const gitRepo = await gitRepoService(log).getOrThrow({ id })
+            const { git, tablesFolderPath } = await gitHelper.createGitRepoAndReturnPaths(log, gitRepo, userId)
+
+            const populatedTables: PopulatedTable[] = await listTablesByExternalIds(gitRepo.projectId, request.externalTableIds)
+
+            for (const table of populatedTables) {
+                const tableName = table.externalId || table.id
+                await gitSyncHelper(log).upsertTableToGit({
+                    fileName: tableName,
+                    table,
+                    tablesFolderPath,
+                })
+            }
+
+            await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: updated tables ${request.externalTableIds.join(', ')}`)
+        },
+
+        async delete({ id, userId, request }: TableOperationParams): Promise<void> {
+            const gitRepo = await gitRepoService(log).getOrThrow({ id })
+            const { git, tablesFolderPath } = await gitHelper.createGitRepoAndReturnPaths(log, gitRepo, userId)
+
+            const populatedTables = await listTablesByExternalIds(gitRepo.projectId, request.externalTableIds)
+            for (const table of populatedTables) {
+                await gitSyncHelper(log).deleteFromGit({
+                    fileName: table.externalId,
+                    folderPath: tablesFolderPath,
+                })
+            }
+
+            await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: deleted tables ${request.externalTableIds.join(', ')}`)
+        },
+    },
+})
+
+async function listTablesByExternalIds(projectId: string, externalIds: string[]): Promise<PopulatedTable[]> {
+    const tables = await tableService.list({
+        folderId: undefined,
+        projectId,
+        limit: 10000,
+        cursor: undefined,
+        name: undefined,
+        externalIds,
+    })
+
+    const tableIds = tables.data.map((t) => t.id)
+    const fieldsMap = await fieldService.getAllByTableIds({ projectId, tableIds })
+    return tables.data.map((table) => ({
+        ...table,
+        fields: fieldsMap.get(table.id) ?? [],
+    }))
+}
+
+async function pushConnectionsWithContext(log: FastifyBaseLogger, { git, flowFolderPath, connectionsFolderPath, gitRepo, platformId }: ConnectionContextParams): Promise<void> {
+    await gitSyncHelper(log).updateConectionStateOnGit({
+        flowFolderPath,
+        connectionsFolderPath,
+        git,
+        gitRepo,
+        platformId,
+        log,
+    })
+}
+
+function listFlowsByExternalIds(log: FastifyBaseLogger, projectId: string, externalIds: string[]): Promise<FlowState[]> {
+    return flowService(log).list({
+        projectIds: [projectId],
+        limit: 10000,
+        cursorRequest: null,
+        folderId: undefined,
+        status: undefined,
+        name: undefined,
+        connectionExternalIds: undefined,
+        versionState: FlowVersionState.LOCKED,
+    }).then((page) => page.data.filter((flow) => externalIds.includes(flow.externalId)))
+}
+
+type FlowOperationParams = {
+    id: string
+    platformId: string
+    userId: string
+    request: PushFlowsGitRepoRequest
+}
+
+type TableOperationParams = {
+    id: string
+    userId: string
+    request: PushTablesGitRepoRequest
+}
+
+type ConnectionOperationParams = {
+    id: string
+    platformId: string
+    userId: string
+}
+
+type ConnectionContextParams = {
+    git: SimpleGit
+    flowFolderPath: string
+    connectionsFolderPath: string
+    gitRepo: GitRepo
+    platformId: string
+}

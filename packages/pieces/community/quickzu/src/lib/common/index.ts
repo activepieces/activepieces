@@ -1,0 +1,97 @@
+import { AppConnectionValueForAuthProperty, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { quickzuAuth } from '../auth';
+import { QuickzuAPIClient } from './client';
+
+export function makeClient(auth: AppConnectionValueForAuthProperty<typeof quickzuAuth>) {
+  const client = new QuickzuAPIClient(auth.secret_text);
+  return client;
+}
+
+export const quickzuCommon = {
+  categoryId: (required = false) =>
+    Property.Dropdown({
+      auth: quickzuAuth,
+      displayName: 'Category',
+      refreshers: [],
+      required,
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first.',
+          };
+        }
+        const client = makeClient(auth);
+        const res = await client.listCategories();
+
+        return {
+          disabled: false,
+          options: res.data.map((category) => {
+            return {
+              label: category.name,
+              value: category._id,
+            };
+          }),
+        };
+      },
+    }),
+  productId: (required = false) =>
+    Property.Dropdown({ 
+      auth: quickzuAuth,
+      displayName: 'Product',
+      refreshers: [],
+      required,
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first.',
+          };
+        }
+        const client = makeClient(auth);
+        const res = await client.listProducts();
+
+        return {
+          disabled: false,
+          options: res.data.map((product) => {
+            return {
+              label: product.name,
+              value: product._id,
+            };
+          }),
+        };
+      },
+    }),
+  orderId: (required = false) =>
+    Property.Dropdown<string,boolean,typeof quickzuAuth>({
+      auth: quickzuAuth,
+      displayName: 'Order',
+      refreshers: [],
+      required,
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first.',
+          };
+        }
+        const client = makeClient(auth);
+        const res = await client.listOrders(1, 20);
+
+        return {
+          disabled: false,
+          options: res['data'].map(
+            (order: { _id: string; order_id: number }) => {
+              return {
+                label: order.order_id.toString(),
+                value: order._id,
+              };
+            }
+          ),
+        };
+      },
+    }),
+};

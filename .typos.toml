@@ -1,0 +1,27 @@
+[files]
+extend-exclude = [
+    ".git/",
+    "**/database/**",
+    "packages/ui/core/src/locale/",
+    # French
+    "packages/pieces/community/wedof/src/",
+]
+ignore-hidden = false
+
+[default]
+extend-ignore-re = [
+    "[0-9A-Za-z]{34}",
+    "name: 'referal'",
+    "getRepository\\('referal'\\)",
+    "label: 'FO Language', value: 'fo'",
+    "649c83111c9cbe6ba1d4cabe",
+    "hYy9pRFVxpDsO1FB05SunFWUe9JZY",
+    "lod6JEdKyPlvrnErdnrGa",
+]
+
+[default.extend-identifiers]
+"crazyTweek" = "crazyTweek"
+"optin_ip" = "optin_ip"
+
+# Typos
+"Github" = "GitHub"

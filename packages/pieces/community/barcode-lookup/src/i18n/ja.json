@@ -1,0 +1,10 @@
+{
+  "Lookup product information by barcode number": "バーコード番号で製品情報を検索",
+  "API Key for Barcode Lookup": "バーコード検索のAPIキー",
+  "Search By Barcode": "バーコードで検索",
+  "Search for product information by barcode": "バーコードで商品情報を検索",
+  "Barcode": "Barcode",
+  "Formatted Output": "フォーマットされた出力",
+  "The barcode/UPC/EAN number to search for": "検索するバーコード/UPC/EAN番号",
+  "Return results in a clean, easy to read format": "結果をクリーンで読みやすい形式で返します"
+}
