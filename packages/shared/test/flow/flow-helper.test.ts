@@ -127,6 +127,7 @@ const flowVersionWithBranching: FlowVersion = {
         displayName: 'Cron Expression',
     },
     connectionIds: [],
+    variableNames: [],
     valid: true,
     state: FlowVersionState.DRAFT,
 }
@@ -177,6 +178,7 @@ const emptyScheduleFlowVersion: FlowVersion = {
     valid: true,
     state: FlowVersionState.DRAFT,
     connectionIds: [],
+    variableNames: [],
 }
 
 describe('Flow Helper', () => {
@@ -249,6 +251,7 @@ describe('Flow Helper', () => {
             valid: true,
             state: FlowVersionState.DRAFT,
             connectionIds: [],
+            variableNames: [],
         }
         expect(result).toEqual(expectedFlowVersion)
     })
@@ -426,6 +429,7 @@ test('Duplicate Flow With Loops using Import', () => {
         valid: false,
         state: FlowVersionState.DRAFT,
         connectionIds: [],
+        variableNames: [],
     }
     const expectedResult: FlowOperationRequest[] = [
         {

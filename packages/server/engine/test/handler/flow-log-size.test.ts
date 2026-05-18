@@ -132,6 +132,7 @@ describe('flow executor log size exceeded', () => {
                         agentIds: [],
                         state: FlowVersionState.DRAFT,
                         connectionIds: [],
+                        variableNames: [],
                         backupFiles: null,
                         notes: [],
                     },

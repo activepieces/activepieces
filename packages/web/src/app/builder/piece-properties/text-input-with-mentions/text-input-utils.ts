@@ -6,6 +6,9 @@ import {
 } from '@activepieces/shared';
 import { MentionNodeAttrs } from '@tiptap/extension-mention';
 import { JSONContent } from '@tiptap/react';
+import { Variable as VariableIcon } from 'lucide-react';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 
 import { StepMetadata } from '@/features/pieces';
 
@@ -241,42 +244,20 @@ function convertTiptapJsonToText(nodes: JSONContent[]): string {
   return res.join('');
 }
 
-const SVG_NS = 'http://www.w3.org/2000/svg';
+// eslint-disable-next-line testing-library/render-result-naming-convention
+const VARIABLE_ICON_SVG_MARKUP = renderToStaticMarkup(
+  createElement(VariableIcon, {
+    className: 'w-4 h-4 shrink-0 text-primary',
+    'aria-hidden': true,
+  }),
+);
 
-const buildVariableIconElement = (): SVGSVGElement => {
-  const svg = document.createElementNS(SVG_NS, 'svg');
-  svg.setAttribute('viewBox', '0 0 24 24');
-  svg.setAttribute('fill', 'none');
-  svg.setAttribute('stroke', 'currentColor');
-  svg.setAttribute('stroke-width', '2');
-  svg.setAttribute('stroke-linecap', 'round');
-  svg.setAttribute('stroke-linejoin', 'round');
-  svg.setAttribute('aria-hidden', 'true');
-  svg.classList.add('w-4', 'h-4', 'shrink-0', 'text-primary');
-  const segments: Array<
-    ['path', string] | ['line', [string, string, string, string]]
-  > = [
-    ['path', 'M8 21s-4-3-4-9 4-9 4-9'],
-    ['path', 'M16 3s4 3 4 9-4 9-4 9'],
-    ['line', ['15', '9', '9', '15']],
-    ['line', ['9', '9', '15', '15']],
-  ];
-  for (const segment of segments) {
-    if (segment[0] === 'path') {
-      const path = document.createElementNS(SVG_NS, 'path');
-      path.setAttribute('d', segment[1]);
-      svg.appendChild(path);
-    } else {
-      const [x1, y1, x2, y2] = segment[1];
-      const line = document.createElementNS(SVG_NS, 'line');
-      line.setAttribute('x1', x1);
-      line.setAttribute('y1', y1);
-      line.setAttribute('x2', x2);
-      line.setAttribute('y2', y2);
-      svg.appendChild(line);
-    }
-  }
-  return svg;
+const buildVariableIconElement = (): Element => {
+  const template = document.createElement('template');
+  template.innerHTML = VARIABLE_ICON_SVG_MARKUP;
+  const element = template.content.firstElementChild;
+  assertNotNullOrUndefined(element, 'variableIconMarkup');
+  return element;
 };
 
 const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {

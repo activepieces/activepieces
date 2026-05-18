@@ -50,6 +50,7 @@ function makeFlowVersion(): FlowVersion {
         agentIds: [],
         state: FlowVersionState.DRAFT,
         connectionIds: [],
+        variableNames: [],
         backupFiles: null,
         notes: [],
     }
