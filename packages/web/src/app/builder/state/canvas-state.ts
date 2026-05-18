@@ -122,7 +122,7 @@ export const createCanvasState = (
           state.flowVersion.trigger.type === FlowTriggerType.EMPTY;
 
         const userPickedDifferentStepDuringRun =
-          options?.fromAutoFocus !== true &&
+          !options?.fromAutoFocus &&
           !isNil(state.run) &&
           state.selectedStep !== selectedStep;
 
@@ -135,9 +135,9 @@ export const createCanvasState = (
           selectedBranchIndex: null,
           selectedNodes,
           chatDrawerOpenSource: null,
-          ...(userPickedDifferentStepDuringRun
-            ? { userManuallySelectedStepDuringRun: true }
-            : {}),
+          userManuallySelectedStepDuringRun:
+            state.userManuallySelectedStepDuringRun ||
+            userPickedDifferentStepDuringRun,
         };
       });
     },

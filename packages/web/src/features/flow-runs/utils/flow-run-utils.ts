@@ -82,7 +82,7 @@ export const flowRunUtils = {
     const latestStep = run.steps
       ? flowRunUtils.findLastStepWithStatus(run.status, run.steps)
       : null;
-    const result = currentLoopsState;
+    const result = { ...currentLoopsState };
 
     Object.entries(loopsOutputs).forEach(([loopName, loopOutput]) => {
       const doesLoopIncludeLatestStep =

@@ -96,7 +96,9 @@ export const createRunState = (
           run,
           flowVersion,
           readonly: true,
-          ...(isNewRun ? { userManuallySelectedStepDuringRun: false } : {}),
+          userManuallySelectedStepDuringRun: isNewRun
+            ? false
+            : state.userManuallySelectedStepDuringRun,
         };
       }),
     goToFailedStep: () => {
@@ -161,9 +163,8 @@ export const createRunState = (
         });
         return {
           loopsIndexes,
-          ...(isNil(state.run)
-            ? {}
-            : { userManuallySelectedStepDuringRun: true }),
+          userManuallySelectedStepDuringRun:
+            state.userManuallySelectedStepDuringRun || !isNil(state.run),
         };
       });
     },

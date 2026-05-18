@@ -5,7 +5,7 @@ import {
 } from '@activepieces/shared';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { ArrowRight, CircleHelp, LocateFixed } from 'lucide-react';
+import { ArrowRight, CircleHelp, Magnet } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { flowRunUtils } from '@/features/flow-runs';
@@ -67,12 +67,7 @@ function getStatusText({
 }
 
 const RunInfoWidget = () => {
-  const [run, userManuallySelectedStepDuringRun, resumeLiveFollow] =
-    useBuilderStateContext((state) => [
-      state.run,
-      state.userManuallySelectedStepDuringRun,
-      state.resumeLiveFollow,
-    ]);
+  const run = useBuilderStateContext((state) => state.run);
   const { variant, Icon } = run
     ? flowRunUtils.getStatusIcon(run.status)
     : { variant: 'default' as const, Icon: CircleHelp };
@@ -92,8 +87,6 @@ const RunInfoWidget = () => {
     status: run.status,
     ignoreInternalError: false,
   });
-  const showResumeLiveFollow =
-    !isRunTerminal && userManuallySelectedStepDuringRun;
   return (
     <LargeWidgetWrapper
       containerClassName={cn(
@@ -143,12 +136,7 @@ const RunInfoWidget = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          {showResumeLiveFollow && (
-            <Button variant="ghost" size="sm" onClick={resumeLiveFollow}>
-              <LocateFixed className="size-4" />
-              {t('Follow run updates')}
-            </Button>
-          )}
+          <ResumeLiveFollowButton isRunTerminal={isRunTerminal} />
           {run.failedStep && (
             <JumpToFailedStepButton failedStepName={run.failedStep.name} />
           )}
@@ -175,6 +163,27 @@ const DateSection = ({
       <span>{`${text}: `}</span>
       <span>{`${dateOrDuration}`}</span>
     </>
+  );
+};
+
+const ResumeLiveFollowButton = ({
+  isRunTerminal,
+}: {
+  isRunTerminal: boolean;
+}) => {
+  const [userManuallySelectedStepDuringRun, resumeLiveFollow] =
+    useBuilderStateContext((state) => [
+      state.userManuallySelectedStepDuringRun,
+      state.resumeLiveFollow,
+    ]);
+  if (isRunTerminal || !userManuallySelectedStepDuringRun) {
+    return null;
+  }
+  return (
+    <Button variant="ghost" size="sm" onClick={resumeLiveFollow}>
+      <Magnet className="size-4" />
+      {t('Follow run updates')}
+    </Button>
   );
 };
 
@@ -205,7 +214,7 @@ const JumpToFailedStepButton = ({
       className="text-destructive-700 hover:text-destructive-700 dark:text-destructive-200 dark:hover:text-destructive-200"
     >
       <ArrowRight className="size-4" />
-      {t('Failed step')}
+      {t('See error')}
     </Button>
   );
 };
