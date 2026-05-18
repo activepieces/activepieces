@@ -38,6 +38,9 @@ export enum ApplicationEventName {
     CONNECTION_UPSERTED = 'connection.upserted',
     CONNECTION_DELETED = 'connection.deleted',
     CONNECTION_VALUE_REVEALED = 'connection.value.revealed',
+    VARIABLE_UPSERTED = 'variable.upserted',
+    VARIABLE_DELETED = 'variable.deleted',
+    VARIABLE_VALUE_REVEALED = 'variable.value.revealed',
     USER_SIGNED_UP = 'user.signed.up',
     USER_SIGNED_IN = 'user.signed.in',
     USER_PASSWORD_RESET = 'user.password.reset',
@@ -99,6 +102,50 @@ export const ConnectionDeletedEvent = z.object({
     data: ConnectionEventData,
 })
 export type ConnectionDeletedEvent = z.infer<typeof ConnectionDeletedEvent>
+
+const VariableEventData = z.object({
+    variable: z.object({
+        id: z.string(),
+        name: z.string(),
+        created: DateOrString,
+        updated: DateOrString,
+    }),
+    project: z.object({
+        displayName: z.string(),
+    }).optional(),
+})
+
+export const VariableEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.union([
+        z.literal(ApplicationEventName.VARIABLE_UPSERTED),
+        z.literal(ApplicationEventName.VARIABLE_DELETED),
+        z.literal(ApplicationEventName.VARIABLE_VALUE_REVEALED),
+    ]),
+    data: VariableEventData,
+})
+export type VariableEvent = z.infer<typeof VariableEvent>
+
+export const VariableUpsertedEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.literal(ApplicationEventName.VARIABLE_UPSERTED),
+    data: VariableEventData,
+})
+export type VariableUpsertedEvent = z.infer<typeof VariableUpsertedEvent>
+
+export const VariableDeletedEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.literal(ApplicationEventName.VARIABLE_DELETED),
+    data: VariableEventData,
+})
+export type VariableDeletedEvent = z.infer<typeof VariableDeletedEvent>
+
+export const VariableValueRevealedEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.literal(ApplicationEventName.VARIABLE_VALUE_REVEALED),
+    data: VariableEventData,
+})
+export type VariableValueRevealedEvent = z.infer<typeof VariableValueRevealedEvent>
 
 const FolderEventData = z.object({
     folder: Folder.pick({ id: true, displayName: true, created: true, updated: true }),
@@ -406,6 +453,7 @@ export type ProjectReleaseEvent = z.infer<typeof ProjectReleaseEvent>
 
 export const ApplicationEvent = z.union([
     ConnectionEvent,
+    VariableEvent,
     FlowCreatedEvent,
     FlowDeletedEvent,
     FlowUpdatedEvent,
@@ -461,6 +509,12 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return `${event.data.connection.displayName} (${event.data.connection.externalId}) is deleted`
         case ApplicationEventName.CONNECTION_VALUE_REVEALED:
             return `${event.data.connection.displayName} (${event.data.connection.externalId}) value was revealed`
+        case ApplicationEventName.VARIABLE_UPSERTED:
+            return `Variable ${event.data.variable.name} is created or updated`
+        case ApplicationEventName.VARIABLE_DELETED:
+            return `Variable ${event.data.variable.name} is deleted`
+        case ApplicationEventName.VARIABLE_VALUE_REVEALED:
+            return `Variable ${event.data.variable.name} value was revealed`
         case ApplicationEventName.USER_SIGNED_IN:
             return `User ${event.userEmail} signed in`
         case ApplicationEventName.USER_PASSWORD_RESET:

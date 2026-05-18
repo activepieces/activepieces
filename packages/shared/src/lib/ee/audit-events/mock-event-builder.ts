@@ -20,6 +20,7 @@ import {
     ProjectRoleEvent,
     SigningKeyEvent,
     SignUpEvent,
+    VariableEvent,
 } from './index'
 
 export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventParams): ApplicationEvent => {
@@ -162,6 +163,24 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
                         pieceName: '@activepieces/piece-sample',
                         status: 'ACTIVE',
                         type: 'CUSTOM_AUTH',
+                        created: isoNow,
+                        updated: isoNow,
+                    },
+                    project,
+                },
+            }
+            return mock
+        }
+        case ApplicationEventName.VARIABLE_UPSERTED:
+        case ApplicationEventName.VARIABLE_DELETED:
+        case ApplicationEventName.VARIABLE_VALUE_REVEALED: {
+            const mock: VariableEvent = {
+                ...baseEnvelope,
+                action: event,
+                data: {
+                    variable: {
+                        id: apId(),
+                        name: 'SAMPLE_VARIABLE',
                         created: isoNow,
                         updated: isoNow,
                     },
