@@ -9,8 +9,8 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, FindOptionsWhere } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
-import { domainHelper } from '../ee/custom-domains/domain-helper'
 import { applicationEvents } from '../helper/application-events'
+import { domainHelper } from '../helper/domain-helper'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { jobQueue, JobType } from '../workers/job-queue/job-queue'
@@ -119,7 +119,6 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
         const destinationsToDispatch = await skipInternalDestinationsOnFlowCycle({
             destinations,
             event,
-            platformId,
             log,
         })
         await Promise.all(destinationsToDispatch.map(destination =>
@@ -161,7 +160,6 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
 const skipInternalDestinationsOnFlowCycle = async ({
     destinations,
     event,
-    platformId,
     log,
 }: SkipDestinationsParams): Promise<EventDestinationSchema[]> => {
     if (destinations.length === 0 || !isFlowRunEvent(event)) {
@@ -169,7 +167,6 @@ const skipInternalDestinationsOnFlowCycle = async ({
     }
     const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
         path: 'v1/webhooks',
-        platformId,
     })
     const destinationsWithFlowIds = destinations.map((destination) => ({
         destination,
@@ -252,7 +249,6 @@ type TestParams = {
 type SkipDestinationsParams = {
     destinations: EventDestinationSchema[]
     event: ApplicationEvent
-    platformId: PlatformId
     log: FastifyBaseLogger
 }
 
@@ -260,4 +256,3 @@ type ExtractFlowIdParams = {
     destinationUrl: string
     webhookUrlPrefix: string
 }
-

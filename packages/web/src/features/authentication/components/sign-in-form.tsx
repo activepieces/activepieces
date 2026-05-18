@@ -8,7 +8,7 @@ import {
   SignInRequest,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
@@ -37,6 +37,7 @@ const SignInSchema = z.object({
 type SignInSchema = z.infer<typeof SignInSchema>;
 
 const SignInForm: React.FC = () => {
+  const queryClient = useQueryClient();
   const [showCheckYourEmailNote, setShowCheckYourEmailNote] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const form = useForm<SignInSchema>({
@@ -62,6 +63,8 @@ const SignInForm: React.FC = () => {
     mutationFn: authenticationApi.signIn,
     onSuccess: (data) => {
       authenticationSession.saveResponse(data, false);
+      queryClient.invalidateQueries({ queryKey: ['flags'] });
+
       if (isNil(data.projectId)) {
         navigate('/create-platform');
         return;

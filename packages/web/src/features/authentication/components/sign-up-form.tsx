@@ -5,6 +5,7 @@ import {
   ErrorCode,
   isNil,
 } from '@activepieces/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Eye, EyeOff } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -53,6 +54,7 @@ const SignUpForm = ({
   const [searchParams] = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  const queryClient = useQueryClient();
 
   const form = useForm<SignUpSchema>({
     defaultValues: {
@@ -94,6 +96,8 @@ const SignUpForm = ({
     onSuccess: (data) => {
       if (data.verified) {
         authenticationSession.saveResponse(data, false);
+        queryClient.invalidateQueries({ queryKey: ['flags'] });
+
         if (isNil(data.projectId)) {
           navigate('/create-platform');
           return;
@@ -177,7 +181,7 @@ const SignUpForm = ({
   ) : (
     <>
       <Form {...form}>
-        <form className="grid space-y-4">
+        <form className="flex flex-col space-y-4">
           <div className={'flex flex-row gap-2'}>
             <FormField
               control={form.control}
@@ -186,7 +190,7 @@ const SignUpForm = ({
                 required: t('First name is required'),
               }}
               render={({ field }) => (
-                <FormItem className="w-full grid space-y-1">
+                <FormItem className="w-full">
                   <Label htmlFor="firstName">{t('First Name')}</Label>
                   <Input
                     {...field}
@@ -208,7 +212,7 @@ const SignUpForm = ({
                 required: t('Last name is required'),
               }}
               render={({ field }) => (
-                <FormItem className="w-full grid space-y-1">
+                <FormItem className="w-full">
                   <Label htmlFor="lastName">{t('Last Name')}</Label>
                   <Input
                     {...field}
