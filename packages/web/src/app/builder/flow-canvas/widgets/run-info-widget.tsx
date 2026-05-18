@@ -5,7 +5,7 @@ import {
 } from '@activepieces/shared';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { ArrowRight, CircleHelp } from 'lucide-react';
+import { ArrowRight, CircleHelp, LocateFixed } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { flowRunUtils } from '@/features/flow-runs';
@@ -67,7 +67,12 @@ function getStatusText({
 }
 
 const RunInfoWidget = () => {
-  const run = useBuilderStateContext((state) => state.run);
+  const [run, userManuallySelectedStepDuringRun, resumeLiveFollow] =
+    useBuilderStateContext((state) => [
+      state.run,
+      state.userManuallySelectedStepDuringRun,
+      state.resumeLiveFollow,
+    ]);
   const { variant, Icon } = run
     ? flowRunUtils.getStatusIcon(run.status)
     : { variant: 'default' as const, Icon: CircleHelp };
@@ -87,6 +92,8 @@ const RunInfoWidget = () => {
     status: run.status,
     ignoreInternalError: false,
   });
+  const showResumeLiveFollow =
+    !isRunTerminal && userManuallySelectedStepDuringRun;
   return (
     <LargeWidgetWrapper
       containerClassName={cn(
@@ -136,6 +143,12 @@ const RunInfoWidget = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          {showResumeLiveFollow && (
+            <Button variant="ghost" size="sm" onClick={resumeLiveFollow}>
+              <LocateFixed className="size-4" />
+              {t('Follow run updates')}
+            </Button>
+          )}
           {run.failedStep && (
             <JumpToFailedStepButton failedStepName={run.failedStep.name} />
           )}
