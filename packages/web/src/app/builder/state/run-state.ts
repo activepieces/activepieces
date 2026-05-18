@@ -120,6 +120,7 @@ export const createRunState = (
         readonly: !userHasPermissionToEditFlow,
         loopsIndexes: {},
         selectedBranchIndex: null,
+        userManuallySelectedStepDuringRun: false,
       }),
 
     setLoopIndex: (stepName: string, index: number) => {
