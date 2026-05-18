@@ -1,0 +1,17 @@
+{
+  "name": "@activepieces/piece-instantly",
+  "displayName": "Instantly.ai",
+  "version": "0.1.0",
+  "minimumSupportedRelease": "0.20.0",
+  "logoUrl": "https://cdn.activepieces.com/pieces/instantly.png",
+  "authors": ["oocheol"],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
