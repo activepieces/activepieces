@@ -8,6 +8,7 @@ import { openaiAuth } from '../auth';
 import { sleep } from '../common/common';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
+import { isObject } from '@activepieces/shared';
 
 export const askAssistant = createAction({
   auth: openaiAuth,
@@ -79,9 +80,13 @@ export const askAssistant = createAction({
     });
     const { assistant, prompt, memoryKey } = propsValue;
 
-    let threadId: string | null = null;
+    let threadId: any = null;
     if (memoryKey) {
-      threadId = (await store.get(memoryKey, StoreScope.PROJECT)) ?? null;
+      const storedValue = await store.get(memoryKey, StoreScope.PROJECT);
+      if (storedValue) {
+        // Migration guard: old code stored full Thread object, new code stores string ID
+        threadId = isObject(storedValue) ? (storedValue as any).id : storedValue;
+      }
     }
 
     if (!threadId) {
@@ -107,14 +112,13 @@ export const askAssistant = createAction({
       const runStatus = await openai.beta.threads.runs.retrieve(threadId, run.id);
       if (runStatus.status === 'completed') {
         const messages = await openai.beta.threads.messages.list(threadId);
-        // Get the latest message
-        response = messages.data.splice(
-          0,
-          messages.data.findIndex((m) => m.id == run.id) // This line was likely incorrect in original too, but keeping logic
-        );
-        // In Assistants API v2, we usually just take the first one if it's the latest
-        response = messages.data[0].content;
+        // Return the latest message from the assistant
+        const assistantMessages = messages.data.filter(m => m.role === 'assistant');
+        response = assistantMessages[0];
         break;
+      }
+      if (['failed', 'cancelled', 'expired'].includes(runStatus.status)) {
+        throw new Error(`Assistant run ${runStatus.status}: ${JSON.stringify(runStatus.last_error)}`);
       }
 
       await sleep(runCheckDelay);
