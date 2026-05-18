@@ -6,6 +6,7 @@ import {
 import { AIProviderEntity } from '../ai/ai-provider-entity'
 import { PlatformAnalyticsReportEntity } from '../analytics/platform-analytics-report.entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
+import { VariableEntity } from '../variable/variable.entity'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
 import { AlertEntity } from '../ee/alerts/alerts-entity'
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
@@ -79,6 +80,7 @@ function getEntities(): EntitySchema<unknown>[] {
         StoreEntryEntity,
         UserEntity,
         AppConnectionEntity,
+        VariableEntity,
         FolderEntity,
         PieceMetadataEntity,
         PlatformEntity,

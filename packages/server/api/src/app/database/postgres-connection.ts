@@ -376,6 +376,7 @@ import { RemoveMcpServerStatus1790000000000 } from './migration/postgres/1790000
 import { RenameEnabledToolsToDisabledTools1791000000000 } from './migration/postgres/1791000000000-RenameEnabledToolsToDisabledTools'
 import { RelaxAppConnectionPieceFields1791000000001 } from './migration/postgres/1791000000001-RelaxAppConnectionPieceFields'
 import { AddTriggerSourceFlowVersionIdIndex1792000000000 } from './migration/postgres/1792000000000-AddTriggerSourceFlowVersionIdIndex'
+import { AddVariableTable1793000000000 } from './migration/postgres/1793000000000-AddVariableTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -767,6 +768,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         RenameEnabledToolsToDisabledTools1791000000000,
         RelaxAppConnectionPieceFields1791000000001,
         AddTriggerSourceFlowVersionIdIndex1792000000000,
+        AddVariableTable1793000000000,
     ]
     return migrations
 }
