@@ -59,7 +59,6 @@ type DataTableAction<TData extends DataWithId> = (
 
 type ColumnDef<TData, TValue> = TanstackColumnDef<TData, TValue> & {
   notClickable?: boolean;
-  cellClassName?: string;
 };
 
 interface DataTableProps<
@@ -368,13 +367,9 @@ export function DataTable<
               <TableRow key={headerGroup.id} className="hover:bg-transparent">
                 {headerGroup.headers.map((header) => {
                   const size = header.column.columnDef.size;
-                  const cellClassName = (
-                    header.column.columnDef as ColumnDef<TData, TValue>
-                  ).cellClassName;
                   return (
                     <TableHead
                       key={header.id}
-                      className={cellClassName}
                       style={
                         size
                           ? { width: size, minWidth: size, maxWidth: size }
@@ -459,13 +454,9 @@ export function DataTable<
                       >
                         {row.getVisibleCells().map((cell) => {
                           const size = cell.column.columnDef.size;
-                          const cellClassName = (
-                            cell.column.columnDef as ColumnDef<TData, TValue>
-                          ).cellClassName;
                           return (
                             <TableCell
                               key={cell.id}
-                              className={cellClassName}
                               style={
                                 size
                                   ? {

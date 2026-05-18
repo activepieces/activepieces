@@ -142,7 +142,6 @@ function VariablesPage() {
       {
         accessorKey: 'name',
         size: 280,
-        cellClassName: 'pl-0',
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
