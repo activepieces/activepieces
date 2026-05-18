@@ -62,6 +62,8 @@
   "Publishing...": "",
   "Run Succeeded": "Run Succeeded",
   "Run Failed": "Run Failed",
+  "Follow run updates": "Follow run updates",
+  "See error": "See error",
   "Run Paused": "",
   "Quota Exceeded": "",
   "Run failed due to exceeding the memory limit of {memoryLimit} MB": "Run failed due to exceeding the memory limit of {memoryLimit} MB",

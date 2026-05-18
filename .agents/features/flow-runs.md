@@ -14,6 +14,7 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
 - `packages/web/src/features/flow-runs/components/runs-table/` — `RunsTable`, `columns.tsx`, retry/cancel/archive dialogs, `failed-step-dialog.tsx`
 - `packages/web/src/app/builder/flow-canvas/widgets/run-info-widget.tsx` — builder widget that jumps to the failed step on the canvas
 - `packages/web/src/app/builder/state/run-state.ts` — tracks the focused/failed step for the builder
+- `packages/web/src/app/builder/state/canvas-state.ts` — tracks `userManuallySelectedStepDuringRun` and exposes the `resumeLiveFollow` action for live-follow control
 - `packages/server/api/src/app/ee/alerts/alerts-service.ts` — sends the failure email via the EE Alerts feature (see `.agents/features/alerts.md`)
 - `packages/web/src/features/flow-runs/components/step-status-icon.tsx` — per-step status badge
 - `packages/web/src/app/routes/runs/index.tsx` — runs list page
@@ -99,4 +100,7 @@ The runs table surfaces a Status multi-select and an "Error message" text input 
 ### Failed-Step Surfaces
 
 - **Runs table failed-step column** renders the failed step's display name with a tooltip showing the truncated, JSON-pretty error message; clicking opens `FailedStepDialog` (full error + "Go to run" footer). Legacy runs without a captured message bypass the dialog and navigate straight to the run page.
-- **Builder run-info widget** shows a "Jump to failed step" button that focuses the failed step on the canvas using `run-state` to track the focused step.
+- **Builder run-info widget** shows up to two controls during a run:
+  - A "Follow run updates" button — visible only while the run is non-terminal and the user has manually selected a different step. Clicking it calls `resumeLiveFollow`, which clears the `userManuallySelectedStepDuringRun` flag and snaps loop indexes to their latest iteration so the canvas resumes following the engine live.
+  - On failure, a "See error" button that focuses the failed step on the canvas via `goToFailedStep` in `run-state`.
+  - Live-follow itself is gated by `userManuallySelectedStepDuringRun` in `canvas-state`: `selectStepByName` sets it whenever the user picks a different step mid-run (`fromAutoFocus` is passed when the change came from the auto-follow effect, not a user click), and `setRun` resets it when a new run id arrives.
