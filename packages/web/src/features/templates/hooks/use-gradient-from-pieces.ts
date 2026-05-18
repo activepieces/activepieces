@@ -149,12 +149,12 @@ export const useGradientFromPieces = (
     [steps, excludeCore],
   );
 
-  const pieceQueries = piecesHooks.useMultiplePieces({ names: pieceNames });
+  const { summaries } = piecesHooks.usePieceSummariesByNames({
+    names: pieceNames,
+  });
 
   const uniqueMetadata: StepMetadata[] = useMemo(() => {
-    const pieceMetadata: StepMetadata[] = pieceQueries
-      .map((q) => q.data)
-      .filter((data): data is NonNullable<typeof data> => !!data)
+    const pieceMetadata: StepMetadata[] = summaries
       .filter(
         (piece) =>
           !excludeCore || !piece.categories?.includes(PieceCategory.CORE),
@@ -179,11 +179,7 @@ export const useGradientFromPieces = (
           (secondItem) => item.displayName === secondItem.displayName,
         ) === index,
     );
-  }, [
-    pieceQueries.map((q) => q.dataUpdatedAt).join(','),
-    coreMetadata,
-    excludeCore,
-  ]);
+  }, [summaries, coreMetadata, excludeCore]);
 
   const logosToProcess = useMemo(
     () =>
