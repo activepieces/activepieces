@@ -2,6 +2,8 @@ import {
   StepOutputStatus,
   flowStructureUtil,
   AgentResult,
+  FlowActionType,
+  FlowTriggerType,
   isFlowRunStateTerminal,
   FlowRun,
   FlowRunStatus,
@@ -21,12 +23,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AgentTimeline } from '@/features/agents';
 import { flowRunUtils } from '@/features/flow-runs';
+import { piecesHooks } from '@/features/pieces';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { formatUtils } from '@/lib/format-utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { DataDisplayTabs } from '../data-display/data-display-tabs';
-import { FriendlyErrorView } from '../data-display/friendly-error-view';
+import { ErrorDisplayTabs } from '../data-display/error-display-tabs';
 import { isRunAgent } from '../test-step/agent-test-step';
 import { TestPanelHeader } from '../test-step/test-panel-header';
 import { TestPanelViewToggle } from '../test-step/test-panel-view-toggle';
@@ -71,6 +74,21 @@ export const FlowStepInputOutput = () => {
   const friendlyError = tryParseFriendlyPieceError(
     selectedStepOutput?.errorMessage,
   );
+  const stepPieceName =
+    selectedStep?.type === FlowActionType.PIECE ||
+    selectedStep?.type === FlowTriggerType.PIECE
+      ? selectedStep.settings.pieceName
+      : undefined;
+  const stepPieceVersion =
+    selectedStep?.type === FlowActionType.PIECE ||
+    selectedStep?.type === FlowTriggerType.PIECE
+      ? selectedStep.settings.pieceVersion
+      : undefined;
+  const { pieceModel } = piecesHooks.usePiece({
+    name: stepPieceName ?? '',
+    version: stepPieceVersion,
+    enabled: !isNil(stepPieceName),
+  });
   const parsedOutput = isSlicedOutput
     ? undefined
     : selectedStepOutput?.errorMessage ??
@@ -185,7 +203,10 @@ export const FlowStepInputOutput = () => {
             ) : slicedOutputRef ? (
               <SlicedOutputDownload slicedOutputRef={slicedOutputRef} />
             ) : friendlyError ? (
-              <FriendlyErrorView error={friendlyError} />
+              <ErrorDisplayTabs
+                error={friendlyError}
+                pieceDisplayName={pieceModel?.displayName}
+              />
             ) : (
               <DataDisplayTabs
                 data={parsedOutput}

@@ -3,7 +3,6 @@ import { t } from 'i18next';
 import {
   AlertOctagon,
   AlertTriangle,
-  ChevronRight,
   Hourglass,
   KeyRound,
   Search,
@@ -12,23 +11,36 @@ import {
   XCircle,
   type LucideIcon,
 } from 'lucide-react';
-import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
-import { DataDisplayTabs } from './data-display-tabs';
+import { CopyAiPromptButton } from './copy-ai-prompt';
+import { ErrorExplanationContext } from './explanation-prompt';
 
 type FriendlyErrorViewProps = {
   error: FriendlyPieceError;
+  explanationContext?: ErrorExplanationContext;
+  pieceDisplayName?: string;
   className?: string;
 };
 
-const FriendlyErrorView = ({ error, className }: FriendlyErrorViewProps) => {
+const FriendlyErrorView = ({
+  error,
+  explanationContext,
+  pieceDisplayName,
+  className,
+}: FriendlyErrorViewProps) => {
   const { status } = error;
   const { Icon, headline, hint, tone } = getStatusPresentation(status);
-  const detailPayload = buildDetailPayload(error);
-  const hasDetails = Object.keys(detailPayload).length > 0;
+  const isHttpError = !isNil(status);
+  const messageText = pickDisplayMessage(error);
+  const showMessage = !isNil(messageText) && messageText.length > 0;
+  const messageLabel = isHttpError
+    ? pieceDisplayName
+      ? t('Response from {pieceDisplayName}', { pieceDisplayName })
+      : t('What the service said')
+    : t('Error message');
 
   return (
     <div
@@ -58,97 +70,31 @@ const FriendlyErrorView = ({ error, className }: FriendlyErrorViewProps) => {
           </p>
         </div>
       </div>
-      {error.apiMessage && (
+      {showMessage && (
         <div className="px-4 py-3 border-t border-border bg-background flex flex-col gap-1">
           <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {t('What the service said')}
+            {messageLabel}
           </span>
           <p className="text-sm text-foreground break-words whitespace-pre-wrap">
-            {error.apiMessage}
+            {messageText}
           </p>
         </div>
       )}
-      {!error.apiMessage && error.message && isNil(status) && (
-        <div className="px-4 py-3 border-t border-border bg-background flex flex-col gap-1">
-          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {t('Error message')}
-          </span>
-          <p className="text-sm text-foreground break-words whitespace-pre-wrap">
-            {error.message}
-          </p>
-        </div>
-      )}
-      {hasDetails && <CollapsibleDetails payload={detailPayload} />}
-    </div>
-  );
-};
-
-type CollapsibleDetailsProps = {
-  payload: Record<string, unknown>;
-};
-
-const CollapsibleDetails = ({ payload }: CollapsibleDetailsProps) => {
-  const [expanded, setExpanded] = useState(false);
-
-  return (
-    <div className="border-t border-border">
-      <button
-        type="button"
-        onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-1.5 w-full text-left px-3 py-2 text-sm hover:bg-muted/50 transition-colors"
-        aria-expanded={expanded}
-      >
-        <ChevronRight
-          className={cn(
-            'size-4 shrink-0 text-muted-foreground transition-transform',
-            expanded && 'rotate-90',
-          )}
-        />
-        <span className="font-medium text-foreground">
-          {t('Technical details')}
-        </span>
-      </button>
-      {expanded && (
-        <div className="border-t border-border bg-muted/20 px-3 py-3">
-          <DataDisplayTabs data={payload} title={t('Technical details')} />
-        </div>
+      {explanationContext && (
+        <CopyAiPromptButton error={error} context={explanationContext} />
       )}
     </div>
   );
 };
 
-const buildDetailPayload = (
-  error: FriendlyPieceError,
-): Record<string, unknown> => {
-  const payload: Record<string, unknown> = {};
-  if (!isNil(error.errorName)) {
-    payload.errorName = error.errorName;
+const pickDisplayMessage = (error: FriendlyPieceError): string | undefined => {
+  const candidates = [error.apiMessage, error.message];
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim().length > 0) {
+      return candidate;
+    }
   }
-  if (
-    !isNil(error.requestUrl) ||
-    !isNil(error.requestMethod) ||
-    !isNil(error.requestBody)
-  ) {
-    payload.request = {
-      ...(error.requestMethod ? { method: error.requestMethod } : {}),
-      ...(error.requestUrl ? { url: error.requestUrl } : {}),
-      ...(isNil(error.requestBody) ? {} : { body: error.requestBody }),
-    };
-  }
-  if (
-    !isNil(error.status) ||
-    !isNil(error.responseBody) ||
-    !isNil(error.responseHeaders)
-  ) {
-    payload.response = {
-      ...(isNil(error.status) ? {} : { status: error.status }),
-      ...(isNil(error.responseHeaders)
-        ? {}
-        : { headers: error.responseHeaders }),
-      ...(isNil(error.responseBody) ? {} : { body: error.responseBody }),
-    };
-  }
-  return payload;
+  return undefined;
 };
 
 type StatusPresentation = {
@@ -207,7 +153,7 @@ const getStatusPresentation = (
       Icon: ShieldOff,
       headline: t('Permission denied'),
       hint: t(
-        "The connected account does not have permission for this action. Verify the account's role and permissions for this integration, and check any optional safety toggles on the step (for example, a built-in sanitize / safe-mode setting) they may need to be disabled for accounts without administrative scope.",
+        'The connected account does not have permission for this action.',
       ),
       tone: DESTRUCTIVE_TONE,
     };
@@ -217,7 +163,7 @@ const getStatusPresentation = (
       Icon: Search,
       headline: t('Resource not found'),
       hint: t(
-        'The service could not find the requested resource. Double-check the IDs or names in the step input — the resource may have been deleted, moved, or is not visible to this account.',
+        'The service could not find the requested resource. Double-check the IDs or names in the step input.',
       ),
       tone: WARNING_TONE,
     };
