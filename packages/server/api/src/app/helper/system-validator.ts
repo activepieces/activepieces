@@ -157,6 +157,7 @@ const systemPropValidators: {
     // Cloudflare
     [AppSystemProp.CLOUDFLARE_API_TOKEN]: stringValidator,
     [AppSystemProp.CLOUDFLARE_API_BASE]: stringValidator,
+    [AppSystemProp.CLOUDFLARE_SAAS_FALLBACK_ORIGIN]: stringValidator,
     [AppSystemProp.CLOUDFLARE_ZONE_ID]: stringValidator,
 
     // Secret Manager
@@ -184,6 +185,9 @@ const systemPropValidators: {
     [AppSystemProp.IS_CANARY_APP]: booleanValidator,
     // SSRF protection
     [AppSystemProp.SSRF_ALLOW_LIST]: stringValidator,
+
+    // Embed
+    [AppSystemProp.ALLOWED_EMBED_ORIGINS]: stringValidator,
     [AppSystemProp.NETWORK_MODE]: enumValidator(Object.values(NetworkMode)),
 
     // On-call
