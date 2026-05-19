@@ -80,6 +80,7 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
         updatedBy: null,
         agentIds: [],
         connectionIds: [],
+        variableNames: [],
         notes: selectedFlow.notes ?? [],
       },
     };
