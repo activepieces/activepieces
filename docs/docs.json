@@ -219,6 +219,7 @@
                   "group": "Essentials",
                   "pages": [
                      "embedding/overview",
+                     "embedding/configure-embedding",
                      "embedding/provision-users",
                      "embedding/embed-builder"
                   ]
@@ -456,6 +457,13 @@
                         "icon": "server",
                         "pages": [
                            "endpoints/worker-machines/queue-metrics"
+                        ]
+                     },
+                     {
+                        "group": "Embedding",
+                        "icon": "code",
+                        "pages": [
+                           "endpoints/embedding/add-allowed-embed-origins"
                         ]
                      }
                   ]

@@ -16,6 +16,7 @@ import {
     JobPayload,
     LoopStepOutput,
     ResumePayload,
+    ResumeReason,
     StepOutput,
     StepOutputStatus,
     TriggerHookType,
@@ -132,9 +133,10 @@ async function getFlowExecutionState(input: ResolvedExecuteFlowOperation, consta
             }).setOutput(newPayload))
     }
     flowContext = flowContext.addTags(input.executionState.tags)
+    const isWaitpointResume = input.resumeReason === ResumeReason.WAITPOINT
     for (const [step, output] of Object.entries(input.executionState.steps)) {
-        if ([StepOutputStatus.SUCCEEDED, StepOutputStatus.PAUSED].includes(output.status)) {
-            const newOutput = await insertSuccessStepsOrPausedRecursively(output)
+        if (isStepRestorable({ status: output.status, isWaitpointResume })) {
+            const newOutput = await insertSuccessStepsOrPausedRecursively({ stepOutput: output, isWaitpointResume })
             if (!isNil(newOutput)) {
                 flowContext = await flowContext.upsertStep(step, newOutput)
             }
@@ -161,8 +163,8 @@ async function runOrReturnPayload(input: ResolvedBeginExecuteFlowOperation, cons
 }
 
 
-async function insertSuccessStepsOrPausedRecursively(stepOutput: StepOutput): Promise<StepOutput | null> {
-    if (![StepOutputStatus.SUCCEEDED, StepOutputStatus.PAUSED].includes(stepOutput.status)) {
+async function insertSuccessStepsOrPausedRecursively({ stepOutput, isWaitpointResume }: InsertStepsParams): Promise<StepOutput | null> {
+    if (!isStepRestorable({ status: stepOutput.status, isWaitpointResume })) {
         return null
     }
     if (stepOutput.type === FlowActionType.LOOP_ON_ITEMS) {
@@ -172,7 +174,7 @@ async function insertSuccessStepsOrPausedRecursively(stepOutput: StepOutput): Pr
         for (const iteration of iterations) {
             const newSteps: Record<string, StepOutput> = {}
             for (const [step, output] of Object.entries(iteration)) {
-                const newOutput = await insertSuccessStepsOrPausedRecursively(output)
+                const newOutput = await insertSuccessStepsOrPausedRecursively({ stepOutput: output, isWaitpointResume })
                 if (!isNil(newOutput)) {
                     newSteps[step] = newOutput
                 }
@@ -230,6 +232,18 @@ async function fetchExecutionStateFromLogs(logsFileId: string | undefined, opera
     return parsed.executionState as ExecutionState
 }
 
+// Waitpoint resumes preserve FAILED so a `continueOnFailure` step isn't replayed,
+// which would re-fire its waitpoint and let the global `constants.resumePayload`
+// pollute the new output. Retry resumes (FlowRetryStrategy.FROM_FAILED_STEP) drop
+// FAILED so the engine re-executes the failed step. The discriminator is the
+// explicit `resumeReason` set when the run is enqueued.
+function isStepRestorable({ status, isWaitpointResume }: IsStepRestorableParams): boolean {
+    if (status === StepOutputStatus.SUCCEEDED || status === StepOutputStatus.PAUSED) {
+        return true
+    }
+    return isWaitpointResume && status === StepOutputStatus.FAILED
+}
+
 type ResolveStateParams = {
     input: ResolvedExecuteFlowOperation
     constants: EngineConstants
@@ -240,4 +254,14 @@ type BuildFailedTriggerContextParams = {
     input: ResolvedExecuteFlowOperation
     baseContext: FlowExecutorContext
     error: ExecutionError
+}
+
+type IsStepRestorableParams = {
+    status: StepOutputStatus
+    isWaitpointResume: boolean
+}
+
+type InsertStepsParams = {
+    stepOutput: StepOutput
+    isWaitpointResume: boolean
 }

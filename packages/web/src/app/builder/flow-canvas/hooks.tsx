@@ -180,10 +180,12 @@ const useIsFocusInsideListMapperModeInput = ({
   }, [setIsFocusInsideListMapperModeInput, isFocusInsideListMapperModeInput]);
 };
 export const useFocusOnStep = () => {
-  const [currentRun, selectStep] = useBuilderStateContext((state) => [
-    state.run,
-    state.selectStepByName,
-  ]);
+  const [currentRun, selectStep, userManuallySelectedStepDuringRun] =
+    useBuilderStateContext((state) => [
+      state.run,
+      state.selectStepByName,
+      state.userManuallySelectedStepDuringRun,
+    ]);
 
   const previousStatus = usePrevious(currentRun?.status);
   const currentStep = flowRunUtils.findLastStepWithStatus(
@@ -191,17 +193,20 @@ export const useFocusOnStep = () => {
     currentRun?.steps ?? {},
   );
 
+  const { fitView } = useReactFlow();
   const focusCurrentStep = useDebouncedCallback(() => {
+    if (userManuallySelectedStepDuringRun) {
+      return;
+    }
     if (!isNil(currentStep)) {
       fitView(flowCanvasUtils.createFocusStepInGraphParams(currentStep));
-      selectStep(currentStep);
+      selectStep(currentStep, { fromAutoFocus: true });
     }
   }, 500);
 
-  const { fitView } = useReactFlow();
   useEffect(() => {
     focusCurrentStep();
-  }, [currentStep, selectStep, fitView]);
+  }, [currentStep, selectStep, fitView, userManuallySelectedStepDuringRun]);
 };
 
 export const useResizeCanvas = (
