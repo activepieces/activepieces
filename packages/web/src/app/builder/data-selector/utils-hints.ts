@@ -131,7 +131,7 @@ function buildFieldNode({
       key: propertyPath,
       data: {
         type: 'value' as const,
-        value: `${value.length} ${t('items')}`,
+        value: t('itemCount', { count: value.length }),
         displayName: label,
         propertyPath,
         insertable: false,
@@ -354,7 +354,7 @@ function buildTreeFromArray({
     key: stepName,
     data: {
       type: 'value',
-      value: `${items.length} ${t('items')}`,
+      value: t('itemCount', { count: items.length }),
       displayName,
       propertyPath: stepName,
       insertable: false,

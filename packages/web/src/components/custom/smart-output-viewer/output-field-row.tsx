@@ -17,7 +17,7 @@ import {
   getValueByDotPath,
 } from './format-value';
 import { hintUtils } from './resolve-hints';
-import { InlineCopyButton, truncateValue } from './shared-value-rendering';
+import { truncateValue } from './shared-value-rendering';
 import { HintField } from './types';
 
 function ChildFieldRow({
@@ -33,8 +33,10 @@ function ChildFieldRow({
   const childValue = getValueByDotPath(json, path);
 
   return (
-    <div className="group flex items-center gap-3 py-1.5 px-3 pl-10 hover:bg-accent/50">
-      <FieldTypeIcon value={childValue} format={child.format} />
+    <div className="flex items-start gap-3 py-1.5 px-3 pl-10 hover:bg-accent/50">
+      <span className="flex h-5 items-center shrink-0">
+        <FieldTypeIcon value={childValue} format={child.format} />
+      </span>
       <span className="text-sm text-muted-foreground min-w-[120px] max-w-[160px] shrink-0 truncate">
         {hintUtils.resolveFieldLabel(child)}
       </span>
@@ -49,7 +51,6 @@ function ChildFieldRow({
           />
         )}
       </span>
-      <InlineCopyButton value={childValue} />
     </div>
   );
 }
@@ -69,11 +70,11 @@ function ListItemRow({
 
   if (itemChildren.length === 0) {
     return (
-      <div className="group flex items-center gap-3 py-1.5 px-3 pl-10 hover:bg-accent/50">
+      <div className="flex items-start gap-3 py-1.5 px-3 pl-10 hover:bg-accent/50">
         <span className="text-sm text-muted-foreground min-w-[120px] max-w-[160px] shrink-0 truncate">
           {itemLabel}
         </span>
-        <span className="flex-1 text-sm min-w-0 break-all">
+        <span className="flex-1 text-sm min-w-0 break-words whitespace-pre-wrap">
           {isNil(item) ? (
             <span className="text-muted-foreground italic">{t('empty')}</span>
           ) : typeof item === 'object' ? (
@@ -82,7 +83,6 @@ function ListItemRow({
             String(item)
           )}
         </span>
-        <InlineCopyButton value={item} />
       </div>
     );
   }
@@ -91,7 +91,7 @@ function ListItemRow({
     <>
       <button
         type="button"
-        className="group flex items-center gap-3 py-1.5 px-3 pl-10 hover:bg-accent/50 cursor-pointer w-full text-left"
+        className="flex items-center gap-3 py-1.5 px-3 pl-10 hover:bg-accent/50 cursor-pointer w-full text-left"
         onClick={() => setItemExpanded(!itemExpanded)}
       >
         <span className="flex items-center gap-1 text-sm text-muted-foreground min-w-[120px] max-w-[160px] shrink-0">
@@ -113,7 +113,7 @@ function ListItemRow({
             return (
               <div
                 key={`${itemKey}-${child.key}`}
-                className="group flex items-center gap-3 py-1.5 px-3 pl-16 hover:bg-accent/50"
+                className="flex items-start gap-3 py-1.5 px-3 pl-16 hover:bg-accent/50"
               >
                 <span className="text-sm text-muted-foreground min-w-[100px] max-w-[140px] shrink-0 truncate">
                   {hintUtils.resolveFieldLabel(child)}
@@ -131,7 +131,6 @@ function ListItemRow({
                     />
                   )}
                 </span>
-                <InlineCopyButton value={childValue} />
               </div>
             );
           })}
@@ -169,7 +168,7 @@ function OutputFieldRow({ field, json }: OutputFieldRowProps) {
 
   return (
     <div className="border-b border-dividers last:border-b-0">
-      <div className="group flex items-start gap-3 py-2.5 px-3 hover:bg-accent/50">
+      <div className="flex items-start gap-3 py-2.5 px-3 hover:bg-accent/50">
         <div className="flex items-center gap-1.5 min-w-[140px] max-w-[180px] shrink-0 pt-0.5">
           {isExpandable ? (
             <button
@@ -207,7 +206,7 @@ function OutputFieldRow({ field, json }: OutputFieldRowProps) {
         <div className="flex-1 text-sm min-w-0">
           {isList ? (
             <span className="text-muted-foreground">
-              {listItems.length} {t('items')}
+              {t('itemCount', { count: listItems.length })}
             </span>
           ) : isPrimitiveList && expanded ? null : hasChildren && !expanded ? (
             <span
@@ -219,14 +218,13 @@ function OutputFieldRow({ field, json }: OutputFieldRowProps) {
               }
             >
               {isDynamicMap
-                ? `${dynamicEntries.length} ${t('fields')}`
+                ? t('fieldCount', { count: dynamicEntries.length })
                 : truncateValue(value)}
             </span>
           ) : hasChildren && expanded ? null : (
             <FormatValue value={value} field={field} />
           )}
         </div>
-        {!isExpandable && <InlineCopyButton value={value} />}
       </div>
 
       {expanded && isDynamicMap && (
@@ -282,13 +280,15 @@ function OutputFieldRow({ field, json }: OutputFieldRowProps) {
           {primitiveItems.map((item, idx) => (
             <div
               key={`${path}-${idx}`}
-              className="group flex items-center gap-3 py-1.5 px-3 pl-10 hover:bg-accent/50"
+              className="flex items-start gap-3 py-1.5 px-3 pl-10 hover:bg-accent/50"
             >
-              <FieldTypeIcon value={item} format={field.format} />
+              <span className="flex h-5 items-center shrink-0">
+                <FieldTypeIcon value={item} format={field.format} />
+              </span>
               <span className="text-sm text-muted-foreground min-w-[120px] max-w-[160px] shrink-0 truncate">
                 {`${label} ${idx + 1}`}
               </span>
-              <span className="flex-1 text-sm min-w-0 break-all">
+              <span className="flex-1 text-sm min-w-0 break-words whitespace-pre-wrap">
                 {isNil(item) || item === '' ? (
                   <span className="text-muted-foreground italic">
                     {t('empty')}
@@ -301,7 +301,6 @@ function OutputFieldRow({ field, json }: OutputFieldRowProps) {
                   />
                 )}
               </span>
-              <InlineCopyButton value={item} />
             </div>
           ))}
         </div>

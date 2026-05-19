@@ -3,26 +3,20 @@ import { t } from 'i18next';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
-import {
-  InlineCopyButton,
-  formatKey,
-  truncateValue,
-  ValueRow,
-} from './shared-value-rendering';
+import { formatKey, truncateValue, ValueRow } from './shared-value-rendering';
 
 function ArrayItemRow({ item, index }: { item: unknown; index: number }) {
   const [expanded, setExpanded] = useState(false);
 
   if (!isObject(item)) {
     return (
-      <div className="group flex items-center gap-3 py-2 px-4 hover:bg-accent/50 border-b border-dividers last:border-b-0">
+      <div className="flex items-center gap-3 py-2 px-4 hover:bg-accent/50 border-b border-dividers last:border-b-0">
         <span className="text-sm font-medium text-muted-foreground shrink-0">
           {t('Item')} {index + 1}
         </span>
         <span className="text-sm text-foreground/70 truncate flex-1">
           {truncateValue(item)}
         </span>
-        <InlineCopyButton value={item} />
       </div>
     );
   }
@@ -39,7 +33,7 @@ function ArrayItemRow({ item, index }: { item: unknown; index: number }) {
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
-        className="group flex items-center gap-3 py-2 px-4 hover:bg-accent/50 cursor-pointer w-full text-left"
+        className="flex items-center gap-3 py-2 px-4 hover:bg-accent/50 cursor-pointer w-full text-left"
       >
         <div className="shrink-0 w-4 h-4 flex items-center justify-center text-muted-foreground">
           {expanded ? (

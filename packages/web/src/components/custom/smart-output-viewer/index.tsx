@@ -1,7 +1,7 @@
 import { isObject } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Download } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { JsonViewer } from '@/components/custom/json-viewer';
@@ -20,11 +20,7 @@ import { OutputGenericFieldList } from './output-generic-field-list';
 import { isTabularArray, OutputTableView } from './output-table-view';
 import { OutputDisplayHints } from './types';
 
-const MAX_TEXT_DISPLAY_LENGTH = 500;
-
 function OutputTextDisplay({ text }: { text: string }) {
-  const [expanded, setExpanded] = useState(false);
-
   if (text === '') {
     return (
       <div className="p-4 text-sm text-muted-foreground italic">
@@ -33,24 +29,11 @@ function OutputTextDisplay({ text }: { text: string }) {
     );
   }
 
-  const isLong = text.length > MAX_TEXT_DISPLAY_LENGTH;
-  const displayText =
-    isLong && !expanded ? text.slice(0, MAX_TEXT_DISPLAY_LENGTH) + '...' : text;
-
   return (
     <div className="p-4">
       <pre className="text-sm whitespace-pre-wrap break-words font-sans leading-relaxed">
-        {displayText}
+        {text}
       </pre>
-      {isLong && (
-        <button
-          type="button"
-          onClick={() => setExpanded(!expanded)}
-          className="mt-2 text-xs text-primary hover:underline"
-        >
-          {expanded ? t('Show less') : t('Show more')}
-        </button>
-      )}
     </div>
   );
 }

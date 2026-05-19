@@ -30,13 +30,13 @@ function truncatePreview(value: unknown): {
     return { text: '', isTruncated: false, fullText: '' };
   if (Array.isArray(value))
     return {
-      text: `${value.length} ${t('items')}`,
+      text: t('itemCount', { count: value.length }),
       isTruncated: false,
       fullText: '',
     };
   if (isObject(value))
     return {
-      text: `${Object.keys(value).length} ${t('fields')}`,
+      text: t('fieldCount', { count: Object.keys(value).length }),
       isTruncated: false,
       fullText: '',
     };

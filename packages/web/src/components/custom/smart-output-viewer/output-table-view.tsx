@@ -1,11 +1,9 @@
 import { isObject } from '@activepieces/shared';
 import { t } from 'i18next';
 
-import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { stringUtils } from '@/lib/string-utils';
 import { cn } from '@/lib/utils';
 
-const MAX_CELL_LENGTH = 50;
 const MAX_TABLE_ROWS = 100;
 
 function isFlat(value: unknown): boolean {
@@ -80,14 +78,8 @@ function CellValue({ value }: { value: unknown }) {
     );
   }
 
-  const str = String(value);
-  const isTruncated = str.length > MAX_CELL_LENGTH;
-  const displayText = isTruncated ? str.slice(0, MAX_CELL_LENGTH) + '...' : str;
-
   return (
-    <span title={isTruncated ? str : undefined} className="break-words">
-      {displayText}
-    </span>
+    <span className="break-words whitespace-pre-wrap">{String(value)}</span>
   );
 }
 
@@ -119,8 +111,8 @@ function OutputTableView({ items }: OutputTableViewProps) {
               total: totalRows,
               label: t('rows'),
             })
-          : `${totalRows} ${t('rows')}`}{' '}
-        × {columns.length} {t('columns')}
+          : t('rowCount', { count: totalRows })}{' '}
+        × {t('columnCount', { count: columns.length })}
       </div>
       <div className="overflow-x-auto rounded-md border border-dividers">
         <table className="w-full text-sm">
@@ -147,16 +139,8 @@ function OutputTableView({ items }: OutputTableViewProps) {
                 {columns.map((col) => {
                   const cellValue = getCellValue(row, col.path);
                   return (
-                    <td key={col.key} className="px-3 py-2 group relative">
-                      <div className="flex items-center gap-1">
-                        <CellValue value={cellValue} />
-                        <CopyButton
-                          textToCopy={String(cellValue ?? '')}
-                          variant="ghost"
-                          withoutTooltip
-                          className="opacity-0 group-hover:opacity-100 shrink-0 h-5 w-5 p-0"
-                        />
-                      </div>
+                    <td key={col.key} className="px-3 py-2">
+                      <CellValue value={cellValue} />
                     </td>
                   );
                 })}

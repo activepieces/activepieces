@@ -1,17 +1,13 @@
 import { isNil, isObject } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { formatUtils } from '@/lib/format-utils';
 import { pathUtils } from '@/lib/path-utils';
-import { cn } from '@/lib/utils';
 
 import { hintUtils } from './resolve-hints';
 import { HintField, FieldFormat } from './types';
 
-const MAX_TEXT_LENGTH = 200;
 const SAFE_URL_PROTOCOLS = new Set(['http:', 'https:']);
 
 function getValueByDotPath(obj: unknown, path: string): unknown {
@@ -87,17 +83,14 @@ function FormatSingleValue({
     if (!isSafeUrl(stringValue)) {
       return <span className="break-all">{stringValue}</span>;
     }
-    const displayUrl =
-      stringValue.length > 60 ? stringValue.slice(0, 57) + '...' : stringValue;
     return (
       <a
         href={stringValue}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-primary underline-offset-4 hover:underline"
-        title={stringValue}
+        className="text-primary underline-offset-4 hover:underline break-all"
       >
-        {displayUrl}
+        {stringValue}
       </a>
     );
   }
@@ -170,14 +163,7 @@ function FormatSingleValue({
     }
   }
 
-  return (
-    <span
-      className="break-all"
-      title={stringValue.length > 40 ? stringValue : undefined}
-    >
-      {stringValue}
-    </span>
-  );
+  return <span className="break-words whitespace-pre-wrap">{stringValue}</span>;
 }
 
 function PrimitiveArrayPreview({
@@ -202,8 +188,6 @@ function PrimitiveArrayPreview({
 }
 
 function FormatValue({ value, field }: FormatValueProps) {
-  const [expanded, setExpanded] = useState(false);
-
   if (isNil(value) || value === '') {
     return <span className="text-muted-foreground italic">{t('empty')}</span>;
   }
@@ -219,57 +203,15 @@ function FormatValue({ value, field }: FormatValueProps) {
       );
     }
     return (
-      <Badge variant="outline">
-        {value.length} {t('items')}
-      </Badge>
+      <Badge variant="outline">{t('itemCount', { count: value.length })}</Badge>
     );
   }
 
   if (isObject(value)) {
     return (
       <Badge variant="outline">
-        {Object.keys(value).length} {t('fields')}
+        {t('fieldCount', { count: Object.keys(value).length })}
       </Badge>
-    );
-  }
-
-  const stringValue = String(value);
-
-  if (stringValue.length > MAX_TEXT_LENGTH && !expanded) {
-    return (
-      <div>
-        <span className="break-all">
-          {stringValue.slice(0, MAX_TEXT_LENGTH)}...
-        </span>
-        <button
-          type="button"
-          onClick={() => setExpanded(true)}
-          className={cn(
-            'ml-1 inline-flex items-center text-xs text-primary hover:underline',
-          )}
-        >
-          {t('Show more')}
-          <ChevronDown className="ml-0.5 h-3 w-3" />
-        </button>
-      </div>
-    );
-  }
-
-  if (stringValue.length > MAX_TEXT_LENGTH && expanded) {
-    return (
-      <div>
-        <span className="break-all">{stringValue}</span>
-        <button
-          type="button"
-          onClick={() => setExpanded(false)}
-          className={cn(
-            'ml-1 inline-flex items-center text-xs text-primary hover:underline',
-          )}
-        >
-          {t('Show less')}
-          <ChevronUp className="ml-0.5 h-3 w-3" />
-        </button>
-      </div>
     );
   }
 

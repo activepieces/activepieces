@@ -3,7 +3,6 @@ import { t } from 'i18next';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
-import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { stringUtils } from '@/lib/string-utils';
 
 import { FieldTypeIcon } from './field-type-icon';
@@ -13,7 +12,7 @@ const MAX_NESTED_DEPTH = 10;
 
 function truncateValue(value: unknown): string {
   if (isNil(value) || value === '') return '';
-  if (Array.isArray(value)) return `${value.length} ${t('items')}`;
+  if (Array.isArray(value)) return t('itemCount', { count: value.length });
   if (isObject(value)) {
     const entries = Object.entries(value);
     const preview = entries
@@ -23,56 +22,39 @@ function truncateValue(value: unknown): string {
         return `${k}: ${vs}`;
       })
       .join(', ');
-    return preview || `${entries.length} ${t('fields')}`;
+    return preview || t('fieldCount', { count: entries.length });
   }
-  const str = String(value);
-  return str.length > 50 ? str.slice(0, 50) + '...' : str;
-}
-
-function valueAsCopyText(value: unknown): string {
-  if (typeof value === 'object' && value !== null) {
-    return JSON.stringify(value, null, 2);
-  }
-  return String(value ?? '');
-}
-
-function InlineCopyButton({ value }: { value: unknown }) {
-  return (
-    <CopyButton
-      textToCopy={valueAsCopyText(value)}
-      variant="ghost"
-      withoutTooltip
-      className="opacity-0 group-hover:opacity-100 shrink-0 h-6 w-6 p-0"
-      onClick={(e) => e.stopPropagation()}
-    />
-  );
+  return String(value);
 }
 
 function ValueRow({ label, value, depth }: ValueRowProps) {
   const [expanded, setExpanded] = useState(false);
   const paddingLeft = 16 + depth * 24;
 
-  const isNestedObject = isObject(value);
+  if (isObject(value) || (Array.isArray(value) && value.length > 0)) {
+    if (depth >= MAX_NESTED_DEPTH) {
+      return (
+        <div
+          className="py-1.5 text-xs text-muted-foreground italic"
+          style={{ paddingLeft, paddingRight: 16 }}
+        >
+          {label}: {t('Too deep to display')}
+        </div>
+      );
+    }
 
-  if (isNestedObject && depth >= MAX_NESTED_DEPTH) {
-    return (
-      <div
-        className="py-1.5 text-xs text-muted-foreground italic"
-        style={{ paddingLeft, paddingRight: 16 }}
-      >
-        {label}: {t('Too deep to display')}
-      </div>
-    );
-  }
+    const nestedEntries: Array<readonly [string, unknown]> = Array.isArray(
+      value,
+    )
+      ? value.map((item, idx) => [`${t('Item')} ${idx + 1}`, item] as const)
+      : Object.entries(value);
 
-  if (isNestedObject) {
-    const nestedEntries = Object.entries(value);
     return (
       <div>
         <button
           type="button"
           onClick={() => setExpanded(!expanded)}
-          className="group flex items-center gap-3 py-1.5 hover:bg-accent/50 cursor-pointer w-full text-left"
+          className="flex items-center gap-3 py-1.5 hover:bg-accent/50 cursor-pointer w-full text-left"
           style={{ paddingLeft, paddingRight: 16 }}
         >
           <div className="shrink-0 w-4 h-4 flex items-center justify-center text-muted-foreground">
@@ -92,14 +74,13 @@ function ValueRow({ label, value, depth }: ValueRowProps) {
           >
             {truncateValue(value)}
           </span>
-          <InlineCopyButton value={value} />
         </button>
         {expanded && (
           <div>
             {nestedEntries.map(([key, childValue]) => (
               <ValueRow
                 key={key}
-                label={formatKey(key)}
+                label={Array.isArray(value) ? key : formatKey(key)}
                 value={childValue}
                 depth={depth + 1}
               />
@@ -112,37 +93,29 @@ function ValueRow({ label, value, depth }: ValueRowProps) {
 
   return (
     <div
-      className="group flex items-center gap-3 py-1.5 hover:bg-accent/50"
+      className="flex items-start gap-3 py-1.5 hover:bg-accent/50"
       style={{ paddingLeft: paddingLeft + 24, paddingRight: 16 }}
     >
-      <FieldTypeIcon value={value} />
+      <span className="flex h-5 items-center shrink-0">
+        <FieldTypeIcon value={value} />
+      </span>
       <span className="text-sm text-muted-foreground min-w-[100px] max-w-[160px] shrink-0 truncate">
         {label}
       </span>
-      <span
-        className="text-sm text-foreground/70 truncate flex-1 min-w-0"
-        title={
-          isNil(value) || value === ''
-            ? undefined
-            : typeof value === 'object'
-            ? JSON.stringify(value)
-            : String(value)
-        }
-      >
+      <span className="text-sm text-foreground/70 flex-1 min-w-0 break-words whitespace-pre-wrap">
         {isNil(value) || value === '' ? (
           <span className="text-muted-foreground/40 italic">{t('empty')}</span>
         ) : Array.isArray(value) ? (
-          `${value.length} ${t('items')}`
+          t('itemCount', { count: value.length })
         ) : (
           String(value)
         )}
       </span>
-      <InlineCopyButton value={value} />
     </div>
   );
 }
 
-export { ValueRow, InlineCopyButton, formatKey, truncateValue };
+export { ValueRow, formatKey, truncateValue };
 
 type ValueRowProps = {
   label: string;
