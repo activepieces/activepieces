@@ -14,6 +14,7 @@ import {
   isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
+import { Pencil } from 'lucide-react';
 import { Dispatch, SetStateAction, useState } from 'react';
 import { useFormContext, UseFormReturn } from 'react-hook-form';
 
@@ -27,7 +28,6 @@ import {
   MultiSelectValue,
 } from '@/components/custom/multi-select';
 import { Button } from '@/components/ui/button';
-import { CommandEmpty } from '@/components/ui/command';
 import {
   FormControl,
   FormField,
@@ -83,6 +83,7 @@ function OAuth2ConnectionSettings({
     oauth2App.oauth2Type === AppConnectionType.OAUTH2 &&
     grantType === OAuth2GrantType.AUTHORIZATION_CODE;
   const [loading, setLoading] = useState(false);
+  const [scopesEditing, setScopesEditing] = useState(false);
 
   return (
     <div className="flex flex-col gap-4">
@@ -152,57 +153,73 @@ function OAuth2ConnectionSettings({
             const selected = parseScopeString(field.value);
             return (
               <FormItem className="flex flex-col gap-2">
-                <FormLabel className="flex items-center gap-1">
-                  <span>{t('Permissions')}</span>
-                </FormLabel>
                 <FormControl>
-                  <MultiSelect
-                    modal={true}
-                    value={selected}
-                    onValueChange={(next) => field.onChange(next.join(' '))}
-                    items={authProperty.scope.map((scope) => ({
-                      value: scope,
-                      label: scope,
-                    }))}
-                  >
-                    <MultiSelectTrigger>
-                      {selected.length < 10 ? (
-                        <MultiSelectValue
-                          placeholder={t('Select permissions')}
-                        />
-                      ) : (
-                        t('{number} items selected', {
-                          number: selected.length,
-                        })
-                      )}
-                    </MultiSelectTrigger>
-                    <MultiSelectContent>
-                      <MultiSelectSearch
-                        placeholder={t('Search permissions')}
-                      />
-                      <MultiSelectList>
-                        <div
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            field.onChange(authProperty.scope.join(' '));
-                          }}
-                        >
-                          {authProperty.scope.length > 1 && (
-                            <MultiSelectItem>{t('Select All')}</MultiSelectItem>
+                  <div className="flex flex-col gap-2">
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setScopesEditing((v) => !v)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setScopesEditing((v) => !v);
+                        }
+                      }}
+                      className="flex w-full items-center gap-2 text-sm font-medium cursor-pointer select-none"
+                    >
+                      <span>{t('Permissions')}</span>
+                      <div className="grow" />
+                      <Pencil className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    {scopesEditing && (
+                      <MultiSelect
+                        modal={true}
+                        value={selected}
+                        onValueChange={(next) => field.onChange(next.join(' '))}
+                        items={authProperty.scope.map((scope) => ({
+                          value: scope,
+                          label: scope,
+                        }))}
+                      >
+                        <MultiSelectTrigger>
+                          {selected.length < 10 ? (
+                            <MultiSelectValue
+                              placeholder={t('Select permissions')}
+                            />
+                          ) : (
+                            t('{number} items selected', {
+                              number: selected.length,
+                            })
                           )}
-                        </div>
-                        {authProperty.scope.map((scope) => (
-                          <MultiSelectItem key={scope} value={scope}>
-                            <span className="truncate min-w-0">{scope}</span>
-                          </MultiSelectItem>
-                        ))}
-                        {authProperty.scope.length === 0 && (
-                          <CommandEmpty>{t('No results found.')}</CommandEmpty>
-                        )}
-                      </MultiSelectList>
-                    </MultiSelectContent>
-                  </MultiSelect>
+                        </MultiSelectTrigger>
+                        <MultiSelectContent>
+                          <MultiSelectSearch
+                            placeholder={t('Search permissions')}
+                          />
+                          <MultiSelectList>
+                            <div
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                field.onChange(authProperty.scope.join(' '));
+                              }}
+                            >
+                              <MultiSelectItem>
+                                {t('Select All')}
+                              </MultiSelectItem>
+                            </div>
+                            {authProperty.scope.map((scope) => (
+                              <MultiSelectItem key={scope} value={scope}>
+                                <span className="truncate min-w-0">
+                                  {scope}
+                                </span>
+                              </MultiSelectItem>
+                            ))}
+                          </MultiSelectList>
+                        </MultiSelectContent>
+                      </MultiSelect>
+                    )}
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
