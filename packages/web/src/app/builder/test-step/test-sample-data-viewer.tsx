@@ -3,23 +3,18 @@ import {
   AgentTaskStatus,
   FlowAction,
   isNil,
-  StepOutputStatus,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import React, { useContext } from 'react';
+import React, { useState } from 'react';
 
-import { StepOutputSkeleton } from '@/app/components/step-output-skeleton';
-import { JsonViewer } from '@/components/custom/json-viewer';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { StepStatusIcon } from '@/features/flow-runs';
-import { formatUtils } from '@/lib/format-utils';
 
-import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
+import { DataDisplayTabs } from '../data-display/data-display-tabs';
 
 import { AgentTestStep, isRunAgent } from './agent-test-step';
-import { TestButtonTooltip } from './test-step-tooltip';
+import { TestPanelHeader } from './test-panel-header';
 
 type TestSampleDataViewerProps = {
   isValid: boolean;
@@ -51,28 +46,7 @@ type RetestButtonProps = {
   onRetest: () => void;
 };
 
-const RetestButton = React.forwardRef<HTMLButtonElement, RetestButtonProps>(
-  ({ isValid, isSaving, isTesting, onRetest }, ref) => {
-    const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
-    return (
-      <TestButtonTooltip saving={isSaving} invalid={!isValid}>
-        <Button
-          ref={ref}
-          variant="outline"
-          size="sm"
-          disabled={!isValid || isSaving || isLoadingDynamicProperties}
-          keyboardShortcut="G"
-          onKeyboardShortcut={onRetest}
-          onClick={onRetest}
-          loading={isTesting || isSaving}
-        >
-          {t('Test')}
-        </Button>
-      </TestButtonTooltip>
-    );
-  },
-);
-RetestButton.displayName = 'TestButton';
+type ActiveTab = 'Input' | 'Output' | 'Logs';
 
 const isConsoleLogsValid = (value: unknown) => {
   if (isNil(value)) return false;
@@ -93,99 +67,112 @@ export const TestSampleDataViewer = React.memo(
       onRetest,
       onCancelTesting,
       hideCancel,
+      sampleDataInput,
+      consoleLogs,
     } = props;
+    const [requestedTab, setActiveTab] = useState<ActiveTab>('Output');
+    const hasInput = !isNil(sampleDataInput);
+    const hasLogs = isConsoleLogsValid(consoleLogs);
+    const activeTab: ActiveTab =
+      (requestedTab === 'Input' && !hasInput) ||
+      (requestedTab === 'Logs' && !hasLogs)
+        ? 'Output'
+        : requestedTab;
+
     const isFailed =
-      isRunAgent(currentStep) &&
-      ((sampleData as AgentResult | undefined)?.status ===
-        AgentTaskStatus.FAILED ||
-        !isNil(errorMessage));
+      !isNil(errorMessage) ||
+      (isRunAgent(currentStep) &&
+        (sampleData as AgentResult | undefined)?.status ===
+          AgentTaskStatus.FAILED);
+
+    const status: 'success' | 'failed' | 'testing' | 'idle' = isTesting
+      ? 'testing'
+      : isFailed
+      ? 'failed'
+      : 'success';
+
+    const outputData = errorMessage ?? sampleData;
+    const activeData =
+      activeTab === 'Input'
+        ? sampleDataInput
+        : activeTab === 'Logs'
+        ? consoleLogs
+        : outputData;
+    const dataLabel = t(activeTab);
 
     return (
       <>
         {!isTesting && children}
-        <div className="grow flex flex-col w-full text-start gap-4">
-          <div className="flex justify-center items-center">
-            <div className="flex flex-col grow gap-1">
-              <div className="text-md flex gap-1 items-center">
-                {isTesting && (
-                  <div className="flex items-center gap-1">
-                    <span className="flex gap-1 items-center">
-                      <LoadingSpinner className="w-4 h-4" />
-                      {isRunAgent(currentStep)
-                        ? t('Agent running...')
-                        : t('Testing...')}
-                    </span>
-                  </div>
-                )}
-
-                {isRunAgent(currentStep) && !isTesting && (
-                  <>
-                    <StepStatusIcon
-                      status={
-                        isFailed
-                          ? StepOutputStatus.FAILED
-                          : StepOutputStatus.SUCCEEDED
-                      }
-                      size="5"
-                    />
-                    <span>
-                      {t(isFailed ? 'Testing Failed' : 'Tested Successfully')}
-                    </span>
-                  </>
-                )}
-
-                {errorMessage && !isTesting && !isRunAgent(currentStep) && (
-                  <>
-                    <StepStatusIcon status={StepOutputStatus.FAILED} size="5" />
-                    <span>{t('Testing Failed')}</span>
-                  </>
-                )}
-
-                {!isTesting && !isRunAgent(currentStep) && !errorMessage && (
-                  <>
-                    <StepStatusIcon
-                      status={StepOutputStatus.SUCCEEDED}
-                      size="5"
-                    />
-                    <span>{t('Tested Successfully')}</span>
-                  </>
-                )}
-              </div>
-              <div className="text-muted-foreground text-xs">
-                {lastTestDate &&
-                  !errorMessage &&
-                  !isTesting &&
-                  formatUtils.formatDateWithTime(new Date(lastTestDate), false)}
-                {errorMessage && !isTesting && (
-                  <span>{t('Errors are not saved on refresh')}</span>
-                )}
-              </div>
+        <div className="grow flex flex-col w-full text-start">
+          <TestPanelHeader
+            status={status}
+            lastTestDate={lastTestDate}
+            onRetest={onRetest}
+            retestDisabled={!isValid || isSaving}
+            retestLoading={isTesting || isSaving}
+            copyableData={activeData}
+            dataLabel={dataLabel}
+            downloadFileName={`${
+              currentStep?.name ?? 'output'
+            }-${activeTab.toLowerCase()}`}
+          />
+          {errorMessage && !isTesting && (
+            <div className="px-3 pb-2 text-xs text-muted-foreground">
+              {t('Errors are not saved on refresh')}
             </div>
-
-            {!isTesting && (
-              <TestButtonTooltip saving={isSaving} invalid={!isValid}>
-                <RetestButton
-                  isValid={isValid}
-                  isSaving={isSaving}
-                  isTesting={isTesting}
-                  onRetest={onRetest}
-                />
-              </TestButtonTooltip>
-            )}
-            {isTesting && !hideCancel && (
-              <Button size={'sm'} variant={'outline'} onClick={onCancelTesting}>
-                {t('Cancel')}
-              </Button>
+          )}
+          <div className="flex-1 min-h-0 px-3 pb-3">
+            {isTesting && !isRunAgent(currentStep) ? (
+              <TestRunningState
+                onCancel={hideCancel ? undefined : onCancelTesting}
+              />
+            ) : (
+              <TestSampleDataViewerContent
+                {...props}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              />
             )}
           </div>
-          <TestSampleDataViewerContent {...props} />
         </div>
       </>
     );
   },
 );
 
+type TestRunningStateProps = {
+  onCancel?: () => void;
+};
+
+const TestRunningState = ({ onCancel }: TestRunningStateProps) => {
+  return (
+    <div className="h-full min-h-[140px] flex flex-col items-center justify-center gap-3 text-center">
+      <div className="flex items-center gap-2">
+        <LoadingSpinner className="size-4 text-muted-foreground" />
+        <span className="text-sm text-muted-foreground">
+          {t('Running test...')}
+        </span>
+      </div>
+      {onCancel && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onCancel}
+          className="text-muted-foreground h-7"
+        >
+          {t('Cancel')}
+        </Button>
+      )}
+    </div>
+  );
+};
+
 TestSampleDataViewer.displayName = 'TestSampleDataViewer';
+
+type TestSampleDataViewerContentProps = TestSampleDataViewerProps & {
+  activeTab: ActiveTab;
+  setActiveTab: (tab: ActiveTab) => void;
+};
 
 const TestSampleDataViewerContent = ({
   sampleData,
@@ -193,11 +180,9 @@ const TestSampleDataViewerContent = ({
   consoleLogs,
   errorMessage,
   currentStep,
-  isTesting,
-}: TestSampleDataViewerProps) => {
-  if (isTesting && !isRunAgent(currentStep)) {
-    return <StepOutputSkeleton className="px-1 " />;
-  }
+  activeTab,
+  setActiveTab,
+}: TestSampleDataViewerContentProps) => {
   if (isRunAgent(currentStep) && !errorMessage) {
     return (
       <AgentTestStep
@@ -207,44 +192,50 @@ const TestSampleDataViewerContent = ({
     );
   }
   if (isNil(sampleDataInput) && !isConsoleLogsValid(consoleLogs)) {
-    return <JsonViewer json={errorMessage ?? sampleData} title={t('Output')} />;
-  } else {
     return (
-      <Tabs defaultValue="Output">
-        <TabsList
-          className={`grid w-full ${
-            !isNil(sampleDataInput) && isConsoleLogsValid(consoleLogs)
-              ? 'w-[300px] grid-cols-3'
-              : 'w-[250px] grid-cols-2'
-          }`}
-        >
-          {!isNil(sampleDataInput) && (
-            <TabsTrigger value="Input">{t('Input')}</TabsTrigger>
-          )}
-          <TabsTrigger value="Output">{t('Output')}</TabsTrigger>
-          {isConsoleLogsValid(consoleLogs) && (
-            <TabsTrigger value="Logs">{t('Logs')}</TabsTrigger>
-          )}
-        </TabsList>
-
-        {!isNil(sampleDataInput) && (
-          <TabsContent value="Input">
-            <JsonViewer json={sampleDataInput} title={t('Input')} />
-          </TabsContent>
-        )}
-
-        <TabsContent value="Output">
-          <JsonViewer json={errorMessage ?? sampleData} title={t('Output')} />
-        </TabsContent>
-
-        {isConsoleLogsValid(consoleLogs) && (
-          <TabsContent value="Logs">
-            <JsonViewer json={consoleLogs} title={t('Logs')} />
-          </TabsContent>
-        )}
-      </Tabs>
+      <DataDisplayTabs data={errorMessage ?? sampleData} title={t('Output')} />
     );
   }
+  const showThree = !isNil(sampleDataInput) && isConsoleLogsValid(consoleLogs);
+  return (
+    <Tabs
+      value={activeTab}
+      onValueChange={(value) => setActiveTab(value as ActiveTab)}
+    >
+      <TabsList
+        className={`grid w-full h-9 ${
+          showThree ? 'grid-cols-3' : 'grid-cols-2'
+        }`}
+      >
+        {!isNil(sampleDataInput) && (
+          <TabsTrigger value="Input">{t('Input')}</TabsTrigger>
+        )}
+        <TabsTrigger value="Output">{t('Output')}</TabsTrigger>
+        {isConsoleLogsValid(consoleLogs) && (
+          <TabsTrigger value="Logs">{t('Logs')}</TabsTrigger>
+        )}
+      </TabsList>
+
+      {!isNil(sampleDataInput) && (
+        <TabsContent value="Input">
+          <DataDisplayTabs data={sampleDataInput} title={t('Input')} />
+        </TabsContent>
+      )}
+
+      <TabsContent value="Output">
+        <DataDisplayTabs
+          data={errorMessage ?? sampleData}
+          title={t('Output')}
+        />
+      </TabsContent>
+
+      {isConsoleLogsValid(consoleLogs) && (
+        <TabsContent value="Logs">
+          <DataDisplayTabs data={consoleLogs} title={t('Logs')} />
+        </TabsContent>
+      )}
+    </Tabs>
+  );
 };
 
 //In case the user has mangled sample data

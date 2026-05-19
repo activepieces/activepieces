@@ -35,7 +35,7 @@ export const apFindRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
         permission: Permission.READ_TABLE,
         description: 'Query records from a table with optional filtering. Operators: eq, neq, gt, gte, lt, lte, co, exists, not_exists.',
         inputSchema: findRecordsInput.shape,
-        annotations: { readOnlyHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {
                 const { tableId, filters, limit } = findRecordsInput.parse(args)
@@ -77,15 +77,28 @@ export const apFindRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
                 })
 
                 if (result.data.length === 0) {
-                    return { content: [{ type: 'text', text: 'No records found.' }] }
+                    return {
+                        content: [{ type: 'text', text: 'No records found.' }],
+                        structuredContent: { records: [], count: 0 },
+                    }
                 }
 
                 const formatted = result.data.map(r => formatPopulatedRecord(r)).join('\n\n')
+                const structured = {
+                    records: result.data.map(r => ({
+                        id: r.id,
+                        cells: Object.fromEntries(
+                            Object.entries(r.cells).map(([fieldId, c]) => [c.fieldName ?? fieldId, c.value]),
+                        ),
+                    })),
+                    count: result.data.length,
+                }
                 return {
                     content: [{
                         type: 'text',
                         text: `Found ${result.data.length} record(s):\n\n${formatted}`,
                     }],
+                    structuredContent: structured,
                 }
             }
             catch (err) {

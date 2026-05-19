@@ -1,71 +1,109 @@
 ---
 title: "Technical Limits"
 icon: "ban"
-description: "Technical limits for Activepieces execution"
+description: "Limits enforced on Activepieces Cloud, with self-hosted overrides"
 ---
-
-
-### Execution Limits
-
-- **Flow Execution Time**  
-  Maximum: **600 seconds (10 minutes)**  
-  Flows exceeding this limit will be marked as timed out.
-
-- **Memory Usage**  
-  Maximum: **1 GB RAM**  
-  (Self hosted can be configured via `AP_SANDBOX_MEMORY_LIMIT`)
 
 <Note>
-The memory usage is measured for the entire Node.js process running the flow. There is approximately 300 MB of overhead for a warm process with pieces already loaded.
+The numbers in the **Cloud** column are the limits enforced on
+[cloud.activepieces.com](https://cloud.activepieces.com). On **self-hosted**
+installations every limit is configurable through the environment variable
+shown in the table — the **Self-hosted default** column lists the value applied
+when the variable is unset.
 </Note>
 
+---
+
+### Execution
+
+| Limit | Cloud | Env var | Self-hosted default |
+|---|---|---|---|
+| Flow run timeout | 10 min | `AP_FLOW_TIMEOUT_SECONDS` | `600` |
+| Worker process memory | 1 GB | `AP_SANDBOX_MEMORY_LIMIT` (KB) | `1048576` |
+| Paused flow lifetime | 30 days | `AP_PAUSED_FLOW_TIMEOUT_DAYS` | `30` |
+| Worker concurrency (per worker) | 10 | `AP_WORKER_CONCURRENCY` | `5` |
+
 <Tip>
-**Note 1:** Flows paused by steps like **Wait for Approval** or **Delay** do **not** count toward the 600-second limit.
+Flows paused by **Wait for Approval** or **Delay** do **not** count toward the
+flow run timeout — the timeout only counts active execution time.
 </Tip>
 
 <Tip>
-**Note 2:** To handle longer processes, split them into multiple flows.  
-For example:  
-- Have one flow call another via **webhook**.  
-- Process smaller **batches of items** in separate flows.
+The memory limit is measured for the entire Node.js process running the flow.
+About 300 MB of that is overhead for a warm process with pieces loaded.
+</Tip>
+
+<Tip>
+To handle longer processes, split them into multiple flows — e.g. one flow calls
+another via webhook, or each flow processes a smaller batch of items.
 </Tip>
 
 ---
 
-### File Storage Limits
+### Files & flow run logs
 
 <Info>
-Files from actions or triggers are stored in the database/S3 to support retries for certain steps.
+Files emitted by actions or triggers are persisted to the database or S3 so the
+flow can retry from a later step. The log size limit applies to the combined
+inputs and outputs of every step in a single run; step outputs above the slice
+threshold are offloaded to object storage and re-hydrated on demand instead of
+sitting in worker memory.
 </Info>
 
-- **Maximum File Size**: **10 MB**  
-  (Configurable via `AP_MAX_FILE_SIZE_MB`, default: **25 MB**)
+| Limit | Cloud | Env var | Self-hosted default |
+|---|---|---|---|
+| Step file size | 10 MB | `AP_MAX_FILE_SIZE_MB` | `25` |
+| Flow run log size (combined inputs + outputs, includes sliced payloads) | 25 MB | `AP_MAX_FLOW_RUN_LOG_SIZE_MB` | `50` |
+| Step output slice threshold | 32 KB | `AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB` | `32` |
+| Step input truncate threshold | 2 KB | `AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB` | `2` |
 
-- **Maximum Flow Run Log Size**: **25 MB**  
-  (Configurable via `AP_MAX_FLOW_RUN_LOG_SIZE_MB`, default: **25 MB**)  
-  > This is the total combined size of all inputs and outputs for each step in a single flow run.
+#### How it works
+
+- **Input** — values above `AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB` are
+  replaced with a placeholder in the log; the step still receives the full
+  value at runtime.
+- **Output** — outputs above `AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB` are offloaded
+  to object storage and replaced with a reference in the log; the payload is
+  re-hydrated on demand.
+- **Total** — the cumulative size of inputs and outputs (counting the
+  **original** size of offloaded outputs) is capped by
+  `AP_MAX_FLOW_RUN_LOG_SIZE_MB`. Runs that exceed it end with status
+  `LOG_SIZE_EXCEEDED`.
+
+<Warning>
+A run that produces enough cumulative output to exceed
+`AP_MAX_FLOW_RUN_LOG_SIZE_MB` ends with status `LOG_SIZE_EXCEEDED`, regardless
+of how many individual outputs were offloaded to object storage. Lowering
+`AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB` will not buy more log headroom — only
+raising `AP_MAX_FLOW_RUN_LOG_SIZE_MB` does.
+</Warning>
+
 ---
 
-### Webhook Limits
+### Webhooks
 
-- **Webhook Response Timeout**: **30 seconds**
-  (Configurable via `AP_WEBHOOK_TIMEOUT_SECONDS`, default: **30 seconds**)
-  > For synchronous webhook requests (URLs ending in `/sync`), Activepieces will wait up to this limit before returning a 408 Request Timeout response.
+| Limit | Cloud | Env var | Self-hosted default |
+|---|---|---|---|
+| Sync webhook response timeout | 30 s | `AP_WEBHOOK_TIMEOUT_SECONDS` | `30` |
+| Max webhook payload size | 5 MB | `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` | `25` |
+| Webhook payload inline threshold | 1024 KB | `AP_WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB` | `512` |
 
-- **Maximum Webhook Payload Size**: **5 MB**
-  (Configurable via `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB`, default: **5 MB**)
-  > Webhook payloads exceeding this limit will be rejected with HTTP 413.
-
-- **Webhook Payload Inline Threshold**: **512 KB**
-  (Configurable via `AP_WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB`, default: **512 KB**)
-  > Payloads below this threshold are stored inline in Redis for fastest processing.
-  > Payloads above this threshold are offloaded to file storage to protect Redis memory.
+<Tip>
+For synchronous webhook requests (URLs ending in `/sync`), Activepieces will
+wait up to the response timeout before returning HTTP 408. Payloads above the
+inline threshold are offloaded from Redis to file storage to protect Redis
+memory; smaller payloads stay inline for the fastest path.
+</Tip>
 
 ---
 
-### Key / Value Storage Limits
+### Key / value storage
 
-Some pieces use the built-in Activepieces key store (e.g., **Store Piece**, **Queue Piece**).
+Used by the built-in **Store** piece and any piece that calls `context.store`.
 
-- **Maximum Key Length**: **128 characters**  
-- **Maximum Value Size**: **512 KB**
+| Limit | Value |
+|---|---|
+| Maximum key length | 128 characters |
+| Maximum value size | 512 KB |
+
+These limits are not configurable.

@@ -8,6 +8,7 @@ Audit Logging records security-relevant actions taken within a platform for comp
 - `packages/server/api/src/app/ee/audit-logs/audit-event-service.ts` — service with `setup()` and `list()` methods
 - `packages/server/api/src/app/ee/audit-logs/audit-event-entity.ts` — TypeORM entity
 - `packages/shared/src/lib/ee/audit-events/index.ts` — all event types, `ApplicationEvent` union, `ApplicationEventName` enum, `summarizeApplicationEvent()` helper
+- `packages/shared/src/lib/ee/audit-events/mock-event-builder.ts` — `buildMockEvent()` returns a typed `ApplicationEvent` mock for every `ApplicationEventName` value (used by event destination test delivery)
 - `packages/web/src/features/platform-admin/api/audit-events-api.ts` — frontend API client
 - `packages/web/src/features/platform-admin/hooks/audit-log-hooks.ts` — React query hooks
 - `packages/web/src/app/routes/platform/security/audit-logs/` — platform admin UI page
@@ -17,7 +18,7 @@ Enterprise and Cloud. Gated by `platform.plan.auditLogEnabled`.
 
 ## Domain Terms
 - **ApplicationEvent**: A discriminated union of all auditable event types.
-- **ApplicationEventName**: Enum of 19 event action strings (e.g., `flow.created`, `user.signed.in`).
+- **ApplicationEventName**: Enum of 24 event action strings (e.g., `flow.created`, `flow.published`, `user.signed.in`).
 - **userEvent / workerEvent**: Two listener types registered on the event bus; both persist records to `audit_event`.
 
 ## Entity
@@ -62,6 +63,9 @@ Returns `SeekPage<ApplicationEvent>` sorted descending by `created`.
 | `flow.created` | Flow created |
 | `flow.deleted` | Flow deleted |
 | `flow.updated` | Flow version modified (with detailed summary via `summarizeApplicationEvent`) |
+| `flow.published` | Flow version published |
+| `flow.activated` | Flow enabled/activated |
+| `flow.deactivated` | Flow disabled/deactivated |
 | `flow.run.started/finished/resumed/retried` | Flow run lifecycle |
 | `folder.created/updated/deleted` | Folder management |
 | `connection.upserted/deleted` | App connection changes |
