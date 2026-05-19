@@ -8,12 +8,12 @@ import { userIdentityService } from '../../authentication/user-identity/user-ide
 import { repoFactory } from '../../core/db/repo-factory'
 import { redisConnections } from '../../database/redis-connections'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
+import { domainHelper } from '../../helper/domain-helper'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
-import { domainHelper } from '../custom-domains/domain-helper'
 import { emailService } from '../helper/email/email-service'
 import { AlertEntity } from './alerts-entity'
 
@@ -139,10 +139,9 @@ export const alertsService = (log: FastifyBaseLogger) => ({
 })
 
 async function sendAlertOnFlowFailure(log: FastifyBaseLogger, params: IssueParams): Promise<void> {
-    const { platformId, flowRunId, projectId } = params
+    const { flowRunId, projectId } = params
 
     const runUrl = await domainHelper.getInternalUrl({
-        platformId,
         path: `projects/${projectId}/runs/${flowRunId}`,
     })
 

@@ -33,17 +33,19 @@ import { platformService } from './platform.service'
 
 const edition = system.getEdition()
 export const platformController: FastifyPluginAsyncZod = async (app) => {
-    app.post('/', CreatePlatformEndpoint, async (req) => {
-        const isOnboarding = req.principal.type === PrincipalType.ONBOARDING
-        const identityId = isOnboarding
-            ? req.principal.id
-            : (await userService(req.log).getOneOrFail({ id: req.principal.id })).identityId
-        return platformService(req.log).createPlatformWithProject({
-            identityId,
-            name: req.body.name,
-            invalidatePreviousTokens: isOnboarding,
+    if (edition === ApEdition.CLOUD) {
+        app.post('/', CreatePlatformEndpoint, async (req) => {
+            const isOnboarding = req.principal.type === PrincipalType.ONBOARDING
+            const identityId = isOnboarding
+                ? req.principal.id
+                : (await userService(req.log).getOneOrFail({ id: req.principal.id })).identityId
+            return platformService(req.log).createPlatformWithProject({
+                identityId,
+                name: req.body.name,
+                invalidatePreviousTokens: isOnboarding,
+            })
         })
-    })
+    }
 
     app.post('/:id', UpdatePlatformRequest, async (req, _res) => {
         if (req.principal.platform.id !== req.params.id) {

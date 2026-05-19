@@ -76,7 +76,7 @@ jobs:
         run: |
           RELEASE=$(node --print "require('./package.json').version")
           echo "image_tag=${RELEASE}.${{ github.sha }}.beta" >> $GITHUB_OUTPUT
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -171,7 +171,7 @@ jobs:
           echo "Staging tag: $CURRENT (SHA: $SHA)"
 
       - name: Login to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
