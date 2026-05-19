@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/tooltip';
 import { StepStatusIcon, flowRunUtils } from '@/features/flow-runs';
 import { pieceSelectorUtils } from '@/features/pieces';
+import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
 import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
@@ -40,6 +41,7 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
     isStepValid,
     isManualTrigger,
     isSkipped,
+    requestStepAutoTest,
   ] = useBuilderStateContext((state) => {
     const step = flowStructureUtil.getStep(stepName, state.flowVersion.trigger);
     const isManualTrigger =
@@ -59,6 +61,7 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
       !!step?.valid,
       isManualTrigger,
       flowCanvasUtils.isSkipped(stepName, state.flowVersion.trigger),
+      state.requestStepAutoTest,
     ];
   });
 
@@ -147,20 +150,40 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
   }
 
   const config = draftStatusConfig[status];
+  const isTestTrigger = status === 'untested' || status === 'needs-test';
+  const badgeContent = (
+    <>
+      {config.icon}
+      <div>{config.text}</div>
+    </>
+  );
+  const badgeClassName = flowRunUtils.getStatusContainerClassName(
+    config.variant,
+    true,
+  );
 
   return (
     <div className="absolute right-[1px] h-[20px] -top-[28px]">
       <Tooltip>
         <TooltipTrigger asChild>
-          <div
-            className={flowRunUtils.getStatusContainerClassName(
-              config.variant,
-              true,
-            )}
-          >
-            {config.icon}
-            <div>{config.text}</div>
-          </div>
+          {isTestTrigger && isStepValid ? (
+            <button
+              type="button"
+              aria-label={t('Test step')}
+              onClick={(e) => {
+                e.stopPropagation();
+                requestStepAutoTest(stepName);
+              }}
+              className={cn(
+                badgeClassName,
+                'cursor-pointer hover:brightness-95',
+              )}
+            >
+              {badgeContent}
+            </button>
+          ) : (
+            <div className={badgeClassName}>{badgeContent}</div>
+          )}
         </TooltipTrigger>
         {status === 'untested' && (
           <TooltipContent>
