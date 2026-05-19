@@ -5,9 +5,12 @@ import {
     Cursor,
     ErrorCode,
     ExecutionType,
+    ExecutioOutputFile,
+    FileType,
     FlowId,
     FlowRetryStrategy,
     FlowRun,
+    FlowRunCountByStatus,
     FlowRunId,
     FlowRunStatus,
     FlowRunWithRetryError,
@@ -22,7 +25,6 @@ import {
     SampleDataFileType,
     SeekPage,
     StreamStepProgress,
-    UploadLogsBehavior,
     WorkerJobType,
 } from '@activepieces/shared'
 import { context, propagation, trace } from '@opentelemetry/api'
@@ -30,7 +32,7 @@ import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
 import { ArrayContains, In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
-import { flowVersionService } from '../../flows/flow-version/flow-version.service'
+import { fileService } from '../../file/file.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
@@ -40,11 +42,11 @@ import { projectService } from '../../project/project-service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { payloadOffloader } from '../../workers/payload-offloader'
 import { flowService } from '../flow/flow.service'
+import { flowVersionService } from '../flow-version/flow-version.service'
 import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { runsMetadataQueue } from './flow-runs-queue'
-import { flowRunLogsService } from './logs/flow-run-logs-service'
 
 const CANCELLABLE_STATUSES: FlowRunStatus[] = [FlowRunStatus.PAUSED, FlowRunStatus.QUEUED]
 
@@ -52,7 +54,6 @@ const CANCELLABLE_STATUSES: FlowRunStatus[] = [FlowRunStatus.PAUSED, FlowRunStat
 const tracer = trace.getTracer('flow-run-service')
 export const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
 export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
-const USE_SIGNED_URL = system.getBoolean(AppSystemProp.S3_USE_SIGNED_URLS) ?? false
 
 export const flowRunService = (log: FastifyBaseLogger) => ({
     async upsert({ id, projectId }: { id: FlowRunId, projectId: ProjectId }): Promise<FlowRun> {
@@ -119,6 +120,11 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 failedStepName: params.failedStepName,
             })
         }
+        if (!isNil(params.failedStepMessage)) {
+            query = query.andWhere('flow_run."failedStep"->>\'message\' ILIKE :failedStepMessage', {
+                failedStepMessage: `%${params.failedStepMessage}%`,
+            })
+        }
         if (params.flowRunIds) {
             query = query.andWhere({
                 id: In(params.flowRunIds),
@@ -134,7 +140,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             projectId,
         })
         log.info({ runId: flowRunId, flowId: oldFlowRun.flowId, strategy }, 'Flow run retry initiated')
-        
+
         const retentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
         if (
             isFlowRunStateTerminal({ status: oldFlowRun.status, ignoreInternalError: false }) &&
@@ -400,14 +406,32 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
         return flowRun
     },
+    async countByStatus(params: CountByStatusParams): Promise<FlowRunCountByStatus[]> {
+        let query = flowRunRepo().createQueryBuilder('flow_run')
+            .select('flow_run.status', 'status')
+            .addSelect('COUNT(*)', 'count')
+            .where({
+                projectId: params.projectId,
+                environment: RunEnvironment.PRODUCTION,
+                archivedAt: IsNull(),
+            })
+            .groupBy('flow_run.status')
+
+        if (params.createdAfter) {
+            query = query.andWhere('flow_run.created >= :createdAfter', { createdAfter: params.createdAfter })
+        }
+        if (params.createdBefore) {
+            query = query.andWhere('flow_run.created <= :createdBefore', { createdBefore: params.createdBefore })
+        }
+
+        const results = await query.getRawMany()
+        return results.map((r: { status: FlowRunStatus, count: string }) => ({ status: r.status, count: parseInt(r.count, 10) }))
+    },
     async getOnePopulatedOrThrow(params: GetOneParams): Promise<FlowRun> {
         const flowRun = await this.getOneOrThrow(params)
         let steps = {}
         if (!isNil(flowRun.logsFileId)) {
-            const stateFile = await flowRunLogsService(log).getLogs({
-                logsFileId: flowRun.logsFileId,
-                projectId: flowRun.projectId,
-            })
+            const stateFile = await readLogsFile(log, flowRun.logsFileId, flowRun.projectId)
             if (!isNil(stateFile)) {
                 steps = stateFile.executionState.steps
             }
@@ -519,6 +543,11 @@ async function filterFlowRunsAndApplyFilters(
             failedStepName: params.failedStepName,
         })
     }
+    if (params.failedStepMessage) {
+        query = query.andWhere('flow_run."failedStep"->>\'message\' ILIKE :failedStepMessage', {
+            failedStepMessage: `%${params.failedStepMessage}%`,
+        })
+    }
 
     const flowRuns = await query.getMany()
     return flowRuns
@@ -527,12 +556,6 @@ async function filterFlowRunsAndApplyFilters(
 
 export async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Promise<FlowRun> {
     const logsFileId = params.flowRun.logsFileId ?? apId()
-    const logsUploadUrl = await flowRunLogsService(log).constructUploadUrl({
-        logsFileId,
-        projectId: params.flowRun.projectId,
-        flowRunId: params.flowRun.id,
-        behavior: USE_SIGNED_URL ? UploadLogsBehavior.REDIRECT_TO_S3 : UploadLogsBehavior.UPLOAD_DIRECTLY,
-    })
 
     const traceContext: Record<string, string> = {}
     propagation.inject(context.active(), traceContext)
@@ -565,7 +588,6 @@ export async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogge
             streamStepProgress: params.streamStepProgress,
             stepNameToTest: params.flowRun.stepNameToTest ?? undefined,
             sampleData: params.sampleData,
-            logsUploadUrl,
             logsFileId,
             traceContext,
         },
@@ -592,6 +614,18 @@ function queryBuilderForFlowRun(repo: Repository<FlowRun>): SelectQueryBuilder<F
     return repo.createQueryBuilder('flow_run')
         .leftJoinAndSelect('flow_run.flowVersion', 'flowVersion')
         .addSelect(['"flowVersion"."displayName"'])
+}
+
+async function readLogsFile(log: FastifyBaseLogger, logsFileId: string, projectId: string): Promise<ExecutioOutputFile | null> {
+    const result = await fileService(log).getDataOrUndefined({
+        projectId,
+        fileId: logsFileId,
+        type: FileType.FLOW_RUN_LOG,
+    })
+    if (isNil(result)) {
+        return null
+    }
+    return JSON.parse(result.data.toString('utf-8'))
 }
 
 async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogger): Promise<FlowRun> {
@@ -621,7 +655,7 @@ async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogg
     }
 }
 
-function isOutsideRetentionWindow(createdTime: string, retentionDays: number): boolean {
+export function isOutsideRetentionWindow(createdTime: string, retentionDays: number): boolean {
     if (!createdTime) return false
     return apDayjs(createdTime).add(retentionDays, 'day').isBefore(apDayjs())
 }
@@ -647,6 +681,7 @@ type ListParams = {
     createdAfter?: string
     createdBefore?: string
     failedStepName?: string
+    failedStepMessage?: string
     flowRunIds?: FlowRunId[]
     includeArchived?: boolean
     environment?: RunEnvironment
@@ -731,6 +766,7 @@ type BulkRetryParams = {
     createdBefore?: string
     excludeFlowRunIds?: FlowRunId[]
     failedStepName?: string
+    failedStepMessage?: string
 }
 
 type BulkArchiveActionParams = {
@@ -743,6 +779,13 @@ type BulkArchiveActionParams = {
     createdBefore?: string
     excludeFlowRunIds?: FlowRunId[]
     failedStepName?: string
+    failedStepMessage?: string
+}
+
+type CountByStatusParams = {
+    projectId: ProjectId
+    createdAfter?: string
+    createdBefore?: string
 }
 
 type FilterFlowRunsAndApplyFiltersParams = {
@@ -755,4 +798,5 @@ type FilterFlowRunsAndApplyFiltersParams = {
     createdBefore?: string
     excludeFlowRunIds?: FlowRunId[]
     failedStepName?: string
+    failedStepMessage?: string
 }

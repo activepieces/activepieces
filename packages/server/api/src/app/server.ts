@@ -13,12 +13,13 @@ import { Socket } from 'socket.io'
 import { getAdapter, setupApp } from './app'
 import { websocketService } from './core/websockets.service'
 import { healthModule } from './health/health.module'
+import { embedSecurity } from './helper/embed-security'
 import { errorHandler } from './helper/error-handler'
 import { exceptionHandler } from './helper/exception-handler'
 import { rejectedPromiseHandler } from './helper/promise-handler'
 import { system } from './helper/system/system'
 import { AppSystemProp } from './helper/system/system-props'
-import { mcpOAuthHttpController } from './mcp/oauth/mcp-oauth.controller'
+import { mcpOAuthHttpController, mcpPlatformHttpController } from './mcp/oauth/mcp-oauth.controller'
 import { mcpOAuthRootModule } from './mcp/oauth/mcp-oauth.module'
 
 
@@ -31,6 +32,7 @@ export const setupServer = async (): Promise<FastifyInstance> => {
     if (system.isApp()) {
         await app.register(mcpOAuthRootModule)
         await app.register(mcpOAuthHttpController, { prefix: '/mcp' })
+        await app.register(mcpPlatformHttpController, { prefix: '/mcp/platform' })
     }
 
     await app.register(async (apiApp) => {
@@ -64,11 +66,15 @@ export const setupServer = async (): Promise<FastifyInstance> => {
         await app.register(fastifyStatic, {
             root: frontendPath,
             setHeaders: (res, filepath) => {
-                if (filepath.endsWith('.html')) {
-                    void res.setHeader('Cache-Control', 'public, max-age=120')
+                const normalized = filepath.replace(/\\/g, '/')
+                if (normalized.endsWith('.html')) {
+                    void res.setHeader('Cache-Control', 'no-cache')
+                }
+                else if (normalized.includes('/assets/')) {
+                    void res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
                 }
                 else {
-                    void res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+                    void res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate')
                 }
             },
         })
@@ -87,9 +93,15 @@ export const setupServer = async (): Promise<FastifyInstance> => {
         return reply.code(404).send({ statusCode: 404, error: 'Not Found', message: 'Route not found' })
     })
 
-    app.addHook('onSend', async (_request, reply) => {
+    app.addHook('onSend', async (request, reply) => {
         void reply.header('X-Content-Type-Options', 'nosniff')
         void reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
+        if (!reply.hasHeader('Content-Security-Policy')) {
+            const frameAncestors = await embedSecurity(request.log).getFrameAncestorsHeader({
+                hostname: request.hostname,
+            })
+            void reply.header('Content-Security-Policy', frameAncestors)
+        }
     })
 
     return app

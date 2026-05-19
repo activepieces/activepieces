@@ -154,13 +154,13 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                 stripeSubscriptionStatus: undefined,
                 manageTemplatesEnabled: key.manageTemplatesEnabled,
                 apiKeysEnabled: key.apiKeysEnabled,
-                customDomainsEnabled: key.customDomainsEnabled,
                 projectRolesEnabled: key.projectRolesEnabled,
                 analyticsEnabled: key.analyticsEnabled,
                 eventStreamingEnabled: key.eventStreamingEnabled,
                 secretManagersEnabled: key.secretManagersEnabled,
                 agentsEnabled: key.agentsEnabled,
                 aiProvidersEnabled: key.aiProvidersEnabled ?? true,
+                chatEnabled: key.chatEnabled ?? false,
             },
         })
     },
@@ -179,7 +179,6 @@ const turnedOffFeatures: Omit<LicenseKeyEntity, 'id' | 'createdAt' | 'expiresAt'
     managePiecesEnabled: false,
     manageTemplatesEnabled: false,
     apiKeysEnabled: false,
-    customDomainsEnabled: false,
     globalConnectionsEnabled: false,
     customRolesEnabled: false,
     projectRolesEnabled: false,
@@ -187,4 +186,5 @@ const turnedOffFeatures: Omit<LicenseKeyEntity, 'id' | 'createdAt' | 'expiresAt'
     secretManagersEnabled: false,
     agentsEnabled: false,
     aiProvidersEnabled: false,
+    chatEnabled: false,
 }

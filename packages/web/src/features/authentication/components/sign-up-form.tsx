@@ -9,7 +9,7 @@ import { t } from 'i18next';
 import { Eye, EyeOff } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -88,11 +88,17 @@ const SignUpForm = ({
   }, [edition, websiteName]);
 
   const redirectAfterLogin = useRedirectAfterLogin();
+  const navigate = useNavigate();
 
   const { mutate, isPending } = authMutations.useSignUp({
     onSuccess: (data) => {
       if (data.verified) {
         authenticationSession.saveResponse(data, false);
+
+        if (isNil(data.projectId)) {
+          navigate('/create-platform');
+          return;
+        }
         redirectAfterLogin();
       } else {
         setShowCheckYourEmailNote(true);
@@ -172,7 +178,7 @@ const SignUpForm = ({
   ) : (
     <>
       <Form {...form}>
-        <form className="grid space-y-4">
+        <form className="flex flex-col space-y-4">
           <div className={'flex flex-row gap-2'}>
             <FormField
               control={form.control}
@@ -181,7 +187,7 @@ const SignUpForm = ({
                 required: t('First name is required'),
               }}
               render={({ field }) => (
-                <FormItem className="w-full grid space-y-1">
+                <FormItem className="w-full">
                   <Label htmlFor="firstName">{t('First Name')}</Label>
                   <Input
                     {...field}
@@ -203,7 +209,7 @@ const SignUpForm = ({
                 required: t('Last name is required'),
               }}
               render={({ field }) => (
-                <FormItem className="w-full grid space-y-1">
+                <FormItem className="w-full">
                   <Label htmlFor="lastName">{t('Last Name')}</Label>
                   <Input
                     {...field}

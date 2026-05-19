@@ -263,9 +263,9 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
 
   const currentStructure =
     viewMode === 'friendly' ? friendlyStructure : advancedStructure;
-  const filteredNodes = dataSelectorUtils.filterBy(
-    currentStructure,
-    searchTerm,
+  const filteredNodes = useMemo(
+    () => dataSelectorUtils.filterBy(currentStructure, searchTerm),
+    [currentStructure, searchTerm],
   );
 
   const checkFocus = useCallback(() => {

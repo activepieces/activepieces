@@ -60,7 +60,7 @@ type CompleteParams = {
 
 type CompleteResult = {
     completedExisting: boolean
-    waitpoint: Waitpoint
+    waitpoint: Waitpoint | null
 }
 
 type HandleResumeSignalParams = {

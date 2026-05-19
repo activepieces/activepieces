@@ -1,0 +1,49 @@
+---
+title: "Configure Embedding"
+description: "Set up your platform before provisioning users"
+icon: "sliders"
+---
+
+<Snippet file="enterprise-feature.mdx" />
+
+Before you provision users and generate signing keys, complete the embed onboarding in **Platform Settings → Security → Embedding**.
+
+On **Cloud**, all four steps below are required. On **self-hosted** Enterprise, only steps 3 and 4 apply — your instance already runs on your own domain.
+
+<Steps>
+  <Step title="Step 1: Enter the embed URL (Cloud only)">
+    Pick the subdomain you'll embed in your website (e.g. `flows.acme.com`). This URL will be visible inside workflows and is the origin the iframe loads from.
+
+    ![Enter the embed URL](/resources/embed-screenshots/embed-url.png)
+
+    <Tip>
+      Use a subdomain you control. You'll need access to its DNS provider in the next step.
+    </Tip>
+  </Step>
+
+  <Step title="Step 2: Verify the DNS records (Cloud only)">
+    Add the records shown in the dashboard at your DNS provider. They cover hostname routing, ownership, and SSL. We detect them automatically — verification usually completes within a few minutes.
+
+    ![Verify the DNS records](/resources/embed-screenshots/dns-records.png)
+
+    <Warning>
+      If you see **two `_acme-challenge` TXT records** with different values, both must be in place for SSL to issue. If your DNS provider supports multiple records with the same name, add both at once. If it only allows a single record per name, add one first — once it verifies and disappears from the dashboard, add the second.
+    </Warning>
+
+    Once all records are detected, the domain status switches to **Active** and you can move on.
+  </Step>
+
+  <Step title="Step 3: Add allowed websites">
+    List the origins that are allowed to load your embed in an iframe (e.g. `https://app.acme.com`). All other origins are blocked by the browser.
+
+    ![Verify the DNS records](/resources/embed-screenshots/allowed-websites.png)
+
+    <Tip>
+      You can also pre-seed origins via the `AP_ALLOWED_EMBED_ORIGINS` environment variable on self-hosted instances. Origins set this way are merged with the ones configured in the UI.
+    </Tip>
+  </Step>
+
+  <Step title="Step 4: Add a signing key">
+    Generate the signing key used to authenticate users. This step is covered in detail in [Provision Users](./provision-users).
+  </Step>
+</Steps>

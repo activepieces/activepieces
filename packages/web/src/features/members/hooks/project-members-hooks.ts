@@ -17,7 +17,6 @@ export const projectMembersHooks = {
     const { platform } = platformHooks.useCurrentPlatform();
     const query = useQuery<ProjectMemberWithUser[]>({
       queryKey: ['project-members', authenticationSession.getProjectId()],
-      meta: { showErrorDialog: true, loadSubsetOptions: {} },
       queryFn: async () => {
         const projectId = authenticationSession.getProjectId();
         assertNotNullOrUndefined(projectId, 'Project ID is null');
