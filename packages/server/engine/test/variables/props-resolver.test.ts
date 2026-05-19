@@ -249,7 +249,7 @@ describe('Props resolver', () => {
     test('failed step output resolves to empty string', async () => {
         const { resolvedInput } = await propsResolverService.resolve({
             unresolvedInput: '{{step_4.output}}',
-            executionState: buildStateWithFailedStep('step_4', 'Custom Runtime Error'),
+            executionState: await buildStateWithFailedStep('step_4', 'Custom Runtime Error'),
         })
         expect(resolvedInput).toEqual('')
     })
@@ -257,7 +257,7 @@ describe('Props resolver', () => {
     test('failed step output resolves to undefined inside an expression', async () => {
         const { resolvedInput } = await propsResolverService.resolve({
             unresolvedInput: '{{step_4.output === undefined}}',
-            executionState: buildStateWithFailedStep('step_4', 'Custom Runtime Error'),
+            executionState: await buildStateWithFailedStep('step_4', 'Custom Runtime Error'),
         })
         expect(resolvedInput).toEqual(true)
     })
@@ -265,7 +265,7 @@ describe('Props resolver', () => {
     test('error channel exposes the failure message via bracket path', async () => {
         const { resolvedInput } = await propsResolverService.resolve({
             unresolvedInput: "{{step_4['error']['message']}}",
-            executionState: buildStateWithFailedStep('step_4', 'Custom Runtime Error'),
+            executionState: await buildStateWithFailedStep('step_4', 'Custom Runtime Error'),
         })
         expect(resolvedInput).toEqual('Custom Runtime Error')
     })
@@ -273,7 +273,7 @@ describe('Props resolver', () => {
     test('error channel exposes the failure message via dot path', async () => {
         const { resolvedInput } = await propsResolverService.resolve({
             unresolvedInput: '{{step_4.error.message}}',
-            executionState: buildStateWithFailedStep('step_4', 'Custom Runtime Error'),
+            executionState: await buildStateWithFailedStep('step_4', 'Custom Runtime Error'),
         })
         expect(resolvedInput).toEqual('Custom Runtime Error')
     })
@@ -295,7 +295,7 @@ describe('Props resolver', () => {
     })
 
     test('error channel resolves a failure inside a loop iteration', async () => {
-        const stateWithLoopFailure = FlowExecutorContext.empty().upsertStep('step_3', GenericStepOutput.create({
+        const stateWithLoopFailure = (await FlowExecutorContext.empty().upsertStep('step_3', GenericStepOutput.create({
             type: FlowActionType.LOOP_ON_ITEMS,
             status: StepOutputStatus.SUCCEEDED,
             input: {},
@@ -312,7 +312,7 @@ describe('Props resolver', () => {
                 item: 1,
                 index: 0,
             },
-        })).setCurrentPath(StepExecutionPath.empty().loopIteration({
+        }))).setCurrentPath(StepExecutionPath.empty().loopIteration({
             loopName: 'step_3',
             iteration: 0,
         }))
@@ -324,7 +324,7 @@ describe('Props resolver', () => {
     })
 
     test('Q5. loop current-iteration item from inside loop subgraph', async () => {
-        const stateInsideLoop = FlowExecutorContext.empty().upsertStep('step_3', GenericStepOutput.create({
+        const stateInsideLoop = (await FlowExecutorContext.empty().upsertStep('step_3', GenericStepOutput.create({
             type: FlowActionType.LOOP_ON_ITEMS,
             status: StepOutputStatus.SUCCEEDED,
             input: {},
@@ -333,7 +333,7 @@ describe('Props resolver', () => {
                 item: { a: 42 },
                 index: 0,
             },
-        })).setCurrentPath(StepExecutionPath.empty().loopIteration({
+        }))).setCurrentPath(StepExecutionPath.empty().loopIteration({
             loopName: 'step_3',
             iteration: 0,
         }))
@@ -345,7 +345,7 @@ describe('Props resolver', () => {
     })
 
     test('Q7. step output is null (resolver normalizes nullish to empty string)', async () => {
-        const stateWithNullOutput = FlowExecutorContext.empty().upsertStep('step_1', GenericStepOutput.create({
+        const stateWithNullOutput = await FlowExecutorContext.empty().upsertStep('step_1', GenericStepOutput.create({
             type: FlowActionType.PIECE,
             status: StepOutputStatus.SUCCEEDED,
             input: {},
@@ -359,7 +359,7 @@ describe('Props resolver', () => {
     })
 
     test('Q8. step output is a primitive number', async () => {
-        const stateWithPrimitive = FlowExecutorContext.empty().upsertStep('step_1', GenericStepOutput.create({
+        const stateWithPrimitive = await FlowExecutorContext.empty().upsertStep('step_1', GenericStepOutput.create({
             type: FlowActionType.PIECE,
             status: StepOutputStatus.SUCCEEDED,
             input: {},
@@ -373,7 +373,7 @@ describe('Props resolver', () => {
     })
 
     test('Q9. step output is an array', async () => {
-        const stateWithArray = FlowExecutorContext.empty().upsertStep('step_1', GenericStepOutput.create({
+        const stateWithArray = await FlowExecutorContext.empty().upsertStep('step_1', GenericStepOutput.create({
             type: FlowActionType.PIECE,
             status: StepOutputStatus.SUCCEEDED,
             input: {},

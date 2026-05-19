@@ -839,7 +839,7 @@ describe('Execute Flow E2E', () => {
                     packageJson: '{}',
                 },
                 input: {
-                    received: '{{step_1.big}}',
+                    received: '{{step_1.output.big}}',
                 },
                 errorHandlingOptions: {},
             },
