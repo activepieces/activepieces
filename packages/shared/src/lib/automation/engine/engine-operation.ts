@@ -73,6 +73,8 @@ export type ExecuteToolOperation = BaseEngineOperation & {
     pieceVersion: string
     predefinedInput?: PredefinedInputsStructure
     instruction: string
+    flowId?: string
+    flowRunId?: string
 }
 
 export type ExecutePropsOptions = BaseEngineOperation & {

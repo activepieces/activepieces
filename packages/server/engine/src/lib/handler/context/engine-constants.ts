@@ -140,13 +140,13 @@ export class EngineConstants {
         })
     }
 
-    public static fromExecuteActionInput(input: ExecuteToolOperation): EngineConstants {
+    public static fromExecuteActionInput(input: ExecuteToolOperation, overrides?: { flowId?: string, flowRunId?: string }): EngineConstants {
         return new EngineConstants({
-            flowId: DEFAULT_MCP_DATA.flowId,
+            flowId: overrides?.flowId ?? DEFAULT_MCP_DATA.flowId,
             flowVersionId: DEFAULT_MCP_DATA.flowVersionId,
             flowVersionState: DEFAULT_MCP_DATA.flowVersionState,
             triggerPieceName: DEFAULT_MCP_DATA.triggerPieceName,
-            flowRunId: DEFAULT_MCP_DATA.flowRunId,
+            flowRunId: overrides?.flowRunId ?? DEFAULT_MCP_DATA.flowRunId,
             publicApiUrl: input.publicApiUrl,
             internalApiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
             retryConstants: DEFAULT_RETRY_CONSTANTS,

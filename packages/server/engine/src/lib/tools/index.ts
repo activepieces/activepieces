@@ -173,7 +173,10 @@ async function execute(operation: ExecuteToolOperationWithModel): Promise<Execut
         const output = await flowExecutor.getExecutorForAction(step.type).handle({
             action: step,
             executionState: FlowExecutorContext.empty(),
-            constants: EngineConstants.fromExecuteActionInput(operation),
+            constants: EngineConstants.fromExecuteActionInput(operation, {
+                flowId: operation.flowId,
+                flowRunId: operation.flowRunId,
+            }),
         })
         const { output: stepOutput, errorMessage, status } = output.steps[operation.actionName]
         
