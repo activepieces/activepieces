@@ -4,6 +4,8 @@ import {
     EngineResponseStatus,
     ExecuteFlowOperation,
     ExecuteTriggerResponse,
+    ExecutionError,
+    ExecutionErrorType,
     ExecutionState,
     ExecutionType,
     FlowActionType,
@@ -18,6 +20,7 @@ import {
     StepOutputStatus,
     TriggerHookType,
     TriggerPayload,
+    tryCatch,
 } from '@activepieces/shared'
 import { engineFileApi } from '../engine-file-api'
 import { EngineConstants, ResolvedBeginExecuteFlowOperation, ResolvedExecuteFlowOperation } from '../handler/context/engine-constants'
@@ -26,6 +29,7 @@ import { testExecutionContext } from '../handler/context/test-execution-context'
 import { flowExecutor } from '../handler/flow-executor'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
 import { triggerHelper } from '../helper/trigger-helper'
+import { utils } from '../utils'
 
 export const flowOperation = {
     execute: async (operation: ExecuteFlowOperation): Promise<EngineResponse<undefined>> => {
@@ -66,15 +70,41 @@ const executieSingleStepOrFlowOperation = async (input: ResolvedExecuteFlowOpera
             constants,
         })
     }
+    const emptyContext = FlowExecutorContext.empty({
+        engineApi: {
+            engineToken: constants.engineToken,
+            internalApiUrl: constants.internalApiUrl,
+        },
+    })
+    const { data: executionState, error: executionStateError } = await tryCatch(() => getFlowExecutionState(input, constants, emptyContext))
+    if (executionStateError) {
+        if (executionStateError instanceof ExecutionError && executionStateError.type === ExecutionErrorType.USER) {
+            return buildFailedTriggerContext({ input, baseContext: emptyContext, error: executionStateError })
+        }
+        throw executionStateError
+    }
     return flowExecutor.executeFromTrigger({
-        executionState: await getFlowExecutionState(input, constants, FlowExecutorContext.empty({
-            engineApi: {
-                engineToken: constants.engineToken,
-                internalApiUrl: constants.internalApiUrl,
-            },
-        })),
+        executionState,
         constants,
         input,
+    })
+}
+
+async function buildFailedTriggerContext({ input, baseContext, error }: BuildFailedTriggerContextParams): Promise<FlowExecutorContext> {
+    const trigger = input.flowVersion.trigger
+    const message = utils.formatError(error)
+    const failedTriggerOutput = GenericStepOutput.create({
+        type: trigger.type,
+        status: StepOutputStatus.FAILED,
+        input: {},
+    }).setErrorMessage(message)
+    return (await baseContext.upsertStep(trigger.name, failedTriggerOutput)).setVerdict({
+        status: FlowRunStatus.FAILED,
+        failedStep: {
+            name: trigger.name,
+            displayName: trigger.displayName,
+            message,
+        },
     })
 }
 
@@ -187,3 +217,8 @@ async function fetchExecutionStateFromLogs(logsFileId: string | undefined, opera
     return parsed.executionState as ExecutionState
 }
 
+type BuildFailedTriggerContextParams = {
+    input: ResolvedExecuteFlowOperation
+    baseContext: FlowExecutorContext
+    error: ExecutionError
+}
