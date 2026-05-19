@@ -105,10 +105,11 @@ async function resolveStateOrThrowOnNonUserError({ input, constants, baseContext
 async function buildFailedTriggerContext({ input, baseContext, error }: BuildFailedTriggerContextParams): Promise<FlowExecutorContext> {
     const trigger = input.flowVersion.trigger
     const message = utils.formatExecutionError(error)
+    const triggerPayload = input.executionType === ExecutionType.BEGIN ? input.triggerPayload : undefined
     const failedTriggerOutput = GenericStepOutput.create({
         type: trigger.type,
         status: StepOutputStatus.FAILED,
-        input: {},
+        input: triggerPayload ?? {},
     }).setErrorMessage(message)
     return (await baseContext.upsertStep(trigger.name, failedTriggerOutput)).setVerdict({
         status: FlowRunStatus.FAILED,

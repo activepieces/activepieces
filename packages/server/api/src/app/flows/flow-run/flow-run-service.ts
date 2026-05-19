@@ -24,6 +24,7 @@ import {
     RunEnvironment,
     SampleDataFileType,
     SeekPage,
+    StepOutputStatus,
     StreamStepProgress,
     WorkerJobType,
 } from '@activepieces/shared'
@@ -152,6 +153,10 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
         switch (strategy) {
             case FlowRetryStrategy.FROM_FAILED_STEP: {
+                const flowVersion = await flowVersionService(log).getOneOrThrow(oldFlowRun.flowVersionId)
+                const triggerStep = oldFlowRun.steps?.[flowVersion.trigger.name]
+                const triggerFailed = triggerStep?.status === StepOutputStatus.FAILED
+
                 await flowRunRepo().update({
                     id: oldFlowRun.id,
                     projectId: oldFlowRun.projectId,
@@ -163,6 +168,18 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 const updatedFlowRun = await findFlowRunOrThrow(oldFlowRun.id)
                 const platformId = await projectService(log).getPlatformId(updatedFlowRun.projectId)
                 await flowRunSideEffects(log).onRetry(updatedFlowRun)
+                if (triggerFailed) {
+                    return addToQueue({
+                        flowRun: updatedFlowRun,
+                        platformId,
+                        payload: triggerStep.input,
+                        streamStepProgress: StreamStepProgress.NONE,
+                        executeTrigger: true,
+                        executionType: ExecutionType.BEGIN,
+                        workerHandlerId: undefined,
+                        httpRequestId: undefined,
+                    }, log)
+                }
                 return addToQueue({
                     flowRun: updatedFlowRun,
                     platformId,
@@ -177,7 +194,9 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 const latestFlowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(
                     oldFlowRun.flowId,
                 )
-                const payload = oldFlowRun.steps ? oldFlowRun.steps[latestFlowVersion.trigger.name]?.output : undefined
+                const triggerStep = oldFlowRun.steps?.[latestFlowVersion.trigger.name]
+                const triggerFailed = triggerStep?.status === StepOutputStatus.FAILED
+                const payload = triggerFailed ? triggerStep?.input : triggerStep?.output
                 return this.start({
                     flowId: oldFlowRun.flowId,
                     payload,
@@ -186,7 +205,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     streamStepProgress: StreamStepProgress.NONE,
                     workerHandlerId: undefined,
                     httpRequestId: undefined,
-                    executeTrigger: false,
+                    executeTrigger: triggerFailed,
                     environment: oldFlowRun.environment,
                     flowVersionId: latestFlowVersion.id,
                     projectId: oldFlowRun.projectId,
