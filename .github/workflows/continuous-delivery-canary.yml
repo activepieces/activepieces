@@ -27,7 +27,7 @@ jobs:
           RELEASE=$(node --print "require('./package.json').version")
           echo "image_tag=${RELEASE}.${{ github.sha }}.canary" >> $GITHUB_OUTPUT
 
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -63,7 +63,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 24
 
