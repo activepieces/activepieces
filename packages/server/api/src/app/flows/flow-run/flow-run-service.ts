@@ -120,6 +120,11 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 failedStepName: params.failedStepName,
             })
         }
+        if (!isNil(params.failedStepMessage)) {
+            query = query.andWhere('flow_run."failedStep"->>\'message\' ILIKE :failedStepMessage', {
+                failedStepMessage: `%${params.failedStepMessage}%`,
+            })
+        }
         if (params.flowRunIds) {
             query = query.andWhere({
                 id: In(params.flowRunIds),
@@ -538,6 +543,11 @@ async function filterFlowRunsAndApplyFilters(
             failedStepName: params.failedStepName,
         })
     }
+    if (params.failedStepMessage) {
+        query = query.andWhere('flow_run."failedStep"->>\'message\' ILIKE :failedStepMessage', {
+            failedStepMessage: `%${params.failedStepMessage}%`,
+        })
+    }
 
     const flowRuns = await query.getMany()
     return flowRuns
@@ -671,6 +681,7 @@ type ListParams = {
     createdAfter?: string
     createdBefore?: string
     failedStepName?: string
+    failedStepMessage?: string
     flowRunIds?: FlowRunId[]
     includeArchived?: boolean
     environment?: RunEnvironment
@@ -755,6 +766,7 @@ type BulkRetryParams = {
     createdBefore?: string
     excludeFlowRunIds?: FlowRunId[]
     failedStepName?: string
+    failedStepMessage?: string
 }
 
 type BulkArchiveActionParams = {
@@ -767,6 +779,7 @@ type BulkArchiveActionParams = {
     createdBefore?: string
     excludeFlowRunIds?: FlowRunId[]
     failedStepName?: string
+    failedStepMessage?: string
 }
 
 type CountByStatusParams = {
@@ -785,4 +798,5 @@ type FilterFlowRunsAndApplyFiltersParams = {
     createdBefore?: string
     excludeFlowRunIds?: FlowRunId[]
     failedStepName?: string
+    failedStepMessage?: string
 }

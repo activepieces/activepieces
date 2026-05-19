@@ -1,16 +1,23 @@
 import {
     ACTIVEPIECES_CHAT_TIERS,
+    ActivepiecesChatTier,
     ActivepiecesError,
-    AIProviderModelType,
     AIProviderName,
-    ALLOWED_CHAT_MODELS_BY_PROVIDER,
     apId,
     ChatConversation,
     ChatHistoryMessage,
+    chatPersistenceUtils,
+    ChatStreamWriter,
     CreateChatConversationRequest,
+    DEFAULT_CHAT_TIER_ID,
     ErrorCode,
     GetProviderConfigResponse,
     isNil,
+    PersistedChatMessage,
+    PersistedChatPart,
+    PersistedChatPartType,
+    PersistedChatRole,
+    PersistedToolCallStatus,
     Project,
     ProjectType,
     SeekPage,
@@ -36,9 +43,10 @@ import { buildUserContentWithFiles } from './chat-file-utils'
 import { createChatModel } from './chat-model-factory'
 import { chatPrepareStep } from './chat-prepare-step'
 import { chatHistory } from './history/chat-history'
-import { chatMcp } from './mcp/chat-mcp'
+import { chatMcp, PlanExecution } from './mcp/chat-mcp'
 import { chatPrompt } from './prompt/chat-prompt'
-import { createBuilderTool, createChatTools, createResearcherTool } from './tools/chat-tools'
+import { chatDisplayTools } from './tools/chat-display-tools'
+import { createChatTools, createPlanApprovalTool } from './tools/chat-tools'
 
 const conversationRepo = repoFactory(ChatConversationEntity)
 
@@ -109,19 +117,13 @@ export const chatService = (log: FastifyBaseLogger) => ({
         await conversationRepo().delete(conversation.id)
     },
 
-    async getMessages({ id, platformId, userId }: ConversationIdentifier): Promise<{ data: ChatHistoryMessage[] }> {
+    async getMessages({ id, platformId, userId }: ConversationIdentifier): Promise<{ data: PersistedChatMessage[] | ChatHistoryMessage[] }> {
         const conversation = await this.getConversationOrThrow({ id, platformId, userId })
+        if (conversation.uiMessages) {
+            return { data: conversation.uiMessages }
+        }
         const messages = chatHistory.reconstruct(conversation.messages as ModelMessage[])
         return { data: messages }
-    },
-
-    async setProjectContext({ id, platformId, userId, projectId }: SetProjectContextParams): Promise<ChatConversation> {
-        const conversation = await this.getConversationOrThrow({ id, platformId, userId })
-        if (projectId !== null) {
-            await assertUserHasProjectAccess({ platformId, userId, projectId, log })
-        }
-        await conversationRepo().update(conversation.id, { projectId })
-        return { ...conversation, projectId }
     },
 
     async sendMessage({ conversationId, userId, platformId, content, files }: SendMessageParams): Promise<SendMessageResult> {
@@ -138,23 +140,17 @@ export const chatService = (log: FastifyBaseLogger) => ({
             ? candidateProjectId
             : null
 
-        const modelName = conversation.modelName
-            ?? await resolveDefaultChatModel({ platformId, provider: providerConfig.provider, log })
+        const tier = resolveTier({ tierId: conversation.modelName ?? null })
+        const modelId = resolveModelIdForProvider({ tier, provider: providerConfig.provider })
 
-        const { mcpClient, mcpToolSet } = await chatMcp.connectClient({ mcpCredentials, log })
+        const { mcpClient, mcpToolSet } = await chatMcp.connectClient({ mcpCredentials, conversationId, log })
 
-        if (selectedProjectId) {
-            mcpProjectSelection.set({ platformId, userId, projectId: selectedProjectId })
-        }
-        else {
-            mcpProjectSelection.clear({ platformId, userId })
-        }
-
+        const selectionScope = { conversationId }
         const model = createChatModel({
             provider: providerConfig.provider,
             auth: providerConfig.auth,
             config: providerConfig.config,
-            modelId: modelName,
+            modelId,
         })
 
         const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
@@ -167,17 +163,22 @@ export const chatService = (log: FastifyBaseLogger) => ({
         const newUserMessage: ModelMessage = { role: 'user' as const, content: userContent }
         const allMessages = [...previousMessages, newUserMessage]
 
-        await conversationRepo().update(conversationId, { messages: allMessages })
-
-        const compactionState = await resolveCompactionState({
-            conversation,
-            allMessages,
-            systemPromptLength: systemPrompt.length,
-            provider: providerConfig.provider,
-            model,
-            conversationId,
-            log,
-        })
+        const [, compactionState] = await Promise.all([
+            selectedProjectId
+                ? mcpProjectSelection.set({ scope: selectionScope, projectId: selectedProjectId })
+                : mcpProjectSelection.clear(selectionScope),
+            conversationRepo().update(conversationId, { messages: allMessages }).then(() =>
+                resolveCompactionState({
+                    conversation,
+                    allMessages,
+                    systemPromptLength: systemPrompt.length,
+                    provider: providerConfig.provider,
+                    model,
+                    conversationId,
+                    log,
+                }),
+            ),
+        ])
 
         const messagesForLlm = chatCompaction.buildCompactedPayload({
             messages: allMessages,
@@ -187,23 +188,15 @@ export const chatService = (log: FastifyBaseLogger) => ({
         })
 
         let pendingTitle = ''
-        const localTools = createChatTools({
-            onSessionTitle: (title) => {
-                pendingTitle = title
-            },
-            onSetProjectContext: async (projectId) => {
-                await conversationRepo().update(conversationId, { projectId })
-                if (projectId) {
-                    mcpProjectSelection.set({ platformId, userId, projectId })
-                }
-                else {
-                    mcpProjectSelection.clear({ platformId, userId })
-                }
-            },
-            projects: userProjects,
-            platformId,
-            log,
-        })
+        const onSetProjectContext = async (projectId: string | null) => {
+            await conversationRepo().update(conversationId, { projectId })
+            if (projectId) {
+                await mcpProjectSelection.set({ scope: selectionScope, projectId })
+            }
+            else {
+                await mcpProjectSelection.clear(selectionScope)
+            }
+        }
 
         const closeMcpClient = async (): Promise<void> => {
             if (mcpClient) {
@@ -213,29 +206,32 @@ export const chatService = (log: FastifyBaseLogger) => ({
             }
         }
 
+        const planApproved = { approved: false }
+        const planStepCounter = { current: 0 }
+        const uiParts: PersistedChatPart[] = []
+        const previousUiMessages = conversation.uiMessages ?? []
         const stream = createUIMessageStream({
             execute: ({ writer }) => {
-                const gatedTools = chatMcp.withApprovalGates({ mcpToolSet, writer, log })
-                const currentProviderOptions = buildProviderOptions({ provider: providerConfig.provider, modelId: modelName })
-                const baseTools: ToolSet = { ...localTools, ...gatedTools }
-                const builderTool = createBuilderTool({
-                    model,
-                    allTools: baseTools,
-                    rawMcpTools: mcpToolSet,
-                    providerOptions: currentProviderOptions,
+                const localTools = createChatTools({
+                    onSessionTitle: (title) => {
+                        pendingTitle = title
+                    },
+                    onSetProjectContext,
+                    projects: userProjects,
+                    platformId,
+                    log,
+                })
+                const displayTools = chatDisplayTools.create({ writer })
+                const planExecution = buildPlanExecution({ planApproved, planStepCounter, writer })
+                const planApprovalTool = createPlanApprovalTool({
                     writer,
-                    log,
+                    onPlanApproved: () => {
+                        planApproved.approved = true
+                    },
                 })
-                const researcherTool = createResearcherTool({
-                    model,
-                    allTools: baseTools,
-                    providerOptions: currentProviderOptions,
-                    log,
-                })
-                const tools: ToolSet = { ...baseTools, ...builderTool, ...researcherTool }
-                const allToolNames = Object.keys(tools)
-
-                const thinkingCapable = chatPrepareStep.isThinkingCapable({ modelId: modelName })
+                const gatedTools = chatMcp.withApprovalGates({ mcpToolSet, writer, log, planExecution })
+                const currentProviderOptions = buildProviderOptions({ provider: providerConfig.provider, tier })
+                const tools: ToolSet = { ...localTools, ...displayTools, ...planApprovalTool, ...gatedTools }
                 const sanitizedMessages = stripThinkingBlocks(messagesForLlm)
                 const textStream = streamText({
                     model,
@@ -243,23 +239,25 @@ export const chatService = (log: FastifyBaseLogger) => ({
                     messages: sanitizedMessages,
                     tools,
                     providerOptions: currentProviderOptions,
-                    prepareStep: chatPrepareStep.createPrepareStep({
-                        provider: providerConfig.provider,
-                        allToolNames,
-                        log,
-                        supportsThinking: thinkingCapable,
-                    }),
+                    prepareStep: chatPrepareStep.createPrepareStep({ log }),
                     stopWhen: stepCountIs(MAX_STEPS),
-                    onStepFinish: ({ finishReason, usage }) => {
+                    onStepFinish: ({ text, reasoning, toolCalls, toolResults, finishReason, usage }) => {
+                        uiParts.push(...buildStepParts({ text, reasoning, toolCalls, toolResults }))
                         log.debug({ conversationId, finishReason, usage }, 'Chat step finished')
                     },
                     onFinish: async ({ response, usage }) => {
                         const updatedMessages = [...allMessages, ...response.messages]
+                        const updatedUiMessages: PersistedChatMessage[] = [
+                            ...previousUiMessages,
+                            { role: PersistedChatRole.USER, parts: [{ type: PersistedChatPartType.TEXT, text: content }] },
+                            { role: PersistedChatRole.ASSISTANT, parts: uiParts },
+                        ]
                         try {
                             await conversationRepo().update(conversationId, {
                                 messages: updatedMessages,
+                                uiMessages: JSON.parse(JSON.stringify(updatedUiMessages)),
                                 ...(pendingTitle ? { title: pendingTitle } : {}),
-                                ...(isNil(conversation.modelName) ? { modelName } : {}),
+                                ...(isNil(conversation.modelName) ? { modelName: tier.id } : {}),
                             })
                         }
                         catch (saveErr) {
@@ -289,6 +287,30 @@ export const chatService = (log: FastifyBaseLogger) => ({
 
 })
 
+function buildPlanExecution({ planApproved, planStepCounter, writer }: {
+    planApproved: { approved: boolean }
+    planStepCounter: { current: number }
+    writer: ChatStreamWriter
+}): PlanExecution {
+    return {
+        isApproved: () => planApproved.approved,
+        async trackStep({ execute }) {
+            const stepIndex = planStepCounter.current
+            writer.write({ type: 'data-plan-progress', data: { stepIndex, status: 'executing' }, transient: true })
+            try {
+                const result = await execute()
+                writer.write({ type: 'data-plan-progress', data: { stepIndex, status: 'done' }, transient: true })
+                planStepCounter.current++
+                return result
+            }
+            catch (err) {
+                writer.write({ type: 'data-plan-progress', data: { stepIndex, status: 'error' }, transient: true })
+                throw err
+            }
+        },
+    }
+}
+
 async function getUserProjects({ platformId, userId, log }: {
     platformId: string
     userId: string
@@ -305,21 +327,6 @@ async function getUserProjects({ platformId, userId, log }: {
     )
 }
 
-async function assertUserHasProjectAccess({ platformId, userId, projectId, log }: {
-    platformId: string
-    userId: string
-    projectId: string
-    log: FastifyBaseLogger
-}): Promise<void> {
-    const userProjects = await getUserProjects({ platformId, userId, log })
-    if (!userProjects.some((p) => p.id === projectId)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: { entityId: projectId, entityType: 'Project' },
-        })
-    }
-}
-
 async function resolveChatProvider({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
     const chatProvider = await aiProviderService(log).getChatProvider({ platformId })
     if (isNil(chatProvider)) {
@@ -331,24 +338,24 @@ async function resolveChatProvider({ platformId, log }: { platformId: string, lo
     return chatProvider
 }
 
-async function resolveDefaultChatModel({ platformId, provider, log }: {
-    platformId: string
-    provider: AIProviderName
-    log: FastifyBaseLogger
-}): Promise<string> {
-    const allModels = await aiProviderService(log).listModels(platformId, provider)
-    const textModels = allModels.filter((m) => m.type === AIProviderModelType.TEXT)
-    const allowedIds = ALLOWED_CHAT_MODELS_BY_PROVIDER[provider]
-    if (allowedIds) {
-        const firstAllowed = textModels.find((m) => allowedIds.includes(m.id))
-        if (firstAllowed) return firstAllowed.id
+function resolveTier({ tierId }: { tierId: string | null }): ActivepiecesChatTier {
+    if (tierId) {
+        const tier = ACTIVEPIECES_CHAT_TIERS.find((t) => t.id === tierId)
+        if (tier) return tier
     }
-    const firstText = textModels[0]
-    if (firstText) return firstText.id
-    throw new ActivepiecesError({
-        code: ErrorCode.ENTITY_NOT_FOUND,
-        params: { entityId: provider, entityType: 'AIProviderTextModel' },
-    })
+    const defaultTier = ACTIVEPIECES_CHAT_TIERS.find((t) => t.id === DEFAULT_CHAT_TIER_ID)
+    return defaultTier ?? ACTIVEPIECES_CHAT_TIERS[0]
+}
+
+function resolveModelIdForProvider({ tier, provider }: { tier: ActivepiecesChatTier, provider: AIProviderName }): string {
+    const openrouterModelId = tier.modelId
+    // OpenRouter/Activepieces use "provider/model.version" format directly
+    if (provider === AIProviderName.ACTIVEPIECES || provider === AIProviderName.OPENROUTER) {
+        return openrouterModelId
+    }
+    // Direct providers (Anthropic, Bedrock, etc.) need the bare model ID with hyphens
+    const bareModel = openrouterModelId.replace(/^[^/]+\//, '').replace(/\./g, '-')
+    return bareModel
 }
 
 async function resolveCompactionState({ conversation, allMessages, systemPromptLength, provider, model, conversationId, log }: {
@@ -416,31 +423,19 @@ function stripThinkingBlocks(messages: ModelMessage[]): ModelMessage[] {
         .filter((msg): msg is ModelMessage => msg !== null)
 }
 
-const TIER_EFFORT: Record<string, { anthropicBudget: number, openrouterEffort: string }> = {
-    fast: { anthropicBudget: 5_000, openrouterEffort: 'low' },
-    smart: { anthropicBudget: 10_000, openrouterEffort: 'medium' },
-    premium: { anthropicBudget: 20_000, openrouterEffort: 'high' },
+const OPENROUTER_EFFORT_BY_TIER: Record<string, string> = {
+    fast: 'low',
+    smart: 'medium',
+    premium: 'high',
 }
 
-const DEFAULT_EFFORT = TIER_EFFORT.smart
-
-function resolveEffort({ modelId }: { modelId: string }): { anthropicBudget: number, openrouterEffort: string } {
-    const tier = ACTIVEPIECES_CHAT_TIERS.find((t) => t.modelId === modelId)
-    if (tier) {
-        return TIER_EFFORT[tier.id] ?? DEFAULT_EFFORT
-    }
-    return DEFAULT_EFFORT
-}
-
-function buildProviderOptions({ provider, modelId }: { provider: AIProviderName, modelId: string }): SharedV3ProviderOptions {
-    const effort = chatPrepareStep.isThinkingCapable({ modelId }) ? resolveEffort({ modelId }) : null
-
+function buildProviderOptions({ provider, tier }: { provider: AIProviderName, tier: ActivepiecesChatTier }): SharedV3ProviderOptions {
     switch (provider) {
         case AIProviderName.ANTHROPIC:
         case AIProviderName.BEDROCK:
             return {
                 anthropic: {
-                    ...(effort ? { thinking: { type: 'enabled', budgetTokens: effort.anthropicBudget } } : {}),
+                    thinking: { type: 'enabled', budgetTokens: tier.thinkingBudget },
                 },
             }
         case AIProviderName.ACTIVEPIECES:
@@ -448,7 +443,7 @@ function buildProviderOptions({ provider, modelId }: { provider: AIProviderName,
             return {
                 openrouter: {
                     cache_control: { type: 'ephemeral' },
-                    ...(effort ? { reasoning: { effort: effort.openrouterEffort } } : {}),
+                    reasoning: { effort: OPENROUTER_EFFORT_BY_TIER[tier.id] ?? 'medium' },
                 },
             }
         default:
@@ -473,6 +468,41 @@ function buildSystemPromptWithCaching({ systemPrompt, provider }: {
     }
 }
 
+function toRecord(value: unknown): Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value) ? value as Record<string, unknown> : {}
+}
+
+function buildStepParts({ text, reasoning, toolCalls, toolResults }: {
+    text: string
+    reasoning: Array<{ text: string }>
+    toolCalls: Array<{ toolCallId: string, toolName: string, input: unknown }>
+    toolResults: Array<{ toolCallId: string, output: unknown }>
+}): PersistedChatPart[] {
+    const parts: PersistedChatPart[] = []
+    for (const r of reasoning) {
+        if (r.text) {
+            parts.push({ type: PersistedChatPartType.REASONING, text: r.text })
+        }
+    }
+    if (text) {
+        parts.push({ type: PersistedChatPartType.TEXT, text })
+    }
+    const resultMap = new Map(toolResults.map((tr) => [tr.toolCallId, tr]))
+    for (const tc of toolCalls) {
+        const result = resultMap.get(tc.toolCallId)
+        const rawOutput = result ? chatPersistenceUtils.unwrapToolOutput(result.output) : undefined
+        parts.push({
+            type: PersistedChatPartType.TOOL_CALL,
+            toolCallId: tc.toolCallId,
+            toolName: tc.toolName,
+            input: toRecord(tc.input),
+            output: rawOutput,
+            status: result ? PersistedToolCallStatus.COMPLETED : PersistedToolCallStatus.ERROR,
+        })
+    }
+    return parts
+}
+
 type CreateConversationParams = {
     platformId: string
     userId: string
@@ -494,10 +524,6 @@ type ConversationIdentifier = {
 
 type UpdateConversationParams = ConversationIdentifier & {
     request: UpdateChatConversationRequest
-}
-
-type SetProjectContextParams = ConversationIdentifier & {
-    projectId: string | null
 }
 
 type SendMessageParams = {
