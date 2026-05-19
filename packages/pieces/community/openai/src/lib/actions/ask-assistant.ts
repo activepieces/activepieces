@@ -97,7 +97,7 @@ export const askAssistant = createAction({
       }
     }
 
-    await openai.beta.threads.messages.create(threadId, {
+    const message = await openai.beta.threads.messages.create(threadId, {
       role: 'user',
       content: prompt,
     });
@@ -112,9 +112,11 @@ export const askAssistant = createAction({
       const runStatus = await openai.beta.threads.runs.retrieve(threadId, run.id);
       if (runStatus.status === 'completed') {
         const messages = await openai.beta.threads.messages.list(threadId);
-        // Return the latest message from the assistant
-        const assistantMessages = messages.data.filter(m => m.role === 'assistant');
-        response = assistantMessages[0];
+        // Return only messages that are newer than the user's latest message (matching original behavior)
+        response = messages.data.splice(
+          0,
+          messages.data.findIndex((m) => m.id == message.id)
+        );
         break;
       }
       if (['failed', 'cancelled', 'expired'].includes(runStatus.status)) {
