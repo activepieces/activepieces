@@ -19,12 +19,12 @@ import {
     TriggerHookType,
     TriggerPayload,
 } from '@activepieces/shared'
+import { engineFileApi } from '../engine-file-api'
 import { EngineConstants, ResolvedBeginExecuteFlowOperation, ResolvedExecuteFlowOperation } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { testExecutionContext } from '../handler/context/test-execution-context'
 import { flowExecutor } from '../handler/flow-executor'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
-import { payloadFileClient } from '../helper/payload-file-client'
 import { triggerHelper } from '../helper/trigger-helper'
 
 export const flowOperation = {
@@ -67,7 +67,12 @@ const executieSingleStepOrFlowOperation = async (input: ResolvedExecuteFlowOpera
         })
     }
     return flowExecutor.executeFromTrigger({
-        executionState: await getFlowExecutionState(input, constants, FlowExecutorContext.empty()),
+        executionState: await getFlowExecutionState(input, constants, FlowExecutorContext.empty({
+            engineApi: {
+                engineToken: constants.engineToken,
+                internalApiUrl: constants.internalApiUrl,
+            },
+        })),
         constants,
         input,
     })
@@ -76,18 +81,19 @@ const executieSingleStepOrFlowOperation = async (input: ResolvedExecuteFlowOpera
 async function getFlowExecutionState(input: ResolvedExecuteFlowOperation, constants: EngineConstants, flowContext: FlowExecutorContext): Promise<FlowExecutorContext> {
     if (input.executionType === ExecutionType.BEGIN) {
         const newPayload = await runOrReturnPayload(input, constants)
-        return flowContext.upsertStep(input.flowVersion.trigger.name, GenericStepOutput.create({
-            type: input.flowVersion.trigger.type,
-            status: StepOutputStatus.SUCCEEDED,
-            input: {},
-        }).setOutput(newPayload))
+        return flowContext.upsertStep(input.flowVersion.trigger.name,
+            GenericStepOutput.create({
+                type: input.flowVersion.trigger.type,
+                status: StepOutputStatus.SUCCEEDED,
+                input: {},
+            }).setOutput(newPayload))
     }
     flowContext = flowContext.addTags(input.executionState.tags)
     for (const [step, output] of Object.entries(input.executionState.steps)) {
         if ([StepOutputStatus.SUCCEEDED, StepOutputStatus.PAUSED].includes(output.status)) {
             const newOutput = await insertSuccessStepsOrPausedRecursively(output)
             if (!isNil(newOutput)) {
-                flowContext = flowContext.upsertStep(step, newOutput)
+                flowContext = await flowContext.upsertStep(step, newOutput)
             }
         }
     }
@@ -157,18 +163,27 @@ async function resolveJobPayload(payload: JobPayload, operation: ExecuteFlowOper
     if (payload.type === 'inline') {
         return payload.value
     }
-    const buffer = await payloadFileClient.get({ apiUrl: operation.internalApiUrl, engineToken: operation.engineToken, fileId: payload.fileId })
-    return JSON.parse(buffer.toString('utf-8'))
+    const bytes = await engineFileApi.download({
+        fileId: payload.fileId,
+        apiUrl: operation.internalApiUrl,
+        engineToken: operation.engineToken,
+    })
+    return JSON.parse(new TextDecoder('utf-8').decode(bytes))
 }
 
 async function fetchExecutionStateFromLogs(logsFileId: string | undefined, operation: ExecuteFlowOperation): Promise<ExecutionState> {
     if (isNil(logsFileId)) {
         throw new EngineGenericError('ResumeLogsFileMissing', 'logsFileId is missing for RESUME operation')
     }
-    const buffer = await payloadFileClient.get({ apiUrl: operation.internalApiUrl, engineToken: operation.engineToken, fileId: logsFileId })
-    const parsed = JSON.parse(buffer.toString('utf-8'))
+    const bytes = await engineFileApi.download({
+        fileId: logsFileId,
+        apiUrl: operation.internalApiUrl,
+        engineToken: operation.engineToken,
+    })
+    const parsed = JSON.parse(new TextDecoder('utf-8').decode(bytes))
     if (isNil(parsed?.executionState)) {
         throw new EngineGenericError('ExecutionStateMissing', 'executionState is missing in logs file')
     }
     return parsed.executionState as ExecutionState
 }
+

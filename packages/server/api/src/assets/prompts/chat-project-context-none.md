@@ -1,1 +1,1 @@
-No project is currently selected. All tools are available but require a project context to return data. You can answer general questions, explain concepts, and help plan automations. If the user wants to build or modify automations, call `ap_select_project` with their chosen project ID, or ask them to select a project from the dropdown in the chat input area.
+No project is currently selected. If a tool call requires project context, select the most relevant project silently with `ap_select_project` — do not ask unless you are building an automation (Step 3).

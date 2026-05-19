@@ -71,7 +71,6 @@ export function ProjectDashboardSidebar({
   const navigate = useNavigate();
   const { data: currentUser } = userHooks.useCurrentUser();
   const { platform } = platformHooks.useCurrentPlatform();
-
   useEffect(() => {
     if (!searchOpen) {
       setSearchQuery('');
@@ -219,9 +218,9 @@ export function ProjectDashboardSidebar({
     },
   };
 
-  const items = [chatLink, exploreLink, impactLink, leaderboardLink].filter(
-    permissionFilter,
-  );
+  const items = [chatLink, exploreLink, impactLink, leaderboardLink]
+    .filter((item) => item.show !== false)
+    .filter(permissionFilter);
 
   return (
     !embedState.hideSideNav && (

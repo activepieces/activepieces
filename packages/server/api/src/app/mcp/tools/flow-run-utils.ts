@@ -1,4 +1,4 @@
-import { apId, FlowActionType, FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, FlowTriggerType, isFlowRunStateTerminal, isNil, RunEnvironment, SampleDataFileType, StepLocationRelativeToParent, StepOutputStatus, tryCatch, UpdateActionRequest } from '@activepieces/shared'
+import { apId, FlowActionType, FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, FlowTriggerType, isFlowRunStateTerminal, isNil, McpToolResult, RunEnvironment, SampleDataFileType, StepLocationRelativeToParent, StepOutputStatus, tryCatch, UpdateActionRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunService, isOutsideRetentionWindow } from '../../flows/flow-run/flow-run-service'
@@ -17,7 +17,7 @@ export async function executeFlowTest({ flowId, projectId, stepName, triggerTest
     stepName?: string
     triggerTestData?: Record<string, unknown>
     log: FastifyBaseLogger
-}): Promise<{ content: [{ type: 'text', text: string }] }> {
+}): Promise<McpToolResult> {
     let flow = await flowService(log).getOnePopulated({ id: flowId, projectId })
     if (isNil(flow)) {
         return { content: [{ type: 'text', text: '❌ Flow not found' }] }
@@ -111,7 +111,7 @@ export async function executeAdhocAction({
     input?: Record<string, unknown>
     connectionExternalId?: string
     log: FastifyBaseLogger
-}): Promise<{ content: [{ type: 'text', text: string }] }> {
+}): Promise<McpToolResult> {
     const authError = mcpUtils.validateAuth(connectionExternalId)
     if (authError) {
         return authError
@@ -137,6 +137,11 @@ export async function executeAdhocAction({
     const resolvedInput: Record<string, unknown> = {
         ...(input ?? {}),
         ...(connectionExternalId !== undefined && { auth: `{{connections['${connectionExternalId}']}}` }),
+    }
+
+    // createCustomApiCallAction wraps url in DynamicProperties, expecting { url: string } not a flat string
+    if (actionName === 'custom_api_call' && typeof resolvedInput.url === 'string') {
+        resolvedInput.url = { url: resolvedInput.url }
     }
 
     const diagnosis = mcpUtils.diagnosePieceProps({
@@ -197,7 +202,7 @@ export async function executeAdhocAction({
             actionName: action.name,
             input: resolvedInput,
             propertySettings: {},
-            errorHandlingOptions: { continueOnFailure: { value: false }, retryOnFailure: { value: false } },
+            errorHandlingOptions: mcpUtils.buildErrorHandlingOptions({}),
         }
         await mcpUtils.fillDefaultsForMissingOptionalProps({ settings: pieceSettings, platformId: project.platformId, log })
 
@@ -267,6 +272,22 @@ export async function executeAdhocAction({
     }
 }
 
+function looksEmpty(output: unknown): boolean {
+    if (output === undefined || output === null) return true
+    if (Array.isArray(output) && output.length === 0) return true
+    if (typeof output === 'object' && output !== null) {
+        const obj = output as Record<string, unknown>
+        if (obj.found === false) return true
+        if (Array.isArray(obj.messages) && obj.messages.length === 0) return true
+        if (Array.isArray(obj.results) && obj.results.length === 0) return true
+        if (typeof obj.results === 'object' && obj.results !== null) {
+            const results = obj.results as Record<string, unknown>
+            if (Array.isArray(results.messages) && results.messages.length === 0 && results.count === 0) return true
+        }
+    }
+    return false
+}
+
 function formatAdhocActionResult(run: FlowRun, stepName: string, displayName: string): string {
     const steps = run.steps
     if (isNil(steps) || typeof steps !== 'object') {
@@ -284,12 +305,16 @@ function formatAdhocActionResult(run: FlowRun, stepName: string, displayName: st
         const outStr = output === undefined
             ? '(no output)'
             : typeof output === 'string' ? output : JSON.stringify(output)
-        return `✅ ${displayName} completed (run ${run.id}).\n\n${mcpUtils.truncate(outStr, 4000)}`
+        const base = `✅ ${displayName} completed (run ${run.id}).\n\n${outStr}`
+        if (looksEmpty(output)) {
+            return `${base}\n\nNote: No results matched. If the user expected data, try broader parameters (e.g., wider date range, fewer filters).`
+        }
+        return base
     }
     const errStr = errorMessage === undefined
         ? `status: ${String(status)}`
         : typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage)
-    return `❌ ${displayName} failed (run ${run.id}): ${mcpUtils.truncate(errStr, 2000)}`
+    return `❌ ${displayName} failed (run ${run.id}): ${errStr}\n\nRetry suggestion: Check the error above. If it mentions missing criteria, try adding a broad filter (e.g., after_date with a recent date, or a common search term). If it mentions auth, verify the connection.`
 }
 
 export async function pollForRunCompletion(log: FastifyBaseLogger, runId: string, projectId: string): Promise<FlowRun> {
@@ -368,11 +393,11 @@ function formatStepOutput(name: string, step: unknown): string {
 
     if (status === StepOutputStatus.FAILED && errorMessage !== undefined) {
         const errStr = typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage)
-        parts.push(`    Error: ${mcpUtils.truncate(errStr, 300)}`)
+        parts.push(`    Error: ${errStr}`)
     }
     else if (output !== undefined) {
         const outStr = typeof output === 'string' ? output : JSON.stringify(output)
-        parts.push(`    Output: ${mcpUtils.truncate(outStr, 500)}`)
+        parts.push(`    Output: ${outStr}`)
     }
 
     return parts.join('\n')

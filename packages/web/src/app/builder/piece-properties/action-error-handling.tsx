@@ -35,11 +35,10 @@ const ActionErrorHandlingForm = React.memo(
     }
 
     return (
-      <div className={cn('flex flex-col', GAP_SIZE_FOR_STEP_SETTINGS)}>
-        <Separator />
-        <div className="flex items-center gap-2">
+      <div className={cn('flex flex-col mt-2', GAP_SIZE_FOR_STEP_SETTINGS)}>
+        <div className="text-xs font-semibold  tracking-wide text-muted-foreground flex items-center gap-1">
           <ShieldAlert className="w-4 h-4" />
-          <Label className="text-base">{t('Error handling')}</Label>
+          <span>{t('Error handling')}</span>
         </div>
         {hideContinueOnFailure !== true && (
           <FormField

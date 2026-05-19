@@ -21,6 +21,7 @@ import {
     FlowVersionState,
     PackageType,
     PieceType,
+    StepOutputType,
     StreamStepProgress,
     RunEnvironment,
 } from '@activepieces/shared'
@@ -802,6 +803,136 @@ describe('Execute Flow E2E', () => {
         expect(result.status).toBe(FlowRunStatus.SUCCEEDED)
         expect(result.steps.step_2.output).toEqual(
             expect.objectContaining({ resumed: true }),
+        )
+    }, 60_000)
+
+    it('slices a >32 KB step output, persists it across a delay/resume, and materializes it for a downstream step', async () => {
+        const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+
+        const webhookPiece = createMockPieceMetadata({
+            name: '@activepieces/piece-webhook',
+            version: '0.1.29',
+            platformId: undefined,
+            packageType: PackageType.REGISTRY,
+            pieceType: PieceType.OFFICIAL,
+        })
+        const delayPiece = createMockPieceMetadata({
+            name: '@activepieces/piece-delay',
+            version: '0.3.26',
+            platformId: undefined,
+            packageType: PackageType.REGISTRY,
+            pieceType: PieceType.OFFICIAL,
+        })
+        await databaseConnection().getRepository('piece_metadata').save([webhookPiece, delayPiece])
+
+        const referenceAction = {
+            type: FlowActionType.CODE as const,
+            name: 'step_3',
+            displayName: 'Read Sliced Output',
+            valid: true,
+            settings: {
+                sourceCode: {
+                    code: `export const code = async (inputs) => ({
+                        seenLength: inputs.received.length,
+                        sample: inputs.received.slice(0, 5),
+                    });`,
+                    packageJson: '{}',
+                },
+                input: {
+                    received: '{{step_1.big}}',
+                },
+                errorHandlingOptions: {},
+            },
+        }
+
+        const delayAction = {
+            type: FlowActionType.PIECE as const,
+            name: 'step_2',
+            displayName: 'Delay For',
+            valid: true,
+            settings: {
+                pieceName: '@activepieces/piece-delay',
+                pieceVersion: '0.3.26',
+                actionName: 'delayFor',
+                input: {
+                    unit: 'seconds',
+                    delayFor: 2,
+                },
+                propertySettings: {},
+                errorHandlingOptions: {},
+            },
+            nextAction: referenceAction,
+        }
+
+        const emitBigOutputAction = {
+            type: FlowActionType.CODE as const,
+            name: 'step_1',
+            displayName: 'Emit 40 KB',
+            valid: true,
+            settings: {
+                sourceCode: {
+                    code: `export const code = async () => ({ big: 'x'.repeat(40000) });`,
+                    packageJson: '{}',
+                },
+                input: {},
+                errorHandlingOptions: {},
+            },
+            nextAction: delayAction,
+        }
+
+        const mockFlow = createMockFlow({
+            projectId: mockProject.id,
+        })
+        await db.save('flow', mockFlow)
+
+        const mockFlowVersion = createMockFlowVersion({
+            flowId: mockFlow.id,
+            state: FlowVersionState.DRAFT,
+            trigger: {
+                type: FlowTriggerType.PIECE,
+                name: 'trigger',
+                displayName: 'Catch Webhook',
+                valid: true,
+                lastUpdatedDate: new Date().toISOString(),
+                settings: {
+                    pieceName: '@activepieces/piece-webhook',
+                    pieceVersion: '0.1.29',
+                    triggerName: 'catch_webhook',
+                    input: { authType: 'none' },
+                    propertySettings: {},
+                },
+                nextAction: emitBigOutputAction,
+            },
+        })
+        await db.save('flow_version', mockFlowVersion)
+
+        const flowRun = await flowRunService(app.log).start({
+            flowId: mockFlow.id,
+            payload: { body: { test: true } },
+            platformId: mockPlatform.id,
+            executionType: ExecutionType.BEGIN,
+            environment: RunEnvironment.TESTING,
+            streamStepProgress: StreamStepProgress.NONE,
+            executeTrigger: false,
+            flowVersionId: mockFlowVersion.id,
+            projectId: mockProject.id,
+            workerHandlerId: undefined,
+            httpRequestId: undefined,
+            failParentOnFailure: undefined,
+        })
+
+        const result = await pollFlowRunToCompletion(flowRun.id, mockProject.id)
+        expect(result.status).toBe(FlowRunStatus.SUCCEEDED)
+        // step_1 was offloaded to a FLOW_RUN_LOG_SLICE file; the journal stores a LogSliceRef.
+        expect(result.steps.step_1.outputType).toBe(StepOutputType.SLICE)
+        expect((result.steps.step_1.output as { fileId: string }).fileId).toEqual(expect.any(String))
+        // step_3 ran after the delay/resume — its input was resolved by materializing the slice
+        // through the unified /v1/files/:fileId GET endpoint.
+        expect(result.steps.step_3.output).toEqual(
+            expect.objectContaining({
+                seenLength: 40_000,
+                sample: 'xxxxx',
+            }),
         )
     }, 60_000)
 

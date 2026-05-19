@@ -1,5 +1,5 @@
 import { PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
-import { BranchOperator, FlowActionType, flowStructureUtil, isNil, isObject, singleValueConditions } from '@activepieces/shared'
+import { BranchOperator, FlowActionType, flowStructureUtil, isNil, isObject, McpServerType, McpToolResult, ProjectScopedMcpServer, singleValueConditions } from '@activepieces/shared'
 import type { RouterAction, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -22,10 +22,29 @@ const RESOLVABLE_PROP_TYPES = new Set<PropertyType>([
 
 const STEP_REFERENCE_HINT = 'Use {{stepName.field}} to reference prior steps (no .output. in path).'
 
-function mcpToolError(prefix: string, err: unknown): { content: [{ type: 'text', text: string }] } {
+function mcpToolError(prefix: string, err: unknown): McpToolResult {
+    const entityDetail = extractEntityNotFoundDetail(err)
+    if (entityDetail) {
+        return { content: [{ type: 'text', text: `❌ ${prefix}: ${entityDetail} not found. Check the ID or name and try again.` }], isError: true }
+    }
     const raw = err instanceof Error ? err.message : String(err)
     const message = sanitizeErrorMessage(raw)
-    return { content: [{ type: 'text', text: `❌ ${prefix}: ${message}` }] }
+    return { content: [{ type: 'text', text: `❌ ${prefix}: ${message}` }], isError: true }
+}
+
+function extractEntityNotFoundDetail(err: unknown): string | null {
+    if (!isObject(err)) return null
+    const error = (err as Record<string, unknown>).error
+    if (!isObject(error)) return null
+    const typed = error as Record<string, unknown>
+    if (typed.code !== 'ENTITY_NOT_FOUND') return null
+    if (!isObject(typed.params)) return null
+    const params = typed.params as Record<string, unknown>
+    if (typeof params.message === 'string') return params.message
+    const entityType = typeof params.entityType === 'string' ? params.entityType : null
+    const entityId = typeof params.entityId === 'string' ? params.entityId : null
+    if (entityType) return `${entityType}${entityId ? ` "${entityId}"` : ''}`
+    return entityId ? `"${entityId}"` : null
 }
 
 function sanitizeErrorMessage(message: string): string {
@@ -113,7 +132,7 @@ function buildPropSummaries(props: PiecePropertyMap, depth = 0): PropSummary[] {
                 summary.options = prop.options.options.map((o: { label: string, value: unknown }) => ({ label: o.label, value: o.value }))
             }
             if (prop.type === PropertyType.DROPDOWN || prop.type === PropertyType.MULTI_SELECT_DROPDOWN) {
-                summary.note = 'Dynamic dropdown — options load from your account via API. Configure in the Activepieces UI, or provide a known value.'
+                summary.note = 'Resolve with ap_resolve_property_options. Use the returned value (ID), not label.'
             }
             if (prop.type === PropertyType.DYNAMIC) {
                 summary.note = 'DYNAMIC — call ap_get_piece_props with auth+input to resolve sub-fields.'
@@ -138,24 +157,34 @@ function normalizePieceName(pieceName: string | undefined): string | undefined {
     return `@activepieces/piece-${normalized}`
 }
 
-async function lookupPieceComponent({ pieceName, componentName, componentType, projectId, log }: LookupPieceComponentParams): Promise<LookupPieceComponentResult> {
+async function lookupPieceComponent({ pieceName, componentName, componentType, projectId, platformId, log }: LookupPieceComponentParams): Promise<LookupPieceComponentResult> {
     const normalized = normalizePieceName(pieceName)
     if (isNil(normalized)) {
         return { error: mcpToolError('Validation failed', new Error('pieceName is required')) }
     }
-    // Resolve platformId so private (CUSTOM) pieces on this platform are findable by
-    // every tool that uses this helper (ap_add_step, ap_update_step, ap_get_piece_props,
-    // ap_validate_step_config, ap_run_action, etc.).
-    const project = await projectService(log).getOneOrThrow(projectId)
-    const piece = await pieceMetadataService(log).get({ name: normalized, projectId, platformId: project.platformId })
+    // platformId is needed so private (CUSTOM) pieces on this platform are discoverable.
+    let resolvedPlatformId: string
+    if (!isNil(platformId)) {
+        resolvedPlatformId = platformId
+    }
+    else if (!isNil(projectId)) {
+        resolvedPlatformId = (await projectService(log).getOneOrThrow(projectId)).platformId
+    }
+    else {
+        return { error: mcpToolError('Validation failed', new Error('Either platformId or projectId is required to look up a piece')) }
+    }
+    const piece = await pieceMetadataService(log).get({ name: normalized, projectId, platformId: resolvedPlatformId })
     if (isNil(piece)) {
-        return { error: { content: [{ type: 'text', text: `❌ Piece "${normalized}" not found. Use ap_list_pieces to get valid piece names.` }] } }
+        return { error: { content: [{ type: 'text', text: `❌ Piece "${normalized}" not found. Use ap_research_pieces to get valid piece names.` }] } }
     }
     const componentMap = componentType === 'action' ? piece.actions : piece.triggers
     const label = componentType === 'action' ? 'Action' : 'Trigger'
     const component = componentMap[componentName]
     if (isNil(component)) {
-        return { error: { content: [{ type: 'text', text: `❌ ${label} "${componentName}" not found in "${normalized}". Available: ${Object.keys(componentMap).join(', ')}` }] } }
+        const available = Object.keys(componentMap)
+        const suggestion = available.find((name) => name.includes(componentName))
+        const hint = suggestion ? ` Did you mean "${suggestion}"?` : ''
+        return { error: { content: [{ type: 'text', text: `❌ ${label} "${componentName}" not found in "${normalized}".${hint} Available: ${available.join(', ')}` }] } }
     }
     return { piece, component, pieceName: normalized }
 }
@@ -276,6 +305,55 @@ async function fillDefaultsForMissingOptionalProps({ settings, platformId, log }
     }
 }
 
+function buildErrorHandlingOptions({ continueOnFailure, retryOnFailure }: {
+    continueOnFailure?: boolean
+    retryOnFailure?: boolean
+}): { continueOnFailure: { value: boolean }, retryOnFailure: { value: boolean } } {
+    return {
+        continueOnFailure: { value: continueOnFailure ?? false },
+        retryOnFailure: { value: retryOnFailure ?? false },
+    }
+}
+
+async function resolveLatestPieceVersion({ pieceName, projectId, platformId, log }: {
+    pieceName: string
+    projectId: string
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<ResolveLatestPieceVersionResult> {
+    const normalized = normalizePieceName(pieceName)
+    if (isNil(normalized)) {
+        return { error: mcpToolError('Validation failed', new Error('pieceName is required')) }
+    }
+    const piece = await pieceMetadataService(log).get({ name: normalized, projectId, platformId })
+    if (isNil(piece)) {
+        return { error: { content: [{ type: 'text', text: `❌ Piece "${normalized}" not found. Use ap_research_pieces to get valid piece names.` }] } }
+    }
+    return { pieceVersion: `~${piece.version}`, normalizedPieceName: normalized }
+}
+
+function withTimeout<T>({ promise, ms }: { promise: Promise<T>, ms: number }): Promise<T> {
+    let timer: ReturnType<typeof setTimeout>
+    return Promise.race([
+        promise.finally(() => clearTimeout(timer)),
+        new Promise<never>((_resolve, reject) => {
+            timer = setTimeout(() => reject(new Error(`Timed out after ${ms}ms`)), ms)
+        }),
+    ])
+}
+
+async function resolvePlatformId({ mcp, log }: { mcp: ProjectScopedMcpServer, log: FastifyBaseLogger }): Promise<string> {
+    if (mcp.platformId) {
+        return mcp.platformId
+    }
+    const project = await projectService(log).getOneOrThrow(mcp.projectId)
+    return project.platformId
+}
+
+function isProjectScoped(mcp: ProjectScopedMcpServer): boolean {
+    return mcp.type === McpServerType.PROJECT
+}
+
 export const mcpUtils = {
     mcpToolError,
     truncate,
@@ -289,6 +367,11 @@ export const mcpUtils = {
     findResolvableProps,
     validateAuth,
     fillDefaultsForMissingOptionalProps,
+    buildErrorHandlingOptions,
+    resolveLatestPieceVersion,
+    resolvePlatformId,
+    isProjectScoped,
+    withTimeout,
     STEP_REFERENCE_HINT,
     BRANCH_CONDITIONS_INPUT_SCHEMA,
 }
@@ -334,16 +417,19 @@ type LookupPieceComponentParams = {
     pieceName: string
     componentName: string
     componentType: 'action' | 'trigger'
-    projectId: string
+    projectId: string | undefined
+    platformId?: string
     log: FastifyBaseLogger
 }
 
 type LookupPieceComponentResult =
     | { piece: PieceMetadataModel, component: { props: PiecePropertyMap, requireAuth: boolean, name: string, displayName: string, description: string }, pieceName: string, error?: never }
-    | { error: { content: [{ type: 'text', text: string }] }, piece?: never, component?: never, pieceName?: never }
-
-type McpToolResult = { content: [{ type: 'text', text: string }] }
+    | { error: McpToolResult, piece?: never, component?: never, pieceName?: never }
 
 type ResolveRouterStepResult =
     | { routerStep: RouterAction, error?: never }
     | { error: McpToolResult, routerStep?: never }
+
+type ResolveLatestPieceVersionResult =
+    | { pieceVersion: string, normalizedPieceName: string, error?: never }
+    | { error: McpToolResult, pieceVersion?: never, normalizedPieceName?: never }
