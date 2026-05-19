@@ -64,9 +64,13 @@ const executieSingleStepOrFlowOperation = async (input: ResolvedExecuteFlowOpera
             engineConstants: constants,
         })
         const step = flowStructureUtil.getActionOrThrow(input.stepNameToTest!, input.flowVersion.trigger)
+        const executionState = await resolveStateOrThrowOnNonUserError({ input, constants, baseContext: testContext })
+        if (executionState.verdict.status !== FlowRunStatus.RUNNING) {
+            return executionState
+        }
         return flowExecutor.execute({
             action: step,
-            executionState: await getFlowExecutionState(input, constants, testContext),
+            executionState,
             constants,
         })
     }
@@ -76,12 +80,9 @@ const executieSingleStepOrFlowOperation = async (input: ResolvedExecuteFlowOpera
             internalApiUrl: constants.internalApiUrl,
         },
     })
-    const { data: executionState, error: executionStateError } = await tryCatch(() => getFlowExecutionState(input, constants, emptyContext))
-    if (executionStateError) {
-        if (executionStateError instanceof ExecutionError && executionStateError.type === ExecutionErrorType.USER) {
-            return buildFailedTriggerContext({ input, baseContext: emptyContext, error: executionStateError })
-        }
-        throw executionStateError
+    const executionState = await resolveStateOrThrowOnNonUserError({ input, constants, baseContext: emptyContext })
+    if (executionState.verdict.status !== FlowRunStatus.RUNNING) {
+        return executionState
     }
     return flowExecutor.executeFromTrigger({
         executionState,
@@ -90,9 +91,20 @@ const executieSingleStepOrFlowOperation = async (input: ResolvedExecuteFlowOpera
     })
 }
 
+async function resolveStateOrThrowOnNonUserError({ input, constants, baseContext }: ResolveStateParams): Promise<FlowExecutorContext> {
+    const { data: executionState, error } = await tryCatch(() => getFlowExecutionState(input, constants, baseContext))
+    if (!error) {
+        return executionState
+    }
+    if (error instanceof ExecutionError && error.type === ExecutionErrorType.USER) {
+        return buildFailedTriggerContext({ input, baseContext, error })
+    }
+    throw error
+}
+
 async function buildFailedTriggerContext({ input, baseContext, error }: BuildFailedTriggerContextParams): Promise<FlowExecutorContext> {
     const trigger = input.flowVersion.trigger
-    const message = utils.formatError(error)
+    const message = utils.formatExecutionError(error)
     const failedTriggerOutput = GenericStepOutput.create({
         type: trigger.type,
         status: StepOutputStatus.FAILED,
@@ -215,6 +227,12 @@ async function fetchExecutionStateFromLogs(logsFileId: string | undefined, opera
         throw new EngineGenericError('ExecutionStateMissing', 'executionState is missing in logs file')
     }
     return parsed.executionState as ExecutionState
+}
+
+type ResolveStateParams = {
+    input: ResolvedExecuteFlowOperation
+    constants: EngineConstants
+    baseContext: FlowExecutorContext
 }
 
 type BuildFailedTriggerContextParams = {
