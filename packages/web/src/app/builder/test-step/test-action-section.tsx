@@ -7,7 +7,7 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { FlaskConical, Play } from 'lucide-react';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 
@@ -83,13 +83,13 @@ const TestStepSectionImplementation = React.memo(
       !isNil(lastTestDate) ||
       !isNil(errorMessage) ||
       isStepBeingTested(currentStep.name);
-    const onTestButtonClick = async () => {
+    const onTestButtonClick = useCallback(() => {
       if (isReturnResponseAndWaitForWebhook(currentStep)) {
         setActiveDialog(DialogType.WEBHOOK);
       } else {
         testAction(undefined);
       }
-    };
+    }, [currentStep, testAction]);
 
     const handleCloseDialog = () => {
       setActiveDialog(DialogType.NONE);
@@ -113,6 +113,8 @@ const TestStepSectionImplementation = React.memo(
       currentStep.valid,
       isLoadingDynamicProperties,
       isTesting,
+      consumePendingAutoTest,
+      onTestButtonClick,
     ]);
 
     return (
