@@ -119,29 +119,9 @@ export const FlowStepInputOutput = () => {
       ? 'testing'
       : 'success';
 
-  const activeData =
-    activeTab === 'input'
-      ? selectedStepOutput.input
-      : activeTab === 'output'
-      ? parsedOutput
-      : undefined;
-  const activeLabel =
-    activeTab === 'input'
-      ? t('Input')
-      : activeTab === 'output'
-      ? t('Output')
-      : undefined;
-
   return (
     <div className="h-full flex flex-col">
-      <TestPanelHeader
-        status={status}
-        lastTestDate={run.created}
-        copyableData={activeData}
-        dataLabel={activeLabel}
-        downloadFileName={`${selectedStep.name}-${activeTab}`}
-        hideRetest
-      />
+      <TestPanelHeader status={status} lastTestDate={run.created} />
       <ScrollArea className="flex-1 p-3">
         <Tabs
           value={activeTab}
@@ -160,6 +140,8 @@ export const FlowStepInputOutput = () => {
             <DataDisplayTabs
               data={selectedStepOutput.input}
               title={t('Input')}
+              copyableData={selectedStepOutput.input}
+              downloadFileName={`${selectedStep.name}-input`}
             />
           </TabsContent>
 
@@ -176,7 +158,12 @@ export const FlowStepInputOutput = () => {
             ) : slicedOutputRef ? (
               <SlicedOutputDownload slicedOutputRef={slicedOutputRef} />
             ) : (
-              <DataDisplayTabs data={parsedOutput} title={t('Output')} />
+              <DataDisplayTabs
+                data={parsedOutput}
+                title={t('Output')}
+                copyableData={parsedOutput}
+                downloadFileName={`${selectedStep.name}-output`}
+              />
             )}
           </TabsContent>
         </Tabs>
