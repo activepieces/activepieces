@@ -174,7 +174,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     flowRun: updatedFlowRun,
                     platformId,
                     streamStepProgress: StreamStepProgress.NONE,
-                    executeTrigger: false,
                     executionType: ExecutionType.RESUME,
                     resumeReason: ResumeReason.RETRY,
                     workerHandlerId: undefined,
@@ -593,7 +592,7 @@ export async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogge
         ? {
             ...commonJobData,
             executionType: ExecutionType.RESUME,
-            resumeReason: params.resumeReason ?? ResumeReason.WAITPOINT,
+            resumeReason: params.resumeReason,
         }
         : {
             ...commonJobData,
@@ -705,18 +704,20 @@ type GetOneParams = {
     projectId: ProjectId | undefined
 }
 
-export type AddToQueueParams = {
+type AddToQueueParamsCommon = {
     flowRun: FlowRun
     platformId: PlatformId
     payload?: unknown
-    executeTrigger: boolean
-    executionType: ExecutionType
-    resumeReason?: ResumeReason
     workerHandlerId: string | undefined
     httpRequestId: string | undefined
     streamStepProgress: StreamStepProgress
     sampleData?: Record<string, unknown>
 }
+
+export type AddToQueueParams = AddToQueueParamsCommon & (
+    | { executionType: ExecutionType.BEGIN, executeTrigger: boolean }
+    | { executionType: ExecutionType.RESUME, resumeReason: ResumeReason }
+)
 
 
 type StartParams = {
@@ -730,7 +731,7 @@ type StartParams = {
     failParentOnFailure: boolean | undefined
     stepNameToTest?: string
     executeTrigger: boolean
-    executionType: ExecutionType
+    executionType: ExecutionType.BEGIN
     workerHandlerId: string | undefined
     httpRequestId: string | undefined
     streamStepProgress: StreamStepProgress
