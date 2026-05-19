@@ -12,6 +12,7 @@ import { AutomationsPagination } from '@/features/automations/components/automat
 import { AutomationsSelectionBar } from '@/features/automations/components/automations-selection-bar';
 import { AutomationsTable } from '@/features/automations/components/automations-table';
 import { CreateFolderDialog } from '@/features/automations/components/create-folder-dialog';
+import { CreateInFolderKind } from '@/features/automations/components/create-new-menu';
 import { MoveToFolderDialog } from '@/features/automations/components/move-to-folder-dialog';
 import { RenameDialog } from '@/features/automations/components/rename-dialog';
 import { useAutomationsData } from '@/features/automations/hooks/use-automations-data';
@@ -98,6 +99,15 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
     invalidateFolder,
   } = useAutomationsData(filters, pinnedList);
 
+  const expandFolderIfCollapsed = useCallback(
+    (folderId: string) => {
+      if (!expandedFolders.has(folderId)) {
+        toggleFolder(folderId);
+      }
+    },
+    [expandedFolders, toggleFolder],
+  );
+
   const {
     selectedItems,
     toggleItemSelection,
@@ -179,6 +189,30 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
     [navigate, toggleFolder, folders, currentProjectName],
   );
 
+  const handleCreateInFolder = useCallback(
+    (folderId: string, kind: CreateInFolderKind) => {
+      switch (kind) {
+        case 'flow':
+          mutations.createFlow(folderId);
+          break;
+        case 'table':
+          mutations.createTable(t('New Table'), folderId);
+          break;
+        case 'import-flow':
+          expandFolderIfCollapsed(folderId);
+          dialogs.setImportTargetFolderId(folderId);
+          dialogs.setIsImportFlowDialogOpen(true);
+          break;
+        case 'import-table':
+          expandFolderIfCollapsed(folderId);
+          dialogs.setImportTargetFolderId(folderId);
+          dialogs.setIsImportTableDialogOpen(true);
+          break;
+      }
+    },
+    [expandFolderIfCollapsed, mutations, dialogs],
+  );
+
   const updateSearchParams = (newFolderId: string | undefined) => {
     setSearchParams(
       (prev) => {
@@ -226,11 +260,17 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
         userHasPermissionToWriteFlow={userHasPermissionToWriteFlow}
         userHasPermissionToWriteTable={userHasPermissionToWriteTable}
         userHasPermissionToWriteFolder={userHasPermissionToWriteFolder}
-        onCreateFlow={mutations.createFlow}
+        onCreateFlow={() => mutations.createFlow()}
         onCreateTable={() => mutations.createTable(t('New Table'))}
         onCreateFolder={() => dialogs.setIsFolderDialogOpen(true)}
-        onImportFlow={() => dialogs.setIsImportFlowDialogOpen(true)}
-        onImportTable={() => dialogs.setIsImportTableDialogOpen(true)}
+        onImportFlow={() => {
+          dialogs.setImportTargetFolderId(undefined);
+          dialogs.setIsImportFlowDialogOpen(true);
+        }}
+        onImportTable={() => {
+          dialogs.setImportTargetFolderId(undefined);
+          dialogs.setIsImportTableDialogOpen(true);
+        }}
         onClearAllFilters={clearAllFilters}
         hasActiveFilters={filtersActive}
         isCreatingFlow={mutations.isCreateFlowPending}
@@ -261,6 +301,11 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
             onMoveItem={mutations.handleMoveItem}
             onExportFlow={mutations.handleExportFlow}
             onExportTable={mutations.handleExportTable}
+            onCreateInFolder={handleCreateInFolder}
+            userHasPermissionToWriteFlow={userHasPermissionToWriteFlow}
+            userHasPermissionToWriteTable={userHasPermissionToWriteTable}
+            isCreatingFlow={mutations.isCreateFlowPending}
+            isCreatingTable={mutations.isCreatingTable}
             isMoving={mutations.isMoving}
             isDuplicating={mutations.isDuplicating}
             onLoadMoreInFolder={loadMoreInFolder}
@@ -317,8 +362,9 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
       />
 
       <ImportFlowDialog
+        key={dialogs.importTargetFolderId ?? 'root-import-flow'}
         insideBuilder={false}
-        folderId={UncategorizedFolderId}
+        folderId={dialogs.importTargetFolderId ?? UncategorizedFolderId}
         onRefresh={() => invalidateAll()}
       >
         <button
@@ -335,8 +381,12 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
       {!embedState.hideTables && (
         <ImportTableDialog
           open={dialogs.isImportTableDialogOpen}
-          setIsOpen={dialogs.setIsImportTableDialogOpen}
+          setIsOpen={(open) => {
+            dialogs.setIsImportTableDialogOpen(open);
+            if (!open) dialogs.setImportTargetFolderId(undefined);
+          }}
           showTrigger={false}
+          folderId={dialogs.importTargetFolderId}
           onImportSuccess={() => invalidateAll()}
         />
       )}

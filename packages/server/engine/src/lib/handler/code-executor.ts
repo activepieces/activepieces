@@ -37,7 +37,7 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
     const { data: executionStateResult, error: executionStateError } = await utils.tryCatchAndThrowOnEngineError((async () => {
         await flowRunProgressReporter.sendUpdate({
             engineConstants: constants,
-            flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
+            flowExecutorContext: await executionState.upsertStep(action.name, stepOutput),
             stepNameToUpdate: action.name,
         })
 
@@ -53,7 +53,8 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
             inputs: resolvedInput,
         })
 
-        return executionState.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(performance.now() - stepStartTime)).incrementStepsExecuted()
+        const succeeded = stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(performance.now() - stepStartTime)
+        return (await executionState.upsertStep(action.name, succeeded)).incrementStepsExecuted()
     }))
 
     if (executionStateError) {
@@ -62,8 +63,8 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
             .setErrorMessage(utils.formatError(executionStateError))
             .setDuration(performance.now() - stepStartTime)
 
-        return executionState
-            .upsertStep(action.name, failedStepOutput)
+        return (await executionState
+            .upsertStep(action.name, failedStepOutput))
             .setVerdict({ status: FlowRunStatus.FAILED, failedStep: {
                 name: action.name,
                 displayName: action.displayName,
