@@ -1,10 +1,10 @@
 import {
-    expressionRewriter,
     flowStructureUtil,
     FlowVersion,
     isNil,
     Step,
 } from '@activepieces/shared'
+import { expressionRewriter } from './expression-rewriter'
 import { Migration } from '.'
 
 const COF_BRANCHES_KEY = 'continueOnFailureBranches'

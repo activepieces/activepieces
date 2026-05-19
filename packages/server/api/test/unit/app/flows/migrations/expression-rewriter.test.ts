@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { expressionRewriter } from '../../src'
+import { expressionRewriter } from '../../../../../src/app/flows/flow-version/migrations/expression-rewriter'
 
 const rewrite = (input: string, stepNames: string[] = []): string =>
     expressionRewriter.rewriteStepReferences({ input, stepNames })
