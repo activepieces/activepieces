@@ -66,11 +66,11 @@ function OAuth2ConnectionSettings({
     form.getValues('request.value.client_secret');
   const isPropsValid = isNil(form.formState.errors.request?.value?.props);
   const selectedScopeString = form.watch('request.value.scope') ?? '';
+  const showScopeSelector = authProperty.scope.length > 1;
   const hasSelectedScopes =
-    authProperty.scope.length === 0 || selectedScopeString.trim().length > 0;
+    !showScopeSelector || selectedScopeString.trim().length > 0;
   const isConnectButtonEnabled =
     isClientIdValid && isClientSecretValid && isPropsValid && hasSelectedScopes;
-  const showScopeSelector = authProperty.scope.length > 1;
   const { data: thirdPartyUrl } = flagsHooks.useFlag<string>(
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
   );
@@ -237,6 +237,9 @@ function OAuth2ConnectionSettings({
                     type="button"
                     onClick={async () => {
                       if (!hasCode) {
+                        const scopesList = parseScopeString(
+                          form.getValues().request.value.scope,
+                        );
                         openPopup({
                           redirectUrl,
                           clientId: form.getValues().request.value.client_id,
@@ -244,9 +247,8 @@ function OAuth2ConnectionSettings({
                           pieceName: piece.name,
                           form,
                           pieceVersion: piece.version,
-                          scopes: parseScopeString(
-                            form.getValues().request.value.scope,
-                          ),
+                          scopes:
+                            scopesList.length > 0 ? scopesList : undefined,
                           setLoading,
                         });
                       } else {
@@ -341,7 +343,7 @@ type OpenPopupParams = {
   props: Record<string, unknown> | undefined;
   pieceName: string;
   pieceVersion: string;
-  scopes: string[];
+  scopes: string[] | undefined;
   form: UseFormReturn<{
     request:
       | UpsertCloudOAuth2Request
