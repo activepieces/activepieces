@@ -291,11 +291,12 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             if (!code) {
                 return reply.type('text/plain').send('The code is missing in url')
             }
+            const frontendOrigin = new URL(system.getOrThrow(AppSystemProp.FRONTEND_URL)).origin
             return reply
                 .type('text/html')
                 .header('Content-Security-Policy', 'default-src \'none\'; script-src \'unsafe-inline\'')
                 .header('X-Content-Type-Options', 'nosniff')
-                .send(Mustache.render(REDIRECT_HTML_TEMPLATE, { code }))
+                .send(Mustache.render(REDIRECT_HTML_TEMPLATE, { code, frontendOrigin }))
         },
     )
 
@@ -524,7 +525,7 @@ Redirect successful, this window should close now.
     var el = document.getElementById('ap-oauth-code');
     var code = el ? el.getAttribute('content') : null;
     if (window.opener && code) {
-        window.opener.postMessage({ code: code }, '*');
+        window.opener.postMessage({ code: code }, '{{{frontendOrigin}}}');
     }
 })();
 </script>
