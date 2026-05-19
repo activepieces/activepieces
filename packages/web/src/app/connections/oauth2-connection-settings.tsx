@@ -17,7 +17,17 @@ import { t } from 'i18next';
 import { Dispatch, SetStateAction, useState } from 'react';
 import { useFormContext, UseFormReturn } from 'react-hook-form';
 
+import {
+  MultiSelect,
+  MultiSelectContent,
+  MultiSelectItem,
+  MultiSelectList,
+  MultiSelectSearch,
+  MultiSelectTrigger,
+  MultiSelectValue,
+} from '@/components/custom/multi-select';
 import { Button } from '@/components/ui/button';
+import { CommandEmpty } from '@/components/ui/command';
 import {
   FormControl,
   FormField,
@@ -55,8 +65,12 @@ function OAuth2ConnectionSettings({
     oauth2App.oauth2Type !== AppConnectionType.OAUTH2 ||
     form.getValues('request.value.client_secret');
   const isPropsValid = isNil(form.formState.errors.request?.value?.props);
+  const selectedScopeString = form.watch('request.value.scope') ?? '';
+  const hasSelectedScopes =
+    authProperty.scope.length === 0 || selectedScopeString.trim().length > 0;
   const isConnectButtonEnabled =
-    isClientIdValid && isClientSecretValid && isPropsValid;
+    isClientIdValid && isClientSecretValid && isPropsValid && hasSelectedScopes;
+  const showScopeSelector = authProperty.scope.length > 1;
   const { data: thirdPartyUrl } = flagsHooks.useFlag<string>(
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
   );
@@ -130,6 +144,73 @@ function OAuth2ConnectionSettings({
         />
       )}
 
+      {showScopeSelector && (
+        <FormField
+          name="request.value.scope"
+          control={form.control}
+          render={({ field }) => {
+            const selected = parseScopeString(field.value);
+            return (
+              <FormItem className="flex flex-col gap-2">
+                <FormLabel className="flex items-center gap-1">
+                  <span>{t('Permissions')}</span>
+                </FormLabel>
+                <FormControl>
+                  <MultiSelect
+                    modal={true}
+                    value={selected}
+                    onValueChange={(next) => field.onChange(next.join(' '))}
+                    items={authProperty.scope.map((scope) => ({
+                      value: scope,
+                      label: scope,
+                    }))}
+                  >
+                    <MultiSelectTrigger>
+                      {selected.length < 10 ? (
+                        <MultiSelectValue
+                          placeholder={t('Select permissions')}
+                        />
+                      ) : (
+                        t('{number} items selected', {
+                          number: selected.length,
+                        })
+                      )}
+                    </MultiSelectTrigger>
+                    <MultiSelectContent>
+                      <MultiSelectSearch
+                        placeholder={t('Search permissions')}
+                      />
+                      <MultiSelectList>
+                        <div
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            field.onChange(authProperty.scope.join(' '));
+                          }}
+                        >
+                          {authProperty.scope.length > 1 && (
+                            <MultiSelectItem>{t('Select All')}</MultiSelectItem>
+                          )}
+                        </div>
+                        {authProperty.scope.map((scope) => (
+                          <MultiSelectItem key={scope} value={scope}>
+                            <span className="truncate min-w-0">{scope}</span>
+                          </MultiSelectItem>
+                        ))}
+                        {authProperty.scope.length === 0 && (
+                          <CommandEmpty>{t('No results found.')}</CommandEmpty>
+                        )}
+                      </MultiSelectList>
+                    </MultiSelectContent>
+                  </MultiSelect>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
+        />
+      )}
+
       {grantType !== OAuth2GrantType.CLIENT_CREDENTIALS && (
         <FormField
           name="request.value.code"
@@ -163,6 +244,9 @@ function OAuth2ConnectionSettings({
                           pieceName: piece.name,
                           form,
                           pieceVersion: piece.version,
+                          scopes: parseScopeString(
+                            form.getValues().request.value.scope,
+                          ),
                           setLoading,
                         });
                       } else {
@@ -189,6 +273,13 @@ function OAuth2ConnectionSettings({
 OAuth2ConnectionSettings.displayName = 'OAuth2ConnectionSettings';
 export { OAuth2ConnectionSettings };
 
+function parseScopeString(value: string | undefined): string[] {
+  if (!value) {
+    return [];
+  }
+  return value.split(' ').filter((scope) => scope.length > 0);
+}
+
 async function openPopup({
   redirectUrl,
   clientId,
@@ -196,6 +287,7 @@ async function openPopup({
   pieceName,
   pieceVersion,
   form,
+  scopes,
   setLoading,
 }: OpenPopupParams) {
   let authorizationUrl, codeVerifier;
@@ -209,6 +301,7 @@ async function openPopup({
       pieceVersion,
       props,
       projectId: formProjectId,
+      scopes,
     });
     authorizationUrl = result.authorizationUrl;
     codeVerifier = result.codeVerifier;
@@ -248,6 +341,7 @@ type OpenPopupParams = {
   props: Record<string, unknown> | undefined;
   pieceName: string;
   pieceVersion: string;
+  scopes: string[];
   form: UseFormReturn<{
     request:
       | UpsertCloudOAuth2Request
