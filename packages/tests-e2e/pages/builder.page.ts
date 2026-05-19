@@ -31,6 +31,7 @@ export class BuilderPage extends BasePage {
   }
 
   async testTrigger() {
+    await this.page.getByRole('button', { name: 'Test Step Ctrl + G' }).click();
     await this.page.getByTestId('test-trigger-button').click();
     await this.page.waitForTimeout(5000);
   }
