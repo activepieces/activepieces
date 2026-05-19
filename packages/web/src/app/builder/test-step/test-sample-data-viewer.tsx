@@ -30,8 +30,6 @@ type TestSampleDataViewerProps = {
   lastTestDate: string | undefined;
   children?: React.ReactNode;
   consoleLogs: string | null;
-  pieceName?: string;
-  pieceVersion?: string;
   pieceHints?: OutputDisplayHints | null;
 } & (
   | {
@@ -188,7 +186,6 @@ const TestSampleDataViewerContent = ({
   currentStep,
   activeTab,
   setActiveTab,
-  pieceName,
   pieceHints,
 }: TestSampleDataViewerContentProps) => {
   if (isRunAgent(currentStep) && !errorMessage) {
@@ -205,7 +202,6 @@ const TestSampleDataViewerContent = ({
     <SmartOutputViewer
       json={sampleData}
       title={t('Output')}
-      pieceName={pieceName}
       pieceHints={pieceHints}
     />
   );

@@ -19,7 +19,6 @@ import { OutputFieldList } from './output-field-list';
 import { OutputGenericFieldList } from './output-generic-field-list';
 import { isTabularArray, OutputTableView } from './output-table-view';
 import { OutputDisplayHints } from './types';
-import { isUserDefinedPiece } from './user-defined-pieces';
 
 const MAX_TEXT_DISPLAY_LENGTH = 500;
 
@@ -129,11 +128,9 @@ function OutputViewerShell({
 function SmartOutputViewer({
   json,
   title,
-  pieceName,
   pieceHints,
 }: SmartOutputViewerProps) {
   const pieceDefinedHints = pieceHints ?? null;
-  const isUserDefined = isUserDefinedPiece(pieceName);
   const isJsonObject = isObject(json);
 
   if (typeof json === 'string') {
@@ -163,16 +160,6 @@ function SmartOutputViewer({
     );
   }
 
-  if (isUserDefined && isJsonObject && Object.keys(json).length > 0) {
-    return (
-      <OutputViewerShell
-        json={json}
-        title={title}
-        friendlyContent={<OutputGenericFieldList json={json} />}
-      />
-    );
-  }
-
   if (pieceDefinedHints && isJsonObject) {
     return (
       <OutputViewerShell
@@ -185,6 +172,16 @@ function SmartOutputViewer({
     );
   }
 
+  if (isJsonObject) {
+    return (
+      <OutputViewerShell
+        json={json}
+        title={title}
+        friendlyContent={<OutputGenericFieldList json={json} />}
+      />
+    );
+  }
+
   return <JsonViewer json={json} title={title} />;
 }
 
@@ -193,6 +190,5 @@ export { SmartOutputViewer };
 type SmartOutputViewerProps = {
   json: unknown;
   title: string;
-  pieceName?: string;
   pieceHints?: OutputDisplayHints | null;
 };

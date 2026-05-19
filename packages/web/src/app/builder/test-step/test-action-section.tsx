@@ -158,11 +158,6 @@ const TestStepSectionImplementation = React.memo(
             onRetest={onTestButtonClick}
             errorMessage={errorMessage}
             consoleLogs={consoleLogs}
-            pieceName={
-              currentStep.type === 'PIECE'
-                ? currentStep.settings.pieceName
-                : undefined
-            }
             pieceHints={pieceHints}
             onCancelTesting={() => {
               removeStepTestListener(currentStep.name);

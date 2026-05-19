@@ -218,7 +218,6 @@ const TestTriggerSection = React.memo(
                 errorMessage={errorMessage ?? null}
                 lastTestDate={lastTestDate}
                 isSaving={isSaving}
-                pieceName={formValues.settings.pieceName}
                 pieceHints={trigger?.outputDisplayHints ?? null}
               >
                 {pollResults?.data && !errorMessage && (

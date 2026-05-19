@@ -192,7 +192,6 @@ export const FlowStepInputOutput = () => {
               <SmartOutputViewer
                 json={parsedOutput}
                 title={t('Output')}
-                pieceName={pieceContext.pieceName}
                 pieceHints={pieceHints}
               />
             )}
