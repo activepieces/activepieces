@@ -1,4 +1,4 @@
-import { ExecuteFlowJobData, ExecutionType, FlowTriggerType, PollingJobData, RunEnvironment, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
+import { ExecuteFlowJobData, ExecutionType, FlowTriggerType, PollingJobData, ResumeReason, RunEnvironment, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -23,7 +23,7 @@ const mockLog: FastifyBaseLogger = {
     level: 'info',
 } as unknown as FastifyBaseLogger
 
-const LATEST = 8
+const LATEST = 10
 
 function baseFlowJob(overrides: Partial<ExecuteFlowJobData> = {}): ExecuteFlowJobData {
     return {
@@ -170,5 +170,70 @@ describe('jobMigrations v7 → v8 (backfillRequiredExecuteFlowFields)', () => {
 
         expect(migrated.schemaVersion).toBe(LATEST)
         expect(migrated.jobType).toBe(WorkerJobType.EXECUTE_POLLING)
+    })
+})
+
+describe('jobMigrations v9 → v10 (addResumeReason)', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+    })
+
+    it('classifies inline-null payload as RETRY (the only legacy producer of that shape)', async () => {
+        const job = baseFlowJob({
+            schemaVersion: 9,
+            executionType: ExecutionType.RESUME,
+            payload: { type: 'inline', value: null },
+        })
+
+        const migrated = await jobMigrations(mockLog).apply(job) as ExecuteFlowJobData
+
+        expect(migrated.schemaVersion).toBe(LATEST)
+        expect(migrated.resumeReason).toBe(ResumeReason.RETRY)
+    })
+
+    it('classifies inline payload with a real body as WAITPOINT', async () => {
+        const job = baseFlowJob({
+            schemaVersion: 9,
+            executionType: ExecutionType.RESUME,
+            payload: { type: 'inline', value: { body: { action: 'approve' }, headers: {}, queryParams: {} } },
+        })
+
+        const migrated = await jobMigrations(mockLog).apply(job) as ExecuteFlowJobData
+
+        expect(migrated.resumeReason).toBe(ResumeReason.WAITPOINT)
+    })
+
+    it('classifies ref payload as WAITPOINT (offloaded payloads were never produced by retry)', async () => {
+        const job = baseFlowJob({
+            schemaVersion: 9,
+            executionType: ExecutionType.RESUME,
+            payload: { type: 'ref', fileId: 'offloaded-payload-1' },
+        })
+
+        const migrated = await jobMigrations(mockLog).apply(job) as ExecuteFlowJobData
+
+        expect(migrated.resumeReason).toBe(ResumeReason.WAITPOINT)
+    })
+
+    it('only bumps schemaVersion for BEGIN execution (resumeReason is meaningless for BEGIN)', async () => {
+        const job = baseFlowJob({
+            schemaVersion: 9,
+            executionType: ExecutionType.BEGIN,
+        })
+
+        const migrated = await jobMigrations(mockLog).apply(job) as ExecuteFlowJobData
+
+        expect(migrated.schemaVersion).toBe(LATEST)
+        expect(migrated.resumeReason).toBeUndefined()
+    })
+
+    it('only bumps schemaVersion for non-EXECUTE_FLOW jobs at v9', async () => {
+        const job = basePollingJob({ schemaVersion: 9 })
+
+        const migrated = await jobMigrations(mockLog).apply(job)
+
+        expect(migrated.schemaVersion).toBe(LATEST)
+        expect(migrated.jobType).toBe(WorkerJobType.EXECUTE_POLLING)
+        expect('resumeReason' in migrated).toBe(false)
     })
 })
