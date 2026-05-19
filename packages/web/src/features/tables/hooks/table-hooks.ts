@@ -5,7 +5,7 @@ import {
   Table,
   UncategorizedFolderId,
 } from '@activepieces/shared';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { authenticationSession } from '@/lib/authentication-session';
@@ -34,24 +34,31 @@ export const tableMutations = {
 };
 
 export const tableHooks = {
-  useTables: (limit?: number) => {
-    const projectId = authenticationSession.getProjectId() ?? '';
-    const [searchParams] = useSearchParams();
-    return useQuery({
-      queryKey: ['tables', searchParams.toString(), projectId],
-      queryFn: () =>
-        tablesApi.list({
-          projectId,
-          cursor: searchParams.get('cursor') ?? undefined,
-          limit: limit
-            ? limit
-            : searchParams.get('limit')
-            ? parseInt(searchParams.get('limit')!)
-            : undefined,
-          name: searchParams.get('name') ?? undefined,
-        }),
-      meta: { showErrorDialog: true, loadSubsetOptions: {} },
+  createTableWithDefaults: async ({
+    name,
+    folderId,
+    projectId,
+  }: {
+    name: string;
+    folderId?: string;
+    projectId: string;
+  }): Promise<Table> => {
+    const table = await tablesApi.create({
+      projectId,
+      name,
+      folderId:
+        !folderId || folderId === UncategorizedFolderId ? undefined : folderId,
     });
+    const field = await fieldsApi.create({
+      name: 'Name',
+      type: FieldType.TEXT,
+      tableId: table.id,
+    });
+    await recordsApi.create({
+      records: [[{ fieldId: field.id, value: '' }]],
+      tableId: table.id,
+    });
+    return table;
   },
   useCreateTable: (folderId: string) => {
     const projectId = authenticationSession.getProjectId() ?? '';
@@ -60,28 +67,11 @@ export const tableHooks = {
     const [searchParams] = useSearchParams();
     return useMutation({
       mutationFn: async (data: { name: string }) => {
-        const table = await tablesApi.create({
-          projectId,
+        return tableHooks.createTableWithDefaults({
           name: data.name,
-          folderId: folderId === UncategorizedFolderId ? undefined : folderId,
+          folderId,
+          projectId,
         });
-        const field = await fieldsApi.create({
-          name: 'Name',
-          type: FieldType.TEXT,
-          tableId: table.id,
-        });
-        await recordsApi.create({
-          records: [
-            ...Array.from({ length: 1 }, () => [
-              {
-                fieldId: field.id,
-                value: '',
-              },
-            ]),
-          ],
-          tableId: table.id,
-        });
-        return table;
       },
       onSuccess: (table) => {
         queryClient.invalidateQueries({
@@ -176,14 +166,19 @@ export const tableHooks = {
     templates,
     projectId,
     maxRecords,
+    folderId,
   }: {
     templates: SharedTemplate[];
     projectId: string;
     maxRecords?: number;
+    folderId?: string;
   }): Promise<Table[]> => {
     if (templates.length === 0) {
       return [];
     }
+
+    const targetFolderId =
+      !folderId || folderId === UncategorizedFolderId ? undefined : folderId;
 
     const allTablesToImport: Array<{
       table: Table;
@@ -202,6 +197,7 @@ export const tableHooks = {
           name: tableTemplate.name,
           externalId: tableTemplate.externalId,
           fields: tableTemplate.fields,
+          folderId: targetFolderId,
         });
 
         allTablesToImport.push({

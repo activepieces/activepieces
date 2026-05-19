@@ -7,6 +7,7 @@ import {
     isNil,
     PiecePackage,
     StreamStepProgress,
+    truncateFailedStepMessage,
     WebsocketClientEvent,
     WorkerToApiContract,
 } from '@activepieces/shared'
@@ -65,7 +66,7 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
                 status: input.status,
                 tags: input.tags,
                 logsFileId: input.logsFileId,
-                failedStep: input.failedStep,
+                failedStep: truncateFailedStepMessage(input.failedStep),
                 startTime: input.startTime,
                 finishTime: input.finishTime,
                 stepsCount: input.stepsCount,

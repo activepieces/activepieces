@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { savvyCalApiCall } from '../common';
-import { savvyCalAuth } from '../../';
+import { savvyCalAuth, getToken } from '../auth';
 
 export const cancelEventAction = createAction({
   auth: savvyCalAuth,
@@ -17,7 +17,7 @@ export const cancelEventAction = createAction({
   },
   async run(context) {
     await savvyCalApiCall({
-      token: context.auth.secret_text,
+      token: getToken(context.auth),
       method: HttpMethod.POST,
       path: `/events/${context.propsValue.event_id}/cancel`,
     });

@@ -5,9 +5,10 @@ import {
   isNil,
   UncategorizedFolderId,
 } from '@activepieces/shared';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { flowsApi } from '@/features/flows/api/flows-api';
@@ -16,7 +17,9 @@ import { foldersApi } from '@/features/folders/api/folders-api';
 import { tablesUtils } from '@/features/tables';
 import { tablesApi } from '@/features/tables/api/tables-api';
 import { tableHooks } from '@/features/tables/hooks/table-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
+import { NEW_FLOW_QUERY_PARAM, NEW_TABLE_QUERY_PARAM } from '@/lib/route-utils';
 
 import { SelectedItemsMap, TreeItem } from '../lib/types';
 
@@ -33,12 +36,43 @@ type MutationDeps = {
 
 export function useAutomationsMutations(deps: MutationDeps) {
   const openNewWindow = useNewWindow();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const projectId = authenticationSession.getProjectId() ?? '';
 
   const { mutate: startFromScratch, isPending: isCreateFlowPending } =
-    flowHooks.useStartFromScratch(UncategorizedFolderId);
+    useMutation<PopulatedFlow, Error, string | undefined>({
+      mutationFn: async (folderId) => {
+        return flowsApi.create({
+          projectId,
+          displayName: t('Untitled'),
+          folderId:
+            !folderId || folderId === UncategorizedFolderId
+              ? undefined
+              : folderId,
+        });
+      },
+      onSuccess: (flow) => {
+        navigate(`/flows/${flow.id}?${NEW_FLOW_QUERY_PARAM}=true`);
+      },
+    });
 
   const { mutate: createTableMutation, isPending: isCreatingTable } =
-    tableHooks.useCreateTable(UncategorizedFolderId);
+    useMutation<Table, Error, { name: string; folderId?: string }>({
+      mutationFn: async ({ name, folderId }) => {
+        return tableHooks.createTableWithDefaults({
+          name,
+          folderId,
+          projectId,
+        });
+      },
+      onSuccess: (table) => {
+        queryClient.invalidateQueries({ queryKey: ['tables'] });
+        navigate(
+          `/projects/${projectId}/tables/${table.id}?${NEW_TABLE_QUERY_PARAM}=true`,
+        );
+      },
+    });
 
   const { mutate: exportFlows, isPending: isExportFlowsPending } =
     flowHooks.useExportFlows();
@@ -249,8 +283,9 @@ export function useAutomationsMutations(deps: MutationDeps) {
   );
 
   return {
-    createFlow: () => startFromScratch(),
-    createTable: (name: string) => createTableMutation({ name }),
+    createFlow: (folderId?: string) => startFromScratch(folderId),
+    createTable: (name: string, folderId?: string) =>
+      createTableMutation({ name, folderId }),
     isCreateFlowPending,
     isCreatingTable,
     handleDeleteItem: deleteItem,

@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { aiprise } from '../common';
-import { aipriseAuth } from '../../';
+import { aipriseAuth } from '../common/auth';
 
 export const getVerificationResultAction = createAction({
   auth: aipriseAuth,
@@ -20,7 +20,7 @@ export const getVerificationResultAction = createAction({
   async run(context) {
     const { session_id } = context.propsValue;
     const result = await aiprise.makeRequest<Record<string, unknown>>({
-      apiKey: context.auth.secret_text,
+      auth: context.auth.props,
       method: HttpMethod.GET,
       path: `/verify/get_user_verification_result/${session_id}`,
     });

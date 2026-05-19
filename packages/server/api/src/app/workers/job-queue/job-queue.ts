@@ -46,7 +46,7 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
                     priority: JOB_PRIORITY[getDefaultJobPriority(data)],
                     delay: params.delay,
                     jobId: params.id,
-                    removeOnFail: data.jobType === WorkerJobType.EVENT_DESTINATION,
+                    ...(data.jobType === WorkerJobType.EVENT_DESTINATION ? { removeOnFail: true } : {}),
                     ...isUserInteractionJob(data.jobType) ? {
                         attempts: 1,
                         removeOnComplete: { age: 300 },

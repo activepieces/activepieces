@@ -4,6 +4,8 @@ import {
     BulkActionOnRunsRequestBody,
     BulkArchiveActionOnRunsRequestBody,
     BulkCancelFlowRequestBody,
+    CountFlowRunsByStatusRequest,
+    CountFlowRunsByStatusResponse,
     ErrorCode,
     FlowRun,
     isNil,
@@ -33,6 +35,7 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
             tags: request.query.tags,
             status: request.query.status,
             failedStepName: request.query.failedStepName,
+            failedStepMessage: request.query.failedStepMessage,
             cursor: request.query.cursor ?? null,
             limit: Number(request.query.limit ?? DEFAULT_PAGING_LIMIT),
             createdAfter: request.query.createdAfter,
@@ -41,6 +44,15 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
             includeArchived: request.query.includeArchived,
             environment: RunEnvironment.PRODUCTION,
         })
+    })
+
+    app.get('/count-by-status', CountByStatusRouteConfig, async (request) => {
+        const data = await flowRunService(request.log).countByStatus({
+            projectId: request.query.projectId,
+            createdAfter: request.query.createdAfter,
+            createdBefore: request.query.createdBefore,
+        })
+        return { data }
     })
 
     app.get(
@@ -99,6 +111,7 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
             createdAfter: req.body.createdAfter,
             createdBefore: req.body.createdBefore,
             failedStepName: req.body.failedStepName,
+            failedStepMessage: req.body.failedStepMessage,
         })
     })
 
@@ -112,6 +125,7 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
             createdAfter: req.body.createdAfter,
             createdBefore: req.body.createdBefore,
             failedStepName: req.body.failedStepName,
+            failedStepMessage: req.body.failedStepMessage,
         })
     })
 
@@ -203,6 +217,25 @@ const ArchiveFlowRunRequest = {
     },
     schema: {
         body: BulkArchiveActionOnRunsRequestBody,
+    },
+}
+
+const CountByStatusRouteConfig = {
+    config: {
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.READ_RUN, {
+                type: ProjectResourceType.QUERY,
+            }),
+    },
+    schema: {
+        tags: ['flow-runs'],
+        description: 'Count Flow Runs by Status',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        querystring: CountFlowRunsByStatusRequest,
+        response: {
+            [StatusCodes.OK]: CountFlowRunsByStatusResponse,
+        },
     },
 }
 
