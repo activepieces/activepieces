@@ -168,7 +168,7 @@ const TestTriggerSection = React.memo(
       <div className="flex flex-col h-full">
         {showFirstTimeTestingSection && !errorMessage && (
           <div className="flex flex-col h-full">
-            <TestPanelHeader status="idle" hideRetest />
+            <TestPanelHeader status="idle" />
             <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
               <div className="flex items-center justify-center size-12 rounded-full bg-primary/10 text-primary">
                 <Zap className="size-6" />

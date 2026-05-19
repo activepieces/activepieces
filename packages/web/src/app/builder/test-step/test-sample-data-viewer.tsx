@@ -5,16 +5,19 @@ import {
   isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
+import { Columns2, Loader2, Play, Rows2 } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { LoadingSpinner } from '@/components/custom/spinner';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 import { DataDisplayTabs } from '../data-display/data-display-tabs';
 
 import { AgentTestStep, isRunAgent } from './agent-test-step';
 import { TestPanelHeader } from './test-panel-header';
+import { TestButtonTooltip } from './test-step-tooltip';
 
 type TestSampleDataViewerProps = {
   isValid: boolean;
@@ -98,145 +101,279 @@ export const TestSampleDataViewer = React.memo(
         : activeTab === 'Logs'
         ? consoleLogs
         : outputData;
-    const dataLabel = t(activeTab);
+
+    const showAgentView = isRunAgent(currentStep) && !errorMessage;
 
     return (
-      <>
+      <div className="flex flex-col h-full w-full min-h-0">
         {!isTesting && children}
-        <div className="grow flex flex-col w-full text-start">
-          <TestPanelHeader
-            status={status}
-            lastTestDate={lastTestDate}
-            onRetest={onRetest}
-            retestDisabled={!isValid || isSaving}
-            retestLoading={isTesting || isSaving}
-            copyableData={activeData}
-            dataLabel={dataLabel}
-            downloadFileName={`${
-              currentStep?.name ?? 'output'
-            }-${activeTab.toLowerCase()}`}
-          />
+        <div className="flex-1 flex flex-col w-full text-start min-h-0">
+          <TestPanelHeader status={status} lastTestDate={lastTestDate} />
           {errorMessage && !isTesting && (
-            <div className="px-3 pb-2 text-xs text-muted-foreground">
+            <div className="px-3 pt-2 text-xs text-muted-foreground shrink-0">
               {t('Errors are not saved on refresh')}
             </div>
           )}
-          <div className="flex-1 min-h-0 px-3 pb-3">
-            {isTesting && !isRunAgent(currentStep) ? (
-              <TestRunningState
-                onCancel={hideCancel ? undefined : onCancelTesting}
+          {!showAgentView && (
+            <TestPanelToolbar
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              hasInput={hasInput}
+              hasLogs={hasLogs}
+              disabled={isTesting}
+            />
+          )}
+          <div className="flex-1 min-h-0 px-3 pb-3 overflow-auto">
+            {isTesting && !showAgentView ? (
+              <TestingPreviewContent data={activeData} />
+            ) : showAgentView ? (
+              <AgentTestStep
+                agentResult={getAgentResult(sampleData)}
+                errorMessage={errorMessage}
               />
             ) : (
-              <TestSampleDataViewerContent
-                {...props}
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
+              <DataDisplayTabs
+                data={activeData}
+                title={t(activeTab)}
+                copyableData={activeData}
+                downloadFileName={`${
+                  currentStep?.name ?? 'output'
+                }-${activeTab.toLowerCase()}`}
               />
             )}
           </div>
         </div>
-      </>
+        {isTesting ? (
+          <CancelTestingBar
+            onCancel={hideCancel ? undefined : onCancelTesting}
+          />
+        ) : (
+          <RetestActionBar
+            onRetest={onRetest}
+            disabled={!isValid || isSaving}
+            isValid={isValid}
+            isSaving={isSaving}
+          />
+        )}
+      </div>
     );
   },
 );
 
-type TestRunningStateProps = {
-  onCancel?: () => void;
+type TestPanelToolbarProps = {
+  activeTab: ActiveTab;
+  setActiveTab: (tab: ActiveTab) => void;
+  hasInput: boolean;
+  hasLogs: boolean;
+  disabled?: boolean;
 };
 
-const TestRunningState = ({ onCancel }: TestRunningStateProps) => {
+const TestPanelToolbar = ({
+  activeTab,
+  setActiveTab,
+  hasInput,
+  hasLogs,
+  disabled = false,
+}: TestPanelToolbarProps) => {
+  const [testPanelView, setTestPanelView] = useBuilderStateContext((state) => [
+    state.testPanelView,
+    state.setTestPanelView,
+  ]);
+
+  const isSplit = testPanelView === 'split';
+  const ToggleIcon = isSplit ? Rows2 : Columns2;
+  const toggleLabel = isSplit ? t('Collapse') : t('Split View');
+
   return (
-    <div className="h-full min-h-[140px] flex flex-col items-center justify-center gap-3 text-center">
-      <div className="flex items-center gap-2">
-        <LoadingSpinner className="size-4 text-muted-foreground" />
-        <span className="text-sm text-muted-foreground">
-          {t('Running test...')}
-        </span>
-      </div>
-      {onCancel && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onCancel}
-          className="text-muted-foreground h-7"
-        >
-          {t('Cancel')}
-        </Button>
-      )}
+    <div className="flex items-center justify-between px-3 py-2 gap-2 shrink-0">
+      <SegmentedTabs
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        hasInput={hasInput}
+        hasLogs={hasLogs}
+        disabled={disabled}
+      />
+      <button
+        type="button"
+        onClick={() => setTestPanelView(isSplit ? 'drawer' : 'split')}
+        disabled={disabled}
+        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+        aria-label={toggleLabel}
+      >
+        <ToggleIcon className="size-4" />
+        <span>{toggleLabel}</span>
+      </button>
     </div>
   );
 };
 
-TestSampleDataViewer.displayName = 'TestSampleDataViewer';
+type SegmentedTabsProps = TestPanelToolbarProps;
 
-type TestSampleDataViewerContentProps = TestSampleDataViewerProps & {
-  activeTab: ActiveTab;
-  setActiveTab: (tab: ActiveTab) => void;
-};
-
-const TestSampleDataViewerContent = ({
-  sampleData,
-  sampleDataInput,
-  consoleLogs,
-  errorMessage,
-  currentStep,
+const SegmentedTabs = ({
   activeTab,
   setActiveTab,
-}: TestSampleDataViewerContentProps) => {
-  if (isRunAgent(currentStep) && !errorMessage) {
-    return (
-      <AgentTestStep
-        agentResult={getAgentResult(sampleData)}
-        errorMessage={errorMessage}
+  hasInput,
+  hasLogs,
+  disabled,
+}: SegmentedTabsProps) => (
+  <div
+    className={cn(
+      'inline-flex items-center rounded-md bg-muted p-0.5 gap-0.5',
+      disabled && 'opacity-50',
+    )}
+  >
+    <SegmentedTabsButton
+      label={t('Output')}
+      active={activeTab === 'Output'}
+      onClick={() => setActiveTab('Output')}
+      disabled={disabled}
+    />
+    {hasInput && (
+      <SegmentedTabsButton
+        label={t('Input')}
+        active={activeTab === 'Input'}
+        onClick={() => setActiveTab('Input')}
+        disabled={disabled}
       />
-    );
-  }
-  if (isNil(sampleDataInput) && !isConsoleLogsValid(consoleLogs)) {
-    return (
-      <DataDisplayTabs data={errorMessage ?? sampleData} title={t('Output')} />
-    );
-  }
-  const showThree = !isNil(sampleDataInput) && isConsoleLogsValid(consoleLogs);
-  return (
-    <Tabs
-      value={activeTab}
-      onValueChange={(value) => setActiveTab(value as ActiveTab)}
-    >
-      <TabsList
-        className={`grid w-full h-9 ${
-          showThree ? 'grid-cols-3' : 'grid-cols-2'
-        }`}
-      >
-        {!isNil(sampleDataInput) && (
-          <TabsTrigger value="Input">{t('Input')}</TabsTrigger>
-        )}
-        <TabsTrigger value="Output">{t('Output')}</TabsTrigger>
-        {isConsoleLogsValid(consoleLogs) && (
-          <TabsTrigger value="Logs">{t('Logs')}</TabsTrigger>
-        )}
-      </TabsList>
+    )}
+    {hasLogs && (
+      <SegmentedTabsButton
+        label={t('Logs')}
+        active={activeTab === 'Logs'}
+        onClick={() => setActiveTab('Logs')}
+        disabled={disabled}
+      />
+    )}
+  </div>
+);
 
-      {!isNil(sampleDataInput) && (
-        <TabsContent value="Input">
-          <DataDisplayTabs data={sampleDataInput} title={t('Input')} />
-        </TabsContent>
-      )}
-
-      <TabsContent value="Output">
-        <DataDisplayTabs
-          data={errorMessage ?? sampleData}
-          title={t('Output')}
-        />
-      </TabsContent>
-
-      {isConsoleLogsValid(consoleLogs) && (
-        <TabsContent value="Logs">
-          <DataDisplayTabs data={consoleLogs} title={t('Logs')} />
-        </TabsContent>
-      )}
-    </Tabs>
-  );
+type SegmentedTabsButtonProps = {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  disabled?: boolean;
 };
+
+const SegmentedTabsButton = ({
+  label,
+  active,
+  onClick,
+  disabled,
+}: SegmentedTabsButtonProps) => (
+  <button
+    type="button"
+    onClick={onClick}
+    disabled={disabled}
+    className={cn(
+      'px-3 py-1 text-xs font-medium rounded-sm transition-colors disabled:cursor-not-allowed',
+      active
+        ? 'bg-background text-foreground shadow-sm'
+        : 'text-muted-foreground hover:text-foreground',
+    )}
+  >
+    {label}
+  </button>
+);
+
+type RetestActionBarProps = {
+  onRetest: () => void;
+  disabled: boolean;
+  isValid: boolean;
+  isSaving: boolean;
+};
+
+const RetestActionBar = ({
+  onRetest,
+  disabled,
+  isValid,
+  isSaving,
+}: RetestActionBarProps) => (
+  <div
+    data-test-panel-trigger
+    className="relative px-3 py-3 bg-background z-10 shrink-0"
+  >
+    <div
+      aria-hidden
+      className="pointer-events-none absolute -top-6 left-0 right-0 h-6 bg-gradient-to-t from-background to-transparent"
+    />
+    <TestButtonTooltip saving={isSaving} invalid={!isValid}>
+      <Button
+        onClick={onRetest}
+        disabled={disabled}
+        keyboardShortcut="G"
+        onKeyboardShortcut={onRetest}
+        className="w-full justify-center bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 [&_span]:text-primary-foreground/70"
+        size="sm"
+      >
+        <Play className="size-4 fill-current" />
+        {t('Retest Step')}
+      </Button>
+    </TestButtonTooltip>
+  </div>
+);
+
+type CancelTestingBarProps = {
+  onCancel?: () => void;
+};
+
+const CancelTestingBar = ({ onCancel }: CancelTestingBarProps) => (
+  <div
+    data-test-panel-trigger
+    className="relative px-3 py-3 bg-background z-10 shrink-0"
+  >
+    <div
+      aria-hidden
+      className="pointer-events-none absolute -top-6 left-0 right-0 h-6 bg-gradient-to-t from-background to-transparent"
+    />
+    <Button
+      onClick={onCancel}
+      disabled={!onCancel}
+      variant="outline"
+      className="w-full justify-center bg-primary/5 hover:bg-primary/10 text-primary border-primary/20"
+      size="sm"
+    >
+      <Loader2 className="size-4 animate-spin" />
+      {t('Cancel Testing')}
+    </Button>
+  </div>
+);
+
+type TestingPreviewContentProps = {
+  data: unknown;
+};
+
+const TestingPreviewContent = ({ data }: TestingPreviewContentProps) => {
+  if (!isNil(data)) {
+    return (
+      <div className="opacity-40 animate-pulse pointer-events-none select-none">
+        <DataDisplayTabs data={data} title={t('Output')} />
+      </div>
+    );
+  }
+  return <JsonTreeSkeleton />;
+};
+
+const JsonTreeSkeleton = () => (
+  <div className="flex flex-col gap-3 py-3 animate-pulse">
+    <Skeleton className="h-3 w-24" />
+    <div className="pl-4 flex flex-col gap-2.5">
+      <Skeleton className="h-3 w-32" />
+      <div className="pl-4 flex flex-col gap-2.5">
+        <Skeleton className="h-3 w-48" />
+        <Skeleton className="h-3 w-40" />
+        <Skeleton className="h-3 w-44" />
+      </div>
+      <Skeleton className="h-3 w-28" />
+      <div className="pl-4 flex flex-col gap-2.5">
+        <Skeleton className="h-3 w-36" />
+        <Skeleton className="h-3 w-52" />
+      </div>
+      <Skeleton className="h-3 w-32" />
+    </div>
+  </div>
+);
+
+TestSampleDataViewer.displayName = 'TestSampleDataViewer';
 
 //In case the user has mangled sample data
 function getAgentResult(sampleData: unknown) {

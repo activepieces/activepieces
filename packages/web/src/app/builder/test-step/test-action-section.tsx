@@ -7,7 +7,7 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { FlaskConical, Play } from 'lucide-react';
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 
@@ -54,6 +54,8 @@ const TestStepSectionImplementation = React.memo(
       isStepBeingTested,
       removeStepTestListener,
       revertSampleDataLocally,
+      pendingAutoTestStepName,
+      consumePendingAutoTest,
     ] = useBuilderStateContext((state) => {
       return [
         state.outputSampleData[currentStep.name],
@@ -65,6 +67,8 @@ const TestStepSectionImplementation = React.memo(
         state.isStepBeingTested,
         state.removeStepTestListener,
         state.revertSampleDataLocallyCallbacks[currentStep.name],
+        state.pendingAutoTestStepName,
+        state.consumePendingAutoTest,
       ];
     });
 
@@ -97,11 +101,25 @@ const TestStepSectionImplementation = React.memo(
       isStepBeingTested(currentStep.name);
     const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
 
+    useEffect(() => {
+      if (pendingAutoTestStepName !== currentStep.name) return;
+      if (isLoadingDynamicProperties || isTesting) return;
+      consumePendingAutoTest(currentStep.name);
+      if (!currentStep.valid) return;
+      onTestButtonClick();
+    }, [
+      pendingAutoTestStepName,
+      currentStep.name,
+      currentStep.valid,
+      isLoadingDynamicProperties,
+      isTesting,
+    ]);
+
     return (
       <>
         {!sampleDataExists && !isTesting && (
           <div className="flex flex-col h-full">
-            <TestPanelHeader status="idle" hideRetest />
+            <TestPanelHeader status="idle" />
             <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
               <div className="flex items-center justify-center size-12 rounded-full bg-primary/10 text-primary">
                 <FlaskConical className="size-6" />

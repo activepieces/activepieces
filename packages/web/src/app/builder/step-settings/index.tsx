@@ -4,6 +4,8 @@ import {
   FlowOperationType,
   FlowTrigger,
   FlowTriggerType,
+  flowPieceUtil,
+  flowStructureUtil,
   isNil,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,11 +15,6 @@ import { useForm, Resolver } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Form } from '@/components/ui/form';
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from '@/components/ui/resizable-panel';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -42,9 +39,9 @@ import EditableStepName from './editable-step-name';
 import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
 import { RouterSettings } from './router-settings';
-import { SettingsSubHeader } from './settings-sub-header';
 import { StepNavigationButtons } from './step-navigation-buttons';
 import { useStepSettingsContext } from './step-settings-context';
+import { UpdatePieceVersionDialog } from './update-piece-version-dialog/update-piece-version-dialog';
 
 const StepSettingsContainer = () => {
   const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
@@ -171,7 +168,6 @@ const StepSettingsContainer = () => {
 
   const settingsForm = (
     <ScrollArea className="h-full">
-      <SettingsSubHeader step={selectedStep} />
       <div
         className={cn(
           'flex flex-col px-4 pb-6 pt-3',
@@ -252,10 +248,28 @@ const StepSettingsContainer = () => {
                 />
               ) : null
             }
-            actions={<StepNavigationButtons />}
+            actions={
+              <div className="flex items-center gap-1">
+                {isPieceMetadata(stepMetadata) &&
+                  stepMetadata.pieceVersion &&
+                  (modifiedStep.type === FlowActionType.PIECE ||
+                    modifiedStep.type === FlowTriggerType.PIECE) && (
+                    <PieceVersionInHeader
+                      step={modifiedStep}
+                      pieceVersion={stepMetadata.pieceVersion}
+                      readonly={readonly}
+                    />
+                  )}
+                <StepNavigationButtons />
+              </div>
+            }
           >
             <EditableStepName
               selectedBranchIndex={selectedBranchIndex}
+              stepIndex={flowStructureUtil.getStepNumber(
+                flowVersion.trigger,
+                selectedStep.name,
+              )}
               setDisplayName={(value) => {
                 form.setValue('displayName', value, {
                   shouldValidate: true,
@@ -304,26 +318,17 @@ const StepSettingsContainer = () => {
         <DynamicPropertiesProvider
           key={`${selectedStep.name}-${selectedStep.type}`}
         >
-          {showTestPanel && isTestPanelOpen && testPanelView === 'split' ? (
-            <ResizablePanelGroup
-              orientation="horizontal"
-              className="flex-1 min-h-0"
-            >
-              <ResizablePanel
-                defaultSize="50%"
-                minSize="40%"
-                className="min-w-0"
-              >
-                {settingsForm}
-              </ResizablePanel>
-              <ResizableHandle withHandle />
-              <ResizablePanel
-                defaultSize="50%"
-                minSize="40%"
-                className="min-w-0"
-              >
+          <StepSettingsLayout
+            isSplit={
+              showTestPanel && isTestPanelOpen && testPanelView === 'split'
+            }
+            showTestPanel={showTestPanel}
+            isTestPanelOpen={isTestPanelOpen}
+            settingsForm={settingsForm}
+            testPanelHost={
+              showTestPanel ? (
                 <TestPanelHost
-                  mode="split"
+                  mode={testPanelView === 'split' ? 'split' : 'drawer'}
                   flowId={flowVersion.flowId}
                   flowVersionId={flowVersion.id}
                   projectId={project?.id}
@@ -332,26 +337,9 @@ const StepSettingsContainer = () => {
                   showStepInputOutFromRun={showStepInputOutFromRun}
                   saving={saving}
                 />
-              </ResizablePanel>
-            </ResizablePanelGroup>
-          ) : (
-            <div className="relative flex-1 min-h-0 flex flex-col">
-              <div className="flex-1 min-h-0">{settingsForm}</div>
-              {showTestPanel && !isTestPanelOpen && <TestStepCTAButton />}
-              {showTestPanel && isTestPanelOpen && (
-                <TestPanelHost
-                  mode="drawer"
-                  flowId={flowVersion.flowId}
-                  flowVersionId={flowVersion.id}
-                  projectId={project?.id}
-                  stepType={modifiedStep.type}
-                  showGenerateSampleData={showGenerateSampleData}
-                  showStepInputOutFromRun={showStepInputOutFromRun}
-                  saving={saving}
-                />
-              )}
-            </div>
-          )}
+              ) : null
+            }
+          />
         </DynamicPropertiesProvider>
       </form>
     </Form>
@@ -359,6 +347,87 @@ const StepSettingsContainer = () => {
 };
 StepSettingsContainer.displayName = 'StepSettingsContainer';
 export { StepSettingsContainer };
+
+type StepSettingsLayoutProps = {
+  isSplit: boolean;
+  showTestPanel: boolean;
+  isTestPanelOpen: boolean;
+  settingsForm: React.ReactNode;
+  testPanelHost: React.ReactNode;
+};
+
+const StepSettingsLayout = ({
+  isSplit,
+  showTestPanel,
+  isTestPanelOpen,
+  settingsForm,
+  testPanelHost,
+}: StepSettingsLayoutProps) => {
+  if (isSplit) {
+    return (
+      <div className="relative flex-1 min-h-0 flex flex-row">
+        <div className="w-1/2 min-w-0 min-h-0 h-full">{settingsForm}</div>
+        {testPanelHost && (
+          <div className="w-1/2 min-w-0 min-h-0 h-full pt-2 pl-1">
+            {testPanelHost}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative flex-1 min-h-0 flex flex-col w-full">
+      <div className="flex-1 min-h-0">{settingsForm}</div>
+      {showTestPanel && (
+        <div
+          className={cn(
+            'shrink-0 transition-opacity duration-150',
+            isTestPanelOpen ? 'opacity-0 pointer-events-none' : 'opacity-100',
+          )}
+        >
+          <TestStepCTAButton />
+        </div>
+      )}
+      {testPanelHost && (
+        <div
+          className={cn(
+            'absolute bottom-0 left-0 right-0 h-1/2 z-20 transition-transform duration-200',
+            isTestPanelOpen ? 'translate-y-0' : 'translate-y-full',
+          )}
+        >
+          {testPanelHost}
+        </div>
+      )}
+    </div>
+  );
+};
+
+type PieceVersionInHeaderProps = {
+  step: FlowAction | FlowTrigger;
+  pieceVersion: string;
+  readonly: boolean;
+};
+
+const PieceVersionInHeader = ({
+  step,
+  pieceVersion,
+  readonly,
+}: PieceVersionInHeaderProps) => {
+  const exactVersion = flowPieceUtil.getExactVersion(pieceVersion);
+  const showSwitcher =
+    !readonly &&
+    (step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE);
+  return (
+    <div className="flex items-center gap-1 shrink-0">
+      <span className="text-xs text-muted-foreground">v{exactVersion}</span>
+      {showSwitcher && (
+        <UpdatePieceVersionDialog step={step} currentVersion={exactVersion} />
+      )}
+    </div>
+  );
+};
+
 const stripSampleData = (step: FlowAction | FlowTrigger) => {
   const { sampleData: _, ...settingsWithoutSampleData } = step.settings;
   const { lastUpdatedDate: __, ...stepWithoutMetadata } = step;

@@ -44,6 +44,9 @@ export type CanvasState = {
   setTestPanelView: (view: TestPanelView) => void;
   isTestPanelOpen: boolean;
   setTestPanelOpen: (open: boolean) => void;
+  pendingAutoTestStepName: string | null;
+  requestStepAutoTest: (stepName: string) => void;
+  consumePendingAutoTest: (stepName: string) => void;
 };
 
 type CanvasStateInitialState = Pick<
@@ -208,6 +211,31 @@ export const createCanvasState = (
         isTestPanelOpen: open,
       }));
     },
+    pendingAutoTestStepName: null,
+    requestStepAutoTest: (stepName: string) => {
+      localStorage.setItem(TEST_PANEL_OPEN_KEY_IN_LOCAL_STORAGE, 'open');
+      set((state) => {
+        const isEmptyTrigger =
+          stepName === 'trigger' &&
+          state.flowVersion.trigger.type === FlowTriggerType.EMPTY;
+        return {
+          selectedStep: stepName,
+          selectedBranchIndex: null,
+          selectedNodes: [stepName],
+          rightSidebar: isEmptyTrigger
+            ? RightSideBarType.NONE
+            : RightSideBarType.PIECE_SETTINGS,
+          isTestPanelOpen: true,
+          pendingAutoTestStepName: stepName,
+        };
+      });
+    },
+    consumePendingAutoTest: (stepName: string) =>
+      set((state) =>
+        state.pendingAutoTestStepName === stepName
+          ? { pendingAutoTestStepName: null }
+          : state,
+      ),
   };
 };
 

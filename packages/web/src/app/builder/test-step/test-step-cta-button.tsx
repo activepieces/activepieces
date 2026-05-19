@@ -16,6 +16,9 @@ import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties
 import { TestButtonTooltip } from './test-step-tooltip';
 import { testStepHooks } from './utils/test-step-hooks';
 
+const PRIMARY_CTA_CLASSES =
+  'w-full justify-center bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 [&_span]:text-primary-foreground/70';
+
 const TestStepCTAButton = () => {
   const [
     selectedStep,
@@ -60,9 +63,54 @@ const TestStepCTAButton = () => {
     );
   }
 
-  const showsViewState = sampleDataExists || hasRun;
-  const label = showsViewState ? t('View sample data') : t('Test Step');
-  const Icon = showsViewState ? Eye : Play;
+  if (hasRun) {
+    return (
+      <CTAShell>
+        <TestButtonTooltip saving={saving} invalid={false}>
+          <Button
+            onClick={openPanel}
+            disabled={saving}
+            className={PRIMARY_CTA_CLASSES}
+            size="sm"
+          >
+            <Eye className="size-4" />
+            {t('Show Sample Data')}
+          </Button>
+        </TestButtonTooltip>
+      </CTAShell>
+    );
+  }
+
+  if (sampleDataExists) {
+    return (
+      <CTAShell>
+        <Button
+          variant="outline"
+          onClick={openPanel}
+          disabled={saving}
+          className="w-full justify-center"
+          size="sm"
+        >
+          <Eye className="size-4" />
+          {t('Show Sample Data')}
+        </Button>
+        <TestButtonTooltip saving={saving} invalid={false}>
+          <Button
+            onClick={openPanel}
+            disabled={saving}
+            keyboardShortcut="G"
+            onKeyboardShortcut={openPanel}
+            className={PRIMARY_CTA_CLASSES}
+            size="sm"
+          >
+            <Play className="size-4 fill-current" />
+            {t('Retest Step')}
+          </Button>
+        </TestButtonTooltip>
+      </CTAShell>
+    );
+  }
+
   return (
     <CTAShell>
       <TestButtonTooltip saving={saving} invalid={false}>
@@ -71,11 +119,11 @@ const TestStepCTAButton = () => {
           disabled={saving}
           keyboardShortcut="G"
           onKeyboardShortcut={openPanel}
-          className="w-full justify-center bg-primary/70 text-primary-foreground enabled:hover:bg-primary disabled:opacity-50 [&_span]:text-primary-foreground/70"
+          className={PRIMARY_CTA_CLASSES}
           size="sm"
         >
-          <Icon className={showsViewState ? 'size-4' : 'size-4 fill-current'} />
-          {label}
+          <Play className="size-4 fill-current" />
+          {t('Test Step')}
         </Button>
       </TestButtonTooltip>
     </CTAShell>
@@ -111,52 +159,82 @@ const PieceActionCTAButton = ({
     testStepHooks.useTestAction({ currentStep });
 
   const isTesting = stepIsRunning || isWaitingTestResult;
-  const showsViewState = sampleDataExists || hasRun;
-  const disabled = showsViewState
-    ? saving
-    : !stepIsValid || saving || isLoadingDynamicProperties;
-  const canAutoFireTest = !isReturnResponseAndWaitWebhook && !showsViewState;
+  const canFireTest =
+    !isReturnResponseAndWaitWebhook &&
+    !isTesting &&
+    stepIsValid &&
+    !isLoadingDynamicProperties;
 
-  const handleClick = () => {
+  const fireTest = () => {
     onOpenPanel();
-    if (
-      canAutoFireTest &&
-      !isTesting &&
-      stepIsValid &&
-      !isLoadingDynamicProperties
-    ) {
+    if (canFireTest) {
       testAction(undefined);
     }
   };
 
-  const label = isTesting
-    ? t('Testing...')
-    : showsViewState
-    ? t('View sample data')
-    : t('Test Step');
-  const Icon = showsViewState ? Eye : Play;
+  if (hasRun) {
+    return (
+      <CTAShell>
+        <TestButtonTooltip saving={saving} invalid={false}>
+          <Button
+            onClick={onOpenPanel}
+            disabled={saving}
+            className={PRIMARY_CTA_CLASSES}
+            size="sm"
+          >
+            <Eye className="size-4" />
+            {t('Show Sample Data')}
+          </Button>
+        </TestButtonTooltip>
+      </CTAShell>
+    );
+  }
 
-  return (
-    <CTAShell>
-      <TestButtonTooltip
-        saving={saving}
-        invalid={!showsViewState && !stepIsValid}
-      >
+  if (sampleDataExists) {
+    const retestDisabled = saving || !stepIsValid || isLoadingDynamicProperties;
+    return (
+      <CTAShell>
         <Button
-          onClick={handleClick}
-          disabled={disabled}
-          loading={isTesting}
-          keyboardShortcut="G"
-          onKeyboardShortcut={handleClick}
-          className="w-full justify-center bg-primary/70 text-primary-foreground enabled:hover:bg-primary disabled:opacity-50 [&_span]:text-primary-foreground/70"
+          variant="outline"
+          onClick={onOpenPanel}
+          disabled={saving}
+          className="w-full justify-center"
           size="sm"
         >
-          {!isTesting && (
-            <Icon
-              className={showsViewState ? 'size-4' : 'size-4 fill-current'}
-            />
-          )}
-          {label}
+          <Eye className="size-4" />
+          {t('Show Sample Data')}
+        </Button>
+        <TestButtonTooltip saving={saving} invalid={!stepIsValid}>
+          <Button
+            onClick={fireTest}
+            disabled={retestDisabled}
+            keyboardShortcut="G"
+            onKeyboardShortcut={fireTest}
+            className={PRIMARY_CTA_CLASSES}
+            size="sm"
+          >
+            <Play className="size-4 fill-current" />
+            {t('Retest Step')}
+          </Button>
+        </TestButtonTooltip>
+      </CTAShell>
+    );
+  }
+
+  const testDisabled = !stepIsValid || saving || isLoadingDynamicProperties;
+  return (
+    <CTAShell>
+      <TestButtonTooltip saving={saving} invalid={!stepIsValid}>
+        <Button
+          onClick={fireTest}
+          disabled={testDisabled}
+          keyboardShortcut="G"
+          onKeyboardShortcut={fireTest}
+          className={PRIMARY_CTA_CLASSES}
+          size="sm"
+        >
+          <Play className="size-4 fill-current" />
+          {t('Test Step')}
         </Button>
       </TestButtonTooltip>
     </CTAShell>
@@ -164,7 +242,14 @@ const PieceActionCTAButton = ({
 };
 
 const CTAShell = ({ children }: { children: React.ReactNode }) => (
-  <div className="sticky bottom-0 left-0 right-0 px-3 py-3 bg-background border-t border-border z-10">
+  <div
+    data-test-panel-trigger
+    className="relative px-3 py-3 bg-background z-10 flex flex-col gap-2 shrink-0"
+  >
+    <div
+      aria-hidden
+      className="pointer-events-none absolute -top-6 left-0 right-0 h-6 bg-gradient-to-t from-background to-transparent"
+    />
     {children}
   </div>
 );
