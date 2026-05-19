@@ -11,8 +11,6 @@ import {
   FormLabel,
   FormControl,
 } from '@/components/ui/form';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 

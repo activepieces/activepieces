@@ -36,7 +36,7 @@ export class FlowExecutorContext {
     stepNameToTest?: boolean
     stepsCount: number
     engineApi?: EngineApiConfig
-    materializeCache: Map<string, Promise<unknown>>
+    resolvedStepOutputCache: Map<string, Promise<unknown>>
     slicingEnabled: boolean
 
     /**
@@ -53,7 +53,7 @@ export class FlowExecutorContext {
         this.stepNameToTest = copyFrom?.stepNameToTest ?? false
         this.stepsCount = copyFrom?.stepsCount ?? 0
         this.engineApi = copyFrom?.engineApi
-        this.materializeCache = copyFrom?.materializeCache ?? new Map()
+        this.resolvedStepOutputCache  = copyFrom?.resolvedStepOutputCache  ?? new Map()
         this.slicingEnabled = copyFrom?.slicingEnabled ?? true
     }
 
@@ -190,7 +190,7 @@ export class FlowExecutorContext {
             }, {} as Record<string, StepOutput>)
             : this.steps
 
-        let flattened: Record<string, unknown> = await extractStepView(referencedSteps, this.engineApi, this.materializeCache)
+        let flattened: Record<string, unknown> = await extractStepView(referencedSteps, this.engineApi, this.resolvedStepOutputCache )
         let targetMap = this.steps
 
         for (const [stepName, iteration] of this.currentPath.path) {
@@ -201,7 +201,7 @@ export class FlowExecutorContext {
             targetMap = stepOutput.output.iterations[iteration]
             flattened = {
                 ...flattened,
-                ...await extractStepView(targetMap, this.engineApi, this.materializeCache),
+                ...await extractStepView(targetMap, this.engineApi, this.resolvedStepOutputCache ),
             }
         }
         return flattened
@@ -211,7 +211,7 @@ export class FlowExecutorContext {
 async function extractStepView(steps: Record<string, StepOutput>, engineApi: EngineApiConfig | undefined, cache: Map<string, Promise<unknown>>): Promise<Record<string, unknown>> {
     const result: Record<string, unknown> = {}
     for (const [stepName, step] of Object.entries(steps)) {
-        const output = await materializeStep(step, engineApi, cache)
+        const output = await resolveStepOutput(step, engineApi, cache)
         const error = step.status === StepOutputStatus.FAILED && step.errorMessage !== undefined
             ? { message: step.errorMessage }
             : undefined
@@ -239,7 +239,7 @@ async function maybeSliceOutput(value: unknown, engineApi?: EngineApiConfig): Pr
     return { ref: { fileId, size, url: readUrl } }
 }
 
-async function materializeStep(step: StepOutput, engineApi: EngineApiConfig | undefined, cache: Map<string, Promise<unknown>>): Promise<unknown> {
+async function resolveStepOutput(step: StepOutput, engineApi: EngineApiConfig | undefined, cache: Map<string, Promise<unknown>>): Promise<unknown> {
     if (step.outputType !== StepOutputType.SLICE) {
         return step.output
     }

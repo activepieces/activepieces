@@ -9,12 +9,12 @@ import { Migration } from '.'
 
 const COF_BRANCHES_KEY = 'continueOnFailureBranches'
 
-function rewriteStrings<T>(value: T, stepNames: string[]): T {
+function wrapStepReferencesInOutputProperty <T>(value: T, stepNames: string[]): T {
     if (typeof value === 'string') {
         return expressionRewriter.rewriteStepReferences({ input: value, stepNames }) as T
     }
     if (Array.isArray(value)) {
-        return value.map((item) => rewriteStrings(item, stepNames)) as T
+        return value.map((item) => wrapStepReferencesInOutputProperty(item, stepNames)) as T
     }
     if (!isNil(value) && typeof value === 'object') {
         const result: Record<string, unknown> = {}
@@ -25,7 +25,7 @@ function rewriteStrings<T>(value: T, stepNames: string[]): T {
                 result[key] = child
                 continue
             }
-            result[key] = rewriteStrings(child, stepNames)
+            result[key] = wrapStepReferencesInOutputProperty(child, stepNames)
         }
         return result as T
     }
@@ -38,7 +38,7 @@ export const migrateV20StepOutputNesting: Migration = {
         const stepNames = flowStructureUtil.getAllSteps(flowVersion.trigger).map((step) => step.name)
         const newFlowVersion = flowStructureUtil.transferFlow(flowVersion, (step: Step) => ({
             ...step,
-            settings: rewriteStrings(step.settings, stepNames),
+            settings: wrapStepReferencesInOutputProperty(step.settings, stepNames),
         }))
         return {
             ...newFlowVersion,

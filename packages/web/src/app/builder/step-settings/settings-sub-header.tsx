@@ -6,12 +6,12 @@ import {
   flowPieceUtil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
+import { Cog } from 'lucide-react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceStepMetadata, stepsHooks } from '@/features/pieces';
 
 import { UpdatePieceVersionDialog } from './update-piece-version-dialog/update-piece-version-dialog';
-import { Cog } from 'lucide-react';
 
 type SettingsSubHeaderProps = {
   step: FlowAction | FlowTrigger;
@@ -34,7 +34,7 @@ const SettingsSubHeader = ({ step }: SettingsSubHeaderProps) => {
   return (
     <div className="flex items-center justify-between gap-2 px-4 pt-3 pb-1">
       <span className="text-xs font-semibold  tracking-wide text-muted-foreground flex items-center gap-2">
-       <Cog className='size-4'></Cog> {t('Settings')}
+        <Cog className="size-4"></Cog> {t('Settings')}
       </span>
       {exactVersion && (
         <div className="flex items-center gap-1 shrink-0">

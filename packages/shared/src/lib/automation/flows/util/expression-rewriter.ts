@@ -1,6 +1,19 @@
 import { AnyNode, AssignmentProperty, Identifier, MemberExpression, parse, Property } from 'acorn'
 import { ancestor } from 'acorn-walk'
 import { analyze } from 'eslint-scope'
+/**
+ * Rewrites bare step references (`step_1.foo`) into the `['output']` form
+ * (`step_1['output'].foo`) for the v20 step-output schema, while leaving
+ * locally-shadowed names alone (e.g. `(step_1) => step_1.bar`).
+ *
+ * Library reference:
+ *  - ESTree AST node types (Identifier, MemberExpression, Property, …):
+ *    https://github.com/estree/estree
+ *  - acorn parser + acorn-walk's `ancestor` visitor:
+ *    https://github.com/acornjs/acorn/blob/master/acorn-walk/README.md
+ *  - eslint-scope (`analyze`, `Scope.through` for free references):
+ *    https://eslint.org/docs/latest/extend/scope-manager-interface
+ */
 
 function rewriteStepReferences({ input, stepNames }: { input: string, stepNames: string[] }): string {
     if (!input.includes('{{')) {
@@ -37,9 +50,10 @@ function rewriteToken(code: string, stepNames: Set<string>): string | null {
     }
 
     const globalScope = scopeManager.scopes[0]
-    const freeReferenceNodes = new Set<unknown>()
+
+    const unresolvedIdentifiers  = new Set<unknown>()
     for (const ref of globalScope.through) {
-        freeReferenceNodes.add(ref.identifier)
+        unresolvedIdentifiers .add(ref.identifier)
     }
 
     const rewrites: Rewrite[] = []
@@ -49,16 +63,17 @@ function rewriteToken(code: string, stepNames: Set<string>): string | null {
             if (!isStepRef(node.name, stepNames)) {
                 return
             }
-            if (!freeReferenceNodes.has(node)) {
+            if (!unresolvedIdentifiers.has(node)) {
                 return
             }
             const parent = ancestors.length >= 2 ? ancestors[ancestors.length - 2] : null
-            if (!isHeadPosition(node, parent)) {
+            if (!isVariableReference(node, parent)) {
                 return
             }
             const start = node.start - WRAP_OFFSET
             const end = node.end - WRAP_OFFSET
             if (parent !== null && parent.type === 'Property' && parent.shorthand && parent.value === node) {
+                // {step_1} ==> {step_1: {step_1}['output']}
                 rewrites.push({
                     start,
                     end,
@@ -90,25 +105,32 @@ function isStepRef(name: string, stepNames: Set<string>): boolean {
     return STEP_NAME_PATTERN.test(name) || stepNames.has(name)
 }
 
-function isHeadPosition(node: Identifier, parent: AnyNode | null): boolean {
+function isVariableReference(node: Identifier, parent: AnyNode | null): boolean {
     if (parent === null) {
         return true
     }
     switch (parent.type) {
         case 'MemberExpression':
-            return isHeadOfMemberExpression(node, parent)
+            // `step_1.foo` → step_1 is a variable; `obj.step_1` → step_1 is just a property name.
+            // Bracket access `obj[step_1]` is also a variable lookup (handled via `computed`).
+            return isVariableReferenceInMemberExpression(node, parent)
         case 'Property':
-            return isHeadOfProperty(node, parent)
+            // `{ foo: step_1 }` → step_1 is a variable; `{ step_1: 42 }` → step_1 is just a key.
+            // `{ step_1 }` (shorthand) and `{ [step_1]: 42 }` (computed) are variable lookups.
+            return isVariableReferenceInProperty(node, parent)
         case 'MethodDefinition':
+            // `class X { step_1() {} }` → step_1 is just the method name, not a variable.
             return parent.key !== node
         case 'LabeledStatement':
+            // `step_1: while (true) {}` → step_1 is a label, not a variable.
             return parent.label !== node
         default:
+            // Everything else (`step_1 + 1`, `f(step_1)`, `const x = step_1`, …) is a real lookup.
             return true
     }
 }
 
-function isHeadOfMemberExpression(node: Identifier, parent: MemberExpression): boolean {
+function isVariableReferenceInMemberExpression(node: Identifier, parent: MemberExpression): boolean {
     if (parent.object === node) {
         return true
     }
@@ -118,7 +140,7 @@ function isHeadOfMemberExpression(node: Identifier, parent: MemberExpression): b
     return true
 }
 
-function isHeadOfProperty(node: Identifier, parent: Property | AssignmentProperty): boolean {
+function isVariableReferenceInProperty(node: Identifier, parent: Property | AssignmentProperty): boolean {
     if (parent.key === node) {
         return parent.shorthand || parent.computed
     }

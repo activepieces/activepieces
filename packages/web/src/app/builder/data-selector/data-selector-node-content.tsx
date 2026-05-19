@@ -17,7 +17,7 @@ import { useBuilderStateContext } from '../builder-hooks';
 import { DataSelectorTreeNode } from './type';
 
 const INDENT_PER_DEPTH = 14;
-const VALUE_PREVIEW_MAX_LENGTH = 1000;
+const VALUE_PREVIEW_MAX_LENGTH = 60;
 
 type DataSelectorNodeContentProps = {
   expanded: boolean;
@@ -219,18 +219,3 @@ const formatValuePreview = (value: unknown): string => {
 
 DataSelectorNodeContent.displayName = 'DataSelectorNodeContent';
 export { DataSelectorNodeContent };
-
-const StepMetadataIcon = ({ step }: { step: FlowAction | FlowTrigger }) => {
-  const stepMetadata = stepsHooks.useStepMetadata({ step }).stepMetadata;
-  return (
-    stepMetadata && (
-      <PieceIcon
-        displayName={stepMetadata.displayName}
-        logoUrl={stepMetadata.logoUrl}
-        showTooltip={false}
-        border={false}
-        size="sm"
-      ></PieceIcon>
-    )
-  );
-};
