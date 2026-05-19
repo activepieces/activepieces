@@ -29,6 +29,7 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
 - **Waitpoint**: Row in the `waitpoint` table representing one paused step on a run. Fields: `type` (DELAY|WEBHOOK), `version` (V0|V1 — V1 is the current API), `status` (PENDING|COMPLETED), `stepName`, `resumeDateTime`, `responseToSend`, `resumePayload`, `workerHandlerId`, `httpRequestId`. Unique on `(flow_run_id, step_name)`.
 - **PauseMetadata** *(legacy/V0)*: JSONB column on `flow_run` distinguishing DELAY vs WEBHOOK pauses. Deprecated 2026-04-13 (0.82.0); still read for in-flight V0 runs, scheduled for removal. V1 runs store this information on the `waitpoint` row instead.
 - **Retry Strategy**: FROM_FAILED_STEP (resume from exact failure point, keeping prior outputs) or ON_LATEST_VERSION (fresh run on current published version).
+- **ResumeReason**: `WAITPOINT` | `RETRY`. Set on every `ExecutionType.RESUME` engine operation and threaded through `ExecuteFlowJobData`. Determines whether the engine restores FAILED steps from the journal — waitpoint resumes preserve them, retry resumes drop them so the failed step re-executes. The two resume paths share the same `ExecutionType`, so this field is the only discriminator.
 - **Subflow**: A child run linked via `parentRunId`, created when a flow calls another flow as a step.
 - **failedStep**: JSONB snapshot of `{ name, type, errorMessage }` for the step that caused failure, enabling filtered retries.
 
@@ -57,7 +58,7 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
 
 ## Retry Strategies
 
-- **FROM_FAILED_STEP**: Fetches execution state from zstd-compressed logs file, rebuilds FlowExecutorContext, re-runs from failed step. Previous step outputs preserved.
+- **FROM_FAILED_STEP**: Fetches execution state from zstd-compressed logs file, rebuilds FlowExecutorContext, re-runs from failed step. Previous step outputs preserved. Enqueued with `resumeReason: RETRY` so the engine drops the FAILED step from the restored journal — without this, the failed step would be treated as already-complete and the retry would be a no-op.
 - **ON_LATEST_VERSION**: Starts fresh from trigger on latest published version.
 - Constraint: only terminal states, within retention window (EXECUTION_DATA_RETENTION_DAYS).
 
@@ -74,7 +75,7 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
   - `DELAY` waitpoint: server upserts a `SystemJobName.RESUME_DELAY_WAITPOINT` BullMQ job scheduled at `resumeDateTime`. When it fires, `resumeService.resumeFromWaitpoint` enqueues the resume.
   - `WEBHOOK` waitpoint: resume signal arrives as an HTTP call on `/:id/waitpoints/:waitpointId[/sync]`. Optional `responseToSend` is replied immediately to the original webhook trigger.
 - **Pre-completion (resume-before-pause race):** `waitpoint-service.complete()` takes a pessimistic write lock on the PENDING row. If no row yet, it inserts a COMPLETED row with the `resumePayload`. When the flow then transitions to PAUSED, `flow-runs-queue.ts` sees the COMPLETED waitpoint and enqueues the resume immediately. Prevents dropped early callbacks.
-- **On resume:** fetch state from logs file → rebuild `FlowExecutorContext` → re-run the paused step with `ExecutionType.RESUME` and `ctx.resumePayload = waitpoint.resumePayload`.
+- **On resume:** fetch state from logs file → rebuild `FlowExecutorContext` → re-run the paused step with `ExecutionType.RESUME` and `ctx.resumePayload = waitpoint.resumePayload`. When rebuilding `flowContext` in `flow.operation.ts#getFlowExecutionState`, steps in `SUCCEEDED` / `PAUSED` are always restored; `FAILED` steps are restored iff `resumeReason === WAITPOINT`. Dropping a FAILED step kept alive by `continueOnFailure` would re-execute it from BEGIN — re-firing its waitpoint (e.g. re-invoking a subflow) and letting the global `constants.resumePayload` pollute the new output. The retry path needs the opposite behavior, hence the discriminator.
 - **Limits:** `AP_PAUSED_FLOW_TIMEOUT_DAYS` caps DELAY `resumeDateTime`; engine throws `PausedFlowTimeoutError` beyond that.
 - **Legacy (V0) path:** `pauseMetadata` on `flow_run` + `ctx.run.pause({ pauseMetadata })` + `ctx.generateResumeUrl()` + `/requests/:requestId[/sync]` routes. Still functional for in-flight runs; scheduled for removal.
 - **On server restart:** `refill-paused-jobs` migration re-queues legacy paused runs. Waitpoint DELAYs are BullMQ delayed jobs and survive restarts natively.
