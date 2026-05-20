@@ -88,13 +88,11 @@ export type TriggerBase = ActionBase & {
 
 export const PieceMetadata = z.object({
   ...PieceBase.shape,
-  llmDescription: z.string().optional(),
   actions: z.record(z.string(), ActionBase),
   triggers: z.record(z.string(), TriggerBase),
 })
 
 export type PieceMetadata = Omit<PieceBase, 'getContextInfo'> & {
-  llmDescription?: string;
   actions: Record<string, ActionBase>;
   triggers: Record<string, TriggerBase>;
   // this property didn't exist in older version
