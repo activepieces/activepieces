@@ -32,7 +32,7 @@ const ActionTestRunnerProvider = ({
   const [showWebhookDialog, setShowWebhookDialog] = useState(false);
   const [lastSeenAutoTestRequest, setLastSeenAutoTestRequest] = useState<
     string | null
-  >(pendingAutoTestStepName);
+  >(null);
 
   const isTesting =
     isWaitingTestResult || isStepBeingTested(step.name) || showWebhookDialog;
@@ -57,7 +57,7 @@ const ActionTestRunnerProvider = ({
     setLastSeenAutoTestRequest(pendingAutoTestStepName);
     if (pendingAutoTestStepName === step.name && canFireTest) {
       consumePendingAutoTest(step.name);
-      fireTestNow();
+      queueMicrotask(fireTestNow);
     }
   }
 

@@ -138,7 +138,7 @@ const TestTriggerSection = React.memo(
 
     const [lastSeenAutoTestRequest, setLastSeenAutoTestRequest] = useState<
       string | null
-    >(pendingAutoTestStepName);
+    >(null);
 
     if (pendingAutoTestStepName !== lastSeenAutoTestRequest) {
       setLastSeenAutoTestRequest(pendingAutoTestStepName);
@@ -154,7 +154,7 @@ const TestTriggerSection = React.memo(
         isValid;
       if (canAutoFire) {
         consumePendingAutoTest(formValues.name);
-        onTest();
+        queueMicrotask(onTest);
       }
     }
 
