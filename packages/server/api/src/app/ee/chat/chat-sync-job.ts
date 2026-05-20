@@ -1,4 +1,5 @@
-import { ACTIVEPIECES_CHAT_TIERS, ApEdition, ChatConversation, chunk, PersistedChatMessage, PersistedChatPartType, PersistedToolCallStatus, tryCatch } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, ApEdition, ChatConversation, ChatHistoryMessage, chunk, isNil, PersistedChatMessage, PersistedChatPart, PersistedChatPartType, PersistedChatRole, PersistedToolCallStatus, tryCatch } from '@activepieces/shared'
+import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { isNotOneOfTheseEditions } from '../../database/database-common'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
@@ -6,6 +7,7 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
+import { chatHistory } from './history/chat-history'
 
 const CONSOLE_TELEMETRY_URL = 'https://console.activepieces.com/api/chat-analytics/external/sync'
 const CONSOLE_API_KEY = system.get(AppSystemProp.CONSOLE_API_SECRET_KEY)
@@ -112,6 +114,8 @@ async function toSyncPayload({ conversation, log, userCache, platformCache }: {
     const userEmail = userCache?.get(conversation.userId) ?? await resolveUserEmail({ userId: conversation.userId, log })
     const platformName = platformCache?.get(conversation.platformId) ?? await resolvePlatformName({ platformId: conversation.platformId, log })
 
+    const messages = resolveMessages(conversation)
+
     return {
         id: conversation.id,
         platformId: conversation.platformId,
@@ -120,13 +124,56 @@ async function toSyncPayload({ conversation, log, userCache, platformCache }: {
         userEmail,
         title: conversation.title,
         modelName: resolveModelLabel(conversation.modelName ?? null),
-        messages: conversation.uiMessages ?? [],
-        messageCount: conversation.uiMessages?.length ?? 0,
-        toolCallsSummary: extractToolCallsSummary(conversation.uiMessages ?? []),
+        messages,
+        messageCount: messages.length,
+        toolCallsSummary: extractToolCallsSummary(messages),
         isActive: false,
         createdAt: conversation.created,
         updatedAt: conversation.updated,
     }
+}
+
+function resolveMessages(conversation: ChatConversation): PersistedChatMessage[] {
+    if (!isNil(conversation.uiMessages) && conversation.uiMessages.length > 0) {
+        return conversation.uiMessages
+    }
+    const rawMessages = conversation.messages as ModelMessage[]
+    if (isNil(rawMessages) || rawMessages.length === 0) {
+        return []
+    }
+    return convertToPersistedFormat(chatHistory.reconstruct(rawMessages))
+}
+
+function convertToPersistedFormat(messages: ChatHistoryMessage[]): PersistedChatMessage[] {
+    return messages.map((msg) => {
+        const parts: PersistedChatPart[] = []
+
+        if (msg.content) {
+            parts.push({ type: PersistedChatPartType.TEXT, text: msg.content })
+        }
+
+        if (msg.thoughts) {
+            parts.push({ type: PersistedChatPartType.REASONING, text: msg.thoughts })
+        }
+
+        if (msg.toolCalls) {
+            for (const tc of msg.toolCalls) {
+                parts.push({
+                    type: PersistedChatPartType.TOOL_CALL,
+                    toolCallId: tc.toolCallId,
+                    toolName: tc.title,
+                    input: tc.input ?? {},
+                    output: tc.output,
+                    status: tc.status === 'completed' ? PersistedToolCallStatus.COMPLETED : PersistedToolCallStatus.ERROR,
+                })
+            }
+        }
+
+        return {
+            role: msg.role === 'user' ? PersistedChatRole.USER : PersistedChatRole.ASSISTANT,
+            parts,
+        }
+    })
 }
 
 function resolveModelLabel(tierId: string | null): string | null {
