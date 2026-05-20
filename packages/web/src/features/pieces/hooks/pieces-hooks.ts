@@ -144,6 +144,14 @@ export const piecesHooks = {
     }, [pieces, names]);
     return { summaries, isLoading };
   },
+  usePieceSummary: ({ name }: { name: string }) => {
+    const { pieces, isLoading } = piecesHooks.usePieces({});
+    const summary = useMemo(
+      () => pieces?.find((p) => p.name === name),
+      [pieces, name],
+    );
+    return { summary, isLoading };
+  },
   usePieces: ({
     searchQuery,
     includeHidden = false,
