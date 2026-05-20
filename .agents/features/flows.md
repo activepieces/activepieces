@@ -20,7 +20,8 @@ Flows are the core automation primitive in Activepieces. Each flow is a versione
 - `packages/web/src/features/flows/utils/flows-utils.tsx` — download, zip, template parsing helpers
 - `packages/web/src/app/builder/index.tsx` — visual flow builder entry point
 - `packages/web/src/app/builder/flow-canvas/` — XYFlow canvas (nodes, edges, drag layer, context menu)
-- `packages/web/src/app/builder/state/` — Zustand-based builder state (flow, run, canvas, notes, step form, piece selector); canvas state includes `pendingAutoTestStepName` / `requestStepAutoTest` / `consumePendingAutoTest` for one-click auto-test from canvas badges
+- `packages/web/src/app/builder/state/` — Zustand-based builder state; canvas state adds `prepareStepForTesting(stepName)` to atomically select a step and open its test panel
+- `packages/web/src/app/builder/test-step/auto-test-bus-context.tsx` — `AutoTestBusProvider` coordinates one-click auto-test requests from canvas badges across the canvas/settings trees
 - `packages/web/src/app/builder/step-settings/` — step configuration panel
 - `packages/web/src/app/builder/pieces-selector/` — piece/action browser
 - `packages/web/src/app/routes/automations/index.tsx` — flows list page
@@ -97,7 +98,7 @@ When CHANGE_STATUS to DISABLED:
 The visual builder (`packages/web/src/app/builder/`) uses XYFlow for the canvas. State is split into focused Zustand slices, composed by `builder-state-provider.tsx`:
 - `flow-state.ts` — current flow and version, pending operations
 - `run-state.ts` — active test run, step results, focused/failed step (used by the run-info widget's "See error" affordance); `setRun` resets `userManuallySelectedStepDuringRun` whenever a new run id arrives
-- `canvas-state.ts` — viewport, selected node, drag state, plus the `userManuallySelectedStepDuringRun` flag and `resumeLiveFollow` action that gate auto-follow. The auto-focus effect lives in `useFocusOnStep` (`flow-canvas/hooks.tsx`): it calls `selectStepByName(step, { fromAutoFocus: true })` to pan the canvas to the latest engine step, and short-circuits whenever `userManuallySelectedStepDuringRun` is set. The flag flips to `true` when the user picks a different step mid-run (any `selectStepByName` call without `fromAutoFocus`) and clears via `resumeLiveFollow` or when `setRun` receives a new run id. Also owns one-click auto-test plumbing: `requestStepAutoTest(stepName)` selects the step, opens the test panel, and sets `pendingAutoTestStepName`; the action panel consumes that flag via `consumePendingAutoTest` and fires the test once dynamic properties have loaded
+- `canvas-state.ts` — viewport, selected node, drag state, plus the `userManuallySelectedStepDuringRun` flag and `resumeLiveFollow` action that gate auto-follow. The auto-focus effect lives in `useFocusOnStep` (`flow-canvas/hooks.tsx`): it calls `selectStepByName(step, { fromAutoFocus: true })` to pan the canvas to the latest engine step, and short-circuits whenever `userManuallySelectedStepDuringRun` is set. The flag flips to `true` when the user picks a different step mid-run (any `selectStepByName` call without `fromAutoFocus`) and clears via `resumeLiveFollow` or when `setRun` receives a new run id. `prepareStepForTesting(stepName)` selects the step and opens the test panel; the cross-tree auto-test "fire when the runner is ready" coordination lives in `AutoTestBusProvider` (`test-step/auto-test-bus-context.tsx`), which holds a pending request until the step's runner registers via `registerRunner`
 - `step-form-state.ts` — open/focused step configuration
 - `piece-selector-state.ts` — piece browser visibility and search
 - `notes-state.tsx` — sticky notes overlay
