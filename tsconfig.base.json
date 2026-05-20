@@ -960,6 +960,9 @@
       "@activepieces/piece-prompthub": [
         "packages/pieces/community/prompthub/src/index.ts"
       ],
+      "@activepieces/piece-provenexpert": [
+        "packages/pieces/community/provenexpert/src/index.ts"
+      ],
       "@activepieces/piece-pubrio": [
         "packages/pieces/community/pubrio/src/index.ts"
       ],
