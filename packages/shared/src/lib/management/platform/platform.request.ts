@@ -6,6 +6,26 @@ import { ApMultipartFile } from '../../core/common/multipart-file'
 import { FederatedAuthnProviderConfig } from '../../core/federated-authn'
 import { FilteredPieceBehavior } from './platform.model'
 
+export const MAX_ALLOWED_EMBED_ORIGINS = 50
+export const MAX_EMBED_ORIGIN_LENGTH = 300
+
+const ALLOWED_EMBED_ORIGIN_PROTOCOLS = new Set(['http:', 'https:'])
+const WILDCARD_EMBED_ORIGIN_PATTERN = /^https?:\/\/\*\.[^*\s/?#]+$/
+
+export const allowedEmbedOriginSchema = z.string()
+    .max(MAX_EMBED_ORIGIN_LENGTH, 'invalidEmbedOrigin')
+    .refine((value) => {
+        const isWildcard = WILDCARD_EMBED_ORIGIN_PATTERN.test(value)
+        const probe = isWildcard ? value.replace('://*.', '://wildcard.') : value
+        try {
+            const url = new URL(probe)
+            return ALLOWED_EMBED_ORIGIN_PROTOCOLS.has(url.protocol) && url.origin === probe
+        }
+        catch {
+            return false
+        }
+    }, 'invalidEmbedOrigin')
+
 export const Base64EncodedFile = z.object({
     base64: z.string(),
     mimetype: z.string(),
@@ -29,10 +49,14 @@ export const UpdatePlatformRequestBody = z.object({
     filteredPieceBehavior: z.nativeEnum(FilteredPieceBehavior).optional(),
     federatedAuthProviders: FederatedAuthnProviderConfig.optional(),
     cloudAuthEnabled: OptionalBooleanFromQuery,
+    googleAuthEnabled: OptionalBooleanFromQuery,
     emailAuthEnabled: OptionalBooleanFromQuery,
     allowedAuthDomains: OptionalArrayFromQuery(z.string()),
     enforceAllowedAuthDomains: OptionalBooleanFromQuery,
     pinnedPieces: OptionalArrayFromQuery(z.string()),
+    allowedEmbedOrigins: z.array(allowedEmbedOriginSchema)
+        .max(MAX_ALLOWED_EMBED_ORIGINS, 'tooManyEmbedOrigins')
+        .optional(),
 })
 
 export type UpdatePlatformRequestBody = z.infer<typeof UpdatePlatformRequestBody>
@@ -59,3 +83,16 @@ export const IncreaseAICreditsForPlatformRequestBody = z.object({
 
 export type IncreaseAICreditsForPlatformRequestBody = z.infer<typeof IncreaseAICreditsForPlatformRequestBody>
 
+export const AddAllowedEmbedOriginsRequestBody = z.object({
+    allowedEmbedOrigins: z.array(allowedEmbedOriginSchema)
+        .min(1, 'invalidEmbedOrigin')
+        .max(MAX_ALLOWED_EMBED_ORIGINS, 'tooManyEmbedOrigins'),
+})
+
+export type AddAllowedEmbedOriginsRequestBody = z.infer<typeof AddAllowedEmbedOriginsRequestBody>
+
+export const AddAllowedEmbedOriginsResponse = z.object({
+    allowedEmbedOrigins: z.array(z.string()),
+})
+
+export type AddAllowedEmbedOriginsResponse = z.infer<typeof AddAllowedEmbedOriginsResponse>

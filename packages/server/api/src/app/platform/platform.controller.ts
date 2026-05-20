@@ -35,6 +35,15 @@ const edition = system.getEdition()
 export const platformController: FastifyPluginAsyncZod = async (app) => {
     app.post('/', CreatePlatformEndpoint, async (req) => {
         const isOnboarding = req.principal.type === PrincipalType.ONBOARDING
+        if (!isOnboarding && edition !== ApEdition.CLOUD) {
+            // only first ee/ce user will be able to have onboarding token. which means any other principal type should not be able to create platform
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'This action is unauthorized in non cloud editions',
+                },
+            })
+        }
         const identityId = isOnboarding
             ? req.principal.id
             : (await userService(req.log).getOneOrFail({ id: req.principal.id })).identityId
@@ -262,4 +271,3 @@ const GetAssetRequest = {
         }),
     },
 }
-
