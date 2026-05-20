@@ -247,6 +247,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
             step,
             sampleData,
             isFocusInsideListMapperModeInput,
+            true,
           );
         } catch {
           return {

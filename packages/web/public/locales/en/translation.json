@@ -1010,6 +1010,8 @@
   "fieldCount": "{count, plural, =1 {1 field} other {# fields}}",
   "rowCount": "{count, plural, =1 {1 row} other {# rows}}",
   "columnCount": "{count, plural, =1 {1 column} other {# columns}}",
+  "Empty List": "Empty List",
+  "Empty Object": "Empty Object",
   "Yes": "Yes",
   "No": "No",
   "Too deep to display": "Too deep to display",

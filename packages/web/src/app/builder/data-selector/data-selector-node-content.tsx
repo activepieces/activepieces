@@ -213,6 +213,15 @@ const formatValuePreview = (value: unknown): string => {
   if (typeof value === 'number' || typeof value === 'boolean') {
     return String(value);
   }
+  if (Array.isArray(value) && value.length === 0) return t('Empty List');
+  if (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.keys(value).length === 0
+  ) {
+    return t('Empty Object');
+  }
   const json = JSON.stringify(value);
   return json.length > VALUE_PREVIEW_MAX_LENGTH
     ? `${json.slice(0, VALUE_PREVIEW_MAX_LENGTH)}…`

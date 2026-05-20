@@ -166,16 +166,13 @@ function buildDataSelectorNode(
   children: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[] | undefined,
   insertable = true,
 ): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
-  const isEmptyArrayOrObject =
-    (Array.isArray(value) && value.length === 0) ||
-    (isObject(value) && Object.keys(value).length === 0);
   const jsonPath = buildJsonPath(propertyPath);
 
   return {
     key: jsonPath,
     data: {
       type: 'value',
-      value: isEmptyArrayOrObject ? 'Empty List' : value,
+      value,
       displayName,
       propertyPath: jsonPath,
       insertable,
@@ -206,6 +203,7 @@ function traverseOutput(
   node: unknown,
   zipArraysOfProperties: boolean,
   insertable = true,
+  disableChunking = false,
 ): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
   if (Array.isArray(node)) {
     const isArrayOfObjects = node.some((value) => isObject(value));
@@ -217,8 +215,18 @@ function traverseOutput(
           value,
           zipArraysOfProperties,
           insertable,
+          disableChunking,
         ),
       );
+      if (disableChunking) {
+        return buildDataSelectorNode(
+          displayName,
+          propertyPath,
+          node,
+          mentionNodes,
+          insertable,
+        );
+      }
       const chunks = breakArrayIntoChunks(mentionNodes, MAX_CHUNK_LENGTH);
       const isSingleChunk = chunks.length === 1;
       if (isSingleChunk) {
@@ -233,7 +241,7 @@ function traverseOutput(
       return buildDataSelectorNode(
         displayName,
         propertyPath,
-        undefined,
+        node,
         chunks.map((chunk) =>
           buildChunkNode(
             `${displayName} [${chunk.range.start}-${chunk.range.end}]`,
@@ -271,6 +279,7 @@ function traverseOutput(
         value,
         zipArraysOfProperties,
         insertable,
+        disableChunking,
       );
     });
     return buildDataSelectorNode(
@@ -312,6 +321,7 @@ function traverseStep(
   step: (FlowAction | FlowTrigger) & { dfsIndex: number },
   sampleData: Record<string, unknown>,
   zipArraysOfProperties: boolean,
+  disableChunking = false,
 ): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
   const displayName = `${step.dfsIndex + 1}. ${step.displayName}`;
   const stepNeedsTesting =
@@ -333,6 +343,7 @@ function traverseStep(
       copiedSampleData,
       zipArraysOfProperties,
       true,
+      disableChunking,
     );
     headNode.isLoopStepNode = true;
     return headNode;
@@ -344,6 +355,7 @@ function traverseStep(
     sampleData[step.name],
     zipArraysOfProperties,
     true,
+    disableChunking,
   );
 }
 
