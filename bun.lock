@@ -7357,6 +7357,16 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/weekdone": {
+      "name": "@activepieces/piece-weekdone",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/what-converts": {
       "name": "@activepieces/piece-what-converts",
       "version": "0.1.3",
@@ -9832,6 +9842,8 @@
     "@activepieces/piece-wedof": ["@activepieces/piece-wedof@workspace:packages/pieces/community/wedof"],
 
     "@activepieces/piece-week-done": ["@activepieces/piece-week-done@workspace:packages/pieces/community/week-done"],
+
+    "@activepieces/piece-weekdone": ["@activepieces/piece-weekdone@workspace:packages/pieces/community/weekdone"],
 
     "@activepieces/piece-what-converts": ["@activepieces/piece-what-converts@workspace:packages/pieces/community/what-converts"],
 
