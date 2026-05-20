@@ -1,13 +1,7 @@
 import { FlowTrigger, flowStructureUtil, isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Zap } from 'lucide-react';
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useContext, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { ChatDrawerSource } from '@/app/builder/types';
@@ -142,33 +136,27 @@ const TestTriggerSection = React.memo(
       }
     }, [testType, setChatDrawerOpenSource, simulateTrigger, pollTrigger]);
 
-    useEffect(() => {
-      if (pendingAutoTestStepName !== formValues.name) return;
-      if (!testType || isPieceLoading || isLoadingDynamicProperties) return;
-      if (
-        isSimulating ||
-        isPollingTesting ||
-        isSavingMockdata ||
-        isTestingDialogOpen
-      )
-        return;
-      if (!isValid) return;
-      consumePendingAutoTest(formValues.name);
-      onTest();
-    }, [
-      pendingAutoTestStepName,
-      formValues.name,
-      testType,
-      isPieceLoading,
-      isLoadingDynamicProperties,
-      isSimulating,
-      isPollingTesting,
-      isSavingMockdata,
-      isTestingDialogOpen,
-      isValid,
-      consumePendingAutoTest,
-      onTest,
-    ]);
+    const [lastSeenAutoTestRequest, setLastSeenAutoTestRequest] = useState<
+      string | null
+    >(pendingAutoTestStepName);
+
+    if (pendingAutoTestStepName !== lastSeenAutoTestRequest) {
+      setLastSeenAutoTestRequest(pendingAutoTestStepName);
+      const canAutoFire =
+        pendingAutoTestStepName === formValues.name &&
+        !!testType &&
+        !isPieceLoading &&
+        !isLoadingDynamicProperties &&
+        !isSimulating &&
+        !isPollingTesting &&
+        !isSavingMockdata &&
+        !isTestingDialogOpen &&
+        isValid;
+      if (canAutoFire) {
+        consumePendingAutoTest(formValues.name);
+        onTest();
+      }
+    }
 
     if (isPieceLoading || isNil(trigger) || !testType) {
       return (
