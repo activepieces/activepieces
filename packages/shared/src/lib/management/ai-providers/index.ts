@@ -11,6 +11,7 @@ export enum AIProviderName {
     CLOUDFLARE_GATEWAY = 'cloudflare-gateway',
     CUSTOM = 'custom',
     BEDROCK = 'bedrock',
+    N1N_AI = 'n1n-ai',
 }
 
 
@@ -129,6 +130,7 @@ export const AIProviderConfig = z.union([
     OpenAIProviderConfig,
     OpenRouterProviderConfig,
     ActivePiecesProviderConfig,
+    z.object({}),
 ])
 export type AIProviderConfig = z.infer<typeof AIProviderConfig>
 
@@ -186,6 +188,12 @@ const ProviderConfigUnion = z.discriminatedUnion('provider', [
         provider: z.literal(AIProviderName.BEDROCK),
         config: BedrockProviderConfig,
         auth: BedrockProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.N1N_AI),
+        config: z.object({}),
+        auth: BaseAIProviderAuthConfig,
     }),
 ])
 
