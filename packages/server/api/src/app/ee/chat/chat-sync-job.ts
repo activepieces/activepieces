@@ -38,13 +38,9 @@ export const chatAnalyticsBulkSync = (log: FastifyBaseLogger) => ({
         let failed = 0
 
         for (const batch of chunk(conversations, BATCH_SIZE)) {
-            const success = await pushToConsole({ conversations: batch, log, userCache, platformCache })
-            if (success) {
-                synced += batch.length
-            }
-            else {
-                failed += batch.length
-            }
+            const result = await pushToConsole({ conversations: batch, log, userCache, platformCache })
+            synced += result.pushed
+            failed += result.skipped + (result.success ? 0 : batch.length - result.skipped)
         }
 
         return { synced, failed }
@@ -75,14 +71,26 @@ async function pushToConsole({ conversations, log, userCache, platformCache }: {
     log: FastifyBaseLogger
     userCache?: Map<string, string | null>
     platformCache?: Map<string, string | null>
-}): Promise<boolean> {
+}): Promise<{ pushed: number, skipped: number, success: boolean }> {
     if (!CONSOLE_API_KEY) {
-        return false
+        return { pushed: 0, skipped: conversations.length, success: false }
     }
 
-    const payloads = await Promise.all(
-        conversations.map((conversation) => toSyncPayload({ conversation, log, userCache, platformCache })),
-    )
+    const payloads: Record<string, unknown>[] = []
+    for (const conversation of conversations) {
+        const payloadResult = await tryCatch(() => toSyncPayload({ conversation, log, userCache, platformCache }))
+        if (payloadResult.error) {
+            log.error({ conversationId: conversation.id, error: String(payloadResult.error) }, 'Failed to build sync payload for conversation, skipping')
+            continue
+        }
+        payloads.push(payloadResult.data)
+    }
+
+    const skipped = conversations.length - payloads.length
+
+    if (payloads.length === 0) {
+        return { pushed: 0, skipped, success: true }
+    }
 
     const result = await tryCatch(() => fetch(CONSOLE_TELEMETRY_URL, {
         method: 'POST',
@@ -96,13 +104,14 @@ async function pushToConsole({ conversations, log, userCache, platformCache }: {
 
     if (result.error) {
         log.error({ error: result.error }, 'Failed to push chat analytics telemetry')
-        return false
+        return { pushed: 0, skipped, success: false }
     }
     if (!result.data.ok) {
-        log.error({ status: result.data.status }, 'Failed to push chat analytics telemetry: non-2xx response')
-        return false
+        const body = await tryCatch(() => result.data.text())
+        log.error({ status: result.data.status, body: body.error ? 'unreadable' : body.data }, 'Failed to push chat analytics telemetry: non-2xx response')
+        return { pushed: 0, skipped, success: false }
     }
-    return true
+    return { pushed: payloads.length, skipped, success: true }
 }
 
 async function toSyncPayload({ conversation, log, userCache, platformCache }: {
