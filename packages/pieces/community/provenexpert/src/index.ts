@@ -17,7 +17,7 @@ export const provenexpert = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/provenexpert.png',
   categories: [PieceCategory.MARKETING, PieceCategory.FORMS_AND_SURVEYS],
   auth: provenExpertAuth,
-  authors: ['sanket-a11'],
+  authors: ['sanket-a11y'],
   actions: [
     getRatingSummaryAction,
     createSurveyInvitationUrlAction,
