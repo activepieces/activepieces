@@ -6,6 +6,9 @@ Flow Failure Alerts allow users to subscribe to email notifications when a flow 
 ## Key Files
 - `packages/server/api/src/app/ee/alerts/alerts-controller.ts` — REST controller (list, create, delete)
 - `packages/server/api/src/app/ee/alerts/alerts-service.ts` — alert dispatch logic, Redis deduplication, case-insensitive receiver storage, personal-project owner-only constraint
+- `packages/server/api/src/app/ee/helper/email/email-service.ts` — `sendIssueCreatedNotification` (`IssueCreatedArgs` shape: `projectName`, `runUrl`, `failedStepDisplayName`, `failedStepNumber`, optional `failedStepMessage`)
+- `packages/server/api/src/app/ee/helper/email/email-sender/smtp-email-sender.ts` — `getEmailSubject` builds the inbox subject line
+- `packages/server/api/src/assets/emails/issue-created.html` — Mustache template for the failure email
 - `packages/server/api/src/app/ee/alerts/alerts-entity.ts` — TypeORM entity
 - `packages/server/api/src/app/ee/alerts/alerts-module.ts` — module registration (no project-type restriction)
 - `packages/server/api/src/app/ee/projects/ee-project-hooks.ts` — auto-subscribes the owner on personal-project creation; auto-subscribes `alertReceiverEmail` on team-project creation
@@ -70,10 +73,18 @@ Body for create: `{ projectId, channel, receiver }`.
 
 ## Service Methods
 
-- `sendAlertOnRunFinish({ issueToAlert, flowRunId })` — called after a flow run finishes. Increments the Redis counter for the flow version; if this is the first failure in 24 hours, fetches the latest locked flow version and sends an issue-created email to all receivers for the project.
+- `sendAlertOnRunFinish({ issueToAlert, flowRunId, failedStep })` — called after a flow run finishes. `failedStep: FailedStep` is required; `flow-run-hooks.onFinish` already gates the call on `!isNil(flowRun.failedStep)` for failed production runs, so the contract reflects reality. Increments the Redis counter; on the first failure in 24 hours, fetches **the run's own** flow version via `flowVersionService.getOneOrThrow(issueToAlert.flowVersionId)` (not the latest locked version — using the run's own version guarantees `failedStep.name` is findable in the structure, so `failedStepNumber` is always present) and sends the issue-created email to every receiver for the project.
 - `add({ projectId, channel, receiver })` — creates a new alert. Lowercases the receiver. For personal projects, throws `VALIDATION` if the receiver is not the owner's identity email. Throws `EXISTING_ALERT_CHANNEL` (case-insensitive lookup) if the receiver already exists for the project.
 - `list({ projectId, cursor, limit })` — returns a paginated `SeekPage<Alert>`.
 - `delete({ alertId })` — removes an alert record.
+
+## Issue-Created Email
+
+Template: `packages/server/api/src/assets/emails/issue-created.html`. Mustache vars: `projectName`, `flowName`, `createdAt`, `failedStepNumber`, `failedStepDisplayName`, `failedStepMessage` (optional), `runUrl`. Layout: heading → "First seen at … To recover, retry this run from the runs table, or update the flow, republish, and retry it again." → labeled rows for **Project**, **Failed at**, optional **Reason** → CTA "View Run" linking to `projects/<projectId>/runs/<flowRunId>`.
+
+Subject (built in `smtp-email-sender.ts:getEmailSubject`): `` `[${projectName}] Flow has an issue "${flowName}" ⚠️` ``.
+
+There is no Issues feature in the product; the email points directly at the run page. The previously dead `checkIssuesEnabled` / `isIssue` plumbing and "View Issue" CTA were removed in this branch.
 
 ## Project Creation Integration
 

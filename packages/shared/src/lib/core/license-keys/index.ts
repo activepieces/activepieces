@@ -25,7 +25,6 @@ export const LicenseKeyEntity = z.object({
     managePiecesEnabled: z.boolean(),
     manageTemplatesEnabled: z.boolean(),
     apiKeysEnabled: z.boolean(),
-    customDomainsEnabled: z.boolean(),
     projectRolesEnabled: z.boolean(),
     analyticsEnabled: z.boolean(),
     globalConnectionsEnabled: z.boolean(),

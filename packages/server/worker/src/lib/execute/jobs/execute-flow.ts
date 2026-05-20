@@ -131,6 +131,7 @@ function buildFlowOperation(
             ...base,
             executionType: ExecutionType.RESUME,
             resumePayload: data.payload,
+            resumeReason: data.resumeReason,
         }
     }
 
