@@ -44,9 +44,7 @@ export type CanvasState = {
   setTestPanelView: (view: TestPanelView) => void;
   isTestPanelOpen: boolean;
   setTestPanelOpen: (open: boolean) => void;
-  pendingAutoTestStepName: string | null;
-  requestStepAutoTest: (stepName: string) => void;
-  consumePendingAutoTest: (stepName: string) => void;
+  prepareStepForTesting: (stepName: string) => void;
 };
 
 type CanvasStateInitialState = Pick<
@@ -211,8 +209,7 @@ export const createCanvasState = (
         isTestPanelOpen: open,
       }));
     },
-    pendingAutoTestStepName: null,
-    requestStepAutoTest: (stepName: string) => {
+    prepareStepForTesting: (stepName: string) => {
       localStorage.setItem(TEST_PANEL_OPEN_KEY_IN_LOCAL_STORAGE, 'open');
       set((state) => {
         const isEmptyTrigger =
@@ -226,16 +223,9 @@ export const createCanvasState = (
             ? RightSideBarType.NONE
             : RightSideBarType.PIECE_SETTINGS,
           isTestPanelOpen: true,
-          pendingAutoTestStepName: stepName,
         };
       });
     },
-    consumePendingAutoTest: (stepName: string) =>
-      set((state) =>
-        state.pendingAutoTestStepName === stepName
-          ? { pendingAutoTestStepName: null }
-          : state,
-      ),
   };
 };
 

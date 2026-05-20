@@ -10,6 +10,7 @@ import { piecesHooks } from '@/features/pieces';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { DynamicPropertiesContext } from '../../piece-properties/dynamic-properties-context';
+import { useAutoTestBus } from '../auto-test-bus-context';
 import { McpToolTestingDialog } from '../custom-test-step/mcp-tool-testing-dialog';
 import { TestPanelHeader } from '../test-panel-header';
 import { TestPanelViewToggle } from '../test-panel-view-toggle';
@@ -54,8 +55,6 @@ const TestTriggerSection = React.memo(
       sampleDataInput,
       setChatDrawerOpenSource,
       lastTestDate,
-      pendingAutoTestStepName,
-      consumePendingAutoTest,
     } = useBuilderStateContext((state) => {
       const step = flowStructureUtil.getStep(
         formValues.name,
@@ -66,11 +65,10 @@ const TestTriggerSection = React.memo(
         sampleDataInput: state.inputSampleData[formValues.name],
         setChatDrawerOpenSource: state.setChatDrawerOpenSource,
         lastTestDate: step?.settings?.sampleData?.lastTestDate,
-        pendingAutoTestStepName: state.pendingAutoTestStepName,
-        consumePendingAutoTest: state.consumePendingAutoTest,
       };
     });
     const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
+    const { registerRunner } = useAutoTestBus();
 
     const onTestSuccess = async () => {
       await refetch();
@@ -136,31 +134,34 @@ const TestTriggerSection = React.memo(
       }
     }, [testType, setChatDrawerOpenSource, simulateTrigger, pollTrigger]);
 
-    const [lastSeenAutoTestRequest, setLastSeenAutoTestRequest] = useState<
-      string | null
-    >(null);
+    const canAutoFire =
+      !!testType &&
+      !isPieceLoading &&
+      !isLoadingDynamicProperties &&
+      !isSimulating &&
+      !isPollingTesting &&
+      !isSavingMockdata &&
+      !isTestingDialogOpen &&
+      isValid;
 
-    if (pendingAutoTestStepName !== lastSeenAutoTestRequest) {
-      setLastSeenAutoTestRequest(pendingAutoTestStepName);
-      const canAutoFire =
-        pendingAutoTestStepName === formValues.name &&
-        !!testType &&
-        !isPieceLoading &&
-        !isLoadingDynamicProperties &&
-        !isSimulating &&
-        !isPollingTesting &&
-        !isSavingMockdata &&
-        !isTestingDialogOpen &&
-        isValid;
-      if (canAutoFire) {
-        consumePendingAutoTest(formValues.name);
-        queueMicrotask(onTest);
-      }
-    }
+    const cleanupRef = useRef<(() => void) | null>(null);
+    const registrationRef = useCallback(
+      (el: HTMLDivElement | null) => {
+        cleanupRef.current?.();
+        cleanupRef.current = null;
+        if (!el) return;
+        cleanupRef.current = registerRunner(formValues.name, () => {
+          if (!canAutoFire) return false;
+          onTest();
+          return true;
+        });
+      },
+      [registerRunner, formValues.name, canAutoFire, onTest],
+    );
 
     if (isPieceLoading || isNil(trigger) || !testType) {
       return (
-        <div className="flex flex-col h-full">
+        <div ref={registrationRef} className="flex flex-col h-full">
           <TestPanelHeader status="idle" />
           <div className="flex justify-end px-3 py-2 shrink-0">
             <TestPanelViewToggle />
@@ -205,7 +206,7 @@ const TestTriggerSection = React.memo(
     };
 
     return (
-      <div className="flex flex-col h-full">
+      <div ref={registrationRef} className="flex flex-col h-full">
         {showFirstTimeTestingSection && !errorMessage && (
           <div className="flex flex-col h-full">
             <TestPanelHeader status="idle" />

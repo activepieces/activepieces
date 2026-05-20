@@ -20,6 +20,7 @@ import { pieceSelectorUtils } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
+import { useAutoTestBus } from '../../../test-step/auto-test-bus-context';
 import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
 type DraftStepStatus =
   | 'invalid'
@@ -41,7 +42,6 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
     isStepValid,
     isManualTrigger,
     isSkipped,
-    requestStepAutoTest,
   ] = useBuilderStateContext((state) => {
     const step = flowStructureUtil.getStep(stepName, state.flowVersion.trigger);
     const isManualTrigger =
@@ -61,9 +61,9 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
       !!step?.valid,
       isManualTrigger,
       flowCanvasUtils.isSkipped(stepName, state.flowVersion.trigger),
-      state.requestStepAutoTest,
     ];
   });
+  const { requestAutoTest } = useAutoTestBus();
 
   const draftStatusConfig: Record<
     DraftStepStatus,
@@ -172,7 +172,7 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
               aria-label={t('Test step')}
               onClick={(e) => {
                 e.stopPropagation();
-                requestStepAutoTest(stepName);
+                requestAutoTest(stepName);
               }}
               className={cn(
                 badgeClassName,
