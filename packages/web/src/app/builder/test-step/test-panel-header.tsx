@@ -34,13 +34,12 @@ const TestPanelHeader = ({
       )}
     >
       <TestPanelStatusBadge status={status} viewMode={viewMode} />
-      {lastTestDate && (
+      {lastTestDate && status !== 'testing' && (
         <span
           className={cn(
             'text-xs truncate',
             status === 'success' && 'text-success-700/80',
             status === 'failed' && 'text-destructive/80',
-            status === 'testing' && 'text-primary/80',
           )}
         >
           {formatUtils.formatDateWithTime(new Date(lastTestDate), false)}

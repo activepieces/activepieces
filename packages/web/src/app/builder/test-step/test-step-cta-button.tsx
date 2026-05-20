@@ -8,8 +8,9 @@ import {
   isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Eye, Play } from 'lucide-react';
-import { useContext } from 'react';
+import { Play } from 'lucide-react';
+import { useContext, useEffect } from 'react';
+import { toast } from 'sonner';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
@@ -20,11 +21,8 @@ import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties
 import { TestButtonTooltip } from './test-step-tooltip';
 import { testStepHooks } from './utils/test-step-hooks';
 
-const PRIMARY_CTA_CLASSES =
-  'w-full justify-center bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 [&_span]:text-primary-foreground/70';
-
 const SOFT_PRIMARY_CTA_CLASSES =
-  'w-full justify-center bg-primary/5 hover:bg-primary/10 text-primary border-primary/20';
+  'w-full justify-center bg-primary/5 enabled:hover:bg-primary/15 enabled:hover:text-primary text-primary border-primary/20';
 
 const TestStepCTAButton = () => {
   const [
@@ -132,6 +130,7 @@ const ActionCTAButton = ({
   const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
   const { mutate: testAction, isPending: isWaitingTestResult } =
     testStepHooks.useTestAction({ currentStep });
+  useConfigureStepShortcutToast(stepIsValid);
 
   const isTesting = stepIsRunning || isWaitingTestResult;
   const canFireTest =
@@ -152,13 +151,13 @@ const ActionCTAButton = ({
       <CTAShell>
         <TestButtonTooltip saving={saving} invalid={false}>
           <Button
+            variant="outline"
             onClick={onOpenPanel}
             disabled={saving}
-            className={PRIMARY_CTA_CLASSES}
+            className={SOFT_PRIMARY_CTA_CLASSES}
             size="sm"
           >
-            <Eye className="size-4" />
-            {t('Show Sample Data')}
+            {t('Show Output')}
           </Button>
         </TestButtonTooltip>
       </CTAShell>
@@ -176,7 +175,6 @@ const ActionCTAButton = ({
           className="w-full justify-center"
           size="sm"
         >
-          <Eye className="size-4" />
           {t('Show Sample Data')}
         </Button>
         <TestButtonTooltip saving={saving} invalid={!stepIsValid}>
@@ -238,6 +236,7 @@ const TriggerCTAButton = ({
   hasRun,
 }: TriggerCTAButtonProps) => {
   const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
+  useConfigureStepShortcutToast(stepIsValid);
   const testDisabled =
     !stepIsValid || saving || isLoadingDynamicProperties || stepIsRunning;
 
@@ -245,13 +244,13 @@ const TriggerCTAButton = ({
     return (
       <CTAShell>
         <Button
+          variant="outline"
           onClick={onOpenPanel}
           disabled={saving}
-          className={PRIMARY_CTA_CLASSES}
+          className={SOFT_PRIMARY_CTA_CLASSES}
           size="sm"
         >
-          <Eye className="size-4" />
-          {t('Show Sample Data')}
+          {t('Show Output')}
         </Button>
       </CTAShell>
     );
@@ -267,7 +266,6 @@ const TriggerCTAButton = ({
           className="w-full justify-center"
           size="sm"
         >
-          <Eye className="size-4" />
           {t('Show Sample Data')}
         </Button>
         <TestButtonTooltip saving={saving} invalid={!stepIsValid}>
@@ -299,6 +297,7 @@ const TriggerCTAButton = ({
           onKeyboardShortcut={onFireTest}
           className={SOFT_PRIMARY_CTA_CLASSES}
           size="sm"
+          data-testid="test-trigger-button"
         >
           <Play className="size-4 fill-current" />
           {t('Test Trigger')}
@@ -306,6 +305,21 @@ const TriggerCTAButton = ({
       </TestButtonTooltip>
     </CTAShell>
   );
+};
+
+const useConfigureStepShortcutToast = (stepIsValid: boolean) => {
+  useEffect(() => {
+    if (stepIsValid) return;
+    const isMac = /(Mac)/i.test(navigator.userAgent);
+    const onKeyDown = (e: KeyboardEvent) => {
+      const isCtrlG =
+        e.key.toLowerCase() === 'g' && (isMac ? e.metaKey : e.ctrlKey);
+      if (!isCtrlG) return;
+      toast.error(t('Configure step first'));
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [stepIsValid]);
 };
 
 const CTAShell = ({ children }: { children: React.ReactNode }) => (

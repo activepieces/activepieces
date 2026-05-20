@@ -106,9 +106,9 @@ export const TestSampleDataViewer = React.memo(
 
     return (
       <div className="flex flex-col h-full w-full min-h-0">
+        <TestPanelHeader status={status} lastTestDate={lastTestDate} />
         {!isTesting && children}
         <div className="flex-1 flex flex-col w-full text-start min-h-0">
-          <TestPanelHeader status={status} lastTestDate={lastTestDate} />
           {errorMessage && !isTesting && (
             <div className="px-3 pt-2 text-xs text-muted-foreground shrink-0">
               {t('Errors are not saved on refresh')}
@@ -283,7 +283,7 @@ const RetestActionBar = ({
         disabled={disabled}
         keyboardShortcut="G"
         onKeyboardShortcut={onRetest}
-        className="w-full justify-center bg-primary/5 hover:bg-primary/10 text-primary border-primary/20"
+        className="w-full justify-center bg-primary/5 enabled:hover:bg-primary/15 enabled:hover:text-primary text-primary border-primary/20"
         size="sm"
       >
         <Play className="size-4 fill-current" />

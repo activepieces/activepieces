@@ -61,7 +61,7 @@ const DataDisplayTabs = ({
       {canActOnData && (
         <TooltipProvider>
           <div className="sticky top-0 z-10 flex justify-end pointer-events-none">
-            <div className="flex items-center gap-0.5 bg-background/80 backdrop-blur-sm rounded-md pointer-events-auto">
+            <div className="flex items-center gap-0.5 bg-background/90 backdrop-blur-sm rounded-md border border-border shadow-sm pointer-events-auto opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button

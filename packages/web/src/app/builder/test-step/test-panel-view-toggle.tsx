@@ -30,10 +30,7 @@ const TestPanelViewToggle = ({
       size="sm"
       onClick={() => setTestPanelView(isSplit ? 'drawer' : 'split')}
       disabled={disabled}
-      className={cn(
-        'text-sm text-muted-foreground hover:text-foreground shrink-0',
-        className,
-      )}
+      className={cn('text-sm shrink-0', className)}
       aria-label={toggleLabel}
     >
       <ToggleIcon className="size-4" />
