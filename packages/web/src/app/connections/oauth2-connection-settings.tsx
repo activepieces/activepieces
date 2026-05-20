@@ -14,7 +14,7 @@ import {
   isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Pencil } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { Dispatch, SetStateAction, useState } from 'react';
 import { useFormContext, UseFormReturn } from 'react-hook-form';
 
@@ -167,9 +167,13 @@ function OAuth2ConnectionSettings({
                       }}
                       className="flex w-full items-center gap-2 text-sm font-medium cursor-pointer select-none"
                     >
-                      <span>{t('Permissions')}</span>
-                      <div className="grow" />
-                      <Pencil className="h-4 w-4 text-muted-foreground" />
+                      <span className="leading-none">{t('Permissions')}</span>
+                      <ChevronDown
+                        className={cn(
+                          'h-4 w-4 shrink-0 text-muted-foreground transition-transform',
+                          !scopesEditing && '-rotate-90',
+                        )}
+                      />
                     </div>
                     {scopesEditing && (
                       <MultiSelect
