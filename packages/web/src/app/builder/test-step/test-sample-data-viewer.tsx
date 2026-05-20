@@ -5,10 +5,9 @@ import {
   isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Columns2, Loader2, Play, Rows2 } from 'lucide-react';
+import { Loader2, Play } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -17,6 +16,7 @@ import { DataDisplayTabs } from '../data-display/data-display-tabs';
 
 import { AgentTestStep, isRunAgent } from './agent-test-step';
 import { TestPanelHeader } from './test-panel-header';
+import { TestPanelViewToggle } from './test-panel-view-toggle';
 import { TestButtonTooltip } from './test-step-tooltip';
 
 type TestSampleDataViewerProps = {
@@ -174,38 +174,18 @@ const TestPanelToolbar = ({
   hasInput,
   hasLogs,
   disabled = false,
-}: TestPanelToolbarProps) => {
-  const [testPanelView, setTestPanelView] = useBuilderStateContext((state) => [
-    state.testPanelView,
-    state.setTestPanelView,
-  ]);
-
-  const isSplit = testPanelView === 'split';
-  const ToggleIcon = isSplit ? Rows2 : Columns2;
-  const toggleLabel = isSplit ? t('Collapse') : t('Split View');
-
-  return (
-    <div className="flex items-center justify-between px-3 py-2 gap-2 shrink-0">
-      <SegmentedTabs
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        hasInput={hasInput}
-        hasLogs={hasLogs}
-        disabled={disabled}
-      />
-      <button
-        type="button"
-        onClick={() => setTestPanelView(isSplit ? 'drawer' : 'split')}
-        disabled={disabled}
-        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-        aria-label={toggleLabel}
-      >
-        <ToggleIcon className="size-4" />
-        <span>{toggleLabel}</span>
-      </button>
-    </div>
-  );
-};
+}: TestPanelToolbarProps) => (
+  <div className="flex items-center justify-between px-3 py-2 gap-2 shrink-0">
+    <SegmentedTabs
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
+      hasInput={hasInput}
+      hasLogs={hasLogs}
+      disabled={disabled}
+    />
+    <TestPanelViewToggle disabled={disabled} />
+  </div>
+);
 
 type SegmentedTabsProps = TestPanelToolbarProps;
 
@@ -298,11 +278,12 @@ const RetestActionBar = ({
     />
     <TestButtonTooltip saving={isSaving} invalid={!isValid}>
       <Button
+        variant="outline"
         onClick={onRetest}
         disabled={disabled}
         keyboardShortcut="G"
         onKeyboardShortcut={onRetest}
-        className="w-full justify-center bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 [&_span]:text-primary-foreground/70"
+        className="w-full justify-center bg-primary/5 hover:bg-primary/10 text-primary border-primary/20"
         size="sm"
       >
         <Play className="size-4 fill-current" />

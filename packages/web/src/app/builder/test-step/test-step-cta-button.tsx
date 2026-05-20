@@ -1,6 +1,8 @@
 import {
   FlowAction,
   FlowActionType,
+  FlowTrigger,
+  FlowTriggerType,
   Step,
   flowStructureUtil,
   isNil,
@@ -11,6 +13,7 @@ import { useContext } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
+import { pieceSelectorUtils } from '@/features/pieces';
 
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
 
@@ -20,12 +23,16 @@ import { testStepHooks } from './utils/test-step-hooks';
 const PRIMARY_CTA_CLASSES =
   'w-full justify-center bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 [&_span]:text-primary-foreground/70';
 
+const SOFT_PRIMARY_CTA_CLASSES =
+  'w-full justify-center bg-primary/5 hover:bg-primary/10 text-primary border-primary/20';
+
 const TestStepCTAButton = () => {
   const [
     selectedStep,
     flowVersion,
     isStepBeingTested,
     setTestPanelOpen,
+    requestStepAutoTest,
     run,
     saving,
   ] = useBuilderStateContext((state) => [
@@ -33,6 +40,7 @@ const TestStepCTAButton = () => {
     state.flowVersion,
     state.isStepBeingTested,
     state.setTestPanelOpen,
+    state.requestStepAutoTest,
     state.run,
     state.saving,
   ]);
@@ -41,24 +49,62 @@ const TestStepCTAButton = () => {
     ? flowStructureUtil.getStep(selectedStep, flowVersion.trigger)
     : null;
 
-  if (!currentStep || !isFlowAction(currentStep)) {
+  if (!currentStep) {
     return null;
   }
 
-  return (
-    <ActionCTAButton
-      currentStep={currentStep}
-      sampleDataExists={!isNil(currentStep.settings?.sampleData?.lastTestDate)}
-      stepIsRunning={isStepBeingTested(currentStep.name)}
-      onOpenPanel={() => setTestPanelOpen(true)}
-      saving={saving}
-      hasRun={!isNil(run)}
-    />
+  const sampleDataExists = !isNil(
+    currentStep.settings?.sampleData?.lastTestDate,
   );
+  const stepIsRunning = isStepBeingTested(currentStep.name);
+  const onOpenPanel = () => setTestPanelOpen(true);
+  const onFireTest = () => requestStepAutoTest(currentStep.name);
+
+  if (isFlowAction(currentStep)) {
+    return (
+      <ActionCTAButton
+        currentStep={currentStep}
+        sampleDataExists={sampleDataExists}
+        stepIsRunning={stepIsRunning}
+        onOpenPanel={onOpenPanel}
+        saving={saving}
+        hasRun={!isNil(run)}
+      />
+    );
+  }
+
+  if (isPieceTrigger(currentStep)) {
+    if (
+      pieceSelectorUtils.isManualTrigger({
+        pieceName: currentStep.settings.pieceName,
+        triggerName: currentStep.settings.triggerName ?? '',
+      })
+    ) {
+      return null;
+    }
+    return (
+      <TriggerCTAButton
+        sampleDataExists={sampleDataExists}
+        stepIsRunning={stepIsRunning}
+        stepIsValid={currentStep.valid !== false}
+        onOpenPanel={onOpenPanel}
+        onFireTest={onFireTest}
+        saving={saving}
+        hasRun={!isNil(run)}
+      />
+    );
+  }
+
+  return null;
 };
 
 const isFlowAction = (step: Step): step is FlowAction =>
   flowStructureUtil.isAction(step.type);
+
+const isPieceTrigger = (
+  step: Step,
+): step is Extract<FlowTrigger, { type: FlowTriggerType.PIECE }> =>
+  step.type === FlowTriggerType.PIECE;
 
 type ActionCTAButtonProps = {
   currentStep: FlowAction;
@@ -135,11 +181,12 @@ const ActionCTAButton = ({
         </Button>
         <TestButtonTooltip saving={saving} invalid={!stepIsValid}>
           <Button
+            variant="outline"
             onClick={fireTest}
             disabled={retestDisabled}
             keyboardShortcut="G"
             onKeyboardShortcut={fireTest}
-            className={PRIMARY_CTA_CLASSES}
+            className={SOFT_PRIMARY_CTA_CLASSES}
             size="sm"
           >
             <Play className="size-4 fill-current" />
@@ -155,15 +202,106 @@ const ActionCTAButton = ({
     <CTAShell>
       <TestButtonTooltip saving={saving} invalid={!stepIsValid}>
         <Button
+          variant="outline"
           onClick={fireTest}
           disabled={testDisabled}
           keyboardShortcut="G"
           onKeyboardShortcut={fireTest}
-          className={PRIMARY_CTA_CLASSES}
+          className={SOFT_PRIMARY_CTA_CLASSES}
           size="sm"
         >
           <Play className="size-4 fill-current" />
           {t('Test Step')}
+        </Button>
+      </TestButtonTooltip>
+    </CTAShell>
+  );
+};
+
+type TriggerCTAButtonProps = {
+  sampleDataExists: boolean;
+  stepIsRunning: boolean;
+  stepIsValid: boolean;
+  onOpenPanel: () => void;
+  onFireTest: () => void;
+  saving: boolean;
+  hasRun: boolean;
+};
+
+const TriggerCTAButton = ({
+  sampleDataExists,
+  stepIsRunning,
+  stepIsValid,
+  onOpenPanel,
+  onFireTest,
+  saving,
+  hasRun,
+}: TriggerCTAButtonProps) => {
+  const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
+  const testDisabled =
+    !stepIsValid || saving || isLoadingDynamicProperties || stepIsRunning;
+
+  if (hasRun) {
+    return (
+      <CTAShell>
+        <Button
+          onClick={onOpenPanel}
+          disabled={saving}
+          className={PRIMARY_CTA_CLASSES}
+          size="sm"
+        >
+          <Eye className="size-4" />
+          {t('Show Sample Data')}
+        </Button>
+      </CTAShell>
+    );
+  }
+
+  if (sampleDataExists) {
+    return (
+      <CTAShell>
+        <Button
+          variant="outline"
+          onClick={onOpenPanel}
+          disabled={saving}
+          className="w-full justify-center"
+          size="sm"
+        >
+          <Eye className="size-4" />
+          {t('Show Sample Data')}
+        </Button>
+        <TestButtonTooltip saving={saving} invalid={!stepIsValid}>
+          <Button
+            variant="outline"
+            onClick={onFireTest}
+            disabled={testDisabled}
+            keyboardShortcut="G"
+            onKeyboardShortcut={onFireTest}
+            className={SOFT_PRIMARY_CTA_CLASSES}
+            size="sm"
+          >
+            <Play className="size-4 fill-current" />
+            {t('Retest Trigger')}
+          </Button>
+        </TestButtonTooltip>
+      </CTAShell>
+    );
+  }
+
+  return (
+    <CTAShell>
+      <TestButtonTooltip saving={saving} invalid={!stepIsValid}>
+        <Button
+          variant="outline"
+          onClick={onFireTest}
+          disabled={testDisabled}
+          keyboardShortcut="G"
+          onKeyboardShortcut={onFireTest}
+          className={SOFT_PRIMARY_CTA_CLASSES}
+          size="sm"
+        >
+          <Play className="size-4 fill-current" />
+          {t('Test Trigger')}
         </Button>
       </TestButtonTooltip>
     </CTAShell>

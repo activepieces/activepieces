@@ -16,6 +16,7 @@ import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties
 
 import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
 import { TestPanelHeader } from './test-panel-header';
+import { TestPanelViewToggle } from './test-panel-view-toggle';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
 import { TestButtonTooltip } from './test-step-tooltip';
 import { testStepHooks } from './utils/test-step-hooks';
@@ -122,6 +123,9 @@ const TestStepSectionImplementation = React.memo(
         {!sampleDataExists && !isTesting && (
           <div className="flex flex-col h-full">
             <TestPanelHeader status="idle" />
+            <div className="flex justify-end px-3 py-2 shrink-0">
+              <TestPanelViewToggle />
+            </div>
             <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
               <div className="flex items-center justify-center size-12 rounded-full bg-primary/10 text-primary">
                 <FlaskConical className="size-6" />

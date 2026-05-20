@@ -7,13 +7,19 @@ import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
 type TestPanelHeaderStatus = 'success' | 'failed' | 'testing' | 'idle';
+type TestPanelHeaderViewMode = 'edit' | 'run';
 
 type TestPanelHeaderProps = {
   status: TestPanelHeaderStatus;
   lastTestDate?: string | null;
+  viewMode?: TestPanelHeaderViewMode;
 };
 
-const TestPanelHeader = ({ status, lastTestDate }: TestPanelHeaderProps) => {
+const TestPanelHeader = ({
+  status,
+  lastTestDate,
+  viewMode = 'edit',
+}: TestPanelHeaderProps) => {
   if (status === 'idle') {
     return null;
   }
@@ -27,7 +33,7 @@ const TestPanelHeader = ({ status, lastTestDate }: TestPanelHeaderProps) => {
         status === 'testing' && 'bg-primary/10',
       )}
     >
-      <TestPanelStatusBadge status={status} />
+      <TestPanelStatusBadge status={status} viewMode={viewMode} />
       {lastTestDate && (
         <span
           className={cn(
@@ -46,15 +52,19 @@ const TestPanelHeader = ({ status, lastTestDate }: TestPanelHeaderProps) => {
 
 type TestPanelStatusBadgeProps = {
   status: Exclude<TestPanelHeaderStatus, 'idle'>;
+  viewMode: TestPanelHeaderViewMode;
 };
 
-const TestPanelStatusBadge = ({ status }: TestPanelStatusBadgeProps) => {
+const TestPanelStatusBadge = ({
+  status,
+  viewMode,
+}: TestPanelStatusBadgeProps) => {
   if (status === 'failed') {
     return (
       <div className="flex items-center gap-1.5 text-sm">
         <StepStatusIcon status={StepOutputStatus.FAILED} size="4.5" />
         <span className="text-destructive-700 dark:text-destructive-200 font-medium">
-          {t('Testing Failed')}
+          {viewMode === 'run' ? t('Failed') : t('Tested Failed')}
         </span>
       </div>
     );
@@ -70,7 +80,9 @@ const TestPanelStatusBadge = ({ status }: TestPanelStatusBadgeProps) => {
   return (
     <div className="flex items-center gap-1.5 text-sm">
       <StepStatusIcon status={StepOutputStatus.SUCCEEDED} size="4.5" />
-      <span className="text-success-700 font-medium">{t('Tested')}</span>
+      <span className="text-success-700 font-medium">
+        {viewMode === 'run' ? t('Success') : t('Tested Successfully')}
+      </span>
     </div>
   );
 };

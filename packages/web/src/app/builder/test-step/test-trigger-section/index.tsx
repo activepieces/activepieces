@@ -1,7 +1,13 @@
 import { FlowTrigger, flowStructureUtil, isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Zap } from 'lucide-react';
-import React, { useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { ChatDrawerSource } from '@/app/builder/types';
@@ -9,8 +15,10 @@ import { triggerEventHooks } from '@/features/flows';
 import { piecesHooks } from '@/features/pieces';
 
 import { useBuilderStateContext } from '../../builder-hooks';
+import { DynamicPropertiesContext } from '../../piece-properties/dynamic-properties-context';
 import { McpToolTestingDialog } from '../custom-test-step/mcp-tool-testing-dialog';
 import { TestPanelHeader } from '../test-panel-header';
+import { TestPanelViewToggle } from '../test-panel-view-toggle';
 import { TestSampleDataViewer } from '../test-sample-data-viewer';
 import { testStepHooks } from '../utils/test-step-hooks';
 
@@ -52,6 +60,8 @@ const TestTriggerSection = React.memo(
       sampleDataInput,
       setChatDrawerOpenSource,
       lastTestDate,
+      pendingAutoTestStepName,
+      consumePendingAutoTest,
     } = useBuilderStateContext((state) => {
       const step = flowStructureUtil.getStep(
         formValues.name,
@@ -62,8 +72,11 @@ const TestTriggerSection = React.memo(
         sampleDataInput: state.inputSampleData[formValues.name],
         setChatDrawerOpenSource: state.setChatDrawerOpenSource,
         lastTestDate: step?.settings?.sampleData?.lastTestDate,
+        pendingAutoTestStepName: state.pendingAutoTestStepName,
+        consumePendingAutoTest: state.consumePendingAutoTest,
       };
     });
+    const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
 
     const onTestSuccess = async () => {
       await refetch();
@@ -101,19 +114,16 @@ const TestTriggerSection = React.memo(
     const isTestedBefore = !isNil(lastTestDate);
     const showFirstTimeTestingSection = !isTestedBefore && !isSimulating;
 
-    if (isPieceLoading || isNil(trigger)) {
-      return null;
-    }
-    const testType: TestType = triggerEventUtils.getTestType({
-      triggerName: formValues.settings.triggerName,
-      pieceName: formValues.settings.pieceName,
-      trigger: trigger,
-    });
+    const testType: TestType | null = trigger
+      ? triggerEventUtils.getTestType({
+          triggerName: formValues.settings.triggerName,
+          pieceName: formValues.settings.pieceName,
+          trigger,
+        })
+      : null;
 
-    const showSampleDataViewer =
-      sampleDataSelected && !isSimulating && !isSavingMockdata;
-
-    const onTest = () => {
+    const onTest = useCallback(() => {
+      if (!testType) return;
       switch (testType) {
         case 'chat-trigger':
           setChatDrawerOpenSource(ChatDrawerSource.TEST_STEP);
@@ -130,7 +140,49 @@ const TestTriggerSection = React.memo(
           setIsTestingDialogOpen(true);
           break;
       }
-    };
+    }, [testType, setChatDrawerOpenSource, simulateTrigger, pollTrigger]);
+
+    useEffect(() => {
+      if (pendingAutoTestStepName !== formValues.name) return;
+      if (!testType || isPieceLoading || isLoadingDynamicProperties) return;
+      if (
+        isSimulating ||
+        isPollingTesting ||
+        isSavingMockdata ||
+        isTestingDialogOpen
+      )
+        return;
+      if (!isValid) return;
+      consumePendingAutoTest(formValues.name);
+      onTest();
+    }, [
+      pendingAutoTestStepName,
+      formValues.name,
+      testType,
+      isPieceLoading,
+      isLoadingDynamicProperties,
+      isSimulating,
+      isPollingTesting,
+      isSavingMockdata,
+      isTestingDialogOpen,
+      isValid,
+      consumePendingAutoTest,
+      onTest,
+    ]);
+
+    if (isPieceLoading || isNil(trigger) || !testType) {
+      return (
+        <div className="flex flex-col h-full">
+          <TestPanelHeader status="idle" />
+          <div className="flex justify-end px-3 py-2 shrink-0">
+            <TestPanelViewToggle />
+          </div>
+        </div>
+      );
+    }
+
+    const showSampleDataViewer =
+      sampleDataSelected && !isSimulating && !isSavingMockdata;
     const getSimulationNote = () => {
       switch (testType) {
         case 'simulation':
@@ -169,6 +221,9 @@ const TestTriggerSection = React.memo(
         {showFirstTimeTestingSection && !errorMessage && (
           <div className="flex flex-col h-full">
             <TestPanelHeader status="idle" />
+            <div className="flex justify-end px-3 py-2 shrink-0">
+              <TestPanelViewToggle />
+            </div>
             <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
               <div className="flex items-center justify-center size-12 rounded-full bg-primary/10 text-primary">
                 <Zap className="size-6" />

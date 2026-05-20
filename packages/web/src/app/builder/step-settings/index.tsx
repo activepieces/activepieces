@@ -16,7 +16,6 @@ import { useForm, Resolver } from 'react-hook-form';
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Form } from '@/components/ui/form';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import {
   stepsHooks,
   pieceSelectorUtils,
@@ -145,8 +144,11 @@ const StepSettingsContainer = () => {
       pieceName: modifiedStep.settings.pieceName,
       triggerName: modifiedStep.settings.triggerName ?? '',
     });
-  const showGenerateSampleData = !readonly && !isManualTrigger;
-  const showStepInputOutFromRun = !isNil(run) && !isManualTrigger;
+  const isEmptyTrigger = modifiedStep.type === FlowTriggerType.EMPTY;
+  const showGenerateSampleData =
+    !readonly && !isManualTrigger && !isEmptyTrigger;
+  const showStepInputOutFromRun =
+    !isNil(run) && !isManualTrigger && !isEmptyTrigger;
 
   const [isEditingStepOrBranchName, setIsEditingStepOrBranchName] =
     useState(false);
@@ -234,7 +236,10 @@ const StepSettingsContainer = () => {
         onChange={(e) => e.preventDefault()}
         className="w-full h-full flex flex-col"
       >
-        <div ref={sidebarHeaderContainerRef}>
+        <div
+          ref={sidebarHeaderContainerRef}
+          className="relative z-10 bg-background"
+        >
           <SidebarHeader
             onClose={() => exitStepSettings()}
             leadingIcon={
@@ -312,7 +317,10 @@ const StepSettingsContainer = () => {
               }
             ></EditableStepName>
           </SidebarHeader>
-          <Separator className="w-full h-px" />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -bottom-3 left-0 right-0 h-3 bg-gradient-to-b from-background to-transparent"
+          />
         </div>
 
         <DynamicPropertiesProvider

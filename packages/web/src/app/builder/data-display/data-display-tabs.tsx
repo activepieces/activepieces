@@ -57,42 +57,44 @@ const DataDisplayTabs = ({
   };
 
   return (
-    <div className={cn('group relative flex flex-col gap-2', className)}>
+    <div className={cn('group flex flex-col gap-2', className)}>
       {canActOnData && (
         <TooltipProvider>
-          <div className="absolute right-1 top-1 z-10 flex items-center gap-0.5 bg-background/80 backdrop-blur-sm rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="size-7 p-0"
-                  onClick={handleCopy}
-                  aria-label={t('Copy to clipboard')}
-                >
-                  <Copy className="size-3.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                {t('Copy to clipboard')}
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="size-7 p-0"
-                  onClick={handleDownload}
-                  aria-label={t('Download JSON')}
-                >
-                  <Download className="size-3.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                {t('Download JSON')}
-              </TooltipContent>
-            </Tooltip>
+          <div className="sticky top-0 z-10 flex justify-end pointer-events-none">
+            <div className="flex items-center gap-0.5 bg-background/80 backdrop-blur-sm rounded-md pointer-events-auto">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="size-7 p-0"
+                    onClick={handleCopy}
+                    aria-label={t('Copy to clipboard')}
+                  >
+                    <Copy className="size-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {t('Copy to clipboard')}
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="size-7 p-0"
+                    onClick={handleDownload}
+                    aria-label={t('Download JSON')}
+                  >
+                    <Download className="size-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {t('Download JSON')}
+                </TooltipContent>
+              </Tooltip>
+            </div>
           </div>
         </TooltipProvider>
       )}
@@ -101,7 +103,7 @@ const DataDisplayTabs = ({
         title={title}
         hideHeader
         hideDownload
-        className="border border-solid border-dividers rounded-md"
+        className="border-0 rounded-none"
       />
     </div>
   );

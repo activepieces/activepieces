@@ -121,7 +121,11 @@ export const FlowStepInputOutput = () => {
 
   return (
     <div className="h-full flex flex-col">
-      <TestPanelHeader status={status} lastTestDate={run.created} />
+      <TestPanelHeader
+        status={status}
+        lastTestDate={run.created}
+        viewMode="run"
+      />
       <ScrollArea className="flex-1 p-3">
         <Tabs
           value={activeTab}
