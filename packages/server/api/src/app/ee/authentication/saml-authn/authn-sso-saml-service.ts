@@ -1,12 +1,12 @@
 import { resolveTxt } from 'dns/promises'
 import { ActivepiecesError, ApEdition, apId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, PlatformId, SAMLAuthnProviderConfig, SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus, tryCatch, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { platformUtils } from 'src/app/platform/platform.utils'
 import { z } from 'zod'
 import { authenticationService } from '../../../authentication/authentication.service'
 import { domainHelper } from '../../../helper/domain-helper'
 import { system } from '../../../helper/system/system'
 import { platformRepo, platformService } from '../../../platform/platform.service'
+import { platformUtils } from '../../../platform/platform.utils'
 import { platformPlanService } from '../../platform/platform-plan/platform-plan.service'
 import { createSamlClient, IdpLoginResponse } from './saml-client'
 
