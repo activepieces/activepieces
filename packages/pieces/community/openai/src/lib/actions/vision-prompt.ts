@@ -6,6 +6,7 @@ import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
+import mime from 'mime-types';
 
 export const visionPrompt = createAction({
   auth: openaiAuth,
@@ -108,6 +109,8 @@ export const visionPrompt = createAction({
       detail,
     } = propsValue;
 
+    const mimeType = mime.lookup(image.extension || 'png') || 'image/png';
+
     const completion = await openai.chat.completions.create({
       model: model,
       messages: [
@@ -118,7 +121,7 @@ export const visionPrompt = createAction({
             {
               type: 'image_url',
               image_url: {
-                url: `data:image/png;base64,${image.data.toString('base64')}`,
+                url: `data:${mimeType};base64,${image.data.toString('base64')}`,
                 detail: detail as any,
               },
             },
