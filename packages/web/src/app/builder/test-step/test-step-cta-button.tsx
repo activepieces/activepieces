@@ -1,6 +1,7 @@
 import {
   FlowAction,
   FlowActionType,
+  Step,
   flowStructureUtil,
   isNil,
 } from '@activepieces/shared';
@@ -40,100 +41,27 @@ const TestStepCTAButton = () => {
     ? flowStructureUtil.getStep(selectedStep, flowVersion.trigger)
     : null;
 
-  if (!currentStep) {
+  if (!currentStep || !isFlowAction(currentStep)) {
     return null;
   }
 
-  const hasRun = !isNil(run);
-  const lastTestDate = currentStep.settings?.sampleData?.lastTestDate;
-  const sampleDataExists = !isNil(lastTestDate);
-  const stepIsRunning = isStepBeingTested(currentStep.name);
-  const openPanel = () => setTestPanelOpen(true);
-
-  if (currentStep.type === FlowActionType.PIECE) {
-    return (
-      <PieceActionCTAButton
-        currentStep={currentStep}
-        sampleDataExists={sampleDataExists}
-        stepIsRunning={stepIsRunning}
-        onOpenPanel={openPanel}
-        saving={saving}
-        hasRun={hasRun}
-      />
-    );
-  }
-
-  if (hasRun) {
-    return (
-      <CTAShell>
-        <TestButtonTooltip saving={saving} invalid={false}>
-          <Button
-            onClick={openPanel}
-            disabled={saving}
-            className={PRIMARY_CTA_CLASSES}
-            size="sm"
-          >
-            <Eye className="size-4" />
-            {t('Show Sample Data')}
-          </Button>
-        </TestButtonTooltip>
-      </CTAShell>
-    );
-  }
-
-  if (sampleDataExists) {
-    return (
-      <CTAShell>
-        <Button
-          variant="outline"
-          onClick={openPanel}
-          disabled={saving}
-          className="w-full justify-center"
-          size="sm"
-        >
-          <Eye className="size-4" />
-          {t('Show Sample Data')}
-        </Button>
-        <TestButtonTooltip saving={saving} invalid={false}>
-          <Button
-            onClick={openPanel}
-            disabled={saving}
-            keyboardShortcut="G"
-            onKeyboardShortcut={openPanel}
-            className={PRIMARY_CTA_CLASSES}
-            size="sm"
-          >
-            <Play className="size-4 fill-current" />
-            {t('Retest Step')}
-          </Button>
-        </TestButtonTooltip>
-      </CTAShell>
-    );
-  }
-
   return (
-    <CTAShell>
-      <TestButtonTooltip saving={saving} invalid={false}>
-        <Button
-          onClick={openPanel}
-          disabled={saving}
-          keyboardShortcut="G"
-          onKeyboardShortcut={openPanel}
-          className={PRIMARY_CTA_CLASSES}
-          size="sm"
-        >
-          <Play className="size-4 fill-current" />
-          {t('Test Step')}
-        </Button>
-      </TestButtonTooltip>
-    </CTAShell>
+    <ActionCTAButton
+      currentStep={currentStep}
+      sampleDataExists={!isNil(currentStep.settings?.sampleData?.lastTestDate)}
+      stepIsRunning={isStepBeingTested(currentStep.name)}
+      onOpenPanel={() => setTestPanelOpen(true)}
+      saving={saving}
+      hasRun={!isNil(run)}
+    />
   );
 };
 
-type PieceFlowAction = Extract<FlowAction, { type: FlowActionType.PIECE }>;
+const isFlowAction = (step: Step): step is FlowAction =>
+  flowStructureUtil.isAction(step.type);
 
-type PieceActionCTAButtonProps = {
-  currentStep: PieceFlowAction;
+type ActionCTAButtonProps = {
+  currentStep: FlowAction;
   sampleDataExists: boolean;
   stepIsRunning: boolean;
   onOpenPanel: () => void;
@@ -141,15 +69,16 @@ type PieceActionCTAButtonProps = {
   hasRun: boolean;
 };
 
-const PieceActionCTAButton = ({
+const ActionCTAButton = ({
   currentStep,
   sampleDataExists,
   stepIsRunning,
   onOpenPanel,
   saving,
   hasRun,
-}: PieceActionCTAButtonProps) => {
+}: ActionCTAButtonProps) => {
   const isReturnResponseAndWaitWebhook =
+    currentStep.type === FlowActionType.PIECE &&
     currentStep.settings.pieceName === '@activepieces/piece-webhook' &&
     currentStep.settings.actionName ===
       'return_response_and_wait_for_next_webhook';

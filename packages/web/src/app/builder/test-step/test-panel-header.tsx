@@ -51,9 +51,11 @@ type TestPanelStatusBadgeProps = {
 const TestPanelStatusBadge = ({ status }: TestPanelStatusBadgeProps) => {
   if (status === 'failed') {
     return (
-      <div className="flex items-center gap-1.5 text-sm text-destructive">
+      <div className="flex items-center gap-1.5 text-sm">
         <StepStatusIcon status={StepOutputStatus.FAILED} size="4.5" />
-        <span>{t('Testing Failed')}</span>
+        <span className="text-destructive-700 dark:text-destructive-200 font-medium">
+          {t('Testing Failed')}
+        </span>
       </div>
     );
   }

@@ -104,8 +104,8 @@ const TestStepSectionImplementation = React.memo(
     useEffect(() => {
       if (pendingAutoTestStepName !== currentStep.name) return;
       if (isLoadingDynamicProperties || isTesting) return;
-      consumePendingAutoTest(currentStep.name);
       if (!currentStep.valid) return;
+      consumePendingAutoTest(currentStep.name);
       onTestButtonClick();
     }, [
       pendingAutoTestStepName,
