@@ -30,6 +30,7 @@ import { ActionErrorHandlingForm } from '../piece-properties/action-error-handli
 import { DynamicPropertiesProvider } from '../piece-properties/dynamic-properties-context';
 import { SidebarHeader } from '../sidebar-header';
 import { TestPanelHost } from '../test-step/test-panel-host';
+import { ActionTestRunnerProvider } from '../test-step/test-runner-context';
 import { TestStepCTAButton } from '../test-step/test-step-cta-button';
 
 import { AgentSettings } from './agent-settings';
@@ -326,28 +327,30 @@ const StepSettingsContainer = () => {
         <DynamicPropertiesProvider
           key={`${selectedStep.name}-${selectedStep.type}`}
         >
-          <StepSettingsLayout
-            isSplit={
-              showTestPanel && isTestPanelOpen && testPanelView === 'split'
-            }
-            showTestPanel={showTestPanel}
-            isTestPanelOpen={isTestPanelOpen}
-            settingsForm={settingsForm}
-            testPanelHost={
-              showTestPanel ? (
-                <TestPanelHost
-                  mode={testPanelView === 'split' ? 'split' : 'drawer'}
-                  flowId={flowVersion.flowId}
-                  flowVersionId={flowVersion.id}
-                  projectId={project?.id}
-                  stepType={modifiedStep.type}
-                  showGenerateSampleData={showGenerateSampleData}
-                  showStepInputOutFromRun={showStepInputOutFromRun}
-                  saving={saving}
-                />
-              ) : null
-            }
-          />
+          <ActionTestRunnerProviderIfAction step={modifiedStep}>
+            <StepSettingsLayout
+              isSplit={
+                showTestPanel && isTestPanelOpen && testPanelView === 'split'
+              }
+              showTestPanel={showTestPanel}
+              isTestPanelOpen={isTestPanelOpen}
+              settingsForm={settingsForm}
+              testPanelHost={
+                showTestPanel ? (
+                  <TestPanelHost
+                    mode={testPanelView === 'split' ? 'split' : 'drawer'}
+                    flowId={flowVersion.flowId}
+                    flowVersionId={flowVersion.id}
+                    projectId={project?.id}
+                    stepType={modifiedStep.type}
+                    showGenerateSampleData={showGenerateSampleData}
+                    showStepInputOutFromRun={showStepInputOutFromRun}
+                    saving={saving}
+                  />
+                ) : null
+              }
+            />
+          </ActionTestRunnerProviderIfAction>
         </DynamicPropertiesProvider>
       </form>
     </Form>
@@ -434,6 +437,26 @@ const PieceVersionInHeader = ({
       )}
     </div>
   );
+};
+
+const isFlowActionStep = (step: FlowAction | FlowTrigger): step is FlowAction =>
+  flowStructureUtil.isAction(step.type);
+
+const ActionTestRunnerProviderIfAction = ({
+  step,
+  children,
+}: {
+  step: FlowAction | FlowTrigger;
+  children: React.ReactNode;
+}) => {
+  if (isFlowActionStep(step)) {
+    return (
+      <ActionTestRunnerProvider step={step} key={step.name}>
+        {children}
+      </ActionTestRunnerProvider>
+    );
+  }
+  return <>{children}</>;
 };
 
 const stripSampleData = (step: FlowAction | FlowTrigger) => {

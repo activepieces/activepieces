@@ -7,46 +7,24 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { FlaskConical, Play } from 'lucide-react';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useContext } from 'react';
 
 import { Button } from '@/components/ui/button';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
 
-import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
 import { TestPanelHeader } from './test-panel-header';
 import { TestPanelViewToggle } from './test-panel-view-toggle';
+import { useActionTestRunner } from './test-runner-context';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
 import { TestButtonTooltip } from './test-step-tooltip';
-import { testStepHooks } from './utils/test-step-hooks';
-type TestActionComponentProps = {
-  isSaving: boolean;
-  flowVersionId: string;
-  projectId: string;
-};
-
-enum DialogType {
-  NONE = 'NONE',
-  WEBHOOK = 'WEBHOOK',
-}
-
-const isReturnResponseAndWaitForWebhook = (step: FlowAction) => {
-  return (
-    step.type === FlowActionType.PIECE &&
-    step.settings.pieceName === '@activepieces/piece-webhook' &&
-    step.settings.actionName === 'return_response_and_wait_for_next_webhook'
-  );
-};
 
 const TestStepSectionImplementation = React.memo(
   ({
     isSaving,
     currentStep,
   }: TestActionComponentProps & { currentStep: FlowAction }) => {
-    const [activeDialog, setActiveDialog] = useState<DialogType>(
-      DialogType.NONE,
-    );
     const [
       sampleData,
       sampleDataInput,
@@ -55,8 +33,6 @@ const TestStepSectionImplementation = React.memo(
       isStepBeingTested,
       removeStepTestListener,
       revertSampleDataLocally,
-      pendingAutoTestStepName,
-      consumePendingAutoTest,
     ] = useBuilderStateContext((state) => {
       return [
         state.outputSampleData[currentStep.name],
@@ -68,15 +44,11 @@ const TestStepSectionImplementation = React.memo(
         state.isStepBeingTested,
         state.removeStepTestListener,
         state.revertSampleDataLocallyCallbacks[currentStep.name],
-        state.pendingAutoTestStepName,
-        state.consumePendingAutoTest,
       ];
     });
 
-    const { mutate: testAction, isPending: isWatingTestResult } =
-      testStepHooks.useTestAction({
-        currentStep,
-      });
+    const runner = useActionTestRunner();
+    const onTestButtonClick = () => runner?.fireTest();
 
     const lastTestDate = currentStep.settings.sampleData?.lastTestDate;
 
@@ -84,39 +56,9 @@ const TestStepSectionImplementation = React.memo(
       !isNil(lastTestDate) ||
       !isNil(errorMessage) ||
       isStepBeingTested(currentStep.name);
-    const onTestButtonClick = useCallback(() => {
-      if (isReturnResponseAndWaitForWebhook(currentStep)) {
-        setActiveDialog(DialogType.WEBHOOK);
-      } else {
-        testAction(undefined);
-      }
-    }, [currentStep, testAction]);
 
-    const handleCloseDialog = () => {
-      setActiveDialog(DialogType.NONE);
-    };
-
-    const isTesting =
-      activeDialog !== DialogType.NONE ||
-      isWatingTestResult ||
-      isStepBeingTested(currentStep.name);
+    const isTesting = runner?.isTesting ?? false;
     const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
-
-    useEffect(() => {
-      if (pendingAutoTestStepName !== currentStep.name) return;
-      if (isLoadingDynamicProperties || isTesting) return;
-      if (!currentStep.valid) return;
-      consumePendingAutoTest(currentStep.name);
-      onTestButtonClick();
-    }, [
-      pendingAutoTestStepName,
-      currentStep.name,
-      currentStep.valid,
-      isLoadingDynamicProperties,
-      isTesting,
-      consumePendingAutoTest,
-      onTestButtonClick,
-    ]);
 
     return (
       <>
@@ -173,14 +115,6 @@ const TestStepSectionImplementation = React.memo(
             }}
           ></TestSampleDataViewer>
         )}
-        {activeDialog === DialogType.WEBHOOK && (
-          <TestWebhookDialog
-            testingMode="returnResponseAndWaitForNextWebhook"
-            open={true}
-            onOpenChange={(open) => !open && handleCloseDialog()}
-            currentStep={currentStep}
-          />
-        )}
       </>
     );
   },
@@ -204,5 +138,11 @@ const TestActionSection = React.memo((props: TestActionComponentProps) => {
 
 TestStepSectionImplementation.displayName = 'TestStepSectionImplementation';
 TestActionSection.displayName = 'TestActionSection';
+
+type TestActionComponentProps = {
+  isSaving: boolean;
+  flowVersionId: string;
+  projectId: string;
+};
 
 export { TestActionSection };

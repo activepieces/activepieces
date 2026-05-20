@@ -1,6 +1,5 @@
 import {
   FlowAction,
-  FlowActionType,
   FlowTrigger,
   FlowTriggerType,
   Step,
@@ -18,8 +17,8 @@ import { pieceSelectorUtils } from '@/features/pieces';
 
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
 
+import { useActionTestRunner } from './test-runner-context';
 import { TestButtonTooltip } from './test-step-tooltip';
-import { testStepHooks } from './utils/test-step-hooks';
 
 const SOFT_PRIMARY_CTA_CLASSES =
   'w-full justify-center bg-primary/5 enabled:hover:bg-primary/15 enabled:hover:text-primary text-primary border-primary/20';
@@ -63,7 +62,6 @@ const TestStepCTAButton = () => {
       <ActionCTAButton
         currentStep={currentStep}
         sampleDataExists={sampleDataExists}
-        stepIsRunning={stepIsRunning}
         onOpenPanel={onOpenPanel}
         saving={saving}
         hasRun={!isNil(run)}
@@ -107,7 +105,6 @@ const isPieceTrigger = (
 type ActionCTAButtonProps = {
   currentStep: FlowAction;
   sampleDataExists: boolean;
-  stepIsRunning: boolean;
   onOpenPanel: () => void;
   saving: boolean;
   hasRun: boolean;
@@ -116,34 +113,18 @@ type ActionCTAButtonProps = {
 const ActionCTAButton = ({
   currentStep,
   sampleDataExists,
-  stepIsRunning,
   onOpenPanel,
   saving,
   hasRun,
 }: ActionCTAButtonProps) => {
-  const isReturnResponseAndWaitWebhook =
-    currentStep.type === FlowActionType.PIECE &&
-    currentStep.settings.pieceName === '@activepieces/piece-webhook' &&
-    currentStep.settings.actionName ===
-      'return_response_and_wait_for_next_webhook';
   const stepIsValid = currentStep.valid !== false;
   const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
-  const { mutate: testAction, isPending: isWaitingTestResult } =
-    testStepHooks.useTestAction({ currentStep });
+  const runner = useActionTestRunner();
   useConfigureStepShortcutToast(stepIsValid);
-
-  const isTesting = stepIsRunning || isWaitingTestResult;
-  const canFireTest =
-    !isReturnResponseAndWaitWebhook &&
-    !isTesting &&
-    stepIsValid &&
-    !isLoadingDynamicProperties;
 
   const fireTest = () => {
     onOpenPanel();
-    if (canFireTest) {
-      testAction(undefined);
-    }
+    runner?.fireTest();
   };
 
   if (hasRun) {
