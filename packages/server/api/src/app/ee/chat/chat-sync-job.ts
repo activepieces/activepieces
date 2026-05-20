@@ -1,4 +1,4 @@
-import { ACTIVEPIECES_CHAT_TIERS, ApEdition, ChatConversation, ChatHistoryMessage, chunk, isNil, PersistedChatMessage, PersistedChatPart, PersistedChatPartType, PersistedChatRole, PersistedToolCallStatus, tryCatch } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, ApEdition, ChatConversation, ChatHistoryMessage, chunk, isNil, PersistedChatMessage, PersistedChatPart, PersistedChatPartType, PersistedChatRole, PersistedToolCallStatus, tryCatch, tryCatchSync } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { isNotOneOfTheseEditions } from '../../database/database-common'
@@ -123,7 +123,7 @@ async function toSyncPayload({ conversation, log, userCache, platformCache }: {
     const userEmail = userCache?.get(conversation.userId) ?? await resolveUserEmail({ userId: conversation.userId, log })
     const platformName = platformCache?.get(conversation.platformId) ?? await resolvePlatformName({ platformId: conversation.platformId, log })
 
-    const messages = resolveMessages(conversation)
+    const messages = resolveMessages({ conversation, log })
 
     return {
         id: conversation.id,
@@ -142,7 +142,7 @@ async function toSyncPayload({ conversation, log, userCache, platformCache }: {
     }
 }
 
-function resolveMessages(conversation: ChatConversation): PersistedChatMessage[] {
+function resolveMessages({ conversation, log }: { conversation: ChatConversation, log: FastifyBaseLogger }): PersistedChatMessage[] {
     if (!isNil(conversation.uiMessages) && conversation.uiMessages.length > 0) {
         return conversation.uiMessages
     }
@@ -150,7 +150,12 @@ function resolveMessages(conversation: ChatConversation): PersistedChatMessage[]
     if (isNil(rawMessages) || rawMessages.length === 0) {
         return []
     }
-    return convertToPersistedFormat(chatHistory.reconstruct(rawMessages))
+    const result = tryCatchSync(() => convertToPersistedFormat(chatHistory.reconstruct(rawMessages)))
+    if (result.error) {
+        log.warn({ conversationId: conversation.id, error: String(result.error) }, 'Failed to reconstruct messages for old conversation, syncing with empty messages')
+        return []
+    }
+    return result.data
 }
 
 function convertToPersistedFormat(messages: ChatHistoryMessage[]): PersistedChatMessage[] {
