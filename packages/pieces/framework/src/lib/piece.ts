@@ -31,6 +31,7 @@ export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | u
     public readonly minimumSupportedRelease: string = MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION,
     public readonly maximumSupportedRelease?: string,
     public readonly description = '',
+    public readonly llmDescription?: string,
   ) {
     if (!isValidSimpleSemver(minimumSupportedRelease) || isSemverLessThan(minimumSupportedRelease, MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION)) {
       this.minimumSupportedRelease = MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION;
@@ -48,6 +49,7 @@ export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | u
       triggers: this._triggers,
       categories: this.categories,
       description: this.description,
+      llmDescription: this.llmDescription,
       authors: this.authors,
       auth: this.auth,
       minimumSupportedRelease: this.minimumSupportedRelease,
@@ -96,6 +98,7 @@ export const createPiece = <PieceAuth extends PieceAuthProperty | PieceAuthPrope
     params.minimumSupportedRelease,
     params.maximumSupportedRelease,
     params.description,
+    params.llmDescription,
   );
 };
 
@@ -106,6 +109,13 @@ type CreatePieceParams<
   logoUrl: string;
   authors: string[];
   description?: string;
+  /**
+   * Optional alternate description shown to LLMs (chat / MCP).
+   * Use this for tool-selection guidance, anti-patterns, disambiguation,
+   * and parameter pitfalls that would be noise in the human UI description.
+   * Falls back to {@code description} when omitted.
+   */
+  llmDescription?: string;
   auth: PieceAuth | undefined;
   events?: PieceEventProcessors;
   minimumSupportedRelease?: string;
