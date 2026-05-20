@@ -96,6 +96,10 @@ async function pushToConsole({ conversations, log, userCache, platformCache }: {
         log.error({ error: result.error }, 'Failed to push chat analytics telemetry')
         return false
     }
+    if (!result.data.ok) {
+        log.error({ status: result.data.status }, 'Failed to push chat analytics telemetry: non-2xx response')
+        return false
+    }
     return true
 }
 
