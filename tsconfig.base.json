@@ -960,6 +960,9 @@
       "@activepieces/piece-prompthub": [
         "packages/pieces/community/prompthub/src/index.ts"
       ],
+      "@activepieces/piece-provenexpert": [
+        "packages/pieces/community/provenexpert/src/index.ts"
+      ],
       "@activepieces/piece-pubrio": [
         "packages/pieces/community/pubrio/src/index.ts"
       ],
@@ -1336,6 +1339,9 @@
       ],
       "@activepieces/piece-wedof": [
         "packages/pieces/community/wedof/src/index.ts"
+      ],
+      "@activepieces/piece-weekdone": [
+        "packages/pieces/community/weekdone/src/index.ts"
       ],
       "@activepieces/piece-what-converts": [
         "packages/pieces/community/what-converts/src/index.ts"
