@@ -251,7 +251,7 @@
   "Test": "",
   "Agent running...": "",
   "Testing Failed": "Testing Failed",
-  "Tested Failed": "Tested Failed",
+  "Test Failed": "Test Failed",
   "Tested Successfully": "Tested Successfully",
   "Errors are not saved on refresh": "",
   "Logs": "Logs",

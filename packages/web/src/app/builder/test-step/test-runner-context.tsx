@@ -30,7 +30,9 @@ const ActionTestRunnerProvider = ({
     ]);
   const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
   const [showWebhookDialog, setShowWebhookDialog] = useState(false);
-  const [autoFiredForStep, setAutoFiredForStep] = useState<string | null>(null);
+  const [lastSeenAutoTestRequest, setLastSeenAutoTestRequest] = useState<
+    string | null
+  >(pendingAutoTestStepName);
 
   const isTesting =
     isWaitingTestResult || isStepBeingTested(step.name) || showWebhookDialog;
@@ -51,14 +53,12 @@ const ActionTestRunnerProvider = ({
     fireTestNow();
   }, [canFireTest, fireTestNow]);
 
-  if (
-    pendingAutoTestStepName === step.name &&
-    canFireTest &&
-    autoFiredForStep !== step.name
-  ) {
-    setAutoFiredForStep(step.name);
-    consumePendingAutoTest(step.name);
-    fireTestNow();
+  if (pendingAutoTestStepName !== lastSeenAutoTestRequest) {
+    setLastSeenAutoTestRequest(pendingAutoTestStepName);
+    if (pendingAutoTestStepName === step.name && canFireTest) {
+      consumePendingAutoTest(step.name);
+      fireTestNow();
+    }
   }
 
   return (
