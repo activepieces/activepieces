@@ -6,8 +6,8 @@ export const provenExpertAuth = PieceAuth.CustomAuth({
 
 **How to get your API credentials:**
 1. Log in to your [ProvenExpert account](https://www.provenexpert.com/).
-2. Go to **My Account → API Access** (available on PLUS, PREMIUM, and ENTERPRISE plans).
-3. Generate or copy your **API ID** and **API Key**.
+2. Go to **integrations ** from the left side panel.
+3.  Copy your **Username** and **API Key**.
 4. Paste them into the fields below.`,
   required: true,
   props: {
