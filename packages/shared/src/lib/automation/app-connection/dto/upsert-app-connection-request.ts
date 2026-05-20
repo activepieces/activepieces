@@ -169,6 +169,7 @@ export const GetOAuth2AuthorizationUrlRequestBody = z.object({
     projectId: z.string().optional(),
     clientId: z.string(),
     redirectUrl: z.string(),
+    scopes: z.array(z.string()).optional(),
     props: z.record(z.string(), z.unknown()).optional(),
 })
 export type GetOAuth2AuthorizationUrlRequestBody = z.infer<typeof GetOAuth2AuthorizationUrlRequestBody>
