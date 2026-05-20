@@ -12,7 +12,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-      security-events: write
     concurrency:
       group: canary-deploy
       cancel-in-progress: true
@@ -27,7 +26,7 @@ jobs:
           RELEASE=$(node --print "require('./package.json').version")
           echo "image_tag=${RELEASE}.${{ github.sha }}.canary" >> $GITHUB_OUTPUT
 
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -52,7 +51,6 @@ jobs:
         with:
           image: ghcr.io/activepieces/activepieces-cloud:${{ steps.set-tag.outputs.image_tag }}
           version: ${{ steps.set-tag.outputs.image_tag }}
-          upload-sarif: 'true'
 
   check-migrations:
     needs: build-image
@@ -63,7 +61,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 24
 

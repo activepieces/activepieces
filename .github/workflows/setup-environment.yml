@@ -38,7 +38,7 @@ jobs:
 
       - name: Check if PR has preview label
         id: check-label
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         with:
           script: |
             const isManualTrigger = context.eventName === 'workflow_dispatch';
@@ -67,7 +67,7 @@ jobs:
 
       - name: Comment on PR
         if: steps.check-label.outputs.should-setup == 'true' && github.event_name != 'workflow_dispatch'
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         with:
           script: |
             github.rest.issues.createComment({

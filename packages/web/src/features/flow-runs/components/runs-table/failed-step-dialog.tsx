@@ -98,6 +98,7 @@ export const FailedStepDialog = ({
                 </span>
               </span>
             }
+            className="max-h-[400px] overflow-auto"
             hideDownload
           />
         ) : (
