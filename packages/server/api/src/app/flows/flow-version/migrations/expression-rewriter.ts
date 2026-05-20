@@ -89,16 +89,19 @@ function rewriteToken(code: string, stepNames: Set<string>): string | null {
         },
     })
 
-    if (rewrites.length === 0) {
-        return code
-    }
+    return applyRewrites(code, rewrites)
+}
 
-    rewrites.sort((a, b) => b.start - a.start)
-    let result = code
-    for (const r of rewrites) {
-        result = result.slice(0, r.start) + r.text + result.slice(r.end)
+function applyRewrites(source: string, rewrites: Rewrite[]): string {
+    const ordered = [...rewrites].sort((a, b) => a.start - b.start)
+    const chunks: string[] = []
+    let cursor = 0
+    for (const rewrite of ordered) {
+        chunks.push(source.slice(cursor, rewrite.start), rewrite.text)
+        cursor = rewrite.end
     }
-    return result
+    chunks.push(source.slice(cursor))
+    return chunks.join('')
 }
 
 function isStepRef(name: string, stepNames: Set<string>): boolean {
