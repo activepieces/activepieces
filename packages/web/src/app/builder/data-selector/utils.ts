@@ -19,7 +19,6 @@ import {
 
 type PathSegment = string | number;
 
-const MAX_CHUNK_LENGTH = 10;
 const JOINED_VALUES_MAX_LENGTH = 32;
 
 function buildTestStepNode(
@@ -45,20 +44,6 @@ function buildTestStepNode(
         key: `test_${stepName}`,
       },
     ],
-  };
-}
-
-function buildChunkNode(
-  displayName: string,
-  children: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[] | undefined,
-): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
-  return {
-    key: displayName,
-    data: {
-      type: 'chunk',
-      displayName,
-    },
-    children,
   };
 }
 
@@ -181,29 +166,12 @@ function buildDataSelectorNode(
   };
 }
 
-function breakArrayIntoChunks<T>(
-  array: T[],
-  chunkSize: number,
-): { items: T[]; range: { start: number; end: number } }[] {
-  return Array.from(
-    { length: Math.ceil(array.length / chunkSize) },
-    (_, i) => ({
-      items: array.slice(i * chunkSize, i * chunkSize + chunkSize),
-      range: {
-        start: i * chunkSize + 1,
-        end: Math.min((i + 1) * chunkSize, array.length),
-      },
-    }),
-  );
-}
-
 function traverseOutput(
   displayName: string,
   propertyPath: PathSegment[],
   node: unknown,
   zipArraysOfProperties: boolean,
   insertable = true,
-  disableChunking = false,
 ): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
   if (Array.isArray(node)) {
     const isArrayOfObjects = node.some((value) => isObject(value));
@@ -215,39 +183,13 @@ function traverseOutput(
           value,
           zipArraysOfProperties,
           insertable,
-          disableChunking,
         ),
       );
-      if (disableChunking) {
-        return buildDataSelectorNode(
-          displayName,
-          propertyPath,
-          node,
-          mentionNodes,
-          insertable,
-        );
-      }
-      const chunks = breakArrayIntoChunks(mentionNodes, MAX_CHUNK_LENGTH);
-      const isSingleChunk = chunks.length === 1;
-      if (isSingleChunk) {
-        return buildDataSelectorNode(
-          displayName,
-          propertyPath,
-          node,
-          mentionNodes,
-          insertable,
-        );
-      }
       return buildDataSelectorNode(
         displayName,
         propertyPath,
         node,
-        chunks.map((chunk) =>
-          buildChunkNode(
-            `${displayName} [${chunk.range.start}-${chunk.range.end}]`,
-            chunk.items,
-          ),
-        ),
+        mentionNodes,
         insertable,
       );
     } else {
@@ -279,7 +221,6 @@ function traverseOutput(
         value,
         zipArraysOfProperties,
         insertable,
-        disableChunking,
       );
     });
     return buildDataSelectorNode(
@@ -321,7 +262,6 @@ function traverseStep(
   step: (FlowAction | FlowTrigger) & { dfsIndex: number },
   sampleData: Record<string, unknown>,
   zipArraysOfProperties: boolean,
-  disableChunking = false,
 ): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
   const displayName = `${step.dfsIndex + 1}. ${step.displayName}`;
   const stepNeedsTesting =
@@ -343,7 +283,6 @@ function traverseStep(
       copiedSampleData,
       zipArraysOfProperties,
       true,
-      disableChunking,
     );
     headNode.isLoopStepNode = true;
     return headNode;
@@ -355,7 +294,6 @@ function traverseStep(
     sampleData[step.name],
     zipArraysOfProperties,
     true,
-    disableChunking,
   );
 }
 
