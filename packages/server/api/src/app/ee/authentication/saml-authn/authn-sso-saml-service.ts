@@ -1,6 +1,7 @@
 import { resolveTxt } from 'dns/promises'
 import { ActivepiecesError, ApEdition, apId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, PlatformId, SAMLAuthnProviderConfig, SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus, tryCatch, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { platformUtils } from 'src/app/platform/platform.utils'
 import { z } from 'zod'
 import { authenticationService } from '../../../authentication/authentication.service'
 import { domainHelper } from '../../../helper/domain-helper'
@@ -13,9 +14,15 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
     return {
         async getAcsUrl(platformId: string): Promise<string> {
             const baseUrl = await domainHelper.getPublicApiUrl({ path: '/v1/authn/saml/acs' })
-            return system.getEdition() === ApEdition.CLOUD
-                ? `${baseUrl}?platformId=${encodeURIComponent(platformId)}`
-                : baseUrl
+            if (system.getEdition() === ApEdition.CLOUD) {
+                // we still want to support entreprise customers who are still using custom domains . without forcing them to change their saml redirect url
+                const legacyHost = await platformUtils.getLegacyHostByPlatformId(platformId)
+                if (legacyHost) {
+                    return `https://${legacyHost}/api/v1/authn/saml/acs`
+                }
+                return `${baseUrl}?platformId=${encodeURIComponent(platformId)}`
+            }
+            return baseUrl
         },
         async getSamlConfigOrThrow(platformId: string | null): Promise<SamlConfigResult> {
             assertNotNullOrUndefined(platformId, 'Platform ID is required for SAML authentication')
@@ -26,6 +33,7 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
         },
         async login(platformId: string, samlProvider: SAMLAuthnProviderConfig): Promise<LoginResponse> {
             const acsUrl = await this.getAcsUrl(platformId)
+
             const client = await createSamlClient({ platformId, samlProvider, acsUrl })
             const redirectUrl = client.getLoginUrl()
             return {
