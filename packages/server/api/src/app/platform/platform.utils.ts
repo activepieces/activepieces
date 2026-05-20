@@ -32,7 +32,7 @@ export const platformUtils = {
         )
         return rows[0]?.platform_id ?? null
     },
-    async getLegacyHostByPlatformId(platformId: string): Promise<PlatformId | null> {
+    async getLegacyHostByPlatformId(platformId: string): Promise<string | null> {
         const rows = await databaseConnection().query<Array<{ domain: string }>>(
             'SELECT domain FROM legacy_custom_domain WHERE platform_id = $1 LIMIT 1',
             [platformId],
