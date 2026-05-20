@@ -1121,6 +1121,9 @@
       "@activepieces/piece-simplybookme": [
         "packages/pieces/community/simplybookme/src/index.ts"
       ],
+      "@activepieces/piece-simplyprint": [
+        "packages/pieces/community/simplyprint/src/index.ts"
+      ],
       "@activepieces/piece-sitespeakai": [
         "packages/pieces/community/sitespeakai/src/index.ts"
       ],
