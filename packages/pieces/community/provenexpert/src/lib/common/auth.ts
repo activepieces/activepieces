@@ -13,12 +13,12 @@ export const provenExpertAuth = PieceAuth.CustomAuth({
   props: {
     api_id: Property.ShortText({
       displayName: 'Username',
-      description: 'Your ProvenExpert API ID. Generated in',
+      description: 'Your ProvenExpert Username.',
       required: true,
     }),
     api_key: PieceAuth.SecretText({
       displayName: 'API Key',
-      description: 'Your ProvenExpert API Key. Generated alongside the API ID in My Account → API Access.',
+      description: 'Your ProvenExpert API Key.',
       required: true,
     }),
   },
@@ -32,7 +32,7 @@ export const provenExpertAuth = PieceAuth.CustomAuth({
     } catch {
       return {
         valid: false,
-        error: 'Invalid API ID or API Key. Double-check your credentials in ProvenExpert under My Account → API Access.',
+        error: 'Invalid Username or API Key. Double-check your credentials in ProvenExpert under My Account → API Access.',
       };
     }
   },
