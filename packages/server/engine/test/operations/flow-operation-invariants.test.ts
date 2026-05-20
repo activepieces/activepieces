@@ -1,8 +1,11 @@
 import { describe, it, expect, vi } from 'vitest'
 import {
+    ConnectionNotFoundError,
     EngineGenericError,
+    EngineResponseStatus,
     ExecutionType,
     FlowActionType,
+    FlowRunStatus,
     FlowTriggerType,
     FlowVersionState,
     ResumeReason,
@@ -12,11 +15,25 @@ import {
 } from '@activepieces/shared'
 import type { BeginExecuteFlowOperation, FlowAction, FlowVersion, ResumeExecuteFlowOperation } from '@activepieces/shared'
 
+const { mockSendUpdate, mockBackup } = vi.hoisted(() => ({
+    mockSendUpdate: vi.fn().mockResolvedValue(undefined),
+    mockBackup: vi.fn().mockResolvedValue(undefined),
+}))
 vi.mock('../../src/lib/helper/flow-run-progress-reporter', () => ({
     flowRunProgressReporter: {
-        sendUpdate: vi.fn().mockResolvedValue(undefined),
-        backup: vi.fn().mockResolvedValue(undefined),
+        sendUpdate: mockSendUpdate,
+        backup: mockBackup,
         createOutputContext: vi.fn().mockReturnValue({ update: vi.fn().mockResolvedValue(undefined) }),
+    },
+}))
+
+const { mockExecuteTrigger } = vi.hoisted(() => ({
+    mockExecuteTrigger: vi.fn(),
+}))
+vi.mock('../../src/lib/helper/trigger-helper', () => ({
+    triggerHelper: {
+        executeTrigger: mockExecuteTrigger,
+        executeOnStart: vi.fn().mockResolvedValue(undefined),
     },
 }))
 
@@ -474,6 +491,47 @@ describe('flow operation invariants', () => {
                 engineToken: 'test-token',
                 fileId: 'payload-file-1',
             })
+        })
+    })
+
+    describe('trigger input resolution failure', () => {
+        it('surfaces a USER ExecutionError from the trigger as a FAILED trigger step + OK engine response (instead of INTERNAL_ERROR)', async () => {
+            mockSendUpdate.mockClear()
+            mockBackup.mockClear()
+            mockExecuteTrigger.mockRejectedValue(new ConnectionNotFoundError('missing-conn'))
+
+            const triggerPayload = { headers: { 'x-source': 'webhook' }, body: { foo: 'bar' } }
+            const operation = makeBeginOperation({
+                triggerPayload: { type: 'inline', value: triggerPayload },
+                executeTrigger: true,
+            })
+
+            const response = await flowOperation.execute(operation)
+
+            expect(response.status).toBe(EngineResponseStatus.OK)
+
+            const finalSendUpdate = mockSendUpdate.mock.calls[mockSendUpdate.mock.calls.length - 1][0]
+            const finalCtx = finalSendUpdate.flowExecutorContext
+            expect(finalCtx.verdict.status).toBe(FlowRunStatus.FAILED)
+            expect(finalCtx.verdict.failedStep).toEqual({
+                name: 'trigger_1',
+                displayName: 'Test Trigger',
+                message: expect.stringContaining('connection (missing-conn) not found'),
+            })
+            const triggerStep = finalCtx.steps.trigger_1
+            expect(triggerStep.status).toBe(StepOutputStatus.FAILED)
+            expect(triggerStep.errorMessage).toEqual(expect.stringContaining('connection (missing-conn) not found'))
+            expect(triggerStep.input).toEqual(triggerPayload)
+        })
+
+        it('non-USER engine errors from the trigger still propagate (caller will map to INTERNAL_ERROR)', async () => {
+            mockExecuteTrigger.mockRejectedValue(new EngineGenericError('SomeEngineFailure', 'boom'))
+            const operation = makeBeginOperation({
+                triggerPayload: { type: 'inline', value: {} },
+                executeTrigger: true,
+            })
+
+            await expect(flowOperation.execute(operation)).rejects.toThrow(EngineGenericError)
         })
     })
 })
