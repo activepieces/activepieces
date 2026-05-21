@@ -27,6 +27,7 @@ import { useBuilderStateContext } from '../builder-hooks';
 import { DataDisplayTabs } from '../data-display/data-display-tabs';
 import { isRunAgent } from '../test-step/agent-test-step';
 import { TestPanelHeader } from '../test-step/test-panel-header';
+import { TestPanelViewToggle } from '../test-step/test-panel-view-toggle';
 
 type RunActiveTab = 'input' | 'output' | 'timeline';
 
@@ -71,8 +72,6 @@ export const FlowStepInputOutput = () => {
       selectedStepOutput?.output ??
       'No output';
 
-  const tabCount = isAgent ? 3 : 2;
-  const gridCols = tabCount === 3 ? 'grid-cols-3' : 'grid-cols-2';
   if (!run) {
     return <></>;
   }
@@ -106,9 +105,25 @@ export const FlowStepInputOutput = () => {
 
   if (!selectedStepOutput || !selectedStep) {
     return (
-      <div className="px-4 bg-muted rounded-md m-4 py-2 flex items-center gap-1.5">
-        <Info className="w-4 h-4" />
-        <span>{t("This step didn't run")}</span>
+      <div className="flex flex-col h-full w-full">
+        <div className="flex justify-end px-3 py-2 shrink-0">
+          <TestPanelViewToggle />
+        </div>
+        <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
+          <div className="flex items-center justify-center size-12 rounded-full bg-muted text-muted-foreground">
+            <Info className="size-6" />
+          </div>
+          <div className="flex flex-col gap-1.5 max-w-[280px]">
+            <span className="text-sm font-medium text-foreground">
+              {t("This step didn't run")}
+            </span>
+            <span className="text-xs text-muted-foreground leading-relaxed">
+              {t(
+                'This step was skipped during this run, no input or output was captured.',
+              )}
+            </span>
+          </div>
+        </div>
       </div>
     );
   }
@@ -119,28 +134,12 @@ export const FlowStepInputOutput = () => {
       ? 'testing'
       : 'success';
 
-  const activeData =
-    activeTab === 'input'
-      ? selectedStepOutput.input
-      : activeTab === 'output'
-      ? parsedOutput
-      : undefined;
-  const activeLabel =
-    activeTab === 'input'
-      ? t('Input')
-      : activeTab === 'output'
-      ? t('Output')
-      : undefined;
-
   return (
     <div className="h-full flex flex-col">
       <TestPanelHeader
         status={status}
         lastTestDate={run.created}
-        copyableData={activeData}
-        dataLabel={activeLabel}
-        downloadFileName={`${selectedStep.name}-${activeTab}`}
-        hideRetest
+        viewMode="run"
       />
       <ScrollArea className="flex-1 p-3">
         <Tabs
@@ -148,18 +147,23 @@ export const FlowStepInputOutput = () => {
           onValueChange={(value) => setActiveTab(value as RunActiveTab)}
           className="w-full"
         >
-          <TabsList className={`w-full grid h-9 ${gridCols}`}>
-            <TabsTrigger value="input">{t('Input')}</TabsTrigger>
-            {isAgent && (
-              <TabsTrigger value="timeline">{t('Timeline')}</TabsTrigger>
-            )}
-            <TabsTrigger value="output">{t('Output')}</TabsTrigger>
-          </TabsList>
+          <div className="flex items-center justify-between gap-2 shrink-0 mb-2">
+            <TabsList className="h-9">
+              <TabsTrigger value="input">{t('Input')}</TabsTrigger>
+              {isAgent && (
+                <TabsTrigger value="timeline">{t('Timeline')}</TabsTrigger>
+              )}
+              <TabsTrigger value="output">{t('Output')}</TabsTrigger>
+            </TabsList>
+            <TestPanelViewToggle />
+          </div>
 
           <TabsContent value="input">
             <DataDisplayTabs
               data={selectedStepOutput.input}
               title={t('Input')}
+              copyableData={selectedStepOutput.input}
+              downloadFileName={`${selectedStep.name}-input`}
             />
           </TabsContent>
 
@@ -176,7 +180,12 @@ export const FlowStepInputOutput = () => {
             ) : slicedOutputRef ? (
               <SlicedOutputDownload slicedOutputRef={slicedOutputRef} />
             ) : (
-              <DataDisplayTabs data={parsedOutput} title={t('Output')} />
+              <DataDisplayTabs
+                data={parsedOutput}
+                title={t('Output')}
+                copyableData={parsedOutput}
+                downloadFileName={`${selectedStep.name}-output`}
+              />
             )}
           </TabsContent>
         </Tabs>
