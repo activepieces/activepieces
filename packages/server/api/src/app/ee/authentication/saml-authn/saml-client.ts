@@ -28,10 +28,7 @@ const samlClient = ({ idp, sp, attributeMapping }: SamlClientArgs) => ({
     },
     async parseAndValidateLoginResponse(idpLoginResponse: IdpLoginResponse): Promise<SamlAttributes> {
         const { data: loginResult, error: parseError } = await tryCatch(
-            () => sp.parseLoginResponse(idp, LOGIN_RESPONSE_BINDING, {
-                body: toStringRecord(idpLoginResponse.body),
-                query: toStringRecord(idpLoginResponse.query),
-            }),
+            () => sp.parseLoginResponse(idp, LOGIN_RESPONSE_BINDING, idpLoginResponse),
         )
         if (parseError !== null) {
             throw new ActivepiecesError({
@@ -108,14 +105,6 @@ const createSp = ({ privateKey, acsUrl }: CreateSpArgs): saml.ServiceProviderIns
 
 const toErrorMessage = (error: unknown): string => {
     return error instanceof Error ? error.message : String(error)
-}
-
-const toStringRecord = (input: Record<string, unknown>): Record<string, string | undefined> => {
-    const out: Record<string, string | undefined> = {}
-    for (const [key, value] of Object.entries(input)) {
-        out[key] = typeof value === 'string' ? value : value === undefined ? undefined : String(value)
-    }
-    return out
 }
 
 const LOGIN_REQUEST_BINDING = 'redirect'
