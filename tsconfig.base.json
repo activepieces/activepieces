@@ -624,6 +624,9 @@
       "@activepieces/piece-imap": [
         "packages/pieces/community/imap/src/index.ts"
       ],
+      "@activepieces/piece-imeetify": [
+        "packages/pieces/community/imeetify/src/index.ts"
+      ],
       "@activepieces/piece-insighto-ai": [
         "packages/pieces/community/insighto-ai/src/index.ts"
       ],
@@ -1231,6 +1234,9 @@
       ],
       "@activepieces/piece-tavily": [
         "packages/pieces/community/tavily/src/index.ts"
+      ],
+      "@activepieces/piece-teamhood": [
+        "packages/pieces/community/teamhood/src/index.ts"
       ],
       "@activepieces/piece-teamleader": [
         "packages/pieces/community/teamleader/src/index.ts"

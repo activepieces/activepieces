@@ -3599,6 +3599,16 @@
         "@types/mailparser": "3.4.6",
       },
     },
+    "packages/pieces/community/imeetify": {
+      "name": "@activepieces/piece-imeetify",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/influencers-club": {
       "name": "@activepieces/piece-influencers-club",
       "version": "0.0.5",
@@ -6805,6 +6815,16 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/teamhood": {
+      "name": "@activepieces/piece-teamhood",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/teamleader": {
       "name": "@activepieces/piece-teamleader",
       "version": "0.1.5",
@@ -9180,6 +9200,8 @@
 
     "@activepieces/piece-imap": ["@activepieces/piece-imap@workspace:packages/pieces/community/imap"],
 
+    "@activepieces/piece-imeetify": ["@activepieces/piece-imeetify@workspace:packages/pieces/community/imeetify"],
+
     "@activepieces/piece-influencers-club": ["@activepieces/piece-influencers-club@workspace:packages/pieces/community/influencers-club"],
 
     "@activepieces/piece-insightly": ["@activepieces/piece-insightly@workspace:packages/pieces/community/insightly"],
@@ -9797,6 +9819,8 @@
     "@activepieces/piece-tavily": ["@activepieces/piece-tavily@workspace:packages/pieces/community/tavily"],
 
     "@activepieces/piece-teable": ["@activepieces/piece-teable@workspace:packages/pieces/community/teable"],
+
+    "@activepieces/piece-teamhood": ["@activepieces/piece-teamhood@workspace:packages/pieces/community/teamhood"],
 
     "@activepieces/piece-teamleader": ["@activepieces/piece-teamleader@workspace:packages/pieces/community/teamleader"],
 
