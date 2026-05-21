@@ -16,7 +16,7 @@ vi.mock('../../../../../src/app/helper/system/system', () => ({
     },
 }))
 
-vi.mock('../../../../../src/app/ee/custom-domains/domain-helper', () => ({
+vi.mock('../../../../../src/app/helper/domain-helper', () => ({
     domainHelper: {
         getPublicUrl: vi.fn().mockResolvedValue('https://example.com'),
     },

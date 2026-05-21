@@ -27,7 +27,7 @@ export const getDatasetItems = createAction({
     limit: Property.Number({
       required: false,
       displayName: 'Limit',
-      description: 'Maximum number of results to return.',
+      description: 'Maximum number of results to return. Must be greater than 0.',
       defaultValue: 50
     })
   },
@@ -36,6 +36,12 @@ export const getDatasetItems = createAction({
     const { datasetId, offset, limit } = context.propsValue;
 
     const client = createApifyClient(apifyToken);
+    if (offset !== undefined && offset !== null && offset < 0) {
+      throw new Error('Offset must be greater than or equal to 0.');
+    }
+    if (limit !== undefined && limit !== null && limit <= 0) {
+      throw new Error('Limit must be greater than 0.');
+    }
 
     const response = await client.dataset(datasetId).listItems({
       limit,

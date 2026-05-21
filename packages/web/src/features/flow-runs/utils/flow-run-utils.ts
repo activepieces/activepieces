@@ -76,26 +76,44 @@ export const flowRunUtils = {
     run: FlowRun,
     //runs get updated if they aren't terminated yet, so we shouldn't reset the loops state on each update
     currentLoopsState: Record<string, number>,
+    options?: { liveFollowPaused?: boolean },
   ) {
     const loopsOutputs = executionJournal.getLoopSteps(run.steps);
-    const failedStep = run.steps
+    const latestStep = run.steps
       ? flowRunUtils.findLastStepWithStatus(run.status, run.steps)
       : null;
     const result = { ...currentLoopsState };
 
     Object.entries(loopsOutputs).forEach(([loopName, loopOutput]) => {
-      const doesLoopIncludeFailedStep =
-        failedStep && executionJournal.isChildOf(loopOutput, failedStep);
+      const doesLoopIncludeLatestStep =
+        latestStep && executionJournal.isChildOf(loopOutput, latestStep);
 
       if (isNil(loopOutput.output)) {
         result[loopName] = 0;
         return;
       }
-      if (doesLoopIncludeFailedStep && loopOutput.output) {
+      if (
+        doesLoopIncludeLatestStep &&
+        loopOutput.output &&
+        !options?.liveFollowPaused
+      ) {
         result[loopName] = loopOutput.output.iterations.length - 1;
         return;
       }
       result[loopName] = currentLoopsState[loopName] ?? 0;
+    });
+    return result;
+  },
+  snapLoopsToLatestIteration(
+    run: FlowRun,
+    currentLoopsState: Record<string, number>,
+  ): Record<string, number> {
+    const loopsOutputs = executionJournal.getLoopSteps(run.steps);
+    const result = { ...currentLoopsState };
+    Object.entries(loopsOutputs).forEach(([loopName, loopOutput]) => {
+      if (!isNil(loopOutput.output)) {
+        result[loopName] = loopOutput.output.iterations.length - 1;
+      }
     });
     return result;
   },
