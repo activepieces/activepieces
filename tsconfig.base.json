@@ -621,6 +621,9 @@
       "@activepieces/piece-imap": [
         "packages/pieces/community/imap/src/index.ts"
       ],
+      "@activepieces/piece-imeetify": [
+        "packages/pieces/community/imeetify/src/index.ts"
+      ],
       "@activepieces/piece-insighto-ai": [
         "packages/pieces/community/insighto-ai/src/index.ts"
       ],
