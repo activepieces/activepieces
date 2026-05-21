@@ -593,6 +593,9 @@
       "@activepieces/piece-heygen": [
         "packages/pieces/community/heygen/src/index.ts"
       ],
+      "@activepieces/piece-hootsuite": [
+        "packages/pieces/community/hootsuite/src/index.ts"
+      ],
       "@activepieces/piece-http": ["packages/pieces/core/http/src/index.ts"],
       "@activepieces/piece-http-oauth2": [
         "packages/pieces/community/http-oauth2/src/index.ts"
