@@ -1,6 +1,5 @@
 import {
   createAction,
-  DynamicPropsValue,
   Property,
 } from '@activepieces/pieces-framework';
 import { beeboleAuth } from '../common/auth';
@@ -40,22 +39,13 @@ export const createMultipleTimeEntriesAction = createAction({
         ],
       },
     }),
-    // target: Property.DynamicProperties({
-    //   auth: beeboleAuth,
-    //   displayName: 'Target',
-    //   required: true,
-    //   refreshers: ['entryType'],
-    //   props: async ({ entryType }): Promise<DynamicPropsValue> => {
-    //     if (entryType === 'absence') {
-    //     return {
+
     absence: beeboleProps.absenceDropdown({
       required: false,
       description:
         'The absence type (e.g. Vacation, Sick Leave) to log on the selected dates.',
     }),
-    //     };
-    //}
-    //return {
+
     company: beeboleProps.companyDropdown({
       required: false,
       description: 'The company that owns the project.',
@@ -68,9 +58,7 @@ export const createMultipleTimeEntriesAction = createAction({
       required: false,
       description: 'The subproject to log working time against.',
     }),
-    //   };
-    // },
-    // }),
+
     dates: Property.Array({
       displayName: 'Dates',
       description:

@@ -62,7 +62,6 @@ export const createProjectAction = createAction({
       throw new Error(`Beebole returned an error: ${response.body.message ?? 'Unknown error'}`);
     }
 
-    const created = response.body.project;
     return response.body
   },
 });
