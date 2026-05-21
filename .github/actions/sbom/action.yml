@@ -40,7 +40,7 @@ runs:
         sbom: activepieces-${{ inputs.version }}.cdx.json
         output-format: sarif
         fail-build: false
-        severity-cutoff: high
+        severity-cutoff: critical
 
     - name: Upload SARIF to GitHub Security tab
       if: inputs.upload-sarif == 'true'

@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { TiptapEditor } from './tiptap-editor';
 
 type TextInputWithMentionsProps = {

@@ -4,10 +4,12 @@ import { applyFunctionToValues, FormulaEvaluationError, formulaEvaluator, isNil,
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createConnectionResolver } from '../piece-context/connection-resolver'
+import { createVariableResolver } from '../piece-context/variable-resolver'
 import { utils } from '../utils'
 
 const VARIABLE_PATTERN = /\{\{(.*?)\}\}/g
 const CONNECTIONS = 'connections'
+const VARIABLES = 'variables'
 const FLATTEN_NESTED_KEYS_PATTERN = /\{\{\s*flattenNestedKeys(.*?)\}\}/g
 
 
@@ -146,11 +148,36 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
 
 async function resolveSingleToken(params: ResolveSingleTokenParams): Promise<unknown> {
     const { variableName, currentState } = params
-    const isConnection = variableName.startsWith(CONNECTIONS)
-    if (isConnection) {
+    if (variableName.startsWith(VARIABLES)) {
+        return handleVariable(params)
+    }
+    if (variableName.startsWith(CONNECTIONS)) {
         return handleConnection(params)
     }
     return evalInScope(variableName, { ...currentState }, { flattenNestedKeys })
+}
+
+async function handleVariable(params: ResolveSingleTokenParams): Promise<unknown> {
+    const { variableName, engineToken, projectId, apiUrl, censoredInput } = params
+    const name = parseVariableName(variableName)
+    if (isNil(name)) {
+        return ''
+    }
+    if (censoredInput) {
+        return '**REDACTED**'
+    }
+    return createVariableResolver({ engineToken, projectId, apiUrl }).obtain(name)
+}
+
+function parseVariableName(variableName: string): string | null {
+    if (variableName.startsWith(`${VARIABLES}[`)) {
+        const match = variableName.match(/\['([^']+)'\]/)
+        return match ? match[1] : null
+    }
+    if (variableName.startsWith(`${VARIABLES}.`)) {
+        return variableName.split('.')[1] ?? null
+    }
+    return null
 }
 
 async function handleConnection(params: ResolveSingleTokenParams): Promise<unknown> {

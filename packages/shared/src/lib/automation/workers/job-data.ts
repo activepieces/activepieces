@@ -2,14 +2,14 @@
 import { z } from 'zod'
 import { isNil } from '../../core/common'
 import { ApplicationEvent } from '../../ee/audit-events'
-import { StreamStepProgress, TriggerHookType, TriggerPayload } from '../engine'
+import { ResumeReason, StreamStepProgress, TriggerHookType, TriggerPayload } from '../engine'
 import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
 import { FlowTriggerType } from '../flows/triggers/trigger'
 import { PiecePackage } from '../pieces/piece'
 
-export const LATEST_JOB_DATA_SCHEMA_VERSION = 9
+export const LATEST_JOB_DATA_SCHEMA_VERSION = 10
 
 export const InlineJobPayload = z.object({
     type: z.literal('inline'),
@@ -110,7 +110,7 @@ export const PollingJobData = z.object({
 })
 export type PollingJobData = z.infer<typeof PollingJobData>
 
-export const ExecuteFlowJobData = z.object({
+const ExecuteFlowJobDataCommon = z.object({
     projectId: z.string(),
     platformId: z.string(),
     jobType: z.literal(WorkerJobType.EXECUTE_FLOW),
@@ -122,14 +122,26 @@ export const ExecuteFlowJobData = z.object({
     workerHandlerId: z.union([z.string(), z.null()]).optional(),
     httpRequestId: z.string().optional(),
     payload: JobPayload,
-    executeTrigger: z.boolean().optional(),
-    executionType: z.nativeEnum(ExecutionType),
     streamStepProgress: z.nativeEnum(StreamStepProgress),
     stepNameToTest: z.string().optional(),
     sampleData: z.record(z.string(), z.unknown()).optional(),
     logsFileId: z.string(),
     traceContext: z.record(z.string(), z.string()).optional(),
 })
+
+export const BeginExecuteFlowJobData = ExecuteFlowJobDataCommon.extend({
+    executionType: z.literal(ExecutionType.BEGIN),
+    executeTrigger: z.boolean().optional(),
+})
+export type BeginExecuteFlowJobData = z.infer<typeof BeginExecuteFlowJobData>
+
+export const ResumeExecuteFlowJobData = ExecuteFlowJobDataCommon.extend({
+    executionType: z.literal(ExecutionType.RESUME),
+    resumeReason: z.nativeEnum(ResumeReason),
+})
+export type ResumeExecuteFlowJobData = z.infer<typeof ResumeExecuteFlowJobData>
+
+export const ExecuteFlowJobData = z.discriminatedUnion('executionType', [BeginExecuteFlowJobData, ResumeExecuteFlowJobData])
 export type ExecuteFlowJobData = z.infer<typeof ExecuteFlowJobData>
 
 export const WebhookJobData = z.object({

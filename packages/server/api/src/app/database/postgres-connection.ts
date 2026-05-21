@@ -368,6 +368,7 @@ import { DropChatTokenColumns1782000000000 } from './migration/postgres/17820000
 import { AddUserSandboxTable1784000000000 } from './migration/postgres/1784000000000-AddUserSandboxTable'
 import { ReplacesSandboxWithVercelAiSdk1785000000000 } from './migration/postgres/1785000000000-ReplacesSandboxWithVercelAiSdk'
 import { AddChatCompactionColumns1786000000000 } from './migration/postgres/1786000000000-AddChatCompactionColumns'
+import { AddEmbedSubdomainTable1787000000000 } from './migration/postgres/1787000000000-AddEmbedSubdomainTable'
 import { MakeChatConversationPlatformWide1787000000000 } from './migration/postgres/1787000000000-MakeChatConversationPlatformWide'
 import { AddSsoDomainVerification1787100000000 } from './migration/postgres/1787100000000-AddSsoDomainVerification'
 import { AddProjectIdsGinIndexToAppConnection1787200000000 } from './migration/postgres/1787200000000-AddProjectIdsGinIndexToAppConnection'
@@ -377,6 +378,7 @@ import { RemoveMcpServerStatus1790000000000 } from './migration/postgres/1790000
 import { RenameEnabledToolsToDisabledTools1791000000000 } from './migration/postgres/1791000000000-RenameEnabledToolsToDisabledTools'
 import { AddTriggerSourceFlowVersionIdIndex1792000000000 } from './migration/postgres/1792000000000-AddTriggerSourceFlowVersionIdIndex'
 import { AddDataManipulationEnabledToPlatformPlan1793000000000 } from './migration/postgres/1793000000000-AddDataManipulationEnabledToPlatformPlan'
+import { AddVariableTable1793000000000 } from './migration/postgres/1793000000000-AddVariableTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -754,11 +756,12 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddChatTables1776200000000,
         AddMcpServerTokenIndex1776400000000,
         AddRunStatusCoverIndex1777370308000,
+        AddLastLoggedInPlatformIdToUserIdentity1777491000474,
         DropChatTokenColumns1782000000000,
         AddUserSandboxTable1784000000000,
-        AddLastLoggedInPlatformIdToUserIdentity1777491000474,
         ReplacesSandboxWithVercelAiSdk1785000000000,
         AddChatCompactionColumns1786000000000,
+        AddEmbedSubdomainTable1787000000000,
         AddSsoDomainVerification1787100000000,
         AddProjectIdsGinIndexToAppConnection1787200000000,
         AddPlatformMcpServer1788000000000,
@@ -769,6 +772,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddTriggerSourceFlowVersionIdIndex1792000000000,
         AddDataManipulationEnabledToPlatformPlan1793000000000,
         AddUiMessagesToChatConversation1778983371000,
+        AddVariableTable1793000000000,
     ]
     return migrations
 }

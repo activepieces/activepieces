@@ -8,6 +8,9 @@ import {
 } from '@activepieces/shared';
 import { MentionNodeAttrs } from '@tiptap/extension-mention';
 import { JSONContent } from '@tiptap/react';
+import { Variable as VariableIcon } from 'lucide-react';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 
 import { StepMetadata } from '@/features/pieces';
 
@@ -46,6 +49,7 @@ type ApMentionNodeAttrs = {
   logoUrl?: string;
   displayText: string;
   serverValue: string;
+  isVariable?: boolean;
 };
 const flattenNestedKeysRegex = /^flattenNestedKeys\((\w+),\s*\[(.*?)\]\)$/;
 enum TipTapNodeTypes {
@@ -152,6 +156,7 @@ function convertTextToTipTapJsonContent(
   userInputText: string,
   steps: (FlowAction | FlowTrigger)[],
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
+  variableByName?: Map<string, string>,
 ): { type: TipTapNodeTypes.paragraph; content: JSONContent[] }[] {
   // Strip ap-formula-v1::{...} wrappers before tokenizing so the editor can
   // reconstruct function nodes from the inner expression. Saved values use the
@@ -209,7 +214,12 @@ function convertTextToTipTapJsonContent(
       }
       case 'variable':
         para.content.push(
-          createMentionNodeFromText(token.value, steps, stepsMetadata),
+          createMentionNodeFromText(
+            token.value,
+            steps,
+            stepsMetadata,
+            variableByName,
+          ),
         );
         break;
       case 'newline':
@@ -283,8 +293,19 @@ function parseLabelFromMention(
   mention: string,
   steps: (FlowAction | FlowTrigger)[],
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
+  variableByName?: Map<string, string>,
 ) {
   const { stepName, path } = parseStepAndNameFromMention(mention);
+  if (stepName === 'variables') {
+    const name = path[0] ?? '';
+    const displayName = variableByName?.get(name) ?? name;
+    return {
+      displayText: `Variable · ${displayName}`,
+      serverValue: mention,
+      logoUrl: undefined,
+      isVariable: true,
+    };
+  }
   const stepIdx = steps.findIndex((step) => step.name === stepName);
   if (stepIdx < 0) {
     return {
@@ -307,13 +328,14 @@ function createMentionNodeFromText(
   mention: string,
   steps: (FlowAction | FlowTrigger)[],
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
+  variableByName?: Map<string, string>,
 ) {
   return {
     type: TipTapNodeTypes.mention,
     attrs: {
       id: mention,
       label: JSON.stringify(
-        parseLabelFromMention(mention, steps, stepsMetadata),
+        parseLabelFromMention(mention, steps, stepsMetadata, variableByName),
       ),
     },
   };
@@ -369,6 +391,22 @@ function convertTiptapJsonToText(
   return res.join('');
 }
 
+// eslint-disable-next-line testing-library/render-result-naming-convention
+const VARIABLE_ICON_SVG_MARKUP = renderToStaticMarkup(
+  createElement(VariableIcon, {
+    className: 'w-4 h-4 shrink-0 text-primary',
+    'aria-hidden': true,
+  }),
+);
+
+const buildVariableIconElement = (): Element => {
+  const template = document.createElement('template');
+  template.innerHTML = VARIABLE_ICON_SVG_MARKUP;
+  const element = template.content.firstElementChild;
+  assertNotNullOrUndefined(element, 'variableIconMarkup');
+  return element;
+};
+
 const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
   const mentionElement = document.createElement('span');
   const apMentionNodeAttrs: ApMentionNodeAttrs = JSON.parse(
@@ -388,7 +426,9 @@ const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
   mentionElement.dataset.type = TipTapNodeTypes.mention;
   mentionElement.contentEditable = 'false';
 
-  if (apMentionNodeAttrs.logoUrl) {
+  if (apMentionNodeAttrs.isVariable) {
+    mentionElement.appendChild(buildVariableIconElement());
+  } else if (apMentionNodeAttrs.logoUrl) {
     const imgElement = document.createElement('img');
     imgElement.src = apMentionNodeAttrs.logoUrl;
     imgElement.className = 'object-contain w-4 h-4';

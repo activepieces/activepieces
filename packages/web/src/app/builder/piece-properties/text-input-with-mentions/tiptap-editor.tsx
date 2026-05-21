@@ -19,12 +19,14 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { t } from 'i18next';
 import { ChevronRight, XCircle } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { inputClass } from '@/components/ui/input';
 import { stepsHooks } from '@/features/pieces';
+import { variablesQueries } from '@/features/variables/hooks/variables-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../../builder-hooks';
@@ -140,6 +142,20 @@ export const TiptapEditor = ({
     (state) => state.setInsertMentionHandler,
   );
 
+  const projectId = authenticationSession.getProjectId();
+  const { data: variablesPage } = variablesQueries.useVariables({
+    request: {
+      projectId: projectId ?? '',
+      limit: 100,
+    },
+    extraKeys: ['mention-resolver-variables', projectId ?? ''],
+    enabled: !!projectId,
+  });
+  const variableByName = useMemo(
+    () => new Map((variablesPage?.data ?? []).map((v) => [v.name, v.name])),
+    [variablesPage],
+  );
+
   const [slashState, setSlashState] =
     useState<SlashCommandState>(INITIAL_SLASH_STATE);
   const slashStateRef = useRef(slashState);
@@ -180,6 +196,7 @@ export const TiptapEditor = ({
       `{{${propertyPath}}}`,
       steps,
       stepsMetadata,
+      variableByName,
     );
     editorRef.current?.chain().focus().insertContent(mentionNode).run();
   };
@@ -193,6 +210,7 @@ export const TiptapEditor = ({
         convertToText(initialValue),
         steps,
         stepsMetadata,
+        variableByName,
       ),
     },
     editorProps: {

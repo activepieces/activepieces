@@ -94,13 +94,13 @@ export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     customAppearanceEnabled: false,
     teamProjectsLimit: TeamProjectsLimit.ONE,
     projectRolesEnabled: false,
-    customDomainsEnabled: false,
     apiKeysEnabled: false,
     ssoEnabled: false,
     secretManagersEnabled: false,
     scimEnabled: false,
     dedicatedWorkers: null,
     canary: false,
+    customDomainsEnabled: false,
 }
 
 export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
@@ -123,7 +123,6 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     customAppearanceEnabled: false,
     teamProjectsLimit: TeamProjectsLimit.ONE,
     projectRolesEnabled: false,
-    customDomainsEnabled: false,
     apiKeysEnabled: false,
     ssoEnabled: false,
     secretManagersEnabled: false,
@@ -134,6 +133,7 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.DISABLED,
     dedicatedWorkers: null,
     canary: false,
+    customDomainsEnabled: false,
 }
 
 export const APPSUMO_PLAN = (planName: PlanName): PlatformPlanWithOnlyLimits => ({
