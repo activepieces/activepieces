@@ -153,7 +153,10 @@ export const triggerHelper = {
                 return {}
             }
             case TriggerHookType.ON_ENABLE: {
-                await pieceTrigger.onEnable(context)
+             await pieceTrigger.onEnable({
+                ...context,
+                isRepublish: params.isRepublish ?? false,
+            })
                 return {
                     listeners: appListeners,
                     scheduleOptions: pieceTrigger.type === TriggerStrategy.POLLING ? scheduleOptions : undefined,
@@ -238,9 +241,11 @@ export const triggerHelper = {
     },
 }
 
+
 type ExecuteTriggerParams = {
     params: ExecuteTriggerOperation<TriggerHookType>
     constants: EngineConstants
+    isRepublish?: boolean     
 }
 
 async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, input, propertySettings, projectId, apiUrl, engineToken, devPieces, stepNames }: PrepareTriggerExecutionParams) {

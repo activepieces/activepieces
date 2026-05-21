@@ -58,6 +58,7 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 pieceName: flowVersion.trigger.settings.pieceName,
                 pieceTrigger,
                 simulate,
+                isRepublish: params.isRepublish,   
             })
 
             if (templateId) {
@@ -232,4 +233,5 @@ type EnableTriggerParams = {
     projectId: string
     simulate: boolean
     templateId?: string
+    isRepublish?: boolean    
 }

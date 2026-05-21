@@ -357,13 +357,16 @@ export const flowService = (log: FastifyBaseLogger) => ({
 
         switch (operation.type) {
             case FlowOperationType.LOCK_AND_PUBLISH: {
+                const flowBeforePublish = await this.getOneOrThrow({ id, projectId })
+                const isRepublish = flowBeforePublish.status === FlowStatus.ENABLED  
+
                 await this.updatedPublishedVersionId({
                     id,
                     userId,
                     projectId,
                     platformId,
                 })
-                await applyStatusChange({ id, projectId, newStatus: operation.request.status ?? FlowStatus.ENABLED }, log)
+                await applyStatusChange({ id, projectId, newStatus: operation.request.status ?? FlowStatus.ENABLED, isRepublish }, log)   
                 break
             }
 
@@ -682,6 +685,7 @@ async function applyStatusChange(params: {
     id: FlowId
     projectId: ProjectId
     newStatus: FlowStatus
+    isRepublish?: boolean   
 }, log: FastifyBaseLogger): Promise<void> {
     const triggerTimeout = system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS)
     await distributedLock(log).runExclusive({
@@ -703,11 +707,13 @@ async function applyStatusChange(params: {
                 versionId: publishedFlowVersionId,
             })
 
+          
             await flowSideEffects(log).preUpdateStatus({
                 flowToUpdate,
                 publishedFlowVersion,
                 newStatus: params.newStatus,
                 templateId: flowToUpdate.templateId ?? undefined,
+                isRepublish: params.isRepublish,   
             })
 
             await flowRepo().save({

@@ -116,11 +116,14 @@ export const pollingHelper = {
       store,
       auth,
       propsValue,
-    }: { store: Store; auth: AuthValue; propsValue: PropsValue }
+      isRepublish,                                 
+    }: { store: Store; auth: AuthValue; propsValue: PropsValue; isRepublish?: boolean }
   ): Promise<void> {
     switch (polling.strategy) {
       case DedupeStrategy.TIMEBASED: {
-        await store.put('lastPoll', Date.now());
+        if (!isRepublish) {                         
+          await store.put('lastPoll', Date.now());
+        }
         break;
       }
       case DedupeStrategy.LAST_ITEM: {
