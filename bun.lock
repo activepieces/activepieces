@@ -3452,6 +3452,16 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/hootsuite": {
+      "name": "@activepieces/piece-hootsuite",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/housecall-pro": {
       "name": "@activepieces/piece-housecall-pro",
       "version": "0.1.4",
@@ -5318,6 +5328,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/pdf4me": {
+      "name": "@activepieces/piece-pdf4me",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/pdfcrowd": {
       "name": "@activepieces/piece-pdfcrowd",
       "version": "0.1.1",
@@ -6775,6 +6795,16 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/teamhood": {
+      "name": "@activepieces/piece-teamhood",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/teamleader": {
       "name": "@activepieces/piece-teamleader",
       "version": "0.1.5",
@@ -7566,6 +7596,16 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/youtrack": {
+      "name": "@activepieces/piece-youtrack",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/youtube": {
       "name": "@activepieces/piece-youtube",
       "version": "0.4.7",
@@ -8103,7 +8143,7 @@
     },
     "packages/pieces/core/webhook": {
       "name": "@activepieces/piece-webhook",
-      "version": "0.1.33",
+      "version": "0.1.34",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -8367,7 +8407,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.76.6",
+      "version": "0.76.7",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
@@ -9110,6 +9150,8 @@
 
     "@activepieces/piece-heymarket-sms": ["@activepieces/piece-heymarket-sms@workspace:packages/pieces/community/heymarket-sms"],
 
+    "@activepieces/piece-hootsuite": ["@activepieces/piece-hootsuite@workspace:packages/pieces/community/hootsuite"],
+
     "@activepieces/piece-housecall-pro": ["@activepieces/piece-housecall-pro@workspace:packages/pieces/community/housecall-pro"],
 
     "@activepieces/piece-http": ["@activepieces/piece-http@workspace:packages/pieces/core/http"],
@@ -9458,6 +9500,8 @@
 
     "@activepieces/piece-pdf-co": ["@activepieces/piece-pdf-co@workspace:packages/pieces/community/pdf-co"],
 
+    "@activepieces/piece-pdf4me": ["@activepieces/piece-pdf4me@workspace:packages/pieces/community/pdf4me"],
+
     "@activepieces/piece-pdfcrowd": ["@activepieces/piece-pdfcrowd@workspace:packages/pieces/community/pdfcrowd"],
 
     "@activepieces/piece-pdfmonkey": ["@activepieces/piece-pdfmonkey@workspace:packages/pieces/community/pdfmonkey"],
@@ -9752,6 +9796,8 @@
 
     "@activepieces/piece-teable": ["@activepieces/piece-teable@workspace:packages/pieces/community/teable"],
 
+    "@activepieces/piece-teamhood": ["@activepieces/piece-teamhood@workspace:packages/pieces/community/teamhood"],
+
     "@activepieces/piece-teamleader": ["@activepieces/piece-teamleader@workspace:packages/pieces/community/teamleader"],
 
     "@activepieces/piece-teamwork": ["@activepieces/piece-teamwork@workspace:packages/pieces/community/teamwork"],
@@ -9907,6 +9953,8 @@
     "@activepieces/piece-youcanbookme": ["@activepieces/piece-youcanbookme@workspace:packages/pieces/community/youcanbookme"],
 
     "@activepieces/piece-youform": ["@activepieces/piece-youform@workspace:packages/pieces/community/youform"],
+
+    "@activepieces/piece-youtrack": ["@activepieces/piece-youtrack@workspace:packages/pieces/community/youtrack"],
 
     "@activepieces/piece-youtube": ["@activepieces/piece-youtube@workspace:packages/pieces/community/youtube"],
 
