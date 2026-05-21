@@ -43,8 +43,13 @@ Password: `12345678`
 
 When [`AP_PIECES_SYNC_MODE`](https://github.com/activepieces/activepieces/blob/main/.env.dev#L14) is set to `OFFICIAL_AUTO`, all pieces are automatically loaded from the cloud API and synced to the database on first launch. This process may take a few seconds to several minutes depending on your internet connection.
 
-For local development, pieces are loaded from your local `dist` folder instead of the database. To enable this, set the [`AP_DEV_PIECES`](https://github.com/activepieces/activepieces/blob/main/.env.dev#L5) environment variable with a comma-separated list of pieces. For example, to develop with `google-sheets` and `cal-com`:
+For local development, pieces are loaded from your local `dist` folder instead of the database. To enable this, set the [`AP_DEV_PIECES`](https://github.com/activepieces/activepieces/blob/main/.env.dev#L5) environment variable in `.env.dev` with a comma-separated list of pieces. For example, to develop with `google-sheets` and `cal-com`:
 
 ```sh
-AP_DEV_PIECES=google-sheets,cal-com npm start
+# Edit .env.dev and set:
+AP_DEV_PIECES="google-sheets,cal-com"
 ```
+
+<Note>
+  Setting `AP_DEV_PIECES` via an inline shell prefix (e.g. `AP_DEV_PIECES=google-sheets npm start`) does not work — Turborepo does not forward shell-set environment variables to spawned dev server processes. Always edit `.env.dev` instead.
+</Note>
