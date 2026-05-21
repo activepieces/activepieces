@@ -14,12 +14,11 @@ export const listUsersAction = createAction({
   description: 'List all users in your Teamhood account.',
   props: {},
   async run(context) {
-    const response = await teamhoodApiCall<TeamhoodUser[]>({
+    const response = await teamhoodApiCall<{ users: TeamhoodUser[] }>({
       auth: context.auth.props as TeamhoodAuth,
       method: HttpMethod.GET,
       path: '/users',
     });
-
-    return response.body;
+    return response.body.users ?? [];
   },
 });

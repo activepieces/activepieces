@@ -43,12 +43,6 @@ export const findItemsAction = createAction({
         ],
       },
     }),
-    tags: Property.Array({
-      displayName: 'Tags',
-      description:
-        'Filter by tag names (OR logic — items matching any of the tags are returned).',
-      required: false,
-    }),
     createdSince: Property.DateTime({
       displayName: 'Created Since',
       description: 'Only return items created after this UTC date/time.',
@@ -92,7 +86,6 @@ export const findItemsAction = createAction({
       assignedUserId,
       ownerId,
       completed,
-      tags,
       createdSince,
       modifiedSince,
       completedSince,
@@ -117,7 +110,7 @@ export const findItemsAction = createAction({
       queryParams['IncludeChildItems'] = String(includeChildItems);
     queryParams['Take'] = String(take ?? 100);
     queryParams['Skip'] = String(skip ?? 0);
-
+    
     const response = await teamhoodApiCall<{ data?: TeamhoodItem[] }>({
       auth: context.auth.props as TeamhoodAuth,
       method: HttpMethod.GET,
