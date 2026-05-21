@@ -44,7 +44,6 @@ export type CanvasState = {
   setTestPanelView: (view: TestPanelView) => void;
   isTestPanelOpen: boolean;
   setTestPanelOpen: (open: boolean) => void;
-  prepareStepForTesting: (stepName: string) => void;
 };
 
 type CanvasStateInitialState = Pick<
@@ -208,23 +207,6 @@ export const createCanvasState = (
       return set(() => ({
         isTestPanelOpen: open,
       }));
-    },
-    prepareStepForTesting: (stepName: string) => {
-      localStorage.setItem(TEST_PANEL_OPEN_KEY_IN_LOCAL_STORAGE, 'open');
-      set((state) => {
-        const isEmptyTrigger =
-          stepName === 'trigger' &&
-          state.flowVersion.trigger.type === FlowTriggerType.EMPTY;
-        return {
-          selectedStep: stepName,
-          selectedBranchIndex: null,
-          selectedNodes: [stepName],
-          rightSidebar: isEmptyTrigger
-            ? RightSideBarType.NONE
-            : RightSideBarType.PIECE_SETTINGS,
-          isTestPanelOpen: true,
-        };
-      });
     },
   };
 };

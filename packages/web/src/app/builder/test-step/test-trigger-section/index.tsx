@@ -1,7 +1,7 @@
 import { FlowTrigger, flowStructureUtil, isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Zap } from 'lucide-react';
-import React, { useCallback, useContext, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { ChatDrawerSource } from '@/app/builder/types';
@@ -9,8 +9,6 @@ import { triggerEventHooks } from '@/features/flows';
 import { piecesHooks } from '@/features/pieces';
 
 import { useBuilderStateContext } from '../../builder-hooks';
-import { DynamicPropertiesContext } from '../../piece-properties/dynamic-properties-context';
-import { useAutoTestBus } from '../auto-test-bus-context';
 import { McpToolTestingDialog } from '../custom-test-step/mcp-tool-testing-dialog';
 import { TestPanelHeader } from '../test-panel-header';
 import { TestPanelViewToggle } from '../test-panel-view-toggle';
@@ -67,8 +65,6 @@ const TestTriggerSection = React.memo(
         lastTestDate: step?.settings?.sampleData?.lastTestDate,
       };
     });
-    const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
-    const { registerRunner } = useAutoTestBus();
 
     const onTestSuccess = async () => {
       await refetch();
@@ -134,34 +130,9 @@ const TestTriggerSection = React.memo(
       }
     }, [testType, setChatDrawerOpenSource, simulateTrigger, pollTrigger]);
 
-    const canAutoFire =
-      !!testType &&
-      !isPieceLoading &&
-      !isLoadingDynamicProperties &&
-      !isSimulating &&
-      !isPollingTesting &&
-      !isSavingMockdata &&
-      !isTestingDialogOpen &&
-      isValid;
-
-    const cleanupRef = useRef<(() => void) | null>(null);
-    const registrationRef = useCallback(
-      (el: HTMLDivElement | null) => {
-        cleanupRef.current?.();
-        cleanupRef.current = null;
-        if (!el) return;
-        cleanupRef.current = registerRunner(formValues.name, () => {
-          if (!canAutoFire) return false;
-          onTest();
-          return true;
-        });
-      },
-      [registerRunner, formValues.name, canAutoFire, onTest],
-    );
-
     if (isPieceLoading || isNil(trigger) || !testType) {
       return (
-        <div ref={registrationRef} className="flex flex-col h-full">
+        <div className="flex flex-col h-full">
           <TestPanelHeader status="idle" />
           <div className="flex justify-end px-3 py-2 shrink-0">
             <TestPanelViewToggle />
@@ -206,7 +177,7 @@ const TestTriggerSection = React.memo(
     };
 
     return (
-      <div ref={registrationRef} className="flex flex-col h-full">
+      <div className="flex flex-col h-full">
         {showFirstTimeTestingSection && !errorMessage && (
           <div className="flex flex-col h-full">
             <TestPanelHeader status="idle" />

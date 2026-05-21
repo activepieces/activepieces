@@ -17,7 +17,6 @@ import { pieceSelectorUtils } from '@/features/pieces';
 
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
 
-import { useAutoTestBus } from './auto-test-bus-context';
 import { useActionTestRunner } from './test-runner-context';
 import { TestButtonTooltip } from './test-step-tooltip';
 
@@ -40,7 +39,6 @@ const TestStepCTAButton = () => {
     state.run,
     state.saving,
   ]);
-  const { requestAutoTest } = useAutoTestBus();
 
   const currentStep = selectedStep
     ? flowStructureUtil.getStep(selectedStep, flowVersion.trigger)
@@ -55,7 +53,6 @@ const TestStepCTAButton = () => {
   );
   const stepIsRunning = isStepBeingTested(currentStep.name);
   const onOpenPanel = () => setTestPanelOpen(true);
-  const onFireTest = () => requestAutoTest(currentStep.name);
 
   if (isFlowAction(currentStep)) {
     return (
@@ -84,7 +81,7 @@ const TestStepCTAButton = () => {
         stepIsRunning={stepIsRunning}
         stepIsValid={currentStep.valid !== false}
         onOpenPanel={onOpenPanel}
-        onFireTest={onFireTest}
+        onFireTest={onOpenPanel}
         saving={saving}
         hasRun={!isNil(run)}
       />

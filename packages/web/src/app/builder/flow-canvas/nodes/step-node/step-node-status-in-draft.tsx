@@ -17,10 +17,8 @@ import {
 } from '@/components/ui/tooltip';
 import { StepStatusIcon, flowRunUtils } from '@/features/flow-runs';
 import { pieceSelectorUtils } from '@/features/pieces';
-import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
-import { useAutoTestBus } from '../../../test-step/auto-test-bus-context';
 import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
 type DraftStepStatus =
   | 'invalid'
@@ -63,7 +61,6 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
       flowCanvasUtils.isSkipped(stepName, state.flowVersion.trigger),
     ];
   });
-  const { requestAutoTest } = useAutoTestBus();
 
   const draftStatusConfig: Record<
     DraftStepStatus,
@@ -150,13 +147,6 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
   }
 
   const config = draftStatusConfig[status];
-  const isTestTrigger = status === 'untested' || status === 'needs-test';
-  const badgeContent = (
-    <>
-      {config.icon}
-      <div>{config.text}</div>
-    </>
-  );
   const badgeClassName = flowRunUtils.getStatusContainerClassName(
     config.variant,
     true,
@@ -166,24 +156,10 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
     <div className="absolute right-[1px] h-[20px] -top-[28px]">
       <Tooltip>
         <TooltipTrigger asChild>
-          {isTestTrigger && isStepValid ? (
-            <button
-              type="button"
-              aria-label={t('Test step')}
-              onClick={(e) => {
-                e.stopPropagation();
-                requestAutoTest(stepName);
-              }}
-              className={cn(
-                badgeClassName,
-                'cursor-pointer hover:brightness-95',
-              )}
-            >
-              {badgeContent}
-            </button>
-          ) : (
-            <div className={badgeClassName}>{badgeContent}</div>
-          )}
+          <div className={badgeClassName}>
+            {config.icon}
+            <div>{config.text}</div>
+          </div>
         </TooltipTrigger>
         {status === 'untested' && (
           <TooltipContent>

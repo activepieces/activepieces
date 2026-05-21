@@ -1,17 +1,10 @@
 import { FlowAction, FlowActionType } from '@activepieces/shared';
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useRef,
-  useState,
-} from 'react';
+import React, { createContext, useCallback, useContext, useState } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
 
-import { useAutoTestBus } from './auto-test-bus-context';
 import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
 import { testStepHooks } from './utils/test-step-hooks';
 
@@ -33,7 +26,6 @@ const ActionTestRunnerProvider = ({
     (state) => state.isStepBeingTested,
   );
   const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
-  const { registerRunner } = useAutoTestBus();
   const [showWebhookDialog, setShowWebhookDialog] = useState(false);
 
   const isTesting =
@@ -42,41 +34,20 @@ const ActionTestRunnerProvider = ({
   const canFireTest =
     step.valid !== false && !isTesting && !isLoadingDynamicProperties;
 
-  const fireTestNow = useCallback(() => {
+  const fireTest = useCallback(() => {
+    if (!canFireTest) return;
     if (isReturnResponseAndWaitForWebhook(step)) {
       setShowWebhookDialog(true);
     } else {
       testAction(undefined);
     }
-  }, [step, testAction]);
-
-  const fireTest = useCallback(() => {
-    if (!canFireTest) return;
-    fireTestNow();
-  }, [canFireTest, fireTestNow]);
-
-  const cleanupRef = useRef<(() => void) | null>(null);
-  const registrationRef = useCallback(
-    (el: HTMLDivElement | null) => {
-      cleanupRef.current?.();
-      cleanupRef.current = null;
-      if (!el) return;
-      cleanupRef.current = registerRunner(step.name, () => {
-        if (!canFireTest) return false;
-        fireTestNow();
-        return true;
-      });
-    },
-    [registerRunner, step.name, canFireTest, fireTestNow],
-  );
+  }, [canFireTest, step, testAction]);
 
   return (
     <ActionTestRunnerContext.Provider
       value={{ fireTest, isTesting, canFireTest }}
     >
-      <div ref={registrationRef} className="contents">
-        {children}
-      </div>
+      {children}
       {showWebhookDialog && (
         <TestWebhookDialog
           testingMode="returnResponseAndWaitForNextWebhook"
