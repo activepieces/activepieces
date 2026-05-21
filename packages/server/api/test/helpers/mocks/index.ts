@@ -521,7 +521,6 @@ export const createMockFlowVersion = (
         agentIds: flowVersion?.agentIds ?? [],
         trigger: flowVersion?.trigger ?? emptyTrigger,
         connectionIds: flowVersion?.connectionIds ?? [],
-        variableNames: flowVersion?.variableNames ?? [],
         state: flowVersion?.state ?? faker.helpers.enumValue(FlowVersionState),
         updatedBy: flowVersion?.updatedBy,
         valid: flowVersion?.valid ?? faker.datatype.boolean(),

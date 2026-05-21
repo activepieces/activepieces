@@ -26,7 +26,6 @@ export const FlowVersionTemplate = FlowVersion.omit({
     updatedBy: true,
     agentIds: true,
     connectionIds: true,
-    variableNames: true,
     backupFiles: true,
     notes: true,
 }).extend({

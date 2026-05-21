@@ -254,36 +254,6 @@ function extractConnectionIds(flowVersion: FlowVersion): string[] {
     return Array.from(new Set([...triggerAuthIds, ...stepAuthIds]))
 }
 
-const VARIABLE_MENTION_PATTERN = /\{\{\s*variables\[\s*'([^']+)'\s*\]\s*\}\}/g
-
-function extractVariableNamesFromValue(value: unknown, names: Set<string>): void {
-    if (typeof value === 'string') {
-        VARIABLE_MENTION_PATTERN.lastIndex = 0
-        let match: RegExpExecArray | null
-        while ((match = VARIABLE_MENTION_PATTERN.exec(value)) !== null) {
-            names.add(match[1])
-        }
-        return
-    }
-    if (Array.isArray(value)) {
-        for (const item of value) extractVariableNamesFromValue(item, names)
-        return
-    }
-    if (value !== null && typeof value === 'object') {
-        for (const item of Object.values(value as Record<string, unknown>)) {
-            extractVariableNamesFromValue(item, names)
-        }
-    }
-}
-
-function extractVariableNames(flowVersion: FlowVersion): string[] {
-    const names = new Set<string>()
-    for (const step of flowStructureUtil.getAllSteps(flowVersion.trigger)) {
-        extractVariableNamesFromValue(step.settings?.input, names)
-    }
-    return Array.from(names)
-}
-
 export const flowStructureUtil = {
     isTrigger,
     isAction,
@@ -303,7 +273,6 @@ export const flowStructureUtil = {
     getAllNextActionsWithoutChildren,
     getAllChildSteps,
     extractConnectionIds,
-    extractVariableNames,
     isAgentPiece,
     extractAgentIds,
 }

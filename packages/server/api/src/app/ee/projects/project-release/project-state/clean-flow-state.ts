@@ -34,7 +34,6 @@ function cleanFlowVersion(version: FlowVersion): FlowVersion {
         agentIds: version.agentIds,
         state: version.state,
         connectionIds: version.connectionIds,
-        variableNames: version.variableNames,
         backupFiles: version.backupFiles,
         notes: version.notes,
     }

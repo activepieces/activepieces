@@ -13,7 +13,6 @@ function createMinimalFlowVersion(template: FlowVersionTemplate): FlowVersion {
         updatedBy: null,
         agentIds: [],
         connectionIds: [],
-        variableNames: [],
         backupFiles: null,
         notes: template.notes ?? [],
     }

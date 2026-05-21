@@ -36,11 +36,6 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
             array: true,
             nullable: false,
         },
-        variableNames: {
-            type: String,
-            array: true,
-            nullable: false,
-        },
         updatedBy: {
             type: String,
             nullable: true,

@@ -126,7 +126,6 @@ function makeFlowVersion(overrides: { id?: string, trigger?: FlowVersion['trigge
         agentIds: [],
         state: FlowVersionState.DRAFT,
         connectionIds: [],
-        variableNames: [],
         backupFiles: null,
         notes: [],
     }

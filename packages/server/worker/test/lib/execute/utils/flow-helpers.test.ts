@@ -43,7 +43,6 @@ function makeFlowVersion(trigger: FlowVersion['trigger']): FlowVersion {
         agentIds: [],
         state: FlowVersionState.DRAFT,
         connectionIds: [],
-        variableNames: [],
         backupFiles: null,
         notes: [],
     }

@@ -25,7 +25,6 @@ export const FlowVersion = z.object({
     agentIds: z.array(z.string()),
     state: z.nativeEnum(FlowVersionState),
     connectionIds: z.array(z.string()),
-    variableNames: z.array(z.string()),
     backupFiles: Nullable(z.record(z.string(), z.string())),
     notes: z.array(Note),
 })

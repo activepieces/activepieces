@@ -2,14 +2,12 @@ import { Permission, VariableWithoutSensitiveData } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
-  Copy,
   Link2,
   MoreVertical,
   Pencil,
   Search,
   Trash2,
   Variable,
-  Workflow,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -34,7 +32,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { variablesApi } from '@/features/variables/api/variables';
 import {
   variablesMutations,
   variablesQueries,
@@ -42,16 +39,6 @@ import {
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { ownerColumnHooks } from '@/hooks/owner-column-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-
-const copyValueToClipboard = async (id: string) => {
-  try {
-    const { value } = await variablesApi.reveal(id);
-    await navigator.clipboard.writeText(value);
-    toast.success(t('Value copied to clipboard'));
-  } catch {
-    toast.error(t('Could not copy value'));
-  }
-};
 
 const copyReferenceToClipboard = async (name: string) => {
   try {
@@ -161,27 +148,6 @@ function VariablesPage() {
         ),
       },
       {
-        accessorKey: 'flowIds',
-        size: 140,
-        header: ({ column }) => (
-          <DataTableColumnHeader
-            column={column}
-            title={t('Used in')}
-            icon={Workflow}
-          />
-        ),
-        cell: ({ row }) => {
-          const count = row.original.flowIds?.length ?? 0;
-          return (
-            <span className="text-sm text-muted-foreground">
-              {t('{count, plural, =0 {No flows} =1 {1 flow} other {# flows}}', {
-                count,
-              })}
-            </span>
-          );
-        },
-      },
-      {
         accessorKey: 'updated',
         size: 180,
         header: ({ column }) => (
@@ -226,16 +192,6 @@ function VariablesPage() {
                 >
                   <Link2 className="h-4 w-4 mr-2" />
                   {t('Copy reference')}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  disabled={!canWrite}
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    void copyValueToClipboard(row.original.id);
-                  }}
-                >
-                  <Copy className="h-4 w-4 mr-2" />
-                  {t('Copy value')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
