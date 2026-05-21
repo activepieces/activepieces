@@ -23,6 +23,9 @@ Flows are the core automation primitive in Activepieces. Each flow is a versione
 - `packages/web/src/app/builder/state/` — Zustand-based builder state (flow, run, canvas, notes, step form, piece selector)
 - `packages/web/src/app/builder/step-settings/` — step configuration panel
 - `packages/web/src/app/builder/pieces-selector/` — piece/action browser
+- `packages/web/src/app/builder/data-selector/` — variable picker (mentions / data selector); `index.tsx` hosts both **Advanced** (existing tree) and **Friendly** tabs. When a step is a PIECE action/trigger, friendly mode builds its tree from the piece's `outputDisplayHints` via `utils-hints.ts` and renders rows through `friendly-data-selector-node.tsx`; otherwise it falls back to a generic field list. Hints are fetched via `usePieceOutputHints` (see [pieces.md](../features/pieces.md))
+- `packages/web/src/components/custom/smart-output-viewer/` — the new **Smart Output Viewer** used by test-step output and run details. `index.tsx` chooses between a labelled "Friendly view" (`output-field-list.tsx` → `output-field-row.tsx`, table-shaped arrays via `output-table-view.tsx`, generic fallback via `output-generic-field-list.tsx`) and the existing Raw JSON view. Values render through `format-value.tsx` which applies per-field `FieldFormat` rendering (clickable email/url, inline image, formatted date / currency / filesize / duration / boolean / HTML badge) and enforces an SSRF/XSS-safe URL allow-list (`http(s)` only). Path resolution and the common wrapper-key fallback (`data.*`, `body.*`, `payload.*`, …) live in `packages/web/src/lib/path-utils.ts`
+- `packages/web/src/app/builder/test-step/test-sample-data-viewer.tsx` and `packages/web/src/app/builder/run-details/flow-step-input-output.tsx` — both wrap `SmartOutputViewer` for test-output and run-output panes, passing the resolved `pieceHints` for the current step
 - `packages/web/src/app/routes/automations/index.tsx` — flows list page
 
 ## Edition Availability
@@ -104,3 +107,12 @@ The visual builder (`packages/web/src/app/builder/`) uses XYFlow for the canvas.
 - `chat-state.ts` — embedded chat drawer state for testing `chat_submission`-trigger flows from the builder
 
 `flowHooks.useChangeFlowStatus` handles both publish and enable/disable, surfaces `TRIGGER_UPDATE_STATUS` errors via an `ApErrorDialog`, and maps gateway timeout errors to a user-readable message. `flowHooks.importFlowsFromTemplates` replaces `externalId` references across a multi-flow template import to maintain cross-flow links.
+
+### Step Output Surfaces (Smart Output Viewer + Data Selector)
+
+Two builder surfaces consume an action/trigger's optional `outputDisplayHints` (defined on the piece — see [pieces.md](./pieces.md)):
+
+- **Smart Output Viewer** (`components/custom/smart-output-viewer/`) — used by the test-step output pane and run details. With hints, renders a labelled friendly view driven by the hints' `fields` array (type icons, copy-to-clipboard, expandable nested values via `children` / `listItems`, automatic table view for arrays of records, formatted images / emails / dates / file sizes / durations / currencies). Without hints, falls back to a generic field list for arbitrary JSON. A Raw JSON tab is always available.
+- **Data Selector** (`app/builder/data-selector/`) — variable picker. With hints, the Friendly tab shows labelled rows with value previews (purple values, same formatting as the viewer); inserting a row produces a fully-qualified mention path (e.g. `step_1["thread"]["data"]["messages"][0]["subject"]`). Without hints, falls back to a generic per-step field list. The Advanced tab is the existing raw tree.
+
+Both surfaces fetch hints via `usePieceOutputHints({ pieceName, pieceVersion, stepName })`, which reads from the cached `['piece', name, version]` React Query entry — no extra network calls. Hint path lookups use `pathUtils.getValueByDotPath` (`packages/web/src/lib/path-utils.ts`), which supports dot/bracket notation and a wrapper-key fallback (`data.*`, `body.*`, `payload.*`, …) so common API envelopes resolve transparently.

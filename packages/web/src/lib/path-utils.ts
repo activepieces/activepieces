@@ -1,4 +1,4 @@
-import { isNil, isObject } from '@activepieces/shared';
+import { isObject } from '@activepieces/shared';
 
 const COMMON_WRAPPERS = [
   'properties',
@@ -95,7 +95,7 @@ function resolvePathWithWrapperFallback(
   }
   const segments = parsePath(path);
   const direct = resolveSegments(obj, segments);
-  if (!isNil(direct)) return { value: direct, resolvedPath: path };
+  if (direct !== undefined) return { value: direct, resolvedPath: path };
 
   if (segments.length === 0 || !isObject(obj)) {
     return { value: direct, resolvedPath: path };
@@ -105,7 +105,7 @@ function resolvePathWithWrapperFallback(
     if (!rootKeys.includes(wrapper)) continue;
     if (segments[0] === wrapper) continue;
     const fallback = resolveSegments(obj, [wrapper, ...segments]);
-    if (!isNil(fallback)) {
+    if (fallback !== undefined) {
       return { value: fallback, resolvedPath: `${wrapper}.${path}` };
     }
   }

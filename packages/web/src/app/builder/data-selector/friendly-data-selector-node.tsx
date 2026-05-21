@@ -1,7 +1,7 @@
 import { flowStructureUtil, isNil, isObject } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { ReactElement, useState } from 'react';
 
 import { FieldTypeIcon } from '@/components/custom/smart-output-viewer/field-type-icon';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,12 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { PieceIcon, stepsHooks } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
@@ -55,6 +61,31 @@ function truncatePreview(value: unknown): {
     };
   }
   return { text: str, isTruncated: false, fullText: str };
+}
+
+function TruncatedValuePreview({
+  truncated,
+  fullText,
+  children,
+}: {
+  truncated: boolean;
+  fullText: string;
+  children: ReactElement;
+}) {
+  if (!truncated) return children;
+  return (
+    <TooltipProvider delayDuration={300}>
+      <Tooltip>
+        <TooltipTrigger asChild>{children}</TooltipTrigger>
+        <TooltipContent
+          side="top"
+          className="max-w-md break-words whitespace-pre-wrap"
+        >
+          {fullText}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
 }
 
 function FieldRow({
@@ -142,17 +173,21 @@ function FieldRow({
             return (
               <>
                 <span className="text-muted-foreground/40 shrink-0">:</span>
-                <span
-                  className={cn(
-                    'text-sm truncate flex-1 min-w-0',
-                    isEmpty
-                      ? 'text-muted-foreground/40 italic'
-                      : 'text-primary',
-                  )}
-                  title={preview?.isTruncated ? preview.fullText : undefined}
+                <TruncatedValuePreview
+                  truncated={!!preview?.isTruncated}
+                  fullText={preview?.fullText ?? ''}
                 >
-                  {isEmpty ? t('empty') : preview?.text}
-                </span>
+                  <span
+                    className={cn(
+                      'text-sm truncate flex-1 min-w-0',
+                      isEmpty
+                        ? 'text-muted-foreground/40 italic'
+                        : 'text-primary',
+                    )}
+                  >
+                    {isEmpty ? t('empty') : preview?.text}
+                  </span>
+                </TruncatedValuePreview>
               </>
             );
           })()}
@@ -162,12 +197,14 @@ function FieldRow({
           (() => {
             const preview = truncatePreview(node.data.value);
             return (
-              <span
-                className="text-sm text-muted-foreground/60 truncate flex-1 min-w-0"
-                title={preview.isTruncated ? preview.fullText : undefined}
+              <TruncatedValuePreview
+                truncated={preview.isTruncated}
+                fullText={preview.fullText}
               >
-                {preview.text}
-              </span>
+                <span className="text-sm text-muted-foreground/60 truncate flex-1 min-w-0">
+                  {preview.text}
+                </span>
+              </TruncatedValuePreview>
             );
           })()}
 

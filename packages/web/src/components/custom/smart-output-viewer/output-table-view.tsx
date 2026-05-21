@@ -50,13 +50,12 @@ function isTabularArray(items: unknown[]): boolean {
   const columns = buildColumns(first);
   if (!columns) return false;
 
-  const firstKeys = Object.keys(first).sort();
-  const sampleSize = Math.min(items.length, 5);
+  const firstKeys = Object.keys(first).sort().join(',');
+  const sampleSize = Math.min(items.length, MAX_TABLE_ROWS);
   for (let i = 1; i < sampleSize; i++) {
     const item = items[i];
     if (!isObject(item)) return false;
-    const keys = Object.keys(item).sort();
-    if (keys.join(',') !== firstKeys.join(',')) return false;
+    if (Object.keys(item).sort().join(',') !== firstKeys) return false;
   }
 
   return true;

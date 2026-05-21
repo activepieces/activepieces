@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest';
 
 import {
+  formatCurrency,
   isSafeEmail,
   isSafeUrl,
+  toBoolean,
 } from '@/components/custom/smart-output-viewer/format-value';
 import { pathUtils } from '@/lib/path-utils';
 
@@ -133,5 +135,50 @@ describe('isSafeEmail', () => {
       false,
     );
     expect(isSafeEmail('user@example.com\nBcc: attacker@evil.com')).toBe(false);
+  });
+});
+
+describe('toBoolean', () => {
+  it('returns the native boolean unchanged', () => {
+    expect(toBoolean(true)).toBe(true);
+    expect(toBoolean(false)).toBe(false);
+  });
+
+  it('treats common false-y strings as false', () => {
+    expect(toBoolean('false')).toBe(false);
+    expect(toBoolean('FALSE')).toBe(false);
+    expect(toBoolean('  False  ')).toBe(false);
+    expect(toBoolean('0')).toBe(false);
+    expect(toBoolean('no')).toBe(false);
+    expect(toBoolean('off')).toBe(false);
+  });
+
+  it('treats other non-empty strings as true', () => {
+    expect(toBoolean('true')).toBe(true);
+    expect(toBoolean('TRUE')).toBe(true);
+    expect(toBoolean('yes')).toBe(true);
+    expect(toBoolean('1')).toBe(true);
+  });
+
+  it('coerces numbers like JS truthiness without surprises', () => {
+    expect(toBoolean(0)).toBe(false);
+    expect(toBoolean(1)).toBe(true);
+    expect(toBoolean(-1)).toBe(true);
+  });
+});
+
+describe('formatCurrency', () => {
+  it('formats a finite number with a valid ISO currency code', () => {
+    expect(formatCurrency(19.99, 'USD')).toMatch(/19\.99/);
+  });
+
+  it('falls back to plain number formatting when no currency is supplied', () => {
+    expect(formatCurrency(1000, undefined)).not.toMatch(/[A-Z]{3}|\$|€|¥/);
+  });
+
+  it('falls back to plain number formatting on invalid currency codes (no crash)', () => {
+    expect(() => formatCurrency(19.99, 'US')).not.toThrow();
+    expect(() => formatCurrency(19.99, 'NOT-A-CODE')).not.toThrow();
+    expect(formatCurrency(19.99, 'US')).toMatch(/19\.99/);
   });
 });

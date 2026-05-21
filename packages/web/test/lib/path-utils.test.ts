@@ -43,6 +43,22 @@ describe('pathUtils.resolvePathWithWrapperFallback', () => {
     const obj = { a: 1 };
     expect(pathUtils.resolvePathWithWrapperFallback(obj, '').value).toBe(obj);
   });
+
+  it('preserves an intentional null at the requested path instead of falling through to a wrapper', () => {
+    const obj = { subject: null, data: { subject: 'Hello' } };
+    expect(pathUtils.resolvePathWithWrapperFallback(obj, 'subject')).toEqual({
+      value: null,
+      resolvedPath: 'subject',
+    });
+  });
+
+  it('still falls back through wrappers when the direct lookup is missing (undefined)', () => {
+    const obj = { data: { subject: 'Hello' } };
+    expect(pathUtils.resolvePathWithWrapperFallback(obj, 'subject')).toEqual({
+      value: 'Hello',
+      resolvedPath: 'data.subject',
+    });
+  });
 });
 
 describe('pathUtils.getValueByDotPath', () => {

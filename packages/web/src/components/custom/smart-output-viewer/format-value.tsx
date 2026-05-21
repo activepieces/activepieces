@@ -49,6 +49,29 @@ function toFiniteNumber(value: unknown): number | undefined {
   return undefined;
 }
 
+function toBoolean(value: unknown): boolean {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value !== 0;
+  if (typeof value === 'string') {
+    const v = value.trim().toLowerCase();
+    if (v === 'false' || v === '0' || v === 'no' || v === 'off') return false;
+    return v !== '';
+  }
+  return Boolean(value);
+}
+
+function formatCurrency(n: number, currency: string | undefined): string {
+  if (!currency) return formatUtils.formatNumber(n);
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency,
+    }).format(n);
+  } catch {
+    return formatUtils.formatNumber(n);
+  }
+}
+
 function FormatSingleValue({
   value,
   format,
@@ -126,7 +149,7 @@ function FormatSingleValue({
   }
 
   if (format === 'boolean') {
-    return <span>{value ? t('Yes') : t('No')}</span>;
+    return <span>{toBoolean(value) ? t('Yes') : t('No')}</span>;
   }
 
   if (format === 'filesize') {
@@ -153,13 +176,7 @@ function FormatSingleValue({
   if (format === 'currency') {
     const n = toFiniteNumber(value);
     if (n !== undefined) {
-      const formatted = currency
-        ? new Intl.NumberFormat(undefined, {
-            style: 'currency',
-            currency,
-          }).format(n)
-        : formatUtils.formatNumber(n);
-      return <span>{formatted}</span>;
+      return <span>{formatCurrency(n, currency)}</span>;
     }
   }
 
@@ -231,6 +248,8 @@ export {
   getValueByDotPath,
   isSafeUrl,
   isSafeEmail,
+  toBoolean,
+  formatCurrency,
 };
 
 type FormatValueProps = {

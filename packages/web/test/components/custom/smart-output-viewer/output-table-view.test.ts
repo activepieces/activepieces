@@ -48,6 +48,18 @@ describe('isTabularArray', () => {
     ];
     expect(isTabularArray(items)).toBe(false);
   });
+
+  it('detects shape divergence past the first five rows', () => {
+    const items = [
+      { id: 1, name: 'a' },
+      { id: 2, name: 'b' },
+      { id: 3, name: 'c' },
+      { id: 4, name: 'd' },
+      { id: 5, name: 'e' },
+      { id: 6, label: 'f' },
+    ];
+    expect(isTabularArray(items)).toBe(false);
+  });
 });
 
 describe('buildColumns', () => {
