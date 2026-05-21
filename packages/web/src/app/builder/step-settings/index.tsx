@@ -395,13 +395,8 @@ const StepSettingsLayout = ({
           <TestStepCTAButton />
         </div>
       )}
-      {testPanelHost && (
-        <div
-          className={cn(
-            'absolute bottom-0 left-0 right-0 h-[60%] z-50 transition-transform duration-200',
-            isTestPanelOpen ? 'translate-y-0' : 'translate-y-full',
-          )}
-        >
+      {testPanelHost && isTestPanelOpen && (
+        <div className="absolute bottom-0 left-0 right-0 h-[60%] z-50">
           {testPanelHost}
         </div>
       )}
