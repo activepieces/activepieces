@@ -14,8 +14,7 @@ export const orocommerce = createPiece({
   displayName: 'OroCommerce',
   auth: oroAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl:
-    'https://oroinc.com/wp-content/themes/oroinc/images/redesign/ORO.svg',
+  logoUrl: 'https://static.oroinc.com/logo/O(logo).svg',
   categories: [PieceCategory.COMMERCE],
   description: 'B2B digital commerce solution',
   authors: ['Oro Inc.'],
