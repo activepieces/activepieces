@@ -11,6 +11,7 @@ export const UpsertVariableRequestBody = z.object({
 export type UpsertVariableRequestBody = z.infer<typeof UpsertVariableRequestBody>
 
 export const UpdateVariableRequestBody = z.object({
+    value: z.string().min(1, 'formErrors.required').optional(),
     metadata: Metadata.optional(),
 })
 export type UpdateVariableRequestBody = z.infer<typeof UpdateVariableRequestBody>

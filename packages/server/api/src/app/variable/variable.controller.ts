@@ -8,6 +8,7 @@ import {
     RevealVariableResponse,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
+    UpdateVariableRequestBody,
     UpsertVariableRequestBody,
     VariableWithoutSensitiveData,
 } from '@activepieces/shared'
@@ -22,9 +23,9 @@ import { VariableEntity } from './variable.entity'
 import { variableService } from './variable.service'
 
 export const variableController: FastifyPluginCallbackZod = (app, _opts, done) => {
-    app.post('/', UpsertVariableRequest, async (request, reply) => {
+    app.post('/', CreateVariableRequest, async (request, reply) => {
         const ownerId = await securityHelper.getUserIdFromRequest(request)
-        const variable = await variableService(request.log).upsert({
+        const variable = await variableService(request.log).create({
             projectId: request.projectId,
             platformId: request.principal.platform.id,
             name: request.body.name,
@@ -37,6 +38,21 @@ export const variableController: FastifyPluginCallbackZod = (app, _opts, done) =
             data: { variable: { id: variable.id, name: variable.name, created: variable.created, updated: variable.updated } },
         })
         await reply.status(StatusCodes.CREATED).send(variable)
+    })
+
+    app.post('/:id', UpdateVariableRequest, async (request, reply) => {
+        const variable = await variableService(request.log).update({
+            id: request.params.id,
+            projectId: request.projectId,
+            platformId: request.principal.platform.id,
+            value: request.body.value,
+            metadata: request.body.metadata,
+        })
+        applicationEvents(request.log).sendUserEvent(request, {
+            action: ApplicationEventName.VARIABLE_UPSERTED,
+            data: { variable: { id: variable.id, name: variable.name, created: variable.created, updated: variable.updated } },
+        })
+        await reply.status(StatusCodes.OK).send(variable)
     })
 
     app.get('/', ListVariablesRequest, async (request): Promise<SeekPage<VariableWithoutSensitiveData>> => {
@@ -91,7 +107,7 @@ export const variableController: FastifyPluginCallbackZod = (app, _opts, done) =
     done()
 }
 
-const UpsertVariableRequest = {
+const CreateVariableRequest = {
     config: {
         security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE],
@@ -102,10 +118,30 @@ const UpsertVariableRequest = {
     schema: {
         tags: ['variables'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        description: 'Create or update a project variable',
+        description: 'Create a project variable. Fails if a variable with the same name already exists.',
         body: UpsertVariableRequestBody,
         response: {
             [StatusCodes.CREATED]: VariableWithoutSensitiveData,
+        },
+    },
+}
+
+const UpdateVariableRequest = {
+    config: {
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.WRITE_VARIABLE,
+            { type: ProjectResourceType.TABLE, tableName: VariableEntity },
+        ),
+    },
+    schema: {
+        tags: ['variables'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Update a project variable value or metadata. Name cannot be changed.',
+        params: z.object({ id: ApId }),
+        body: UpdateVariableRequestBody,
+        response: {
+            [StatusCodes.OK]: VariableWithoutSensitiveData,
         },
     },
 }

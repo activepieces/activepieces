@@ -19,9 +19,8 @@ import {
     VariableWithoutSensitiveData,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { Equal, ILike } from 'typeorm'
+import { Equal, ILike, QueryFailedError } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
-import { flowService } from '../flows/flow/flow.service'
 import { encryptUtils } from '../helper/encryption'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
@@ -30,23 +29,42 @@ import { VariableEntity, VariableSchema } from './variable.entity'
 export const variableRepo = repoFactory(VariableEntity)
 
 export const variableService = (log: FastifyBaseLogger) => ({
-    async upsert(params: UpsertParams): Promise<VariableWithoutSensitiveData> {
+    async create(params: CreateParams): Promise<VariableWithoutSensitiveData> {
         const { projectId, platformId, name, value, ownerId, metadata } = params
-        await variableRepo().upsert(
-            {
-                id: apId(),
+        const id = apId()
+        try {
+            await variableRepo().insert({
+                id,
                 projectId,
                 platformId,
                 name,
                 ownerId: ownerId ?? null,
                 value: await encryptUtils.encryptObject({ secret_text: value }),
                 ...spreadIfDefined('metadata', metadata),
-            },
-            ['projectId', 'name'],
-        )
-        const row = await variableRepo().findOneByOrFail({ projectId, name })
-        log.info({ id: row.id, projectId, name }, 'Variable upserted')
-        return getOneOrThrowWithoutValue({ id: row.id, projectId, platformId })
+            })
+        }
+        catch (error) {
+            if (isUniqueViolation(error)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: { message: 'Variable name already used' },
+                })
+            }
+            throw error
+        }
+        log.info({ id, projectId, name }, 'Variable created')
+        return getOneOrThrowWithoutValue({ id, projectId, platformId })
+    },
+
+    async update(params: UpdateParams): Promise<VariableWithoutSensitiveData> {
+        const { id, projectId, platformId, value, metadata } = params
+        await getOneOrThrowWithoutValue({ id, projectId, platformId })
+        await variableRepo().update({ id, projectId, platformId }, {
+            ...(isNil(value) ? {} : { value: await encryptUtils.encryptObject({ secret_text: value }) }),
+            ...spreadIfDefined('metadata', metadata),
+        })
+        log.info({ id, projectId }, 'Variable updated')
+        return getOneOrThrowWithoutValue({ id, projectId, platformId })
     },
 
     async list(params: ListParams): Promise<SeekPage<VariableWithoutSensitiveData>> {
@@ -73,11 +91,7 @@ export const variableService = (log: FastifyBaseLogger) => ({
             })
 
         const { data, cursor: nextCursor } = await paginator.paginate(queryBuilder)
-        const flowIdsByName = await fetchFlowIdsForVariables(log, projectId, data)
-        const sanitized = data.map((row) => ({
-            ...stripSensitiveData(row),
-            flowIds: flowIdsByName.get(row.name) ?? [],
-        }))
+        const sanitized = data.map(stripSensitiveData)
         return paginationHelper.createPage<VariableWithoutSensitiveData>(sanitized, nextCursor)
     },
 
@@ -161,6 +175,21 @@ async function getOneOrThrowWithoutValue(params: GetOneParams): Promise<Variable
     return stripSensitiveData(row)
 }
 
+const POSTGRES_UNIQUE_VIOLATION = '23505'
+
+function isUniqueViolation(error: unknown): boolean {
+    if (!(error instanceof QueryFailedError)) {
+        return false
+    }
+    const driverError: unknown = error.driverError
+    return (
+        typeof driverError === 'object' &&
+        driverError !== null &&
+        'code' in driverError &&
+        driverError.code === POSTGRES_UNIQUE_VIOLATION
+    )
+}
+
 function stripSensitiveData(row: VariableSchema): VariableWithoutSensitiveData {
     return {
         id: row.id,
@@ -172,39 +201,7 @@ function stripSensitiveData(row: VariableSchema): VariableWithoutSensitiveData {
         ownerId: row.ownerId,
         owner: mapToUserWithMetaInformation(row.owner ?? null),
         metadata: row.metadata,
-        flowIds: null,
     }
-}
-
-async function fetchFlowIdsForVariables(
-    log: FastifyBaseLogger,
-    projectId: ProjectId,
-    variables: VariableSchema[],
-): Promise<Map<string, string[]>> {
-    const flowIdsByName = new Map<string, string[]>()
-    if (variables.length === 0) {
-        return flowIdsByName
-    }
-    const variableNames = variables.map((v) => v.name)
-
-    const flowsPage = await flowService(log).list({
-        projectIds: [projectId],
-        cursorRequest: null,
-        variableNames,
-    })
-
-    for (const flow of flowsPage.data) {
-        for (const name of flow.version?.variableNames ?? []) {
-            if (!variableNames.includes(name)) {
-                continue
-            }
-            const ids = flowIdsByName.get(name) ?? []
-            ids.push(flow.id)
-            flowIdsByName.set(name, ids)
-        }
-    }
-
-    return flowIdsByName
 }
 
 const MAX_VARIABLE_OWNERS = 200
@@ -231,12 +228,20 @@ function mapToUserWithMetaInformation(owner: (User & { identity?: UserIdentity }
     }
 }
 
-type UpsertParams = {
+type CreateParams = {
     projectId: string
     platformId: string
     name: string
     value: string
     ownerId: UserId | null
+    metadata: Metadata | undefined
+}
+
+type UpdateParams = {
+    id: ApId
+    projectId: string
+    platformId: string
+    value: string | undefined
     metadata: Metadata | undefined
 }
 

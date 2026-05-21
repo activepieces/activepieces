@@ -3,6 +3,7 @@ import {
   ListVariablesRequestQuery,
   RevealVariableResponse,
   SeekPage,
+  UpdateVariableRequestBody,
   UpsertVariableRequestBody,
   VariableWithoutSensitiveData,
 } from '@activepieces/shared';
@@ -18,10 +19,19 @@ export const variablesApi = {
       request,
     );
   },
-  upsert(
+  create(
     request: UpsertVariableRequestBody,
   ): Promise<VariableWithoutSensitiveData> {
     return api.post<VariableWithoutSensitiveData>('/v1/variables', request);
+  },
+  update(
+    id: string,
+    request: UpdateVariableRequestBody,
+  ): Promise<VariableWithoutSensitiveData> {
+    return api.post<VariableWithoutSensitiveData>(
+      `/v1/variables/${id}`,
+      request,
+    );
   },
   delete(id: string): Promise<void> {
     return api.delete<void>(`/v1/variables/${id}`);

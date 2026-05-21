@@ -1,4 +1,5 @@
 import {
+  ErrorCode,
   formErrors,
   VARIABLE_NAME_REGEX,
   VariableWithoutSensitiveData,
@@ -33,6 +34,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { variablesApi } from '@/features/variables/api/variables';
+import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
 const FormSchema = z.object({
@@ -95,7 +97,10 @@ function VariableForm(props: VariableFormProps) {
       if (!projectId) {
         throw new Error('No project');
       }
-      return variablesApi.upsert({
+      if (existing) {
+        return variablesApi.update(existing.id, { value: values.value });
+      }
+      return variablesApi.create({
         projectId,
         name: values.name,
         value: values.value ?? '',
@@ -106,7 +111,16 @@ function VariableForm(props: VariableFormProps) {
       onSaved?.(variable);
       onOpenChange(false);
     },
-    onError: () => internalErrorToast(),
+    onError: (error) => {
+      if (api.isApError(error, ErrorCode.VALIDATION)) {
+        form.setError('name', {
+          type: 'manual',
+          message: 'Variable name already used',
+        });
+        return;
+      }
+      internalErrorToast();
+    },
   });
 
   const handleSubmit = (values: FormValues) => {

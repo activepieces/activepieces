@@ -1896,6 +1896,7 @@
   "Variable saved": "Variable saved",
   "Variable deleted": "Variable deleted",
   "Variable value revealed": "Variable value revealed",
+  "Variable name already used": "Variable name already used",
   "User signed up": "User signed up",
   "User signed in": "User signed in",
   "User password reset": "User password reset",
