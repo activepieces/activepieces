@@ -147,8 +147,9 @@ const PieceActionCTAButton = ({
           disabled={disabled}
           loading={isTesting}
           keyboardShortcut="G"
+          variant="accent"
           onKeyboardShortcut={handleClick}
-          className="w-full justify-center bg-primary/70 text-primary-foreground enabled:hover:bg-primary disabled:opacity-50 [&_span]:text-primary-foreground/70"
+          className="w-full justify-center"
           size="sm"
         >
           {!isTesting && (
