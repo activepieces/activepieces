@@ -87,8 +87,14 @@ export const CloudflareGatewayProviderConfig = z.object({
 })
 export type CloudflareGatewayProviderConfig = z.infer<typeof CloudflareGatewayProviderConfig>
 
+export const DEFAULT_AZURE_API_VERSION = '2024-10-21'
+
 export const AzureProviderConfig = z.object({
     resourceName: z.string(),
+    apiVersion: z.preprocess(
+        (v) => (typeof v === 'string' && v.trim().length === 0 ? undefined : v),
+        z.string().optional(),
+    ),
 })
 export type AzureProviderConfig = z.infer<typeof AzureProviderConfig>
 
