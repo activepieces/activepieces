@@ -216,9 +216,16 @@ function inferArgType(argNodes: DocNode[]): ApFunctionArgType | null {
         if (!text) return null
         if (text === 'true' || text === 'false') return 'boolean'
         if (!Number.isNaN(Number(text))) return 'number'
+        // Expression operators imply the value comes from evaluation, not a
+        // raw literal — skip static type inference so we don't misclassify
+        // `3 == 9` (boolean) or `1 + 2` (number) as a string.
+        if (EXPRESSION_OPERATOR_REGEX.test(text)) return null
         return 'string'
     }
 
     return null
 }
+
+const EXPRESSION_OPERATOR_REGEX =
+    /==|!=|<=|>=|&&|\|\||[<>]|\s(?:and|or|not)\s|[+\-*/%^]/
 
