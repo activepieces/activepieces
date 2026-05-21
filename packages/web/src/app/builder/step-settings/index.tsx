@@ -390,13 +390,8 @@ const StepSettingsLayout = ({
   return (
     <div className="relative flex-1 min-h-0 flex flex-col w-full">
       <div className="flex-1 min-h-0">{settingsForm}</div>
-      {showTestPanel && (
-        <div
-          className={cn(
-            'shrink-0 transition-opacity duration-150',
-            isTestPanelOpen ? 'opacity-0 pointer-events-none' : 'opacity-100',
-          )}
-        >
+      {showTestPanel && !isTestPanelOpen && (
+        <div className="shrink-0">
           <TestStepCTAButton />
         </div>
       )}
