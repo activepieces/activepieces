@@ -40,6 +40,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof googleDocsAuth>,
 				orderBy: 'createdTime desc',
 				supportsAllDrives: true,
 				includeItemsFromAllDrives: true,
+				corpora: 'allDrives',
 				pageToken: nextPageToken,
 			});
 

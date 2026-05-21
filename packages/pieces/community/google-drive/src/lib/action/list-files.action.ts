@@ -44,6 +44,7 @@ async function getFilesRecursively(
     fields: 'nextPageToken,files(id,kind,mimeType,name,trashed,parents)',
     supportsAllDrives: 'true',
     includeItemsFromAllDrives: includeTeamDrives ? 'true' : 'false',
+    corpora: includeTeamDrives ? 'allDrives' : 'user',
     pageSize: '1000',
   };
 
