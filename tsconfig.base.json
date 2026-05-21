@@ -593,6 +593,9 @@
       "@activepieces/piece-heygen": [
         "packages/pieces/community/heygen/src/index.ts"
       ],
+      "@activepieces/piece-hootsuite": [
+        "packages/pieces/community/hootsuite/src/index.ts"
+      ],
       "@activepieces/piece-http": ["packages/pieces/core/http/src/index.ts"],
       "@activepieces/piece-http-oauth2": [
         "packages/pieces/community/http-oauth2/src/index.ts"
@@ -902,6 +905,9 @@
       "@activepieces/piece-pdf": ["packages/pieces/core/pdf/src/index.ts"],
       "@activepieces/piece-pdf-co": [
         "packages/pieces/community/pdf-co/src/index.ts"
+      ],
+      "@activepieces/piece-pdf4me": [
+        "packages/pieces/community/pdf4me/src/index.ts"
       ],
       "@activepieces/piece-pdfmonkey": [
         "packages/pieces/community/pdfmonkey/src/index.ts"
@@ -1223,6 +1229,9 @@
       "@activepieces/piece-tavily": [
         "packages/pieces/community/tavily/src/index.ts"
       ],
+      "@activepieces/piece-teamhood": [
+        "packages/pieces/community/teamhood/src/index.ts"
+      ],
       "@activepieces/piece-teamleader": [
         "packages/pieces/community/teamleader/src/index.ts"
       ],
@@ -1388,6 +1397,9 @@
       "@activepieces/piece-xml": ["packages/pieces/core/xml/src/index.ts"],
       "@activepieces/piece-youtube": [
         "packages/pieces/community/youtube/src/index.ts"
+      ],
+      "@activepieces/piece-youtrack": [
+        "packages/pieces/community/youtrack/src/index.ts"
       ],
       "@activepieces/piece-zagomail": [
         "packages/pieces/community/zagomail/src/index.ts"
