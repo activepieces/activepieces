@@ -6,11 +6,9 @@ import {
   HttpResponse,
 } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
-import { frillAuth } from '../../';
+import { frillAuth } from '../auth';
 
 const BASE_URL = 'https://api.frill.co/v1';
-
-// ─── Centralized API call ──────────────────────────────────────────
 
 export async function frillApiCall<T extends HttpMessageBody>({
   token,
@@ -45,8 +43,6 @@ export async function frillApiCall<T extends HttpMessageBody>({
     body,
   });
 }
-
-// ─── Pagination helper (cursor-based) ─────────────────────────────────
 
 export async function frillPaginatedApiCall<T>({
   token,
@@ -95,8 +91,6 @@ export async function frillPaginatedApiCall<T>({
   return results;
 }
 
-// ─── Flattening helper ───────────────────────────────────────────────
-
 export function flattenObject(
   obj: Record<string, unknown>,
   prefix = '',
@@ -122,8 +116,6 @@ export function flattenObject(
   return result;
 }
 
-// ─── Dropdown helpers ───────────────────────────────────────────────
-
 export const frillDropdowns = {
   ideaDropdown: Property.Dropdown({
     displayName: 'Idea',
@@ -139,7 +131,7 @@ export const frillDropdowns = {
         const response = await frillApiCall<{
           data: { idx: string; name: string; slug: string }[];
         }>({
-          token: auth as string,
+          token: auth.secret_text,
           method: HttpMethod.GET,
           path: '/ideas',
           queryParams: { limit: 100 },
@@ -171,7 +163,7 @@ export const frillDropdowns = {
         const response = await frillApiCall<{
           data: { idx: string; name: string; slug: string }[];
         }>({
-          token: auth as string,
+          token: auth.secret_text,
           method: HttpMethod.GET,
           path: '/ideas',
           queryParams: { limit: 100 },
@@ -203,7 +195,7 @@ export const frillDropdowns = {
         const response = await frillApiCall<{
           data: { idx: string; name: string; color: string }[];
         }>({
-          token: auth as string,
+          token: auth.secret_text,
           method: HttpMethod.GET,
           path: '/statuses',
         });
@@ -234,7 +226,7 @@ export const frillDropdowns = {
         const response = await frillApiCall<{
           data: { idx: string; name: string }[];
         }>({
-          token: auth as string,
+          token: auth.secret_text,
           method: HttpMethod.GET,
           path: '/topics',
         });
@@ -265,7 +257,7 @@ export const frillDropdowns = {
         const response = await frillApiCall<{
           data: { idx: string; name: string }[];
         }>({
-          token: auth as string,
+          token: auth.secret_text,
           method: HttpMethod.GET,
           path: '/announcement-categories',
         });
@@ -296,7 +288,7 @@ export const frillDropdowns = {
         const response = await frillApiCall<{
           data: { idx: string; name: string; email: string }[];
         }>({
-          token: auth as string,
+          token: auth.secret_text,
           method: HttpMethod.GET,
           path: '/followers',
           queryParams: { limit: 100 },

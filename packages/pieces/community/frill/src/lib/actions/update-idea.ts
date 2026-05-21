@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { frillAuth } from '../../';
-import { frillDropdowns, flattenObject } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { frillAuth } from '../auth';
+import { frillDropdowns, flattenObject, frillApiCall } from '../common';
 
 export const updateIdea = createAction({
   auth: frillAuth,
@@ -45,25 +45,22 @@ export const updateIdea = createAction({
   },
   async run(context) {
     const body: Record<string, unknown> = {};
-    if (context.propsValue.name) body.name = context.propsValue.name;
-    if (context.propsValue.description) body.description = context.propsValue.description;
-    if (context.propsValue.status) body.status = context.propsValue.status;
-    if (context.propsValue.topics && context.propsValue.topics.length > 0) body.topics = context.propsValue.topics;
-    if (context.propsValue.is_bug !== undefined) body.is_bug = context.propsValue.is_bug;
-    if (context.propsValue.is_archived !== undefined) body.is_archived = context.propsValue.is_archived;
-    if (context.propsValue.is_completed !== undefined) body.is_completed = context.propsValue.is_completed;
-    if (context.propsValue.show_in_roadmap !== undefined) body.show_in_roadmap = context.propsValue.show_in_roadmap;
+    if (context.propsValue.name) body['name'] = context.propsValue.name;
+    if (context.propsValue.description) body['description'] = context.propsValue.description;
+    if (context.propsValue.status) body['status'] = context.propsValue.status;
+    if (context.propsValue.topics && context.propsValue.topics.length > 0) body['topics'] = context.propsValue.topics;
+    if (context.propsValue.is_bug !== undefined) body['is_bug'] = context.propsValue.is_bug;
+    if (context.propsValue.is_archived !== undefined) body['is_archived'] = context.propsValue.is_archived;
+    if (context.propsValue.is_completed !== undefined) body['is_completed'] = context.propsValue.is_completed;
+    if (context.propsValue.show_in_roadmap !== undefined) body['show_in_roadmap'] = context.propsValue.show_in_roadmap;
 
-    const response = await httpClient.sendRequest<Record<string, unknown>>({
+    const response = await frillApiCall<{ data: Record<string, unknown> }>({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `https://api.frill.co/v1/ideas/${context.propsValue.idea}`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth as string,
-      },
+      path: `/ideas/${context.propsValue.idea}`,
       body,
     });
 
-    return flattenObject(response.body);
+    return flattenObject(response.body.data);
   },
 });

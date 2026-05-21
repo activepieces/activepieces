@@ -1,11 +1,12 @@
 import { createTrigger, TriggerStrategy, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-import { DedupeStrategy, Polling, pollingHelper, httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { frillAuth } from '../../';
+import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
+import { frillAuth } from '../auth';
+import { frillApiCall } from '../common';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof frillAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, lastFetchEpochMS }) => {
-    const response = await httpClient.sendRequest<{
+  items: async ({ auth }) => {
+    const response = await frillApiCall<{
       data: {
         idx: string;
         message: string;
@@ -19,15 +20,10 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof frillAuth>, Reco
         idea_id: number;
       }[];
     }>({
+      token: auth.secret_text,
       method: HttpMethod.GET,
-      url: 'https://api.frill.co/v1/comments',
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth as string,
-      },
-      queryParams: {
-        limit: '100',
-      },
+      path: '/comments',
+      queryParams: { limit: 100 },
     });
 
     return response.body.data.map((item) => ({

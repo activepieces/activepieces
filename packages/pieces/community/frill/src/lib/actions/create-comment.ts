@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { frillAuth } from '../../';
-import { frillDropdowns, flattenObject } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { frillAuth } from '../auth';
+import { frillDropdowns, flattenObject, frillApiCall } from '../common';
 
 export const createComment = createAction({
   auth: frillAuth,
@@ -23,13 +23,10 @@ export const createComment = createAction({
     }),
   },
   async run(context) {
-    const response = await httpClient.sendRequest<Record<string, unknown>>({
+    const response = await frillApiCall<{ data: Record<string, unknown> }>({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: 'https://api.frill.co/v1/comments',
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth as string,
-      },
+      path: '/comments',
       body: {
         idea_id: context.propsValue.idea,
         message: context.propsValue.message,
@@ -37,6 +34,6 @@ export const createComment = createAction({
       },
     });
 
-    return flattenObject(response.body);
+    return flattenObject(response.body.data);
   },
 });

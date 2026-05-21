@@ -20,7 +20,7 @@ The key is used in the Authorization header as a Bearer token.`,
           type: AuthenticationType.BEARER_TOKEN,
           token: auth,
         },
-        queryParams: { limit: 1 },
+        queryParams: { limit: '1' },
       });
       return { valid: true };
     } catch (e) {

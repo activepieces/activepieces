@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { frillAuth } from '../../';
-import { frillDropdowns, flattenObject } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { frillAuth } from '../auth';
+import { frillDropdowns, flattenObject, frillApiCall } from '../common';
 
 export const createAnnouncement = createAction({
   auth: frillAuth,
@@ -34,19 +34,16 @@ export const createAnnouncement = createAction({
       is_published: context.propsValue.is_published,
     };
     if (context.propsValue.category) {
-      body.categories = [context.propsValue.category];
+      body['categories'] = [context.propsValue.category];
     }
 
-    const response = await httpClient.sendRequest<Record<string, unknown>>({
+    const response = await frillApiCall<{ data: Record<string, unknown> }>({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: 'https://api.frill.co/v1/announcements',
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth as string,
-      },
+      path: '/announcements',
       body,
     });
 
-    return flattenObject(response.body);
+    return flattenObject(response.body.data);
   },
 });

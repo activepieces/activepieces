@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { frillAuth } from '../../';
+import { frillAuth } from '../auth';
 import { frillDropdowns, frillPaginatedApiCall, flattenObject } from '../common';
 
 export const getComments = createAction({
@@ -11,7 +11,7 @@ export const getComments = createAction({
     idea: frillDropdowns.ideaDropdownOptional,
     limit: Property.Number({
       displayName: 'Limit',
-      description: 'Maximum number of comments to return (max 100).',
+      description: 'Maximum number of comments to return. Defaults to 20.',
       required: false,
       defaultValue: 20,
     }),
@@ -21,11 +21,11 @@ export const getComments = createAction({
       limit: context.propsValue.limit ?? 20,
     };
     if (context.propsValue.idea) {
-      queryParams.idea_id = context.propsValue.idea;
+      queryParams['idea_id'] = context.propsValue.idea;
     }
 
     const comments = await frillPaginatedApiCall<Record<string, unknown>>({
-      token: context.auth as string,
+      token: context.auth.secret_text,
       path: '/comments',
       queryParams,
       limit: context.propsValue.limit ?? 20,

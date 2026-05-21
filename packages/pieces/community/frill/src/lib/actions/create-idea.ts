@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { frillAuth } from '../../';
-import { frillDropdowns, flattenObject } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { frillAuth } from '../auth';
+import { frillDropdowns, flattenObject, frillApiCall } from '../common';
 
 export const createIdea = createAction({
   auth: frillAuth,
@@ -43,23 +43,20 @@ export const createIdea = createAction({
     const body: Record<string, unknown> = {
       name: context.propsValue.name,
     };
-    if (context.propsValue.description) body.description = context.propsValue.description;
-    if (context.propsValue.topics && context.propsValue.topics.length > 0) body.topics = context.propsValue.topics;
-    if (context.propsValue.status) body.status = context.propsValue.status;
-    if (context.propsValue.is_bug !== undefined) body.is_bug = context.propsValue.is_bug;
-    if (context.propsValue.show_in_roadmap !== undefined) body.show_in_roadmap = context.propsValue.show_in_roadmap;
-    if (context.propsValue.cover_image) body.cover_image = context.propsValue.cover_image;
+    if (context.propsValue.description) body['description'] = context.propsValue.description;
+    if (context.propsValue.topics && context.propsValue.topics.length > 0) body['topics'] = context.propsValue.topics;
+    if (context.propsValue.status) body['status'] = context.propsValue.status;
+    if (context.propsValue.is_bug !== undefined) body['is_bug'] = context.propsValue.is_bug;
+    if (context.propsValue.show_in_roadmap !== undefined) body['show_in_roadmap'] = context.propsValue.show_in_roadmap;
+    if (context.propsValue.cover_image) body['cover_image'] = context.propsValue.cover_image;
 
-    const response = await httpClient.sendRequest<Record<string, unknown>>({
+    const response = await frillApiCall<{ data: Record<string, unknown> }>({
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: 'https://api.frill.co/v1/ideas',
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth as string,
-      },
+      path: '/ideas',
       body,
     });
 
-    return flattenObject(response.body);
+    return flattenObject(response.body.data);
   },
 });

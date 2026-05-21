@@ -3,9 +3,6 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/shared';
 
 import { frillAuth } from './lib/auth';
-
-export { frillAuth };
-
 import { createIdea } from './lib/actions/create-idea';
 import { updateIdea } from './lib/actions/update-idea';
 import { createComment } from './lib/actions/create-comment';
@@ -14,7 +11,6 @@ import { createFollower } from './lib/actions/create-follower';
 import { updateFollower } from './lib/actions/update-follower';
 import { getIdeas } from './lib/actions/get-ideas';
 import { getComments } from './lib/actions/get-comments';
-
 import { newIdeaTrigger } from './lib/triggers/new-idea';
 import { newCommentTrigger } from './lib/triggers/new-comment';
 
@@ -25,7 +21,7 @@ export const frill = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/frill.png',
   categories: [PieceCategory.CUSTOMER_SUPPORT],
   auth: frillAuth,
-  authors: ['simonmann2'],
+  authors: ['simonmann2', 'onyedikachi-david'],
   actions: [
     createIdea,
     updateIdea,
@@ -39,9 +35,11 @@ export const frill = createPiece({
       baseUrl: () => 'https://api.frill.co/v1',
       auth: frillAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],
   triggers: [newIdeaTrigger, newCommentTrigger],
 });
+
+export { frillAuth };
