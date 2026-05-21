@@ -5318,6 +5318,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/pdf4me": {
+      "name": "@activepieces/piece-pdf4me",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/pdfcrowd": {
       "name": "@activepieces/piece-pdfcrowd",
       "version": "0.1.1",
@@ -9457,6 +9467,8 @@
     "@activepieces/piece-pdf": ["@activepieces/piece-pdf@workspace:packages/pieces/core/pdf"],
 
     "@activepieces/piece-pdf-co": ["@activepieces/piece-pdf-co@workspace:packages/pieces/community/pdf-co"],
+
+    "@activepieces/piece-pdf4me": ["@activepieces/piece-pdf4me@workspace:packages/pieces/community/pdf4me"],
 
     "@activepieces/piece-pdfcrowd": ["@activepieces/piece-pdfcrowd@workspace:packages/pieces/community/pdfcrowd"],
 
