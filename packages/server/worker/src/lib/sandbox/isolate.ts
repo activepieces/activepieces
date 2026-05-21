@@ -28,6 +28,7 @@ const REQUIRED_SANDBOX_ENV_KEYS: readonly string[] = [
     'NODE_PATH',
     'AP_EXECUTION_MODE',
     'AP_SANDBOX_WS_PORT',
+    'AP_SANDBOX_WS_TOKEN',
     'AP_BASE_CODE_DIRECTORY',
     'SANDBOX_ID',
 ]
