@@ -3589,6 +3589,16 @@
         "@types/mailparser": "3.4.6",
       },
     },
+    "packages/pieces/community/imeetify": {
+      "name": "@activepieces/piece-imeetify",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/influencers-club": {
       "name": "@activepieces/piece-influencers-club",
       "version": "0.0.5",
@@ -8173,7 +8183,7 @@
     },
     "packages/pieces/framework": {
       "name": "@activepieces/pieces-framework",
-      "version": "0.28.1",
+      "version": "0.28.2",
       "dependencies": {
         "@activepieces/shared": "workspace:*",
         "ai": "^6.0.0",
@@ -9177,6 +9187,8 @@
     "@activepieces/piece-image-router": ["@activepieces/piece-image-router@workspace:packages/pieces/community/image-router"],
 
     "@activepieces/piece-imap": ["@activepieces/piece-imap@workspace:packages/pieces/community/imap"],
+
+    "@activepieces/piece-imeetify": ["@activepieces/piece-imeetify@workspace:packages/pieces/community/imeetify"],
 
     "@activepieces/piece-influencers-club": ["@activepieces/piece-influencers-club@workspace:packages/pieces/community/influencers-club"],
 
