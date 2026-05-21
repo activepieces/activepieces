@@ -1,8 +1,7 @@
-// Action: Apply Command
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { youtrackAuth } from '../../';
-import { issueDropdown } from '../common';
+import { issueDropdown, youtrackApiCall } from '../common';
 
 export const applyCommandAction = createAction({
   auth: youtrackAuth,
@@ -20,17 +19,17 @@ export const applyCommandAction = createAction({
     silent: Property.Checkbox({ displayName: 'Apply silently?', description: 'No notifications if enabled.', required: false, defaultValue: false }),
   },
   async run(context) {
-    const a = context.auth as unknown as { baseUrl: string; apiToken: string };
+    const { baseUrl, apiToken } = context.auth.props;
     const body: Record<string, unknown> = { query: context.propsValue.command, issues: [{ id: context.propsValue.issue }] };
-    if (context.propsValue.comment) body.comment = context.propsValue.comment;
-    if (context.propsValue.silent) body.silent = true;
-    const r = await fetch(a.baseUrl.replace(/\/+$/, '') + '/api/commands', {
+    if (context.propsValue.comment) body['comment'] = context.propsValue.comment;
+    if (context.propsValue.silent) body['silent'] = true;
+    await youtrackApiCall({
+      baseUrl,
+      token: apiToken,
       method: HttpMethod.POST,
-      headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + a.apiToken, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      path: '/commands',
+      body,
     });
-    if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error('Failed: ' + JSON.stringify(e)); }
     return { success: true, command: context.propsValue.command };
   },
-  sampleData: { success: true, command: 'State Fixed' },
 });

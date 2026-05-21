@@ -1,8 +1,7 @@
-// Action: Search Issues
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { youtrackAuth } from '../../';
-import { ISSUE_FIELDS, flattenObject } from '../common';
+import { ISSUE_FIELDS, flattenObject, youtrackApiCall } from '../common';
 
 export const searchIssuesAction = createAction({
   auth: youtrackAuth,
@@ -11,24 +10,27 @@ export const searchIssuesAction = createAction({
   description: 'Searches for issues using YouTrack query syntax. Returns flat rows for spreadsheets.',
   props: {
     project: Property.Dropdown({
+      auth:youtrackAuth,
       displayName: 'Project',
       description: 'Optional: filter by project. Leave empty to search across all projects.',
       required: false,
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
-        const a = auth as unknown as { baseUrl: string; apiToken: string };
+        const { baseUrl, apiToken } = auth as unknown as { baseUrl: string; apiToken: string };
         try {
-          const r = await fetch(a.baseUrl.replace(/\/+$/, '') + '/api/admin/projects?fields=id,name,shortName', {
-            headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + a.apiToken },
+          const response = await youtrackApiCall<Array<{ id: string; name: string; shortName: string }>>({
+            baseUrl,
+            token: apiToken,
+            method: HttpMethod.GET,
+            path: '/admin/projects',
+            queryParams: { fields: 'id,name,shortName' },
           });
-          const projects = await r.json() as Array<{ id: string; name: string; shortName: string }>;
-          if (!r.ok) throw new Error(JSON.stringify(projects));
           return {
             disabled: false,
             options: [
               { label: '[All projects]', value: '' },
-              ...projects.map((p) => ({ label: p.name + ' (' + p.shortName + ')', value: p.shortName })),
+              ...response.body.map((p) => ({ label: p.name + ' (' + p.shortName + ')', value: p.shortName })),
             ],
           };
         } catch {
@@ -54,29 +56,23 @@ export const searchIssuesAction = createAction({
     }),
   },
   async run(context) {
-    const a = context.auth as unknown as { baseUrl: string; apiToken: string };
+    const { baseUrl, apiToken } = context.auth.props;
     const limit = context.propsValue.limit ?? 100;
 
-    const parts: string[] = [];
-    if (context.propsValue.project) {
-      parts.push('project: {' + context.propsValue.project + '}');
-    }
-    if (context.propsValue.query) {
-      parts.push(context.propsValue.query);
-    }
-    const q = parts.length > 0 ? encodeURIComponent(parts.join(' ')) : '';
+    const queryParts: string[] = [];
+    if (context.propsValue.project) queryParts.push('project: {' + context.propsValue.project + '}');
+    if (context.propsValue.query) queryParts.push(context.propsValue.query);
 
-    const url = a.baseUrl.replace(/\/+$/, '') + '/api/issues?fields=' +
-      encodeURIComponent(ISSUE_FIELDS) + '&query=' + q + '&$top=' + limit;
-    const r = await fetch(url, {
+    const queryParams: Record<string, string> = { fields: ISSUE_FIELDS, '$top': String(limit) };
+    if (queryParts.length > 0) queryParams['query'] = queryParts.join(' ');
+
+    const response = await youtrackApiCall<Array<Record<string, unknown>>>({
+      baseUrl,
+      token: apiToken,
       method: HttpMethod.GET,
-      headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + a.apiToken },
+      path: '/issues',
+      queryParams,
     });
-    if (!r.ok) { const errText = await r.text().catch(() => String(r.status)); throw new Error('Failed to search: ' + errText); }
-    const data = await r.json() as Array<Record<string, unknown>>;
-    return (data || []).map(flattenObject);
+    return (response.body || []).map((item) => flattenObject(item));
   },
-  sampleData: [
-    { idReadable: 'SP-42', summary: 'Fix login page crash', project_name: 'Sample Project', reporter_name: 'Jane Doe', created: 1644916724088 },
-  ],
 });

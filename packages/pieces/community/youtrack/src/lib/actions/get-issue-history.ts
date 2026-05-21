@@ -2,7 +2,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { youtrackAuth } from '../../';
-import { issueDropdown } from '../common';
+import { issueDropdown, youtrackApiCall } from '../common';
 
 export const getIssueHistoryAction = createAction({
   auth: youtrackAuth,
@@ -25,33 +25,31 @@ export const getIssueHistoryAction = createAction({
     }),
   },
   async run(context) {
-    const a = context.auth as unknown as { baseUrl: string; apiToken: string };
+    const { baseUrl, apiToken } = context.auth.props;
     const categories = (context.propsValue.categories as string[]).join(',');
-    const url = a.baseUrl.replace(/\/+$/, '') + '/api/issues/' + context.propsValue.issue +
-      '/activities?categories=' + categories +
-      '&fields=author(name,login),timestamp,target(id,text),added(name),removed(name)';
-    const r = await fetch(url, {
+    const response = await youtrackApiCall<Array<Record<string, unknown>>>({
+      baseUrl,
+      token: apiToken,
       method: HttpMethod.GET,
-      headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + a.apiToken },
+      path: '/issues/' + context.propsValue.issue + '/activities',
+      queryParams: {
+        categories,
+        fields: 'author(name,login),timestamp,target(id,text),added(name),removed(name)',
+      },
     });
-    if (!r.ok) { const errText = await r.text().catch(() => String(r.status)); throw new Error('Failed to get history: ' + errText); }
-    const data = await r.json() as Array<Record<string, unknown>>;
+    const data = response.body;
     return (data || []).map((item) => ({
-      type: item.$type,
-      timestamp: item.timestamp,
-      author_name: (item.author as Record<string, unknown>)?.name ?? null,
-      author_login: (item.author as Record<string, unknown>)?.login ?? null,
-      added_values: Array.isArray(item.added)
-        ? (item.added as Array<Record<string, unknown>>).map((x) => x.name ?? JSON.stringify(x)).join(', ')
+      type: item['$type'],
+      timestamp: item['timestamp'],
+      author_name: (item['author'] as Record<string, unknown>)?.['name'] ?? null,
+      author_login: (item['author'] as Record<string, unknown>)?.['login'] ?? null,
+      added_values: Array.isArray(item['added'])
+        ? (item['added'] as Array<Record<string, unknown>>).map((x) => x['name'] ?? JSON.stringify(x)).join(', ')
         : null,
-      removed_values: Array.isArray(item.removed)
-        ? (item.removed as Array<Record<string, unknown>>).map((x) => x.name ?? JSON.stringify(x)).join(', ')
+      removed_values: Array.isArray(item['removed'])
+        ? (item['removed'] as Array<Record<string, unknown>>).map((x) => x['name'] ?? JSON.stringify(x)).join(', ')
         : null,
-      comment_text: (item.target as Record<string, unknown>)?.text ?? null,
+      comment_text: (item['target'] as Record<string, unknown>)?.['text'] ?? null,
     }));
   },
-  sampleData: [
-    { type: 'CustomFieldActivityItem', timestamp: 1644916724088, author_name: 'Jane Doe', author_login: 'jane.doe',
-      added_values: 'Critical', removed_values: 'Major', comment_text: null },
-  ],
 });

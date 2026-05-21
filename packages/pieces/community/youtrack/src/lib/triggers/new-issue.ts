@@ -1,23 +1,25 @@
 // Trigger: New Issue
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { AppConnectionValueForAuthProperty, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { youtrackAuth } from '../../';
-import { ISSUE_FIELDS, flattenObject } from '../common';
+import { ISSUE_FIELDS, flattenObject, youtrackApiCall } from '../common';
 
-const polling: Polling<{ baseUrl: string; apiToken: string }, Record<string, never>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof youtrackAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
-    const url = auth.baseUrl.replace(/\/+$/, '') + '/api/issues?fields=' +
-      encodeURIComponent(ISSUE_FIELDS) +
-      '&query=' + encodeURIComponent('created: {after ' + lastFetchEpochMS + '}') +
-      '&$top=50';
-    const r = await fetch(url, {
-      headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + auth.apiToken },
+    const response = await youtrackApiCall<Array<Record<string, unknown>>>({
+      baseUrl: auth.props.baseUrl,
+      token: auth.props.apiToken,
+      method: HttpMethod.GET,
+      path: '/issues',
+      queryParams: {
+        fields: ISSUE_FIELDS,
+        query: 'created: {after ' + lastFetchEpochMS + '}',
+        '$top': '50',
+      },
     });
-    if (!r.ok) { const errText = await r.text().catch(() => String(r.status)); throw new Error('Failed to fetch new issues: ' + errText); }
-    const data = await r.json() as Array<Record<string, unknown>>;
-    return (data || []).map((issue) => ({
-      epochMilliSeconds: (issue.created as number) || 0,
+    return (response.body || []).map((issue) => ({
+      epochMilliSeconds: (issue['created'] as number) || 0,
       data: flattenObject(issue),
     }));
   },

@@ -1,7 +1,3 @@
-// =============================================================================
-// YouTrack Piece - Common Helpers & Dropdowns
-// =============================================================================
-
 import {
   httpClient,
   HttpMethod,
@@ -63,7 +59,7 @@ export function flattenObject(
         result[flatKey] = value
           .map((v) => {
             if (typeof v === 'object' && v !== null && 'name' in v) {
-              return (v as Record<string, unknown>).name as string;
+              return (v as Record<string, unknown>)['name'] as string;
             }
             return JSON.stringify(v);
           })
@@ -92,21 +88,22 @@ export const projectDropdown = Property.Dropdown({
   displayName: 'Project',
   description: 'Select the YouTrack project to work with.',
   required: true,
+  auth:youtrackAuth,
   refreshers: [],
   options: async ({ auth }) => {
     if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
-    const a = auth as unknown as { baseUrl: string; apiToken: string };
+    const { baseUrl, apiToken } = auth as unknown as { baseUrl: string; apiToken: string };
     try {
-      const r = await youtrackApiCall<Array<{ id: string; name: string; shortName: string }>>({
-        baseUrl: a.baseUrl, token: a.apiToken, method: HttpMethod.GET,
+      const response = await youtrackApiCall<Array<{ id: string; name: string; shortName: string }>>({
+        baseUrl, token: apiToken, method: HttpMethod.GET,
         path: '/admin/projects', queryParams: { fields: 'id,name,shortName' },
       });
-      if (!r.body || r.body.length === 0) {
+      if (!response.body || response.body.length === 0) {
         return { disabled: false, options: [], placeholder: 'No projects found. Create one in YouTrack first.' };
       }
       return {
         disabled: false,
-        options: r.body.map((p) => ({
+        options: response.body.map((p) => ({
           label: p.name + ' (' + p.shortName + ')',
           value: p.id,
         })),
@@ -121,22 +118,23 @@ export const issueDropdown = Property.Dropdown({
   displayName: 'Issue',
   description: 'Select the issue to work with.',
   required: true,
+  auth:youtrackAuth,
   refreshers: ['project'],
   options: async ({ auth, project }) => {
     if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
-    const a = auth as unknown as { baseUrl: string; apiToken: string };
+    const { baseUrl, apiToken } = auth as unknown as { baseUrl: string; apiToken: string };
     if (!project) {
       try {
-        const r = await youtrackApiCall<Array<{ id: string; idReadable: string; summary: string }>>({
-          baseUrl: a.baseUrl, token: a.apiToken, method: HttpMethod.GET, path: '/issues',
+        const response = await youtrackApiCall<Array<{ id: string; idReadable: string; summary: string }>>({
+          baseUrl, token: apiToken, method: HttpMethod.GET, path: '/issues',
           queryParams: { fields: 'id,idReadable,summary', '$top': '50' },
         });
-        if (!r.body || r.body.length === 0) {
+        if (!response.body || response.body.length === 0) {
           return { disabled: false, options: [], placeholder: 'No issues found.' };
         }
         return {
           disabled: false,
-          options: r.body.map((i) => ({
+          options: response.body.map((i) => ({
             label: i.idReadable + ': ' + i.summary,
             value: i.id,
           })),
@@ -146,16 +144,16 @@ export const issueDropdown = Property.Dropdown({
       }
     }
     try {
-      const r = await youtrackApiCall<Array<{ id: string; idReadable: string; summary: string }>>({
-        baseUrl: a.baseUrl, token: a.apiToken, method: HttpMethod.GET, path: '/issues',
+      const response = await youtrackApiCall<Array<{ id: string; idReadable: string; summary: string }>>({
+        baseUrl, token: apiToken, method: HttpMethod.GET, path: '/issues',
         queryParams: { fields: 'id,idReadable,summary', query: 'project: {' + project + '}', '$top': '100' },
       });
-      if (!r.body || r.body.length === 0) {
+      if (!response.body || response.body.length === 0) {
         return { disabled: false, options: [], placeholder: 'No issues found in this project.' };
       }
       return {
         disabled: false,
-        options: r.body.map((i) => ({
+        options: response.body.map((i) => ({
           label: i.idReadable + ': ' + i.summary,
           value: i.id,
         })),
@@ -171,18 +169,19 @@ export const tagDropdown = Property.Dropdown({
   description: 'Select a tag to apply to the issue.',
   required: true,
   refreshers: [],
+  auth:youtrackAuth,
   options: async ({ auth }) => {
     if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
-    const a = auth as unknown as { baseUrl: string; apiToken: string };
+    const { baseUrl, apiToken } = auth as unknown as { baseUrl: string; apiToken: string };
     try {
-      const r = await youtrackApiCall<Array<{ id: string; name: string }>>({
-        baseUrl: a.baseUrl, token: a.apiToken, method: HttpMethod.GET,
+      const response = await youtrackApiCall<Array<{ id: string; name: string }>>({
+        baseUrl, token: apiToken, method: HttpMethod.GET,
         path: '/tags', queryParams: { fields: 'id,name' },
       });
-      if (!r.body || r.body.length === 0) {
+      if (!response.body || response.body.length === 0) {
         return { disabled: false, options: [], placeholder: 'No tags found. Create one in YouTrack first.' };
       }
-      return { disabled: false, options: r.body.map((t) => ({ label: t.name, value: t.id })) };
+      return { disabled: false, options: response.body.map((t) => ({ label: t.name, value: t.id })) };
     } catch {
       return { disabled: true, options: [], placeholder: 'Failed to load tags. Check your connection.' };
     }
@@ -194,20 +193,21 @@ export const userDropdown = Property.Dropdown({
   description: 'Select a YouTrack user.',
   required: true,
   refreshers: [],
+  auth:youtrackAuth,
   options: async ({ auth }) => {
     if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
-    const a = auth as unknown as { baseUrl: string; apiToken: string };
+    const { baseUrl, apiToken } = auth as unknown as { baseUrl: string; apiToken: string };
     try {
-      const r = await youtrackApiCall<Array<{ id: string; name: string; login: string }>>({
-        baseUrl: a.baseUrl, token: a.apiToken, method: HttpMethod.GET,
+      const response = await youtrackApiCall<Array<{ id: string; name: string; login: string }>>({
+        baseUrl, token: apiToken, method: HttpMethod.GET,
         path: '/users', queryParams: { fields: 'id,name,login', '$top': '200' },
       });
-      if (!r.body || r.body.length === 0) {
+      if (!response.body || response.body.length === 0) {
         return { disabled: false, options: [], placeholder: 'No users found.' };
       }
       return {
         disabled: false,
-        options: r.body.map((u) => ({
+        options: response.body.map((u) => ({
           label: u.name + ' (' + u.login + ')',
           value: u.id,
         })),

@@ -1,8 +1,7 @@
-// Action: Delete Attachment
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { youtrackAuth } from '../../';
-import { issueDropdown } from '../common';
+import { issueDropdown, youtrackApiCall } from '../common';
 
 export const deleteAttachmentAction = createAction({
   auth: youtrackAuth,
@@ -18,14 +17,13 @@ export const deleteAttachmentAction = createAction({
     }),
   },
   async run(context) {
-    const a = context.auth as unknown as { baseUrl: string; apiToken: string };
-    const url = a.baseUrl.replace(/\/+$/, '') + '/api/issues/' + context.propsValue.issue + '/attachments/' + context.propsValue.attachmentId;
-    const r = await fetch(url, {
+    const { baseUrl, apiToken } = context.auth.props;
+    await youtrackApiCall({
+      baseUrl,
+      token: apiToken,
       method: HttpMethod.DELETE,
-      headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + a.apiToken },
+      path: '/issues/' + context.propsValue.issue + '/attachments/' + context.propsValue.attachmentId,
     });
-    if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error('Failed to delete attachment: ' + JSON.stringify(e)); }
     return { success: true };
   },
-  sampleData: { success: true },
 });

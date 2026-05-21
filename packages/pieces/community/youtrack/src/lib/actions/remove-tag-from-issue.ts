@@ -2,7 +2,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { youtrackAuth } from '../../';
-import { issueDropdown, tagDropdown } from '../common';
+import { issueDropdown, tagDropdown, youtrackApiCall } from '../common';
 
 export const removeTagFromIssueAction = createAction({
   auth: youtrackAuth,
@@ -14,14 +14,13 @@ export const removeTagFromIssueAction = createAction({
     tag: tagDropdown,
   },
   async run(context) {
-    const a = context.auth as unknown as { baseUrl: string; apiToken: string };
-    const url = a.baseUrl.replace(/\/+$/, '') + '/api/issues/' + context.propsValue.issue + '/tags/' + context.propsValue.tag;
-    const r = await fetch(url, {
+    const { baseUrl, apiToken } = context.auth.props;
+    await youtrackApiCall({
+      baseUrl,
+      token: apiToken,
       method: HttpMethod.DELETE,
-      headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + a.apiToken },
+      path: '/issues/' + context.propsValue.issue + '/tags/' + context.propsValue.tag,
     });
-    if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error('Failed: ' + JSON.stringify(e)); }
     return { success: true };
   },
-  sampleData: { success: true },
 });

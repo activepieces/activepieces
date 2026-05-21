@@ -2,7 +2,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { youtrackAuth } from '../../';
-import { projectDropdown, ISSUE_FIELDS, flattenObject } from '../common';
+import { projectDropdown, ISSUE_FIELDS, flattenObject, youtrackApiCall } from '../common';
 
 export const createIssueAction = createAction({
   auth: youtrackAuth,
@@ -32,27 +32,22 @@ export const createIssueAction = createAction({
     }),
   },
   async run(context) {
-    const a = context.auth as unknown as { baseUrl: string; apiToken: string };
+    const { baseUrl, apiToken } = context.auth.props;
     const body: Record<string, unknown> = {
       project: { id: context.propsValue.project },
       summary: context.propsValue.summary,
     };
-    if (context.propsValue.description) body.description = context.propsValue.description;
-    if (context.propsValue.customFieldsJson) body.customFields = context.propsValue.customFieldsJson;
+    if (context.propsValue.description) body['description'] = context.propsValue.description;
+    if (context.propsValue.customFieldsJson) body['customFields'] = context.propsValue.customFieldsJson;
 
-    const url = a.baseUrl.replace(/\/+$/, '') + '/api/issues?fields=' + encodeURIComponent(ISSUE_FIELDS);
-    const r = await fetch(url, {
+    const response = await youtrackApiCall<Record<string, unknown>>({
+      baseUrl,
+      token: apiToken,
       method: HttpMethod.POST,
-      headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + a.apiToken, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      path: '/issues',
+      queryParams: { fields: ISSUE_FIELDS },
+      body,
     });
-    if (!r.ok) { const errText = await r.text().catch(() => String(r.status)); throw new Error('Failed to create issue: ' + errText); }
-    const data = await r.json();
-    return flattenObject(data);
-  },
-  sampleData: {
-    idReadable: 'SP-42', summary: 'Fix login page crash', description: 'Users report crashes with special characters.',
-    project_name: 'Sample Project', project_shortName: 'SP', reporter_name: 'Jane Doe', reporter_login: 'jane.doe',
-    created: 1644916724088, updated: 1644916724088,
+    return flattenObject(response.body);
   },
 });

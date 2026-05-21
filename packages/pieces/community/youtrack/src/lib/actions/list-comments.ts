@@ -1,8 +1,7 @@
-// Action: List Comments
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { youtrackAuth } from '../../';
-import { issueDropdown } from '../common';
+import { issueDropdown, youtrackApiCall } from '../common';
 
 export const listCommentsAction = createAction({
   auth: youtrackAuth,
@@ -14,24 +13,21 @@ export const listCommentsAction = createAction({
     limit: Property.Number({ displayName: 'Limit', description: 'Max comments. Default 100.', required: false, defaultValue: 100 }),
   },
   async run(context) {
-    const a = context.auth as unknown as { baseUrl: string; apiToken: string };
+    const { baseUrl, apiToken } = context.auth.props;
     const limit = context.propsValue.limit ?? 100;
-    const url = a.baseUrl.replace(/\/+$/, '') + '/api/issues/' + context.propsValue.issue +
-      '/comments?fields=id,text,author(name,login),created,updated&$top=' + limit;
-    const r = await fetch(url, {
+    const response = await youtrackApiCall<Array<Record<string, unknown>>>({
+      baseUrl,
+      token: apiToken,
       method: HttpMethod.GET,
-      headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + a.apiToken },
+      path: '/issues/' + context.propsValue.issue + '/comments',
+      queryParams: { fields: 'id,text,author(name,login),created,updated', '$top': String(limit) },
     });
-    if (!r.ok) { const errText = await r.text().catch(() => String(r.status)); throw new Error('Failed to list comments: ' + errText); }
-    const data = await r.json() as Array<Record<string, unknown>>;
+    const data = response.body;
     return (data || []).map((c) => ({
-      id: c.id, text: c.text,
-      author_name: (c.author as Record<string, unknown>)?.name ?? null,
-      author_login: (c.author as Record<string, unknown>)?.login ?? null,
-      created: c.created, updated: c.updated,
+      id: c['id'], text: c['text'],
+      author_name: (c['author'] as Record<string, unknown>)?.['name'] ?? null,
+      author_login: (c['author'] as Record<string, unknown>)?.['login'] ?? null,
+      created: c['created'], updated: c['updated'],
     }));
   },
-  sampleData: [
-    { id: '136-261', text: 'Tweaks per requirements.', author_name: 'Jane Doe', author_login: 'jane.doe', created: 1647869116494, updated: 1647869116494 },
-  ],
 });

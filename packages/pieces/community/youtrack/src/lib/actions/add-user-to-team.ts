@@ -1,8 +1,7 @@
-// Action: Add User to Project Team
 import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { youtrackAuth } from '../../';
-import { projectDropdown, userDropdown, flattenObject } from '../common';
+import { projectDropdown, userDropdown, flattenObject, youtrackApiCall } from '../common';
 
 export const addUserToTeamAction = createAction({
   auth: youtrackAuth,
@@ -11,17 +10,15 @@ export const addUserToTeamAction = createAction({
   description: 'Adds a user as a direct member of a project team, giving them access to the project.',
   props: { project: projectDropdown, user: userDropdown },
   async run(context) {
-    const a = context.auth as unknown as { baseUrl: string; apiToken: string };
-    const url = a.baseUrl.replace(/\/+$/, '') + '/api/admin/projects/' + context.propsValue.project +
-      '/team/ownUsers?fields=id,login,name';
-    const r = await fetch(url, {
+    const { baseUrl, apiToken } = context.auth.props;
+    const response = await youtrackApiCall<Record<string, unknown>>({
+      baseUrl,
+      token: apiToken,
       method: HttpMethod.POST,
-      headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + a.apiToken, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: context.propsValue.user }),
+      path: '/admin/projects/' + context.propsValue.project + '/team/ownUsers',
+      queryParams: { fields: 'id,login,name' },
+      body: { id: context.propsValue.user },
     });
-    if (!r.ok) { const errText = await r.text().catch(() => String(r.status)); throw new Error('Failed to add user to team: ' + errText); }
-    const data = await r.json();
-    return flattenObject(data);
+    return flattenObject(response.body);
   },
-  sampleData: { id: '1-7', login: 'Mad_Max', name: 'Mad Max' },
 });

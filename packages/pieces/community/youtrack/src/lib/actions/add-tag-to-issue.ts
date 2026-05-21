@@ -1,8 +1,7 @@
-// Action: Add Tag to Issue
 import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { youtrackAuth } from '../../';
-import { issueDropdown, tagDropdown, flattenObject } from '../common';
+import { issueDropdown, tagDropdown, flattenObject, youtrackApiCall } from '../common';
 
 export const addTagToIssueAction = createAction({
   auth: youtrackAuth,
@@ -11,15 +10,15 @@ export const addTagToIssueAction = createAction({
   description: 'Adds an existing tag to an issue.',
   props: { issue: issueDropdown, tag: tagDropdown },
   async run(context) {
-    const a = context.auth as unknown as { baseUrl: string; apiToken: string };
-    const r = await fetch(a.baseUrl.replace(/\/+$/, '') + '/api/issues/' + context.propsValue.issue + '/tags?fields=id,name', {
+    const { baseUrl, apiToken } = context.auth.props;
+    const response = await youtrackApiCall<Record<string, unknown>>({
+      baseUrl,
+      token: apiToken,
       method: HttpMethod.POST,
-      headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + a.apiToken, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: context.propsValue.tag }),
+      path: '/issues/' + context.propsValue.issue + '/tags',
+      queryParams: { fields: 'id,name' },
+      body: { id: context.propsValue.tag },
     });
-    if (!r.ok) { const errText = await r.text().catch(() => String(r.status)); throw new Error('Failed: ' + errText); }
-    const data = await r.json();
-    return flattenObject(data);
+    return flattenObject(response.body);
   },
-  sampleData: { id: '6-4', name: 'To deploy' },
 });

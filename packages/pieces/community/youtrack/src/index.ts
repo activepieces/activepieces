@@ -58,10 +58,10 @@ export const youtrack = createPiece({
   displayName: 'YouTrack',
   description: 'JetBrains project management and issue tracking for agile teams.',
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://raw.githubusercontent.com/homarr-labs/dashboard-icons/main/png/jetbrains-youtrack.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/youtrack.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   auth: youtrackAuth,
-  authors: ['simon1400'],
+  authors: ['cumonvip1'],
   actions: [
     createIssueAction,
     getIssueAction,
@@ -83,13 +83,13 @@ export const youtrack = createPiece({
     listAttachmentsAction,
     createCustomApiCallAction({
       baseUrl: (auth) => {
-        const a = auth as unknown as { baseUrl: string; apiToken: string };
-        return a.baseUrl.replace(/\/+$/, '') + '/api';
+        const { baseUrl } = auth as unknown as { baseUrl: string };
+        return baseUrl.replace(/\/+$/, '') + '/api';
       },
       auth: youtrackAuth,
       authMapping: async (auth) => {
-        const a = auth as unknown as { apiToken: string };
-        return { Authorization: 'Bearer ' + a.apiToken };
+        const { apiToken } = auth as unknown as { apiToken: string };
+        return { Authorization: 'Bearer ' + apiToken };
       },
     }),
   ],

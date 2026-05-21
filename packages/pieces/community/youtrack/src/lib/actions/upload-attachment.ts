@@ -2,7 +2,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { youtrackAuth } from '../../';
-import { issueDropdown } from '../common';
+import { issueDropdown, youtrackApiCall } from '../common';
 
 export const uploadAttachmentAction = createAction({
   auth: youtrackAuth,
@@ -21,7 +21,7 @@ export const uploadAttachmentAction = createAction({
           description: 'The name the file will have in YouTrack (e.g. "screenshot.png").',
           required: true,
         }),
-        fileContent: Property.LongText({
+        fileContent: Property.File({
           displayName: 'File Content (Base64)',
           description: 'The file content as a Base64 string. Use the Text Helper piece to encode files.',
           required: true,
@@ -30,11 +30,12 @@ export const uploadAttachmentAction = createAction({
     }),
   },
   async run(context) {
-    const a = context.auth as unknown as { baseUrl: string; apiToken: string };
+    const { baseUrl, apiToken } = context.auth.props;
     const results: Array<{ name: string; id: string }> = [];
 
-    for (const file of context.propsValue.files) {
-      const binary = Buffer.from(file.fileContent as string, 'base64');
+    type FileEntry = { fileName: string; fileContent: { base64: string } };
+    for (const file of context.propsValue.files as Array<FileEntry>) {
+      const binary = Buffer.from(file.fileContent.base64, 'base64');
       const boundary = '----ActivepiecesBoundary' + Date.now();
       const parts: Buffer[] = [];
 
@@ -48,20 +49,17 @@ export const uploadAttachmentAction = createAction({
       parts.push(Buffer.from('\r\n--' + boundary + '--\r\n', 'utf-8'));
 
       const body = Buffer.concat(parts);
-      const url = a.baseUrl.replace(/\/+$/, '') + '/api/issues/' + context.propsValue.issue + '/attachments?fields=id,name';
-      const r = await fetch(url, {
+      const response = await youtrackApiCall<Array<{ id: string; name: string }>>({
+        baseUrl,
+        token: apiToken,
         method: HttpMethod.POST,
-        headers: {
-          'Authorization': 'Bearer ' + a.apiToken,
-          'Content-Type': 'multipart/form-data; boundary=' + boundary,
-        },
+        path: '/issues/' + context.propsValue.issue + '/attachments',
+        queryParams: { fields: 'id,name' },
+        headers: { 'Content-Type': 'multipart/form-data; boundary=' + boundary },
         body,
       });
-      const data = await r.json() as Array<{ id: string; name: string }>;
-      if (!r.ok) throw new Error('Failed to upload "' + file.fileName + '": ' + JSON.stringify(data));
-      results.push(...(data || []));
+      results.push(...(response.body || []));
     }
     return results;
   },
-  sampleData: [{ id: '134-31', name: 'screenshot.png' }],
 });

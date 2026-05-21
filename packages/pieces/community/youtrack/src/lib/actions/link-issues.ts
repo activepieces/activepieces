@@ -1,8 +1,7 @@
-// Action: Link Issues
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { youtrackAuth } from '../../';
-import { issueDropdown } from '../common';
+import { issueDropdown, youtrackApiCall } from '../common';
 
 export const linkIssuesAction = createAction({
   auth: youtrackAuth,
@@ -34,18 +33,18 @@ export const linkIssuesAction = createAction({
     }),
   },
   async run(context) {
-    const a = context.auth as unknown as { baseUrl: string; apiToken: string };
+    const { baseUrl, apiToken } = context.auth.props;
     const body: Record<string, unknown> = {
       query: context.propsValue.linkType + ' ' + context.propsValue.targetIssueId,
       issues: [{ id: context.propsValue.sourceIssue }],
     };
-    const r = await fetch(a.baseUrl.replace(/\/+$/, '') + '/api/commands', {
+    await youtrackApiCall({
+      baseUrl,
+      token: apiToken,
       method: HttpMethod.POST,
-      headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + a.apiToken, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      path: '/commands',
+      body,
     });
-    if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error('Failed to link issues: ' + JSON.stringify(e)); }
     return { success: true, link_type: context.propsValue.linkType, target_issue: context.propsValue.targetIssueId };
   },
-  sampleData: { success: true, link_type: 'relates to', target_issue: 'NP-92' },
 });
