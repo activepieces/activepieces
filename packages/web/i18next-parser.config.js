@@ -13,4 +13,5 @@ module.exports = {
   keepRemoved: false,
   keySeparator: false, // Disable key separator
   namespaceSeparator: false, // Disable namespace separator
+  pluralSeparator: false, // ICU plurals are inline; suppress i18next-style key_one / key_other variants
 };
