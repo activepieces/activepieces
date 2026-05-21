@@ -426,6 +426,7 @@ export const flowHooks = {
         displayName: flow.version.displayName,
         trigger: updatedTrigger,
         schemaVersion: templateFlow.schemaVersion,
+        notes: templateFlow.notes,
       },
     });
   },

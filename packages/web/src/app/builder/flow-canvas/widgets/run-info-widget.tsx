@@ -6,7 +6,7 @@ import {
 } from '@activepieces/shared';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { ArrowRight, CircleHelp } from 'lucide-react';
+import { ArrowRight, CircleHelp, Magnet } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { flowRunUtils } from '@/features/flow-runs';
@@ -137,6 +137,7 @@ const RunInfoWidget = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          <ResumeLiveFollowButton isRunTerminal={isRunTerminal} />
           {run.failedStep && (
             <JumpToFailedStepButton failedStepName={run.failedStep.name} />
           )}
@@ -163,6 +164,27 @@ const DateSection = ({
       <span>{`${text}: `}</span>
       <span>{`${dateOrDuration}`}</span>
     </>
+  );
+};
+
+const ResumeLiveFollowButton = ({
+  isRunTerminal,
+}: {
+  isRunTerminal: boolean;
+}) => {
+  const [userManuallySelectedStepDuringRun, resumeLiveFollow] =
+    useBuilderStateContext((state) => [
+      state.userManuallySelectedStepDuringRun,
+      state.resumeLiveFollow,
+    ]);
+  if (isRunTerminal || !userManuallySelectedStepDuringRun) {
+    return null;
+  }
+  return (
+    <Button variant="ghost" size="sm" onClick={resumeLiveFollow}>
+      <Magnet className="size-4" />
+      {t('Follow run updates')}
+    </Button>
   );
 };
 
@@ -205,7 +227,7 @@ const JumpToFailedStepButton = ({
       className="text-destructive-700 hover:text-destructive-700 dark:text-destructive-200 dark:hover:text-destructive-200"
     >
       <ArrowRight className="size-4" />
-      {t('Failed step')}
+      {t('See error')}
     </Button>
   );
 };

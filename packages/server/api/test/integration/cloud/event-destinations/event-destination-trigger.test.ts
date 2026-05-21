@@ -8,7 +8,7 @@ import {
     WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
-import { domainHelper } from '../../../../src/app/ee/custom-domains/domain-helper'
+import { domainHelper } from '../../../../src/app/helper/domain-helper'
 import { eventDestinationService } from '../../../../src/app/event-destinations/event-destinations.service'
 import { applicationEvents } from '../../../../src/app/helper/application-events'
 import * as jobQueueModule from '../../../../src/app/workers/job-queue/job-queue'

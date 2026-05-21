@@ -42,6 +42,7 @@ import { ChatConversationEntity } from './chat-conversation-entity'
 import { buildUserContentWithFiles } from './chat-file-utils'
 import { createChatModel } from './chat-model-factory'
 import { chatPrepareStep } from './chat-prepare-step'
+import { chatAnalyticsTelemetry } from './chat-sync-job'
 import { chatHistory } from './history/chat-history'
 import { chatMcp, PlanExecution } from './mcp/chat-mcp'
 import { chatPrompt } from './prompt/chat-prompt'
@@ -272,6 +273,17 @@ export const chatService = (log: FastifyBaseLogger) => ({
                             ...spreadIfDefined('cacheWriteTokens', usage.inputTokenDetails.cacheWriteTokens),
                             provider: providerConfig.provider,
                         }, 'Chat message completed')
+
+                        chatAnalyticsTelemetry(log).sendConversationUpdate({
+                            conversation: {
+                                ...conversation,
+                                messages: updatedMessages,
+                                uiMessages: updatedUiMessages,
+                                updated: new Date().toISOString(),
+                                ...(pendingTitle ? { title: pendingTitle } : {}),
+                                ...(isNil(conversation.modelName) ? { modelName: tier.id } : {}),
+                            },
+                        })
                     },
                     onError: ({ error }) => {
                         log.error({ err: error, conversationId }, 'Chat streamText error')
