@@ -48,6 +48,12 @@ export const apStoreGetTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogg
             try {
                 const { key, scope, flowId } = storeGetInput.parse(args)
                 const modifiedKey = createKey(scope, flowId, key)
+                if (modifiedKey.length > STORE_KEY_MAX_LENGTH) {
+                    return {
+                        content: [{ type: 'text', text: `❌ Key too long for ${scope} scope. Maximum length after prefixing is ${STORE_KEY_MAX_LENGTH} characters.` }],
+                        isError: true,
+                    }
+                }
                 const entry = await storeEntryService.getOne({
                     projectId: mcp.projectId,
                     key: modifiedKey,
@@ -83,6 +89,12 @@ export const apStorePutTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogg
                     }
                 }
                 const modifiedKey = createKey(scope, flowId, key)
+                if (modifiedKey.length > STORE_KEY_MAX_LENGTH) {
+                    return {
+                        content: [{ type: 'text', text: `❌ Key too long for ${scope} scope. Maximum length after prefixing is ${STORE_KEY_MAX_LENGTH} characters.` }],
+                        isError: true,
+                    }
+                }
                 await storeEntryService.upsert({
                     projectId: mcp.projectId,
                     request: {
@@ -113,6 +125,12 @@ export const apStoreDeleteTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
             try {
                 const { key, scope, flowId } = storeDeleteInput.parse(args)
                 const modifiedKey = createKey(scope, flowId, key)
+                if (modifiedKey.length > STORE_KEY_MAX_LENGTH) {
+                    return {
+                        content: [{ type: 'text', text: `❌ Key too long for ${scope} scope. Maximum length after prefixing is ${STORE_KEY_MAX_LENGTH} characters.` }],
+                        isError: true,
+                    }
+                }
                 await storeEntryService.delete({
                     projectId: mcp.projectId,
                     key: modifiedKey,
