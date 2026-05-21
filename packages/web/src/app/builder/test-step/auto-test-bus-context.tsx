@@ -33,9 +33,14 @@ const AutoTestBusProvider = ({ children }: { children: React.ReactNode }) => {
           if (runnersRef.current.get(stepName) === runner) {
             runnersRef.current.delete(stepName);
           }
-          if (pendingRef.current === stepName) {
-            pendingRef.current = null;
-          }
+          setTimeout(() => {
+            if (
+              pendingRef.current === stepName &&
+              !runnersRef.current.has(stepName)
+            ) {
+              pendingRef.current = null;
+            }
+          }, 0);
         };
       },
     };
