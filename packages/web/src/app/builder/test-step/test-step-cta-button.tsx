@@ -272,8 +272,9 @@ const TriggerCTAButton = ({
           onClick={onFireTest}
           disabled={testDisabled}
           keyboardShortcut="G"
-          onKeyboardShortcut={onFireTest}
-          className={SOFT_PRIMARY_CTA_CLASSES}
+          variant="accent"
+          onKeyboardShortcut={handleClick}
+          className="w-full justify-center"
           size="sm"
           data-testid="test-trigger-button"
         >
