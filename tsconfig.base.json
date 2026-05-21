@@ -149,6 +149,9 @@
       "@activepieces/piece-beamer": [
         "packages/pieces/community/beamer/src/index.ts"
       ],
+      "@activepieces/piece-beebole": [
+        "packages/pieces/community/beebole/src/index.ts"
+      ],
       "@activepieces/piece-beehiiv": [
         "packages/pieces/community/beehiiv/src/index.ts"
       ],
