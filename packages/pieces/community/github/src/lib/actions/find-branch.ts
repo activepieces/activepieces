@@ -22,7 +22,7 @@ export const githubFindBranchAction = createAction({
 
     try {
       const response = await githubApiCall({
-        accessToken: auth.access_token,
+        auth,
         method: HttpMethod.GET,
         resourceUri: `/repos/${owner}/${repo}/branches/${branchName}`,
       });

@@ -15,8 +15,6 @@ import {
     assertNotNullOrUndefined,
     Cell,
     ColorName,
-    CustomDomain,
-    CustomDomainStatus,
     EventDestinationScope,
     Field,
     FieldType,
@@ -248,15 +246,16 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         embeddingEnabled: platformPlan?.embeddingEnabled ?? false,
         agentsEnabled: platformPlan?.agentsEnabled ?? false,
         aiProvidersEnabled: platformPlan?.aiProvidersEnabled ?? false,
+        chatEnabled: platformPlan?.chatEnabled ?? false,
         teamProjectsLimit: platformPlan?.teamProjectsLimit ?? TeamProjectsLimit.NONE,
         projectRolesEnabled: platformPlan?.projectRolesEnabled ?? false,
-        customDomainsEnabled: platformPlan?.customDomainsEnabled ?? false,
         stripeSubscriptionEndDate: apDayjs().endOf('month').unix(),
         stripeSubscriptionStartDate: apDayjs().startOf('month').unix(),
         plan: platformPlan?.plan,
         secretManagersEnabled: platformPlan?.secretManagersEnabled ?? false,
         scimEnabled: platformPlan?.scimEnabled ?? false,
-        canary: platformPlan?.canary ?? false
+        canary: platformPlan?.canary ?? false,
+        customDomainsEnabled: false,
     }
 }
 export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
@@ -266,8 +265,9 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         updated: platform?.updated ?? faker.date.recent().toISOString(),
         ownerId: platform?.ownerId ?? apId(),
         enforceAllowedAuthDomains: platform?.enforceAllowedAuthDomains ?? false,
-        federatedAuthProviders: platform?.federatedAuthProviders ?? {},
+        federatedAuthProviders: platform?.federatedAuthProviders ?? { saml: null },
         allowedAuthDomains: platform?.allowedAuthDomains ?? [],
+        allowedEmbedOrigins: platform?.allowedEmbedOrigins ?? [],
         name: platform?.name ?? faker.lorem.word(),
         primaryColor: platform?.primaryColor ?? faker.color.rgb(),
         logoIconUrl: platform?.logoIconUrl ?? faker.image.urlPlaceholder(),
@@ -280,6 +280,9 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
             platform?.filteredPieceBehavior ??
             faker.helpers.enumValue(FilteredPieceBehavior),
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
+        googleAuthEnabled: platform?.googleAuthEnabled ?? true,
+        ssoDomain: platform?.ssoDomain ?? null,
+        ssoDomainVerification: platform?.ssoDomainVerification ?? null,
     }
 }
 
@@ -438,19 +441,6 @@ export const createAuditEvent = (auditEvent: Partial<ApplicationEvent>) => {
         userEmail: auditEvent.userEmail ?? faker.internet.email(),
         action: auditEvent.action ?? faker.helpers.enumValue(ApplicationEventName),
         data: auditEvent.data ?? {},
-    }
-}
-
-export const createMockCustomDomain = (
-    customDomain?: Partial<CustomDomain>,
-): CustomDomain => {
-    return {
-        id: customDomain?.id ?? apId(),
-        created: customDomain?.created ?? faker.date.recent().toISOString(),
-        updated: customDomain?.updated ?? faker.date.recent().toISOString(),
-        domain: customDomain?.domain ?? faker.internet.domainName(),
-        platformId: customDomain?.platformId ?? apId(),
-        status: customDomain?.status ?? CustomDomainStatus.ACTIVE,
     }
 }
 
@@ -695,7 +685,6 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
             apiKeysEnabled: true,
             customRolesEnabled: true,
             teamProjectsLimit: TeamProjectsLimit.UNLIMITED,
-            customDomainsEnabled: true,
             includedAiCredits: 1000,
             ...params?.plan,
         })
@@ -736,16 +725,22 @@ export const mockAndSaveBasicSetupWithApiKey = async (params?: MockBasicSetupPar
 }
 
 export const createMockFile = (file?: Partial<File>): File => {
+    const hasExplicitProjectId = file !== undefined && 'projectId' in file
+    const hasExplicitPlatformId = file !== undefined && 'platformId' in file
     return {
         id: file?.id ?? apId(),
         created: file?.created ?? faker.date.recent().toISOString(),
         updated: file?.updated ?? faker.date.recent().toISOString(),
-        platformId: file?.platformId ?? apId(),
-        projectId: file?.projectId ?? apId(),
+        platformId: hasExplicitPlatformId ? (file?.platformId ?? null) : apId(),
+        projectId: hasExplicitProjectId ? (file?.projectId ?? null) : apId(),
         location: file?.location ?? FileLocation.DB,
         compression: file?.compression ?? faker.helpers.enumValue(FileCompression),
         data: file?.data ?? Buffer.from(faker.lorem.paragraphs()),
         type: file?.type ?? faker.helpers.enumValue(FileType),
+        fileName: file?.fileName ?? null,
+        metadata: file?.metadata ?? null,
+        s3Key: file?.s3Key ?? null,
+        size: file?.size ?? null,
     }
 }
 
@@ -788,7 +783,7 @@ export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Pr
         }),
         config: aiProvider?.config ?? {},
     }
-    
+
 }
 
 export const mockAndSaveAIProvider = async (params?: Partial<AIProvider>): Promise<Omit<AIProviderSchema, 'platform'>> => {
@@ -824,6 +819,7 @@ export const createMockEventDestination = (eventDestination?: Partial<{
     created: string
     updated: string
     platformId: string
+    projectId: string | null
     events: ApplicationEventName[]
     url: string
     scope: EventDestinationScope
@@ -832,6 +828,7 @@ export const createMockEventDestination = (eventDestination?: Partial<{
     created: string
     updated: string
     platformId: string
+    projectId: string | null
     events: ApplicationEventName[]
     url: string
     scope: EventDestinationScope
@@ -841,6 +838,7 @@ export const createMockEventDestination = (eventDestination?: Partial<{
         created: eventDestination?.created ?? faker.date.recent().toISOString(),
         updated: eventDestination?.updated ?? faker.date.recent().toISOString(),
         platformId: eventDestination?.platformId ?? apId(),
+        projectId: eventDestination?.projectId ?? null,
         events: eventDestination?.events ?? [faker.helpers.enumValue(ApplicationEventName)],
         url: eventDestination?.url ?? faker.internet.url(),
         scope: eventDestination?.scope ?? EventDestinationScope.PLATFORM,

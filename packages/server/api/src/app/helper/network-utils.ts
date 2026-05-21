@@ -6,7 +6,6 @@ import { FastifyRequest } from 'fastify'
 const GOOGLE_DNS = '216.239.32.10'
 const PUBLIC_IP_ADDRESS_QUERY = 'o-o.myaddr.l.google.com'
 
-
 type IpMetadata = {
     ip: string
 }
@@ -63,10 +62,17 @@ const extractClientRealIp = (request: FastifyRequest, clientIpHeader: string | u
     return request.headers[clientIpHeader] as string
 }
 
+const getRequestBaseUrl = (req: FastifyRequest): string => {
+    const forwardedProto = req.headers['x-forwarded-proto'] as string | undefined
+    const protocol = forwardedProto?.split(',')[0]?.trim() ?? req.protocol
+    const host = req.headers['x-forwarded-host'] as string ?? req.hostname
+    return `${protocol}://${host}`
+}
 
 export const networkUtils = {
     extractClientRealIp,
     getPublicIp,
+    getRequestBaseUrl,
     combineUrl(url: string, path: string) {
         const cleanedUrl = cleanTrailingSlash(url)
         const cleanedPath = cleanLeadingSlash(path)
@@ -81,5 +87,3 @@ function cleanLeadingSlash(url: string): string {
 function cleanTrailingSlash(url: string): string {
     return url.endsWith('/') ? url.slice(0, -1) : url
 }
-
-

@@ -119,6 +119,9 @@
       "@activepieces/piece-autocalls": [
         "packages/pieces/community/autocalls/src/index.ts"
       ],
+      "@activepieces/piece-avian": [
+        "packages/pieces/community/avian/src/index.ts"
+      ],
       "@activepieces/piece-avoma": [
         "packages/pieces/community/avoma/src/index.ts"
       ],
@@ -240,6 +243,9 @@
       "@activepieces/piece-checkout": [
         "packages/pieces/community/checkout/src/index.ts"
       ],
+      "@activepieces/piece-chess-com": [
+        "packages/pieces/community/chess-com/src/index.ts"
+      ],
       "@activepieces/piece-circle": [
         "packages/pieces/community/circle/src/index.ts"
       ],
@@ -358,7 +364,13 @@
       "@activepieces/piece-deepseek": [
         "packages/pieces/community/deepseek/src/index.ts"
       ],
+      "@activepieces/piece-deftform": [
+        "packages/pieces/community/deftform/src/index.ts"
+      ],
       "@activepieces/piece-delay": ["packages/pieces/core/delay/src/index.ts"],
+      "@activepieces/piece-descript": [
+        "packages/pieces/community/descript/src/index.ts"
+      ],
       "@activepieces/piece-devin": [
         "packages/pieces/community/devin/src/index.ts"
       ],
@@ -545,6 +557,9 @@
       "@activepieces/piece-gotify": [
         "packages/pieces/community/gotify/src/index.ts"
       ],
+      "@activepieces/piece-greenhouse": [
+        "packages/pieces/community/greenhouse/src/index.ts"
+      ],
       "@activepieces/piece-granola": [
         "packages/pieces/community/granola/src/index.ts"
       ],
@@ -553,9 +568,6 @@
       ],
       "@activepieces/piece-gravityforms": [
         "packages/pieces/community/gravityforms/src/index.ts"
-      ],
-      "@activepieces/piece-greenhouse": [
-        "packages/pieces/community/greenhouse/src/index.ts"
       ],
       "@activepieces/piece-grist": [
         "packages/pieces/community/grist/src/index.ts"
@@ -584,6 +596,9 @@
       "@activepieces/piece-heygen": [
         "packages/pieces/community/heygen/src/index.ts"
       ],
+      "@activepieces/piece-hootsuite": [
+        "packages/pieces/community/hootsuite/src/index.ts"
+      ],
       "@activepieces/piece-http": ["packages/pieces/core/http/src/index.ts"],
       "@activepieces/piece-http-oauth2": [
         "packages/pieces/community/http-oauth2/src/index.ts"
@@ -596,6 +611,9 @@
       ],
       "@activepieces/piece-hunter": [
         "packages/pieces/community/hunter/src/index.ts"
+      ],
+      "@activepieces/piece-iloveapi": [
+        "packages/pieces/community/iloveapi/src/index.ts"
       ],
       "@activepieces/piece-image-ai": [
         "packages/pieces/community/image-ai/src/index.ts"
@@ -653,6 +671,9 @@
       ],
       "@activepieces/piece-knack": [
         "packages/pieces/community/knack/src/index.ts"
+      ],
+      "@activepieces/piece-ko-fi": [
+        "packages/pieces/community/ko-fi/src/index.ts"
       ],
       "@activepieces/piece-kustomer": [
         "packages/pieces/community/kustomer/src/index.ts"
@@ -821,6 +842,9 @@
       "@activepieces/piece-nifty": [
         "packages/pieces/community/nifty/src/index.ts"
       ],
+      "@activepieces/piece-ninjapipe": [
+        "packages/pieces/community/ninjapipe/src/index.ts"
+      ],
       "@activepieces/piece-ninox": [
         "packages/pieces/community/ninox/src/index.ts"
       ],
@@ -869,6 +893,9 @@
       "@activepieces/piece-pagerduty": [
         "packages/pieces/community/pagerduty/src/index.ts"
       ],
+      "@activepieces/piece-parallel": [
+        "packages/pieces/community/parallel/src/index.ts"
+      ],
       "@activepieces/piece-parseur": [
         "packages/pieces/community/parseur/src/index.ts"
       ],
@@ -882,11 +909,17 @@
       "@activepieces/piece-pdf-co": [
         "packages/pieces/community/pdf-co/src/index.ts"
       ],
+      "@activepieces/piece-pdf4me": [
+        "packages/pieces/community/pdf4me/src/index.ts"
+      ],
       "@activepieces/piece-pdfmonkey": [
         "packages/pieces/community/pdfmonkey/src/index.ts"
       ],
       "@activepieces/piece-peekshot": [
         "packages/pieces/community/peekshot/src/index.ts"
+      ],
+      "@activepieces/piece-pendo": [
+        "packages/pieces/community/pendo/src/index.ts"
       ],
       "@activepieces/piece-perplexity-ai": [
         "packages/pieces/community/perplexity-ai/src/index.ts"
@@ -936,11 +969,20 @@
       "@activepieces/piece-prompthub": [
         "packages/pieces/community/prompthub/src/index.ts"
       ],
+      "@activepieces/piece-provenexpert": [
+        "packages/pieces/community/provenexpert/src/index.ts"
+      ],
+      "@activepieces/piece-pubrio": [
+        "packages/pieces/community/pubrio/src/index.ts"
+      ],
       "@activepieces/piece-pushover": [
         "packages/pieces/community/pushover/src/index.ts"
       ],
       "@activepieces/piece-pylon": [
         "packages/pieces/community/pylon/src/index.ts"
+      ],
+      "@activepieces/piece-qawafel": [
+        "packages/pieces/community/qawafel/src/index.ts"
       ],
       "@activepieces/piece-qdrant": [
         "packages/pieces/community/qdrant/src/index.ts"
@@ -1069,6 +1111,9 @@
       "@activepieces/piece-seven": [
         "packages/pieces/community/seven/src/index.ts"
       ],
+      "@activepieces/piece-service-now": [
+        "packages/pieces/community/service-now/src/index.ts"
+      ],
       "@activepieces/piece-sftp": ["packages/pieces/core/sftp/src/index.ts"],
       "@activepieces/piece-shopify": [
         "packages/pieces/community/shopify/src/index.ts"
@@ -1084,6 +1129,9 @@
       ],
       "@activepieces/piece-simplybookme": [
         "packages/pieces/community/simplybookme/src/index.ts"
+      ],
+      "@activepieces/piece-simplyprint": [
+        "packages/pieces/community/simplyprint/src/index.ts"
       ],
       "@activepieces/piece-sitespeakai": [
         "packages/pieces/community/sitespeakai/src/index.ts"
@@ -1183,6 +1231,9 @@
       ],
       "@activepieces/piece-tavily": [
         "packages/pieces/community/tavily/src/index.ts"
+      ],
+      "@activepieces/piece-teamhood": [
+        "packages/pieces/community/teamhood/src/index.ts"
       ],
       "@activepieces/piece-teamleader": [
         "packages/pieces/community/teamleader/src/index.ts"
@@ -1304,6 +1355,9 @@
       "@activepieces/piece-wedof": [
         "packages/pieces/community/wedof/src/index.ts"
       ],
+      "@activepieces/piece-weekdone": [
+        "packages/pieces/community/weekdone/src/index.ts"
+      ],
       "@activepieces/piece-what-converts": [
         "packages/pieces/community/what-converts/src/index.ts"
       ],
@@ -1346,6 +1400,9 @@
       "@activepieces/piece-xml": ["packages/pieces/core/xml/src/index.ts"],
       "@activepieces/piece-youtube": [
         "packages/pieces/community/youtube/src/index.ts"
+      ],
+      "@activepieces/piece-youtrack": [
+        "packages/pieces/community/youtrack/src/index.ts"
       ],
       "@activepieces/piece-zagomail": [
         "packages/pieces/community/zagomail/src/index.ts"
@@ -1952,6 +2009,12 @@
       ],
       "@activepieces/piece-knock": [
         "packages/pieces/community/knock/src/index.ts"
+      ],
+      "@activepieces/piece-proxycurl": [
+        "packages/pieces/community/proxycurl/src/index.ts"
+      ],
+      "@activepieces/piece-connectuc": [
+        "packages/pieces/community/connectuc/src/index.ts"
       ]
     },
     "resolveJsonModule": true
