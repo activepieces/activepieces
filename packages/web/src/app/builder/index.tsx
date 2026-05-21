@@ -183,6 +183,8 @@ const BuilderPage = () => {
             disabled={rightSidebar === RightSideBarType.NONE}
             withHandle={rightSidebar !== RightSideBarType.NONE}
             onPointerDown={() => setIsDraggingHandle(true)}
+            onPointerUp={() => setIsDraggingHandle(false)}
+            onPointerCancel={() => setIsDraggingHandle(false)}
             className={
               rightSidebar === RightSideBarType.NONE ? 'bg-transparent' : ''
             }
