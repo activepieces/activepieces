@@ -207,39 +207,39 @@ export const updateFormSettings = createAction({
         }),
     },
     async run(context) {
-        const body: Record<string, unknown> = {};
+        const body: any = {};
 
-        if (context.propsValue.name !== undefined) body['name'] = context.propsValue.name;
-        if (context.propsValue.description !== undefined) body['description'] = context.propsValue.description;
-        if (context.propsValue.isClosed !== undefined) body['is_closed'] = context.propsValue.isClosed;
-        if (context.propsValue.responsesLimit !== undefined) body['responses_limit'] = context.propsValue.responsesLimit;
-        if (context.propsValue.afterMessage !== undefined) body['after_message'] = context.propsValue.afterMessage;
-        if (context.propsValue.afterRedirectUrl !== undefined) body['after_redirect_url'] = context.propsValue.afterRedirectUrl;
-        if (context.propsValue.afterRedirectDelay !== undefined) body['after_redirect_delay'] = context.propsValue.afterRedirectDelay;
-        if (context.propsValue.ctaLabel !== undefined) body['cta_label'] = context.propsValue.ctaLabel;
-        if (context.propsValue.ctaLabelContinue !== undefined) body['cta_label_continue'] = context.propsValue.ctaLabelContinue;
-        if (context.propsValue.closedMessage !== undefined) body['closed_message'] = context.propsValue.closedMessage;
-        if (context.propsValue.adminEmailSubject !== undefined) body['admin_email_subject'] = context.propsValue.adminEmailSubject;
-        if (context.propsValue.adminEmailNote !== undefined) body['admin_email_note'] = context.propsValue.adminEmailNote;
-        if (context.propsValue.adminEmailAttachPdf !== undefined) body['admin_email_attach_pdf'] = context.propsValue.adminEmailAttachPdf;
-        if (context.propsValue.includeResponseInEmail !== undefined) body['include_response_in_email'] = context.propsValue.includeResponseInEmail;
-        if (context.propsValue.afterMessageEmail !== undefined) body['after_message_email'] = context.propsValue.afterMessageEmail;
-        if (context.propsValue.afterMessageEmailSubject !== undefined) body['after_message_email_subject'] = context.propsValue.afterMessageEmailSubject;
-        if (context.propsValue.seoTitle !== undefined) body['seo_title'] = context.propsValue.seoTitle;
-        if (context.propsValue.seoDescription !== undefined) body['seo_description'] = context.propsValue.seoDescription;
-        if (context.propsValue.seoAllowBots !== undefined) body['seo_allow_bots'] = context.propsValue.seoAllowBots;
-        if (context.propsValue.discordEnabled !== undefined) body['discord_enabled'] = context.propsValue.discordEnabled;
-        if (context.propsValue.slackEnabled !== undefined) body['slack_enabled'] = context.propsValue.slackEnabled;
-        if (context.propsValue.googleSheetsEnabled !== undefined) body['google_sheets_enabled'] = context.propsValue.googleSheetsEnabled;
-        if (context.propsValue.hubspotEnabled !== undefined) body['hubspot_enabled'] = context.propsValue.hubspotEnabled;
-        if (context.propsValue.captcha !== undefined) body['captcha'] = context.propsValue.captcha;
-        if (context.propsValue.captureLocation !== undefined) body['capture_location'] = context.propsValue.captureLocation;
-        if (context.propsValue.showFormTitle !== undefined) body['show_formtitle'] = context.propsValue.showFormTitle;
-        if (context.propsValue.showMultipageProgress !== undefined) body['show_multipage_progress'] = context.propsValue.showMultipageProgress;
-        if (context.propsValue.aiSummaryEnabled !== undefined) body['ai_summary_enabled'] = context.propsValue.aiSummaryEnabled;
-        if (context.propsValue.sendPdfToRespondent !== undefined) body['send_pdf_to_respondent'] = context.propsValue.sendPdfToRespondent;
-        if (context.propsValue.numberPrefix !== undefined) body['number_prefix'] = context.propsValue.numberPrefix;
-        if (context.propsValue.numberSuffix !== undefined) body['number_suffix'] = context.propsValue.numberSuffix;
+        if (context.propsValue.name !== undefined) body.name = context.propsValue.name;
+        if (context.propsValue.description !== undefined) body.description = context.propsValue.description;
+        if (context.propsValue.isClosed !== undefined) body.is_closed = context.propsValue.isClosed;
+        if (context.propsValue.responsesLimit !== undefined) body.responses_limit = context.propsValue.responsesLimit;
+        if (context.propsValue.afterMessage !== undefined) body.after_message = context.propsValue.afterMessage;
+        if (context.propsValue.afterRedirectUrl !== undefined) body.after_redirect_url = context.propsValue.afterRedirectUrl;
+        if (context.propsValue.afterRedirectDelay !== undefined) body.after_redirect_delay = context.propsValue.afterRedirectDelay;
+        if (context.propsValue.ctaLabel !== undefined) body.cta_label = context.propsValue.ctaLabel;
+        if (context.propsValue.ctaLabelContinue !== undefined) body.cta_label_continue = context.propsValue.ctaLabelContinue;
+        if (context.propsValue.closedMessage !== undefined) body.closed_message = context.propsValue.closedMessage;
+        if (context.propsValue.adminEmailSubject !== undefined) body.admin_email_subject = context.propsValue.adminEmailSubject;
+        if (context.propsValue.adminEmailNote !== undefined) body.admin_email_note = context.propsValue.adminEmailNote;
+        if (context.propsValue.adminEmailAttachPdf !== undefined) body.admin_email_attach_pdf = context.propsValue.adminEmailAttachPdf;
+        if (context.propsValue.includeResponseInEmail !== undefined) body.include_response_in_email = context.propsValue.includeResponseInEmail;
+        if (context.propsValue.afterMessageEmail !== undefined) body.after_message_email = context.propsValue.afterMessageEmail;
+        if (context.propsValue.afterMessageEmailSubject !== undefined) body.after_message_email_subject = context.propsValue.afterMessageEmailSubject;
+        if (context.propsValue.seoTitle !== undefined) body.seo_title = context.propsValue.seoTitle;
+        if (context.propsValue.seoDescription !== undefined) body.seo_description = context.propsValue.seoDescription;
+        if (context.propsValue.seoAllowBots !== undefined) body.seo_allow_bots = context.propsValue.seoAllowBots;
+        if (context.propsValue.discordEnabled !== undefined) body.discord_enabled = context.propsValue.discordEnabled;
+        if (context.propsValue.slackEnabled !== undefined) body.slack_enabled = context.propsValue.slackEnabled;
+        if (context.propsValue.googleSheetsEnabled !== undefined) body.google_sheets_enabled = context.propsValue.googleSheetsEnabled;
+        if (context.propsValue.hubspotEnabled !== undefined) body.hubspot_enabled = context.propsValue.hubspotEnabled;
+        if (context.propsValue.captcha !== undefined) body.captcha = context.propsValue.captcha;
+        if (context.propsValue.captureLocation !== undefined) body.capture_location = context.propsValue.captureLocation;
+        if (context.propsValue.showFormTitle !== undefined) body.show_formtitle = context.propsValue.showFormTitle;
+        if (context.propsValue.showMultipageProgress !== undefined) body.show_multipage_progress = context.propsValue.showMultipageProgress;
+        if (context.propsValue.aiSummaryEnabled !== undefined) body.ai_summary_enabled = context.propsValue.aiSummaryEnabled;
+        if (context.propsValue.sendPdfToRespondent !== undefined) body.send_pdf_to_respondent = context.propsValue.sendPdfToRespondent;
+        if (context.propsValue.numberPrefix !== undefined) body.number_prefix = context.propsValue.numberPrefix;
+        if (context.propsValue.numberSuffix !== undefined) body.number_suffix = context.propsValue.numberSuffix;
 
         const response = await deftformApiCall<{
             data?: {

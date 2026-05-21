@@ -259,10 +259,9 @@ export function MultiQuestionForm({
                             />
                           </div>
                         )}
-                        <Label
-                          htmlFor={id}
-                          onClick={(e) => {
-                            if (e.detail >= 1) handleNext(option);
+                        <div
+                          onClick={() => {
+                            handleNext(option);
                           }}
                           onMouseEnter={() => setHoveredRow(i)}
                           onMouseLeave={() =>
@@ -321,7 +320,7 @@ export function MultiQuestionForm({
                             {i + 1}
                           </span>
                           <span className="flex-1 leading-snug">{option}</span>
-                        </Label>
+                        </div>
                       </Fragment>
                     );
                   })}

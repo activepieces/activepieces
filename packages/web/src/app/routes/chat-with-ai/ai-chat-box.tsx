@@ -1,8 +1,7 @@
-import { AIProviderName, ProjectType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
-import { motion } from 'motion/react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import {
   ChatContainerContent,
@@ -11,11 +10,16 @@ import {
 } from '@/components/prompt-kit/chat-container';
 import { ScrollButton } from '@/components/prompt-kit/scroll-button';
 import { Button } from '@/components/ui/button';
+import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
+import {
+  ChatStoreProvider,
+  useChatStoreContext,
+} from '@/features/chat/lib/chat-store-context';
 import { useAgentChat } from '@/features/chat/lib/use-chat';
-import { useToolApproval } from '@/features/chat/lib/use-tool-approval';
 import { aiProviderQueries } from '@/features/platform-admin';
-import { projectCollectionUtils } from '@/features/projects';
 
+import { AssistantMessage } from './components/assistant-message';
+import { ChatBottomBar } from './components/chat-bottom-bar';
 import {
   EmptyState,
   MessageSkeletons,
@@ -23,17 +27,11 @@ import {
   SuggestionCards,
 } from './components/chat-empty-state';
 import { ChatInput } from './components/chat-input';
-import { ChatMessage } from './components/chat-message';
 import { ChatModelSelector } from './components/chat-model-selector';
-import { ChatProjectSelector } from './components/chat-project-selector';
-import { QuickReplies } from './components/message-content';
-import { MultiQuestionForm } from './components/multi-question-form';
-import { ToolApprovalForm } from './components/tool-approval-form';
-import {
-  getTextFromParts,
-  parseMultiQuestion,
-  parseQuickReplies,
-} from './lib/message-parsers';
+import { QuickReplies } from './components/quick-replies';
+import { ThinkingDetailsPanel } from './components/thinking-details-panel';
+import { UserMessage } from './components/user-message';
+import { getTextFromParts } from './lib/message-parsers';
 
 export function AIChatBox({
   incognito,
@@ -52,13 +50,14 @@ export function AIChatBox({
   }
 
   return (
-    <ChatBoxContent
-      incognito={incognito}
-      conversationId={conversationId}
-      onTitleUpdate={onTitleUpdate}
-      onConversationCreated={onConversationCreated}
-      chatProviderName={chatProvider?.provider}
-    />
+    <ChatStoreProvider>
+      <ChatBoxContent
+        incognito={incognito}
+        conversationId={conversationId}
+        onTitleUpdate={onTitleUpdate}
+        onConversationCreated={onConversationCreated}
+      />
+    </ChatStoreProvider>
   );
 }
 
@@ -67,12 +66,10 @@ function ChatBoxContent({
   conversationId: initialConversationId,
   onTitleUpdate,
   onConversationCreated,
-  chatProviderName,
 }: AIChatBoxProps) {
   const {
     messages,
     modelName,
-    selectedProjectId,
     isStreaming,
     wasCancelled,
     isLoadingHistory,
@@ -81,39 +78,21 @@ function ChatBoxContent({
     cancelStream,
     setConversationId,
     setModelName,
-    setProjectContext,
-    pendingApprovalRequest,
   } = useAgentChat({ onTitleUpdate, onConversationCreated });
-  const { data: allProjects } = projectCollectionUtils.useAll();
-  const projects = allProjects ?? [];
 
-  const handleProjectChange = useCallback(
-    (projectId: string | null) => {
-      void setProjectContext(projectId);
-    },
-    [setProjectContext],
+  const quickReplies = useChatStoreContext((s) => s.quickReplies);
+  const displayCard = useChatStoreContext((s) => s.displayCard);
+  const thinkingPanelMessageId = useChatStoreContext(
+    (s) => s.thinkingPanelMessageId,
   );
+  const closeThinkingPanel = useChatStoreContext((s) => s.closeThinkingPanel);
 
-  const [dismissedFormIds, setDismissedFormIds] = useState<Set<string>>(
-    new Set(),
+  const hasPlanApproval = useChatStoreContext(
+    chatStoreSelectors.hasPlanApproval,
   );
-
-  const didAutoSelectProjectRef = useRef(false);
-  useEffect(() => {
-    if (
-      didAutoSelectProjectRef.current ||
-      selectedProjectId !== null ||
-      initialConversationId
-    )
-      return;
-    const personalProject = projects.find(
-      (p) => p.type === ProjectType.PERSONAL,
-    );
-    if (personalProject) {
-      didAutoSelectProjectRef.current = true;
-      void setProjectContext(personalProject.id);
-    }
-  }, [projects, selectedProjectId, initialConversationId, setProjectContext]);
+  const hasActiveApproval = useChatStoreContext(
+    chatStoreSelectors.hasActiveApproval,
+  );
 
   useEffect(() => {
     if (initialConversationId) {
@@ -130,35 +109,27 @@ function ChatBoxContent({
   );
 
   const handleRetry = useCallback(() => {
-    const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+    const lastUser = messages.findLast((m) => m.role === 'user');
     if (lastUser) void sendMessage(getTextFromParts(lastUser.parts));
   }, [messages, sendMessage]);
 
   const lastMessage = messages[messages.length - 1];
-  const lastMessageText = useMemo(
-    () =>
-      lastMessage?.role === 'assistant'
-        ? getTextFromParts(lastMessage.parts)
-        : '',
-    [lastMessage],
+  const lastAssistantMessage = useMemo(
+    () => messages.findLast((m) => m.role === 'assistant'),
+    [messages],
   );
-  const activeQuestions = useMemo(
-    () => parseMultiQuestion(lastMessageText).questions,
-    [lastMessageText],
-  );
-  const hasActiveForm =
-    activeQuestions.length > 0 &&
-    !!lastMessage &&
-    !dismissedFormIds.has(lastMessage.id);
 
-  const {
-    hasActiveApproval,
-    approvalDisplayName,
-    approve,
-    approveAndRemember,
-    reject,
-    dismiss: dismissApproval,
-  } = useToolApproval({ pendingApprovalRequest });
+  const hasActiveForm = useChatStoreContext((s) =>
+    chatStoreSelectors.hasActiveForm({ state: s, lastAssistantMessage }),
+  );
+
+  const shouldCloseThinking =
+    hasPlanApproval || hasActiveApproval || hasActiveForm || !!displayCard;
+  useEffect(() => {
+    if (shouldCloseThinking && thinkingPanelMessageId) {
+      closeThinkingPanel();
+    }
+  }, [shouldCloseThinking, thinkingPanelMessageId, closeThinkingPanel]);
 
   const isEmpty = messages.length === 0 && !isLoadingHistory && !isStreaming;
 
@@ -174,19 +145,11 @@ function ChatBoxContent({
               isStreaming={isStreaming}
               onSend={handleSend}
               onStop={cancelStream}
-              leftActions={
-                <>
-                  <ChatProjectSelector
-                    projects={projects}
-                    selectedProjectId={selectedProjectId}
-                    onProjectChange={handleProjectChange}
-                  />
-                  <ChatModelSelector
-                    chatProviderName={chatProviderName}
-                    selectedModel={modelName}
-                    onModelChange={setModelName}
-                  />
-                </>
+              rightActions={
+                <ChatModelSelector
+                  selectedModel={modelName}
+                  onModelChange={setModelName}
+                />
               }
             />
           </div>
@@ -211,38 +174,45 @@ function ChatBoxContent({
           {isLoadingHistory && <MessageSkeletons />}
 
           {messages.map((msg, idx) => {
+            if (msg.role === 'user') {
+              return (
+                <UserMessage
+                  key={msg.id}
+                  message={msg}
+                  isLastMessage={idx === messages.length - 1}
+                />
+              );
+            }
+
             const isLastStreamingAssistant =
-              isStreaming &&
-              idx === messages.length - 1 &&
-              msg.role === 'assistant';
+              isStreaming && idx === messages.length - 1;
+
+            const isLastAssistant = idx === messages.length - 1;
 
             return (
-              <ChatMessage
+              <AssistantMessage
                 key={msg.id}
                 message={msg}
                 isStreaming={isLastStreamingAssistant}
-                isLastMessage={idx === messages.length - 1}
-                onSend={handleSend}
+                isLastMessage={isLastAssistant}
                 onRetry={handleRetry}
-                selectedProjectId={selectedProjectId}
-                projects={projects}
-                onSelectProject={handleProjectChange}
+                onSend={handleSend}
+                lastAssistantMessage={
+                  isLastAssistant ? lastAssistantMessage : msg
+                }
               />
             );
           })}
+
+          {!isStreaming && !wasCancelled && quickReplies.length > 0 && (
+            <QuickReplies replies={quickReplies} onSend={handleSend} />
+          )}
 
           {wasCancelled && (
             <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground animate-in fade-in duration-200">
               <Square className="h-3 w-3 fill-current" />
               <span>{t('Response stopped')}</span>
             </div>
-          )}
-
-          {!wasCancelled && lastMessageText && (
-            <QuickReplies
-              replies={parseQuickReplies(lastMessageText).replies}
-              onSend={handleSend}
-            />
           )}
 
           {error && (
@@ -271,64 +241,45 @@ function ChatBoxContent({
         <ScrollButton className="absolute bottom-4 right-1/2 translate-x-1/2" />
       </ChatContainerRoot>
 
-      <div className="px-6">
-        <div className="max-w-3xl mx-auto">
-          {hasActiveApproval ? (
-            <ToolApprovalForm
-              key={pendingApprovalRequest?.gateId}
-              displayName={approvalDisplayName ?? ''}
-              onApprove={approve}
-              onApproveAndRemember={approveAndRemember}
-              onReject={reject}
-              onDismiss={dismissApproval}
-            />
-          ) : hasActiveForm ? (
-            <MultiQuestionForm
-              key={lastMessage?.id}
-              questions={activeQuestions}
-              onSubmit={(text) => {
-                if (lastMessage?.id) {
-                  setDismissedFormIds((prev) => {
-                    const next = new Set(prev);
-                    next.add(lastMessage.id);
-                    return next;
-                  });
-                }
-                void handleSend(text);
-              }}
-              onDismiss={() => {
-                if (lastMessage?.id) {
-                  setDismissedFormIds((prev) => {
-                    const next = new Set(prev);
-                    next.add(lastMessage.id);
-                    return next;
-                  });
-                }
-                void handleSend(t('Skip these questions'));
-              }}
-            />
-          ) : (
-            <ChatInput
-              isStreaming={isStreaming}
-              onSend={handleSend}
-              onStop={cancelStream}
-              placeholder={t('Reply...')}
-              leftActions={
-                <>
-                  <ChatProjectSelector
-                    projects={projects}
-                    selectedProjectId={selectedProjectId}
-                    onProjectChange={handleProjectChange}
-                  />
-                  <ChatModelSelector
-                    chatProviderName={chatProviderName}
-                    selectedModel={modelName}
-                    onModelChange={setModelName}
-                  />
-                </>
-              }
-            />
-          )}
+      <div className="px-6 pb-4">
+        <div className="max-w-3xl mx-auto relative">
+          <AnimatePresence mode="wait">
+            {thinkingPanelMessageId &&
+            messages.find((m) => m.id === thinkingPanelMessageId) ? (
+              <motion.div
+                key="thinking-panel"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+                transition={{ duration: 0.2 }}
+              >
+                <ThinkingDetailsPanel
+                  messageParts={
+                    messages.find((m) => m.id === thinkingPanelMessageId)!.parts
+                  }
+                  onClose={closeThinkingPanel}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="bottom-bar"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+                transition={{ duration: 0.2 }}
+              >
+                <ChatBottomBar
+                  isStreaming={isStreaming}
+                  onSend={handleSend}
+                  onStop={cancelStream}
+                  selectedModel={modelName}
+                  onModelChange={setModelName}
+                  lastAssistantMessage={lastAssistantMessage}
+                  lastMessageId={lastMessage?.id}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>
@@ -340,5 +291,4 @@ type AIChatBoxProps = {
   conversationId?: string | null;
   onConversationCreated?: (conversationId: string) => void;
   onTitleUpdate?: (title: string, conversationId?: string) => void;
-  chatProviderName?: AIProviderName;
 };
