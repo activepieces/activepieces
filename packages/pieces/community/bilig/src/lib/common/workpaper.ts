@@ -285,8 +285,12 @@ function requireCellAddress(args: {
   defaultSheetId: number;
 }): WorkPaperCellAddress {
   const address = args.workbook.simpleCellAddressFromString(args.address, args.defaultSheetId);
-  if (address === undefined || address.sheet !== args.defaultSheetId) {
+  if (address === undefined) {
     throw new Error(`Invalid cell address: ${args.sheetName}!${args.address}`);
+  }
+  if (address.sheet !== args.defaultSheetId) {
+    const resolvedSheetName = args.workbook.getSheetName(address.sheet) ?? `sheet ${address.sheet}`;
+    throw new Error(`Expected cell address on sheet "${args.sheetName}", got "${resolvedSheetName}".`);
   }
   return address;
 }
@@ -306,10 +310,10 @@ function parseCellInput(value: string): RawCellContent {
       return parsed;
     }
   } catch {
-    return value;
+    return trimmedValue;
   }
 
-  return value;
+  return trimmedValue;
 }
 
 function cellValueToScalar(value: unknown): unknown {

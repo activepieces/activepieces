@@ -113,4 +113,28 @@ describe('biligWorkpaperUtils', () => {
     expect(result.verified).toBe(true);
     expect(result.readback.scalarValue).toBe('ok');
   });
+
+  it('normalizes padded scalar input before writing it', async () => {
+    const result = await biligWorkpaperUtils.setCellAndVerify({
+      workpaper: biligWorkpaperUtils.createDemoWorkpaper(),
+      sheet: 'Inputs',
+      cell: 'B2',
+      value: '  unquoted text  ',
+      expectedReadback: 'unquoted text',
+    });
+
+    expect(result.verified).toBe(true);
+    expect(result.readback.scalarValue).toBe('unquoted text');
+  });
+
+  it('reports a clear error when the input address targets another sheet', async () => {
+    await expect(
+      biligWorkpaperUtils.setCellAndVerify({
+        workpaper: biligWorkpaperUtils.createDemoWorkpaper(),
+        sheet: 'Inputs',
+        cell: 'Summary!B2',
+        value: '32',
+      })
+    ).rejects.toThrow('Expected cell address on sheet "Inputs", got "Summary".');
+  });
 });
