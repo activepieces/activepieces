@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddDataManipulationEnabledToPlatformPlan1793000000000 implements Migration {
-    name = 'AddDataManipulationEnabledToPlatformPlan1793000000000'
+export class AddDataManipulationEnabledToPlatformPlan1794000000000 implements Migration {
+    name = 'AddDataManipulationEnabledToPlatformPlan1794000000000'
     breaking = false
     release = '0.83.0'
     transaction = true
