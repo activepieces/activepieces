@@ -371,7 +371,7 @@ function authenticateHandshake({ getExpectedToken, log, sandboxId }: {
     sandboxId: string
 }): (socket: Socket, next: (err?: Error) => void) => void {
     return (socket, next) => {
-        const provided = socket.handshake.auth?.connectionToken
+        const provided = socket.handshake.auth?.['connectionToken']
         const expected = getExpectedToken()
         if (typeof provided !== 'string' || expected === null) {
             log.warn({ sandboxId, socketId: socket.id }, '[WebSocket] Rejecting handshake: missing connection token')
