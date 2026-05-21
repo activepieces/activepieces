@@ -35,7 +35,7 @@ export const appointmentEvent = createTrigger({
       description:
         'Choose which event to listen for. Other event types received on this URL will be ignored.',
       required: true,
-      defaultValue: 'confirmation',
+      defaultValue: 'appointment_schedule',
       options: {
         disabled: false,
         options: [
