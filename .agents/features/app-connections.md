@@ -1,7 +1,7 @@
 # App Connections
 
 ## Summary
-App Connections store encrypted authentication credentials (OAuth2 tokens, API keys, basic auth, or custom piece-defined fields) that flow steps use to call external services. They support automatic OAuth2 token refresh with distributed locking, a dual-scope model (project-level or platform-wide), and a "replace" operation that atomically rewires all flow references from one connection to another. The module handles all OAuth2 variants: user-supplied credentials, platform-managed OAuth apps, and Activepieces-hosted cloud OAuth.
+App Connections store encrypted authentication credentials (OAuth2 tokens, API keys, basic auth, or custom piece-defined fields) that flow steps use to call external services. They support automatic OAuth2 token refresh with distributed locking, a dual-scope model (project-level or platform-wide), and a "replace" operation that atomically rewires all flow references from one connection to another. The module handles all OAuth2 variants: user-supplied credentials, platform-managed OAuth apps, and Activepieces-hosted cloud OAuth, Users can optionally select a subset of a piece's declared OAuth2 scopes when creating a connection.
 
 ## Key Files
 - `packages/server/api/src/app/app-connection/` — backend module (controller, service, entity)
@@ -75,7 +75,7 @@ Automatic on connection retrieval:
 - `GET /v1/app-connections/owners` — list connection owners (platform admins + project members)
 - `POST /v1/app-connections/replace` — replace source connection with target across all flows
 - `DELETE /v1/app-connections/:id` — hard delete
-- `POST /v1/app-connections/oauth2/authorization-url` — generate OAuth redirect URL from piece metadata
+- `POST /v1/app-connections/oauth2/authorization-url` — generate OAuth redirect URL from piece metadata; accepts optional scopes array to restrict the authorization to a user-selected subset of the piece's declared scopes (all piece scopes used when omitted)
 
 ## Connection → Flow Integration
 
