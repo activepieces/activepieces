@@ -4,6 +4,7 @@ import {
     apId,
     Cursor,
     ErrorCode,
+    ExecuteFlowJobData,
     ExecutionType,
     ExecutioOutputFile,
     FileType,
@@ -21,6 +22,7 @@ import {
     LATEST_JOB_DATA_SCHEMA_VERSION,
     PlatformId,
     ProjectId,
+    ResumeReason,
     RunEnvironment,
     SampleDataFileType,
     SeekPage,
@@ -120,6 +122,11 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 failedStepName: params.failedStepName,
             })
         }
+        if (!isNil(params.failedStepMessage)) {
+            query = query.andWhere('flow_run."failedStep"->>\'message\' ILIKE :failedStepMessage', {
+                failedStepMessage: `%${params.failedStepMessage}%`,
+            })
+        }
         if (params.flowRunIds) {
             query = query.andWhere({
                 id: In(params.flowRunIds),
@@ -167,8 +174,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     flowRun: updatedFlowRun,
                     platformId,
                     streamStepProgress: StreamStepProgress.NONE,
-                    executeTrigger: false,
                     executionType: ExecutionType.RESUME,
+                    resumeReason: ResumeReason.RETRY,
                     workerHandlerId: undefined,
                     httpRequestId: undefined,
                 }, log)
@@ -538,6 +545,11 @@ async function filterFlowRunsAndApplyFilters(
             failedStepName: params.failedStepName,
         })
     }
+    if (params.failedStepMessage) {
+        query = query.andWhere('flow_run."failedStep"->>\'message\' ILIKE :failedStepMessage', {
+            failedStepMessage: `%${params.failedStepMessage}%`,
+        })
+    }
 
     const flowRuns = await query.getMany()
     return flowRuns
@@ -558,29 +570,39 @@ export async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogge
         jobPayload = await payloadOffloader.maybeOffloadPayload(log, params.payload, params.flowRun.projectId, params.platformId)
     }
 
+    const commonJobData = {
+        schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+        workerHandlerId: params.workerHandlerId ?? null,
+        projectId: params.flowRun.projectId,
+        platformId: params.platformId,
+        environment: params.flowRun.environment,
+        flowId: params.flowRun.flowId,
+        runId: params.flowRun.id,
+        jobType: WorkerJobType.EXECUTE_FLOW as const,
+        flowVersionId: params.flowRun.flowVersionId,
+        payload: jobPayload,
+        httpRequestId: params.httpRequestId,
+        streamStepProgress: params.streamStepProgress,
+        stepNameToTest: params.flowRun.stepNameToTest ?? undefined,
+        sampleData: params.sampleData,
+        logsFileId,
+        traceContext,
+    }
+    const data: ExecuteFlowJobData = params.executionType === ExecutionType.RESUME
+        ? {
+            ...commonJobData,
+            executionType: ExecutionType.RESUME,
+            resumeReason: params.resumeReason,
+        }
+        : {
+            ...commonJobData,
+            executionType: ExecutionType.BEGIN,
+            executeTrigger: params.executeTrigger,
+        }
     await jobQueue(log).add({
         id: params.flowRun.id,
         type: JobType.ONE_TIME,
-        data: {
-            schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-            workerHandlerId: params.workerHandlerId ?? null,
-            projectId: params.flowRun.projectId,
-            platformId: params.platformId,
-            environment: params.flowRun.environment,
-            flowId: params.flowRun.flowId,
-            runId: params.flowRun.id,
-            jobType: WorkerJobType.EXECUTE_FLOW,
-            flowVersionId: params.flowRun.flowVersionId,
-            payload: jobPayload,
-            executeTrigger: params.executeTrigger,
-            httpRequestId: params.httpRequestId,
-            executionType: params.executionType,
-            streamStepProgress: params.streamStepProgress,
-            stepNameToTest: params.flowRun.stepNameToTest ?? undefined,
-            sampleData: params.sampleData,
-            logsFileId,
-            traceContext,
-        },
+        data,
     })
     return params.flowRun
 }
@@ -671,6 +693,7 @@ type ListParams = {
     createdAfter?: string
     createdBefore?: string
     failedStepName?: string
+    failedStepMessage?: string
     flowRunIds?: FlowRunId[]
     includeArchived?: boolean
     environment?: RunEnvironment
@@ -681,17 +704,20 @@ type GetOneParams = {
     projectId: ProjectId | undefined
 }
 
-export type AddToQueueParams = {
+type AddToQueueParamsCommon = {
     flowRun: FlowRun
     platformId: PlatformId
     payload?: unknown
-    executeTrigger: boolean
-    executionType: ExecutionType
     workerHandlerId: string | undefined
     httpRequestId: string | undefined
     streamStepProgress: StreamStepProgress
     sampleData?: Record<string, unknown>
 }
+
+export type AddToQueueParams = AddToQueueParamsCommon & (
+    | { executionType: ExecutionType.BEGIN, executeTrigger: boolean }
+    | { executionType: ExecutionType.RESUME, resumeReason: ResumeReason }
+)
 
 
 type StartParams = {
@@ -705,7 +731,7 @@ type StartParams = {
     failParentOnFailure: boolean | undefined
     stepNameToTest?: string
     executeTrigger: boolean
-    executionType: ExecutionType
+    executionType: ExecutionType.BEGIN
     workerHandlerId: string | undefined
     httpRequestId: string | undefined
     streamStepProgress: StreamStepProgress
@@ -755,6 +781,7 @@ type BulkRetryParams = {
     createdBefore?: string
     excludeFlowRunIds?: FlowRunId[]
     failedStepName?: string
+    failedStepMessage?: string
 }
 
 type BulkArchiveActionParams = {
@@ -767,6 +794,7 @@ type BulkArchiveActionParams = {
     createdBefore?: string
     excludeFlowRunIds?: FlowRunId[]
     failedStepName?: string
+    failedStepMessage?: string
 }
 
 type CountByStatusParams = {
@@ -785,4 +813,5 @@ type FilterFlowRunsAndApplyFiltersParams = {
     createdBefore?: string
     excludeFlowRunIds?: FlowRunId[]
     failedStepName?: string
+    failedStepMessage?: string
 }

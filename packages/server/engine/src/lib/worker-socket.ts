@@ -93,7 +93,10 @@ export const workerSocket = {
 function buildSocketOptions(sandboxId: string): Partial<ManagerOptions & SocketOptions> {
     const base: Partial<ManagerOptions & SocketOptions> = {
         path: '/worker/ws',
-        auth: { sandboxId },
+        auth: {
+            sandboxId,
+            connectionToken: process.env.AP_SANDBOX_WS_TOKEN,
+        },
         autoConnect: false,
         reconnection: true,
     }

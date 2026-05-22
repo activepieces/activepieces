@@ -11,7 +11,7 @@
   "dependencies": {
     "@activepieces/shared": "workspace:*",
     "async-mutex": "0.4.0",
-    "axios": "1.15.0",
+    "axios": "1.15.2",
     "axios-retry": "4.4.1",
     "check-disk-space": "3.4.0",
     "dayjs": "1.11.9",

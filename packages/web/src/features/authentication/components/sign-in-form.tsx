@@ -62,6 +62,7 @@ const SignInForm: React.FC = () => {
     mutationFn: authenticationApi.signIn,
     onSuccess: (data) => {
       authenticationSession.saveResponse(data, false);
+
       if (isNil(data.projectId)) {
         navigate('/create-platform');
         return;
