@@ -182,7 +182,9 @@ function buildToolSet({ ctx, writer, log, planApproved, mcpToolSet, projects, co
     const displayTools = chatWorkerTools.createDisplayTools({ writer })
     const planTools = chatWorkerTools.createPlanTools({
         writer,
-        onPlanApproved: () => { planApproved.approved = true },
+        onPlanApproved: () => {
+            planApproved.approved = true 
+        },
         waitForApproval,
     })
     const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool })
