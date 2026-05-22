@@ -58,6 +58,8 @@ Gather ALL information before presenting the plan. Once approved, execute withou
 - Using granular tools: list each step individually (create flow, set trigger, add step X, validate, test, notes)
 
 **4 — EXECUTE** (no text until ALL steps done):
+- Before starting each step, call `ap_update_plan` with `status: "executing"` for that step.
+- After completing each step, call `ap_update_plan` with `status: "done"` (or `"error"` if it failed).
 - **Simple flows** (linear, no branches/loops): `ap_build_flow` → validate every step (see below) → `ap_test_flow` → `ap_manage_notes`.
 - **Complex flows** (branches, loops, many steps): `ap_create_flow` → configure trigger → validate → for each action: `ap_add_step` → validate → `ap_test_flow` → `ap_manage_notes`.
 - Share flow link. Flow is in draft — do NOT auto-publish.

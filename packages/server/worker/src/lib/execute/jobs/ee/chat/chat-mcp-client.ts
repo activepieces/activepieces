@@ -62,11 +62,11 @@ function hasExecute(tool: object): tool is object & { execute: (args: unknown) =
     return 'execute' in tool && typeof tool.execute === 'function'
 }
 
-function withApprovalGates({ mcpToolSet, writer, log, planExecution, waitForApproval }: {
+function withApprovalGates({ mcpToolSet, writer, log, isApproved, waitForApproval }: {
     mcpToolSet: Record<string, unknown>
     writer: ChatStreamWriter
     log: FastifyBaseLogger
-    planExecution: PlanExecution
+    isApproved: () => boolean
     waitForApproval: (gateId: string) => Promise<boolean>
 }): Record<string, unknown> {
     const result: Record<string, unknown> = {}
@@ -82,10 +82,7 @@ function withApprovalGates({ mcpToolSet, writer, log, planExecution, waitForAppr
 
         result[name] = Object.assign({}, tool, {
             execute: async (args: unknown) => {
-                if (planExecution.isApproved()) {
-                    return planExecution.trackStep({ execute: () => originalExecute(args) })
-                }
-                if (!needsApproval) {
+                if (isApproved() || !needsApproval) {
                     return originalExecute(args)
                 }
                 const gateId = apId()
@@ -103,11 +100,9 @@ function withApprovalGates({ mcpToolSet, writer, log, planExecution, waitForAppr
                 const approved = await waitForApproval(gateId)
 
                 if (!approved) {
-                    log.info({ gateId, toolName: name }, 'Tool approval rejected or timed out')
                     return { content: [{ type: 'text', text: 'Action cancelled by user.' }] }
                 }
 
-                log.info({ gateId, toolName: name }, 'Tool approval granted')
                 return originalExecute(args)
             },
         })
@@ -119,11 +114,6 @@ function withApprovalGates({ mcpToolSet, writer, log, planExecution, waitForAppr
 type McpConnection = {
     mcpClient: Awaited<ReturnType<typeof createMCPClient>> | null
     mcpToolSet: Record<string, unknown>
-}
-
-export type PlanExecution = {
-    isApproved: () => boolean
-    trackStep: (params: { execute: () => Promise<unknown> }) => Promise<unknown>
 }
 
 export const chatMcpClient = {
