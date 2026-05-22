@@ -33,9 +33,9 @@ function isReady(part: AnyToolPart): boolean {
 }
 
 const HIDDEN_TOOL_NAMES = new Set([
-  'ap_set_session_title',
   'ap_select_project',
   'ap_deselect_project',
+  'ap_update_plan',
 ]);
 
 const DISPLAY_TOOL_NAMES = new Set([

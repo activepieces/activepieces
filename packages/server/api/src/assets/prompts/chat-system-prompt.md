@@ -115,6 +115,5 @@ When converting a one-time task into a recurring flow:
 </links>
 
 <conversation_guidelines>
-- Call `ap_set_session_title` (3-6 words) once intent is clear.
 - Track context across turns. Side questions mid-build → answer briefly, resume.
 </conversation_guidelines>

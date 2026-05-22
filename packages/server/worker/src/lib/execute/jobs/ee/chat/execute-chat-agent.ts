@@ -9,14 +9,19 @@ import {
     PersistedChatPart,
     PersistedChatRole,
     spreadIfDefined,
+    tryCatch,
     WorkerJobType,
 } from '@activepieces/shared'
-import { createUIMessageStream, ModelMessage, stepCountIs, streamText } from 'ai'
+import { createUIMessageStream, generateText, ModelMessage, stepCountIs, streamText } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { chatMcpClient } from './chat-mcp-client'
 import { chatWorkerTools } from './chat-worker-tools'
 
 const MAX_STEPS = 30
+const BATCH_SIZE = 10
+const BATCH_FLUSH_MS = 50
+const APPROVAL_POLL_INTERVAL_MS = 2_000
+const APPROVAL_TIMEOUT_MS = 5 * 60 * 1_000
 
 export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_CHAT_AGENT,
@@ -28,11 +33,9 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             conversationId, platformId, userId, userMessage, modelName, files,
         })
 
+        const provider = config.provider as AIProviderName
         const model = chatAiUtils.createChatModel({
-            provider: config.provider as AIProviderName,
-            auth: config.auth,
-            config: config.providerConfig,
-            modelId: config.modelId,
+            provider, auth: config.auth, config: config.providerConfig, modelId: config.modelId,
         })
 
         const writer = chatWorkerTools.createRpcWriterForConversation({
@@ -42,106 +45,34 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
         })
 
         const { mcpClient, mcpToolSet } = await chatMcpClient.connect({
-            mcpCredentials: config.mcpCredentials,
-            conversationId,
-            log,
+            mcpCredentials: config.mcpCredentials, conversationId, log,
         })
 
         try {
             const planApproved = { approved: false }
-            let pendingTitle = ''
 
-            const waitForApproval = async (gateId: string): Promise<boolean> => {
-                const POLL_INTERVAL_MS = 2_000
-                const MAX_WAIT_MS = 5 * 60 * 1_000
-                const deadline = Date.now() + MAX_WAIT_MS
-                while (Date.now() < deadline) {
-                    const response = await ctx.apiClient.executeChatTool({
-                        toolName: '__approval_check',
-                        toolInput: { gateId },
-                        platformId,
-                        userId,
-                    })
-                    if (response.result !== 'pending') {
-                        return response.result === true
-                    }
-                    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS))
-                }
-                return false
-            }
-
-            const onSetProjectContext = async (projectId: string | null) => {
-                await ctx.apiClient.updateProjectContext({ conversationId, projectId })
-            }
-
-            const displayTools = chatWorkerTools.createDisplayTools({ writer })
-            const localTools = chatWorkerTools.createLocalTools({
-                writer,
-                onSessionTitle: (title) => {
-                    pendingTitle = title
-                },
-                onSetProjectContext,
-                projects: config.projects,
-            })
-            const planTools = chatWorkerTools.createPlanTools({
-                writer,
-                onPlanApproved: () => {
-                    planApproved.approved = true
-                },
-                waitForApproval,
-            })
-            const crossProjectTools = chatWorkerTools.createCrossProjectTools({
-                executeTool: async (toolName, toolInput) => {
-                    const response = await ctx.apiClient.executeChatTool({
-                        toolName,
-                        toolInput,
-                        platformId,
-                        userId,
-                    })
-                    return response.result
-                },
-            })
-            const gatedMcpTools = chatMcpClient.withApprovalGates({
-                mcpToolSet, writer, log, isApproved: () => planApproved.approved, waitForApproval,
-            })
-            const allTools = { ...localTools, ...displayTools, ...crossProjectTools, ...planTools, ...(gatedMcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
-
-            const sanitizedMessages = chatAiUtils.stripThinkingBlocks(config.messages as ModelMessage[], config.provider as AIProviderName)
-            const systemPrompt = chatAiUtils.buildSystemPromptWithCaching({
-                systemPrompt: config.systemPrompt,
-                provider: config.provider as AIProviderName,
-            })
-            const providerOptions = chatAiUtils.buildProviderOptions({
-                provider: config.provider as AIProviderName,
-                tier: config.tier,
+            const allTools = buildToolSet({
+                ctx, writer, log, planApproved, mcpToolSet,
+                projects: config.projects, conversationId, platformId, userId,
             })
 
             const uiParts: PersistedChatPart[] = []
 
             const result = streamText({
                 model,
-                system: systemPrompt,
-                messages: sanitizedMessages,
+                system: chatAiUtils.buildSystemPromptWithCaching({ systemPrompt: config.systemPrompt, provider }),
+                messages: chatAiUtils.stripThinkingBlocks(config.messages as ModelMessage[], provider),
                 tools: allTools,
-                providerOptions,
+                providerOptions: chatAiUtils.buildProviderOptions({ provider, tier: config.tier }),
                 stopWhen: stepCountIs(MAX_STEPS),
                 onStepFinish: ({ content }) => {
-                    const contentParts = content as ContentPartLike[]
-                    uiParts.push(...chatAiUtils.buildStepParts({ content: contentParts }))
-                    const titleCall = contentParts.find((p) => p.type === 'tool-call' && p.toolName === 'ap_set_session_title')
-                    if (titleCall) {
-                        const titleInput = (titleCall.args ?? titleCall.input) as Record<string, unknown> | undefined
-                        if (titleInput && typeof titleInput['title'] === 'string') {
-                            pendingTitle = titleInput['title']
-                        }
-                    }
-                    const progressUiMessages: PersistedChatMessage[] = [
-                        ...(config.previousUiMessages as PersistedChatMessage[]),
-                        { role: PersistedChatRole.ASSISTANT, parts: [...uiParts] },
-                    ]
+                    uiParts.push(...chatAiUtils.buildStepParts({ content: content as ContentPartLike[] }))
                     ctx.apiClient.updateChatProgress({
                         conversationId,
-                        uiMessages: progressUiMessages,
+                        uiMessages: [
+                            ...(config.previousUiMessages as PersistedChatMessage[]),
+                            { role: PersistedChatRole.ASSISTANT, parts: [...uiParts] },
+                        ],
                     }).catch((err: unknown) => {
                         log.warn({ err, conversationId }, 'Failed to save chat progress')
                     })
@@ -151,65 +82,15 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 },
             })
 
-            const BATCH_SIZE = 10
-            const BATCH_FLUSH_MS = 50
-            let chunkBuffer: unknown[] = []
-            let flushTimer: ReturnType<typeof setTimeout> | null = null
+            await streamChunksToClient({ result, ctx, userId, conversationId, log })
 
-            const flushChunks = async () => {
-                if (chunkBuffer.length === 0) return
-                const batch = chunkBuffer
-                chunkBuffer = []
-                await ctx.apiClient.sendChatEvent({
-                    userId,
-                    conversationId,
-                    event: { type: ChatAgentEventType.CHUNK, data: batch },
-                })
-            }
-
-            const uiStream = createUIMessageStream({
-                execute: ({ writer: streamWriter }) => {
-                    streamWriter.merge(result.toUIMessageStream())
-                },
-            })
-
-            const reader = uiStream.getReader()
-            try {
-                while (true) {
-                    const { done, value: chunk } = await reader.read()
-                    if (done) break
-                    chunkBuffer.push(chunk)
-                    if (chunkBuffer.length >= BATCH_SIZE) {
-                        if (flushTimer) {
-                            clearTimeout(flushTimer)
-                            flushTimer = null
-                        }
-                        await flushChunks()
-                    }
-                    else if (!flushTimer) {
-                        flushTimer = setTimeout(() => {
-                            flushTimer = null
-                            flushChunks().catch((err: unknown) => {
-                                log.error({ err, conversationId }, 'Failed to flush chat chunk batch')
-                            })
-                        }, BATCH_FLUSH_MS)
-                    }
-                }
-            }
-            finally {
-                reader.releaseLock()
-            }
-            if (flushTimer) clearTimeout(flushTimer)
-            await flushChunks()
-
-            const response = await result.response
-            const usage = await result.usage
-
-            const updatedMessages = [...(config.allMessages as ModelMessage[]), ...response.messages]
-            const updatedUiMessages: PersistedChatMessage[] = [
-                ...(config.previousUiMessages as PersistedChatMessage[]),
-                { role: PersistedChatRole.ASSISTANT, parts: uiParts },
-            ]
+            const [response, usage, autoTitle] = await Promise.all([
+                result.response,
+                result.usage,
+                generateTitleIfFirstTurn({
+                    model, userMessage, previousUiMessages: config.previousUiMessages as unknown[], log, conversationId,
+                }),
+            ])
 
             log.info({
                 conversationId,
@@ -222,15 +103,17 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
 
             await ctx.apiClient.saveChatMessages({
                 conversationId,
-                messages: updatedMessages,
-                uiMessages: updatedUiMessages,
-                ...(pendingTitle ? { title: pendingTitle } : {}),
+                messages: [...(config.allMessages as ModelMessage[]), ...response.messages],
+                uiMessages: [
+                    ...(config.previousUiMessages as PersistedChatMessage[]),
+                    { role: PersistedChatRole.ASSISTANT, parts: uiParts },
+                ],
+                ...spreadIfDefined('title', autoTitle),
                 ...spreadIfDefined('modelName', isNil(data.modelName) ? config.tier.id : undefined),
             })
 
             await ctx.apiClient.sendChatEvent({
-                userId,
-                conversationId,
+                userId, conversationId,
                 event: { type: ChatAgentEventType.FINISHED, data: { conversationId } },
             })
         }
@@ -238,18 +121,14 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             log.error({ err, conversationId }, '[executeChatAgent] Agent job failed')
             const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
             await ctx.apiClient.saveChatMessages({
-                conversationId,
-                messages: [],
-                uiMessages: [],
+                conversationId, messages: [], uiMessages: [],
             }).catch(() => {})
             await ctx.apiClient.sendChatEvent({
-                userId,
-                conversationId,
+                userId, conversationId,
                 event: { type: ChatAgentEventType.ERROR, data: { message: errorMessage } },
             }).catch(() => {})
             await ctx.apiClient.sendChatEvent({
-                userId,
-                conversationId,
+                userId, conversationId,
                 event: { type: ChatAgentEventType.FINISHED, data: { conversationId } },
             }).catch(() => {})
             throw err
@@ -264,4 +143,132 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
 
         return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
     },
+}
+
+function buildToolSet({ ctx, writer, log, planApproved, mcpToolSet, projects, conversationId, platformId, userId }: {
+    ctx: JobContext
+    writer: ReturnType<typeof chatWorkerTools.createRpcWriterForConversation>
+    log: JobContext['log']
+    planApproved: { approved: boolean }
+    mcpToolSet: Record<string, unknown>
+    projects: Array<{ id: string, displayName: string, type: string }>
+    conversationId: string
+    platformId: string
+    userId: string
+}) {
+    const executeCrossProjectTool = async (toolName: string, toolInput: Record<string, unknown>) => {
+        const response = await ctx.apiClient.executeChatTool({ toolName, toolInput, platformId, userId })
+        return response.result
+    }
+
+    const waitForApproval = async (gateId: string): Promise<boolean> => {
+        const deadline = Date.now() + APPROVAL_TIMEOUT_MS
+        while (Date.now() < deadline) {
+            const response = await ctx.apiClient.executeChatTool({
+                toolName: '__approval_check', toolInput: { gateId }, platformId, userId,
+            })
+            if (response.result !== 'pending') return response.result === true
+            await new Promise((resolve) => setTimeout(resolve, APPROVAL_POLL_INTERVAL_MS))
+        }
+        return false
+    }
+
+    const localTools = chatWorkerTools.createLocalTools({
+        onSetProjectContext: async (projectId) => {
+            await ctx.apiClient.updateProjectContext({ conversationId, projectId })
+        },
+        projects,
+    })
+    const displayTools = chatWorkerTools.createDisplayTools({ writer })
+    const planTools = chatWorkerTools.createPlanTools({
+        writer,
+        onPlanApproved: () => { planApproved.approved = true },
+        waitForApproval,
+    })
+    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool })
+    const gatedMcpTools = chatMcpClient.withApprovalGates({
+        mcpToolSet, writer, log, isApproved: () => planApproved.approved, waitForApproval,
+    })
+
+    return { ...localTools, ...displayTools, ...crossProjectTools, ...planTools, ...(gatedMcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
+}
+
+async function streamChunksToClient({ result, ctx, userId, conversationId, log }: {
+    result: ReturnType<typeof streamText>
+    ctx: JobContext
+    userId: string
+    conversationId: string
+    log: JobContext['log']
+}): Promise<void> {
+    let chunkBuffer: unknown[] = []
+    let flushTimer: ReturnType<typeof setTimeout> | null = null
+
+    const flushChunks = async () => {
+        if (chunkBuffer.length === 0) return
+        const batch = chunkBuffer
+        chunkBuffer = []
+        await ctx.apiClient.sendChatEvent({
+            userId, conversationId,
+            event: { type: ChatAgentEventType.CHUNK, data: batch },
+        })
+    }
+
+    const uiStream = createUIMessageStream({
+        execute: ({ writer: streamWriter }) => {
+            streamWriter.merge(result.toUIMessageStream())
+        },
+    })
+
+    const reader = uiStream.getReader()
+    try {
+        while (true) {
+            const { done, value: chunk } = await reader.read()
+            if (done) break
+            chunkBuffer.push(chunk)
+            if (chunkBuffer.length >= BATCH_SIZE) {
+                if (flushTimer) {
+                    clearTimeout(flushTimer)
+                    flushTimer = null
+                }
+                await flushChunks()
+            }
+            else if (!flushTimer) {
+                flushTimer = setTimeout(() => {
+                    flushTimer = null
+                    flushChunks().catch((err: unknown) => {
+                        log.error({ err, conversationId }, 'Failed to flush chat chunk batch')
+                    })
+                }, BATCH_FLUSH_MS)
+            }
+        }
+    }
+    finally {
+        reader.releaseLock()
+    }
+    if (flushTimer) clearTimeout(flushTimer)
+    await flushChunks()
+}
+
+async function generateTitleIfFirstTurn({ model, userMessage, previousUiMessages, log, conversationId }: {
+    model: ReturnType<typeof chatAiUtils.createChatModel>
+    userMessage: string
+    previousUiMessages: unknown[]
+    log: JobContext['log']
+    conversationId: string
+}): Promise<string | undefined> {
+    const isFirstTurn = previousUiMessages.length === 1
+    if (!isFirstTurn) return undefined
+
+    const { data: generatedTitle } = await tryCatch(async () => {
+        const { text } = await generateText({
+            model,
+            prompt: `Generate a concise 3-6 word title for this conversation. Return ONLY the title, nothing else.\n\nUser: ${userMessage}`,
+        })
+        return text.replace(/^["']|["']$/g, '').slice(0, 100)
+    })
+
+    if (!generatedTitle) {
+        log.warn({ conversationId }, 'Failed to auto-generate title')
+    }
+    return generatedTitle ?? undefined
 }
