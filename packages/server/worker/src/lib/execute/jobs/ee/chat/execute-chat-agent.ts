@@ -112,6 +112,13 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 ...spreadIfDefined('modelName', isNil(data.modelName) ? config.tier.id : undefined),
             })
 
+            if (autoTitle) {
+                await ctx.apiClient.sendChatEvent({
+                    userId, conversationId,
+                    event: { type: ChatAgentEventType.CHUNK, data: { type: 'data-session-title', data: { title: autoTitle }, transient: true } },
+                })
+            }
+
             await ctx.apiClient.sendChatEvent({
                 userId, conversationId,
                 event: { type: ChatAgentEventType.FINISHED, data: { conversationId } },
