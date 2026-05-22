@@ -44,6 +44,7 @@ function createTestProcessMaker() {
     const maker: SandboxProcessMaker = {
         create: vi.fn(async (params) => {
             const port = params.env.AP_SANDBOX_WS_PORT
+            const token = params.env.AP_SANDBOX_WS_TOKEN ?? null
             child = new EventEmitter() as ChildProcess & EventEmitter
             ;(child as ChildProcess).pid = 12345
             ;(child as ChildProcess).exitCode = null
@@ -53,6 +54,7 @@ function createTestProcessMaker() {
                 path: '/worker/ws',
                 autoConnect: true,
                 reconnection: false,
+                auth: { sandboxId: params.sandboxId, connectionToken: token },
             })
 
             return child as ChildProcess
@@ -340,6 +342,114 @@ describe('createSandbox', () => {
             await sandbox.start(startOptions)
             await sandbox.start(startOptions)
             expect(testPM.maker.create).toHaveBeenCalledTimes(1)
+        })
+
+        it('passes a per-start AP_SANDBOX_WS_TOKEN to the child', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-token', defaultOptions, testPM.maker, workerHandlers)
+
+            await sandbox.start(startOptions)
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            expect(createCall.env.AP_SANDBOX_WS_TOKEN).toMatch(/^[a-f0-9]{64}$/)
+        })
+
+        it('rotates AP_SANDBOX_WS_TOKEN between successive start() calls on a reusable sandbox', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            const reusableOptions = { ...defaultOptions, reusable: true }
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-rotate', reusableOptions, testPM.maker, workerHandlers)
+
+            await sandbox.start(startOptions)
+            const firstToken = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0].env.AP_SANDBOX_WS_TOKEN
+            await sandbox.shutdown()
+            await sandbox.start(startOptions)
+            const secondToken = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[1][0].env.AP_SANDBOX_WS_TOKEN
+
+            expect(firstToken).toBeTruthy()
+            expect(secondToken).toBeTruthy()
+            expect(firstToken).not.toBe(secondToken)
+        })
+
+        it('rejects an unauthenticated Socket.IO connection', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-rej-noauth', defaultOptions, testPM.maker, workerHandlers)
+
+            await sandbox.start(startOptions)
+            const port = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0].env.AP_SANDBOX_WS_PORT
+
+            const attacker = ioClient(`http://127.0.0.1:${port}`, {
+                path: '/worker/ws',
+                autoConnect: true,
+                reconnection: false,
+            })
+            const err = await new Promise<Error>((resolve, reject) => {
+                attacker.on('connect_error', resolve)
+                attacker.on('connect', () => reject(new Error('attacker should not have connected')))
+                setTimeout(() => reject(new Error('no connect_error received')), 2000)
+            })
+            attacker.disconnect()
+
+            expect(err.message).toBe('unauthorized')
+            expect(testPM.getClient().connected).toBe(true)
+        })
+
+        it('rejects a Socket.IO connection that presents the wrong token', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-rej-wrong', defaultOptions, testPM.maker, workerHandlers)
+
+            await sandbox.start(startOptions)
+            const port = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0].env.AP_SANDBOX_WS_PORT
+
+            const attacker = ioClient(`http://127.0.0.1:${port}`, {
+                path: '/worker/ws',
+                autoConnect: true,
+                reconnection: false,
+                auth: { sandboxId: 'spoof', connectionToken: 'definitely-not-the-real-token' },
+            })
+            const err = await new Promise<Error>((resolve, reject) => {
+                attacker.on('connect_error', resolve)
+                attacker.on('connect', () => reject(new Error('attacker should not have connected')))
+                setTimeout(() => reject(new Error('no connect_error received')), 2000)
+            })
+            attacker.disconnect()
+
+            expect(err.message).toBe('unauthorized')
+            expect(testPM.getClient().connected).toBe(true)
+        })
+
+        it('disconnects a second authenticated connection while keeping the first active', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-rej-second', defaultOptions, testPM.maker, workerHandlers)
+
+            await sandbox.start(startOptions)
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            const port = createCall.env.AP_SANDBOX_WS_PORT
+            const token = createCall.env.AP_SANDBOX_WS_TOKEN
+
+            const second = ioClient(`http://127.0.0.1:${port}`, {
+                path: '/worker/ws',
+                autoConnect: true,
+                reconnection: false,
+                auth: { sandboxId: 'second', connectionToken: token },
+            })
+            await new Promise<void>((resolve, reject) => {
+                second.on('disconnect', () => resolve())
+                second.on('connect_error', (e) => reject(new Error(`unexpected connect_error: ${e.message}`)))
+                setTimeout(() => reject(new Error('second connection was not disconnected')), 2000)
+            })
+
+            expect(second.connected).toBe(false)
+            expect(testPM.getClient().connected).toBe(true)
         })
     })
 
