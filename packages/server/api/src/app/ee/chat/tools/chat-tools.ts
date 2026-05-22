@@ -194,16 +194,20 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
     const availableProjectIds = projects.map((p) => p.id)
 
     switch (toolName) {
+        case 'ap_discover_action_auth': {
+            return findConnectionsForPiece({ pieceName: toolInput.pieceName as string, projects, platformId, log })
+        }
         case 'ap_run_one_time_action': {
             const pieceName = toolInput.pieceName as string
             const actionName = toolInput.actionName as string
             const connectionExternalId = toolInput.connectionExternalId as string | undefined
             const projectId = toolInput.projectId as string | undefined
 
-            if (!connectionExternalId || !projectId) {
-                return findConnectionsForPiece({ pieceName, projects, platformId, log })
+            const resolvedProjectId = projectId ?? projects[0]?.id
+            if (!resolvedProjectId) {
+                return { success: false, error: 'No projects available. Create a project first.' }
             }
-            if (!availableProjectIds.includes(projectId)) {
+            if (projectId && !availableProjectIds.includes(projectId)) {
                 return { success: false, error: `Project ${projectId} is not accessible.` }
             }
             let parsedInput = toolInput.input
@@ -214,7 +218,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
                 }
             }
             return executeAdhocAction({
-                projectId,
+                projectId: resolvedProjectId,
                 pieceName,
                 actionName,
                 input: parsedInput as Record<string, unknown> | undefined,
