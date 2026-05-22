@@ -42,7 +42,7 @@ export const webSearchAction = createAction({
     if (propsValue['freshness']) {
       body['freshness'] = propsValue['freshness'];
     }
-    if (propsValue['summary']) {
+    if (propsValue['summary'] !== undefined && propsValue['summary'] !== null) {
       body['summary'] = propsValue['summary'];
     }
     if (propsValue['include']) {
