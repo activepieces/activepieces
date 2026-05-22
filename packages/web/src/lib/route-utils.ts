@@ -10,6 +10,7 @@ export const routesThatRequireProjectId = {
   automations: '/automations',
   connections: '/connections',
   singleConnection: '/connections/:connectionId',
+  variables: '/variables',
   tables: '/tables',
   singleTable: '/tables/:tableId',
   settings: '/settings',
@@ -22,9 +23,6 @@ export const determineDefaultRoute = (
 ) => {
   if (checkAccess(Permission.READ_FLOW) || checkAccess(Permission.READ_TABLE)) {
     return authenticationSession.appendProjectRoutePrefix('/automations');
-  }
-  if (checkAccess(Permission.READ_CHAT)) {
-    return '/chat';
   }
   if (checkAccess(Permission.READ_RUN)) {
     return authenticationSession.appendProjectRoutePrefix('/runs');

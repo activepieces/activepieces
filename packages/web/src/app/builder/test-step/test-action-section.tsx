@@ -6,45 +6,25 @@ import {
   isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import React, { useContext, useState } from 'react';
+import { FlaskConical, Play } from 'lucide-react';
+import React, { useContext } from 'react';
 
-import { Dot } from '@/components/custom/dot';
 import { Button } from '@/components/ui/button';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
 
-import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
+import { TestPanelHeader } from './test-panel-header';
+import { TestPanelViewToggle } from './test-panel-view-toggle';
+import { useActionTestRunner } from './test-runner-context';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
 import { TestButtonTooltip } from './test-step-tooltip';
-import { testStepHooks } from './utils/test-step-hooks';
-type TestActionComponentProps = {
-  isSaving: boolean;
-  flowVersionId: string;
-  projectId: string;
-};
-
-enum DialogType {
-  NONE = 'NONE',
-  WEBHOOK = 'WEBHOOK',
-}
-
-const isReturnResponseAndWaitForWebhook = (step: FlowAction) => {
-  return (
-    step.type === FlowActionType.PIECE &&
-    step.settings.pieceName === '@activepieces/piece-webhook' &&
-    step.settings.actionName === 'return_response_and_wait_for_next_webhook'
-  );
-};
 
 const TestStepSectionImplementation = React.memo(
   ({
     isSaving,
     currentStep,
   }: TestActionComponentProps & { currentStep: FlowAction }) => {
-    const [activeDialog, setActiveDialog] = useState<DialogType>(
-      DialogType.NONE,
-    );
     const [
       sampleData,
       sampleDataInput,
@@ -67,10 +47,8 @@ const TestStepSectionImplementation = React.memo(
       ];
     });
 
-    const { mutate: testAction, isPending: isWatingTestResult } =
-      testStepHooks.useTestAction({
-        currentStep,
-      });
+    const runner = useActionTestRunner();
+    const onTestButtonClick = () => runner?.fireTest();
 
     const lastTestDate = currentStep.settings.sampleData?.lastTestDate;
 
@@ -78,47 +56,50 @@ const TestStepSectionImplementation = React.memo(
       !isNil(lastTestDate) ||
       !isNil(errorMessage) ||
       isStepBeingTested(currentStep.name);
-    const onTestButtonClick = async () => {
-      if (isReturnResponseAndWaitForWebhook(currentStep)) {
-        setActiveDialog(DialogType.WEBHOOK);
-      } else {
-        testAction(undefined);
-      }
-    };
 
-    const handleCloseDialog = () => {
-      setActiveDialog(DialogType.NONE);
-    };
-
-    const isTesting =
-      activeDialog !== DialogType.NONE ||
-      isWatingTestResult ||
-      isStepBeingTested(currentStep.name);
+    const isTesting = runner?.isTesting ?? false;
     const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
 
     return (
       <>
         {!sampleDataExists && !isTesting && (
-          <div className="grow flex justify-center items-center w-full h-full">
-            <TestButtonTooltip saving={isSaving} invalid={!currentStep.valid}>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onTestButtonClick}
-                keyboardShortcut="G"
-                onKeyboardShortcut={onTestButtonClick}
-                loading={isTesting || isSaving}
-                disabled={!currentStep.valid || isLoadingDynamicProperties}
-              >
-                <Dot animation={true} variant={'primary'}></Dot>
-                {t('Test Step')}
-              </Button>
-            </TestButtonTooltip>
+          <div className="flex flex-col h-full">
+            <TestPanelHeader status="idle" />
+            <div className="flex justify-end px-3 py-2 shrink-0">
+              <TestPanelViewToggle />
+            </div>
+            <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
+              <div className="flex items-center justify-center size-12 rounded-full bg-primary/10 text-primary">
+                <FlaskConical className="size-6" />
+              </div>
+              <div className="flex flex-col gap-1.5 max-w-[280px]">
+                <span className="text-sm font-medium text-foreground">
+                  {t('No sample data yet')}
+                </span>
+                <span className="text-xs text-muted-foreground leading-relaxed">
+                  {t(
+                    'Run this step to capture sample data. You can then use the result in following steps.',
+                  )}
+                </span>
+              </div>
+              <TestButtonTooltip saving={isSaving} invalid={!currentStep.valid}>
+                <Button
+                  size="sm"
+                  onClick={onTestButtonClick}
+                  loading={isTesting || isSaving}
+                  disabled={!currentStep.valid || isLoadingDynamicProperties}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  <Play className="size-3.5 fill-current" />
+                  {t('Test Step')}
+                </Button>
+              </TestButtonTooltip>
+            </div>
           </div>
         )}
         {(sampleDataExists || isTesting) && (
           <TestSampleDataViewer
-            isValid={currentStep.valid || isLoadingDynamicProperties}
+            isValid={currentStep.valid && !isLoadingDynamicProperties}
             currentStep={currentStep}
             isTesting={isTesting}
             sampleData={sampleData}
@@ -133,14 +114,6 @@ const TestStepSectionImplementation = React.memo(
               revertSampleDataLocally?.();
             }}
           ></TestSampleDataViewer>
-        )}
-        {activeDialog === DialogType.WEBHOOK && (
-          <TestWebhookDialog
-            testingMode="returnResponseAndWaitForNextWebhook"
-            open={true}
-            onOpenChange={(open) => !open && handleCloseDialog()}
-            currentStep={currentStep}
-          />
         )}
       </>
     );
@@ -165,5 +138,11 @@ const TestActionSection = React.memo((props: TestActionComponentProps) => {
 
 TestStepSectionImplementation.displayName = 'TestStepSectionImplementation';
 TestActionSection.displayName = 'TestActionSection';
+
+type TestActionComponentProps = {
+  isSaving: boolean;
+  flowVersionId: string;
+  projectId: string;
+};
 
 export { TestActionSection };
