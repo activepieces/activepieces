@@ -247,8 +247,14 @@ function selectShouldShowPlan({
   const progress = selectPlanProgress({ state, lastAssistantMessage });
   if (progress === null) return false;
 
-  const planWasExecuted =
-    selectEffectivePlanUpdates({ state }).length > 0;
+  const hasLiveUpdates = selectEffectivePlanUpdates({ state }).length > 0;
+  const planToolWasCompleted = lastAssistantMessage?.parts.some(
+    (p) =>
+      chatPartUtils.isAnyToolPart(p) &&
+      chatPartUtils.getToolPartName(p) === 'ap_request_plan_approval' &&
+      p.state === 'output-available',
+  ) ?? false;
+  const planWasExecuted = hasLiveUpdates || planToolWasCompleted;
 
   if (!isLastAssistant) {
     return !isStreaming && planWasExecuted;

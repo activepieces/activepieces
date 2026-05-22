@@ -100,9 +100,11 @@ function withApprovalGates({ mcpToolSet, writer, log, isApproved, waitForApprova
                 const approved = await waitForApproval(gateId)
 
                 if (!approved) {
+                    log.info({ gateId, toolName: name }, 'Tool approval rejected or timed out')
                     return { content: [{ type: 'text', text: 'Action cancelled by user.' }] }
                 }
 
+                log.info({ gateId, toolName: name }, 'Tool approval granted')
                 return originalExecute(args)
             },
         })
