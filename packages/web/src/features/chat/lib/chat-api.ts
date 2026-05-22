@@ -1,9 +1,9 @@
 import {
   type ChatHistoryMessage,
+  type PersistedChatMessage,
   ChatConversation,
   CreateChatConversationRequest,
   SeekPage,
-  SetProjectContextRequest,
   UpdateChatConversationRequest,
 } from '@activepieces/shared';
 
@@ -34,8 +34,8 @@ async function getConversation(id: string): Promise<ChatConversation> {
 
 async function getMessages(
   conversationId: string,
-): Promise<{ data: ChatHistoryMessage[] }> {
-  return api.get<{ data: ChatHistoryMessage[] }>(
+): Promise<{ data: PersistedChatMessage[] | ChatHistoryMessage[] }> {
+  return api.get<{ data: PersistedChatMessage[] | ChatHistoryMessage[] }>(
     `/v1/chat/conversations/${conversationId}/messages`,
   );
 }
@@ -51,16 +51,6 @@ async function deleteConversation(id: string): Promise<void> {
   return api.delete<void>(`/v1/chat/conversations/${id}`);
 }
 
-async function setProjectContext(
-  conversationId: string,
-  request: SetProjectContextRequest,
-): Promise<ChatConversation> {
-  return api.post<ChatConversation>(
-    `/v1/chat/conversations/${conversationId}/project-context`,
-    request,
-  );
-}
-
 export const chatApi = {
   createConversation,
   listConversations,
@@ -68,5 +58,4 @@ export const chatApi = {
   getMessages,
   updateConversation,
   deleteConversation,
-  setProjectContext,
 };

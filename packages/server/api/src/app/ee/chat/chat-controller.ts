@@ -3,7 +3,6 @@ import {
     PrincipalType,
     SendChatMessageRequest,
     SERVICE_KEY_SECURITY_OPENAPI,
-    SetProjectContextRequest,
     UpdateChatConversationRequest,
 } from '@activepieces/shared'
 import { pipeUIMessageStreamToResponse } from 'ai'
@@ -118,14 +117,6 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         return reply.status(StatusCodes.OK).send({ success: true })
     })
 
-    app.post('/conversations/:id/project-context', SetProjectContextRoute, async (request) => {
-        return chatService(request.log).setProjectContext({
-            id: request.params.id,
-            platformId: request.principal.platform.id,
-            userId: request.principal.id,
-            projectId: request.body.projectId ?? null,
-        })
-    })
 }
 
 const CreateConversationRoute = {
@@ -224,14 +215,3 @@ const ToolApprovalRoute = {
     },
 }
 
-const SetProjectContextRoute = {
-    config: {
-        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
-    },
-    schema: {
-        tags: ['chat'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        params: CONVERSATION_PARAMS,
-        body: SetProjectContextRequest,
-    },
-}
