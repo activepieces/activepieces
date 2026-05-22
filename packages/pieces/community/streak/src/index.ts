@@ -1,7 +1,7 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import { streakAuth } from './auth';
+import { streakAuth } from './lib/common/auth';
 import { createBoxAction } from './lib/actions/create-box';
 import { createCommentAction } from './lib/actions/create-comment';
 import { createContactAction } from './lib/actions/create-contact';
@@ -25,8 +25,6 @@ import { taskDueTrigger } from './lib/triggers/task-due';
 import { updatedBoxTrigger } from './lib/triggers/updated-box';
 import { updatedContactTrigger } from './lib/triggers/updated-contact';
 
-export { streakAuth };
-
 export const streak = createPiece({
   displayName: 'Streak',
   description:
@@ -35,7 +33,7 @@ export const streak = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/streak.png',
   categories: [PieceCategory.SALES_AND_CRM],
-  authors: ['activepieces'],
+  authors: ['sanket-a11y'],
   actions: [
     createBoxAction,
     updateBoxAction,
@@ -51,7 +49,7 @@ export const streak = createPiece({
       baseUrl: () => STREAK_BASE_URL,
       auth: streakAuth,
       authMapping: async (auth) => ({
-        Authorization: `Basic ${Buffer.from(`${auth as unknown as string}:`).toString('base64')}`,
+        Authorization: `Basic ${Buffer.from(`${auth.secret_text}:`).toString('base64')}`,
       }),
     }),
   ],

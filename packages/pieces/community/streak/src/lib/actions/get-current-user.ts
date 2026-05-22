@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
-import { streakAuth } from '../../auth';
+import { streakAuth } from '../common/auth';
 import { streakApiCall } from '../common/client';
 import { StreakUser } from '../common/types';
 
@@ -12,7 +12,7 @@ export const getCurrentUserAction = createAction({
   props: {},
   async run(context) {
     const response = await streakApiCall<StreakUser>({
-      apiKey: context.auth as unknown as string,
+      apiKey: context.auth.secret_text,
       method: HttpMethod.GET,
       path: '/api/v1/users/me',
     });

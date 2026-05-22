@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { streakAuth } from '../../auth';
+import { streakAuth } from '../common/auth';
 import { streakApiCall } from '../common/client';
 import { boxDropdown, pipelineDropdown } from '../common/props';
 
@@ -29,7 +29,7 @@ export const createCommentAction = createAction({
   async run(context) {
     const { boxKey, message } = context.propsValue;
     const response = await streakApiCall<StreakComment>({
-      apiKey: context.auth as unknown as string,
+      apiKey: context.auth.secret_text,
       method: HttpMethod.POST,
       path: `/api/v2/boxes/${boxKey}/comments`,
       contentType: 'application/json',

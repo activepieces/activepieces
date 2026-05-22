@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { streakAuth } from '../../auth';
+import { streakAuth } from '../common/auth';
 import { streakApiCall } from '../common/client';
 import { pipelineDropdown } from '../common/props';
 import { StreakStage } from '../common/types';
@@ -21,7 +21,7 @@ export const createStageAction = createAction({
   },
   async run(context) {
     const response = await streakApiCall<StreakStage>({
-      apiKey: context.auth as unknown as string,
+      apiKey: context.auth.secret_text,
       method: HttpMethod.PUT,
       path: `/api/v1/pipelines/${context.propsValue.pipelineKey}/stages`,
       contentType: 'application/x-www-form-urlencoded',

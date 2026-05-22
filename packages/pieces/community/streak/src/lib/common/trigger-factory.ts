@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { streakAuth } from '../../auth';
+import { streakAuth } from './auth';
 import { pipelineDropdown, teamDropdown } from './props';
 import {
   createPipelineWebhook,
@@ -34,7 +34,7 @@ export function createPipelineWebhookTrigger({
     sampleData,
     async onEnable(context) {
       const webhook = await createPipelineWebhook({
-        apiKey: context.auth as unknown as string,
+        apiKey: context.auth.secret_text,
         pipelineKey: context.propsValue.pipelineKey as string,
         event,
         targetUrl: context.webhookUrl,
@@ -45,14 +45,14 @@ export function createPipelineWebhookTrigger({
       const stored = await context.store.get<StoredWebhook>(STORE_KEY);
       if (stored?.webhookKey) {
         await deleteWebhook({
-          apiKey: context.auth as unknown as string,
+          apiKey: context.auth.secret_text,
           webhookKey: stored.webhookKey,
         });
       }
     },
     async run(context) {
-      const body = context.payload.body as Record<string, unknown> | unknown[];
-      return Array.isArray(body) ? body : [body];
+      const body = context.payload.body as any
+      return [body];
     },
   });
 }
@@ -99,8 +99,8 @@ export function createTeamWebhookTrigger({
       }
     },
     async run(context) {
-      const body = context.payload.body as Record<string, unknown> | unknown[];
-      return Array.isArray(body) ? body : [body];
+      const body = context.payload.body as any;
+      return [body];
     },
   });
 }

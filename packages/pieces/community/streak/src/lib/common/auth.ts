@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth } from '@activepieces/pieces-framework';
-import { streakApiCall } from './lib/common/client';
+import { streakApiCall } from './client';
 
 export const streakAuth = PieceAuth.SecretText({
   displayName: 'API Key',

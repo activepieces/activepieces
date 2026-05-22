@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { streakAuth } from '../../auth';
+import { streakAuth } from '../common/auth';
 import { streakApiCall } from '../common/client';
 import { pipelineDropdown } from '../common/props';
 import { StreakSearchResponse } from '../common/types';
@@ -23,13 +23,13 @@ export const findBoxAction = createAction({
   async run(context) {
     const { query, pipelineKey } = context.propsValue;
 
-    const queryParams: Record<string, string> = { query };
+    const queryParams: any = { query };
     if (pipelineKey) {
       queryParams['pipelineKey'] = pipelineKey;
     }
 
     const response = await streakApiCall<StreakSearchResponse>({
-      apiKey: context.auth as unknown as string,
+      apiKey: context.auth.secret_text,
       method: HttpMethod.GET,
       path: '/api/v1/search',
       queryParams,

@@ -7,10 +7,13 @@ import {
   StreakStage,
   StreakTeamsResponse,
 } from './types';
+import { streakAuth } from './auth';
 
 export const pipelineDropdown = Property.Dropdown({
+  auth: streakAuth,
   displayName: 'Pipeline',
-  description: 'The pipeline to use. Pipelines are your workflows in Streak (e.g. Sales CRM, Hiring, Project Tracker).',
+  description:
+    'The pipeline to use. Pipelines are your workflows in Streak (e.g. Sales CRM, Hiring, Project Tracker).',
   required: true,
   refreshers: [],
   options: async ({ auth }) => {
@@ -23,7 +26,7 @@ export const pipelineDropdown = Property.Dropdown({
     }
     try {
       const response = await streakApiCall<StreakPipeline[]>({
-        apiKey: auth as string,
+        apiKey: auth.secret_text as string,
         method: HttpMethod.GET,
         path: '/api/v1/pipelines',
       });
@@ -45,8 +48,10 @@ export const pipelineDropdown = Property.Dropdown({
 });
 
 export const stageDropdown = Property.Dropdown({
+  auth: streakAuth,
   displayName: 'Stage',
-  description: 'The stage that the box should be in. Stages are the columns of a pipeline (e.g. Lead, Negotiating, Closed Won).',
+  description:
+    'The stage that the box should be in. Stages are the columns of a pipeline (e.g. Lead, Negotiating, Closed Won).',
   required: false,
   refreshers: ['pipelineKey'],
   options: async ({ auth, pipelineKey }) => {
@@ -66,7 +71,7 @@ export const stageDropdown = Property.Dropdown({
     }
     try {
       const response = await streakApiCall<Record<string, StreakStage>>({
-        apiKey: auth as string,
+        apiKey: auth.secret_text as string,
         method: HttpMethod.GET,
         path: `/api/v1/pipelines/${pipelineKey}/stages`,
       });
@@ -86,6 +91,7 @@ export const stageDropdown = Property.Dropdown({
 });
 
 export const boxDropdown = Property.Dropdown({
+  auth: streakAuth,
   displayName: 'Box',
   description: 'The box (record) inside the selected pipeline to operate on.',
   required: true,
@@ -107,7 +113,7 @@ export const boxDropdown = Property.Dropdown({
     }
     try {
       const response = await streakApiCall<StreakBox[]>({
-        apiKey: auth as string,
+        apiKey: auth.secret_text as string,
         method: HttpMethod.GET,
         path: `/api/v1/pipelines/${pipelineKey}/boxes`,
         queryParams: {
@@ -133,8 +139,10 @@ export const boxDropdown = Property.Dropdown({
 });
 
 export const teamDropdown = Property.Dropdown({
+  auth: streakAuth,
   displayName: 'Team',
-  description: 'The Streak team that owns this contact or organization. Contacts and organizations are shared at the team level.',
+  description:
+    'The Streak team that owns this contact or organization. Contacts and organizations are shared at the team level.',
   required: true,
   refreshers: [],
   options: async ({ auth }) => {
@@ -147,7 +155,7 @@ export const teamDropdown = Property.Dropdown({
     }
     try {
       const response = await streakApiCall<StreakTeamsResponse>({
-        apiKey: auth as string,
+        apiKey: auth.secret_text as string,
         method: HttpMethod.GET,
         path: '/api/v2/users/me/teams',
       });

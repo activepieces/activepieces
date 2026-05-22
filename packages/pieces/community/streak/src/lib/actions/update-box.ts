@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { streakAuth } from '../../auth';
+import { streakAuth } from '../common/auth';
 import { streakApiCall } from '../common/client';
 import { flattenStreakBox } from '../common/flatten';
 import { boxDropdown, pipelineDropdown, stageDropdown } from '../common/props';
@@ -57,7 +57,7 @@ export const updateBoxAction = createAction({
     }
 
     const response = await streakApiCall<StreakBox>({
-      apiKey: context.auth as unknown as string,
+      apiKey: context.auth.secret_text,
       method: HttpMethod.POST,
       path: `/api/v1/boxes/${boxKey}`,
       contentType: 'application/json',

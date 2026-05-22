@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { streakAuth } from '../../auth';
+import { streakAuth } from '../common/auth';
 import { streakApiCall } from '../common/client';
 import { teamDropdown } from '../common/props';
 
@@ -96,9 +96,9 @@ export const createContactAction = createAction({
     if (other) body['other'] = other;
 
     const response = await streakApiCall<StreakContact>({
-      apiKey: context.auth as unknown as string,
+      apiKey: context.auth.secret_text,
       method: HttpMethod.POST,
-      path: `/api/v2/teams/${teamKey}/contacts/`,
+      path: `/api/v2/teams/${teamKey}/contacts`,
       queryParams: { getIfExisting: 'true' },
       contentType: 'application/json',
       body,
