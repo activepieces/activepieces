@@ -9,7 +9,7 @@ export class AddStatusToChatConversation1779500000000 implements Migration {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            ALTER TABLE "chat_conversation" ADD COLUMN IF NOT EXISTS "status" varchar(20) NOT NULL DEFAULT 'IDLE'
+            ALTER TABLE "chat_conversation" ADD COLUMN IF NOT EXISTS "status" character varying NOT NULL DEFAULT 'IDLE'
         `)
     }
 
