@@ -179,7 +179,7 @@ function createCrossProjectTools({ executeTool }: {
     }
 }
 
-function createPlanApprovalTool({ writer, onPlanApproved, waitForApproval }: {
+function createPlanTools({ writer, onPlanApproved, waitForApproval }: {
     writer: ChatStreamWriter
     onPlanApproved: () => void
     waitForApproval: (gateId: string) => Promise<boolean>
@@ -201,9 +201,25 @@ function createPlanApprovalTool({ writer, onPlanApproved, waitForApproval }: {
                 const approved = await waitForApproval(gateId)
                 if (approved) {
                     onPlanApproved()
-                    return { success: true, message: 'Plan approved by the user. Execute each step in order now.' }
+                    return { success: true, message: 'Plan approved by the user. Execute each step in order now. Call ap_update_plan to update step statuses as you work.' }
                 }
                 return { success: false, message: 'Plan rejected by user. Do not proceed.' }
+            },
+        }),
+
+        ap_update_plan: tool({
+            description: 'Update the status of plan steps. Call this before starting each step (status: executing) and after completing it (status: done or error).',
+            inputSchema: z.object({
+                updates: z.array(z.object({
+                    stepIndex: z.number().describe('Zero-based index of the step in the plan'),
+                    status: z.enum(['pending', 'executing', 'done', 'error']).describe('New status for this step'),
+                })).min(1),
+            }),
+            execute: async (input) => {
+                for (const update of input.updates) {
+                    writer.write({ type: 'data-plan-progress', data: update, transient: true })
+                }
+                return { success: true }
             },
         }),
     }
@@ -214,5 +230,5 @@ export const chatWorkerTools = {
     createDisplayTools,
     createLocalTools,
     createCrossProjectTools,
-    createPlanApprovalTool,
+    createPlanTools,
 }

@@ -174,7 +174,6 @@ export const AssistantMessage = memo(function AssistantMessage({
                   <InlinePlanCard
                     key={`plan-${i}`}
                     planPart={part.part}
-                    message={message}
                     lastAssistantMessage={lastAssistantMessage}
                     isStreaming={isStreaming}
                   />
@@ -237,12 +236,10 @@ export const AssistantMessage = memo(function AssistantMessage({
 
 function InlinePlanCard({
   planPart,
-  message,
   lastAssistantMessage,
   isStreaming,
 }: {
   planPart: AnyToolPart;
-  message: ChatUIMessage;
   lastAssistantMessage?: ChatUIMessage;
   isStreaming: boolean;
 }) {
@@ -250,7 +247,7 @@ function InlinePlanCard({
     chatStoreSelectors.planProgress({ state: s, lastAssistantMessage }),
   );
   const storePlanUpdates = useChatStoreContext((s) =>
-    chatStoreSelectors.effectivePlanUpdates({ state: s, lastAssistantMessage }),
+    chatStoreSelectors.effectivePlanUpdates({ state: s }),
   );
 
   const localPlan = (() => {
@@ -286,18 +283,8 @@ function InlinePlanCard({
         (_stepText, i): PlanStepUpdate => ({ stepIndex: i, status: 'done' }),
       );
     }
-    if (storePlanUpdates.length > 0) return storePlanUpdates;
-    const toolParts = message.parts.filter((p): p is AnyToolPart =>
-      chatPartUtils.isAnyToolPart(p),
-    );
-    if (toolParts.length === 0) return [];
-    return progress.steps.map(
-      (stepText, i): PlanStepUpdate => ({
-        stepIndex: i,
-        status: chatStoreSelectors.deriveStepStatus({ stepText, toolParts }),
-      }),
-    );
-  }, [storePlanUpdates, progress, message.parts, planCompleted]);
+    return storePlanUpdates;
+  }, [storePlanUpdates, progress, planCompleted]);
 
   if (!progress) return null;
 

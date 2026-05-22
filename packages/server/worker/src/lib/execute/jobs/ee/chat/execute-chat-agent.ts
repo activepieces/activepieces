@@ -13,7 +13,7 @@ import {
 } from '@activepieces/shared'
 import { createUIMessageStream, ModelMessage, stepCountIs, streamText } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
-import { chatMcpClient, PlanExecution } from './chat-mcp-client'
+import { chatMcpClient } from './chat-mcp-client'
 import { chatWorkerTools } from './chat-worker-tools'
 
 const MAX_STEPS = 30
@@ -49,7 +49,6 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
 
         try {
             const planApproved = { approved: false }
-            const planStepCounter = { current: 0 }
             let pendingTitle = ''
 
             const waitForApproval = async (gateId: string): Promise<boolean> => {
@@ -75,24 +74,6 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 await ctx.apiClient.updateProjectContext({ conversationId, projectId })
             }
 
-            const planExecution: PlanExecution = {
-                isApproved: () => planApproved.approved,
-                async trackStep({ execute }) {
-                    const stepIndex = planStepCounter.current
-                    writer.write({ type: 'data-plan-progress', data: { stepIndex, status: 'executing' }, transient: true })
-                    try {
-                        const result = await execute()
-                        writer.write({ type: 'data-plan-progress', data: { stepIndex, status: 'done' }, transient: true })
-                        planStepCounter.current++
-                        return result
-                    }
-                    catch (err) {
-                        writer.write({ type: 'data-plan-progress', data: { stepIndex, status: 'error' }, transient: true })
-                        throw err
-                    }
-                },
-            }
-
             const displayTools = chatWorkerTools.createDisplayTools({ writer })
             const localTools = chatWorkerTools.createLocalTools({
                 writer,
@@ -102,7 +83,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 onSetProjectContext,
                 projects: config.projects,
             })
-            const planApprovalTool = chatWorkerTools.createPlanApprovalTool({
+            const planTools = chatWorkerTools.createPlanTools({
                 writer,
                 onPlanApproved: () => {
                     planApproved.approved = true
@@ -121,9 +102,9 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 },
             })
             const gatedMcpTools = chatMcpClient.withApprovalGates({
-                mcpToolSet, writer, log, planExecution, waitForApproval,
+                mcpToolSet, writer, log, isApproved: () => planApproved.approved, waitForApproval,
             })
-            const allTools = { ...localTools, ...displayTools, ...crossProjectTools, ...planApprovalTool, ...(gatedMcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
+            const allTools = { ...localTools, ...displayTools, ...crossProjectTools, ...planTools, ...(gatedMcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
 
             const sanitizedMessages = chatAiUtils.stripThinkingBlocks(config.messages as ModelMessage[])
             const systemPrompt = chatAiUtils.buildSystemPromptWithCaching({
