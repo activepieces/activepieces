@@ -106,7 +106,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             })
             const allTools = { ...localTools, ...displayTools, ...crossProjectTools, ...planTools, ...(gatedMcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
 
-            const sanitizedMessages = chatAiUtils.stripThinkingBlocks(config.messages as ModelMessage[])
+            const sanitizedMessages = chatAiUtils.stripThinkingBlocks(config.messages as ModelMessage[], config.provider as AIProviderName)
             const systemPrompt = chatAiUtils.buildSystemPromptWithCaching({
                 systemPrompt: config.systemPrompt,
                 provider: config.provider as AIProviderName,
