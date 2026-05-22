@@ -82,7 +82,7 @@ export function createTeamWebhookTrigger({
     sampleData,
     async onEnable(context) {
       const webhook = await createTeamWebhook({
-        apiKey: context.auth as unknown as string,
+        apiKey: context.auth.secret_text,
         teamKey: context.propsValue.teamKey as string,
         event,
         targetUrl: context.webhookUrl,
@@ -93,7 +93,7 @@ export function createTeamWebhookTrigger({
       const stored = await context.store.get<StoredWebhook>(STORE_KEY);
       if (stored?.webhookKey) {
         await deleteWebhook({
-          apiKey: context.auth as unknown as string,
+          apiKey: context.auth.secret_text,
           webhookKey: stored.webhookKey,
         });
       }
