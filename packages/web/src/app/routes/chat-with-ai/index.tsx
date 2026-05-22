@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { chatApi } from '@/features/chat/lib/chat-api';
 
 import { AIChatBox } from './ai-chat-box';
+import { TypewriterText } from './components/typewriter-text';
 import { ConversationList } from './conversation-list';
 
 export function ChatWithAIPage() {
@@ -187,9 +188,10 @@ export function ChatWithAIPage() {
             />
           ) : (
             <>
-              <span className="text-sm font-semibold truncate max-w-[400px]">
-                {displayTitle}
-              </span>
+              <TypewriterText
+                text={displayTitle}
+                className="text-sm font-semibold truncate max-w-[400px]"
+              />
               {activeConversationId && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
