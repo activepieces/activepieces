@@ -1,17 +1,20 @@
 import {
+  ChatAgentEventType,
   ChatAllowedMimeType,
+  ChatConversationStatus,
   CHAT_ALLOWED_MIME_TYPES,
   DEFAULT_CHAT_TIER_ID,
   isObject,
   PlanStepUpdate,
   tryCatch,
+  WebsocketClientEvent,
 } from '@activepieces/shared';
 import { useChat } from '@ai-sdk/react';
-import { DefaultChatTransport } from 'ai';
+import { useQuery } from '@tanstack/react-query';
+import { ChatTransport, UIMessage, UIMessageChunk } from 'ai';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
-import { API_URL } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
+import { useSocket } from '@/components/providers/socket-provider';
 
 import { chatApi } from './chat-api';
 import { useChatStoreApi } from './chat-store-context';
@@ -19,6 +22,8 @@ import { ChatUIMessage } from './chat-types';
 import { chatUtils } from './chat-utils';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const STREAM_TIMEOUT_MS = 10 * 60 * 1000;
+const AGENT_POLL_INTERVAL_MS = 5_000;
 
 const ALLOWED_MIME_SET: ReadonlySet<string> = new Set(CHAT_ALLOWED_MIME_TYPES);
 
@@ -98,6 +103,105 @@ const DISPLAY_CARD_DATA_TYPES = new Set([
   'data-questions',
 ]);
 
+type SocketEvent = {
+  conversationId: string;
+  type: string;
+  data: unknown;
+};
+
+function createSocketChatTransport({
+  socket,
+  getConversationId,
+  getFiles,
+}: {
+  socket: ReturnType<typeof useSocket>;
+  getConversationId: () => string | null;
+  getFiles: () =>
+    | Array<{ name: string; mimeType: ChatAllowedMimeType; data: string }>
+    | undefined;
+}): ChatTransport<UIMessage> {
+  return {
+    async sendMessages({ messages, abortSignal }) {
+      const conversationId = getConversationId();
+      if (!conversationId) {
+        throw new Error('No conversation ID');
+      }
+
+      const lastUser = messages.findLast((m) => m.role === 'user');
+      const content =
+        lastUser?.parts
+          .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+          .map((p) => p.text)
+          .join('') ?? '';
+
+      const files = getFiles();
+
+      let cleanupFn: () => void = () => {};
+      const stream = new ReadableStream<UIMessageChunk>({
+        start(controller) {
+          const closeStream = () => {
+            cleanupFn();
+            try {
+              controller.close();
+            } catch {
+              // stream may already be closed
+            }
+          };
+
+          const timeout = setTimeout(closeStream, STREAM_TIMEOUT_MS);
+
+          const handler = (event: SocketEvent) => {
+            if (event.conversationId !== conversationId) return;
+            if (event.type === ChatAgentEventType.CHUNK) {
+              const chunks = Array.isArray(event.data)
+                ? event.data
+                : [event.data];
+              for (const chunk of chunks) {
+                controller.enqueue(chunk as UIMessageChunk);
+              }
+            } else if (event.type === ChatAgentEventType.ERROR) {
+              const errorData = event.data as { message?: string };
+              controller.enqueue({
+                type: 'error',
+                errorText: errorData?.message ?? 'An error occurred',
+              } as UIMessageChunk);
+            } else if (event.type === ChatAgentEventType.FINISHED) {
+              closeStream();
+            }
+          };
+
+          cleanupFn = () => {
+            clearTimeout(timeout);
+            socket.off(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
+          };
+
+          socket.on(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
+        },
+        cancel() {
+          cleanupFn();
+        },
+      });
+
+      abortSignal?.addEventListener('abort', () => cleanupFn(), {
+        once: true,
+      });
+
+      try {
+        await chatApi.sendMessage({ conversationId, content, files });
+      } catch (err) {
+        cleanupFn();
+        throw err;
+      }
+
+      return stream;
+    },
+
+    async reconnectToStream() {
+      return null;
+    },
+  };
+}
+
 type SendStatus =
   | { type: 'idle' }
   | { type: 'submitting' }
@@ -120,6 +224,7 @@ export function useAgentChat({
     DEFAULT_CHAT_TIER_ID,
   );
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [isPollingForAgentReply, setIsPollingForAgentReply] = useState(false);
   const [sendStatus, setSendStatus] = useState<SendStatus>({ type: 'idle' });
   const sendStatusRef = useRef<SendStatus>({ type: 'idle' });
 
@@ -213,35 +318,15 @@ export function useAgentChat({
     setSendStatus(next);
   }, []);
 
+  const socket = useSocket();
+
   const transport = useMemo(() => {
-    return new DefaultChatTransport({
-      api: '/api/placeholder',
-      prepareSendMessagesRequest: ({ messages: msgs }) => {
-        const lastUser = msgs.findLast((m) => m.role === 'user');
-        const lastUserText =
-          lastUser?.parts
-            .filter(
-              (p): p is { type: 'text'; text: string } => p.type === 'text',
-            )
-            .map((p) => p.text)
-            .join('') ?? '';
-
-        const token = authenticationSession.getToken();
-        const convId = conversationIdRef.current;
-
-        return {
-          api: `${API_URL}/v1/chat/conversations/${convId}/messages`,
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: {
-            content: lastUserText,
-            files: pendingFilesRef.current,
-          },
-        };
-      },
+    return createSocketChatTransport({
+      socket,
+      getConversationId: () => conversationIdRef.current,
+      getFiles: () => pendingFilesRef.current,
     });
-  }, []);
+  }, [socket]);
 
   const {
     messages: uiMessages,
@@ -300,7 +385,9 @@ export function useAgentChat({
 
   const sdkIsActive = status === 'streaming' || status === 'submitted';
   const isStreaming =
-    sdkIsActive || sendStatusRef.current.type === 'submitting';
+    sdkIsActive ||
+    sendStatusRef.current.type === 'submitting' ||
+    isPollingForAgentReply;
 
   const messages: ChatUIMessage[] = useMemo(() => {
     return injectFilePartsIntoLastUserMessage({
@@ -435,6 +522,7 @@ export function useAgentChat({
   const setConversationId = useCallback(
     async (id: string) => {
       void stop();
+      setIsPollingForAgentReply(false);
       updateSendStatus({ type: 'idle' });
       conversationIdRef.current = id;
       setConversationIdState(id);
@@ -469,11 +557,46 @@ export function useAgentChat({
       if (convResult.data) {
         modelNameRef.current = convResult.data.modelName ?? null;
         setModelNameState(convResult.data.modelName ?? null);
+        if (convResult.data.status === ChatConversationStatus.STREAMING) {
+          setIsPollingForAgentReply(true);
+        }
       }
       setIsLoadingHistory(false);
     },
     [stop, setUiMessages, updateSendStatus, store],
   );
+
+  useQuery({
+    queryKey: ['chat-agent-poll', conversationId],
+    queryFn: async () => {
+      if (!conversationId) return null;
+      const [messagesResult, convResult] = await Promise.all([
+        chatApi.getMessages(conversationId),
+        chatApi.getConversation(conversationId),
+      ]);
+      const mapped = chatUtils.mapHistoryToUIMessages(messagesResult.data);
+      const currentMessages = uiMessages as ChatUIMessage[];
+      const hasChanged =
+        mapped.length !== currentMessages.length ||
+        mapped.some(
+          (m, i) => m.parts.length !== currentMessages[i]?.parts.length,
+        );
+      if (hasChanged) {
+        setUiMessages(mapped);
+        const restoredReplies =
+          chatUtils.extractQuickRepliesFromHistory(mapped);
+        if (restoredReplies.length > 0) {
+          store.setState({ quickReplies: restoredReplies });
+        }
+      }
+      if (convResult.status !== ChatConversationStatus.STREAMING) {
+        setIsPollingForAgentReply(false);
+      }
+      return mapped;
+    },
+    enabled: isPollingForAgentReply && !sdkIsActive,
+    refetchInterval: AGENT_POLL_INTERVAL_MS,
+  });
 
   const setModelName = useCallback(async (newModelName: string) => {
     modelNameRef.current = newModelName;
