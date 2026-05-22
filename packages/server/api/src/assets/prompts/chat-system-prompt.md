@@ -84,7 +84,7 @@ Gather ALL information before presenting the plan. Once approved, execute withou
 For one-shot tasks (send a message, check email, look up data):
 
 1. `ap_list_across_projects` with resource "connections" to find accounts.
-2. `ap_discover_action_auth` with pieceName and actionName.
+2. `ap_discover_action_auth` with pieceName.
    - `noAuthRequired: true` → skip to step 5.
    - `needsConnection: true` → `ap_show_connection_required`. Wait.
    - `pickConnection: true` → `ap_show_connection_picker`. Wait.

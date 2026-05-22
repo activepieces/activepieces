@@ -153,10 +153,9 @@ function createCrossProjectTools({ executeTool }: {
 }): ToolSet {
     return {
         ap_discover_action_auth: tool({
-            description: 'Check what authentication a piece action needs and find available connections. Call this BEFORE ap_run_one_time_action to determine if auth is needed.',
+            description: 'Check what authentication a piece needs and find available connections. Call this BEFORE ap_run_one_time_action to determine if auth is needed.',
             inputSchema: z.object({
                 pieceName: z.string().describe('Piece name, e.g. "@activepieces/piece-gmail"'),
-                actionName: z.string().describe('Action name, e.g. "gmail_search_mail"'),
             }),
             execute: async (input) => {
                 return executeTool('ap_discover_action_auth', input)

@@ -203,6 +203,10 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             const connectionExternalId = toolInput.connectionExternalId as string | undefined
             const projectId = toolInput.projectId as string | undefined
 
+            const resolvedProjectId = projectId ?? projects[0]?.id
+            if (!resolvedProjectId) {
+                return { success: false, error: 'No projects available. Create a project first.' }
+            }
             if (projectId && !availableProjectIds.includes(projectId)) {
                 return { success: false, error: `Project ${projectId} is not accessible.` }
             }
@@ -214,7 +218,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
                 }
             }
             return executeAdhocAction({
-                projectId: projectId ?? projects[0]?.id,
+                projectId: resolvedProjectId,
                 pieceName,
                 actionName,
                 input: parsedInput as Record<string, unknown> | undefined,
