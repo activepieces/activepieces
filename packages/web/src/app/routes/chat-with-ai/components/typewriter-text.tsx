@@ -33,9 +33,7 @@ export function TypewriterText({
           animate={{ opacity: 1 }}
           transition={{ duration: 0.1, delay: i * CHAR_DELAY }}
           onAnimationComplete={
-            i === text.length - 1
-              ? () => setIsAnimating(false)
-              : undefined
+            i === text.length - 1 ? () => setIsAnimating(false) : undefined
           }
         >
           {char}
