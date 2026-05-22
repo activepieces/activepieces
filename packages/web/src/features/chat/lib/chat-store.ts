@@ -248,12 +248,13 @@ function selectShouldShowPlan({
   if (progress === null) return false;
 
   const hasLiveUpdates = selectEffectivePlanUpdates({ state }).length > 0;
-  const planToolWasCompleted = lastAssistantMessage?.parts.some(
-    (p) =>
-      chatPartUtils.isAnyToolPart(p) &&
-      chatPartUtils.getToolPartName(p) === 'ap_request_plan_approval' &&
-      p.state === 'output-available',
-  ) ?? false;
+  const planToolWasCompleted =
+    lastAssistantMessage?.parts.some(
+      (p) =>
+        chatPartUtils.isAnyToolPart(p) &&
+        chatPartUtils.getToolPartName(p) === 'ap_request_plan_approval' &&
+        p.state === 'output-available',
+    ) ?? false;
   const planWasExecuted = hasLiveUpdates || planToolWasCompleted;
 
   if (!isLastAssistant) {
