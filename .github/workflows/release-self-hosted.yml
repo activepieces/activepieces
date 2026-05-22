@@ -51,19 +51,19 @@ jobs:
             ghcr.io/activepieces/activepieces:${{ inputs.tag }}
 
       - name: Create git tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
         run: |
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
-          git tag -f ${{ inputs.tag }}
-          for attempt in 1 2 3 4 5; do
-            if git push origin ${{ inputs.tag }} --force; then
-              exit 0
-            fi
-            echo "Tag push attempt $attempt failed, retrying in 10s..."
-            sleep 10
-          done
-          echo "Failed to push tag after 5 attempts"
-          exit 1
+          SHA=$(git rev-parse HEAD)
+          REPO=${{ github.repository }}
+          if gh api "repos/$REPO/git/refs/tags/$TAG" >/dev/null 2>&1; then
+            gh api -X PATCH "repos/$REPO/git/refs/tags/$TAG" \
+              -f sha="$SHA" -F force=true
+          else
+            gh api -X POST "repos/$REPO/git/refs" \
+              -f ref="refs/tags/$TAG" -f sha="$SHA"
+          fi
 
       - name: Create or update changelog via release-drafter
         uses: release-drafter/release-drafter@v7
