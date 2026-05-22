@@ -1,7 +1,7 @@
 import { distributedStore } from '../../database/redis-connections'
 import { pubsub } from '../../helper/pubsub'
 
-const GATE_TTL_MS = 5 * 60 * 1000
+const GATE_TTL_SECONDS = 5 * 60
 const KEY_PREFIX = 'tool-approval-decision:'
 const CHANNEL_PREFIX = 'tool-approval:'
 
@@ -14,7 +14,7 @@ function channelName(gateId: string): string {
 }
 
 async function resolveGate({ gateId, approved }: { gateId: string, approved: boolean }): Promise<void> {
-    await distributedStore.put(decisionKey(gateId), { approved }, GATE_TTL_MS)
+    await distributedStore.put(decisionKey(gateId), { approved }, GATE_TTL_SECONDS)
     await pubsub.publish(channelName(gateId), JSON.stringify({ approved }))
 }
 

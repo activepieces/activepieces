@@ -135,11 +135,12 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
     },
 
     async saveChatMessages(input: SaveChatMessagesRequest): Promise<void> {
+        const isSuccessfulCompletion = input.messages.length > 0
         const updates: Record<string, unknown> = {
-            status: ChatConversationStatus.IDLE,
+            status: isSuccessfulCompletion ? ChatConversationStatus.IDLE : ChatConversationStatus.ERROR,
         }
 
-        if (input.messages.length > 0) {
+        if (isSuccessfulCompletion) {
             updates.messages = input.messages
             updates.uiMessages = sanitizeObjectForPostgresql(input.uiMessages)
             if (input.title) updates.title = input.title
