@@ -76,6 +76,12 @@ export type PersistedToolCallPart = z.infer<typeof PersistedToolCallPartSchema>
 export type PersistedChatPart = z.infer<typeof PersistedChatPartSchema>
 export type PersistedChatMessage = z.infer<typeof PersistedChatMessageSchema>
 
+export enum ChatConversationStatus {
+    IDLE = 'IDLE',
+    STREAMING = 'STREAMING',
+    ERROR = 'ERROR',
+}
+
 export const ChatConversation = z.object({
     ...BaseModelSchema,
     platformId: z.string(),
@@ -83,6 +89,7 @@ export const ChatConversation = z.object({
     userId: z.string(),
     title: Nullable(z.string()),
     modelName: Nullable(z.string()),
+    status: z.nativeEnum(ChatConversationStatus).default(ChatConversationStatus.IDLE),
     messages: z.array(z.record(z.string(), z.unknown())).default([]),
     uiMessages: z.array(PersistedChatMessageSchema).nullable().default(null),
     summary: Nullable(z.string()),

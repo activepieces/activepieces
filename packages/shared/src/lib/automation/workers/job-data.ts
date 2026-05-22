@@ -62,6 +62,8 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
         case WorkerJobType.EXECUTE_VALIDATION:
         case WorkerJobType.EXECUTE_TRIGGER_HOOK:
             return 'critical'
+        case WorkerJobType.EXECUTE_CHAT_AGENT:
+            return 'high'
     }
 }
 
@@ -76,6 +78,7 @@ export enum WorkerJobType {
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_EXTRACT_PIECE_INFORMATION = 'EXECUTE_EXTRACT_PIECE_INFORMATION',
     EVENT_DESTINATION = 'EVENT_DESTINATION',
+    EXECUTE_CHAT_AGENT = 'EXECUTE_CHAT_AGENT',
 }
 
 export const NON_SCHEDULED_JOB_TYPES: WorkerJobType[] = [
@@ -85,6 +88,7 @@ export const NON_SCHEDULED_JOB_TYPES: WorkerJobType[] = [
     WorkerJobType.EXECUTE_TRIGGER_HOOK,
     WorkerJobType.EXECUTE_PROPERTY,
     WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+    WorkerJobType.EXECUTE_CHAT_AGENT,
 ] as const
 
 // Never change without increasing LATEST_JOB_DATA_SCHEMA_VERSION, and adding a migration
@@ -234,6 +238,23 @@ export const UserInteractionJobDataWithoutWatchingInformation = z.union([
 ])
 export type UserInteractionJobDataWithoutWatchingInformation = z.infer<typeof UserInteractionJobDataWithoutWatchingInformation>
 
+export const ExecuteChatAgentJobData = z.object({
+    schemaVersion: z.number(),
+    jobType: z.literal(WorkerJobType.EXECUTE_CHAT_AGENT),
+    conversationId: z.string(),
+    projectId: z.string().nullable(),
+    platformId: z.string(),
+    userId: z.string(),
+    userMessage: z.string(),
+    modelName: z.string().nullable(),
+    files: z.array(z.object({
+        name: z.string(),
+        mimeType: z.string(),
+        data: z.string(),
+    })).optional(),
+})
+export type ExecuteChatAgentJobData = z.infer<typeof ExecuteChatAgentJobData>
+
 export const EventDestinationJobData = z.object({
     schemaVersion: z.number(),
     platformId: z.string(),
@@ -253,6 +274,7 @@ export const JobData = z.union([
     WebhookJobData,
     UserInteractionJobData,
     EventDestinationJobData,
+    ExecuteChatAgentJobData,
 ])
 export type JobData = z.infer<typeof JobData>
 export type JobPayload = z.infer<typeof JobPayload>

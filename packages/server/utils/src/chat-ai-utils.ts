@@ -1,0 +1,195 @@
+import {
+    AIProviderName,
+    AzureProviderConfig,
+    BaseAIProviderAuthConfig,
+    BedrockProviderAuthConfig,
+    BedrockProviderConfig,
+    chatPersistenceUtils,
+    CloudflareGatewayProviderConfig,
+    OpenAICompatibleProviderConfig,
+    PersistedChatPart,
+    PersistedChatPartType,
+    PersistedToolCallStatus,
+    splitCloudflareGatewayModelId,
+} from '@activepieces/shared'
+import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock'
+import { createAnthropic } from '@ai-sdk/anthropic'
+import { createAzure } from '@ai-sdk/azure'
+import { createGoogleGenerativeAI } from '@ai-sdk/google'
+import { createOpenAI } from '@ai-sdk/openai'
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
+import { SharedV3ProviderOptions } from '@ai-sdk/provider'
+import { createOpenRouter } from '@openrouter/ai-sdk-provider'
+import { LanguageModel, ModelMessage, SystemModelMessage } from 'ai'
+
+function createChatModel({ provider, auth, config, modelId }: {
+    provider: AIProviderName
+    auth: Record<string, unknown>
+    config: Record<string, unknown>
+    modelId: string
+}): LanguageModel {
+    switch (provider) {
+        case AIProviderName.OPENAI: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            return createOpenAI({ apiKey }).chat(modelId)
+        }
+        case AIProviderName.ANTHROPIC: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            return createAnthropic({ apiKey })(modelId)
+        }
+        case AIProviderName.GOOGLE: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            return createGoogleGenerativeAI({ apiKey })(modelId)
+        }
+        case AIProviderName.AZURE: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            const { resourceName } = config as AzureProviderConfig
+            return createAzure({ resourceName, apiKey }).chat(modelId)
+        }
+        case AIProviderName.BEDROCK: {
+            const { accessKeyId, secretAccessKey } = auth as BedrockProviderAuthConfig
+            const { region } = config as BedrockProviderConfig
+            return createAmazonBedrock({ region, accessKeyId, secretAccessKey })(modelId)
+        }
+        case AIProviderName.CLOUDFLARE_GATEWAY: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            const { accountId, gatewayId } = config as CloudflareGatewayProviderConfig
+            const { model: actualModelId } = splitCloudflareGatewayModelId(modelId)
+            return createOpenAICompatible({
+                name: 'cloudflare',
+                baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/compat`,
+                headers: { 'cf-aig-authorization': `Bearer ${apiKey}` },
+            }).chatModel(actualModelId)
+        }
+        case AIProviderName.CUSTOM: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            const { apiKeyHeader, baseUrl, defaultHeaders } = config as OpenAICompatibleProviderConfig
+            return createOpenAICompatible({
+                name: 'openai-compatible',
+                baseURL: baseUrl,
+                headers: {
+                    ...(defaultHeaders ?? {}),
+                    [apiKeyHeader]: apiKey,
+                },
+            }).chatModel(modelId)
+        }
+        case AIProviderName.ACTIVEPIECES:
+        case AIProviderName.OPENROUTER: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            return createOpenRouter({ apiKey }).chat(modelId) as LanguageModel
+        }
+        default: {
+            const exhaustiveCheck: never = provider
+            throw new Error(`Unsupported chat provider: ${exhaustiveCheck}`)
+        }
+    }
+}
+
+function stripThinkingBlocks(messages: ModelMessage[]): ModelMessage[] {
+    const hasThinking = messages.some(
+        (msg) => msg.role === 'assistant' && Array.isArray(msg.content)
+            && (msg.content as Array<Record<string, unknown>>).some(
+                (part) => part['type'] === 'reasoning' || part['type'] === 'thinking',
+            ),
+    )
+    if (!hasThinking) return messages
+
+    return messages
+        .map((msg) => {
+            if (msg.role !== 'assistant' || !Array.isArray(msg.content)) return msg
+            const filtered = (msg.content as Array<Record<string, unknown>>).filter(
+                (part) => part['type'] !== 'reasoning' && part['type'] !== 'thinking',
+            )
+            if (filtered.length === msg.content.length) return msg
+            if (filtered.length === 0) return null
+            return { ...msg, content: filtered }
+        })
+        .filter((msg): msg is ModelMessage => msg !== null)
+}
+
+const OPENROUTER_EFFORT_BY_TIER: Record<string, string> = { fast: 'low', smart: 'medium', premium: 'high' }
+
+function buildProviderOptions({ provider, tier }: { provider: AIProviderName, tier: { id: string, thinkingBudget: number } }): SharedV3ProviderOptions {
+    switch (provider) {
+        case AIProviderName.ANTHROPIC:
+        case AIProviderName.BEDROCK:
+            return { anthropic: { thinking: { type: 'enabled', budgetTokens: tier.thinkingBudget } } }
+        case AIProviderName.ACTIVEPIECES:
+        case AIProviderName.OPENROUTER:
+            return { openrouter: { cache_control: { type: 'ephemeral' }, reasoning: { effort: OPENROUTER_EFFORT_BY_TIER[tier.id] ?? 'medium' } } }
+        default:
+            return {}
+    }
+}
+
+function buildSystemPromptWithCaching({ systemPrompt, provider }: { systemPrompt: string, provider: AIProviderName }): string | SystemModelMessage {
+    switch (provider) {
+        case AIProviderName.ANTHROPIC:
+        case AIProviderName.BEDROCK:
+            return { role: 'system', content: systemPrompt, providerOptions: { anthropic: { cacheControl: { type: 'ephemeral' } } } }
+        default:
+            return systemPrompt
+    }
+}
+
+function toRecord(value: unknown): Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value) ? value as Record<string, unknown> : {}
+}
+
+type ContentPartLike = {
+    type: string
+    text?: string
+    toolCallId?: string
+    toolName?: string
+    input?: unknown
+    args?: unknown
+    output?: unknown
+}
+
+function buildStepParts({ content }: {
+    content: ContentPartLike[]
+}): PersistedChatPart[] {
+    const resultMap = new Map<string, ContentPartLike>()
+    for (const part of content) {
+        if ((part.type === 'tool-result' || part.type === 'tool-error') && part.toolCallId) {
+            resultMap.set(part.toolCallId, part)
+        }
+    }
+
+    const parts: PersistedChatPart[] = []
+    for (const part of content) {
+        switch (part.type) {
+            case 'reasoning':
+                if (part.text) parts.push({ type: PersistedChatPartType.REASONING, text: part.text })
+                break
+            case 'text':
+                if (part.text) parts.push({ type: PersistedChatPartType.TEXT, text: part.text })
+                break
+            case 'tool-call': {
+                const result = part.toolCallId ? resultMap.get(part.toolCallId) : undefined
+                const input = toRecord(part.args ?? part.input)
+                const rawOutput = result?.output ? chatPersistenceUtils.unwrapToolOutput(result.output) : undefined
+                parts.push({
+                    type: PersistedChatPartType.TOOL_CALL,
+                    toolCallId: part.toolCallId ?? '',
+                    toolName: part.toolName ?? '',
+                    input,
+                    output: rawOutput,
+                    status: result ? PersistedToolCallStatus.COMPLETED : PersistedToolCallStatus.ERROR,
+                })
+                break
+            }
+        }
+    }
+    return parts
+}
+
+export const chatAiUtils = {
+    createChatModel,
+    stripThinkingBlocks,
+    buildProviderOptions,
+    buildSystemPromptWithCaching,
+    buildStepParts,
+}
+
+export type { ContentPartLike }

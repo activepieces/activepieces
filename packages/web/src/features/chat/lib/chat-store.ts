@@ -5,8 +5,7 @@ import {
 } from '@activepieces/shared';
 import { StoreApi, create } from 'zustand';
 
-import { api } from '@/lib/api';
-
+import { chatApi } from './chat-api';
 import { MultiQuestion, PlanProgressData } from './chat-store-types';
 import { AnyToolPart, ChatUIMessage, chatPartUtils } from './chat-types';
 
@@ -17,7 +16,7 @@ function sendApprovalDecision({
   gateId: string;
   approved: boolean;
 }): void {
-  void api.post(`/v1/chat/tool-approvals/${gateId}`, { approved });
+  void chatApi.approveToolCall({ gateId, approved });
 }
 
 function extractQuestionsFromToolParts(
@@ -43,12 +42,12 @@ type StepCategory = {
 
 const STEP_CATEGORIES: StepCategory[] = [
   {
-    keywords: ['create flow', 'create a flow', 'new flow'],
+    keywords: ['create flow', 'create a flow', 'new flow', 'build flow'],
     tools: ['ap_create_flow', 'ap_build_flow'],
   },
   {
     keywords: ['trigger', 'set trigger', 'configure trigger'],
-    tools: ['ap_update_trigger'],
+    tools: ['ap_update_trigger', 'ap_build_flow'],
   },
   {
     keywords: [
@@ -59,11 +58,18 @@ const STEP_CATEGORIES: StepCategory[] = [
       'configure action',
       'configure step',
     ],
-    tools: ['ap_add_step'],
+    tools: ['ap_add_step', 'ap_build_flow'],
   },
   {
-    keywords: ['validate', 'test'],
-    tools: ['ap_validate_flow', 'ap_test_flow', 'ap_test_step'],
+    keywords: ['validate', 'test', 'fix'],
+    tools: [
+      'ap_validate_flow',
+      'ap_validate_step_config',
+      'ap_test_flow',
+      'ap_test_step',
+      'ap_update_step',
+      'ap_update_trigger',
+    ],
   },
   {
     keywords: ['note', 'notes', 'add note', 'summary note'],
