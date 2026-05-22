@@ -85,7 +85,16 @@ function createChatModel({ provider, auth, config, modelId }: {
     }
 }
 
-function stripThinkingBlocks(messages: ModelMessage[]): ModelMessage[] {
+const THINKING_PROVIDERS = new Set([
+    AIProviderName.ANTHROPIC,
+    AIProviderName.BEDROCK,
+    AIProviderName.OPENROUTER,
+    AIProviderName.ACTIVEPIECES,
+])
+
+function stripThinkingBlocks(messages: ModelMessage[], provider: AIProviderName): ModelMessage[] {
+    if (THINKING_PROVIDERS.has(provider)) return messages
+
     const hasThinking = messages.some(
         (msg) => msg.role === 'assistant' && Array.isArray(msg.content)
             && (msg.content as Array<Record<string, unknown>>).some(
