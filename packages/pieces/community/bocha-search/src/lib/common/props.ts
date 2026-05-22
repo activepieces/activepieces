@@ -21,4 +21,5 @@ export const countProp = Property.Number({
   description: 'Number of results to return (1-50). Defaults to 10.',
   required: false,
   defaultValue: 10,
+  validators: [Validators.minValue(1), Validators.maxValue(50)],
 });
