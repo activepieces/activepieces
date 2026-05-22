@@ -1195,6 +1195,9 @@
       "@activepieces/piece-straico": [
         "packages/pieces/community/straico/src/index.ts"
       ],
+      "@activepieces/piece-streak": [
+        "packages/pieces/community/streak/src/index.ts"
+      ],
       "@activepieces/piece-stripe": [
         "packages/pieces/community/stripe/src/index.ts"
       ],
