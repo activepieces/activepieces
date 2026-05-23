@@ -15,6 +15,7 @@ import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
 import {
   AnyToolPart,
   ChatUIMessage,
+  ThinkingStep,
   chatPartUtils,
 } from '@/features/chat/lib/chat-types';
 import { useTts } from '@/features/chat/lib/use-tts';
@@ -57,12 +58,13 @@ export const AssistantMessage = memo(function AssistantMessage({
   onSend: (text: string, files?: File[]) => void;
   lastAssistantMessage?: ChatUIMessage;
 }) {
-  const { renderedParts, thinkingToolParts, hasContent, reasoningText } =
+  const { renderedParts, thinkingSteps, hasContent, reasoningText } =
     useMemo(() => {
       const rendered: RenderedPart[] = [];
-      const thinkingTools: AnyToolPart[] = [];
+      const steps: ThinkingStep[] = [];
       let hasText = false;
       let reasoning = '';
+      let lastThinkingStatus: string | null = null;
 
       for (let i = 0; i < message.parts.length; i++) {
         const p = message.parts[i];
@@ -72,8 +74,21 @@ export const AssistantMessage = memo(function AssistantMessage({
           rendered.push({ kind: 'text', text: p.text });
         } else if (p.type === 'reasoning') {
           reasoning += p.text;
+          const trimmed = p.text.trim();
+          if (trimmed) {
+            steps.push({ kind: 'reasoning', text: trimmed });
+          }
         } else if (chatPartUtils.isAnyToolPart(p)) {
           const toolName = chatPartUtils.getToolPartName(p);
+          if (chatPartUtils.isThinkingStatusTool(toolName)) {
+            const input = p.input as { status?: string } | undefined;
+            const statusText = (input?.status ?? '').trim();
+            if (statusText) {
+              steps.push({ kind: 'thinking-status', text: statusText });
+              lastThinkingStatus = statusText;
+            }
+            continue;
+          }
           if (chatPartUtils.HIDDEN_TOOL_NAMES.has(toolName)) {
             continue;
           }
@@ -82,7 +97,17 @@ export const AssistantMessage = memo(function AssistantMessage({
           } else if (toolName === 'ap_request_plan_approval') {
             rendered.push({ kind: 'plan-marker', part: p });
           } else {
-            thinkingTools.push(p);
+            const lastStep = steps[steps.length - 1];
+            if (
+              lastThinkingStatus &&
+              lastStep?.kind === 'thinking-status' &&
+              lastStep.text === lastThinkingStatus
+            ) {
+              steps[steps.length - 1] = { ...lastStep, toolPart: p };
+            } else {
+              steps.push({ kind: 'tool', part: p });
+            }
+            lastThinkingStatus = null;
           }
         }
       }
@@ -102,7 +127,7 @@ export const AssistantMessage = memo(function AssistantMessage({
 
       return {
         renderedParts: rendered,
-        thinkingToolParts: thinkingTools,
+        thinkingSteps: steps,
         hasContent: hasText,
         reasoningText: reasoning,
       };
@@ -114,14 +139,13 @@ export const AssistantMessage = memo(function AssistantMessage({
   );
 
   const { isSpeaking, isSupported: isTtsSupported, speak, stop } = useTts();
-  const openThinkingDetails = useChatStoreContext((s) => s.openThinkingDetails);
 
   const hasPlanMarker = renderedParts.some((p) => p.kind === 'plan-marker');
   const hasRenderedContent = renderedParts.some(
     (p) => p.kind !== 'plan-marker',
   );
   const hasThinkingContent =
-    thinkingToolParts.length > 0 || reasoningText.length > 0;
+    thinkingSteps.length > 0 || reasoningText.length > 0;
   const showThinking = isStreaming || hasThinkingContent;
 
   if (
@@ -145,10 +169,13 @@ export const AssistantMessage = memo(function AssistantMessage({
         <div className="min-w-0 space-y-2 flex-1">
           {showThinking && (
             <ThinkingBlock
-              toolParts={thinkingToolParts}
+              thinkingSteps={thinkingSteps}
               reasoningText={reasoningText}
               isStreaming={isStreaming}
-              onOpenDetails={() => openThinkingDetails(message.id)}
+              thinkingDurationMs={
+                (message as ChatUIMessage & { thinkingDurationMs?: number })
+                  .thinkingDurationMs
+              }
             />
           )}
 
