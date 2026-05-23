@@ -2,7 +2,9 @@ import { isNil, McpServerType, PopulatedMcpServer, TelemetryEventName, tryCatch 
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { repoFactory } from '../../core/db/repo-factory'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { ChatConversationEntity } from '../../ee/chat/chat-conversation-entity'
 import { CONVERSATION_ID_HEADER } from '../../ee/chat/mcp/chat-mcp'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { telemetry } from '../../helper/telemetry.utils'
@@ -71,8 +73,14 @@ function registerMcpEndpoint(app: Parameters<FastifyPluginAsyncZod>[0], scope: M
         }
 
         const conversationId = req.headers[CONVERSATION_ID_HEADER] as string | undefined
-        const selectionScope = conversationId ? { conversationId } : null
-        const { server } = await mcpServerService(req.log).buildServer({ mcp, userId, selectionScope })
+        const conversationProjectId = conversationId
+            ? await resolveConversationProjectId({ conversationId, log: req.log })
+            : null
+        const serverMcp = conversationProjectId
+            ? await mcpServerService(req.log).getPopulatedByProjectId(conversationProjectId) ?? mcp
+            : mcp
+        const selectionScope = !conversationProjectId && conversationId ? { conversationId } : null
+        const { server } = await mcpServerService(req.log).buildServer({ mcp: serverMcp, userId, selectionScope })
 
         const transport = new StreamableHTTPServerTransport({
             sessionIdGenerator: undefined,
@@ -137,6 +145,22 @@ async function resolveMcpAndUser({ identity, log }: { identity: ResolvedIdentity
 type ResolvedIdentity =
     | { type: McpServerType.PROJECT, projectId: string, userId: string }
     | { type: McpServerType.PLATFORM, platformId: string, userId: string }
+
+const chatConversationRepo = repoFactory(ChatConversationEntity)
+
+async function resolveConversationProjectId({ conversationId, log }: {
+    conversationId: string
+    log: FastifyBaseLogger
+}): Promise<string | null> {
+    const { data: conversation } = await tryCatch(async () =>
+        chatConversationRepo().findOne({ where: { id: conversationId }, select: ['projectId'] }),
+    )
+    if (!conversation) {
+        log.debug({ conversationId }, 'Conversation not found for project resolution')
+        return null
+    }
+    return conversation.projectId ?? null
+}
 
 const McpEndpointConfig = {
     config: { security: securityAccess.public() },

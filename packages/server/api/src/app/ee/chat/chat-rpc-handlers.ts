@@ -19,7 +19,6 @@ import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
-import { mcpProjectSelection } from '../../mcp/mcp-project-selection'
 import { chatApprovalGate } from './chat-approval-gate'
 import { chatCompaction } from './chat-compaction'
 import { buildUserContentWithFiles } from './chat-file-utils'
@@ -66,14 +65,6 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         const previousMessages = conversation.messages as ModelMessage[]
         const newUserMessage: ModelMessage = { role: 'user' as const, content: userContent }
         const allMessages = [...previousMessages, newUserMessage]
-
-        const selectionScope = { conversationId }
-        if (selectedProjectId) {
-            await mcpProjectSelection.set({ scope: selectionScope, projectId: selectedProjectId })
-        }
-        else {
-            await mcpProjectSelection.clear(selectionScope)
-        }
 
         const previousUiMessages = (conversation.uiMessages ?? []) as PersistedChatMessage[]
         const uiMessagesWithUser: PersistedChatMessage[] = [
@@ -165,13 +156,6 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
 
     async updateProjectContext(input: UpdateProjectContextRequest): Promise<void> {
         await chatHelpers.conversationRepo().update(input.conversationId, { projectId: input.projectId })
-        const scope = { conversationId: input.conversationId }
-        if (input.projectId) {
-            await mcpProjectSelection.set({ scope, projectId: input.projectId })
-        }
-        else {
-            await mcpProjectSelection.clear(scope)
-        }
     },
 
     async executeChatTool(input: ExecuteChatToolRequest): Promise<ExecuteChatToolResponse> {
