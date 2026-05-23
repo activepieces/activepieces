@@ -451,11 +451,13 @@ export function useAgentChat({
   useQuery({
     queryKey: ['chat-agent-poll', conversationId],
     queryFn: async () => {
-      if (!conversationId) return null;
+      if (!conversationId || conversationIdRef.current !== conversationId)
+        return null;
       const [messagesResult, convResult] = await Promise.all([
         chatApi.getMessages(conversationId),
         chatApi.getConversation(conversationId),
       ]);
+      if (conversationIdRef.current !== conversationId) return null;
       const mapped = chatUtils.mapHistoryToUIMessages(messagesResult.data);
       const current = persistedMessagesRef.current;
       const hasChanged =

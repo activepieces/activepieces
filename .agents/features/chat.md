@@ -1,7 +1,7 @@
 # Chat Module
 
 ## Summary
-A platform-level AI chat assistant that lets users interact with an LLM to manage their Activepieces projects through natural language. The chat connects to the platform's configured AI provider, streams responses via the Vercel AI SDK, and exposes Activepieces resources (flows, tables, connections, runs) as callable tools through the project's MCP server. Conversations are persisted per-user with support for message compaction, file attachments, multi-project context switching, plan approval for multi-step operations, and a tool approval gate for destructive operations.
+A platform-level AI chat assistant that lets users interact with an LLM to manage their Activepieces projects through natural language. The chat connects to the platform's configured AI provider, streams responses via a custom WebSocket chunk reducer, and exposes Activepieces resources (flows, tables, connections, runs) as callable tools through the project's MCP server. Conversations are persisted per-user with support for message compaction, file attachments, multi-project context switching, plan approval for multi-step operations, and a tool approval gate for destructive operations.
 
 ## Key Files
 - `packages/server/api/src/app/ee/chat/chat.module.ts` — module registration with `chatEnabled` plan gate
@@ -28,7 +28,9 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `packages/web/src/features/chat/lib/chat-api.ts` — API client for `/v1/chat/*` endpoints
 - `packages/web/src/features/chat/lib/chat-store.ts` — Zustand store for interaction state (approvals, plan progress, display cards, thinking panel)
 - `packages/web/src/features/chat/lib/chat-store-context.tsx` — React context provider and `useChatStoreContext` selector hook
-- `packages/web/src/features/chat/lib/use-chat.ts` — `useAgentChat()` hook bridging AI SDK transport to Zustand store
+- `packages/web/src/features/chat/lib/use-chat.ts` — `useAgentChat()` hook managing message state (persisted, optimistic, streaming) and polling fallback
+- `packages/web/src/features/chat/lib/chunk-reducer.ts` — pure streaming state machine that accumulates `UIMessageChunk` events into a `ChatUIMessage`
+- `packages/web/src/features/chat/lib/use-streaming-reducer.ts` — WebSocket-driven streaming lifecycle hook; buffers chunks and throttles React re-renders
 - `packages/web/src/features/chat/lib/chat-types.ts` — frontend type definitions, tool output parsing, display/hidden tool name sets
 - `packages/web/src/features/chat/lib/use-voice-input.ts` — `useVoiceInput()` hook for speech-to-text via the Web Speech API (`SpeechRecognition`)
 - `packages/web/src/features/chat/lib/use-tts.ts` — `useTts()` hook for text-to-speech via the `SpeechSynthesis` API
