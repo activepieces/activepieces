@@ -512,6 +512,7 @@
   "Retry": "Opnieuw",
   "stepsCompleted": "{count, plural, =1 {1 stap voltooid} other {# stappen voltooid}}",
   "Thought for a few seconds": "Denk voor een paar seconden",
+  "Thought for {seconds} seconds": "Denk aan {seconds} seconden",
   "Thinking...": "Denken...",
   "Stop reading": "Stop met lezen",
   "Read aloud": "Hardop lezen",
