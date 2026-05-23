@@ -15,6 +15,7 @@ import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
 import {
   AnyToolPart,
   ChatUIMessage,
+  ThinkingStep,
   chatPartUtils,
 } from '@/features/chat/lib/chat-types';
 import { useTts } from '@/features/chat/lib/use-tts';
@@ -57,56 +58,88 @@ export const AssistantMessage = memo(function AssistantMessage({
   onSend: (text: string, files?: File[]) => void;
   lastAssistantMessage?: ChatUIMessage;
 }) {
-  const { renderedParts, thinkingToolParts, hasContent, reasoningText } =
-    useMemo(() => {
-      const rendered: RenderedPart[] = [];
-      const thinkingTools: AnyToolPart[] = [];
-      let hasText = false;
-      let reasoning = '';
+  const {
+    renderedParts,
+    thinkingToolParts,
+    thinkingSteps,
+    hasContent,
+    reasoningText,
+  } = useMemo(() => {
+    const rendered: RenderedPart[] = [];
+    const thinkingTools: AnyToolPart[] = [];
+    const steps: ThinkingStep[] = [];
+    let hasText = false;
+    let reasoning = '';
+    let lastThinkingStatus: string | null = null;
 
-      for (let i = 0; i < message.parts.length; i++) {
-        const p = message.parts[i];
+    for (let i = 0; i < message.parts.length; i++) {
+      const p = message.parts[i];
 
-        if (p.type === 'text' && p.text.length > 0) {
-          hasText = true;
-          rendered.push({ kind: 'text', text: p.text });
-        } else if (p.type === 'reasoning') {
-          reasoning += p.text;
-        } else if (chatPartUtils.isAnyToolPart(p)) {
-          const toolName = chatPartUtils.getToolPartName(p);
-          if (chatPartUtils.HIDDEN_TOOL_NAMES.has(toolName)) {
-            continue;
+      if (p.type === 'text' && p.text.length > 0) {
+        hasText = true;
+        rendered.push({ kind: 'text', text: p.text });
+      } else if (p.type === 'reasoning') {
+        reasoning += p.text;
+        const trimmed = p.text.trim();
+        if (trimmed) {
+          steps.push({ kind: 'reasoning', text: trimmed });
+        }
+      } else if (chatPartUtils.isAnyToolPart(p)) {
+        const toolName = chatPartUtils.getToolPartName(p);
+        if (chatPartUtils.isThinkingStatusTool(toolName)) {
+          const input = p.input as { status?: string } | undefined;
+          const statusText = (input?.status ?? '').trim();
+          if (statusText) {
+            steps.push({ kind: 'thinking-status', text: statusText });
+            lastThinkingStatus = statusText;
           }
-          if (chatPartUtils.isDisplayTool(toolName)) {
-            rendered.push({ kind: 'display-tool', part: p });
-          } else if (toolName === 'ap_request_plan_approval') {
-            rendered.push({ kind: 'plan-marker', part: p });
+          continue;
+        }
+        if (chatPartUtils.HIDDEN_TOOL_NAMES.has(toolName)) {
+          continue;
+        }
+        if (chatPartUtils.isDisplayTool(toolName)) {
+          rendered.push({ kind: 'display-tool', part: p });
+        } else if (toolName === 'ap_request_plan_approval') {
+          rendered.push({ kind: 'plan-marker', part: p });
+        } else {
+          thinkingTools.push(p);
+          const lastStep = steps[steps.length - 1];
+          if (
+            lastThinkingStatus &&
+            lastStep?.kind === 'thinking-status' &&
+            lastStep.text === lastThinkingStatus
+          ) {
+            lastStep.toolPart = p;
           } else {
-            thinkingTools.push(p);
+            steps.push({ kind: 'tool', part: p });
+          }
+          lastThinkingStatus = null;
+        }
+      }
+    }
+
+    if (isStreaming) {
+      const lastDisplayIdx = rendered.findLastIndex(
+        (r) => r.kind === 'display-tool',
+      );
+      if (lastDisplayIdx > -1) {
+        for (let j = rendered.length - 1; j >= 0; j--) {
+          if (rendered[j].kind === 'display-tool' && j !== lastDisplayIdx) {
+            rendered.splice(j, 1);
           }
         }
       }
+    }
 
-      if (isStreaming) {
-        const lastDisplayIdx = rendered.findLastIndex(
-          (r) => r.kind === 'display-tool',
-        );
-        if (lastDisplayIdx > -1) {
-          for (let j = rendered.length - 1; j >= 0; j--) {
-            if (rendered[j].kind === 'display-tool' && j !== lastDisplayIdx) {
-              rendered.splice(j, 1);
-            }
-          }
-        }
-      }
-
-      return {
-        renderedParts: rendered,
-        thinkingToolParts: thinkingTools,
-        hasContent: hasText,
-        reasoningText: reasoning,
-      };
-    }, [message.parts, isStreaming]);
+    return {
+      renderedParts: rendered,
+      thinkingToolParts: thinkingTools,
+      thinkingSteps: steps,
+      hasContent: hasText,
+      reasoningText: reasoning,
+    };
+  }, [message.parts, isStreaming]);
 
   const fullText = useMemo(
     () => (isStreaming ? '' : getTextFromParts(message.parts)),
@@ -114,7 +147,6 @@ export const AssistantMessage = memo(function AssistantMessage({
   );
 
   const { isSpeaking, isSupported: isTtsSupported, speak, stop } = useTts();
-  const openThinkingDetails = useChatStoreContext((s) => s.openThinkingDetails);
 
   const hasPlanMarker = renderedParts.some((p) => p.kind === 'plan-marker');
   const hasRenderedContent = renderedParts.some(
@@ -145,10 +177,13 @@ export const AssistantMessage = memo(function AssistantMessage({
         <div className="min-w-0 space-y-2 flex-1">
           {showThinking && (
             <ThinkingBlock
-              toolParts={thinkingToolParts}
+              thinkingSteps={thinkingSteps}
               reasoningText={reasoningText}
               isStreaming={isStreaming}
-              onOpenDetails={() => openThinkingDetails(message.id)}
+              thinkingDurationMs={
+                (message as ChatUIMessage & { thinkingDurationMs?: number })
+                  .thinkingDurationMs
+              }
             />
           )}
 

@@ -70,7 +70,6 @@ export type ChatStoreState = {
   dismissedApprovalGateId: string | null;
   dismissedPlanGateId: string | null;
 
-  thinkingPanelMessageId: string | null;
   lastDismissedFormId: string | null;
 
   approveToolCall: () => void;
@@ -81,8 +80,6 @@ export type ChatStoreState = {
   rejectPlan: () => void;
   dismissPlan: () => void;
 
-  openThinkingDetails: (messageId: string) => void;
-  closeThinkingPanel: () => void;
   dismissForm: (messageId: string) => void;
 
   resetInteractions: () => void;
@@ -102,7 +99,6 @@ export const createChatStore = () =>
     dismissedApprovalGateId: null,
     dismissedPlanGateId: null,
 
-    thinkingPanelMessageId: null,
     lastDismissedFormId: null,
 
     approveToolCall: () => {
@@ -139,12 +135,6 @@ export const createChatStore = () =>
       if (plan) set({ dismissedPlanGateId: plan.gateId });
     },
 
-    openThinkingDetails: (messageId: string) => {
-      set({ thinkingPanelMessageId: messageId });
-    },
-    closeThinkingPanel: () => {
-      set({ thinkingPanelMessageId: null });
-    },
     dismissForm: (messageId: string) => {
       set({ lastDismissedFormId: messageId });
     },

@@ -221,10 +221,25 @@ function createPlanTools({ writer, onPlanApproved, waitForApproval }: {
     }
 }
 
+function createThinkingTools(): ToolSet {
+    return {
+        ap_update_thinking_status: tool({
+            description: 'Update the current thinking status displayed to the user. Call this before each tool call to explain what you are about to do in a short human-readable label.',
+            inputSchema: z.object({
+                status: z.string().describe('Short human-readable label for the current step, e.g. "Searching for Gmail flows", "Creating flow trigger"'),
+            }),
+            execute: async () => {
+                return { success: true }
+            },
+        }),
+    }
+}
+
 export const chatWorkerTools = {
     createRpcWriterForConversation,
     createDisplayTools,
     createLocalTools,
     createCrossProjectTools,
     createPlanTools,
+    createThinkingTools,
 }

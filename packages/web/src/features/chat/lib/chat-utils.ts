@@ -126,12 +126,23 @@ function isPersistedFormat(data: unknown[]): data is PersistedChatMessage[] {
 
 function persistedPartToUIPart(
   part: PersistedChatPart,
+  idx: number,
 ): ChatUIMessage['parts'][number] {
   switch (part.type) {
     case PersistedChatPartType.TEXT:
       return { type: 'text', text: part.text };
     case PersistedChatPartType.REASONING:
       return { type: 'reasoning', text: part.text };
+    case PersistedChatPartType.THINKING_STATUS:
+      return {
+        type: 'dynamic-tool',
+        toolCallId: `thinking-status-${idx}`,
+        toolName: 'ap_update_thinking_status',
+        title: 'ap_update_thinking_status',
+        state: 'output-available' as const,
+        input: { status: part.text },
+        output: JSON.stringify({ success: true }),
+      };
     case PersistedChatPartType.TOOL_CALL:
       if (part.status === PersistedToolCallStatus.COMPLETED) {
         return {
@@ -171,7 +182,10 @@ function mapPersistedToUIMessages(
   return data.map((msg, idx) => ({
     id: `hist-${idx}`,
     role: msg.role,
-    parts: msg.parts.map(persistedPartToUIPart),
+    parts: msg.parts.map((p, i) => persistedPartToUIPart(p, i)),
+    ...(msg.thinkingDurationMs !== undefined && {
+      thinkingDurationMs: msg.thinkingDurationMs,
+    }),
   }));
 }
 
@@ -217,6 +231,12 @@ function extractQuickRepliesFromHistory(messages: ChatUIMessage[]): string[] {
   return [];
 }
 
+function humanizeToolName(toolName: string): string {
+  const mcpMatch = /^mcp__[^_]+__(.+)$/.exec(toolName);
+  const name = mcpMatch ? mcpMatch[1] : toolName.replace(/^ap_/, '');
+  return formatUtils.convertEnumToHumanReadable(name.replace(/_/g, ' '));
+}
+
 export const chatUtils = {
   formatToolLabel: ({ part }: { part: AnyToolPart }) =>
     formatToolName({ part }),
@@ -225,6 +245,7 @@ export const chatUtils = {
   extractToolContext,
   stripPiecePrefix,
   humanizePieceName,
+  humanizeToolName,
   mapHistoryToUIMessages,
   extractQuickRepliesFromHistory,
 };
