@@ -1,6 +1,7 @@
 import { ApEdition, isNil, PlatformId, PrincipalType } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { databaseConnection } from '../database/database-connection'
+import { networkUtils } from '../helper/network-utils'
 import { system } from '../helper/system/system'
 import { platformService } from './platform.service'
 
@@ -22,7 +23,8 @@ export const platformUtils = {
     },
 
     // temporary helper for sso customers until they update the acs url in saml
-    async getPlatformIdByLegacyHost(host: string | undefined | null): Promise<PlatformId | null> {
+    async getPlatformIdByLegacyHost(req: FastifyRequest): Promise<PlatformId | null> {
+        const host = networkUtils.getRequestHost(req)
         if (isNil(host) || host.length === 0) {
             return null
         }
