@@ -231,12 +231,6 @@ function extractQuickRepliesFromHistory(messages: ChatUIMessage[]): string[] {
   return [];
 }
 
-function humanizeToolName(toolName: string): string {
-  const mcpMatch = /^mcp__[^_]+__(.+)$/.exec(toolName);
-  const name = mcpMatch ? mcpMatch[1] : toolName.replace(/^ap_/, '');
-  return formatUtils.convertEnumToHumanReadable(name.replace(/_/g, ' '));
-}
-
 export const chatUtils = {
   formatToolLabel: ({ part }: { part: AnyToolPart }) =>
     formatToolName({ part }),
@@ -245,7 +239,6 @@ export const chatUtils = {
   extractToolContext,
   stripPiecePrefix,
   humanizePieceName,
-  humanizeToolName,
   mapHistoryToUIMessages,
   extractQuickRepliesFromHistory,
 };

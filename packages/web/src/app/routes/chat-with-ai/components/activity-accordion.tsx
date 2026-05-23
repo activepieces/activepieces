@@ -246,27 +246,13 @@ function ToolStep({
   showIcon: boolean;
 }) {
   const status = chatPartUtils.deriveToolStatus(part);
+  const icon =
+    status === 'running' ? Loader2 : status === 'failed' ? XCircle : Wrench;
 
   return (
-    <div className="flex gap-3">
-      {showIcon && (
-        <div className="flex flex-col items-center shrink-0">
-          <div className="flex items-center justify-center size-5 rounded-full bg-muted mt-1">
-            {status === 'running' ? (
-              <Loader2 className="size-3 animate-spin text-muted-foreground" />
-            ) : status === 'failed' ? (
-              <XCircle className="size-3 text-red-500" />
-            ) : (
-              <Wrench className="size-3 text-muted-foreground" />
-            )}
-          </div>
-          {showConnector && <div className="w-px flex-1 bg-border min-h-3" />}
-        </div>
-      )}
-      <div className="flex-1 min-w-0 pb-4">
-        <ToolCard part={part} />
-      </div>
-    </div>
+    <StepLayout showIcon={showIcon} showConnector={showConnector} icon={icon}>
+      <ToolCard part={part} />
+    </StepLayout>
   );
 }
 
@@ -281,7 +267,10 @@ function ToolCard({ part }: { part: AnyToolPart }) {
     () => (detailsOpen && output ? tryParseJson(output) : undefined),
     [detailsOpen, output],
   );
-  const pieceNames = chatPartUtils.extractPieceNames(input);
+  const pieceNames = useMemo(
+    () => chatPartUtils.extractPieceNames(input),
+    [input],
+  );
   const { summaries: pieceSummaries } = piecesHooks.usePieceSummariesByNames({
     names: pieceNames,
   });
@@ -307,7 +296,7 @@ function ToolCard({ part }: { part: AnyToolPart }) {
                 key={piece.name}
                 displayName={piece.displayName}
                 logoUrl={piece.logoUrl}
-                size="xs"
+                size="xxs"
                 border={false}
                 showTooltip={true}
               />
@@ -369,7 +358,7 @@ function buildToolSummary({ part }: { part: AnyToolPart }): {
       : toolName.startsWith('mcp__')
       ? Wrench
       : Search;
-  return { icon, label: chatUtils.humanizeToolName(toolName) };
+  return { icon, label: chatUtils.formatToolActionName({ part }) };
 }
 
 function tryParseJson(value: string): unknown {
