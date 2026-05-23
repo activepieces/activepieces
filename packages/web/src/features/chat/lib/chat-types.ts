@@ -38,7 +38,6 @@ const HIDDEN_TOOL_NAMES = new Set([
   'ap_select_project',
   'ap_deselect_project',
   'ap_update_plan',
-  THINKING_STATUS_TOOL_NAME,
 ]);
 
 const DISPLAY_TOOL_NAMES = new Set([

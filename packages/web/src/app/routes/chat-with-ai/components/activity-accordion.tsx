@@ -311,7 +311,7 @@ function ToolCard({ part }: { part: AnyToolPart }) {
           />
         )}
       </div>
-      {hasDetails && detailsOpen && (
+      {hasDetails && (
         <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
           <div className="mt-1.5 space-y-1.5 text-[11px]">
             {hasInput && input && (
