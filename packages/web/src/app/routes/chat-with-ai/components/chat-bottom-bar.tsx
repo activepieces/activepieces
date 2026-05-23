@@ -73,7 +73,7 @@ export function ChatBottomBar({
     );
   }
 
-  if (hasActiveForm) {
+  if (hasActiveForm && !isStreaming) {
     return (
       <MultiQuestionForm
         key={lastMessageId}

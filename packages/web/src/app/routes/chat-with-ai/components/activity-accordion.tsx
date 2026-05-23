@@ -63,86 +63,84 @@ export function ThinkingBlock({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
     >
-      {isStreaming ? (
-        <div>
-          <TextShimmer className="text-sm" duration={3}>
-            {t('Thinking...')}
-          </TextShimmer>
-
-          {lastStep && (
-            <div className="mt-3 ml-1">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={`step-${lastStepIdx}`}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <StepRenderer
-                    step={lastStep}
-                    showConnector={false}
-                    isStreaming={true}
-                    showIcon={false}
-                  />
-                </motion.div>
-              </AnimatePresence>
-            </div>
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <button
+          type="button"
+          disabled={!isExpandable}
+          onClick={() => setIsOpen(!isOpen)}
+          className={cn(
+            'flex items-center gap-1.5 text-sm text-muted-foreground text-left w-full',
+            isExpandable &&
+              'hover:text-foreground transition-colors cursor-pointer',
           )}
-        </div>
-      ) : (
-        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-          <button
-            type="button"
-            disabled={!isExpandable}
-            onClick={() => setIsOpen(!isOpen)}
-            className={cn(
-              'flex items-center gap-1.5 text-sm text-muted-foreground text-left w-full',
-              isExpandable &&
-                'hover:text-foreground transition-colors cursor-pointer',
-            )}
-          >
+        >
+          {isStreaming ? (
+            <TextShimmer className="text-sm" duration={3}>
+              {t('Thinking...')}
+            </TextShimmer>
+          ) : (
             <span>{doneLabel}</span>
-            {isExpandable && (
-              <ChevronDown
-                className={cn(
-                  'size-4 shrink-0 text-muted-foreground/50 transition-transform',
-                  isOpen && 'rotate-180',
-                )}
-              />
-            )}
-          </button>
-
-          <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
-            <div className="mt-3 ml-1">
-              {thinkingSteps.map((step, idx) => (
-                <StepRenderer
-                  key={
-                    step.kind === 'tool'
-                      ? step.part.toolCallId
-                      : `${step.kind}-${idx}`
-                  }
-                  step={step}
-                  showConnector={true}
-                  isStreaming={false}
-                  showIcon={true}
-                />
-              ))}
-
-              {hasSteps && (
-                <div className="flex gap-3 items-center">
-                  <div className="flex items-center justify-center size-5 rounded-full bg-muted">
-                    <Check className="size-3 text-muted-foreground" />
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {t('Done')}
-                  </span>
-                </div>
+          )}
+          {isExpandable && (
+            <ChevronDown
+              className={cn(
+                'size-4 shrink-0 text-muted-foreground/50 transition-transform',
+                isOpen && 'rotate-180',
               )}
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-      )}
+            />
+          )}
+        </button>
+
+        {!isOpen && isStreaming && lastStep && (
+          <div className="mt-3 ml-1">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`step-${lastStepIdx}`}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <StepRenderer
+                  step={lastStep}
+                  showConnector={false}
+                  isStreaming={true}
+                  showIcon={false}
+                />
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        )}
+
+        <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
+          <div className="mt-3 ml-1">
+            {thinkingSteps.map((step, idx) => (
+              <StepRenderer
+                key={
+                  step.kind === 'tool'
+                    ? step.part.toolCallId
+                    : `${step.kind}-${idx}`
+                }
+                step={step}
+                showConnector={true}
+                isStreaming={isStreaming}
+                showIcon={true}
+              />
+            ))}
+
+            {!isStreaming && hasSteps && (
+              <div className="flex gap-3 items-center">
+                <div className="flex items-center justify-center size-5 rounded-full bg-muted">
+                  <Check className="size-3 text-muted-foreground" />
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  {t('Done')}
+                </span>
+              </div>
+            )}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
     </motion.div>
   );
 }
@@ -179,6 +177,16 @@ function StepRenderer({
         </StepLayout>
       );
     case 'thinking-status':
+      if (step.toolPart) {
+        return (
+          <ToolStep
+            part={step.toolPart}
+            showConnector={showConnector}
+            showIcon={showIcon}
+            label={step.text}
+          />
+        );
+      }
       return (
         <StepLayout
           showIcon={showIcon}
@@ -191,11 +199,6 @@ function StepRenderer({
             </TextShimmer>
           ) : (
             <p className="text-xs text-muted-foreground">{step.text}</p>
-          )}
-          {step.toolPart && (
-            <div className="mt-2">
-              <ToolCard part={step.toolPart} />
-            </div>
           )}
         </StepLayout>
       );
@@ -240,10 +243,12 @@ function ToolStep({
   part,
   showConnector,
   showIcon,
+  label,
 }: {
   part: AnyToolPart;
   showConnector: boolean;
   showIcon: boolean;
+  label?: string;
 }) {
   const status = chatPartUtils.deriveToolStatus(part);
   const icon =
@@ -251,12 +256,12 @@ function ToolStep({
 
   return (
     <StepLayout showIcon={showIcon} showConnector={showConnector} icon={icon}>
-      <ToolCard part={part} />
+      <ToolCard part={part} label={label} />
     </StepLayout>
   );
 }
 
-function ToolCard({ part }: { part: AnyToolPart }) {
+function ToolCard({ part, label }: { part: AnyToolPart; label?: string }) {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const input = isObject(part.input) ? part.input : undefined;
   const output = chatPartUtils.extractToolOutputText(part);
@@ -275,6 +280,8 @@ function ToolCard({ part }: { part: AnyToolPart }) {
     names: pieceNames,
   });
   const summary = buildToolSummary({ part });
+  const displayLabel = label ?? summary.label;
+  const primaryPiece = pieceSummaries.find((p) => p.logoUrl);
 
   return (
     <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
@@ -285,23 +292,20 @@ function ToolCard({ part }: { part: AnyToolPart }) {
         )}
         onClick={() => hasDetails && setDetailsOpen(!detailsOpen)}
       >
-        <summary.icon className="size-3 text-muted-foreground shrink-0" />
-        <span className="text-xs text-muted-foreground whitespace-nowrap">
-          {summary.label}
-        </span>
-        {pieceSummaries.map(
-          (piece) =>
-            piece.logoUrl && (
-              <PieceIcon
-                key={piece.name}
-                displayName={piece.displayName}
-                logoUrl={piece.logoUrl}
-                size="xxs"
-                border={false}
-                showTooltip={true}
-              />
-            ),
+        {primaryPiece ? (
+          <PieceIcon
+            displayName={primaryPiece.displayName}
+            logoUrl={primaryPiece.logoUrl!}
+            size="xxs"
+            border={false}
+            showTooltip={false}
+          />
+        ) : (
+          <summary.icon className="size-3 text-muted-foreground shrink-0" />
         )}
+        <span className="text-xs text-muted-foreground whitespace-nowrap">
+          {displayLabel}
+        </span>
         {hasDetails && (
           <ChevronDown
             className={cn(

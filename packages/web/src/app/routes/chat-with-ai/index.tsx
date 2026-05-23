@@ -67,19 +67,13 @@ export function ChatWithAIPage() {
   );
 
   const handleTitleUpdate = useCallback(
-    (title: string, conversationId?: string) => {
+    (title: string) => {
       setConversationTitle(title);
       void queryClient.invalidateQueries({
         queryKey: ['chat-conversations'],
       });
-      if (conversationId && !selectedConversationId) {
-        setPendingConversationId(null);
-        navigate(`/chat/${conversationId}`, {
-          replace: true,
-        });
-      }
     },
-    [queryClient, selectedConversationId, navigate],
+    [queryClient],
   );
 
   const handleRename = useCallback(async () => {
