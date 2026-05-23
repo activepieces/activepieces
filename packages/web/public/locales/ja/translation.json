@@ -512,6 +512,7 @@
   "Retry": "再試行する",
   "stepsCompleted": "{count, plural, =1 {1 ステップ完了} other {# ステップ完了}}",
   "Thought for a few seconds": "数秒間の想定値",
+  "Thought for {seconds} seconds": "{seconds} 秒の思考時間",
   "Thinking...": "考えています...",
   "Stop reading": "読書を停止する",
   "Read aloud": "音声読み上げ",
