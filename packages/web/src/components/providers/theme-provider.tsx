@@ -46,7 +46,19 @@ export function ThemeProvider({
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
   );
   const [forceLightMode, setForceLightMode] = useState(false);
+  const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>(() =>
+    window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
+  );
   const branding = flagsHooks.useWebsiteBranding();
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e: MediaQueryListEvent) => {
+      setSystemTheme(e.matches ? 'dark' : 'light');
+    };
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
   useEffect(() => {
     if (!branding) {
       console.warn('Website brand is not defined');
@@ -57,7 +69,7 @@ export function ThemeProvider({
     const resolvedTheme = forceLightMode
       ? 'light'
       : theme === 'system'
-      ? 'light'
+      ? systemTheme
       : theme;
     root.classList.remove('light', 'dark');
     document.title = branding.websiteName;
@@ -95,7 +107,7 @@ export function ThemeProvider({
     }
 
     root.classList.add(resolvedTheme);
-  }, [theme, branding, forceLightMode]);
+  }, [theme, branding, forceLightMode, systemTheme]);
 
   const value = {
     theme,
