@@ -73,8 +73,8 @@ function registerMcpEndpoint(app: Parameters<FastifyPluginAsyncZod>[0], scope: M
         }
 
         const conversationId = req.headers[CONVERSATION_ID_HEADER] as string | undefined
-        const conversationProjectId = conversationId
-            ? await resolveConversationProjectId({ conversationId, log: req.log })
+        const conversationProjectId = conversationId && userId
+            ? await resolveConversationProjectId({ conversationId, userId, log: req.log })
             : null
         const serverMcp = conversationProjectId
             ? await mcpServerService(req.log).getPopulatedByProjectId(conversationProjectId) ?? mcp
@@ -147,12 +147,13 @@ type ResolvedIdentity =
 
 const chatConversationRepo = repoFactory(ChatConversationEntity)
 
-async function resolveConversationProjectId({ conversationId, log }: {
+async function resolveConversationProjectId({ conversationId, userId, log }: {
     conversationId: string
+    userId: string
     log: FastifyBaseLogger
 }): Promise<string | null> {
     const { data: conversation, error } = await tryCatch(async () =>
-        chatConversationRepo().findOne({ where: { id: conversationId }, select: ['projectId'] }),
+        chatConversationRepo().findOne({ where: { id: conversationId, userId }, select: ['projectId'] }),
     )
     if (error) {
         log.warn({ err: error, conversationId }, 'DB error resolving conversation project')
