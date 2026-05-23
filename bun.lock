@@ -1140,7 +1140,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "@bilig/headless": "^0.18.29",
+        "@bilig/headless": "^0.39.0",
         "tslib": "2.6.2",
       },
       "devDependencies": {
@@ -10395,17 +10395,17 @@
 
     "@base44/sdk": ["@base44/sdk@0.8.27", "", { "dependencies": { "axios": "^1.6.2", "socket.io-client": "^4.7.5", "uuid": "^13.0.0" } }, "sha512-TkCQ6TZb0Fqq48Ig6xc1o+SU9LYg0sgzDHTIE0JiRcAmRkoO7Jm8kVzNEe2Nmh3msP6P8sxs0GFwGfukMUoCzg=="],
 
-    "@bilig/core": ["@bilig/core@0.18.29", "", { "dependencies": { "@bilig/formula": "0.18.29", "@bilig/protocol": "0.18.29", "@bilig/wasm-kernel": "0.18.29", "@bilig/workbook-domain": "0.18.29", "effect": "3.21.0" } }, "sha512-okLrnMKKCijMz+wCI/0hJ6eQPKt7fd8SeYRswibyDdyr9dwshOWadkmZ5zM7wDeAeT7tKyiDWpv8+CQa1CcYIw=="],
+    "@bilig/core": ["@bilig/core@0.39.0", "", { "dependencies": { "@bilig/formula": "0.39.0", "@bilig/protocol": "0.39.0", "@bilig/wasm-kernel": "0.39.0", "@bilig/workbook-domain": "0.39.0", "effect": "3.21.0" } }, "sha512-0byui2lPXEmuHkDs3vvILJthnq6lJDT6wAlHJC2shXZ/duGyEowFD0Gkn940AWQyyeRiwUlaYI6+rWjWeV0isw=="],
 
-    "@bilig/formula": ["@bilig/formula@0.18.29", "", { "dependencies": { "@bilig/protocol": "0.18.29" } }, "sha512-mkZS4yoa+SPh8iCXnDqg/Yx6yqRwTT/T1oPod+qXhxj3R8t86jnj4unMCkgfSEr0EianMganQtysq1ljZewQUw=="],
+    "@bilig/formula": ["@bilig/formula@0.39.0", "", { "dependencies": { "@bilig/protocol": "0.39.0" } }, "sha512-Osk2SumSXwOnbmB2KQIiOXvfd2CLn2ghcja+mhQQ/UlJ+HxL7FZSdy17fGDhQOOANf9nk0SvUSDXOaceTLp9rg=="],
 
-    "@bilig/headless": ["@bilig/headless@0.18.29", "", { "dependencies": { "@bilig/core": "0.18.29", "@bilig/formula": "0.18.29", "@bilig/protocol": "0.18.29", "fast-xml-parser": "5.7.3", "fflate": "0.3.11", "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz", "xlsx-js-style": "1.2.0" }, "bin": { "bilig-workpaper-mcp": "dist/work-paper-mcp-stdio-bin.js" } }, "sha512-J3artwL/mbW1S12efz4JDNZIE3EbUzWaH6QnCm2urxwtb7PQl7Ya2ugmQH5RchR+3eD8JfkrXLtBHd5RQENEiQ=="],
+    "@bilig/headless": ["@bilig/headless@0.39.0", "", { "dependencies": { "@bilig/core": "0.39.0", "@bilig/formula": "0.39.0", "@bilig/protocol": "0.39.0", "fast-xml-parser": "5.7.3", "fflate": "0.3.11", "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz", "xlsx-js-style": "1.2.0" }, "bin": { "bilig-mcp-challenge": "dist/mcp-challenge-bin.js", "bilig-workpaper-mcp": "dist/work-paper-mcp-stdio-bin.js", "bilig-formula-clinic": "dist/formula-clinic-bin.js", "bilig-agent-challenge": "dist/agent-workbook-challenge-bin.js" } }, "sha512-MW0hxwdwNrpFLBz/EJ/aRVOh3HhOguM7jgAt2uaWjuANoYcBB/zmG22g7ovcjMGZQkt2/1k7pvbDU5ka2xtMzQ=="],
 
-    "@bilig/protocol": ["@bilig/protocol@0.18.29", "", {}, "sha512-2ImaADsfZ02SmtAeyVmxyukY0WB7SsswglNuNSIaVifFvLJiOP+5N2QC0eDYdsvUdlr3xsgO41Dw5O71zE2BHg=="],
+    "@bilig/protocol": ["@bilig/protocol@0.39.0", "", {}, "sha512-+XxC+xOhV0+xYNYtw7+a5jBUbyoevUtPW407PBr9+mi37BM4wO6FBPA5a02wOYnS618FtBZ38vswbFAQPIUEMQ=="],
 
-    "@bilig/wasm-kernel": ["@bilig/wasm-kernel@0.18.29", "", {}, "sha512-VptJU1khn3uDO4UMjRXL9KzzfZpnyZ0mGmuPqMEf6ZP8oBSTvwlXmbidAWu9IxP9bLrUWd4RtZxn8YeF49IM0Q=="],
+    "@bilig/wasm-kernel": ["@bilig/wasm-kernel@0.39.0", "", {}, "sha512-kHihCagLtXXDZsGuYNx4jl303pyh0pvFT8Ue6feAC8uiCPo9bvUFV4SKWzvD9k46BH52bhCMbjKIVBSebTQBWw=="],
 
-    "@bilig/workbook-domain": ["@bilig/workbook-domain@0.18.29", "", { "dependencies": { "@bilig/protocol": "0.18.29" } }, "sha512-qSXwRbcpgIfSLdugUql+xfjaiXG97uH9xBEaK8jCbdYcmzv7LeLCbVxBjP+q/WL9SfQQdjiyqjpvIXFjCctJCQ=="],
+    "@bilig/workbook-domain": ["@bilig/workbook-domain@0.39.0", "", { "dependencies": { "@bilig/protocol": "0.39.0" } }, "sha512-8CKuW94f3PhVWf7UAuK/YK2H1/14/YBYvWnwyatYKOzjhpPTaCLm5Cabc4ZEvEhfZY6jAWfxrINIqSILqmCZOw=="],
 
     "@bull-board/api": ["@bull-board/api@6.10.1", "", { "dependencies": { "redis-info": "^3.1.0" }, "peerDependencies": { "@bull-board/ui": "6.10.1" } }, "sha512-VPkZa2XZI2Wk2MqK1XyiiS+tOhNan54mnm2fpv2KA0fdZ92mQqNjhKkOpsykhQv9XUEc8cCRlZqGxf67YCMJbQ=="],
 
@@ -16409,8 +16409,6 @@
 
     "@fastify/otel/minimatch": ["minimatch@10.2.5", "", { "dependencies": { "brace-expansion": "^5.0.5" } }, "sha512-MULkVLfKGYDFYejP07QOurDLLQpcjk7Fw+7jXS2R2czRQzR56yHRveU5NDJEOviH+hETZKSkIk5c+T23GjFUMg=="],
 
-    "@fastify/send/mime": ["mime@3.0.0", "", { "bin": { "mime": "cli.js" } }, "sha512-jSCU7/VB1loIWBZe14aEYHU/+1UMEHoaO7qxCOVJOw9GgH72VAWppxNcjU+x9a2k3GSIBXNKxXQFqRvvZ7vr3A=="],
-
     "@fastify/static/content-disposition": ["content-disposition@1.1.0", "", {}, "sha512-5jRCH9Z/+DRP7rkvY83B+yGIGX96OYdJmzngqnw2SBSxqCFPd0w2km3s5iawpGX8krnwSGmF0FW5Nhr0Hfai3g=="],
 
     "@fastify/static/glob": ["glob@13.0.6", "", { "dependencies": { "minimatch": "^10.2.2", "minipass": "^7.1.3", "path-scurry": "^2.0.2" } }, "sha512-Wjlyrolmm8uDpm/ogGyXZXb1Z+Ca2B8NbJwqBVg0axK9GbBeoS7yGV6vjXnYdGm6X53iehEuxxbyiKp8QmN4Vw=="],
@@ -18730,8 +18728,6 @@
     "@base44/sdk/axios/form-data": ["form-data@4.0.5", "", { "dependencies": { "asynckit": "^0.4.0", "combined-stream": "^1.0.8", "es-set-tostringtag": "^2.1.0", "hasown": "^2.0.2", "mime-types": "^2.1.12" } }, "sha512-8RipRLol37bNs2bhoV67fiTEvdTrbMUYcFTiy3+wuuOnUog2QBHCZWXDRijWQfAkhBj2Uf5UnVaiWwA5vdd82w=="],
 
     "@bilig/headless/fast-xml-parser/fast-xml-builder": ["fast-xml-builder@1.2.0", "", { "dependencies": { "path-expression-matcher": "^1.5.0", "xml-naming": "^0.1.0" } }, "sha512-00aAWieqff+ZJhsXA4g1g7M8k+7AYoMUUHF+/zFb5U6Uv/P0Vl4QZo84/IcufzYalLuEj9928bXN9PbbFzMF0Q=="],
-
-    "@bull-board/fastify/@fastify/static/@fastify/send": ["@fastify/send@4.1.0", "", { "dependencies": { "@lukeed/ms": "^2.0.2", "escape-html": "~1.0.3", "fast-decode-uri-component": "^1.0.1", "http-errors": "^2.0.0", "mime": "^3" } }, "sha512-TMYeQLCBSy2TOFmV95hQWkiTYgC/SEx7vMdV+wnZVX4tt8VBLKzmH8vV9OzJehV0+XBfg+WxPMt5wp+JBUKsVw=="],
 
     "@bull-board/fastify/@fastify/static/glob": ["glob@11.1.0", "", { "dependencies": { "foreground-child": "^3.3.1", "jackspeak": "^4.1.1", "minimatch": "^10.1.1", "minipass": "^7.1.2", "package-json-from-dist": "^1.0.0", "path-scurry": "^2.0.0" }, "bin": { "glob": "dist/esm/bin.mjs" } }, "sha512-vuNwKSaKiqm7g0THUBu2x7ckSs3XJLXE+2ssL7/MfTGPLLcrJQ/4Uq1CjPTtO5cCIiRxqvN6Twy1qOwhL0Xjcw=="],
 
