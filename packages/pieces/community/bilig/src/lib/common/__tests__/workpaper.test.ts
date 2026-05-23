@@ -98,7 +98,7 @@ describe('biligWorkpaperUtils', () => {
         sheets: {
           Sheet1: [
             [10, 20, '=SUM(A1:B1)'],
-            [30, 5, '=IF(C1>20,"ok","low")'],
+            [30, 5, '=IF(B2>5,"ok","low")'],
           ],
         },
       },
