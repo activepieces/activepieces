@@ -512,6 +512,7 @@
   "Retry": "Réessayer",
   "stepsCompleted": "{count, plural, =1 {1 étape terminée} other {# étapes accomplies}}",
   "Thought for a few seconds": "Penser pendant quelques secondes",
+  "Thought for {seconds} seconds": "Penser pendant {seconds} secondes",
   "Thinking...": "Réfléchissement...",
   "Stop reading": "Arrêter la lecture",
   "Read aloud": "Lire à haute voix",
