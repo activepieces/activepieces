@@ -79,8 +79,7 @@ function registerMcpEndpoint(app: Parameters<FastifyPluginAsyncZod>[0], scope: M
         const serverMcp = conversationProjectId
             ? await mcpServerService(req.log).getPopulatedByProjectId(conversationProjectId) ?? mcp
             : mcp
-        const selectionScope = !conversationProjectId && conversationId ? { conversationId } : null
-        const { server } = await mcpServerService(req.log).buildServer({ mcp: serverMcp, userId, selectionScope })
+        const { server } = await mcpServerService(req.log).buildServer({ mcp: serverMcp, userId })
 
         const transport = new StreamableHTTPServerTransport({
             sessionIdGenerator: undefined,
@@ -152,9 +151,13 @@ async function resolveConversationProjectId({ conversationId, log }: {
     conversationId: string
     log: FastifyBaseLogger
 }): Promise<string | null> {
-    const { data: conversation } = await tryCatch(async () =>
+    const { data: conversation, error } = await tryCatch(async () =>
         chatConversationRepo().findOne({ where: { id: conversationId }, select: ['projectId'] }),
     )
+    if (error) {
+        log.warn({ err: error, conversationId }, 'DB error resolving conversation project')
+        return null
+    }
     if (!conversation) {
         log.debug({ conversationId }, 'Conversation not found for project resolution')
         return null
