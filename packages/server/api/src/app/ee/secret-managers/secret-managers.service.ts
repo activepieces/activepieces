@@ -109,14 +109,23 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
             .createQueryBuilder('sm')
             .where('sm.id = :connectionId', { connectionId })
             .andWhere('sm.platformId = :platformId', { platformId })
-            .andWhere(
+
+        const hasProjectScope = !isNil(projectIds) && projectIds.length > 0
+        if (hasProjectScope) {
+            qb.andWhere(
                 '(sm.scope = :platformScope OR (sm.scope = :projectScope AND sm.projectIds @> :projectIds::jsonb))',
                 {
                     platformScope: SecretManagerConnectionScope.PLATFORM,
                     projectScope: SecretManagerConnectionScope.PROJECT,
-                    projectIds: JSON.stringify(projectIds ?? []),
+                    projectIds: JSON.stringify(projectIds),
                 },
             )
+        }
+        else {
+            qb.andWhere('sm.scope = :platformScope', {
+                platformScope: SecretManagerConnectionScope.PLATFORM,
+            })
+        }
 
         const connection = await qb.getOne()
         if (isNil(connection)) {

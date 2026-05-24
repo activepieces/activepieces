@@ -297,8 +297,12 @@ const DeleteAppConnectionRequest = {
 
 const GetOAuth2AuthorizationUrlRequest = {
     config: {
-        security: securityAccess.publicPlatform(
+        security: securityAccess.project(
             [PrincipalType.USER],
+            Permission.READ_APP_CONNECTION,
+            {
+                type: ProjectResourceType.BODY,
+            },
         ),
     },
     schema: {
