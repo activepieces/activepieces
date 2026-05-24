@@ -461,4 +461,3 @@ const isPieceMetadata = (
 ): metadata is PieceStepMetadata =>
   metadata?.type === FlowActionType.PIECE ||
   metadata?.type === FlowTriggerType.PIECE;
-
