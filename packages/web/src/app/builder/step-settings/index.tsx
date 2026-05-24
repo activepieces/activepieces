@@ -327,7 +327,7 @@ const StepSettingsContainer = () => {
         <DynamicPropertiesProvider
           key={`${selectedStep.name}-${selectedStep.type}`}
         >
-          <ActionTestRunnerProviderIfAction step={modifiedStep}>
+          <ActionTestRunnerProviderIfAction step={selectedStep}>
             <StepSettingsLayout
               isSplit={
                 showTestPanel && isTestPanelOpen && testPanelView === 'split'
