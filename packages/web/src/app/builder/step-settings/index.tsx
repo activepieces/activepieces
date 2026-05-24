@@ -30,7 +30,10 @@ import { ActionErrorHandlingForm } from '../piece-properties/action-error-handli
 import { DynamicPropertiesProvider } from '../piece-properties/dynamic-properties-context';
 import { SidebarHeader } from '../sidebar-header';
 import { TestPanelHost } from '../test-step/test-panel-host';
-import { ActionTestRunnerProvider } from '../test-step/test-runner-context';
+import {
+  ActionTestRunnerProvider,
+  TriggerTestRunnerProvider,
+} from '../test-step/test-runner-context';
 import { TestStepCTAButton } from '../test-step/test-step-cta-button';
 
 import { AgentSettings } from './agent-settings';
@@ -327,7 +330,7 @@ const StepSettingsContainer = () => {
         <DynamicPropertiesProvider
           key={`${selectedStep.name}-${selectedStep.type}`}
         >
-          <ActionTestRunnerProviderIfAction step={selectedStep}>
+          <StepTestRunnerProvider step={selectedStep}>
             <StepSettingsLayout
               isSplit={
                 showTestPanel && isTestPanelOpen && testPanelView === 'split'
@@ -350,7 +353,7 @@ const StepSettingsContainer = () => {
                 ) : null
               }
             />
-          </ActionTestRunnerProviderIfAction>
+          </StepTestRunnerProvider>
         </DynamicPropertiesProvider>
       </form>
     </Form>
@@ -432,7 +435,7 @@ const PieceVersionInHeader = ({
 const isFlowActionStep = (step: FlowAction | FlowTrigger): step is FlowAction =>
   flowStructureUtil.isAction(step.type);
 
-const ActionTestRunnerProviderIfAction = ({
+const StepTestRunnerProvider = ({
   step,
   children,
 }: {
@@ -446,7 +449,11 @@ const ActionTestRunnerProviderIfAction = ({
       </ActionTestRunnerProvider>
     );
   }
-  return <>{children}</>;
+  return (
+    <TriggerTestRunnerProvider step={step} key={step.name}>
+      {children}
+    </TriggerTestRunnerProvider>
+  );
 };
 
 const stripSampleData = (step: FlowAction | FlowTrigger) => {

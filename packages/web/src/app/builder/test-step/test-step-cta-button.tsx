@@ -17,7 +17,10 @@ import { pieceSelectorUtils } from '@/features/pieces';
 
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
 
-import { useActionTestRunner } from './test-runner-context';
+import {
+  useActionTestRunner,
+  useTriggerTestRunner,
+} from './test-runner-context';
 import { TestButtonTooltip } from './test-step-tooltip';
 
 const SOFT_PRIMARY_CTA_CLASSES =
@@ -81,7 +84,6 @@ const TestStepCTAButton = () => {
         stepIsRunning={stepIsRunning}
         stepIsValid={currentStep.valid !== false}
         onOpenPanel={onOpenPanel}
-        onFireTest={onOpenPanel}
         saving={saving}
         hasRun={!isNil(run)}
       />
@@ -199,7 +201,6 @@ type TriggerCTAButtonProps = {
   stepIsRunning: boolean;
   stepIsValid: boolean;
   onOpenPanel: () => void;
-  onFireTest: () => void;
   saving: boolean;
   hasRun: boolean;
 };
@@ -209,14 +210,27 @@ const TriggerCTAButton = ({
   stepIsRunning,
   stepIsValid,
   onOpenPanel,
-  onFireTest,
   saving,
   hasRun,
 }: TriggerCTAButtonProps) => {
   const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
+  const runner = useTriggerTestRunner();
   useConfigureStepShortcutToast(stepIsValid);
+
+  const fireTest = () => {
+    onOpenPanel();
+    runner?.fireTest();
+  };
+
+  const runnerBusy = runner?.isTesting ?? false;
+  const runnerReady = runner?.canFireTest ?? false;
   const testDisabled =
-    !stepIsValid || saving || isLoadingDynamicProperties || stepIsRunning;
+    !stepIsValid ||
+    saving ||
+    isLoadingDynamicProperties ||
+    stepIsRunning ||
+    runnerBusy ||
+    !runnerReady;
 
   if (hasRun) {
     return (
@@ -249,10 +263,10 @@ const TriggerCTAButton = ({
         <TestButtonTooltip saving={saving} invalid={!stepIsValid}>
           <Button
             variant="outline"
-            onClick={onFireTest}
+            onClick={fireTest}
             disabled={testDisabled}
             keyboardShortcut="G"
-            onKeyboardShortcut={onFireTest}
+            onKeyboardShortcut={fireTest}
             className={SOFT_PRIMARY_CTA_CLASSES}
             size="sm"
           >
@@ -269,10 +283,10 @@ const TriggerCTAButton = ({
       <TestButtonTooltip saving={saving} invalid={!stepIsValid}>
         <Button
           variant="outline"
-          onClick={onFireTest}
+          onClick={fireTest}
           disabled={testDisabled}
           keyboardShortcut="G"
-          onKeyboardShortcut={onFireTest}
+          onKeyboardShortcut={fireTest}
           className={SOFT_PRIMARY_CTA_CLASSES}
           size="sm"
           data-testid="test-trigger-button"
