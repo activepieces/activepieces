@@ -138,6 +138,7 @@ export function ChatInput({
           </div>
         ) : (
           <PromptInputTextarea
+            autoFocus
             placeholder={placeholder ?? t('Tell me what you need...')}
             className="min-h-[44px] text-sm"
           />
