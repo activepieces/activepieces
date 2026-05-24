@@ -327,7 +327,7 @@ const StepSettingsContainer = () => {
         <DynamicPropertiesProvider
           key={`${selectedStep.name}-${selectedStep.type}`}
         >
-          <ActionTestRunnerProviderIfAction step={modifiedStep}>
+          <ActionTestRunnerProviderIfAction step={selectedStep}>
             <StepSettingsLayout
               isSplit={
                 showTestPanel && isTestPanelOpen && testPanelView === 'split'
@@ -461,3 +461,4 @@ const isPieceMetadata = (
 ): metadata is PieceStepMetadata =>
   metadata?.type === FlowActionType.PIECE ||
   metadata?.type === FlowTriggerType.PIECE;
+
