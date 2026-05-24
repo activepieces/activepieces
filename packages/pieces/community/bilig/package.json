@@ -8,7 +8,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "@bilig/headless": "^0.39.0",
+    "@bilig/headless": "0.40.42",
     "tslib": "2.6.2"
   },
   "scripts": {

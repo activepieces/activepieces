@@ -1140,7 +1140,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "@bilig/headless": "^0.39.0",
+        "@bilig/headless": "0.40.42",
         "tslib": "2.6.2",
       },
       "devDependencies": {
@@ -10395,17 +10395,17 @@
 
     "@base44/sdk": ["@base44/sdk@0.8.27", "", { "dependencies": { "axios": "^1.6.2", "socket.io-client": "^4.7.5", "uuid": "^13.0.0" } }, "sha512-TkCQ6TZb0Fqq48Ig6xc1o+SU9LYg0sgzDHTIE0JiRcAmRkoO7Jm8kVzNEe2Nmh3msP6P8sxs0GFwGfukMUoCzg=="],
 
-    "@bilig/core": ["@bilig/core@0.39.0", "", { "dependencies": { "@bilig/formula": "0.39.0", "@bilig/protocol": "0.39.0", "@bilig/wasm-kernel": "0.39.0", "@bilig/workbook-domain": "0.39.0", "effect": "3.21.0" } }, "sha512-0byui2lPXEmuHkDs3vvILJthnq6lJDT6wAlHJC2shXZ/duGyEowFD0Gkn940AWQyyeRiwUlaYI6+rWjWeV0isw=="],
+    "@bilig/core": ["@bilig/core@0.40.42", "", { "dependencies": { "@bilig/formula": "0.40.42", "@bilig/protocol": "0.40.42", "@bilig/wasm-kernel": "0.40.42", "@bilig/workbook-domain": "0.40.42", "effect": "3.21.0" } }, "sha512-rHu8M/riKiXA4ajoJ7H4z4BwAvAzv75GMpz7wRvPdR6ioBHbJonljtWCLKGd2POxyWDp4T8IVE2E0UKfOIkxPQ=="],
 
-    "@bilig/formula": ["@bilig/formula@0.39.0", "", { "dependencies": { "@bilig/protocol": "0.39.0" } }, "sha512-Osk2SumSXwOnbmB2KQIiOXvfd2CLn2ghcja+mhQQ/UlJ+HxL7FZSdy17fGDhQOOANf9nk0SvUSDXOaceTLp9rg=="],
+    "@bilig/formula": ["@bilig/formula@0.40.42", "", { "dependencies": { "@bilig/protocol": "0.40.42" } }, "sha512-Mg4HRcpaXcbKTnx8cFcJD7/CL625TRaD+jJ075jR4S0CX//aAflTgNdu6A+Jt72/bLT6YpzT3Ji0ROkFmoChUg=="],
 
-    "@bilig/headless": ["@bilig/headless@0.39.0", "", { "dependencies": { "@bilig/core": "0.39.0", "@bilig/formula": "0.39.0", "@bilig/protocol": "0.39.0", "fast-xml-parser": "5.7.3", "fflate": "0.3.11", "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz", "xlsx-js-style": "1.2.0" }, "bin": { "bilig-mcp-challenge": "dist/mcp-challenge-bin.js", "bilig-workpaper-mcp": "dist/work-paper-mcp-stdio-bin.js", "bilig-formula-clinic": "dist/formula-clinic-bin.js", "bilig-agent-challenge": "dist/agent-workbook-challenge-bin.js" } }, "sha512-MW0hxwdwNrpFLBz/EJ/aRVOh3HhOguM7jgAt2uaWjuANoYcBB/zmG22g7ovcjMGZQkt2/1k7pvbDU5ka2xtMzQ=="],
+    "@bilig/headless": ["@bilig/headless@0.40.42", "", { "dependencies": { "@bilig/core": "0.40.42", "@bilig/formula": "0.40.42", "@bilig/protocol": "0.40.42", "fast-xml-parser": "5.7.3", "fflate": "0.3.11", "fflate-stream": "npm:fflate@0.8.3", "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz", "xlsx-js-style": "1.2.0" }, "bin": { "bilig-mcp-challenge": "dist/mcp-challenge-bin.js", "bilig-workpaper-mcp": "dist/work-paper-mcp-stdio-bin.js", "bilig-formula-clinic": "dist/formula-clinic-bin.js", "bilig-agent-challenge": "dist/agent-workbook-challenge-bin.js" } }, "sha512-/IotXkr8+pRrIEj6N5ziZlca18vWXhHCiqHQ9BZYNk5Nj4/+2KU3fG+RaG17o1upBA5/gNI56u/hfx7EWQhwUA=="],
 
-    "@bilig/protocol": ["@bilig/protocol@0.39.0", "", {}, "sha512-+XxC+xOhV0+xYNYtw7+a5jBUbyoevUtPW407PBr9+mi37BM4wO6FBPA5a02wOYnS618FtBZ38vswbFAQPIUEMQ=="],
+    "@bilig/protocol": ["@bilig/protocol@0.40.42", "", {}, "sha512-46Tl28gTserJo8TxPrmeWRUuwH+zKof5AwPXA5ILlogwJQ7VFMCP48Rg2Tl5ur/JLyyBFdyszDW4O6iarGI/Jg=="],
 
-    "@bilig/wasm-kernel": ["@bilig/wasm-kernel@0.39.0", "", {}, "sha512-kHihCagLtXXDZsGuYNx4jl303pyh0pvFT8Ue6feAC8uiCPo9bvUFV4SKWzvD9k46BH52bhCMbjKIVBSebTQBWw=="],
+    "@bilig/wasm-kernel": ["@bilig/wasm-kernel@0.40.42", "", {}, "sha512-+0187KmdLoRDsYl2gkVAPcWQkk/tG5sqT9OnldicUqiq/5JX/jPjbP3MPHiOv5XlJTPf8UkbTVijrdFs4yTNTQ=="],
 
-    "@bilig/workbook-domain": ["@bilig/workbook-domain@0.39.0", "", { "dependencies": { "@bilig/protocol": "0.39.0" } }, "sha512-8CKuW94f3PhVWf7UAuK/YK2H1/14/YBYvWnwyatYKOzjhpPTaCLm5Cabc4ZEvEhfZY6jAWfxrINIqSILqmCZOw=="],
+    "@bilig/workbook-domain": ["@bilig/workbook-domain@0.40.42", "", { "dependencies": { "@bilig/protocol": "0.40.42" } }, "sha512-qcWaziOXlsSrPJn+akpDXh4MqUWipkhZS1JK7eAd8QvEXMc5xJm3GceLASkL+mULqte0VnqE6YdgQeEFV/sQzA=="],
 
     "@bull-board/api": ["@bull-board/api@6.10.1", "", { "dependencies": { "redis-info": "^3.1.0" }, "peerDependencies": { "@bull-board/ui": "6.10.1" } }, "sha512-VPkZa2XZI2Wk2MqK1XyiiS+tOhNan54mnm2fpv2KA0fdZ92mQqNjhKkOpsykhQv9XUEc8cCRlZqGxf67YCMJbQ=="],
 
@@ -13292,6 +13292,8 @@
     "fetch-retry": ["fetch-retry@6.0.0", "", {}, "sha512-BUFj1aMubgib37I3v4q78fYo63Po7t4HUPTpQ6/QE6yK6cIQrP+W43FYToeTEyg5m2Y7eFUtijUuAv/PDlWuag=="],
 
     "fflate": ["fflate@0.4.8", "", {}, "sha512-FJqqoDBR00Mdj9ppamLa/Y7vxm+PRmNWA67N846RvsoYVMKB4q3y/de5PA7gUmRMYK/8CMz2GDZQmCRN1wBcWA=="],
+
+    "fflate-stream": ["fflate@0.8.3", "", {}, "sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA=="],
 
     "figures": ["figures@3.2.0", "", { "dependencies": { "escape-string-regexp": "^1.0.5" } }, "sha512-yaduQFRKLXYOGgEn6AZau90j3ggSOyiqXU0F9JZfeXYhNa+Jk4X+s45A2zg5jns87GAFa34BBm2kXw4XpNcbdg=="],
 
