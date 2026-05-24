@@ -1,4 +1,4 @@
-import { ApEdition, isNil, PlatformId, PrincipalType } from '@activepieces/shared'
+import { ApEdition, isNil, PlatformId, PrincipalType, tryCatch } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { databaseConnection } from '../database/database-connection'
 import { system } from '../helper/system/system'
@@ -26,17 +26,19 @@ export const platformUtils = {
         if (isNil(host) || host.length === 0) {
             return null
         }
-        const rows = await databaseConnection().query<Array<{ platform_id: string }>>(
+        const { data, error } =  await tryCatch(() => databaseConnection().query<Array<{ platform_id: string }>>(
             'SELECT platform_id FROM legacy_custom_domain WHERE domain = $1 LIMIT 1',
             [host.toLowerCase()],
-        )
-        return rows[0]?.platform_id ?? null
+        ))
+        if (error) return null
+        return data[0]?.platform_id ?? null
     },
     async getLegacyHostByPlatformId(platformId: string): Promise<string | null> {
-        const rows = await databaseConnection().query<Array<{ domain: string }>>(
+        const { data, error } =  await tryCatch(() => databaseConnection().query<Array<{ domain: string }>>(
             'SELECT domain FROM legacy_custom_domain WHERE platform_id = $1 LIMIT 1',
             [platformId],
-        )
-        return rows[0]?.domain ?? null
+        ))
+        if (error) return null
+        return data[0]?.domain ?? null
     },
 }
