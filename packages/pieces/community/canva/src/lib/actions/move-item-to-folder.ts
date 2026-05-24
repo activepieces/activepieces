@@ -17,6 +17,18 @@ export const moveItemToFolder = createAction({
       description: 'ID of the design or asset to move.',
       required: true,
     }),
+    item_type: Property.StaticDropdown({
+      displayName: 'Item Type',
+      description: 'Whether the item is a design or an asset.',
+      required: true,
+      defaultValue: 'design',
+      options: {
+        options: [
+          { label: 'Design', value: 'design' },
+          { label: 'Asset', value: 'asset' },
+        ],
+      },
+    }),
     to_folder_id: Property.ShortText({
       displayName: 'Destination Folder ID',
       description: 'ID of the folder to move the item into.',
@@ -30,13 +42,13 @@ export const moveItemToFolder = createAction({
     }),
   },
   async run(context) {
-    const { item_id, to_folder_id, from_folder_id } = context.propsValue;
+    const { item_id, item_type, to_folder_id, from_folder_id } = context.propsValue;
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `https://api.canva.com/rest/v1/folders/${to_folder_id}/items/move`,
       body: {
-        items: [{ type: 'design', id: item_id }],
+        items: [{ type: item_type, id: item_id }],
         from_folder_id,
       },
       authentication: {

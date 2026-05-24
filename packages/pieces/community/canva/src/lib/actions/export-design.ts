@@ -40,7 +40,7 @@ export const exportDesign = createAction({
     const createResponse = await httpClient.sendRequest<{ job: { id: string; status: string } }>({
       method: HttpMethod.POST,
       url: 'https://api.canva.com/rest/v1/exports',
-      body: { design_id, format },
+      body: { design_id, format: { type: format } },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
