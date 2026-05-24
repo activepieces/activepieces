@@ -1850,7 +1850,7 @@
   "HTTP {status}": "HTTP {status}",
   "What the service said": "What the service said",
   "Response from {pieceDisplayName}": "Response from {pieceDisplayName}",
-  "Copy for AI to explain": "Copy for AI to explain",
+  "Copy Error for AI": "Copy Error for AI",
   "Copied": "Copied",
   "Prompt copied to clipboard": "Prompt copied to clipboard",
   "Paste it into any AI assistant to get a diagnosis.": "Paste it into any AI assistant to get a diagnosis.",

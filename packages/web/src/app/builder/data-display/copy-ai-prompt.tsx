@@ -73,7 +73,7 @@ const CopyAiPromptButton = ({
         ) : (
           <Sparkles className="size-3.5 text-primary" />
         )}
-        {copied ? t('Copied') : t('Copy for AI to explain')}
+        {copied ? t('Copied') : t('Copy Error for AI')}
       </Button>
     </div>
   );
