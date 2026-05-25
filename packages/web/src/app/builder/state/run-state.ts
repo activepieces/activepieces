@@ -82,15 +82,23 @@ export const createRunState = (
     setRun: async (run: FlowRun, flowVersion: FlowVersion) =>
       set((state) => {
         get().removeAllStepTestsListeners();
+        const isNewRun = state.run?.id !== run.id;
         const loopsIndexes = flowRunUtils.pinLoopsToIterationsWithFailedStep(
           run,
           state.loopsIndexes,
+          {
+            liveFollowPaused:
+              !isNewRun && state.userManuallySelectedStepDuringRun,
+          },
         );
         return {
           loopsIndexes,
           run,
           flowVersion,
           readonly: true,
+          userManuallySelectedStepDuringRun: isNewRun
+            ? false
+            : state.userManuallySelectedStepDuringRun,
         };
       }),
     selectFailedStep: () => {
@@ -112,6 +120,7 @@ export const createRunState = (
         readonly: !userHasPermissionToEditFlow,
         loopsIndexes: {},
         selectedBranchIndex: null,
+        userManuallySelectedStepDuringRun: false,
       }),
 
     setLoopIndex: (stepName: string, index: number) => {
@@ -155,6 +164,8 @@ export const createRunState = (
         });
         return {
           loopsIndexes,
+          userManuallySelectedStepDuringRun:
+            state.userManuallySelectedStepDuringRun || !isNil(state.run),
         };
       });
     },

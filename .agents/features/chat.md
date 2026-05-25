@@ -1,7 +1,7 @@
 # Chat Module
 
 ## Summary
-A platform-level AI chat assistant that lets users interact with an LLM to manage their Activepieces projects through natural language. The chat connects to the platform's configured AI provider, streams responses via the Vercel AI SDK, and exposes Activepieces resources (flows, tables, connections, runs) as callable tools through the project's MCP server. Conversations are persisted per-user with support for message compaction, file attachments, multi-project context switching, plan approval for multi-step operations, and a tool approval gate for destructive operations.
+A platform-level AI chat assistant that lets users interact with an LLM to manage their Activepieces projects through natural language. The chat connects to the platform's configured AI provider, streams responses via a custom WebSocket chunk reducer, and exposes Activepieces resources (flows, tables, connections, runs) as callable tools through the project's MCP server. Conversations are persisted per-user with support for message compaction, file attachments, multi-project context switching, plan approval for multi-step operations, and a tool approval gate for destructive operations.
 
 ## Key Files
 - `packages/server/api/src/app/ee/chat/chat.module.ts` — module registration with `chatEnabled` plan gate
@@ -19,6 +19,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `packages/server/api/src/app/ee/chat/mcp/chat-mcp.ts` — connects to Activepieces MCP server for project-scoped tools with approval wrapping
 - `packages/server/api/src/app/ee/chat/history/chat-history.ts` — reconstructs chat history from AI SDK `ModelMessage` format
 - `packages/server/api/src/app/ee/chat/prompt/chat-prompt.ts` — builds system prompt from markdown templates in `src/assets/prompts/`
+- `packages/server/api/src/app/ee/chat/chat-sync-job.ts` — fire-and-forget telemetry sync to console.activepieces.com (cloud-only); also exposes `chatAnalyticsBulkSync` for admin bulk sync; falls back to reconstructing messages from raw ModelMessage[] when uiMessages is null
 - `packages/shared/src/lib/ee/chat/index.ts` — shared Zod schemas, types (ChatConversation, request DTOs, ChatHistoryMessage), and typed tool outputs (`ChatToolOutputs`)
 - `packages/web/src/app/routes/chat-with-ai/index.tsx` — main chat page component
 - `packages/web/src/app/routes/chat-with-ai/ai-chat-box.tsx` — chat interface with provider check, message streaming, Zustand store provider
@@ -27,7 +28,9 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `packages/web/src/features/chat/lib/chat-api.ts` — API client for `/v1/chat/*` endpoints
 - `packages/web/src/features/chat/lib/chat-store.ts` — Zustand store for interaction state (approvals, plan progress, display cards, thinking panel)
 - `packages/web/src/features/chat/lib/chat-store-context.tsx` — React context provider and `useChatStoreContext` selector hook
-- `packages/web/src/features/chat/lib/use-chat.ts` — `useAgentChat()` hook bridging AI SDK transport to Zustand store
+- `packages/web/src/features/chat/lib/use-chat.ts` — `useAgentChat()` hook managing message state (persisted, optimistic, streaming) and polling fallback
+- `packages/web/src/features/chat/lib/chunk-reducer.ts` — pure streaming state machine that accumulates `UIMessageChunk` events into a `ChatUIMessage`
+- `packages/web/src/features/chat/lib/use-streaming-reducer.ts` — WebSocket-driven streaming lifecycle hook; buffers chunks and throttles React re-renders
 - `packages/web/src/features/chat/lib/chat-types.ts` — frontend type definitions, tool output parsing, display/hidden tool name sets
 - `packages/web/src/features/chat/lib/use-voice-input.ts` — `useVoiceInput()` hook for speech-to-text via the Web Speech API (`SpeechRecognition`)
 - `packages/web/src/features/chat/lib/use-tts.ts` — `useTts()` hook for text-to-speech via the `SpeechSynthesis` API
@@ -89,7 +92,9 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `POST /v1/chat/conversations/:id/messages` — send message (streaming response)
 - `POST /v1/chat/tool-approvals/:gateId` — approve or deny a tool execution
 
-All endpoints require `PrincipalType.USER` authentication at the platform level.
+- `POST /v1/admin/chat/sync-all` — bulk historical sync of all conversations to console analytics (admin API key required)
+
+All chat endpoints require `PrincipalType.USER` authentication at the platform level. The admin sync endpoint uses `api-key` header auth.
 
 ## Message Flow
 1. User sends message via `POST /conversations/:id/messages`
@@ -99,3 +104,4 @@ All endpoints require `PrincipalType.USER` authentication at the platform level.
 5. Destructive MCP tool calls pause and emit an approval request to the UI via the stream
 6. User approves/denies via `POST /tool-approvals/:gateId`, unblocking the gate via Redis pub/sub
 7. On stream completion, assistant messages are appended to the stored conversation
+8. On cloud, `chatAnalyticsTelemetry` pushes the updated conversation to `console.activepieces.com` for monitoring (fire-and-forget, skipped when `CONSOLE_API_SECRET_KEY` is unset); messages are sourced from uiMessages when available, falling back to reconstruction from raw ModelMessage[] for older conversations

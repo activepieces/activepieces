@@ -76,7 +76,6 @@ export const PlatformPlan = z.object({
     customAppearanceEnabled: z.boolean(),
     teamProjectsLimit: z.nativeEnum(TeamProjectsLimit),
     projectRolesEnabled: z.boolean(),
-    customDomainsEnabled: z.boolean(),
     globalConnectionsEnabled: z.boolean(),
     customRolesEnabled: z.boolean(),
     apiKeysEnabled: z.boolean(),
@@ -101,6 +100,8 @@ export const PlatformPlan = z.object({
     })),
     /** @deprecated use workerGroupId instead — will be removed in 0.83.0 */
     canary: z.boolean(),
+    /** @deprecated custom domains have been removed; column kept for backwards compatibility with existing DBs */
+    customDomainsEnabled: z.boolean(),
     workerGroupId: Nullable(z.string()),
 })
 export type PlatformPlan = z.infer<typeof PlatformPlan>
@@ -126,8 +127,10 @@ export const Platform = z.object({
     */
     filteredPieceBehavior: z.nativeEnum(FilteredPieceBehavior),
     cloudAuthEnabled: z.boolean(),
+    googleAuthEnabled: z.boolean(),
     enforceAllowedAuthDomains: z.boolean(),
     allowedAuthDomains: z.array(z.string()),
+    allowedEmbedOrigins: z.array(z.string()),
     ssoDomain: Nullable(z.string()),
     ssoDomainVerification: Nullable(SsoDomainVerification),
     federatedAuthProviders: FederatedAuthnProviderConfig,
@@ -135,6 +138,7 @@ export const Platform = z.object({
     pinnedPieces: z.array(z.string()),
 })
 export type Platform = z.infer<typeof Platform>
+export type PlatformWithoutFederatedAuth = Omit<Platform, 'federatedAuthProviders'>
 
 export const PlatformWithoutSensitiveData = z.object({
     federatedAuthProviders: Nullable(FederatedAuthnProviderConfigWithoutSensitiveData),
@@ -152,8 +156,10 @@ export const PlatformWithoutSensitiveData = z.object({
     filteredPieceNames: z.array(z.string()),
     filteredPieceBehavior: z.nativeEnum(FilteredPieceBehavior),
     cloudAuthEnabled: z.boolean(),
+    googleAuthEnabled: z.boolean(),
     enforceAllowedAuthDomains: z.boolean(),
     allowedAuthDomains: z.array(z.string()),
+    allowedEmbedOrigins: z.array(z.string()),
     ssoDomain: Nullable(z.string()),
     ssoDomainVerification: Nullable(SsoDomainVerification),
     emailAuthEnabled: z.boolean(),
