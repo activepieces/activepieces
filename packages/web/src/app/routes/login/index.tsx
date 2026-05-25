@@ -5,7 +5,6 @@ import { Link } from 'react-router-dom';
 
 import { authenticationSession } from '@/lib/authentication-session';
 import { otom8ClerkAppearance } from '@/lib/otom8-clerk-appearance';
-import { OTOM8_SITE_URL } from '@/lib/otom8-site-url';
 
 export function LoginPage() {
   // Clear any stale AP session on mount. This is the canonical teardown point —
@@ -68,8 +67,8 @@ export function LoginPage() {
         >
           <SignIn
             routing="virtual"
-            forceRedirectUrl={`${OTOM8_SITE_URL}/api/ap-sso`}
-            signUpForceRedirectUrl="/api/ap-sso"
+            forceRedirectUrl="/authenticate"
+            signUpForceRedirectUrl="/authenticate"
             appearance={{
               ...otom8ClerkAppearance,
               variables: {
