@@ -1,7 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { sendrAuth } from '../auth';
-import { sendrApiCall, flattenObject } from '../common';
+import {  flattenObject } from '../common';
 
 export const getUserInfo = createAction({
   auth: sendrAuth,
@@ -10,11 +10,11 @@ export const getUserInfo = createAction({
   description: 'Returns information about the currently connected Sendr API user. Useful for verifying that your API key is valid.',
   props: {},
   async run(context) {
-    const response = await sendrApiCall<Record<string, unknown>>({
-      token: context.auth.secret_text,
-      method: HttpMethod.GET,
-      path: '/seat/me',
-    });
+    const response = await httpClient.sendRequest({
+            method: HttpMethod.GET,
+            url:  'https://api.sendr.io/seat/me',
+            headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+          });
     return flattenObject(response.body);
   },
 });
