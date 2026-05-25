@@ -11,6 +11,7 @@ import { activepiecesTools, ALL_CONTROLLABLE_TOOL_NAMES, LOCKED_TOOL_NAMES, PLAT
 import { apSetProjectContextTool } from './tools/ap-set-project-context'
 
 const PLATFORM_LEVEL_TOOL_SET = new Set(PLATFORM_LEVEL_TOOL_NAMES)
+const MCP_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
 
 const MCP_SERVER_INSTRUCTIONS = `## Activepieces MCP Server
 
@@ -160,6 +161,7 @@ function registerFlowTools({ server, mcp, projectId, permissionChecker, log }: R
                 payload: args,
                 execute: true,
                 failParentOnFailure: false,
+                timeoutMs: MCP_TIMEOUT_MS,
             })
             const isOkay = Math.floor(response.status / 100) === 2
 

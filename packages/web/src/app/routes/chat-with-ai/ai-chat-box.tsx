@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
+import { motion } from 'motion/react';
 import { useCallback, useEffect, useMemo } from 'react';
 
 import {
@@ -10,7 +10,6 @@ import {
 } from '@/components/prompt-kit/chat-container';
 import { ScrollButton } from '@/components/prompt-kit/scroll-button';
 import { Button } from '@/components/ui/button';
-import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import {
   ChatStoreProvider,
   useChatStoreContext,
@@ -29,7 +28,6 @@ import {
 import { ChatInput } from './components/chat-input';
 import { ChatModelSelector } from './components/chat-model-selector';
 import { QuickReplies } from './components/quick-replies';
-import { ThinkingDetailsPanel } from './components/thinking-details-panel';
 import { UserMessage } from './components/user-message';
 import { getTextFromParts } from './lib/message-parsers';
 
@@ -81,18 +79,6 @@ function ChatBoxContent({
   } = useAgentChat({ onTitleUpdate, onConversationCreated });
 
   const quickReplies = useChatStoreContext((s) => s.quickReplies);
-  const displayCard = useChatStoreContext((s) => s.displayCard);
-  const thinkingPanelMessageId = useChatStoreContext(
-    (s) => s.thinkingPanelMessageId,
-  );
-  const closeThinkingPanel = useChatStoreContext((s) => s.closeThinkingPanel);
-
-  const hasPlanApproval = useChatStoreContext(
-    chatStoreSelectors.hasPlanApproval,
-  );
-  const hasActiveApproval = useChatStoreContext(
-    chatStoreSelectors.hasActiveApproval,
-  );
 
   useEffect(() => {
     if (initialConversationId) {
@@ -118,18 +104,6 @@ function ChatBoxContent({
     () => messages.findLast((m) => m.role === 'assistant'),
     [messages],
   );
-
-  const hasActiveForm = useChatStoreContext((s) =>
-    chatStoreSelectors.hasActiveForm({ state: s, lastAssistantMessage }),
-  );
-
-  const shouldCloseThinking =
-    hasPlanApproval || hasActiveApproval || hasActiveForm || !!displayCard;
-  useEffect(() => {
-    if (shouldCloseThinking && thinkingPanelMessageId) {
-      closeThinkingPanel();
-    }
-  }, [shouldCloseThinking, thinkingPanelMessageId, closeThinkingPanel]);
 
   const isEmpty = messages.length === 0 && !isLoadingHistory && !isStreaming;
 
@@ -243,43 +217,15 @@ function ChatBoxContent({
 
       <div className="px-6 pb-4">
         <div className="max-w-3xl mx-auto relative">
-          <AnimatePresence mode="wait">
-            {thinkingPanelMessageId &&
-            messages.find((m) => m.id === thinkingPanelMessageId) ? (
-              <motion.div
-                key="thinking-panel"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 8 }}
-                transition={{ duration: 0.2 }}
-              >
-                <ThinkingDetailsPanel
-                  messageParts={
-                    messages.find((m) => m.id === thinkingPanelMessageId)!.parts
-                  }
-                  onClose={closeThinkingPanel}
-                />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="bottom-bar"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 8 }}
-                transition={{ duration: 0.2 }}
-              >
-                <ChatBottomBar
-                  isStreaming={isStreaming}
-                  onSend={handleSend}
-                  onStop={cancelStream}
-                  selectedModel={modelName}
-                  onModelChange={setModelName}
-                  lastAssistantMessage={lastAssistantMessage}
-                  lastMessageId={lastMessage?.id}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <ChatBottomBar
+            isStreaming={isStreaming}
+            onSend={handleSend}
+            onStop={cancelStream}
+            selectedModel={modelName}
+            onModelChange={setModelName}
+            lastAssistantMessage={lastAssistantMessage}
+            lastMessageId={lastMessage?.id}
+          />
         </div>
       </div>
     </div>
@@ -290,5 +236,5 @@ type AIChatBoxProps = {
   incognito: boolean;
   conversationId?: string | null;
   onConversationCreated?: (conversationId: string) => void;
-  onTitleUpdate?: (title: string, conversationId?: string) => void;
+  onTitleUpdate?: (title: string) => void;
 };

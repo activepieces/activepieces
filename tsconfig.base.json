@@ -1087,6 +1087,9 @@
       "@activepieces/piece-sender": [
         "packages/pieces/community/sender/src/index.ts"
       ],
+      "@activepieces/piece-sendr": [
+        "packages/pieces/community/sendr/src/index.ts"
+      ],
       "@activepieces/piece-sendfox": [
         "packages/pieces/community/sendfox/src/index.ts"
       ],
@@ -1194,6 +1197,9 @@
       "@activepieces/piece-store": ["packages/pieces/core/store/src/index.ts"],
       "@activepieces/piece-straico": [
         "packages/pieces/community/straico/src/index.ts"
+      ],
+      "@activepieces/piece-streak": [
+        "packages/pieces/community/streak/src/index.ts"
       ],
       "@activepieces/piece-stripe": [
         "packages/pieces/community/stripe/src/index.ts"

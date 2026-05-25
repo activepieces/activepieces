@@ -85,6 +85,10 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
     [dataSelectorStructure, searchTerm],
   );
   const [showDataSelector, setShowDataSelector] = useState(false);
+  const isTriggerSelected = useBuilderStateContext(
+    (state) => state.selectedStep === 'trigger',
+  );
+  const defaultTab = isTriggerSelected ? 'variables' : 'data';
 
   const checkFocus = useCallback(() => {
     const isTextMentionInputFocused =
@@ -138,7 +142,11 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
         }}
         className="transition-all overflow-hidden"
       >
-        <Tabs defaultValue="data" className="h-full flex flex-col gap-0">
+        <Tabs
+          key={defaultTab}
+          defaultValue={defaultTab}
+          className="h-full flex flex-col gap-0"
+        >
           <TabsList
             variant="outline"
             className="px-3 shrink-0 gap-1 border-b border-border w-full justify-start"

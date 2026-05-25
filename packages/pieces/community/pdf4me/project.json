@@ -1,8 +1,0 @@
-{
-  "name": "piece-pdf4me",
-  "$schema": "../../node_modules/nx/schemas/project.json",
-  "sourceRoot": "packages/pieces/community/pdf4me/src",
-  "projectType": "library",
-  "tags": [],
-  "targets": {}
-}
