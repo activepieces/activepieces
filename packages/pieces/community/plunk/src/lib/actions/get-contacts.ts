@@ -4,11 +4,11 @@ import {
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { plunkAuth, PLUNK_BASE_URL } from '../../index';
+import { PLUNK_BASE_URL, plunkAuth } from '../auth';
 
 type PlunkContactsPage = {
-  items?: unknown[];
-  nextCursor?: string | null;
+  data?: unknown[];
+  cursor?: string | null;
   hasMore?: boolean;
 };
 
@@ -43,14 +43,14 @@ export const getContacts = createAction({
       });
 
       const body = response.body as PlunkContactsPage;
-      if (body.items?.length) {
-        items.push(...body.items);
+      if (body.data?.length) {
+        items.push(...body.data);
       }
 
-      if (!body.hasMore || !body.nextCursor) {
+      if (!body.hasMore || !body.cursor) {
         break;
       }
-      cursor = body.nextCursor;
+      cursor = body.cursor;
     }
 
     return { items };

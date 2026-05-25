@@ -4,7 +4,7 @@ import {
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { plunkAuth, PLUNK_BASE_URL } from '../../index';
+import { PLUNK_BASE_URL, plunkAuth } from '../auth';
 
 export const getContact = createAction({
   auth: plunkAuth,

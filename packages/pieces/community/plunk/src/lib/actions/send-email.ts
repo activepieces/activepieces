@@ -4,7 +4,7 @@ import {
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { plunkAuth, PLUNK_BASE_URL } from '../../index';
+import { PLUNK_BASE_URL, plunkAuth } from '../auth';
 
 export const sendTransactionalEmail = createAction({
   auth: plunkAuth,
@@ -70,7 +70,7 @@ export const sendTransactionalEmail = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${PLUNK_BASE_URL}/send`,
+      url: `${PLUNK_BASE_URL}/v1/send`,
       body: requestBody,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,

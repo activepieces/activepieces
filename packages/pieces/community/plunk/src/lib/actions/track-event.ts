@@ -4,7 +4,7 @@ import {
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { plunkAuth, PLUNK_BASE_URL } from '../../index';
+import { PLUNK_BASE_URL, plunkAuth } from '../auth';
 
 export const trackEvent = createAction({
   auth: plunkAuth,
@@ -53,7 +53,7 @@ export const trackEvent = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${PLUNK_BASE_URL}/track`,
+      url: `${PLUNK_BASE_URL}/v1/track`,
       body: requestBody,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
