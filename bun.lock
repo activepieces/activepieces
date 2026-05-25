@@ -7163,6 +7163,16 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/useinbox": {
+      "name": "@activepieces/piece-useinbox",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/vadoo-ai": {
       "name": "@activepieces/piece-vadoo-ai",
       "version": "0.1.3",
@@ -9935,6 +9945,8 @@
     "@activepieces/piece-upgradechat": ["@activepieces/piece-upgradechat@workspace:packages/pieces/community/upgradechat"],
 
     "@activepieces/piece-uscreen": ["@activepieces/piece-uscreen@workspace:packages/pieces/community/uscreen"],
+
+    "@activepieces/piece-useinbox": ["@activepieces/piece-useinbox@workspace:packages/pieces/community/useinbox"],
 
     "@activepieces/piece-vadoo-ai": ["@activepieces/piece-vadoo-ai@workspace:packages/pieces/community/vadoo-ai"],
 
