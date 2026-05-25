@@ -26,7 +26,7 @@ root.render(
       appearance={otom8ClerkAppearance}
       signInUrl={`${OTOM8_SITE_URL}/login`}
       signUpUrl={`${OTOM8_SITE_URL}/login`}
-      afterSignOutUrl={`${OTOM8_SITE_URL}/login`}
+      afterSignOutUrl={`${OTOM8_SITE_URL}/signout`}
       signInForceRedirectUrl={`${OTOM8_SITE_URL}/api/ap-sso`}
     >
       <App />
