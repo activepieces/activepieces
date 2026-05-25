@@ -1322,6 +1322,9 @@
       "@activepieces/piece-upgradechat": [
         "packages/pieces/community/upgradechat/src/index.ts"
       ],
+      "@activepieces/piece-useinbox": [
+        "packages/pieces/community/useinbox/src/index.ts"
+      ],
       "@activepieces/piece-utility-ai": [
         "packages/pieces/community/utility-ai/src/index.ts"
       ],
