@@ -4,30 +4,23 @@ import { postmarkAuth } from '../auth';
 import { postmarkClient, SendEmailResponse } from '../common/client';
 import { normalizeEmails } from '../common/utils';
 
-type SendEmailProps = {
+type SendEmailWithTemplateProps = {
   from: string;
   to: string[];
   cc?: string[];
   bcc?: string[];
   replyTo?: string;
-  subject: string;
-  textBody?: string;
-  htmlBody?: string;
+  templateId: number;
+  templateModel: Record<string, unknown>;
   tag?: string;
   trackOpens?: boolean;
   messageStream?: string;
 };
 
-function assertBodyProvided(textBody?: string, htmlBody?: string): void {
-  if (!textBody?.trim() && !htmlBody?.trim()) {
-    throw new Error('Please provide a text body, an HTML body, or both.');
-  }
-}
-
-export const sendEmail = createAction({
-  name: 'send_email',
-  displayName: 'Send Email',
-  description: 'Send a single transactional email using Postmark.',
+export const sendEmailWithTemplate = createAction({
+  name: 'send_email_with_template',
+  displayName: 'Send Email With Template',
+  description: 'Send an email using a Postmark template ID and template model.',
   auth: postmarkAuth,
   props: {
     from: Property.ShortText({
@@ -42,30 +35,25 @@ export const sendEmail = createAction({
     }),
     cc: Property.Array({
       displayName: 'CC',
-      description: 'Optional CC recipients.',
       required: false,
     }),
     bcc: Property.Array({
       displayName: 'BCC',
-      description: 'Optional BCC recipients.',
       required: false,
     }),
     replyTo: Property.ShortText({
       displayName: 'Reply To',
-      description: 'Optional reply-to email address.',
       required: false,
     }),
-    subject: Property.ShortText({
-      displayName: 'Subject',
+    templateId: Property.Number({
+      displayName: 'Template ID',
+      description: 'Numeric Postmark template ID.',
       required: true,
     }),
-    textBody: Property.LongText({
-      displayName: 'Text Body',
-      required: false,
-    }),
-    htmlBody: Property.LongText({
-      displayName: 'HTML Body',
-      required: false,
+    templateModel: Property.Json({
+      displayName: 'Template Model',
+      description: 'JSON object used to populate the Postmark template.',
+      required: true,
     }),
     tag: Property.ShortText({
       displayName: 'Tag',
@@ -83,8 +71,7 @@ export const sendEmail = createAction({
     }),
   },
   async run(context) {
-    const props = context.propsValue as SendEmailProps;
-    assertBodyProvided(props.textBody, props.htmlBody);
+    const props = context.propsValue as SendEmailWithTemplateProps;
 
     const payload = {
       From: props.from,
@@ -92,9 +79,8 @@ export const sendEmail = createAction({
       Cc: normalizeEmails(props.cc),
       Bcc: normalizeEmails(props.bcc),
       ReplyTo: props.replyTo?.trim() || undefined,
-      Subject: props.subject,
-      TextBody: props.textBody?.trim() || undefined,
-      HtmlBody: props.htmlBody?.trim() || undefined,
+      TemplateId: props.templateId,
+      TemplateModel: props.templateModel,
       Tag: props.tag?.trim() || undefined,
       TrackOpens: props.trackOpens,
       MessageStream: props.messageStream?.trim() || 'outbound',
@@ -102,7 +88,7 @@ export const sendEmail = createAction({
 
     const response = await postmarkClient.post<SendEmailResponse>(
       context.auth.secret_text,
-      '/email',
+      '/email/withTemplate',
       payload
     );
 

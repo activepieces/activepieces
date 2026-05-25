@@ -462,6 +462,9 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Angelebeats"><img src="https://avatars.githubusercontent.com/u/271780508?v=4?s=100" width="100px;" alt="Angelebeats"/><br /><sub><b>Angelebeats</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=Angelebeats" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://xquik.com"><img src="https://avatars.githubusercontent.com/u/8755484?v=4?s=100" width="100px;" alt="Burak Bayır"/><br /><sub><b>Burak Bayır</b></sub></a><br /><a href="#plugin-kriptoburak" title="Plugin/utility libraries">🔌</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/fran-mora"><img src="https://avatars.githubusercontent.com/u/8603380?v=4?s=100" width="100px;" alt="Francesco"/><br /><sub><b>Francesco</b></sub></a><br /><a href="#plugin-fran-mora" title="Plugin/utility libraries">🔌</a></td>
+    </tr>
   </tbody>
 </table>
 
