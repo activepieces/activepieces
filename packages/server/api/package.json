@@ -141,7 +141,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.app.json",
-    "serve": "cd ../../.. && npx tsx watch --exclude 'packages/pieces/**' --exclude 'packages/**/dist/**' --tsconfig packages/server/api/tsconfig.app.json packages/server/api/src/bootstrap.ts",
+    "serve": "cd ../../.. && npx tsx watch --clear-screen=false --exclude 'packages/pieces/**' --exclude 'packages/**/dist/**' --include 'packages/server/api/src/**' --include 'packages/shared/src/**' --include 'packages/server/utils/src/**' --include 'packages/pieces/framework/src/**' --include 'packages/pieces/common/src/**' --tsconfig packages/server/api/tsconfig.app.json packages/server/api/src/bootstrap.ts",
     "lint": "eslint 'src/**/*.ts'",
     "test": "npm run test-ce && npm run test-ee && npm run test-cloud",
     "test-unit": "vitest run test/unit --bail 1 --passWithNoTests=false",

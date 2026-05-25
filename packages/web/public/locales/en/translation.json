@@ -512,6 +512,7 @@
   "Retry": "Retry",
   "stepsCompleted": "{count, plural, =1 {1 step completed} other {# steps completed}}",
   "Thought for a few seconds": "Thought for a few seconds",
+  "Thought for {seconds} seconds": "Thought for {seconds} seconds",
   "Thinking...": "Thinking...",
   "Stop reading": "Stop reading",
   "Read aloud": "Read aloud",
