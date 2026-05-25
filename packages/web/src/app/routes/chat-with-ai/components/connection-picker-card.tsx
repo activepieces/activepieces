@@ -188,6 +188,16 @@ export function ConnectionPickerCard({
     setConnectDialogOpen(true);
   };
 
+  if (selectedConnection) {
+    return (
+      <SelectedState
+        pieceName={pieceName}
+        connection={selectedConnection}
+        displayName={filteredPicker.displayName}
+      />
+    );
+  }
+
   if (!isInteractive) {
     return (
       <motion.div
@@ -210,7 +220,9 @@ export function ConnectionPickerCard({
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-sm font-semibold">
-              {filteredPicker.displayName}
+              {t('Which {name} account should I use?', {
+                name: filteredPicker.displayName,
+              })}
             </div>
             <div className="text-xs text-muted-foreground">
               {t('Connected')}
@@ -218,16 +230,6 @@ export function ConnectionPickerCard({
           </div>
         </div>
       </motion.div>
-    );
-  }
-
-  if (selectedConnection) {
-    return (
-      <SelectedState
-        pieceName={pieceName}
-        connection={selectedConnection}
-        displayName={filteredPicker.displayName}
-      />
     );
   }
 

@@ -18,13 +18,19 @@ import {
     ErrorCode,
     ExecuteValidateAuthResponse,
     isNil,
+    MAX_PLATFORM_APP_CONNECTION_OWNERS,
     Metadata,
     OAuth2GrantType,
+    PlatformAppConnectionOwner,
+    PlatformAppConnectionOwnersResponse,
+    PlatformAppConnectionProjectInfo,
+    PlatformAppConnectionsListItem,
     PlatformId,
     PlatformRole,
     ProjectId,
     SeekPage,
     spreadIfDefined,
+    unique,
     UpsertAppConnectionRequestBody,
     User,
     UserId,
@@ -278,6 +284,8 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
 
     async list({
         projectId,
+        projectIds,
+        ownerIds,
         pieceName,
         cursorRequest,
         displayName,
@@ -315,11 +323,17 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         if (!isNil(externalIds)) {
             querySelector.externalId = In(externalIds)
         }
+        if (!isNil(ownerIds) && ownerIds.length > 0) {
+            querySelector.ownerId = In(ownerIds)
+        }
         const queryBuilder = appConnectionsRepo()
             .createQueryBuilder('app_connection')
             .leftJoinAndSelect('app_connection.owner', 'owner')
             .leftJoinAndSelect('owner.identity', 'owner_identity')
             .where(querySelector)
+        if (!isNil(projectIds) && projectIds.length > 0) {
+            queryBuilder.andWhere('app_connection."projectIds" && :projectIds::varchar[]', { projectIds })
+        }
         const { data, cursor } = await paginator.paginate(queryBuilder)
 
         const flowIdsByExternalId = await fetchFlowIdsForConnections(log, data)
@@ -400,7 +414,68 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         return [...platformAdmins, ...projectMembersDetails]
     },
 
+    async listForPlatform(params: ListForPlatformParams): Promise<SeekPage<PlatformAppConnectionsListItem>> {
+        const service = appConnectionService(log)
+        const page = await service.list({
+            pieceName: params.pieceName,
+            displayName: params.displayName,
+            status: params.status,
+            scope: params.scope,
+            platformId: params.platformId,
+            projectId: null,
+            projectIds: params.projectIds,
+            ownerIds: params.ownerIds,
+            cursorRequest: params.cursorRequest,
+            limit: params.limit,
+            externalIds: undefined,
+        })
+
+        const projectIdsToLookUp = unique(page.data.flatMap((connection) => connection.projectIds))
+        const projectsById = await fetchProjectsForPlatform(projectIdsToLookUp, params.platformId)
+
+        const data: PlatformAppConnectionsListItem[] = page.data.map((connection) => {
+            const sanitized = service.removeSensitiveData(connection)
+            const projects: PlatformAppConnectionProjectInfo[] = connection.projectIds
+                .map((id) => projectsById.get(id))
+                .filter((project): project is PlatformAppConnectionProjectInfo => project !== undefined)
+            return { ...sanitized, projects }
+        })
+
+        return { ...page, data }
+    },
+
+    async listOwnersForPlatform({ platformId }: { platformId: PlatformId }): Promise<PlatformAppConnectionOwnersResponse> {
+        const rows = await appConnectionsRepo()
+            .createQueryBuilder('app_connection')
+            .innerJoin('app_connection.owner', 'owner')
+            .innerJoin('owner.identity', 'identity')
+            .where('app_connection.platformId = :platformId', { platformId })
+            .select('owner.id', 'id')
+            .addSelect('identity.firstName', 'firstName')
+            .addSelect('identity.lastName', 'lastName')
+            .addSelect('identity.email', 'email')
+            .distinct(true)
+            .orderBy('identity.email', 'ASC')
+            .limit(MAX_PLATFORM_APP_CONNECTION_OWNERS + 1)
+            .getRawMany<PlatformAppConnectionOwner>()
+
+        const truncated = rows.length > MAX_PLATFORM_APP_CONNECTION_OWNERS
+        const data = truncated ? rows.slice(0, MAX_PLATFORM_APP_CONNECTION_OWNERS) : rows
+        return { data, truncated }
+    },
+
 })
+
+const fetchProjectsForPlatform = async (projectIds: string[], platformId: string): Promise<Map<string, PlatformAppConnectionProjectInfo>> => {
+    if (projectIds.length === 0) {
+        return new Map()
+    }
+    const projects = await projectRepo().find({
+        where: { id: In(projectIds), platformId },
+        select: ['id', 'displayName', 'type'],
+    })
+    return new Map(projects.map((project) => [project.id, { id: project.id, displayName: project.displayName, type: project.type }]))
+}
 
 async function assertProjectIds(projectIds: ProjectId[], platformId: string): Promise<void> {
     const filteredProjects = await projectRepo().countBy({
@@ -692,6 +767,8 @@ type ValidateConnectionValueParams = {
 
 type ListParams = {
     projectId: ProjectId | null
+    projectIds?: ProjectId[]
+    ownerIds?: string[]
     platformId: string
     pieceName: string | undefined
     cursorRequest: Cursor | null
@@ -700,6 +777,18 @@ type ListParams = {
     status: AppConnectionStatus[] | undefined
     limit: number
     externalIds: string[] | undefined
+}
+
+type ListForPlatformParams = {
+    platformId: string
+    pieceName: string | undefined
+    displayName: string | undefined
+    status: AppConnectionStatus[] | undefined
+    scope: AppConnectionScope | undefined
+    projectIds: ProjectId[] | undefined
+    ownerIds: string[] | undefined
+    cursorRequest: Cursor | null
+    limit: number
 }
 
 type UpdateParams = {

@@ -124,6 +124,9 @@
                            "admin-guide/security/audit-logs/flow-created",
                            "admin-guide/security/audit-logs/flow-updated",
                            "admin-guide/security/audit-logs/flow-deleted",
+                           "admin-guide/security/audit-logs/flow-published",
+                           "admin-guide/security/audit-logs/flow-activated",
+                           "admin-guide/security/audit-logs/flow-deactivated",
                            "admin-guide/security/audit-logs/connection-upserted",
                            "admin-guide/security/audit-logs/connection-deleted",
                            "admin-guide/security/audit-logs/flow-run-started",
@@ -216,6 +219,7 @@
                   "group": "Essentials",
                   "pages": [
                      "embedding/overview",
+                     "embedding/configure-embedding",
                      "embedding/provision-users",
                      "embedding/embed-builder"
                   ]
@@ -453,6 +457,13 @@
                         "icon": "server",
                         "pages": [
                            "endpoints/worker-machines/queue-metrics"
+                        ]
+                     },
+                     {
+                        "group": "Embedding",
+                        "icon": "code",
+                        "pages": [
+                           "endpoints/embedding/add-allowed-embed-origins"
                         ]
                      }
                   ]
