@@ -1087,6 +1087,9 @@
       "@activepieces/piece-sender": [
         "packages/pieces/community/sender/src/index.ts"
       ],
+      "@activepieces/piece-sendr": [
+        "packages/pieces/community/sendr/src/index.ts"
+      ],
       "@activepieces/piece-sendfox": [
         "packages/pieces/community/sendfox/src/index.ts"
       ],
