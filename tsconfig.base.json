@@ -963,6 +963,9 @@
       "@activepieces/piece-postiz": [
         "packages/pieces/community/postiz/src/index.ts"
       ],
+      "@activepieces/piece-postmark": [
+        "packages/pieces/community/postmark/src/index.ts"
+      ],
       "@activepieces/piece-predict-leads": [
         "packages/pieces/community/predict-leads/src/index.ts"
       ],
@@ -1411,6 +1414,9 @@
       ],
       "@activepieces/piece-xero": [
         "packages/pieces/community/xero/src/index.ts"
+      ],
+      "@activepieces/piece-xquik": [
+        "packages/pieces/community/xquik/src/index.ts"
       ],
       "@activepieces/piece-xml": ["packages/pieces/core/xml/src/index.ts"],
       "@activepieces/piece-youtube": [
