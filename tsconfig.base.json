@@ -963,6 +963,9 @@
       "@activepieces/piece-postiz": [
         "packages/pieces/community/postiz/src/index.ts"
       ],
+      "@activepieces/piece-postmark": [
+        "packages/pieces/community/postmark/src/index.ts"
+      ],
       "@activepieces/piece-predict-leads": [
         "packages/pieces/community/predict-leads/src/index.ts"
       ],
