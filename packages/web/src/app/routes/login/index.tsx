@@ -69,7 +69,7 @@ export function LoginPage() {
           <SignIn
             routing="virtual"
             forceRedirectUrl={`${OTOM8_SITE_URL}/api/ap-sso`}
-            signUpForceRedirectUrl="/api/ap-sso"
+            signUpForceRedirectUrl={`${OTOM8_SITE_URL}/api/ap-sso`}
             appearance={{
               ...otom8ClerkAppearance,
               variables: {
