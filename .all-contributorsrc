@@ -2166,6 +2166,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "fran-mora",
+      "name": "Francesco",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8603380?v=4",
+      "profile": "https://github.com/fran-mora",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
