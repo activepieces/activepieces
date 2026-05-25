@@ -1,12 +1,6 @@
-import { useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 
-const SignInPage: React.FC = () => {
-  useEffect(() => {
-    window.location.replace('/login');
-  }, []);
-
-  return null;
-};
+const SignInPage: React.FC = () => <Navigate to="/login" replace />;
 
 SignInPage.displayName = 'SignInPage';
 

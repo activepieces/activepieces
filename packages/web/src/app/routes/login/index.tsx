@@ -1,19 +1,34 @@
-import { SignIn } from '@clerk/clerk-react';
+import { SignIn, useAuth } from '@clerk/clerk-react';
 import { motion } from 'motion/react';
 import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { authenticationSession } from '@/lib/authentication-session';
 import { otom8ClerkAppearance } from '@/lib/otom8-clerk-appearance';
 import { OTOM8_SITE_URL } from '@/lib/otom8-site-url';
 
 export function LoginPage() {
-  // Clear any stale AP session on mount. This is the canonical teardown point —
-  // it fires on every load of /login (signout landing, expired session, fresh visit)
-  // with no race conditions because it runs in a clean page load context.
+  const { isLoaded, isSignedIn } = useAuth();
+  const navigate = useNavigate();
+
   useEffect(() => {
-    authenticationSession.clearSession();
-  }, []);
+    if (!isLoaded) {
+      return;
+    }
+    if (isSignedIn && authenticationSession.isLoggedIn()) {
+      navigate('/flows', { replace: true });
+      return;
+    }
+    if (isSignedIn) {
+      window.location.replace(`${OTOM8_SITE_URL}/api/ap-sso`);
+      return;
+    }
+    if (!isSignedIn) {
+      authenticationSession.clearSession();
+    }
+  }, [isLoaded, isSignedIn, navigate]);
+
+  const shouldShowLoading = !isLoaded || isSignedIn;
 
   return (
     <main
@@ -66,29 +81,43 @@ export function LoginPage() {
             boxShadow: '0 0 40px rgba(16,185,129,0.08)',
           }}
         >
-          <SignIn
-            routing="virtual"
-            forceRedirectUrl={`${OTOM8_SITE_URL}/api/ap-sso`}
-            signUpForceRedirectUrl="/api/ap-sso"
-            appearance={{
-              ...otom8ClerkAppearance,
-              variables: {
-                ...otom8ClerkAppearance.variables,
-                colorBackground: 'transparent',
-              },
-              elements: {
-                ...otom8ClerkAppearance.elements,
-                rootBox: { width: '100%' },
-                card: {
-                  boxShadow: 'none',
-                  border: 'none',
-                  backgroundColor: 'transparent',
-                  padding: '1.75rem 1.5rem 1.5rem',
+          {shouldShowLoading ? (
+            <div className="h-28 flex items-center justify-center">
+              <div
+                className="h-1 w-40 overflow-hidden rounded-full"
+                style={{ backgroundColor: 'rgba(255,255,255,0.10)' }}
+              >
+                <div
+                  className="h-full w-1/2 animate-pulse rounded-full"
+                  style={{ backgroundColor: '#10B981' }}
+                />
+              </div>
+            </div>
+          ) : (
+            <SignIn
+              routing="virtual"
+              forceRedirectUrl={`${OTOM8_SITE_URL}/api/ap-sso`}
+              signUpForceRedirectUrl={`${OTOM8_SITE_URL}/api/ap-sso`}
+              appearance={{
+                ...otom8ClerkAppearance,
+                variables: {
+                  ...otom8ClerkAppearance.variables,
+                  colorBackground: 'transparent',
                 },
-                header: { display: 'none' },
-              },
-            }}
-          />
+                elements: {
+                  ...otom8ClerkAppearance.elements,
+                  rootBox: { width: '100%' },
+                  card: {
+                    boxShadow: 'none',
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    padding: '1.75rem 1.5rem 1.5rem',
+                  },
+                  header: { display: 'none' },
+                },
+              }}
+            />
+          )}
         </div>
       </motion.div>
     </main>

@@ -1,4 +1,4 @@
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 
 import { SocketProvider } from '@/components/providers/socket-provider';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
@@ -17,13 +17,10 @@ export const AllowOnlyLoggedInUserOnlyGuard = ({
   children,
 }: AllowOnlyLoggedInUserOnlyGuardProps) => {
   const { reset } = useTelemetry();
-  const location = useLocation();
   if (!authenticationSession.isLoggedIn()) {
-    authenticationSession.logOut();
+    authenticationSession.clearSession();
     reset();
-    const searchParams = new URLSearchParams();
-    searchParams.set('from', location.pathname + location.search);
-    return <Navigate to={`/sign-in?${searchParams.toString()}`} replace />;
+    return <Navigate to="/login" replace />;
   }
   platformHooks.useCurrentPlatform();
   flagsHooks.useFlags();

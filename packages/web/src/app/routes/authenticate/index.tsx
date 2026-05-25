@@ -20,7 +20,7 @@ const AuthenticatePage = () => {
       authenticationSession.saveResponse(decodedResponse, false);
       navigate('/flows');
     }
-  }, [response]);
+  }, [navigate, response]);
 
   return (
     <main
@@ -70,10 +70,7 @@ const AuthenticatePage = () => {
               style={{ backgroundColor: '#10B981' }}
             />
           </span>
-          <p
-            className="text-sm tracking-wide"
-            style={{ color: '#A1A1AA' }}
-          >
+          <p className="text-sm tracking-wide" style={{ color: '#A1A1AA' }}>
             Connecting your workspace…
           </p>
         </div>
