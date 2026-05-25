@@ -165,7 +165,7 @@ npx turbo run build --filter=@activepieces/piece-<name>
 
 `bun install` is required for new pieces so the workspace symlinks are created before TypeScript can resolve imports. Skip it on subsequent rebuilds.
 
-Fix TypeScript errors and rebuild. Common causes: missing import in `src/index.ts`, missing `tsconfig.base.json` entry, wrong type cast on `context.auth` (use `context.auth as unknown as string` for SecretText), missing `sampleData` on a trigger.
+Fix TypeScript errors and rebuild. Common causes: missing import in `src/index.ts`, missing `tsconfig.base.json` entry, accessing `context.auth` as a string for SecretText (use `context.auth.secret_text` instead — see Quick Auth Reference), missing `sampleData` on a trigger.
 
 #### Test locally
 
@@ -208,13 +208,17 @@ packages/pieces/community/<piece-name>/
 
 ## Quick Auth Reference
 
-| API Auth Method        | Activepieces Type        | Access Pattern                       |
-| ---------------------- | ------------------------ | ------------------------------------ |
-| API key / Bearer token | `PieceAuth.SecretText()` | `context.auth` (string)              |
-| OAuth2                 | `PieceAuth.OAuth2()`     | `context.auth.access_token`          |
-| Username + password    | `PieceAuth.BasicAuth()`  | `context.auth.username`, `.password` |
-| Multiple fields        | `PieceAuth.CustomAuth()` | `context.auth.<field_name>`          |
-| No auth needed         | `PieceAuth.None()`       | No `context.auth` available          |
+In actions and triggers, `context.auth` is the resolved connection object — not a flat string. Access fields per type below:
+
+| API Auth Method        | Activepieces Type        | Access Pattern                                                                |
+| ---------------------- | ------------------------ | ----------------------------------------------------------------------------- |
+| API key / Bearer token | `PieceAuth.SecretText()` | `context.auth.secret_text`                                                    |
+| OAuth2                 | `PieceAuth.OAuth2()`     | `context.auth.access_token`; extra props via `context.auth.props?.['<key>']`  |
+| Username + password    | `PieceAuth.BasicAuth()`  | `context.auth.username`, `context.auth.password`                              |
+| Multiple fields        | `PieceAuth.CustomAuth()` | `context.auth.props.<field_name>`                                             |
+| No auth needed         | `PieceAuth.None()`       | No `context.auth` available                                                   |
+
+Inside the auth's own `validate` callback the shape is different (it receives the raw entered values — e.g. `auth` is the plain string for SecretText, the flat `{ base_url, api_key }` for CustomAuth). The patterns above apply to action/trigger `run()` only.
 
 Full code examples: read `auth-patterns.md`
 

@@ -7,16 +7,14 @@ type PieceCardProps = {
 };
 
 export const PieceCard = ({ pieceName }: PieceCardProps) => {
-  const { pieceModel } = piecesHooks.usePiece({
-    name: pieceName,
-  });
+  const { summary } = piecesHooks.usePieceSummary({ name: pieceName });
 
   return (
     <Card>
       <CardContent className="p-2 w-[165px] flex items-center gap-3">
         <PieceIconWithPieceName pieceName={pieceName} size="md" />
         <span className="text-sm font-medium">
-          {pieceModel?.displayName ||
+          {summary?.displayName ||
             formatUtils.convertEnumToHumanReadable(pieceName)}
         </span>
       </CardContent>

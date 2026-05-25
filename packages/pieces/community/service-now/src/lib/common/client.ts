@@ -9,6 +9,12 @@ import {
   NotSupported,
   ServiceNowClientOptions,
   TriggerEvent,
+  CatalogItem,
+  CatalogOrderResult,
+  JournalEntry,
+  KnowledgeArticle,
+  KnowledgeSearchResult,
+  EmailSendResult,
 } from './types';
 
 export class ServiceNowClient {
@@ -526,5 +532,292 @@ export class ServiceNowClient {
     } catch {
       return [];
     }
+  }
+
+  async deleteAttachment({
+    attachment_sys_id,
+  }: {
+    attachment_sys_id: string;
+  }): Promise<void> {
+    await this.makeRequest<void>(
+      HttpMethod.DELETE,
+      `/api/now/attachment/${attachment_sys_id}`
+    );
+  }
+
+  async countRecords({
+    table,
+    query,
+  }: {
+    table: string;
+    query?: string;
+  }): Promise<number> {
+    const endpoint = `/api/now/stats/${table}`;
+    const queryParams: Record<string, string> = {
+      sysparm_count: 'true',
+    };
+    if (query) {
+      queryParams['sysparm_query'] = query;
+    }
+
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: `${this.baseURL}${endpoint}`,
+      headers: this.getHeaders(),
+      queryParams,
+      timeout: 30000,
+      retries: 3,
+    });
+
+    const data = response.body as {
+      result?: {
+        stats?: { count?: string | number };
+      };
+    };
+
+    const rawCount = data?.result?.stats?.count ?? 0;
+    return typeof rawCount === 'number' ? rawCount : parseInt(String(rawCount), 10) || 0;
+  }
+
+  async listCatalogItems({
+    limit = 50,
+    query,
+  }: {
+    limit?: number;
+    query?: string;
+  } = {}): Promise<CatalogItem[]> {
+    const endpoint = `/api/sn_sc/servicecatalog/items`;
+    const queryParams: Record<string, string> = {
+      sysparm_limit: limit.toString(),
+    };
+    if (query) {
+      queryParams['sysparm_text'] = query;
+    }
+
+    try {
+      const response = await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: `${this.baseURL}${endpoint}`,
+        headers: this.getHeaders(),
+        queryParams,
+        timeout: 30000,
+        retries: 3,
+      });
+
+      const data = response.body as { result: CatalogItem[] };
+      return data.result || [];
+    } catch {
+      return [];
+    }
+  }
+
+  async orderCatalogItem({
+    item_sys_id,
+    quantity = 1,
+    variables,
+    requested_for,
+  }: {
+    item_sys_id: string;
+    quantity?: number;
+    variables?: Record<string, unknown>;
+    requested_for?: string;
+  }): Promise<CatalogOrderResult> {
+    const endpoint = `/api/sn_sc/servicecatalog/items/${item_sys_id}/order_now`;
+    const body: Record<string, unknown> = {
+      sysparm_quantity: String(quantity),
+    };
+    if (variables && Object.keys(variables).length > 0) {
+      body['variables'] = variables;
+    }
+    if (requested_for) {
+      body['sysparm_requested_for'] = requested_for;
+    }
+
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: `${this.baseURL}${endpoint}`,
+      headers: this.getHeaders(),
+      body,
+      timeout: 60000,
+      retries: 2,
+    });
+
+    const data = response.body as { result: CatalogOrderResult };
+    return data.result;
+  }
+
+  async pollJournalEntries({
+    table,
+    elements,
+    record_sys_id,
+    limit = 100,
+  }: {
+    table: string;
+    elements: string[];
+    record_sys_id?: string;
+    limit?: number;
+  }): Promise<JournalEntry[]> {
+    const endpoint = `/api/now/table/sys_journal_field`;
+    const elementClause = elements
+      .map((element) => `element=${element}`)
+      .join('^OR');
+    const filters: string[] = [`name=${table}`];
+    if (elementClause) {
+      filters.push(elementClause);
+    }
+    if (record_sys_id) {
+      filters.push(`element_id=${record_sys_id}`);
+    }
+
+    const queryParams: Record<string, string> = {
+      sysparm_query: `${filters.join('^')}^ORDERBYDESCsys_created_on`,
+      sysparm_limit: limit.toString(),
+    };
+
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: `${this.baseURL}${endpoint}`,
+      headers: this.getHeaders(),
+      queryParams,
+      timeout: 30000,
+      retries: 3,
+    });
+
+    const data = response.body as { result: JournalEntry[] };
+    return data.result || [];
+  }
+
+  async getCatalogItem({
+    item_sys_id,
+  }: {
+    item_sys_id: string;
+  }): Promise<CatalogItem> {
+    const endpoint = `/api/sn_sc/servicecatalog/items/${item_sys_id}`;
+
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: `${this.baseURL}${endpoint}`,
+      headers: this.getHeaders(),
+      timeout: 30000,
+      retries: 3,
+    });
+
+    const data = response.body as { result: CatalogItem };
+    return data.result;
+  }
+
+  async searchKnowledgeArticles({
+    query,
+    kb,
+    language,
+    limit = 20,
+    offset = 0,
+    fields,
+  }: {
+    query?: string;
+    kb?: string;
+    language?: string;
+    limit?: number;
+    offset?: number;
+    fields?: string[];
+  }): Promise<KnowledgeSearchResult> {
+    const endpoint = `/api/sn_km_api/knowledge/articles`;
+    const queryParams: Record<string, string> = {
+      sysparm_limit: limit.toString(),
+      sysparm_offset: offset.toString(),
+    };
+    if (query) {
+      queryParams['query'] = query;
+    }
+    if (kb) {
+      queryParams['kb'] = kb;
+    }
+    if (language) {
+      queryParams['language'] = language;
+    }
+    if (fields && fields.length > 0) {
+      queryParams['fields'] = fields.join(',');
+    }
+
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: `${this.baseURL}${endpoint}`,
+      headers: this.getHeaders(),
+      queryParams,
+      timeout: 30000,
+      retries: 3,
+    });
+
+    return response.body as KnowledgeSearchResult;
+  }
+
+  async getKnowledgeArticle({
+    article_sys_id,
+    update_view,
+  }: {
+    article_sys_id: string;
+    update_view?: boolean;
+  }): Promise<KnowledgeArticle> {
+    const endpoint = `/api/sn_km_api/knowledge/articles/${article_sys_id}`;
+    const queryParams: Record<string, string> = {};
+    if (update_view !== undefined) {
+      queryParams['update_view'] = update_view.toString();
+    }
+
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: `${this.baseURL}${endpoint}`,
+      headers: this.getHeaders(),
+      queryParams: Object.keys(queryParams).length > 0 ? queryParams : undefined,
+      timeout: 30000,
+      retries: 3,
+    });
+
+    const data = response.body as { result: KnowledgeArticle };
+    return data.result;
+  }
+
+  async sendEmail({
+    to,
+    subject,
+    body,
+    from,
+    cc,
+    bcc,
+  }: {
+    to: string[];
+    subject: string;
+    body: string;
+    from?: string;
+    cc?: string[];
+    bcc?: string[];
+  }): Promise<EmailSendResult> {
+    const endpoint = `/api/now/v1/email`;
+    const payload: Record<string, unknown> = {
+      to: to.join(','),
+      subject,
+      body,
+    };
+    if (from) {
+      payload['from'] = from;
+    }
+    if (cc && cc.length > 0) {
+      payload['cc'] = cc.join(',');
+    }
+    if (bcc && bcc.length > 0) {
+      payload['bcc'] = bcc.join(',');
+    }
+
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: `${this.baseURL}${endpoint}`,
+      headers: this.getHeaders(),
+      body: payload,
+      timeout: 30000,
+      retries: 3,
+    });
+
+    const data = response.body as { result?: EmailSendResult };
+    return data?.result ?? (response.body as EmailSendResult);
   }
 }

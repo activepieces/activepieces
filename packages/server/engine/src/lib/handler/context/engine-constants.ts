@@ -1,5 +1,5 @@
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, EngineGenericError, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, flowStructureUtil, FlowVersionState, PlatformId, Project, ProjectId, ResumePayload, RunEnvironment, StreamStepProgress, TriggerHookType } from '@activepieces/shared'
+import { BeginExecuteFlowOperation, DEFAULT_MCP_DATA, EngineGenericError, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionState, ExecutionType, flowStructureUtil, FlowVersionState, PlatformId, Project, ProjectId, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment, StreamStepProgress, TriggerHookType } from '@activepieces/shared'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
@@ -25,7 +25,6 @@ type EngineConstantsParams = {
     resumePayload?: ResumePayload
     runEnvironment?: RunEnvironment
     stepNameToTest?: string
-    logsUploadUrl?: string
     logsFileId?: string
     timeoutInSeconds: number
     platformId: PlatformId
@@ -66,7 +65,6 @@ export class EngineConstants {
     public readonly resumePayload?: ResumePayload
     public readonly runEnvironment?: RunEnvironment
     public readonly stepNameToTest?: string
-    public readonly logsUploadUrl?: string
     public readonly logsFileId?: string
     public readonly stepNames: string[] = []
     private project: Project | null = null
@@ -111,14 +109,13 @@ export class EngineConstants {
         this.resumePayload = params.resumePayload
         this.runEnvironment = params.runEnvironment
         this.stepNameToTest = params.stepNameToTest
-        this.logsUploadUrl = params.logsUploadUrl
         this.logsFileId = params.logsFileId
         this.platformId = params.platformId
         this.timeoutInSeconds = params.timeoutInSeconds
         this.stepNames = params.stepNames
     }
   
-    public static fromExecuteFlowInput(input: ExecuteFlowOperation): EngineConstants {
+    public static fromExecuteFlowInput(input: ResolvedExecuteFlowOperation): EngineConstants {
         return new EngineConstants({
             flowId: input.flowVersion.flowId,
             flowVersionId: input.flowVersion.id,
@@ -136,7 +133,6 @@ export class EngineConstants {
             resumePayload: input.executionType === ExecutionType.RESUME ? input.resumePayload : undefined,
             runEnvironment: input.runEnvironment,
             stepNameToTest: input.stepNameToTest ?? undefined,
-            logsUploadUrl: input.logsUploadUrl, 
             logsFileId: input.logsFileId,
             timeoutInSeconds: input.timeoutInSeconds,
             platformId: input.platformId,
@@ -251,3 +247,14 @@ export class EngineConstants {
 const addTrailingSlashIfMissing = (url: string): string => {
     return url.endsWith('/') ? url : url + '/'
 }
+
+export type ResolvedBeginExecuteFlowOperation = Omit<BeginExecuteFlowOperation, 'triggerPayload'> & {
+    triggerPayload: unknown
+}
+
+export type ResolvedResumeExecuteFlowOperation = Omit<ResumeExecuteFlowOperation, 'resumePayload'> & {
+    resumePayload: ResumePayload
+    executionState: ExecutionState
+}
+
+export type ResolvedExecuteFlowOperation = ResolvedBeginExecuteFlowOperation | ResolvedResumeExecuteFlowOperation

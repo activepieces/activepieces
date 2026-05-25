@@ -1,15 +1,19 @@
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, AuthenticationEvent, ConnectionEvent, Flow, FlowCreatedEvent, FlowDeletedEvent, FlowRun, FlowRunEvent, FlowUpdatedEvent, Folder, FolderEvent, GitRepoWithoutSensitiveData, isNil, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserInvitation, UserWithMetaInformation } from '@activepieces/shared'
+import { AddAllowedEmbedOriginsRequestBody, ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, ConnectionDeletedEvent, ConnectionUpsertedEvent, Flow, FlowActivatedEvent, FlowCreatedEvent, FlowDeactivatedEvent, FlowDeletedEvent, FlowPublishedEvent, FlowRun, FlowRunFinishedEvent, FlowRunRetriedEvent, FlowRunStartedEvent, FlowUpdatedEvent, Folder, FolderCreatedEvent, FolderDeletedEvent, FolderUpdatedEvent, GitRepoWithoutSensitiveData, isNil, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserEmailVerifiedEvent, UserInvitation, UserPasswordResetEvent, UserSignedInEvent, UserWithMetaInformation } from '@activepieces/shared'
 import replyFrom from '@fastify/reply-from'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
 import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
+import { jsonSchemaTransform, jsonSchemaTransformObject } from 'fastify-type-provider-zod'
+import Mustache from 'mustache'
+import { globalRegistry } from 'zod/v4/core'
 import { agentsModule } from './agents/agents-module'
 import { aiProviderService } from './ai/ai-provider-service'
 import { aiProviderModule } from './ai/ai-provider.module'
 import { platformAnalyticsModule } from './analytics/platform-analytics.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
+import { platformAppConnectionModule } from './app-connection/platform-app-connection.module'
 import { authenticationModule } from './authentication/authentication.module'
 import { canaryRoutingMiddleware } from './core/canary/canary-routing.middleware'
 import { collaborativeModule } from './core/collaborative/collaborative.module'
@@ -28,9 +32,9 @@ import { federatedAuthModule } from './ee/authentication/federated-authn/federat
 import { otpModule } from './ee/authentication/otp/otp-module'
 import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware'
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
+import { chatModule } from './ee/chat/chat.module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
-import { customDomainModule } from './ee/custom-domains/custom-domain.module'
-import { domainHelper } from './ee/custom-domains/domain-helper'
+import { embedSubdomainModule } from './ee/embed-subdomain/embed-subdomain.module'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { globalConnectionModule } from './ee/global-connections/global-connection-module'
 import { licenseKeysModule } from './ee/license-keys/license-keys-module'
@@ -61,6 +65,7 @@ import { humanInputModule } from './flows/flow/human-input/human-input.module'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
+import { domainHelper } from './helper/domain-helper'
 import { exceptionHandler } from './helper/exception-handler'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { system } from './helper/system/system'
@@ -89,6 +94,7 @@ import { triggerModule } from './trigger/trigger.module'
 import { userBadgeModule } from './user/badges/badge-module'
 import { platformUserModule } from './user/platform/platform-user-module'
 import { invitationModule } from './user-invitations/user-invitation.module'
+import { variableModule } from './variable/variable.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 
@@ -100,10 +106,15 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         return payload as Buffer
     })
 
+    registerOpenApiSchemas()
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await app.register(swagger as any, {
         hideUntagged: true,
+        transform: jsonSchemaTransform,
+        transformObject: jsonSchemaTransformObject,
         openapi: {
+            openapi: '3.1.0',
             servers: [
                 {
                     url: 'https://cloud.activepieces.com/api',
@@ -119,38 +130,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
                     },
                 },
                 schemas: {
-                    [ApplicationEventName.FLOW_CREATED]: FlowCreatedEvent,
-                    [ApplicationEventName.FLOW_UPDATED]: FlowUpdatedEvent,
-                    [ApplicationEventName.FLOW_DELETED]: FlowDeletedEvent,
-                    [ApplicationEventName.CONNECTION_UPSERTED]: ConnectionEvent,
-                    [ApplicationEventName.CONNECTION_DELETED]: ConnectionEvent,
-                    [ApplicationEventName.FOLDER_CREATED]: FolderEvent,
-                    [ApplicationEventName.FOLDER_UPDATED]: FolderEvent,
-                    [ApplicationEventName.FOLDER_DELETED]: FolderEvent,
-                    [ApplicationEventName.FLOW_RUN_STARTED]: FlowRunEvent,
-                    [ApplicationEventName.FLOW_RUN_FINISHED]: FlowRunEvent,
-                    [ApplicationEventName.FLOW_RUN_RETRIED]: FlowRunEvent,
-                    [ApplicationEventName.USER_SIGNED_UP]: SignUpEvent,
-                    [ApplicationEventName.USER_SIGNED_IN]: AuthenticationEvent,
-                    [ApplicationEventName.USER_PASSWORD_RESET]: AuthenticationEvent,
-                    [ApplicationEventName.USER_EMAIL_VERIFIED]: AuthenticationEvent,
-                    [ApplicationEventName.SIGNING_KEY_CREATED]: SigningKeyEvent,
-                    [ApplicationEventName.PROJECT_ROLE_CREATED]: ProjectRoleEvent,
-                    [ApplicationEventName.PROJECT_RELEASE_CREATED]: ProjectReleaseEvent,
-                    'template': Template,
-                    'folder': Folder,
-                    'user': UserWithMetaInformation,
-                    'user-invitation': UserInvitation,
-                    'project-member': ProjectMember,
-                    project: ProjectWithLimits,
-                    flow: Flow,
-                    'flow-run': FlowRun,
-                    'app-connection': AppConnectionWithoutSensitiveData,
-                    piece: PieceMetadata,
-                    'git-repo': GitRepoWithoutSensitiveData,
-                    'project-release': ProjectRelease,
-                    'global-connection': AppConnectionWithoutSensitiveData,
-
+                    'global-connection': { $ref: '#/components/schemas/app-connection' },
                 },
             },
             info: {
@@ -187,7 +167,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     app.addHook('preHandler', authenticationMiddleware)
     app.addHook('preHandler', authorizationMiddleware)
     app.addHook('preHandler', rbacMiddleware)
-    
+
     const canaryAppUrl = system.get(AppSystemProp.CANARY_APP_URL)
     if (!isNil(canaryAppUrl)) {
         await app.register(replyFrom, { base: canaryAppUrl })
@@ -207,6 +187,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(flowRunModule)
     await app.register(webhookModule)
     await app.register(appConnectionModule)
+    await app.register(platformAppConnectionModule)
+    await app.register(variableModule)
     await app.register(openapiModule)
     await app.register(appEventRoutingModule)
     await app.register(authenticationModule)
@@ -239,19 +221,15 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             request: FastifyRequest<{ Querystring: { code: string } }>,
             reply,
         ) => {
-            const params = {
-                code: request.query.code,
+            const code = request.query.code
+            if (!code) {
+                return reply.type('text/plain').send('The code is missing in url')
             }
-            if (!params.code) {
-                return reply.send('The code is missing in url')
-            }
-            else {
-                return reply
-                    .type('text/html')
-                    .send(
-                        `<script>if(window.opener){window.opener.postMessage({ 'code': ${JSON.stringify(params.code)} },'*')}</script> <html>Redirect succuesfully, this window should close now</html>`,
-                    )
-            }
+            return reply
+                .type('text/html')
+                .header('Content-Security-Policy', 'default-src \'none\'; script-src \'unsafe-inline\'')
+                .header('X-Content-Type-Options', 'nosniff')
+                .send(Mustache.render(REDIRECT_HTML_TEMPLATE, { code }))
         },
     )
 
@@ -272,7 +250,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(platformPlanModule)
             await app.register(projectMemberModule)
             await app.register(appSumoModule)
-            await app.register(customDomainModule)
             await app.register(signingKeyModule)
             await app.register(authnSsoSamlModule)
             await app.register(managedAuthnModule)
@@ -290,6 +267,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(globalConnectionModule)
             await app.register(secretManagersModule)
             await app.register(scimModule)
+            await app.register(embedSubdomainModule)
+            await app.register(chatModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
@@ -299,7 +278,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         case ApEdition.ENTERPRISE:
             await platformAiCreditsService(app.log).init()
             await app.register(platformPlanModule)
-            await app.register(customDomainModule)
             await app.register(platformProjectModule)
             await app.register(projectMemberModule)
             await app.register(signingKeyModule)
@@ -319,6 +297,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(globalConnectionModule)
             await app.register(secretManagersModule)
             await app.register(scimModule)
+            await app.register(embedSubdomainModule)
+            await app.register(chatModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
@@ -329,7 +309,13 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             break
     }
 
-    await systemJobsSchedule(app.log).startWorker()
+    const isCanaryApp = system.getBoolean(AppSystemProp.IS_CANARY_APP) ?? false
+    if (isCanaryApp) {
+        app.log.info('[setupApp] Skipping system jobs worker on canary app instance')
+    }
+    else {
+        await systemJobsSchedule(app.log).startWorker()
+    }
 
     app.addHook('onClose', async () => {
         app.log.info('Shutting down')
@@ -381,3 +367,58 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
     }
     void startDevPieceWatcher(app)
 }
+
+function registerOpenApiSchemas() {
+    globalRegistry.add(FlowCreatedEvent, { id: ApplicationEventName.FLOW_CREATED })
+    globalRegistry.add(FlowUpdatedEvent, { id: ApplicationEventName.FLOW_UPDATED })
+    globalRegistry.add(FlowDeletedEvent, { id: ApplicationEventName.FLOW_DELETED })
+    globalRegistry.add(FlowPublishedEvent, { id: ApplicationEventName.FLOW_PUBLISHED })
+    globalRegistry.add(FlowActivatedEvent, { id: ApplicationEventName.FLOW_ACTIVATED })
+    globalRegistry.add(FlowDeactivatedEvent, { id: ApplicationEventName.FLOW_DEACTIVATED })
+    globalRegistry.add(ConnectionUpsertedEvent, { id: ApplicationEventName.CONNECTION_UPSERTED })
+    globalRegistry.add(ConnectionDeletedEvent, { id: ApplicationEventName.CONNECTION_DELETED })
+    globalRegistry.add(FolderCreatedEvent, { id: ApplicationEventName.FOLDER_CREATED })
+    globalRegistry.add(FolderUpdatedEvent, { id: ApplicationEventName.FOLDER_UPDATED })
+    globalRegistry.add(FolderDeletedEvent, { id: ApplicationEventName.FOLDER_DELETED })
+    globalRegistry.add(FlowRunStartedEvent, { id: ApplicationEventName.FLOW_RUN_STARTED })
+    globalRegistry.add(FlowRunFinishedEvent, { id: ApplicationEventName.FLOW_RUN_FINISHED })
+    globalRegistry.add(FlowRunRetriedEvent, { id: ApplicationEventName.FLOW_RUN_RETRIED })
+    globalRegistry.add(SignUpEvent, { id: ApplicationEventName.USER_SIGNED_UP })
+    globalRegistry.add(UserSignedInEvent, { id: ApplicationEventName.USER_SIGNED_IN })
+    globalRegistry.add(UserPasswordResetEvent, { id: ApplicationEventName.USER_PASSWORD_RESET })
+    globalRegistry.add(UserEmailVerifiedEvent, { id: ApplicationEventName.USER_EMAIL_VERIFIED })
+    globalRegistry.add(SigningKeyEvent, { id: ApplicationEventName.SIGNING_KEY_CREATED })
+    globalRegistry.add(ProjectRoleEvent, { id: ApplicationEventName.PROJECT_ROLE_CREATED })
+    globalRegistry.add(ProjectReleaseEvent, { id: ApplicationEventName.PROJECT_RELEASE_CREATED })
+    globalRegistry.add(Template, { id: 'template' })
+    globalRegistry.add(Folder, { id: 'folder' })
+    globalRegistry.add(UserWithMetaInformation, { id: 'user' })
+    globalRegistry.add(UserInvitation, { id: 'user-invitation' })
+    globalRegistry.add(ProjectMember, { id: 'project-member' })
+    globalRegistry.add(ProjectWithLimits, { id: 'project' })
+    globalRegistry.add(Flow, { id: 'flow' })
+    globalRegistry.add(FlowRun, { id: 'flow-run' })
+    globalRegistry.add(AppConnectionWithoutSensitiveData, { id: 'app-connection' })
+    globalRegistry.add(PieceMetadata, { id: 'piece' })
+    globalRegistry.add(GitRepoWithoutSensitiveData, { id: 'git-repo' })
+    globalRegistry.add(ProjectRelease, { id: 'project-release' })
+    globalRegistry.add(AddAllowedEmbedOriginsRequestBody, { id: 'embedding' })
+}
+
+const REDIRECT_HTML_TEMPLATE = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Redirect</title></head>
+<body>
+Redirect successful, this window should close now.
+<meta id="ap-oauth-code" content="{{code}}">
+<script>
+(function () {
+    var el = document.getElementById('ap-oauth-code');
+    var code = el ? el.getAttribute('content') : null;
+    if (window.opener && code) {
+        window.opener.postMessage({ code: code }, '*');
+    }
+})();
+</script>
+</body>
+</html>`

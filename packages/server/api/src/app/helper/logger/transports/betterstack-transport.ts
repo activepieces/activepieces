@@ -1,3 +1,4 @@
+import { loggerRedact } from '@activepieces/server-utils'
 import { Level, pino, TransportTargetOptions } from 'pino'
 import { AppSystemProp, environmentVariables } from '../../system/system-props'
 import { TransportProvider } from './transport-provider'
@@ -14,6 +15,7 @@ export const betterstackTransport: TransportProvider = {
 
         return pino({
             level,
+            redact: loggerRedact,
             transport: {
                 targets: [
                     {
