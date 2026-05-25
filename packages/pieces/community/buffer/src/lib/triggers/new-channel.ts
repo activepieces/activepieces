@@ -11,17 +11,20 @@ import {
 import { bufferAuth } from '../common/auth';
 import { bufferProps, bufferQueries, Channel } from '../common/props';
 
-const polling: Polling< AppConnectionValueForAuthProperty<typeof bufferAuth>, 
-  { organizationId: string}
+const polling: Polling<
+  AppConnectionValueForAuthProperty<typeof bufferAuth>,
+  { organizationId: string }
 > = {
-  strategy: DedupeStrategy.LAST_ITEM,
+  strategy: DedupeStrategy.TIMEBASED,
   async items({ auth, propsValue }) {
     const channels = await bufferQueries.fetchChannels(
       auth.secret_text,
       propsValue.organizationId,
     );
     return channels.map((channel) => ({
-      id: channel.id,
+      epochMilliSeconds: channel.createdAt
+        ? new Date(channel.createdAt).getTime()
+        : 0,
       data: channel,
     }));
   },
@@ -41,6 +44,7 @@ export const newChannel = createTrigger({
     name: 'My Page',
     service: 'facebook',
     organizationId: 'org_id_example',
+    createdAt: '2026-05-25T10:00:00.000Z',
   } satisfies Channel,
   async onEnable(context) {
     await pollingHelper.onEnable(polling, {

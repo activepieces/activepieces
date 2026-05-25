@@ -20,7 +20,7 @@ const polling: Polling<
   AppConnectionValueForAuthProperty<typeof bufferAuth>,
   { organizationId: string; channelIds?: string[] }
 > = {
-  strategy: DedupeStrategy.LAST_ITEM,
+  strategy: DedupeStrategy.TIMEBASED,
   async items({ auth, propsValue }) {
     const posts = await bufferQueries.fetchPosts({
       accessToken: auth.secret_text,
@@ -28,7 +28,14 @@ const polling: Polling<
       channelIds: propsValue.channelIds,
       statusFilter: (status) => status?.toLowerCase() === 'sent',
     });
-    return posts.map((post) => ({ id: post.id, data: post }));
+    return posts.map((post) => ({
+      epochMilliSeconds: post.sentAt
+        ? new Date(post.sentAt).getTime()
+        : post.createdAt
+          ? new Date(post.createdAt).getTime()
+          : 0,
+      data: post,
+    }));
   },
 };
 

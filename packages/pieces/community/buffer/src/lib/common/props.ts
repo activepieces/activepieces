@@ -24,6 +24,7 @@ async function fetchChannels(
         name
         service
         organizationId
+        createdAt
       }
     }`,
     variables: { organizationId },
@@ -205,6 +206,7 @@ export type Channel = {
   name: string;
   service: string;
   organizationId: string;
+  createdAt?: string;
 };
 
 export type BufferPost = {
