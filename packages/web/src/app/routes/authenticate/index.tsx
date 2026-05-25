@@ -1,10 +1,8 @@
-import { useAuth } from '@clerk/clerk-react';
 import { motion } from 'motion/react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 import { authenticationSession } from '@/lib/authentication-session';
-import { OTOM8_SITE_URL } from '@/lib/otom8-site-url';
 
 // Matches otom8-site signout aesthetic (see
 // otom8-site/site/src/app/signout/page.tsx) so the SSO hop from marketing
@@ -12,76 +10,17 @@ import { OTOM8_SITE_URL } from '@/lib/otom8-site-url';
 const AuthenticatePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { getToken } = useAuth();
 
   const searchParams = new URLSearchParams(location.search);
   const response = searchParams.get('response');
 
-  // If the URL already carries a response param (server-to-server path through
-  // 3001/api/ap-sso), save the token synchronously before any async effect can
-  // run and navigate away.
-  const [saved] = useState(() => {
-    if (!response) return false;
-    try {
-      authenticationSession.saveResponse(JSON.parse(response), false);
-      return true;
-    } catch {
-      return false;
-    }
-  });
-
   useEffect(() => {
-    if (saved) {
+    if (response) {
+      const decodedResponse = JSON.parse(response);
+      authenticationSession.saveResponse(decodedResponse, false);
       navigate('/flows');
-      return;
     }
-
-    // No response param — Clerk landed us here directly (forceRedirectUrl="/authenticate").
-    // Get a fresh Clerk token and call Fastify's ap-sso endpoint via the Vite proxy
-    // (/api → :3000). This keeps the entire flow on the same origin and avoids the
-    // cross-origin 4200→3001→4200 hop that caused Clerk to re-initialize and loop.
-    async function exchangeToken() {
-      const token = await getToken();
-      if (!token) {
-        authenticationSession.clearSession();
-        window.location.href = OTOM8_SITE_URL
-          ? `${OTOM8_SITE_URL}/login`
-          : '/login';
-        return;
-      }
-
-      try {
-        // Vite proxy forwards /api/* → localhost:3000/api/*.
-        // Fastify /api/ap-sso verifies the Clerk bearer token, signs an AP JWT,
-        // and redirects to /authenticate?response=<encoded-auth-json>.
-        // fetch(redirect:'follow') follows the redirect; resp.url is the final URL.
-        const resp = await fetch('/api/ap-sso', {
-          headers: { Authorization: `Bearer ${token}` },
-          redirect: 'follow',
-        });
-
-        const finalUrl = new URL(resp.url);
-        const responseParam = finalUrl.searchParams.get('response');
-
-        if (responseParam) {
-          authenticationSession.saveResponse(JSON.parse(responseParam), false);
-          navigate('/flows');
-        } else {
-          authenticationSession.clearSession();
-          window.location.href = OTOM8_SITE_URL
-            ? `${OTOM8_SITE_URL}/login`
-            : '/login';
-        }
-      } catch {
-        authenticationSession.clearSession();
-        window.location.href = OTOM8_SITE_URL
-          ? `${OTOM8_SITE_URL}/login`
-          : '/login';
-      }
-    }
-
-    exchangeToken();
-  }, [getToken, navigate, saved]);
+  }, [navigate, response]);
 
   return (
     <main

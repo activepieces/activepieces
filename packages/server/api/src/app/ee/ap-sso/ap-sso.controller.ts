@@ -44,21 +44,14 @@ export const apSsoController: FastifyPluginAsyncZod = async (app) => {
 
             if (!clerkSecretKey || !signingKeyId || !privateKeyPem) {
                 req.log.error('[ap-sso] Missing env: CLERK_SECRET_KEY, AP_SIGNING_KEY_ID, AP_SIGNING_KEY_PRIVATE')
-                const siteUrl = process.env.VITE_OTOM8_SITE_URL ?? ''
-                return reply.redirect(`${siteUrl}/login?error=config`)
+                return reply.redirect('/login?error=config')
             }
 
-            // Accept bearer token (server-to-server from Next.js) or __session cookie.
-            // The Next.js route calls auth().getToken() which is always fresh, so
-            // the bearer path is immune to stale-cookie loops.
-            const authHeader = req.headers.authorization
-            const sessionToken = authHeader?.startsWith('Bearer ')
-                ? authHeader.slice(7)
-                : parseCookies(req.headers.cookie)['__session']
+            const cookies = parseCookies(req.headers.cookie)
+            const sessionToken = cookies['__session']
 
             if (!sessionToken) {
-                const siteUrl = process.env.VITE_OTOM8_SITE_URL ?? ''
-                return reply.redirect(`${siteUrl}/login?signed_out=1`)
+                return reply.redirect('/login')
             }
 
             // Verify Clerk session JWT — fetches Clerk JWKS, caches them.
@@ -71,8 +64,7 @@ export const apSsoController: FastifyPluginAsyncZod = async (app) => {
             }
             catch (err) {
                 req.log.warn({ err }, '[ap-sso] Clerk session verification failed, redirecting to login')
-                const siteUrl = process.env.VITE_OTOM8_SITE_URL ?? ''
-                return reply.redirect(`${siteUrl}/login?signed_out=1`)
+                return reply.redirect('/login')
             }
 
             if (!checkRateLimit(userId)) {
