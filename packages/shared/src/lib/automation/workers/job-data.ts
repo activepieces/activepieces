@@ -1,14 +1,15 @@
 
 import { z } from 'zod'
 import { isNil } from '../../core/common'
-import { StreamStepProgress, TriggerHookType, TriggerPayload } from '../engine'
+import { ApplicationEvent } from '../../ee/audit-events'
+import { ResumeReason, StreamStepProgress, TriggerHookType, TriggerPayload } from '../engine'
 import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
 import { FlowTriggerType } from '../flows/triggers/trigger'
 import { PiecePackage } from '../pieces/piece'
 
-export const LATEST_JOB_DATA_SCHEMA_VERSION = 8
+export const LATEST_JOB_DATA_SCHEMA_VERSION = 10
 
 export const InlineJobPayload = z.object({
     type: z.literal('inline'),
@@ -61,6 +62,8 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
         case WorkerJobType.EXECUTE_VALIDATION:
         case WorkerJobType.EXECUTE_TRIGGER_HOOK:
             return 'critical'
+        case WorkerJobType.EXECUTE_CHAT_AGENT:
+            return 'high'
     }
 }
 
@@ -75,6 +78,7 @@ export enum WorkerJobType {
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_EXTRACT_PIECE_INFORMATION = 'EXECUTE_EXTRACT_PIECE_INFORMATION',
     EVENT_DESTINATION = 'EVENT_DESTINATION',
+    EXECUTE_CHAT_AGENT = 'EXECUTE_CHAT_AGENT',
 }
 
 export const NON_SCHEDULED_JOB_TYPES: WorkerJobType[] = [
@@ -84,6 +88,7 @@ export const NON_SCHEDULED_JOB_TYPES: WorkerJobType[] = [
     WorkerJobType.EXECUTE_TRIGGER_HOOK,
     WorkerJobType.EXECUTE_PROPERTY,
     WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+    WorkerJobType.EXECUTE_CHAT_AGENT,
 ] as const
 
 // Never change without increasing LATEST_JOB_DATA_SCHEMA_VERSION, and adding a migration
@@ -109,7 +114,7 @@ export const PollingJobData = z.object({
 })
 export type PollingJobData = z.infer<typeof PollingJobData>
 
-export const ExecuteFlowJobData = z.object({
+const ExecuteFlowJobDataCommon = z.object({
     projectId: z.string(),
     platformId: z.string(),
     jobType: z.literal(WorkerJobType.EXECUTE_FLOW),
@@ -121,14 +126,26 @@ export const ExecuteFlowJobData = z.object({
     workerHandlerId: z.union([z.string(), z.null()]).optional(),
     httpRequestId: z.string().optional(),
     payload: JobPayload,
-    executeTrigger: z.boolean().optional(),
-    executionType: z.nativeEnum(ExecutionType),
     streamStepProgress: z.nativeEnum(StreamStepProgress),
     stepNameToTest: z.string().optional(),
     sampleData: z.record(z.string(), z.unknown()).optional(),
     logsFileId: z.string(),
     traceContext: z.record(z.string(), z.string()).optional(),
 })
+
+export const BeginExecuteFlowJobData = ExecuteFlowJobDataCommon.extend({
+    executionType: z.literal(ExecutionType.BEGIN),
+    executeTrigger: z.boolean().optional(),
+})
+export type BeginExecuteFlowJobData = z.infer<typeof BeginExecuteFlowJobData>
+
+export const ResumeExecuteFlowJobData = ExecuteFlowJobDataCommon.extend({
+    executionType: z.literal(ExecutionType.RESUME),
+    resumeReason: z.nativeEnum(ResumeReason),
+})
+export type ResumeExecuteFlowJobData = z.infer<typeof ResumeExecuteFlowJobData>
+
+export const ExecuteFlowJobData = z.discriminatedUnion('executionType', [BeginExecuteFlowJobData, ResumeExecuteFlowJobData])
 export type ExecuteFlowJobData = z.infer<typeof ExecuteFlowJobData>
 
 export const WebhookJobData = z.object({
@@ -221,13 +238,30 @@ export const UserInteractionJobDataWithoutWatchingInformation = z.union([
 ])
 export type UserInteractionJobDataWithoutWatchingInformation = z.infer<typeof UserInteractionJobDataWithoutWatchingInformation>
 
+export const ExecuteChatAgentJobData = z.object({
+    schemaVersion: z.number(),
+    jobType: z.literal(WorkerJobType.EXECUTE_CHAT_AGENT),
+    conversationId: z.string(),
+    projectId: z.string().nullable(),
+    platformId: z.string(),
+    userId: z.string(),
+    userMessage: z.string(),
+    modelName: z.string().nullable(),
+    files: z.array(z.object({
+        name: z.string(),
+        mimeType: z.string(),
+        data: z.string(),
+    })).optional(),
+})
+export type ExecuteChatAgentJobData = z.infer<typeof ExecuteChatAgentJobData>
+
 export const EventDestinationJobData = z.object({
     schemaVersion: z.number(),
     platformId: z.string(),
     projectId: z.string().optional(),
     webhookId: z.string(),
     webhookUrl: z.string(),
-    payload: z.unknown(),
+    payload: ApplicationEvent,
     jobType: z.literal(WorkerJobType.EVENT_DESTINATION),
 })
 
@@ -240,6 +274,7 @@ export const JobData = z.union([
     WebhookJobData,
     UserInteractionJobData,
     EventDestinationJobData,
+    ExecuteChatAgentJobData,
 ])
 export type JobData = z.infer<typeof JobData>
 export type JobPayload = z.infer<typeof JobPayload>

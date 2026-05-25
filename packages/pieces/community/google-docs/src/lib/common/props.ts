@@ -31,6 +31,7 @@ export const folderIdProp = Property.Dropdown({
 				supportsAllDrives: true,
                 orderBy:'createdTime desc',
 				includeItemsFromAllDrives: true,
+				corpora: 'allDrives',
 				pageToken: nextPageToken,
 			});
 

@@ -36,6 +36,25 @@ You can enforce SSO by specifying your organization's email domain. When SSO enf
 We recommend testing SSO with a small group of users before enforcing it organization-wide.
 </Tip>
 
+## SSO Domain
+
+The **SSO Domain** lets you map a public domain (e.g. `acme.com`) to your platform's SAML provider so users can discover the right IdP from the shared sign-in page.
+
+You can set it in the SAML configuration dialog (**Platform Settings → SSO → SAML 2.0 → Enable**), in the **SSO Domain** field. Leave it empty to disable domain-based discovery.
+
+**How it works on Cloud**
+
+On the cloud sign-in page, clicking **Sign in with SAML** opens a dialog asking the user for their organization's domain. When they enter `acme.com`, the platform whose SSO Domain matches is looked up and the user is redirected to that platform's identity provider.
+
+**Constraints**
+
+- Must be a valid public hostname containing a dot (e.g. `acme.com`, not `acme`).
+- Each domain can be claimed by only one platform on Cloud.
+
+<Note>
+On self-hosted Enterprise instances the SAML button on the sign-in page redirects directly to the configured identity provider, so the **SSO Domain** field is effectively ignored at login. You can still leave it empty.
+</Note>
+
 ## Supported SSO Providers
 
 Activepieces supports multiple SSO providers to integrate with your existing identity management system.
@@ -125,6 +144,7 @@ Activepieces supports multiple SSO providers to integrate with your existing ide
     <Step title="Configure Activepieces">
         - Paste the **IdP Metadata** XML into the corresponding field
         - Copy the **X.509 Certificate** from Okta and paste it into the **Signing Key** field
+        - (Optional, Cloud) Set the **SSO Domain** to your organization's public domain (e.g. `acme.com`) so users can sign in by entering it on the cloud sign-in page. See [SSO Domain](#sso-domain) above.
     </Step>
     <Step title="Save Configuration">
         Click **Save** to complete the setup.

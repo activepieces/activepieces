@@ -149,6 +149,9 @@
       "@activepieces/piece-beamer": [
         "packages/pieces/community/beamer/src/index.ts"
       ],
+      "@activepieces/piece-beebole": [
+        "packages/pieces/community/beebole/src/index.ts"
+      ],
       "@activepieces/piece-beehiiv": [
         "packages/pieces/community/beehiiv/src/index.ts"
       ],
@@ -451,6 +454,9 @@
       "@activepieces/piece-fliqr-ai": [
         "packages/pieces/community/fliqr-ai/src/index.ts"
       ],
+      "@activepieces/piece-frill": [
+        "packages/pieces/community/frill/src/index.ts"
+      ],
       "@activepieces/piece-flow-helper": [
         "packages/pieces/community/flow-helper/src/index.ts"
       ],
@@ -593,6 +599,9 @@
       "@activepieces/piece-heygen": [
         "packages/pieces/community/heygen/src/index.ts"
       ],
+      "@activepieces/piece-hootsuite": [
+        "packages/pieces/community/hootsuite/src/index.ts"
+      ],
       "@activepieces/piece-http": ["packages/pieces/core/http/src/index.ts"],
       "@activepieces/piece-http-oauth2": [
         "packages/pieces/community/http-oauth2/src/index.ts"
@@ -617,6 +626,9 @@
       ],
       "@activepieces/piece-imap": [
         "packages/pieces/community/imap/src/index.ts"
+      ],
+      "@activepieces/piece-imeetify": [
+        "packages/pieces/community/imeetify/src/index.ts"
       ],
       "@activepieces/piece-insighto-ai": [
         "packages/pieces/community/insighto-ai/src/index.ts"
@@ -903,6 +915,9 @@
       "@activepieces/piece-pdf-co": [
         "packages/pieces/community/pdf-co/src/index.ts"
       ],
+      "@activepieces/piece-pdf4me": [
+        "packages/pieces/community/pdf4me/src/index.ts"
+      ],
       "@activepieces/piece-pdfmonkey": [
         "packages/pieces/community/pdfmonkey/src/index.ts"
       ],
@@ -962,6 +977,9 @@
       ],
       "@activepieces/piece-prompthub": [
         "packages/pieces/community/prompthub/src/index.ts"
+      ],
+      "@activepieces/piece-provenexpert": [
+        "packages/pieces/community/provenexpert/src/index.ts"
       ],
       "@activepieces/piece-pubrio": [
         "packages/pieces/community/pubrio/src/index.ts"
@@ -1072,6 +1090,9 @@
       "@activepieces/piece-sender": [
         "packages/pieces/community/sender/src/index.ts"
       ],
+      "@activepieces/piece-sendr": [
+        "packages/pieces/community/sendr/src/index.ts"
+      ],
       "@activepieces/piece-sendfox": [
         "packages/pieces/community/sendfox/src/index.ts"
       ],
@@ -1120,6 +1141,9 @@
       ],
       "@activepieces/piece-simplybookme": [
         "packages/pieces/community/simplybookme/src/index.ts"
+      ],
+      "@activepieces/piece-simplyprint": [
+        "packages/pieces/community/simplyprint/src/index.ts"
       ],
       "@activepieces/piece-sitespeakai": [
         "packages/pieces/community/sitespeakai/src/index.ts"
@@ -1177,6 +1201,9 @@
       "@activepieces/piece-straico": [
         "packages/pieces/community/straico/src/index.ts"
       ],
+      "@activepieces/piece-streak": [
+        "packages/pieces/community/streak/src/index.ts"
+      ],
       "@activepieces/piece-stripe": [
         "packages/pieces/community/stripe/src/index.ts"
       ],
@@ -1219,6 +1246,9 @@
       ],
       "@activepieces/piece-tavily": [
         "packages/pieces/community/tavily/src/index.ts"
+      ],
+      "@activepieces/piece-teamhood": [
+        "packages/pieces/community/teamhood/src/index.ts"
       ],
       "@activepieces/piece-teamleader": [
         "packages/pieces/community/teamleader/src/index.ts"
@@ -1340,6 +1370,9 @@
       "@activepieces/piece-wedof": [
         "packages/pieces/community/wedof/src/index.ts"
       ],
+      "@activepieces/piece-weekdone": [
+        "packages/pieces/community/weekdone/src/index.ts"
+      ],
       "@activepieces/piece-what-converts": [
         "packages/pieces/community/what-converts/src/index.ts"
       ],
@@ -1379,9 +1412,15 @@
       "@activepieces/piece-xero": [
         "packages/pieces/community/xero/src/index.ts"
       ],
+      "@activepieces/piece-xquik": [
+        "packages/pieces/community/xquik/src/index.ts"
+      ],
       "@activepieces/piece-xml": ["packages/pieces/core/xml/src/index.ts"],
       "@activepieces/piece-youtube": [
         "packages/pieces/community/youtube/src/index.ts"
+      ],
+      "@activepieces/piece-youtrack": [
+        "packages/pieces/community/youtrack/src/index.ts"
       ],
       "@activepieces/piece-zagomail": [
         "packages/pieces/community/zagomail/src/index.ts"

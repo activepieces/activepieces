@@ -1,9 +1,9 @@
 import {
   type ChatHistoryMessage,
+  type PersistedChatMessage,
   ChatConversation,
   CreateChatConversationRequest,
   SeekPage,
-  SetProjectContextRequest,
   UpdateChatConversationRequest,
 } from '@activepieces/shared';
 
@@ -34,8 +34,8 @@ async function getConversation(id: string): Promise<ChatConversation> {
 
 async function getMessages(
   conversationId: string,
-): Promise<{ data: ChatHistoryMessage[] }> {
-  return api.get<{ data: ChatHistoryMessage[] }>(
+): Promise<{ data: PersistedChatMessage[] | ChatHistoryMessage[] }> {
+  return api.get<{ data: PersistedChatMessage[] | ChatHistoryMessage[] }>(
     `/v1/chat/conversations/${conversationId}/messages`,
   );
 }
@@ -51,14 +51,29 @@ async function deleteConversation(id: string): Promise<void> {
   return api.delete<void>(`/v1/chat/conversations/${id}`);
 }
 
-async function setProjectContext(
-  conversationId: string,
-  request: SetProjectContextRequest,
-): Promise<ChatConversation> {
-  return api.post<ChatConversation>(
-    `/v1/chat/conversations/${conversationId}/project-context`,
-    request,
+async function sendMessage({
+  conversationId,
+  content,
+  files,
+}: {
+  conversationId: string;
+  content: string;
+  files?: Array<{ name: string; mimeType: string; data: string }>;
+}): Promise<{ conversationId: string }> {
+  return api.post<{ conversationId: string }>(
+    `/v1/chat/conversations/${conversationId}/messages`,
+    { content, files },
   );
+}
+
+async function approveToolCall({
+  gateId,
+  approved,
+}: {
+  gateId: string;
+  approved: boolean;
+}): Promise<void> {
+  return api.post<void>(`/v1/chat/tool-approvals/${gateId}`, { approved });
 }
 
 export const chatApi = {
@@ -68,5 +83,6 @@ export const chatApi = {
   getMessages,
   updateConversation,
   deleteConversation,
-  setProjectContext,
+  sendMessage,
+  approveToolCall,
 };
