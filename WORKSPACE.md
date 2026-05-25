@@ -33,19 +33,23 @@ pnpm dev:native   # recommended — hot reload for AP + site
 ```
 
 Starts Postgres + Redis in Docker, everything else natively:
-- AP Vite frontend → **http://localhost:4200**
+- AP Vite frontend + Clerk login → **http://localhost:4200**
 - AP Fastify API → **http://localhost:3000**
-- Next.js site → **http://localhost:3001**
+- Next.js site + SSO API → **http://localhost:3001**
 
-First-time SSO: `pnpm dev:bootstrap`. Env: `otom8-site/site/.env.local` (copy from `.env.local.example`, use `pk_test_*` / `sk_test_*` Clerk keys for local dev).
+SSO bootstrap is automatic in `pnpm dev:native`. For Docker AP mode, run
+`pnpm dev:bootstrap` once after AP starts. Env:
+`otom8-site/site/.env.local` (copy from `.env.local.example`, use `pk_test_*` /
+`sk_test_*` Clerk keys for local dev).
 
 **Alternative (Docker AP):** `pnpm dev` — runs full AP in Docker on `:8080`, site on `:3000`. Slower iteration but no native Node.js deps needed.
 
 ## Request flow (high level)
 
-1. User hits **localhost:3000** (or **otom8.us**) and signs in with **Clerk**.
-2. User hits **`/api/ap-sso`** on the site; the route signs a JWT and exchanges it with AP’s **`/api/v1/managed-authn/external-token`**.
-3. Browser lands on **localhost:8080** (or **app.otom8.us**) **`/authenticate`**, then the flow builder.
+1. User hits **localhost:3001** (or **otom8.us**) and clicks login.
+2. The site sends the browser to AP login: **localhost:4200/login** (or **app.otom8.us/login**) where Clerk renders.
+3. Clerk returns to the site **`/api/ap-sso`** route; the route signs a JWT and exchanges it with AP’s **`/api/v1/managed-authn/external-token`**.
+4. Browser lands on **localhost:4200** (or **app.otom8.us**) **`/authenticate`**, then the flow builder.
 
 ## Where to edit what
 
