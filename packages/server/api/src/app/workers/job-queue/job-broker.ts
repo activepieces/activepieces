@@ -1,5 +1,5 @@
 import { ConsumeJobRequest, ConsumeJobResponse, EngineResponseStatus, isNil, JobData, tryCatch } from '@activepieces/shared'
-import { Worker as BullMQWorker, Job } from 'bullmq'
+import { Worker as BullMQWorker, Job, UnrecoverableError } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
@@ -89,6 +89,22 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
     if (isNil(job)) {
         return null  // waiting list empty — drainDelay provided backpressure
     }
+
+    if (job.deferredFailure) {
+        log.warn(
+            { queueName, jobId: job.id, jobName: job.name, deferredFailure: job.deferredFailure },
+            '[jobBroker#tryDequeue] Failing job with deferred failure (BullMQ stalled limit exceeded)',
+        )
+        const { error: failError } = await tryCatch(() => job.moveToFailed(new UnrecoverableError(job.deferredFailure), token, false))
+        if (failError) {
+            log.error(
+                { queueName, jobId: job.id, error: String(failError) },
+                '[jobBroker#tryDequeue] Failed to fail deferred-failure job',
+            )
+        }
+        return tryDequeue(worker, queueName, log)
+    }
+
     log.info({ queueName, jobId: job.id, jobName: job.name }, '[jobBroker#tryDequeue] Dequeued job')
 
     const originalSchemaVersion = (job.data as Record<string, unknown>).schemaVersion
@@ -97,6 +113,21 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
 
     if (migratedData.schemaVersion !== originalSchemaVersion) {
         await job.updateData(migratedData)
+    }
+
+    const parseResult = JobData.safeParse(migratedData)
+    if (!parseResult.success) {
+        const issues = parseResult.error.issues.map(issue => `${issue.path.join('.') || '<root>'}: ${issue.message}`).join('; ')
+        const reason = `Job data failed schema validation after migration: ${issues}`
+        log.error(
+            { queueName, jobId, schemaVersion: migratedData.schemaVersion, jobType: migratedData.jobType, issues: parseResult.error.issues },
+            '[jobBroker#tryDequeue] Failing job with invalid schema as unrecoverable',
+        )
+        const { error: failError } = await tryCatch(() => job.moveToFailed(new UnrecoverableError(reason), token, false))
+        if (failError) {
+            log.error({ queueName, jobId, error: String(failError) }, '[jobBroker#tryDequeue] Failed to fail invalid-schema job')
+        }
+        return tryDequeue(worker, queueName, log)
     }
 
     const interceptorResult = await runInterceptors({ jobId, jobData: migratedData, job, log })
@@ -171,11 +202,6 @@ async function runInterceptors({ jobId, jobData, job, log }: { jobId: string, jo
     return null
 }
 
-function isStalledJobError(error: unknown): boolean {
-    const msg = error instanceof Error ? error.message : String(error)
-    return msg.includes('Missing lock') || msg.includes('job stalled') || msg.includes('Cannot read properties of null (reading \'moveToFinishedArgs\')')
-}
-
 function buildFailedReason(errorMessage: string, logs?: string): string {
     if (!logs) return errorMessage
     return `${errorMessage}\n${logs}`
@@ -229,12 +255,7 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
             }
         })
         if (error) {
-            if (isStalledJobError(error)) {
-                log.warn({ jobId: input.jobId, error: String(error), originalError: input.errorMessage }, '[jobBroker] Stalled job error during completeJob')
-            }
-            else {
-                log.error({ jobId: input.jobId, error: String(error), originalError: input.errorMessage }, '[jobBroker] Failed to move job to final state')
-            }
+            log.error({ jobId: input.jobId, error: String(error), originalError: input.errorMessage }, '[jobBroker] Failed to move job to final state — leaving for stalled-scan recovery')
             if (userJobData) {
                 await engineResponseWatcher(log).publish(userJobData.webserverId, userJobData.requestId, {
                     status: EngineResponseStatus.INTERNAL_ERROR,

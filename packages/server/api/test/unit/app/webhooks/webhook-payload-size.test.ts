@@ -39,6 +39,37 @@ describe('payloadOffloader', () => {
             const size = payloadOffloader.getPayloadSizeInBytes(payload)
             expect(size).toBe(Buffer.byteLength(JSON.stringify(payload), 'utf8'))
         })
+
+        it('should not over-count buffer bytes for multipart payloads with a raw Buffer', () => {
+            const fileSize = 35 * 1024 * 1024
+            const buffer = Buffer.alloc(fileSize, 0xff)
+            const payload = {
+                body: { fileField: 'http://example.com/file.bin' },
+                rawBody: buffer,
+            }
+
+            const size = payloadOffloader.getPayloadSizeInBytes(payload)
+
+            const naiveSize = Buffer.byteLength(JSON.stringify(payload), 'utf8')
+            expect(naiveSize).toBeGreaterThan(fileSize * 2)
+
+            expect(size).toBeGreaterThanOrEqual(fileSize)
+            expect(size).toBeLessThan(fileSize + 1024)
+        })
+
+        it('should not under-count crafted objects that mimic Buffer JSON shape', () => {
+            const payload = {
+                rawBody: {
+                    type: 'Buffer',
+                    data: [0, 'a'.repeat(10 * 1024 * 1024)],
+                },
+            }
+
+            const size = payloadOffloader.getPayloadSizeInBytes(payload)
+            const naiveSize = Buffer.byteLength(JSON.stringify(payload), 'utf8')
+
+            expect(size).toBe(naiveSize)
+        })
     })
 
     describe('offloadPayload', () => {

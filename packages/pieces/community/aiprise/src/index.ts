@@ -18,16 +18,7 @@ import { getBusinessDocumentsAction } from './lib/actions/get-business-documents
 import { getUserProfileAction } from './lib/actions/get-user-profile';
 import { getBusinessProfileAction } from './lib/actions/get-business-profile';
 import { searchBusinessesAction } from './lib/actions/search-businesses';
-
-export const aipriseAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: `To get your AiPrise API key:
-1. Log in to your [AiPrise dashboard](https://app.aiprise.com)
-2. Go to **Settings > API Keys**
-3. Copy your API key and paste it here
-`,
-  required: true,
-});
+import { aipriseAuth } from './lib/common/auth';
 
 export const aiprise = createPiece({
   displayName: 'AiPrise',
@@ -56,10 +47,13 @@ export const aiprise = createPiece({
     getAdditionalUserInfoAction,
     getBusinessDocumentsAction,
     createCustomApiCallAction({
-      baseUrl: () => 'https://api.aiprise.com/api/v1',
+      baseUrl: (auth) =>
+        auth?.props.environment === 'sandbox'
+          ? 'https://api-sandbox.aiprise.com/api/v1'
+          : 'https://api.aiprise.com/api/v1',
       auth: aipriseAuth,
       authMapping: async (auth) => ({
-        'X-API-KEY': auth.secret_text,
+        'X-API-KEY': auth.props.secret_text,
       }),
     }),
   ],
