@@ -16,7 +16,7 @@ export const xquik = createPiece({
     'Search public X/Twitter posts, users, timelines, and trends for automation workflows.',
   auth: xquikAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://xquik.com/logo.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/xquik.png',
   authors: ['kriptoburak'],
   categories: [PieceCategory.BUSINESS_INTELLIGENCE, PieceCategory.MARKETING],
   actions: [

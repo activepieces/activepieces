@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { xquikCommon } from './index';
+import { xquikCommon } from '../src/lib/common/index';
 
 describe('xquikCommon.utils', () => {
   it('removes empty query values and stringifies primitives', () => {

@@ -6,7 +6,7 @@ export const searchUsers = createAction({
   auth: xquikAuth,
   name: 'search_users',
   displayName: 'Search Users',
-  description: 'Search public X/Twitter users by name or username',
+  description: 'Search public X/Twitter users by name or username.',
   props: {
     query: Property.ShortText({
       displayName: 'Query',
