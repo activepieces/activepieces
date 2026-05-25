@@ -17,6 +17,7 @@ import { SelectedItemsMap, TreeItem } from '../lib/types';
 import { groupTreeItemsByFolder } from '../lib/utils';
 
 import { AutomationsTableRow } from './automations-table-row';
+import { CreateInFolderKind } from './create-new-menu';
 
 type AutomationsTableProps = {
   items: TreeItem[];
@@ -31,13 +32,18 @@ type AutomationsTableProps = {
   onTogglePin: (itemId: string) => void;
   onToggleAllSelection: () => void;
   onToggleItemSelection: (item: TreeItem) => void;
-  onRowClick: (item: TreeItem) => void;
+  onRowClick: (item: TreeItem, ctrlKey?: boolean) => void;
   onRenameItem: (item: TreeItem) => void;
   onDeleteItem: (item: TreeItem) => void;
   onDuplicateFlow: (flow: PopulatedFlow) => void;
   onMoveItem: (item: TreeItem, folderId: string) => void;
   onExportFlow: (flow: PopulatedFlow) => void;
   onExportTable: (table: Table) => void;
+  onCreateInFolder?: (folderId: string, kind: CreateInFolderKind) => void;
+  userHasPermissionToWriteFlow?: boolean;
+  userHasPermissionToWriteTable?: boolean;
+  isCreatingFlow?: boolean;
+  isCreatingTable?: boolean;
   isMoving: boolean;
   isDuplicating: boolean;
   onLoadMoreInFolder: (folderId: string) => void;
@@ -45,7 +51,7 @@ type AutomationsTableProps = {
 };
 
 const rowClassName =
-  'flex items-center min-h-[48px] py-2 text-sm cursor-pointer hover:bg-muted/50';
+  'group flex items-center min-h-[48px] py-2 text-sm cursor-pointer hover:bg-muted/50';
 
 export const AutomationsTable = ({
   items,
@@ -67,6 +73,11 @@ export const AutomationsTable = ({
   onMoveItem,
   onExportFlow,
   onExportTable,
+  onCreateInFolder,
+  userHasPermissionToWriteFlow,
+  userHasPermissionToWriteTable,
+  isCreatingFlow,
+  isCreatingTable,
   isMoving,
   isDuplicating,
   onLoadMoreInFolder,
@@ -78,7 +89,7 @@ export const AutomationsTable = ({
   return (
     <div className="overflow-x-auto">
       <div className="min-w-[1000px]">
-        <div className="flex items-center h-10 text-xs border-b border-t font-medium text-foreground bg-background">
+        <div className="flex items-center h-8 text-xs border-b font-medium text-foreground bg-muted/50">
           <div className="w-10 shrink-0 pl-4 pr-1">
             <Checkbox
               checked={
@@ -112,14 +123,14 @@ export const AutomationsTable = ({
             <Activity className="h-3.5 w-3.5" />
             {t('Status')}
           </div>
-          <div className="w-[50px] shrink-0 px-2"></div>
+          <div className="w-[80px] shrink-0 px-2"></div>
         </div>
 
         {isLoading ? (
           <div className="p-2">
             {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="w-full h-10 mb-4 rounded-sm">
-                <Skeleton className="w-full min-h-10" />
+              <div key={i} className="w-full h-9 mb-3 rounded-sm">
+                <Skeleton className="w-full min-h-9" />
               </div>
             ))}
           </div>
@@ -136,11 +147,13 @@ export const AutomationsTable = ({
                   <AccordionPrimitive.Item
                     key={`folder-${group.item.id}`}
                     value={group.item.id}
-                    className="not-last:border-b"
+                    className="border-b"
                   >
                     <div
                       className={cn(rowClassName)}
-                      onClick={() => onRowClick(group.item)}
+                      onClick={(e) =>
+                        onRowClick(group.item, e.ctrlKey || e.metaKey)
+                      }
                     >
                       <AutomationsTableRow
                         item={group.item}
@@ -161,6 +174,15 @@ export const AutomationsTable = ({
                         onMoveTo={onMoveItem}
                         onExportFlow={onExportFlow}
                         onExportTable={onExportTable}
+                        onCreateInFolder={onCreateInFolder}
+                        userHasPermissionToWriteFlow={
+                          userHasPermissionToWriteFlow
+                        }
+                        userHasPermissionToWriteTable={
+                          userHasPermissionToWriteTable
+                        }
+                        isCreatingFlow={isCreatingFlow}
+                        isCreatingTable={isCreatingTable}
                         isMoving={isMoving}
                         isDuplicating={isDuplicating}
                         onLoadMore={undefined}
@@ -171,7 +193,9 @@ export const AutomationsTable = ({
                         <div
                           key={`${child.type}-${child.id}`}
                           className={cn(rowClassName, 'border-t')}
-                          onClick={() => onRowClick(child)}
+                          onClick={(e) =>
+                            onRowClick(child, e.ctrlKey || e.metaKey)
+                          }
                         >
                           <AutomationsTableRow
                             item={child}
@@ -209,8 +233,10 @@ export const AutomationsTable = ({
               return (
                 <div
                   key={`${group.item.type}-${group.item.id}`}
-                  className={cn(rowClassName, 'not-last:border-b')}
-                  onClick={() => onRowClick(group.item)}
+                  className={cn(rowClassName, 'border-b')}
+                  onClick={(e) =>
+                    onRowClick(group.item, e.ctrlKey || e.metaKey)
+                  }
                 >
                   <AutomationsTableRow
                     item={group.item}

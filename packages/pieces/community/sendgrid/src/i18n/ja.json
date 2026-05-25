@@ -1,6 +1,5 @@
 {
   "Email delivery service for sending transactional and marketing emails": "トランザクションとマーケティングの電子メールを送信するためのメール配信サービス",
-  "API key acquired from your SendGrid settings": "SendGrid設定から取得したAPIキー",
   "Send Email": "メール送信",
   "Send Dynamic Template": "動的テンプレートを送信",
   "Custom API Call": "カスタムAPI通話",
@@ -14,6 +13,7 @@
   "Subject": "件名",
   "Content Type": "コンテンツタイプ",
   "Content": "コンテンツ",
+  "Attachments": "添付ファイル",
   "Template Id": "テンプレートID",
   "Template Data": "テンプレートデータ",
   "Method": "方法",

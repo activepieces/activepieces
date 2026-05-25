@@ -14,7 +14,9 @@ export enum FlowStatus {
 export enum FlowOperationStatus {
     NONE = 'NONE',
     DELETING = 'DELETING',
+    /** @deprecated No longer set — status changes are now synchronous via distributed lock */
     ENABLING = 'ENABLING',
+    /** @deprecated No longer set — status changes are now synchronous via distributed lock */
     DISABLING = 'DISABLING',
 }
 
@@ -37,6 +39,7 @@ export const Flow = z.object({
     status: z.nativeEnum(FlowStatus),
     publishedVersionId: Nullable(z.string()),
     metadata: Nullable(Metadata),
+    /** @deprecated Only DELETING is actively used — ENABLING/DISABLING are no longer set */
     operationStatus: z.nativeEnum(FlowOperationStatus),
     timeSavedPerRun: Nullable(z.number()),
     templateId: Nullable(z.string()),

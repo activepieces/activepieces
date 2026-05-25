@@ -7,6 +7,9 @@ import { retrieveVideoStatusAction } from './lib/actions/retrieve-a-video-status
 import { retrieveSharableVideoUrlAction } from './lib/actions/retrieve-shareable-link-for-a-video';
 import { uploadAssetAction } from './lib/actions/upload-an-asset';
 import { translateVideoAction } from './lib/actions/translate-a-video';
+import { listAvatarsAction } from './lib/actions/list-avatars';
+import { listVoicesAction } from './lib/actions/list-voices';
+import { listVideosAction } from './lib/actions/list-videos';
 import { videoGenerationCompletedTrigger } from './lib/triggers/video-generation-completed';
 import { videoGenerationFailedTrigger } from './lib/triggers/video-generation-failed';
 
@@ -19,7 +22,7 @@ export const heygen = createPiece({
   auth: heygenAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/heygen.jpg',
-  authors: ['krushnarout'],
+  authors: ['krushnarout', 'Angelebeats'],
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   actions: [
     createVideoFromTemplateAction,
@@ -28,6 +31,9 @@ export const heygen = createPiece({
     retrieveSharableVideoUrlAction,
     uploadAssetAction,
     translateVideoAction,
+    listAvatarsAction,
+    listVoicesAction,
+    listVideosAction,
     createCustomApiCallAction({
       auth: heygenAuth,
       baseUrl: () => BASE_URL_V1,

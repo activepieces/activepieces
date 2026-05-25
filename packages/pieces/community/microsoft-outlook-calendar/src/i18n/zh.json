@@ -1,5 +1,9 @@
 {
   "Calendar software by Microsoft": "Calendar software by Microsoft",
+  "Cloud Environment": "Cloud Environment",
+  "Select your Microsoft cloud environment.": "Select your Microsoft cloud environment.",
+  "Commercial (Global)": "Commercial (Global)",
+  "US Government (GCC High)": "US Government (GCC High)",
   "\nIf you’d like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n set the **Redirect URI** to {{redirectUrl}} and add the following **Microsoft Graph (Delegated) permissions** under **API permissions**:\n - User.Read\n - Calendars.ReadWrite\n - offline_access": "\nIf you’d like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n set the **Redirect URI** to {{redirectUrl}} and add the following **Microsoft Graph (Delegated) permissions** under **API permissions**:\n - User.Read\n - Calendars.ReadWrite\n - offline_access",
   "Create a new event in a calendar": "Create a new event in a calendar",
   "Delete an event in a calendar": "Delete an event in a calendar",

@@ -1,13 +1,13 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { sardisAuth } from '../..';
-import { sardisCommon, makeSardisClient } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { sardisAuth } from '../auth';
+import { sardisCommon, sardisApiCall } from '../common';
 
-export const sardisCheckBalance = createAction({
+export const checkBalanceAction = createAction({
   name: 'check_balance',
   auth: sardisAuth,
   displayName: 'Check Balance',
-  description:
-    'Check the current wallet balance and address for a specific token and chain.',
+  description: 'Check wallet balance and spending limits.',
   props: {
     walletId: sardisCommon.walletId,
     token: sardisCommon.token,
@@ -15,12 +15,12 @@ export const sardisCheckBalance = createAction({
   },
   async run(context) {
     const { walletId, token, chain } = context.propsValue;
-    const client = makeSardisClient(context.auth.secret_text);
-
-    return await client.wallets.getBalance(
-      walletId,
-      chain ?? 'base',
-      token ?? 'USDC',
+    return sardisApiCall(
+      context.auth.secret_text,
+      HttpMethod.GET,
+      `/api/v2/wallets/${walletId}/balance`,
+      undefined,
+      { chain: chain ?? 'base', token: token ?? 'USDC' },
     );
   },
 });

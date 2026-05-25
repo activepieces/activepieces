@@ -22,26 +22,21 @@ export const createDynamicTableAction = createAction({
     table_name: Property.ShortText({
       displayName: 'Dynamic Table Name',
       description:
-        'The name for the new dynamic table (e.g. `DAILY_SALES_SUMMARY`).',
+        'The name for the new dynamic table (e.g. `DAILY_SALES_SUMMARY`). Only letters, digits, underscores, and `$` are allowed.',
       required: true,
     }),
     target_lag: Property.ShortText({
-      displayName: 'Target Lag',
+      displayName: 'Refresh Interval',
       description:
-        'How fresh the dynamic table data should be. Accepts time expressions like `1 minute`, `5 minutes`, `1 hour`, or `DOWNSTREAM` to refresh when downstream objects are refreshed.',
+        'How up-to-date the dynamic table data should be (called **Target Lag** in Snowflake). Examples: `1 minute`, `5 minutes`, `1 hour`. Use `DOWNSTREAM` to only refresh when a downstream object explicitly requests it.',
       required: true,
       defaultValue: '1 hour',
     }),
-    warehouse: Property.ShortText({
-      displayName: 'Warehouse',
-      description:
-        'The name of the virtual warehouse to use when refreshing the dynamic table. Uses the auth warehouse if left empty.',
-      required: false,
-    }),
+    warehouse: snowflakeCommonProps.warehouse,
     query: Property.LongText({
       displayName: 'Source Query',
       description:
-        'The SELECT statement that defines the dynamic table content. ' +
+        'The SELECT statement that defines the content of the dynamic table. ' +
         'Example: `SELECT user_id, SUM(amount) AS total FROM orders GROUP BY user_id`',
       required: true,
     }),

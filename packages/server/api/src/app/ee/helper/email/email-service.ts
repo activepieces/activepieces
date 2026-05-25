@@ -1,12 +1,12 @@
 import { AlertChannel, ApEdition, assertNotNullOrUndefined, BADGES, InvitationType, isNil, OtpType, UserIdentity, UserInvitation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
+import { domainHelper } from '../../../helper/domain-helper'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
 import { alertsService } from '../../alerts/alerts-service'
-import { domainHelper } from '../../custom-domains/domain-helper'
 import { projectRoleService } from '../../projects/project-role/project-role.service'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
 
@@ -26,7 +26,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
             platformRole: userInvitation.platformRole,
         })
         const { email, platformId } = userInvitation
-        const { name: projectName, role } = await getEntityNameForInvitation(userInvitation, log)
+        const { name: projectName } = await getEntityNameForInvitation(userInvitation, log)
         await emailSender(log).send({
             emails: [email],
             platformId,
@@ -35,7 +35,6 @@ export const emailService = (log: FastifyBaseLogger) => ({
                 vars: {
                     setupLink: invitationLink,
                     projectName,
-                    role,
                 },
             },
         })
@@ -55,7 +54,6 @@ export const emailService = (log: FastifyBaseLogger) => ({
         const { name: projectName, role } = await getEntityNameForInvitation(userInvitation, log)
         const redirectPath = projectId ? `/projects/${projectId}/flows` : '/flows'
         const loginLink = await domainHelper.getPublicUrl({
-            platformId,
             path: `sign-in?from=${encodeURIComponent(redirectPath)}`,
         })
         await emailSender(log).send({
@@ -84,7 +82,6 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
 
         const loginLink = await domainHelper.getPublicUrl({
-            platformId,
             path: 'sign-in',
         })
 
@@ -102,11 +99,14 @@ export const emailService = (log: FastifyBaseLogger) => ({
 
     async sendIssueCreatedNotification({
         projectId,
+        projectName,
         flowName,
         platformId,
-        issueOrRunsPath,
-        isIssue,
+        runUrl,
         createdAt,
+        failedStepDisplayName,
+        failedStepNumber,
+        failedStepMessage,
     }: IssueCreatedArgs): Promise<void> {
         if (EDITION_IS_NOT_PAID) {
             return
@@ -132,10 +132,13 @@ export const emailService = (log: FastifyBaseLogger) => ({
             templateData: {
                 name: 'issue-created',
                 vars: {
+                    projectName,
                     flowName,
                     createdAt,
-                    isIssue: isIssue.toString(),
-                    issueUrl: issueOrRunsPath,
+                    runUrl,
+                    failedStepDisplayName,
+                    failedStepNumber: failedStepNumber ? `${failedStepNumber}` : '',
+                    failedStepMessage: failedStepMessage ?? '',
                 },
             },
         })
@@ -163,7 +166,6 @@ export const emailService = (log: FastifyBaseLogger) => ({
         }
 
         const setupLink = await domainHelper.getInternalUrl({
-            platformId,
             path: frontendPath[type] + `?otpcode=${otp}&identityId=${userIdentity.id}`,
         })
 
@@ -269,9 +271,12 @@ type SendScimUserWelcomeArgs = {
 
 type IssueCreatedArgs = {
     projectId: string
+    projectName: string
     flowName: string
     platformId: string
-    isIssue: boolean
-    issueOrRunsPath: string
+    runUrl: string
     createdAt: string
+    failedStepDisplayName: string
+    failedStepNumber?: number
+    failedStepMessage?: string
 }

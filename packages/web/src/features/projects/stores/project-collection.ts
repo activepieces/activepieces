@@ -10,6 +10,7 @@ import {
 } from '@activepieces/shared';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
 import {
+  and,
   createCollection,
   eq,
   like,
@@ -54,6 +55,7 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
               : undefined,
           icon: modified.icon,
           plan: modified.plan,
+          maxConcurrentJobs: modified.maxConcurrentJobs,
         };
         await api.post<ProjectWithLimits>(
           `/v1/projects/${original.id}`,
@@ -157,7 +159,10 @@ export const projectCollectionUtils = {
           .where(({ project }) =>
             or(
               eq(project.type, ProjectType.TEAM),
-              eq(project.ownerId, currentUserId),
+              and(
+                eq(project.type, ProjectType.PERSONAL),
+                eq(project.ownerId, currentUserId),
+              ),
             ),
           )
           .orderBy(({ project }) => project.type, 'asc')
@@ -215,7 +220,9 @@ export const projectCollectionUtils = {
   },
 };
 
-export const getProjectName = (project: ProjectWithLimits): string => {
+export const getProjectName = (
+  project: Pick<ProjectWithLimits, 'type' | 'displayName'>,
+): string => {
   return project.type === ProjectType.PERSONAL
     ? 'Personal Project'
     : project.displayName;
@@ -225,9 +232,7 @@ export const projectHooks = {
     return useQuery<ProjectWithLimitsWithPlatform[], Error>({
       queryKey: ['projects-for-platforms'],
       queryFn: async () => {
-        return api.get<ProjectWithLimitsWithPlatform[]>(
-          '/v1/users/projects/platforms',
-        );
+        return api.get<ProjectWithLimitsWithPlatform[]>('/v1/platforms');
       },
     });
   },

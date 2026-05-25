@@ -1,6 +1,5 @@
-import { fathomAuth } from '../..';
+import { fathomAuth, getFathomClient } from '../common/auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { Fathom } from 'fathom-typescript';
 import { ListTeamsRequest } from 'fathom-typescript/dist/esm/sdk/models/operations';
 
 export const findTeam = createAction({
@@ -16,9 +15,7 @@ export const findTeam = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const fathom = new Fathom({
-      security: { apiKeyAuth: auth.secret_text },
-    });
+    const fathom = getFathomClient(auth);
 
     const params: Partial<ListTeamsRequest> = {};
     if (propsValue.cursor) {

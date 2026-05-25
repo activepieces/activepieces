@@ -14,9 +14,19 @@ import {
   isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
+import { ChevronDown } from 'lucide-react';
 import { Dispatch, SetStateAction, useState } from 'react';
 import { useFormContext, UseFormReturn } from 'react-hook-form';
 
+import {
+  MultiSelect,
+  MultiSelectContent,
+  MultiSelectItem,
+  MultiSelectList,
+  MultiSelectSearch,
+  MultiSelectTrigger,
+  MultiSelectValue,
+} from '@/components/custom/multi-select';
 import { Button } from '@/components/ui/button';
 import {
   FormControl,
@@ -29,6 +39,7 @@ import { Input } from '@/components/ui/input';
 import { OAuth2App, oauth2Utils } from '@/features/connections';
 import { appConnectionsApi } from '@/features/connections/api/app-connections';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { cn } from '@/lib/utils';
 
 import { GenericPropertiesForm } from '../builder/piece-properties/generic-properties-form';
 
@@ -54,8 +65,12 @@ function OAuth2ConnectionSettings({
     oauth2App.oauth2Type !== AppConnectionType.OAUTH2 ||
     form.getValues('request.value.client_secret');
   const isPropsValid = isNil(form.formState.errors.request?.value?.props);
+  const selectedScopeString = form.watch('request.value.scope') ?? '';
+  const showScopeSelector = authProperty.scope.length > 1;
+  const hasSelectedScopes =
+    !showScopeSelector || selectedScopeString.trim().length > 0;
   const isConnectButtonEnabled =
-    isClientIdValid && isClientSecretValid && isPropsValid;
+    isClientIdValid && isClientSecretValid && isPropsValid && hasSelectedScopes;
   const { data: thirdPartyUrl } = flagsHooks.useFlag<string>(
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
   );
@@ -64,11 +79,11 @@ function OAuth2ConnectionSettings({
       ? 'https://secrets.activepieces.com/redirect'
       : thirdPartyUrl ?? 'no_redirect_url_found';
 
-  const hasCode = form.getValues().request.value.code;
   const showRedirectUrlInput =
     oauth2App.oauth2Type === AppConnectionType.OAUTH2 &&
     grantType === OAuth2GrantType.AUTHORIZATION_CODE;
   const [loading, setLoading] = useState(false);
+  const [scopesEditing, setScopesEditing] = useState(false);
 
   return (
     <div className="flex flex-col gap-4">
@@ -89,11 +104,15 @@ function OAuth2ConnectionSettings({
             control={form.control}
             render={({ field }) => (
               <FormItem className="flex flex-col gap-2">
-                <FormLabel>{t('Client ID')}</FormLabel>
+                <FormLabel
+                  className="flex items-center gap-1"
+                  showRequiredIndicator
+                >
+                  <span>{t('Client ID')}</span>
+                </FormLabel>
                 <FormControl>
                   <SecretInput {...field} type="text" />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           ></FormField>
@@ -102,11 +121,15 @@ function OAuth2ConnectionSettings({
             control={form.control}
             render={({ field }) => (
               <FormItem className="flex flex-col gap-2">
-                <FormLabel>{t('Client Secret')}</FormLabel>
+                <FormLabel
+                  className="flex items-center gap-1"
+                  showRequiredIndicator
+                >
+                  <span>{t('Client Secret')}</span>
+                </FormLabel>
                 <FormControl>
                   <SecretInput {...field} type="password" />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           ></FormField>
@@ -122,43 +145,149 @@ function OAuth2ConnectionSettings({
         />
       )}
 
+      {showScopeSelector && (
+        <FormField
+          name="request.value.scope"
+          control={form.control}
+          render={({ field }) => {
+            const selected = parseScopeString(field.value);
+            return (
+              <FormItem className="flex flex-col gap-2">
+                <FormControl>
+                  <div className="flex flex-col gap-2">
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setScopesEditing((v) => !v)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setScopesEditing((v) => !v);
+                        }
+                      }}
+                      className="flex w-full items-center gap-2 text-sm font-medium cursor-pointer select-none"
+                    >
+                      <span className="leading-none">{t('Permissions')}</span>
+                      <ChevronDown
+                        className={cn(
+                          'h-4 w-4 shrink-0 text-muted-foreground transition-transform',
+                          !scopesEditing && '-rotate-90',
+                        )}
+                      />
+                    </div>
+                    {scopesEditing && (
+                      <MultiSelect
+                        modal={true}
+                        value={selected}
+                        onValueChange={(next) => field.onChange(next.join(' '))}
+                        items={authProperty.scope.map((scope) => ({
+                          value: scope,
+                          label: scope,
+                        }))}
+                      >
+                        <MultiSelectTrigger>
+                          {selected.length < 10 ? (
+                            <MultiSelectValue
+                              placeholder={t('Select permissions')}
+                            />
+                          ) : (
+                            t('{number} items selected', {
+                              number: selected.length,
+                            })
+                          )}
+                        </MultiSelectTrigger>
+                        <MultiSelectContent>
+                          <MultiSelectSearch
+                            placeholder={t('Search permissions')}
+                          />
+                          <MultiSelectList>
+                            <div
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                field.onChange(authProperty.scope.join(' '));
+                              }}
+                            >
+                              <MultiSelectItem>
+                                {t('Select All')}
+                              </MultiSelectItem>
+                            </div>
+                            {authProperty.scope.map((scope) => (
+                              <MultiSelectItem key={scope} value={scope}>
+                                <span className="truncate min-w-0">
+                                  {scope}
+                                </span>
+                              </MultiSelectItem>
+                            ))}
+                          </MultiSelectList>
+                        </MultiSelectContent>
+                      </MultiSelect>
+                    )}
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
+        />
+      )}
+
       {grantType !== OAuth2GrantType.CLIENT_CREDENTIALS && (
-        <div className="border border-solid p-2 rounded-lg gap-2 flex text-center items-center justify-center h-full">
-          <div className="rounded-full border border-solid p-1 flex items-center justify-center">
-            <img src={piece.logoUrl} className="w-5 h-5"></img>
-          </div>
-          <div className="text-sm">{piece.displayName}</div>
-          <div className="grow"></div>
-          <Button
-            size={'sm'}
-            variant={'basic'}
-            className={hasCode ? 'text-destructive' : ''}
-            disabled={!isConnectButtonEnabled}
-            loading={loading}
-            type="button"
-            onClick={async () => {
-              if (!hasCode) {
-                openPopup(
-                  redirectUrl,
-                  form.getValues().request.value.client_id,
-                  form.getValues().request.value.props,
-                  piece.name,
-                  form,
-                  setLoading,
-                );
-              } else {
-                form.setValue('request.value.code', '', {
-                  shouldValidate: true,
-                });
-                form.setValue('request.value.code_challenge', '', {
-                  shouldValidate: true,
-                });
-              }
-            }}
-          >
-            {hasCode ? t('Disconnect') : t('Connect')}
-          </Button>
-        </div>
+        <FormField
+          name="request.value.code"
+          control={form.control}
+          render={({ field }) => {
+            const hasCode = !isNil(field.value) && field.value !== '';
+            return (
+              <FormItem className="flex flex-col gap-2">
+                <FormControl>
+                  <input type="hidden" {...field} />
+                </FormControl>
+                <div className="border border-solid p-2 rounded-lg gap-2 flex text-center items-center justify-center h-full">
+                  <div className="rounded-full  border border-solid p-1 flex items-center justify-center">
+                    <img src={piece.logoUrl} className="w-5 h-5"></img>
+                  </div>
+                  <div className="text-sm">{piece.displayName}</div>
+                  <div className="grow"></div>
+                  <Button
+                    size={'sm'}
+                    variant={'basic'}
+                    className={cn(hasCode && 'text-destructive')}
+                    disabled={!isConnectButtonEnabled}
+                    loading={loading}
+                    type="button"
+                    onClick={async () => {
+                      if (!hasCode) {
+                        const scopesList = parseScopeString(
+                          form.getValues().request.value.scope,
+                        );
+                        openPopup({
+                          redirectUrl,
+                          clientId: form.getValues().request.value.client_id,
+                          props: form.getValues().request.value.props,
+                          pieceName: piece.name,
+                          form,
+                          pieceVersion: piece.version,
+                          scopes:
+                            scopesList.length > 0 ? scopesList : undefined,
+                          setLoading,
+                        });
+                      } else {
+                        field.onChange('');
+                        form.setValue('request.value.code_challenge', '', {
+                          shouldValidate: true,
+                        });
+                      }
+                    }}
+                  >
+                    {hasCode ? t('Disconnect') : t('Connect')}
+                  </Button>
+                </div>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
+        />
       )}
     </div>
   );
@@ -167,27 +296,35 @@ function OAuth2ConnectionSettings({
 OAuth2ConnectionSettings.displayName = 'OAuth2ConnectionSettings';
 export { OAuth2ConnectionSettings };
 
-async function openPopup(
-  redirectUrl: string,
-  clientId: string,
-  props: Record<string, unknown> | undefined,
-  pieceName: string,
-  form: UseFormReturn<{
-    request:
-      | UpsertCloudOAuth2Request
-      | UpsertOAuth2Request
-      | UpsertPlatformOAuth2Request;
-  }>,
-  setLoading: Dispatch<SetStateAction<boolean>>,
-) {
+function parseScopeString(value: string | undefined): string[] {
+  if (!value) {
+    return [];
+  }
+  return value.split(' ').filter((scope) => scope.length > 0);
+}
+
+async function openPopup({
+  redirectUrl,
+  clientId,
+  props,
+  pieceName,
+  pieceVersion,
+  form,
+  scopes,
+  setLoading,
+}: OpenPopupParams) {
   let authorizationUrl, codeVerifier;
   try {
     setLoading(true);
+    const formProjectId = form.getValues().request.projectId;
     const result = await appConnectionsApi.getOAuth2AuthorizationUrl({
       pieceName,
       clientId,
       redirectUrl,
+      pieceVersion,
       props,
+      projectId: formProjectId,
+      scopes,
     });
     authorizationUrl = result.authorizationUrl;
     codeVerifier = result.codeVerifier;
@@ -219,4 +356,20 @@ type OAuth2ConnectionSettingsProps = {
   authProperty: OAuth2Property<OAuth2Props>;
   oauth2App: OAuth2App;
   grantType: OAuth2GrantType;
+};
+
+type OpenPopupParams = {
+  redirectUrl: string;
+  clientId: string;
+  props: Record<string, unknown> | undefined;
+  pieceName: string;
+  pieceVersion: string;
+  scopes: string[] | undefined;
+  form: UseFormReturn<{
+    request:
+      | UpsertCloudOAuth2Request
+      | UpsertOAuth2Request
+      | UpsertPlatformOAuth2Request;
+  }>;
+  setLoading: Dispatch<SetStateAction<boolean>>;
 };

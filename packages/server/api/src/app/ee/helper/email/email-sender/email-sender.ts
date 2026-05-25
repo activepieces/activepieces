@@ -27,7 +27,6 @@ type BaseEmailTemplateData<Name extends string, Vars extends Record<string, stri
 
 type InvitationEmailTemplateData = BaseEmailTemplateData<'invitation-email', {
     projectName: string
-    role: string
     setupLink: string
 }>
 
@@ -46,15 +45,13 @@ type VerifyEmailTemplateData = BaseEmailTemplateData<'verify-email', {
 }>
 
 type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
-    issueUrl: string
-    flowName: string
-    isIssue: string
-    createdAt: string
-}>
-
-type TriggerFailureThresholdTemplateData = BaseEmailTemplateData<'trigger-failure', {
-    flowName: string
+    runUrl: string
     projectName: string
+    flowName: string
+    createdAt: string
+    failedStepDisplayName: string
+    failedStepNumber: string
+    failedStepMessage: string
 }>
 
 type BadgeAwardedTemplateData = BaseEmailTemplateData<'badge-awarded', {
@@ -74,7 +71,6 @@ export type EmailTemplateData =
   | ResetPasswordEmailTemplateData
   | VerifyEmailTemplateData
   | IssueCreatedTemplateData
-  | TriggerFailureThresholdTemplateData
   | BadgeAwardedTemplateData
   | ScimUserWelcomeTemplateData
 

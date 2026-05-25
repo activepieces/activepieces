@@ -1,7 +1,6 @@
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { getTaskListsDropdown, getIncompleteTasksInListDropdown } from '../common';
+import { getTaskListsDropdown, getIncompleteTasksInListDropdown, createTodoClient } from '../common';
 import { microsoftToDoAuth } from '../auth';
-import { Client } from '@microsoft/microsoft-graph-client';
 import { TodoTask } from '@microsoft/microsoft-graph-types';
 
 export const completeTaskAction = createAction({
@@ -56,11 +55,7 @@ export const completeTaskAction = createAction({
             throw new Error('Task List ID and Task ID are required');
         }
 
-        const client = Client.initWithMiddleware({
-            authProvider: {
-                getAccessToken: () => Promise.resolve(auth.access_token),
-            },
-        });
+        const client = createTodoClient(auth);
 
         try {
             const taskUpdate: Partial<TodoTask> = {

@@ -1,3 +1,4 @@
+import path from 'path'
 import {
     DropdownProperty,
     DynamicProperties,
@@ -22,7 +23,7 @@ import {
 } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { testExecutionContext } from '../handler/context/test-execution-context'
-import { createFlowsContext } from '../services/flows.service'
+import { createFlowsContext } from '../piece-context/flows'
 import { utils } from '../utils'
 import { createPropsResolver } from '../variables/props-resolver'
 import { pieceLoader } from './piece-loader'
@@ -151,8 +152,9 @@ export const pieceHelper = {
         const { pieceName, pieceVersion } = params
         const piece = await pieceLoader.loadPieceOrThrow({ pieceName, pieceVersion, devPieces })
         const pieceAlias = pieceLoader.getPackageAlias({ pieceName, pieceVersion, devPieces })
-        const pieceFolderPath = await pieceLoader.getPiecePath({ packageName: pieceAlias, devPieces })
-        const i18n = await pieceTranslation.initializeI18n(pieceFolderPath)
+        const pieceIndexPath = await pieceLoader.getPiecePath({ packageName: pieceAlias, devPieces })
+        const pieceDistRoot = path.dirname(path.dirname(pieceIndexPath))
+        const i18n = await pieceTranslation.initializeI18n(pieceDistRoot)
         const fullMetadata = piece.metadata()
         return {
             ...fullMetadata,

@@ -1,11 +1,13 @@
 import { microsoftSharePointAuth } from '../auth';
 import {
   createTrigger,
+  OAuth2PropertyValue,
   TriggerStrategy,
   Property,
   DropdownOption,
   PiecePropValueSchema,
 } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftSharePointCommon } from '../common';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { DriveItem } from '@microsoft/microsoft-graph-types';
@@ -37,10 +39,12 @@ export const newFileInFolderTrigger = createTrigger({
         const authValue = auth as PiecePropValueSchema<
           typeof microsoftSharePointAuth
         >;
+        const cloud = (authValue as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
         const client = Client.initWithMiddleware({
           authProvider: {
             getAccessToken: () => Promise.resolve(authValue.access_token),
           },
+          baseUrl: getGraphBaseUrl(cloud),
         });
         const options: DropdownOption<string>[] = [
           { label: 'Root Folder', value: 'root' },
@@ -86,10 +90,12 @@ export const newFileInFolderTrigger = createTrigger({
   async onEnable(context) {
     const { siteId, driveId, folderId } = context.propsValue;
     
+    const cloud = context.auth.props?.['cloud'] as string | undefined;
     const client = Client.initWithMiddleware({
       authProvider: {
         getAccessToken: () => Promise.resolve(context.auth.access_token),
       },
+      baseUrl: getGraphBaseUrl(cloud),
     });
 
     try {
@@ -117,10 +123,12 @@ export const newFileInFolderTrigger = createTrigger({
   async onDisable(context) {
     const subscriptionId = await context.store.get<string>('subscriptionId');
     if (subscriptionId) {
+      const cloud = context.auth.props?.['cloud'] as string | undefined;
       const client = Client.initWithMiddleware({
         authProvider: {
           getAccessToken: () => Promise.resolve(context.auth.access_token),
         },
+        baseUrl: getGraphBaseUrl(cloud),
       });
       try {
         await client.api(`/subscriptions/${subscriptionId}`).delete();
@@ -146,12 +154,14 @@ export const newFileInFolderTrigger = createTrigger({
       return [];
     }
 
+    const cloud = context.auth.props?.['cloud'] as string | undefined;
     const client = Client.initWithMiddleware({
         authProvider: {
           getAccessToken: () => Promise.resolve(context.auth.access_token),
         },
+        baseUrl: getGraphBaseUrl(cloud),
       });
-      
+
     const newFilePayloads = [];
     for (const notification of validNotifications) {
         try {

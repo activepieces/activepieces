@@ -3,6 +3,7 @@ import {
     apId,
     Cursor,
     EngineResponse,
+    EngineResponseStatus,
     ErrorCode,
     ExecuteTriggerResponse,
     FileCompression,
@@ -90,11 +91,11 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
                     projectId,
                     flowId: flow.id,
                 })
-                if (!engineResponse.response.success) {
+                if (engineResponse.status !== EngineResponseStatus.OK) {
                     throw new ActivepiecesError({
                         code: ErrorCode.TEST_TRIGGER_FAILED,
                         params: {
-                            message: engineResponse.response.message!,
+                            message: engineResponse.error ?? 'Unknown trigger error',
                         },
                     })
                 }

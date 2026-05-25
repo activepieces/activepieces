@@ -1,127 +1,39 @@
 ---
-title: "Workers & Sandboxing"
+title: "Workers"
+description: "Run, scale, and tune the container that executes your flows"
 icon: "gears"
 ---
 
-This component is responsible for polling jobs from the app, preparing the sandbox, and executing them with the engine.
+The **worker** is the container that actually runs flows. It pulls jobs from Redis, executes each one inside a sandbox, and streams results back to the app. This page is about operating it: how many to run, how to size them, and what happens when one dies mid-flow.
 
-## Jobs
+## What a Worker Does
 
-There are three types of jobs:
+Each worker pulls jobs off the BullMQ queue in Redis, hands them to a sandboxed engine process, and posts progress and results back to the app over HTTP. Workers are **stateless** — they hold no per-flow memory, which is what makes horizontal scaling and crash recovery straightforward.
 
-- **Recurring Jobs**: Polling/schedule triggers jobs for active flows.
-- **Flow Jobs**: Flows that are currently being executed.
-- **Webhook Jobs**: Webhooks that still need to be ingested, as third-party webhooks can map to multiple flows or need mapping.
+## Scaling
+
+There are two independent knobs:
+
+- **Replicas** — scale horizontally. Workers are stateless, so adding replicas is safe behind any orchestrator (Docker Compose, Kubernetes, Nomad). The default Docker Compose setup starts 5 replicas.
+- **`AP_WORKER_CONCURRENCY`** — concurrent jobs per replica. Default `5`. Each concurrent job uses one sandbox instance, so this also sets the peak sandbox count per worker.
+
+Size replicas for throughput, and concurrency for how much a single replica can chew on. If flows are CPU-bound, lower concurrency and add replicas. If flows are I/O-bound (most automation workloads), raise concurrency before adding replicas.
+
+See [Hardware Requirements](../configuration/hardware) for per-replica memory and CPU sizing.
 
 <Tip>
-This documentation will not discuss how the engine works other than stating that it takes the jobs and produces the output. Please refer to [engine](./engine) for more information.
+In `UNSANDBOXED` and `SANDBOX_CODE_ONLY` modes, sandboxes stay warm across jobs, so steady-state execution is fast. `SANDBOX_PROCESS` spins up a fresh sandbox per run, which trades latency for kernel-level isolation.
 </Tip>
 
-## Sandbox Architecture
+## Failure Behaviour
 
-The sandbox is a standalone package (`@activepieces/sandbox`) that manages isolated execution environments for the engine. It consists of the following components:
+If a worker crashes, is evicted, or loses its Redis lease mid-run, BullMQ requeues the job and another worker picks it up. The engine's durable-execution layer replays already-completed steps from persisted state rather than re-running them, so side effects are not duplicated. This means a worker restart or OOM kill during a flow is survivable — you do not need to drain traffic before rolling workers.
 
-- **Sandbox Pool**: Manages a pool of sandbox instances based on `AP_WORKER_CONCURRENCY`. Sandboxes can be reused across executions (in trusted modes) or shut down after each use (for full isolation).
-- **Sandbox Process**: Each sandbox spawns a child process. The process type depends on the execution mode — either a simple `fork()` or an `isolate` binary for kernel-level isolation.
-- **WebSocket Server**: A Socket.IO server (on port 12345) that handles bidirectional communication between the worker and the engine running inside each sandbox. The engine connects with its `sandboxId` and exchanges operations and results over WebSocket events.
+See [Durable Execution](./durable-execution) for exactly what is persisted and how replay works.
 
-### Execution Flow
+## Sandbox & Network Isolation
 
-<Steps>
-  <Step title="Allocate Sandbox">
-    The worker allocates a sandbox from the pool. If the sandbox is reusable and already running, it is reused directly. If the sandbox generation is stale (e.g., dev pieces changed), it is restarted.
-  </Step>
-  <Step title="Start Sandbox Process">
-    The sandbox spawns a child process (either via `fork()` or the `isolate` binary depending on the execution mode). The child process starts the engine and connects back to the worker via WebSocket.
-  </Step>
-  <Step title="Execute Operation">
-    The worker sends the engine operation (e.g., execute flow, execute trigger) over WebSocket. The engine processes it and sends back the result, along with stdout/stderr output.
-  </Step>
-  <Step title="Release Sandbox">
-    After execution completes (or times out), the sandbox is released back to the pool. In non-reusable modes, the sandbox process is shut down before release.
-  </Step>
-</Steps>
+How flows are isolated from the worker container and the outside world is two independent choices:
 
-## Execution Modes
-
-Sandbox in Activepieces means in which environment the engine will execute the flow. There are four types of sandboxes, each with different trade-offs:
-
-<Snippet file="execution-mode.mdx" />
-
-### No Sandboxing & V8 Sandboxing
-
-The difference between the two modes is in the execution of code pieces. For V8 Sandboxing, we use [isolated-vm](https://www.npmjs.com/package/isolated-vm), which relies on V8 isolation to isolate code pieces.
-
-In both modes, the sandbox spawns the engine using a simple Node.js `fork()` with memory limits. The engine process stays warm and connected via WebSocket, executing operations as they arrive.
-
-<Steps>
-  <Step title="Prepare Code Pieces">
-    If the code doesn't exist, it will be built with bun and the necessary npm packages will be prepared, if possible.
-  </Step>
-  <Step title="Install Pieces">
-    Pieces are npm packages, we use `bun` to install the pieces.
-  </Step>
-  <Step title="Execution">
-    The sandbox allocates a process from the pool. The engine stays running and connected via WebSocket. Each sandbox executes one engine operation at a time and sends back the result upon completion.
-  </Step>
-</Steps>
-
-
-#### Security
-In a self-hosted environment, all piece installations are done by the **platform admin**. It is assumed that the pieces are secure, as they have full access to the machine.
-
-Code pieces provided by the end user are isolated using V8, which restricts the user to browser JavaScript instead of Node.js with npm.
-
-#### Performance
-The flow execution is fast as JavaScript can be, although there is overhead in polling from queue and preparing the files the first time the flow gets executed.
-
-#### Benchmark
-
-TBD
-
-### Kernel Namespaces Sandboxing
-
-In this mode, the sandbox uses the `isolate` binary to run the engine inside kernel namespaces with full filesystem, memory, and CPU isolation.
-
-#### Prepare the folder
-
-Each flow will have a folder with everything required to execute the flow, which means the **engine**, **code pieces** and **npms**.
-
-<Steps>
-  <Step title="Prepare Code Pieces">
-    If the code doesn't exist, it will be compiled and the necessary npm packages will be prepared, if possible.
-  </Step>
-  <Step title="Install Pieces">
-    Pieces are npm packages. If they don't exist, we use `bun` to install them.
-  </Step>
-</Steps>
-
-#### Execute Flow using Sandbox
-
-The sandbox uses the `isolate` binary to create an isolated environment with its own namespaces. The prepared folders are mounted as read-only directories inside the sandbox:
-
-- `/root` — Engine and common cache
-- `/codes` — Flow code artifacts
-- `/etc` — System configuration
-- `/node_modules`, `/pieces` — Custom pieces (for dedicated workers)
-
-The `isolate` binary is invoked with flags for namespace isolation, network sharing, and resource limits:
-```bash
-isolate --dir=/root=<cache> --dir=/codes=<code-cache> --share-net --box-id=<id> --processes --run /usr/bin/node /root/main.js
-```
-
-The engine inside the sandbox connects back to the worker via WebSocket to receive operations and send results.
-
-#### Security
-
-The flow execution is isolated in its own namespaces, which means pieces run in a separate process with filesystem restrictions. The user can run bash scripts and use the file system safely as it's limited and will be removed after the execution. In this mode, the user can use any **NPM package** in their code piece.
-
-#### Performance
-
-This mode is **Slow** and **CPU Intensive**. The reason behind this is the **cold boot** of Node.js, since each flow execution will require a new **Node.js** process. The Node.js process consumes a lot of resources and takes some time to compile the code and start executing.
-
-
-#### Benchmark
-
-
-TBD
+- [**Sandboxing**](./sandboxing) — `AP_EXECUTION_MODE` decides how user code is isolated from the host kernel. This is the most important security decision for multi-tenant deployments.
+- [**Network Security**](./network-security) — `AP_NETWORK_MODE` decides what the sandbox is allowed to reach on the network.

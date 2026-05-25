@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-pipedrive",
-  "version": "0.8.5",
+  "version": "0.8.6",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
