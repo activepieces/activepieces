@@ -195,6 +195,11 @@ const systemPropValidators: {
 
     // Console
     [AppSystemProp.CONSOLE_API_SECRET_KEY]: stringValidator,
+
+    // BEGIN stable-engine-response-server-id B side (delete block if experiment retains A side)
+    [AppSystemProp.STABLE_ENGINE_RESPONSE_SERVER_ID_ENABLED]: booleanValidator,
+    [AppSystemProp.ENGINE_RESPONSE_SERVER_ID]: stringValidator,
+    // END stable-engine-response-server-id B side
 }
 
 

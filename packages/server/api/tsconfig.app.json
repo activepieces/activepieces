@@ -7,7 +7,9 @@
     "types": ["node"],
     "allowJs": true,
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@api/*": ["./src/app/*"]
+    }
   },
   "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"],
   "include": ["src/**/*.ts", "types/**/*.d.ts"]

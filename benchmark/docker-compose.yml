@@ -20,6 +20,7 @@ services:
         condition: service_started
     environment:
       AP_CONTAINER_TYPE: APP
+      AP_STABLE_ENGINE_RESPONSE_SERVER_ID_ENABLED: "true"
       AP_POSTGRES_DATABASE: activepieces
       AP_POSTGRES_PASSWORD: password
       AP_POSTGRES_USERNAME: postgres
@@ -59,6 +60,7 @@ services:
       - app
     environment:
       AP_CONTAINER_TYPE: WORKER
+      AP_STABLE_ENGINE_RESPONSE_SERVER_ID_ENABLED: "true"
       AP_FRONTEND_URL: http://nginx:80
       AP_JWT_SECRET: benchmark-secret-key-for-testing
       AP_ENCRYPTION_KEY: 11020ebf480a9b1648ceec6400beaf26

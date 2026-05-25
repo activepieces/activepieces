@@ -11,6 +11,7 @@ services:
     env_file: .env
     environment:
       - AP_CONTAINER_TYPE=APP
+      - AP_STABLE_ENGINE_RESPONSE_SERVER_ID_ENABLED=true
     volumes:
       - ./cache:/usr/src/app/cache
     networks:
@@ -23,6 +24,7 @@ services:
     env_file: .env
     environment:
       - AP_CONTAINER_TYPE=WORKER
+      - AP_STABLE_ENGINE_RESPONSE_SERVER_ID_ENABLED=true
     deploy:
       replicas: 5
     volumes:

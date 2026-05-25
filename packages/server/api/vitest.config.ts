@@ -13,10 +13,11 @@ export default defineConfig({
     hookTimeout: 60000,
     pool: 'forks',
     setupFiles: [path.resolve(__dirname, 'vitest.setup.ts')],
-    include: [path.resolve(__dirname, 'test/**/*.test.ts')],
+    include: [path.resolve(__dirname, 'test/**/*.test.ts').replaceAll('\\', '/')],
   },
   resolve: {
     alias: {
+      '@api': path.resolve(__dirname, 'src/app'),
       'isolated-vm': path.resolve(__dirname, '__mocks__/isolated-vm.js'),
       '@activepieces/shared': path.resolve(__dirname, '../../../packages/shared/src/index.ts'),
       '@activepieces/pieces-framework': path.resolve(__dirname, '../../../packages/pieces/framework/src/index.ts'),

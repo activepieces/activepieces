@@ -124,6 +124,10 @@ export enum AppSystemProp {
     SSRF_ALLOW_LIST = 'SSRF_ALLOW_LIST',
     NETWORK_MODE = 'NETWORK_MODE',
     CONTAINER_TYPE = 'CONTAINER_TYPE',
+    // BEGIN stable-engine-response-server-id B side (delete block if experiment retains A side)
+    ENGINE_RESPONSE_SERVER_ID = 'ENGINE_RESPONSE_SERVER_ID',
+    STABLE_ENGINE_RESPONSE_SERVER_ID_ENABLED = 'STABLE_ENGINE_RESPONSE_SERVER_ID_ENABLED',
+    // END stable-engine-response-server-id B side
     FRONTEND_URL = 'FRONTEND_URL',
     PORT = 'PORT',
     CONSOLE_API_SECRET_KEY = 'CONSOLE_API_SECRET_KEY',

@@ -1,21 +1,21 @@
-import { apId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { pubsub } from '../helper/pubsub'
+import { pubsub } from '@api/helper/pubsub'
+import { getEngineResponseServerId } from '@api/workers/engine-response-server-id'
 
 type EngineResponseWithId<T> = { requestId: string, response: T }
 
 const listeners = new Map<string, (flowResponse: EngineResponseWithId<unknown>) => void>()
-const SERVER_ID = apId()
 
 export const engineResponseWatcher = (log: FastifyBaseLogger) => ({
     getServerId(): string {
-        return SERVER_ID
+        return getEngineResponseServerId()
     },
 
     async init(): Promise<void> {
-        log.info('[engineResponseWatcher#init] Initializing engine run watcher')
+        const serverId = getEngineResponseServerId()
+        log.info({ serverId }, '[engineResponseWatcher#init] Initializing engine run watcher')
         await pubsub.subscribe(
-            `engine-run:sync:${SERVER_ID}`,
+            `engine-run:sync:${serverId}`,
             (message: string) => {
                 const parsedMessage: EngineResponseWithId<unknown> = JSON.parse(message)
                 const listener = listeners.get(parsedMessage.requestId)
@@ -67,6 +67,6 @@ export const engineResponseWatcher = (log: FastifyBaseLogger) => ({
     },
 
     async shutdown(): Promise<void> {
-        await pubsub.unsubscribe(`engine-run:sync:${SERVER_ID}`)
+        await pubsub.unsubscribe(`engine-run:sync:${getEngineResponseServerId()}`)
     },
 })

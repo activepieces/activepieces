@@ -3,7 +3,11 @@
   "compilerOptions": {
     "outDir": "../../../dist/out-tsc",
     "module": "commonjs",
-    "types": ["vitest/globals", "node"]
+    "types": ["vitest/globals", "node"],
+    "baseUrl": ".",
+    "paths": {
+      "@api/*": ["./src/app/*"]
+    }
   },
   "include": [
     "types/**/*.d.ts",
