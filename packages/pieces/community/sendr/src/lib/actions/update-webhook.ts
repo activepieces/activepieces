@@ -39,22 +39,22 @@ export const updateWebhook = createAction({
   async run(context) {
     const body: Record<string, unknown> = {};
     if (context.propsValue.name) {
-      body.name = context.propsValue.name;
+      body['name'] = context.propsValue.name;
     }
     if (context.propsValue.events) {
-      body.events = context.propsValue.events;
+      body['events'] = context.propsValue.events;
     }
     if (context.propsValue.attributes) {
-      body.attributes = context.propsValue.attributes;
+      body['attributes'] = context.propsValue.attributes;
     }
     if (context.propsValue.resourceType) {
-      body.resourceType = context.propsValue.resourceType;
+      body['resourceType'] = context.propsValue.resourceType;
     }
     if (context.propsValue.resourceId) {
-      body.resourceId = context.propsValue.resourceId;
+      body['resourceId'] = context.propsValue.resourceId;
     }
     const response = await sendrApiCall<Record<string, unknown>>({
-      token: context.auth as unknown as string,
+      token: context.auth.secret_text,
       method: HttpMethod.PATCH,
       path: '/webhook',
       body: { ...body, url: context.propsValue.webhook },

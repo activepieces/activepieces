@@ -7,7 +7,7 @@ export const getPageTemplateVariables = createAction({
   auth: sendrAuth,
   name: 'get_page_template_variables',
   displayName: 'Get Page Template Variables',
-  description: 'Returns the custom variables (placeholders) defined in a selected page template — for example first_name, company, or email.',
+  description: 'Returns the custom variables (placeholders) defined in a selected page template ï¿½ for example first_name, company, or email.',
   props: {
     template: pageTemplateDropdown,
   },
@@ -15,7 +15,7 @@ export const getPageTemplateVariables = createAction({
     const response = await sendrApiCall<{
       variables: { id: string; name?: string; type?: string; defaultValue?: string; [key: string]: unknown }[];
     }>({
-      token: context.auth as unknown as string,
+      token: context.auth.secret_text,
       method: HttpMethod.GET,
       path: `/page-template/${context.propsValue.template}/variables`,
     });

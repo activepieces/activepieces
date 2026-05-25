@@ -63,25 +63,25 @@ export const queueVideoGeneration = createAction({
       mode: context.propsValue.mode,
     };
     if (context.propsValue.videoUrl) {
-      body.videoUrl = context.propsValue.videoUrl;
+      body['videoUrl'] = context.propsValue.videoUrl;
     }
     if (context.propsValue.muxAssetId) {
-      body.muxAssetId = context.propsValue.muxAssetId;
+      body['muxAssetId'] = context.propsValue.muxAssetId;
     }
     if (context.propsValue.targetWord) {
-      body.targetWord = context.propsValue.targetWord;
+      body['targetWord'] = context.propsValue.targetWord;
     }
     if (context.propsValue.replacementWord) {
-      body.replacementWord = context.propsValue.replacementWord;
+      body['replacementWord'] = context.propsValue.replacementWord;
     }
     if (context.propsValue.pageSlug) {
-      body.pageSlug = context.propsValue.pageSlug;
+      body['pageSlug'] = context.propsValue.pageSlug;
     }
     if (context.propsValue.webhookUrl) {
-      body.webhookUrl = context.propsValue.webhookUrl;
+      body['webhookUrl'] = context.propsValue.webhookUrl;
     }
     const response = await sendrApiCall<Record<string, unknown>>({
-      token: context.auth as unknown as string,
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
       path: '/enrichment/generate-video',
       body,

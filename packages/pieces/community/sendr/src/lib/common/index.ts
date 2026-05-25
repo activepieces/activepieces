@@ -1,5 +1,6 @@
 import { httpClient, HttpMethod, AuthenticationType, HttpMessageBody, HttpResponse } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
+import { sendrAuth } from '../auth';
 
 export const BASE_URL = 'https://api.sendr.io/api/v1';
 
@@ -56,22 +57,23 @@ export function flattenObject(
 }
 
 // Reusable dropdown: Sheets
-export const sheetDropdown = Property.Dropdown<string>({
+export const sheetDropdown = Property.Dropdown({
   displayName: 'Sheet',
   description: 'Select the contact list (sheet) to use.',
   refreshers: [],
+  auth:sendrAuth,
   required: true,
   options: async ({ auth }) => {
     if (!auth) {
       return { disabled: true, options: [], placeholder: 'Please connect your Sendr account first' };
     }
     try {
-      const response = await sendrApiCall<{ items: { id: string; name?: string; campaignId?: string; createdAt?: string }[] }>({
-        token: auth as string,
+      const response = await sendrApiCall<{ sheets: { id: string; name?: string; campaignId?: string; createdAt?: string }[] }>({
+        token: auth.secret_text,
         method: HttpMethod.GET,
         path: '/sheet',
       });
-      const items = response.body?.items ?? [];
+      const items = response.body?.sheets ?? [];
       return {
         disabled: false,
         options: items.map((s) => ({
@@ -86,18 +88,19 @@ export const sheetDropdown = Property.Dropdown<string>({
 });
 
 // Reusable dropdown: Campaigns
-export const campaignDropdown = Property.Dropdown<string>({
+export const campaignDropdown = Property.Dropdown({
   displayName: 'Campaign',
   description: 'Select the campaign.',
   refreshers: [],
   required: true,
+  auth:sendrAuth,
   options: async ({ auth }) => {
     if (!auth) {
       return { disabled: true, options: [], placeholder: 'Please connect your Sendr account first' };
     }
     try {
       const response = await sendrApiCall<{ items: { id: string; name?: string; status?: string }[] }>({
-        token: auth as string,
+        token: auth.secret_text,
         method: HttpMethod.GET,
         path: '/campaigns',
         queryParams: { limit: '200' },
@@ -117,18 +120,19 @@ export const campaignDropdown = Property.Dropdown<string>({
 });
 
 // Reusable dropdown: Page Templates
-export const pageTemplateDropdown = Property.Dropdown<string>({
+export const pageTemplateDropdown = Property.Dropdown({
   displayName: 'Page Template',
   description: 'Select a Sendr Page template to generate content from.',
   refreshers: [],
   required: true,
+  auth:sendrAuth,
   options: async ({ auth }) => {
     if (!auth) {
       return { disabled: true, options: [], placeholder: 'Please connect your Sendr account first' };
     }
     try {
       const response = await sendrApiCall<{ templates: { id: string; name?: string }[] }>({
-        token: auth as string,
+        token: auth.secret_text,
         method: HttpMethod.GET,
         path: '/page-template/list',
       });
@@ -147,22 +151,23 @@ export const pageTemplateDropdown = Property.Dropdown<string>({
 });
 
 // Reusable dropdown: Webhooks
-export const webhookDropdown = Property.Dropdown<string>({
+export const webhookDropdown = Property.Dropdown({
   displayName: 'Webhook',
   description: 'Select the webhook to manage.',
   refreshers: [],
   required: true,
+  auth:sendrAuth,
   options: async ({ auth }) => {
     if (!auth) {
       return { disabled: true, options: [], placeholder: 'Please connect your Sendr account first' };
     }
     try {
-      const response = await sendrApiCall<{ webhooks: { url: string; name?: string }[] }>({
-        token: auth as string,
+      const response = await sendrApiCall<{ url: string; name?: string }[]>({
+        token: auth.secret_text,
         method: HttpMethod.GET,
         path: '/webhook',
       });
-      const webhooks = response.body?.webhooks ?? [];
+      const webhooks = response.body ?? [];
       return {
         disabled: false,
         options: webhooks.map((w) => ({

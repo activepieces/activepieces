@@ -15,7 +15,7 @@ export const getSheetColumns = createAction({
     const response = await sendrApiCall<{
       columns: { id: string; name?: string; type?: string; enriched?: boolean; [key: string]: unknown }[];
     }>({
-      token: context.auth as unknown as string,
+      token: context.auth.secret_text,
       method: HttpMethod.GET,
       path: `/sheet/${context.propsValue.sheet}/column`,
     });

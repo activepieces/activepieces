@@ -27,12 +27,12 @@ export const listCampaigns = createAction({
   async run(context) {
     const queryParams: Record<string, string> = { limit: '50' };
     if (context.propsValue.status) {
-      queryParams.status = context.propsValue.status;
+      queryParams['status'] = context.propsValue.status;
     }
     const response = await sendrApiCall<{
       items: { id: string; name?: string; status?: string; createdAt?: string; [key: string]: unknown }[];
     }>({
-      token: context.auth as unknown as string,
+      token: context.auth.secret_text,
       method: HttpMethod.GET,
       path: '/campaigns',
       queryParams,

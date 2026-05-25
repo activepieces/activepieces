@@ -25,7 +25,7 @@ export const pageRenderCreated = createTrigger({
     if (oldUrl) {
       try {
         await sendrApiCall({
-          token: context.auth as unknown as string,
+          token: context.auth.secret_text,
           method: HttpMethod.DELETE,
           path: '/webhook',
           body: { url: oldUrl },
@@ -37,21 +37,21 @@ export const pageRenderCreated = createTrigger({
     }
     // Register new webhook
     try {
-      const resp = await sendrApiCall<{ url?: string }>({
-        token: context.auth as unknown as string,
+       await sendrApiCall<{ url?: string }>({
+        token: context.auth.secret_text,
         method: HttpMethod.POST,
         path: '/webhook',
         body: {
           name: 'Activepieces - New Page Render',
           url: context.webhookUrl,
-          events: ['page_render:created'],
+          events: ['page_render.created'],
         },
       });
       await context.store.put('webhookUrl', context.webhookUrl);
       // Fetch webhook secret for payload verification
       try {
         const secretResp = await sendrApiCall<{ secret: string }>({
-          token: context.auth as unknown as string,
+          token: context.auth.secret_text,
           method: HttpMethod.POST,
           path: '/webhook/reveal-secret',
           body: { url: context.webhookUrl },
@@ -72,7 +72,7 @@ export const pageRenderCreated = createTrigger({
       const webhookUrl = await context.store.get<string>('webhookUrl');
       if (webhookUrl) {
         await sendrApiCall({
-          token: context.auth as unknown as string,
+          token: context.auth.secret_text,
           method: HttpMethod.DELETE,
           path: '/webhook',
           body: { url: webhookUrl },
@@ -98,19 +98,19 @@ export const pageRenderCreated = createTrigger({
     }
     const body = context.payload.body as Record<string, unknown>;
     return [{
-      event_type: body.event ?? 'page_render:created',
-      page_id: body.pageId ?? null,
-      page_url: body.pageUrl ?? null,
-      page_slug: body.pageSlug ?? null,
-      template_id: body.templateId ?? null,
-      event_status: body.eventStatus ?? null,
+      event_type: body['event'] ?? 'page_render.created',
+      page_id: body['pageId'] ?? null,
+      page_url: body['pageUrl'] ?? null,
+      page_slug: body['pageSlug'] ?? null,
+      template_id: body['templateId'] ?? null,
+      event_status: body['eventStatus'] ?? null,
     }];
   },
 
   async test(context) {
     return [
       {
-        event_type: 'page_render:created',
+        event_type: 'page_render.created',
         page_id: 'test_cuid_page',
         page_url: 'https://pages.sendr.io/test',
         page_slug: 'test-slug',

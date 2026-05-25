@@ -49,19 +49,19 @@ export const generateSendrPage = createAction({
       variablesValues: context.propsValue.variables,
     };
     if (context.propsValue.websiteUrl) {
-      body.websiteToScreenshotUrl = context.propsValue.websiteUrl;
+      body['websiteToScreenshotUrl'] = context.propsValue.websiteUrl;
     }
     if (context.propsValue.renderGif) {
-      body.renderGif = true;
+      body['renderGif'] = true;
     }
     if (context.propsValue.attributes) {
-      body.attributes = context.propsValue.attributes;
+      body['attributes'] = context.propsValue.attributes;
     }
     if (context.propsValue.webhookUrl) {
-      body.webhookUrl = context.propsValue.webhookUrl;
+      body['webhookUrl'] = context.propsValue.webhookUrl;
     }
     const response = await sendrApiCall<Record<string, unknown>>({
-      token: context.auth as unknown as string,
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
       path: '/enrichment/sendr-page',
       body,

@@ -13,7 +13,7 @@ export const listSheets = createAction({
     const response = await sendrApiCall<{
       items: { id: string; name?: string; campaignId?: string; createdAt?: string; updatedAt?: string; [key: string]: unknown }[];
     }>({
-      token: context.auth as unknown as string,
+      token: context.auth.secret_text,
       method: HttpMethod.GET,
       path: '/sheet',
     });

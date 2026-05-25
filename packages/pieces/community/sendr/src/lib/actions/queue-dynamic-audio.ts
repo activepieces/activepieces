@@ -48,16 +48,16 @@ export const queueDynamicAudio = createAction({
       replacementWord: context.propsValue.replacementWord,
     };
     if (context.propsValue.elevenlabsId) {
-      body.elevenlabsId = context.propsValue.elevenlabsId;
+      body['elevenlabsId'] = context.propsValue.elevenlabsId;
     }
     if (context.propsValue.languageCode) {
-      body.languageCode = context.propsValue.languageCode;
+      body['languageCode'] = context.propsValue.languageCode;
     }
     if (context.propsValue.webhookUrl) {
-      body.webhookUrl = context.propsValue.webhookUrl;
+      body['webhookUrl'] = context.propsValue.webhookUrl;
     }
     const response = await sendrApiCall<Record<string, unknown>>({
-      token: context.auth as unknown as string,
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
       path: '/enrichment/dynamic-audio',
       body,

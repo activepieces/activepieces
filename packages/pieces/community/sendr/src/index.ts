@@ -34,10 +34,10 @@ export const sendr = createPiece({
   displayName: 'Sendr',
   description: 'Create personalized landing pages, dynamic audio, video, and manage campaigns with Sendr.',
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/sendr.svg',
+  logoUrl: 'https://cdn.activepieces.com/pieces/sendr.png',
   categories: [PieceCategory.MARKETING],
   auth: sendrAuth,
-  authors: ['simon-reitinger'],
+  authors: ['cumonvip1'],
   actions: [
     getUserInfo,
     listSheets,
@@ -61,7 +61,7 @@ export const sendr = createPiece({
       baseUrl: () => BASE_URL,
       auth: sendrAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],

@@ -19,7 +19,7 @@ export const toggleWebhook = createAction({
   },
   async run(context) {
     const response = await sendrApiCall<Record<string, unknown>>({
-      token: context.auth as unknown as string,
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
       path: '/webhook/enabling',
       body: {

@@ -47,16 +47,16 @@ export const createWebhook = createAction({
       events: context.propsValue.events,
     };
     if (context.propsValue.attributes) {
-      body.attributes = context.propsValue.attributes;
+      body['attributes'] = context.propsValue.attributes;
     }
     if (context.propsValue.resourceType) {
-      body.resourceType = context.propsValue.resourceType;
+      body['resourceType'] = context.propsValue.resourceType;
     }
     if (context.propsValue.resourceId) {
-      body.resourceId = context.propsValue.resourceId;
+      body['resourceId'] = context.propsValue.resourceId;
     }
     const response = await sendrApiCall<Record<string, unknown>>({
-      token: context.auth as unknown as string,
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
       path: '/webhook',
       body,

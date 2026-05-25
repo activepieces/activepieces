@@ -25,7 +25,7 @@ export const contactPageEngagementCreated = createTrigger({
     if (oldUrl) {
       try {
         await sendrApiCall({
-          token: context.auth as unknown as string,
+          token: context.auth.secret_text,
           method: HttpMethod.DELETE,
           path: '/webhook',
           body: { url: oldUrl },
@@ -38,20 +38,20 @@ export const contactPageEngagementCreated = createTrigger({
     // Register new webhook
     try {
       await sendrApiCall({
-        token: context.auth as unknown as string,
+        token: context.auth.secret_text,
         method: HttpMethod.POST,
         path: '/webhook',
         body: {
           name: 'Activepieces - New Contact Page Engagement',
           url: context.webhookUrl,
-          events: ['contact_page_engagement:created'],
+          events: ['contact_page_engagement.created'],
         },
       });
       await context.store.put('webhookUrl', context.webhookUrl);
       // Fetch webhook secret for payload verification
       try {
         const secretResp = await sendrApiCall<{ secret: string }>({
-          token: context.auth as unknown as string,
+          token: context.auth.secret_text,
           method: HttpMethod.POST,
           path: '/webhook/reveal-secret',
           body: { url: context.webhookUrl },
@@ -72,7 +72,7 @@ export const contactPageEngagementCreated = createTrigger({
       const webhookUrl = await context.store.get<string>('webhookUrl');
       if (webhookUrl) {
         await sendrApiCall({
-          token: context.auth as unknown as string,
+          token: context.auth.secret_text,
           method: HttpMethod.DELETE,
           path: '/webhook',
           body: { url: webhookUrl },
@@ -98,19 +98,19 @@ export const contactPageEngagementCreated = createTrigger({
     }
     const body = context.payload.body as Record<string, unknown>;
     return [{
-      event_type: body.event ?? 'contact_page_engagement:created',
-      page_id: body.pageId ?? null,
-      page_slug: body.pageSlug ?? null,
-      page_url: body.pageUrl ?? null,
-      attributes: body.attributes ? JSON.stringify(body.attributes) : null,
-      timestamp: body.timestamp ?? null,
+      event_type: body['event'] ?? 'contact_page_engagement.created',
+      page_id: body['pageId'] ?? null,
+      page_slug: body['pageSlug'] ?? null,
+      page_url: body['pageUrl'] ?? null,
+      attributes: body['attributes'] ? JSON.stringify(body['attributes']) : null,
+      timestamp: body['timestamp'] ?? null,
     }];
   },
 
   async test(context) {
     return [
       {
-        event_type: 'contact_page_engagement:created',
+        event_type: 'contact_page_engagement.created',
         page_id: 'test_cuid_page',
         page_slug: 'test-slug',
         page_url: 'https://pages.sendr.io/test',

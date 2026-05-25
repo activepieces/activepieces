@@ -13,7 +13,7 @@ export const listWebhooks = createAction({
     const response = await sendrApiCall<{
       webhooks: { url: string; name?: string; events?: string[]; enabled?: boolean; [key: string]: unknown }[];
     }>({
-      token: context.auth as unknown as string,
+      token: context.auth.secret_text,
       method: HttpMethod.GET,
       path: '/webhook',
     });

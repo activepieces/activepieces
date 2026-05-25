@@ -13,7 +13,7 @@ export const listPageTemplates = createAction({
     const response = await sendrApiCall<{
       templates: { id: string; name?: string; createdAt?: string; [key: string]: unknown }[];
     }>({
-      token: context.auth as unknown as string,
+      token: context.auth.secret_text,
       method: HttpMethod.GET,
       path: '/page-template/list',
     });

@@ -27,7 +27,7 @@ export const pageRenderUpdated = createTrigger({
     if (oldUrl) {
       try {
         await sendrApiCall({
-          token: context.auth as unknown as string,
+          token: context.auth.secret_text,
           method: HttpMethod.DELETE,
           path: '/webhook',
           body: { url: oldUrl },
@@ -40,20 +40,20 @@ export const pageRenderUpdated = createTrigger({
     // Register new webhook
     try {
       await sendrApiCall({
-        token: context.auth as unknown as string,
+        token: context.auth.secret_text,
         method: HttpMethod.POST,
         path: '/webhook',
         body: {
           name: 'Activepieces - Page Render Updated',
           url: context.webhookUrl,
-          events: ['page_render:updated'],
+          events: ['page_render.updated'],
         },
       });
       await context.store.put('webhookUrl', context.webhookUrl);
       // Fetch webhook secret for payload verification
       try {
         const secretResp = await sendrApiCall<{ secret: string }>({
-          token: context.auth as unknown as string,
+          token: context.auth.secret_text,
           method: HttpMethod.POST,
           path: '/webhook/reveal-secret',
           body: { url: context.webhookUrl },
@@ -74,7 +74,7 @@ export const pageRenderUpdated = createTrigger({
       const webhookUrl = await context.store.get<string>('webhookUrl');
       if (webhookUrl) {
         await sendrApiCall({
-          token: context.auth as unknown as string,
+          token: context.auth.secret_text,
           method: HttpMethod.DELETE,
           path: '/webhook',
           body: { url: webhookUrl },
@@ -100,21 +100,21 @@ export const pageRenderUpdated = createTrigger({
     }
     const body = context.payload.body as Record<string, unknown>;
     return [{
-      event_type: body.event ?? 'page_render:updated',
-      page_id: body.pageId ?? null,
-      page_url: body.pageUrl ?? null,
-      page_slug: body.pageSlug ?? null,
-      gif_url: body.gifUrl ?? null,
-      audio_url: body.audioUrl ?? null,
-      lipsync_video: body.lipsyncVideo ?? null,
-      event_status: body.eventStatus ?? null,
+      event_type: body['event'] ?? 'page_render.updated',
+      page_id: body['pageId'] ?? null,
+      page_url: body['pageUrl'] ?? null,
+      page_slug: body['pageSlug'] ?? null,
+      gif_url: body['gifUrl'] ?? null,
+      audio_url: body['audioUrl'] ?? null,
+      lipsync_video: body['lipsyncVideo'] ?? null,
+      event_status: body['eventStatus'] ?? null,
     }];
   },
 
   async test(context) {
     return [
       {
-        event_type: 'page_render:updated',
+        event_type: 'page_render.updated',
         page_id: 'test_cuid_page',
         page_url: 'https://pages.sendr.io/test',
         page_slug: 'test-slug',
