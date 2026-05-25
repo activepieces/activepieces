@@ -135,5 +135,21 @@ describe('engine-response-server-id B side', () => {
         expect(appModule.getEngineResponseServerId(), 'explicit server id must be used on APP').toBe(configuredId)
         expect(workerModule.getEngineResponseServerId(), 'explicit server id must be used on WORKER').toBe(configuredId)
     })
+
+    it('should reject AP_ENGINE_RESPONSE_SERVER_ID when it is not a valid ApId', async () => {
+        getMock.mockImplementation((prop: AppSystemProp) => {
+            if (prop === AppSystemProp.ENGINE_RESPONSE_SERVER_ID) {
+                return 'invalid-server-id'
+            }
+            return undefined
+        })
+
+        const module = await loadEngineResponseServerIdModule()
+
+        expect(
+            () => module.getEngineResponseServerId(),
+            'misconfigured engine response server id must fail ApId validation at startup',
+        ).toThrow()
+    })
 })
 // END stable-engine-response-server-id B side

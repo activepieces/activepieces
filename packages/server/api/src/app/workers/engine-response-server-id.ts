@@ -23,6 +23,7 @@ function isStableEngineResponseServerIdEnabled(): boolean {
 function resolveStableEngineResponseServerId(): string {
     const configuredId = system.get(AppSystemProp.ENGINE_RESPONSE_SERVER_ID)
     if (configuredId) {
+        ApId.parse(configuredId)
         return configuredId
     }
     const encryptionKey = system.getOrThrow(AppSystemProp.ENCRYPTION_KEY)
