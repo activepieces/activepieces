@@ -454,6 +454,9 @@
       "@activepieces/piece-fliqr-ai": [
         "packages/pieces/community/fliqr-ai/src/index.ts"
       ],
+      "@activepieces/piece-frill": [
+        "packages/pieces/community/frill/src/index.ts"
+      ],
       "@activepieces/piece-flow-helper": [
         "packages/pieces/community/flow-helper/src/index.ts"
       ],
@@ -960,6 +963,9 @@
       "@activepieces/piece-postiz": [
         "packages/pieces/community/postiz/src/index.ts"
       ],
+      "@activepieces/piece-postmark": [
+        "packages/pieces/community/postmark/src/index.ts"
+      ],
       "@activepieces/piece-predict-leads": [
         "packages/pieces/community/predict-leads/src/index.ts"
       ],
@@ -1084,6 +1090,9 @@
       "@activepieces/piece-sender": [
         "packages/pieces/community/sender/src/index.ts"
       ],
+      "@activepieces/piece-sendr": [
+        "packages/pieces/community/sendr/src/index.ts"
+      ],
       "@activepieces/piece-sendfox": [
         "packages/pieces/community/sendfox/src/index.ts"
       ],
@@ -1191,6 +1200,9 @@
       "@activepieces/piece-store": ["packages/pieces/core/store/src/index.ts"],
       "@activepieces/piece-straico": [
         "packages/pieces/community/straico/src/index.ts"
+      ],
+      "@activepieces/piece-streak": [
+        "packages/pieces/community/streak/src/index.ts"
       ],
       "@activepieces/piece-stripe": [
         "packages/pieces/community/stripe/src/index.ts"
@@ -1399,6 +1411,9 @@
       ],
       "@activepieces/piece-xero": [
         "packages/pieces/community/xero/src/index.ts"
+      ],
+      "@activepieces/piece-xquik": [
+        "packages/pieces/community/xquik/src/index.ts"
       ],
       "@activepieces/piece-xml": ["packages/pieces/core/xml/src/index.ts"],
       "@activepieces/piece-youtube": [
