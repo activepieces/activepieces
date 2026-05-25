@@ -14,7 +14,7 @@ export const postmark = createPiece({
     'Transactional email platform for sending email, templates, and retrieving delivery and bounce insights.',
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/postmark.png',
-  authors: ['Harmatta'],
+  authors: ['Harmatta','Angelebeats'],
   categories: [PieceCategory.COMMUNICATION, PieceCategory.MARKETING],
   auth: postmarkAuth,
   actions: [
