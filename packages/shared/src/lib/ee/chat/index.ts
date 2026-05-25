@@ -27,6 +27,7 @@ export enum PersistedChatPartType {
     TEXT = 'text',
     REASONING = 'reasoning',
     TOOL_CALL = 'tool-call',
+    THINKING_STATUS = 'thinking-status',
 }
 
 export enum PersistedToolCallStatus {
@@ -59,22 +60,36 @@ const PersistedToolCallPartSchema = z.object({
     errorText: z.string().optional(),
 })
 
+const PersistedThinkingStatusPartSchema = z.object({
+    type: z.literal(PersistedChatPartType.THINKING_STATUS),
+    text: z.string(),
+})
+
 const PersistedChatPartSchema = z.discriminatedUnion('type', [
     PersistedTextPartSchema,
     PersistedReasoningPartSchema,
     PersistedToolCallPartSchema,
+    PersistedThinkingStatusPartSchema,
 ])
 
 export const PersistedChatMessageSchema = z.object({
     role: z.enum([PersistedChatRole.USER, PersistedChatRole.ASSISTANT]),
     parts: z.array(PersistedChatPartSchema),
+    thinkingDurationMs: z.number().optional(),
 })
 
 export type PersistedTextPart = z.infer<typeof PersistedTextPartSchema>
 export type PersistedReasoningPart = z.infer<typeof PersistedReasoningPartSchema>
 export type PersistedToolCallPart = z.infer<typeof PersistedToolCallPartSchema>
+export type PersistedThinkingStatusPart = z.infer<typeof PersistedThinkingStatusPartSchema>
 export type PersistedChatPart = z.infer<typeof PersistedChatPartSchema>
 export type PersistedChatMessage = z.infer<typeof PersistedChatMessageSchema>
+
+export enum ChatConversationStatus {
+    IDLE = 'IDLE',
+    STREAMING = 'STREAMING',
+    ERROR = 'ERROR',
+}
 
 export const ChatConversation = z.object({
     ...BaseModelSchema,
@@ -83,6 +98,7 @@ export const ChatConversation = z.object({
     userId: z.string(),
     title: Nullable(z.string()),
     modelName: Nullable(z.string()),
+    status: z.nativeEnum(ChatConversationStatus).default(ChatConversationStatus.IDLE),
     messages: z.array(z.record(z.string(), z.unknown())).default([]),
     uiMessages: z.array(PersistedChatMessageSchema).nullable().default(null),
     summary: Nullable(z.string()),
@@ -164,6 +180,7 @@ export type ChatToolOutputs = {
     ap_show_project_picker: { displayed: boolean }
     ap_show_questions: { displayed: boolean }
     ap_show_quick_replies: { displayed: boolean }
+    ap_update_thinking_status: { success: boolean }
 }
 
 export type ConnectionOption = {
