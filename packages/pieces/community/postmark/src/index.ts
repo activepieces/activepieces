@@ -1,16 +1,24 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { sendEmail } from './lib/actions/send-email';
+import { createPiece } from '@activepieces/pieces-framework';
+import { sendEmailAction } from './lib/actions/send-email';
+import { postmarkAuth } from './lib/auth';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const postmark = createPiece({
   displayName: 'Postmark',
-  auth: PieceAuth.SecretText({
-    displayName: 'Server Token',
-    description: 'Enter your Postmark Server Token',
-    required: true,
-  }),
-  minimumSupportedRelease: '0.20.0',
+  auth: postmarkAuth,
+  minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/postmark.png',
   authors: ['Angelebeats'],
-  actions: [sendEmail],
+  actions: [sendEmailAction,
+    createCustomApiCallAction({
+      auth:postmarkAuth,
+      baseUrl:()=>'https://api.postmarkapp.com',
+      authMapping:async (auth)=>{
+        return{
+          'X-Postmark-Server-Token':auth.secret_text
+        }
+      }
+    })
+  ],
   triggers: [],
 });

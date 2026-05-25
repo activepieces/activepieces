@@ -1,3 +1,5 @@
-# Piece - Postmark
+# pieces-postmark
 
-This library was generated with [Nx](https://nx.dev).
+## Building
+
+Run `turbo run build --filter=@activepieces/piece-postmark` to build the library.
