@@ -1,5 +1,4 @@
 import {
-  ChatAgentEventType,
   ChatAllowedMimeType,
   ChatConversationStatus,
   CHAT_ALLOWED_MIME_TYPES,
@@ -7,22 +6,18 @@ import {
   isObject,
   PlanStepUpdate,
   tryCatch,
-  WebsocketClientEvent,
 } from '@activepieces/shared';
-import { useChat } from '@ai-sdk/react';
 import { useQuery } from '@tanstack/react-query';
-import { ChatTransport, UIMessage, UIMessageChunk } from 'ai';
 import { useCallback, useMemo, useRef, useState } from 'react';
-
-import { useSocket } from '@/components/providers/socket-provider';
 
 import { chatApi } from './chat-api';
 import { useChatStoreApi } from './chat-store-context';
 import { ChatUIMessage } from './chat-types';
 import { chatUtils } from './chat-utils';
+import { DataPart } from './chunk-reducer';
+import { useStreamingReducer } from './use-streaming-reducer';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const STREAM_TIMEOUT_MS = 10 * 60 * 1000;
 const AGENT_POLL_INTERVAL_MS = 5_000;
 
 const ALLOWED_MIME_SET: ReadonlySet<string> = new Set(CHAT_ALLOWED_MIME_TYPES);
@@ -86,121 +81,12 @@ function injectFilePartsIntoLastUserMessage({
   return result;
 }
 
-function removeMessageById({
-  id,
-  setMessages,
-}: {
-  id: string;
-  setMessages: (fn: (prev: ChatUIMessage[]) => ChatUIMessage[]) => void;
-}) {
-  setMessages((prev) => prev.filter((m) => m.id !== id));
-}
-
 const DISPLAY_CARD_DATA_TYPES = new Set([
   'data-connection-required',
   'data-connection-picker',
   'data-project-picker',
   'data-questions',
 ]);
-
-type SocketEvent = {
-  conversationId: string;
-  type: string;
-  data: unknown;
-};
-
-function createSocketChatTransport({
-  socket,
-  getConversationId,
-  getFiles,
-}: {
-  socket: ReturnType<typeof useSocket>;
-  getConversationId: () => string | null;
-  getFiles: () =>
-    | Array<{ name: string; mimeType: ChatAllowedMimeType; data: string }>
-    | undefined;
-}): ChatTransport<UIMessage> {
-  return {
-    async sendMessages({ messages, abortSignal }) {
-      const conversationId = getConversationId();
-      if (!conversationId) {
-        throw new Error('No conversation ID');
-      }
-
-      const lastUser = messages.findLast((m) => m.role === 'user');
-      const content =
-        lastUser?.parts
-          .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
-          .map((p) => p.text)
-          .join('') ?? '';
-
-      const files = getFiles();
-
-      let cleanupFn: () => void = () => {};
-      const stream = new ReadableStream<UIMessageChunk>({
-        start(controller) {
-          const closeStream = () => {
-            cleanupFn();
-            try {
-              controller.close();
-            } catch {
-              // stream may already be closed
-            }
-          };
-
-          const timeout = setTimeout(closeStream, STREAM_TIMEOUT_MS);
-
-          const handler = (event: SocketEvent) => {
-            if (event.conversationId !== conversationId) return;
-            if (event.type === ChatAgentEventType.CHUNK) {
-              const chunks = Array.isArray(event.data)
-                ? event.data
-                : [event.data];
-              for (const chunk of chunks) {
-                controller.enqueue(chunk as UIMessageChunk);
-              }
-            } else if (event.type === ChatAgentEventType.ERROR) {
-              const errorData = event.data as { message?: string };
-              controller.enqueue({
-                type: 'error',
-                errorText: errorData?.message ?? 'An error occurred',
-              } as UIMessageChunk);
-            } else if (event.type === ChatAgentEventType.FINISHED) {
-              closeStream();
-            }
-          };
-
-          cleanupFn = () => {
-            clearTimeout(timeout);
-            socket.off(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
-          };
-
-          socket.on(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
-        },
-        cancel() {
-          cleanupFn();
-        },
-      });
-
-      abortSignal?.addEventListener('abort', () => cleanupFn(), {
-        once: true,
-      });
-
-      try {
-        await chatApi.sendMessage({ conversationId, content, files });
-      } catch (err) {
-        cleanupFn();
-        throw err;
-      }
-
-      return stream;
-    },
-
-    async reconnectToStream() {
-      return null;
-    },
-  };
-}
 
 type SendStatus =
   | { type: 'idle' }
@@ -212,7 +98,7 @@ export function useAgentChat({
   onTitleUpdate,
   onConversationCreated,
 }: {
-  onTitleUpdate?: (title: string, conversationId?: string) => void;
+  onTitleUpdate?: (title: string) => void;
   onConversationCreated?: (conversationId: string) => void;
 } = {}) {
   const store = useChatStoreApi();
@@ -228,22 +114,36 @@ export function useAgentChat({
   const [sendStatus, setSendStatus] = useState<SendStatus>({ type: 'idle' });
   const sendStatusRef = useRef<SendStatus>({ type: 'idle' });
 
+  const [persistedMessages, setPersistedMessages] = useState<ChatUIMessage[]>(
+    [],
+  );
+  const persistedMessagesRef = useRef(persistedMessages);
+  persistedMessagesRef.current = persistedMessages;
+  const [optimisticUserMessage, setOptimisticUserMessage] =
+    useState<ChatUIMessage | null>(null);
+
   const pendingFilesRef = useRef<
     { name: string; mimeType: ChatAllowedMimeType; data: string }[] | undefined
   >(undefined);
   const lastSentFileNamesRef = useRef<string[]>([]);
   const conversationIdRef = useRef<string | null>(null);
   const modelNameRef = useRef<string | null>(DEFAULT_CHAT_TIER_ID);
-  const optimisticIdRef = useRef<string | null>(null);
   const onTitleUpdateRef = useRef(onTitleUpdate);
   onTitleUpdateRef.current = onTitleUpdate;
   const onConversationCreatedRef = useRef(onConversationCreated);
   onConversationCreatedRef.current = onConversationCreated;
 
   const handleDataPart = useCallback(
-    (dataPart: { type: string; data: unknown }) => {
+    (dataPart: DataPart) => {
       if (!isObject(dataPart.data)) return;
-      const d = dataPart.data;
+      const d = dataPart.data as Record<string, unknown>;
+
+      if (
+        dataPart.type === 'data-session-title' &&
+        typeof d['title'] === 'string'
+      ) {
+        onTitleUpdateRef.current?.(d['title']);
+      }
 
       switch (dataPart.type) {
         case 'data-approval-request':
@@ -318,104 +218,73 @@ export function useAgentChat({
     setSendStatus(next);
   }, []);
 
-  const socket = useSocket();
-
-  const transport = useMemo(() => {
-    return createSocketChatTransport({
-      socket,
-      getConversationId: () => conversationIdRef.current,
-      getFiles: () => pendingFilesRef.current,
-    });
-  }, [socket]);
+  const reconcile = useCallback(
+    async (convId: string) => {
+      if (conversationIdRef.current !== convId) return;
+      const { data: result } = await tryCatch(() =>
+        chatApi.getMessages(convId),
+      );
+      if (result && conversationIdRef.current === convId) {
+        const mapped = chatUtils.mapHistoryToUIMessages(result.data);
+        setPersistedMessages(mapped);
+        const restoredReplies =
+          chatUtils.extractQuickRepliesFromHistory(mapped);
+        if (restoredReplies.length > 0) {
+          store.setState({ quickReplies: restoredReplies });
+        }
+      }
+      setOptimisticUserMessage(null);
+    },
+    [store],
+  );
 
   const {
-    messages: uiMessages,
-    status,
-    sendMessage: chatSendMessage,
-    stop,
-    setMessages: sdkSetMessages,
-    error: useChatError,
-  } = useChat({
-    transport,
-    experimental_throttle: 100,
-    onData: (dataPart) => {
-      const data = dataPart.data;
-      if (
-        dataPart.type === 'data-session-title' &&
-        isObject(data) &&
-        typeof data['title'] === 'string'
-      ) {
-        onTitleUpdateRef.current?.(
-          data['title'],
-          conversationIdRef.current ?? undefined,
-        );
-      }
-      handleDataPart(dataPart);
+    streamingMessage,
+    streamPhase,
+    streamError,
+    startStream,
+    stopStream,
+    clearStreamingState,
+  } = useStreamingReducer({
+    onDataPart: handleDataPart,
+    onStreamFinished: (convId) => {
+      void reconcile(convId).then(() => clearStreamingState());
     },
-    onError: () => {
-      if (optimisticIdRef.current) {
-        removeMessageById({
-          id: optimisticIdRef.current,
-          setMessages: sdkSetMessages as (
-            fn: (prev: ChatUIMessage[]) => ChatUIMessage[],
-          ) => void,
-        });
-        optimisticIdRef.current = null;
-      }
-      const convId = conversationIdRef.current;
-      if (convId) {
-        setTimeout(async () => {
-          if (conversationIdRef.current !== convId) return;
-          const { data: result } = await tryCatch(() =>
-            chatApi.getMessages(convId),
-          );
-          if (result && conversationIdRef.current === convId) {
-            (sdkSetMessages as (msgs: ChatUIMessage[]) => void)(
-              chatUtils.mapHistoryToUIMessages(result.data),
-            );
-          }
-        }, 3000);
-      }
+    onStreamError: ({ conversationId: convId }) => {
+      void reconcile(convId).then(() => clearStreamingState());
     },
   });
 
-  const setUiMessages = sdkSetMessages as (
-    msgs: ChatUIMessage[] | ((prev: ChatUIMessage[]) => ChatUIMessage[]),
-  ) => void;
-
-  const sdkIsActive = status === 'streaming' || status === 'submitted';
+  const isStreamActive = streamPhase !== 'idle';
   const isStreaming =
-    sdkIsActive ||
+    isStreamActive ||
     sendStatusRef.current.type === 'submitting' ||
     isPollingForAgentReply;
 
   const messages: ChatUIMessage[] = useMemo(() => {
+    const base = [...persistedMessages];
+    if (optimisticUserMessage) base.push(optimisticUserMessage);
+    if (streamingMessage) base.push(streamingMessage);
     return injectFilePartsIntoLastUserMessage({
-      messages: uiMessages as ChatUIMessage[],
+      messages: base,
       fileNames: lastSentFileNamesRef.current,
     });
-  }, [uiMessages]);
+  }, [persistedMessages, optimisticUserMessage, streamingMessage]);
 
   const error =
     sendStatus.type === 'error'
       ? sendStatus.message
-      : useChatError
-      ? useChatError.message
+      : streamError
+      ? streamError
       : null;
 
   const wasCancelled = sendStatus.type === 'cancelled';
 
   const cancelStream = useCallback(() => {
-    void stop();
+    stopStream();
     updateSendStatus({ type: 'cancelled' });
-    if (optimisticIdRef.current) {
-      removeMessageById({
-        id: optimisticIdRef.current,
-        setMessages: setUiMessages,
-      });
-      optimisticIdRef.current = null;
-    }
-  }, [stop, setUiMessages, updateSendStatus]);
+    setOptimisticUserMessage(null);
+  }, [stopStream, updateSendStatus]);
 
   const createConversation = useCallback(
     async ({
@@ -440,10 +309,8 @@ export function useAgentChat({
       const fileNames = files?.map((f) => f.name) ?? [];
       lastSentFileNamesRef.current = fileNames;
 
-      const optimisticId = `optimistic-${Date.now()}`;
-      optimisticIdRef.current = optimisticId;
       const optimisticUser: ChatUIMessage = {
-        id: optimisticId,
+        id: `optimistic-${Date.now()}`,
         role: 'user',
         parts: [
           { type: 'text', text: content },
@@ -451,14 +318,13 @@ export function useAgentChat({
         ],
       };
 
-      setUiMessages((prev) => [...prev, optimisticUser]);
+      setOptimisticUserMessage(optimisticUser);
       store.getState().resetInteractions();
 
       if (files && files.length > 0) {
         const oversized = files.find((f) => f.size > MAX_FILE_SIZE);
         if (oversized) {
-          removeMessageById({ id: optimisticId, setMessages: setUiMessages });
-          optimisticIdRef.current = null;
+          setOptimisticUserMessage(null);
           updateSendStatus({
             type: 'error',
             message: `File "${oversized.name}" exceeds 10 MB limit`,
@@ -469,8 +335,7 @@ export function useAgentChat({
           async () => Promise.all(files.map(fileToBase64)),
         );
         if (fileError) {
-          removeMessageById({ id: optimisticId, setMessages: setUiMessages });
-          optimisticIdRef.current = null;
+          setOptimisticUserMessage(null);
           updateSendStatus({
             type: 'error',
             message: fileError.message ?? 'Failed to read attached files',
@@ -491,8 +356,7 @@ export function useAgentChat({
           onConversationCreatedRef.current?.(conv.id);
         });
         if (convError) {
-          removeMessageById({ id: optimisticId, setMessages: setUiMessages });
-          optimisticIdRef.current = null;
+          setOptimisticUserMessage(null);
           updateSendStatus({
             type: 'error',
             message: convError.message ?? 'Failed to start conversation',
@@ -500,28 +364,46 @@ export function useAgentChat({
           return;
         }
         if (sendStatusRef.current.type === 'cancelled') {
-          removeMessageById({ id: optimisticId, setMessages: setUiMessages });
-          optimisticIdRef.current = null;
+          setOptimisticUserMessage(null);
           return;
         }
       }
 
+      const convId = conversationIdRef.current;
+      if (!convId) {
+        setOptimisticUserMessage(null);
+        updateSendStatus({
+          type: 'error',
+          message: 'No conversation ID',
+        });
+        return;
+      }
+
+      startStream(convId);
       updateSendStatus({ type: 'idle' });
-      await chatSendMessage({ text: content, messageId: optimisticId });
-      optimisticIdRef.current = null;
+
+      const { error: sendError } = await tryCatch(async () =>
+        chatApi.sendMessage({
+          conversationId: convId,
+          content,
+          files: pendingFilesRef.current,
+        }),
+      );
+      if (sendError) {
+        stopStream();
+        setOptimisticUserMessage(null);
+        updateSendStatus({
+          type: 'error',
+          message: sendError.message ?? 'Failed to send message',
+        });
+      }
     },
-    [
-      createConversation,
-      chatSendMessage,
-      setUiMessages,
-      updateSendStatus,
-      store,
-    ],
+    [createConversation, startStream, stopStream, updateSendStatus, store],
   );
 
   const setConversationId = useCallback(
     async (id: string) => {
-      void stop();
+      stopStream();
       setIsPollingForAgentReply(false);
       updateSendStatus({ type: 'idle' });
       conversationIdRef.current = id;
@@ -530,7 +412,7 @@ export function useAgentChat({
 
       pendingFilesRef.current = undefined;
       lastSentFileNamesRef.current = [];
-      optimisticIdRef.current = null;
+      setOptimisticUserMessage(null);
 
       setIsLoadingHistory(true);
       const [historyResult, convResult] = await Promise.all([
@@ -544,12 +426,12 @@ export function useAgentChat({
           message: 'Failed to load conversation history',
         });
       } else {
-        const uiMessages = chatUtils.mapHistoryToUIMessages(
+        const mapped = chatUtils.mapHistoryToUIMessages(
           historyResult.data.data,
         );
-        setUiMessages(uiMessages);
+        setPersistedMessages(mapped);
         const restoredReplies =
-          chatUtils.extractQuickRepliesFromHistory(uiMessages);
+          chatUtils.extractQuickRepliesFromHistory(mapped);
         if (restoredReplies.length > 0) {
           store.setState({ quickReplies: restoredReplies });
         }
@@ -563,26 +445,26 @@ export function useAgentChat({
       }
       setIsLoadingHistory(false);
     },
-    [stop, setUiMessages, updateSendStatus, store],
+    [stopStream, updateSendStatus, store],
   );
 
   useQuery({
     queryKey: ['chat-agent-poll', conversationId],
     queryFn: async () => {
-      if (!conversationId) return null;
+      if (!conversationId || conversationIdRef.current !== conversationId)
+        return null;
       const [messagesResult, convResult] = await Promise.all([
         chatApi.getMessages(conversationId),
         chatApi.getConversation(conversationId),
       ]);
+      if (conversationIdRef.current !== conversationId) return null;
       const mapped = chatUtils.mapHistoryToUIMessages(messagesResult.data);
-      const currentMessages = uiMessages as ChatUIMessage[];
+      const current = persistedMessagesRef.current;
       const hasChanged =
-        mapped.length !== currentMessages.length ||
-        mapped.some(
-          (m, i) => m.parts.length !== currentMessages[i]?.parts.length,
-        );
+        mapped.length !== current.length ||
+        mapped.some((m, i) => m.parts.length !== current[i]?.parts.length);
       if (hasChanged) {
-        setUiMessages(mapped);
+        setPersistedMessages(mapped);
         const restoredReplies =
           chatUtils.extractQuickRepliesFromHistory(mapped);
         if (restoredReplies.length > 0) {
@@ -594,7 +476,7 @@ export function useAgentChat({
       }
       return mapped;
     },
-    enabled: isPollingForAgentReply && !sdkIsActive,
+    enabled: isPollingForAgentReply && !isStreamActive,
     refetchInterval: AGENT_POLL_INTERVAL_MS,
   });
 

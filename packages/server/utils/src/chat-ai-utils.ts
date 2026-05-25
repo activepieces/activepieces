@@ -175,13 +175,21 @@ function buildStepParts({ content }: {
                 if (part.text) parts.push({ type: PersistedChatPartType.TEXT, text: part.text })
                 break
             case 'tool-call': {
-                const result = part.toolCallId ? resultMap.get(part.toolCallId) : undefined
+                const toolName = part.toolName ?? ''
                 const input = toRecord(part.args ?? part.input)
+                if (toolName === 'ap_update_thinking_status') {
+                    const statusText = typeof input['status'] === 'string' ? input['status'] : ''
+                    if (statusText) {
+                        parts.push({ type: PersistedChatPartType.THINKING_STATUS, text: statusText })
+                    }
+                    break
+                }
+                const result = part.toolCallId ? resultMap.get(part.toolCallId) : undefined
                 const rawOutput = result?.output ? chatPersistenceUtils.unwrapToolOutput(result.output) : undefined
                 parts.push({
                     type: PersistedChatPartType.TOOL_CALL,
                     toolCallId: part.toolCallId ?? '',
-                    toolName: part.toolName ?? '',
+                    toolName,
                     input,
                     output: rawOutput,
                     status: result ? PersistedToolCallStatus.COMPLETED : PersistedToolCallStatus.ERROR,

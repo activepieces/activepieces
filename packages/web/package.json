@@ -5,7 +5,6 @@
   "dependencies": {
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "@ai-sdk/react": "3.0.156",
     "@codemirror/commands": "6.10.3",
     "@codemirror/lang-javascript": "6.2.2",
     "@codemirror/lang-json": "6.0.1",

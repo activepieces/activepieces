@@ -57,6 +57,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             })
 
             const uiParts: PersistedChatPart[] = []
+            const thinkingStartTime = Date.now()
 
             const result = streamText({
                 model,
@@ -71,7 +72,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                         conversationId,
                         uiMessages: [
                             ...(config.previousUiMessages as PersistedChatMessage[]),
-                            { role: PersistedChatRole.ASSISTANT, parts: [...uiParts] },
+                            { role: PersistedChatRole.ASSISTANT, parts: [...uiParts], thinkingDurationMs: Date.now() - thinkingStartTime },
                         ],
                     }).catch((err: unknown) => {
                         log.warn({ err, conversationId }, 'Failed to save chat progress')
@@ -101,12 +102,13 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 provider: config.provider,
             }, 'Chat message completed')
 
+            const thinkingDurationMs = Date.now() - thinkingStartTime
             await ctx.apiClient.saveChatMessages({
                 conversationId,
                 messages: [...(config.allMessages as ModelMessage[]), ...response.messages],
                 uiMessages: [
                     ...(config.previousUiMessages as PersistedChatMessage[]),
-                    { role: PersistedChatRole.ASSISTANT, parts: uiParts },
+                    { role: PersistedChatRole.ASSISTANT, parts: uiParts, thinkingDurationMs },
                 ],
                 ...spreadIfDefined('title', autoTitle),
                 ...spreadIfDefined('modelName', isNil(data.modelName) ? config.tier.id : undefined),
@@ -195,11 +197,12 @@ function buildToolSet({ ctx, writer, log, planApproved, mcpToolSet, projects, co
         waitForApproval,
     })
     const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool })
+    const thinkingTools = chatWorkerTools.createThinkingTools()
     const gatedMcpTools = chatMcpClient.withApprovalGates({
         mcpToolSet, writer, log, isApproved: () => planApproved.approved, waitForApproval,
     })
 
-    return { ...localTools, ...displayTools, ...crossProjectTools, ...planTools, ...(gatedMcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
+    return { ...localTools, ...displayTools, ...crossProjectTools, ...planTools, ...thinkingTools, ...(gatedMcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
 }
 
 async function streamChunksToClient({ result, ctx, userId, conversationId, log }: {

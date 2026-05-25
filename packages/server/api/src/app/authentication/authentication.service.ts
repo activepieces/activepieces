@@ -125,10 +125,12 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        await authenticationUtils(log).assertEmailMatchesSsoDomain({
-            email: params.email,
-            platformId,
-        })
+        if (params.provider == UserIdentityProvider.SAML) {
+            await authenticationUtils(log).assertEmailMatchesSsoDomain({
+                email: params.email,
+                platformId,
+            })
+        }
 
         if (isNil(userIdentity)) {
             return authenticationService(log).signUp({
