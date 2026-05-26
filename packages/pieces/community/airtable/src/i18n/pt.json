@@ -91,5 +91,10 @@
   "Triggers when a new record is added to the selected table.": "Dispara quando um novo registro é adicionado à tabela selecionada.",
   "Triggers when a record is created or updated in selected table.": "Dispara quando um registro é criado ou atualizado na tabela selecionada.",
   "Trigger field": "Campo gatilho",
-  "**Last Modified Time** field will be used to watch new or updated records.Please create **Last Modified Time** field in your schema,if you don't have any timestamp field.": "O campo **Última Modificação** será usado para assistir registros novos ou atualizados. crie campo **Hora Última Modificação** em seu esquema, se você não tiver nenhum campo de carimbo de data."
+  "**Last Modified Time** field will be used to watch new or updated records.Please create **Last Modified Time** field in your schema,if you don't have any timestamp field.": "O campo **Última Modificação** será usado para assistir registros novos ou atualizados. crie campo **Hora Última Modificação** em seu esquema, se você não tiver nenhum campo de carimbo de data.",
+  "Please connect your account": "Por favor, conecte sua conta",
+  "Please select a base first": "Por favor, selecione uma base primeiro",
+  "Please select a table first": "Por favor, selecione uma tabela primeiro",
+  "Please check your permission scope": "Por favor, verifique seu escopo de permissão",
+  "Please select a base and table first": "Por favor, selecione uma base e uma tabela primeiro"
 }
