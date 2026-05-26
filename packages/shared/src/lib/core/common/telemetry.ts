@@ -142,8 +142,9 @@ type McpToolCalled = {
 }
 
 type McpServerConnected = {
-    projectId: string
     userId: string
+    projectId?: string
+    platformId?: string
 }
 
 type PieceSelectorSearch = {

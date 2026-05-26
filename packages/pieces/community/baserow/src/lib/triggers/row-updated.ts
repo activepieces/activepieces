@@ -1,18 +1,22 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { baserowJwtAuth } from '../auth';
-import { baserowCommon } from '../common';
-import { createWebhookTriggerHooks } from '../common/webhook-trigger';
+import { baserowAuth } from '../auth';
+import { baserowCommon, makeClient } from '../common';
+import { createWebhookTriggerHooks, dynamicWebhookInstructions } from '../common/webhook-trigger';
 
-const webhookHooks = createWebhookTriggerHooks('rows.updated', 'baserow_row_updated');
+const triggerHooks = createWebhookTriggerHooks({
+  events: ['rows.updated'],
+  storeKey: 'baserow_row_updated_trigger',
+});
 
 export const rowUpdatedTrigger = createTrigger({
   name: 'baserow_row_updated',
-  auth: baserowJwtAuth,
-  displayName: 'Row Updated',
+  auth: baserowAuth,
+  displayName: 'Updated Row',
   description: 'Triggers when an existing row is updated in a Baserow table.',
   type: TriggerStrategy.WEBHOOK,
   props: {
     table_id: baserowCommon.tableId(),
+    instructions: dynamicWebhookInstructions('Rows updated'),
   },
   sampleData: {
     row: {
@@ -26,12 +30,8 @@ export const rowUpdatedTrigger = createTrigger({
       Name: 'Original row',
     },
   },
-  async onEnable(context) {
-    await webhookHooks.onEnable(context);
-  },
-  async onDisable(context) {
-    await webhookHooks.onDisable(context);
-  },
+  onEnable: triggerHooks.onEnable,
+  onDisable: triggerHooks.onDisable,
   async run(context) {
     const body = context.payload.body as {
       items?: Record<string, unknown>[];
@@ -47,5 +47,12 @@ export const rowUpdatedTrigger = createTrigger({
         if (!previous) return true;
         return JSON.stringify(row) !== JSON.stringify(previous);
       });
+  },
+  async test(context) {
+    const tableId = context.propsValue.table_id;
+    if (!tableId) return [];
+    const client = await makeClient(context.auth);
+    const response = await client.listRows(tableId, 1, 5);
+    return response.results.map((row) => ({ row, previous: null }));
   },
 });

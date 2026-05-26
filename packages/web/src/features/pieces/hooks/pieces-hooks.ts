@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-framework';
 import {
   AddPieceRequestBody,
+  ApEdition,
   FlowActionType,
   flowPieceUtil,
   LocalesEnum,
@@ -18,7 +19,9 @@ import {
 } from '@activepieces/shared';
 import { useMutation, useQueries, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import semver from 'semver';
 
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { appConnectionsApi } from '@/features/connections/api/app-connections';
@@ -129,6 +132,25 @@ export const piecesHooks = {
         staleTime: Infinity,
       })),
     });
+  },
+  usePieceSummariesByNames: ({ names }: UseMultiplePiecesProps) => {
+    const { pieces, isLoading } = piecesHooks.usePieces({});
+    const summaries = useMemo(() => {
+      if (!pieces) return [];
+      const byName = new Map(pieces.map((p) => [p.name, p]));
+      return names
+        .map((name) => byName.get(name))
+        .filter((p): p is PieceMetadataModelSummary => !!p);
+    }, [pieces, names]);
+    return { summaries, isLoading };
+  },
+  usePieceSummary: ({ name }: { name: string }) => {
+    const { pieces, isLoading } = piecesHooks.usePieces({});
+    const summary = useMemo(
+      () => pieces?.find((p) => p.name === name),
+      [pieces, name],
+    );
+    return { summary, isLoading };
   },
   usePieces: ({
     searchQuery,
@@ -322,14 +344,23 @@ export const piecesHooks = {
     });
   },
   usePieceVersions: (pieceName: string) => {
+    const { data: release } = flagsHooks.useFlag<string>(
+      ApFlagId.CURRENT_VERSION,
+    );
+    const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
     const query = useQuery({
-      queryKey: ['piece-versions', pieceName],
-      queryFn: () => piecesApi.listVersions(pieceName),
+      queryKey: ['pieces-registry', release, edition],
+      queryFn: () => piecesApi.registry(release!, edition!),
       staleTime: Infinity,
-      enabled: !!pieceName,
+      enabled: !!pieceName && !!release && !!edition,
+      select: (registry) =>
+        registry
+          .filter((entry) => entry.name === pieceName)
+          .map((entry) => ({ version: entry.version }))
+          .sort((a, b) => semver.rcompare(a.version, b.version)),
     });
     return {
-      pieceVersions: query.data?.data,
+      pieceVersions: query.data,
       isLoading: query.isLoading,
     };
   },
