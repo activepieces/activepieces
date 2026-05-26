@@ -1,6 +1,8 @@
 {
   "Collect, manage, and share testimonials with Senja.": "Verzamelen, beheren en delen van getuigenissen met Senja.",
+  "API Key": "API Sleutel",
   "To get your Senja API key:\n1. Log in to your Senja account.\n2. Go to **Automate** in the left sidebar.\n3. Click **REST API** and copy your API key.": "Om je Senja API key te verkrijgen:\n1. Log in op je Senja account.\n2. Ga naar **Automatiseren** in de linker zijbalk.\n3. Klik op **REST API** en kopieer uw API-sleutel.",
+  "Invalid API Key. Please check and try again.": "Ongeldige API-sleutel. Controleer en probeer het opnieuw.",
   "List Testimonials": "Lijst met beoordelingen",
   "Get Testimonial": "Krijg beoordeling",
   "Create Testimonial": "Beoordeling maken",
@@ -134,5 +136,19 @@
   "Only trigger for the selected event types. Leave empty to trigger on all events. Make sure the matching events are enabled in Senja.": "Trigger alleen voor de geselecteerde evenementen. Laat leeg om te activeren voor alle evenementen. Zorg ervoor dat de overeenkomende evenementen ingeschakeld zijn in Senja.",
   "Testimonial Created": "Testimoniaal aangemaakt",
   "Testimonial Updated": "Beoordeling bijgewerkt",
-  "Testimonial Deleted": "Beoordeling verwijderd"
+  "Testimonial Deleted": "Beoordeling verwijderd",
+  "Media (Images)": "Media (Images)",
+  "Update Testimonial": "Update beoordeling",
+  "Approve, unapprove, or update tags on an existing testimonial.": "Keur tags goed, niet goed of werk deze bij op een bestaande testimonial.",
+  "Set to \"Approved\" to publish the testimonial, or \"Pending\" to unpublish it. Leave empty to keep the current status.": "Zet op \"Goedgekeurd\" om de testimonie te publiceren, of \"In behandeling\" om de publicatie te depubliceren. Laat leeg om de huidige status te behouden.",
+  "Add Tags": "Labels toevoegen",
+  "Tag names to add to this testimonial. Tags are created automatically if they do not already exist.": "Tag namen om toe te voegen aan deze testimonial. Tags worden automatisch gemaakt als ze niet al bestaan.",
+  "Remove Tags": "Labels verwijderen",
+  "Tag names to remove from this testimonial.": "Tag namen om van deze getuigenis te verwijderen.",
+  "Delete Testimonial": "Verwijder beoordeling",
+  "Permanently delete a testimonial from your Senja project. This action cannot be undone.": "Verwijder permanent een getuigenis van je Senja project. Deze actie kan niet ongedaan worden gemaakt.",
+  "The unique ID of the testimonial to delete. You can find it in the URL when viewing a testimonial in Senja, or from the output of a \"List Testimonials\" step.": "Het unieke ID van de getuigenis om te verwijderen. U kunt het vinden in de URL wanneer u een getuigenis bekijkt in Senja, of in de output van een \"List Testimonials\" stap.",
+  "Search": "Zoeken",
+  "Full-text search across testimonial text, title, customer name, customer email, and customer tagline.": "Volledige-tekst zoeken over getuigenistekst, titel, klantnaam, e-mail klant en klant tagline.",
+  "List of image URLs to attach to this testimonial. Each entry must be a JSON object with a \"url\" field and optionally \"alt\" text, e.g. {\"url\": \"https://...\", \"alt\": \"description\"}.": "Lijst van afbeeldings-URL's die aan deze testimoniale toegevoegd moeten worden. Elk item moet een JSON object zijn met een \"url\" veld en eventueel \"alt\" tekst, bijvoorbeeld {\"url\": \"https://...\", \"alt\": \"description\"}."
 }
