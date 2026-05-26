@@ -91,5 +91,10 @@
   "Triggers when a new record is added to the selected table.": "Activeert wanneer een nieuwe record wordt toegevoegd aan de geselecteerde tabel.",
   "Triggers when a record is created or updated in selected table.": "Triggert wanneer een record wordt aangemaakt of bijgewerkt in de geselecteerde tabel.",
   "Trigger field": "Trigger veld",
-  "**Last Modified Time** field will be used to watch new or updated records.Please create **Last Modified Time** field in your schema,if you don't have any timestamp field.": "**Laatst gewijzigde tijd** veld zal worden gebruikt om nieuwe of bijgewerkte records te bekijken. lease creëer **Last Modified Time** veld in je schema, als je geen timestamp veld hebt."
+  "**Last Modified Time** field will be used to watch new or updated records.Please create **Last Modified Time** field in your schema,if you don't have any timestamp field.": "**Laatst gewijzigde tijd** veld zal worden gebruikt om nieuwe of bijgewerkte records te bekijken. lease creëer **Last Modified Time** veld in je schema, als je geen timestamp veld hebt.",
+  "Please connect your account": "Verbind uw account",
+  "Please select a base first": "Selecteer eerst een basis",
+  "Please select a table first": "Selecteer eerst een tabel",
+  "Please check your permission scope": "Controleer uw toestemmingsbereik",
+  "Please select a base and table first": "Selecteer eerst een basis en tabel"
 }
