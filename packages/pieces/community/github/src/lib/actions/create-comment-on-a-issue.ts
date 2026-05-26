@@ -27,7 +27,7 @@ export const githubCreateCommentOnAIssue = createAction({
     const { owner, repo } = propsValue.repository!;
 
     const response = await githubApiCall({
-      accessToken: auth.access_token,
+      auth,
       method: HttpMethod.POST,
       resourceUri: `/repos/${owner}/${repo}/issues/${issue_number}/comments`,
       body: {

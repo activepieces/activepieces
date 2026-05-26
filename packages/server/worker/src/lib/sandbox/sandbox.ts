@@ -1,4 +1,5 @@
 import { ChildProcess } from 'child_process'
+import { randomBytes, timingSafeEqual } from 'crypto'
 import { createServer, Server as HttpServer } from 'http'
 import path from 'path'
 import { ActivepiecesError, assertNotNullOrUndefined, createNotifyServer, createRpcClient, createRpcServer, EngineContract, EngineOperation, EngineOperationType, EngineResponse, EngineStderr, EngineStdout, ErrorCode, isNil, WorkerContract, WorkerNotifyContract } from '@activepieces/shared'
@@ -65,6 +66,7 @@ export function createSandbox(
     let io: SocketIOServer | null = null
     let connectedSocket: Socket | null = null
     let connectionResolve: (() => void) | null = null
+    let wsRpcToken: string | null = null
 
     function createSocketServer(): number {
         httpServer = createServer()
@@ -74,7 +76,14 @@ export function createSandbox(
             cors: { origin: '*' },
         })
 
+        io.use(authenticateHandshake({ getExpectedToken: () => wsRpcToken, log, sandboxId }))
+
         io.on('connection', (socket) => {
+            if (!isNil(connectedSocket) && connectedSocket.connected) {
+                log.warn({ sandboxId, socketId: socket.id }, '[WebSocket] Rejecting extra connection — sandbox already has an active socket')
+                socket.disconnect(true)
+                return
+            }
             connectedSocket = socket
             log.info({ sandboxId, socketId: socket.id }, '[WebSocket] Sandbox connected')
 
@@ -82,7 +91,9 @@ export function createSandbox(
 
             socket.on('disconnect', (reason) => {
                 log.info({ sandboxId, reason, socketId: socket.id }, '[WebSocket] Sandbox disconnected')
-                connectedSocket = null
+                if (connectedSocket === socket) {
+                    connectedSocket = null
+                }
             })
 
             if (connectionResolve) {
@@ -91,7 +102,7 @@ export function createSandbox(
             }
         })
 
-        httpServer.listen(0)
+        httpServer.listen(options.wsRpcPort ?? 0)
 
         const address = httpServer.address()
         if (typeof address === 'object' && address !== null) {
@@ -133,6 +144,7 @@ export function createSandbox(
                 platformId,
             }, 'Starting sandbox')
 
+            wsRpcToken = randomBytes(32).toString('hex')
             const port = createSocketServer()
 
             const codeMount = buildCodeMount({ flowVersionId, reusable: options.reusable })
@@ -164,6 +176,7 @@ export function createSandbox(
                 env: {
                     ...options.env,
                     AP_SANDBOX_WS_PORT: String(port),
+                    AP_SANDBOX_WS_TOKEN: wsRpcToken,
                     ...(customPieceMounts.length > 0
                         ? { AP_CUSTOM_PIECES_PATHS: '/root/custom_pieces' }
                         : {}),
@@ -279,6 +292,7 @@ export function createSandbox(
             }
             io = null
             httpServer = null
+            wsRpcToken = null
         },
     }
 }
@@ -349,6 +363,28 @@ function buildLogs(stdOut: string, stdError: string): string | undefined {
     if (stdOut) parts.push(`stdout:\n${stdOut}`)
     if (stdError) parts.push(`stderr:\n${stdError}`)
     return parts.length > 0 ? parts.join('\n') : undefined
+}
+
+function authenticateHandshake({ getExpectedToken, log, sandboxId }: {
+    getExpectedToken: () => string | null
+    log: SandboxLogger
+    sandboxId: string
+}): (socket: Socket, next: (err?: Error) => void) => void {
+    return (socket, next) => {
+        const provided = socket.handshake.auth?.['connectionToken']
+        const expected = getExpectedToken()
+        if (typeof provided !== 'string' || expected === null) {
+            log.warn({ sandboxId, socketId: socket.id }, '[WebSocket] Rejecting handshake: missing connection token')
+            return next(new Error('unauthorized'))
+        }
+        const a = Buffer.from(provided)
+        const b = Buffer.from(expected)
+        if (a.length !== b.length || !timingSafeEqual(a, b)) {
+            log.warn({ sandboxId, socketId: socket.id }, '[WebSocket] Rejecting handshake: invalid connection token')
+            return next(new Error('unauthorized'))
+        }
+        next()
+    }
 }
 
 type ProcessExitParams = {

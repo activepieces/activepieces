@@ -29,36 +29,54 @@ export default defineConfig(({ command, mode }) => {
           },
           ws: true,
         },
-        '^/mcp$': {
+        '^/mcp(/|$)': {
           target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
+          headers: {
+            'X-Forwarded-Host': 'localhost:4200',
+          },
           rewrite: (p: string) => p,
         },
         '/.well-known': {
           target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
+          headers: {
+            'X-Forwarded-Host': 'localhost:4200',
+          },
         },
         '/register': {
           target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
+          headers: {
+            'X-Forwarded-Host': 'localhost:4200',
+          },
         },
         '/authorize': {
           target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
+          headers: {
+            'X-Forwarded-Host': 'localhost:4200',
+          },
         },
         '/token': {
           target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
+          headers: {
+            'X-Forwarded-Host': 'localhost:4200',
+          },
         },
         '/revoke': {
           target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
+          headers: {
+            'X-Forwarded-Host': 'localhost:4200',
+          },
         },
       },
       port: 4200,
@@ -89,12 +107,6 @@ export default defineConfig(({ command, mode }) => {
         '@activepieces/pieces-framework': path.resolve(
           __dirname,
           '../../packages/pieces/framework/src',
-        ),
-        // request-filtering-agent extends Node.js http.Agent and cannot run in the browser.
-        // SSRF protection is server-side only, so we stub it out for the browser bundle.
-        'request-filtering-agent': path.resolve(
-          __dirname,
-          './src/stubs/request-filtering-agent.ts',
         ),
       },
     },

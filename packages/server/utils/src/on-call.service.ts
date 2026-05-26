@@ -1,13 +1,16 @@
 import { tryCatch } from '@activepieces/shared'
+import { safeHttp } from './safe-http'
 
 export const onCallService = (log: OnCallLogger, webhookUrl: string | undefined) => ({
     async page(error: OnCallPagePayload): Promise<void> {
         if (!webhookUrl) return
         const { error: fetchError } = await tryCatch(() =>
-            fetch(webhookUrl, {
+            safeHttp.axios.request({
+                url: webhookUrl,
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code: error.code, message: error.message, params: error.params }),
+                data: { code: error.code, message: error.message, params: error.params },
+                validateStatus: () => true,
             }),
         )
         if (fetchError) {

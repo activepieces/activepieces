@@ -1,4 +1,4 @@
-import { apId, FieldType, McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
+import { apId, FieldType, McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { fieldService } from '../../tables/field/field.service'
@@ -15,7 +15,7 @@ const createTableInput = z.object({
     })).describe('Fields to create. Max 100 fields per table.'),
 })
 
-export const apCreateTableTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apCreateTableTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_create_table',
         permission: Permission.WRITE_TABLE,
