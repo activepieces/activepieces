@@ -22,11 +22,14 @@ export const createApprovalLink = createAction({
     },
   },
   async run(ctx) {
+    const waitpoint = await ctx.run.createWaitpoint({
+      type: 'WEBHOOK',
+    });
     return {
-      approvalLink: ctx.generateResumeUrl({
+      approvalLink: waitpoint.buildResumeUrl({
         queryParams: { action: 'approve' },
       }),
-      disapprovalLink: ctx.generateResumeUrl({
+      disapprovalLink: waitpoint.buildResumeUrl({
         queryParams: { action: 'disapprove' },
       }),
     };

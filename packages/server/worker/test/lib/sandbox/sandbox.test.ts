@@ -4,7 +4,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { io as ioClient, type Socket as ClientSocket } from 'socket.io-client'
 import { ActivepiecesError, EngineResponseStatus, ErrorCode, WorkerContract } from '@activepieces/shared'
 import { createSandbox } from '../../../src/lib/sandbox/sandbox'
-import { Sandbox, SandboxLogger, SandboxProcessMaker } from '../../../src/lib/sandbox/types'
+import { Sandbox, SandboxLogger, SandboxMount, SandboxProcessMaker } from '../../../src/lib/sandbox/types'
 
 const { treeKillMock } = vi.hoisted(() => ({
     treeKillMock: vi.fn((_pid: number, _signal: string, cb: (err?: Error) => void) => cb()),
@@ -16,6 +16,7 @@ vi.mock('tree-kill', () => ({
 
 vi.mock('../../../src/lib/cache/cache-paths', () => ({
     getGlobalCachePathLatestVersion: vi.fn(() => '/tmp/test-cache'),
+    getGlobalCodeCachePath: vi.fn(() => '/tmp/test-cache/codes'),
 }))
 
 function createMockLogger(): SandboxLogger {
@@ -43,6 +44,7 @@ function createTestProcessMaker() {
     const maker: SandboxProcessMaker = {
         create: vi.fn(async (params) => {
             const port = params.env.AP_SANDBOX_WS_PORT
+            const token = params.env.AP_SANDBOX_WS_TOKEN ?? null
             child = new EventEmitter() as ChildProcess & EventEmitter
             ;(child as ChildProcess).pid = 12345
             ;(child as ChildProcess).exitCode = null
@@ -52,6 +54,7 @@ function createTestProcessMaker() {
                 path: '/worker/ws',
                 autoConnect: true,
                 reconnection: false,
+                auth: { sandboxId: params.sandboxId, connectionToken: token },
             })
 
             return child as ChildProcess
@@ -118,7 +121,7 @@ describe('createSandbox', () => {
                         AP_CUSTOM_PIECES_PATHS: '/root/custom_pieces',
                     }),
                     resourceLimits: {
-                        memoryBytes: 256 * 1024 * 1024,
+                        memoryLimitMb: 256,
                         cpuMsPerSec: 1000,
                         timeLimitSeconds: 300,
                     },
@@ -135,7 +138,198 @@ describe('createSandbox', () => {
             await sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] })
 
             const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
-            expect(createCall.mounts).toEqual([])
+            const customPieceMount = createCall.mounts.find((m: { sandboxPath: string }) => m.sandboxPath === '/root/custom_pieces')
+            expect(customPieceMount).toBeUndefined()
+            expect(createCall.env.AP_CUSTOM_PIECES_PATHS).toBeUndefined()
+        })
+
+        it('scopes code mount to flowVersionId when non-reusable', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-scoped', { ...defaultOptions, reusable: false }, testPM.maker, workerHandlers)
+
+            await sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] })
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            const codeMount = createCall.mounts.find((m: { sandboxPath: string }) => m.sandboxPath.startsWith('/root/codes'))
+            expect(codeMount).toEqual({
+                hostPath: '/tmp/test-cache/codes/fv-1',
+                sandboxPath: '/root/codes/fv-1',
+                optional: true,
+            })
+        })
+
+        it('mounts full codes directory when reusable even with flowVersionId', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-reuse', { ...defaultOptions, reusable: true }, testPM.maker, workerHandlers)
+
+            await sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] })
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            const codeMount = createCall.mounts.find((m: { sandboxPath: string }) => m.sandboxPath.startsWith('/root/codes'))
+            expect(codeMount).toEqual({
+                hostPath: '/tmp/test-cache/codes',
+                sandboxPath: '/root/codes',
+                optional: true,
+            })
+        })
+
+        it('omits code mount when non-reusable without flowVersionId', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-no-fv', { ...defaultOptions, reusable: false }, testPM.maker, workerHandlers)
+
+            await sandbox.start({ flowVersionId: undefined, platformId: '', mounts: [] })
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            const codeMount = createCall.mounts.find((m: { sandboxPath: string }) => m.sandboxPath.startsWith('/root/codes'))
+            expect(codeMount).toBeUndefined()
+        })
+
+        it('resolves custom_pieces hostPath to cache/custom_pieces/<platformId>', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-plat', defaultOptions, testPM.maker, workerHandlers)
+
+            await sandbox.start({ flowVersionId: 'fv-1', platformId: 'plat-xyz', mounts: [] })
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            const customPieceMount = createCall.mounts.find((m: SandboxMount) => m.sandboxPath === '/root/custom_pieces')
+            expect(customPieceMount).toEqual({
+                hostPath: '/tmp/test-cache/custom_pieces/plat-xyz',
+                sandboxPath: '/root/custom_pieces',
+                optional: true,
+            })
+        })
+
+        it.each([
+            ['.'],
+            ['..'],
+            ['../etc'],
+            ['a/b'],
+            ['fv\\1'],
+            ['fv\0null'],
+            [''],
+        ])('rejects path traversal in flowVersionId: %s', async (flowVersionId) => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-fv-trav', defaultOptions, testPM.maker, workerHandlers)
+
+            let caughtErr: unknown
+            try {
+                await sandbox.start({ flowVersionId, platformId: '', mounts: [] })
+            }
+            catch (err) {
+                caughtErr = err
+            }
+            expect(caughtErr).toBeDefined()
+            expect((caughtErr as ActivepiecesError).error.code).toBe(ErrorCode.VALIDATION)
+            expect(testPM.maker.create).not.toHaveBeenCalled()
+        })
+
+        it.each([
+            ['.'],
+            ['..'],
+            ['../other'],
+            ['plat/sub'],
+            ['plat\\x'],
+            ['plat\0null'],
+        ])('rejects path traversal in platformId: %s', async (platformId) => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-plat-trav', defaultOptions, testPM.maker, workerHandlers)
+
+            let caughtErr: unknown
+            try {
+                await sandbox.start({ flowVersionId: 'fv-1', platformId, mounts: [] })
+            }
+            catch (err) {
+                caughtErr = err
+            }
+            expect(caughtErr).toBeDefined()
+            expect((caughtErr as ActivepiecesError).error.code).toBe(ErrorCode.VALIDATION)
+            expect(testPM.maker.create).not.toHaveBeenCalled()
+        })
+
+        it('rejects caller-supplied mount whose sandboxPath escapes /root/', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-escape', defaultOptions, testPM.maker, workerHandlers)
+
+            const maliciousMount: SandboxMount = { hostPath: '/host/evil', sandboxPath: '/root/../etc' }
+
+            await expect(
+                sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [maliciousMount] }),
+            ).rejects.toThrow()
+            expect(testPM.maker.create).not.toHaveBeenCalled()
+        })
+
+        it('rejects baseMount whose sandboxPath escapes /root/', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            const baseMounts: SandboxMount[] = [{ hostPath: '/host/secret', sandboxPath: '/etc/passwd-evil' }]
+            sandbox = createSandbox(log, 'sb-base-escape', { ...defaultOptions, baseMounts }, testPM.maker, workerHandlers)
+
+            await expect(
+                sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] }),
+            ).rejects.toThrow()
+            expect(testPM.maker.create).not.toHaveBeenCalled()
+        })
+
+        it('composes mounts in order: baseMounts, codeMount, callerMounts, customPieceMounts', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            const baseMounts: SandboxMount[] = [{ hostPath: '/host/common', sandboxPath: '/root/common' }]
+            sandbox = createSandbox(log, 'sb-order', { ...defaultOptions, baseMounts }, testPM.maker, workerHandlers)
+
+            const callerMount: SandboxMount = { hostPath: '/host/x', sandboxPath: '/root/x' }
+            await sandbox.start({ flowVersionId: 'fv-1', platformId: 'plat-1', mounts: [callerMount] })
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            expect(createCall.mounts).toEqual([
+                { hostPath: '/host/common', sandboxPath: '/root/common' },
+                { hostPath: '/tmp/test-cache/codes/fv-1', sandboxPath: '/root/codes/fv-1', optional: true },
+                { hostPath: '/host/x', sandboxPath: '/root/x' },
+                { hostPath: '/tmp/test-cache/custom_pieces/plat-1', sandboxPath: '/root/custom_pieces', optional: true },
+            ])
+        })
+
+        it('never exposes host /etc, /root, or / as a sandbox mount', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-no-host-leak', defaultOptions, testPM.maker, workerHandlers)
+
+            await sandbox.start(startOptions)
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            for (const mount of createCall.mounts as SandboxMount[]) {
+                expect(mount.hostPath).not.toBe('/')
+                expect(mount.hostPath).not.toBe('/etc')
+                expect(mount.hostPath).not.toBe('/root')
+                expect(mount.hostPath).not.toMatch(/^\/home(\/|$)/)
+            }
+        })
+
+        it('does not inject AP_CUSTOM_PIECES_PATHS when platformId is undefined', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-no-plat-env', defaultOptions, testPM.maker, workerHandlers)
+
+            await sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] })
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
             expect(createCall.env.AP_CUSTOM_PIECES_PATHS).toBeUndefined()
         })
 
@@ -148,6 +342,114 @@ describe('createSandbox', () => {
             await sandbox.start(startOptions)
             await sandbox.start(startOptions)
             expect(testPM.maker.create).toHaveBeenCalledTimes(1)
+        })
+
+        it('passes a per-start AP_SANDBOX_WS_TOKEN to the child', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-token', defaultOptions, testPM.maker, workerHandlers)
+
+            await sandbox.start(startOptions)
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            expect(createCall.env.AP_SANDBOX_WS_TOKEN).toMatch(/^[a-f0-9]{64}$/)
+        })
+
+        it('rotates AP_SANDBOX_WS_TOKEN between successive start() calls on a reusable sandbox', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            const reusableOptions = { ...defaultOptions, reusable: true }
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-rotate', reusableOptions, testPM.maker, workerHandlers)
+
+            await sandbox.start(startOptions)
+            const firstToken = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0].env.AP_SANDBOX_WS_TOKEN
+            await sandbox.shutdown()
+            await sandbox.start(startOptions)
+            const secondToken = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[1][0].env.AP_SANDBOX_WS_TOKEN
+
+            expect(firstToken).toBeTruthy()
+            expect(secondToken).toBeTruthy()
+            expect(firstToken).not.toBe(secondToken)
+        })
+
+        it('rejects an unauthenticated Socket.IO connection', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-rej-noauth', defaultOptions, testPM.maker, workerHandlers)
+
+            await sandbox.start(startOptions)
+            const port = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0].env.AP_SANDBOX_WS_PORT
+
+            const attacker = ioClient(`http://127.0.0.1:${port}`, {
+                path: '/worker/ws',
+                autoConnect: true,
+                reconnection: false,
+            })
+            const err = await new Promise<Error>((resolve, reject) => {
+                attacker.on('connect_error', resolve)
+                attacker.on('connect', () => reject(new Error('attacker should not have connected')))
+                setTimeout(() => reject(new Error('no connect_error received')), 2000)
+            })
+            attacker.disconnect()
+
+            expect(err.message).toBe('unauthorized')
+            expect(testPM.getClient().connected).toBe(true)
+        })
+
+        it('rejects a Socket.IO connection that presents the wrong token', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-rej-wrong', defaultOptions, testPM.maker, workerHandlers)
+
+            await sandbox.start(startOptions)
+            const port = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0].env.AP_SANDBOX_WS_PORT
+
+            const attacker = ioClient(`http://127.0.0.1:${port}`, {
+                path: '/worker/ws',
+                autoConnect: true,
+                reconnection: false,
+                auth: { sandboxId: 'spoof', connectionToken: 'definitely-not-the-real-token' },
+            })
+            const err = await new Promise<Error>((resolve, reject) => {
+                attacker.on('connect_error', resolve)
+                attacker.on('connect', () => reject(new Error('attacker should not have connected')))
+                setTimeout(() => reject(new Error('no connect_error received')), 2000)
+            })
+            attacker.disconnect()
+
+            expect(err.message).toBe('unauthorized')
+            expect(testPM.getClient().connected).toBe(true)
+        })
+
+        it('disconnects a second authenticated connection while keeping the first active', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-rej-second', defaultOptions, testPM.maker, workerHandlers)
+
+            await sandbox.start(startOptions)
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            const port = createCall.env.AP_SANDBOX_WS_PORT
+            const token = createCall.env.AP_SANDBOX_WS_TOKEN
+
+            const second = ioClient(`http://127.0.0.1:${port}`, {
+                path: '/worker/ws',
+                autoConnect: true,
+                reconnection: false,
+                auth: { sandboxId: 'second', connectionToken: token },
+            })
+            await new Promise<void>((resolve, reject) => {
+                second.on('disconnect', () => resolve())
+                second.on('connect_error', (e) => reject(new Error(`unexpected connect_error: ${e.message}`)))
+                setTimeout(() => reject(new Error('second connection was not disconnected')), 2000)
+            })
+
+            expect(second.connected).toBe(false)
+            expect(testPM.getClient().connected).toBe(true)
         })
     })
 
