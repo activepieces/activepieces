@@ -1,16 +1,15 @@
-import {
-  createTrigger,
-  TriggerStrategy,
-  Property,
-} from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
+import crypto from 'crypto';
 import { resendAuth } from '../..';
 
 const BASE_URL = 'https://api.resend.com';
+const STORE_KEY = 'webhookData';
+const TIMESTAMP_TOLERANCE_SECONDS = 300;
 
 const EVENT_OPTIONS = [
   { label: 'Email Sent', value: 'email.sent' },
@@ -32,12 +31,52 @@ const EVENT_OPTIONS = [
   { label: 'Contact Deleted', value: 'contact.deleted' },
 ];
 
+function verifyResendWebhook({
+  rawBody,
+  headers,
+  signingSecret,
+}: {
+  rawBody: unknown;
+  headers: Record<string, string>;
+  signingSecret: string;
+}): boolean {
+  const svixId = headers['svix-id'];
+  const svixTimestamp = headers['svix-timestamp'];
+  const svixSignature = headers['svix-signature'];
+
+  if (!svixId || !svixTimestamp || !svixSignature) {
+    return false;
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  if (Math.abs(now - parseInt(svixTimestamp, 10)) > TIMESTAMP_TOLERANCE_SECONDS) {
+    return false;
+  }
+
+  const bodyString = Buffer.isBuffer(rawBody) ? rawBody.toString('utf8') : String(rawBody);
+  const secretBytes = Buffer.from(signingSecret.replace('whsec_', ''), 'base64');
+  const toSign = `${svixId}.${svixTimestamp}.${bodyString}`;
+  const computed = crypto.createHmac('sha256', secretBytes).update(toSign).digest('base64');
+
+  return svixSignature.split(' ').some((sig) => {
+    const [version, sigValue] = sig.split(',');
+    if (version !== 'v1' || !sigValue) return false;
+    try {
+      return crypto.timingSafeEqual(
+        Buffer.from(sigValue, 'base64'),
+        Buffer.from(computed, 'base64'),
+      );
+    } catch {
+      return false;
+    }
+  });
+}
+
 export const emailBounced = createTrigger({
   name: 'email_bounced',
   auth: resendAuth,
   displayName: 'Email Event',
-  description:
-    'Triggers when a selected email or contact event occurs in Resend',
+  description: 'Triggers when a selected email or contact event occurs in Resend',
   type: TriggerStrategy.WEBHOOK,
   props: {
     events: Property.StaticMultiSelectDropdown({
@@ -65,14 +104,17 @@ export const emailBounced = createTrigger({
         events: context.propsValue.events,
       },
     });
-    await context.store.put('webhookId', response.body.id);
+    await context.store.put(STORE_KEY, {
+      id: response.body.id,
+      signingSecret: response.body.signing_secret,
+    });
   },
   async onDisable(context) {
-    const webhookId = await context.store.get<string>('webhookId');
-    if (webhookId) {
+    const data = await context.store.get<{ id: string; signingSecret: string }>(STORE_KEY);
+    if (data?.id) {
       await httpClient.sendRequest({
         method: HttpMethod.DELETE,
-        url: `${BASE_URL}/webhooks/${webhookId}`,
+        url: `${BASE_URL}/webhooks/${data.id}`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
           token: context.auth.secret_text,
@@ -81,6 +123,18 @@ export const emailBounced = createTrigger({
     }
   },
   async run(context) {
+    const data = await context.store.get<{ id: string; signingSecret: string }>(STORE_KEY);
+
+    if (
+      !verifyResendWebhook({
+        rawBody: context.payload.rawBody,
+        headers: context.payload.headers,
+        signingSecret: data?.signingSecret ?? '',
+      })
+    ) {
+      return [];
+    }
+
     return [context.payload.body];
   },
   sampleData: {
