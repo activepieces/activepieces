@@ -1,27 +1,35 @@
-import { apId, JobData, UploadLogsBehavior, WorkerJobType } from '@activepieces/shared'
+import { apId, ExecutionType, isNil, JobData, ResumeReason, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { flowRunLogsService } from '../../flows/flow-run/logs/flow-run-logs-service'
+import { z } from 'zod'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 
+const LegacyExecuteFlowFields = z.object({
+    streamStepProgress: z.enum(StreamStepProgress).optional(),
+    progressUpdateType: z.string().optional(),
+    workerHandlerId: z.string().nullish(),
+    synchronousHandlerId: z.string().nullish(),
+})
+
+function deriveExecuteFlowMigrationFields(job: JobData): { streamStepProgress: StreamStepProgress, workerHandlerId: string | null } {
+    const legacy = LegacyExecuteFlowFields.parse(job)
+    return {
+        streamStepProgress: legacy.streamStepProgress ?? migrateProgressUpdateType(legacy.progressUpdateType),
+        workerHandlerId: legacy.workerHandlerId ?? legacy.synchronousHandlerId ?? null,
+    }
+}
+
 function createMigrations(log: FastifyBaseLogger): JobMigration[] {
-    const enrichFlowIdAndLogsUrl: JobMigration = {
+    const enrichFlowId: JobMigration = {
         runAtSchemaVersion: 0,
         migrate: async (job: JobData) => {
             if (job.jobType === WorkerJobType.EXECUTE_FLOW) {
                 const flowVersion = await flowVersionService(log).getOne(job.flowVersionId)
                 const logsFileId = 'logsFileId' in job ? job.logsFileId : apId()
-                const logsUploadUrl = await flowRunLogsService(log).constructUploadUrl({
-                    logsFileId,
-                    projectId: job.projectId,
-                    flowRunId: job.runId,
-                    behavior: UploadLogsBehavior.UPLOAD_DIRECTLY,
-                })
                 return {
                     ...job,
                     flowId: flowVersion!.flowId,
                     schemaVersion: 4,
                     logsFileId,
-                    logsUploadUrl,
                 }
             }
             return {
@@ -43,8 +51,73 @@ function createMigrations(log: FastifyBaseLogger): JobMigration[] {
             return { ...job, schemaVersion: 5 }
         },
     }
+    const renameProgressAndHandlerFields: JobMigration = {
+        runAtSchemaVersion: 5,
+        migrate: async (job: JobData) => {
+            if (job.jobType === WorkerJobType.EXECUTE_FLOW) {
+                return {
+                    ...job,
+                    schemaVersion: 6,
+                    ...deriveExecuteFlowMigrationFields(job),
+                }
+            }
+            return { ...job, schemaVersion: 6 }
+        },
+    }
+    const dropLogsUploadUrl: JobMigration = {
+        runAtSchemaVersion: 6,
+        migrate: async (job: JobData) => {
+            if (job.jobType !== WorkerJobType.EXECUTE_FLOW) {
+                return { ...job, schemaVersion: 7 }
+            }
+            const legacy = job as Record<string, unknown>
+            delete legacy['logsUploadUrl']
+            return {
+                ...job,
+                schemaVersion: 7,
+            }
+        },
+    }
+    const backfillRequiredExecuteFlowFields: JobMigration = {
+        runAtSchemaVersion: 7,
+        migrate: async (job: JobData) => {
+            if (job.jobType !== WorkerJobType.EXECUTE_FLOW) {
+                return { ...job, schemaVersion: 8 }
+            }
+            return {
+                ...job,
+                schemaVersion: 8,
+                ...deriveExecuteFlowMigrationFields(job),
+            }
+        },
+    }
+    const bridgeV8ToV9: JobMigration = {
+        runAtSchemaVersion: 8,
+        migrate: async (job: JobData) => ({ ...job, schemaVersion: 9 }),
+    }
+    const addResumeReason: JobMigration = {
+        runAtSchemaVersion: 9,
+        migrate: async (job: JobData) => {
+            if (job.jobType !== WorkerJobType.EXECUTE_FLOW || job.executionType !== ExecutionType.RESUME) {
+                return { ...job, schemaVersion: 10 }
+            }
+            const isLegacyRetry = job.payload.type === 'inline' && isNil(job.payload.value)
+            return {
+                ...job,
+                schemaVersion: 10,
+                resumeReason: isLegacyRetry ? ResumeReason.RETRY : ResumeReason.WAITPOINT,
+            }
+        },
+    }
 
-    return [enrichFlowIdAndLogsUrl, migratePayloadToUnion]
+    return [enrichFlowId, migratePayloadToUnion, renameProgressAndHandlerFields, dropLogsUploadUrl, backfillRequiredExecuteFlowFields, bridgeV8ToV9, addResumeReason]
+}
+
+function migrateProgressUpdateType(progressUpdateType: string | undefined): StreamStepProgress {
+    if (progressUpdateType === 'TEST_FLOW' || progressUpdateType === 'WEBHOOK_RESPONSE') {
+        return StreamStepProgress.WEBSOCKET
+    }
+    return StreamStepProgress.NONE
 }
 
 export const jobMigrations = (log: FastifyBaseLogger) => ({

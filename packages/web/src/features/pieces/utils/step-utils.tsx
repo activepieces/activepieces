@@ -101,6 +101,12 @@ export const stepUtils = {
           version: step.settings.pieceVersion,
           locale,
         });
+        const latestPieceVersion = await piecesApi.get({
+          name: step.settings.pieceName,
+          version: undefined,
+          locale,
+        });
+        piece.logoUrl = latestPieceVersion.logoUrl;
         const metadata = stepUtils.mapPieceToMetadata({
           piece,
           type: step.type === FlowActionType.PIECE ? 'action' : 'trigger',

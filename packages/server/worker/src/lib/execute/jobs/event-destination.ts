@@ -1,5 +1,8 @@
+import { safeHttp } from '@activepieces/server-utils'
 import {
+    EngineResponseStatus,
     EventDestinationJobData,
+    tryCatch,
     WorkerJobType,
 } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
@@ -8,20 +11,25 @@ import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '.
 export const eventDestinationJob: JobHandler<EventDestinationJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EVENT_DESTINATION,
     async execute(ctx: JobContext, data: EventDestinationJobData): Promise<FireAndForgetJobResult> {
-        const settings = workerSettings.getSettings()
-        const timeoutInSeconds = settings.EVENT_DESTINATION_TIMEOUT_SECONDS
+        const timeoutInSeconds = workerSettings.getSettings().EVENT_DESTINATION_TIMEOUT_SECONDS
 
-        ctx.log.info({ webhookUrl: data.webhookUrl, webhookId: data.webhookId }, 'Sending event destination')
-
-        const response = await fetch(data.webhookUrl, {
+        const { error } = await tryCatch(() => safeHttp.axios.request({
+            url: data.webhookUrl,
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data.payload),
-            signal: AbortSignal.timeout(timeoutInSeconds * 1000),
-        })
+            data: data.payload,
+            timeout: timeoutInSeconds * 1000,
+            validateStatus: () => true,
+        }))
 
-        ctx.log.info({ webhookUrl: data.webhookUrl, status: response.status }, 'Event destination sent')
+        if (error) {
+            ctx.log.warn({
+                webhookUrl: data.webhookUrl,
+                webhookId: data.webhookId,
+                error: error.message,
+            }, 'Event destination request failed before reaching the server')
+        }
 
-        return { kind: JobResultKind.FIRE_AND_FORGET }
+        return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
     },
 }

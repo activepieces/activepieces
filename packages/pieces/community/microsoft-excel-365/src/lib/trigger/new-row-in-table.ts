@@ -24,7 +24,8 @@ interface TableRow {
 // Helper function to get all rows from a specific table
 async function getTableRows(auth: OAuth2PropertyValue, workbookId: string, tableId: string, drivePath: string): Promise<TableRow[]> {
     try {
-        const client = createMSGraphClient(auth.access_token);
+        const cloud = auth.props?.['cloud'] as string | undefined;
+        const client = createMSGraphClient(auth.access_token, cloud);
         const response = await client
             .api(`${drivePath}/items/${workbookId}/workbook/tables/${encodeURIComponent(tableId)}/rows`)
             .get();

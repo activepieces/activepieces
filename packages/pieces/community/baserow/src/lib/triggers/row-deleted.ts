@@ -1,47 +1,37 @@
-import { Property, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { MarkdownVariant } from '@activepieces/shared';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
+import { baserowCommon, makeClient } from '../common';
+import { createWebhookTriggerHooks, dynamicWebhookInstructions } from '../common/webhook-trigger';
+
+const triggerHooks = createWebhookTriggerHooks({
+  events: ['rows.deleted'],
+  storeKey: 'baserow_row_deleted_trigger',
+});
+
 export const rowDeletedTrigger = createTrigger({
   name: 'baserow_row_deleted',
   auth: baserowAuth,
-  displayName: 'Row Deleted',
+  displayName: 'Deleted Row',
   description: 'Triggers when a row is deleted from a Baserow table.',
   type: TriggerStrategy.WEBHOOK,
   props: {
-    instructions: Property.MarkDown({
-      value: `
-## Setup Instructions
-
-1. In Baserow, click the **···** menu beside your table and select **Webhooks**.
-2. Click **Create webhook +**.
-3. Set the HTTP method to **POST**.
-4. Paste the following URL into the endpoint field:
-\`\`\`text
-{{webhookUrl}}
-\`\`\`
-5. Under events, select **Rows deleted**.
-6. Click **Save**.
-
-> **Note:** The payload contains only the deleted row IDs (\`row_ids\`), not the full row data.
-`,
-      variant: MarkdownVariant.INFO,
-    }),
+    table_id: baserowCommon.tableId(),
+    instructions: dynamicWebhookInstructions('Rows deleted'),
   },
   sampleData: {
-    table_id: 1,
-    database_id: 1,
-    workspace_id: 1,
-    event_id: 'event_123',
-    event_type: 'rows.deleted',
-    row_ids: [1],
+    id: 1,
   },
-  async onEnable() {
-    // Manual setup required — user registers the webhook URL in Baserow UI.
-  },
-  async onDisable() {
-    // Manual cleanup — user deletes the webhook in Baserow UI.
-  },
+  onEnable: triggerHooks.onEnable,
+  onDisable: triggerHooks.onDisable,
   async run(context) {
-    return [context.payload.body];
+    const body = context.payload.body as { row_ids?: number[] };
+    return (body.row_ids ?? []).map((id) => ({ id }));
+  },
+  async test(context) {
+    const tableId = context.propsValue.table_id;
+    if (!tableId) return [];
+    const client = await makeClient(context.auth);
+    const response = await client.listRows(tableId, 1, 5);
+    return response.results.map((row) => ({ id: row.id }));
   },
 });

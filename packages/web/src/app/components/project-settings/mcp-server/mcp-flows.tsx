@@ -1,16 +1,22 @@
-import { PopulatedMcpServer, FlowStatus } from '@activepieces/shared';
+import { FlowStatus, PopulatedMcpServer } from '@activepieces/shared';
 import { t } from 'i18next';
 
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 export function McpFlows({ mcpServer }: McpFlowsProps) {
   const flows = mcpServer?.flows ?? [];
 
   if (flows.length === 0) {
     return (
-      <div className="border rounded-lg px-4 py-3 text-sm text-muted-foreground">
-        {t('No MCP flows available')}
-      </div>
+      <Alert>
+        <AlertDescription>
+          {t(
+            'No MCP flows yet. Create a flow with an MCP Trigger to expose it as a tool on this server.',
+          )}
+        </AlertDescription>
+      </Alert>
     );
   }
 
@@ -31,9 +37,10 @@ export function McpFlows({ mcpServer }: McpFlowsProps) {
               className="flex items-center gap-1.5"
             >
               <div
-                className={`w-2 h-2 rounded-full ${
-                  isEnabled ? 'bg-success' : 'bg-gray-400'
-                }`}
+                className={cn(
+                  'w-2 h-2 rounded-full',
+                  isEnabled ? 'bg-success' : 'bg-gray-400',
+                )}
               />
               <span>{isEnabled ? t('On') : t('Off')}</span>
             </Badge>

@@ -149,7 +149,24 @@ export async function getVertexAIImageModelOptions(
     return { disabled: true, placeholder: 'Connect your account first', options: [] };
   }
   try {
-    const options = await fetchVertexAIModels(auth, location ?? 'us-central1', 'imagen');
+    const targetLocation = location ?? 'us-central1';
+    
+    const options = await fetchVertexAIModels(auth, targetLocation, 'imagen');
+
+    try {
+      const geminiModels = await fetchVertexAIModels(auth, targetLocation, 'gemini');
+      
+      const geminiImageModels = geminiModels.filter((model) => {
+        const name = model.value.toLowerCase();
+        return name.includes('image');
+      });
+
+      options.push(...geminiImageModels);
+    } catch {
+      // If the Gemini fetch fails for any reason, fail silently 
+      // and just return the Imagen models we already successfully fetched
+    }
+
     return { disabled: false, options };
   } catch {
     return {

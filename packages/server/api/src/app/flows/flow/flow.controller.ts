@@ -1,7 +1,6 @@
-import { ActivepiecesError, ApId, ApplicationEventName,
+import { ApId, ApplicationEventName,
     CountFlowsRequest,
     CreateFlowRequest,
-    ErrorCode,
     FlowOperationRequest,
     FlowOperationType,
     FlowStatus,
@@ -10,7 +9,6 @@ import { ActivepiecesError, ApId, ApplicationEventName,
     GetFlowQueryParamsRequest,
     GetFlowTemplateRequestQuery,
     GitPushOperationType,
-    isNil,
     ListFlowsRequest,
     Permission,
     PlatformUsageMetric,
@@ -20,7 +18,6 @@ import { ActivepiecesError, ApId, ApplicationEventName,
     SERVICE_KEY_SECURITY_OPENAPI,
     SharedTemplate,
 } from '@activepieces/shared'
-import dayjs from 'dayjs'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -113,7 +110,6 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
                 PlatformUsageMetric.ACTIVE_FLOWS,
             )
         }
-        await assertThatFlowIsNotBeingUsed(flow, userId)
         const updatedFlow = await flowService(request.log).update({
             id: request.params.id,
             userId: request.principal.type === PrincipalType.SERVICE ? null : userId,
@@ -124,10 +120,25 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
         applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.FLOW_UPDATED,
             data: {
+                flow: {
+                    id: updatedFlow.id,
+                    externalId: updatedFlow.externalId,
+                    created: updatedFlow.created,
+                    updated: updatedFlow.updated,
+                },
                 request: request.body,
                 flowVersion: flow.version,
             },
         })
+        for (const action of pickLifecycleActions({ operation: request.body, previousStatus: flow.status })) {
+            applicationEvents(request.log).sendUserEvent(request, {
+                action,
+                data: {
+                    flow: updatedFlow,
+                    flowVersion: updatedFlow.version,
+                },
+            })
+        }
         return updatedFlow
     })
 
@@ -199,6 +210,32 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
     })
 }
 
+function pickLifecycleActions({ operation, previousStatus }: PickLifecycleActionsParams): ApplicationEventName[] {
+    if (operation.type === FlowOperationType.LOCK_AND_PUBLISH) {
+        const actions: ApplicationEventName[] = [ApplicationEventName.FLOW_PUBLISHED]
+        const newStatus = operation.request.status ?? FlowStatus.ENABLED
+        const transitionAction = pickTransitionAction({ previousStatus, newStatus })
+        if (transitionAction) {
+            actions.push(transitionAction)
+        }
+        return actions
+    }
+    if (operation.type === FlowOperationType.CHANGE_STATUS) {
+        const transitionAction = pickTransitionAction({ previousStatus, newStatus: operation.request.status })
+        return transitionAction ? [transitionAction] : []
+    }
+    return []
+}
+
+function pickTransitionAction({ previousStatus, newStatus }: PickTransitionActionParams): ApplicationEventName | undefined {
+    if (newStatus === previousStatus) {
+        return undefined
+    }
+    return newStatus === FlowStatus.ENABLED
+        ? ApplicationEventName.FLOW_ACTIVATED
+        : ApplicationEventName.FLOW_DEACTIVATED
+}
+
 function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
     if (operation.type === FlowOperationType.IMPORT_FLOW) {
         const clearSampleData = {
@@ -206,57 +243,25 @@ function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
             sampleDataInputFileId: undefined,
             lastTestDate: undefined,
         }
-        const trigger = flowStructureUtil.transferStep(operation.request.trigger, (step) => {
-            return {
-                ...step,
-                settings: {
-                    ...step.settings,
-                    sampleData: {
-                        ...step.settings.sampleData,
-                        ...clearSampleData,
-                    },
+        const trigger = flowStructureUtil.transferStep(operation.request.trigger, (step) => ({
+            ...step,
+            settings: {
+                ...step.settings,
+                sampleData: {
+                    ...step.settings.sampleData,
+                    ...clearSampleData,
                 },
-            }
-        }) as FlowTrigger
+            },
+        })) as FlowTrigger
         return {
             ...operation,
             request: {
                 ...operation.request,
-                trigger: {
-                    ...trigger,
-                    settings: {
-                        ...trigger.settings,
-                        sampleData: {
-                            ...trigger.settings.sampleData,
-                            ...clearSampleData,
-                        },
-                    },
-                },
+                trigger,
             },
         }
     }
     return operation
-}
-
-async function assertThatFlowIsNotBeingUsed(
-    flow: PopulatedFlow,
-    userId: string,
-): Promise<void> {
-    const currentTime = dayjs()
-    if (
-        !isNil(flow.version.updatedBy) &&
-        flow.version.updatedBy !== userId &&
-        currentTime.diff(dayjs(flow.version.updated), 'minute') <= 1
-    ) {
-        throw new ActivepiecesError({
-            code: ErrorCode.FLOW_IN_USE,
-            params: {
-                flowVersionId: flow.version.id,
-                message:
-                    'Flow is being used by another user in the last minute. Please try again later.',
-            },
-        })
-    }
 }
 
 const CreateFlowRequestOptions = {
@@ -379,4 +384,12 @@ const DeleteFlowRequestOptions = {
     },
 }
 
+type PickLifecycleActionsParams = {
+    operation: FlowOperationRequest
+    previousStatus: FlowStatus
+}
 
+type PickTransitionActionParams = {
+    previousStatus: FlowStatus
+    newStatus: FlowStatus
+}

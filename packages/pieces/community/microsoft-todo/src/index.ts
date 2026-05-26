@@ -1,4 +1,5 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { getGraphBaseUrl } from './lib/common/microsoft-cloud';
 import {
   createPiece,
   OAuth2PropertyValue,
@@ -15,6 +16,8 @@ import { findTaskListByNameAction } from './lib/actions/find-task-list-by-name';
 import { getTaskAction } from './lib/actions/get-task';
 import { updateTaskAction } from './lib/actions/update-task';
 import { updateTaskListAction } from './lib/actions/update-task-list';
+import { listTasksAction } from './lib/actions/list-tasks';
+import { listTaskListsAction } from './lib/actions/list-task-lists';
 
 import { microsoftToDoAuth } from './lib/auth';
 import { newListCreatedTrigger } from './lib/triggers/new-list-created';
@@ -33,6 +36,8 @@ export const microsoftTodo = createPiece({
   actions: [
     createTask,
     createTaskListAction,
+    listTasksAction,
+    listTaskListsAction,
     updateTaskAction,
     updateTaskListAction,
     completeTaskAction,
@@ -42,7 +47,10 @@ export const microsoftTodo = createPiece({
     findTaskListByNameAction,
     findTaskByTitleAction,
     createCustomApiCallAction({
-      baseUrl: () => 'https://graph.microsoft.com/v1.0/me/todo',
+      baseUrl: (auth) => {
+        const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+        return getGraphBaseUrl(cloud) + '/v1.0/me/todo';
+      },
       auth: microsoftToDoAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,

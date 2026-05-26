@@ -1,5 +1,6 @@
 import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { getPowerBiBaseUrl, getMicrosoftCloudFromAuth } from '../common/microsoft-cloud';
 import { microsoftPowerBiAuth } from '../auth';
 
 type PowerBIRow = {
@@ -29,9 +30,10 @@ export const pushRowsToDatasetTableAction = createAction({
                 }
 
                 try {
+                    const cloud = getMicrosoftCloudFromAuth(auth);
                     const response = await httpClient.sendRequest<{value:{name:string,id:string}[]}>({
                         method: HttpMethod.GET,
-                        url: 'https://api.powerbi.com/v1.0/myorg/datasets',
+                        url: `${getPowerBiBaseUrl(cloud)}/datasets`,
                         headers: {
                             'Authorization': `Bearer ${auth.access_token}`
                         }
@@ -71,9 +73,10 @@ export const pushRowsToDatasetTableAction = createAction({
                 }
 
                 try {
+                    const cloud = getMicrosoftCloudFromAuth(auth);
                     const response = await httpClient.sendRequest<{value:{name:string}[]}>({
                         method: HttpMethod.GET,
-                        url: `https://api.powerbi.com/v1.0/myorg/datasets/${datasetId}/tables`,
+                        url: `${getPowerBiBaseUrl(cloud)}/datasets/${datasetId}/tables`,
                         headers: {
                             'Authorization': `Bearer ${auth.access_token}`
                         }
@@ -142,7 +145,8 @@ export const pushRowsToDatasetTableAction = createAction({
         }
         
         const skipRefresh = context.propsValue.skip_refresh;
-        const baseUrl = 'https://api.powerbi.com/v1.0/myorg';
+        const cloud = getMicrosoftCloudFromAuth(auth);
+        const baseUrl = getPowerBiBaseUrl(cloud);
 
         try {
             // 1. Get dataset info

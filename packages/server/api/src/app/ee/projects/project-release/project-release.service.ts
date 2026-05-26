@@ -4,6 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { buildPaginator } from '../../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
+import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
 import { gitRepoService } from './git-sync/git-sync.service'
 import { ProjectReleaseEntity } from './project-release.entity'
@@ -17,7 +18,7 @@ export const projectReleaseService = {
         const lockKey = `project-release:${params.projectId}`
         const lock = await memoryLock.acquire(lockKey)
         try {
-            const diffs = await findDiffStates(projectId, ownerId, params, log)
+            const diffs = await findDiffStates({ projectId, userId: ownerId, platformId, params, log })
             const flowIdsToApply = params.selectedFlowsIds ?? diffs.flows.map((flow) => flow.flowState.id)
             const filteredDiffs = await projectDiffService.filterFlows(flowIdsToApply, diffs)
             await projectStateService(log).apply({
@@ -44,8 +45,8 @@ export const projectReleaseService = {
             await lock.release()
         }
     },
-    async releasePlan(projectId: ProjectId, userId: ApId, params: DiffReleaseRequest | CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<ProjectSyncPlan> {
-        const diffs = await findDiffStates(projectId, userId, params, log)
+    async releasePlan({ projectId, userId, platformId, params, log }: ReleasePlanParams): Promise<ProjectSyncPlan> {
+        const diffs = await findDiffStates({ projectId, userId, platformId, params, log })
         return toResponse({
             diffs,
             errors: [],
@@ -97,9 +98,11 @@ export const projectReleaseService = {
         return projectRelease
     },
 }
-async function findDiffStates(projectId: ProjectId, ownerId: ApId, params: DiffReleaseRequest | CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<DiffState> {
-    const newState = await getStateFromCreateRequest(projectId, ownerId, params, log) as ProjectState
-    const currentState = await projectStateService(log).getProjectState(projectId, log) as ProjectState
+async function findDiffStates({ projectId, userId, platformId, params, log }: FindDiffStatesParams): Promise<DiffState> {
+    const [newState, currentState] = await Promise.all([
+        getStateFromCreateRequest({ projectId, userId, platformId, params, log }),
+        projectStateService(log).getProjectState(projectId, log),
+    ])
     const diffs = await projectDiffService.diff({
         newState,
         currentState,
@@ -149,22 +152,35 @@ async function toResponse(params: toResponseParams): Promise<ProjectSyncPlan> {
         tables,
     }
 }
-async function getStateFromCreateRequest(projectId: string, ownerId: ApId, request: DiffReleaseRequest | CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<ProjectState> {
-    switch (request.type) {
+async function getStateFromCreateRequest({ projectId, userId, platformId, params, log }: GetStateFromCreateRequestParams): Promise<ProjectState> {
+    switch (params.type) {
         case ProjectReleaseType.GIT: {
             const gitRepo = await gitRepoService(log).getOneByProjectOrThrow({ projectId })
-            return gitRepoService(log).getState({ gitRepo, userId: ownerId, log })
+            return gitRepoService(log).getState({ gitRepo, userId, log })
         }
         case ProjectReleaseType.PROJECT: {
-            return projectStateService(log).getProjectState(request.targetProjectId, log)
+            await assertTargetProjectOwnedByPlatform({ targetProjectId: params.targetProjectId, platformId, log })
+            return projectStateService(log).getProjectState(params.targetProjectId, log)
         }
         case ProjectReleaseType.ROLLBACK: {
             const projectRelease = await projectReleaseService.getOneOrThrow({
-                id: request.projectReleaseId,
+                id: params.projectReleaseId,
                 projectId,
             })
             return projectStateService(log).getStateFromRelease(projectId, projectRelease.fileId, log)
         }
+    }
+}
+
+async function assertTargetProjectOwnedByPlatform({ targetProjectId, platformId, log }: { targetProjectId: string, platformId: PlatformId, log: FastifyBaseLogger }): Promise<void> {
+    const targetProject = await projectService(log).getOne(targetProjectId)
+    if (isNil(targetProject) || targetProject.platformId !== platformId) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {
+                message: 'Target project does not belong to the current platform',
+            },
+        })
     }
 }
 
@@ -184,6 +200,30 @@ type toResponseParams = {
 type ListParams = {
     projectId: ProjectId
     request: ListProjectReleasesRequest
+    log: FastifyBaseLogger
+}
+
+type ReleasePlanParams = {
+    projectId: ProjectId
+    userId: ApId
+    platformId: PlatformId
+    params: DiffReleaseRequest | CreateProjectReleaseRequestBody
+    log: FastifyBaseLogger
+}
+
+type FindDiffStatesParams = {
+    projectId: ProjectId
+    userId: ApId
+    platformId: PlatformId
+    params: DiffReleaseRequest | CreateProjectReleaseRequestBody
+    log: FastifyBaseLogger
+}
+
+type GetStateFromCreateRequestParams = {
+    projectId: ProjectId
+    userId: ApId
+    platformId: PlatformId
+    params: DiffReleaseRequest | CreateProjectReleaseRequestBody
     log: FastifyBaseLogger
 }
 

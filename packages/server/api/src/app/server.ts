@@ -13,17 +13,28 @@ import { Socket } from 'socket.io'
 import { getAdapter, setupApp } from './app'
 import { websocketService } from './core/websockets.service'
 import { healthModule } from './health/health.module'
+import { embedSecurity } from './helper/embed-security'
 import { errorHandler } from './helper/error-handler'
 import { exceptionHandler } from './helper/exception-handler'
+import { networkUtils } from './helper/network-utils'
 import { rejectedPromiseHandler } from './helper/promise-handler'
 import { system } from './helper/system/system'
 import { AppSystemProp } from './helper/system/system-props'
+import { mcpOAuthHttpController, mcpPlatformHttpController } from './mcp/oauth/mcp-oauth.controller'
+import { mcpOAuthRootModule } from './mcp/oauth/mcp-oauth.module'
 
 
 export let app: FastifyInstance | undefined = undefined
 
 export const setupServer = async (): Promise<FastifyInstance> => {
     app = await setupBaseApp()
+
+    // MCP OAuth endpoints at domain root (required by MCP spec)
+    if (system.isApp()) {
+        await app.register(mcpOAuthRootModule)
+        await app.register(mcpOAuthHttpController, { prefix: '/mcp' })
+        await app.register(mcpPlatformHttpController, { prefix: '/mcp/platform' })
+    }
 
     await app.register(async (apiApp) => {
         await apiApp.register(healthModule)
@@ -56,11 +67,15 @@ export const setupServer = async (): Promise<FastifyInstance> => {
         await app.register(fastifyStatic, {
             root: frontendPath,
             setHeaders: (res, filepath) => {
-                if (filepath.endsWith('.html')) {
-                    void res.setHeader('Cache-Control', 'public, max-age=120')
+                const normalized = filepath.replace(/\\/g, '/')
+                if (normalized.endsWith('.html')) {
+                    void res.setHeader('Cache-Control', 'no-cache')
+                }
+                else if (normalized.includes('/assets/')) {
+                    void res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
                 }
                 else {
-                    void res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+                    void res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate')
                 }
             },
         })
@@ -71,14 +86,23 @@ export const setupServer = async (): Promise<FastifyInstance> => {
             return reply.code(404).send({ statusCode: 404, error: 'Not Found', message: 'Route not found' })
         }
         if (system.isApp() && environment !== ApEnvironment.DEVELOPMENT) {
+            if (hasStaticFileExtension(request.url)) {
+                return reply.code(404).send({ statusCode: 404, error: 'Not Found', message: 'Asset not found' })
+            }
             return reply.sendFile('index.html')
         }
         return reply.code(404).send({ statusCode: 404, error: 'Not Found', message: 'Route not found' })
     })
 
-    app.addHook('onSend', async (_request, reply) => {
+    app.addHook('onSend', async (request, reply) => {
         void reply.header('X-Content-Type-Options', 'nosniff')
         void reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
+        if (!reply.hasHeader('Content-Security-Policy')) {
+            const frameAncestors = await embedSecurity(request.log).getFrameAncestorsHeader({
+                hostname: networkUtils.getRequestHost(request),
+            })
+            void reply.header('Content-Security-Policy', frameAncestors)
+        }
     })
 
     return app
@@ -152,6 +176,15 @@ async function setupBaseApp(): Promise<FastifyInstance> {
         app.getDefaultJsonParser('ignore', 'ignore'),
     )
     return app
+}
+
+const STATIC_FILE_EXTENSIONS = new Set(['.js', '.css', '.map', '.json', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot'])
+
+function hasStaticFileExtension(url: string): boolean {
+    const pathname = url.split('?')[0]
+    const lastDot = pathname.lastIndexOf('.')
+    if (lastDot === -1) return false
+    return STATIC_FILE_EXTENSIONS.has(pathname.slice(lastDot))
 }
 
 type ZodLike = { safeParse: (data: unknown) => { success: boolean, data?: unknown } }

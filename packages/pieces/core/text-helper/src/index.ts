@@ -2,6 +2,7 @@ import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { concat } from './lib/actions/concat';
 import { find } from './lib/actions/find';
+import { findAll } from './lib/actions/find-all';
 import { htmlToMarkdown } from './lib/actions/html-to-markdown';
 import { markdownToHTML } from './lib/actions/markdown-to-html';
 import { replace } from './lib/actions/replace';
@@ -10,6 +11,7 @@ import { stripHtmlContent } from './lib/actions/strip-html';
 import { slugifyAction } from './lib/actions/slugify';
 import { defaultValue } from './lib/actions/default-value';
 import { jsonToAsciiTable } from './lib/actions/json-to-ascii-table';
+import { extractFromHtml } from './lib/actions/extract-from-html';
 
 export const textHelper = createPiece({
   displayName: 'Text Helper',
@@ -26,6 +28,8 @@ export const textHelper = createPiece({
     'AdamSelene',
     'Anmol-Gup',
     'geekyme',
+    'bertrandong',
+    'onyedikachi-david',
   ],
   categories: [PieceCategory.CORE],
   actions: [
@@ -33,12 +37,14 @@ export const textHelper = createPiece({
     replace,
     split,
     find,
+    findAll,
     markdownToHTML,
     htmlToMarkdown,
     stripHtmlContent,
     slugifyAction,
     defaultValue,
     jsonToAsciiTable,
+    extractFromHtml,
   ],
   triggers: [],
 });

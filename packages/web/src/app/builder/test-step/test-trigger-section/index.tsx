@@ -1,22 +1,25 @@
-import { FlowTrigger, flowStructureUtil, isNil } from '@activepieces/shared';
+import {
+  FlowTrigger,
+  FlowTriggerType,
+  flowStructureUtil,
+  isNil,
+} from '@activepieces/shared';
 import { t } from 'i18next';
-import React, { useRef, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { Zap } from 'lucide-react';
+import React from 'react';
 
-import { ChatDrawerSource } from '@/app/builder/types';
 import { triggerEventHooks } from '@/features/flows';
-import { piecesHooks } from '@/features/pieces';
 
 import { useBuilderStateContext } from '../../builder-hooks';
-import { McpToolTestingDialog } from '../custom-test-step/mcp-tool-testing-dialog';
+import { TestPanelHeader } from '../test-panel-header';
+import { TestPanelViewToggle } from '../test-panel-view-toggle';
+import { useTriggerTestRunner } from '../test-runner-context';
 import { TestSampleDataViewer } from '../test-sample-data-viewer';
-import { testStepHooks } from '../utils/test-step-hooks';
 
 import { FirstTimeTestingSection } from './first-time-testing-section';
 import { ManualWebhookTestButton } from './manual-webhook-test-button';
 import { SimulationNote } from './simulation-section';
 import { TriggerEventSelect } from './trigger-event-select';
-import { TestType, triggerEventUtils } from './trigger-event-utils';
 
 type TestTriggerSectionProps = {
   isSaving: boolean;
@@ -27,115 +30,81 @@ type TestTriggerSectionProps = {
 
 const TestTriggerSection = React.memo(
   ({ isSaving, flowVersionId, flowId }: TestTriggerSectionProps) => {
-    const form = useFormContext<Pick<FlowTrigger, 'name' | 'settings'>>();
-    const formValues = form.getValues();
-    const isValid = form.formState.isValid;
-    const abortControllerRef = useRef<AbortController>(new AbortController());
-    const [isTestingDialogOpen, setIsTestingDialogOpen] = useState(false);
-    const { pieceModel, isLoading: isPieceLoading } = piecesHooks.usePiece({
-      name: formValues.settings.pieceName,
-      version: formValues.settings.pieceVersion,
-    });
-
-    const trigger = pieceModel?.triggers?.[formValues.settings.triggerName];
-    const mockData =
-      pieceModel?.triggers?.[formValues.settings.triggerName]?.sampleData;
-
-    const [errorMessage, setErrorMessage] = useState<string | undefined>(
-      undefined,
+    const runner = useTriggerTestRunner();
+    const currentStep = useBuilderStateContext((state) =>
+      state.selectedStep
+        ? flowStructureUtil.getStep(
+            state.selectedStep,
+            state.flowVersion.trigger,
+          )
+        : null,
     );
 
-    const {
-      sampleData,
-      sampleDataInput,
-      setChatDrawerOpenSource,
-      lastTestDate,
-    } = useBuilderStateContext((state) => {
-      const step = flowStructureUtil.getStep(
-        formValues.name,
-        state.flowVersion.trigger,
-      );
-      return {
-        sampleData: state.outputSampleData[formValues.name],
-        sampleDataInput: state.inputSampleData[formValues.name],
-        setChatDrawerOpenSource: state.setChatDrawerOpenSource,
-        lastTestDate: step?.settings?.sampleData?.lastTestDate,
-      };
-    });
+    const stepName = currentStep?.name;
+    const { sampleData, sampleDataInput, lastTestDate } =
+      useBuilderStateContext((state) => ({
+        sampleData: stepName ? state.outputSampleData[stepName] : undefined,
+        sampleDataInput: stepName ? state.inputSampleData[stepName] : undefined,
+        lastTestDate:
+          stepName && state.selectedStep
+            ? findTriggerLastTestDate(state.flowVersion.trigger, stepName)
+            : undefined,
+      }));
 
-    const onTestSuccess = async () => {
-      await refetch();
-    };
-
-    const { mutate: saveMockAsSampleData, isPending: isSavingMockdata } =
-      testStepHooks.useSaveMockData({
-        onSuccess: onTestSuccess,
-      });
-
-    const {
-      mutate: simulateTrigger,
-      isPending: isSimulating,
-      reset: resetSimulation,
-    } = testStepHooks.useSimulateTrigger({
-      setErrorMessage,
-      onSuccess: async () => {
-        await onTestSuccess();
-        setIsTestingDialogOpen(false);
-      },
-    });
-    const { mutate: pollTrigger, isPending: isPollingTesting } =
-      testStepHooks.usePollTrigger({
-        setErrorMessage,
-        onSuccess: onTestSuccess,
-      });
-
-    const { pollResults, refetch } = triggerEventHooks.usePollResults(
+    const { pollResults } = triggerEventHooks.usePollResults(
       flowVersionId,
       flowId,
     );
 
-    const sampleDataSelected = !isNil(lastTestDate) || !isNil(errorMessage);
+    if (!runner || !currentStep || currentStep.type !== FlowTriggerType.PIECE) {
+      return null;
+    }
 
+    const {
+      pieceModel,
+      isPieceLoading,
+      testType,
+      mockData,
+      isValid,
+      isSimulating,
+      isSavingMockdata,
+      isPollingTesting,
+      errorMessage,
+      isTestingDialogOpen,
+      setIsTestingDialogOpen,
+      abortControllerRef,
+      saveMockAsSampleData,
+      resetSimulation,
+      fireTest,
+    } = runner;
+
+    const sampleDataSelected = !isNil(lastTestDate) || !isNil(errorMessage);
     const isTestedBefore = !isNil(lastTestDate);
     const showFirstTimeTestingSection = !isTestedBefore && !isSimulating;
 
-    if (isPieceLoading || isNil(trigger)) {
-      return null;
+    if (isPieceLoading || isNil(testType)) {
+      return (
+        <div className="flex flex-col h-full">
+          <TestPanelHeader status="idle" />
+          <div className="flex justify-end px-3 py-2 shrink-0">
+            <TestPanelViewToggle />
+          </div>
+        </div>
+      );
     }
-    const testType: TestType = triggerEventUtils.getTestType({
-      triggerName: formValues.settings.triggerName,
-      pieceName: formValues.settings.pieceName,
-      trigger: trigger,
-    });
 
     const showSampleDataViewer =
       sampleDataSelected && !isSimulating && !isSavingMockdata;
 
-    const onTest = () => {
-      switch (testType) {
-        case 'chat-trigger':
-          setChatDrawerOpenSource(ChatDrawerSource.TEST_STEP);
-          simulateTrigger(abortControllerRef.current.signal);
-          break;
-        case 'simulation':
-        case 'webhook':
-          simulateTrigger(abortControllerRef.current.signal);
-          break;
-        case 'polling':
-          pollTrigger();
-          break;
-        case 'mcp-tool':
-          setIsTestingDialogOpen(true);
-          break;
-      }
-    };
+    const triggerName = currentStep.settings.triggerName;
     const getSimulationNote = () => {
       switch (testType) {
         case 'simulation':
           return t('testPieceWebhookTriggerNote', {
             pieceName: pieceModel?.displayName,
-            triggerName:
-              pieceModel?.triggers[formValues.settings.triggerName].displayName,
+            triggerName: triggerName
+              ? pieceModel?.triggers[triggerName]?.displayName
+              : undefined,
           });
         case 'webhook':
           return (
@@ -163,30 +132,48 @@ const TestTriggerSection = React.memo(
     };
 
     return (
-      <div>
+      <div className="flex flex-col h-full">
         {showFirstTimeTestingSection && !errorMessage && (
-          <FirstTimeTestingSection
-            isValid={isValid}
-            testType={testType}
-            isTesting={isPollingTesting || isSimulating || isTestingDialogOpen}
-            mockData={mockData}
-            isSaving={isSaving || isSavingMockdata}
-            onSimulateTrigger={() => {
-              if (testType === 'chat-trigger') {
-                setChatDrawerOpenSource(ChatDrawerSource.TEST_STEP);
-              }
-              simulateTrigger(abortControllerRef.current.signal);
-            }}
-            onPollTrigger={pollTrigger}
-            onMcpToolTesting={() => setIsTestingDialogOpen(true)}
-            onSaveMockAsSampleData={saveMockAsSampleData}
-          />
+          <div className="flex flex-col h-full">
+            <TestPanelHeader status="idle" />
+            <div className="flex justify-end px-3 py-2 shrink-0">
+              <TestPanelViewToggle />
+            </div>
+            <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
+              <div className="flex items-center justify-center size-12 rounded-full bg-primary/10 text-primary">
+                <Zap className="size-6" />
+              </div>
+              <div className="flex flex-col gap-1.5 max-w-[280px]">
+                <span className="text-sm font-medium text-foreground">
+                  {t('No sample data yet')}
+                </span>
+                <span className="text-xs text-muted-foreground leading-relaxed">
+                  {t(
+                    'Test the trigger to capture sample data. You can then use the result in the following steps.',
+                  )}
+                </span>
+              </div>
+              <FirstTimeTestingSection
+                isValid={isValid}
+                testType={testType}
+                isTesting={
+                  isPollingTesting || isSimulating || isTestingDialogOpen
+                }
+                mockData={mockData}
+                isSaving={isSaving || isSavingMockdata}
+                onSimulateTrigger={fireTest}
+                onPollTrigger={fireTest}
+                onMcpToolTesting={fireTest}
+                onSaveMockAsSampleData={saveMockAsSampleData}
+              />
+            </div>
+          </div>
         )}
         {(!showFirstTimeTestingSection || errorMessage) && (
           <>
             {showSampleDataViewer && (
               <TestSampleDataViewer
-                onRetest={onTest}
+                onRetest={fireTest}
                 hideCancel={true}
                 isValid={isValid}
                 consoleLogs={null}
@@ -215,17 +202,18 @@ const TestTriggerSection = React.memo(
             )}
           </>
         )}
-        {testType === 'mcp-tool' && (
-          <McpToolTestingDialog
-            open={isTestingDialogOpen}
-            onOpenChange={setIsTestingDialogOpen}
-            onTestingSuccess={onTestSuccess}
-          />
-        )}
       </div>
     );
   },
 );
 TestTriggerSection.displayName = 'TestTriggerSection';
+
+const findTriggerLastTestDate = (
+  trigger: FlowTrigger,
+  stepName: string,
+): string | undefined => {
+  const step = flowStructureUtil.getStep(stepName, trigger);
+  return step?.settings?.sampleData?.lastTestDate;
+};
 
 export { TestTriggerSection };

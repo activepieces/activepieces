@@ -1,12 +1,13 @@
 import path from 'path'
+import { environmentMigrations } from '@activepieces/server-utils'
 import { assertNotNullOrUndefined } from '@activepieces/shared'
-import { environmentMigrations } from './env-migrations'
 
-export type SystemProp = AppSystemProp | WorkerSystemProp
+export type SystemProp = AppSystemProp
 
 let cachedVersion: string | undefined
 
 export enum AppSystemProp {
+    ALLOWED_EMBED_ORIGINS = 'ALLOWED_EMBED_ORIGINS',
     API_KEY = 'API_KEY',
     TEMPLATES_API_KEY = 'TEMPLATES_API_KEY',
     TEMPLATE_MANAGER_API_KEY = 'TEMPLATE_MANAGER_API_KEY',
@@ -21,9 +22,11 @@ export enum AppSystemProp {
     CLOUD_AUTH_ENABLED = 'CLOUD_AUTH_ENABLED',
     CLOUDFLARE_API_BASE = 'CLOUDFLARE_API_BASE',
     CLOUDFLARE_API_TOKEN = 'CLOUDFLARE_API_TOKEN',
+    CLOUDFLARE_SAAS_FALLBACK_ORIGIN = 'CLOUDFLARE_SAAS_FALLBACK_ORIGIN',
     CLOUDFLARE_ZONE_ID = 'CLOUDFLARE_ZONE_ID',
     CONFIG_PATH = 'CONFIG_PATH',
     DB_TYPE = 'DB_TYPE',
+    DEFAULT_CONCURRENT_JOBS_LIMIT = 'DEFAULT_CONCURRENT_JOBS_LIMIT',
     DEV_PIECES = 'DEV_PIECES',
     EDITION = 'EDITION',
     ENABLE_FLOW_ON_PUBLISH = 'ENABLE_FLOW_ON_PUBLISH',
@@ -48,7 +51,6 @@ export enum AppSystemProp {
     LOKI_PASSWORD = 'LOKI_PASSWORD',
     LOKI_URL = 'LOKI_URL',
     LOKI_USERNAME = 'LOKI_USERNAME',
-    MAX_CONCURRENT_JOBS_PER_PROJECT = 'MAX_CONCURRENT_JOBS_PER_PROJECT',
     MAX_FIELDS_PER_TABLE = 'MAX_FIELDS_PER_TABLE',
     MAX_FILE_SIZE_MB = 'MAX_FILE_SIZE_MB',
     MAX_FLOW_RUN_LOG_SIZE_MB = 'MAX_FLOW_RUN_LOG_SIZE_MB',
@@ -56,8 +58,8 @@ export enum AppSystemProp {
     WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB = 'WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB',
     MAX_RECORDS_PER_TABLE = 'MAX_RECORDS_PER_TABLE',
     OTEL_ENABLED = 'OTEL_ENABLED',
+    PAGE_ONCALL_WEBHOOK = 'PAGE_ONCALL_WEBHOOK',
     PAUSED_FLOW_TIMEOUT_DAYS = 'PAUSED_FLOW_TIMEOUT_DAYS',
-    PIECES_CACHE_MAX_ENTRIES = 'PIECES_CACHE_MAX_ENTRIES',
     PIECES_SYNC_MODE = 'PIECES_SYNC_MODE',
     WORKERS = 'WORKERS',
     POSTGRES_DATABASE = 'POSTGRES_DATABASE',
@@ -117,6 +119,14 @@ export enum AppSystemProp {
     WEBHOOK_TIMEOUT_SECONDS = 'WEBHOOK_TIMEOUT_SECONDS',
     OPENROUTER_PROVISION_KEY = 'OPENROUTER_PROVISION_KEY',
     EVENT_DESTINATION_TIMEOUT_SECONDS = 'EVENT_DESTINATION_TIMEOUT_SECONDS',
+    CANARY_APP_URL = 'CANARY_APP_URL',
+    IS_CANARY_APP = 'IS_CANARY_APP',
+    SSRF_ALLOW_LIST = 'SSRF_ALLOW_LIST',
+    NETWORK_MODE = 'NETWORK_MODE',
+    CONTAINER_TYPE = 'CONTAINER_TYPE',
+    FRONTEND_URL = 'FRONTEND_URL',
+    PORT = 'PORT',
+    CONSOLE_API_SECRET_KEY = 'CONSOLE_API_SECRET_KEY',
 }
 
 export enum ContainerType {
@@ -125,36 +135,24 @@ export enum ContainerType {
     WORKER_AND_APP = 'WORKER_AND_APP',
 }
 
-export enum WorkerSystemProp {
-    WORKER_TOKEN = 'WORKER_TOKEN',
-    CONTAINER_TYPE = 'CONTAINER_TYPE',
-    FRONTEND_URL = 'FRONTEND_URL',
-    PORT = 'PORT',
-
-    // Optional
-    PLATFORM_ID_FOR_DEDICATED_WORKER = 'PLATFORM_ID_FOR_DEDICATED_WORKER',
-    PRE_WARM_CACHE = 'PRE_WARM_CACHE',
-}
-
-
 export const environmentVariables = {
     hasAppModules(): boolean {
-        const environment = this.getEnvironment(WorkerSystemProp.CONTAINER_TYPE) ?? ContainerType.WORKER_AND_APP
+        const environment = this.getEnvironment(AppSystemProp.CONTAINER_TYPE) ?? ContainerType.WORKER_AND_APP
         return [ContainerType.APP, ContainerType.WORKER_AND_APP].includes(environment as ContainerType)
     },
-    getNumberEnvironment: (prop: WorkerSystemProp | AppSystemProp): number | undefined => {
+    getNumberEnvironment: (prop: AppSystemProp): number | undefined => {
         const value = environmentVariables.getEnvironment(prop)
         return value ? parseInt(value) : undefined
     },
-    getBooleanEnvironment: (prop: WorkerSystemProp | AppSystemProp): boolean | undefined => {
+    getBooleanEnvironment: (prop: AppSystemProp): boolean | undefined => {
         const value = environmentVariables.getEnvironment(prop)
         return value ? value === 'true' : undefined
     },
-    getEnvironment: (prop: WorkerSystemProp | AppSystemProp): string | undefined => {
+    getEnvironment: (prop: AppSystemProp): string | undefined => {
         const environmnetVariables = environmentMigrations.migrate()
         return environmnetVariables['AP_' + prop]
     },
-    getEnvironmentOrThrow: (prop: WorkerSystemProp | AppSystemProp): string => {
+    getEnvironmentOrThrow: (prop: AppSystemProp): string => {
         const value = environmentVariables.getEnvironment(prop)
         assertNotNullOrUndefined(value, `Environment variable ${prop} is not set`)
         return value

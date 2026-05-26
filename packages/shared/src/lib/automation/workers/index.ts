@@ -13,6 +13,11 @@ export enum WorkerMachineType {
     DEDICATED = 'DEDICATED',
 }
 
+export enum NetworkMode {
+    UNRESTRICTED = 'UNRESTRICTED',
+    STRICT = 'STRICT',
+}
+
 
 export const MachineInformation = z.object({
     cpuUsagePercentage: z.number(),
@@ -42,6 +47,7 @@ export type WorkerMachine = z.infer<typeof WorkerMachine>
 export const WorkerMachineWithStatus = WorkerMachine.extend({
     status: z.nativeEnum(WorkerMachineStatus),
     type: z.nativeEnum(WorkerMachineType),
+    workerGroupId: z.string().optional(),
 })
 
 export type WorkerMachineWithStatus = z.infer<typeof WorkerMachineWithStatus>
@@ -49,7 +55,6 @@ export type WorkerMachineWithStatus = z.infer<typeof WorkerMachineWithStatus>
 export const ConsumeJobRequest = z.object({
     jobId: z.string(),
     jobData: JobData,
-    timeoutInSeconds: z.number(),
     attempsStarted: z.number(),
     engineToken: z.string(),
     token: z.string(),
@@ -61,7 +66,7 @@ export type ConsumeJobRequest = z.infer<typeof ConsumeJobRequest>
 export const ConsumeJobResponse = z.object({
     status: z.nativeEnum(EngineResponseStatus),
     errorMessage: z.string().optional(),
-    delayInSeconds: z.number().optional(),
+    logs: z.string().optional(),
     response: z.unknown().optional(),
 })
 
@@ -99,8 +104,11 @@ export const WorkerSettingsResponse = z.object({
     FILE_STORAGE_LOCATION: z.string(),
     S3_USE_SIGNED_URLS: z.string(),
     EVENT_DESTINATION_TIMEOUT_SECONDS: z.number(),
-    PLATFORM_ID_FOR_DEDICATED_WORKER: z.string().optional(),
+    WORKER_GROUP_ID: z.string().optional(),
     EDITION: z.string(),
+    NETWORK_MODE: z.enum(NetworkMode),
+    SSRF_ALLOW_LIST: z.array(z.string()),
+    PAGE_ONCALL_WEBHOOK: z.string().optional(),
 })
 
 export type WorkerSettingsResponse = z.infer<typeof WorkerSettingsResponse>

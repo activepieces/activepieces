@@ -4,6 +4,8 @@ import {
     ApEdition,
     ApId,
     assertNotNullOrUndefined,
+    AuthenticationResponse,
+    CreatePlatformRequest,
     ErrorCode,
     FileType,
     PlatformWithoutSensitiveData,
@@ -24,13 +26,43 @@ import { fileService } from '../file/file.service'
 import { system } from '../helper/system/system'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
+import { userIdentityHelper } from '../helper/user-identity-helper'
 import { projectService } from '../project/project-service'
 import { userRepo, userService } from '../user/user-service'
 import { platformService } from './platform.service'
 
 const edition = system.getEdition()
 export const platformController: FastifyPluginAsyncZod = async (app) => {
+    app.post('/', CreatePlatformEndpoint, async (req) => {
+        const isOnboarding = req.principal.type === PrincipalType.ONBOARDING
+        if (!isOnboarding && edition !== ApEdition.CLOUD) {
+            // only first ee/ce user will be able to have onboarding token. which means any other principal type should not be able to create platform
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'This action is unauthorized in non cloud editions',
+                },
+            })
+        }
+        const identityId = isOnboarding
+            ? req.principal.id
+            : (await userService(req.log).getOneOrFail({ id: req.principal.id })).identityId
+        return platformService(req.log).createPlatformWithProject({
+            identityId,
+            name: req.body.name,
+            invalidatePreviousTokens: isOnboarding,
+        })
+    })
+
     app.post('/:id', UpdatePlatformRequest, async (req, _res) => {
+        if (req.principal.platform.id !== req.params.id) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'You are not authorized to access this platform',
+                },
+            })
+        }
         const platformId = req.principal.platform.id
 
         const [logoIconUrl, fullLogoUrl, favIconUrl] = await Promise.all([
@@ -55,13 +87,13 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
         ])
 
         await platformService(req.log).update({
-            id: req.params.id,
+            id: platformId,
             ...req.body,
             logoIconUrl,
             fullLogoUrl,
             favIconUrl,
         })
-        return platformService(req.log).getOneWithPlanAndUsageOrThrow(req.params.id)
+        return platformService(req.log).getOneWithPlanAndUsageOrThrow(platformId)
     })
 
     app.get('/:id', GetPlatformRequest, async (req) => {
@@ -73,23 +105,38 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
                 },
             })
         }
-        return platformService(req.log).getOneWithPlanAndUsageOrThrow(req.principal.platform.id)
+        const platform = await platformService(req.log).getOneWithPlanAndUsageOrThrow(req.principal.platform.id)
+        if (req.principal.type === PrincipalType.USER) {
+            const isEmbedded = await userIdentityHelper(req.log).isUserEmbedded(req.principal.id)
+            if (isEmbedded) {
+                return {
+                    ...platform,
+                    plan: {
+                        ...platform.plan,
+                        licenseKey: null,
+                    },
+                }
+            }
+        }
+        return platform
     })
 
     app.get('/assets/:id', GetAssetRequest, async (req, reply) => {
-        const [file, data] = await Promise.all([
-            fileService(app.log).getFileOrThrow({ fileId: req.params.id }),
-            fileService(app.log).getDataOrThrow({ fileId: req.params.id })])
+        const { fileName, metadata, data } = await fileService(app.log).getDataOrThrow({
+            fileId: req.params.id,
+            type: [FileType.PLATFORM_ASSET, FileType.USER_PROFILE_PICTURE],
+        })
 
         return reply
             .header(
                 'Content-Disposition',
-                `attachment; filename="${encodeURI(file.fileName ?? '')}"`,
+                `attachment; filename="${encodeURI(fileName ?? '')}"`,
             )
-            .type(file.metadata?.mimetype ?? 'application/octet-stream')
+            .type(metadata?.mimetype ?? 'application/octet-stream')
             .status(StatusCodes.OK)
-            .send(data.data)
+            .send(data)
     })
+
 
     if (edition === ApEdition.CLOUD) {
         app.delete('/:id', DeletePlatformRequest, async (req, res) => {
@@ -156,6 +203,18 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
             return res.status(StatusCodes.NO_CONTENT).send()
         })
     }
+}
+
+const CreatePlatformEndpoint = {
+    config: {
+        security: securityAccess.unscoped([PrincipalType.ONBOARDING, PrincipalType.USER]),
+    },
+    schema: {
+        body: CreatePlatformRequest,
+        response: {
+            [StatusCodes.OK]: AuthenticationResponse,
+        },
+    },
 }
 
 const UpdatePlatformRequest = {

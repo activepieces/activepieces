@@ -1,5 +1,9 @@
 {
   "Cloud storage by Microsoft": "Stockage dans le cloud par Microsoft",
+  "Cloud Environment": "Environnement Cloud",
+  "Select your Microsoft cloud environment.": "Sélectionnez votre environnement de cloud Microsoft.",
+  "Commercial (Global)": "Commerce (Mondial)",
+  "US Government (GCC High)": "Gouvernement américain (GCC High)",
   "\nIf you'd like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n set the **Redirect URI** to {{redirectUrl}} and add the following **Microsoft Graph (Delegated) permissions** under **API permissions**:\n - Files.ReadWrite\n - offline_access\n": "\nIf you'd like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n set the **Redirect URI** to {{redirectUrl}} and add the following **Microsoft Graph (Delegated) permissions** under **API permissions**:\n - Files.ReadWrite\n - offline_access\n",
   "Upload file": "Charger un fichier",
   "Download file": "Télécharger le fichier",
