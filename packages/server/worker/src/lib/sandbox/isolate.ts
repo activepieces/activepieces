@@ -21,13 +21,14 @@ function assertMountInsideRoot(mount: SandboxMount): void {
     }
 }
 
-const ENV_KEY_RE = /^[A-Z_][A-Z0-9_]*$/
+const ENV_KEY_RE = /^[A-Za-z_][A-Za-z0-9_]*$/
 const FORBIDDEN_VALUE_CHARS = /[\n\r\0]/
 const REQUIRED_SANDBOX_ENV_KEYS: readonly string[] = [
     'HOME',
     'NODE_PATH',
     'AP_EXECUTION_MODE',
     'AP_SANDBOX_WS_PORT',
+    'AP_SANDBOX_WS_TOKEN',
     'AP_BASE_CODE_DIRECTORY',
     'SANDBOX_ID',
 ]
@@ -88,10 +89,20 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
             })
 
             const args = [
+                '--no-default-dirs',
+                '--dir=/bin/',
+                '--dir=/lib/',
+                '--dir=/lib64/:maybe',
                 '--dir=/usr/bin/',
+                '--dir=/usr/lib/',
                 '--dir=/usr/local/',
                 `--dir=/etc/=${etcDir}`,
                 '--dir=/usr/src/node_modules/',
+                '--dir=proc=proc:fs',
+                '--dir=/dev=/dev:dev',
+                // isolate uses /box internally as its initial working dir, even when --chdir overrides it.
+                // With --no-default-dirs that auto-mount disappears, so we add it back explicitly.
+                `--dir=/box=/var/local/lib/isolate/${boxId}/box:rw`,
                 ...dirArgs,
                 '--share-net',
                 `--box-id=${boxId}`,

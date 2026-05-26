@@ -1,6 +1,8 @@
 {
   "Collect, manage, and share testimonials with Senja.": "Collect, manage, and share testimonials with Senja.",
+  "API Key": "API Key",
   "To get your Senja API key:\n1. Log in to your Senja account.\n2. Go to **Automate** in the left sidebar.\n3. Click **REST API** and copy your API key.": "To get your Senja API key:\n1. Log in to your Senja account.\n2. Go to **Automate** in the left sidebar.\n3. Click **REST API** and copy your API key.",
+  "Invalid API Key. Please check and try again.": "Invalid API Key. Please check and try again.",
   "List Testimonials": "List Testimonials",
   "Get Testimonial": "Get Testimonial",
   "Create Testimonial": "Create Testimonial",
@@ -134,5 +136,20 @@
   "Only trigger for the selected event types. Leave empty to trigger on all events. Make sure the matching events are enabled in Senja.": "Only trigger for the selected event types. Leave empty to trigger on all events. Make sure the matching events are enabled in Senja.",
   "Testimonial Created": "Testimonial Created",
   "Testimonial Updated": "Testimonial Updated",
-  "Testimonial Deleted": "Testimonial Deleted"
+  "Testimonial Deleted": "Testimonial Deleted",
+  "Media (Images)": "Media (Images)",
+  "Update Testimonial": "Update Testimonial",
+  "Approve, unapprove, or update tags on an existing testimonial.": "Approve, unapprove, or update tags on an existing testimonial.",
+  "Approval Status": "Approval Status",
+  "Set to \"Approved\" to publish the testimonial, or \"Pending\" to unpublish it. Leave empty to keep the current status.": "Set to \"Approved\" to publish the testimonial, or \"Pending\" to unpublish it. Leave empty to keep the current status.",
+  "Add Tags": "Add Tags",
+  "Tag names to add to this testimonial. Tags are created automatically if they do not already exist.": "Tag names to add to this testimonial. Tags are created automatically if they do not already exist.",
+  "Remove Tags": "Remove Tags",
+  "Tag names to remove from this testimonial.": "Tag names to remove from this testimonial.",
+  "Delete Testimonial": "Delete Testimonial",
+  "Permanently delete a testimonial from your Senja project. This action cannot be undone.": "Permanently delete a testimonial from your Senja project. This action cannot be undone.",
+  "The unique ID of the testimonial to delete. You can find it in the URL when viewing a testimonial in Senja, or from the output of a \"List Testimonials\" step.": "The unique ID of the testimonial to delete. You can find it in the URL when viewing a testimonial in Senja, or from the output of a \"List Testimonials\" step.",
+  "Search": "Search",
+  "Full-text search across testimonial text, title, customer name, customer email, and customer tagline.": "Full-text search across testimonial text, title, customer name, customer email, and customer tagline.",
+  "List of image URLs to attach to this testimonial. Each entry must be a JSON object with a \"url\" field and optionally \"alt\" text, e.g. {\"url\": \"https://...\", \"alt\": \"description\"}.": "List of image URLs to attach to this testimonial. Each entry must be a JSON object with a \"url\" field and optionally \"alt\" text, e.g. {\"url\": \"https://...\", \"alt\": \"description\"}."
 }

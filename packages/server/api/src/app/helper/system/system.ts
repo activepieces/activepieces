@@ -8,6 +8,7 @@ import {
     ExecutionMode,
     FileLocation,
     isNil,
+    NetworkMode,
     PieceSyncMode,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -33,7 +34,6 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.PORT]: '3000',
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: '30',
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: '30',
-    [AppSystemProp.PIECES_CACHE_MAX_ENTRIES]: '1000',
     [AppSystemProp.PIECES_SYNC_MODE]: PieceSyncMode.OFFICIAL_AUTO,
     [AppSystemProp.ENVIRONMENT]: 'prod',
     [AppSystemProp.EXECUTION_MODE]: ExecutionMode.UNSANDBOXED,
@@ -43,7 +43,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.LOG_PRETTY]: 'false',
     [AppSystemProp.S3_USE_SIGNED_URLS]: 'false',
     [AppSystemProp.MAX_FILE_SIZE_MB]: '25',
-    [AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB]: '25',
+    [AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB]: '50',
     [AppSystemProp.MAX_WEBHOOK_PAYLOAD_SIZE_MB]: '25',
     [AppSystemProp.WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB]: '512',
     [AppSystemProp.FILE_STORAGE_LOCATION]: FileLocation.DB,
@@ -66,6 +66,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.ISSUE_ARCHIVE_DAYS]: '7',
     [AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS]: '300000',
     [AppSystemProp.SCIM_DEFAULT_PROJECT_ROLE]: DefaultProjectRole.EDITOR,
+    [AppSystemProp.NETWORK_MODE]: NetworkMode.UNRESTRICTED,
 }
 
 let globalLogger: FastifyBaseLogger

@@ -48,6 +48,8 @@ import { newModalInteractionTrigger } from './lib/triggers/new-modal-interaction
 import { slackAuth } from './lib/auth';
 import { getBotToken, getUserToken } from './lib/common/auth-helpers';
 import type { SlackAuthValue } from './lib/common/auth-helpers';
+import { updateGroupUsersAction } from './lib/actions/update-user-groups';
+import { getGroupByHandleAction } from './lib/actions/get-group-by-handle';
 
 export { slackAuth, slackOAuth2Auth } from './lib/auth';
 
@@ -168,6 +170,8 @@ export const slack = createPiece({
     setChannelTopicAction,
     getMessageAction,
     inviteUserToChannelAction,
+    getGroupByHandleAction,
+    updateGroupUsersAction,
     createCustomApiCallAction({
       baseUrl: () => {
         return 'https://slack.com/api';

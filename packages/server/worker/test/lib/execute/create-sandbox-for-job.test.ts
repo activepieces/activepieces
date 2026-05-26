@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ApEnvironment, ExecutionMode } from '@activepieces/shared'
+import { ApEnvironment, ExecutionMode, NetworkMode } from '@activepieces/shared'
 
 const { getSettingsMock, createSandboxMock, isolateProcessMock, simpleProcessMock, getGlobalCacheCommonPathMock, getGlobalCodeCachePathMock, getEnginePathMock } = vi.hoisted(() => ({
     getSettingsMock: vi.fn(),
@@ -58,7 +58,7 @@ type Settings = {
     S3_USE_SIGNED_URLS: string
     EVENT_DESTINATION_TIMEOUT_SECONDS: number
     EDITION: string
-    SSRF_PROTECTION_ENABLED: boolean
+    NETWORK_MODE: NetworkMode
     SSRF_ALLOW_LIST: string[]
 }
 
@@ -84,7 +84,7 @@ function buildSettings(overrides: Partial<Settings> = {}): Settings {
         S3_USE_SIGNED_URLS: 'false',
         EVENT_DESTINATION_TIMEOUT_SECONDS: 30,
         EDITION: 'community',
-        SSRF_PROTECTION_ENABLED: false,
+        NETWORK_MODE: NetworkMode.UNRESTRICTED,
         SSRF_ALLOW_LIST: [],
     }
     return { ...base, ...overrides }
@@ -102,7 +102,7 @@ describe('createSandboxForJob', () => {
     describe('baseMounts', () => {
         it('contains exactly /root/common → getGlobalCacheCommonPath()', () => {
             getSettingsMock.mockReturnValue(buildSettings())
-            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false })
+            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, proxyPort: null })
 
             const options = createSandboxMock.mock.calls[0][2]
             expect(options.baseMounts).toEqual([
@@ -112,7 +112,7 @@ describe('createSandboxForJob', () => {
 
         it('never leaks host / or /etc into baseMounts', () => {
             getSettingsMock.mockReturnValue(buildSettings())
-            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false })
+            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, proxyPort: null })
 
             const options = createSandboxMock.mock.calls[0][2]
             for (const mount of options.baseMounts) {
@@ -150,14 +150,14 @@ describe('createSandboxForJob', () => {
     })
 
     describe('buildSandboxEnv', () => {
-        it('emits all required keys including NODE_PATH', () => {
+        it('emits all required keys including NODE_PATH (STRICT when proxyPort is set)', () => {
             getSettingsMock.mockReturnValue(buildSettings({
                 EXECUTION_MODE: ExecutionMode.SANDBOX_PROCESS,
                 MAX_FLOW_RUN_LOG_SIZE_MB: 25,
                 MAX_FILE_SIZE_MB: 50,
-                SSRF_PROTECTION_ENABLED: true,
+                NETWORK_MODE: NetworkMode.STRICT,
             }))
-            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false })
+            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, proxyPort: 49321 })
 
             const env = createSandboxMock.mock.calls[0][2].env
             expect(env).toMatchObject({
@@ -166,13 +166,14 @@ describe('createSandboxForJob', () => {
                 AP_MAX_FLOW_RUN_LOG_SIZE_MB: '25',
                 AP_MAX_FILE_SIZE_MB: '50',
                 NODE_PATH: '/usr/src/node_modules',
-                AP_SSRF_PROTECTION_ENABLED: 'true',
+                AP_NETWORK_MODE: NetworkMode.STRICT,
+                AP_EGRESS_PROXY_URL: 'http://127.0.0.1:49321',
             })
         })
 
         it('omits AP_DEV_PIECES when DEV_PIECES is empty', () => {
             getSettingsMock.mockReturnValue(buildSettings({ DEV_PIECES: [] }))
-            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false })
+            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, proxyPort: null })
 
             const env = createSandboxMock.mock.calls[0][2].env
             expect(env.AP_DEV_PIECES).toBeUndefined()
@@ -180,7 +181,7 @@ describe('createSandboxForJob', () => {
 
         it('joins DEV_PIECES with comma', () => {
             getSettingsMock.mockReturnValue(buildSettings({ DEV_PIECES: ['a', 'b', 'c'] }))
-            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false })
+            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, proxyPort: null })
 
             const env = createSandboxMock.mock.calls[0][2].env
             expect(env.AP_DEV_PIECES).toBe('a,b,c')
@@ -194,7 +195,7 @@ describe('createSandboxForJob', () => {
                 getSettingsMock.mockReturnValue(buildSettings({
                     SANDBOX_PROPAGATED_ENV_VARS: ['PROPAGATED_YES', 'PROPAGATED_NO'],
                 }))
-                createSandboxForJob({ log, apiClient, boxId: 1, reusable: false })
+                createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, proxyPort: null })
 
                 const env = createSandboxMock.mock.calls[0][2].env
                 expect(env.PROPAGATED_YES).toBe('forwarded')
@@ -209,14 +210,14 @@ describe('createSandboxForJob', () => {
     describe('parseMemoryLimit', () => {
         it('converts KB string to MB', () => {
             getSettingsMock.mockReturnValue(buildSettings({ SANDBOX_MEMORY_LIMIT: '524288' }))
-            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false })
+            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, proxyPort: null })
 
             expect(createSandboxMock.mock.calls[0][2].memoryLimitMb).toBe(512)
         })
 
         it('defaults to 1024 MB on invalid input', () => {
             getSettingsMock.mockReturnValue(buildSettings({ SANDBOX_MEMORY_LIMIT: 'not-a-number' }))
-            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false })
+            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, proxyPort: null })
 
             expect(createSandboxMock.mock.calls[0][2].memoryLimitMb).toBe(1024)
         })
@@ -224,8 +225,59 @@ describe('createSandboxForJob', () => {
 
     it('forwards reusable flag into createSandbox options', () => {
         getSettingsMock.mockReturnValue(buildSettings())
-        createSandboxForJob({ log, apiClient, boxId: 1, reusable: true })
+        createSandboxForJob({ log, apiClient, boxId: 1, reusable: true, proxyPort: null })
 
         expect(createSandboxMock.mock.calls[0][2].reusable).toBe(true)
+    })
+
+    // The sandbox network env follows the egress stack's runtime state (proxyPort),
+    // not the live workerSettings.NETWORK_MODE. The stack starts once at worker boot;
+    // settings refresh on every reconnect. Keying off proxyPort prevents the
+    // STRICT iptables + missing AP_EGRESS_PROXY_URL drift that surfaces as
+    // EHOSTUNREACH ("fetch failed") in user code-pieces.
+    describe('sandbox network env follows proxyPort, not live settings', () => {
+        it('proxyPort=null + NETWORK_MODE=STRICT in settings → engine sees UNRESTRICTED, no proxy URL', () => {
+            // Drift scenario: settings flipped STRICT after boot but the egress stack
+            // was never (re)started, so the firewall isn't actually armed. Telling the
+            // engine it is would install ProxyAgent pointed at nothing.
+            getSettingsMock.mockReturnValue(buildSettings({ NETWORK_MODE: NetworkMode.STRICT }))
+            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, proxyPort: null })
+
+            const env = createSandboxMock.mock.calls[0][2].env
+            expect(env.AP_NETWORK_MODE).toBe(NetworkMode.UNRESTRICTED)
+            expect('AP_EGRESS_PROXY_URL' in env).toBe(false)
+        })
+
+        it('proxyPort=<port> + NETWORK_MODE=UNRESTRICTED in settings → engine sees STRICT, proxy URL set', () => {
+            // Drift scenario users actually hit: settings flipped UNRESTRICTED after
+            // boot, but iptables is still armed and the proxy is still listening.
+            // Engine MUST install ProxyAgent or every fetch fails with EHOSTUNREACH.
+            getSettingsMock.mockReturnValue(buildSettings({ NETWORK_MODE: NetworkMode.UNRESTRICTED }))
+            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, proxyPort: 49322 })
+
+            const env = createSandboxMock.mock.calls[0][2].env
+            expect(env.AP_NETWORK_MODE).toBe(NetworkMode.STRICT)
+            expect(env.AP_EGRESS_PROXY_URL).toBe('http://127.0.0.1:49322')
+        })
+
+        it('blocks HTTP_PROXY-style propagated env vars when STRICT is derived from proxyPort, not settings', () => {
+            const originalProcessEnv = { ...process.env }
+            try {
+                process.env.HTTP_PROXY = 'http://leak:3128'
+                process.env.HTTPS_PROXY = 'http://leak:3128'
+                getSettingsMock.mockReturnValue(buildSettings({
+                    NETWORK_MODE: NetworkMode.UNRESTRICTED,
+                    SANDBOX_PROPAGATED_ENV_VARS: ['HTTP_PROXY', 'HTTPS_PROXY'],
+                }))
+                createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, proxyPort: 49323 })
+
+                const env = createSandboxMock.mock.calls[0][2].env
+                expect('HTTP_PROXY' in env).toBe(false)
+                expect('HTTPS_PROXY' in env).toBe(false)
+            }
+            finally {
+                process.env = originalProcessEnv
+            }
+        })
     })
 })

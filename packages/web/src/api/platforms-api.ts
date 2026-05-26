@@ -1,4 +1,5 @@
 import {
+  AuthenticationResponse,
   PlatformWithoutSensitiveData,
   UpdatePlatformRequestBody,
 } from '@activepieces/shared';
@@ -7,6 +8,9 @@ import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
 export const platformApi = {
+  createPlatform({ name }: { name: string }) {
+    return api.post<AuthenticationResponse>('/v1/platforms', { name });
+  },
   deleteAccount() {
     return api.delete<void>(
       `/v1/platforms/${authenticationSession.getPlatformId()}`,
