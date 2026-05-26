@@ -1,5 +1,5 @@
 import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
-import { ExecutionType, MarkdownVariant, PauseType } from '@activepieces/shared';
+import { ExecutionType, MarkdownVariant } from '@activepieces/shared';
 
 export const waitForApprovalLink = createAction({
   auth: PieceAuth.None(),
@@ -22,12 +22,10 @@ export const waitForApprovalLink = createAction({
   },
   async run(ctx) {
     if (ctx.executionType === ExecutionType.BEGIN) {
-      ctx.run.pause({
-        pauseMetadata: {
-          type: PauseType.WEBHOOK,
-          response: {}
-        },
+      const waitpoint = await ctx.run.createWaitpoint({
+        type: 'WEBHOOK',
       });
+      ctx.run.waitForWaitpoint(waitpoint.id);
 
       return {
         approved: true,

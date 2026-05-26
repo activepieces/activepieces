@@ -1,5 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import axiosRetry from 'axios-retry';
+import { HttpProxyAgent } from 'http-proxy-agent';
+import { HttpsProxyAgent } from 'https-proxy-agent';
 import { DelegatingAuthenticationConverter } from '../core/delegating-authentication-converter';
 import { BaseHttpClient } from '../core/base-http-client';
 import { HttpError } from '../core/http-error';
@@ -9,7 +11,6 @@ import { HttpMethod } from '../core/http-method';
 import { HttpRequest } from '../core/http-request';
 import { HttpResponse } from '../core/http-response';
 import { HttpRequestBody } from '../core/http-request-body';
-import { getSsrfAgents } from './ssrf';
 
 
 
@@ -50,14 +51,16 @@ export class AxiosHttpClient extends BaseHttpClient {
         responseType,
       };
 
-      const ssrfProtectionEnabled = process.env['AP_SSRF_PROTECTION_ENABLED'] === 'true';
-      const ssrfAllowList = process.env['AP_SSRF_ALLOW_LIST']?.split(',').map((s) => s.trim()).filter(Boolean) ?? [];
-      
-      if (ssrfProtectionEnabled) {
-        const { httpSsrfAgent, httpsSsrfAgent } = getSsrfAgents(ssrfAllowList);
-
-        config.httpAgent = httpSsrfAgent;
-        config.httpsAgent = httpsSsrfAgent;
+      const httpProxy = process.env['HTTP_PROXY'] ?? process.env['http_proxy'];
+      const httpsProxy = process.env['HTTPS_PROXY'] ?? process.env['https_proxy'];
+      if (httpProxy) {
+        config.httpAgent = new HttpProxyAgent(httpProxy);
+      }
+      if (httpsProxy) {
+        config.httpsAgent = new HttpsProxyAgent(httpsProxy);
+      }
+      if (httpProxy || httpsProxy) {
+        config.proxy = false;
       }
 
       if (request.followRedirects === false) {

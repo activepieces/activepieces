@@ -36,9 +36,6 @@ const LICENSE_PROPS_MAP = {
   projectRolesEnabled: {
     label: 'Project Roles',
   },
-  customDomainsEnabled: {
-    label: 'Custom Domains',
-  },
   apiKeysEnabled: {
     label: 'API Keys',
   },
@@ -62,6 +59,9 @@ const LICENSE_PROPS_MAP = {
   },
   aiProvidersEnabled: {
     label: 'AI Providers',
+  },
+  chatEnabled: {
+    label: 'Chat',
   },
 };
 
