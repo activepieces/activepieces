@@ -22,13 +22,13 @@ const DataSelectorNode = ({
   depth,
   searchTerm,
 }: DataSelectorNodeProps) => {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(depth === 0);
 
   useEffect(() => {
-    if (searchTerm && depth <= 1) {
+    if (searchTerm) {
       setExpanded(true);
-    } else if (!searchTerm) {
-      setExpanded(false);
+    } else {
+      setExpanded(depth === 0);
     }
   }, [searchTerm, depth]);
 

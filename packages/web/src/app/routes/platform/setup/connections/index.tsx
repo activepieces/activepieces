@@ -227,6 +227,7 @@ const GlobalConnectionsTable = () => {
     extraKeys: [location.search],
     staleTime: 0,
     gcTime: 0,
+    showErrorDialog: true,
   });
 
   const userHasPermissionToWriteAppConnection = checkAccess(

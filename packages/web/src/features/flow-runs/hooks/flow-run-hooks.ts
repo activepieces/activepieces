@@ -4,6 +4,8 @@ import {
   BulkArchiveActionOnRunsRequestBody,
   BulkCancelFlowRequestBody,
   ErrorCode,
+  FlowRunCountByStatus,
+  FlowRunStatus,
   FlowRetryStrategy,
   FlowRun,
   FlowRunWithRetryError,
@@ -11,11 +13,14 @@ import {
 } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useMemo } from 'react';
 import { toast } from 'sonner';
 
+import { getDefaultRange } from '@/components/custom/date-time-picker-range';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { flowsApi } from '@/features/flows/api/flows-api';
 import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { flowRunsApi } from '../api/flow-runs-api';
 
@@ -23,14 +28,94 @@ export const flowRunKeys = {
   detail: (runId: string) => ['flow-run', runId] as const,
 };
 
+const STATUS_CATEGORIES = [
+  {
+    label: 'Succeeded',
+    statuses: [FlowRunStatus.SUCCEEDED],
+    color: 'hsl(var(--success))',
+  },
+  {
+    label: 'Failed',
+    statuses: [
+      FlowRunStatus.FAILED,
+      FlowRunStatus.INTERNAL_ERROR,
+      FlowRunStatus.TIMEOUT,
+      FlowRunStatus.MEMORY_LIMIT_EXCEEDED,
+      FlowRunStatus.QUOTA_EXCEEDED,
+      FlowRunStatus.LOG_SIZE_EXCEEDED,
+    ],
+    color: 'hsl(var(--destructive))',
+  },
+  {
+    label: 'Running',
+    statuses: [FlowRunStatus.RUNNING],
+    color: 'hsl(var(--primary))',
+  },
+  {
+    label: 'Queued',
+    statuses: [FlowRunStatus.QUEUED],
+    color: 'var(--muted-foreground)',
+  },
+  {
+    label: 'Paused',
+    statuses: [FlowRunStatus.PAUSED],
+    color: 'hsl(var(--warning))',
+  },
+  {
+    label: 'Canceled',
+    statuses: [FlowRunStatus.CANCELED],
+    color: 'var(--muted-foreground)',
+  },
+] as const;
+
+function groupByCategory(data: FlowRunCountByStatus[]) {
+  const statusToCount = new Map(data.map((d) => [d.status, d.count]));
+  return STATUS_CATEGORIES.map((cat) => ({
+    label: cat.label,
+    color: cat.color,
+    count: cat.statuses.reduce(
+      (sum, s) => sum + (statusToCount.get(s) ?? 0),
+      0,
+    ),
+  })).filter((cat) => cat.count > 0);
+}
+
+export const DEFAULT_DATE_PRESET = '7days' as const;
+
 export const flowRunQueries = {
   useFlowRun: (runId: string) =>
     useQuery({
       queryKey: flowRunKeys.detail(runId),
       queryFn: () => flowRunsApi.getPopulated(runId),
-      refetchInterval: 15000,
+      refetchInterval: 7000,
     }),
+  useRunStats: () => {
+    const projectId = authenticationSession.getProjectId()!;
+
+    const { data, isLoading, dataUpdatedAt, refetch } = useQuery({
+      queryKey: ['flow-run-count-by-status', projectId],
+      queryFn: () => {
+        const range = getDefaultRange(DEFAULT_DATE_PRESET);
+        return flowRunsApi.countByStatus({
+          projectId,
+          createdAfter: range.from.toISOString(),
+          createdBefore: range.to.toISOString(),
+        });
+      },
+      refetchInterval: 15000,
+    });
+
+    const categories = useMemo(() => groupByCategory(data?.data ?? []), [data]);
+    const total = useMemo(
+      () => categories.reduce((sum, c) => sum + c.count, 0),
+      [categories],
+    );
+
+    return { categories, total, isLoading, dataUpdatedAt, refetch };
+  },
 };
+
+export type RunStatusCategory = ReturnType<typeof groupByCategory>[number];
 
 export const flowRunMutations = {
   useRetryRun: ({

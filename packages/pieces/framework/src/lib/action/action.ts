@@ -30,6 +30,13 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty | PieceAuthProperty[
   auth?: PieceAuth
   displayName: string
   description: string
+  /**
+   * Optional alternate description shown to LLMs (chat / MCP).
+   * Use this for tool-selection guidance, anti-patterns, disambiguation,
+   * and parameter pitfalls that would be noise in the human UI description.
+   * Falls back to {@code description} when omitted.
+   */
+  llmDescription?: string
   props: ActionProps
   run: ActionRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, ActionProps>
   test?: ActionRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, ActionProps>
@@ -48,6 +55,7 @@ export class IAction<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] |
     public readonly test: ActionRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, ActionProps>,
     public readonly requireAuth: boolean,
     public readonly errorHandlingOptions: ErrorHandlingOptionsParam,
+    public readonly llmDescription?: string,
   ) { }
 }
 
@@ -80,5 +88,6 @@ export const createAction = <
         defaultValue: false,
       }
     },
+    params.llmDescription,
   )
 }

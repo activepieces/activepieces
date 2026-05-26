@@ -25,7 +25,7 @@ export const managedAuthnController: FastifyPluginAsyncZod = async (
             applicationEvents(req.log).sendUserEvent({
                 platformId: response.platformId,
                 userId: response.id,
-                projectId: response.projectId,
+                projectId: response.projectId ?? undefined,
                 ip: networkUtils.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
             }, {
                 action: ApplicationEventName.USER_SIGNED_UP,
