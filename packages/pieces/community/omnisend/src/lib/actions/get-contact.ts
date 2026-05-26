@@ -7,11 +7,10 @@ export const getContactAction = createAction({
   auth: omnisendAuth,
   name: 'get_contact',
   displayName: 'Get Contact',
-  description: 'Retrieve a contact by their Omnisend contact ID.',
+  description: 'Retrieve a contact by their contact ID.',
   props: {
     contactId: Property.ShortText({
       displayName: 'Contact ID',
-      description: 'The Omnisend contact ID.',
       required: true,
     }),
   },

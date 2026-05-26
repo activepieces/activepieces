@@ -1,6 +1,6 @@
 import { httpClient, HttpMethod, HttpMessageBody } from '@activepieces/pieces-common';
 
-export const OMNISEND_API_BASE = 'https://api.omnisend.com/v5';
+export const OMNISEND_API_BASE = 'https://api.omnisend.com/api';
 
 export async function omnisendRequest<T extends HttpMessageBody>(
   method: HttpMethod,
@@ -13,9 +13,8 @@ export async function omnisendRequest<T extends HttpMessageBody>(
     method,
     url: `${OMNISEND_API_BASE}${path}`,
     headers: {
-      'X-API-KEY': apiKey,
-      'Content-Type': 'application/json',
-      accept: 'application/json',
+      'Authorization': `Omnisend-API-Key ${apiKey}`,
+      'Omnisend-Version':'2026-03-15'
     },
     body,
     queryParams,

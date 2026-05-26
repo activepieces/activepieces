@@ -7,7 +7,7 @@ export const listCampaignsAction = createAction({
   auth: omnisendAuth,
   name: 'list_campaigns',
   displayName: 'List Campaigns',
-  description: 'Retrieve a list of email campaigns from Omnisend.',
+  description: 'Retrieve a list of email campaigns.',
   props: {
     limit: Property.Number({
       displayName: 'Limit',

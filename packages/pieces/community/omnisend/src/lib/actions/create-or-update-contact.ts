@@ -63,12 +63,6 @@ export const createOrUpdateContactAction = createAction({
       required: false,
       defaultValue: false,
     }),
-    customProperties: Property.Object({
-      displayName: 'Custom Properties',
-      description:
-        'Custom key-value properties to store on the contact (e.g. {"shoeSize": 42, "plan": "premium"}).',
-      required: false,
-    }),
   },
   async run(context) {
     const {
@@ -81,7 +75,6 @@ export const createOrUpdateContactAction = createAction({
       city,
       tags,
       sendWelcomeMessage,
-      customProperties,
     } = context.propsValue;
 
     const body: Record<string, unknown> = {
@@ -105,12 +98,6 @@ export const createOrUpdateContactAction = createAction({
     if (countryCode) body['countryCode'] = countryCode;
     if (city) body['city'] = city;
     if (tags && (tags as string[]).length > 0) body['tags'] = tags;
-    if (
-      customProperties &&
-      Object.keys(customProperties as Record<string, unknown>).length > 0
-    ) {
-      body['customProperties'] = customProperties;
-    }
 
     return omnisendRequest(
       HttpMethod.POST,
