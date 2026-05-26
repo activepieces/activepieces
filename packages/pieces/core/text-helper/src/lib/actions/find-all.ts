@@ -31,7 +31,14 @@ export const findAll = createAction({
   },
   run: async (ctx): Promise<string[]> => {
     const flags = ctx.propsValue.ignoreCase ? 'gi' : 'g';
-    const regex = new RegExp(ctx.propsValue.expression, flags);
+    let regex: RegExp;
+    try {
+      regex = new RegExp(ctx.propsValue.expression, flags);
+    } catch {
+      throw new Error(
+        `Invalid regular expression: ${ctx.propsValue.expression}`
+      );
+    }
     return [...ctx.propsValue.text.matchAll(regex)].map((m) => m[0]);
   },
 });

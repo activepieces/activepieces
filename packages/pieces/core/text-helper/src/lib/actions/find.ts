@@ -32,7 +32,14 @@ export const find = createAction({
   },
   run: async (ctx): Promise<RegExpMatchArray | null> => {
     const flags = ctx.propsValue.ignoreCase ? 'i' : '';
-    const expression = new RegExp(ctx.propsValue.expression, flags);
+    let expression: RegExp;
+    try {
+      expression = new RegExp(ctx.propsValue.expression, flags);
+    } catch {
+      throw new Error(
+        `Invalid regular expression: ${ctx.propsValue.expression}`
+      );
+    }
     return ctx.propsValue.text.match(expression);
   },
 });

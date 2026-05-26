@@ -89,4 +89,11 @@ describe('findAll action', () => {
     });
     expect(await findAll.run(ctx)).toEqual(['one']);
   });
+
+  test('throws a descriptive error for an invalid regex', async () => {
+    const ctx = createMockActionContext({
+      propsValue: { text: 'hello', expression: '[unclosed', ignoreCase: false },
+    });
+    await expect(findAll.run(ctx)).rejects.toThrow('Invalid regular expression: [unclosed');
+  });
 });

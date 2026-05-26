@@ -77,4 +77,11 @@ describe('find action', () => {
     expect(result).not.toBeNull();
     expect(result![0]).toBe('Cat');
   });
+
+  test('throws a descriptive error for an invalid regex', async () => {
+    const ctx = createMockActionContext({
+      propsValue: { text: 'hello', expression: '[unclosed', ignoreCase: false },
+    });
+    await expect(find.run(ctx)).rejects.toThrow('Invalid regular expression: [unclosed');
+  });
 });
