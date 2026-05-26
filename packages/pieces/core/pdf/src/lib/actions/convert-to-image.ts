@@ -13,8 +13,12 @@ const pdftoppmPath = '/usr/bin/pdftoppm';
 const MAX_FILE_SIZE = 16 * 1024 * 1024;
 
 async function isPdftoppmInstalled(): Promise<boolean> {
+    try {
         const { stdout, stderr } = await execPromise(`command -v ${pdftoppmPath}`);
         return !stderr && stdout.trim() === pdftoppmPath;
+    } catch {
+        return false;
+    }
 }
 async function convertPdfToImages(dataBuffer: Buffer): Promise<Buffer[]> {
     const tempDir = tmpdir();
