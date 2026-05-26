@@ -198,7 +198,6 @@ const systemPropValidators: {
 
     // OIDC
     [AppSystemProp.OIDC_RSA_PRIVATE_KEY]: stringValidator,
-    [AppSystemProp.OIDC_ISSUER_URL]: urlValidator,
 }
 
 

@@ -1,11 +1,10 @@
-import { OIDCProperty } from '@activepieces/pieces-framework';
+import { OIDCAuthProps, OIDCProperty } from '@activepieces/pieces-framework';
 import React from 'react';
 
 import { GenericPropertiesForm } from '@/app/builder/piece-properties/generic-properties-form';
 
 type OIDCConnectionSettingsProps = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  authProperty: OIDCProperty<any>;
+  authProperty: OIDCProperty<OIDCAuthProps>;
 };
 
 const OIDCConnectionSettings = React.memo(

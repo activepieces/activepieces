@@ -8,7 +8,7 @@ import { oidcKeyManager } from './oidc-key-manager'
 const TOKEN_TTL_SECONDS = 3600
 
 export const oidcTokenController: FastifyPluginAsyncZod = async (app) => {
-    const issuer = (system.get(AppSystemProp.OIDC_ISSUER_URL) ?? system.getOrThrow(AppSystemProp.FRONTEND_URL)).replace(/\/$/, '')
+    const issuer = system.getOrThrow(AppSystemProp.FRONTEND_URL).replace(/\/$/, '')
     app.get('/oidc-token', {
         config: { security: securityAccess.engine() },
         schema: { hide: true },

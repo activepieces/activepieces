@@ -1,4 +1,5 @@
-import { createPublicKey, generateKeyPairSync, JsonWebKey } from 'crypto'
+import { createPublicKey, generateKeyPair, JsonWebKey } from 'crypto'
+import { promisify } from 'util'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import { RedisType } from '../../../database/redis/types'
@@ -7,10 +8,11 @@ import { localFileStore } from '../../../helper/local-store'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 
-const OIDC_KID = 'oidc-2'
+const generateKeyPairAsync = promisify(generateKeyPair)
+
+const OIDC_KID = 'oidc-1'
 const mutex = new Mutex()
 let cachedPrivateKeyPem: string | undefined
-type OidcJwk = JsonWebKey & { use: string, alg: string, kid: string }
 let cachedPublicKeyJwk: OidcJwk | undefined
 
 async function getPrivateKeyPem(): Promise<string> {
@@ -33,7 +35,7 @@ async function getPrivateKeyPem(): Promise<string> {
             cachedPrivateKeyPem = Buffer.from(stored, 'base64').toString('utf8')
             return cachedPrivateKeyPem
         }
-        const { privateKey } = generateKeyPairSync('rsa', {
+        const { privateKey } = await generateKeyPairAsync('rsa', {
             modulusLength: 2048,
             privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
             publicKeyEncoding: { type: 'spki', format: 'pem' },
@@ -52,6 +54,8 @@ async function getPublicKeyJwk(): Promise<OidcJwk> {
     cachedPublicKeyJwk = { ...jwk, use: 'sig', alg: 'RS256', kid: OIDC_KID }
     return cachedPublicKeyJwk
 }
+
+type OidcJwk = JsonWebKey & { use: string, alg: string, kid: string }
 
 export const oidcKeyManager = {
     getPrivateKeyPem,

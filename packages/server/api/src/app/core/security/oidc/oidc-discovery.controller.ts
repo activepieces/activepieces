@@ -5,11 +5,12 @@ import { securityAccess } from '../authorization/fastify-security'
 import { oidcKeyManager } from './oidc-key-manager'
 
 export const oidcDiscoveryController: FastifyPluginAsyncZod = async (app) => {
+    const issuer = system.getOrThrow(AppSystemProp.FRONTEND_URL).replace(/\/$/, '')
+
     app.get('/.well-known/openid-configuration', {
         config: { security: securityAccess.public() },
         schema: { hide: true },
     }, async (_req, reply) => {
-        const issuer = resolveIssuer()
         return reply.status(200).header('Access-Control-Allow-Origin', '*').send({
             issuer,
             jwks_uri: `${issuer}/.well-known/jwks.json`,
@@ -28,12 +29,4 @@ export const oidcDiscoveryController: FastifyPluginAsyncZod = async (app) => {
             keys: [jwk],
         })
     })
-}
-
-function resolveIssuer(): string {
-    const explicit = system.get(AppSystemProp.OIDC_ISSUER_URL)
-    if (explicit) {
-        return explicit.replace(/\/$/, '')
-    }
-    return system.getOrThrow(AppSystemProp.FRONTEND_URL).replace(/\/$/, '')
 }

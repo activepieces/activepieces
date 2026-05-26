@@ -92,17 +92,17 @@ describe('OIDC Discovery', () => {
             expect(key.q).toBeUndefined()
         })
 
-        it('should return the same kid as reported in the discovery document', async () => {
-            const [discoveryResponse, jwksResponse] = await Promise.all([
-                app!.inject({ method: 'GET', url: '/.well-known/openid-configuration' }),
-                app!.inject({ method: 'GET', url: '/.well-known/jwks.json' }),
-            ])
-
+        it('should serve the public key at the jwks_uri advertised in the discovery document', async () => {
+            const discoveryResponse = await app!.inject({ method: 'GET', url: '/.well-known/openid-configuration' })
             const discovery = discoveryResponse.json()
-            const jwks = jwksResponse.json()
-            const expectedJwksUri = `${discovery.issuer}/.well-known/jwks.json`
-            expect(discovery.jwks_uri).toBe(expectedJwksUri)
-            expect(jwks.keys[0].kid).toBeDefined()
+
+            const jwksPath = new URL(discovery.jwks_uri).pathname
+            const jwksResponse = await app!.inject({ method: 'GET', url: jwksPath })
+
+            expect(jwksResponse.statusCode).toBe(StatusCodes.OK)
+            const { keys } = jwksResponse.json()
+            expect(keys).toHaveLength(1)
+            expect(keys[0].kty).toBe('RSA')
         })
 
         it('should include CORS header to allow AWS STS to fetch the keys', async () => {
