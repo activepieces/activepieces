@@ -9,9 +9,8 @@ import {
   FormValues,
 } from '@/app/components/project-settings/general';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
@@ -30,15 +29,24 @@ export default function WorkspaceGeneralPage() {
     disabled: !canWrite,
   });
 
+  const { mutate, isPending } = projectCollectionUtils.useUpdateProject(
+    () => {
+      toast.success(t('Changes saved.'));
+      form.reset(form.getValues());
+    },
+    () => internalErrorToast(),
+  );
+
   const handleSave = (values: FormValues) => {
-    projectCollectionUtils.update(project.id, {
-      displayName: values.projectName,
-      externalId: values.externalId,
-      icon: values.icon,
-      maxConcurrentJobs: values.maxConcurrentJobs,
+    mutate({
+      projectId: project.id,
+      request: {
+        displayName: values.projectName,
+        externalId: values.externalId,
+        icon: values.icon,
+        maxConcurrentJobs: values.maxConcurrentJobs,
+      },
     });
-    toast.success(t('Changes saved.'));
-    form.reset(values);
   };
 
   const currentIconColor = form.watch('icon')?.color ?? project.icon.color;
@@ -62,25 +70,14 @@ export default function WorkspaceGeneralPage() {
 
         <Separator />
 
-        <div>
-          <Label htmlFor="workspaceName" className="text-sm font-medium">
-            {t('Workspace Name')}
-          </Label>
-          <Input
-            id="workspaceName"
-            className="mt-2 h-10"
-            disabled={!canWrite}
-            {...form.register('projectName')}
-          />
-        </div>
-
-        <GeneralSettings form={form} />
+        <GeneralSettings form={form} projectNameLabel={t('Workspace Name')} />
 
         {canWrite && (
           <div className="flex justify-end">
             <Button
               size="sm"
-              disabled={!form.formState.isDirty}
+              disabled={!form.formState.isDirty || isPending}
+              loading={isPending}
               onClick={form.handleSubmit(handleSave)}
             >
               {t('Save changes')}

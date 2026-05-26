@@ -83,12 +83,14 @@ export const AppearanceSection = () => {
                 name="name"
                 render={({ field }) => (
                   <FormItem className="grid space-y-2">
-                    <FormLabel htmlFor="name">{t('Platform Name')}</FormLabel>
+                    <FormLabel htmlFor="name">
+                      {t('Organization Name')}
+                    </FormLabel>
                     <Input
                       {...field}
                       required
                       id="name"
-                      placeholder={t('Platform Name')}
+                      placeholder={t('Organization Name')}
                       className="rounded-sm"
                     />
                     <FormMessage />
