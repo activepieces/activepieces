@@ -29,8 +29,8 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const { personal_api_key, project_id, host } = (auth as { props: PostHogAuth }).props;
-    const baseUrl = host || 'https://app.posthog.com';
+    const { personal_api_key, project_id, api_host } = (auth as { props: PostHogAuth }).props;
+    const apiBase = api_host || 'https://us.posthog.com';
 
     const queryParams: Record<string, string> = { limit: '100' };
     if (lastFetchEpochMS) {
@@ -42,7 +42,7 @@ const polling: Polling<
 
     const result = await httpClient.sendRequest<EventsResponse>({
       method: HttpMethod.GET,
-      url: `${baseUrl}/api/projects/${project_id}/events/`,
+      url: `${apiBase}/api/projects/${project_id}/events/`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: personal_api_key,

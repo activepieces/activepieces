@@ -16,12 +16,12 @@ export const posthogGetFeatureFlags = createAction({
     }),
   },
   async run(context) {
-    const { personal_api_key, project_id, host } = context.auth.props;
-    const baseUrl = host || 'https://app.posthog.com';
+    const { personal_api_key, project_id, api_host } = context.auth.props;
+    const apiBase = api_host || 'https://us.posthog.com';
 
     const result = await httpClient.sendRequest<FeatureFlagsResponse>({
       method: HttpMethod.GET,
-      url: `${baseUrl}/api/projects/${project_id}/feature_flags/`,
+      url: `${apiBase}/api/projects/${project_id}/feature_flags/`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: personal_api_key,

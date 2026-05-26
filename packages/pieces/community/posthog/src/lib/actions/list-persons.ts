@@ -21,8 +21,8 @@ export const posthogListPersons = createAction({
     }),
   },
   async run(context) {
-    const { personal_api_key, project_id, host } = context.auth.props;
-    const baseUrl = host || 'https://app.posthog.com';
+    const { personal_api_key, project_id, api_host } = context.auth.props;
+    const apiBase = api_host || 'https://us.posthog.com';
 
     const queryParams: Record<string, string> = {
       limit: String(context.propsValue.limit ?? 100),
@@ -33,7 +33,7 @@ export const posthogListPersons = createAction({
 
     const result = await httpClient.sendRequest<PersonsResponse>({
       method: HttpMethod.GET,
-      url: `${baseUrl}/api/projects/${project_id}/persons/`,
+      url: `${apiBase}/api/projects/${project_id}/persons/`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: personal_api_key,

@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { posthogAuth } from '../..';
+import { posthogAuth, PostHogAuth } from '../..';
 
 export const posthogCreateProject = createAction({
   auth: posthogAuth,
@@ -8,11 +8,38 @@ export const posthogCreateProject = createAction({
   displayName: 'Create Project',
   description: 'Create a new PostHog project in your organization',
   props: {
-    organization_id: Property.ShortText({
-      displayName: 'Organization ID',
-      description:
-        'Your PostHog organization ID. Found in the URL when viewing organization settings: `/organization/{id}/settings`',
+    organization_id: Property.Dropdown({
+      displayName: 'Organization',
+      description: 'The organization to create the project in',
       required: true,
+      refreshers: [],
+      auth: posthogAuth,
+      options: async ({ auth }) => {
+        if (!auth) {
+          return { disabled: true, options: [], placeholder: 'Connect your account first' };
+        }
+        const { personal_api_key, api_host } = (auth as unknown as { props: PostHogAuth }).props;
+        const apiBase = api_host || 'https://us.posthog.com';
+        try {
+          const result = await httpClient.sendRequest<OrganizationsResponse>({
+            method: HttpMethod.GET,
+            url: `${apiBase}/api/organizations/`,
+            authentication: {
+              type: AuthenticationType.BEARER_TOKEN,
+              token: personal_api_key,
+            },
+          });
+          return {
+            disabled: false,
+            options: (result.body.results ?? []).map((org) => ({
+              label: org.name,
+              value: org.id,
+            })),
+          };
+        } catch {
+          return { disabled: true, options: [], placeholder: 'Failed to load organizations. Check your connection.' };
+        }
+      },
     }),
     name: Property.ShortText({
       displayName: 'Project Name',
@@ -26,13 +53,13 @@ export const posthogCreateProject = createAction({
     }),
   },
   async run(context) {
-    const { personal_api_key, host } = context.auth.props;
-    const baseUrl = host || 'https://app.posthog.com';
+    const { personal_api_key, api_host } = context.auth.props;
+    const apiBase = api_host || 'https://us.posthog.com';
     const { organization_id, name, anonymize_ips } = context.propsValue;
 
     const result = await httpClient.sendRequest<CreateProjectResponse>({
       method: HttpMethod.POST,
-      url: `${baseUrl}/api/organizations/${organization_id}/projects/`,
+      url: `${apiBase}/api/organizations/${organization_id}/projects/`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: personal_api_key,
@@ -54,6 +81,10 @@ export const posthogCreateProject = createAction({
     };
   },
 });
+
+type OrganizationsResponse = {
+  results: { id: string; name: string }[];
+};
 
 type CreateProjectResponse = {
   id: number;

@@ -17,19 +17,22 @@ export const posthogAuth = PieceAuth.CustomAuth({
 
 **Personal API Key**: Go to PostHog → Settings → Personal API Keys → Create personal API key.
 
-**Project API Key**: Found in PostHog → Project Settings → Project API Key.
+**Project ID**: Found in the URL when viewing your project: \`/project/{id}/\`
 
-**Project ID**: Found in the URL when viewing your project: \`/project/{id}/\``,
+**API Host**: The base URL for private API calls.
+- US Cloud (default): \`https://us.posthog.com\`
+- EU Cloud: \`https://eu.posthog.com\`
+- Self-hosted: your instance URL (e.g. \`https://posthog.mycompany.com\`)
+
+**Ingestion Host**: The base URL for event capture.
+- US Cloud (default): \`https://us.i.posthog.com\`
+- EU Cloud: \`https://eu.i.posthog.com\`
+- Self-hosted: same as your API Host`,
   required: true,
   props: {
     personal_api_key: PieceAuth.SecretText({
       displayName: 'Personal API Key',
-      description: 'Your PostHog personal API key (for reading data)',
-      required: true,
-    }),
-    project_api_key: PieceAuth.SecretText({
-      displayName: 'Project API Key',
-      description: 'Your PostHog project API key (for capturing events)',
+      description: 'Your PostHog personal API key',
       required: true,
     }),
     project_id: Property.ShortText({
@@ -37,19 +40,25 @@ export const posthogAuth = PieceAuth.CustomAuth({
       description: 'Your PostHog project ID (found in project settings URL)',
       required: true,
     }),
-    host: Property.ShortText({
-      displayName: 'Host URL',
-      description: 'PostHog host URL (default: https://app.posthog.com)',
+    api_host: Property.ShortText({
+      displayName: 'API Host',
+      description: 'Base URL for private API calls (default: https://us.posthog.com)',
       required: false,
-      defaultValue: 'https://app.posthog.com',
+      defaultValue: 'https://us.posthog.com',
+    }),
+    ingestion_host: Property.ShortText({
+      displayName: 'Ingestion Host',
+      description: 'Base URL for event capture (default: https://us.i.posthog.com)',
+      required: false,
+      defaultValue: 'https://us.i.posthog.com',
     }),
   },
   validate: async ({ auth }) => {
     try {
-      const baseUrl = auth.host || 'https://app.posthog.com';
+      const apiHost = auth.api_host || 'https://us.posthog.com';
       await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: `${baseUrl}/api/projects/${auth.project_id}/`,
+        url: `${apiHost}/api/projects/${auth.project_id}/`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
           token: auth.personal_api_key,
@@ -75,7 +84,7 @@ export const posthog = createPiece({
     posthogGetFeatureFlags,
     posthogListPersons,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth as PostHogConnection).props.host || 'https://app.posthog.com',
+      baseUrl: (auth) => (auth as PostHogConnection).props.api_host || 'https://us.posthog.com',
       auth: posthogAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as PostHogConnection).props.personal_api_key}`,
@@ -88,9 +97,9 @@ export const posthog = createPiece({
 
 export type PostHogAuth = {
   personal_api_key: string;
-  project_api_key: string;
   project_id: string;
-  host?: string;
+  api_host?: string;
+  ingestion_host?: string;
 };
 
 type PostHogConnection = { props: PostHogAuth };
