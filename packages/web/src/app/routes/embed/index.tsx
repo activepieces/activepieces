@@ -160,7 +160,9 @@ const EmbedPage = React.memo(() => {
                 });
               });
               memoryRouter.navigate(initialRoute);
-              handleVendorNavigation({ projectId: data.projectId });
+              if (data.projectId) {
+                handleVendorNavigation({ projectId: data.projectId });
+              }
               handleClientNavigation();
               notifyVendorPostAuthentication();
             },

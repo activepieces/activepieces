@@ -17,7 +17,7 @@ export const githubDeleteBranchAction = createAction({
     const branchName = propsValue.branch;
 
     const response = await githubApiCall({
-      accessToken: auth.access_token,
+      auth,
       method: HttpMethod.DELETE,
 
       resourceUri: `/repos/${owner}/${repo}/git/refs/heads/${branchName}`,

@@ -23,19 +23,29 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
           'Get the structure of a flow: step tree, configuration status, and valid insert locations',
       },
       {
+        name: 'ap_read_step_code',
+        description:
+          'Read full source code, package.json, and input of a CODE step',
+      },
+      {
         name: 'ap_validate_flow',
         description:
           'Validate a flow for structural issues without publishing — checks step validity, template references, and empty branches',
       },
       {
-        name: 'ap_list_pieces',
+        name: 'ap_research_pieces',
         description:
-          'List pieces with actions and triggers — required before adding or updating steps',
+          'Research pieces with actions and triggers — required before adding or updating steps',
       },
       {
         name: 'ap_get_piece_props',
         description:
           'Get detailed property schema for a specific piece action or trigger',
+      },
+      {
+        name: 'ap_resolve_property_options',
+        description:
+          'Resolve dropdown options for a specific piece property — returns available choices with labels and IDs',
       },
       {
         name: 'ap_validate_step_config',
@@ -94,6 +104,10 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
       {
         name: 'ap_change_flow_status',
         description: 'Enable or disable a flow',
+      },
+      {
+        name: 'ap_delete_flow',
+        description: 'Permanently delete a flow and all its versions',
       },
       {
         name: 'ap_lock_and_publish',
@@ -196,6 +210,11 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
       {
         name: 'ap_retry_run',
         description: 'Retry a failed flow run',
+      },
+      {
+        name: 'ap_run_action',
+        description:
+          'Run a single piece action once without saving a flow — for one-shot tasks like "check my inbox"',
       },
     ],
   },

@@ -22,7 +22,7 @@ export const getGeneration = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `https://public-api.gamma.app/v0.2/generations/${generationId}`,
+      url: `https://public-api.gamma.app/v1.0/generations/${generationId}`,
       headers: {
         'X-API-KEY': apiKey,
         'accept': 'application/json',

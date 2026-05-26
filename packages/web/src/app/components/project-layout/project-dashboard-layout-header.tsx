@@ -6,6 +6,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { BoxIcon } from '@/components/icons/box';
 import { ConnectIcon } from '@/components/icons/connect';
 import { HistoryIcon } from '@/components/icons/history';
+import { VariableIcon } from '@/components/icons/variable';
 import { WorkflowIcon } from '@/components/icons/workflow';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Separator } from '@/components/ui/separator';
@@ -52,6 +53,11 @@ const AnimatedTab = ({
     >
       <IconComponent ref={iconRef} size={16} className="mr-2" />
       {tab.label}
+      {tab.beta && (
+        <span className="ml-1.5 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium leading-none text-primary">
+          Beta
+        </span>
+      )}
     </TabsTrigger>
   );
 };
@@ -87,6 +93,13 @@ export const ProjectDashboardLayoutHeader = () => {
       label: t('Connections'),
       icon: ConnectIcon,
       hasPermission: checkAccess(Permission.READ_APP_CONNECTION),
+      show: true,
+    },
+    {
+      to: authenticationSession.appendProjectRoutePrefix('/variables'),
+      label: t('Variables'),
+      icon: VariableIcon,
+      hasPermission: checkAccess(Permission.READ_VARIABLE),
       show: true,
     },
     {

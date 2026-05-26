@@ -12,7 +12,7 @@ import {
     WorkerNotifyContract,
 } from '@activepieces/shared'
 import { io, type ManagerOptions, type Socket, type SocketOptions } from 'socket.io-client'
-import { runProgressService } from './handler/run-progress'
+import { flowRunProgressReporter } from './helper/flow-run-progress-reporter'
 import { execute } from './operations'
 
 let socket: Socket | undefined
@@ -51,13 +51,13 @@ export const workerSocket = {
 
         createRpcServer<EngineContract>(socket, {
             executeOperation: async ({ operationType, operation }): Promise<EngineResponse<unknown>> => {
-                runProgressService.init()
+                flowRunProgressReporter.init()
                 try {
                     const response = await execute(operationType, operation)
                     return JSON.parse(JSON.stringify(response)) as EngineResponse<unknown>
                 }
                 finally {
-                    await runProgressService.shutdown()
+                    await flowRunProgressReporter.shutdown()
                 }
             },
         })
@@ -93,7 +93,10 @@ export const workerSocket = {
 function buildSocketOptions(sandboxId: string): Partial<ManagerOptions & SocketOptions> {
     const base: Partial<ManagerOptions & SocketOptions> = {
         path: '/worker/ws',
-        auth: { sandboxId },
+        auth: {
+            sandboxId,
+            connectionToken: process.env.AP_SANDBOX_WS_TOKEN,
+        },
         autoConnect: false,
         reconnection: true,
     }
