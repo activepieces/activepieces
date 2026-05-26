@@ -4,13 +4,13 @@ import { resendAuth } from '../..';
 
 interface EmailRecord {
   id: string;
-  to: string[];
+  to: string[] | null;
   from: string;
   created_at: string;
   subject: string;
-  bcc: string[];
-  cc: string[];
-  reply_to: string[];
+  bcc: string[] | null;
+  cc: string[] | null;
+  reply_to: string[] | null;
   last_event: string;
   scheduled_at: string | null;
 }
@@ -30,14 +30,14 @@ export const listEmails = createAction({
     return response.body.data.map((email) => ({
       id: email.id,
       from: email.from,
-      to: email.to.join(', '),
+      to: (email.to ?? []).join(', '),
       subject: email.subject,
       last_event: email.last_event,
       created_at: email.created_at,
       scheduled_at: email.scheduled_at ?? '',
-      cc: email.cc.join(', '),
-      bcc: email.bcc.join(', '),
-      reply_to: email.reply_to.join(', '),
+      cc: (email.cc ?? []).join(', '),
+      bcc: (email.bcc ?? []).join(', '),
+      reply_to: (email.reply_to ?? []).join(', '),
     }));
   },
 });
