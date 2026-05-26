@@ -10,6 +10,8 @@ import {
 } from './common';
 import { isNil } from '@activepieces/shared';
 
+const SPREADSHEET_DROPDOWN_PAGE_SIZE = 50;
+
 const createEmptyOptionList = (message: string) => {
 	return {
 		disabled: true,
@@ -17,6 +19,8 @@ const createEmptyOptionList = (message: string) => {
 		options: [],
 	};
 };
+
+const escapeDriveQueryValue = (value: string) => value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
 export const includeTeamDrivesProp = () =>
 	Property.Checkbox({
@@ -47,32 +51,30 @@ export const spreadsheetIdProp = (displayName: string, description: string, requ
 			const q = ["mimeType='application/vnd.google-apps.spreadsheet'", 'trashed = false'];
 
 			if (searchValue) {
-				q.push(`name contains '${searchValue}'`);
+				q.push(`name contains '${escapeDriveQueryValue(searchValue)}'`);
 			}
 
-			let nextPageToken;
 			const options: DropdownOption<string>[] = [];
-			do {
-				const response: any = await drive.files.list({
-					q: q.join(' and '),
-					pageToken: nextPageToken,
-					orderBy: 'createdTime desc',
-					fields: 'nextPageToken, files(id, name)',
-					supportsAllDrives: true,
-					includeItemsFromAllDrives: includeTeamDrives ? true : false,
-				});
-				const fileList: drive_v3.Schema$FileList = response.data;
+			const response: any = await drive.files.list({
+				q: q.join(' and '),
+				pageSize: SPREADSHEET_DROPDOWN_PAGE_SIZE,
+				orderBy: 'createdTime desc',
+				fields: 'files(id, name)',
+				supportsAllDrives: true,
+				includeItemsFromAllDrives: includeTeamDrives ? true : false,
+			});
+			const fileList: drive_v3.Schema$FileList = response.data;
 
-				if (fileList.files) {
-					for (const file of fileList.files) {
+			if (fileList.files) {
+				for (const file of fileList.files) {
+					if (file.id && file.name) {
 						options.push({
-							label: file.name!,
-							value: file.id!,
+							label: file.name,
+							value: file.id,
 						});
 					}
 				}
-				nextPageToken = response.data.nextPageToken;
-			} while (nextPageToken);
+			}
 
 			return {
 				disabled: false,
@@ -105,6 +107,7 @@ export const sheetIdProp = (displayName: string, description: string, required =
 
 			const response = await sheets.spreadsheets.get({
 				spreadsheetId: spreadsheetId as unknown as string,
+				fields: 'sheets.properties(sheetId,title)',
 			});
 
 			const sheetsData = response.data.sheets ?? [];
@@ -151,6 +154,14 @@ export const rowValuesProp = () =>
 			) {
 				return {};
 			}
+			if (!first_row_headers) {
+				return {
+					values: Property.Array({
+						displayName: 'Row Values',
+						required: true,
+					}),
+				};
+			}
 			const sheet_id = Number(sheetId);
 			const authValue = auth as GoogleSheetsAuthValue;
 
@@ -160,14 +171,6 @@ export const rowValuesProp = () =>
 				sheetId: sheet_id,
 			});
 
-			if (!first_row_headers) {
-				return {
-					values: Property.Array({
-						displayName: 'Row Values',
-						required: true,
-					}),
-				};
-			}
 			const firstRow = headers ?? [];
 			const properties: {
 				[key: string]: any;
@@ -206,12 +209,6 @@ export const columnNameProp = () =>
 					options: [],
 					placeholder: 'Please select a sheet first',
 				};
-			}
-
-			const sheetName = await googleSheetsCommon.findSheetName(auth, spreadsheet_id, sheet_id);
-
-			if (!sheetName) {
-				throw Error('Sheet not found in spreadsheet');
 			}
 
 			const headers = await getHeaderRow({

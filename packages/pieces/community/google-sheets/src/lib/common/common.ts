@@ -39,7 +39,7 @@ async function listSheetsName(auth: GoogleSheetsAuthValue, spreadsheet_id: strin
 			sheets: { properties: { title: string; sheetId: number } }[];
 		}>({
 			method: HttpMethod.GET,
-			url: `https://sheets.googleapis.com/v4/spreadsheets/` + spreadsheet_id,
+			url: `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheet_id}?fields=sheets.properties(sheetId,title)`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
 				token: await getAccessToken(auth),
@@ -87,20 +87,23 @@ async function getGoogleSheetRows({
 	});
 	if (rowsResponse.body.values === undefined) return [];
 
-	const headerResponse = await httpClient.sendRequest<{ values: [string[]][] }>({
-		method: HttpMethod.GET,
-		url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/values/${encodeURIComponent(`${sheetName}!A${headerRow}:ZZZ${headerRow}`)}`,
-		authentication: {
-			type: AuthenticationType.BEARER_TOKEN,
-			token: await getAccessToken(auth),
-		},
-	});
+	let headers = rowsResponse.body.values[0] ?? [];
+	if (rowIndex_s !== headerRow || rowIndex_e !== headerRow) {
+		const headerResponse = await httpClient.sendRequest<{ values: [string[]][] }>({
+			method: HttpMethod.GET,
+			url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/values/${encodeURIComponent(`${sheetName}!A${headerRow}:ZZZ${headerRow}`)}`,
+			authentication: {
+				type: AuthenticationType.BEARER_TOKEN,
+				token: await getAccessToken(auth),
+			},
+		});
 
-	if (!headerResponse.body.values) {
-		throw new Error(`Unable to read headers from row ${headerRow} in sheet "${sheetName}". The row appears to be empty or inaccessible.`);
+		if (!headerResponse.body.values) {
+			throw new Error(`Unable to read headers from row ${headerRow} in sheet "${sheetName}". The row appears to be empty or inaccessible.`);
+		}
+		headers = headerResponse.body.values[0] ?? [];
 	}
 
-	const headers = headerResponse.body.values[0] ?? [];
 	const headerCount = headers.length;
 
 	const startingRow = rowIndex_s ? rowIndex_s - 1 : 0;
@@ -379,5 +382,3 @@ export const googleSheetsAuth =[PieceAuth.OAuth2({
 		};
 	  }
 	})];
-
-	
