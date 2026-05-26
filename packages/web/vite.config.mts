@@ -18,7 +18,7 @@ export default defineConfig(({ command, mode }) => {
     root: __dirname,
     cacheDir: '../../node_modules/.vite/packages/web',
     server: {
-      // allowedHosts: ['wozcsvaint.loclx.io'],
+      allowedHosts: ['trailer-dentists-saskatchewan-diploma.trycloudflare.com'],
       proxy: {
         '/api': {
           target: 'http://127.0.0.1:3000',

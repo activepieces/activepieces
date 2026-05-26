@@ -1,5 +1,6 @@
 import {
   CustomAuthProps,
+  OIDCAuthProps,
   OAuth2Props,
   PieceAuthProperty,
   PieceMetadataModel,
@@ -148,6 +149,19 @@ export const newConnectionUtils = {
           },
         };
       }
+      case PropertyType.OIDC: {
+        return {
+          ...commmonProps,
+          type: AppConnectionType.OIDC,
+          value: {
+            type: AppConnectionType.OIDC,
+            props: formUtils.getDefaultValueForProperties({
+              props: auth.props ?? {},
+              existingInput: {},
+            }),
+          },
+        };
+      }
       case PropertyType.OAUTH2: {
         switch (oauth2App?.oauth2Type) {
           case AppConnectionType.CLOUD_OAUTH2:
@@ -210,7 +224,9 @@ export const newConnectionUtils = {
     }
   },
 
-  extractDefaultPropsValues(props: CustomAuthProps | OAuth2Props | undefined) {
+  extractDefaultPropsValues(
+    props: CustomAuthProps | OIDCAuthProps | OAuth2Props | undefined,
+  ) {
     if (!props) {
       return {};
     }

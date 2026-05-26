@@ -2,6 +2,7 @@
 import { z } from "zod";
 import { BasicAuthProperty } from "./basic-auth-prop";
 import { CustomAuthProperty, CustomAuthProps } from "./custom-auth-prop";
+import { OIDCProperty, OIDCAuthProps } from "./oidc-prop";
 import { SecretTextProperty } from "./secret-text-property";
 import { PropertyType } from "../input/property-type";
 import { OAuth2Property, OAuth2Props } from "./oauth2-prop";
@@ -10,12 +11,13 @@ import { AppConnectionType, isNil } from "@activepieces/shared";
 export const PieceAuthProperty = z.union([
   BasicAuthProperty,
   CustomAuthProperty,
+  OIDCProperty,
   OAuth2Property,
   SecretTextProperty,
 ])
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type PieceAuthProperty = BasicAuthProperty | CustomAuthProperty<any> | OAuth2Property<any> | SecretTextProperty<boolean>;
+export type PieceAuthProperty = BasicAuthProperty | CustomAuthProperty<any> | OIDCProperty<any> | OAuth2Property<any> | SecretTextProperty<boolean>;
 
 type AuthProperties<T> = Omit<Properties<T>, 'displayName'> & {
   displayName?: string;
@@ -68,6 +70,16 @@ export const PieceAuth = {
       displayName: request.displayName || DEFAULT_CONNECTION_DISPLAY_NAME,
     } as unknown as CustomAuthProperty<T>
   },
+  OIDC<T extends OIDCAuthProps>(
+    request: AuthProperties<OIDCProperty<T>>
+  ): OIDCProperty<T> {
+    return {
+      ...request,
+      valueSchema: undefined,
+      type: PropertyType.OIDC,
+      displayName: request.displayName || DEFAULT_CONNECTION_DISPLAY_NAME,
+    } as unknown as OIDCProperty<T>
+  },
   None() {
     return undefined;
   },
@@ -94,6 +106,7 @@ const authConnectionTypeToPropertyType: Record<AppConnectionType, PropertyType |
   [AppConnectionType.PLATFORM_OAUTH2]: PropertyType.OAUTH2,
   [AppConnectionType.BASIC_AUTH]: PropertyType.BASIC_AUTH,
   [AppConnectionType.CUSTOM_AUTH]: PropertyType.CUSTOM_AUTH,
+  [AppConnectionType.OIDC]: PropertyType.OIDC,
   [AppConnectionType.SECRET_TEXT]: PropertyType.SECRET_TEXT,
   [AppConnectionType.NO_AUTH]: undefined,
 }

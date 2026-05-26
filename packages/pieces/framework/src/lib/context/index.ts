@@ -79,6 +79,7 @@ type PollingTriggerHookContext<
   PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined,
   TriggerProps extends InputPropertyMap
 > = BaseContext<PieceAuth, TriggerProps> & {
+  server: ServerContext;
   setSchedule(schedule: { cronExpression: string; timezone?: string }): void;
 };
 

@@ -579,6 +579,7 @@ const validateConnectionValue = async (
         case AppConnectionType.NO_AUTH:
             break
         case AppConnectionType.CUSTOM_AUTH:
+        case AppConnectionType.OIDC:
         case AppConnectionType.BASIC_AUTH:
         case AppConnectionType.SECRET_TEXT:
             await engineValidateAuth({
