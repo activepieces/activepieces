@@ -9,9 +9,12 @@ import { Placeholder } from '@tiptap/extension-placeholder';
 import { Text } from '@tiptap/extension-text';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import { useMemo } from 'react';
 
 import { inputClass } from '@/components/ui/input';
 import { stepsHooks } from '@/features/pieces';
+import { variablesQueries } from '@/features/variables/hooks/variables-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../../builder-hooks';
@@ -110,6 +113,20 @@ export const TextInputWithMentions = ({
       return undefined;
     });
 
+  const projectId = authenticationSession.getProjectId();
+  const { data: variablesPage } = variablesQueries.useVariables({
+    request: {
+      projectId: projectId ?? '',
+      limit: 100,
+    },
+    extraKeys: ['mention-resolver-variables', projectId ?? ''],
+    enabled: !!projectId,
+  });
+  const variableByName = useMemo(
+    () => new Map((variablesPage?.data ?? []).map((v) => [v.name, v.name])),
+    [variablesPage],
+  );
+
   const setInsertMentionHandler = useBuilderStateContext(
     (state) => state.setInsertMentionHandler,
   );
@@ -119,6 +136,7 @@ export const TextInputWithMentions = ({
       `{{${propertyPath}}}`,
       steps,
       stepsMetadata,
+      variableByName,
     );
     editor?.chain().focus().insertContent(mentionNode).run();
   };
@@ -132,6 +150,7 @@ export const TextInputWithMentions = ({
         convertToText(initialValue),
         steps,
         stepsMetadata,
+        variableByName,
       ),
     },
     editorProps: {

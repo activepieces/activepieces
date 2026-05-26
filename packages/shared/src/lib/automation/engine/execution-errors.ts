@@ -102,3 +102,14 @@ export class EngineGenericError extends ExecutionError {
         super(name, formatMessage(message), ExecutionErrorType.ENGINE, cause)
     }
 }
+
+export class SSRFBlockedError extends ExecutionError {
+    constructor({ host, ip, cause }: { host: string, ip: string, cause?: unknown }) {
+        super(
+            'SSRFBlockedError',
+            formatMessage(`SSRF protection: refusing to connect to ${host} (resolved ${ip}) — private, loopback, link-local, or multicast address`),
+            ExecutionErrorType.USER,
+            cause,
+        )
+    }
+}

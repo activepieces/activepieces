@@ -147,17 +147,16 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
   }
 
   const config = draftStatusConfig[status];
+  const badgeClassName = flowRunUtils.getStatusContainerClassName(
+    config.variant,
+    true,
+  );
 
   return (
     <div className="absolute right-[1px] h-[20px] -top-[28px]">
       <Tooltip>
         <TooltipTrigger asChild>
-          <div
-            className={flowRunUtils.getStatusContainerClassName(
-              config.variant,
-              true,
-            )}
-          >
+          <div className={badgeClassName}>
             {config.icon}
             <div>{config.text}</div>
           </div>
