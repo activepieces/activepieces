@@ -13,7 +13,7 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { twitchAuth } from '../../index';
+import { twitchAuth } from '../auth';
 
 const props = {
   streamers: Property.Array({

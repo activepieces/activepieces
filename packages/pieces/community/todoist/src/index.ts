@@ -19,7 +19,7 @@ export const todoist = createPiece({
 	description: 'To-do list and task manager',
 	minimumSupportedRelease: '0.5.0',
 	logoUrl: 'https://cdn.activepieces.com/pieces/todoist.png',
-	authors: ['MyWay', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
+	authors: ['MyWay', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud','sanket-a11y'],
 	categories: [PieceCategory.PRODUCTIVITY],
 	auth: todoistAuth,
 	actions: [
@@ -28,7 +28,7 @@ export const todoist = createPiece({
 		todoistFindTaskAction,
 		todoistMarkTaskCompletedAction,
 		createCustomApiCallAction({
-			baseUrl: () => 'https://api.todoist.com/rest/v2',
+			baseUrl: () => 'https://api.todoist.com/api/v1',
 			auth: todoistAuth,
 			authMapping: async (auth) => ({
 				Authorization: `Bearer ${auth.access_token}`,

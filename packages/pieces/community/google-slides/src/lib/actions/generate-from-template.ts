@@ -1,4 +1,4 @@
-import { googleSlidesAuth } from '../../index';
+import { googleSlidesAuth } from '../auth';
 import { createAction, DynamicPropsValue, Property } from "@activepieces/pieces-framework";
 import { getSlide, PageElement, batchUpdate, TableCell, TextElement } from '../commons/common';
 import { google } from 'googleapis';
@@ -110,7 +110,7 @@ export const generateFromTemplate = createAction({
 
         try {
             const authClient = new OAuth2Client();
-            authClient.setCredentials(context.auth);
+            authClient.setCredentials({ access_token: access_token });
             
             const drive = google.drive({ version: 'v3', auth: authClient });
                 

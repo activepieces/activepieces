@@ -5,7 +5,7 @@ import {
     HttpRequest,
 } from '@activepieces/pieces-common';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-import { hunterAuth } from '../..';
+import { hunterAuth } from '../auth';
 
 export async function hunterApiCall({
     apiKey,

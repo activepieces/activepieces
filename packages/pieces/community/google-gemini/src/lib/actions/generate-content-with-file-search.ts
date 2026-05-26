@@ -1,4 +1,4 @@
-import { googleGeminiAuth } from '../../index';
+import { googleGeminiAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { defaultLLM, getGeminiModelOptions } from '../common/common';
 import { GoogleGenAI } from '@google/genai';
@@ -45,6 +45,7 @@ export const generateContentWithFileSearchAction = createAction({
 
     try {
       const fileBuffer = Buffer.from(file.base64, 'base64');
+      await fs.mkdir(tmpdir(), { recursive: true });
       await fs.writeFile(tempFilePath, fileBuffer);
 
       const genAI = new GoogleGenAI({ apiKey: auth.secret_text });

@@ -1,11 +1,10 @@
 import {
+    ActivepiecesError,
     ApplicationEvent,
     ApplicationEventName,
-    OtpType,
-    ResetPasswordRequestBody,
-    VerifyEmailRequestBody,
-} from '@activepieces/ee-shared'
-import { ActivepiecesError, ErrorCode, isNil, UserId, UserIdentity } from '@activepieces/shared'
+    ErrorCode,
+    isNil,
+    OtpType, ResetPasswordRequestBody, UserId, UserIdentity, VerifyEmailRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
 import { applicationEvents } from '../../../helper/application-events'
@@ -70,7 +69,7 @@ const sendAuditLogForIdentity = async (
     event: Pick<ApplicationEvent, 'action' | 'data'>,
     log: FastifyBaseLogger,
 ): Promise<void> => {
-    const users = await userService.getUsersByIdentityId({ identityId })
+    const users = await userService(log).getUsersByIdentityId({ identityId })
     for (const { id, platformId } of users) {
         if (isNil(platformId)) {
             continue

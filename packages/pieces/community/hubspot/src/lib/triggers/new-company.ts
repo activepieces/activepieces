@@ -6,7 +6,7 @@ import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from 
 import dayjs from 'dayjs';
 import { MarkdownVariant, isNil } from '@activepieces/shared';
 import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
-import { hubspotAuth } from '../..';
+import { hubspotAuth } from '../auth';
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
 

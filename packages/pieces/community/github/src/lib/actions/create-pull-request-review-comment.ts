@@ -1,4 +1,4 @@
-import { githubAuth } from '../../index';
+import { githubAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { githubApiCall, githubCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
@@ -43,7 +43,7 @@ export const githubCreatePullRequestReviewCommentAction = createAction({
     const { owner, repo } = propsValue.repository!;
 
     const response = await githubApiCall({
-      accessToken: auth.access_token,
+      auth,
       method: HttpMethod.POST,
       resourceUri: `/repos/${owner}/${repo}/pulls/${pull_number}/comments`,
       body: {

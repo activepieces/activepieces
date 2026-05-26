@@ -1,4 +1,3 @@
-import { securityAccess } from '@activepieces/server-shared'
 import {
     AP_MAXIMUM_PROFILE_PICTURE_SIZE,
     ApId,
@@ -7,25 +6,28 @@ import {
     isNil,
     PrincipalType,
     PROFILE_PICTURE_ALLOWED_TYPES,
+    SERVICE_KEY_SECURITY_OPENAPI,
     UpdateMeResponse,
     UserWithBadges,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { fileService } from '../../file/file.service'
 import { userService } from '../../user/user-service'
 
-export const usersController: FastifyPluginAsyncTypebox = async (app) => {
+export const usersController: FastifyPluginAsyncZod = async (app) => {
     app.get('/:id', GetUserByIdRequest, async (req): Promise<UserWithBadges> => {
         const userId = req.params.id
         const platformId = req.principal.platform.id
-        return userService.getOneByIdAndPlatformIdOrThrow({ id: userId, platformId })
+        return userService(req.log).getOneByIdAndPlatformIdOrThrow({ id: userId, platformId })
     })
 
     app.post('/me', UpdateMeRequest, async (req) => {
         const userId = req.principal.id
-        const user = await userService.getOrThrow({ id: userId })
+        const user = await userService(req.log).getOrThrow({ id: userId })
         const identityId = user.identityId
         const platformId = req.principal.platform.id
 
@@ -47,7 +49,7 @@ export const usersController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.delete('/me/profile-picture', DeleteProfilePictureRequest, async (req) => {
         const userId = req.principal.id
-        const user = await userService.getOrThrow({ id: userId })
+        const user = await userService(req.log).getOrThrow({ id: userId })
         const identityId = user.identityId
 
         await userIdentityService(app.log).update(identityId, { imageUrl: null })
@@ -59,7 +61,10 @@ export const usersController: FastifyPluginAsyncTypebox = async (app) => {
 
 const GetUserByIdRequest = {
     schema: {
-        params: Type.Object({
+        tags: ['users'],
+        description: 'Get a user by id',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: z.object({
             id: ApId,
         }),
         response: {
@@ -67,7 +72,7 @@ const GetUserByIdRequest = {
         },
     },
     config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER]),
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
 }
 
@@ -77,8 +82,8 @@ const UpdateMeRequest = {
     },
     schema: {
         consumes: ['multipart/form-data'],
-        body: Type.Object({
-            profilePicture: Type.Optional(ApMultipartFile),
+        body: z.object({
+            profilePicture: ApMultipartFile.optional(),
         }),
         response: {
             [StatusCodes.OK]: UpdateMeResponse,
@@ -89,8 +94,8 @@ const UpdateMeRequest = {
 const DeleteProfilePictureRequest = {
     schema: {
         response: {
-            [StatusCodes.OK]: Type.Object({
-                success: Type.Boolean(),
+            [StatusCodes.OK]: z.object({
+                success: z.boolean(),
             }),
         },
     },

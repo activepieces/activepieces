@@ -1,7 +1,7 @@
-import { AppSystemProp } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../../helper/system/system'
+import { AppSystemProp } from '../../../../helper/system/system-props'
 import { logEmailSender } from './log-email-sender'
 import { smtpEmailSender } from './smtp-email-sender'
 
@@ -26,9 +26,14 @@ type BaseEmailTemplateData<Name extends string, Vars extends Record<string, stri
 }
 
 type InvitationEmailTemplateData = BaseEmailTemplateData<'invitation-email', {
-    projectOrPlatformName: string
-    role: string
+    projectName: string
     setupLink: string
+}>
+
+type ProjectMemberAddedEmailTemplateData = BaseEmailTemplateData<'project-member-added', {
+    projectName: string
+    role: string
+    loginLink: string
 }>
 
 type ResetPasswordEmailTemplateData = BaseEmailTemplateData<'reset-password', {
@@ -40,15 +45,13 @@ type VerifyEmailTemplateData = BaseEmailTemplateData<'verify-email', {
 }>
 
 type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
-    issueUrl: string
-    flowName: string
-    isIssue: string
-    createdAt: string
-}>
-
-type TriggerFailureThresholdTemplateData = BaseEmailTemplateData<'trigger-failure', {
-    flowName: string
+    runUrl: string
     projectName: string
+    flowName: string
+    createdAt: string
+    failedStepDisplayName: string
+    failedStepNumber: string
+    failedStepMessage: string
 }>
 
 type BadgeAwardedTemplateData = BaseEmailTemplateData<'badge-awarded', {
@@ -58,13 +61,18 @@ type BadgeAwardedTemplateData = BaseEmailTemplateData<'badge-awarded', {
     firstName: string
 }>
 
+type ScimUserWelcomeTemplateData = BaseEmailTemplateData<'scim-user-welcome', {
+    loginLink: string
+}>
+
 export type EmailTemplateData =
   | InvitationEmailTemplateData
+  | ProjectMemberAddedEmailTemplateData
   | ResetPasswordEmailTemplateData
   | VerifyEmailTemplateData
   | IssueCreatedTemplateData
-  | TriggerFailureThresholdTemplateData
   | BadgeAwardedTemplateData
+  | ScimUserWelcomeTemplateData
 
 type SendArgs = {
     emails: string[]

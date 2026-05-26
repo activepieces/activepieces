@@ -4,14 +4,7 @@ import { PieceCategory } from '@activepieces/shared';
 import { completeTaskAction } from './lib/actions/complete-task.action';
 import { deleteTaskAction } from './lib/actions/delete-task.action';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-
-export const taskadeAuth = PieceAuth.SecretText({
-	displayName: 'Personal Token',
-	required: true,
-	description: `
-	1. Navigate to https://taskade.com/settings/password and scroll down to Personal Access Tokens.
-	2. Create your personal access token with any name.`,
-});
+import { taskadeAuth } from './lib/auth';
 
 export const taskade = createPiece({
 	displayName: 'Taskade',

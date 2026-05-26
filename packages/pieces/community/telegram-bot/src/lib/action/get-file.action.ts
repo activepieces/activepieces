@@ -45,7 +45,7 @@ export const telegramGetFileAction = createAction({
     const fileInfo = fileInfoResponse.body.result;
 
     if (ctx.propsValue.download && fileInfo.file_path) {
-      const fileUrl = `https://api.telegram.org/file/bot${ctx.auth}/${fileInfo.file_path}`;
+      const fileUrl = `https://api.telegram.org/file/bot${ctx.auth.secret_text}/${fileInfo.file_path}`;
       
       const fileResponse = await httpClient.sendRequest({
         method: HttpMethod.GET,
@@ -64,7 +64,7 @@ export const telegramGetFileAction = createAction({
     return {
       file_info: fileInfo,
       file_url: fileInfo.file_path 
-        ? `https://api.telegram.org/file/bot${ctx.auth}/${fileInfo.file_path}`
+        ? `https://api.telegram.org/file/bot${ctx.auth.secret_text}/${fileInfo.file_path}`
         : undefined,
     };
   },

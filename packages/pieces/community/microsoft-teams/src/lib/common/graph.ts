@@ -1,4 +1,6 @@
-import { Client } from '@microsoft/microsoft-graph-client';
+import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
+import { tryCatch } from '@activepieces/shared';
+import { getGraphBaseUrl } from './microsoft-cloud';
 
 type GraphRetryOptions = {
 	maxRetries?: number;
@@ -6,11 +8,12 @@ type GraphRetryOptions = {
 	maxDelayMs?: number;
 };
 
-export const createGraphClient = (accessToken: string): Client => {
+export const createGraphClient = (accessToken: string, cloud?: string | null): Client => {
 	return Client.initWithMiddleware({
 		authProvider: {
 			getAccessToken: () => Promise.resolve(accessToken),
 		},
+		baseUrl: getGraphBaseUrl(cloud),
 	});
 };
 
@@ -45,8 +48,6 @@ const extractStatusCode = (error: any): number => {
 const shouldRetry = (statusCode: number, code?: string): boolean => {
 	// Retry on throttling and transient errors
 	if (statusCode === 429 || statusCode === 503 || statusCode === 504) return true;
-	// Some concurrency conflicts can be retried
-	if (statusCode === 409) return true;
 	// Optionally retry generic server errors
 	if (statusCode >= 500 && statusCode < 600) return true;
 	// Some SDKs surface codes like 'TooManyRequests'
@@ -62,6 +63,27 @@ export const buildGraphErrorMessage = (error: any): string => {
 	const inner = err?.innerError ?? err?.innererror ?? {};
 	const requestId = inner?.['request-id'] ?? inner?.requestId ?? error?.requestId;
 	return `Graph error (${status}${code ? ` ${code}` : ''})${requestId ? ` [request-id: ${requestId}]` : ''}: ${message}`;
+};
+
+export const resolveMeetingId = async ({
+	client,
+	identifierType,
+	identifierValue,
+}: {
+	client: Client;
+	identifierType: string;
+	identifierValue: string;
+}): Promise<string> => {
+	if (identifierType === 'meetingId') return identifierValue;
+	const filter =
+		identifierType === 'joinWebUrl'
+			? `JoinWebUrl eq '${identifierValue}'`
+			: `joinMeetingIdSettings/joinMeetingId eq '${identifierValue}'`;
+	const response = await client.api('/me/onlineMeetings').filter(filter).get();
+	if (!response.value?.length) {
+		throw new Error('No meeting found with the provided identifier.');
+	}
+	return response.value[0].id as string;
 };
 
 export const withGraphRetry = async <T>(
@@ -94,6 +116,42 @@ export const withGraphRetry = async <T>(
 		}
 	}
 	throw new Error("Unexpected error occured");
+};
+
+// Walks a paginated Graph list endpoint with retry, an item cap, and graceful failure.
+// Returns whatever was collected before an error or the cap; the cap protects the 60s
+// dropdown sandbox timeout from runaway pagination on accounts with very large lists.
+export const paginateGraphList = async <T>(params: {
+	client: Client;
+	initialUrl: string;
+	// Omit on endpoints that don't support OData $top (e.g. /me/joinedTeams).
+	pageSize?: number;
+	maxItems: number;
+	expand?: string;
+}): Promise<{ items: T[]; truncated: boolean; error: Error | null }> => {
+	const { client, initialUrl, pageSize, maxItems, expand } = params;
+	const items: T[] = [];
+	const { error } = await tryCatch(async () => {
+		let firstRequest = client.api(initialUrl);
+		if (pageSize !== undefined) firstRequest = firstRequest.top(pageSize);
+		if (expand) firstRequest = firstRequest.expand(expand);
+		let response: PageCollection = await withGraphRetry(() => firstRequest.get());
+		while (response.value && response.value.length > 0) {
+			for (const item of response.value as T[]) {
+				items.push(item);
+				if (items.length >= maxItems) break;
+			}
+			if (items.length >= maxItems) break;
+			const nextLink = response['@odata.nextLink'];
+			if (!nextLink) break;
+			response = await withGraphRetry(() => client.api(nextLink).get());
+		}
+	});
+	return {
+		items,
+		truncated: items.length >= maxItems,
+		error,
+	};
 };
 
 

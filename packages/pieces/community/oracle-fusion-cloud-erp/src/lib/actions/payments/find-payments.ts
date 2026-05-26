@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { oracleFusionCloudErpAuth } from '../../../index';
+import { oracleFusionCloudErpAuth } from '../../auth';
 import { makeClient } from '../../common/client';
 
 export const findPayments = createAction({

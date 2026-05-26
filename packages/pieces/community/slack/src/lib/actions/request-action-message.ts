@@ -1,5 +1,5 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { slackAuth } from '../..';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { slackAuth } from '../auth';
 import { assertNotNullOrUndefined } from '@activepieces/shared';
 import {
   profilePicture,
@@ -9,6 +9,7 @@ import {
   actions,
   singleSelectChannelInfo,
   threadTs,
+  mentionOriginFlow,
 } from '../common/props';
 import { requestAction } from '../common/request-action';
 
@@ -26,6 +27,13 @@ export const requestActionMessageAction = createAction({
     threadTs,
     username,
     profilePicture,
+    replyBroadcast: Property.Checkbox({
+      displayName: 'Broadcast reply to channel',
+      description: 'When replying to a thread, also make the message visible to everyone in the channel (only applicable when Thread Timestamp is provided)',
+      required: false,
+      defaultValue: false,
+    }),
+    mentionOriginFlow,
   },
   async run(context) {
     const { channel } = context.propsValue;

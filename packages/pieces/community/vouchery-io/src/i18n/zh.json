@@ -34,6 +34,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "失败时没有错误",
   "Timeout (in seconds)": "超时(秒)",
+  "Follow redirects": "Follow redirects",
   "Select the campaign": "Select the campaign",
   "The code for the voucher": "The code for the voucher",
   "The date and time when the voucher expires": "The date and time when the voucher expires",

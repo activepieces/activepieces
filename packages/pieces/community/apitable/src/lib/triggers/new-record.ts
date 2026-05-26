@@ -1,4 +1,4 @@
-import { APITableAuth } from '../../index';
+import { APITableAuth } from '../auth';
 import {
   AppConnectionValueForAuthProperty,
   TriggerStrategy,

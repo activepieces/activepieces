@@ -9,9 +9,10 @@ import {
   mentionOriginFlow,
   iconEmoji,
 } from '../common/props';
-import { processMessageTimestamp, slackSendMessage } from '../common/utils';
-import { slackAuth } from '../../';
+import { buildFlowOriginContextBlock, processMessageTimestamp, slackSendMessage, textToSectionBlocks } from '../common/utils';
+import { slackAuth } from '../auth';
 import { Block,KnownBlock } from '@slack/web-api';
+import { getBotToken, requireUserToken, SlackAuthValue } from '../common/auth-helpers';
 
 
 export const slackSendMessageAction = createAction({
@@ -59,7 +60,7 @@ export const slackSendMessageAction = createAction({
     const { text, channel,sendAsBot, username, profilePicture, iconEmoji, threadTs, file, mentionOriginFlow, blocks, replyBroadcast, unfurlLinks } =
       context.propsValue;
 
-    const token = sendAsBot ?context.auth.access_token :context.auth.data?.authed_user?.access_token ;
+    const token = sendAsBot ? getBotToken(context.auth as SlackAuthValue) : requireUserToken(context.auth as SlackAuthValue);
 
     if (!text && (!blocks || !Array.isArray(blocks) || blocks.length === 0)) {
       throw new Error('Either Message or Block Kit blocks must be provided');
@@ -68,8 +69,8 @@ export const slackSendMessageAction = createAction({
     const blockList: (KnownBlock | Block)[] = [];
 
 
-    if (text && (!blocks || !Array.isArray(blocks) || blocks.length === 0)) {
-      blockList.push({ type: 'section', text: { type: 'mrkdwn', text } });
+    if (text) {
+      blockList.push(...textToSectionBlocks(text));
     }
 
     if(blocks && Array.isArray(blocks) && blocks.length > 0) {
@@ -77,12 +78,7 @@ export const slackSendMessageAction = createAction({
     }
 
     if(mentionOriginFlow) {
-      (blockList as KnownBlock[])?.push({ type: 'context', elements: [
-        {
-          "type": "mrkdwn",
-          "text": `Message sent by <${new URL(context.server.publicUrl).origin}/projects/${context.project.id}/flows/${context.flows.current.id}|this flow>.`
-        }
-      ] })
+      blockList.push(buildFlowOriginContextBlock(context));
     }
 
     return slackSendMessage({

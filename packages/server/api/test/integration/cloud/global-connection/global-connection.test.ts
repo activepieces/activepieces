@@ -1,3 +1,4 @@
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     apId,
     AppConnectionScope,
@@ -10,9 +11,8 @@ import {
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
+import { db } from '../../../helpers/db'
 import {
     createMockPieceMetadata,
     mockAndSaveBasicSetup,
@@ -22,15 +22,12 @@ import {
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection().initialize()
-    app = await setupServer()
+    app = await setupTestEnvironment()
 })
 
 afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
+    await teardownTestEnvironment()
 })
-
 const setupWithGlobalConnections = () => {
     return mockAndSaveBasicSetup({
         platform: {
@@ -51,7 +48,7 @@ describe('GlobalConnection API', () => {
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
-            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+            await db.save('piece_metadata', [mockPieceMetadata])
 
             
 
@@ -81,7 +78,7 @@ describe('GlobalConnection API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/global-connections',
+                url: '/api/v1/global-connections',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -106,7 +103,7 @@ describe('GlobalConnection API', () => {
             const mockPieceMetadata = createMockPieceMetadata({
                 platformId: mockPlatform.id,
             })
-            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+            await db.save('piece_metadata', [mockPieceMetadata])
 
             
 
@@ -136,7 +133,7 @@ describe('GlobalConnection API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/global-connections',
+                url: '/api/v1/global-connections',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -156,7 +153,7 @@ describe('GlobalConnection API', () => {
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
-            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+            await db.save('piece_metadata', [mockPieceMetadata])
 
             
 
@@ -186,7 +183,7 @@ describe('GlobalConnection API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/global-connections',
+                url: '/api/v1/global-connections',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -214,7 +211,7 @@ describe('GlobalConnection API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/global-connections',
+                url: '/api/v1/global-connections',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -245,7 +242,7 @@ describe('GlobalConnection API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/global-connections',
+                url: '/api/v1/global-connections',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -265,7 +262,7 @@ describe('GlobalConnection API', () => {
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
-            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+            await db.save('piece_metadata', [mockPieceMetadata])
 
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
@@ -292,7 +289,7 @@ describe('GlobalConnection API', () => {
 
             const upsertResponse = await app?.inject({
                 method: 'POST',
-                url: '/v1/global-connections',
+                url: '/api/v1/global-connections',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -302,7 +299,7 @@ describe('GlobalConnection API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/global-connections/${connectionId}`,
+                url: `/api/v1/global-connections/${connectionId}`,
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -324,7 +321,7 @@ describe('GlobalConnection API', () => {
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
-            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+            await db.save('piece_metadata', [mockPieceMetadata])
 
             
 
@@ -353,7 +350,7 @@ describe('GlobalConnection API', () => {
 
             const upsertResponse = await app?.inject({
                 method: 'POST',
-                url: '/v1/global-connections',
+                url: '/api/v1/global-connections',
                 headers: {
                     authorization: `Bearer ${mockOwnerToken}`,
                 },
@@ -374,7 +371,7 @@ describe('GlobalConnection API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/global-connections/${connectionId}`,
+                url: `/api/v1/global-connections/${connectionId}`,
                 headers: {
                     authorization: `Bearer ${mockUserToken}`,
                 },
@@ -393,7 +390,7 @@ describe('GlobalConnection API', () => {
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
-            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+            await db.save('piece_metadata', [mockPieceMetadata])
 
             
 
@@ -422,7 +419,7 @@ describe('GlobalConnection API', () => {
 
             const upsertResponse = await app?.inject({
                 method: 'POST',
-                url: '/v1/global-connections',
+                url: '/api/v1/global-connections',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -438,7 +435,7 @@ describe('GlobalConnection API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/global-connections/${connectionId}`,
+                url: `/api/v1/global-connections/${connectionId}`,
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -464,7 +461,7 @@ describe('GlobalConnection API', () => {
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
-            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+            await db.save('piece_metadata', [mockPieceMetadata])
 
             
 
@@ -494,7 +491,7 @@ describe('GlobalConnection API', () => {
 
             const upsertResponse = await app?.inject({
                 method: 'POST',
-                url: '/v1/global-connections',
+                url: '/api/v1/global-connections',
                 headers: {
                     authorization: `Bearer ${mockOwnerToken}`,
                 },
@@ -518,7 +515,7 @@ describe('GlobalConnection API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/global-connections/${connectionId}`,
+                url: `/api/v1/global-connections/${connectionId}`,
                 headers: {  
                     authorization: `Bearer ${mockUserToken}`,
                 },
@@ -537,7 +534,7 @@ describe('GlobalConnection API', () => {
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
-            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+            await db.save('piece_metadata', [mockPieceMetadata])
 
             
 
@@ -567,7 +564,7 @@ describe('GlobalConnection API', () => {
 
             const upsertResponse = await app?.inject({
                 method: 'POST',
-                url: '/v1/global-connections',
+                url: '/api/v1/global-connections',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -584,7 +581,7 @@ describe('GlobalConnection API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/global-connections/${connectionId}`,
+                url: `/api/v1/global-connections/${connectionId}`,
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },

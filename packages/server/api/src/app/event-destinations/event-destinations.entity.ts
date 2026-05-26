@@ -1,5 +1,4 @@
-import { EventDestination, EventDestinationScope } from '@activepieces/ee-shared'
-import { Platform, Project } from '@activepieces/shared'
+import { EventDestination, EventDestinationScope, Platform, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 

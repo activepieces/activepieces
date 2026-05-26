@@ -1,4 +1,4 @@
-import { krispcallAuth } from '../../index';
+import { krispcallAuth } from '../auth';
 import { HttpMethod, httpClient } from "@activepieces/pieces-common";
 import { TriggerStrategy, createTrigger } from "@activepieces/pieces-framework"
 

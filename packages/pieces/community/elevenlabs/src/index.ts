@@ -15,7 +15,7 @@ Follow these instructions to get your API Key:
 1. Visit your Elevenlabs dashboard.
 2. Once there, click on your account in the bottom left corner.
 3. Press Profile + API Key.
-4. Copy the API Key.
+4. Create or copy your API Key. Make sure to enable the following permissions: **user:read**, **text_to_speech**, **voices:read**, and **models**.
 `;
 
 const customApiCallDescription = `
@@ -79,7 +79,7 @@ export const elevenlabs = createPiece({
       // it would be more useful to have hint for URL
       description: customApiCallDescription,
       // missing propsValue to not override url when credentials are changed
-      // @see packages/pieces/community/common/src/lib/helpers/index.ts:65
+      // @see packages/pieces/common/src/lib/helpers/index.ts:65
       baseUrl: (auth) => {
         return getRegionApiUrl(auth?.props.region)
       },

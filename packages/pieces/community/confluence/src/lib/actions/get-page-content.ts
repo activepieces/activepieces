@@ -6,7 +6,7 @@ import {
 	AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { confluenceAuth } from '../..';
+import { confluenceAuth } from '../auth';
 import { confluenceApiCall } from '../common';
 
 interface ConfluencePage {
