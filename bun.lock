@@ -5388,7 +5388,7 @@
     },
     "packages/pieces/community/posthog": {
       "name": "@activepieces/piece-posthog",
-      "version": "0.4.4",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",

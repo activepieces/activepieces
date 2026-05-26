@@ -1,8 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { posthogAuth } from '../..';
 
 export const posthogCreateEvent = createAction({
@@ -18,7 +15,8 @@ export const posthogCreateEvent = createAction({
     }),
     distinct_id: Property.ShortText({
       displayName: 'Distinct ID',
-      description: "Unique identifier for the user",
+      description:
+        'Unique identifier for the user performing the action (e.g. user ID or email address)',
       required: true,
     }),
     properties: Property.Object({
@@ -28,18 +26,17 @@ export const posthogCreateEvent = createAction({
     }),
   },
   async run(context) {
-    const { project_api_key, host } = context.auth;
+    const { project_api_key, host } = context.auth.props;
     const baseUrl = host || 'https://app.posthog.com';
 
-    const result = await httpClient.sendRequest({
+    const result = await httpClient.sendRequest<{ status: number }>({
       method: HttpMethod.POST,
       url: `${baseUrl}/capture/`,
-      headers: { 'Content-Type': 'application/json' },
       body: {
         api_key: project_api_key,
         distinct_id: context.propsValue.distinct_id,
         event: context.propsValue.event,
-        properties: context.propsValue.properties || {},
+        properties: context.propsValue.properties ?? {},
       },
     });
 
