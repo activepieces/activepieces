@@ -132,6 +132,7 @@ export const generateContentAction = createAction({
 				const tempFilePath = join(tmpdir(), `gemini-file-${nanoid()}.${file.extension}`);
 
 				const fileBuffer = Buffer.from(file.base64, 'base64');
+				await fs.mkdir(tmpdir(), { recursive: true });
 				await fs.writeFile(tempFilePath, fileBuffer);
 
 				const fileSearchStore = await genAI.fileSearchStores.create({
