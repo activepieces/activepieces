@@ -1,6 +1,7 @@
 import {
     BranchExecutionType,
     FlowActionType,
+    FlowCreatorType,
     FlowOperationType,
     flowStructureUtil,
     FlowTriggerType,
@@ -77,7 +78,12 @@ export const apBuildFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
 
                 const [project, flow] = await Promise.all([
                     projectService(log).getOneOrThrow(projectId),
-                    flowService(log).create({ projectId, request: { displayName: flowName, projectId } }),
+                    flowService(log).create({
+                        projectId,
+                        ownerId: mcp.userId ?? undefined,
+                        createdBy: { type: FlowCreatorType.MCP, id: mcp.id },
+                        request: { displayName: flowName, projectId },
+                    }),
                 ])
                 const platformId = project.platformId
                 flowId = flow.id

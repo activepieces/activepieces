@@ -29,7 +29,7 @@ export type PopulatedMcpServer = z.infer<typeof PopulatedMcpServer>
 
 export type McpServer = z.infer<typeof McpServer>
 
-export type ProjectScopedMcpServer = McpServer & { projectId: string }
+export type ProjectScopedMcpServer = McpServer & { projectId: string, userId?: string | null }
 
 export const UpdateMcpServerRequest = z.object({
     disabledTools: z.array(z.string()).optional(),

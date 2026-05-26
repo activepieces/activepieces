@@ -43,6 +43,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { MoveToFolderDialog } from '@/features/automations/components/move-to-folder-dialog';
+import { FlowCreatedByBadge } from '@/features/flows/components/flow-created-by-badge';
 import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
 import { ShareTemplateDialog } from '@/features/flows/components/share-template-dialog';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
@@ -206,11 +207,16 @@ export const AutomationsTableRow = ({
         </div>
       )}
       <div
-        className="w-[120px] shrink-0 px-2 flex items-center"
+        className="w-[160px] shrink-0 px-2 flex items-center gap-2"
         onClick={(e) => e.stopPropagation()}
       >
         {item.type === 'flow' && (
-          <FlowStatusToggle flow={item.data as PopulatedFlow} />
+          <>
+            <FlowStatusToggle flow={item.data as PopulatedFlow} />
+            <FlowCreatedByBadge
+              createdBy={(item.data as PopulatedFlow).createdBy}
+            />
+          </>
         )}
       </div>
       <div

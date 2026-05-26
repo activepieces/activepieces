@@ -1,4 +1,4 @@
-import { McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
+import { FlowCreatorType, McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -18,6 +18,8 @@ export const apCreateFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
             try {
                 const flow = await flowService(log).create({
                     projectId: mcp.projectId,
+                    ownerId: mcp.userId ?? undefined,
+                    createdBy: { type: FlowCreatorType.MCP, id: mcp.id },
                     request: {
                         displayName: flowName,
                         projectId: mcp.projectId,

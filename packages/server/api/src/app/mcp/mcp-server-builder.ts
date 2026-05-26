@@ -66,7 +66,7 @@ export async function buildMcpServer({ mcp, userId, selectionScope, log, resolve
             ? await resolvePermissionChecker({ userId, projectId, log })
             : ALLOW_ALL
         registerFlowTools({ server, mcp, projectId, permissionChecker, log })
-        registerStaticTools({ server, mcp, projectId, permissionChecker, log })
+        registerStaticTools({ server, mcp, projectId, userId, permissionChecker, log })
     }
     else if (!isNil(mcp.platformId) && !isNil(userId) && !isNil(resolveProjectMcp)) {
         registerPlatformTools({ server, mcp, userId, selectionScope: selectionScope ?? { platformId: mcp.platformId, userId }, resolveProjectMcp, log })
@@ -91,7 +91,7 @@ function registerPlatformTools({ server, mcp, userId, selectionScope, resolvePro
     const contextTool = apSetProjectContextTool({ platformId, userId, selectionScope, log })
     server.registerTool(contextTool.title, buildToolConfig(contextTool), (args: Record<string, unknown>) => contextTool.execute(args))
 
-    const templateMcp: ProjectScopedMcpServer = { ...mcp, projectId: platformId }
+    const templateMcp: ProjectScopedMcpServer = { ...mcp, projectId: platformId, userId }
     const allTools = activepiecesTools(templateMcp, log)
     const disabledToolSet = new Set(mcp.disabledTools ?? [])
     const tools = allTools.filter(t => LOCKED_TOOL_NAMES.includes(t.title) || !disabledToolSet.has(t.title))
@@ -113,7 +113,7 @@ function registerPlatformTools({ server, mcp, userId, selectionScope, resolvePro
                 }
             }
             const projectMcp = await resolveProjectMcp(selectedProjectId)
-            const projectScopedMcp: ProjectScopedMcpServer = { ...projectMcp, projectId: selectedProjectId }
+            const projectScopedMcp: ProjectScopedMcpServer = { ...projectMcp, projectId: selectedProjectId, userId }
             const permissionChecker = await resolvePermissionChecker({ userId, projectId: selectedProjectId, log })
             const realTools = activepiecesTools(projectScopedMcp, log)
             const realTool = realTools.find(t => t.title === tool.title)
@@ -179,8 +179,8 @@ function registerFlowTools({ server, mcp, projectId, permissionChecker, log }: R
     }
 }
 
-function registerStaticTools({ server, mcp, projectId, permissionChecker, log }: RegisterToolsParams): void {
-    const allTools = activepiecesTools({ ...mcp, projectId }, log)
+function registerStaticTools({ server, mcp, projectId, userId, permissionChecker, log }: RegisterToolsParams): void {
+    const allTools = activepiecesTools({ ...mcp, projectId, userId }, log)
     const disabledToolSet = new Set(mcp.disabledTools ?? [])
     const tools = allTools.filter(t => LOCKED_TOOL_NAMES.includes(t.title) || !disabledToolSet.has(t.title))
 
@@ -249,6 +249,7 @@ type RegisterToolsParams = {
     server: McpServer
     mcp: PopulatedMcpServer
     projectId: string
+    userId?: string | null
     permissionChecker: PermissionChecker
     log: FastifyBaseLogger
 }
