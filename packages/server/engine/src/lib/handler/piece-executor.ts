@@ -3,6 +3,7 @@ import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, ExecutionType, FlowAc
 import type { ToolSet } from 'ai'
 import dayjs from 'dayjs'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
+import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
 import { pieceLoader } from '../helper/piece-loader'
 import { createFileUploader } from '../piece-context/file-uploader'
 import { createFlowsContext } from '../piece-context/flows'
@@ -14,7 +15,6 @@ import { propsProcessor } from '../variables/props-processor'
 import { workerSocket } from '../worker-socket'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
-import { runProgressService } from './run-progress'
 
 const AP_PAUSED_FLOW_TIMEOUT_DAYS = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS)
 
@@ -73,7 +73,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 tags: [],
             },
         }
-        const outputContext = runProgressService.createOutputContext({
+        const outputContext = flowRunProgressReporter.createOutputContext({
             engineConstants: constants,
             flowExecutorContext: executionState,
             stepName: action.name,
@@ -82,9 +82,9 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
 
         const isPaused = executionState.isPaused({ stepName: action.name })
         if (!isPaused) {
-            await runProgressService.sendUpdate({
+            await flowRunProgressReporter.sendUpdate({
                 engineConstants: constants,
-                flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
+                flowExecutorContext: await executionState.upsertStep(action.name, stepOutput),
                 stepNameToUpdate: action.name,
             })
         }
@@ -111,8 +111,6 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             files: createFileUploader({
                 apiUrl: constants.internalApiUrl,
                 engineToken: constants.engineToken,
-                stepName: action.name,
-                flowId: constants.flowId,
             }),
             server: {
                 token: constants.engineToken,
@@ -176,19 +174,20 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             if (isNil(params.hookResponse.response)) {
                 throw new EngineGenericError('StopResponseNotSetError', 'Stop response is not set')
             }
-
-            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).incrementStepsExecuted().setVerdict({
+            const succeeded = stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)
+            return (await newExecutionContext.upsertStep(action.name, succeeded)).incrementStepsExecuted().setVerdict({
                 status: FlowRunStatus.SUCCEEDED,
                 stopResponse: (params.hookResponse.response as StopHookParams).response,
             })
         }
         if (params.hookResponse.type === 'paused') {
-            return newExecutionContext
-                .upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED).setDuration(stepEndTime - stepStartTime))
+            const paused = stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED).setDuration(stepEndTime - stepStartTime)
+            return (await newExecutionContext.upsertStep(action.name, paused))
                 .incrementStepsExecuted()
                 .setVerdict({ status: FlowRunStatus.PAUSED })
         }
-        return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).incrementStepsExecuted().setVerdict({ status: FlowRunStatus.RUNNING })
+        const succeeded = stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)
+        return (await newExecutionContext.upsertStep(action.name, succeeded)).incrementStepsExecuted().setVerdict({ status: FlowRunStatus.RUNNING })
 
     }))
 
@@ -198,8 +197,8 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             .setErrorMessage(utils.formatError(executionStateError))
             .setDuration(performance.now() - stepStartTime)
 
-        return executionState
-            .upsertStep(action.name, failedStepOutput)
+        return (await executionState
+            .upsertStep(action.name, failedStepOutput))
             .setVerdict({
                 status: FlowRunStatus.FAILED, failedStep: {
                     name: action.name,

@@ -4,6 +4,7 @@ import { Server as IOServer } from 'socket.io'
 import {
     createRpcServer,
     ExecutionMode,
+    NetworkMode,
     WebsocketServerEvent,
 } from '@activepieces/shared'
 import type { WorkerToApiContract, WorkerSettingsResponse } from '@activepieces/shared'
@@ -61,7 +62,7 @@ function buildWorkerSettingsResponse(overrides?: Partial<WorkerSettingsResponse>
         S3_USE_SIGNED_URLS: 'false',
         EVENT_DESTINATION_TIMEOUT_SECONDS: 30,
         EDITION: 'community',
-        SSRF_PROTECTION_ENABLED: false,
+        NETWORK_MODE: NetworkMode.UNRESTRICTED,
         SSRF_ALLOW_LIST: [],
         ...overrides,
     }

@@ -1,19 +1,23 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { baserowJwtAuth } from '../auth';
-import { baserowCommon } from '../common';
-import { createWebhookTriggerHooks } from '../common/webhook-trigger';
+import { baserowAuth } from '../auth';
+import { baserowCommon, makeClient } from '../common';
+import { createWebhookTriggerHooks, dynamicWebhookInstructions } from '../common/webhook-trigger';
 
-const webhookHooks = createWebhookTriggerHooks('rows.updated', 'baserow_rows_updated');
+const triggerHooks = createWebhookTriggerHooks({
+  events: ['rows.updated'],
+  storeKey: 'baserow_rows_updated_trigger',
+});
 
 export const rowsUpdatedTrigger = createTrigger({
   name: 'baserow_rows_updated',
-  auth: baserowJwtAuth,
-  displayName: 'Rows Updated (Batch)',
+  auth: baserowAuth,
+  displayName: 'Updated Rows (Batch)',
   description:
     'Triggers when existing rows are updated in a Baserow table. Returns all rows from the event as a single batch.',
   type: TriggerStrategy.WEBHOOK,
   props: {
     table_id: baserowCommon.tableId(),
+    instructions: dynamicWebhookInstructions('Rows updated'),
   },
   sampleData: {
     rows: [
@@ -24,12 +28,8 @@ export const rowsUpdatedTrigger = createTrigger({
     ],
     count: 1,
   },
-  async onEnable(context) {
-    await webhookHooks.onEnable(context);
-  },
-  async onDisable(context) {
-    await webhookHooks.onDisable(context);
-  },
+  onEnable: triggerHooks.onEnable,
+  onDisable: triggerHooks.onDisable,
   async run(context) {
     const body = context.payload.body as {
       items?: Record<string, unknown>[];
@@ -39,6 +39,14 @@ export const rowsUpdatedTrigger = createTrigger({
       row: item,
       previous: (body.old_items ?? [])[i] ?? null,
     }));
+    return [{ rows, count: rows.length }];
+  },
+  async test(context) {
+    const tableId = context.propsValue.table_id;
+    if (!tableId) return [];
+    const client = await makeClient(context.auth);
+    const response = await client.listRows(tableId, 1, 5);
+    const rows = response.results.map((row) => ({ row, previous: null }));
     return [{ rows, count: rows.length }];
   },
 });

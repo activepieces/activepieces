@@ -6,7 +6,7 @@
   "default - https://api.elevenlabs.io": "default - https://api.elevenlabs.io",
   "US - https://api.us.elevenlabs.io": "US - https://api.us.elevenlabs.io",
   "EU - https://api.eu.residency.elevenlabs.io": "EU - https://api.eu.residency.elevenlabs.io",
-  "\nFollow these instructions to get your API Key:\n1. Visit your Elevenlabs dashboard.\n2. Once there, click on your account in the bottom left corner.\n3. Press Profile + API Key.\n4. Copy the API Key.\n": "\nFollow these instructions to get your API Key:\n1. Visit your Elevenlabs dashboard.\n2. Once there, click on your account in the bottom left corner.\n3. Press Profile + API Key.\n4. Copy the API Key.\n",
+  "\nFollow these instructions to get your API Key:\n1. Visit your Elevenlabs dashboard.\n2. Once there, click on your account in the bottom left corner.\n3. Press Profile + API Key.\n4. Create or copy your API Key. Make sure to enable the following permissions: **user:read**, **text_to_speech**, **voices:read**, and **models**.\n": "\nFollow these instructions to get your API Key:\n1. Visit your Elevenlabs dashboard.\n2. Once there, click on your account in the bottom left corner.\n3. Press Profile + API Key.\n4. Create or copy your API Key. Make sure to enable the following permissions: **user:read**, **text_to_speech**, **voices:read**, and **models**.\n",
   "Text to Speech": "Text to Speech",
   "Custom API Call": "Custom API Call",
   "Convert text to speech using Elevenlabs": "Convert text to speech using Elevenlabs",

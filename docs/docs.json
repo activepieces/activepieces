@@ -124,6 +124,9 @@
                            "admin-guide/security/audit-logs/flow-created",
                            "admin-guide/security/audit-logs/flow-updated",
                            "admin-guide/security/audit-logs/flow-deleted",
+                           "admin-guide/security/audit-logs/flow-published",
+                           "admin-guide/security/audit-logs/flow-activated",
+                           "admin-guide/security/audit-logs/flow-deactivated",
                            "admin-guide/security/audit-logs/connection-upserted",
                            "admin-guide/security/audit-logs/connection-deleted",
                            "admin-guide/security/audit-logs/flow-run-started",
@@ -199,7 +202,11 @@
                   "pages": [
                      "install/architecture/overview",
                      "install/architecture/workers",
-                     "install/architecture/engine",
+                     "install/architecture/sandboxing",
+                     "install/architecture/durable-execution",
+                     "install/architecture/waitpoints",
+                     "install/architecture/network-security",
+                     "install/architecture/piece-syncing",
                      "install/architecture/benchmark"
                   ]
                }
@@ -212,6 +219,7 @@
                   "group": "Essentials",
                   "pages": [
                      "embedding/overview",
+                     "embedding/configure-embedding",
                      "embedding/provision-users",
                      "embedding/embed-builder"
                   ]
@@ -450,6 +458,13 @@
                         "pages": [
                            "endpoints/worker-machines/queue-metrics"
                         ]
+                     },
+                     {
+                        "group": "Embedding",
+                        "icon": "code",
+                        "pages": [
+                           "endpoints/embedding/add-allowed-embed-origins"
+                        ]
                      }
                   ]
                }
@@ -508,10 +523,13 @@
                      "handbook/engineering/playbooks/canary-deployment",
                      "handbook/engineering/playbooks/infrastructure",
                      "handbook/engineering/playbooks/database-migration",
+                     "handbook/engineering/playbooks/security-advisory-response",
                      "handbook/engineering/playbooks/product-announcement",
                      "handbook/engineering/playbooks/frontend-best-practices",
                      "handbook/engineering/playbooks/e2e-tests",
+                     "handbook/engineering/playbooks/testing-strategy",
                      "handbook/engineering/playbooks/connect-claude-to-chrome",
+                     "handbook/engineering/playbooks/ai-engineering-guide",
                      {
                         "group": "Postmortems",
                         "icon": "triangle-exclamation",

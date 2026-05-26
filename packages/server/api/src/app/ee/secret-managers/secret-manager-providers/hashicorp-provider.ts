@@ -1,6 +1,6 @@
+import { safeHttp } from '@activepieces/server-utils'
 import { ActivepiecesError, ErrorCode, SecretManagerProviderId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { apAxios } from '../../../helper/ap-axios'
 import { SecretManagerProvider, throwConnectionError, throwGetSecretError } from './secret-manager-providers'
 
 export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider<SecretManagerProviderId.HASHICORP> => ({
@@ -92,7 +92,7 @@ const vaultApi = async ({
     method: string
     body?: Record<string, unknown>
 }) => {
-    return apAxios.request({
+    return safeHttp.retryingAxios.request({
         url,
         method,
         headers: {

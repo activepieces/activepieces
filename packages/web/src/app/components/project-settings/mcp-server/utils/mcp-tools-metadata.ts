@@ -23,19 +23,29 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
           'Get the structure of a flow: step tree, configuration status, and valid insert locations',
       },
       {
+        name: 'ap_read_step_code',
+        description:
+          'Read full source code, package.json, and input of a CODE step',
+      },
+      {
         name: 'ap_validate_flow',
         description:
           'Validate a flow for structural issues without publishing — checks step validity, template references, and empty branches',
       },
       {
-        name: 'ap_list_pieces',
+        name: 'ap_research_pieces',
         description:
-          'List pieces with actions and triggers — required before adding or updating steps',
+          'Research pieces with actions and triggers — required before adding or updating steps',
       },
       {
         name: 'ap_get_piece_props',
         description:
           'Get detailed property schema for a specific piece action or trigger',
+      },
+      {
+        name: 'ap_resolve_property_options',
+        description:
+          'Resolve dropdown options for a specific piece property — returns available choices with labels and IDs',
       },
       {
         name: 'ap_validate_step_config',
@@ -83,12 +93,21 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
         description: 'Create a new flow',
       },
       {
+        name: 'ap_duplicate_flow',
+        description:
+          'Duplicate an existing flow with all steps and configuration',
+      },
+      {
         name: 'ap_rename_flow',
         description: 'Rename an existing flow',
       },
       {
         name: 'ap_change_flow_status',
         description: 'Enable or disable a flow',
+      },
+      {
+        name: 'ap_delete_flow',
+        description: 'Permanently delete a flow and all its versions',
       },
       {
         name: 'ap_lock_and_publish',
@@ -127,6 +146,11 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
       {
         name: 'ap_add_branch',
         description: 'Add a conditional branch to a router step',
+      },
+      {
+        name: 'ap_update_branch',
+        description:
+          'Update the conditions or name of an existing router branch',
       },
       {
         name: 'ap_delete_branch',
@@ -186,6 +210,11 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
       {
         name: 'ap_retry_run',
         description: 'Retry a failed flow run',
+      },
+      {
+        name: 'ap_run_action',
+        description:
+          'Run a single piece action once without saving a flow — for one-shot tasks like "check my inbox"',
       },
     ],
   },

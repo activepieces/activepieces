@@ -1,8 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient, AuthenticationType } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { mistralAuth } from '../common/auth';
 import FormData from 'form-data';
 import { parseMistralError } from '../common/props';
+import { mistralRequest } from '../common/request';
 
 const SUPPORTED_PURPOSES = ['fine-tune', 'batch', 'ocr'];
 const MAX_FILE_SIZE_BYTES = 512 * 1024 * 1024;
@@ -57,6 +58,7 @@ export const uploadFile = createAction({
 
 		if (!ALLOWED_EXTENSIONS.includes(ext)) throw new Error(`File extension .${ext} is not allowed`);
 
+		const { baseUrl, headers } = mistralRequest.getConfig(context.auth);
 		const form = new FormData();
 		form.append('file', Buffer.from(file.data), file.filename);
 		form.append('purpose', purpose);
@@ -64,13 +66,10 @@ export const uploadFile = createAction({
 		try {
 			const response = await httpClient.sendRequest({
 				method: HttpMethod.POST,
-				url: 'https://api.mistral.ai/v1/files',
-				authentication: {
-					type: AuthenticationType.BEARER_TOKEN,
-					token: context.auth.secret_text,
-				},
-				headers:{
-					...form.getHeaders()
+				url: `${baseUrl}/files`,
+				headers: {
+					...headers,
+					...form.getHeaders(),
 				},
 				body: form,
 			});

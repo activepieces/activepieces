@@ -51,6 +51,7 @@ export type SandboxInitOptions = {
     reusable: boolean
     command?: string[]
     baseMounts?: SandboxMount[]
+    wsRpcPort?: number
 }
 
 export type SandboxOptions = {
