@@ -2,6 +2,7 @@ import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
   createCustomApiCallAction,
+  HttpError,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
@@ -32,7 +33,14 @@ export const resendAuth = PieceAuth.SecretText({
         },
       });
       return { valid: true };
-    } catch {
+    } catch (error) {
+      // A restricted (send-only) key returns 401 with name 'restricted_api_key' — it is valid
+      if (error instanceof HttpError) {
+        const body = error.response.body;
+        if (typeof body === 'object' && body !== null && 'name' in body && body.name === 'restricted_api_key') {
+          return { valid: true };
+        }
+      }
       return { valid: false, error: 'Invalid API key. Please check your Resend API key.' };
     }
   },
