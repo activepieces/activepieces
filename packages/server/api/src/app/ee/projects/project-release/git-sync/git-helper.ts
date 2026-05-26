@@ -89,6 +89,7 @@ async function initGitRepo(
         binary: 'git',
         unsafe: {
             allowUnsafeSshCommand: true,
+            allowUnsafeProtocolOverride: true,
         },
     }).env('GIT_SSH_COMMAND', `ssh -i ${keyPath} -o StrictHostKeyChecking=no`)
     await git.init()
