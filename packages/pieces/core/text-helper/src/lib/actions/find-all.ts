@@ -1,9 +1,9 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 
-export const find = createAction({
-  description: 'Find substring (Regex or Text).',
-  displayName: 'Find',
-  name: 'find',
+export const findAll = createAction({
+  description: 'Find all substrings matching a regex or text pattern.',
+  displayName: 'Find All',
+  name: 'find_all',
   errorHandlingOptions: {
     continueOnFailure: {
       hide: true,
@@ -19,8 +19,7 @@ export const find = createAction({
     }),
     expression: Property.ShortText({
       displayName: 'Expression',
-      description:
-        'Regex or text to search for. Returns the first match and its capture groups.',
+      description: 'Regex or text to search for. Returns every occurrence.',
       required: true,
     }),
     ignoreCase: Property.Checkbox({
@@ -30,16 +29,16 @@ export const find = createAction({
       defaultValue: false,
     }),
   },
-  run: async (ctx): Promise<RegExpMatchArray | null> => {
-    const flags = ctx.propsValue.ignoreCase ? 'i' : '';
-    let expression: RegExp;
+  run: async (ctx): Promise<string[]> => {
+    const flags = ctx.propsValue.ignoreCase ? 'gi' : 'g';
+    let regex: RegExp;
     try {
-      expression = new RegExp(ctx.propsValue.expression, flags);
+      regex = new RegExp(ctx.propsValue.expression, flags);
     } catch {
       throw new Error(
         `Invalid regular expression: ${ctx.propsValue.expression}`
       );
     }
-    return ctx.propsValue.text.match(expression);
+    return [...ctx.propsValue.text.matchAll(regex)].map((m) => m[0]);
   },
 });
