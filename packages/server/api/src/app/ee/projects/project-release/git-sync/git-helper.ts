@@ -83,9 +83,13 @@ async function initGitRepo(
     baseDir: string,
     branch: string,
 ): Promise<SimpleGit> {
+    assertSafeKeyPath(keyPath)
     const git = simpleGit({
         baseDir,
         binary: 'git',
+        unsafe: {
+            allowUnsafeSshCommand: true,
+        },
     }).env('GIT_SSH_COMMAND', `ssh -i ${keyPath} -o StrictHostKeyChecking=no`)
     await git.init()
     await git.addConfig('core.symlinks', 'false')
@@ -97,6 +101,7 @@ async function initGitRepo(
 }
 
 const SAFE_SLUG_PATTERN = /^[A-Za-z0-9._-]{1,128}$/
+const SAFE_KEY_PATH_PATTERN = /^[A-Za-z0-9._/-]+$/
 
 function assertSafeSlug(slug: string): void {
     if (!SAFE_SLUG_PATTERN.test(slug) || slug === '.' || slug === '..') {
@@ -104,6 +109,17 @@ function assertSafeSlug(slug: string): void {
             code: ErrorCode.VALIDATION,
             params: {
                 message: `invalid gitRepo.slug "${slug}": only alphanumeric, dot, dash and underscore are allowed (max 128 chars)`,
+            },
+        })
+    }
+}
+
+function assertSafeKeyPath(keyPath: string): void {
+    if (!SAFE_KEY_PATH_PATTERN.test(keyPath)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'invalid ssh key path: contains characters that are not safe to interpolate into GIT_SSH_COMMAND',
             },
         })
     }
