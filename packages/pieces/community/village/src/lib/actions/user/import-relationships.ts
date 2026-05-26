@@ -4,21 +4,14 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 
 const MAX_RELATIONSHIPS_PER_REQUEST = 1000;
 const MIN_SCORE = 0;
-const MAX_SCORE = 100;
+const MAX_SCORE = 10;
 
 const USER_RELATIONSHIP_TYPE_OPTIONS = [
+  { label: 'Met in person', value: 'met_in_person' },
   { label: 'Worked together', value: 'worked_together' },
   { label: 'Studied together', value: 'studied_together' },
-  { label: 'Friend', value: 'friend' },
-  { label: 'Family', value: 'family' },
-  { label: 'Mentor', value: 'mentor' },
-  { label: 'Mentee', value: 'mentee' },
-  { label: 'Investor', value: 'investor' },
-  { label: 'Founder', value: 'founder' },
-  { label: 'Advisor', value: 'advisor' },
-  { label: 'Customer', value: 'customer' },
-  { label: 'Vendor', value: 'vendor' },
-  { label: 'Other', value: 'other' },
+  { label: 'Attended event', value: 'attended_event' },
+  { label: 'Introduced by someone', value: 'introduced_by_someone' },
 ];
 
 type PersonRow = {
@@ -32,12 +25,12 @@ export const importRelationships = createAction({
   name: 'import_relationships',
   displayName: 'Import Relationships',
   description:
-    "Import manual relationships to expand your network graph — useful for adding people you know but aren't connected to digitally. Provide email addresses or LinkedIn URLs with optional scores (0-100); higher scores indicate stronger relationships. Max 1000 per request.",
+    "Import manual relationships to expand your network graph — useful for adding people you know but aren't connected to digitally. Provide email addresses or LinkedIn URLs with optional scores (0-10); higher scores indicate stronger relationships. Max 1000 per request.",
   props: {
     people: Property.Array({
       displayName: 'People',
       description:
-        'Up to 1000 people to import. Each row: identifier (email or LinkedIn URL), optional score (0-100), optional relationship type.',
+        'Up to 1000 people to import. Each row: identifier (email or LinkedIn URL), optional score (0-10), optional relationship type.',
       required: true,
       defaultValue: [],
       properties: {

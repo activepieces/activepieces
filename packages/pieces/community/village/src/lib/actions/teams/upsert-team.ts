@@ -7,17 +7,12 @@ export const upsertTeam = createAction({
   name: 'upsert_team',
   displayName: 'Create or Update Team',
   description:
-    'Create a new team or update an existing one. To create: provide a name (id is auto-generated). To update: provide the team_id (requires admin permissions).',
+    'Create or update a team. The team ID is derived from the team name; repeated calls with the same name update the same team (requires admin permissions on update).',
   props: {
     name: Property.ShortText({
       displayName: 'Name',
       description: 'Team name (max 100 characters)',
       required: true,
-    }),
-    team_id: Property.ShortText({
-      displayName: 'Team ID',
-      description: 'Existing team ID to update. Omit to create a new team.',
-      required: false,
     }),
     logo: Property.ShortText({
       displayName: 'Logo',
@@ -26,10 +21,9 @@ export const upsertTeam = createAction({
     }),
   },
   async run(context) {
-    const { name, team_id, logo } = context.propsValue;
+    const { name, logo } = context.propsValue;
 
     const body: Record<string, unknown> = { name };
-    if (team_id !== undefined) body['team_id'] = team_id;
     if (logo !== undefined) body['logo'] = logo;
 
     const response = await httpClient.sendRequest({

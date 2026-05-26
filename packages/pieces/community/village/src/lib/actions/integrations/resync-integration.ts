@@ -9,9 +9,9 @@ export const resyncIntegration = createAction({
   description:
     'Trigger a full resync of a Google or LinkedIn integration. Clears sync cursors and re-imports all contacts/calendar data; all graph operations use MERGE so it is fully idempotent.',
   props: {
-    id: Property.ShortText({
+    id: Property.Number({
       displayName: 'Integration ID',
-      description: 'Integration ID',
+      description: 'Numeric ID of the integration to resync',
       required: true,
     }),
   },
@@ -20,7 +20,7 @@ export const resyncIntegration = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${VILLAGE_API_BASE_URL}/v2/integrations/${encodeURIComponent(id)}/resync`,
+      url: `${VILLAGE_API_BASE_URL}/v2/integrations/${id}/resync`,
       headers: { Authorization: `Bearer ${context.auth}` },
     });
     return response.body;

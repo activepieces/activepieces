@@ -9,9 +9,9 @@ export const updateIntegration = createAction({
   description:
     'Update settings for a connected Gmail integration — adjust rate limits, timezone, status, or set as the default sending account. Provide only the fields you want to change.',
   props: {
-    id: Property.ShortText({
+    id: Property.Number({
       displayName: 'Integration ID',
-      description: 'Integration ID',
+      description: 'Numeric ID of the integration to update',
       required: true,
     }),
     email_sending_per_day: Property.Number({
@@ -63,17 +63,26 @@ export const updateIntegration = createAction({
       email_sending_default,
     } = context.propsValue;
 
+    const assertRange = (value: number, min: number, max: number, field: string): void => {
+      if (!Number.isInteger(value) || value < min || value > max) {
+        throw new Error(`${field} must be an integer between ${min} and ${max} (got ${value})`);
+      }
+    };
+
     const body: Record<string, unknown> = {};
     if (email_sending_per_day !== undefined && email_sending_per_day !== null) {
+      assertRange(email_sending_per_day, 1, 500, 'email_sending_per_day');
       body['email_sending_per_day'] = email_sending_per_day;
     }
     if (email_sending_per_hour !== undefined && email_sending_per_hour !== null) {
+      assertRange(email_sending_per_hour, 1, 100, 'email_sending_per_hour');
       body['email_sending_per_hour'] = email_sending_per_hour;
     }
     if (
       email_sending_min_delay_seconds !== undefined &&
       email_sending_min_delay_seconds !== null
     ) {
+      assertRange(email_sending_min_delay_seconds, 60, 3600, 'email_sending_min_delay_seconds');
       body['email_sending_min_delay_seconds'] = email_sending_min_delay_seconds;
     }
     if (timezone !== undefined && timezone !== null && timezone !== '') {
@@ -94,7 +103,7 @@ export const updateIntegration = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.PATCH,
-      url: `${VILLAGE_API_BASE_URL}/v2/integrations/${encodeURIComponent(id)}`,
+      url: `${VILLAGE_API_BASE_URL}/v2/integrations/${id}`,
       headers: { Authorization: `Bearer ${context.auth}` },
       body,
     });

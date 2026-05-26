@@ -66,11 +66,18 @@ export const searchCompanies = createAction({
       description: 'Network path and relationship filters.',
       required: false,
     }),
-    include_counts: Property.Json({
+    include_counts: Property.StaticDropdown({
       displayName: 'Include Counts',
       description:
-        'Inline count scopes to compute on the first page only ("global", "network", or "all"). Ignored when cursor is provided.',
+        'Inline count scope to compute on the first page only. Ignored when cursor is provided and adds latency.',
       required: false,
+      options: {
+        options: [
+          { label: 'Global', value: 'global' },
+          { label: 'Network', value: 'network' },
+          { label: 'All', value: 'all' },
+        ],
+      },
     }),
   },
   async run(context) {

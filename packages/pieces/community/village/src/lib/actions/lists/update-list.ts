@@ -21,7 +21,7 @@ export const updateList = createAction({
     }),
     description: Property.LongText({
       displayName: 'Description',
-      description: 'New list description (provide empty string to clear)',
+      description: 'New list description. Leave blank to keep unchanged.',
       required: false,
     }),
   },

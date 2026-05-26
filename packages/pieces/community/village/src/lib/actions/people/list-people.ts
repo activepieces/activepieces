@@ -18,6 +18,7 @@ export const listPeople = createAction({
       displayName: 'Limit',
       description: 'Number of results per page (default 25, max 100)',
       required: false,
+      defaultValue: 25,
     }),
     connection_degrees: Property.Array({
       displayName: 'Connection Degrees',
