@@ -33,7 +33,7 @@ export const editMonitorAction = createAction({
     interval: Property.Number({
       displayName: 'New Check Interval (seconds)',
       description:
-        'Minimum 60s on Free plan, 30s on Pro. Values below the plan minimum are rejected by UptimeRobot. Leave empty to keep the current interval.',
+        'Minimum 300s (5 min) on the Free plan, 60s on Solo/Team, 30s on Enterprise. Values below the plan minimum are rejected by UptimeRobot. Leave empty to keep the current interval.',
       required: false,
     }),
   },
@@ -48,7 +48,7 @@ export const editMonitorAction = createAction({
       throw new Error('Please select a monitor or enter a Monitor ID.');
     }
 
-    const body: Record<string, unknown> = { id: monitorId };
+    const body: Record<string, unknown> = { id: Number(monitorId) };
     if (friendly_name) body['friendly_name'] = friendly_name;
     if (url) body['url'] = url;
     if (interval !== undefined && interval !== null) body['interval'] = interval;

@@ -24,8 +24,57 @@ const MONITOR_STATUS_MAP: Record<number, string> = {
   9: 'Down',
 };
 
+export const uptimeRobotCommon = {
+  apiCall: callApi,
+  fetchAllMonitors,
+  fetchFlatMonitorById,
+  flattenMonitor,
+  buildMonitorOptions,
+  monitorDropdown: Property.Dropdown({
+    displayName: 'Monitor',
+    description: 'Select the monitor to act on',
+    refreshers: [],
+    refreshOnSearch: true,
+    required: true,
+    auth: uptimeRobotAuth,
+    options: async ({ auth }, { searchValue }) =>
+      buildMonitorOptions({ auth, searchValue: searchValue ?? undefined }),
+  }),
+  monitorDropdownOptional: Property.Dropdown({
+    displayName: 'Monitor (optional)',
+    description:
+      'Select the monitor to act on, or leave blank and use "Monitor ID" below to pass a dynamic value.',
+    refreshers: [],
+    refreshOnSearch: true,
+    required: false,
+    auth: uptimeRobotAuth,
+    options: async ({ auth }, { searchValue }) =>
+      buildMonitorOptions({ auth, searchValue: searchValue ?? undefined }),
+  }),
+  monitorMultiSelect: Property.MultiSelectDropdown({
+    displayName: 'Monitors',
+    description:
+      'Filter to specific monitors. Leave empty to include all monitors in your account.',
+    refreshers: [],
+    refreshOnSearch: true,
+    required: false,
+    auth: uptimeRobotAuth,
+    options: async ({ auth }, { searchValue }) =>
+      buildMonitorOptions({ auth, searchValue: searchValue ?? undefined }),
+  }),
+};
+
 function statusLabel(status: number): string {
   return MONITOR_STATUS_MAP[status] ?? String(status);
+}
+
+function getHttpStatus(err: unknown): number | undefined {
+  if (typeof err !== 'object' || err === null || !('response' in err)) return undefined;
+  const { response } = err as { response: unknown };
+  if (typeof response !== 'object' || response === null || !('status' in response))
+    return undefined;
+  const { status } = response as { status: unknown };
+  return typeof status === 'number' ? status : undefined;
 }
 
 async function callApi<T extends UptimeRobotBaseResponse>({
@@ -49,8 +98,7 @@ async function callApi<T extends UptimeRobotBaseResponse>({
   );
 
   if (error) {
-    const err = error as { response?: { status?: number } };
-    const status = err.response?.status;
+    const status = getHttpStatus(error);
     if (status === 429) {
       throw new Error(
         'UptimeRobot rate limit exceeded (Free plan: 10 req/min). Wait a moment and retry, or upgrade your plan.',
@@ -191,46 +239,6 @@ async function buildMonitorOptions({
     };
   }
 }
-
-export const uptimeRobotCommon = {
-  apiCall: callApi,
-  fetchAllMonitors,
-  fetchFlatMonitorById,
-  flattenMonitor,
-  buildMonitorOptions,
-  monitorDropdown: Property.Dropdown({
-    displayName: 'Monitor',
-    description: 'Select the monitor to act on',
-    refreshers: [],
-    refreshOnSearch: true,
-    required: true,
-    auth: uptimeRobotAuth,
-    options: async ({ auth }, { searchValue }) =>
-      buildMonitorOptions({ auth, searchValue: searchValue ?? undefined }),
-  }),
-  monitorDropdownOptional: Property.Dropdown({
-    displayName: 'Monitor',
-    description:
-      'Select the monitor to act on, or leave blank and use "Monitor ID" below to pass a dynamic value.',
-    refreshers: [],
-    refreshOnSearch: true,
-    required: false,
-    auth: uptimeRobotAuth,
-    options: async ({ auth }, { searchValue }) =>
-      buildMonitorOptions({ auth, searchValue: searchValue ?? undefined }),
-  }),
-  monitorMultiSelect: Property.MultiSelectDropdown({
-    displayName: 'Monitors',
-    description:
-      'Filter to specific monitors. Leave empty to include all monitors in your account.',
-    refreshers: [],
-    refreshOnSearch: true,
-    required: false,
-    auth: uptimeRobotAuth,
-    options: async ({ auth }, { searchValue }) =>
-      buildMonitorOptions({ auth, searchValue: searchValue ?? undefined }),
-  }),
-};
 
 export interface UptimeRobotApiError {
   type: string;

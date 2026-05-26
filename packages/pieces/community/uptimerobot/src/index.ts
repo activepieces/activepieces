@@ -6,9 +6,6 @@ import { createMonitorAction } from './lib/actions/create-monitor';
 import { editMonitorAction } from './lib/actions/edit-monitor';
 import { deleteMonitorAction } from './lib/actions/delete-monitor';
 import { pauseResumeMonitorAction } from './lib/actions/pause-resume-monitor';
-import { monitorStatusChangeTrigger } from './lib/triggers/monitor-status-change';
-
-export { uptimeRobotAuth };
 
 export const uptimeRobot = createPiece({
   displayName: 'UptimeRobot',
@@ -25,5 +22,5 @@ export const uptimeRobot = createPiece({
     deleteMonitorAction,
     pauseResumeMonitorAction,
   ],
-  triggers: [monitorStatusChangeTrigger],
+  triggers: [],
 });

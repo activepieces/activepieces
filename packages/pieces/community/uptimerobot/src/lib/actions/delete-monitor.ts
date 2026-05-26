@@ -32,7 +32,7 @@ export const deleteMonitorAction = createAction({
     await uptimeRobotCommon.apiCall<UptimeRobotDeleteMonitorResponse>({
       apiKey: context.auth.secret_text,
       endpoint: 'deleteMonitor',
-      body: { id: monitorId },
+      body: { id: Number(monitorId) },
     });
     return { id: String(monitorId), deleted: true };
   },
