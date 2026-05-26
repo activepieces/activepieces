@@ -9,10 +9,6 @@ import { addCommentAction } from './lib/actions/add-comment';
 import { newUpdatedWorkItemTrigger } from './lib/triggers/new-updated-work-item';
 import { newUpdatedWorkItemWebhookTrigger } from './lib/triggers/new-updated-work-item-webhook';
 import { azureDevOpsAuth, azureDevOpsCommon } from './lib/common';
-import type { AzureDevOpsAuth } from './lib/common';
-
-export { azureDevOpsAuth };
-export type { AzureDevOpsAuth };
 
 export const azureDevOps = createPiece({
   displayName: 'Azure DevOps',
