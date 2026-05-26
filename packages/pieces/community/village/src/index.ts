@@ -23,7 +23,6 @@ import { listGroups } from './lib/actions/groups/list-groups';
 import { upsertGroup } from './lib/actions/groups/upsert-group';
 
 // Integrations actions
-import { createIntegration } from './lib/actions/integrations/create-integration';
 import { listIntegrations } from './lib/actions/integrations/list-integrations';
 import { resyncIntegration } from './lib/actions/integrations/resync-integration';
 import { updateIntegration } from './lib/actions/integrations/update-integration';
@@ -84,7 +83,6 @@ export const village = createPiece({
     leaveGroup,
     listGroups,
     upsertGroup,
-    createIntegration,
     listIntegrations,
     resyncIntegration,
     updateIntegration,

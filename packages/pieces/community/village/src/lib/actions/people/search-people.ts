@@ -40,11 +40,6 @@ export const searchPeople = createAction({
         ],
       },
     }),
-    stream: Property.Checkbox({
-      displayName: 'Stream',
-      description: 'Enable Server-Sent Events (SSE) streaming for real-time results',
-      required: false,
-    }),
     scope: Property.StaticDropdown({
       displayName: 'Scope',
       description:
@@ -94,7 +89,6 @@ export const searchPeople = createAction({
       filters,
       limit,
       mode,
-      stream,
       scope,
       cursor,
       network_filters,
@@ -111,7 +105,6 @@ export const searchPeople = createAction({
     if (filters !== undefined) body['filters'] = filters;
     if (limit !== undefined) body['limit'] = limit;
     if (mode !== undefined) body['mode'] = mode;
-    if (stream !== undefined) body['stream'] = stream;
     if (scope !== undefined) body['scope'] = scope;
     if (cursor !== undefined) body['cursor'] = cursor;
     if (network_filters !== undefined) body['network_filters'] = network_filters;

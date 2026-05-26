@@ -74,6 +74,14 @@ export const importRelationships = createAction({
       );
     }
 
+    if (min_score !== undefined && min_score !== null) {
+      if (min_score < MIN_SCORE || min_score > MAX_SCORE) {
+        throw new Error(
+          `Default Score must be between ${MIN_SCORE} and ${MAX_SCORE} (got ${min_score})`,
+        );
+      }
+    }
+
     const peoplePayload = rows.map((row, index) => {
       const identifier = (row.identifier ?? '').trim();
       if (!identifier) {
@@ -81,6 +89,11 @@ export const importRelationships = createAction({
       }
       const item: Record<string, unknown> = { identifier };
       if (row.score !== undefined && row.score !== null) {
+        if (row.score < MIN_SCORE || row.score > MAX_SCORE) {
+          throw new Error(
+            `people[${index}].score must be between ${MIN_SCORE} and ${MAX_SCORE} (got ${row.score})`,
+          );
+        }
         item['score'] = row.score;
       }
       if (row.user_relationship_type) {

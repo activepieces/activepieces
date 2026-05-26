@@ -51,11 +51,6 @@ export const searchCompanies = createAction({
         ],
       },
     }),
-    stream: Property.Checkbox({
-      displayName: 'Stream',
-      description: 'Enable SSE streaming for progressive results.',
-      required: false,
-    }),
     cursor: Property.ShortText({
       displayName: 'Cursor',
       description: 'Pagination cursor (encoded string) from a previous response.',
@@ -87,7 +82,6 @@ export const searchCompanies = createAction({
       limit,
       mode,
       scope,
-      stream,
       cursor,
       network_filters,
       include_counts,
@@ -103,7 +97,6 @@ export const searchCompanies = createAction({
     if (limit !== undefined) body['limit'] = limit;
     if (mode !== undefined) body['mode'] = mode;
     if (scope !== undefined) body['scope'] = scope;
-    if (stream !== undefined) body['stream'] = stream;
     if (cursor !== undefined) body['cursor'] = cursor;
     if (network_filters !== undefined) body['network_filters'] = network_filters;
     if (include_counts !== undefined) body['include_counts'] = include_counts;
