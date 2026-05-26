@@ -26,11 +26,17 @@ export const bochaAuth = PieceAuth.SecretText({
         valid: true,
       };
     }
-    catch (e) {
-      return {
-        valid: false,
-        error: 'Invalid API Key',
-      };
+    catch (e: unknown) {
+      const status =
+        e instanceof Error &&
+        'response' in e &&
+        typeof (e as { response: { status: number } }).response?.status === 'number'
+          ? (e as { response: { status: number } }).response.status
+          : undefined;
+      if (status === 401 || status === 403) {
+        return { valid: false, error: 'Invalid API Key' };
+      }
+      return { valid: false, error: 'Could not connect to Bocha API. Please try again.' };
     }
   },
 });
