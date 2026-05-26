@@ -23,7 +23,7 @@ export const ImageDialog: React.FC<ImageDialogProps> = ({
     return () => {
       document.removeEventListener('keydown', handler);
     };
-  }, []);
+  }, [onOpenChange]);
   return open ? (
     <div
       className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center transition-colors duration-300"

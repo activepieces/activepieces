@@ -133,7 +133,7 @@ Property.Dropdown({
     const response = await httpClient.sendRequest<{ data: { id: string; name: string }[] }>({
       method: HttpMethod.GET,
       url: 'https://api.example.com/v1/projects',
-      authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth as string },
+      authentication: { type: AuthenticationType.BEARER_TOKEN, token: (auth as { secret_text: string }).secret_text },
     });
     return {
       disabled: false,
@@ -161,7 +161,7 @@ Property.Dropdown({
     const response = await httpClient.sendRequest<{ data: { id: string; name: string }[] }>({
       method: HttpMethod.GET,
       url: `https://api.example.com/v1/projects/${project}/tasks`,
-      authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth as string },
+      authentication: { type: AuthenticationType.BEARER_TOKEN, token: (auth as { secret_text: string }).secret_text },
     });
     return {
       disabled: false,

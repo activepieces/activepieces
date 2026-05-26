@@ -72,30 +72,48 @@ export const flowRunUtils = {
     });
     return lastStepWithStatus;
   },
-  findLoopsState(
+  pinLoopsToIterationsWithFailedStep(
     run: FlowRun,
     //runs get updated if they aren't terminated yet, so we shouldn't reset the loops state on each update
     currentLoopsState: Record<string, number>,
+    options?: { liveFollowPaused?: boolean },
   ) {
     const loopsOutputs = executionJournal.getLoopSteps(run.steps);
-    const failedStep = run.steps
+    const latestStep = run.steps
       ? flowRunUtils.findLastStepWithStatus(run.status, run.steps)
       : null;
-    const result = currentLoopsState;
+    const result = { ...currentLoopsState };
 
     Object.entries(loopsOutputs).forEach(([loopName, loopOutput]) => {
-      const doesLoopIncludeFailedStep =
-        failedStep && executionJournal.isChildOf(loopOutput, failedStep);
+      const doesLoopIncludeLatestStep =
+        latestStep && executionJournal.isChildOf(loopOutput, latestStep);
 
       if (isNil(loopOutput.output)) {
         result[loopName] = 0;
         return;
       }
-      if (doesLoopIncludeFailedStep && loopOutput.output) {
+      if (
+        doesLoopIncludeLatestStep &&
+        loopOutput.output &&
+        !options?.liveFollowPaused
+      ) {
         result[loopName] = loopOutput.output.iterations.length - 1;
         return;
       }
       result[loopName] = currentLoopsState[loopName] ?? 0;
+    });
+    return result;
+  },
+  snapLoopsToLatestIteration(
+    run: FlowRun,
+    currentLoopsState: Record<string, number>,
+  ): Record<string, number> {
+    const loopsOutputs = executionJournal.getLoopSteps(run.steps);
+    const result = { ...currentLoopsState };
+    Object.entries(loopsOutputs).forEach(([loopName, loopOutput]) => {
+      if (!isNil(loopOutput.output)) {
+        result[loopName] = loopOutput.output.iterations.length - 1;
+      }
     });
     return result;
   },
@@ -164,7 +182,7 @@ export const flowRunUtils = {
     return cn('text-xs border rounded-md leading-tight', {
       'text-success-800 bg-success-50 border-success-200 dark:text-success-200 dark:bg-success-900 dark:border-success-800':
         variant === 'success',
-      'text-destructive-800 bg-destructive-50 border-destructive-200 dark:text-destructive-200 dark:bg-destructive-900 dark:border-destructive-800':
+      'text-destructive-700 bg-destructive-50 border-destructive-200 dark:text-destructive-200 dark:bg-destructive-900 dark:border-destructive-800':
         variant === 'error',
       'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-600 dark:bg-amber-950 border-amber-500 dark:border-amber-900':
         variant === 'warning',

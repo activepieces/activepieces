@@ -1,0 +1,26 @@
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { pollingHelper } from '@activepieces/pieces-common';
+import { ninjapipeAuth } from '../../';
+import { buildPolling } from './common';
+
+export const newOrUpdatedCompany = createTrigger({
+  auth: ninjapipeAuth,
+  name: 'new_or_updated_company',
+  displayName: 'New or Updated Company',
+  description: 'Triggers when a company is created or updated.',
+  type: TriggerStrategy.POLLING,
+  sampleData: { id: '1', name: 'Acme Inc', updated_at: '2024-01-01T00:00:00Z' },
+  props: {},
+  async test(context) {
+    return await pollingHelper.test(buildPolling('/companies', 'updated_at'), context);
+  },
+  async onEnable(context) {
+    await pollingHelper.onEnable(buildPolling('/companies', 'updated_at'), context);
+  },
+  async onDisable(context) {
+    await pollingHelper.onDisable(buildPolling('/companies', 'updated_at'), context);
+  },
+  async run(context) {
+    return await pollingHelper.poll(buildPolling('/companies', 'updated_at'), context);
+  },
+});
