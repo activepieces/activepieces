@@ -21,26 +21,24 @@ export const bulkBounceThresholdExceeded = createTrigger({
   name: 'bulk_bounce_threshold_exceeded',
   displayName: 'Bulk Bounce Threshold Exceeded',
   description:
-    'Fires once when the number of failed deliveries on a domain exceeds a threshold within a rolling window. Designed for abuse / bot-attack detection — does not re-fire until the count drops back below the threshold for a full window.',
+    'Triggers once when too many emails bounce within a set time period. Useful for catching spam attacks or deliverability problems early.',
   props: {
     domain: mailgunCommon.domainDropdown,
     threshold: Property.Number({
       displayName: 'Threshold',
-      description: `Number of failed events within the window that will trigger the alert. Must be between 1 and ${MAX_THRESHOLD} (capped to keep each poll bounded).`,
+      description: 'How many bounced emails within the time window will trigger this.',
       required: true,
       defaultValue: 20,
     }),
     window_minutes: Property.Number({
       displayName: 'Window (minutes)',
-      description:
-        'Rolling window in minutes over which failed events are counted.',
+      description: 'How far back to look for bounces.',
       required: true,
       defaultValue: 60,
     }),
     severity: Property.StaticDropdown({
-      displayName: 'Severity',
-      description:
-        'Which failures to count. "Permanent" = hard bounces (recommended for abuse detection).',
+      displayName: 'Bounce Type',
+      description: 'Which type of bounces to count.',
       required: true,
       defaultValue: 'permanent',
       options: {
@@ -107,8 +105,7 @@ export const bulkBounceThresholdExceeded = createTrigger({
     }
 
     const lastAlertMs = await context.store.get<number>(LAST_ALERT_STORE_KEY);
-    if (lastAlertMs) {
-      // Already alerted for this incident; stay silent until the count drops back below the threshold.
+    if (lastAlertMs && nowMs - lastAlertMs < windowMs) {
       return [];
     }
 
@@ -145,7 +142,7 @@ export const bulkBounceThresholdExceeded = createTrigger({
 
     return [
       buildAlertPayload({
-        events,
+        events: events.length >= threshold ? events : [],
         threshold,
         windowMinutes: window_minutes,
         domain,

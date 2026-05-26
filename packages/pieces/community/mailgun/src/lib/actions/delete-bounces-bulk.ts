@@ -8,7 +8,7 @@ export const deleteBouncesBulk = createAction({
   name: 'delete_bounces_bulk',
   displayName: 'Delete Bounces (Bulk)',
   description:
-    'Remove bounced addresses from the Mailgun suppression list, either all at once for a domain or a single address. Useful for cleanup after a spam/bot attack has inflated the bounce list.',
+    'Remove bounced addresses from the Mailgun suppression list, either all at once for a domain or a single address.',
   props: {
     domain: mailgunCommon.domainDropdown,
     scope: Property.StaticDropdown({
@@ -29,23 +29,10 @@ export const deleteBouncesBulk = createAction({
         'Email address to remove from the bounce list. Required when Scope is "Single address".',
       required: false,
     }),
-    confirm: Property.Checkbox({
-      displayName: 'Confirm deletion',
-      description:
-        'Check this box to confirm you want to permanently remove bounces. This action cannot be undone.',
-      required: true,
-      defaultValue: false,
-    }),
   },
   async run(context) {
-    const { domain, scope, address, confirm } = context.propsValue;
+    const { domain, scope, address } = context.propsValue;
     const auth = context.auth;
-
-    if (!confirm) {
-      throw new Error(
-        'Deletion not confirmed. Check the "Confirm deletion" box to proceed.',
-      );
-    }
 
     if (scope === 'single') {
       const trimmed = address?.trim();

@@ -8,7 +8,7 @@ export const getDomainHealth = createAction({
   name: 'get_domain_health',
   displayName: 'Get Domain Health',
   description:
-    'Fetch the health of a Mailgun domain: current state, whether it has been disabled, and DNS verification status for sending and receiving records. Useful for detecting Mailgun-side incidents (e.g. a domain disabled after abuse).',
+    'Fetch the health of a Mailgun domain: current state, whether it has been disabled, and DNS verification status for sending and receiving records.',
   props: {
     domain: mailgunCommon.domainDropdown,
   },
