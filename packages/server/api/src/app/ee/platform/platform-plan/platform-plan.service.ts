@@ -1,5 +1,5 @@
 import { apDayjs } from '@activepieces/server-utils'
-import { ActivepiecesError, AiCreditsAutoTopUpState, ApEdition, ApEnvironment, apId, ErrorCode, FlowStatus, isCloudPlanButNotEnterprise, isNil, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, PlatformUsageMetric, PRICE_ID_MAP, PRICE_NAMES, STANDARD_CLOUD_PLAN, UserWithMetaInformation } from '@activepieces/shared'
+import { ActivepiecesError, AiCreditsAutoTopUpState, ApEdition, ApEnvironment, apId, ErrorCode, FlowStatus, isCloudPlanButNotEnterprise, isNil, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, PlatformUsageMetric, PRICE_ID_MAP, PRICE_NAMES, STANDARD_CLOUD_PLAN, TeamProjectsLimit, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { getPlatformPlanNameKey } from '../../../database/redis/keys'
@@ -28,9 +28,9 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
 
     async getOrCreateForPlatform(platformId: string): Promise<PlatformPlan> {
         const platformPlan = await platformPlanRepo().findOneBy({ platformId })
-        if (!isNil(platformPlan)) return platformPlan
+        if (!isNil(platformPlan)) return applySelfHostedEntitlements(platformPlan)
 
-        return distributedLock(log).runExclusive({
+        const createdPlatformPlan = await distributedLock(log).runExclusive({
             key: `platform_plan_${platformId}`,
             timeoutInSeconds: 60,
             fn: async () => {
@@ -40,6 +40,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
                 return createInitialBilling(platformId, log)
             },
         })
+        return applySelfHostedEntitlements(createdPlatformPlan)
     },
 
     async getBillingDates(platformPlan: PlatformPlan): Promise<{ startDate: number, endDate: number }> {
@@ -67,7 +68,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         if (!isNil(updatedPlatformPlan.plan)) {
             await distributedStore.put(getPlatformPlanNameKey(platformId), updatedPlatformPlan.plan)
         }
-        return updatedPlatformPlan
+        return applySelfHostedEntitlements(updatedPlatformPlan)
     },
     async getNextBillingAmount(params: GetBillingAmountParams): Promise<number> {
         const { subscriptionId } = params
@@ -123,6 +124,18 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         }
     },
 })
+
+function applySelfHostedEntitlements<T extends PlatformPlan>(platformPlan: T): T {
+    if (edition === ApEdition.CLOUD) {
+        return platformPlan
+    }
+    return {
+        ...platformPlan,
+        customAppearanceEnabled: true,
+        managePiecesEnabled: true,
+        teamProjectsLimit: TeamProjectsLimit.UNLIMITED,
+    }
+}
 
 function getPriceIdFor(price: PRICE_NAMES): string {
     const isDev = stripeSecretKey?.startsWith('sk_test')

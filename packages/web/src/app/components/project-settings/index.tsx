@@ -2,7 +2,6 @@ import {
   ApFlagId,
   isNil,
   Permission,
-  PlatformRole,
   ProjectType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -16,12 +15,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { projectCollectionUtils } from '@/features/projects';
 import { ApProjectDisplay } from '@/features/projects/components/ap-project-display';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
-import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 
 import { ProjectAvatar } from '../project-avatar';
@@ -66,37 +64,47 @@ export function ProjectSettingsDialog({
   const { data: showProjectMembers } = flagsHooks.useFlag(
     ApFlagId.SHOW_PROJECT_MEMBERS,
   );
-  const { platform } = platformHooks.useCurrentPlatform();
-  const platformRole = userHooks.getCurrentUserPlatformRole();
 
   const form = useForm<FormValues>({
     defaultValues: {
-      projectName: initialValues?.projectName,
+      projectName: initialValues?.projectName ?? project.displayName,
       icon: project.icon,
-      externalId: initialValues?.externalId,
+      externalId: initialValues?.externalId ?? project.externalId ?? undefined,
       maxConcurrentJobs: project.maxConcurrentJobs,
     },
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
   });
 
+  const { mutate: updateProject, isPending: isSavingProject } =
+    projectCollectionUtils.useUpdateProject(
+      () => {
+        toast.success(t('Your changes have been saved.'), {
+          duration: 3000,
+        });
+        form.reset(form.getValues());
+        onClose();
+      },
+      () => internalErrorToast(),
+    );
+
   const handleSave = (values: FormValues) => {
-    projectCollectionUtils.update(project.id, {
-      displayName: values.projectName,
-      externalId: values.externalId,
-      icon: values.icon,
-      maxConcurrentJobs: values.maxConcurrentJobs,
+    updateProject({
+      projectId: project.id,
+      request: {
+        displayName: values.projectName,
+        externalId: values.externalId,
+        icon: values.icon,
+        maxConcurrentJobs: values.maxConcurrentJobs,
+      },
     });
-    toast.success(t('Your changes have been saved.'), {
-      duration: 3000,
-    });
-    onClose();
   };
 
   useEffect(() => {
     const dialogJustOpened = open && !previousOpenRef.current;
     if (dialogJustOpened && !isNil(project)) {
       form.reset({
-        ...initialValues,
+        projectName: initialValues?.projectName ?? project.displayName,
+        externalId: initialValues?.externalId ?? project.externalId ?? undefined,
         icon: project.icon,
         maxConcurrentJobs: project.maxConcurrentJobs,
       });
@@ -105,9 +113,7 @@ export function ProjectSettingsDialog({
     previousOpenRef.current = open;
   }, [open, project]);
 
-  const hasGeneralSettings =
-    project.type === ProjectType.TEAM ||
-    (platform.plan.embeddingEnabled && platformRole === PlatformRole.ADMIN);
+  const hasGeneralSettings = true;
 
   const tabs = [
     {
@@ -157,7 +163,12 @@ export function ProjectSettingsDialog({
   const renderTabContent = () => {
     switch (activeTab) {
       case 'general':
-        return <GeneralSettings form={form} />;
+        return (
+          <GeneralSettings
+            form={form}
+            projectNameLabel={t('Workspace Name')}
+          />
+        );
       case 'members':
         return <MembersSettings />;
       case 'alerts':
@@ -198,7 +209,8 @@ export function ProjectSettingsDialog({
             {t('Close')}
           </Button>
           <Button
-            disabled={!form.formState.isDirty}
+            disabled={!form.formState.isDirty || isSavingProject}
+            loading={isSavingProject}
             size="sm"
             onClick={form.handleSubmit(handleSave)}
           >
