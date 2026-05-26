@@ -20,6 +20,14 @@ const INITIAL_CONNECT_TIMEOUT_MS = 60_000
 let socket: Socket | undefined
 let workerClient: WorkerContract | undefined
 let notifyClient: WorkerNotifyContract | undefined
+let initialConnectWatchdog: NodeJS.Timeout | undefined
+
+function clearInitialConnectWatchdog(): void {
+    if (initialConnectWatchdog) {
+        clearTimeout(initialConnectWatchdog)
+        initialConnectWatchdog = undefined
+    }
+}
 
 export const workerSocket = {
     init: (sandboxId: string): void => {
@@ -30,7 +38,8 @@ export const workerSocket = {
         // the engine ever connects, the engine sits forever retrying the handshake on a
         // dead port — orphaned, idle, holding ~80 MB. The worker is the only thing that
         // can kill us, so if it's not there to talk to, we self-terminate.
-        const initialConnectWatchdog = setTimeout(() => {
+        initialConnectWatchdog = setTimeout(() => {
+            initialConnectWatchdog = undefined
             // eslint-disable-next-line no-console
             console.error('[engine] Failed to connect to worker within 60s, exiting')
             process.exit(5)
@@ -40,7 +49,7 @@ export const workerSocket = {
         notifyClient = createNotifyClient<WorkerNotifyContract>(socket)
 
         socket.on('connect', () => {
-            clearTimeout(initialConnectWatchdog)
+            clearInitialConnectWatchdog()
         })
 
         // Same rationale as the watchdog: once the control channel is gone, this engine
@@ -113,6 +122,7 @@ export const workerSocket = {
     },
 
     disconnect: (): void => {
+        clearInitialConnectWatchdog()
         socket?.disconnect()
         socket = undefined
         workerClient = undefined
