@@ -1,7 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { savvyCalApiCall } from '../common';
-import { savvyCalAuth } from '../../';
+import { savvyCalAuth, getToken } from '../auth';
 
 export const getCurrentUserAction = createAction({
   auth: savvyCalAuth,
@@ -19,7 +19,7 @@ export const getCurrentUserAction = createAction({
       created_at: string;
       updated_at: string;
     }>({
-      token: context.auth.secret_text,
+      token: getToken(context.auth),
       method: HttpMethod.GET,
       path: '/me',
     });

@@ -1,3 +1,4 @@
+import { apDayjsDuration } from '@activepieces/server-utils'
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedStore } from '../../../database/redis-connections'
@@ -6,13 +7,16 @@ import { platformQueueMigrationService } from '../../../workers/platform-queue-m
 import { platformPlanRepo } from './platform-plan.service'
 
 export const CANARY_WORKER_GROUP_ID = 'canary'
-const getWorkerGroupCacheKey = (platformId: string): string => `platform:${platformId}:worker_group_id`
+
+const NO_WORKER_GROUP_SENTINEL = '__none__'
+const CACHE_TTL_SECONDS = apDayjsDuration(5, 'minute').asSeconds()
+const getWorkerGroupCacheKey = (platformId: string): string => `platform:${platformId}:worker_group_id:v2`
 
 export const workerGroupService = (log: FastifyBaseLogger) => ({
     async getWorkerGroupId({ platformId }: { platformId: string }): Promise<string | null> {
         const cached = await distributedStore.get<string>(getWorkerGroupCacheKey(platformId))
         if (!isNil(cached)) {
-            return cached
+            return cached === NO_WORKER_GROUP_SENTINEL ? null : cached
         }
 
         const plan = await platformPlanRepo().findOne({
@@ -21,9 +25,7 @@ export const workerGroupService = (log: FastifyBaseLogger) => ({
         })
 
         const groupId = plan?.workerGroupId ?? null
-        if (!isNil(groupId)) {
-            await distributedStore.put(getWorkerGroupCacheKey(platformId), groupId)
-        }
+        await distributedStore.put(getWorkerGroupCacheKey(platformId), groupId ?? NO_WORKER_GROUP_SENTINEL, CACHE_TTL_SECONDS)
         return groupId
     },
 

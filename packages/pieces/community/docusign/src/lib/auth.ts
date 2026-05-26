@@ -1,5 +1,4 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { AxiosError } from 'axios';
 import { AppConnectionType } from '@activepieces/shared';
 import { createApiClient } from './common';
 
@@ -39,7 +38,7 @@ export const docusignAuth = PieceAuth.CustomAuth({
       displayName: 'scopes',
       required: true,
       description:
-        'Comma-separated list of scopes. These represent the OAuth scopes (permissions) that are being requested. For eSignature REST API methods, use the signature scope. The impersonation scope is implied by the JWT Grant operation and does not need to be included. If the access token will be used for other Docusign APIs, additional scopes may be required; see each API’s <https://developers.docusign.com/docs/esign-rest-api/esign101/auth/|authentication> requirements',
+        "Comma-separated list of scopes. These represent the OAuth scopes (permissions) that are being requested. For eSignature REST API methods, use the signature scope. The impersonation scope is implied by the JWT Grant operation and does not need to be included. If the access token will be used for other Docusign APIs, additional scopes may be required; see each API's <https://developers.docusign.com/docs/esign-rest-api/esign101/auth/|authentication> requirements",
     }),
   },
   validate: async ({ auth, server }) => {
@@ -48,45 +47,56 @@ export const docusignAuth = PieceAuth.CustomAuth({
         props: auth,
         type: AppConnectionType.CUSTOM_AUTH,
       });
-      return {
-        valid: true,
-      };
+      return { valid: true };
     } catch (error) {
-      if (
-        error instanceof AxiosError &&
-        error.response &&
-        error.response.status === 400 &&
-        error.response.data &&
-        error.response.data.error === 'consent_required'
-      ) {
-        const formattedScopes = auth.scopes.split(',').join(encodeURI(' '));
+      // Use duck-typing instead of instanceof — the DocuSign SDK bundles its own
+      // copy of axios, so instanceof AxiosError returns false even for axios errors.
+      const httpError = error as {
+        response?: {
+          status?: number;
+          data?: { error?: string; error_description?: string };
+        };
+      };
+      const status = httpError.response?.status;
+      const docusignError = httpError.response?.data?.error;
+      const docusignDesc = httpError.response?.data?.error_description;
+
+      if (status === 400) {
+        if (docusignError && docusignError !== 'consent_required') {
+          return {
+            valid: false,
+            error: `DocuSign error: ${docusignError}${
+              docusignDesc ? ` — ${docusignDesc}` : ''
+            }`,
+          };
+        }
+
+        // impersonation must always be in the consent URL for JWT grant to work,
+        // even if the user didn't include it in their scopes field.
+        const scopeSet = new Set([
+          ...auth.scopes.split(',').map((s) => s.trim()),
+          'impersonation',
+        ]);
+        const scopes = [...scopeSet].join('%20');
         const oAuthBasePath =
           auth.environment === 'demo'
             ? 'account-d.docusign.com'
             : 'account.docusign.com';
-
-        // We don't use the built-in getAuthorizationUri method from docusign
-        // because it currently limits the scopes that can be requested to signature, extended, and impersonation
         const consentUrl =
-          'https://' +
-          oAuthBasePath +
-          '/oauth/auth' +
-          '?response_type=code' +
-          '&scope=' +
-          formattedScopes +
-          '&client_id=' +
-          auth.clientId +
-          '&redirect_uri=' +
-          encodeURIComponent(
-            `${server.publicUrl.replace('/api', '')}/redirect`
-          );
+          `https://${oAuthBasePath}/oauth/auth` +
+          `?response_type=code` +
+          `&scope=${scopes}` +
+          `&client_id=${auth.clientId}` +
+          `&redirect_uri=${`${server.publicUrl.replace('/api', '')}/redirect`}`;
+
         return {
           valid: false,
           error:
-            'Consent is required, please visit this URL and grant consent: ' +
+            'Consent is required. Please visit this URL to grant access, then try again: ' +
             consentUrl,
         };
       }
+
       return {
         valid: false,
         error: 'Invalid connection: ' + error,
