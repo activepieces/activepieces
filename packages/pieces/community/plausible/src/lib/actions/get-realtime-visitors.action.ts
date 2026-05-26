@@ -1,6 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { createAction } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { plausibleAuth } from '../..';
+import { plausibleApiCall, siteIdDropdown } from '../common';
 
 export const getRealtimeVisitors = createAction({
   name: 'get_realtime_visitors',
@@ -8,18 +9,15 @@ export const getRealtimeVisitors = createAction({
   displayName: 'Get Realtime Visitors',
   description: 'Get the number of current visitors on your site',
   props: {
-    site_id: Property.ShortText({
-      displayName: 'Site Domain',
-      description: 'Your site domain as configured in Plausible (e.g. yourdomain.com)',
-      required: true,
-    }),
+    site_id: siteIdDropdown,
   },
   async run({ auth, propsValue }) {
-    const response = await httpClient.sendRequest({
+    const visitors = await plausibleApiCall<number>({
+      apiKey: auth.secret_text,
       method: HttpMethod.GET,
-      url: `https://plausible.io/api/v1/stats/realtime/visitors?site_id=${encodeURIComponent(propsValue.site_id)}`,
-      headers: { Authorization: `Bearer ${auth}` },
+      endpoint: '/stats/realtime/visitors',
+      queryParams: { site_id: propsValue.site_id },
     });
-    return { visitors: response.body };
+    return { visitors };
   },
 });

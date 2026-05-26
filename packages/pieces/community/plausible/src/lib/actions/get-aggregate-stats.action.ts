@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { plausibleAuth } from '../..';
+import { plausibleApiCall, siteIdDropdown } from '../common';
 
 export const getAggregateStats = createAction({
   name: 'get_aggregate_stats',
@@ -8,7 +9,7 @@ export const getAggregateStats = createAction({
   displayName: 'Get Aggregate Stats',
   description: 'Get aggregated analytics metrics for a time period',
   props: {
-    site_id: Property.ShortText({ displayName: 'Site Domain', required: true }),
+    site_id: siteIdDropdown,
     period: Property.StaticDropdown({
       displayName: 'Period',
       required: true,
@@ -38,17 +39,23 @@ export const getAggregateStats = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const metricsStr = Array.isArray(propsValue.metrics) ? propsValue.metrics.join(',') : propsValue.metrics;
-    const params = new URLSearchParams({
-      site_id: propsValue.site_id,
-      period: propsValue.period,
-      metrics: metricsStr,
-    });
-    const response = await httpClient.sendRequest({
+    const metricsStr = Array.isArray(propsValue.metrics)
+      ? propsValue.metrics.join(',')
+      : propsValue.metrics;
+    const response = await plausibleApiCall<{
+      results: Record<string, { value: number }>;
+    }>({
+      apiKey: auth.secret_text,
       method: HttpMethod.GET,
-      url: `https://plausible.io/api/v1/stats/aggregate?${params}`,
-      headers: { Authorization: `Bearer ${auth}` },
+      endpoint: '/stats/aggregate',
+      queryParams: {
+        site_id: propsValue.site_id,
+        period: propsValue.period,
+        metrics: metricsStr,
+      },
     });
-    return response.body;
+    return Object.fromEntries(
+      Object.entries(response.results).map(([k, v]) => [k, v.value])
+    );
   },
 });

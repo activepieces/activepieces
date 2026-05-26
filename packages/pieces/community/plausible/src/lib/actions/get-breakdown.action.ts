@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { plausibleAuth } from '../..';
+import { plausibleApiCall, siteIdDropdown } from '../common';
 
 export const getBreakdown = createAction({
   name: 'get_breakdown',
@@ -8,7 +9,7 @@ export const getBreakdown = createAction({
   displayName: 'Get Traffic Breakdown',
   description: 'Break down traffic by page, source, country, or other dimensions',
   props: {
-    site_id: Property.ShortText({ displayName: 'Site Domain', required: true }),
+    site_id: siteIdDropdown,
     period: Property.StaticDropdown({
       displayName: 'Period',
       required: true,
@@ -18,6 +19,8 @@ export const getBreakdown = createAction({
           { label: 'Last 7 days', value: '7d' },
           { label: 'Last 30 days', value: '30d' },
           { label: 'This month', value: 'month' },
+          { label: 'Last 6 months', value: '6mo' },
+          { label: 'Last 12 months', value: '12mo' },
         ],
       },
     }),
@@ -38,17 +41,17 @@ export const getBreakdown = createAction({
     limit: Property.Number({ displayName: 'Limit', required: false, defaultValue: 10 }),
   },
   async run({ auth, propsValue }) {
-    const params = new URLSearchParams({
-      site_id: propsValue.site_id,
-      period: propsValue.period,
-      property: propsValue.property,
-      limit: String(propsValue.limit || 10),
-    });
-    const response = await httpClient.sendRequest({
+    const response = await plausibleApiCall<{ results: Record<string, unknown>[] }>({
+      apiKey: auth.secret_text,
       method: HttpMethod.GET,
-      url: `https://plausible.io/api/v1/stats/breakdown?${params}`,
-      headers: { Authorization: `Bearer ${auth}` },
+      endpoint: '/stats/breakdown',
+      queryParams: {
+        site_id: propsValue.site_id,
+        period: propsValue.period,
+        property: propsValue.property,
+        limit: String(propsValue.limit ?? 10),
+      },
     });
-    return response.body;
+    return response.results;
   },
 });
