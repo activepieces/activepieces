@@ -45,6 +45,7 @@ export const generateContentFromImageAction = createAction({
 
     try {
       const imageBuffer = Buffer.from(propsValue.image.base64, 'base64');
+      await fs.mkdir(tmpdir(), { recursive: true });
       await fs.writeFile(tempFilePath, imageBuffer);
 
       const fileManager = new GoogleAIFileManager(auth?.secret_text);

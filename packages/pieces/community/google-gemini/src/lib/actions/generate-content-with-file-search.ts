@@ -45,6 +45,7 @@ export const generateContentWithFileSearchAction = createAction({
 
     try {
       const fileBuffer = Buffer.from(file.base64, 'base64');
+      await fs.mkdir(tmpdir(), { recursive: true });
       await fs.writeFile(tempFilePath, fileBuffer);
 
       const genAI = new GoogleGenAI({ apiKey: auth.secret_text });
