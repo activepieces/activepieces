@@ -1325,6 +1325,9 @@
       "@activepieces/piece-upgradechat": [
         "packages/pieces/community/upgradechat/src/index.ts"
       ],
+      "@activepieces/piece-uptimerobot": [
+        "packages/pieces/community/uptimerobot/src/index.ts"
+      ],
       "@activepieces/piece-useinbox": [
         "packages/pieces/community/useinbox/src/index.ts"
       ],
