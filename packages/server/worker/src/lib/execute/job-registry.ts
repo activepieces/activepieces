@@ -10,7 +10,7 @@ import { extractPieceInfoJob } from './jobs/extract-piece-info'
 import { renewWebhookJob } from './jobs/renew-webhook'
 import { JobHandler } from './types'
 
-const registry: Record<WorkerJobType, JobHandler> = {
+const registry: Partial<Record<WorkerJobType, JobHandler>> = {
     [WorkerJobType.EXECUTE_FLOW]: executeFlowJob,
     [WorkerJobType.EXECUTE_POLLING]: executePollingJob,
     [WorkerJobType.EXECUTE_WEBHOOK]: executeWebhookJob,
@@ -23,5 +23,9 @@ const registry: Record<WorkerJobType, JobHandler> = {
 }
 
 export function getHandler(jobType: WorkerJobType): JobHandler<JobData> {
-    return registry[jobType]
+    const handler = registry[jobType]
+    if (!handler) {
+        throw new Error(`No worker handler registered for job type ${jobType}`)
+    }
+    return handler
 }
