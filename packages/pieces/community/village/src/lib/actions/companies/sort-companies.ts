@@ -1,44 +1,41 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth } from '../../..';
+import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
+
+const MAX_COMPANIES = 100;
 
 export const sortCompanies = createAction({
-  name: 'sortCompanies',
   auth: villageAuth,
+  name: 'sort_companies',
   displayName: 'Sort Companies',
-  description: 'Sort a list of companies by relationship strength with the user',
+  description:
+    'Rank a list of companies (up to 100 LinkedIn URLs or domains) by how well-connected you are to people there. Each result includes a score, label, LinkedIn URL, and domain.',
   props: {
     companies: Property.Array({
-      displayName: 'Company URLs',
-      description: 'Array of company LinkedIn URLs or domain URLs',
+      displayName: 'Companies',
+      description:
+        'Array of company URLs (LinkedIn URLs or domains), e.g. "https://linkedin.com/company/acme-corp" or "example.com". Max 100.',
       required: true,
-    }),
-    user_identifier: Property.ShortText({
-      displayName: 'User Identifier',
-      description: 'Specify the user making the request. This identifier should match the one you used when integrating the user with Village.',
-      required: false,
     }),
   },
   async run(context) {
-    const { companies, user_identifier } = context.propsValue;
-    
-    const headers: Record<string, string> = {
-      'secret-key': context.auth.secret_text,
-    };
-    
-    if (user_identifier) {
-      headers['user-identifier'] = user_identifier;
+    const { companies } = context.propsValue;
+
+    if (!Array.isArray(companies) || companies.length === 0) {
+      throw new Error('At least one company URL is required');
     }
-    
-    const res = await httpClient.sendRequest({
+    if (companies.length > MAX_COMPANIES) {
+      throw new Error(`Maximum ${MAX_COMPANIES} companies per request`);
+    }
+
+    const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: 'https://api.village.do/v1/companies/sort',
-      headers,
+      url: `${VILLAGE_API_BASE_URL}/v2/companies/sort`,
+      headers: { Authorization: `Bearer ${context.auth}` },
       body: {
-        companies,
+        companies: companies.map((value) => String(value)),
       },
     });
-    
-    return res.body;
+    return response.body;
   },
 });
