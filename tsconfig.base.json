@@ -131,6 +131,9 @@
       "@activepieces/piece-azure-communication-services": [
         "packages/pieces/community/azure-communication-services/src/index.ts"
       ],
+      "@activepieces/piece-azure-devops": [
+        "packages/pieces/community/azure-devops/src/index.ts"
+      ],
       "@activepieces/piece-azure-openai": [
         "packages/pieces/community/azure-openai/src/index.ts"
       ],
@@ -1324,6 +1327,9 @@
       ],
       "@activepieces/piece-upgradechat": [
         "packages/pieces/community/upgradechat/src/index.ts"
+      ],
+      "@activepieces/piece-uptimerobot": [
+        "packages/pieces/community/uptimerobot/src/index.ts"
       ],
       "@activepieces/piece-useinbox": [
         "packages/pieces/community/useinbox/src/index.ts"
