@@ -1,6 +1,8 @@
 {
   "Collect, manage, and share testimonials with Senja.": "Reunir, administrar y compartir testimonios con Senja.",
+  "API Key": "Clave API",
   "To get your Senja API key:\n1. Log in to your Senja account.\n2. Go to **Automate** in the left sidebar.\n3. Click **REST API** and copy your API key.": "Para obtener su clave API de Senja:\n1. Inicie sesión en su cuenta de Senja.\n2. Ve a **Automate** en la barra lateral izquierda.\n3. Haz clic en **API REST** y copia tu clave API.",
+  "Invalid API Key. Please check and try again.": "Clave API no válida. Por favor, compruébalo e inténtalo de nuevo.",
   "List Testimonials": "Listar testimonios",
   "Get Testimonial": "Obtener Testimonio",
   "Create Testimonial": "Crear testimonio",
@@ -134,5 +136,19 @@
   "Only trigger for the selected event types. Leave empty to trigger on all events. Make sure the matching events are enabled in Senja.": "Sólo disparador para los tipos de eventos seleccionados. Dejar en blanco para disparar en todos los eventos. Asegúrese de que los eventos coincidentes están habilitados en Senja.",
   "Testimonial Created": "Testimonio creado",
   "Testimonial Updated": "Testimonial actualizado",
-  "Testimonial Deleted": "Testimonio eliminado"
+  "Testimonial Deleted": "Testimonio eliminado",
+  "Media (Images)": "Medios (Imágenes)",
+  "Update Testimonial": "Actualizar testimonio",
+  "Approve, unapprove, or update tags on an existing testimonial.": "Aprobar, anular o actualizar etiquetas en un testimonio existente.",
+  "Set to \"Approved\" to publish the testimonial, or \"Pending\" to unpublish it. Leave empty to keep the current status.": "Establezca en \"Aprobado\" para publicar el testimonio, o \"Pendiente\" para despublicarlo. Deje en blanco para mantener el estado actual.",
+  "Add Tags": "Añadir Etiquetas",
+  "Tag names to add to this testimonial. Tags are created automatically if they do not already exist.": "Etiquetas de nombres para añadir a este testimonio. Las etiquetas se crean automáticamente si no existen.",
+  "Remove Tags": "Eliminar Etiquetas",
+  "Tag names to remove from this testimonial.": "Etiqueta nombres a eliminar de este testimonio.",
+  "Delete Testimonial": "Eliminar testimonio",
+  "Permanently delete a testimonial from your Senja project. This action cannot be undone.": "Elimina permanentemente un testimonio de tu proyecto Senja. Esta acción no se puede deshacer.",
+  "The unique ID of the testimonial to delete. You can find it in the URL when viewing a testimonial in Senja, or from the output of a \"List Testimonials\" step.": "El ID único del testimonio a eliminar. Puede encontrarlo en la URL cuando vea un testimonio en Senja, o desde la salida de un paso de \"Lista de Testimonios\".",
+  "Search": "Buscar",
+  "Full-text search across testimonial text, title, customer name, customer email, and customer tagline.": "Búsqueda de texto completo a través de texto testimonial, título, nombre del cliente, correo electrónico del cliente y etiqueta del cliente.",
+  "List of image URLs to attach to this testimonial. Each entry must be a JSON object with a \"url\" field and optionally \"alt\" text, e.g. {\"url\": \"https://...\", \"alt\": \"description\"}.": "Lista de URLs de imágenes a adjuntar a este testimonio. Cada entrada debe ser un objeto JSON con un campo \"url\" y opcionalmente \"alt\" texto, por ejemplo, {\"url\": \"https://...\", \"alt\": \"description\"}."
 }
