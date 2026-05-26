@@ -5538,6 +5538,16 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/plunk": {
+      "name": "@activepieces/piece-plunk",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/pocketbase": {
       "name": "@activepieces/piece-pocketbase",
       "version": "0.0.2",
@@ -5613,6 +5623,16 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "tslib": "^2.3.0",
+      },
+    },
+    "packages/pieces/community/postmark": {
+      "name": "@activepieces/piece-postmark",
+      "version": "0.0.2",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
       },
     },
     "packages/pieces/community/predict-leads": {
@@ -6122,7 +6142,7 @@
     },
     "packages/pieces/community/savvycal": {
       "name": "@activepieces/piece-savvycal",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -6247,6 +6267,16 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "tslib": "^2.3.0",
+      },
+    },
+    "packages/pieces/community/sendr": {
+      "name": "@activepieces/piece-sendr",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
       },
     },
     "packages/pieces/community/sendy": {
@@ -7163,6 +7193,16 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/useinbox": {
+      "name": "@activepieces/piece-useinbox",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/vadoo-ai": {
       "name": "@activepieces/piece-vadoo-ai",
       "version": "0.1.3",
@@ -7410,7 +7450,7 @@
     },
     "packages/pieces/community/webflow": {
       "name": "@activepieces/piece-webflow",
-      "version": "0.2.4",
+      "version": "0.2.5",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7624,6 +7664,19 @@
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
         "tslib": "2.6.2",
+      },
+    },
+    "packages/pieces/community/xquik": {
+      "name": "@activepieces/piece-xquik",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+      "devDependencies": {
+        "vitest": "3.0.8",
       },
     },
     "packages/pieces/community/youcanbookme": {
@@ -8476,7 +8529,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.78.0",
+      "version": "0.78.1",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
@@ -9608,6 +9661,8 @@
 
     "@activepieces/piece-plausible": ["@activepieces/piece-plausible@workspace:packages/pieces/community/plausible"],
 
+    "@activepieces/piece-plunk": ["@activepieces/piece-plunk@workspace:packages/pieces/community/plunk"],
+
     "@activepieces/piece-pocketbase": ["@activepieces/piece-pocketbase@workspace:packages/pieces/community/pocketbase"],
 
     "@activepieces/piece-podio": ["@activepieces/piece-podio@workspace:packages/pieces/community/podio"],
@@ -9621,6 +9676,8 @@
     "@activepieces/piece-posthog": ["@activepieces/piece-posthog@workspace:packages/pieces/community/posthog"],
 
     "@activepieces/piece-postiz": ["@activepieces/piece-postiz@workspace:packages/pieces/community/postiz"],
+
+    "@activepieces/piece-postmark": ["@activepieces/piece-postmark@workspace:packages/pieces/community/postmark"],
 
     "@activepieces/piece-predict-leads": ["@activepieces/piece-predict-leads@workspace:packages/pieces/community/predict-leads"],
 
@@ -9747,6 +9804,8 @@
     "@activepieces/piece-sendinblue": ["@activepieces/piece-sendinblue@workspace:packages/pieces/community/sendinblue"],
 
     "@activepieces/piece-sendpulse": ["@activepieces/piece-sendpulse@workspace:packages/pieces/community/sendpulse"],
+
+    "@activepieces/piece-sendr": ["@activepieces/piece-sendr@workspace:packages/pieces/community/sendr"],
 
     "@activepieces/piece-sendy": ["@activepieces/piece-sendy@workspace:packages/pieces/community/sendy"],
 
@@ -9936,6 +9995,8 @@
 
     "@activepieces/piece-uscreen": ["@activepieces/piece-uscreen@workspace:packages/pieces/community/uscreen"],
 
+    "@activepieces/piece-useinbox": ["@activepieces/piece-useinbox@workspace:packages/pieces/community/useinbox"],
+
     "@activepieces/piece-vadoo-ai": ["@activepieces/piece-vadoo-ai@workspace:packages/pieces/community/vadoo-ai"],
 
     "@activepieces/piece-validatedmails": ["@activepieces/piece-validatedmails@workspace:packages/pieces/community/validatedmails"],
@@ -10027,6 +10088,8 @@
     "@activepieces/piece-xero": ["@activepieces/piece-xero@workspace:packages/pieces/community/xero"],
 
     "@activepieces/piece-xml": ["@activepieces/piece-xml@workspace:packages/pieces/core/xml"],
+
+    "@activepieces/piece-xquik": ["@activepieces/piece-xquik@workspace:packages/pieces/community/xquik"],
 
     "@activepieces/piece-youcanbookme": ["@activepieces/piece-youcanbookme@workspace:packages/pieces/community/youcanbookme"],
 
