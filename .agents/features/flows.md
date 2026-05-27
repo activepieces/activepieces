@@ -104,7 +104,7 @@ The visual builder (`packages/web/src/app/builder/`) uses XYFlow for the canvas.
 - `notes-state.tsx` — sticky notes overlay
 - `chat-state.ts` — embedded chat drawer state for testing `chat_submission`-trigger flows from the builder
 
-`flowHooks.useChangeFlowStatus` handles both publish and enable/disable, surfaces `TRIGGER_UPDATE_STATUS` errors via an `ApErrorDialog`, and maps gateway timeout errors to a user-readable message. `flowHooks.importFlowsFromTemplates` replaces `externalId` references across a multi-flow template import to maintain cross-flow links.
+`flowHooks.useChangeFlowStatus` handles both publish and enable/disable, surfaces `TRIGGER_UPDATE_STATUS` errors via an `ApErrorDialog`, and maps gateway timeout errors to a user-readable message. `flowHooks.importFlowsFromTemplates` replaces `externalId` references across a multi-flow template import to maintain cross-flow links. `flowHooks.useExportFlows` downloads a single flow as JSON or zips multiple, and reports failures via a toast (`onError`). Bulk export from the automations list (`handleBulkExport`) resolves each selected flow by id (`flowsApi.get`) rather than filtering the root-scoped `rootFlows` list — flows inside folders are absent from that list, so filtering would silently drop them.
 
 ## Test Panel (Builder)
 
