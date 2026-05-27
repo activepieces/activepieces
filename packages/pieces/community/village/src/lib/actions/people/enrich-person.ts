@@ -2,17 +2,17 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 
-export const getPersonPaths = createAction({
+export const enrichPerson = createAction({
   auth: villageAuth,
-  name: 'get_person_paths',
-  displayName: 'Get Person Paths',
+  name: 'enrich_person',
+  displayName: 'Enrich Person',
   description:
-    'Find introduction paths to reach a specific person through your professional network. Provide a LinkedIn URL and get back direct connections, mutual contacts, and connection strength scores (0-100).',
+    'Get detailed profile information (name, headline, current company, location, photo, LinkedIn URL) for a person identified by LinkedIn URL or generic URL.',
   props: {
     linkedin_url: Property.ShortText({
       displayName: 'LinkedIn URL',
       description:
-        'LinkedIn profile URL of the target person, e.g. https://linkedin.com/in/johndoe (provide this OR url)',
+        'LinkedIn profile URL, e.g. https://linkedin.com/in/johndoe (provide this OR url)',
       required: false,
     }),
     url: Property.ShortText({
@@ -33,7 +33,7 @@ export const getPersonPaths = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${VILLAGE_API_BASE_URL}/v2/people/paths`,
+      url: `${VILLAGE_API_BASE_URL}/v2/people/enrich`,
       headers: { Authorization: `Bearer ${context.auth.secret_text}` },
       body: identifier,
     });
