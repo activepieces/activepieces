@@ -119,6 +119,7 @@ export async function myAppApiCall<T extends HttpMessageBody>({
 export const myAppCommon = {
   projectDropdown: Property.Dropdown({
     displayName: 'Project',
+    auth: myAppAuth,
     refreshers: [],
     required: true,
     options: async ({ auth }) => {
