@@ -133,12 +133,12 @@ export const updateCustomerUserAction = createAction({
       resourceUri: `/customerusers/${p.customerUserId}`,
       auth: context.auth as OroAuth,
       body: {
-        data: jsonApiBodyUtils.omitEmptyObjects({
+        data: {
           type: 'customerusers',
           id: p.customerUserId,
           attributes,
           relationships,
-        }),
+        },
       },
     });
 

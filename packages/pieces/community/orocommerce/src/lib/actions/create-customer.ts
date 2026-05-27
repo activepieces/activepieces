@@ -120,7 +120,11 @@ export const createCustomerAction = createAction({
     };
 
     const body: Record<string, unknown> = {
-      data: { type: 'customers', attributes, relationships },
+      data: {
+        type: 'customers',
+        attributes,
+        relationships
+      },
     };
     if (included.length > 0) body['included'] = included;
 

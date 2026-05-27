@@ -461,7 +461,11 @@ export const createOrderAction = createAction({
       resourceUri: '/orders',
       auth: context.auth,
       body: {
-        data: { type: 'orders', attributes, relationships },
+        data: {
+          type: 'orders',
+          attributes,
+          relationships
+        },
         included,
       },
     });

@@ -28,11 +28,11 @@ function buildRels(
 ): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(map)
-      .filter(([, [, id]]) => id != null && (!Array.isArray(id) || id.length > 0))
+      .filter(([, [, id]]) => id != null && id !== '' && (!Array.isArray(id) || id.length > 0))
       .map(([key, [type, id, many]]) => [
         key,
         Array.isArray(id)
-          ? { data: id.map((i) => ({ type, id: i })) }
+          ? { data: id.filter((i) => i !== '').map((i) => ({ type, id: i })) }
           : many
           ? { data: [{ type, id }] }
           : { data: { type, id } },

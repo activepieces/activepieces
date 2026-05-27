@@ -15,6 +15,7 @@ import {
   type OroJsonApiCollection,
   type FetchCollectionParams,
 } from './types';
+import { jsonApiBodyUtils } from './jsonapi-body-utils';
 
 const tokenCache = new Map<string, { token: string; expiresAt: number }>();
 
@@ -84,6 +85,7 @@ export async function oroApiCall({
 }: OroApiCallParams): Promise<HttpResponse<HttpMessageBody>> {
   try {
     const resource = resourceUri.replace(/^\/+/, '');
+    const sanitizedBody = sanitizeJsonApiBody({ body });
 
     return await httpClient.sendRequest({
       method,
@@ -97,7 +99,7 @@ export async function oroApiCall({
         token: await getAccessToken({ auth }),
       },
       queryParams,
-      body,
+      body: sanitizedBody,
     });
   } catch (error: unknown) {
     throw new Error(formatError({ error }));
@@ -119,3 +121,18 @@ export async function fetchCollection({
   const body = response.body as OroJsonApiCollection | undefined;
   return body?.data ?? [];
 }
+
+function sanitizeJsonApiBody({ body }: { body: unknown }): unknown {
+  if (body === null || typeof body !== 'object' || Array.isArray(body)) {
+    return body;
+  }
+  const record = body as Record<string, unknown>;
+  if (!('data' in record) || typeof record['data'] !== 'object' || record['data'] === null) {
+    return body;
+  }
+  return {
+    ...record,
+    data: jsonApiBodyUtils.omitEmptyObjects(record['data'] as Record<string, unknown>),
+  };
+}
+

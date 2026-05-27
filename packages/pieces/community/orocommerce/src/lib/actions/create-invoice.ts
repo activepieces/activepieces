@@ -272,7 +272,11 @@ export const createInvoiceAction = createAction({
       resourceUri: '/invoices',
       auth: context.auth,
       body: {
-        data: { type: 'invoices', attributes, relationships },
+        data: {
+          type: 'invoices',
+          attributes,
+          relationships
+        },
         included,
       },
     });
