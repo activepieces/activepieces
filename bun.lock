@@ -6160,6 +6160,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/salesloft": {
+      "name": "@activepieces/piece-salesloft",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/sap-ariba": {
       "name": "@activepieces/piece-sap-ariba",
       "version": "0.0.5",
@@ -9832,6 +9842,8 @@
     "@activepieces/piece-saleor": ["@activepieces/piece-saleor@workspace:packages/pieces/community/saleor"],
 
     "@activepieces/piece-salesforce": ["@activepieces/piece-salesforce@workspace:packages/pieces/community/salesforce"],
+
+    "@activepieces/piece-salesloft": ["@activepieces/piece-salesloft@workspace:packages/pieces/community/salesloft"],
 
     "@activepieces/piece-sap-ariba": ["@activepieces/piece-sap-ariba@workspace:packages/pieces/community/sap-ariba"],
 
