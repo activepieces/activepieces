@@ -20,8 +20,10 @@ import {
     UserWithMetaInformation,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
-import { In } from 'typeorm'
-import { userIdentityService } from '../authentication/user-identity/user-identity-service'
+import { FastifyBaseLogger } from 'fastify'
+import { nanoid } from 'nanoid'
+import { In, IsNull } from 'typeorm'
+import { userIdentityRepository, userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { platformProjectService } from '../ee/projects/platform-project-service'
 import { projectMemberRepo } from '../ee/projects/project-role/project-role.service'
@@ -35,13 +37,14 @@ import { UserEntity, UserSchema } from './user-entity'
 
 export const userRepo = repoFactory(UserEntity)
 
-export const userService = {
+export const userService = (log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<User> {
+        const isActive = params.isActive ?? true
         const user: NewUser = {
             id: apId(),
             identityId: params.identityId,
             platformRole: params.platformRole,
-            status: UserStatus.ACTIVE,
+            status: isActive ? UserStatus.ACTIVE : UserStatus.INACTIVE,
             externalId: params.externalId,
             platformId: params.platformId,
         }
@@ -59,7 +62,7 @@ export const userService = {
                 platformRole: PlatformRole.MEMBER,
             })
 
-            await projectService.create({
+            await projectService(log).create({
                 displayName: identity.firstName + '\'s Project',
                 ownerId: newUser.id,
                 platformId,
@@ -86,7 +89,7 @@ export const userService = {
             })
         }
 
-        const platform = await platformService.getOneOrThrow(user.platformId)
+        const platform = await platformService(log).getOneOrThrow(user.platformId)
         if (platform.ownerId === user.id && status === UserStatus.INACTIVE) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -128,14 +131,11 @@ export const userService = {
         const usersWithMetaInformation = await Promise.all(data.map(this.getMetaInformation))
         return paginationHelper.createPage<UserWithMetaInformation>(usersWithMetaInformation, cursor)
     },
-    async getOneByIdentityIdOnly({ identityId }: GetOneByIdentityIdOnlyParams): Promise<User | null> {
-        return userRepo().findOneBy({ identityId })
-    },
     async getByIdentityId({ identityId }: GetByIdentityId): Promise<UserSchema[]> {
         return userRepo().find({ where: { identityId } })
     },
     async getOneByIdentityAndPlatform({ identityId, platformId }: GetOneByIdentityIdParams): Promise<User | null> {
-        return userRepo().findOneBy({ identityId, platformId })
+        return userRepo().findOneBy({ identityId, platformId: isNil(platformId) ? IsNull() : platformId })
     },
     async get({ id }: IdParams): Promise<User | null> {
         return userRepo().findOneBy({ id })
@@ -171,14 +171,37 @@ export const userService = {
         }
     },
     async delete({ id, platformId }: DeleteParams): Promise<void> {
-
-        await platformProjectService(system.globalLogger()).deletePersonalProjectForUser({
+        await assertNotPlatformOwner({ id, platformId, log })
+        await platformProjectService(log).deletePersonalProjectForUser({
             userId: id,
             platformId,
         })
         await userRepo().delete({
             id,
             platformId,
+        })
+    },
+    async removeFromPlatform({ id, platformId }: DeleteParams): Promise<void> {
+        await assertNotPlatformOwner({ id, platformId, log })
+        const user = await this.getOneOrFail({ id })
+        await platformProjectService(log).deletePersonalProjectForUser({
+            userId: id,
+            platformId,
+        })
+        await userRepo().update({
+            id,
+            platformId,
+        }, {
+            platformId: null,
+        })
+        await userIdentityRepository().update(user.identityId, {
+            tokenVersion: nanoid(),
+        })
+        await userIdentityRepository().update({
+            id: user.identityId,
+            lastLoggedInPlatformId: platformId,
+        }, {
+            lastLoggedInPlatformId: null,
         })
     },
 
@@ -201,7 +224,7 @@ export const userService = {
     },
     async getMetaInformation({ id }: IdParams): Promise<UserWithMetaInformation> {
         const user = await userRepo().findOneByOrFail({ id })
-        const identity = await userIdentityService(system.globalLogger()).getBasicInformation(user.identityId)
+        const identity = await userIdentityService(log).getBasicInformation(user.identityId)
         return {
             id: user.id,
             email: identity.email,
@@ -232,8 +255,20 @@ export const userService = {
     isUserPrivileged(user: User): boolean {
         return user.platformRole === PlatformRole.ADMIN || user.platformRole === PlatformRole.OPERATOR
     },
-}
+})
 
+
+async function assertNotPlatformOwner({ id, platformId, log }: DeleteParams & { log: FastifyBaseLogger }): Promise<void> {
+    const platform = await platformService(log).getOneOrThrow(platformId)
+    if (platform.ownerId === id) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'Platform owner cannot be deleted',
+            },
+        })
+    }
+}
 
 async function getUsersForProject(platformId: PlatformId, projectId: string): Promise<UserId[]> {
     const platformAdmins = await userRepo().find({ where: { platformId, platformRole: PlatformRole.ADMIN } }).then((users) => users.map((user) => user.id))
@@ -271,10 +306,6 @@ type ListParams = {
     limit?: number
 }
 
-type GetOneByIdentityIdOnlyParams = {
-    identityId: string
-}
-
 type GetByIdentityId = {
     identityId: string
 }
@@ -282,7 +313,7 @@ type GetByIdentityId = {
 
 type GetOneByIdentityIdParams = {
     identityId: string
-    platformId: PlatformId
+    platformId: PlatformId | null
 }
 
 type UpdateParams = {
@@ -298,6 +329,7 @@ type CreateParams = {
     platformId: string | null
     externalId?: string
     platformRole: PlatformRole
+    isActive?: boolean
 }
 type GetUsersByIdentityIdParams = {
     identityId: string

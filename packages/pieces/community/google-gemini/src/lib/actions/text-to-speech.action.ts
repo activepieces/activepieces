@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { googleGeminiAuth } from '../..';
+import { googleGeminiAuth } from '../auth';
 import { GoogleGenAI } from '@google/genai';
 import wav from 'wav';
 import { Writable } from 'stream';

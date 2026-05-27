@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { githubAuth } from '../../index';
+import { githubAuth } from '../auth';
 import { githubApiCall, githubCommon } from '../common';
 import { HttpError, HttpMethod } from '@activepieces/pieces-common';
 import { HttpStatusCode } from 'axios';
@@ -22,7 +22,7 @@ export const githubFindBranchAction = createAction({
 
     try {
       const response = await githubApiCall({
-        accessToken: auth.access_token,
+        auth,
         method: HttpMethod.GET,
         resourceUri: `/repos/${owner}/${repo}/branches/${branchName}`,
       });

@@ -6,7 +6,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { AppConnectionValueForAuthProperty, Property } from '@activepieces/pieces-framework';
-import { comfyIcuAuth } from '../..';
+import { comfyIcuAuth } from '../auth';
 
 export async function comfyIcuApiCall({
   apiKey: {secret_text},

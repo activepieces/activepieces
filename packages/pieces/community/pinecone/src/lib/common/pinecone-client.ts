@@ -1,6 +1,6 @@
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { Pinecone, type PineconeConfiguration } from '@pinecone-database/pinecone';
-import { pineconeAuth } from '../..';
+import { pineconeAuth } from '../auth';
 
 export interface PineconeAuthConfig {
   apiKey: string;

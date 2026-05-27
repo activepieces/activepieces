@@ -2,7 +2,7 @@ import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import qs from 'qs';
-import { clickupAuth } from '../../..';
+import { clickupAuth } from '../../auth';
 import { callClickUpApi, clickupCommon } from '../../common';
 import { ClickupTask } from '../../common/models';
 

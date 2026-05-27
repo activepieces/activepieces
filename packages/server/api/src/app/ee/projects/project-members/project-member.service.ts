@@ -1,25 +1,24 @@
 import {
-    ProjectMember,
-    ProjectMemberId,
-    ProjectMemberWithUser,
-} from '@activepieces/ee-shared'
-import {
     ActivepiecesError,
     ApEdition,
     ApId,
+
     apId,
     Cursor,
     DefaultProjectRole,
     ErrorCode,
     isNil,
+    Permission,
     PlatformId,
     PlatformRole,
     ProjectId,
+    ProjectMember,
+    ProjectMemberId,
+    ProjectMemberWithUser,
     ProjectRole,
     SeekPage,
     UserId,
-    UserStatus,
-} from '@activepieces/shared'
+    UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { Equal } from 'typeorm'
@@ -42,7 +41,7 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
         projectId,
         projectRoleName,
     }: UpsertParams): Promise<ProjectMember> {
-        const { platformId } = await projectService.getOneOrThrow(projectId)
+        const { platformId } = await projectService(log).getOneOrThrow(projectId)
         const existingProjectMember = await repo().findOneBy({
             projectId,
             userId,
@@ -132,8 +131,8 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
         projectId: ProjectId
         userId: UserId
     }): Promise<ProjectRole | null> {
-        const project = await projectService.getOneOrThrow(projectId)
-        const user = await userService.getOneOrFail({
+        const project = await projectService(log).getOneOrThrow(projectId)
+        const user = await userService(log).getOneOrFail({
             id: userId,
         })
 
@@ -227,6 +226,18 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
         
         return new Map(result.map(r => [r.projectId, parseInt(r.count)]))
     },
+    async hasPermissionOnAnyProject({ userId, platformId, permission }: HasPermissionOnAnyProjectParams): Promise<boolean> {
+        const count = await repo()
+            .createQueryBuilder('project_member')
+            .innerJoin('project_member.projectRole', 'project_role')
+            .innerJoin('project_member.project', 'project')
+            .where('project_member.userId = :userId', { userId })
+            .andWhere('project_member.platformId = :platformId', { platformId })
+            .andWhere(':permission = ANY(project_role.permissions)', { permission })
+            .andWhere('project.deleted IS NULL')
+            .getCount()
+        return count > 0
+    },
     async countActiveUsersByProjects(projectIds: ProjectId[]): Promise<Map<ProjectId, number>> {
         if (projectIds.length === 0) return new Map()
         
@@ -273,11 +284,17 @@ type UpdateMemberRole = {
     role: string
 }
 
+type HasPermissionOnAnyProjectParams = {
+    userId: UserId
+    platformId: PlatformId
+    permission: Permission
+}
+
 async function enrichProjectMemberWithUser(
     projectMember: ProjectMember,
     log: FastifyBaseLogger,
 ): Promise<ProjectMemberWithUser | null> {  
-    const isProjectSoftDeleted = await projectService.exists({
+    const isProjectSoftDeleted = await projectService(log).exists({
         projectId: projectMember.projectId,
         isSoftDeleted: true,
     })
@@ -285,14 +302,14 @@ async function enrichProjectMemberWithUser(
         return null
     }
 
-    const user = await userService.getOneOrFail({
+    const user = await userService(log).getOneOrFail({
         id: projectMember.userId,
     })
     const identity = await userIdentityService(log).getBasicInformation(user.identityId)
     const projectRole = await projectRoleService.getOneOrThrowById({
         id: projectMember.projectRoleId,
     })
-    const project = await projectService.getOneOrThrow(projectMember.projectId)
+    const project = await projectService(log).getOneOrThrow(projectMember.projectId)
     return {
         ...projectMember,
         projectRole,

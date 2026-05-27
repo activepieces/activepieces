@@ -1,5 +1,5 @@
 
-import { zagomailAuth } from '../../';
+import { zagomailAuth } from '../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { zagoMailApiService } from '../common/request';
 import { StoredWebhookId, WebhookResponse } from '../common/constants';

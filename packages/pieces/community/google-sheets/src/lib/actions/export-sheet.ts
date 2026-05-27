@@ -56,6 +56,7 @@ export const exportSheetAction = createAction({
           token: await getAccessToken(auth),
         },
         responseType: 'arraybuffer',
+        followRedirects: true,
       });
 
       if (returnAsText) {

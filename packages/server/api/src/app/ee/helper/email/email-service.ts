@@ -1,13 +1,12 @@
-import { AlertChannel, OtpType } from '@activepieces/ee-shared'
-import { ApEdition, assertNotNullOrUndefined, BADGES, InvitationType, isNil, UserIdentity, UserInvitation } from '@activepieces/shared'
+import { AlertChannel, ApEdition, assertNotNullOrUndefined, BADGES, InvitationType, isNil, OtpType, UserIdentity, UserInvitation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
+import { domainHelper } from '../../../helper/domain-helper'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
 import { alertsService } from '../../alerts/alerts-service'
-import { domainHelper } from '../../custom-domains/domain-helper'
 import { projectRoleService } from '../../projects/project-role/project-role.service'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
 
@@ -27,7 +26,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
             platformRole: userInvitation.platformRole,
         })
         const { email, platformId } = userInvitation
-        const { name: projectName, role } = await getEntityNameForInvitation(userInvitation)
+        const { name: projectName } = await getEntityNameForInvitation(userInvitation, log)
         await emailSender(log).send({
             emails: [email],
             platformId,
@@ -36,7 +35,6 @@ export const emailService = (log: FastifyBaseLogger) => ({
                 vars: {
                     setupLink: invitationLink,
                     projectName,
-                    role,
                 },
             },
         })
@@ -53,10 +51,9 @@ export const emailService = (log: FastifyBaseLogger) => ({
             platformRole: userInvitation.platformRole,
         })
         const { email, platformId, projectId } = userInvitation
-        const { name: projectName, role } = await getEntityNameForInvitation(userInvitation)
+        const { name: projectName, role } = await getEntityNameForInvitation(userInvitation, log)
         const redirectPath = projectId ? `/projects/${projectId}/flows` : '/flows'
         const loginLink = await domainHelper.getPublicUrl({
-            platformId,
             path: `sign-in?from=${encodeURIComponent(redirectPath)}`,
         })
         await emailSender(log).send({
@@ -73,13 +70,43 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
     },
 
+    async sendScimUserWelcome({ email, platformId }: SendScimUserWelcomeArgs): Promise<void> {
+        if (EDITION_IS_NOT_PAID) {
+            return
+        }
+
+        log.info({
+            message: '[emailService#sendScimUserWelcome] sending welcome email',
+            email,
+            platformId,
+        })
+
+        const loginLink = await domainHelper.getPublicUrl({
+            path: 'sign-in',
+        })
+
+        await emailSender(log).send({
+            emails: [email],
+            platformId,
+            templateData: {
+                name: 'scim-user-welcome',
+                vars: {
+                    loginLink,
+                },
+            },
+        })
+    },
+
     async sendIssueCreatedNotification({
         projectId,
+        projectName,
         flowName,
         platformId,
-        issueOrRunsPath,
-        isIssue,
+        runUrl,
         createdAt,
+        failedStepDisplayName,
+        failedStepNumber,
+        failedStepMessage,
     }: IssueCreatedArgs): Promise<void> {
         if (EDITION_IS_NOT_PAID) {
             return
@@ -105,10 +132,13 @@ export const emailService = (log: FastifyBaseLogger) => ({
             templateData: {
                 name: 'issue-created',
                 vars: {
+                    projectName,
                     flowName,
                     createdAt,
-                    isIssue: isIssue.toString(),
-                    issueUrl: issueOrRunsPath,
+                    runUrl,
+                    failedStepDisplayName,
+                    failedStepNumber: failedStepNumber ? `${failedStepNumber}` : '',
+                    failedStepMessage: failedStepMessage ?? '',
                 },
             },
         })
@@ -136,7 +166,6 @@ export const emailService = (log: FastifyBaseLogger) => ({
         }
 
         const setupLink = await domainHelper.getInternalUrl({
-            platformId,
             path: frontendPath[type] + `?otpcode=${otp}&identityId=${userIdentity.id}`,
         })
 
@@ -163,7 +192,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
     },
 
     async sendBadgeAwardedEmail(userId: string, badgeName: string): Promise<void> {
-        const user = await userService.getMetaInformation({ id: userId })
+        const user = await userService(log).getMetaInformation({ id: userId })
 
         if (isNil(user) || !isValidEmail(user.email)) {
             log.info({ userId, email: user?.email }, '[emailService#sendBadgeAwardedEmail] Skipping: external user has no valid email')
@@ -186,10 +215,10 @@ export const emailService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function getEntityNameForInvitation(userInvitation: UserInvitation): Promise<{ name: string, role: string }> {
+async function getEntityNameForInvitation(userInvitation: UserInvitation, log: FastifyBaseLogger): Promise<{ name: string, role: string }> {
     switch (userInvitation.type) {
         case InvitationType.PLATFORM: {
-            const platform = await platformService.getOneOrThrow(userInvitation.platformId)
+            const platform = await platformService(log).getOneOrThrow(userInvitation.platformId)
             assertNotNullOrUndefined(userInvitation.platformRole, 'platformRole')
             return {
                 name: platform.name,
@@ -202,7 +231,7 @@ async function getEntityNameForInvitation(userInvitation: UserInvitation): Promi
             const projectRole = await projectRoleService.getOneOrThrowById({
                 id: userInvitation.projectRoleId,
             })
-            const project = await projectService.getOneOrThrow(userInvitation.projectId)
+            const project = await projectService(log).getOneOrThrow(userInvitation.projectId)
             return {
                 name: project.displayName,
                 role: capitalizeFirstLetter(projectRole.name),
@@ -235,11 +264,19 @@ type SendOtpArgs = {
     userIdentity: UserIdentity
 }
 
+type SendScimUserWelcomeArgs = {
+    email: string
+    platformId: string
+}
+
 type IssueCreatedArgs = {
     projectId: string
+    projectName: string
     flowName: string
     platformId: string
-    isIssue: boolean
-    issueOrRunsPath: string
+    runUrl: string
     createdAt: string
+    failedStepDisplayName: string
+    failedStepNumber?: number
+    failedStepMessage?: string
 }

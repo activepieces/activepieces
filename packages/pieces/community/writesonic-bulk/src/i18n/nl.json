@@ -1,5 +1,5 @@
 {
-  "Writesonic-bulk AI-powered writing assistant": "Writesonic-bulk AI-aangedreven schrijfassistent",
+  "Writesonic AI-powered writing assistant": "Writesonic AI-aangedreven schrijfassistent",
   "\nTo get your API Key:\n\n1. Go to [app.writesonic.com](https://app.writesonic.com/)\n2. Login to your Writesonic account\n3. Hover over your display picture on the top-right corner to open the profile menu\n4. Click on \"API Dashboard\"\n5. Click on the switch to activate the API\n6. Click on \"Reveal API Key\"\n7. Copy and save your API key securely (never commit to public repositories)\n": "\nOm je API-sleutel te krijgen:\n\n1. Ga naar [app.writesonic.com](https://app.writesonic.com/)\n2. Log in op je Writesonic account\n3. Beweeg over je display afbeelding rechtsboven om het profiel menu\n4 te openen. Klik op \"API Dashboard\"\n5. Klik op de schakelaar om API\n6 te activeren. Klik op \"Reveal API Key\"\n7. Kopieer en sla uw API key veilig op (commit nooit bij openbare repositories)\n",
   "Blog Ideas": "Blog ideeën",
   "Blog Intros": "Blog Intro",
@@ -45,10 +45,12 @@
   "Method": "Methode",
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
+  "Body Type": "Type lichaam",
   "Body": "Lichaam",
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The topic or keyword to generate blog ideas for": "Het onderwerp of trefwoord om blog ideeën te genereren voor",
   "A keyword to include in the blog introduction": "Een trefwoord om op te nemen in de blog introductie",
   "Select the engine quality level": "Selecteer het kwaliteit niveau van de motor",
@@ -73,7 +75,7 @@
   "The sentence you want to expand": "De zin die u wilt uitbreiden",
   "A keyword to include in the expanded sentence": "Een trefwoord om op te nemen in de uitgebreide zin",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
-  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
+  "Enable for files like PDFs, images, etc.": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc.",
   "Economy": "Economie",
   "Average": "Gemiddeld",
   "Good": "goed",
@@ -117,5 +119,9 @@
   "PATCH": "BEKIJK",
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
-  "HEAD": "HOOFD"
+  "HEAD": "HOOFD",
+  "None": "geen",
+  "JSON": "JSON",
+  "Form Data": "Formulieren gegevens",
+  "Raw": "Onbewerkte"
 }

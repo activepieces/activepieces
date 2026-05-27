@@ -1,33 +1,21 @@
-import {
-    ApiKey,
-    ApplicationEvent,
-    ApplicationEventName,
-    CustomDomain,
-    CustomDomainStatus,
-    GitBranchType,
-    GitRepo,
-    KeyAlgorithm,
-    OAuthApp,
-    OtpModel,
-    OtpState,
-    OtpType,
-    ProjectMember,
-    SigningKey,
-} from '@activepieces/ee-shared'
-import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { apDayjs } from '@activepieces/server-shared'
+import { LATEST_CONTEXT_VERSION, PieceMetadata } from '@activepieces/pieces-framework'
+import { apDayjs } from '@activepieces/server-utils'
 import {
     AiCreditsAutoTopUpState,
     AIProvider,
     AIProviderName,
     apId,
+    ApiKey,
     AppConnection,
     AppConnectionScope,
     AppConnectionStatus,
     AppConnectionType,
+    ApplicationEvent,
+    ApplicationEventName,
     assertNotNullOrUndefined,
     Cell,
     ColorName,
+    EventDestinationScope,
     Field,
     FieldType,
     File,
@@ -43,8 +31,16 @@ import {
     FlowTriggerType,
     FlowVersion,
     FlowVersionState,
+    Folder,
+    GitBranchType,
+    GitRepo,
     InvitationStatus,
     InvitationType,
+    KeyAlgorithm,
+    OAuthApp,
+    OtpModel,
+    OtpState,
+    OtpType,
     PackageType,
     PiecesFilterType,
     PieceType,
@@ -53,6 +49,7 @@ import {
     PlatformRole,
     Project,
     ProjectIcon,
+    ProjectMember,
     ProjectPlan,
     ProjectRelease,
     ProjectReleaseType,
@@ -61,6 +58,7 @@ import {
     Record,
     RoleType,
     RunEnvironment,
+    SigningKey,
     Table,
     TeamProjectsLimit,
     Template,
@@ -70,11 +68,11 @@ import {
     UserIdentity,
     UserIdentityProvider,
     UserInvitation,
-    UserStatus,
-} from '@activepieces/shared'
+    UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import bcrypt from 'bcrypt'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { AIProviderSchema } from '../../../src/app/ai/ai-provider-entity'
 import { databaseConnection } from '../../../src/app/database/database-connection'
 import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
@@ -82,6 +80,7 @@ import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oaut
 import { PlatformPlanEntity } from '../../../src/app/ee/platform/platform-plan/platform-plan.entity'
 import { encryptUtils } from '../../../src/app/helper/encryption'
 import { PieceMetadataSchema } from '../../../src/app/pieces/metadata/piece-metadata-entity'
+import { pieceMetadataService } from '../../../src/app/pieces/metadata/piece-metadata-service'
 import { PieceTagSchema } from '../../../src/app/pieces/tags/pieces/piece-tag.entity'
 import { TagEntitySchema } from '../../../src/app/pieces/tags/tag-entity'
 
@@ -200,6 +199,7 @@ export const createMockProject = (project?: Partial<Project>): Project => {
         releasesEnabled: project?.releasesEnabled ?? false,
         metadata: project?.metadata ?? null,
         type: project?.type ?? ProjectType.TEAM,
+        poolId: project?.poolId ?? null,
         icon,
     }
 }
@@ -244,12 +244,18 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         stripeSubscriptionStatus: undefined,
         showPoweredBy: platformPlan?.showPoweredBy ?? false,
         embeddingEnabled: platformPlan?.embeddingEnabled ?? false,
+        agentsEnabled: platformPlan?.agentsEnabled ?? false,
+        aiProvidersEnabled: platformPlan?.aiProvidersEnabled ?? false,
+        chatEnabled: platformPlan?.chatEnabled ?? false,
         teamProjectsLimit: platformPlan?.teamProjectsLimit ?? TeamProjectsLimit.NONE,
         projectRolesEnabled: platformPlan?.projectRolesEnabled ?? false,
-        customDomainsEnabled: platformPlan?.customDomainsEnabled ?? false,
         stripeSubscriptionEndDate: apDayjs().endOf('month').unix(),
         stripeSubscriptionStartDate: apDayjs().startOf('month').unix(),
         plan: platformPlan?.plan,
+        secretManagersEnabled: platformPlan?.secretManagersEnabled ?? false,
+        scimEnabled: platformPlan?.scimEnabled ?? false,
+        canary: platformPlan?.canary ?? false,
+        customDomainsEnabled: false,
     }
 }
 export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
@@ -259,8 +265,9 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         updated: platform?.updated ?? faker.date.recent().toISOString(),
         ownerId: platform?.ownerId ?? apId(),
         enforceAllowedAuthDomains: platform?.enforceAllowedAuthDomains ?? false,
-        federatedAuthProviders: platform?.federatedAuthProviders ?? {},
+        federatedAuthProviders: platform?.federatedAuthProviders ?? { saml: null },
         allowedAuthDomains: platform?.allowedAuthDomains ?? [],
+        allowedEmbedOrigins: platform?.allowedEmbedOrigins ?? [],
         name: platform?.name ?? faker.lorem.word(),
         primaryColor: platform?.primaryColor ?? faker.color.rgb(),
         logoIconUrl: platform?.logoIconUrl ?? faker.image.urlPlaceholder(),
@@ -273,6 +280,9 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
             platform?.filteredPieceBehavior ??
             faker.helpers.enumValue(FilteredPieceBehavior),
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
+        googleAuthEnabled: platform?.googleAuthEnabled ?? true,
+        ssoDomain: platform?.ssoDomain ?? null,
+        ssoDomainVerification: platform?.ssoDomainVerification ?? null,
     }
 }
 
@@ -434,19 +444,6 @@ export const createAuditEvent = (auditEvent: Partial<ApplicationEvent>) => {
     }
 }
 
-export const createMockCustomDomain = (
-    customDomain?: Partial<CustomDomain>,
-): CustomDomain => {
-    return {
-        id: customDomain?.id ?? apId(),
-        created: customDomain?.created ?? faker.date.recent().toISOString(),
-        updated: customDomain?.updated ?? faker.date.recent().toISOString(),
-        domain: customDomain?.domain ?? faker.internet.domainName(),
-        platformId: customDomain?.platformId ?? apId(),
-        status: customDomain?.status ?? faker.helpers.enumValue(CustomDomainStatus),
-    }
-}
-
 export const createMockOtp = (otp?: Partial<OtpModel>): OtpModel => {
     const now = dayjs()
     const twentyMinutesAgo = now.subtract(5, 'minutes')
@@ -512,6 +509,7 @@ export const createMockFlowVersion = (
         settings: {},
         valid: false,
         displayName: 'Select Trigger',
+        lastUpdatedDate: dayjs().toISOString(),
     } as const
 
     return {
@@ -551,10 +549,11 @@ export const createMockConnection = (connection: Partial<AppConnection>, ownerId
         externalId: connection?.externalId ?? apId(),
         owner: null,
         pieceVersion: connection?.pieceVersion ?? '0.0.0',
+        preSelectForNewProjects: connection?.preSelectForNewProjects ?? false,
     }
 }
 
-const createMockTable = ({ projectId }: { projectId: string }): Table => {
+export const createMockTable = ({ projectId }: { projectId: string }): Table => {
     return {
         id: apId(),
         created: faker.date.recent().toISOString(),
@@ -565,7 +564,7 @@ const createMockTable = ({ projectId }: { projectId: string }): Table => {
     }
 }
 
-const createMockField = ({ tableId, projectId }: { tableId: string, projectId: string }): Field => {
+export const createMockField = ({ tableId, projectId }: { tableId: string, projectId: string }): Field => {
     return {
         id: apId(),
         created: faker.date.recent().toISOString(),
@@ -580,7 +579,7 @@ const createMockField = ({ tableId, projectId }: { tableId: string, projectId: s
         type: FieldType.STATIC_DROPDOWN,
     }
 }
-const createMockRecord = ({ tableId, projectId }: { tableId: string, projectId: string }): Record => {
+export const createMockRecord = ({ tableId, projectId }: { tableId: string, projectId: string }): Record => {
     return {
         id: apId(),
         created: faker.date.recent().toISOString(),
@@ -590,7 +589,7 @@ const createMockRecord = ({ tableId, projectId }: { tableId: string, projectId: 
     }
 }
 
-const createMockCell = ({ recordId, fieldId, projectId }: { recordId: string, fieldId: string, projectId: string }): Cell => {
+export const createMockCell = ({ recordId, fieldId, projectId }: { recordId: string, fieldId: string, projectId: string }): Cell => {
     return {
         id: apId(),
         created: faker.date.recent().toISOString(),
@@ -686,7 +685,6 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
             apiKeysEnabled: true,
             customRolesEnabled: true,
             teamProjectsLimit: TeamProjectsLimit.UNLIMITED,
-            customDomainsEnabled: true,
             includedAiCredits: 1000,
             ...params?.plan,
         })
@@ -727,16 +725,22 @@ export const mockAndSaveBasicSetupWithApiKey = async (params?: MockBasicSetupPar
 }
 
 export const createMockFile = (file?: Partial<File>): File => {
+    const hasExplicitProjectId = file !== undefined && 'projectId' in file
+    const hasExplicitPlatformId = file !== undefined && 'platformId' in file
     return {
         id: file?.id ?? apId(),
         created: file?.created ?? faker.date.recent().toISOString(),
         updated: file?.updated ?? faker.date.recent().toISOString(),
-        platformId: file?.platformId ?? apId(),
-        projectId: file?.projectId ?? apId(),
+        platformId: hasExplicitPlatformId ? (file?.platformId ?? null) : apId(),
+        projectId: hasExplicitProjectId ? (file?.projectId ?? null) : apId(),
         location: file?.location ?? FileLocation.DB,
         compression: file?.compression ?? faker.helpers.enumValue(FileCompression),
         data: file?.data ?? Buffer.from(faker.lorem.paragraphs()),
         type: file?.type ?? faker.helpers.enumValue(FileType),
+        fileName: file?.fileName ?? null,
+        metadata: file?.metadata ?? null,
+        s3Key: file?.s3Key ?? null,
+        size: file?.size ?? null,
     }
 }
 
@@ -777,15 +781,68 @@ export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Pr
         auth: await encryptUtils.encryptObject({
             apiKey: process.env.OPENAI_API_KEY ?? faker.string.uuid(),
         }),
-        config: {},
+        config: aiProvider?.config ?? {},
     }
-    
+
 }
 
 export const mockAndSaveAIProvider = async (params?: Partial<AIProvider>): Promise<Omit<AIProviderSchema, 'platform'>> => {
     const mockAIProvider = await createMockAIProvider(params)
     await databaseConnection().getRepository('ai_provider').upsert(mockAIProvider, ['platformId', 'provider'])
     return mockAIProvider
+}
+
+export const mockPieceMetadata = async (mockLog: FastifyBaseLogger): Promise<PieceMetadata> => {
+    const { mockPlatform } = await mockAndSaveBasicSetup()
+    const mockPieceMetadata = createMockPieceMetadata({
+        platformId: mockPlatform.id,
+        packageType: PackageType.REGISTRY,
+    })
+    await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+    pieceMetadataService(mockLog).getOrThrow = vi.fn().mockResolvedValue(mockPieceMetadata)
+    return mockPieceMetadata
+}
+
+export const createMockFolder = (folder?: Partial<Folder>): Folder => {
+    return {
+        id: folder?.id ?? apId(),
+        created: folder?.created ?? faker.date.recent().toISOString(),
+        updated: folder?.updated ?? faker.date.recent().toISOString(),
+        projectId: folder?.projectId ?? apId(),
+        displayName: folder?.displayName ?? faker.lorem.word(),
+        displayOrder: folder?.displayOrder ?? faker.number.int({ min: 0, max: 100 }),
+    }
+}
+
+export const createMockEventDestination = (eventDestination?: Partial<{
+    id: string
+    created: string
+    updated: string
+    platformId: string
+    projectId: string | null
+    events: ApplicationEventName[]
+    url: string
+    scope: EventDestinationScope
+}>): {
+    id: string
+    created: string
+    updated: string
+    platformId: string
+    projectId: string | null
+    events: ApplicationEventName[]
+    url: string
+    scope: EventDestinationScope
+} => {
+    return {
+        id: eventDestination?.id ?? apId(),
+        created: eventDestination?.created ?? faker.date.recent().toISOString(),
+        updated: eventDestination?.updated ?? faker.date.recent().toISOString(),
+        platformId: eventDestination?.platformId ?? apId(),
+        projectId: eventDestination?.projectId ?? null,
+        events: eventDestination?.events ?? [faker.helpers.enumValue(ApplicationEventName)],
+        url: eventDestination?.url ?? faker.internet.url(),
+        scope: eventDestination?.scope ?? EventDestinationScope.PLATFORM,
+    }
 }
 
 type CreateMockPlatformWithOwnerParams = {

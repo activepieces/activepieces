@@ -10,7 +10,7 @@ import {
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { bambooHrAuth } from '../common/auth';
-import { isNil } from '@activepieces/shared';
+import { isEmpty, isNil } from '@activepieces/shared';
 
 async function getReportById(
   companyDomain: string,
@@ -128,7 +128,7 @@ export const reportFieldChanged = createTrigger({
       throw new Error('Incorrect Field Provided.');
     }
 
-    const items = employees.map((employee) => {
+    const items = employees.slice(0, 10).map((employee) => {
       const employeeId = String(
         employee['id'] || employee['employeeId'] || 'unknown'
       );
@@ -168,14 +168,19 @@ export const reportFieldChanged = createTrigger({
 
     const fieldId = fieldMap[fieldToMonitor];
 
-    const currentState: Record<string, any> = {};
+    if (isNil(fieldId)) {
+      throw new Error(`Field "${fieldToMonitor}" not found in report.`);
+    }
+
+    // Store all field values per employee (employee may appear multiple times due to duplicate records)
+    const currentState: Record<string, string[]> = {};
 
     for (const employee of employees) {
       const employeeId = String(
         employee['id'] || employee['employeeId'] || 'unknown'
       );
-      const currentFieldValue = employee[fieldId];
-      currentState[employeeId] = currentFieldValue;
+      if (!currentState[employeeId]) currentState[employeeId] = [];
+      currentState[employeeId].push(String(employee[fieldId] ?? ''));
     }
 
     await context.store.put('lastReportState', currentState);
@@ -190,7 +195,8 @@ export const reportFieldChanged = createTrigger({
     const { companyDomain, apiKey } = context.auth.props;
 
     const lastKnownState =
-      (await context.store.get<Record<string, any>>('lastReportState')) || {};
+      (await context.store.get<Record<string, string[]>>('lastReportState')) ||
+      {};
 
     try {
       const response = await getReportById(companyDomain, reportId, apiKey);
@@ -216,30 +222,66 @@ export const reportFieldChanged = createTrigger({
         return [];
       }
 
-      const currentState: Record<string, any> = {};
+      // Collect all field values per employee (employee may appear multiple times due to duplicate records)
+      const currentState: Record<string, string[]> = {};
+      const employeeMap: Record<string, Record<string, any>> = {};
       const changes: any[] = [];
 
       for (const employee of reportData) {
         const employeeId = String(
           employee['id'] || employee['employeeId'] || 'unknown'
         );
-        const currentFieldValue = employee[fieldId];
-        const lastFieldValue = lastKnownState[employeeId];
+        if (!currentState[employeeId]) currentState[employeeId] = [];
+        currentState[employeeId].push(String(employee[fieldId] ?? ''));
+        employeeMap[employeeId] = employee;
+      }
 
-        currentState[employeeId] = currentFieldValue;
-        if (!isNil(lastFieldValue) && lastFieldValue !== currentFieldValue) {
+      for (const [employeeId, currentValues] of Object.entries(currentState)) {
+        const lastValues = lastKnownState[employeeId];
+
+        const employee = employeeMap[employeeId];
+        const employeeName =
+          employee['displayName'] ||
+          (employee['firstName'] && employee['lastName']
+            ? `${employee['firstName']} ${employee['lastName']}`
+            : 'Unknown');
+
+        // New record not seen in the previous poll — fire for each unique value
+        if (isEmpty(lastValues)) {
+          for (const newValue of new Set(currentValues)) {
+            changes.push({
+              employeeId,
+              employeeName,
+              fieldName: fieldToMonitor,
+              oldValue: '',
+              newValue,
+              changedAt: dayjs().toISOString(),
+              employee,
+            });
+          }
+          continue;
+        }
+
+        const lastSet = new Set(lastValues);
+        const currentSet = new Set(currentValues);
+        // Values that appeared in current poll but weren't in the last poll
+        const added = currentValues.filter((v) => !lastSet.has(v));
+        // Values that were in the last poll but no longer present (used as oldValue context)
+        const removed = lastValues.filter((v) => !currentSet.has(v));
+
+        // Only trigger when a new value appeared
+        if (added.length === 0) continue;
+
+        // Fire one event per new value, paired with old value if available
+        for (let i = 0; i < added.length; i++) {
           changes.push({
             employeeId,
-            employeeName:
-              employee['displayName'] ||
-              (employee['firstName'] && employee['lastName']
-                ? `${employee['firstName']} ${employee['lastName']}`
-                : 'Unknown'),
+            employeeName,
             fieldName: fieldToMonitor,
-            oldValue: lastFieldValue,
-            newValue: currentFieldValue,
+            oldValue: removed[i] ?? lastValues[lastValues.length - 1] ?? '',
+            newValue: added[i],
             changedAt: dayjs().toISOString(),
-            employee: employee,
+            employee,
           });
         }
       }

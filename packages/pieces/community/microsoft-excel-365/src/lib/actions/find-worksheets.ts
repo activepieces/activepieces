@@ -1,6 +1,8 @@
-import { excelAuth } from '../../index';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { excelCommon } from '../common/common';
+import { excelAuth } from '../auth';
+import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { commonProps } from '../common/props';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
+import { getDrivePath } from '../common/helpers';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { WorkbookWorksheet } from '@microsoft/microsoft-graph-types';
 
@@ -10,7 +12,10 @@ export const findWorksheetAction = createAction({
   displayName: 'Find Worksheet',
   description: 'Finds an existing worksheet by name.',
   props: {
-    workbookId: excelCommon.workbook_id,
+    storageSource: commonProps.storageSource,
+    siteId: commonProps.siteId,
+    documentId: commonProps.documentId,
+    workbookId: commonProps.workbookId,
     sheetName: Property.ShortText({
       displayName: 'Worksheet Name',
       required: true,
@@ -24,15 +29,22 @@ export const findWorksheetAction = createAction({
     }),
   },
   async run(context) {
-    const { sheetName, workbookId, exactMatch } = context.propsValue;
+    const { storageSource, siteId, documentId, sheetName, workbookId, exactMatch } = context.propsValue;
 
+    if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+      throw new Error('please select SharePoint site and document library.');
+    }
+    const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
+
+    const cloud = (context.auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
     const client = Client.initWithMiddleware({
       authProvider: {
         getAccessToken: () => Promise.resolve(context.auth.access_token),
       },
+      baseUrl: getGraphBaseUrl(cloud),
     });
 
-    const url = `/me/drive/items/${workbookId}/workbook/worksheets`;
+    const url = `${drivePath}/items/${workbookId}/workbook/worksheets`;
 
     const response: PageCollection = await client.api(url).get();
 

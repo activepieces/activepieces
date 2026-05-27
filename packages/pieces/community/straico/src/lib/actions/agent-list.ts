@@ -1,4 +1,4 @@
-import { straicoAuth } from '../../index';
+import { straicoAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,

@@ -12,13 +12,7 @@ import { PieceCategory } from '@activepieces/shared';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { API_URL } from './lib/common';
 import { appointmentCanceledTrigger, appointmentScheduledTrigger } from './lib/triggers';
-
-export const acuitySchedulingAuth = PieceAuth.OAuth2({
-	required: true,
-	authUrl: 'https://acuityscheduling.com/oauth2/authorize',
-	tokenUrl: 'https://acuityscheduling.com/oauth2/token',
-	scope: ['api-v1'],
-});
+import { acuitySchedulingAuth } from './lib/auth';
 
 export const acuityScheduling = createPiece({
 	displayName: 'Acuity Scheduling',

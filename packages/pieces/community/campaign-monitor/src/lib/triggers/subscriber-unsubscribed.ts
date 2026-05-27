@@ -6,7 +6,7 @@ import {
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest, transformCustomFields } from '../common/client';
 import { isNil } from '@activepieces/shared';
-import { campaignMonitorAuth } from '../../index';
+import { campaignMonitorAuth } from '../auth';
 import { clientId, listId } from '../common/props';
 
 export const subscriberUnsubscribedTrigger = createTrigger({

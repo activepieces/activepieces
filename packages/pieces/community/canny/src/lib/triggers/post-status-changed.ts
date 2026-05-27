@@ -1,0 +1,48 @@
+import { createCannyTrigger } from './register-trigger';
+
+export const postStatusChangedTrigger = createCannyTrigger({
+  name: 'post_status_changed',
+  displayName: 'Post Status Changed',
+  description: "Triggers when a post's status is changed (e.g. open → in progress → complete).",
+  eventType: 'post.status_changed',
+  sampleData: {
+    created: '2026-04-06T11:00:00.000Z',
+    objectType: 'post',
+    type: 'post.status_changed',
+    object: {
+      id: 'post123',
+      title: 'Sample feature request',
+      details: 'It would be great if the app had dark mode.',
+      status: 'in progress',
+      score: 5,
+      commentCount: 2,
+      created: '2026-04-06T10:35:58.342Z',
+      statusChangedAt: '2026-04-06T11:00:00.000Z',
+      url: 'https://yourcompany.canny.io/admin/board/feature-requests/p/sample-feature-request',
+      eta: null,
+      by: null,
+      category: null,
+      owner: null,
+      tags: [],
+      imageURLs: [],
+      customFields: [],
+      board: {
+        id: 'board123',
+        name: 'Feature Requests',
+        postCount: 5,
+        created: '2026-04-06T10:35:08.905Z',
+        url: 'https://yourcompany.canny.io/admin/board/feature-requests',
+      },
+      author: {
+        id: 'author123',
+        name: 'Jane Doe',
+        email: 'jane@example.com',
+        isAdmin: false,
+        avatarURL: null,
+        created: '2026-01-08T07:26:38.452Z',
+        url: 'https://yourcompany.canny.io/admin/users/jane-doe',
+        userID: null,
+      },
+    },
+  },
+});

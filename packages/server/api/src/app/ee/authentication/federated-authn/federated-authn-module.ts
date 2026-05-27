@@ -1,27 +1,25 @@
 import {
     ApplicationEventName,
-} from '@activepieces/ee-shared'
-import { AppSystemProp, networkUtils, securityAccess } from '@activepieces/server-shared'
-import {
     ClaimTokenRequest,
-    ThirdPartyAuthnProviderEnum,
-} from '@activepieces/shared'
-import {
-    FastifyPluginAsyncTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
+    isNil,
+    ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { z } from 'zod'
+import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { applicationEvents } from '../../../helper/application-events'
+import { networkUtils } from '../../../helper/network-utils'
 import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-props'
 import { platformUtils } from '../../../platform/platform.utils'
 import { federatedAuthnService } from './federated-authn-service'
 
-export const federatedAuthModule: FastifyPluginAsyncTypebox = async (app) => {
+export const federatedAuthModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(federatedAuthnController, {
         prefix: '/v1/authn/federated',
     })
 }
 
-const federatedAuthnController: FastifyPluginAsyncTypebox = async (app) => {
+const federatedAuthnController: FastifyPluginAsyncZod = async (app) => {
     app.get('/login', LoginRequestSchema, async (req) => {
         const platformId = await platformUtils.getPlatformIdForRequest(req)
         return federatedAuthnService(req.log).login({
@@ -35,17 +33,19 @@ const federatedAuthnController: FastifyPluginAsyncTypebox = async (app) => {
             platformId: platformId ?? undefined,
             code: req.body.code,
         })
-        applicationEvents(req.log).sendUserEvent({
-            platformId: response.platformId!,
-            userId: response.id,
-            projectId: response.projectId,
-            ip: networkUtils.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-        }, {
-            action: ApplicationEventName.USER_SIGNED_UP,
-            data: {
-                source: 'sso',
-            },
-        })
+        if (!isNil(response.platformId)) {
+            applicationEvents(req.log).sendUserEvent({
+                platformId: response.platformId,
+                userId: response.id,
+                projectId: response.projectId ?? undefined,
+                ip: networkUtils.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+            }, {
+                action: ApplicationEventName.USER_SIGNED_UP,
+                data: {
+                    source: 'sso',
+                },
+            })
+        }
         return response
     })
 }
@@ -55,8 +55,8 @@ const LoginRequestSchema = {
         security: securityAccess.public(),
     },
     schema: {
-        querystring: Type.Object({
-            providerName: Type.Enum(ThirdPartyAuthnProviderEnum),
+        querystring: z.object({
+            providerName: z.nativeEnum(ThirdPartyAuthnProviderEnum),
         }),
     },
 }

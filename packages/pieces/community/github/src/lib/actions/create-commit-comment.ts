@@ -1,4 +1,4 @@
-import { githubAuth } from '../../index';
+import { githubAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { githubApiCall, githubCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
@@ -48,7 +48,7 @@ export const githubCreateCommitCommentAction = createAction({
     }
 
     const response = await githubApiCall({
-      accessToken: auth.access_token,
+      auth,
       method: HttpMethod.POST,
       resourceUri: `/repos/${owner}/${repo}/commits/${sha}/comments`,
       body: commentData,

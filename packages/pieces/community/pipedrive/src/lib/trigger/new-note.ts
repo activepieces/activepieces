@@ -1,4 +1,4 @@
-import { pipedriveAuth } from '../../';
+import { pipedriveAuth } from '../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import {

@@ -5,7 +5,7 @@ import {
 	createAction,
 } from '@activepieces/pieces-framework';
 import { APITableCommon, createNewFields, makeClient } from '../common';
-import { APITableAuth } from '../../index';
+import { APITableAuth } from '../auth';
 
 export const updateRecordAction = createAction({
 	auth: APITableAuth,

@@ -1,7 +1,8 @@
 {
   "Create beautiful online forms and surveys with unlimited fields and submissions": "Crear hermosos formularios y encuestas en línea con campos ilimitados y envíos",
-  "Base URL (Default: https://api.opnform.com)": "URL base (por defecto: https://api.opnform.com)",
+  "Base URL": "URL base",
   "API Key": "Clave API",
+  "Default value is 'https://api.opnform.com'.": "El valor predeterminado es 'https://api.opnform.com'.",
   "Please use your Opnform API Key. [Click here for create API Key](https://opnform.com/home?user-settings=access-tokens)": "Por favor, utiliza tu clave API de Opnform. [Haz clic aquí para crear la clave API](https://opnform.com/home?user-settings=access-tokens)",
   "Custom API Call": "Llamada API personalizada",
   "Make a custom API call to a specific endpoint": "Hacer una llamada API personalizada a un extremo específico",

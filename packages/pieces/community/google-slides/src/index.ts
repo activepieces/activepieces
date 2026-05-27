@@ -3,19 +3,7 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { refreshSheetsCharts } from "./lib/actions/refresh-charts";
 import { generateFromTemplate } from "./lib/actions/generate-from-template";
 import { getPresentation } from "./lib/actions/get-presentation";
-
-export const googleSlidesAuth = PieceAuth.OAuth2({
-  description: '',
-
-  authUrl: 'https://accounts.google.com/o/oauth2/auth',
-  tokenUrl: 'https://oauth2.googleapis.com/token',
-  required: true,
-  scope: [
-    'https://www.googleapis.com/auth/presentations',
-    'https://www.googleapis.com/auth/drive',
-    'https://www.googleapis.com/auth/spreadsheets',
-  ],
-});
+import { googleSlidesAuth } from './lib/auth';
 
 export const googleSlide = createPiece({
   displayName: "Google Slides",

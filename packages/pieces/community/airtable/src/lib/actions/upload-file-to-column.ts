@@ -1,4 +1,4 @@
-import { airtableAuth } from '../..';
+import { airtableAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { airtableCommon } from '../common';
 import { AirtableTable } from './../common/models';
@@ -25,7 +25,7 @@ export const airtableUploadFileToColumnAction = createAction({
       options: async ({ auth, base, tableId }) => {
         if (!auth || !base || !tableId) {
           return {
-            placeholder: 'Please select table first',
+            placeholder: 'Please select a base and table first',
             options: [],
             disabled: true,
           };

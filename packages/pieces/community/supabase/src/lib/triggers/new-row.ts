@@ -1,5 +1,5 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { supabaseAuth } from '../../index';
+import { supabaseAuth } from '../auth';
 import { supabaseCommon } from '../common/props';
 
 export const newRow = createTrigger({

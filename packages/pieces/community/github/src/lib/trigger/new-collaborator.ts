@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { githubAuth } from '../../index';
+import { githubAuth } from '../auth';
 import { githubApiCall, githubCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -42,7 +42,7 @@ export const newCollaboratorTrigger = createTrigger({
     const { repo, owner } = context.propsValue.repository!;
 
     const response = await githubApiCall<{ id: number }>({
-      accessToken: context.auth.access_token,
+      auth: context.auth,
       method: HttpMethod.POST,
       resourceUri: `/repos/${owner}/${repo}/hooks`,
       body: {
@@ -72,7 +72,7 @@ export const newCollaboratorTrigger = createTrigger({
     );
     if (webhook !== null && webhook !== undefined) {
       await githubApiCall({
-        accessToken: context.auth.access_token,
+        auth: context.auth,
         method: HttpMethod.DELETE,
         resourceUri: `/repos/${webhook.owner}/${webhook.repo}/hooks/${webhook.webhookId}`,
       });

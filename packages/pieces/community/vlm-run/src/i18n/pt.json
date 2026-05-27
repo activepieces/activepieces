@@ -22,10 +22,12 @@
   "Method": "Método",
   "Headers": "Cabeçalhos",
   "Query Parameters": "Parâmetros da consulta",
+  "Body Type": "Tipo de Corpo",
   "Body": "Conteúdo",
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "The audio file to get the transcription from. Only MP3 supported.": "O arquivo de áudio para obter a transcrição. Somente MP3 suportado.",
   "The image file to be analyzed.": "O arquivo de imagem a ser analisado.",
   "The specific analysis domain for the image.": "O domínio específico da análise para a imagem.",
@@ -35,7 +37,7 @@
   "The specific analysis domain for the video.": "O domínio específico de análise para o vídeo.",
   "Select a file to retrieve its details.": "Selecione um arquivo para recuperar os seus detalhes.",
   "Authorization headers are injected automatically from your connection.": "Os cabeçalhos de autorização são inseridos automaticamente a partir da sua conexão.",
-  "Enable for files like PDFs, images, etc..": "Habilitar para arquivos como PDFs, imagens, etc..",
+  "Enable for files like PDFs, images, etc.": "Habilitar para arquivos como PDFs, imagens, etc.",
   "Image Classification": "Classificação de imagem",
   "Image Caption": "Legenda da imagem",
   "Image TV News": "Imagens de TV",
@@ -61,5 +63,9 @@
   "PATCH": "COMPRAR",
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
-  "HEAD": "CABEÇA"
+  "HEAD": "CABEÇA",
+  "None": "Nenhuma",
+  "JSON": "JSON",
+  "Form Data": "Dados de Formulário",
+  "Raw": "RAW"
 }

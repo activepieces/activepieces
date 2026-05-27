@@ -1,7 +1,5 @@
 # pieces-time-ops
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-time-ops` to build the library.
+Run `turbo run build --filter=@activepieces/piece-time-ops` to build the library.

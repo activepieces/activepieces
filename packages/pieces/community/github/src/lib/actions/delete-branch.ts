@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { githubAuth } from '../../index';
+import { githubAuth } from '../auth';
 import { githubApiCall, githubCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -17,7 +17,7 @@ export const githubDeleteBranchAction = createAction({
     const branchName = propsValue.branch;
 
     const response = await githubApiCall({
-      accessToken: auth.access_token,
+      auth,
       method: HttpMethod.DELETE,
 
       resourceUri: `/repos/${owner}/${repo}/git/refs/heads/${branchName}`,

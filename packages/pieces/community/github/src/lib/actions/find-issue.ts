@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { githubAuth } from '../../index';
+import { githubAuth } from '../auth';
 import { githubApiCall, githubCommon, RequestParams } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -45,7 +45,7 @@ export const githubFindIssueAction = createAction({
       total_count: number;
       items: Array<{ id: number }>;
     }>({
-      accessToken: auth.access_token,
+      auth,
       method: HttpMethod.GET,
       resourceUri: `/search/issues`,
       query: { q, per_page: 1 },

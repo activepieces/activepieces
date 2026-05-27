@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { quickzuAuth } from '../../..';
+import { quickzuAuth } from '../../auth';
 import { makeClient, quickzuCommon } from '../../common';
 
 export const listProductsAction = createAction({

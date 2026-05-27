@@ -15,7 +15,7 @@ export class AddTriggerTestStrategy1707087022764 implements MigrationInterface {
             await updatePieceMetadata(queryRunner, pieceMetadata)
         }
 
-        log.info({ name: 'AddTriggerTestStrategy1707087022764' }, 'up')
+        log.info('[addTriggerTestStrategy1707087022764#up]')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -27,7 +27,7 @@ export class AddTriggerTestStrategy1707087022764 implements MigrationInterface {
             await updatePieceMetadata(queryRunner, pieceMetadata)
         }
 
-        log.info({ name: 'AddTriggerTestStrategy1707087022764' }, 'down')
+        log.info('[addTriggerTestStrategy1707087022764#down]')
     }
 }
 

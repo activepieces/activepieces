@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { instantlyAiAuth } from '../../index';
+import { instantlyAiAuth } from '../auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import { campaignId, listId } from '../common/props';

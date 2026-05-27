@@ -1,7 +1,7 @@
-import { excelAuth } from '../../index';
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { excelCommon } from '../common/common';
-import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
+import { excelAuth } from '../auth';
+import { createAction, OAuth2PropertyValue, Property } from "@activepieces/pieces-framework";
+import { commonProps } from '../common/props';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 
 export const findWorkbookAction = createAction({
   auth: excelAuth,
@@ -9,6 +9,9 @@ export const findWorkbookAction = createAction({
   displayName: 'Find Workbook',
   description: 'Finds an existing workbook by name.',
   props: {
+    storageSource: commonProps.storageSource,
+    siteId: commonProps.siteId,
+    documentId: commonProps.documentId,
     fileName: Property.ShortText({
       displayName: 'File Name',
       description: 'Excel File name to search for without extension.',
@@ -16,21 +19,22 @@ export const findWorkbookAction = createAction({
     })
   },
   async run(context) {
-    const { fileName } = context.propsValue;
+    const { storageSource, siteId, documentId, fileName } = context.propsValue;
+    const cloud = (context.auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+    if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+      throw new Error('please select SharePoint site and document library.');
+    }
+    const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
+
     const fileNameWithExtension = fileName.endsWith('.xlsx') ? fileName : `${fileName}.xlsx`;
 
-    const request: HttpRequest = {
-      method: HttpMethod.GET,
-      url: `${excelCommon.baseUrl}/items/root/search(q='.xlsx')?$select=id,name,lastModifiedDateTime,parentReference`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.access_token
-      }
-    }
+    const client = createMSGraphClient(context.auth.access_token, cloud);
+    const response = await client
+      .api(`${drivePath}/items/root/search(q='.xlsx')`)
+      .select('id,name,lastModifiedDateTime,parentReference')
+      .get();
 
-    const response = await httpClient.sendRequest<{ value: Array<{ id: string, name: string }> }>(request);
-
-    const result = response.body.value.filter(item => item.name === fileNameWithExtension);
+    const result = response.value.filter((item: { name: string }) => item.name === fileNameWithExtension);
 
 
 

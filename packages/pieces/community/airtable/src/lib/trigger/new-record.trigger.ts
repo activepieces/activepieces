@@ -9,7 +9,7 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { airtableAuth } from '../../';
+import { airtableAuth } from '../auth';
 import { airtableCommon } from '../common';
 
 const props = {

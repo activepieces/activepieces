@@ -1,4 +1,4 @@
-import { whatsappAuth } from '../..';
+import { whatsappAuth } from '../auth';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { commonProps } from '../common/utils';

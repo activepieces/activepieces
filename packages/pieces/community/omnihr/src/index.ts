@@ -13,6 +13,7 @@ import { getEmployeeSystemId } from './lib/actions/get-employee-system-id';
 import { getEmployeeInfo } from './lib/actions/get-employee-info';
 import { getEmployeeOrganizationalChart } from './lib/actions/get-employee-organizational-chart';
 import { getDirectReports } from './lib/actions/get-direct-reports';
+import { omnihrAuth } from './lib/auth';
 
 const OMNIHR_API_BASE_URL = 'https://api.omnihr.co/api/';
 const OMNIHR_TOKEN_URL = 'https://api.omnihr.co/api/v1/auth/token/';
@@ -49,44 +50,6 @@ async function getAccessToken(
 
   return response.body.access;
 }
-
-export const omnihrAuth = PieceAuth.CustomAuth({
-  description: markdown,
-  required: true,
-  props: {
-    username: Property.ShortText({
-      displayName: 'Username',
-      description: 'Your OmniHR email address',
-      required: true,
-    }),
-    password: PieceAuth.SecretText({
-      displayName: 'Password',
-      description: 'Your OmniHR password',
-      required: true,
-    }),
-    origin: Property.ShortText({
-      displayName: 'Origin',
-      description: 'Your OmniHR origin URL',
-      required: true,
-    }),
-  },
-  validate: async ({ auth }) => {
-    try {
-      const { username, password, origin } = auth;
-      await getAccessToken(username, password, origin);
-      return {
-        valid: true,
-      };
-    } catch (error: any) {
-      return {
-        valid: false,
-        error: `Authentication failed: ${
-          error.message || 'Invalid credentials'
-        }`,
-      };
-    }
-  },
-});
 
 export const omnihr = createPiece({
   displayName: 'Omni HR',

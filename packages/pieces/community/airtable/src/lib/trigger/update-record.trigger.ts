@@ -12,7 +12,7 @@ import {
 } from '@activepieces/pieces-framework';
 import Airtable from 'airtable';
 import dayjs from 'dayjs';
-import { airtableAuth } from '../../';
+import { airtableAuth } from '../auth';
 import { airtableCommon } from '../common';
 import { AirtableField, AirtableTable } from '../common/models';
 

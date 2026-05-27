@@ -1,4 +1,4 @@
-import { ActivePiecesProviderConfig, AIProviderName, apId } from '@activepieces/shared'
+import { AIProviderName, apId } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { encryptUtils } from '../../../helper/encryption'
 
@@ -13,9 +13,9 @@ export class RemoveOpenRounterKeysFromPlatformPlan1766094015801 implements Migra
         `)
 
         for (const plan of plans) {
-            const config: ActivePiecesProviderConfig = {
-                apiKey: plan.openRouterApiKey,
-                apiKeyHash: plan.openRouterApiKeyHash,
+            const config: Record<string, string> = {
+                apiKey: plan.openRouterApiKey as string,
+                apiKeyHash: plan.openRouterApiKeyHash as string,
             }
 
             const encryptedConfig = await encryptUtils.encryptObject(config)

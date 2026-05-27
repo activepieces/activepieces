@@ -4,7 +4,7 @@ import {
   PiecePropValueSchema,
 } from '@activepieces/pieces-framework';
 import { makeClient, reformatDate } from '../common';
-import { moxieCRMAuth } from '../..';
+import { moxieCRMAuth } from '../auth';
 
 export const moxieCreateTaskAction = createAction({
   auth: moxieCRMAuth,

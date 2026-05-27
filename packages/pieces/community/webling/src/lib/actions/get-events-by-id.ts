@@ -1,4 +1,4 @@
-import { weblingAuth } from '../../index';
+import { weblingAuth } from '../auth';
 import { createAction, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import { getCalendars, getEventsById } from '../common/helpers';
 import { z } from 'zod';

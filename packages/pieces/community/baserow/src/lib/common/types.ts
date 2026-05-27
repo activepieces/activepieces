@@ -121,6 +121,13 @@ interface MultipleCollaboratorsField extends BaserowCommonField {
   type: BaserowFieldType.MULTIPLE_COLLABORATORS;
   notify_user_when_added: boolean;
 }
+export interface BaserowTable {
+  id: number;
+  name: string;
+  order: number;
+  database_id: number;
+}
+
 export type BaserowField =
   | TextField
   | BooleanField

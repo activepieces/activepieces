@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { githubApiCall, githubCommon } from '../common';
-import { githubAuth } from '../../';
+import { githubAuth } from '../auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const githubRegisterTrigger = ({
@@ -28,7 +28,7 @@ export const githubRegisterTrigger = ({
       const { repo, owner } = context.propsValue.repository!;
 
       const response = await githubApiCall<{ id: number }>({
-        accessToken: context.auth.access_token,
+        auth: context.auth,
         method: HttpMethod.POST,
         resourceUri: `/repos/${owner}/${repo}/hooks`,
         body: {
@@ -55,7 +55,7 @@ export const githubRegisterTrigger = ({
       );
       if (response !== null && response !== undefined) {
         await githubApiCall({
-          accessToken: context.auth.access_token,
+          auth: context.auth,
           method: HttpMethod.DELETE,
           resourceUri: `/repos/${response.owner}/${response.repo}/hooks/${response.webhookId}`,
         });

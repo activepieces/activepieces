@@ -1,7 +1,7 @@
 
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { ZOHO_WEBHOOK_TOKEN } from '../common/constants';
-import { biginAuth } from '../../index';
+import { biginAuth } from '../auth';
 import { biginApiService } from '../common/request';
 
 const CACHE_KEY = 'bigin_created_contact_trigger';

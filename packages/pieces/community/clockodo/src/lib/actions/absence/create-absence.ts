@@ -6,7 +6,7 @@ import {
   reformatDate,
 } from '../../common';
 import { AbsenceStatus, AbsenceType } from '../../common/models/absence';
-import { clockodoAuth } from '../../../';
+import { clockodoAuth } from '../../auth';
 
 export default createAction({
   auth: clockodoAuth,

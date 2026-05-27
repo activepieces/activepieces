@@ -1,7 +1,5 @@
 # pieces-zoho-crm
 
-This library was generated with [Nx](https://nx.dev).
+## Building
 
-## Running lint
-
-Run `nx lint pieces-zoho-crm` to execute the lint via [ESLint](https://eslint.org/).
+Run `turbo run build --filter=@activepieces/piece-zoho-crm` to build the library.
