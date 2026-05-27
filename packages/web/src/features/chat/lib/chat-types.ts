@@ -170,3 +170,7 @@ export type TypedToolOutput<T> =
   | { state: 'pending' }
   | { state: 'success'; data: T }
   | { state: 'error'; errorText: string };
+
+export type CreditsWarning = {
+  percentage: number;
+};
