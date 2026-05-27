@@ -9,7 +9,7 @@ export const createPersonAction = createAction({
   name: 'create_person',
   displayName: 'Create Person',
   description:
-    'Create a new person in Salesloft. Either email_address or phone + last_name must be provided.',
+    'Create a new person in Salesloft.',
   auth: salesloftAuth,
   props: {
     email_address: Property.ShortText({

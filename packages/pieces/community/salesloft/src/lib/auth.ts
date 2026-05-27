@@ -7,10 +7,10 @@ export const salesloftAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   description: `
 To obtain your Salesloft API key:
-1. Log in to your Salesloft account
-2. Navigate to **Settings → Integrations → API**
-3. Click **Generate** to create a new API key
-4. Copy the key and paste it here
+1. Log in to your Salesloft account.
+2. Navigate to **Settings → Integrations → API**.
+3. Click **Generate** to create a new API key.
+4. Copy the key and paste it here.
   `,
   required: true,
   validate: async ({ auth }) => {

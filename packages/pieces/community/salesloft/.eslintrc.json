@@ -1,9 +1,6 @@
 {
   "extends": [
-    "../../../../.eslintrc.json"
-  ],
-  "plugins": [
-    "prettier"
+    "../../../../.eslintrc.base.json"
   ],
   "ignorePatterns": [
     "!**/*"
