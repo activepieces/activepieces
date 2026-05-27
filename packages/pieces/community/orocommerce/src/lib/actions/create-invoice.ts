@@ -9,7 +9,10 @@ import {
   organizationDropdown,
   userDropdown,
   websiteDropdown,
+  additionalAttributesProp,
+  additionalRelationsProp,
 } from '../common';
+import { jsonApiBodyUtils } from '../common/jsonapi-body-utils';
 
 export const createInvoiceAction = createAction({
   auth: oroAuth,
@@ -177,20 +180,22 @@ export const createInvoiceAction = createAction({
         };
       },
     }),
+    additionalAttributes: additionalAttributesProp,
+    additionalRelations: additionalRelationsProp,
   },
 
   async run(context) {
     const p = context.propsValue;
 
-    // -- Build included line items with string IDs --------------------------
-    // DynamicProperties wraps the array in an object keyed by "lineItems"
     const dynamicValue = (p.lineItems ?? {}) as Record<string, unknown>;
     const rawItems = (dynamicValue['lineItems'] ?? []) as Array<
       Record<string, unknown>
     >;
 
-    const included = rawItems.map((item, index) => {
-      const attrs: Record<string, unknown> = {
+    const lineItemResources = rawItems.map((item, index) => ({
+      type: 'invoicelineitems',
+      id: `li_${index + 1}`,
+      attributes: {
         position: index + 1,
         lineNumber: item['lineNumber'] || String(index + 1),
         description: item['description'],
@@ -198,108 +203,76 @@ export const createInvoiceAction = createAction({
         unitOfQuantity: item['unitOfQuantity'],
         unitPrice: Number(item['unitPrice']),
         rowTotal: Number(item['rowTotal']),
-      };
-      if (item['note']) attrs['note'] = item['note'];
+        ...jsonApiBodyUtils.pickDefined({
+          note: item['note'] as string | undefined,
+        }),
+      },
+    }));
 
-      return {
-        type: 'invoicelineitems',
-        id: `li_${index + 1}`,
-        attributes: attrs,
-      };
-    });
-
-    const lineItemsRelData = included.map((li) => ({
+    const lineItemsRelData = lineItemResources.map((li) => ({
       type: 'invoicelineitems',
       id: li.id,
     }));
 
-    // -- Build attributes ---------------------------------------------------
-    const attributes: Record<string, unknown> = {
+    const pdfFile = p.invoicePdfContent
+      ? {
+          type: 'files',
+          id: 'invoiceDefaultPdfFile',
+          attributes: {
+            mimeType: 'application/pdf',
+            originalFilename: p.invoicePdfFilename || 'invoice.pdf',
+            content: p.invoicePdfContent,
+          },
+        }
+      : undefined;
+
+    const included = [...lineItemResources, ...(pdfFile ? [pdfFile] : [])];
+
+    const extraAttrs = jsonApiBodyUtils.parseAdditionalAttributes(p.additionalAttributes);
+    const extraRels = jsonApiBodyUtils.parseAdditionalRelations(p.additionalRelations);
+
+    const attributes = {
       invoiceDate: p.invoiceDate,
       currency: p.currency,
       customerName: p.customerName,
       totalAmount: p.totalAmount,
+      ...jsonApiBodyUtils.pickDefined({
+        invoiceNumber: p.invoiceNumber,
+        title: p.title,
+        description: p.description,
+        memo: p.memo,
+        billTo: p.billTo,
+        shipTo: p.shipTo,
+        shippingMethod: p.shippingMethod,
+        sellerInfo: p.sellerInfo,
+        externalPaymentUrl: p.externalPaymentUrl,
+      }),
+      ...extraAttrs,
     };
-    if (p.invoiceNumber) attributes['invoiceNumber'] = p.invoiceNumber;
-    if (p.title) attributes['title'] = p.title;
-    if (p.description) attributes['description'] = p.description;
-    if (p.memo) attributes['memo'] = p.memo;
-    if (p.billTo) attributes['billTo'] = p.billTo;
-    if (p.shipTo) attributes['shipTo'] = p.shipTo;
-    if (p.shippingMethod) attributes['shippingMethod'] = p.shippingMethod;
-    if (p.sellerInfo) attributes['sellerInfo'] = p.sellerInfo;
-    if (p.externalPaymentUrl)
-      attributes['externalPaymentUrl'] = p.externalPaymentUrl;
 
-    // -- Build relationships ------------------------------------------------
-    const relationships: Record<string, unknown> = {
+    const relationships = {
       lineItems: { data: lineItemsRelData },
+      ...jsonApiBodyUtils.buildRels({
+        customer: ['customers', p.customer],
+        customer_user: ['customerusers', p.customerUser],
+        organization: ['organizations', p.organization],
+        owner: ['users', p.owner],
+        website: ['websites', p.website],
+        internal_status: ['invoiceinternalstatuses', p.internalStatus],
+        invoiceDefaultPdfFile: [
+          'files',
+          pdfFile ? 'invoiceDefaultPdfFile' : undefined,
+        ],
+      }),
+      ...extraRels,
     };
 
-    const customerId = p.customer;
-    if (customerId) {
-      relationships['customer'] = {
-        data: { type: 'customers', id: customerId },
-      };
-    }
-
-    const customerUserId = p.customerUser;
-    if (customerUserId) {
-      relationships['customer_user'] = {
-        data: { type: 'customerusers', id: customerUserId },
-      };
-    }
-
-    const organizationId = p.organization;
-    if (organizationId) {
-      relationships['organization'] = {
-        data: { type: 'organizations', id: organizationId },
-      };
-    }
-
-    const ownerId = p.owner;
-    if (ownerId) {
-      relationships['owner'] = { data: { type: 'users', id: ownerId } };
-    }
-
-    const websiteId = p.website;
-    if (websiteId) {
-      relationships['website'] = { data: { type: 'websites', id: websiteId } };
-    }
-
-    const internalStatusId = p.internalStatus;
-    if (internalStatusId) {
-      relationships['internal_status'] = {
-        data: { type: 'invoiceinternalstatuses', id: internalStatusId },
-      };
-    }
-
-    if (p.invoicePdfContent) {
-      included.push({
-        type: 'files',
-        id: 'invoiceDefaultPdfFile',
-        attributes: {
-          mimeType: 'application/pdf',
-          originalFilename: p.invoicePdfFilename || 'invoice.pdf',
-          content: p.invoicePdfContent,
-        },
-      });
-      relationships['invoiceDefaultPdfFile'] = {
-        data: { type: 'files', id: 'invoiceDefaultPdfFile' },
-      };
-    }
-
-    // -- POST /invoices -----------------------------------------------------
     const response = await oroApiCall({
       method: HttpMethod.POST,
       resourceUri: '/invoices',
       auth: context.auth,
       body: {
-        data: {
-          type: 'invoices',
-          attributes,
-          relationships,
-        },
+        data: { type: 'invoices', attributes, relationships },
         included,
       },
     });

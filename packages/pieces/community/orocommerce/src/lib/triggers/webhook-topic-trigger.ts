@@ -18,7 +18,7 @@ export const oroWebhookTopicTrigger = createTrigger({
       displayName: 'Topic',
       description: 'Only topics accessible by your connection are shown',
       required: true,
-      refreshers: ['auth'], // re-fetches when connection changes
+      refreshers: ['auth'],
       options: async ({ auth }) => {
         if (!auth) {
           return { disabled: true, placeholder: 'Connect your account first', options: [] };
@@ -27,14 +27,16 @@ export const oroWebhookTopicTrigger = createTrigger({
         const response = await oroApiCall({
           method: HttpMethod.GET,
           resourceUri: 'webhooktopics',
-          auth: auth as OroAuth
+          auth: auth as OroAuth,
         });
         const body = response.body as OroJsonApiCollection;
 
         return {
           options: (body.data ?? []).map((item: OroJsonApiItem) => ({
             label: String(
-              item.attributes['label'] ? item.attributes['label'] + ' (' + item.id + ')' : item.id
+              item.attributes['label']
+                ? item.attributes['label'] + ' (' + item.id + ')'
+                : item.id
             ),
             value: item.id,
           })),
@@ -58,7 +60,7 @@ export const oroWebhookTopicTrigger = createTrigger({
             notificationUrl: context.webhookUrl,
           },
           relationships: {
-              topic: {
+            topic: {
               data: {
                 type: 'webhooktopics',
                 id: context.propsValue.topic,
@@ -75,16 +77,19 @@ export const oroWebhookTopicTrigger = createTrigger({
       },
     });
 
-    await context.store.put<WebhookInformation>(`webhookInfo`, {
-      webhookId: response.body.data.id,
+    const webhookId = (response.body as { data?: { id?: string } })?.data?.id;
+    if (!webhookId) {
+      throw new Error('OroCommerce webhook registration failed: no webhook ID returned. Check your connection and permissions.');
+    }
+
+    await context.store.put<WebhookInformation>('webhookInfo', {
+      webhookId,
       topic: context.propsValue.topic,
     });
   },
 
   async onDisable(context) {
-    const webhookInfo = await context.store.get<WebhookInformation>(
-      `webhookInfo`
-    );
+    const webhookInfo = await context.store.get<WebhookInformation>('webhookInfo');
 
     if (webhookInfo !== null && webhookInfo !== undefined) {
       await oroApiCall({

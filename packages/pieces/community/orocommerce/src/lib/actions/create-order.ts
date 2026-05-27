@@ -16,8 +16,12 @@ import {
   buildCountryDropdown,
   buildRegionDropdown,
   productDropdown,
+  buildIncludedAddress,
+  additionalAttributesProp,
+  additionalRelationsProp,
 } from '../common';
 import { OroAuth } from '../common/types';
+import { jsonApiBodyUtils } from '../common/jsonapi-body-utils';
 
 export const createOrderAction = createAction({
   auth: oroAuth,
@@ -130,12 +134,12 @@ export const createOrderAction = createAction({
       displayName: 'Billing: Postal Code',
       required: false,
     }),
-    billingAddressCountry: buildCountryDropdown(false, 'Billing: Country'),
-    billingAddressRegion: buildRegionDropdown(
-      'billingAddressCountry',
-      false,
-      'Billing: Region / State'
-    ),
+    billingAddressCountry: buildCountryDropdown({ required: false, displayName: 'Billing: Country' }),
+    billingAddressRegion: buildRegionDropdown({
+      countryRefresher: 'billingAddressCountry',
+      required: false,
+      displayName: 'Billing: Region / State',
+    }),
     billingAddressCustomRegion: Property.ShortText({
       displayName: 'Billing: Custom Region',
       description: 'Free-text region for countries without predefined regions.',
@@ -180,12 +184,12 @@ export const createOrderAction = createAction({
       displayName: 'Shipping: Postal Code',
       required: false,
     }),
-    shippingAddressCountry: buildCountryDropdown(false, 'Shipping: Country'),
-    shippingAddressRegion: buildRegionDropdown(
-      'shippingAddressCountry',
-      false,
-      'Shipping: Region / State'
-    ),
+    shippingAddressCountry: buildCountryDropdown({ required: false, displayName: 'Shipping: Country' }),
+    shippingAddressRegion: buildRegionDropdown({
+      countryRefresher: 'shippingAddressCountry',
+      required: false,
+      displayName: 'Shipping: Region / State',
+    }),
     shippingAddressCustomRegion: Property.ShortText({
       displayName: 'Shipping: Custom Region',
       description: 'Free-text region for countries without predefined regions.',
@@ -202,7 +206,10 @@ export const createOrderAction = createAction({
       required: true,
       refreshers: [],
       props: async ({ auth }) => {
-        type JsonApiCollection = { data: { id: string; attributes: Record<string, unknown> }[] };
+        type JsonApiCollection = {
+          data: { id: string; attributes: Record<string, unknown> }[];
+        };
+
         const unitOptions: { label: string; value: string }[] = [];
         const warehouseOptions: { label: string; value: string }[] = [];
 
@@ -220,14 +227,19 @@ export const createOrderAction = createAction({
                 value: item.id,
               });
             }
-          } catch { /* leave empty */ }
+          } catch {
+            // Silently degrade so the form renders even if the catalog API is unavailable
+          }
 
           try {
             const warehousesResp = await oroApiCall({
               method: HttpMethod.GET,
               resourceUri: '/warehouses',
               auth: auth as OroAuth,
-              queryParams: { 'page[size]': '100', 'fields[warehouses]': 'id,name' },
+              queryParams: {
+                'page[size]': '100',
+                'fields[warehouses]': 'id,name',
+              },
             });
             for (const item of (warehousesResp.body as JsonApiCollection).data ?? []) {
               warehouseOptions.push({
@@ -235,7 +247,9 @@ export const createOrderAction = createAction({
                 value: item.id,
               });
             }
-          } catch { /* leave empty */ }
+          } catch {
+            // Silently degrade so the form renders even if the catalog API is unavailable
+          }
         }
 
         return {
@@ -340,220 +354,108 @@ export const createOrderAction = createAction({
     // -- Product Search helper (top-level, search-enabled) ---------------------
     // Use this to find a product SKU/ID, then paste it into line item "Product SKU or ID".
     productSearch: productDropdown,
+    additionalAttributes: additionalAttributesProp,
+    additionalRelations: additionalRelationsProp,
   },
 
   async run(context) {
     const p = context.propsValue;
 
-    const included: Record<string, unknown>[] = [];
-    const relationships: Record<string, unknown> = {};
-
-    // -- Helper: build an address included resource --------------------------
-    function buildAddress(
-      localId: string,
+    const billingAddressResource = buildAddressResource({
+      localId: 'billing_address',
       fields: {
-        label?: string | null;
-        firstName?: string | null;
-        lastName?: string | null;
-        organization?: string | null;
-        phone?: string | null;
-        street?: string | null;
-        street2?: string | null;
-        city?: string | null;
-        postalCode?: string | null;
-        country?: string | null;
-        region?: string | null;
-        customRegion?: string | null;
-      }
-    ): boolean {
-      const hasData = Object.values(fields).some((v) => v != null && v !== '');
-      if (!hasData) return false;
-
-      const attrs: Record<string, unknown> = { fromExternalSource: false };
-      const rels: Record<string, unknown> = {};
-
-      const textFields: Array<keyof typeof fields> = [
-        'label', 'firstName', 'lastName', 'organization',
-        'phone', 'street', 'street2', 'city', 'postalCode', 'customRegion',
-      ];
-      for (const f of textFields) {
-        if (fields[f]) attrs[f] = fields[f];
-      }
-      if (fields.country) {
-        rels['country'] = { data: { type: 'countries', id: fields.country } };
-      }
-      if (fields.region) {
-        rels['region'] = { data: { type: 'regions', id: fields.region } };
-      }
-
-      included.push({
-        type: 'orderaddresses',
-        id: localId,
-        attributes: attrs,
-        relationships: rels,
-      });
-      return true;
-    }
-
-    // -- Billing address -----------------------------------------------------
-    const billingAdded = buildAddress('billing_address', {
-      label:        p.billingAddressLabel,
-      firstName:    p.billingAddressFirstName,
-      lastName:     p.billingAddressLastName,
-      organization: p.billingAddressOrganization,
-      phone:        p.billingAddressPhone,
-      street:       p.billingAddressStreet,
-      street2:      p.billingAddressStreet2,
-      city:         p.billingAddressCity,
-      postalCode:   p.billingAddressPostalCode,
-      country:      p.billingAddressCountry,
-      region:       p.billingAddressRegion,
-      customRegion: p.billingAddressCustomRegion,
+        label: p.billingAddressLabel,
+        firstName: p.billingAddressFirstName,
+        lastName: p.billingAddressLastName,
+        organization: p.billingAddressOrganization,
+        phone: p.billingAddressPhone,
+        street: p.billingAddressStreet,
+        street2: p.billingAddressStreet2,
+        city: p.billingAddressCity,
+        postalCode: p.billingAddressPostalCode,
+        country: p.billingAddressCountry,
+        region: p.billingAddressRegion,
+        customRegion: p.billingAddressCustomRegion,
+      },
     });
-    if (billingAdded) {
-      relationships['billingAddress'] = {
-        data: { type: 'orderaddresses', id: 'billing_address' },
-      };
-    }
 
-    // -- Shipping address ----------------------------------------------------
-    const shippingAdded = buildAddress('shipping_address', {
-      label:        p.shippingAddressLabel,
-      firstName:    p.shippingAddressFirstName,
-      lastName:     p.shippingAddressLastName,
-      organization: p.shippingAddressOrganization,
-      phone:        p.shippingAddressPhone,
-      street:       p.shippingAddressStreet,
-      street2:      p.shippingAddressStreet2,
-      city:         p.shippingAddressCity,
-      postalCode:   p.shippingAddressPostalCode,
-      country:      p.shippingAddressCountry,
-      region:       p.shippingAddressRegion,
-      customRegion: p.shippingAddressCustomRegion,
+    const shippingAddressResource = buildAddressResource({
+      localId: 'shipping_address',
+      fields: {
+        label: p.shippingAddressLabel,
+        firstName: p.shippingAddressFirstName,
+        lastName: p.shippingAddressLastName,
+        organization: p.shippingAddressOrganization,
+        phone: p.shippingAddressPhone,
+        street: p.shippingAddressStreet,
+        street2: p.shippingAddressStreet2,
+        city: p.shippingAddressCity,
+        postalCode: p.shippingAddressPostalCode,
+        country: p.shippingAddressCountry,
+        region: p.shippingAddressRegion,
+        customRegion: p.shippingAddressCustomRegion,
+      },
     });
-    if (shippingAdded) {
-      relationships['shippingAddress'] = {
-        data: { type: 'orderaddresses', id: 'shipping_address' },
-      };
-    }
 
     // -- Line items ----------------------------------------------------------
     // DynamicProperties wraps the array in an object keyed by "lineItems"
     const dynamicValue = (p.lineItems ?? {}) as Record<string, unknown>;
     const rawItems = (dynamicValue['lineItems'] ?? []) as Array<Record<string, unknown>>;
 
-    const lineItemsRelData = rawItems.map((item, index) => {
-      const lid = `li_${index + 1}`;
+    const lineItems = rawItems.map((item, index) => buildOrderLineItem({ item, index, orderCurrency: p.currency }));
+    const lineItemResources = lineItems.map((li) => li.resource);
+    const lineItemsRelData = lineItems.map((li) => li.ref);
 
-      const productUnitId = item['productUnit'] as string | undefined;
-
-      const liAttributes: Record<string, unknown> = {
-        productSku:         String(item['productSku'] ?? ''),
-        quantity:           Number(item['quantity']),
-        value:              Number(item['value']),
-        currency:           item['currency'] || p.currency || 'USD',
-        priceType:          item['priceType'] != null ? Number(item['priceType']) : 10,
-        fromExternalSource: true,
-      };
-      if (item['productName'])              liAttributes['productName']           = item['productName'];
-      if (item['freeFormProduct'])          liAttributes['freeFormProduct']       = item['freeFormProduct'];
-      if (item['comment'])                  liAttributes['comment']               = item['comment'];
-      if (item['shipBy'])                   liAttributes['shipBy']                = item['shipBy'];
-      if (item['shippingEstimateAmount'] != null) liAttributes['shippingEstimateAmount'] = Number(item['shippingEstimateAmount']);
-      if (item['shippingMethod'])           liAttributes['shippingMethod']        = item['shippingMethod'];
-      if (item['shippingMethodType'])       liAttributes['shippingMethodType']    = item['shippingMethodType'];
-
-      const liRelationships: Record<string, unknown> = {
-        productUnit: { data: { type: 'productunits', id: String(productUnitId) } },
-      };
-
-      const productId = (item['productId'] as string | undefined)?.trim();
-      if (productId) {
-        liRelationships['product'] = { data: { type: 'products', id: productId } };
-      }
-
-      const liWarehouseId = (item['warehouseId'] as string | undefined)?.trim()
-                         || (item['warehouse']   as string | undefined)?.trim();
-      if (liWarehouseId) {
-        liRelationships['warehouse'] = { data: { type: 'warehouses', id: liWarehouseId } };
-      }
-
-      included.push({
-        type: 'orderlineitems',
-        id: lid,
-        attributes: liAttributes,
-        relationships: liRelationships,
-      });
-
-      return { type: 'orderlineitems', id: lid };
-    });
-    relationships['lineItems'] = { data: lineItemsRelData };
+    const extraAttrs = jsonApiBodyUtils.parseAdditionalAttributes(p.additionalAttributes);
+    const extraRels = jsonApiBodyUtils.parseAdditionalRelations(p.additionalRelations);
 
     // -- Order attributes ----------------------------------------------------
-    const attributes: Record<string, unknown> = { external: false };
-    if (p.currency)                             attributes['currency']                     = p.currency;
-    if (p.identifier)                           attributes['identifier']                   = p.identifier;
-    if (p.poNumber)                             attributes['poNumber']                     = p.poNumber;
-    if (p.customerNotes)                        attributes['customerNotes']                = p.customerNotes;
-    if (p.shipUntil)                            attributes['shipUntil']                    = p.shipUntil;
-    if (p.overriddenShippingCostAmount != null) attributes['overriddenShippingCostAmount'] = p.overriddenShippingCostAmount;
-    if (p.estimatedShippingCostAmount  != null) attributes['estimatedShippingCostAmount']  = p.estimatedShippingCostAmount;
-    if (p.shippingMethod)                       attributes['shippingMethod']               = p.shippingMethod;
-    if (p.shippingMethodType)                   attributes['shippingMethodType']           = p.shippingMethodType;
-    if (p.disablePromotions)                    attributes['disablePromotions']            = p.disablePromotions;
+    const attributes: Record<string, unknown> = {
+      external: false,
+      ...jsonApiBodyUtils.pickDefined({
+        currency: p.currency,
+        identifier: p.identifier,
+        poNumber: p.poNumber,
+        customerNotes: p.customerNotes,
+        shipUntil: p.shipUntil,
+        overriddenShippingCostAmount: p.overriddenShippingCostAmount,
+        estimatedShippingCostAmount: p.estimatedShippingCostAmount,
+        shippingMethod: p.shippingMethod,
+        shippingMethodType: p.shippingMethodType,
+        disablePromotions: p.disablePromotions,
+      }),
+      ...extraAttrs,
+    };
 
-    // -- Order relationships --
-    const customerId = p.customer;
-    if (customerId) {
-      relationships['customer'] = { data: { type: 'customers', id: customerId } };
-    }
+    const relationships: Record<string, unknown> = {
+      lineItems: { data: lineItemsRelData },
+      ...(billingAddressResource
+        ? { billingAddress: { data: { type: 'orderaddresses', id: 'billing_address' } } }
+        : {}),
+      ...(shippingAddressResource
+        ? { shippingAddress: { data: { type: 'orderaddresses', id: 'shipping_address' } } }
+        : {}),
+      ...jsonApiBodyUtils.buildRels({
+        customer: ['customers', p.customer],
+        customerUser: ['customerusers', p.customerUser],
+        organization: ['organizations', p.organization],
+        owner: ['users', p.owner],
+        website: ['websites', p.website],
+        internalStatus: ['orderinternalstatuses', p.internalStatus],
+        paymentTerm: ['paymentterms', p.paymentTerm],
+        warehouse: ['warehouses', p.warehouse],
+        parent: ['orders', p.parent],
+        status: ['orderstatuses', p.status],
+      }),
+      ...extraRels,
+    };
 
-    const customerUserId = p.customerUser;
-    if (customerUserId) {
-      relationships['customerUser'] = { data: { type: 'customerusers', id: customerUserId } };
-    }
+    const included = [
+      ...lineItemResources,
+      ...(billingAddressResource ? [billingAddressResource] : []),
+      ...(shippingAddressResource ? [shippingAddressResource] : []),
+    ];
 
-    const organizationId = p.organization;
-    if (organizationId) {
-      relationships['organization'] = { data: { type: 'organizations', id: organizationId } };
-    }
-
-    const ownerId = p.owner;
-    if (ownerId) {
-      relationships['owner'] = { data: { type: 'users', id: ownerId } };
-    }
-
-    const websiteId = p.website;
-    if (websiteId) {
-      relationships['website'] = { data: { type: 'websites', id: websiteId } };
-    }
-
-    const internalStatusId = p.internalStatus;
-    if (internalStatusId) {
-      relationships['internalStatus'] = { data: { type: 'orderinternalstatuses', id: internalStatusId } };
-    }
-
-    const paymentTermId = p.paymentTerm;
-    if (paymentTermId) {
-      relationships['paymentTerm'] = { data: { type: 'paymentterms', id: paymentTermId } };
-    }
-
-    const warehouseId = p.warehouse;
-    if (warehouseId) {
-      relationships['warehouse'] = { data: { type: 'warehouses', id: warehouseId } };
-    }
-
-    const parentId = p.parent;
-    if (parentId) {
-      relationships['parent'] = { data: { type: 'orders', id: parentId } };
-    }
-
-    const statusId = p.status;
-    if (statusId) {
-      relationships['status'] = { data: { type: 'orderstatuses', id: statusId } };
-    }
-
-    // -- POST /orders ---------------------------------------------------------
     const response = await oroApiCall({
       method: HttpMethod.POST,
       resourceUri: '/orders',
@@ -567,3 +469,97 @@ export const createOrderAction = createAction({
     return response.body;
   },
 });
+
+function buildAddressResource({
+  localId,
+  fields,
+}: {
+  localId: string;
+  fields: {
+    label?: string | null;
+    namePrefix?: string | null;
+    firstName?: string | null;
+    middleName?: string | null;
+    lastName?: string | null;
+    nameSuffix?: string | null;
+    organization?: string | null;
+    phone?: string | null;
+    street?: string | null;
+    street2?: string | null;
+    city?: string | null;
+    postalCode?: string | null;
+    country?: string | null;
+    region?: string | null;
+    customRegion?: string | null;
+  };
+}): Record<string, unknown> | null {
+  const hasData = Object.values(fields).some((v) => v != null && v !== '');
+  if (!hasData) return null;
+
+  return buildIncludedAddress({
+    lid: localId,
+    type: 'orderaddresses',
+    addr: fields as Record<string, unknown>,
+    extraAttributes: { fromExternalSource: false },
+  });
+}
+
+function buildOrderLineItem({
+  item,
+  index,
+  orderCurrency,
+}: {
+  item: Record<string, unknown>;
+  index: number;
+  orderCurrency: string | null | undefined;
+}): { resource: Record<string, unknown>; ref: { type: string; id: string } } {
+  const lid = `li_${index + 1}`;
+  const productUnitId = item['productUnit'] as string | undefined;
+
+  const attributes: Record<string, unknown> = {
+    fromExternalSource: true,
+    productSku: String(item['productSku'] ?? ''),
+    quantity: Number(item['quantity']),
+    value: Number(item['value']),
+    currency:
+      (item['currency'] as string | undefined) || orderCurrency || 'USD',
+    priceType: item['priceType'] != null ? Number(item['priceType']) : 10,
+
+    ...jsonApiBodyUtils.pickDefined({
+      productName: item['productName'] as string | undefined,
+      freeFormProduct: item['freeFormProduct'] as string | undefined,
+      comment: item['comment'] as string | undefined,
+      shipBy: item['shipBy'] as string | undefined,
+    }),
+
+    ...(item['shippingEstimateAmount'] != null
+      ? { shippingEstimateAmount: Number(item['shippingEstimateAmount']) }
+      : {}),
+
+    ...(item['shippingMethod']
+      ? { shippingMethod: item['shippingMethod'] }
+      : {}),
+
+    ...(item['shippingMethodType']
+      ? { shippingMethodType: item['shippingMethodType'] }
+      : {}),
+  };
+
+  const productId = (item['productId'] as string | undefined)?.trim();
+  const liWarehouseId =
+    (item['warehouseId'] as string | undefined)?.trim() ||
+    (item['warehouse'] as string | undefined)?.trim();
+
+  const relationships: Record<string, unknown> = {
+    productUnit: { data: { type: 'productunits', id: String(productUnitId) } },
+    ...jsonApiBodyUtils.buildRels({
+      product: ['products', productId],
+      warehouse: ['warehouses', liWarehouseId],
+    }),
+  };
+
+  return {
+    resource: { type: 'orderlineitems', id: lid, attributes, relationships },
+    ref: { type: 'orderlineitems', id: lid },
+  };
+}

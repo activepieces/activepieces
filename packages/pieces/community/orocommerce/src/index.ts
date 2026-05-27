@@ -5,6 +5,10 @@ import { oroWebhookTopicTrigger } from './lib/triggers/webhook-topic-trigger';
 import {
   createInvoiceAction,
   createOrderAction,
+  createCustomerAction,
+  updateCustomerAction,
+  createCustomerUserAction,
+  updateCustomerUserAction,
   customApiCallAction,
   serializeJsonApiAction,
   unserializeJsonApiAction,
@@ -21,6 +25,10 @@ export const orocommerce = createPiece({
   actions: [
     createInvoiceAction,
     createOrderAction,
+    createCustomerAction,
+    updateCustomerAction,
+    createCustomerUserAction,
+    updateCustomerUserAction,
     customApiCallAction,
     serializeJsonApiAction,
     unserializeJsonApiAction,
