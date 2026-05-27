@@ -119,6 +119,7 @@ export function useAgentChat({
   const [sendStatus, setSendStatus] = useState<SendStatus>({ type: 'idle' });
   const sendStatusRef = useRef<SendStatus>({ type: 'idle' });
   const onCreditsExhaustedRef = useRef(onCreditsExhausted);
+  onCreditsExhaustedRef.current = onCreditsExhausted;
 
   const [persistedMessages, setPersistedMessages] = useState<ChatUIMessage[]>(
     [],

@@ -287,7 +287,7 @@ async function generateTitleIfFirstTurn({ model, userMessage, previousUiMessages
     return generatedTitle ?? undefined
 }
 
-const CREDIT_ERROR_PATTERNS = [/credits/i, /402/i, /payment.required/i]
+const CREDIT_ERROR_PATTERNS = [/credits/i, /\b402\b/, /payment.required/i]
 
 function isCreditExhaustedError(message: string): boolean {
     return CREDIT_ERROR_PATTERNS.some((pattern) => pattern.test(message))
