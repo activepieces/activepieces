@@ -570,7 +570,7 @@
     },
     "packages/pieces/community/airtable": {
       "name": "@activepieces/piece-airtable",
-      "version": "0.6.7",
+      "version": "0.6.8",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -3155,7 +3155,7 @@
     },
     "packages/pieces/community/google-gemini": {
       "name": "@activepieces/piece-google-gemini",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -3271,6 +3271,16 @@
         "@activepieces/shared": "workspace:*",
         "tslib": "^2.3.0",
         "zod": "4.3.6",
+      },
+    },
+    "packages/pieces/community/gorgias": {
+      "name": "@activepieces/piece-gorgias",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
       },
     },
     "packages/pieces/community/gotify": {
@@ -4356,7 +4366,7 @@
     },
     "packages/pieces/community/mailgun": {
       "name": "@activepieces/piece-mailgun",
-      "version": "0.0.2",
+      "version": "0.0.3",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -6312,7 +6322,7 @@
     },
     "packages/pieces/community/senja": {
       "name": "@activepieces/piece-senja",
-      "version": "0.0.3",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7175,7 +7185,7 @@
     },
     "packages/pieces/community/typefully": {
       "name": "@activepieces/piece-typefully",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7338,7 +7348,7 @@
     },
     "packages/pieces/community/village": {
       "name": "@activepieces/piece-village",
-      "version": "0.3.3",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -8126,7 +8136,7 @@
     },
     "packages/pieces/core/pdf": {
       "name": "@activepieces/piece-pdf",
-      "version": "0.5.3",
+      "version": "0.5.4",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -9264,6 +9274,8 @@
     "@activepieces/piece-google-vertexai": ["@activepieces/piece-google-vertexai@workspace:packages/pieces/community/google-vertexai"],
 
     "@activepieces/piece-googlechat": ["@activepieces/piece-googlechat@workspace:packages/pieces/community/googlechat"],
+
+    "@activepieces/piece-gorgias": ["@activepieces/piece-gorgias@workspace:packages/pieces/community/gorgias"],
 
     "@activepieces/piece-gotify": ["@activepieces/piece-gotify@workspace:packages/pieces/community/gotify"],
 

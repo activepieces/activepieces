@@ -25,7 +25,7 @@ export const getCustomerAction = createAction({
 
     if (customerId) {
       return await gorgiasApiCall({
-        auth: context.auth.props,
+        auth: context.auth,
         method: HttpMethod.GET,
         resourceUri: `/customers/${customerId}`,
       });
@@ -36,7 +36,7 @@ export const getCustomerAction = createAction({
     }
 
     const customer = await findCustomerByEmail(
-      context.auth.props,
+      context.auth,
       email,
     );
 

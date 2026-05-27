@@ -34,7 +34,7 @@ export const listTicketsAction = createAction({
   async run(context) {
     const { customerId, cursor, limit, orderBy } = context.propsValue;
     return await gorgiasApiCall<GorgiasListResponse<unknown>>({
-      auth: context.auth.props,
+      auth: context.auth,
       method: HttpMethod.GET,
       resourceUri: '/tickets',
       query: {

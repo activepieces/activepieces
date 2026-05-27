@@ -55,11 +55,11 @@ export async function gorgiasApiCall<T extends HttpMessageBody>({
 
   const request: HttpRequest = {
     method,
-    url: `${getGorgiasBaseUrl(auth.domain)}${resourceUri}`,
+    url: `${getGorgiasBaseUrl(auth.props.domain)}${resourceUri}`,
     authentication: {
       type: AuthenticationType.BASIC,
-      username: auth.email,
-      password: auth.api_key,
+      username: auth.props.email,
+      password: auth.props.api_key,
     },
     headers: {
       Accept: 'application/json',

@@ -14,8 +14,8 @@ import { getCustomerAction } from './lib/actions/get-customer';
 export const gorgias = createPiece({
   displayName: 'Gorgias',
   description: 'Helpdesk platform for ecommerce teams to manage tickets, customers, and support conversations.',
-  minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://developers.gorgias.com/favicon.ico',
+  minimumSupportedRelease: '0.36.1',
+  logoUrl: 'https://cdn.activepieces.com/pieces/gorgias.png',
   categories: [PieceCategory.CUSTOMER_SUPPORT],
   auth: gorgiasAuth,
   authors: ['Harmatta'],

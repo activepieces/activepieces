@@ -1,15 +1,11 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, PieceAuth, Property } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
 
-export type GorgiasAuth = {
-  domain: string;
-  email: string;
-  api_key: string;
-};
+export type GorgiasAuth = AppConnectionValueForAuthProperty<typeof gorgiasAuth>
 
 export function normalizeGorgiasDomain(input: string): string {
   return input

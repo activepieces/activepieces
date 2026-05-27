@@ -74,7 +74,7 @@ export const updateTicketAction = createAction({
     } = context.propsValue;
 
     return await gorgiasApiCall({
-      auth: context.auth.props,
+      auth: context.auth,
       method: HttpMethod.PUT,
       resourceUri: `/tickets/${ticketId}`,
       body: {
