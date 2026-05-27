@@ -563,6 +563,9 @@
       "@activepieces/piece-googlechat": [
         "packages/pieces/community/googlechat/src/index.ts"
       ],
+      "@activepieces/piece-gorgias": [
+        "packages/pieces/community/gorgias/src/index.ts"
+      ],
       "@activepieces/piece-gotify": [
         "packages/pieces/community/gotify/src/index.ts"
       ],

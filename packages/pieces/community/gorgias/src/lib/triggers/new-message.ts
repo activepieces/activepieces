@@ -1,0 +1,31 @@
+import { createGorgiasWebhookTrigger } from './create-trigger';
+
+export const newMessage = createGorgiasWebhookTrigger({
+  name: 'new_message',
+  displayName: 'New Message',
+  description: 'Triggers when a new message is added to a ticket (from a customer or an agent).',
+  event: 'ticket-message-created',
+  withMessageFields: true,
+  sampleData: {
+    id: 123,
+    subject: 'Can I get a refund?',
+    status: 'open',
+    priority: 'normal',
+    channel: 'email',
+    via: 'email',
+    language: 'en',
+    customer_id: 3924,
+    customer_email: 'john@example.com',
+    customer_name: 'John Smith',
+    assignee_user_id: 7,
+    assignee_user_email: 'agent@example.com',
+    created_datetime: '2019-07-05T14:42:00.384938',
+    updated_datetime: '2020-01-27T10:42:21.932637',
+    message_id: 9876,
+    message_body_text: 'Thanks for reaching out, we will process your refund shortly.',
+    message_from_agent: true,
+    message_channel: 'email',
+    message_public: true,
+    message_created_datetime: '2020-01-27T10:42:21.932637',
+  },
+});
