@@ -464,6 +464,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/fran-mora"><img src="https://avatars.githubusercontent.com/u/8603380?v=4?s=100" width="100px;" alt="Francesco"/><br /><sub><b>Francesco</b></sub></a><br /><a href="#plugin-fran-mora" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/majewskibartosz"><img src="https://avatars.githubusercontent.com/u/30874844?v=4?s=100" width="100px;" alt="Bartosz Majewski"/><br /><sub><b>Bartosz Majewski</b></sub></a><br /><a href="#plugin-majewskibartosz" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>

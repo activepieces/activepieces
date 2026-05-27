@@ -2175,6 +2175,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "majewskibartosz",
+      "name": "Bartosz Majewski",
+      "avatar_url": "https://avatars.githubusercontent.com/u/30874844?v=4",
+      "profile": "https://github.com/majewskibartosz",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
