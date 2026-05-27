@@ -20,6 +20,7 @@ export function useStreamingReducer({
   onStreamError: (params: {
     conversationId: string;
     errorMessage: string;
+    errorCode?: string;
   }) => void;
 }) {
   const socket = useSocket();
@@ -115,12 +116,18 @@ export function useStreamingReducer({
         onStreamFinishedRef.current(conversationId);
       };
 
-      const handleError = (errorMessage: string) => {
+      const handleError = ({
+        errorMessage,
+        errorCode,
+      }: {
+        errorMessage: string;
+        errorCode?: string;
+      }) => {
         flush();
         teardown();
         setStreamError(errorMessage);
         updatePhase('reconciling');
-        onStreamErrorRef.current({ conversationId, errorMessage });
+        onStreamErrorRef.current({ conversationId, errorMessage, errorCode });
       };
 
       const handler = (event: SocketEvent) => {
@@ -138,11 +145,14 @@ export function useStreamingReducer({
             clearTimeout(streamTimeoutRef.current);
           }
           streamTimeoutRef.current = setTimeout(() => {
-            handleError('Stream timed out');
+            handleError({ errorMessage: 'Stream timed out' });
           }, STREAM_TIMEOUT_MS);
         } else if (event.type === ChatAgentEventType.ERROR) {
-          const errorData = event.data as { message?: string };
-          handleError(errorData?.message ?? 'An error occurred');
+          const errorData = event.data as { message?: string; code?: string };
+          handleError({
+            errorMessage: errorData?.message ?? 'An error occurred',
+            errorCode: errorData?.code,
+          });
         } else if (event.type === ChatAgentEventType.FINISHED) {
           handleFinish();
         }
@@ -151,7 +161,7 @@ export function useStreamingReducer({
       socket.on(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
 
       streamTimeoutRef.current = setTimeout(() => {
-        handleError('Stream timed out');
+        handleError({ errorMessage: 'Stream timed out' });
       }, STREAM_TIMEOUT_MS);
 
       cleanupRef.current = () => {
