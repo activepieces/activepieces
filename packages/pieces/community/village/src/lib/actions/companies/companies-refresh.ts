@@ -9,6 +9,11 @@ export const companiesRefresh = createAction({
   description:
     'Refresh/import company data from LinkedIn URLs or domains. Realtime mode returns enriched data synchronously (or times out after 25s); async mode returns job IDs for later status checking. At least one of linkedin_urls or domains must be provided.',
   props: {
+    job_ids: Property.Array({
+      displayName: 'Job IDs',
+      description: 'Job IDs to check status for (returned by async refresh calls).',
+      required: false,
+    }),
     linkedin_urls: Property.Array({
       displayName: 'LinkedIn URLs',
       description: 'LinkedIn company page URLs to refresh.',
@@ -27,25 +32,28 @@ export const companiesRefresh = createAction({
     }),
   },
   async run(context) {
-    const { linkedin_urls, domains, realtime } = context.propsValue;
+    const { linkedin_urls, domains, realtime, job_ids } = context.propsValue;
 
     const linkedinUrlsArray =
       linkedin_urls && Array.isArray(linkedin_urls) ? linkedin_urls.map((value) => String(value)) : [];
     const domainsArray =
       domains && Array.isArray(domains) ? domains.map((value) => String(value)) : [];
+    const jobIdsArray =
+      job_ids && Array.isArray(job_ids) ? job_ids.map((value) => String(value)) : [];
 
-    if (linkedinUrlsArray.length === 0 && domainsArray.length === 0) {
-      throw new Error('At least one of linkedin_urls or domains must be provided');
+    if (linkedinUrlsArray.length === 0 && domainsArray.length === 0 && jobIdsArray.length === 0) {
+      throw new Error('At least one of linkedin_urls, domains, or job_ids must be provided');
     }
 
     const body: Record<string, unknown> = { realtime };
     if (linkedinUrlsArray.length > 0) body['linkedin_urls'] = linkedinUrlsArray;
     if (domainsArray.length > 0) body['domains'] = domainsArray;
+    if (jobIdsArray.length > 0) body['job_ids'] = jobIdsArray;
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${VILLAGE_API_BASE_URL}/v2/companies/refresh`,
-      headers: { Authorization: `Bearer ${context.auth}` },
+      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
       body,
     });
     return response.body;

@@ -42,7 +42,7 @@ export const checkListMembership = createAction({
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${VILLAGE_API_BASE_URL}/v2/lists/check-membership`,
-      headers: { Authorization: `Bearer ${context.auth}` },
+      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
       body: {
         entity_ids: ids,
         entity_type,

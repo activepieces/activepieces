@@ -68,7 +68,7 @@ export const enrichPersonEmailBulk = createAction({
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${VILLAGE_API_BASE_URL}/v2/people/enrich/emails/bulk`,
-      headers: { Authorization: `Bearer ${context.auth}` },
+      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
       body,
     });
     return response.body;

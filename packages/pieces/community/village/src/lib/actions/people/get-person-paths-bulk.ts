@@ -32,8 +32,8 @@ export const getPersonPathsBulk = createAction({
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${VILLAGE_API_BASE_URL}/v2/people/paths/bulk`,
-      headers: { Authorization: `Bearer ${context.auth}` },
-      body: { linkedin_ids: linkedin_ids.map(String) },
+      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      body: { linkedin_ids },
     });
     return response.body;
   },

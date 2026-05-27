@@ -29,7 +29,7 @@ export const upsertTeam = createAction({
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${VILLAGE_API_BASE_URL}/v2/teams`,
-      headers: { Authorization: `Bearer ${context.auth}` },
+      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
       body,
     });
     return response.body;

@@ -32,7 +32,7 @@ export const peopleRefresh = createAction({
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${VILLAGE_API_BASE_URL}/v2/people/refresh`,
-      headers: { Authorization: `Bearer ${context.auth}` },
+      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
       body: {
         linkedin_urls: linkedin_urls.map(String),
         realtime,

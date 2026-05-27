@@ -13,7 +13,7 @@ export const listTeams = createAction({
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `${VILLAGE_API_BASE_URL}/v2/teams`,
-      headers: { Authorization: `Bearer ${context.auth}` },
+      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
     });
     return response.body;
   },

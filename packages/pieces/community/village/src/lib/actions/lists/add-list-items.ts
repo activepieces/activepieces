@@ -68,7 +68,7 @@ export const addListItems = createAction({
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${VILLAGE_API_BASE_URL}/v2/lists/${encodeURIComponent(id)}/items`,
-      headers: { Authorization: `Bearer ${context.auth}` },
+      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
       body: {
         items: normalizedItems,
       },

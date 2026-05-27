@@ -13,7 +13,7 @@ export const getCurrentUser = createAction({
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `${VILLAGE_API_BASE_URL}/v2/user/me`,
-      headers: { Authorization: `Bearer ${context.auth}` },
+      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
     });
     return response.body;
   },
