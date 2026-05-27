@@ -122,7 +122,6 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
     invalidateRoot,
     invalidateFolder,
     clearSelection,
-    flows: rootFlows,
     unpinItem,
   });
 

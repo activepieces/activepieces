@@ -30,7 +30,6 @@ type MutationDeps = {
   invalidateRoot: () => void;
   invalidateFolder: (folderId: string) => void;
   clearSelection: () => void;
-  flows: PopulatedFlow[];
   unpinItem?: (itemId: string) => void;
 };
 
@@ -250,10 +249,9 @@ export function useAutomationsMutations(deps: MutationDeps) {
       const { flowIds, tableIds } = getSelectedIdsByType(selectedItems);
 
       if (flowIds.length > 0) {
-        const flowsToExport = deps.flows.filter((f) => flowIds.includes(f.id));
-        if (flowsToExport.length > 0) {
-          exportFlows(flowsToExport);
-        }
+        Promise.all(flowIds.map((id) => flowsApi.get(id)))
+          .then((flows) => exportFlows(flows))
+          .catch(() => toast.error(t('Failed to export flows')));
       }
 
       if (tableIds.length > 0) {
