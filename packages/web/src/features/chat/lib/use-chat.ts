@@ -401,11 +401,11 @@ export function useAgentChat({
       );
       if (sendError) {
         stopStream();
+        setOptimisticUserMessage(null);
         if (api.isApError(sendError, ErrorCode.AI_CREDIT_LIMIT_EXCEEDED)) {
           onCreditsExhaustedRef.current?.();
           updateSendStatus({ type: 'idle' });
         } else {
-          setOptimisticUserMessage(null);
           updateSendStatus({
             type: 'error',
             message: sendError.message ?? 'Failed to send message',
