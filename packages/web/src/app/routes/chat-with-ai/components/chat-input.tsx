@@ -1,6 +1,7 @@
 import { t } from 'i18next';
-import { ArrowUp, Paperclip, Square, X } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { ArrowUp, Mic, Paperclip, Square, X } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 import {
   FileUpload,
@@ -14,6 +15,8 @@ import {
   PromptInputTextarea,
 } from '@/components/prompt-kit/prompt-input';
 import { Button } from '@/components/ui/button';
+import { VoiceWaveformBars } from '@/features/chat/components/voice-waveform';
+import { useVoiceInput } from '@/features/chat/lib/use-voice-input';
 
 export function ChatInput({
   isStreaming,
@@ -21,17 +24,58 @@ export function ChatInput({
   onStop,
   placeholder,
   leftActions,
-  activeProject,
+  rightActions,
 }: {
   isStreaming: boolean;
   onSend: (text: string, files?: File[]) => void;
   onStop?: () => void;
   placeholder?: string;
   leftActions?: React.ReactNode;
-  activeProject?: { name: string; color: string; textColor: string };
+  rightActions?: React.ReactNode;
 }) {
   const [value, setValue] = useState('');
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const [interimText, setInterimText] = useState('');
+
+  const handleTranscript = useCallback((text: string) => {
+    setValue((prev) => {
+      const separator = prev.length > 0 ? ' ' : '';
+      return prev + separator + text;
+    });
+    setInterimText('');
+  }, []);
+
+  const handleVoiceError = useCallback((messageKey: string) => {
+    toast.error(t(messageKey));
+    setInterimText('');
+  }, []);
+
+  const {
+    isRecording,
+    isSupported: isVoiceSupported,
+    startRecording,
+    stopRecording,
+    cancelRecording,
+  } = useVoiceInput({
+    onTranscript: handleTranscript,
+    onInterim: setInterimText,
+    onError: handleVoiceError,
+  });
+
+  useEffect(() => {
+    if (!isRecording) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        cancelRecording();
+        setInterimText('');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isRecording, cancelRecording]);
 
   const handleSubmit = useCallback(() => {
     if (!isStreaming && (value.trim() || attachedFiles.length > 0)) {
@@ -58,7 +102,6 @@ export function ChatInput({
         onValueChange={setValue}
         onSubmit={handleSubmit}
         className="relative z-10 rounded-2xl border shadow-none transition-colors border-foreground/20 hover:border-foreground/40 focus-within:border-foreground/40"
-        style={activeProject ? { borderColor: activeProject.color } : undefined}
       >
         {attachedFiles.length > 0 && (
           <div className="flex flex-wrap gap-2 px-3 pt-2">
@@ -87,10 +130,19 @@ export function ChatInput({
             ))}
           </div>
         )}
-        <PromptInputTextarea
-          placeholder={placeholder ?? t('Tell me what you need...')}
-          className="min-h-[44px] text-sm"
-        />
+        {isRecording ? (
+          <div className="min-h-[44px] px-3 py-2 text-sm text-foreground whitespace-pre-wrap break-words">
+            {interimText || (
+              <span className="text-muted-foreground">{t('Listening...')}</span>
+            )}
+          </div>
+        ) : (
+          <PromptInputTextarea
+            autoFocus
+            placeholder={placeholder ?? t('Tell me what you need...')}
+            className="min-h-[44px] text-sm"
+          />
+        )}
         <PromptInputActions className="flex items-center justify-between">
           <div className="flex items-center gap-1">
             <PromptInputAction tooltip={t('Attach files')}>
@@ -102,30 +154,66 @@ export function ChatInput({
             </PromptInputAction>
             {leftActions}
           </div>
-          {isStreaming && onStop ? (
-            <PromptInputAction tooltip={t('Stop')}>
-              <Button
-                variant="default"
-                size="icon"
-                className="h-7 w-7 rounded-full"
-                onClick={onStop}
-              >
-                <Square className="size-3 fill-current" />
-              </Button>
-            </PromptInputAction>
-          ) : (
-            <PromptInputAction tooltip={t('Send message')}>
-              <Button
-                variant="default"
-                size="icon"
-                className="h-7 w-7 rounded-full"
-                onClick={handleSubmit}
-                disabled={!canSend || isStreaming}
-              >
-                <ArrowUp className="size-4" />
-              </Button>
-            </PromptInputAction>
-          )}
+          <div className="flex items-center gap-1">
+            {rightActions}
+            {isStreaming && onStop ? (
+              <PromptInputAction tooltip={t('Stop')}>
+                <Button
+                  variant="default"
+                  size="icon"
+                  className="h-7 w-7 rounded-full"
+                  onClick={onStop}
+                >
+                  <Square className="size-3 fill-current" />
+                </Button>
+              </PromptInputAction>
+            ) : isRecording ? (
+              <PromptInputAction tooltip={t('Stop recording')}>
+                <Button
+                  variant="outline"
+                  className="h-7 gap-1.5 rounded-full px-3"
+                  onClick={stopRecording}
+                >
+                  <VoiceWaveformBars />
+                  <span className="text-xs font-medium">{t('Stop')}</span>
+                </Button>
+              </PromptInputAction>
+            ) : canSend ? (
+              <PromptInputAction tooltip={t('Send message')}>
+                <Button
+                  variant="default"
+                  size="icon"
+                  className="h-7 w-7 rounded-full"
+                  onClick={handleSubmit}
+                  disabled={isStreaming}
+                >
+                  <ArrowUp className="size-4" />
+                </Button>
+              </PromptInputAction>
+            ) : isVoiceSupported ? (
+              <PromptInputAction tooltip={t('Voice input')}>
+                <button
+                  type="button"
+                  onClick={startRecording}
+                  className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  <Mic className="size-4" />
+                </button>
+              </PromptInputAction>
+            ) : (
+              <PromptInputAction tooltip={t('Send message')}>
+                <Button
+                  variant="default"
+                  size="icon"
+                  className="h-7 w-7 rounded-full"
+                  onClick={handleSubmit}
+                  disabled={true}
+                >
+                  <ArrowUp className="size-4" />
+                </Button>
+              </PromptInputAction>
+            )}
+          </div>
         </PromptInputActions>
       </PromptInput>
 

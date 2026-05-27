@@ -2,7 +2,7 @@
 
 ## API Key (SecretText)
 
-Most common for simple APIs. The `auth` value is a plain string.
+Most common for simple APIs. Inside `validate`, `auth` is a plain string. Inside actions/triggers, the resolved value is the full connection object, so read the secret via `context.auth.secret_text`.
 
 ```typescript
 import { PieceAuth } from '@activepieces/pieces-framework';
@@ -27,7 +27,7 @@ export const myAppAuth = PieceAuth.SecretText({
 });
 ```
 
-**Access in actions/triggers:** `context.auth` is a string directly.
+**Access in actions/triggers:** `context.auth.secret_text` (string).
 
 **Real example:** `packages/pieces/community/stripe/src/index.ts`
 
@@ -55,7 +55,18 @@ export const myAppAuth = PieceAuth.OAuth2({
 });
 ```
 
-**Access in actions/triggers:** `context.auth.access_token`
+**Access in actions/triggers:**
+- `context.auth.access_token` — the OAuth2 access token
+- `context.auth.props?.['<key>']` — when the auth defines extra `props` (e.g. data center, region, subdomain)
+- `context.auth.data` — the raw token response from the provider (refresh token, scope, etc.)
+
+```typescript
+async run(context) {
+  const token = context.auth.access_token;
+  const region = context.auth.props?.['region'] as string;
+  // ...
+}
+```
 
 For custom API call actions with OAuth2:
 ```typescript
@@ -68,7 +79,7 @@ createCustomApiCallAction({
 })
 ```
 
-**Real example:** `packages/pieces/community/github/src/index.ts`
+**Real example:** `packages/pieces/community/github/src/index.ts`, `packages/pieces/community/zoho-campaigns/` (OAuth2 with extra `props`)
 
 ---
 
@@ -109,7 +120,7 @@ export const myAppAuth = PieceAuth.BasicAuth({
 });
 ```
 
-**Access:** `context.auth.username`, `context.auth.password`
+**Access in actions/triggers:** `context.auth.username`, `context.auth.password`
 
 ---
 
@@ -149,11 +160,21 @@ export const myAppAuth = PieceAuth.CustomAuth({
 });
 ```
 
-**Access:** `context.auth.base_url`, `context.auth.api_key`
+**Access in actions/triggers:** the fields live under `props`, not on `auth` directly.
+
+```typescript
+async run(context) {
+  const baseUrl = context.auth.props.base_url;
+  const apiKey = context.auth.props.api_key;
+  // ...
+}
+```
+
+Inside `validate`, the callback receives the flat shape — `auth.base_url`, `auth.api_key`. Inside actions/triggers, use `context.auth.props.<field>`.
 
 **Allowed prop types in CustomAuth:** ShortText, LongText, SecretText, Number, Checkbox, StaticDropdown, StaticMultiSelectDropdown, MarkDown.
 
-**Real example:** `packages/pieces/community/wordpress/src/index.ts`
+**Real example:** `packages/pieces/community/wordpress/src/index.ts`, `packages/pieces/community/mattermost/src/index.ts`
 
 ---
 

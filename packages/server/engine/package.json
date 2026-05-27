@@ -4,6 +4,7 @@
   "type": "commonjs",
   "scripts": {
     "build": "node esbuild.config.mjs",
+    "serve": "node esbuild.config.mjs --watch",
     "lint": "eslint 'src/**/*.ts'",
     "test": "vitest run"
   },
