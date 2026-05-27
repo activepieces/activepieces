@@ -1,5 +1,6 @@
 import { microsoftSharePointAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { Site } from '@microsoft/microsoft-graph-types';
 
@@ -18,10 +19,12 @@ export const findSiteAction = createAction({
   async run(context) {
     const { searchTerm } = context.propsValue;
 
+    const cloud = context.auth.props?.['cloud'] as string | undefined;
     const client = Client.initWithMiddleware({
       authProvider: {
         getAccessToken: () => Promise.resolve(context.auth.access_token),
       },
+      baseUrl: getGraphBaseUrl(cloud),
     });
 
     const sites: Pick<Site, 'id' | 'displayName' | 'name' | 'webUrl'>[] = [];

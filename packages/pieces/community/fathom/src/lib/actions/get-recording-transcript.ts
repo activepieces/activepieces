@@ -1,12 +1,11 @@
-import { fathomAuth } from '../..';
+import { fathomAuth, getFathomClient } from '../common/auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { Fathom } from 'fathom-typescript';
 import { GetRecordingTranscriptRequest } from 'fathom-typescript/dist/esm/sdk/models/operations';
 
 export const getRecordingTranscript = createAction({
   name: 'getRecordingTranscript',
   displayName: 'Get Recording Transcript',
-  description: 'Get the AI-generated transcript of a meeting recording',
+  description: 'Get the AI-generated transcript of a meeting recording. Note: This action requires API Key authentication and is not available when using OAuth2.',
   auth: fathomAuth,
   props: {
     recording_id: Property.Dropdown({
@@ -25,9 +24,7 @@ export const getRecordingTranscript = createAction({
         }
 
         try {
-          const fathom = new Fathom({
-            security: { apiKeyAuth: auth.secret_text },
-          });
+          const fathom = getFathomClient(auth);
 
           const meetingsIterator = await fathom.listMeetings();
 
@@ -52,7 +49,7 @@ export const getRecordingTranscript = createAction({
           return {
             disabled: true,
             options: [],
-            placeholder: 'Failed to load meetings. Please check your API key.'
+            placeholder: 'Failed to load meetings. Please check your connection.'
           };
         }
       }
@@ -64,9 +61,7 @@ export const getRecordingTranscript = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const fathom = new Fathom({
-      security: { apiKeyAuth: auth.secret_text },
-    });
+    const fathom = getFathomClient(auth);
 
     const request = {
       recordingId: propsValue.recording_id,

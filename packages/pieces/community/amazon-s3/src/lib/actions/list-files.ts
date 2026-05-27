@@ -24,13 +24,13 @@ export const listFiles = createAction({
   description: 'List all files from an S3 bucket folder/prefix.',
   props: {
     prefix: Property.ShortText({
-      displayName: 'Folder path',
-      description: 'The folder path to list files from (e.g., "folder/"). Leave empty to list from root.',
+      displayName: 'Folder Path (Optional)',
+      description: 'Filter results to a specific folder. Enter the folder path including the trailing slash (e.g. "invoices/" or "reports/2024/"). Leave empty to list all files in the bucket.',
       required: false,
     }),
     maxKeys: Property.Number({
       displayName: 'Maximum Files',
-      description: 'Maximum number of files to return (1-1000)',
+      description: 'Maximum number of files to return (1–1000). Defaults to 1000. Use a lower number if you only need the most recent files.',
       required: false,
       defaultValue: 1000,
     }),

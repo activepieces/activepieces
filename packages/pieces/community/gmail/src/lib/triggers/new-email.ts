@@ -1,20 +1,17 @@
 import {
   createTrigger,
   TriggerStrategy,
-  PiecePropValueSchema,
   FilesService,
 } from '@activepieces/pieces-framework';
 import { GmailLabel } from '../common/models';
 import { GmailProps } from '../common/props';
-import { gmailAuth } from '../auth';
+import { gmailAuth, createGoogleClient, GmailAuthValue } from '../auth';
 import {
-  GmailRequests,
   parseStream,
   convertAttachment,
   getFirstFiveOrAll,
 } from '../common/data';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 
 export const gmailNewEmailTrigger = createTrigger({
   auth: gmailAuth,
@@ -83,7 +80,7 @@ async function pollRecentMessages({
   files,
   lastFetchEpochMS,
 }: {
-  auth: PiecePropValueSchema<typeof gmailAuth>;
+  auth: GmailAuthValue;
   props: PropsValue;
   files: FilesService;
   lastFetchEpochMS: number;
@@ -93,8 +90,7 @@ async function pollRecentMessages({
     data: unknown;
   }[]
 > {
-  const authClient = new OAuth2Client();
-  authClient.setCredentials(auth);
+  const authClient = await createGoogleClient(auth);
 
   const gmail = google.gmail({ version: 'v1', auth: authClient });
 

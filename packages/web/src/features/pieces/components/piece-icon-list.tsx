@@ -57,12 +57,12 @@ export function PieceIconList({
     [steps, excludeCore],
   );
 
-  const pieceQueries = piecesHooks.useMultiplePieces({ names: pieceNames });
+  const { summaries } = piecesHooks.usePieceSummariesByNames({
+    names: pieceNames,
+  });
 
   const stepsMetadata: StepMetadata[] = useMemo(() => {
-    const pieceMetadata: StepMetadata[] = pieceQueries
-      .map((q) => q.data)
-      .filter((data): data is NonNullable<typeof data> => !!data)
+    const pieceMetadata: StepMetadata[] = summaries
       .filter(
         (piece) =>
           !excludeCore || !piece.categories?.includes(PieceCategory.CORE),
@@ -80,7 +80,7 @@ export function PieceIconList({
         auth: piece.auth,
       }));
     return [...coreMetadata, ...pieceMetadata];
-  }, [pieceQueries.map((q) => q.dataUpdatedAt).join(','), coreMetadata]);
+  }, [summaries, coreMetadata, excludeCore]);
 
   const uniqueMetadata: StepMetadata[] = stepsMetadata.filter(
     (item, index, self) =>

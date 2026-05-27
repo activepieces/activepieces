@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-framework';
 import {
   ApFlagId,
+  AppConnectionScope,
   AppConnectionType,
   AppConnectionWithoutSensitiveData,
   BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
@@ -25,7 +26,6 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -70,8 +70,16 @@ function CreateOrEditConnectionSection({
   selectedAuth,
   onTryAnotherMethodButtonClicked,
   showTryAnotherMethodButton,
+  projectId: projectIdOverride,
 }: CreateOrEditConnectionSectionProps) {
-  const formSchema = formUtils.buildConnectionSchema(selectedAuth.authProperty);
+  const formSchema = formUtils.buildConnectionSchema(
+    selectedAuth.authProperty,
+    {
+      isGlobalConnection,
+      showConnectionNameField:
+        isNil(externalIdComingFromSdk) || externalIdComingFromSdk === '',
+    },
+  );
   const { externalId, displayName } = newConnectionUtils.getConnectionName(
     piece,
     reconnectConnection,
@@ -91,7 +99,9 @@ function CreateOrEditConnectionSection({
           oauth2App: selectedAuth.oauth2App,
           grantType: selectedAuth.grantType,
           redirectUrl: redirectUrl ?? '',
+          projectId: projectIdOverride ?? undefined,
         }),
+        ...(isGlobalConnection ? { scope: AppConnectionScope.PLATFORM } : {}),
         projectIds: reconnectConnection?.projectIds ?? [],
         preSelectForNewProjects: false,
         pieceVersion: piece.version,
@@ -130,7 +140,6 @@ function CreateOrEditConnectionSection({
                 })}
           </div>
         </DialogTitle>
-        <DialogDescription></DialogDescription>
       </DialogHeader>
 
       <Form {...form}>
@@ -156,7 +165,7 @@ function CreateOrEditConnectionSection({
                 control={form.control}
                 render={({ field }) => (
                   <FormItem className="flex flex-col gap-2">
-                    <FormLabel htmlFor="displayName">
+                    <FormLabel htmlFor="displayName" showRequiredIndicator>
                       {t('Connection Name')}
                     </FormLabel>
                     <FormControl>
@@ -207,6 +216,7 @@ function CreateOrEditConnectionSection({
                         <FormItem>
                           <FormLabel>{t('External ID')}</FormLabel>
                           <Input {...field} />
+                          <FormMessage />
                         </FormItem>
                       )}
                     ></FormField>
@@ -245,7 +255,6 @@ function CreateOrEditConnectionSection({
                 onClick={(e) => form.handleSubmit(() => upsertConnection())(e)}
                 loading={isPending}
                 type="submit"
-                disabled={!form.formState.isValid}
               >
                 {t('Save')}
               </Button>
@@ -350,6 +359,7 @@ function CreateOrEditConnectionDialog({
   reconnectConnection,
   isGlobalConnection,
   externalIdComingFromSdk,
+  projectId: projectIdOverride,
 }: ConnectionDialogProps) {
   const { data: piecesOAuth2AppsMap, isPending: loadingPiecesOAuth2AppsMap } =
     oauthAppsQueries.usePiecesOAuth2AppsMap();
@@ -384,6 +394,7 @@ function CreateOrEditConnectionDialog({
             reconnectConnection={reconnectConnection}
             isGlobalConnection={isGlobalConnection}
             externalIdComingFromSdk={externalIdComingFromSdk}
+            projectId={projectIdOverride}
           />
         )}
       </DialogContent>
@@ -474,6 +485,7 @@ type ConnectionDialogProps = {
   reconnectConnection: AppConnectionWithoutSensitiveData | null;
   isGlobalConnection: boolean;
   externalIdComingFromSdk?: string | null;
+  projectId?: string | null;
 };
 
 type CreateOrEditConnectionDialogContentProps = {
@@ -486,6 +498,7 @@ type CreateOrEditConnectionDialogContentProps = {
     open: boolean,
     connection?: AppConnectionWithoutSensitiveData,
   ) => void;
+  projectId?: string | null;
 };
 
 type CreateOrEditConnectionSectionProps =
@@ -504,5 +517,6 @@ type ConnectionFormValues = {
   request: UpsertAppConnectionRequestBody & {
     projectIds: string[];
     preSelectForNewProjects: boolean;
+    scope?: AppConnectionScope;
   };
 };

@@ -1,19 +1,19 @@
 import {
     ActivepiecesError,
-    ALL_PRINCIPAL_TYPES,
     ApId,
     BulkActionOnRunsRequestBody,
     BulkArchiveActionOnRunsRequestBody,
     BulkCancelFlowRequestBody,
+    CountFlowRunsByStatusRequest,
+    CountFlowRunsByStatusResponse,
     ErrorCode,
-    ExecutionType,
     FlowRun,
     isNil,
     ListFlowRunsRequestQuery,
     Permission,
     PrincipalType,
-    ProgressUpdateType,
     RetryFlowRequestBody,
+    RunEnvironment,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
@@ -35,13 +35,24 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
             tags: request.query.tags,
             status: request.query.status,
             failedStepName: request.query.failedStepName,
+            failedStepMessage: request.query.failedStepMessage,
             cursor: request.query.cursor ?? null,
             limit: Number(request.query.limit ?? DEFAULT_PAGING_LIMIT),
             createdAfter: request.query.createdAfter,
             createdBefore: request.query.createdBefore,
             flowRunIds: request.query.flowRunIds,
             includeArchived: request.query.includeArchived,
+            environment: RunEnvironment.PRODUCTION,
         })
+    })
+
+    app.get('/count-by-status', CountByStatusRouteConfig, async (request) => {
+        const data = await flowRunService(request.log).countByStatus({
+            projectId: request.query.projectId,
+            createdAfter: request.query.createdAfter,
+            createdBefore: request.query.createdBefore,
+        })
+        return { data }
     })
 
     app.get(
@@ -55,41 +66,6 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
             await reply.send(flowRun)
         },
     )
-
-    app.all('/:id/requests/:requestId', ResumeFlowRunRequest, async (req, reply) => {
-        const headers = req.headers as Record<string, string>
-        const queryParams = req.query as Record<string, string>
-        await flowRunService(req.log).resume({
-            flowRunId: req.params.id,
-            requestId: req.params.requestId,
-            payload: {
-                body: req.body,
-                headers,
-                queryParams,
-            },
-            checkRequestId: true,
-            progressUpdateType: ProgressUpdateType.TEST_FLOW,
-            executionType: ExecutionType.RESUME,
-        })
-        await reply.send({
-            message: 'Your response has been recorded. You can close this page now.',
-        })
-    })
-
-    app.all('/:id/requests/:requestId/sync', ResumeFlowRunRequest, async (req, reply) => {
-        const headers = req.headers as Record<string, string>
-        const queryParams = req.query as Record<string, string>
-        const response = await flowRunService(req.log).handleSyncResumeFlow({
-            runId: req.params.id,
-            payload: {
-                body: req.body,
-                headers,
-                queryParams,
-            },
-            requestId: req.params.requestId,
-        })
-        await reply.status(response.status).headers(response.headers).send(response.body)
-    })
 
     app.post('/:id/retry', RetryFlowRequest, async (req) => {
         const flowRun = await flowRunService(req.log).retry({
@@ -135,6 +111,7 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
             createdAfter: req.body.createdAfter,
             createdBefore: req.body.createdBefore,
             failedStepName: req.body.failedStepName,
+            failedStepMessage: req.body.failedStepMessage,
         })
     })
 
@@ -148,13 +125,13 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
             createdAfter: req.body.createdAfter,
             createdBefore: req.body.createdBefore,
             failedStepName: req.body.failedStepName,
+            failedStepMessage: req.body.failedStepMessage,
         })
     })
 
 }
 
-const FlowRunFiltered = FlowRun.omit({ pauseMetadata: true })
-const FlowRunFilteredWithNoSteps = FlowRun.omit({ pauseMetadata: true, steps: true })
+const FlowRunFilteredWithNoSteps = FlowRun.omit({ steps: true })
 
 const ListRequest = {
     config: {
@@ -192,20 +169,8 @@ const GetRequest = {
             id: ApId,
         }),
         response: {
-            [StatusCodes.OK]: FlowRunFiltered,
+            [StatusCodes.OK]: FlowRun,
         },
-    },
-}
-
-const ResumeFlowRunRequest = {
-    config: {
-        security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
-    },
-    schema: {
-        params: z.object({
-            id: ApId,
-            requestId: z.string(),
-        }),
     },
 }
 
@@ -255,10 +220,29 @@ const ArchiveFlowRunRequest = {
     },
 }
 
+const CountByStatusRouteConfig = {
+    config: {
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.READ_RUN, {
+                type: ProjectResourceType.QUERY,
+            }),
+    },
+    schema: {
+        tags: ['flow-runs'],
+        description: 'Count Flow Runs by Status',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        querystring: CountFlowRunsByStatusRequest,
+        response: {
+            [StatusCodes.OK]: CountFlowRunsByStatusResponse,
+        },
+    },
+}
+
 const BulkRetryFlowRequest = {
     config: {
         security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
+            [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.WRITE_RUN, {
                 type: ProjectResourceType.BODY,
             }),
@@ -267,3 +251,5 @@ const BulkRetryFlowRequest = {
         body: BulkActionOnRunsRequestBody,
     },
 }
+
+

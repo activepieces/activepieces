@@ -1,4 +1,4 @@
-import { DropdownOption, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+import { DropdownOption, DynamicPropsValue, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { createMSGraphClient, getHeaders } from './helpers';
 import { PageCollection } from '@microsoft/microsoft-graph-client';
 import { Drive, DriveItem, Site } from '@microsoft/microsoft-graph-types';
@@ -44,7 +44,8 @@ export const commonProps = {
 			if (storageSource !== 'sharepoint') {
 				return createEmptyOptions('please select sharepoint as file source.');
 			}
-			const client = createMSGraphClient(auth.access_token);
+			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+			const client = createMSGraphClient(auth.access_token, cloud);
 
 			const options: DropdownOption<string>[] = [];
 
@@ -87,7 +88,8 @@ export const commonProps = {
 				return createEmptyOptions('please select sharepoint site first.');
 			}
 
-			const client = createMSGraphClient(auth.access_token);
+			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+			const client = createMSGraphClient(auth.access_token, cloud);
 
 			const options: DropdownOption<string>[] = [];
 
@@ -128,7 +130,8 @@ export const commonProps = {
 				);
 			}
 
-			const client = createMSGraphClient(auth.access_token);
+			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+			const client = createMSGraphClient(auth.access_token, cloud);
 
 			const options: DropdownOption<string>[] = [];
 
@@ -179,7 +182,8 @@ export const commonProps = {
 				);
 			}
 
-			const client = createMSGraphClient(auth.access_token);
+			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+			const client = createMSGraphClient(auth.access_token, cloud);
 
 			const drivePath =
 				storageSource === 'onedrive'
@@ -249,11 +253,14 @@ export const commonProps = {
 						? '/me/drive'
 						: `/sites/${siteId}/drives/${documentId}`;
 
+				const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+
 				const firstRow = await getHeaders(
 					auth.access_token,
 					drivePath,
 					workbookId as unknown as string,
-					worksheetId as unknown as string
+					worksheetId as unknown as string,
+					cloud
 				);
 
 				const columns: {
@@ -316,11 +323,14 @@ export const commonProps = {
 						? '/me/drive'
 						: `/sites/${siteId}/drives/${documentId}`;
 
+				const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+
 				const firstRow = await getHeaders(
 					auth.access_token,
 					drivePath,
 					workbookId as unknown as string,
-					worksheetId as unknown as string
+					worksheetId as unknown as string,
+					cloud
 				);
 
 				const columns: {
@@ -369,7 +379,8 @@ export const commonProps = {
 				);
 			}
 
-			const client = createMSGraphClient(auth.access_token);
+			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+			const client = createMSGraphClient(auth.access_token, cloud);
 			const drivePath =
 				storageSource === 'onedrive'
 					? '/me/drive'
@@ -415,7 +426,8 @@ export const commonProps = {
 				);
 			}
 
-			const client = createMSGraphClient(auth.access_token);
+			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+			const client = createMSGraphClient(auth.access_token, cloud);
 
 			const drivePath =
 				storageSource === 'onedrive'
@@ -426,7 +438,8 @@ export const commonProps = {
 				auth.access_token,
 				drivePath,
 				workbookId as unknown as string,
-				worksheetId as unknown as string
+				worksheetId as unknown as string,
+				cloud
 			);
 
 			const options: DropdownOption<string>[] = [];

@@ -5,7 +5,7 @@ import { baserowCommon, makeClient } from '../common';
 export const getRowAction = createAction({
   name: 'baserow_get_row',
   displayName: 'Get Row',
-  description: 'Fetches a single table row.',
+  description: 'Gets a single row by its ID from a table.',
   auth: baserowAuth,
   props: {
     table_id: baserowCommon.tableId(),
@@ -13,7 +13,7 @@ export const getRowAction = createAction({
   },
   async run(context) {
     const { table_id, row_id } = context.propsValue as {table_id: number, row_id: number};
-    const client = makeClient(context.auth.props);
+    const client = await makeClient(context.auth);
     return await client.getRow(table_id, row_id);
   },
 });

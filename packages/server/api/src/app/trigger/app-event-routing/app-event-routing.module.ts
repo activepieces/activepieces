@@ -18,8 +18,8 @@ import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { flowService } from '../../flows/flow/flow.service'
+import { domainHelper } from '../../helper/domain-helper'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { projectService } from '../../project/project-service'
 import { WebhookFlowVersionToRun, webhookService } from '../../webhooks/webhook.service'
@@ -126,7 +126,14 @@ export const appEventRoutingController: FastifyPluginAsyncZod = async (
                 if (isNil(flow)) {
                     return
                 }
-                const flowVersionIdToRun = await webhookService.getFlowVersionIdToRun(WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST, flow)
+                const isSimulating = await triggerSourceService(request.log).existsByFlowId({
+                    flowId: listener.flowId,
+                    simulate: true,
+                })
+                const flowVersionIdToRun = await webhookService.getFlowVersionIdToRun(
+                    isSimulating ? WebhookFlowVersionToRun.LATEST : WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
+                    flow,
+                )
                 const platformId = await projectService(request.log).getPlatformId(listener.projectId)
                 const jobPayload = await payloadOffloader.offloadPayload(request.log, payload, listener.projectId, platformId)
                 return jobQueue(request.log).add({
@@ -140,11 +147,8 @@ export const appEventRoutingController: FastifyPluginAsyncZod = async (
                         payload: jobPayload,
                         flowId: listener.flowId,
                         jobType: WorkerJobType.EXECUTE_WEBHOOK,
-                        runEnvironment: RunEnvironment.PRODUCTION,
-                        saveSampleData: await triggerSourceService(request.log).existsByFlowId({
-                            flowId: listener.flowId,
-                            simulate: true,
-                        }),
+                        runEnvironment: isSimulating ? RunEnvironment.TESTING : RunEnvironment.PRODUCTION,
+                        saveSampleData: isSimulating,
                         flowVersionIdToRun,
                         execute: flow.status === FlowStatus.ENABLED,
                     },

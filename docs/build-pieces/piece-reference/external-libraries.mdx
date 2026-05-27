@@ -18,3 +18,12 @@ bun install --save <library-name>
 Guidelines:
 - Make sure you are using well-maintained libraries.
 - Ensure that the library size is not too large to avoid bloating the bundle size; this will make the piece load faster in the sandbox.
+
+## Dependency Pinning
+
+When pieces are built for publishing, all dependency versions — including **transitive dependencies** (dependencies of your dependencies) — are automatically pinned to the exact versions resolved in the monorepo's `bun.lock` file.
+
+This means:
+- You don't need to worry about manually pinning transitive dependency versions.
+- The published piece will always install the same dependency tree that was tested during development.
+- This protects against supply chain attacks where a compromised transitive dependency could be silently pulled in at install time.

@@ -4,7 +4,6 @@ import {
   PieceAuth,
   ArraySubProps,
 } from '@activepieces/pieces-framework';
-
 import {
   AgentOutputField,
   AgentPieceProps,
@@ -15,12 +14,16 @@ import {
   AIProviderName,
   AgentProviderModel,
   ExecutionToolStatus,
+  AgentToolType,
+  AgentKnowledgeBaseTool,
+  KnowledgeBaseSourceType,
   normalizeToolOutputToExecuteResponse,
   spreadIfDefined,
+  getEffectiveProviderAndModel,
 } from '@activepieces/shared';
 import { hasToolCall, stepCountIs, streamText } from 'ai';
 import { agentOutputBuilder } from './agent-output-builder';
-import { createAIModel } from '../../common/ai-sdk';
+import { createAIModel, createEmbeddingModel } from '../../common/ai-sdk';
 import { inspect } from 'util';
 import { agentUtils } from './utils';
 import { constructAgentTools } from './tools';
@@ -57,6 +60,19 @@ const agentToolArrayItems: ArraySubProps<boolean> = {
   }),
   auth: Property.Json({
     displayName: 'Auth Configuration',
+    required: false,
+  }),
+
+  sourceType: Property.ShortText({
+    displayName: 'Source Type',
+    required: false,
+  }),
+  sourceId: Property.ShortText({
+    displayName: 'Source ID',
+    required: false,
+  }),
+  sourceName: Property.ShortText({
+    displayName: 'Source Name',
     required: false,
   }),
 }
@@ -102,7 +118,7 @@ export const runAgent = createAction({
     }),
     [AgentPieceProps.MAX_STEPS]: Property.Number({
       displayName: 'Max steps',
-      description: 'The numbder of interations the agent can do',
+      description: 'The number of iterations the agent can do',
       required: true,
       defaultValue: 20,
     }),
@@ -114,7 +130,10 @@ export const runAgent = createAction({
         'Whether to use web search to find information for the AI to use.',
     }),
     [AgentPieceProps.WEB_SEARCH_OPTIONS]: buildWebSearchOptionsProperty(
-      (propsValue) => (propsValue['aiProviderModel'] as unknown as AgentProviderModel)?.provider,
+      (propsValue) => {
+        const aiProviderModel = propsValue['aiProviderModel'] as AgentProviderModel | undefined;
+        return { provider: aiProviderModel?.provider, model: aiProviderModel?.model };
+      },
       ['webSearch', 'aiProviderModel'],
       { showIncludeSources: false },
     ),
@@ -128,10 +147,15 @@ export const runAgent = createAction({
 
     const { tools: webSearchTools, providerOptions } = buildWebSearchConfig({
       provider,
+      model: agentProviderModel.model,
       webSearchEnabled,
       webSearchOptions,
     });
 
+    const { provider: effectiveProvider } = getEffectiveProviderAndModel({
+      provider,
+      model: agentProviderModel.model,
+    });
     const model = await createAIModel({
       modelId: agentProviderModel.model,
       provider,
@@ -140,7 +164,7 @@ export const runAgent = createAction({
       projectId: context.project.id,
       flowId: context.flows.current.id,
       runId: context.run.id,
-      ...spreadIfDefined('openaiResponsesModel', webSearchEnabled && provider === AIProviderName.OPENAI ? true : undefined),
+      ...spreadIfDefined('openaiResponsesModel', webSearchEnabled && effectiveProvider === AIProviderName.OPENAI ? true : undefined),
     });
     const outputBuilder = agentOutputBuilder(prompt);
     const hasStructuredOutput =
@@ -148,12 +172,34 @@ export const runAgent = createAction({
       context.propsValue.structuredOutput.length > 0;
     const structuredOutput = hasStructuredOutput ? context.propsValue.structuredOutput as AgentOutputField[] : undefined;
     const agentTools = context.propsValue.agentTools as AgentTool[];
+
+    const hasKnowledgeBaseTools = agentTools.some(t => t.type === AgentToolType.KNOWLEDGE_BASE);
+    const kbFileTools = agentTools.filter(
+      (t): t is AgentKnowledgeBaseTool => t.type === AgentToolType.KNOWLEDGE_BASE && t.sourceType === KnowledgeBaseSourceType.FILE,
+    );
+    const hasKbFileTools = kbFileTools.length > 0;
+    let embeddingConfig;
+    if (hasKbFileTools) {
+      try {
+        const result = await createEmbeddingModel({
+          provider: agentProviderModel.provider as AIProviderName,
+          engineToken: context.server.token,
+          apiUrl: context.server.apiUrl,
+        });
+        embeddingConfig = { model: result.model, providerOptions: result.providerOptions };
+      }
+      catch (err) {
+        outputBuilder.addMarkdown(`\n\n**Warning:** Could not create embedding model for knowledge base search: ${err instanceof Error ? err.message : 'Unknown error'}\n\n`);
+      }
+    }
+
     const { mcpClients, tools, toolKeyToAgentTool } = await constructAgentTools({
       context,
       agentTools,
       model,
       outputBuilder,
-      structuredOutput
+      structuredOutput,
+      embeddingConfig,
     });
     outputBuilder.setToolMap(toolKeyToAgentTool);
 
@@ -164,10 +210,11 @@ export const runAgent = createAction({
     const errors: { type: string; message: string; details?: unknown }[] = [];
 
     try {
+      const prompts = agentUtils.getPrompts(prompt, { hasKnowledgeBaseTools });
       const stream = streamText({
         model: model,
-        system: agentUtils.getPrompts(prompt).system,
-        prompt: agentUtils.getPrompts(prompt).prompt,
+        system: prompts.system,
+        prompt: prompts.prompt,
         tools: allTools,
         stopWhen: [stepCountIs(maxSteps), hasToolCall(TASK_COMPLETION_TOOL_NAME)],
         providerOptions,

@@ -78,6 +78,7 @@ export const findRowAction = createAction({
     const { storageSource, siteId, documentId, workbookId, tableId, lookup_column, lookup_value } =
       context.propsValue;
     const { access_token } = context.auth;
+    const cloud = (context.auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
     const columnId = lookup_column;
 
     if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
@@ -87,7 +88,7 @@ export const findRowAction = createAction({
 
     const sanitizedValue = (lookup_value as string).replace(/'/g, "''");
 
-    const client = createMSGraphClient(access_token);
+    const client = createMSGraphClient(access_token, cloud);
 
     // Define the URL to clear the filter, which will be used in the 'finally' block
     const clearFilterUrl = `${drivePath}/items/${workbookId}/workbook/tables/${tableId}/columns/${columnId}/filter/clear`;

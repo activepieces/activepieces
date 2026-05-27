@@ -52,6 +52,17 @@
         "!src/**/*.test.ts"
       ]
     },
+    "ee-embed-sdk#bundle": {
+      "dependsOn": [],
+      "inputs": [
+        "src/**",
+        "tsconfig*.json",
+        "package.json",
+        "webpack.config.js"
+      ],
+      "outputs": ["../../../dist/packages/ee/embed-sdk/**"],
+      "cache": false
+    },
     "@activepieces/engine#test": {
       "dependsOn": [
         "build",

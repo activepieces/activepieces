@@ -1,4 +1,8 @@
 {
+  "Cloud Environment": "Cloud Omgeving",
+  "Select your Microsoft cloud environment.": "Selecteer je Microsoft cloud omgeving.",
+  "Commercial (Global)": "Commerciële (globaal)",
+  "US Government (GCC High)": "Amerikaanse regering (GCC High)",
   "\nIf you'd like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n set the **Redirect URI** to {{redirectUrl}} and add the following **Microsoft Graph (Delegated) permissions** under **API permissions**:\n  - User.Read\n\t- Channel.Create\n\t- Channel.ReadBasic.All\n\t- ChannelMessage.Send\n\t- Team.ReadBasic.All\n\t- Chat.ReadWrite\n\t- ChannelMessage.R": "\nAls u uw eigen aangepaste Azure app wilt gebruiken in plaats van de standaard Activepieces app, Volg de [Azure app creatie handleiding] (https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n zet de **Redirect URI** naar {{redirectUrl}} en voeg de volgende **Microsoft Graph (Delegated) permissies** toe onder **API permissies**:\n  - gebruiker. ead\n\t½ - Kanaal. reate\n\t×- Channel.ReadBasic.All\n\tØ - ChannelMessage.Send\n\t・- Team.ReadBasic.All\n\tØ - Chat.ReadWrite\n\tØ - ChannelMessage.Read.All\n\t--User. eadBasic.All\n\t+unnamed@@0 - Presence.Read.All\n\t## - TeamMember.Read.All\n\t## - openid\n\t## - e-mail\n\tconcerneert - profiel\n\t- offline_access",
   "Create Channel": "Kanaal aanmaken",
   "Send Channel Message": "Zend kanaal bericht",
@@ -51,6 +55,7 @@
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
   "Follow redirects": "Volg omleidingen",
+  "Use @username to mention team members in the message.": "Gebruik @username om teamleden in het bericht te vermelden.",
   "ID of the parent message to reply to.": "ID van het bovenliggende bericht waarop u wilt reageren.",
   "The ID of the message to retrieve.": "Het ID van het op te halen bericht.",
   "The ID of the message to delete.": "Het ID van het te verwijderen bericht.",
