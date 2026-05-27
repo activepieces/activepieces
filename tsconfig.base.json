@@ -198,6 +198,9 @@
       "@activepieces/piece-bubble": [
         "packages/pieces/community/bubble/src/index.ts"
       ],
+      "@activepieces/piece-buffer": [
+        "packages/pieces/community/buffer/src/index.ts"
+      ],
       "@activepieces/piece-bumpups": [
         "packages/pieces/community/bumpups/src/index.ts"
       ],
