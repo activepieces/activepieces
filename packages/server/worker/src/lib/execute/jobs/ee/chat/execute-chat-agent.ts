@@ -3,6 +3,7 @@ import {
     AIProviderName,
     ChatAgentEventType,
     EngineResponseStatus,
+    ErrorCode,
     ExecuteChatAgentJobData,
     isNil,
     PersistedChatMessage,
@@ -129,12 +130,13 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
         catch (err) {
             log.error({ err, conversationId }, '[executeChatAgent] Agent job failed')
             const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
+            const errorCode = isCreditExhaustedError(errorMessage) ? ErrorCode.AI_CREDIT_LIMIT_EXCEEDED : undefined
             await ctx.apiClient.saveChatMessages({
                 conversationId, messages: [], uiMessages: [],
             }).catch(() => {})
             await ctx.apiClient.sendChatEvent({
                 userId, conversationId,
-                event: { type: ChatAgentEventType.ERROR, data: { message: errorMessage } },
+                event: { type: ChatAgentEventType.ERROR, data: { message: errorMessage, ...spreadIfDefined('code', errorCode) } },
             }).catch(() => {})
             await ctx.apiClient.sendChatEvent({
                 userId, conversationId,
@@ -283,4 +285,10 @@ async function generateTitleIfFirstTurn({ model, userMessage, previousUiMessages
         log.warn({ conversationId }, 'Failed to auto-generate title')
     }
     return generatedTitle ?? undefined
+}
+
+const CREDIT_ERROR_PATTERNS = [/credits/i, /402/i, /payment.required/i]
+
+function isCreditExhaustedError(message: string): boolean {
+    return CREDIT_ERROR_PATTERNS.some((pattern) => pattern.test(message))
 }

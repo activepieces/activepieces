@@ -70,7 +70,7 @@ export enum ChatAgentEventType {
 export type ChatAgentEvent =
     | { type: ChatAgentEventType.CHUNK, data: unknown }
     | { type: ChatAgentEventType.FINISHED, data: { conversationId: string } }
-    | { type: ChatAgentEventType.ERROR, data: { message: string } }
+    | { type: ChatAgentEventType.ERROR, data: { message: string, code?: string } }
 
 export type GetChatConfigRequest = {
     conversationId: string
