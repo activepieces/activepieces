@@ -10,7 +10,24 @@ import { PieceCategory } from '@activepieces/shared';
 import { sendEmail } from './lib/actions/send-email';
 import { sendBatchEmails } from './lib/actions/send-batch-emails.action';
 import { createContact } from './lib/actions/create-contact.action';
+import { updateContact } from './lib/actions/update-contact.action';
+import { deleteContact } from './lib/actions/delete-contact.action';
+import { listContacts } from './lib/actions/list-contacts.action';
 import { getEmailStatus } from './lib/actions/get-email-status.action';
+import { listEmails } from './lib/actions/list-emails.action';
+import { cancelScheduledEmail } from './lib/actions/cancel-scheduled-email.action';
+import { rescheduleEmail } from './lib/actions/reschedule-email.action';
+import { listDomains } from './lib/actions/list-domains.action';
+import { createDomain } from './lib/actions/create-domain.action';
+import { deleteDomain } from './lib/actions/delete-domain.action';
+import { verifyDomain } from './lib/actions/verify-domain.action';
+import { listAudiences } from './lib/actions/list-audiences.action';
+import { createAudience } from './lib/actions/create-audience.action';
+import { deleteAudience } from './lib/actions/delete-audience.action';
+import { listBroadcasts } from './lib/actions/list-broadcasts.action';
+import { createBroadcast } from './lib/actions/create-broadcast.action';
+import { sendBroadcast } from './lib/actions/send-broadcast.action';
+import { deleteBroadcast } from './lib/actions/delete-broadcast.action';
 import { emailBounced } from './lib/triggers/email-bounced.trigger';
 
 const BASE_URL = 'https://api.resend.com';
@@ -57,8 +74,25 @@ export const resend = createPiece({
   actions: [
     sendEmail,
     sendBatchEmails,
-    createContact,
     getEmailStatus,
+    listEmails,
+    cancelScheduledEmail,
+    rescheduleEmail,
+    createContact,
+    updateContact,
+    deleteContact,
+    listContacts,
+    listDomains,
+    createDomain,
+    deleteDomain,
+    verifyDomain,
+    listAudiences,
+    createAudience,
+    deleteAudience,
+    listBroadcasts,
+    createBroadcast,
+    sendBroadcast,
+    deleteBroadcast,
     createCustomApiCallAction({
       baseUrl: () => BASE_URL,
       auth: resendAuth,
