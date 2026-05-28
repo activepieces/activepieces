@@ -95,6 +95,7 @@ export const TriggerBase = z.object({
   handshakeConfiguration: z.custom<WebhookHandshakeConfiguration>().optional(),
   renewConfiguration: WebhookRenewConfiguration.optional(),
   testStrategy: z.nativeEnum(TriggerTestStrategy),
+  infoForLLM: InfoForLLM.optional(),
 })
 export type TriggerBase = ActionBase & {
   type: TriggerStrategy;
