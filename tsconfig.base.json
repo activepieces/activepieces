@@ -1409,6 +1409,9 @@
       "@activepieces/piece-whatsscale": [
         "packages/pieces/community/whatsscale/src/index.ts"
       ],
+      "@activepieces/piece-wistia": [
+        "packages/pieces/community/wistia/src/index.ts"
+      ],
       "@activepieces/piece-wonderchat": [
         "packages/pieces/community/wonderchat/src/index.ts"
       ],
