@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { ActionContext } from '../context';
-import { ActionBase } from '../piece-metadata';
+import { ActionBase, Audience, InfoForLLM } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { ExtractPieceAuthPropertyTypeForMethods, PieceAuthProperty } from '../property/authentication';
 
@@ -42,6 +42,31 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty | PieceAuthProperty[
   test?: ActionRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, ActionProps>
   requireAuth?: boolean
   errorHandlingOptions?: ErrorHandlingOptionsParam
+  /**
+   * Visibility/routing for this action.
+   *
+   * - `'human'` — flow-builder only; hidden from the agent surface (MCP / SDK).
+   * - `'ai'`    — agent surface only; hidden from the canvas dropdown.
+   * - `'both'`  — visible everywhere. Treated as the implicit default when omitted.
+   *
+   * Top-level, not LLM-targeted.
+   */
+  audience?: Audience
+  /**
+   * Concrete realistic example of the action's output. Mirrors
+   * `TriggerBase.sampleData`. Used by the canvas for field references and
+   * by the agent surface to help an LLM reason about the action's return shape.
+   */
+  sampleData?: unknown
+  /**
+   * Bundle of LLM-targeted metadata. All sub-fields optional. Use
+   * `description` for agent-targeted prose (when to call, constraints,
+   * example inputs), `outputSchema` for a free-form prose-with-example
+   * describing the output shape (stringified JSON for static outputs;
+   * prose + example for dynamic outputs), and `idempotent` to declare
+   * whether retry is safe.
+   */
+  infoForLLM?: InfoForLLM
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -56,6 +81,9 @@ export class IAction<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] |
     public readonly requireAuth: boolean,
     public readonly errorHandlingOptions: ErrorHandlingOptionsParam,
     public readonly llmDescription?: string,
+    public readonly audience?: Audience,
+    public readonly sampleData?: unknown,
+    public readonly infoForLLM?: InfoForLLM,
   ) { }
 }
 
@@ -89,5 +117,8 @@ export const createAction = <
       }
     },
     params.llmDescription,
+    params.audience,
+    params.sampleData,
+    params.infoForLLM,
   )
 }

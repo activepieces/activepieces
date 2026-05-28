@@ -45,6 +45,20 @@ export type PieceBase = {
 }
 
 
+export const Audience = z.enum(['human', 'ai', 'both'])
+export type Audience = z.infer<typeof Audience>
+
+export const InfoForLLM = z.object({
+  description: z.string().optional(),
+  outputSchema: z.string().optional(),
+  idempotent: z.boolean().optional(),
+})
+export type InfoForLLM = {
+  description?: string
+  outputSchema?: string
+  idempotent?: boolean
+}
+
 export const ActionBase = z.object({
   name: z.string(),
   displayName: z.string(),
@@ -53,6 +67,9 @@ export const ActionBase = z.object({
   props: PiecePropertyMap,
   requireAuth: z.boolean(),
   errorHandlingOptions: ErrorHandlingOptionsParam.optional(),
+  audience: Audience.optional(),
+  sampleData: z.unknown().optional(),
+  infoForLLM: InfoForLLM.optional(),
 })
 
 export type ActionBase = {
@@ -63,6 +80,9 @@ export type ActionBase = {
   props: PiecePropertyMap,
   requireAuth: boolean;
   errorHandlingOptions?: ErrorHandlingOptionsParam;
+  audience?: Audience;
+  sampleData?: unknown;
+  infoForLLM?: InfoForLLM;
 }
 
 export const TriggerBase = z.object({
