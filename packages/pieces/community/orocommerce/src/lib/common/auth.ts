@@ -42,6 +42,15 @@ Authenticate to OroCommerce APIs using OAuth 2.0 Client Credentials.
         'The OAuth Client Secret from your OroCommerce OAuth application.',
       required: true,
     }),
+    headers: Property.LongText({
+      displayName: 'Default HTTP Headers',
+      description:
+        'JSON object of HTTP headers sent with every API request. ' +
+        'Actions can override or extend these per-call. ' +
+        'Example: {"Content-Type": "application/vnd.api+json", "X-Custom": "value"}',
+      required: false,
+      defaultValue: '{"Content-Type": "application/vnd.api+json"}',
+    }),
   },
 
   validate: async ({ auth }): Promise<{ valid: true } | { valid: false; error: string }> => {

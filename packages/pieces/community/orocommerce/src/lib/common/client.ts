@@ -6,6 +6,7 @@ import {
   HttpError,
   AuthenticationType,
 } from '@activepieces/pieces-common';
+import { tryCatchSync } from '@activepieces/shared';
 
 import {
   type OroAuth,
@@ -86,12 +87,13 @@ export async function oroApiCall({
   try {
     const resource = resourceUri.replace(/^\/+/, '');
     const sanitizedBody = sanitizeJsonApiBody({ body });
+    const connectionHeaders = parseConnectionHeaders({ raw: auth.props.headers });
 
     return await httpClient.sendRequest({
       method,
       url: `${getOroBaseUrl({ auth })}/${resource}`,
       headers: {
-        'Content-Type': 'application/vnd.api+json',
+        ...connectionHeaders,
         ...extraHeaders,
       },
       authentication: {
@@ -134,5 +136,19 @@ function sanitizeJsonApiBody({ body }: { body: unknown }): unknown {
     ...record,
     data: jsonApiBodyUtils.omitEmptyObjects(record['data'] as Record<string, unknown>),
   };
+}
+
+function toStringRecord({ obj }: { obj: Record<string, unknown> | undefined }): Record<string, string> {
+  if (!obj) return {};
+  return Object.fromEntries(
+    Object.entries(obj).map(([k, v]) => [k, String(v)]),
+  );
+}
+
+function parseConnectionHeaders({ raw }: { raw: string | null | undefined }): Record<string, string> {
+  if (!raw) return {};
+  const { data, error } = tryCatchSync(() => JSON.parse(raw) as unknown);
+  if (error || typeof data !== 'object' || data === null || Array.isArray(data)) return {};
+  return toStringRecord({ obj: data as Record<string, unknown> });
 }
 

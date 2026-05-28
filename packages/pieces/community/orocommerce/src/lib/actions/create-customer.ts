@@ -15,6 +15,7 @@ import {
   buildIncludedAddress,
   additionalAttributesProp,
   additionalRelationsProp,
+  additionalHeadersProp,
 } from '../common';
 import { OroAuth } from '../common/types';
 import { jsonApiBodyUtils } from '../common/jsonapi-body-utils';
@@ -75,6 +76,7 @@ export const createCustomerAction = createAction({
     }),
     additionalAttributes: additionalAttributesProp,
     additionalRelations: additionalRelationsProp,
+    additionalHeaders: additionalHeadersProp,
   },
 
   async run(context) {
@@ -133,6 +135,7 @@ export const createCustomerAction = createAction({
       resourceUri: '/customers',
       auth: context.auth as OroAuth,
       body,
+      headers: p.additionalHeaders as Record<string, string>,
     });
 
     return response.body;

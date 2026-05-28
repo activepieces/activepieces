@@ -538,6 +538,16 @@ export const additionalRelationsProp = Property.Json({
   defaultValue: {},
 });
 
+export const additionalHeadersProp = Property.Object({
+  displayName: 'Additional Headers',
+  description:
+    'Optional HTTP headers to send with this request. ' +
+    'These override or extend the default headers configured on the connection. ' +
+    'Example: {"X-Include": "noHateoas;totalCount"}.',
+  required: false,
+  defaultValue: {},
+});
+
 // --- Private helpers ----------------------------------------------------------
 
 function buildProductNameMap(

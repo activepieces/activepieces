@@ -19,6 +19,7 @@ import {
   buildIncludedAddress,
   additionalAttributesProp,
   additionalRelationsProp,
+  additionalHeadersProp,
 } from '../common';
 import { OroAuth } from '../common/types';
 import { jsonApiBodyUtils } from '../common/jsonapi-body-utils';
@@ -356,6 +357,7 @@ export const createOrderAction = createAction({
     productSearch: productDropdown,
     additionalAttributes: additionalAttributesProp,
     additionalRelations: additionalRelationsProp,
+    additionalHeaders: additionalHeadersProp,
   },
 
   async run(context) {
@@ -468,6 +470,7 @@ export const createOrderAction = createAction({
         },
         included,
       },
+      headers: p.additionalHeaders as Record<string, string>,
     });
 
     return response.body;

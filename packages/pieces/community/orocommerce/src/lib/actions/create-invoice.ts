@@ -11,6 +11,7 @@ import {
   websiteDropdown,
   additionalAttributesProp,
   additionalRelationsProp,
+  additionalHeadersProp,
 } from '../common';
 import { jsonApiBodyUtils } from '../common/jsonapi-body-utils';
 
@@ -182,6 +183,7 @@ export const createInvoiceAction = createAction({
     }),
     additionalAttributes: additionalAttributesProp,
     additionalRelations: additionalRelationsProp,
+    additionalHeaders: additionalHeadersProp,
   },
 
   async run(context) {
@@ -279,6 +281,7 @@ export const createInvoiceAction = createAction({
         },
         included,
       },
+      headers: p.additionalHeaders as Record<string, string>,
     });
 
     return response.body;

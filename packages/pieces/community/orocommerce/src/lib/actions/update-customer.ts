@@ -12,6 +12,7 @@ import {
   paymentTermDropdown,
   additionalAttributesProp,
   additionalRelationsProp,
+  additionalHeadersProp,
 } from '../common';
 import { OroAuth } from '../common/types';
 import { jsonApiBodyUtils } from '../common/jsonapi-body-utils';
@@ -62,6 +63,7 @@ export const updateCustomerAction = createAction({
     paymentTerm: paymentTermDropdown,
     additionalAttributes: additionalAttributesProp,
     additionalRelations: additionalRelationsProp,
+    additionalHeaders: additionalHeadersProp,
   },
 
   async run(context) {
@@ -104,6 +106,7 @@ export const updateCustomerAction = createAction({
           relationships,
         },
       },
+      headers: p.additionalHeaders as Record<string, string>,
     });
 
     return response.body;
