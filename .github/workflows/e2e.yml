@@ -63,7 +63,7 @@ jobs:
 
   test-e2e-ee:
     needs: check-label
-    if: needs.check-label.outputs.should-run-e2e == 'true'
+    if: github.repository == 'activepieces/activepieces' && needs.check-label.outputs.should-run-e2e == 'true'
     uses: ./.github/workflows/tests-e2e-ee.yml
 
   test-e2e-ce:

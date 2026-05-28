@@ -70,7 +70,7 @@ export const flowRunProgressReporter = {
         const { engineConstants, flowExecutorContext, stepName, stepOutput } = params
         return {
             update: async (params: { data: unknown }) => {
-                const updated = await flowExecutorContext
+                const updated = flowExecutorContext
                     .upsertStep(stepName, stepOutput.setOutput(params.data))
 
                 const stepResponse = extractStepResponse({
