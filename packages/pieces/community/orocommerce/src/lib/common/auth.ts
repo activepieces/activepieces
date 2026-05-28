@@ -48,8 +48,7 @@ Authenticate to OroCommerce APIs using OAuth 2.0 Client Credentials.
         'JSON object of HTTP headers sent with every API request. ' +
         'Actions can override or extend these per-call. ' +
         'Example: {"Content-Type": "application/vnd.api+json", "X-Custom": "value"}',
-      required: false,
-      defaultValue: '{"Content-Type": "application/vnd.api+json"}',
+      required: false
     }),
   },
 

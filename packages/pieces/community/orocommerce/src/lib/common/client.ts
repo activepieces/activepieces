@@ -93,6 +93,7 @@ export async function oroApiCall({
       method,
       url: `${getOroBaseUrl({ auth })}/${resource}`,
       headers: {
+        'Content-Type': 'application/vnd.api+json',
         ...connectionHeaders,
         ...extraHeaders,
       },
@@ -151,4 +152,3 @@ function parseConnectionHeaders({ raw }: { raw: string | null | undefined }): Re
   if (error || typeof data !== 'object' || data === null || Array.isArray(data)) return {};
   return toStringRecord({ obj: data as Record<string, unknown> });
 }
-
