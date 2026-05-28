@@ -664,6 +664,19 @@ const lockFlowVersionIfNotLocked = async ({
         return flowVersion
     }
 
+    if (!isNil(flowVersion.usedAsDraftFromVersionId)) {
+        const originalVersion = await flowVersionService(log).getOne(flowVersion.usedAsDraftFromVersionId)
+        if (!isNil(originalVersion) && originalVersion.state === FlowVersionState.LOCKED) {
+            await flowVersionRepo(entityManager).delete({ id: flowVersion.id })
+            const now = dayjs().toISOString()
+            await flowVersionRepo(entityManager).update(
+                { id: originalVersion.id },
+                { created: now, updated: now },
+            )
+            return { ...originalVersion, created: now, updated: now }
+        }
+    }
+
     return flowVersionService(log).applyOperation({
         userId,
         projectId,

@@ -52,6 +52,7 @@ export enum FlowOperationType {
     DELETE_NOTE = 'DELETE_NOTE',
     ADD_NOTE = 'ADD_NOTE',
     UPDATE_SAMPLE_DATA_INFO = 'UPDATE_SAMPLE_DATA_INFO',
+    SET_VERSION_NAME = 'SET_VERSION_NAME',
 }
 
 export const DeleteBranchRequest = z.object({
@@ -212,6 +213,11 @@ export const UpdateOwnerRequest = z.object({
 })
 export type UpdateOwnerRequest = z.infer<typeof UpdateOwnerRequest>
 
+export const SetVersionNameRequest = z.object({
+    versionName: Nullable(z.string()),
+})
+export type SetVersionNameRequest = z.infer<typeof SetVersionNameRequest>
+
 export const FlowOperationRequest = z.union([
     z.object({
         type: z.literal(FlowOperationType.MOVE_ACTION),
@@ -317,6 +323,10 @@ export const FlowOperationRequest = z.union([
         type: z.literal(FlowOperationType.UPDATE_SAMPLE_DATA_INFO),
         request: UpdateSampleDataInfoRequest,
     }).describe('Update Sample Data Info'),
+    z.object({
+        type: z.literal(FlowOperationType.SET_VERSION_NAME),
+        request: SetVersionNameRequest,
+    }).describe('Set Version Name'),
 ])
 
 
@@ -420,6 +430,9 @@ export const flowOperations = {
                 clonedVersion = _updateSampleDataInfo(clonedVersion, operation.request)
                 break
             }
+            case FlowOperationType.SET_VERSION_NAME:
+                clonedVersion.versionName = operation.request.versionName
+                break
             default:
                 break
         }

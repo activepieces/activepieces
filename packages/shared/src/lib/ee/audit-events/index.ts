@@ -615,6 +615,8 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
             return `Deleted note in flow "${event.data.flowVersion.displayName}".`
         case FlowOperationType.UPDATE_SAMPLE_DATA_INFO:
             return `Updated sample data info for step "${event.data.request.request.stepName}" in flow "${event.data.flowVersion.displayName}".`
+        case FlowOperationType.SET_VERSION_NAME:
+            return `Renamed version in flow "${event.data.flowVersion.displayName}".`
     }
 }
 

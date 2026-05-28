@@ -27,6 +27,8 @@ export const FlowVersion = z.object({
     connectionIds: z.array(z.string()),
     backupFiles: Nullable(z.record(z.string(), z.string())),
     notes: z.array(Note),
+    versionName: Nullable(z.string()),
+    usedAsDraftFromVersionId: Nullable(z.string()),
 })
 
 export type FlowVersion = z.infer<typeof FlowVersion>
@@ -40,6 +42,7 @@ export const FlowVersionMetadata = z.object({
     updatedBy: Nullable(z.string()),
     schemaVersion: Nullable(z.string()),
     updatedByUser: Nullable(UserWithMetaInformation),
+    versionName: Nullable(z.string()),
 })
 
 export type FlowVersionMetadata = z.infer<typeof FlowVersionMetadata>

@@ -121,6 +121,12 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         if (userId) {
             mutatedFlowVersion.updatedBy = userId
         }
+
+        if (userOperation.type === FlowOperationType.USE_AS_DRAFT) {
+            mutatedFlowVersion.usedAsDraftFromVersionId = userOperation.request.versionId
+        } else {
+            mutatedFlowVersion.usedAsDraftFromVersionId = null
+        }
         mutatedFlowVersion.connectionIds = flowStructureUtil.extractConnectionIds(mutatedFlowVersion)
         mutatedFlowVersion.agentIds = flowStructureUtil.extractAgentIds(mutatedFlowVersion)
         return flowVersionRepo(entityManager).save(sanitizeObjectForPostgresql(mutatedFlowVersion))

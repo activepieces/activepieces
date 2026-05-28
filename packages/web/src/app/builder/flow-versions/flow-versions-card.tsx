@@ -28,6 +28,10 @@ import { FlowVersionStateDot, flowHooks } from '@/features/flows';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
 import { OverwriteDraftDialog } from './overwrite-draft-dialog';
+import { Input } from '@/components/ui/input';
+import { Check, X } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useRef } from 'react';
 
 const FlowVersionDetailsCard = React.memo(
   ({
@@ -43,6 +47,22 @@ const FlowVersionDetailsCard = React.memo(
       state.setReadOnly,
     ]);
     const [dropdownMenuOpen, setDropdownMenuOpen] = useState(false);
+    const [editingName, setEditingName] = useState(false);
+    const [nameInput, setNameInput] = useState(flowVersion.versionName ?? '');
+    const inputRef = useRef<HTMLInputElement>(null);
+    const queryClient = useQueryClient();
+
+    const { mutate: setVersionName } = flowHooks.useSetVersionName({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['flow-versions', flowVersion.flowId] });
+        setEditingName(false);
+      },
+    });
+
+    const commitName = () => {
+      setVersionName({ flowId: flowVersion.flowId, versionId: flowVersion.id, versionName: nameInput.trim() || null })
+    };
+
     const { mutate: viewVersion, isPending } = flowHooks.useFetchFlowVersion({
       onSuccess: (populatedFlowVersion) => {
         setVersion(populatedFlowVersion);
@@ -56,7 +76,7 @@ const FlowVersionDetailsCard = React.memo(
     const showAvatar = !useEmbedding().embedState.isEmbedded;
 
     return (
-      <CardListItem interactive={false} className="px-4">
+      <CardListItem interactive={false} className="px-4 group">
         {showAvatar && flowVersion.updatedByUser && (
           <UserAvatar
             size={45}
@@ -75,9 +95,40 @@ const FlowVersionDetailsCard = React.memo(
             includeTime={true}
             className="text-sm font-medium leading-none select-none cursor-default"
           ></FormattedDate>
-          <p className="flex gap-1 text-xs text-muted-foreground">
-            {t('Version')} #{flowVersionNumber}
-          </p>
+          {editingName ? (
+            <div className="flex items-center gap-1">
+              <Input
+                ref={inputRef}
+                autoFocus
+                className="h-6 text-xs px-1 py-0 w-36"
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') commitName();
+                  if (e.key === 'Escape') setEditingName(false);
+                }}
+                placeholder={t('Version #{{n}}', { n: flowVersionNumber })}
+              />
+              <Button variant="ghost" size="icon" className="size-5 p-0" onClick={commitName}>
+                <Check className="w-3 h-3 text-green-500" />
+              </Button>
+              <Button variant="ghost" size="icon" className="size-5 p-0" onClick={() => setEditingName(false)}>
+                <X className="w-3 h-3 text-destructive" />
+              </Button>
+            </div>
+          ) : (
+            <p
+              className="flex gap-1 text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+              onClick={() => { setNameInput(flowVersion.versionName ?? ''); setEditingName(true); }}
+              title={t('Click to rename')}
+            >
+              {flowVersion.versionName
+                ? <span className="font-medium text-foreground">{flowVersion.versionName}</span>
+                : <span>{t('Version')} #{flowVersionNumber}</span>
+              }
+              <Pencil className="w-3 h-3 ml-1 opacity-0 group-hover:opacity-60" />
+            </p>
+          )}
         </div>
         <div className="grow"></div>
         <div className="flex font-medium gap-2 justify-center items-center">

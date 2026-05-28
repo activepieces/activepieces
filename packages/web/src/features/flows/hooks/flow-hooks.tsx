@@ -214,6 +214,22 @@ export const flowHooks = {
       onSuccess,
     });
   },
+  useSetVersionName: ({
+    onSuccess,
+  }: {
+    onSuccess?: () => void
+  } = {}) => {
+    return useMutation<
+      void,
+      Error,
+      { flowId: string; versionId: string; versionName: string | null }
+    >({
+      mutationFn: async ({ flowId, versionId, versionName }) => {
+        await api.patch(`/v1/flows/${flowId}/versions/${versionId}/name`, { versionName })
+      },
+      onSuccess,
+    })
+  },
   useCreateMcpFlow: () => {
     const navigate = useNavigate();
     return useMutation({
