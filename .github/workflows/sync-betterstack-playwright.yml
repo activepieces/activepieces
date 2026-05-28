@@ -1,12 +1,11 @@
 name: Sync Playwright test to BetterStack
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   sync:
+    if: github.repository == 'activepieces/activepieces'
     name: Update BetterStack Playwright monitor
     runs-on: ubuntu-latest
     steps:

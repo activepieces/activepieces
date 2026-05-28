@@ -5,6 +5,7 @@ on:
 
 jobs:
   Release:
+    if: github.repository == 'activepieces/activepieces'
     runs-on: ubuntu-24.04
     steps:
       - name: Check out repository code
@@ -64,6 +65,7 @@ jobs:
   Deploy-Checkly:
     name: Deploy E2E Tests Checkly
     needs: Release
+    if: github.repository == 'activepieces/activepieces'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

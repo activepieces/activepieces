@@ -2,12 +2,6 @@ name: Release Pieces
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - 'packages/pieces/**'
-      - 'packages/shared/**'
 
 concurrency:
   group: release-pieces

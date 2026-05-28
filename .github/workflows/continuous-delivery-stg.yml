@@ -1,10 +1,6 @@
 name: Continuous Delivery — Staging
 
 on:
-  push:
-    branches: [main]
-  schedule:
-    - cron: '0 17 * * 4'  # Thursday 5 PM UTC — only for tagging release candidate
   workflow_dispatch:
     inputs:
       action:
@@ -17,7 +13,7 @@ on:
 
 jobs:
   detect-hotfix-merge:
-    if: github.event_name == 'push'
+    if: github.repository == 'activepieces/activepieces' && github.event_name == 'push'
     runs-on: ubuntu-latest
     outputs:
       is_hotfix_merge: ${{ steps.check.outputs.is_hotfix_merge }}
@@ -41,7 +37,7 @@ jobs:
           fi
 
   check-freeze:
-    if: github.event_name == 'push'
+    if: github.repository == 'activepieces/activepieces' && github.event_name == 'push'
     runs-on: ubuntu-latest
     outputs:
       frozen: ${{ steps.check.outputs.frozen }}
@@ -60,6 +56,7 @@ jobs:
   build-image:
     needs: [check-freeze]
     if: |
+      github.repository == 'activepieces/activepieces' &&
       always() &&
       ((github.event_name == 'push' && needs.check-freeze.outputs.frozen == 'false') ||
        (github.event_name == 'workflow_dispatch' && (github.event.inputs.action == 'deploy-staging' || github.event.inputs.action == 'deploy-staging-skip-freeze')))
@@ -97,7 +94,7 @@ jobs:
 
   deploy-staging:
     needs: build-image
-    if: always() && needs.build-image.result == 'success'
+    if: github.repository == 'activepieces/activepieces' && always() && needs.build-image.result == 'success'
     runs-on: ubuntu-latest
     environment:
       name: staging
@@ -130,6 +127,7 @@ jobs:
   tag-release-candidate:
     needs: [detect-hotfix-merge, deploy-staging]
     if: |
+      github.repository == 'activepieces/activepieces' &&
       always() &&
       (github.event_name == 'schedule' ||
        (github.event_name == 'push' && needs.detect-hotfix-merge.outputs.is_hotfix_merge == 'true' &&
@@ -189,4 +187,3 @@ jobs:
           git config user.name "github-actions[bot]"
           git tag -f release-candidate ${{ steps.tag.outputs.sha }}
           git push origin release-candidate --force
-

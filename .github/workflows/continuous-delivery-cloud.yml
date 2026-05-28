@@ -1,8 +1,6 @@
 name: Continuous Delivery — Cloud
 
 on:
-  schedule:
-    - cron: '0 9 * * 0' # Sunday 9 AM UTC — promote release candidate to prod
   workflow_call:
   workflow_dispatch:
     inputs:
@@ -15,7 +13,7 @@ on:
 
 jobs:
   guard:
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'cloud-hotfix'
+    if: github.repository == 'activepieces/activepieces' && github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'cloud-hotfix'
     runs-on: ubuntu-latest
     steps:
       - name: Check proximity to scheduled promotion
@@ -42,7 +40,7 @@ jobs:
 
   build-image:
     needs: [guard]
-    if: github.event_name != 'schedule' && needs.guard.result == 'success'
+    if: github.repository == 'activepieces/activepieces' && github.event_name != 'schedule' && needs.guard.result == 'success'
     runs-on: ubuntu-24.04
     outputs:
       image_tag: ${{ steps.set-tag.outputs.image_tag }}
@@ -75,6 +73,7 @@ jobs:
   deploy-canary:
     needs: [build-image]
     if: |
+      github.repository == 'activepieces/activepieces' &&
       always() &&
       github.event_name != 'workflow_dispatch' &&
       needs.build-image.result == 'skipped'
@@ -84,6 +83,7 @@ jobs:
   promote-to-production:
     needs: [build-image, deploy-canary]
     if: |
+      github.repository == 'activepieces/activepieces' &&
       always() &&
       (
         (needs.build-image.result == 'success' && github.event_name == 'workflow_dispatch') ||
@@ -153,6 +153,6 @@ jobs:
   # Run smoke test after scheduled promotion
   smoke-test:
     needs: promote-to-production
-    if: github.event_name == 'schedule'
+    if: github.repository == 'activepieces/activepieces' && github.event_name == 'schedule'
     uses: ./.github/workflows/smoke-test.yml
     secrets: inherit
