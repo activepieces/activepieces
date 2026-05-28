@@ -68,7 +68,6 @@ export const ActionBase = z.object({
   requireAuth: z.boolean(),
   errorHandlingOptions: ErrorHandlingOptionsParam.optional(),
   audience: Audience.optional(),
-  sampleData: z.unknown().optional(),
   infoForLLM: InfoForLLM.optional(),
 })
 
@@ -81,7 +80,6 @@ export type ActionBase = {
   requireAuth: boolean;
   errorHandlingOptions?: ErrorHandlingOptionsParam;
   audience?: Audience;
-  sampleData?: unknown;
   infoForLLM?: InfoForLLM;
 }
 

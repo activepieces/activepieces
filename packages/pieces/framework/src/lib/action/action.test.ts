@@ -16,20 +16,6 @@ describe('createAction — v2 AI-ready contract fields', () => {
     expect(action.audience).toBe('ai')
   })
 
-  it('accepts sampleData (mirrors TriggerBase.sampleData)', () => {
-    const sample = { id: '19dc5c', subject: 'Invoice #43', from: 'billing@example.com' }
-    const action = createAction({
-      name: 'find_email_by_query',
-      displayName: 'Find email by query',
-      description: 'Find an email by free-text query.',
-      sampleData: sample,
-      props: {},
-      run: async () => sample,
-    })
-
-    expect(action.sampleData).toEqual(sample)
-  })
-
   it('accepts the full infoForLLM bundle', () => {
     const action = createAction({
       name: 'find_email_by_query',
@@ -53,13 +39,12 @@ describe('createAction — v2 AI-ready contract fields', () => {
     const action = createAction({
       name: 'legacy_action',
       displayName: 'Legacy action',
-      description: 'A pre-v2 action with no audience / sampleData / infoForLLM.',
+      description: 'A pre-v2 action with no audience / infoForLLM.',
       props: {},
       run: async () => 'ok',
     })
 
     expect(action.audience).toBeUndefined()
-    expect(action.sampleData).toBeUndefined()
     expect(action.infoForLLM).toBeUndefined()
   })
 })

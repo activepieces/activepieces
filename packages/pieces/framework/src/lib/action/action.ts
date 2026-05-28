@@ -53,12 +53,6 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty | PieceAuthProperty[
    */
   audience?: Audience
   /**
-   * Concrete realistic example of the action's output. Mirrors
-   * `TriggerBase.sampleData`. Used by the canvas for field references and
-   * by the agent surface to help an LLM reason about the action's return shape.
-   */
-  sampleData?: unknown
-  /**
    * Bundle of LLM-targeted metadata. All sub-fields optional. Use
    * `description` for agent-targeted prose (when to call, constraints,
    * example inputs), `outputSchema` for a free-form prose-with-example
@@ -82,7 +76,6 @@ export class IAction<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] |
     public readonly errorHandlingOptions: ErrorHandlingOptionsParam,
     public readonly llmDescription?: string,
     public readonly audience?: Audience,
-    public readonly sampleData?: unknown,
     public readonly infoForLLM?: InfoForLLM,
   ) { }
 }
@@ -118,7 +111,6 @@ export const createAction = <
     },
     params.llmDescription,
     params.audience,
-    params.sampleData,
     params.infoForLLM,
   )
 }
