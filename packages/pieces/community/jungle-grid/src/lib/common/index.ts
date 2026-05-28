@@ -49,8 +49,6 @@ function buildJobPayload(propsValue: Record<string, unknown>): Record<string, un
     model_size_gb: propsValue['model_size_gb'],
     disk_gb: propsValue['disk_gb'],
     optimize_for: propsValue['optimize_for'],
-    latency_priority: propsValue['latency_priority'],
-    cost_priority: propsValue['cost_priority'],
     constraints: Object.keys(constraints).length > 0 ? constraints : undefined,
     huggingface_credential_id: propsValue['huggingface_credential_id'],
     webhook_url: propsValue['webhook_url'],
