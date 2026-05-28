@@ -1,8 +1,6 @@
 name: Generate Translation Files for Community Pieces and UI
 
 on:
-  schedule:
-    - cron: '5 15 * * *'
   workflow_dispatch:
 
 jobs:

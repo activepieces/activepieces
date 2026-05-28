@@ -3,11 +3,10 @@ name: Continuous Delivery — Canary
 on:
   workflow_dispatch:
   workflow_call:
-  schedule:
-    - cron: '0 9 * * *'  # Daily 9 AM UTC
 
 jobs:
   build-image:
+    if: github.repository == 'activepieces/activepieces'
     runs-on: ubuntu-24.04
     concurrency:
       group: canary-deploy
@@ -46,6 +45,7 @@ jobs:
 
   check-migrations:
     needs: build-image
+    if: github.repository == 'activepieces/activepieces'
     runs-on: ubuntu-latest
     outputs:
       has_breaking: ${{ steps.check.outputs.has_breaking }}
@@ -109,6 +109,7 @@ jobs:
 
   deploy-canary:
     needs: [build-image, check-migrations]
+    if: github.repository == 'activepieces/activepieces'
     runs-on: ubuntu-latest
     environment:
       name: canary
@@ -137,4 +138,3 @@ jobs:
       - name: Deploy canary workers
         run: |
           ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ needs.build-image.outputs.image_tag }} --config-file=config/worker-canary.yml --skip-push; exit"'
-

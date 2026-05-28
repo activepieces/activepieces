@@ -10,6 +10,7 @@ on:
 
 jobs:
   tag-release-candidate:
+    if: github.repository == 'activepieces/activepieces'
     runs-on: ubuntu-latest
     permissions:
       contents: write

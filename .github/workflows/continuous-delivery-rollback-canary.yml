@@ -14,6 +14,7 @@ on:
 
 jobs:
   rollback:
+    if: github.repository == 'activepieces/activepieces'
     runs-on: ubuntu-latest
     environment:
       name: canary
