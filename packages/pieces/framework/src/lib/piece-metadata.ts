@@ -48,14 +48,14 @@ export type PieceBase = {
 export const Audience = z.enum(['human', 'ai', 'both'])
 export type Audience = z.infer<typeof Audience>
 
-export const InfoForLLM = z.object({
+export const AiMetadata = z.object({
   description: z.string().optional(),
-  outputSchema: z.string().optional(),
+  outputSchema: z.record(z.string(), z.unknown()).optional(),
   idempotent: z.boolean().optional(),
 })
-export type InfoForLLM = {
+export type AiMetadata = {
   description?: string
-  outputSchema?: string
+  outputSchema?: Record<string, unknown>
   idempotent?: boolean
 }
 
@@ -68,7 +68,7 @@ export const ActionBase = z.object({
   requireAuth: z.boolean(),
   errorHandlingOptions: ErrorHandlingOptionsParam.optional(),
   audience: Audience.optional(),
-  infoForLLM: InfoForLLM.optional(),
+  aiMetadata: AiMetadata.optional(),
 })
 
 export type ActionBase = {
@@ -80,7 +80,7 @@ export type ActionBase = {
   requireAuth: boolean;
   errorHandlingOptions?: ErrorHandlingOptionsParam;
   audience?: Audience;
-  infoForLLM?: InfoForLLM;
+  aiMetadata?: AiMetadata;
 }
 
 export const TriggerBase = z.object({
@@ -95,7 +95,7 @@ export const TriggerBase = z.object({
   handshakeConfiguration: z.custom<WebhookHandshakeConfiguration>().optional(),
   renewConfiguration: WebhookRenewConfiguration.optional(),
   testStrategy: z.nativeEnum(TriggerTestStrategy),
-  infoForLLM: InfoForLLM.optional(),
+  aiMetadata: AiMetadata.optional(),
 })
 export type TriggerBase = ActionBase & {
   type: TriggerStrategy;

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { ActionContext } from '../context';
-import { ActionBase, Audience, InfoForLLM } from '../piece-metadata';
+import { ActionBase, Audience, AiMetadata } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { ExtractPieceAuthPropertyTypeForMethods, PieceAuthProperty } from '../property/authentication';
 
@@ -53,14 +53,18 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty | PieceAuthProperty[
    */
   audience?: Audience
   /**
-   * Bundle of LLM-targeted metadata. All sub-fields optional. Use
-   * `description` for agent-targeted prose (when to call, constraints,
-   * example inputs), `outputSchema` for a free-form prose-with-example
-   * describing the output shape (stringified JSON for static outputs;
-   * prose + example for dynamic outputs), and `idempotent` to declare
-   * whether retry is safe.
+   * Metadata that tells an AI agent how and when to use this action. All
+   * sub-fields optional:
+   * - `description` — agent-targeted prose: when to call, constraints, example inputs.
+   * - `outputSchema` — a JSON Schema object for the result shape, serialized
+   *   verbatim to the MCP `outputSchema` slot. For dynamic outputs (spreadsheet
+   *   cells, raw HTTP responses, SQL rows) use a loose schema
+   *   (`{ type: 'array', items: {} }`, `additionalProperties: true`) and lean on
+   *   `description` + an `examples` entry to convey what varies and a concrete sample.
+   * - `idempotent` — whether re-running with identical inputs is side-effect-safe;
+   *   maps to the MCP `idempotentHint` annotation and guides agent retry behaviour.
    */
-  infoForLLM?: InfoForLLM
+  aiMetadata?: AiMetadata
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -76,7 +80,7 @@ export class IAction<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] |
     public readonly errorHandlingOptions: ErrorHandlingOptionsParam,
     public readonly llmDescription?: string,
     public readonly audience?: Audience,
-    public readonly infoForLLM?: InfoForLLM,
+    public readonly aiMetadata?: AiMetadata,
   ) { }
 }
 
@@ -111,6 +115,6 @@ export const createAction = <
     },
     params.llmDescription,
     params.audience,
-    params.infoForLLM,
+    params.aiMetadata,
   )
 }

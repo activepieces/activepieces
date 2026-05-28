@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { OnStartContext, TestOrRunHookContext, TriggerHookContext } from '../context';
-import { InfoForLLM, TriggerBase } from '../piece-metadata';
+import { AiMetadata, TriggerBase } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { ExtractPieceAuthPropertyTypeForMethods, PieceAuthProperty } from '../property/authentication';
 import { isNil, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration, WebhookHandshakeStrategy } from '@activepieces/shared';
@@ -62,16 +62,17 @@ type BaseTriggerParams<
   onStart?: OnStartRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps>,
   sampleData: unknown
   /**
-   * Bundle of LLM-targeted metadata. Same shape as on `ActionBase`. All
-   * sub-fields optional. Use `description` for agent-targeted prose
-   * (when this trigger fires, payload shape, gotchas), `outputSchema` for
-   * a free-form prose-with-example describing the event payload shape (the
-   * existing required `sampleData` already carries a concrete value;
-   * `outputSchema` adds prose for dynamic shapes like RSS items or webhook
-   * payloads that vary by event). `idempotent` is typically left unset on
-   * triggers — polling for the same cursor is naturally idempotent.
+   * Metadata that tells an AI agent how and when to use this trigger. Same
+   * shape as on `ActionBase`. All sub-fields optional:
+   * - `description` — when this trigger fires, payload shape, gotchas.
+   * - `outputSchema` — a JSON Schema object for the event payload, serialized to
+   *   the agent surface. The existing required `sampleData` still carries a
+   *   concrete value; `outputSchema` adds the typed (or loose, for dynamic
+   *   payloads like RSS items or event-varying webhooks) shape alongside it.
+   * - `idempotent` — typically left unset on triggers (polling the same cursor is
+   *   naturally idempotent).
    */
-  infoForLLM?: InfoForLLM
+  aiMetadata?: AiMetadata
 }
 
 type WebhookTriggerParams<
@@ -117,7 +118,7 @@ export class ITrigger<
     public readonly sampleData: unknown,
     public readonly testStrategy: TriggerTestStrategy,
     public readonly llmDescription?: string,
-    public readonly infoForLLM?: InfoForLLM,
+    public readonly aiMetadata?: AiMetadata,
   ) { }
 }
 
@@ -155,7 +156,7 @@ export const createTrigger = <
         params.sampleData,
         params.test ? TriggerTestStrategy.TEST_FUNCTION : TriggerTestStrategy.SIMULATION,
         params.llmDescription,
-        params.infoForLLM,
+        params.aiMetadata,
       )
     case TriggerStrategy.POLLING:
       return new ITrigger(
@@ -177,7 +178,7 @@ export const createTrigger = <
         params.sampleData,
         TriggerTestStrategy.TEST_FUNCTION,
         params.llmDescription,
-        params.infoForLLM,
+        params.aiMetadata,
       )
     case TriggerStrategy.MANUAL:
       return new ITrigger(
@@ -199,7 +200,7 @@ export const createTrigger = <
         params.sampleData,
         TriggerTestStrategy.TEST_FUNCTION,
         params.llmDescription,
-        params.infoForLLM,
+        params.aiMetadata,
       )
     case TriggerStrategy.APP_WEBHOOK:
       return new ITrigger(
@@ -221,7 +222,7 @@ export const createTrigger = <
         params.sampleData,
         (isNil(params.sampleData) && isNil(params.test)) ? TriggerTestStrategy.SIMULATION : TriggerTestStrategy.TEST_FUNCTION,
         params.llmDescription,
-        params.infoForLLM,
+        params.aiMetadata,
       )
   }
 }
