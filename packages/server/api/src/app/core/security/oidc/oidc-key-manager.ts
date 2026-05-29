@@ -1,4 +1,4 @@
-import { createPrivateKey, createPublicKey, generateKeyPair, JsonWebKey } from 'crypto'
+import { createHash, createPrivateKey, createPublicKey, generateKeyPair, JsonWebKey } from 'crypto'
 import { promisify } from 'util'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
@@ -10,14 +10,14 @@ import { AppSystemProp } from '../../../helper/system/system-props'
 
 const generateKeyPairAsync = promisify(generateKeyPair)
 
-const OIDC_KID = 'oidc-1'
-const mutex = new Mutex()
+const privateKeyMutex = new Mutex()
+const publicKeyMutex = new Mutex()
 let cachedPrivateKeyPem: string | undefined
 let cachedPublicKeyJwk: OidcJwk | undefined
 
 async function getPrivateKeyPem(): Promise<string> {
     if (cachedPrivateKeyPem !== undefined) return cachedPrivateKeyPem
-    return mutex.runExclusive(async () => {
+    return privateKeyMutex.runExclusive(async () => {
         if (cachedPrivateKeyPem !== undefined) return cachedPrivateKeyPem
         const envKey = system.get(AppSystemProp.OIDC_RSA_PRIVATE_KEY)
         if (envKey) {
@@ -58,11 +58,25 @@ async function getPrivateKeyPem(): Promise<string> {
 
 async function getPublicKeyJwk(): Promise<OidcJwk> {
     if (cachedPublicKeyJwk !== undefined) return cachedPublicKeyJwk
-    const privateKeyPem = await getPrivateKeyPem()
-    const publicKey = createPublicKey(privateKeyPem)
-    const jwk = publicKey.export({ format: 'jwk' })
-    cachedPublicKeyJwk = { ...jwk, use: 'sig', alg: 'RS256', kid: OIDC_KID }
-    return cachedPublicKeyJwk
+    return publicKeyMutex.runExclusive(async () => {
+        if (cachedPublicKeyJwk !== undefined) return cachedPublicKeyJwk
+        const privateKeyPem = await getPrivateKeyPem()
+        const publicKey = createPublicKey(privateKeyPem)
+        const jwk = publicKey.export({ format: 'jwk' })
+        const kid = computeKidFromJwk(jwk)
+        cachedPublicKeyJwk = { ...jwk, use: 'sig', alg: 'RS256', kid }
+        return cachedPublicKeyJwk
+    })
+}
+
+async function getKid(): Promise<string> {
+    return (await getPublicKeyJwk()).kid
+}
+
+function computeKidFromJwk(jwk: JsonWebKey): string {
+    // RFC 7638: SHA-256 thumbprint of required RSA members in lexicographic order
+    const thumbprintData = JSON.stringify({ e: jwk.e, kty: jwk.kty, n: jwk.n })
+    return createHash('sha256').update(thumbprintData).digest('base64url')
 }
 
 type OidcJwk = JsonWebKey & { use: string, alg: string, kid: string }
@@ -70,5 +84,5 @@ type OidcJwk = JsonWebKey & { use: string, alg: string, kid: string }
 export const oidcKeyManager = {
     getPrivateKeyPem,
     getPublicKeyJwk,
-    kid: OIDC_KID,
+    getKid,
 }

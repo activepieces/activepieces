@@ -115,7 +115,7 @@ describe('oidcKeyManager', () => {
             expect(jwk.kty).toBe('RSA')
             expect(jwk.use).toBe('sig')
             expect(jwk.alg).toBe('RS256')
-            expect(jwk.kid).toBe(oidcKeyManager.kid)
+            expect(jwk.kid).toBe(await oidcKeyManager.getKid())
             expect(jwk.n).toBeDefined()
             expect(jwk.e).toBeDefined()
         })

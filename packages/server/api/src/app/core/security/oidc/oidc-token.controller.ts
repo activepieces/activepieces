@@ -14,7 +14,10 @@ export const oidcTokenController: FastifyPluginAsyncZod = async (app) => {
         schema: { hide: true },
     }, async (request, reply) => {
         const { projectId, platform } = request.principal
-        const privateKey = await oidcKeyManager.getPrivateKeyPem()
+        const [privateKey, kid] = await Promise.all([
+            oidcKeyManager.getPrivateKeyPem(),
+            oidcKeyManager.getKid(),
+        ])
         const token = await jwtUtils.sign({
             payload: {
                 sub: `platform:${platform.id}:project:${projectId}`,
@@ -23,7 +26,7 @@ export const oidcTokenController: FastifyPluginAsyncZod = async (app) => {
             key: privateKey,
             expiresInSeconds: TOKEN_TTL_SECONDS,
             algorithm: JwtSignAlgorithm.RS256,
-            keyId: oidcKeyManager.kid,
+            keyId: kid,
             issuer,
         })
         void reply.header('Cache-Control', 'no-store')
