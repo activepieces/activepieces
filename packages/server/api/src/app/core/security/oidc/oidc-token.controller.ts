@@ -9,10 +9,10 @@ const TOKEN_TTL_SECONDS = 3600
 
 export const oidcTokenController: FastifyPluginAsyncZod = async (app) => {
     const issuer = system.getOrThrow(AppSystemProp.FRONTEND_URL).replace(/\/$/, '')
-    app.get('/oidc-token', {
+    app.post('/oidc-token', {
         config: { security: securityAccess.engine() },
         schema: { hide: true },
-    }, async (request) => {
+    }, async (request, reply) => {
         const { projectId, platform } = request.principal
         const privateKey = await oidcKeyManager.getPrivateKeyPem()
         const token = await jwtUtils.sign({
@@ -26,6 +26,8 @@ export const oidcTokenController: FastifyPluginAsyncZod = async (app) => {
             keyId: oidcKeyManager.kid,
             issuer,
         })
+        void reply.header('Cache-Control', 'no-store')
+        void reply.header('Pragma', 'no-cache')
         return { token }
     })
 }

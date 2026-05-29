@@ -33,10 +33,10 @@ beforeEach(async () => {
 })
 
 describe('OIDC Token Endpoint', () => {
-    describe('GET /v1/worker/oidc-token', () => {
+    describe('POST /v1/worker/oidc-token', () => {
         it('should return a JWT token when called with a valid engine token', async () => {
             const response = await app!.inject({
-                method: 'GET',
+                method: 'POST',
                 url: '/api/v1/worker/oidc-token',
                 headers: { authorization: `Bearer ${engineToken}` },
             })
@@ -49,7 +49,7 @@ describe('OIDC Token Endpoint', () => {
 
         it('should reject requests without an authorization header', async () => {
             const response = await app!.inject({
-                method: 'GET',
+                method: 'POST',
                 url: '/api/v1/worker/oidc-token',
             })
 
@@ -65,7 +65,7 @@ describe('OIDC Token Endpoint', () => {
             })
 
             const response = await app!.inject({
-                method: 'GET',
+                method: 'POST',
                 url: '/api/v1/worker/oidc-token',
                 headers: { authorization: `Bearer ${userToken}` },
             })
@@ -75,20 +75,20 @@ describe('OIDC Token Endpoint', () => {
 
         it('should issue a JWT with the correct audience for AWS STS', async () => {
             const response = await app!.inject({
-                method: 'GET',
+                method: 'POST',
                 url: '/api/v1/worker/oidc-token',
                 headers: { authorization: `Bearer ${engineToken}` },
             })
 
             const { token } = response.json()
-            const decoded = jwtUtils.decode<{ aud: string; sub: string; iss: string }>({ jwt: token })
+            const decoded = jwtUtils.decode<{ aud: string, sub: string, iss: string }>({ jwt: token })
 
             expect(decoded.payload.aud).toBe('sts.amazonaws.com')
         })
 
         it('should include platform and project in the sub claim', async () => {
             const response = await app!.inject({
-                method: 'GET',
+                method: 'POST',
                 url: '/api/v1/worker/oidc-token',
                 headers: { authorization: `Bearer ${engineToken}` },
             })
@@ -103,7 +103,7 @@ describe('OIDC Token Endpoint', () => {
 
         it('should use RS256 as the signing algorithm', async () => {
             const response = await app!.inject({
-                method: 'GET',
+                method: 'POST',
                 url: '/api/v1/worker/oidc-token',
                 headers: { authorization: `Bearer ${engineToken}` },
             })
@@ -118,14 +118,14 @@ describe('OIDC Token Endpoint', () => {
             const before = Math.floor(Date.now() / 1000)
 
             const response = await app!.inject({
-                method: 'GET',
+                method: 'POST',
                 url: '/api/v1/worker/oidc-token',
                 headers: { authorization: `Bearer ${engineToken}` },
             })
 
             const after = Math.floor(Date.now() / 1000)
             const { token } = response.json()
-            const decoded = jwtUtils.decode<{ iat: number; exp: number }>({ jwt: token })
+            const decoded = jwtUtils.decode<{ iat: number, exp: number }>({ jwt: token })
 
             expect(decoded.payload.iat).toBeGreaterThanOrEqual(before)
             expect(decoded.payload.iat).toBeLessThanOrEqual(after)
@@ -135,7 +135,7 @@ describe('OIDC Token Endpoint', () => {
         it('should include a kid header matching the JWKS endpoint', async () => {
             const [tokenResponse, jwksResponse] = await Promise.all([
                 app!.inject({
-                    method: 'GET',
+                    method: 'POST',
                     url: '/api/v1/worker/oidc-token',
                     headers: { authorization: `Bearer ${engineToken}` },
                 }),

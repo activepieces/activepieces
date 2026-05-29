@@ -13,9 +13,12 @@ import { MarkDownProperty } from '../input/markdown-property';
 const OIDCAuthProps = z.record(z.string(), z.union([
   ShortTextProperty,
   LongTextProperty,
+  SecretTextProperty,
   NumberProperty,
   CheckboxProperty,
   StaticDropdownProperty,
+  StaticMultiSelectDropdownProperty,
+  MarkDownProperty,
 ]));
 
 export type OIDCAuthProps = Record<

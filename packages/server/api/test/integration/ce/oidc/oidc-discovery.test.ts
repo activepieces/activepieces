@@ -45,8 +45,7 @@ describe('OIDC Discovery', () => {
                 url: '/.well-known/openid-configuration',
             })
 
-            expect(response.statusCode).not.toBe(StatusCodes.UNAUTHORIZED)
-            expect(response.statusCode).not.toBe(StatusCodes.FORBIDDEN)
+            expect(response.statusCode).toBe(StatusCodes.OK)
         })
     })
 
@@ -120,8 +119,7 @@ describe('OIDC Discovery', () => {
                 url: '/.well-known/jwks.json',
             })
 
-            expect(response.statusCode).not.toBe(StatusCodes.UNAUTHORIZED)
-            expect(response.statusCode).not.toBe(StatusCodes.FORBIDDEN)
+            expect(response.statusCode).toBe(StatusCodes.OK)
         })
     })
 })

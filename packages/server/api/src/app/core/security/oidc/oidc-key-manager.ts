@@ -1,4 +1,4 @@
-import { createPublicKey, generateKeyPair, JsonWebKey } from 'crypto'
+import { createPrivateKey, createPublicKey, generateKeyPair, JsonWebKey } from 'crypto'
 import { promisify } from 'util'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
@@ -21,7 +21,17 @@ async function getPrivateKeyPem(): Promise<string> {
         if (cachedPrivateKeyPem !== undefined) return cachedPrivateKeyPem
         const envKey = system.get(AppSystemProp.OIDC_RSA_PRIVATE_KEY)
         if (envKey) {
-            cachedPrivateKeyPem = Buffer.from(envKey, 'base64').toString('utf8')
+            const pem = Buffer.from(envKey, 'base64').toString('utf8')
+            try {
+                createPrivateKey(pem)
+            }
+            catch {
+                throw new ActivepiecesError(
+                    { code: ErrorCode.SYSTEM_PROP_INVALID, params: { prop: AppSystemProp.OIDC_RSA_PRIVATE_KEY } },
+                    `System property AP_${AppSystemProp.OIDC_RSA_PRIVATE_KEY} is not a valid RSA private key PEM`,
+                )
+            }
+            cachedPrivateKeyPem = pem
             return cachedPrivateKeyPem
         }
         if (redisConnections.getRedisType() !== RedisType.MEMORY) {

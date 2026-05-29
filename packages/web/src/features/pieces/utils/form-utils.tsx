@@ -287,6 +287,13 @@ const CUSTOM_AUTH_VALUE_PROPS = z.object({
   }),
 });
 
+const OIDC_VALUE_PROPS = z.object({
+  value: z.object({
+    type: z.literal(AppConnectionType.OIDC),
+    props: z.record(z.string(), z.unknown()),
+  }),
+});
+
 function extendUpsertSchema(
   upsertSchema: ZodObject<z.ZodRawShape>,
   names: ReturnType<typeof connectionNameSchema>,
@@ -331,7 +338,7 @@ function extendOIDCUpsertSchema(
         .extend(GLOBAL_CONNECTION_EXTRAS_SCHEMA.shape)
         .extend(PROJECT_FORM_EXTRAS_SCHEMA.shape)
     : base.extend(PROJECT_FORM_EXTRAS_SCHEMA.shape);
-  return withExtras.extend(CUSTOM_AUTH_VALUE_PROPS.shape);
+  return withExtras.extend(OIDC_VALUE_PROPS.shape);
 }
 
 function buildOAuth2RequestSchema(
