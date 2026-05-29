@@ -63,8 +63,7 @@ export const CORE_STEP_METADATA: Record<
     logoUrl:
       apHostedAssetUrl(
         'https://cdn.activepieces.com/pieces/new-core/empty-trigger.svg',
-      ) ??
-      'https://cdn.activepieces.com/pieces/new-core/empty-trigger.svg',
+      ) ?? 'https://cdn.activepieces.com/pieces/new-core/empty-trigger.svg',
     description: t('Empty Trigger'),
     type: FlowTriggerType.EMPTY as const,
   },

@@ -16,7 +16,6 @@ import {
   PieceOptionRequest,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-
 import { toast } from 'sonner';
 
 import { internalErrorToast } from '@/components/ui/sonner';
@@ -49,10 +48,16 @@ export const piecesApi = {
       .catch((error) => {
         console.error(error);
         const isNetworkError =
-          !error?.response && (error?.code === 'ERR_NETWORK' || error?.code === 'ECONNABORTED' || error?.message?.includes('timeout') || error?.message?.includes('Network Error'));
+          !error?.response &&
+          (error?.code === 'ERR_NETWORK' ||
+            error?.code === 'ECONNABORTED' ||
+            error?.message?.includes('timeout') ||
+            error?.message?.includes('Network Error'));
         if (isNetworkError) {
           toast.warning(t('Connection issue'), {
-            description: t('Your connection may have expired. Please reconnect your account.'),
+            description: t(
+              'Your connection may have expired. Please reconnect your account.',
+            ),
             duration: 5000,
           });
         } else {
