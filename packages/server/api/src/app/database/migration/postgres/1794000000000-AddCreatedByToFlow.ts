@@ -9,17 +9,11 @@ export class AddCreatedByToFlow1794000000000 implements Migration {
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "flow"
-            ADD COLUMN "createdBy" jsonb
-        `)
-
-        await queryRunner.query(`
-            CREATE INDEX "idx_flow_created_by_type"
-            ON "flow" (("createdBy" ->> 'type'))
+            ADD COLUMN IF NOT EXISTS "createdBy" jsonb
         `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query('DROP INDEX IF EXISTS "idx_flow_created_by_type"')
         await queryRunner.query('ALTER TABLE "flow" DROP COLUMN IF EXISTS "createdBy"')
     }
 }

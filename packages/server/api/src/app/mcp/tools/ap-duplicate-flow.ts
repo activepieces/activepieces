@@ -1,4 +1,5 @@
 import {
+    FlowCreatorType,
     FlowOperationType,
     isNil,
     McpToolDefinition,
@@ -42,6 +43,8 @@ export const apDuplicateFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
 
                 const newFlow = await flowService(log).create({
                     projectId: mcp.projectId,
+                    ownerId: mcp.userId ?? undefined,
+                    createdBy: { type: FlowCreatorType.MCP, id: mcp.id },
                     request: {
                         displayName,
                         projectId: mcp.projectId,
