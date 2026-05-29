@@ -262,7 +262,8 @@ const ReplaceConnectionsDialog = ({
                           <div className="flex gap-2 items-center">
                             <img
                               src={
-                                apHostedAssetUrl(piece!.logoUrl) ?? piece!.logoUrl
+                                apHostedAssetUrl(piece!.logoUrl) ??
+                                piece!.logoUrl
                               }
                               alt={piece!.displayName}
                               className="w-4 h-4 object-contain"

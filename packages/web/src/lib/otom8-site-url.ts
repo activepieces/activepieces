@@ -6,4 +6,4 @@ export {
   IS_STG,
   OTOM8_SITE_URL,
   type DeployEnv,
-} from "./deploy-env";
+} from './deploy-env';

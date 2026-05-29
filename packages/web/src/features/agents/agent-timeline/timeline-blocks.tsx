@@ -33,7 +33,6 @@ import {
   AccordionContent,
 } from '@/components/ui/accordion';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-
 import { apHostedAssetUrl } from '@/lib/ap-hosted-asset-url';
 
 import { agentToolHooks } from '../agent-tool-hooks';

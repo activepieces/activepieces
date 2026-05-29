@@ -49,8 +49,7 @@ const ApiKeysPage = () => {
       lockVideoUrl={
         apHostedAssetUrl(
           'https://cdn.activepieces.com/videos/showcase/api-keys.mp4',
-        ) ??
-        'https://cdn.activepieces.com/videos/showcase/api-keys.mp4'
+        ) ?? 'https://cdn.activepieces.com/videos/showcase/api-keys.mp4'
       }
     >
       <CenteredPage

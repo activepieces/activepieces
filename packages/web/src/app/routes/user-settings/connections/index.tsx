@@ -29,7 +29,9 @@ function providerIcon(provider: string) {
   );
 }
 
-type ExternalAccount = NonNullable<ReturnType<typeof useUser>['user']>['externalAccounts'][number];
+type ExternalAccount = NonNullable<
+  ReturnType<typeof useUser>['user']
+>['externalAccounts'][number];
 
 function ConnectedAccountRow({ account }: { account: ExternalAccount }) {
   const [removing, setRemoving] = useState(false);
@@ -113,10 +115,13 @@ export default function ConnectionsSettingsPage() {
     setConnecting(strategy);
     try {
       const externalAccount = await user.createExternalAccount({
-        strategy: strategy as Parameters<typeof user.createExternalAccount>[0]['strategy'],
+        strategy: strategy as Parameters<
+          typeof user.createExternalAccount
+        >[0]['strategy'],
         redirectUrl: window.location.href,
       });
-      const redirectUrl = externalAccount.verification?.externalVerificationRedirectURL;
+      const redirectUrl =
+        externalAccount.verification?.externalVerificationRedirectURL;
       if (redirectUrl) {
         window.location.href = redirectUrl.toString();
       } else {
@@ -125,8 +130,17 @@ export default function ConnectionsSettingsPage() {
       }
     } catch (err) {
       const msg =
-        err && typeof err === 'object' && Array.isArray((err as Record<string, unknown>)['errors'])
-          ? String(((err as Record<string, unknown>)['errors'] as Record<string, unknown>[])[0]?.['longMessage'] ?? 'Failed to connect account.')
+        err &&
+        typeof err === 'object' &&
+        Array.isArray((err as Record<string, unknown>)['errors'])
+          ? String(
+              (
+                (err as Record<string, unknown>)['errors'] as Record<
+                  string,
+                  unknown
+                >[]
+              )[0]?.['longMessage'] ?? 'Failed to connect account.',
+            )
           : t('Failed to connect account.');
       toast.error(msg);
       setConnecting(null);

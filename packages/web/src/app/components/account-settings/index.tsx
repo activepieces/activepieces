@@ -1,7 +1,7 @@
+import type { UserWithBadges } from '@activepieces/shared';
 import { UserProfile } from '@clerk/clerk-react';
 import { t } from 'i18next';
 import { Sparkles, Settings as SettingsIcon } from 'lucide-react';
-import type { UserWithBadges } from '@activepieces/shared';
 
 import { UserBadges } from '@/components/custom/user-badges';
 import { Dialog, DialogContent } from '@/components/ui/dialog';

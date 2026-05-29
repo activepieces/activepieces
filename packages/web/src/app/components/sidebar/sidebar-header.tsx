@@ -36,9 +36,7 @@ function SidebarLogoCollapsed({ linkTo }: { linkTo?: string }) {
           color: 'hsl(var(--foreground))',
         }}
       >
-        o
-        <span style={{ color: 'hsl(var(--primary))' }}>∞</span>
-        8
+        o<span style={{ color: 'hsl(var(--primary))' }}>∞</span>8
       </span>
     </Button>
   );

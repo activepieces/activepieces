@@ -1,8 +1,4 @@
-import {
-  ApFlagId,
-  Permission,
-  ProjectType,
-} from '@activepieces/shared';
+import { ApFlagId, Permission, ProjectType } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   Bell,
@@ -19,20 +15,36 @@ import {
 import { NavLink, Outlet } from 'react-router-dom';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
-import { cn } from '@/lib/utils';
 import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { cn } from '@/lib/utils';
 
 const ACCOUNT_NAV = [
   { to: '/user-settings/profile', label: 'Profile', icon: User },
   { to: '/user-settings/contact', label: 'Email', icon: Mail },
-  { to: '/user-settings/connections', label: 'Connected Accounts', icon: Link2 },
+  {
+    to: '/user-settings/connections',
+    label: 'Connected Accounts',
+    icon: Link2,
+  },
   { to: '/user-settings/security', label: 'Password', icon: KeyRound },
-  { to: '/user-settings/preferences', label: 'Preferences', icon: SlidersHorizontal },
+  {
+    to: '/user-settings/preferences',
+    label: 'Preferences',
+    icon: SlidersHorizontal,
+  },
 ];
 
-function NavItem({ to, label, icon: Icon }: { to: string; label: string; icon: React.ComponentType<{ className?: string }> }) {
+function NavItem({
+  to,
+  label,
+  icon: Icon,
+}: {
+  to: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+}) {
   return (
     <NavLink
       to={to}
@@ -53,8 +65,12 @@ function NavItem({ to, label, icon: Icon }: { to: string; label: string; icon: R
 function WorkspaceNav() {
   const { project } = projectCollectionUtils.useCurrentProject();
   const { checkAccess } = useAuthorization();
-  const { data: showAlerts } = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_ALERTS);
-  const { data: showProjectMembers } = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_PROJECT_MEMBERS);
+  const { data: showAlerts } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_ALERTS,
+  );
+  const { data: showProjectMembers } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_PROJECT_MEMBERS,
+  );
 
   const isTeam = project.type === ProjectType.TEAM;
   const canReadMembers = checkAccess(Permission.READ_PROJECT_MEMBER);
@@ -66,12 +82,24 @@ function WorkspaceNav() {
       <p className="px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-0.5 mt-2">
         {t('Workspace')}
       </p>
-      <NavItem to="/user-settings/workspace/general" label="General" icon={Settings} />
+      <NavItem
+        to="/user-settings/workspace/general"
+        label="General"
+        icon={Settings}
+      />
       {isTeam && canReadMembers && showProjectMembers && (
-        <NavItem to="/user-settings/workspace/members" label="Members" icon={Users} />
+        <NavItem
+          to="/user-settings/workspace/members"
+          label="Members"
+          icon={Users}
+        />
       )}
       {isTeam && canReadAlerts && showAlerts && (
-        <NavItem to="/user-settings/workspace/alerts" label="Alert Emails" icon={Bell} />
+        <NavItem
+          to="/user-settings/workspace/alerts"
+          label="Alert Emails"
+          icon={Bell}
+        />
       )}
       <NavLink
         to="/user-settings/workspace/mcp"
@@ -86,9 +114,17 @@ function WorkspaceNav() {
         <McpSvg className="w-4 h-4 shrink-0" />
         {t('MCP Server')}
       </NavLink>
-      <NavItem to="/user-settings/workspace/pieces" label="Pieces" icon={Puzzle} />
+      <NavItem
+        to="/user-settings/workspace/pieces"
+        label="Pieces"
+        icon={Puzzle}
+      />
       {canReadEnvironment && (
-        <NavItem to="/user-settings/workspace/environment" label="Environment" icon={GitBranch} />
+        <NavItem
+          to="/user-settings/workspace/environment"
+          label="Environment"
+          icon={GitBranch}
+        />
       )}
     </div>
   );
