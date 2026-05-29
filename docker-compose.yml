@@ -42,7 +42,7 @@ services:
       replicas: 2
       resources:
         limits:
-          memory: 700m
+          memory: 1200m
     volumes:
       - ./cache:/usr/src/app/cache
     networks:
