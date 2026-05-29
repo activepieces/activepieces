@@ -19,7 +19,6 @@ import { determineDefaultRoute } from '@/lib/route-utils';
 
 function SidebarLogoCollapsed({ linkTo }: { linkTo?: string }) {
   const navigate = useNavigate();
-  const branding = flagsHooks.useWebsiteBranding();
 
   return (
     <Button
@@ -29,11 +28,16 @@ function SidebarLogoCollapsed({ linkTo }: { linkTo?: string }) {
       aria-label={t('home')}
       className="h-10! w-8! p-0! group-data-[collapsible=icon]:h-10! items-center justify-center"
     >
-      <img
-        src={branding.logos.logoIconUrl}
-        alt=""
-        className="h-5 w-5 object-contain"
-      />
+      <span
+        className="inline-flex items-center text-lg font-semibold leading-none tracking-tight"
+        style={{
+          fontFamily:
+            "var(--font-display), 'Cormorant Garamond', Georgia, serif",
+          color: 'hsl(var(--foreground))',
+        }}
+      >
+        o<span style={{ color: 'hsl(var(--primary))' }}>∞</span>8
+      </span>
     </Button>
   );
 }

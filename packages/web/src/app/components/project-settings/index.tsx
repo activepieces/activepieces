@@ -1,9 +1,4 @@
-import {
-  ApFlagId,
-  isNil,
-  Permission,
-  ProjectType,
-} from '@activepieces/shared';
+import { ApFlagId, isNil, Permission, ProjectType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Bell, GitBranch, Puzzle, Settings, Users } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
@@ -104,7 +99,8 @@ export function ProjectSettingsDialog({
     if (dialogJustOpened && !isNil(project)) {
       form.reset({
         projectName: initialValues?.projectName ?? project.displayName,
-        externalId: initialValues?.externalId ?? project.externalId ?? undefined,
+        externalId:
+          initialValues?.externalId ?? project.externalId ?? undefined,
         icon: project.icon,
         maxConcurrentJobs: project.maxConcurrentJobs,
       });
@@ -164,10 +160,7 @@ export function ProjectSettingsDialog({
     switch (activeTab) {
       case 'general':
         return (
-          <GeneralSettings
-            form={form}
-            projectNameLabel={t('Workspace Name')}
-          />
+          <GeneralSettings form={form} projectNameLabel={t('Workspace Name')} />
         );
       case 'members':
         return <MembersSettings />;
