@@ -63,10 +63,12 @@ export function generateTheme({
     }
 }
 
+const otom8LogoUrl = 'https://app.otom8.us/logo.svg'
+
 export const defaultTheme = generateTheme({
     primaryColor: '#6e41e2',
     websiteName: 'otom8',
-    fullLogoUrl: 'https://cdn.activepieces.com/brand/full-logo.png',
-    favIconUrl: 'https://cdn.activepieces.com/brand/logo.svg',
-    logoIconUrl: 'https://cdn.activepieces.com/brand/logo.svg',
+    fullLogoUrl: otom8LogoUrl,
+    favIconUrl: otom8LogoUrl,
+    logoIconUrl: otom8LogoUrl,
 })

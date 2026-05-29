@@ -3,6 +3,7 @@ import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, Authe
 import { FastifyBaseLogger } from 'fastify'
 import { otpService } from '../ee/authentication/otp/otp-service'
 import { flagService } from '../flags/flag.service'
+import { defaultTheme } from '../flags/theme'
 import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
 import { platformUtils } from '../platform/platform.utils'
@@ -212,7 +213,7 @@ async function createUserAndPlatform(userIdentity: UserIdentity, log: FastifyBas
     })
     const platform = await platformService(log).create({
         ownerId: user.id,
-        name: userIdentity.firstName + '\'s Platform',
+        name: defaultTheme.websiteName,
     })
     await userService(log).addOwnerToPlatform({
         platformId: platform.id,
