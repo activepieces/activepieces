@@ -23,6 +23,7 @@ services:
       - ./theme-patched.js:/usr/src/app/packages/server/api/dist/src/app/flags/theme.js:ro
     networks:
       - activepieces
+    mem_limit: 800m
   worker:
     image: ghcr.io/sameerzahiddd/activepieces:latest
     platform: linux/amd64
@@ -35,8 +36,13 @@ services:
       - AP_FRONTEND_URL=http://activepieces-app
       - OTOM8_DISABLE_NATIVE_AUTH=true
       - DEPLOY_ENV=prod
+      - AP_SANDBOX_MEMORY_LIMIT=262144
+      - AP_TRIGGER_TIMEOUT_SECONDS=20
     deploy:
-      replicas: 5
+      replicas: 2
+      resources:
+        limits:
+          memory: 700m
     volumes:
       - ./cache:/usr/src/app/cache
     networks:
@@ -54,6 +60,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - activepieces
+    mem_limit: 512m
   redis:
     image: 'redis:7.0.7'
     container_name: redis
@@ -62,6 +69,7 @@ services:
       - 'redis_data:/data'
     networks:
       - activepieces
+    mem_limit: 256m
 volumes:
   postgres_data:
   redis_data:

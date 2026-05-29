@@ -15,11 +15,12 @@ import {
 import { PlatformSwitcher } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { determineDefaultRoute } from '@/lib/route-utils';
 
 function SidebarLogoCollapsed({ linkTo }: { linkTo?: string }) {
   const navigate = useNavigate();
+  const branding = flagsHooks.useWebsiteBranding();
+
   return (
     <Button
       variant="ghost"
@@ -28,16 +29,11 @@ function SidebarLogoCollapsed({ linkTo }: { linkTo?: string }) {
       aria-label={t('home')}
       className="h-10! w-8! p-0! group-data-[collapsible=icon]:h-10! items-center justify-center"
     >
-      <span
-        className="inline-flex items-center text-lg font-semibold leading-none tracking-tight"
-        style={{
-          fontFamily:
-            "var(--font-display), 'Cormorant Garamond', Georgia, serif",
-          color: 'hsl(var(--foreground))',
-        }}
-      >
-        o<span style={{ color: 'hsl(var(--primary))' }}>∞</span>8
-      </span>
+      <img
+        src={branding.logos.logoIconUrl}
+        alt=""
+        className="h-5 w-5 object-contain"
+      />
     </Button>
   );
 }
@@ -47,7 +43,6 @@ export const AppSidebarHeader = () => {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const showSwitcher = edition === ApEdition.CLOUD && !embedState.isEmbedded;
   const { state } = useSidebar();
-  const { platform: currentPlatform } = platformHooks.useCurrentPlatform();
   const { checkAccess } = useAuthorization();
   const defaultRoute = determineDefaultRoute(checkAccess);
   const branding = flagsHooks.useWebsiteBranding();
@@ -77,7 +72,7 @@ export const AppSidebarHeader = () => {
               <PlatformSwitcher>
                 <SidebarMenuButton className="h-10! w-full">
                   <span className="truncate font-medium flex-1 text-left text-sm">
-                    {currentPlatform?.name ?? t('platform')}
+                    {branding.websiteName}
                   </span>
                   <ChevronsUpDown className="ml-auto size-3! shrink-0" />
                 </SidebarMenuButton>
