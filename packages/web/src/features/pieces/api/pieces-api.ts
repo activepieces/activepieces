@@ -17,6 +17,8 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 
+import { toast } from 'sonner';
+
 import { internalErrorToast } from '@/components/ui/sonner';
 import { api } from '@/lib/api';
 
@@ -46,7 +48,16 @@ export const piecesApi = {
       .post<ExecutePropsResult<T>>(`/v1/pieces/options`, request)
       .catch((error) => {
         console.error(error);
-        internalErrorToast();
+        const isNetworkError =
+          !error?.response && (error?.code === 'ERR_NETWORK' || error?.code === 'ECONNABORTED' || error?.message?.includes('timeout') || error?.message?.includes('Network Error'));
+        if (isNetworkError) {
+          toast.warning(t('Connection issue'), {
+            description: t('Your connection may have expired. Please reconnect your account.'),
+            duration: 5000,
+          });
+        } else {
+          internalErrorToast();
+        }
         const defaultStateForDynamicProperty: ExecutePropsResult<PropertyType.DYNAMIC> =
           {
             options: {} as InputPropertyMap,
@@ -58,7 +69,9 @@ export const piecesApi = {
               options: [],
               disabled: true,
               placeholder: t(
-                'An internal error occurred, please contact support',
+                isNetworkError
+                  ? 'Connection timed out. Reconnect your account and try again.'
+                  : 'An internal error occurred, please contact support',
               ),
             },
             type: PropertyType.DROPDOWN,
