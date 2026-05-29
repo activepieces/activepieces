@@ -58,6 +58,18 @@ export const newResponse = createTrigger({
           ],
         },
       },
+      '7a2f1b3d': {
+        questionId: '7a2f1b3d',
+        fileUploadAnswers: {
+          answers: [
+            {
+              fileId: '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms',
+              fileName: 'document.pdf',
+              mimeType: 'application/pdf',
+            },
+          ],
+        },
+      },
     },
   },
   type: TriggerStrategy.POLLING,
@@ -118,7 +130,7 @@ const getResponse = async (
   }
   const accessToken = await getAccessToken(authentication);
   const response = await httpClient.sendRequest<{
-    responses: { lastSubmittedTime: string }[];
+    responses: GoogleFormResponse[];
   }>({
     url: `https://forms.googleapis.com/v1/forms/${form_id}/responses`,
     method: HttpMethod.GET,
@@ -133,4 +145,27 @@ const getResponse = async (
     return formResponses;
   }
   return [];
+};
+
+type GoogleFormFileUploadAnswer = {
+  fileId: string;
+  fileName: string;
+  mimeType: string;
+};
+
+type GoogleFormAnswer = {
+  questionId: string;
+  textAnswers?: {
+    answers: { value: string }[];
+  };
+  fileUploadAnswers?: {
+    answers: GoogleFormFileUploadAnswer[];
+  };
+};
+
+type GoogleFormResponse = {
+  responseId: string;
+  createTime: string;
+  lastSubmittedTime: string;
+  answers?: Record<string, GoogleFormAnswer>;
 };

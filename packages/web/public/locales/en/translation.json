@@ -1374,6 +1374,12 @@
   "Recommended": "Recommended",
   "Others": "Others",
   "An internal error occurred, please contact support": "An internal error occurred, please contact support",
+  "Connection timed out. Reconnect your account and try again.": "Connection timed out. Reconnect your account and try again.",
+  "Connection issue": "Connection issue",
+  "Your connection may have expired. Please reconnect your account.": "Your connection may have expired. Please reconnect your account.",
+  "Rate limit reached. Please try again in a moment.": "Rate limit reached. Please try again in a moment.",
+  "Could not load options. The resource may have been moved or deleted.": "Could not load options. The resource may have been moved or deleted.",
+  "Failed to load options. Please try again or refresh the page.": "Failed to load options. Please try again or refresh the page."
   "Flow Controller": "Flow Controller",
   "Popular": "Popular",
   "All": "All",

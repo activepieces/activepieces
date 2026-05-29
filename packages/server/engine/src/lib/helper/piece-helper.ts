@@ -122,7 +122,7 @@ export const pieceHelper = {
                 options: {
                     disabled: true,
                     options: [],
-                    placeholder: 'Throws an error, reconnect or refresh the page',
+                    placeholder: classifyPropsError(executePropsError),
                 },
             }
         }
@@ -245,6 +245,29 @@ const validateAuth = async ({
             throw new EngineGenericError('InvalidAuthTypeError', 'Invalid auth type')
         }
     }
+}
+
+function classifyPropsError(error: unknown): string {
+    const msg = String(error).toLowerCase()
+    if (
+        msg.includes('401') ||
+        msg.includes('invalid_grant') ||
+        msg.includes('unauthenticated') ||
+        msg.includes('unauthorized') ||
+        msg.includes('invalid credential') ||
+        msg.includes('token has been expired') ||
+        msg.includes('token has been revoked') ||
+        msg.includes('authentication')
+    ) {
+        return 'Connection expired — please reconnect your account.'
+    }
+    if (msg.includes('429') || msg.includes('rate limit') || msg.includes('quota exceeded') || msg.includes('too many requests')) {
+        return 'Rate limit reached. Please try again in a moment.'
+    }
+    if (msg.includes('404') || msg.includes('not found') || msg.includes('deleted') || msg.includes('does not exist')) {
+        return 'Could not load options. The resource may have been moved or deleted.'
+    }
+    return 'Failed to load options. Please try again or refresh the page.'
 }
 
 type ValidateAuthParams = {
