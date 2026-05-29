@@ -148,11 +148,7 @@ export default function ProfileSettingsPage() {
       </div>
 
       <div className="flex justify-end">
-        <Button
-          size="sm"
-          disabled={!isDirty || saving}
-          onClick={handleSave}
-        >
+        <Button size="sm" disabled={!isDirty || saving} onClick={handleSave}>
           {saving && <LoadingSpinner className="w-4 h-4 mr-2" />}
           {t('Save changes')}
         </Button>

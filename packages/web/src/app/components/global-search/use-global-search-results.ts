@@ -194,24 +194,24 @@ export function useGlobalSearchResults(query: string, open: boolean) {
       const historyPool: PoolItem[] = accessHistory
         .filter((h) => h.type !== 'page' || validPageIds.has(h.id))
         .map((h) => ({
-        timestamp: h.accessedAt,
-        item: {
-          id: h.id,
-          type: h.type,
-          label: h.label,
-          href: h.href,
-          status: h.status,
-          folderName: h.folderName,
-          projectName: h.projectName,
-          iconBgColor: h.iconBgColor,
-          iconTextColor: h.iconTextColor,
-          iconLetter: h.iconLetter,
-          pageIcon:
-            h.type === 'page'
-              ? STATIC_PAGES.find((p) => p.id === h.id)?.icon
-              : undefined,
-        },
-      }));
+          timestamp: h.accessedAt,
+          item: {
+            id: h.id,
+            type: h.type,
+            label: h.label,
+            href: h.href,
+            status: h.status,
+            folderName: h.folderName,
+            projectName: h.projectName,
+            iconBgColor: h.iconBgColor,
+            iconTextColor: h.iconTextColor,
+            iconLetter: h.iconLetter,
+            pageIcon:
+              h.type === 'page'
+                ? STATIC_PAGES.find((p) => p.id === h.id)?.icon
+                : undefined,
+          },
+        }));
 
       const suggestedItems: SearchResultItem[] = [];
 

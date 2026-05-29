@@ -8,9 +8,9 @@ import { TemplateDetailsWrapper } from '../guards/template-details-wrapper';
 
 import NotFoundPage from './404-page';
 import AuthenticatePage from './authenticate';
-import { LoginPage } from './login';
 import { EmbedPage } from './embed';
 import { EmbeddedConnectionDialog } from './embed/embedded-connection-dialog';
+import { LoginPage } from './login';
 import { McpAuthorizePage } from './mcp-authorize';
 import { RedirectPage } from './redirect';
 

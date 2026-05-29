@@ -19,7 +19,6 @@ import {
   AgentMcpDialog,
   KnowledgeBaseSection,
 } from '@/features/agents';
-
 import { apHostedAssetUrl } from '@/lib/ap-hosted-asset-url';
 
 import { AgentPieceDialog } from './piece-tool-dialog';

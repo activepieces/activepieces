@@ -12,20 +12,19 @@ export const BrandingPage = () => {
     <LockedFeatureGuard
       featureKey="BRANDING"
       locked={!platform.plan.customAppearanceEnabled}
-      lockTitle={t('Brand otom8')}
+      lockTitle={t('Brand Activepieces')}
       lockDescription={t(
-        'Customize your organization name, color, logo, and favicon.',
+        'Give your users an experience that looks like you by customizing the color, logo and more',
       )}
       lockVideoUrl={
         apHostedAssetUrl(
           'https://cdn.activepieces.com/videos/showcase/appearance.mp4',
-        ) ??
-        'https://cdn.activepieces.com/videos/showcase/appearance.mp4'
+        ) ?? 'https://cdn.activepieces.com/videos/showcase/appearance.mp4'
       }
     >
       <CenteredPage
         title={t('Branding')}
-        description={t('Configure the appearance for your organization.')}
+        description={t('Configure the appearance for your platform.')}
       >
         <AppearanceSection />
       </CenteredPage>

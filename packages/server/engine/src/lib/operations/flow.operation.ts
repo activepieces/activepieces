@@ -95,7 +95,7 @@ async function getFlowExecutionState(input: ResolvedExecuteFlowOperation, consta
         if (isStepRestorable({ status: output.status, isWaitpointResume })) {
             const newOutput = await insertSuccessStepsOrPausedRecursively({ stepOutput: output, isWaitpointResume })
             if (!isNil(newOutput)) {
-                flowContext = await flowContext.upsertStep(step, newOutput)
+                flowContext = flowContext.upsertStep(step, newOutput)
             }
         }
     }

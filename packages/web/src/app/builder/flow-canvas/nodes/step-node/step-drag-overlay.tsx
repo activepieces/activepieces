@@ -4,7 +4,6 @@ import { useState } from 'react';
 
 import { SIDEBAR_ID } from '@/app/components/sidebar/dashboard';
 import { stepsHooks } from '@/features/pieces';
-
 import { apHostedAssetUrl } from '@/lib/ap-hosted-asset-url';
 
 import {

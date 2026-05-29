@@ -24,16 +24,34 @@ const AnalyticsPage = React.lazy(() => import('./impact'));
 const LeaderboardPage = React.lazy(() => import('./leaderboard'));
 const UserSettingsLayout = React.lazy(() => import('./user-settings/layout'));
 const ProfileSettingsPage = React.lazy(() => import('./user-settings/profile'));
-const PreferencesSettingsPage = React.lazy(() => import('./user-settings/preferences'));
+const PreferencesSettingsPage = React.lazy(
+  () => import('./user-settings/preferences'),
+);
 const ContactSettingsPage = React.lazy(() => import('./user-settings/contact'));
-const ConnectionsSettingsPage = React.lazy(() => import('./user-settings/connections'));
-const SecuritySettingsPage = React.lazy(() => import('./user-settings/security'));
-const WorkspaceGeneralPage = React.lazy(() => import('./user-settings/workspace/general'));
-const WorkspaceAlertsPage = React.lazy(() => import('./user-settings/workspace/alerts'));
-const WorkspaceMcpPage = React.lazy(() => import('./user-settings/workspace/mcp'));
-const WorkspacePiecesPage = React.lazy(() => import('./user-settings/workspace/pieces'));
-const WorkspaceEnvironmentPage = React.lazy(() => import('./user-settings/workspace/environment'));
-const WorkspaceMembersPage = React.lazy(() => import('./user-settings/workspace/members'));
+const ConnectionsSettingsPage = React.lazy(
+  () => import('./user-settings/connections'),
+);
+const SecuritySettingsPage = React.lazy(
+  () => import('./user-settings/security'),
+);
+const WorkspaceGeneralPage = React.lazy(
+  () => import('./user-settings/workspace/general'),
+);
+const WorkspaceAlertsPage = React.lazy(
+  () => import('./user-settings/workspace/alerts'),
+);
+const WorkspaceMcpPage = React.lazy(
+  () => import('./user-settings/workspace/mcp'),
+);
+const WorkspacePiecesPage = React.lazy(
+  () => import('./user-settings/workspace/pieces'),
+);
+const WorkspaceEnvironmentPage = React.lazy(
+  () => import('./user-settings/workspace/environment'),
+);
+const WorkspaceMembersPage = React.lazy(
+  () => import('./user-settings/workspace/members'),
+);
 const ProjectReleasesPage = React.lazy(() =>
   import('./project-release').then((m) => ({
     default: m.ProjectReleasesPage,
@@ -276,7 +294,10 @@ export const projectRoutes = [
       </ProjectDashboardLayout>
     ),
     children: [
-      { index: true, element: <Navigate to="/user-settings/profile" replace /> },
+      {
+        index: true,
+        element: <Navigate to="/user-settings/profile" replace />,
+      },
       {
         path: 'profile',
         element: (
@@ -319,27 +340,51 @@ export const projectRoutes = [
       },
       {
         path: 'workspace/general',
-        element: <SuspenseWrapper><WorkspaceGeneralPage /></SuspenseWrapper>,
+        element: (
+          <SuspenseWrapper>
+            <WorkspaceGeneralPage />
+          </SuspenseWrapper>
+        ),
       },
       {
         path: 'workspace/alerts',
-        element: <SuspenseWrapper><WorkspaceAlertsPage /></SuspenseWrapper>,
+        element: (
+          <SuspenseWrapper>
+            <WorkspaceAlertsPage />
+          </SuspenseWrapper>
+        ),
       },
       {
         path: 'workspace/mcp',
-        element: <SuspenseWrapper><WorkspaceMcpPage /></SuspenseWrapper>,
+        element: (
+          <SuspenseWrapper>
+            <WorkspaceMcpPage />
+          </SuspenseWrapper>
+        ),
       },
       {
         path: 'workspace/pieces',
-        element: <SuspenseWrapper><WorkspacePiecesPage /></SuspenseWrapper>,
+        element: (
+          <SuspenseWrapper>
+            <WorkspacePiecesPage />
+          </SuspenseWrapper>
+        ),
       },
       {
         path: 'workspace/environment',
-        element: <SuspenseWrapper><WorkspaceEnvironmentPage /></SuspenseWrapper>,
+        element: (
+          <SuspenseWrapper>
+            <WorkspaceEnvironmentPage />
+          </SuspenseWrapper>
+        ),
       },
       {
         path: 'workspace/members',
-        element: <SuspenseWrapper><WorkspaceMembersPage /></SuspenseWrapper>,
+        element: (
+          <SuspenseWrapper>
+            <WorkspaceMembersPage />
+          </SuspenseWrapper>
+        ),
       },
     ],
   },

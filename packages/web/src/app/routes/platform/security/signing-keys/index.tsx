@@ -30,12 +30,9 @@ import {
   NewSigningKeyDialog,
   signingKeyQueries,
 } from '@/features/platform-admin';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/format-utils';
 
 const SigningKeysPage = () => {
-  const { platform } = platformHooks.useCurrentPlatform();
-
   const { data, isLoading, refetch } = signingKeyQueries.useSigningKeys();
 
   const signingKeys: SigningKey[] = data?.data ?? [];

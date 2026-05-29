@@ -11,8 +11,8 @@ import { toast } from 'sonner';
 
 import { useSocket } from '@/components/providers/socket-provider';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { apHostedAssetUrl } from '@/lib/ap-hosted-asset-url';
 import { userHooks } from '@/hooks/user-hooks';
+import { apHostedAssetUrl } from '@/lib/ap-hosted-asset-url';
 
 import { AccountSettingsDialog } from './account-settings';
 

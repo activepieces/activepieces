@@ -15,7 +15,9 @@ function clerkError(err: unknown): string {
     const e = err as Record<string, unknown>;
     if (Array.isArray(e['errors']) && e['errors'].length > 0) {
       const first = e['errors'][0] as Record<string, unknown>;
-      return String(first['longMessage'] ?? first['message'] ?? 'Unknown error');
+      return String(
+        first['longMessage'] ?? first['message'] ?? 'Unknown error',
+      );
     }
     if (typeof e['message'] === 'string') return e['message'];
   }
@@ -73,7 +75,11 @@ export default function SecuritySettingsPage() {
   };
 
   const updatePasswordSecure = useReverification(async () => {
-    const { currentPassword: cur, newPassword: next, hasPassword } = formRef.current;
+    const {
+      currentPassword: cur,
+      newPassword: next,
+      hasPassword,
+    } = formRef.current;
     await user!.updatePassword({
       currentPassword: hasPassword ? cur : undefined,
       newPassword: next,

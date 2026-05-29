@@ -24,7 +24,9 @@ function clerkError(err: unknown): string {
     const e = err as Record<string, unknown>;
     if (Array.isArray(e['errors']) && e['errors'].length > 0) {
       const first = e['errors'][0] as Record<string, unknown>;
-      return String(first['longMessage'] ?? first['message'] ?? 'Unknown error');
+      return String(
+        first['longMessage'] ?? first['message'] ?? 'Unknown error',
+      );
     }
     if (typeof e['message'] === 'string') return e['message'];
   }
@@ -42,7 +44,9 @@ export default function ContactSettingsPage() {
   newEmailRef.current = newEmail;
 
   const createEmailSecure = useReverification(async () => {
-    const result = await user!.createEmailAddress({ email: newEmailRef.current.trim() });
+    const result = await user!.createEmailAddress({
+      email: newEmailRef.current.trim(),
+    });
     await result.prepareVerification({ strategy: 'email_code' });
     return result;
   });
@@ -139,10 +143,15 @@ export default function ContactSettingsPage() {
             return (
               <div key={emailAddr.id} className="flex flex-col gap-2">
                 <div className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
-                  <span className="flex-1 truncate">{emailAddr.emailAddress}</span>
+                  <span className="flex-1 truncate">
+                    {emailAddr.emailAddress}
+                  </span>
                   <div className="flex items-center gap-1.5 shrink-0">
                     {isPrimary && (
-                      <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                      <Badge
+                        variant="secondary"
+                        className="text-xs px-1.5 py-0"
+                      >
                         {t('Primary')}
                       </Badge>
                     )}
@@ -161,16 +170,17 @@ export default function ContactSettingsPage() {
                         {t('Unverified')}
                       </Badge>
                     )}
-                    {!isPrimary && emailAddr.verification.status === 'verified' && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 px-2 text-xs"
-                        onClick={() => handleMakePrimary(emailAddr)}
-                      >
-                        {t('Make primary')}
-                      </Button>
-                    )}
+                    {!isPrimary &&
+                      emailAddr.verification.status === 'verified' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-2 text-xs"
+                          onClick={() => handleMakePrimary(emailAddr)}
+                        >
+                          {t('Make primary')}
+                        </Button>
+                      )}
                     {!isPrimary && (
                       <Button
                         variant="ghost"
@@ -232,14 +242,26 @@ export default function ContactSettingsPage() {
                 onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
                 autoFocus
               />
-              <Button size="sm" className="h-8" disabled={submitting} onClick={handleAdd}>
-                {submitting ? <LoadingSpinner className="w-3.5 h-3.5" /> : t('Add')}
+              <Button
+                size="sm"
+                className="h-8"
+                disabled={submitting}
+                onClick={handleAdd}
+              >
+                {submitting ? (
+                  <LoadingSpinner className="w-3.5 h-3.5" />
+                ) : (
+                  t('Add')
+                )}
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-8"
-                onClick={() => { setAdding(false); setNewEmail(''); }}
+                onClick={() => {
+                  setAdding(false);
+                  setNewEmail('');
+                }}
               >
                 {t('Cancel')}
               </Button>

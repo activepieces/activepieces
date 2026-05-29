@@ -127,7 +127,7 @@ type UploadParams = {
     engineToken: string
     apiUrl: string
     fileId: string
-    type: FileType.FLOW_STEP_FILE | FileType.FLOW_RUN_LOG | FileType.FLOW_RUN_LOG_SLICE
+    type: FileType.FLOW_STEP_FILE | FileType.FLOW_RUN_LOG
     fileName?: string
     compression?: FileCompression
     data: Uint8Array | Buffer

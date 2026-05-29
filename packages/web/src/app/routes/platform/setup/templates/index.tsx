@@ -218,8 +218,7 @@ const PlatformTemplatesPage = () => {
       lockVideoUrl={
         apHostedAssetUrl(
           'https://cdn.activepieces.com/videos/showcase/templates.mp4',
-        ) ??
-        'https://cdn.activepieces.com/videos/showcase/templates.mp4'
+        ) ?? 'https://cdn.activepieces.com/videos/showcase/templates.mp4'
       }
     >
       <div className="flex flex-col w-full">
