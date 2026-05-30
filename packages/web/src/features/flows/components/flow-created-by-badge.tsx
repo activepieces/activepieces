@@ -34,7 +34,7 @@ export const FlowCreatedByBadge = ({
           {t('AI')}
         </span>
       </TooltipTrigger>
-      <TooltipContent side="bottom">{t('Created by AI MCP')}</TooltipContent>
+      <TooltipContent side="bottom">{t('Created by AI')}</TooltipContent>
     </Tooltip>
   );
 };

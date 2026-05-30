@@ -3,6 +3,7 @@ import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import {
     apId,
     FlowActionType,
+    FlowCreatorType,
     FlowRunStatus,
     McpServerType,
     PackageType,
@@ -39,6 +40,8 @@ import { apListRunsTool } from '../../../../src/app/mcp/tools/ap-list-runs'
 import { apGetRunTool } from '../../../../src/app/mcp/tools/ap-get-run'
 import { apRunActionTool } from '../../../../src/app/mcp/tools/ap-run-action'
 import { mcpUtils } from '../../../../src/app/mcp/tools/mcp-utils'
+import { flowService } from '../../../../src/app/flows/flow/flow.service'
+import { StatusCodes } from 'http-status-codes'
 
 let app: FastifyInstance
 let mockLog: FastifyBaseLogger
@@ -2484,5 +2487,73 @@ describe('MCP Tools integration', () => {
         // (which also wouldn't contain the piece name) would falsely pass.
         expect(text(result)).toContain('✅')
         expect(text(result)).not.toContain('@activepieces/piece-private-only-b')
+    })
+
+    // ── Flow attribution (createdBy / ownerId) ───────────────────────
+
+    it('ap_create_flow — stamps createdBy=MCP and ownerId=connected user', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = { ...makeMcp(ctx.project.id), userId: ctx.user.id }
+
+        const flowId = await createFlowAndGetId(mcp, 'Attributed Flow')
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+
+        expect(flow.createdBy).toEqual({ type: FlowCreatorType.MCP, id: mcp.id })
+        expect(flow.ownerId).toBe(ctx.user.id)
+    })
+
+    it('ap_build_flow — stamps createdBy=MCP and ownerId=connected user', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = { ...makeMcp(ctx.project.id), userId: ctx.user.id }
+
+        const result = await apBuildFlowTool(mcp, mockLog).execute({
+            flowName: 'Built Attributed Flow',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [],
+        })
+        const flowId = text(result).match(/\(id: (\S+?)\)/)?.[1]
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId!, projectId: ctx.project.id })
+
+        expect(flow.createdBy).toEqual({ type: FlowCreatorType.MCP, id: mcp.id })
+        expect(flow.ownerId).toBe(ctx.user.id)
+    })
+
+    it('ap_duplicate_flow — copy inherits MCP attribution, not the source flow owner', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = { ...makeMcp(ctx.project.id), userId: ctx.user.id }
+        const sourceId = await createFlowAndGetId(mcp, 'Dup Source')
+
+        const dupResult = await apDuplicateFlowTool(mcp, mockLog).execute({ flowId: sourceId, name: 'Dup Copy' })
+        const copyId = text(dupResult).match(/Copy: ".*?" \(id: (\S+?)\)/)?.[1]
+        const copy = await flowService(mockLog).getOnePopulatedOrThrow({ id: copyId!, projectId: ctx.project.id })
+
+        expect(copy.createdBy).toEqual({ type: FlowCreatorType.MCP, id: mcp.id })
+        expect(copy.ownerId).toBe(ctx.user.id)
+    })
+
+    it('REST POST /v1/flows — createdBy is null (human-created)', async () => {
+        const ctx = await createTestContext(app)
+
+        const response = await ctx.post('/v1/flows', {
+            displayName: 'Hand-built Flow',
+            projectId: ctx.project.id,
+        }, { query: { projectId: ctx.project.id } })
+
+        expect(response.statusCode).toBe(StatusCodes.CREATED)
+        expect(response.json().createdBy ?? null).toBeNull()
+    })
+
+    it('REST POST /v1/flows — createdBy cannot be injected through the request body', async () => {
+        const ctx = await createTestContext(app)
+
+        const response = await ctx.post('/v1/flows', {
+            displayName: 'Spoof Attempt',
+            projectId: ctx.project.id,
+            createdBy: { type: FlowCreatorType.MCP, id: apId() },
+        }, { query: { projectId: ctx.project.id } })
+
+        expect(response.statusCode).toBe(StatusCodes.CREATED)
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: response.json().id, projectId: ctx.project.id })
+        expect(flow.createdBy ?? null).toBeNull()
     })
 })
