@@ -109,6 +109,7 @@ export const generateMockExternalToken = (
         algorithm,
         key,
         keyId,
+        issuer: 'otom8',
     })
 
     return {

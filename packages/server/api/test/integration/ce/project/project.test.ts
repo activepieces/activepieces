@@ -1,6 +1,5 @@
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
-    ErrorCode,
     PrincipalType,
     ProjectType,
     TeamProjectsLimit,
@@ -50,7 +49,10 @@ describe('Project API (CE)', () => {
             expect(responseBody.platformId).toBe(mockPlatform.id)
         })
 
-        it('should fail to create a second team project', async () => {
+        // otom8 unlocks self-hosted workspace controls: OPEN_SOURCE_PLAN sets
+        // teamProjectsLimit to UNLIMITED (see OPEN_SOURCE_PLAN in @activepieces/shared),
+        // so CE allows creating more than one team project. Upstream caps CE at one.
+        it('should allow creating a second team project', async () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 plan: { teamProjectsLimit: TeamProjectsLimit.ONE },
             })
@@ -68,9 +70,7 @@ describe('Project API (CE)', () => {
                 headers: { authorization: `Bearer ${testToken}` },
             })
 
-            expect(response?.statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
-            const responseBody = response?.json()
-            expect(responseBody?.code).toBe(ErrorCode.FEATURE_DISABLED)
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
         })
     })
 })
