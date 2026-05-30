@@ -50,6 +50,17 @@ export const UploadLogsToken = z.object({
 
 export type UploadLogsToken = z.infer<typeof UploadLogsToken>
 
+export const FileTransportQueryParams = z.object({
+    token: z.string(),
+})
+export type FileTransportQueryParams = z.infer<typeof FileTransportQueryParams>
+
+export const FileReadToken = z.object({
+    fileId: z.string(),
+    fileType: z.string().optional(),
+})
+export type FileReadToken = z.infer<typeof FileReadToken>
+
 export const SendFlowResponseRequest = z.object({
     workerHandlerId: z.string(),
     httpRequestId: z.string(),
