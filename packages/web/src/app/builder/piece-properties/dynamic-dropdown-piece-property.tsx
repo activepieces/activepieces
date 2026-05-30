@@ -14,6 +14,7 @@ import { MultiSelectPieceProperty } from '../../../components/custom/multi-selec
 
 import { DynamicPropertiesErrorBoundary } from './dynamic-piece-properties-error-boundary';
 import { DynamicPropertiesContext } from './dynamic-properties-context';
+import { dropdownOptionsCache } from './piece-options-cache';
 
 const DynamicDropdownPiecePropertyImplementation = React.memo(
   (props: DynamicDropdownProps) => {
@@ -67,15 +68,35 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
       control: props.form.control,
     });
 
-    const refresh = (term?: string) => {
+    const refresh = (term?: string, options?: { force?: boolean }) => {
       const input: Record<string, unknown> = {};
       refreshersWithAuth.forEach((refresher, index) => {
         input[refresher] = refresherValues[index];
       });
+      const projectId = authenticationSession.getProjectId()!;
+      const cacheKey = {
+        projectId,
+        pieceName: props.pieceName,
+        pieceVersion: props.pieceVersion,
+        propertyName: props.propertyName,
+        actionOrTriggerName: props.actionOrTriggerName,
+        input,
+        searchValue: term,
+      };
+      if (!options?.force) {
+        const cached = dropdownOptionsCache.get(cacheKey);
+        if (cached) {
+          if (!firstDropdownState.current) {
+            firstDropdownState.current = cached;
+          }
+          setDropdownState(cached);
+          return;
+        }
+      }
       mutate(
         {
           request: {
-            projectId: authenticationSession.getProjectId()!,
+            projectId,
             pieceName: props.pieceName,
             pieceVersion: props.pieceVersion,
             propertyName: props.propertyName,
@@ -89,6 +110,7 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
         },
         {
           onSuccess: (response) => {
+            dropdownOptionsCache.set(cacheKey, response.options);
             if (!firstDropdownState.current) {
               firstDropdownState.current = response.options;
             }
@@ -132,7 +154,7 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
           !isDisabled
         }
         showRefresh={!isPending && !readonly}
-        onRefresh={refresh}
+        onRefresh={() => refresh(undefined, { force: true })}
         refreshOnSearch={props.shouldRefreshOnSearch ? refresh : undefined}
         cachedOptions={firstDropdownState.current?.options ?? []}
       />
@@ -147,7 +169,7 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
         showDeselect={
           props.showDeselect && !isNil(props.value) && !props.disabled
         }
-        onRefresh={refresh}
+        onRefresh={() => refresh(undefined, { force: true })}
         showRefresh={!isPending && !readonly}
         refreshOnSearch={props.shouldRefreshOnSearch ? refresh : undefined}
         cachedOptions={firstDropdownState.current?.options ?? []}

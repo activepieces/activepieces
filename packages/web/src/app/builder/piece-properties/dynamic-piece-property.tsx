@@ -5,18 +5,28 @@ import {
   PropertySettings,
 } from '@activepieces/shared';
 import deepEqual from 'deep-equal';
+import { t } from 'i18next';
+import { RefreshCcw } from 'lucide-react';
 import React, { useState, useRef, useContext } from 'react';
 import { useFormContext, UseFormReturn, useWatch } from 'react-hook-form';
 import { useDeepCompareEffectNoCheck } from 'use-deep-compare-effect';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { Button } from '@/components/ui/button';
 import { SkeletonList } from '@/components/ui/skeleton';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { piecesHooks, formUtils } from '@/features/pieces';
 import { authenticationSession } from '@/lib/authentication-session';
+import { cn } from '@/lib/utils';
 
 import { DynamicPropertiesErrorBoundary } from './dynamic-piece-properties-error-boundary';
 import { DynamicPropertiesContext } from './dynamic-properties-context';
 import { GenericPropertiesForm } from './generic-properties-form';
+import { dynamicPropsCache } from './piece-options-cache';
 
 const removeOptionsFromDropdownPropertiesSchema = (
   schema: PiecePropertyMap,
@@ -108,15 +118,59 @@ const DynamicPropertiesImplementation = React.memo(
         },
       );
     };
-    useDeepCompareEffectNoCheck(() => {
-      if (!deepEqual(previousRefresherValues.current, refresherValues)) {
-        clearPropertyValue();
+    const applyResponse = (options: PiecePropertyMap) => {
+      const propertyNameWithPrefix = prependPrefixToPropertyName({
+        propertyName: props.propertyName,
+        prefix: propertyPrefix,
+      });
+      const currentValue = form.getValues(propertyNameWithPrefix);
+      const defaultValue = formUtils.getDefaultValueForProperties({
+        props: options,
+        existingInput: currentValue ?? {},
+        propertySettings: props.propertySettings ?? {},
+      });
+      setPropertyMap(options);
+      const schemaWithoutDropdownOptions =
+        removeOptionsFromDropdownPropertiesSchema(options);
+      props.updateFormSchema?.(
+        propertyNameWithPrefix,
+        schemaWithoutDropdownOptions,
+      );
+
+      if (!readonly && props.updatePropertySettingsSchema) {
+        props.updatePropertySettingsSchema(
+          schemaWithoutDropdownOptions,
+          props.propertyName,
+          form,
+        );
       }
-      previousRefresherValues.current = refresherValues;
+      form.setValue(propertyNameWithPrefix, defaultValue, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    };
+
+    const fetchProperties = (options?: { force?: boolean }) => {
+      const projectId = authenticationSession.getProjectId()!;
+      const cacheKey = {
+        projectId,
+        pieceName: props.pieceName,
+        pieceVersion: props.pieceVersion,
+        propertyName: props.propertyName,
+        actionOrTriggerName: props.actionOrTriggerName,
+        input: refresherValues,
+      };
+      if (!options?.force) {
+        const cached = dynamicPropsCache.get(cacheKey);
+        if (cached) {
+          applyResponse(cached);
+          return;
+        }
+      }
       mutate(
         {
           request: {
-            projectId: authenticationSession.getProjectId()!,
+            projectId,
             pieceName: props.pieceName,
             pieceVersion: props.pieceVersion,
             propertyName: props.propertyName,
@@ -129,57 +183,64 @@ const DynamicPropertiesImplementation = React.memo(
         },
         {
           onSuccess: (response) => {
-            const currentValue = form.getValues(
-              prependPrefixToPropertyName({
-                propertyName: props.propertyName,
-                prefix: propertyPrefix,
-              }),
-            );
-            const defaultValue = formUtils.getDefaultValueForProperties({
-              props: response.options,
-              existingInput: currentValue ?? {},
-              propertySettings: props.propertySettings ?? {},
-            });
-            setPropertyMap(response.options);
-            const schemaWithoutDropdownOptions =
-              removeOptionsFromDropdownPropertiesSchema(response.options);
-            props.updateFormSchema?.(
-              prependPrefixToPropertyName({
-                propertyName: props.propertyName,
-                prefix: propertyPrefix,
-              }),
-              schemaWithoutDropdownOptions,
-            );
-
-            if (!readonly && props.updatePropertySettingsSchema) {
-              props.updatePropertySettingsSchema(
-                schemaWithoutDropdownOptions,
-                props.propertyName,
-                form,
-              );
-            }
-            form.setValue(
-              prependPrefixToPropertyName({
-                propertyName: props.propertyName,
-                prefix: propertyPrefix,
-              }),
-              defaultValue,
-              {
-                shouldValidate: true,
-                shouldDirty: true,
-              },
-            );
+            dynamicPropsCache.set(cacheKey, response.options);
+            applyResponse(response.options);
           },
         },
       );
+    };
+
+    useDeepCompareEffectNoCheck(() => {
+      if (!deepEqual(previousRefresherValues.current, refresherValues)) {
+        clearPropertyValue();
+      }
+      previousRefresherValues.current = refresherValues;
+      fetchProperties();
     }, [refresherValues]);
 
+    const shouldShowSkeleton = isPending && !propertyMap;
+    const shouldShowProperties = !!propertyMap;
+    const showRefresh = !readonly && shouldShowProperties;
+
+    if (!shouldShowSkeleton && !shouldShowProperties) {
+      return null;
+    }
+
     return (
-      <>
-        {isPending && (
+      <div
+        className={cn('rounded-md border border-border bg-background p-3', {
+          'space-y-3': shouldShowSkeleton || shouldShowProperties,
+        })}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm font-medium text-muted-foreground">
+            {t('Fields')}
+          </span>
+          {showRefresh && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  type="button"
+                  disabled={props.disabled || isPending}
+                  onClick={() => fetchProperties({ force: true })}
+                >
+                  <RefreshCcw
+                    className={cn('size-3', {
+                      'animate-spin': isPending,
+                    })}
+                  />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{t('Refresh')}</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+        {shouldShowSkeleton && (
           <SkeletonList numberOfItems={3} className="h-7"></SkeletonList>
         )}
-        {!isPending && propertyMap && (
+        {shouldShowProperties && (
           <GenericPropertiesForm
             prefixValue={prependPrefixToPropertyName({
               propertyName: props.propertyName,
@@ -195,7 +256,7 @@ const DynamicPropertiesImplementation = React.memo(
             }}
           ></GenericPropertiesForm>
         )}
-      </>
+      </div>
     );
   },
 );
