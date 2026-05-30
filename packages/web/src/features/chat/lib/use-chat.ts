@@ -3,12 +3,15 @@ import {
   ChatConversationStatus,
   CHAT_ALLOWED_MIME_TYPES,
   DEFAULT_CHAT_TIER_ID,
+  ErrorCode,
   isObject,
   PlanStepUpdate,
   tryCatch,
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo, useRef, useState } from 'react';
+
+import { api } from '@/lib/api';
 
 import { chatApi } from './chat-api';
 import { useChatStoreApi } from './chat-store-context';
@@ -97,9 +100,11 @@ type SendStatus =
 export function useAgentChat({
   onTitleUpdate,
   onConversationCreated,
+  onCreditsExhausted,
 }: {
   onTitleUpdate?: (title: string) => void;
   onConversationCreated?: (conversationId: string) => void;
+  onCreditsExhausted?: () => void;
 } = {}) {
   const store = useChatStoreApi();
 
@@ -113,6 +118,8 @@ export function useAgentChat({
   const [isPollingForAgentReply, setIsPollingForAgentReply] = useState(false);
   const [sendStatus, setSendStatus] = useState<SendStatus>({ type: 'idle' });
   const sendStatusRef = useRef<SendStatus>({ type: 'idle' });
+  const onCreditsExhaustedRef = useRef(onCreditsExhausted);
+  onCreditsExhaustedRef.current = onCreditsExhausted;
 
   const [persistedMessages, setPersistedMessages] = useState<ChatUIMessage[]>(
     [],
@@ -250,7 +257,10 @@ export function useAgentChat({
     onStreamFinished: (convId) => {
       void reconcile(convId).then(() => clearStreamingState());
     },
-    onStreamError: ({ conversationId: convId }) => {
+    onStreamError: ({ conversationId: convId, errorCode }) => {
+      if (errorCode === ErrorCode.AI_CREDIT_LIMIT_EXCEEDED) {
+        onCreditsExhaustedRef.current?.();
+      }
       void reconcile(convId).then(() => clearStreamingState());
     },
   });
@@ -392,10 +402,15 @@ export function useAgentChat({
       if (sendError) {
         stopStream();
         setOptimisticUserMessage(null);
-        updateSendStatus({
-          type: 'error',
-          message: sendError.message ?? 'Failed to send message',
-        });
+        if (api.isApError(sendError, ErrorCode.AI_CREDIT_LIMIT_EXCEEDED)) {
+          onCreditsExhaustedRef.current?.();
+          updateSendStatus({ type: 'idle' });
+        } else {
+          updateSendStatus({
+            type: 'error',
+            message: sendError.message ?? 'Failed to send message',
+          });
+        }
       }
     },
     [createConversation, startStream, stopStream, updateSendStatus, store],
