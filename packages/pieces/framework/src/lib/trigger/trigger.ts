@@ -44,13 +44,6 @@ type BaseTriggerParams<
   name: string
   displayName: string
   description: string
-  /**
-   * Optional alternate description shown to LLMs (chat / MCP).
-   * Use this for tool-selection guidance, anti-patterns, disambiguation,
-   * and parameter pitfalls that would be noise in the human UI description.
-   * Falls back to {@code description} when omitted.
-   */
-  llmDescription?: string
   requireAuth?: boolean
   auth?: PieceAuth
   props: TriggerProps
@@ -117,7 +110,6 @@ export class ITrigger<
     public readonly test: (ctx: TestOrRunHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<unknown[]>,
     public readonly sampleData: unknown,
     public readonly testStrategy: TriggerTestStrategy,
-    public readonly llmDescription?: string,
     public readonly aiMetadata?: AiMetadata,
   ) { }
 }
@@ -155,7 +147,6 @@ export const createTrigger = <
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
         params.test ? TriggerTestStrategy.TEST_FUNCTION : TriggerTestStrategy.SIMULATION,
-        params.llmDescription,
         params.aiMetadata,
       )
     case TriggerStrategy.POLLING:
@@ -177,7 +168,6 @@ export const createTrigger = <
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
         TriggerTestStrategy.TEST_FUNCTION,
-        params.llmDescription,
         params.aiMetadata,
       )
     case TriggerStrategy.MANUAL:
@@ -199,7 +189,6 @@ export const createTrigger = <
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
         TriggerTestStrategy.TEST_FUNCTION,
-        params.llmDescription,
         params.aiMetadata,
       )
     case TriggerStrategy.APP_WEBHOOK:
@@ -221,7 +210,6 @@ export const createTrigger = <
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
         (isNil(params.sampleData) && isNil(params.test)) ? TriggerTestStrategy.SIMULATION : TriggerTestStrategy.TEST_FUNCTION,
-        params.llmDescription,
         params.aiMetadata,
       )
   }
