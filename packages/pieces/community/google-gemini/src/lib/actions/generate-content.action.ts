@@ -131,34 +131,42 @@ export const generateContentAction = createAction({
 
 				const tempFilePath = join(tmpdir(), `gemini-file-${nanoid()}.${file.extension}`);
 
-				const fileBuffer = Buffer.from(file.base64, 'base64');
-				await fs.writeFile(tempFilePath, fileBuffer);
+				try {
+					const fileBuffer = Buffer.from(file.base64, 'base64');
+					await fs.mkdir(tmpdir(), { recursive: true });
+					await fs.writeFile(tempFilePath, fileBuffer);
 
-				const fileSearchStore = await genAI.fileSearchStores.create({
-					config: { displayName: fileStoreName },
-				});
+					const fileSearchStore = await genAI.fileSearchStores.create({
+						config: { displayName: fileStoreName },
+					});
 
-				let operation = await genAI.fileSearchStores.uploadToFileSearchStore({
-					file: tempFilePath,
-					fileSearchStoreName: fileSearchStore.name!,
-					config: {
-						displayName: file.filename,
-					},
-				});
-				while (!operation.done) {
-					await new Promise((resolve) => setTimeout(resolve, 5000));
-					operation = await genAI.operations.get({ operation });
-				}
-
-				params.config = {
-					tools: [
-						{
-							fileSearch: {
-								fileSearchStoreNames: [fileSearchStore.name!],
-							},
+					let operation = await genAI.fileSearchStores.uploadToFileSearchStore({
+						file: tempFilePath,
+						fileSearchStoreName: fileSearchStore.name!,
+						config: {
+							displayName: file.filename,
 						},
-					],
-				};
+					});
+					while (!operation.done) {
+						await new Promise((resolve) => setTimeout(resolve, 5000));
+						operation = await genAI.operations.get({ operation });
+					}
+
+					params.config = {
+						tools: [
+							{
+								fileSearch: {
+									fileSearchStoreNames: [fileSearchStore.name!],
+								},
+							},
+						],
+					};
+				} catch (error) {
+					console.error('Error in generate content with file search:', error);
+					throw error;
+				} finally {
+					await fs.unlink(tempFilePath).catch(() => void 0);
+				}
 
 				break;
 			}

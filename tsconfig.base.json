@@ -131,6 +131,9 @@
       "@activepieces/piece-azure-communication-services": [
         "packages/pieces/community/azure-communication-services/src/index.ts"
       ],
+      "@activepieces/piece-azure-devops": [
+        "packages/pieces/community/azure-devops/src/index.ts"
+      ],
       "@activepieces/piece-azure-openai": [
         "packages/pieces/community/azure-openai/src/index.ts"
       ],
@@ -194,6 +197,9 @@
       ],
       "@activepieces/piece-bubble": [
         "packages/pieces/community/bubble/src/index.ts"
+      ],
+      "@activepieces/piece-buffer": [
+        "packages/pieces/community/buffer/src/index.ts"
       ],
       "@activepieces/piece-bumpups": [
         "packages/pieces/community/bumpups/src/index.ts"
@@ -560,8 +566,8 @@
       "@activepieces/piece-gotify": [
         "packages/pieces/community/gotify/src/index.ts"
       ],
-      "@activepieces/piece-greenhouse": [
-        "packages/pieces/community/greenhouse/src/index.ts"
+      "@activepieces/piece-gorgias": [
+        "packages/pieces/community/gorgias/src/index.ts"
       ],
       "@activepieces/piece-granola": [
         "packages/pieces/community/granola/src/index.ts"
@@ -571,6 +577,9 @@
       ],
       "@activepieces/piece-gravityforms": [
         "packages/pieces/community/gravityforms/src/index.ts"
+      ],
+      "@activepieces/piece-greenhouse": [
+        "packages/pieces/community/greenhouse/src/index.ts"
       ],
       "@activepieces/piece-grist": [
         "packages/pieces/community/grist/src/index.ts"
@@ -872,6 +881,9 @@
       "@activepieces/piece-okta": [
         "packages/pieces/community/okta/src/index.ts"
       ],
+      "@activepieces/piece-omnisend": [
+        "packages/pieces/community/omnisend/src/index.ts"
+      ],
       "@activepieces/piece-onfleet": [
         "packages/pieces/community/onfleet/src/index.ts"
       ],
@@ -1068,6 +1080,9 @@
       ],
       "@activepieces/piece-salesforce": [
         "packages/pieces/community/salesforce/src/index.ts"
+      ],
+      "@activepieces/piece-salesloft": [
+        "packages/pieces/community/salesloft/src/index.ts"
       ],
       "@activepieces/piece-savvycal": [
         "packages/pieces/community/savvycal/src/index.ts"
@@ -1322,6 +1337,9 @@
       "@activepieces/piece-upgradechat": [
         "packages/pieces/community/upgradechat/src/index.ts"
       ],
+      "@activepieces/piece-uptimerobot": [
+        "packages/pieces/community/uptimerobot/src/index.ts"
+      ],
       "@activepieces/piece-useinbox": [
         "packages/pieces/community/useinbox/src/index.ts"
       ],
@@ -1387,6 +1405,9 @@
       ],
       "@activepieces/piece-whatsscale": [
         "packages/pieces/community/whatsscale/src/index.ts"
+      ],
+      "@activepieces/piece-wistia": [
+        "packages/pieces/community/wistia/src/index.ts"
       ],
       "@activepieces/piece-wonderchat": [
         "packages/pieces/community/wonderchat/src/index.ts"
