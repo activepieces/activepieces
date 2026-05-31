@@ -137,9 +137,6 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
 }
 
 async function isRequesterPlatformAdmin(request: FastifyRequest): Promise<boolean> {
-    if (request.principal.type === PrincipalType.SERVICE) {
-        return true
-    }
     if (request.principal.type !== PrincipalType.USER) {
         return false
     }
