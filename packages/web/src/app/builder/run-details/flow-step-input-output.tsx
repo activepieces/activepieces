@@ -28,7 +28,9 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { formatUtils } from '@/lib/format-utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
+import { stepPropertiesSnapshotUtils } from '../data-display/build-step-properties-snapshot';
 import { DataDisplayTabs } from '../data-display/data-display-tabs';
+import { ErrorExplanationContext } from '../data-display/explanation-prompt';
 import { FriendlyErrorView } from '../data-display/friendly-error-view';
 import { isRunAgent } from '../test-step/agent-test-step';
 import { TestPanelHeader } from '../test-step/test-panel-header';
@@ -157,6 +159,40 @@ export const FlowStepInputOutput = () => {
       ? 'testing'
       : 'success';
 
+  const stepKind: 'action' | 'trigger' =
+    selectedStep.type === FlowTriggerType.PIECE ? 'trigger' : 'action';
+  const stepName =
+    selectedStep.type === FlowActionType.PIECE
+      ? selectedStep.settings.actionName
+      : selectedStep.type === FlowTriggerType.PIECE
+      ? selectedStep.settings.triggerName
+      : selectedStep.type;
+  const stepInput =
+    selectedStep.type === FlowActionType.PIECE ||
+    selectedStep.type === FlowTriggerType.PIECE
+      ? (selectedStep.settings.input as Record<string, unknown> | undefined)
+      : undefined;
+  const explanationContext: ErrorExplanationContext = {
+    pieceName: stepPieceName,
+    pieceVersion: stepPieceVersion,
+    pieceDisplayName: pieceModel?.displayName,
+    pieceAuthType: stepPropertiesSnapshotUtils.findAuthType(pieceModel),
+    stepKind,
+    stepName,
+    stepDisplayName: selectedStep.displayName,
+    stepDescription: stepPropertiesSnapshotUtils.findDescription({
+      pieceModel,
+      stepKind,
+      stepName,
+    }),
+    stepProperties: stepPropertiesSnapshotUtils.build({
+      pieceModel,
+      stepKind,
+      stepName,
+      input: stepInput,
+    }),
+  };
+
   return (
     <div className="h-full flex flex-col">
       <TestPanelHeader
@@ -205,6 +241,7 @@ export const FlowStepInputOutput = () => {
             ) : friendlyError ? (
               <FriendlyErrorView
                 error={friendlyError}
+                explanationContext={explanationContext}
                 pieceDisplayName={pieceModel?.displayName}
               />
             ) : (
