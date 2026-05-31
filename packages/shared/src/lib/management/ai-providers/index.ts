@@ -380,8 +380,8 @@ function getMaxContextTokens({ provider }: { provider: AIProviderName | undefine
 
 export const ACTIVEPIECES_CHAT_TIERS = [
     { id: 'fast', label: 'Fast', modelId: 'anthropic/claude-opus-4.7', thinkingBudget: 5_000 },
-    { id: 'smart', label: 'Smart', modelId: 'anthropic/claude-opus-4.7', thinkingBudget: 10_000 },
-    { id: 'premium', label: 'Premium', modelId: 'anthropic/claude-opus-4.7', thinkingBudget: 20_000 },
+    { id: 'smart', label: 'Expert', modelId: 'anthropic/claude-opus-4.7', thinkingBudget: 10_000 },
+    { id: 'premium', label: 'Heavy', modelId: 'anthropic/claude-opus-4.7', thinkingBudget: 20_000 },
 ] as const
 
 export const DEFAULT_CHAT_TIER_ID = 'smart' as const

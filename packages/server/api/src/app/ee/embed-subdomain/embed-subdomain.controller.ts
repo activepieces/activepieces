@@ -1,4 +1,4 @@
-import { ActivepiecesError, AddAllowedEmbedOriginsRequestBody, AddAllowedEmbedOriginsResponse, EmbedSubdomain, ErrorCode, GenerateEmbedSubdomainRequest, MAX_ALLOWED_EMBED_ORIGINS, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, unique } from '@activepieces/shared'
+import { AddAllowedEmbedOriginsRequestBody, AddAllowedEmbedOriginsResponse, EmbedSubdomain, GenerateEmbedSubdomainRequest, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, unique } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
@@ -23,14 +23,6 @@ export const embedSubdomainController: FastifyPluginAsyncZod = async (app) => {
         const platformId = request.principal.platform.id
         const platform = await platformService(request.log).getOneOrThrow(platformId)
         const merged = unique([...platform.allowedEmbedOrigins, ...request.body.allowedEmbedOrigins])
-        if (merged.length > MAX_ALLOWED_EMBED_ORIGINS) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: `Allowed embed origins exceeds the maximum of ${MAX_ALLOWED_EMBED_ORIGINS}`,
-                },
-            })
-        }
         const updated = await platformService(request.log).update({
             id: platformId,
             allowedEmbedOrigins: merged,

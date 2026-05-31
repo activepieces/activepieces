@@ -131,6 +131,9 @@
       "@activepieces/piece-azure-communication-services": [
         "packages/pieces/community/azure-communication-services/src/index.ts"
       ],
+      "@activepieces/piece-azure-devops": [
+        "packages/pieces/community/azure-devops/src/index.ts"
+      ],
       "@activepieces/piece-azure-openai": [
         "packages/pieces/community/azure-openai/src/index.ts"
       ],
@@ -194,6 +197,9 @@
       ],
       "@activepieces/piece-bubble": [
         "packages/pieces/community/bubble/src/index.ts"
+      ],
+      "@activepieces/piece-buffer": [
+        "packages/pieces/community/buffer/src/index.ts"
       ],
       "@activepieces/piece-bumpups": [
         "packages/pieces/community/bumpups/src/index.ts"
@@ -454,6 +460,9 @@
       "@activepieces/piece-fliqr-ai": [
         "packages/pieces/community/fliqr-ai/src/index.ts"
       ],
+      "@activepieces/piece-frill": [
+        "packages/pieces/community/frill/src/index.ts"
+      ],
       "@activepieces/piece-flow-helper": [
         "packages/pieces/community/flow-helper/src/index.ts"
       ],
@@ -557,8 +566,8 @@
       "@activepieces/piece-gotify": [
         "packages/pieces/community/gotify/src/index.ts"
       ],
-      "@activepieces/piece-greenhouse": [
-        "packages/pieces/community/greenhouse/src/index.ts"
+      "@activepieces/piece-gorgias": [
+        "packages/pieces/community/gorgias/src/index.ts"
       ],
       "@activepieces/piece-granola": [
         "packages/pieces/community/granola/src/index.ts"
@@ -568,6 +577,9 @@
       ],
       "@activepieces/piece-gravityforms": [
         "packages/pieces/community/gravityforms/src/index.ts"
+      ],
+      "@activepieces/piece-greenhouse": [
+        "packages/pieces/community/greenhouse/src/index.ts"
       ],
       "@activepieces/piece-grist": [
         "packages/pieces/community/grist/src/index.ts"
@@ -869,6 +881,9 @@
       "@activepieces/piece-okta": [
         "packages/pieces/community/okta/src/index.ts"
       ],
+      "@activepieces/piece-omnisend": [
+        "packages/pieces/community/omnisend/src/index.ts"
+      ],
       "@activepieces/piece-onfleet": [
         "packages/pieces/community/onfleet/src/index.ts"
       ],
@@ -959,6 +974,9 @@
       ],
       "@activepieces/piece-postiz": [
         "packages/pieces/community/postiz/src/index.ts"
+      ],
+      "@activepieces/piece-postmark": [
+        "packages/pieces/community/postmark/src/index.ts"
       ],
       "@activepieces/piece-predict-leads": [
         "packages/pieces/community/predict-leads/src/index.ts"
@@ -1063,6 +1081,9 @@
       "@activepieces/piece-salesforce": [
         "packages/pieces/community/salesforce/src/index.ts"
       ],
+      "@activepieces/piece-salesloft": [
+        "packages/pieces/community/salesloft/src/index.ts"
+      ],
       "@activepieces/piece-savvycal": [
         "packages/pieces/community/savvycal/src/index.ts"
       ],
@@ -1083,6 +1104,9 @@
       ],
       "@activepieces/piece-sender": [
         "packages/pieces/community/sender/src/index.ts"
+      ],
+      "@activepieces/piece-sendr": [
+        "packages/pieces/community/sendr/src/index.ts"
       ],
       "@activepieces/piece-sendfox": [
         "packages/pieces/community/sendfox/src/index.ts"
@@ -1191,6 +1215,9 @@
       "@activepieces/piece-store": ["packages/pieces/core/store/src/index.ts"],
       "@activepieces/piece-straico": [
         "packages/pieces/community/straico/src/index.ts"
+      ],
+      "@activepieces/piece-streak": [
+        "packages/pieces/community/streak/src/index.ts"
       ],
       "@activepieces/piece-stripe": [
         "packages/pieces/community/stripe/src/index.ts"
@@ -1310,6 +1337,12 @@
       "@activepieces/piece-upgradechat": [
         "packages/pieces/community/upgradechat/src/index.ts"
       ],
+      "@activepieces/piece-uptimerobot": [
+        "packages/pieces/community/uptimerobot/src/index.ts"
+      ],
+      "@activepieces/piece-useinbox": [
+        "packages/pieces/community/useinbox/src/index.ts"
+      ],
       "@activepieces/piece-utility-ai": [
         "packages/pieces/community/utility-ai/src/index.ts"
       ],
@@ -1373,6 +1406,9 @@
       "@activepieces/piece-whatsscale": [
         "packages/pieces/community/whatsscale/src/index.ts"
       ],
+      "@activepieces/piece-wistia": [
+        "packages/pieces/community/wistia/src/index.ts"
+      ],
       "@activepieces/piece-wonderchat": [
         "packages/pieces/community/wonderchat/src/index.ts"
       ],
@@ -1399,6 +1435,9 @@
       ],
       "@activepieces/piece-xero": [
         "packages/pieces/community/xero/src/index.ts"
+      ],
+      "@activepieces/piece-xquik": [
+        "packages/pieces/community/xquik/src/index.ts"
       ],
       "@activepieces/piece-xml": ["packages/pieces/core/xml/src/index.ts"],
       "@activepieces/piece-youtube": [
@@ -2012,6 +2051,9 @@
       ],
       "@activepieces/piece-knock": [
         "packages/pieces/community/knock/src/index.ts"
+      ],
+      "@activepieces/piece-plunk": [
+        "packages/pieces/community/plunk/src/index.ts"
       ],
       "@activepieces/piece-proxycurl": [
         "packages/pieces/community/proxycurl/src/index.ts"

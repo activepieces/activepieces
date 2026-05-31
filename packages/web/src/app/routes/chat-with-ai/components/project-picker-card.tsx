@@ -44,6 +44,8 @@ export function ProjectPickerCard({
   const [selected, setSelected] = useState<string | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  const suggestedProjects = picker.suggestedProjects ?? [];
+
   function handleSelect(projectId: string, name: string) {
     setSelected(projectId);
     onSelect(projectId, name);
@@ -57,8 +59,8 @@ export function ProjectPickerCard({
     const displayName = resolvedProject
       ? getProjectName(resolvedProject)
       : projectId
-      ? picker.suggestedProjects.find((p) => p.id === projectId)?.name ?? ''
-      : picker.suggestedProjects[0]?.name ?? '';
+      ? suggestedProjects.find((p) => p.id === projectId)?.name ?? ''
+      : suggestedProjects[0]?.name ?? '';
     return (
       <motion.div
         className="rounded-xl border bg-background overflow-hidden my-2"
@@ -99,7 +101,7 @@ export function ProjectPickerCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
     >
-      {picker.suggestedProjects
+      {suggestedProjects
         .filter((s) => projects.some((p) => p.id === s.id))
         .map((suggested, i) => {
           const resolvedProject = projects.find((p) => p.id === suggested.id);
@@ -144,7 +146,7 @@ export function ProjectPickerCard({
             animate={{ opacity: 1, y: 0 }}
             transition={{
               duration: 0.2,
-              delay: picker.suggestedProjects.length * 0.04,
+              delay: suggestedProjects.length * 0.04,
             }}
           >
             <Ellipsis className="size-3.5" />

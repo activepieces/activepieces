@@ -101,7 +101,7 @@ export function ChatInput({
         value={value}
         onValueChange={setValue}
         onSubmit={handleSubmit}
-        className="relative z-10 rounded-2xl border shadow-none transition-colors border-foreground/20 hover:border-foreground/40 focus-within:border-foreground/40"
+        className="border-0 rounded-none shadow-none"
       >
         {attachedFiles.length > 0 && (
           <div className="flex flex-wrap gap-2 px-3 pt-2">
@@ -138,6 +138,7 @@ export function ChatInput({
           </div>
         ) : (
           <PromptInputTextarea
+            autoFocus
             placeholder={placeholder ?? t('Tell me what you need...')}
             className="min-h-[44px] text-sm"
           />
