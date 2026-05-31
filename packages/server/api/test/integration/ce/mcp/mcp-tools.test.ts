@@ -167,7 +167,7 @@ function text(result: { content: Array<{ type: 'text', text: string }> }): strin
 }
 
 async function createFlowAndGetId(mcp: ProjectScopedMcpServer, flowName: string): Promise<string> {
-    const result = await apCreateFlowTool(mcp, mockLog).execute({ flowName })
+    const result = await apCreateFlowTool({ mcp }, mockLog).execute({ flowName })
     const match = text(result).match(/\(id: (\S+?)\)/)
     if (!match) throw new Error(`Could not extract flowId from: ${text(result)}`)
     return match[1]
@@ -178,8 +178,8 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        await apCreateFlowTool(mcp, mockLog).execute({ flowName: 'Flow Alpha' })
-        await apCreateFlowTool(mcp, mockLog).execute({ flowName: 'Flow Beta' })
+        await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'Flow Alpha' })
+        await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'Flow Beta' })
 
         const result = await apListFlowsTool(mcp, mockLog).execute({})
 
@@ -192,7 +192,7 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        const result = await apCreateFlowTool(mcp, mockLog).execute({ flowName: 'My Test Flow' })
+        const result = await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'My Test Flow' })
 
         expect(text(result)).toContain('✅')
         expect(text(result)).toContain('My Test Flow')
@@ -1138,7 +1138,7 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        const result = await apBuildFlowTool(mcp, mockLog).execute({
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
             flowName: 'Build Test 1',
             trigger: {
                 pieceName: '@activepieces/piece-test-email',
@@ -1163,7 +1163,7 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        const result = await apBuildFlowTool(mcp, mockLog).execute({
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
             flowName: 'Build Test 2',
             trigger: {
                 pieceName: '@activepieces/piece-test-email',
@@ -1210,7 +1210,7 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        const result = await apBuildFlowTool(mcp, mockLog).execute({
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
             flowName: 'Build Test Partial',
             trigger: {
                 pieceName: '@activepieces/piece-test-email',
@@ -1240,7 +1240,7 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        const result = await apBuildFlowTool(mcp, mockLog).execute({
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
             flowName: 'Build Test Empty',
             trigger: {
                 pieceName: '@activepieces/piece-test-email',
@@ -1257,7 +1257,7 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        const result = await apBuildFlowTool(mcp, mockLog).execute({
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
             flowName: 'Build Test Lifecycle',
             trigger: {
                 pieceName: '@activepieces/piece-test-email',
@@ -1418,7 +1418,7 @@ describe('MCP Tools integration', () => {
             input: {},
         })
 
-        const dupResult = await apDuplicateFlowTool(mcp, mockLog).execute({ flowId })
+        const dupResult = await apDuplicateFlowTool({ mcp }, mockLog).execute({ flowId })
         const dupOutput = text(dupResult)
 
         expect(dupOutput).toContain('✅')
@@ -1440,7 +1440,7 @@ describe('MCP Tools integration', () => {
         const mcp = makeMcp(ctx.project.id)
         const flowId = await createFlowAndGetId(mcp, 'Source Flow')
 
-        const dupResult = await apDuplicateFlowTool(mcp, mockLog).execute({
+        const dupResult = await apDuplicateFlowTool({ mcp }, mockLog).execute({
             flowId,
             name: 'My Custom Copy',
         })
@@ -1453,7 +1453,7 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        const result = await apDuplicateFlowTool(mcp, mockLog).execute({ flowId: 'nonexistent123' })
+        const result = await apDuplicateFlowTool({ mcp }, mockLog).execute({ flowId: 'nonexistent123' })
 
         expect(text(result)).toContain('❌')
         expect(text(result)).toContain('not found')
@@ -1472,7 +1472,7 @@ describe('MCP Tools integration', () => {
 
         const structBefore = text(await apFlowStructureTool(mcp, mockLog).execute({ flowId }))
 
-        await apDuplicateFlowTool(mcp, mockLog).execute({ flowId })
+        await apDuplicateFlowTool({ mcp }, mockLog).execute({ flowId })
 
         const structAfter = text(await apFlowStructureTool(mcp, mockLog).execute({ flowId }))
 
@@ -1515,7 +1515,7 @@ describe('MCP Tools integration', () => {
             input: {},
         })
 
-        const dupResult = await apDuplicateFlowTool(mcp, mockLog).execute({ flowId })
+        const dupResult = await apDuplicateFlowTool({ mcp }, mockLog).execute({ flowId })
         const copyFlowId = text(dupResult).match(/Copy: ".*?" \(id: (\S+?)\)/)?.[1]
         expect(copyFlowId).toBeDefined()
 
@@ -1887,9 +1887,9 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        await apCreateFlowTool(mcp, mockLog).execute({ flowName: 'Flow 1' })
-        await apCreateFlowTool(mcp, mockLog).execute({ flowName: 'Flow 2' })
-        await apCreateFlowTool(mcp, mockLog).execute({ flowName: 'Flow 3' })
+        await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'Flow 1' })
+        await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'Flow 2' })
+        await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'Flow 3' })
 
         const result = await apListFlowsTool(mcp, mockLog).execute({ limit: 2 })
         const output = text(result)
@@ -1902,9 +1902,9 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        await apCreateFlowTool(mcp, mockLog).execute({ flowName: 'Alpha Flow' })
-        await apCreateFlowTool(mcp, mockLog).execute({ flowName: 'Beta Flow' })
-        await apCreateFlowTool(mcp, mockLog).execute({ flowName: 'Alpha Two' })
+        await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'Alpha Flow' })
+        await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'Beta Flow' })
+        await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'Alpha Two' })
 
         const result = await apListFlowsTool(mcp, mockLog).execute({ name: 'Alpha' })
         const output = text(result)
@@ -2493,10 +2493,11 @@ describe('MCP Tools integration', () => {
 
     it('ap_create_flow — stamps createdBy=MCP and ownerId=connected user', async () => {
         const ctx = await createTestContext(app)
-        const mcp = { ...makeMcp(ctx.project.id), userId: ctx.user.id }
+        const mcp = makeMcp(ctx.project.id)
 
-        const flowId = await createFlowAndGetId(mcp, 'Attributed Flow')
-        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+        const result = await apCreateFlowTool({ mcp, userId: ctx.user.id }, mockLog).execute({ flowName: 'Attributed Flow' })
+        const flowId = text(result).match(/\(id: (\S+?)\)/)?.[1]
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId!, projectId: ctx.project.id })
 
         expect(flow.createdBy).toEqual({ type: FlowCreatorType.MCP, id: mcp.id })
         expect(flow.ownerId).toBe(ctx.user.id)
@@ -2504,9 +2505,9 @@ describe('MCP Tools integration', () => {
 
     it('ap_build_flow — stamps createdBy=MCP and ownerId=connected user', async () => {
         const ctx = await createTestContext(app)
-        const mcp = { ...makeMcp(ctx.project.id), userId: ctx.user.id }
+        const mcp = makeMcp(ctx.project.id)
 
-        const result = await apBuildFlowTool(mcp, mockLog).execute({
+        const result = await apBuildFlowTool({ mcp, userId: ctx.user.id }, mockLog).execute({
             flowName: 'Built Attributed Flow',
             trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
             steps: [],
@@ -2520,10 +2521,12 @@ describe('MCP Tools integration', () => {
 
     it('ap_duplicate_flow — copy inherits MCP attribution, not the source flow owner', async () => {
         const ctx = await createTestContext(app)
-        const mcp = { ...makeMcp(ctx.project.id), userId: ctx.user.id }
-        const sourceId = await createFlowAndGetId(mcp, 'Dup Source')
+        const mcp = makeMcp(ctx.project.id)
+        const context = { mcp, userId: ctx.user.id }
+        const sourceResult = await apCreateFlowTool(context, mockLog).execute({ flowName: 'Dup Source' })
+        const sourceId = text(sourceResult).match(/\(id: (\S+?)\)/)?.[1]
 
-        const dupResult = await apDuplicateFlowTool(mcp, mockLog).execute({ flowId: sourceId, name: 'Dup Copy' })
+        const dupResult = await apDuplicateFlowTool(context, mockLog).execute({ flowId: sourceId!, name: 'Dup Copy' })
         const copyId = text(dupResult).match(/Copy: ".*?" \(id: (\S+?)\)/)?.[1]
         const copy = await flowService(mockLog).getOnePopulatedOrThrow({ id: copyId!, projectId: ctx.project.id })
 

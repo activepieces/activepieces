@@ -5,10 +5,10 @@ import {
     FlowOperationType,
     flowStructureUtil,
     FlowTriggerType,
+    McpToolContext,
     McpToolDefinition,
     Permission,
     PieceTrigger,
-    ProjectScopedMcpServer,
     RouterExecutionType,
     StepLocationRelativeToParent,
     UpdateActionRequest,
@@ -44,7 +44,7 @@ const buildFlowInput = z.object({
     steps: z.array(stepSpec),
 })
 
-export const apBuildFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_build_flow',
         permission: Permission.WRITE_FLOW,
@@ -80,7 +80,7 @@ export const apBuildFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
                     projectService(log).getOneOrThrow(projectId),
                     flowService(log).create({
                         projectId,
-                        ownerId: mcp.userId ?? undefined,
+                        ownerId: userId,
                         createdBy: { type: FlowCreatorType.MCP, id: mcp.id },
                         request: { displayName: flowName, projectId },
                     }),
