@@ -23,6 +23,7 @@ Flows are the core automation primitive in Activepieces. Each flow is a versione
 - `packages/web/src/app/builder/state/` — Zustand-based builder state (flow, run, canvas, notes, step form, piece selector)
 - `packages/web/src/app/builder/step-settings/` — step configuration panel and split/drawer layout for the test panel
 - `packages/web/src/app/builder/test-step/` — test-panel UI (`test-panel-host`, action/trigger sections, sample-data viewer, view toggle, CTA buttons); `test-runner-context.tsx` hoists `useTestAction` + the webhook-return dialog so the bottom CTA can fire the test in-tree
+- `packages/web/src/app/builder/data-display/` — failed-step error UI: `friendly-error-view.tsx` (the friendly error card), `copy-ai-prompt.tsx` ("Copy Error for AI" button), `explanation-prompt.ts` (sanitized AI prompt builder), and `build-step-properties-snapshot.ts` (step-properties snapshot helper). Used by both the test panel and the run-details output view.
 - `packages/web/src/app/builder/pieces-selector/` — piece/action browser
 - `packages/web/src/app/routes/automations/index.tsx` — flows list page
 
