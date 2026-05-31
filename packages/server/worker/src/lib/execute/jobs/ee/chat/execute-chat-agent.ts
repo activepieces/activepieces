@@ -23,6 +23,7 @@ const BATCH_SIZE = 10
 const BATCH_FLUSH_MS = 50
 const APPROVAL_POLL_INTERVAL_MS = 2_000
 const APPROVAL_TIMEOUT_MS = 5 * 60 * 1_000
+const DISPLAY_TOOL_TIMEOUT_MS = 15 * 60 * 1_000
 
 export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_CHAT_AGENT,
@@ -172,16 +173,19 @@ function buildToolSet({ ctx, writer, log, planApproved, mcpToolSet, projects, co
         return response.result
     }
 
-    const waitForApproval = async (gateId: string): Promise<boolean> => {
-        const deadline = Date.now() + APPROVAL_TIMEOUT_MS
+    const waitForApproval = async ({ gateId, timeoutMs }: { gateId: string, timeoutMs?: number }): Promise<GateDecision> => {
+        const deadline = Date.now() + (timeoutMs ?? APPROVAL_TIMEOUT_MS)
         while (Date.now() < deadline) {
             const response = await ctx.apiClient.executeChatTool({
                 toolName: '__approval_check', toolInput: { gateId }, platformId, userId,
             })
-            if (response.result !== 'pending') return response.result === true
+            if (response.result !== 'pending') {
+                const decision = response.result as GateDecision
+                return { approved: decision.approved, payload: decision.payload }
+            }
             await new Promise((resolve) => setTimeout(resolve, APPROVAL_POLL_INTERVAL_MS))
         }
-        return false
+        return { approved: false }
     }
 
     const localTools = chatWorkerTools.createLocalTools({
@@ -190,7 +194,7 @@ function buildToolSet({ ctx, writer, log, planApproved, mcpToolSet, projects, co
         },
         projects,
     })
-    const displayTools = chatWorkerTools.createDisplayTools({ writer })
+    const displayTools = chatWorkerTools.createDisplayTools({ writer, waitForApproval, displayToolTimeoutMs: DISPLAY_TOOL_TIMEOUT_MS })
     const planTools = chatWorkerTools.createPlanTools({
         writer,
         onPlanApproved: () => {
@@ -291,4 +295,9 @@ const CREDIT_ERROR_PATTERNS = [/credits/i, /\b402\b/, /payment.required/i]
 
 function isCreditExhaustedError(message: string): boolean {
     return CREDIT_ERROR_PATTERNS.some((pattern) => pattern.test(message))
+}
+
+type GateDecision = {
+    approved: boolean
+    payload?: Record<string, unknown>
 }

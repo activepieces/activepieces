@@ -143,9 +143,10 @@ function useLiveConnections({
 
 export function ConnectionPickerCard({
   picker,
-  onSelect,
+  onResolve,
   isInteractive = true,
   selectedProjectId,
+  selectedConnectionLabel,
 }: ConnectionPickerCardProps) {
   const queryClient = useQueryClient();
   const pieceName = normalizePieceName(picker.piece);
@@ -199,37 +200,19 @@ export function ConnectionPickerCard({
   }
 
   if (!isInteractive) {
+    const historyLabel = selectedConnectionLabel ?? filteredPicker.displayName;
     return (
-      <motion.div
-        className="rounded-xl border bg-background overflow-hidden my-2"
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.2 }}
-      >
-        <div className="p-4 flex items-center gap-3">
-          <div className="relative">
-            <PieceIconWithPieceName
-              pieceName={pieceName}
-              size="sm"
-              border={false}
-              showTooltip={false}
-            />
-            <div className="absolute -bottom-0.5 -right-0.5 bg-green-500 rounded-full p-0.5">
-              <Check className="h-2 w-2 text-white" />
-            </div>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-semibold">
-              {t('Which {name} account should I use?', {
-                name: filteredPicker.displayName,
-              })}
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {t('Connected')}
-            </div>
-          </div>
-        </div>
-      </motion.div>
+      <SelectedState
+        pieceName={pieceName}
+        connection={{
+          label: historyLabel,
+          project: '',
+          externalId: '',
+          projectId: '',
+          status: AppConnectionStatus.ACTIVE,
+        }}
+        displayName={filteredPicker.displayName}
+      />
     );
   }
 
@@ -286,9 +269,11 @@ export function ConnectionPickerCard({
                     className="shrink-0"
                     onClick={() => {
                       setSelectedConnection(conn);
-                      onSelect(
-                        `Use "${conn.label}" from ${conn.project} (${conn.externalId}).`,
-                      );
+                      onResolve({
+                        connectionExternalId: conn.externalId,
+                        projectId: conn.projectId,
+                        label: conn.label,
+                      });
                     }}
                   >
                     {t('Use')}
@@ -362,7 +347,10 @@ export function ConnectionPickerCard({
                 projectId: '',
                 status: AppConnectionStatus.ACTIVE,
               });
-              onSelect(`Connected ${createdConnection.displayName}`);
+              onResolve({
+                connectionExternalId: createdConnection.externalId,
+                label: createdConnection.displayName,
+              });
             }
           }}
           reconnectConnection={reconnectConnection}
@@ -375,7 +363,8 @@ export function ConnectionPickerCard({
 
 type ConnectionPickerCardProps = {
   picker: ConnectionPickerData;
-  onSelect: (text: string) => void;
+  onResolve: (payload: Record<string, unknown>) => void;
   isInteractive?: boolean;
   selectedProjectId?: string | null;
+  selectedConnectionLabel?: string;
 };

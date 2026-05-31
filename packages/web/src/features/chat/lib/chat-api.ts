@@ -69,11 +69,16 @@ async function sendMessage({
 async function approveToolCall({
   gateId,
   approved,
+  payload,
 }: {
   gateId: string;
   approved: boolean;
+  payload?: Record<string, unknown>;
 }): Promise<void> {
-  return api.post<void>(`/v1/chat/tool-approvals/${gateId}`, { approved });
+  return api.post<void>(`/v1/chat/tool-approvals/${gateId}`, {
+    approved,
+    payload,
+  });
 }
 
 export const chatApi = {

@@ -4,6 +4,7 @@ import {
   CHAT_ALLOWED_MIME_TYPES,
   DEFAULT_CHAT_TIER_ID,
   ErrorCode,
+  isNil,
   isObject,
   PlanStepUpdate,
   tryCatch,
@@ -212,7 +213,15 @@ export function useAgentChat({
 
         default:
           if (DISPLAY_CARD_DATA_TYPES.has(dataPart.type)) {
-            store.setState({ displayCard: { type: dataPart.type, data: d } });
+            const gateId = typeof d['gateId'] === 'string' ? d['gateId'] : '';
+            store.setState({
+              displayCard: {
+                type: dataPart.type,
+                data: d,
+                gateId,
+                resolved: false,
+              },
+            });
           }
           break;
       }
@@ -262,6 +271,18 @@ export function useAgentChat({
         onCreditsExhaustedRef.current?.();
       }
       void reconcile(convId).then(() => clearStreamingState());
+    },
+    onStaleCheck: (convId) => {
+      void tryCatch(async () => {
+        const conv = await chatApi.getConversation(convId);
+        if (
+          !isNil(conv) &&
+          conv.status !== ChatConversationStatus.STREAMING &&
+          conversationIdRef.current === convId
+        ) {
+          void reconcile(convId).then(() => clearStreamingState());
+        }
+      });
     },
   });
 
