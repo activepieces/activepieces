@@ -1,4 +1,4 @@
-import { FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PiecePackage, tryCatch, WorkerToApiContract } from '@activepieces/shared'
+import { AgentPieceProps, AgentToolType, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PiecePackage, tryCatch, WorkerToApiContract } from '@activepieces/shared'
 import { Logger } from 'pino'
 import { CodeArtifact } from '../../cache/code/code-builder'
 import { pieceCache, PieceNotFoundError } from '../../cache/pieces/piece-cache'
@@ -38,11 +38,20 @@ export async function extractPiecePackages(flowVersion: FlowVersion, platformId:
     const pieceSteps = flowStructureUtil.getAllSteps(flowVersion.trigger)
         .filter((step) => step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE)
 
+    const refs = new Map<string, { pieceName: string, pieceVersion: string }>()
+    for (const step of pieceSteps) {
+        const { pieceName, pieceVersion } = step.settings
+        refs.set(`${pieceName}@${pieceVersion}`, { pieceName, pieceVersion })
+        for (const tool of extractAgentPieceToolRefs(step)) {
+            refs.set(`${tool.pieceName}@${tool.pieceVersion}`, tool)
+        }
+    }
+
     return Promise.all(
-        pieceSteps.map((step) =>
+        Array.from(refs.values()).map((ref) =>
             pieceCache(log, apiClient).getPiece({
-                pieceName: step.settings.pieceName,
-                pieceVersion: step.settings.pieceVersion,
+                pieceName: ref.pieceName,
+                pieceVersion: ref.pieceVersion,
                 platformId,
             }),
         ),
@@ -58,4 +67,30 @@ export function extractCodeArtifacts(flowVersion: FlowVersion): CodeArtifact[] {
             flowVersionId: flowVersion.id,
             flowVersionState: flowVersion.state,
         }))
+}
+
+function extractAgentPieceToolRefs(step: ReturnType<typeof flowStructureUtil.getAllSteps>[number]): { pieceName: string, pieceVersion: string }[] {
+    if (step.type !== FlowActionType.PIECE) {
+        return []
+    }
+    const tools = step.settings.input?.[AgentPieceProps.AGENT_TOOLS]
+    if (!Array.isArray(tools)) {
+        return []
+    }
+    const refs: { pieceName: string, pieceVersion: string }[] = []
+    for (const tool of tools) {
+        if (
+            tool != null
+            && typeof tool === 'object'
+            && (tool as { type?: unknown }).type === AgentToolType.PIECE
+        ) {
+            const metadata = (tool as { pieceMetadata?: { pieceName?: unknown, pieceVersion?: unknown } }).pieceMetadata
+            const pieceName = metadata?.pieceName
+            const pieceVersion = metadata?.pieceVersion
+            if (typeof pieceName === 'string' && typeof pieceVersion === 'string') {
+                refs.push({ pieceName, pieceVersion })
+            }
+        }
+    }
+    return refs
 }

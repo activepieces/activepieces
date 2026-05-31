@@ -141,6 +141,85 @@ describe('extractPiecePackages', () => {
         expect(packages[0].pieceName).toBe('@activepieces/piece-gmail')
         expect(packages[1].pieceName).toBe('@activepieces/piece-slack')
     })
+
+    it('includes pieces referenced by AI Agent agentTools', async () => {
+        const agentStep = {
+            name: 'step_agent',
+            valid: true,
+            displayName: 'Run Agent',
+            type: FlowActionType.PIECE as const,
+            settings: {
+                pieceName: '@activepieces/piece-ai',
+                pieceVersion: '0.4.1',
+                actionName: 'runAgent',
+                input: {
+                    agentTools: [
+                        {
+                            type: 'PIECE',
+                            toolName: 'gmail_send',
+                            pieceMetadata: {
+                                pieceName: '@activepieces/piece-gmail',
+                                pieceVersion: '0.12.3',
+                                actionName: 'send_email',
+                            },
+                        },
+                        {
+                            type: 'FLOW',
+                            toolName: 'other_flow',
+                            externalFlowId: 'flow-xyz',
+                        },
+                    ],
+                },
+                propertySettings: {},
+            },
+        }
+        const fv = makeFlowVersion({
+            ...pieceTrigger,
+            nextAction: agentStep,
+        })
+        const packages = await extractPiecePackages(fv, mockPlatformId, mockLog, mockApiClient)
+        const names = packages.map((p) => `${p.pieceName}@${p.pieceVersion}`)
+        expect(names).toContain('@activepieces/piece-ai@0.4.1')
+        expect(names).toContain('@activepieces/piece-gmail@0.12.3')
+    })
+
+    it('deduplicates pieces shared between steps and agentTools', async () => {
+        const agentStep = {
+            name: 'step_agent',
+            valid: true,
+            displayName: 'Run Agent',
+            type: FlowActionType.PIECE as const,
+            settings: {
+                pieceName: '@activepieces/piece-ai',
+                pieceVersion: '0.4.1',
+                actionName: 'runAgent',
+                input: {
+                    agentTools: [
+                        {
+                            type: 'PIECE',
+                            toolName: 'slack_send',
+                            pieceMetadata: {
+                                pieceName: '@activepieces/piece-slack',
+                                pieceVersion: '0.2.0',
+                                actionName: 'send_message',
+                            },
+                        },
+                    ],
+                },
+                propertySettings: {},
+            },
+        }
+        const fv = makeFlowVersion({
+            ...pieceTrigger,
+            nextAction: {
+                ...pieceAction,
+                nextAction: agentStep,
+            },
+        })
+        const packages = await extractPiecePackages(fv, mockPlatformId, mockLog, mockApiClient)
+        const slackCount = packages.filter((p) => p.pieceName === '@activepieces/piece-slack').length
+        expect(slackCount).toBe(1)
+    })
 })
 
 describe('extractCodeArtifacts', () => {
