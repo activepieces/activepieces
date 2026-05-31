@@ -113,6 +113,7 @@ export function useStreamingReducer({
     (conversationId: string) => {
       teardown();
 
+      lastChunkTimeRef.current = Date.now();
       reducerStateRef.current = chunkReducer.createStreamingState();
       setStreamingMessage({
         id: reducerStateRef.current.message.id,
