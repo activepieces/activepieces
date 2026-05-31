@@ -125,7 +125,7 @@ const formatPropertyLine = (prop: StepPropertySnapshot): string => {
 };
 
 const INSTRUCTIONS_BLOCK = [
-  'I\'m troubleshooting an Activepieces step that failed. Activepieces is an open-source workflow automation platform; each integration is called a "piece". Please diagnose what went wrong and give me a concrete fix.',
+  'I\'m troubleshooting a failed step in a workflow automation tool. The tool connects to third-party services through integrations called "pieces". Please diagnose what went wrong and give me a concrete fix.',
   '',
   'Diagnostic priority — try in order, pick the first that matches:',
   '',
@@ -133,7 +133,7 @@ const INSTRUCTIONS_BLOCK = [
   '   - The API error literally says `invalid_request`, `invalid_scope`, `insufficient_scope`, `insufficient permission`, `invalid_grant`, `invalid_client`, `unauthorized_client`, `access_denied`, or mentions "scope", AND the piece uses OAUTH2.',
   '   - The error is 4xx with an empty / near-empty response body on an OAUTH2 piece from Google/Microsoft/Slack/Discord/Notion/Hubspot/etc. — almost always a missing OAuth scope.',
   '   - The error mentions a specific scope name (e.g. `gmail.labels`, `drive.file`, `calendar.events`).',
-  '   In this case, say plainly that this looks like an Activepieces-side OAuth configuration issue, NOT a step setting. Suggest contacting Activepieces support OR (self-hosted) configuring custom OAuth credentials with the required scope.',
+  '   In this case, say plainly that this looks like a platform-side OAuth configuration issue, NOT a step setting. Suggest contacting platform support OR (self-hosted) configuring custom OAuth credentials with the required scope.',
   '',
   '2. **Step-level safety toggle.** If 4xx AND there is a Checkbox/Boolean property whose `name` or `displayName` contains "sanitize", "safe", "strict", "restrict", "validate", "verify", or "secure", AND it is currently `true` (or `undefined` with `default=true`) — recommend unchecking it. Reference it by its exact displayName in quotes.',
   '',
