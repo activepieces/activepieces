@@ -47,7 +47,10 @@ import {
 } from '@/features/flow-runs/hooks/flow-run-hooks';
 import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
 import { flowHooks } from '@/features/flows/hooks/flow-hooks';
-import { useAuthorization } from '@/hooks/authorization-hooks';
+import {
+  useAuthorization,
+  useIsPlatformAdmin,
+} from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
 import { useNewWindow } from '@/lib/navigation-utils';
@@ -148,6 +151,7 @@ export const RunsTable = () => {
     },
   });
   const navigate = useNavigate();
+  const isPlatformAdmin = useIsPlatformAdmin();
   const columns = runsTableColumns({
     data,
     selectedRows,
@@ -156,6 +160,7 @@ export const RunsTable = () => {
     setSelectedAll,
     excludedRows,
     setExcludedRows,
+    isPlatformAdmin,
     onViewError: setErrorDialogRun,
     onViewRun: (run) =>
       navigate(

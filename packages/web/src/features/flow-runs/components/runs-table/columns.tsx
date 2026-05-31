@@ -49,6 +49,7 @@ type RunsTableColumnsProps = {
   setExcludedRows: Dispatch<SetStateAction<Set<string>>>;
   onViewError: (run: FlowRun) => void;
   onViewRun: (run: FlowRun) => void;
+  isPlatformAdmin: boolean;
 };
 export const runsTableColumns = ({
   setSelectedRows,
@@ -60,6 +61,7 @@ export const runsTableColumns = ({
   data,
   onViewError,
   onViewRun,
+  isPlatformAdmin,
 }: RunsTableColumnsProps): ColumnDef<RowDataWithActions<FlowRun>>[] => [
   {
     id: 'select',
@@ -314,8 +316,31 @@ export const runsTableColumns = ({
       />
     ),
     cell: ({ row }) => {
-      const { failedStep } = row.original;
+      const { failedStep, status } = row.original;
       if (isNil(failedStep)) {
+        if (status === FlowRunStatus.INTERNAL_ERROR && isPlatformAdmin) {
+          return (
+            <div className="text-left">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onViewError(row.original);
+                    }}
+                  >
+                    {t('View error')}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {t('Internal error')}
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          );
+        }
         return <div className="text-left">-</div>;
       }
       return (

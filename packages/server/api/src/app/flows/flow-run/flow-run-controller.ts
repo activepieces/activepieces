@@ -10,18 +10,22 @@ import {
     FlowRun,
     isNil,
     ListFlowRunsRequestQuery,
+    omit,
     Permission,
+    PlatformRole,
     PrincipalType,
     RetryFlowRequestBody,
     RunEnvironment,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
+import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { userService } from '../../user/user-service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunService } from './flow-run-service'
 
@@ -63,7 +67,8 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
                 projectId: request.projectId,
                 id: request.params.id,
             })
-            await reply.send(flowRun)
+            const isPlatformAdmin = await isRequesterPlatformAdmin(request)
+            await reply.send(isPlatformAdmin ? flowRun : omit(flowRun, ['internalError']))
         },
     )
 
@@ -129,6 +134,17 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
         })
     })
 
+}
+
+async function isRequesterPlatformAdmin(request: FastifyRequest): Promise<boolean> {
+    if (request.principal.type === PrincipalType.SERVICE) {
+        return true
+    }
+    if (request.principal.type !== PrincipalType.USER) {
+        return false
+    }
+    const user = await userService(request.log).getOneOrFail({ id: request.principal.id })
+    return user.platformRole === PlatformRole.ADMIN
 }
 
 const FlowRunFilteredWithNoSteps = FlowRun.omit({ steps: true })
