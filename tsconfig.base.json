@@ -497,6 +497,9 @@
       "@activepieces/piece-front": [
         "packages/pieces/community/front/src/index.ts"
       ],
+      "@activepieces/piece-funasr": [
+        "packages/pieces/community/funasr/src/index.ts"
+      ],
       "@activepieces/piece-gameball": [
         "packages/pieces/community/gameball/src/index.ts"
       ],
