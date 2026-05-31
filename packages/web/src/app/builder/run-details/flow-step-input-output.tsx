@@ -29,7 +29,7 @@ import { formatUtils } from '@/lib/format-utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { DataDisplayTabs } from '../data-display/data-display-tabs';
-import { ErrorDisplayTabs } from '../data-display/error-display-tabs';
+import { FriendlyErrorView } from '../data-display/friendly-error-view';
 import { isRunAgent } from '../test-step/agent-test-step';
 import { TestPanelHeader } from '../test-step/test-panel-header';
 import { TestPanelViewToggle } from '../test-step/test-panel-view-toggle';
@@ -203,7 +203,7 @@ export const FlowStepInputOutput = () => {
             ) : slicedOutputRef ? (
               <SlicedOutputDownload slicedOutputRef={slicedOutputRef} />
             ) : friendlyError ? (
-              <ErrorDisplayTabs
+              <FriendlyErrorView
                 error={friendlyError}
                 pieceDisplayName={pieceModel?.displayName}
               />

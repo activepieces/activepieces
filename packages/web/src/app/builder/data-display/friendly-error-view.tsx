@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import {
   AlertOctagon,
   AlertTriangle,
+  ChevronDown,
   Hourglass,
   KeyRound,
   Search,
@@ -11,8 +12,15 @@ import {
   XCircle,
   type LucideIcon,
 } from 'lucide-react';
+import { useState } from 'react';
 
+import { JsonViewer } from '@/components/custom/json-viewer';
 import { Badge } from '@/components/ui/badge';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 
 import { CopyAiPromptButton } from './copy-ai-prompt';
@@ -31,6 +39,7 @@ const FriendlyErrorView = ({
   pieceDisplayName,
   className,
 }: FriendlyErrorViewProps) => {
+  const [technicalDetailsOpen, setTechnicalDetailsOpen] = useState(false);
   const { status } = error;
   const { Icon, headline, hint, tone } = getStatusPresentation(status);
   const isHttpError = !isNil(status);
@@ -41,6 +50,7 @@ const FriendlyErrorView = ({
       ? t('Response from {pieceDisplayName}', { pieceDisplayName })
       : t('What the service said')
     : t('Error message');
+  const technicalPayload = stripInternalMarker(error);
 
   return (
     <div
@@ -83,8 +93,43 @@ const FriendlyErrorView = ({
       {explanationContext && (
         <CopyAiPromptButton error={error} context={explanationContext} />
       )}
+      <Collapsible
+        open={technicalDetailsOpen}
+        onOpenChange={setTechnicalDetailsOpen}
+        className="border-t border-border bg-background"
+      >
+        <CollapsibleTrigger className="flex w-full items-center gap-2 px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+          <span className="flex-1 text-left">{t('Technical Details')}</span>
+          <ChevronDown
+            className={cn(
+              'size-3.5 transition-transform',
+              technicalDetailsOpen && 'rotate-180',
+            )}
+          />
+        </CollapsibleTrigger>
+        <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
+          <div className="px-4 pb-3">
+            <JsonViewer
+              json={technicalPayload}
+              title={t('Error')}
+              hideHeader
+              hideDownload
+              className="border border-solid border-dividers rounded-md"
+            />
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
+};
+
+const stripInternalMarker = (
+  error: FriendlyPieceError,
+): Record<string, unknown> => {
+  const entries = Object.entries(error).filter(
+    ([key]) => key !== '__apErrorVersion',
+  );
+  return Object.fromEntries(entries);
 };
 
 const pickDisplayMessage = (error: FriendlyPieceError): string | undefined => {
