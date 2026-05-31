@@ -222,8 +222,12 @@ const isFriendlyPieceError = (value: unknown): value is FriendlyPieceError => {
 
 export const formatPieceError = (error: unknown, options?: FormatPieceErrorOptions): FriendlyPieceError => {
     const raw = options?.raw
-    const withRaw = (base: FriendlyPieceError): FriendlyPieceError =>
-        isNil(raw) || raw.length === 0 ? base : { ...base, raw: truncateRaw(raw) }
+    const withRaw = (base: FriendlyPieceError): FriendlyPieceError => {
+        if (isNil(raw) || raw.length === 0 || !isNil(base.raw)) {
+            return base
+        }
+        return { ...base, raw: truncateRaw(raw) }
+    }
 
     if (isNil(error)) {
         return withRaw({
@@ -248,7 +252,7 @@ export const formatPieceError = (error: unknown, options?: FormatPieceErrorOptio
     }
 
     if (isFriendlyPieceError(error)) {
-        return error
+        return withRaw(error)
     }
 
     const httpDetails = extractHttpDetails(error)

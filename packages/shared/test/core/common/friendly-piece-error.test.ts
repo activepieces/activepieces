@@ -156,6 +156,24 @@ describe('formatPieceError', () => {
         expect(second).toBe(original)
     })
 
+    it('fills in raw on an already-formatted error that has none', () => {
+        const original = formatPieceError(new Error('Boom'))
+        expect(original.raw).toBeUndefined()
+
+        const second = formatPieceError(original, { raw: 'Error: Boom\n    at x' })
+
+        expect(second.raw).toBe('Error: Boom\n    at x')
+        expect(second.message).toBe('Boom')
+    })
+
+    it('does not overwrite an existing raw on an already-formatted error', () => {
+        const original = formatPieceError(new Error('Boom'), { raw: 'original raw' })
+
+        const second = formatPieceError(original, { raw: 'new raw' })
+
+        expect(second.raw).toBe('original raw')
+    })
+
     it('truncates very long API messages', () => {
         const longMessage = 'x'.repeat(5000)
         const error = new TestHttpError({ status: 500, body: { message: longMessage } }, { body: {} })
