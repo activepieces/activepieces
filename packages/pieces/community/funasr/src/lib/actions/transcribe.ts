@@ -14,10 +14,10 @@ export const transcribeAction = createAction({
   description: 'Transcribe audio to text using FunASR',
   auth: funasrAuth,
   props: {
-    audio_url: Property.ShortText({
-      displayName: 'Audio URL',
+    audio: Property.File({
+      displayName: 'Audio',
       required: true,
-      description: 'Public URL to an audio file (MP3, WAV, FLAC, etc.). The file will be downloaded and transcribed.',
+      description: 'Audio file to transcribe',
     }),
     model: Property.ShortText({
       displayName: 'Model',
@@ -33,27 +33,13 @@ export const transcribeAction = createAction({
   run: async (context) => {
     const baseUrl = context.auth.props.base_url as string;
     const apiKey = context.auth.props.api_key as string | undefined;
-    const audioUrl = context.propsValue.audio_url;
+    const fileData = context.propsValue.audio;
 
-    const response = await fetch(audioUrl);
-    if (!response.ok) {
-      throw new Error(`Failed to download audio: ${response.status} ${response.statusText}`);
-    }
-    const contentType = response.headers.get('content-type') || 'audio/mpeg';
-    const contentDisposition = response.headers.get('content-disposition');
-    let filename = 'audio';
-    if (contentDisposition) {
-      const match = contentDisposition.match(/filename="?(.+?)"?(?:;|$)/);
-      if (match) {
-        filename = match[1];
-      }
-    }
-    const buffer = Buffer.from(await response.arrayBuffer());
-    const mimeType = mime.lookup(filename) || contentType || 'audio/mpeg';
+    const mimeType = mime.lookup(fileData.extension ? fileData.extension : '');
 
     const form = new FormData();
-    form.append('file', buffer, {
-      filename,
+    form.append('file', fileData.data, {
+      filename: fileData.filename,
       contentType: mimeType as string,
     });
 
@@ -73,7 +59,7 @@ export const transcribeAction = createAction({
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${baseUrl}/v1/audio/transcriptions`,
+      url: `${baseUrl.replace(/\/+$/, '')}/v1/audio/transcriptions`,
       body: form,
       headers,
     };
