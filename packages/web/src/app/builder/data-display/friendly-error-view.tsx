@@ -3,7 +3,6 @@ import { t } from 'i18next';
 import {
   AlertOctagon,
   AlertTriangle,
-  ChevronDown,
   Hourglass,
   KeyRound,
   Search,
@@ -12,15 +11,9 @@ import {
   XCircle,
   type LucideIcon,
 } from 'lucide-react';
-import { useState } from 'react';
 
-import { JsonViewer } from '@/components/custom/json-viewer';
+import { CollapsibleJson } from '@/components/custom/collapsible-json';
 import { Badge } from '@/components/ui/badge';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 
 import { CopyAiPromptButton } from './copy-ai-prompt';
@@ -39,7 +32,6 @@ const FriendlyErrorView = ({
   pieceDisplayName,
   className,
 }: FriendlyErrorViewProps) => {
-  const [technicalDetailsOpen, setTechnicalDetailsOpen] = useState(false);
   const { status } = error;
   const { Icon, headline, hint, tone } = getStatusPresentation(status);
   const isHttpError = !isNil(status);
@@ -93,38 +85,11 @@ const FriendlyErrorView = ({
       {explanationContext && (
         <CopyAiPromptButton error={error} context={explanationContext} />
       )}
-      <Collapsible
-        open={technicalDetailsOpen}
-        onOpenChange={setTechnicalDetailsOpen}
-        className="border-t border-border bg-background"
-      >
-        <CollapsibleTrigger className="flex w-full items-center gap-2 px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-          <span className="flex-1 text-left">{t('Technical Details')}</span>
-          <ChevronDown
-            className={cn(
-              'size-3.5 transition-transform',
-              technicalDetailsOpen && 'rotate-180',
-            )}
-          />
-        </CollapsibleTrigger>
-        <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
-          <div className="px-4 pb-3">
-            {isNil(error.raw) ? (
-              <JsonViewer
-                json={technicalPayload}
-                title={t('Error')}
-                hideHeader
-                hideDownload
-                className="border border-solid border-dividers rounded-md"
-              />
-            ) : (
-              <pre className="m-0 max-h-96 overflow-auto rounded-md border border-solid border-dividers bg-muted/40 p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap break-words text-foreground/80">
-                {error.raw}
-              </pre>
-            )}
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
+      <CollapsibleJson
+        json={error.raw ?? technicalPayload}
+        label={t('Technical Details')}
+        className="border-t border-border px-4 py-3"
+      />
     </div>
   );
 };
