@@ -109,13 +109,19 @@ const FriendlyErrorView = ({
         </CollapsibleTrigger>
         <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
           <div className="px-4 pb-3">
-            <JsonViewer
-              json={technicalPayload}
-              title={t('Error')}
-              hideHeader
-              hideDownload
-              className="border border-solid border-dividers rounded-md"
-            />
+            {isNil(error.raw) ? (
+              <JsonViewer
+                json={technicalPayload}
+                title={t('Error')}
+                hideHeader
+                hideDownload
+                className="border border-solid border-dividers rounded-md"
+              />
+            ) : (
+              <pre className="m-0 max-h-96 overflow-auto rounded-md border border-solid border-dividers bg-muted/40 p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap break-words text-foreground/80">
+                {error.raw}
+              </pre>
+            )}
           </div>
         </CollapsibleContent>
       </Collapsible>

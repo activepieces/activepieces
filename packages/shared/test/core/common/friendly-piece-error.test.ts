@@ -165,6 +165,28 @@ describe('formatPieceError', () => {
         expect(result.apiMessage?.endsWith('…')).toBe(true)
         expect(result.apiMessage?.length).toBeLessThanOrEqual(2001)
     })
+
+    it('attaches the raw dump when provided in options', () => {
+        const error = new Error('Boom')
+
+        const result = formatPieceError(error, { raw: 'Error: Boom\n    at somewhere' })
+
+        expect(result.message).toBe('Boom')
+        expect(result.raw).toBe('Error: Boom\n    at somewhere')
+    })
+
+    it('does not set raw when no raw option is provided', () => {
+        const result = formatPieceError(new Error('Boom'))
+
+        expect(result.raw).toBeUndefined()
+    })
+
+    it('truncates a very long raw dump', () => {
+        const result = formatPieceError(new Error('Boom'), { raw: 'y'.repeat(20000) })
+
+        expect(result.raw?.endsWith('…[truncated]')).toBe(true)
+        expect(result.raw?.length).toBeLessThanOrEqual(16000 + '\n…[truncated]'.length)
+    })
 })
 
 describe('tryParseFriendlyPieceError', () => {

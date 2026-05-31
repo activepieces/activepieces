@@ -1,3 +1,4 @@
+import { inspect } from 'util'
 import {
     EngineOperation,
     EngineOperationType,
@@ -49,7 +50,7 @@ export async function execute(operationType: EngineOperationType, operation: Eng
         return {
             response: undefined,
             status: EngineResponseStatus.INTERNAL_ERROR,
-            error: JSON.stringify(formatPieceError(result.error)),
+            error: JSON.stringify(formatPieceError(result.error, { raw: inspect(result.error) })),
         }
     }
     return result.data

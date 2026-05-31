@@ -1,3 +1,4 @@
+import { inspect } from 'util'
 import {
     EngineResponse,
     EngineResponseStatus,
@@ -24,7 +25,7 @@ export const triggerHookOperation = {
             return {
                 status: EngineResponseStatus.USER_FAILURE,
                 response: undefined as unknown as ExecuteTriggerResponse<TriggerHookType>,
-                error: JSON.stringify(formatPieceError(error)),
+                error: JSON.stringify(formatPieceError(error, { raw: inspect(error) })),
             }
         }
         return {

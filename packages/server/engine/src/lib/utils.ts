@@ -1,4 +1,5 @@
 import fs from 'fs/promises'
+import { inspect } from 'node:util'
 import path from 'path'
 import { ConnectionsManager, ContextVersion, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
 import { ExecutionError, ExecutionErrorType, formatPieceError, RespondResponse, Result, tryCatch } from '@activepieces/shared'
@@ -42,10 +43,10 @@ export const utils = {
         return entries
     },
     formatExecutionError(value: ExecutionError): string {
-        return JSON.stringify(formatPieceError(value))
+        return JSON.stringify(formatPieceError(value, { raw: inspect(value) }))
     },
     formatError(value: Error): string {
-        return JSON.stringify(formatPieceError(value))
+        return JSON.stringify(formatPieceError(value, { raw: inspect(value) }))
     },
     async folderExists(filePath: string): Promise<boolean> {
         try {

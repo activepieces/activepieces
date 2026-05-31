@@ -4,6 +4,7 @@ const FRIENDLY_PIECE_ERROR_VERSION = 1
 
 const STACK_LINE_REGEX = /\n\s*at\s+.+$/gm
 const HTTP_ERROR_MESSAGE_MAX_LENGTH = 2000
+const RAW_ERROR_MAX_LENGTH = 16000
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> => {
     return !isNil(value) && typeof value === 'object' && !Array.isArray(value)
@@ -27,6 +28,13 @@ const truncate = (value: string): string => {
         return value
     }
     return `${value.slice(0, HTTP_ERROR_MESSAGE_MAX_LENGTH)}…`
+}
+
+const truncateRaw = (value: string): string => {
+    if (value.length <= RAW_ERROR_MAX_LENGTH) {
+        return value
+    }
+    return `${value.slice(0, RAW_ERROR_MAX_LENGTH)}\n…[truncated]`
 }
 
 const HTML_DOC_REGEX = /^\s*(<!doctype\s+html|<html\b|<\?xml)/i
@@ -212,27 +220,31 @@ const isFriendlyPieceError = (value: unknown): value is FriendlyPieceError => {
     return value['__apErrorVersion'] === FRIENDLY_PIECE_ERROR_VERSION && typeof value['message'] === 'string'
 }
 
-export const formatPieceError = (error: unknown): FriendlyPieceError => {
+export const formatPieceError = (error: unknown, options?: FormatPieceErrorOptions): FriendlyPieceError => {
+    const raw = options?.raw
+    const withRaw = (base: FriendlyPieceError): FriendlyPieceError =>
+        isNil(raw) || raw.length === 0 ? base : { ...base, raw: truncateRaw(raw) }
+
     if (isNil(error)) {
-        return {
+        return withRaw({
             __apErrorVersion: FRIENDLY_PIECE_ERROR_VERSION,
             message: 'Unknown error',
-        }
+        })
     }
 
     if (isString(error)) {
         const cleaned = stripStack(error)
-        return {
+        return withRaw({
             __apErrorVersion: FRIENDLY_PIECE_ERROR_VERSION,
             message: cleaned.length > 0 ? cleaned : 'Unknown error',
-        }
+        })
     }
 
     if (!isObjectRecord(error)) {
-        return {
+        return withRaw({
             __apErrorVersion: FRIENDLY_PIECE_ERROR_VERSION,
             message: truncate(String(error)),
-        }
+        })
     }
 
     if (isFriendlyPieceError(error)) {
@@ -244,12 +256,12 @@ export const formatPieceError = (error: unknown): FriendlyPieceError => {
     const rawMessage = readErrorMessage(error)
     const message = pickPlainMessage({ httpDetails, rawMessage })
 
-    return {
+    return withRaw({
         __apErrorVersion: FRIENDLY_PIECE_ERROR_VERSION,
         message,
         errorName,
         ...(httpDetails ?? {}),
-    }
+    })
 }
 
 export const tryParseFriendlyPieceError = (value: unknown): FriendlyPieceError | null => {
@@ -281,4 +293,9 @@ export type FriendlyPieceError = {
     requestUrl?: string
     requestMethod?: string
     apiMessage?: string
+    raw?: string
+}
+
+type FormatPieceErrorOptions = {
+    raw?: string
 }
