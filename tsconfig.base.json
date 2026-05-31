@@ -2004,6 +2004,9 @@
       "@activepieces/piece-valyu": [
         "packages/pieces/community/valyu/src/index.ts"
       ],
+      "@activepieces/piece-voxell-forge": [
+        "packages/pieces/community/voxell-forge/src/index.ts"
+      ],
       "@activepieces/piece-alai": [
         "packages/pieces/community/alai/src/index.ts"
       ],

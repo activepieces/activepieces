@@ -1,0 +1,21 @@
+{
+  "Managed embeddings API for AI search, retrieval, and semantic workflows.": "Managed embeddings API for AI search, retrieval, and semantic workflows.",
+  "\n**Get your Voxell Forge API key:**\n\n1. Sign in at https://dash.voxell.ai\n2. Open **API Keys**\n3. Create a key and paste it here.\n  ": "\n**Get your Voxell Forge API key:**\n\n1. Sign in at https://dash.voxell.ai\n2. Open **API Keys**\n3. Create a key and paste it here.\n  ",
+  "Create Embeddings": "Create Embeddings",
+  "Create vector embeddings for one or more text inputs using Voxell Forge.": "Create vector embeddings for one or more text inputs using Voxell Forge.",
+  "Texts": "Texts",
+  "One or more text inputs to embed.": "One or more text inputs to embed.",
+  "Model": "Model",
+  "Forge embedding model tier.": "Forge embedding model tier.",
+  "Dimensions": "Dimensions",
+  "Optional Matryoshka truncation dimension. Leave blank to use the model's native dimension.": "Optional Matryoshka truncation dimension. Leave blank to use the model's native dimension.",
+  "Input Type": "Input Type",
+  "Use query for search queries and document for content being indexed.": "Use query for search queries and document for content being indexed.",
+  "Turbo - 1024 dimensions": "Turbo - 1024 dimensions",
+  "Pro - 2560 dimensions": "Pro - 2560 dimensions",
+  "Ultra 4K - 4096 dimensions": "Ultra 4K - 4096 dimensions",
+  "Document": "Document",
+  "Query": "Query",
+  "Custom API Call": "Custom API Call",
+  "Make a custom API call to a specific endpoint": "Make a custom API call to a specific endpoint"
+}
