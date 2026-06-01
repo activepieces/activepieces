@@ -74,6 +74,19 @@ describe('fetchAllPages', () => {
 		expect(all).toHaveLength(150);
 		expect(sendRequest.mock.calls).toHaveLength(2);
 	});
+
+	it('keeps paginating past the first full page when the API omits total', async () => {
+		const fullPage = Array.from({ length: 100 }, (_, i) => ({ id: i }));
+		const lastPage = Array.from({ length: 10 }, (_, i) => ({ id: 100 + i }));
+		sendRequest.mockImplementation(async (request: HttpRequest) => {
+			const offset = Number(request.queryParams?.['offset'] ?? 0);
+			return resp({ data: offset === 0 ? fullPage : lastPage });
+		});
+
+		const all = await fetchAllPages(AUTH, '/workers');
+		expect(all).toHaveLength(110);
+		expect(sendRequest.mock.calls).toHaveLength(2);
+	});
 });
 
 describe('workdayWqlRequestAll', () => {

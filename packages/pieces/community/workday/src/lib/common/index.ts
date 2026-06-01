@@ -104,13 +104,17 @@ export async function fetchAllPages<T>(
 
 		const items = (response.body[dataKey] ?? []) as T[];
 		allItems.push(...items);
-
-		const total =
-			typeof response.body['total'] === 'number'
-				? response.body['total']
-				: allItems.length;
 		offset += limit;
-		hasMore = offset < total && items.length === limit;
+
+		// A short page is the only reliable end signal. `total` stops us one
+		// round-trip early, but ONLY when the API returns it — falling back to
+		// allItems.length would halt after the first full page.
+		if (items.length < limit) {
+			hasMore = false;
+		} else {
+			const total = response.body['total'];
+			hasMore = typeof total !== 'number' || offset < total;
+		}
 	}
 
 	return allItems;
