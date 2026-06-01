@@ -51,6 +51,36 @@ async function deleteConversation(id: string): Promise<void> {
   return api.delete<void>(`/v1/chat/conversations/${id}`);
 }
 
+async function sendMessage({
+  conversationId,
+  content,
+  files,
+}: {
+  conversationId: string;
+  content: string;
+  files?: Array<{ name: string; mimeType: string; data: string }>;
+}): Promise<{ conversationId: string }> {
+  return api.post<{ conversationId: string }>(
+    `/v1/chat/conversations/${conversationId}/messages`,
+    { content, files },
+  );
+}
+
+async function approveToolCall({
+  gateId,
+  approved,
+  payload,
+}: {
+  gateId: string;
+  approved: boolean;
+  payload?: Record<string, unknown>;
+}): Promise<void> {
+  return api.post<void>(`/v1/chat/tool-approvals/${gateId}`, {
+    approved,
+    payload,
+  });
+}
+
 export const chatApi = {
   createConversation,
   listConversations,
@@ -58,4 +88,6 @@ export const chatApi = {
   getMessages,
   updateConversation,
   deleteConversation,
+  sendMessage,
+  approveToolCall,
 };

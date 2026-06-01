@@ -1,4 +1,5 @@
-import { ACTIVEPIECES_CHAT_TIERS, ApEdition, ChatConversation, chunk, PersistedChatMessage, PersistedChatPartType, PersistedToolCallStatus, tryCatch } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, ApEdition, ChatConversation, ChatHistoryMessage, chunk, isNil, PersistedChatMessage, PersistedChatPart, PersistedChatPartType, PersistedChatRole, PersistedToolCallStatus, tryCatch } from '@activepieces/shared'
+import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { isNotOneOfTheseEditions } from '../../database/database-common'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
@@ -6,6 +7,7 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
+import { chatHistory } from './history/chat-history'
 
 const CONSOLE_TELEMETRY_URL = 'https://console.activepieces.com/api/chat-analytics/external/sync'
 const CONSOLE_API_KEY = system.get(AppSystemProp.CONSOLE_API_SECRET_KEY)
@@ -36,13 +38,9 @@ export const chatAnalyticsBulkSync = (log: FastifyBaseLogger) => ({
         let failed = 0
 
         for (const batch of chunk(conversations, BATCH_SIZE)) {
-            const success = await pushToConsole({ conversations: batch, log, userCache, platformCache })
-            if (success) {
-                synced += batch.length
-            }
-            else {
-                failed += batch.length
-            }
+            const result = await pushToConsole({ conversations: batch, log, userCache, platformCache })
+            synced += result.pushed
+            failed += result.skipped + (result.success ? 0 : batch.length - result.skipped)
         }
 
         return { synced, failed }
@@ -73,14 +71,26 @@ async function pushToConsole({ conversations, log, userCache, platformCache }: {
     log: FastifyBaseLogger
     userCache?: Map<string, string | null>
     platformCache?: Map<string, string | null>
-}): Promise<boolean> {
+}): Promise<{ pushed: number, skipped: number, success: boolean }> {
     if (!CONSOLE_API_KEY) {
-        return false
+        return { pushed: 0, skipped: conversations.length, success: false }
     }
 
-    const payloads = await Promise.all(
-        conversations.map((conversation) => toSyncPayload({ conversation, log, userCache, platformCache })),
-    )
+    const payloads: Record<string, unknown>[] = []
+    for (const conversation of conversations) {
+        const payloadResult = await tryCatch(() => toSyncPayload({ conversation, log, userCache, platformCache }))
+        if (payloadResult.error) {
+            log.error({ conversationId: conversation.id, error: String(payloadResult.error) }, 'Failed to build sync payload for conversation, skipping')
+            continue
+        }
+        payloads.push(payloadResult.data)
+    }
+
+    const skipped = conversations.length - payloads.length
+
+    if (payloads.length === 0) {
+        return { pushed: 0, skipped, success: true }
+    }
 
     const result = await tryCatch(() => fetch(CONSOLE_TELEMETRY_URL, {
         method: 'POST',
@@ -94,13 +104,14 @@ async function pushToConsole({ conversations, log, userCache, platformCache }: {
 
     if (result.error) {
         log.error({ error: result.error }, 'Failed to push chat analytics telemetry')
-        return false
+        return { pushed: 0, skipped, success: false }
     }
     if (!result.data.ok) {
-        log.error({ status: result.data.status }, 'Failed to push chat analytics telemetry: non-2xx response')
-        return false
+        const body = await tryCatch(() => result.data.text())
+        log.error({ status: result.data.status, body: body.error ? 'unreadable' : body.data }, 'Failed to push chat analytics telemetry: non-2xx response')
+        return { pushed: 0, skipped, success: false }
     }
-    return true
+    return { pushed: payloads.length, skipped, success: true }
 }
 
 async function toSyncPayload({ conversation, log, userCache, platformCache }: {
@@ -112,6 +123,8 @@ async function toSyncPayload({ conversation, log, userCache, platformCache }: {
     const userEmail = userCache?.get(conversation.userId) ?? await resolveUserEmail({ userId: conversation.userId, log })
     const platformName = platformCache?.get(conversation.platformId) ?? await resolvePlatformName({ platformId: conversation.platformId, log })
 
+    const messages = resolveMessages(conversation)
+
     return {
         id: conversation.id,
         platformId: conversation.platformId,
@@ -120,13 +133,56 @@ async function toSyncPayload({ conversation, log, userCache, platformCache }: {
         userEmail,
         title: conversation.title,
         modelName: resolveModelLabel(conversation.modelName ?? null),
-        messages: conversation.uiMessages ?? [],
-        messageCount: conversation.uiMessages?.length ?? 0,
-        toolCallsSummary: extractToolCallsSummary(conversation.uiMessages ?? []),
+        messages,
+        messageCount: messages.length,
+        toolCallsSummary: extractToolCallsSummary(messages),
         isActive: false,
         createdAt: conversation.created,
         updatedAt: conversation.updated,
     }
+}
+
+function resolveMessages(conversation: ChatConversation): PersistedChatMessage[] {
+    if (!isNil(conversation.uiMessages) && conversation.uiMessages.length > 0) {
+        return conversation.uiMessages
+    }
+    const rawMessages = conversation.messages as ModelMessage[]
+    if (isNil(rawMessages) || rawMessages.length === 0) {
+        return []
+    }
+    return convertToPersistedFormat(chatHistory.reconstruct(rawMessages))
+}
+
+function convertToPersistedFormat(messages: ChatHistoryMessage[]): PersistedChatMessage[] {
+    return messages.map((msg) => {
+        const parts: PersistedChatPart[] = []
+
+        if (msg.content) {
+            parts.push({ type: PersistedChatPartType.TEXT, text: msg.content })
+        }
+
+        if (msg.thoughts) {
+            parts.push({ type: PersistedChatPartType.REASONING, text: msg.thoughts })
+        }
+
+        if (msg.toolCalls) {
+            for (const tc of msg.toolCalls) {
+                parts.push({
+                    type: PersistedChatPartType.TOOL_CALL,
+                    toolCallId: tc.toolCallId,
+                    toolName: tc.title,
+                    input: tc.input ?? {},
+                    output: tc.output,
+                    status: tc.status === 'completed' ? PersistedToolCallStatus.COMPLETED : PersistedToolCallStatus.ERROR,
+                })
+            }
+        }
+
+        return {
+            role: msg.role === 'user' ? PersistedChatRole.USER : PersistedChatRole.ASSISTANT,
+            parts,
+        }
+    })
 }
 
 function resolveModelLabel(tierId: string | null): string | null {

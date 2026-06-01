@@ -2,12 +2,24 @@ import { t } from 'i18next';
 
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
+import { MultiQuestion } from '@/features/chat/lib/chat-store-types';
 import { ChatUIMessage } from '@/features/chat/lib/chat-types';
+
+import {
+  ConnectionPickerData,
+  ProjectPickerData,
+} from '../lib/message-parsers';
 
 import { ChatInput } from './chat-input';
 import { ChatModelSelector } from './chat-model-selector';
+import { ConnectionPickerCard } from './connection-picker-card';
+import {
+  ConnectionRequiredData,
+  ConnectionsRequiredCard,
+} from './connections-required-card';
 import { MultiQuestionForm } from './multi-question-form';
 import { PlanApprovalForm } from './plan-approval-form';
+import { ProjectPickerCard } from './project-picker-card';
 import { ToolApprovalForm } from './tool-approval-form';
 
 export function ChatBottomBar({
@@ -47,6 +59,9 @@ export function ChatBottomBar({
     chatStoreSelectors.hasActiveForm({ state: s, lastAssistantMessage }),
   );
   const dismissForm = useChatStoreContext((s) => s.dismissForm);
+  const displayCard = useChatStoreContext((s) => s.displayCard);
+  const resolveDisplayCard = useChatStoreContext((s) => s.resolveDisplayCard);
+  const dismissDisplayCard = useChatStoreContext((s) => s.dismissDisplayCard);
 
   if (hasPlanApproval && pendingPlanApproval) {
     return (
@@ -73,7 +88,18 @@ export function ChatBottomBar({
     );
   }
 
-  if (hasActiveForm) {
+  if (displayCard && !displayCard.resolved) {
+    return (
+      <BlockingDisplayCard
+        displayCard={displayCard}
+        activeQuestions={activeQuestions}
+        resolveDisplayCard={resolveDisplayCard}
+        dismissDisplayCard={dismissDisplayCard}
+      />
+    );
+  }
+
+  if (hasActiveForm && !isStreaming) {
     return (
       <MultiQuestionForm
         key={lastMessageId}
@@ -104,6 +130,53 @@ export function ChatBottomBar({
       }
     />
   );
+}
+
+function BlockingDisplayCard({
+  displayCard,
+  activeQuestions,
+  resolveDisplayCard,
+  dismissDisplayCard,
+}: {
+  displayCard: { type: string; data: Record<string, unknown>; gateId: string };
+  activeQuestions: MultiQuestion[];
+  resolveDisplayCard: (payload: Record<string, unknown>) => void;
+  dismissDisplayCard: () => void;
+}) {
+  switch (displayCard.type) {
+    case 'data-questions':
+      return (
+        <MultiQuestionForm
+          key={displayCard.gateId}
+          questions={activeQuestions}
+          onSubmit={(text) => resolveDisplayCard({ answers: text })}
+          onDismiss={() => dismissDisplayCard()}
+        />
+      );
+    case 'data-connection-required':
+      return (
+        <ConnectionsRequiredCard
+          connections={[displayCard.data as unknown as ConnectionRequiredData]}
+          onResolve={resolveDisplayCard}
+        />
+      );
+    case 'data-connection-picker':
+      return (
+        <ConnectionPickerCard
+          picker={displayCard.data as unknown as ConnectionPickerData}
+          onResolve={resolveDisplayCard}
+        />
+      );
+    case 'data-project-picker':
+      return (
+        <ProjectPickerCard
+          picker={displayCard.data as unknown as ProjectPickerData}
+          onResolve={resolveDisplayCard}
+        />
+      );
+    default:
+      return null;
+  }
 }
 
 type ChatBottomBarProps = {

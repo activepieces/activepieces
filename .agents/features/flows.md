@@ -16,12 +16,13 @@ Flows are the core automation primitive in Activepieces. Each flow is a versione
 - `packages/shared/src/lib/automation/flows/triggers/trigger.ts` — `FlowTrigger` discriminated union
 - `packages/web/src/features/flows/api/flows-api.tsx` — `flowsApi` (list, create, update, get, versions, delete, count)
 - `packages/web/src/features/flows/hooks/flow-hooks.tsx` — `flowHooks` (status change, export, import, test, version management)
-- `packages/web/src/features/flows/components/` — `FlowStatusToggle`, `ImportFlowDialog`, `ShareTemplateDialog`, `ChangeOwnerDialog`
+- `packages/web/src/features/flows/components/` — `FlowStatusToggle`, `ImportFlowDialog`, `ShareTemplateDialog`, `ChangeOwnerDialog`, `FlowCreatedByBadge`
 - `packages/web/src/features/flows/utils/flows-utils.tsx` — download, zip, template parsing helpers
 - `packages/web/src/app/builder/index.tsx` — visual flow builder entry point
 - `packages/web/src/app/builder/flow-canvas/` — XYFlow canvas (nodes, edges, drag layer, context menu)
 - `packages/web/src/app/builder/state/` — Zustand-based builder state (flow, run, canvas, notes, step form, piece selector)
-- `packages/web/src/app/builder/step-settings/` — step configuration panel
+- `packages/web/src/app/builder/step-settings/` — step configuration panel and split/drawer layout for the test panel
+- `packages/web/src/app/builder/test-step/` — test-panel UI (`test-panel-host`, action/trigger sections, sample-data viewer, view toggle, CTA buttons); `test-runner-context.tsx` hoists `useTestAction` + the webhook-return dialog so the bottom CTA can fire the test in-tree
 - `packages/web/src/app/builder/pieces-selector/` — piece/action browser
 - `packages/web/src/app/routes/automations/index.tsx` — flows list page
 
@@ -40,10 +41,11 @@ Flows are the core automation primitive in Activepieces. Each flow is a versione
 - **Sample Data**: Captured step output (input + output) stored as File entities per flow version, used for testing downstream steps without live execution.
 - **Human Input**: Flows that expose a public form (`/form/:flowId`) or chat interface (`/chat/:flowId`) as their trigger UI.
 - **operationStatus**: Tracks in-progress mutations (ENABLING, DISABLING, DELETING) to prevent race conditions on concurrent state changes.
+- **createdBy**: Records the automated source that created the flow as a discriminated union (`FlowCreator`: `{ type: 'MCP' | 'AGENT', id }`). Null for human-created flows. Server-set only — surfaced in the UI as the "AI" badge (`FlowCreatedByBadge`). Distinct from `ownerId`, which is the current owning user.
 
 ## Entities
 
-**Flow**: id, projectId, folderId (nullable), status (ENABLED/DISABLED), externalId, publishedVersionId (nullable, unique FK), metadata (JSONB), operationStatus (NONE/DELETING/ENABLING/DISABLING), timeSavedPerRun, ownerId, templateId. Relations: project, folder, owner, publishedVersion (one-to-one), versions (one-to-many), runs, events, tableWebhooks.
+**Flow**: id, projectId, folderId (nullable), status (ENABLED/DISABLED), externalId, publishedVersionId (nullable, unique FK), metadata (JSONB), operationStatus (NONE/DELETING/ENABLING/DISABLING), timeSavedPerRun, ownerId, templateId, createdBy (nullable JSONB — `FlowCreator`). Relations: project, folder, owner, publishedVersion (one-to-one), versions (one-to-many), runs, events, tableWebhooks.
 
 **FlowVersion**: id, flowId, displayName, schemaVersion, trigger (JSONB — full flow graph), connectionIds[], agentIds[], updatedBy, valid, state (DRAFT/LOCKED), backupFiles (JSONB), notes[] (JSONB). Relations: flow, updatedByUser.
 
@@ -97,10 +99,20 @@ When CHANGE_STATUS to DISABLED:
 The visual builder (`packages/web/src/app/builder/`) uses XYFlow for the canvas. State is split into focused Zustand slices, composed by `builder-state-provider.tsx`:
 - `flow-state.ts` — current flow and version, pending operations
 - `run-state.ts` — active test run, step results, focused/failed step (used by the run-info widget's "See error" affordance); `setRun` resets `userManuallySelectedStepDuringRun` whenever a new run id arrives
-- `canvas-state.ts` — viewport, selected node, drag state, plus the `userManuallySelectedStepDuringRun` flag and `resumeLiveFollow` action that gate auto-follow. The auto-focus effect lives in `useFocusOnStep` (`flow-canvas/hooks.tsx`): it calls `selectStepByName(step, { fromAutoFocus: true })` to pan the canvas to the latest engine step, and short-circuits whenever `userManuallySelectedStepDuringRun` is set. The flag flips to `true` when the user picks a different step mid-run (any `selectStepByName` call without `fromAutoFocus`) and clears via `resumeLiveFollow` or when `setRun` receives a new run id
+- `canvas-state.ts` — viewport, selected node, drag state, plus the `userManuallySelectedStepDuringRun` flag and `resumeLiveFollow` action that gate auto-follow. The auto-focus effect lives in `useFocusOnStep` (`flow-canvas/hooks.tsx`): it calls `selectStepByName(step, { fromAutoFocus: true })` to pan the canvas to the latest engine step, and short-circuits whenever `userManuallySelectedStepDuringRun` is set. The flag flips to `true` when the user picks a different step mid-run (any `selectStepByName` call without `fromAutoFocus`) and clears via `resumeLiveFollow` or when `setRun` receives a new run id. Also owns the test-panel layout state: `testPanelView` (`'split' | 'drawer'`, persisted via localStorage) and `isTestPanelOpen`
 - `step-form-state.ts` — open/focused step configuration
 - `piece-selector-state.ts` — piece browser visibility and search
 - `notes-state.tsx` — sticky notes overlay
 - `chat-state.ts` — embedded chat drawer state for testing `chat_submission`-trigger flows from the builder
 
 `flowHooks.useChangeFlowStatus` handles both publish and enable/disable, surfaces `TRIGGER_UPDATE_STATUS` errors via an `ApErrorDialog`, and maps gateway timeout errors to a user-readable message. `flowHooks.importFlowsFromTemplates` replaces `externalId` references across a multi-flow template import to maintain cross-flow links.
+
+## Test Panel (Builder)
+
+The step-settings sidebar hosts a test panel with two layouts, switched via `testPanelView` in canvas state:
+- **`drawer`** — slides up from the bottom of the sidebar, occupies 60% height, sits at `z-50` over the settings form. Dismisses on outside-click (pointerdown listener in `test-panel-host.tsx`, ignoring Radix poppers, role="dialog", and resizable handles).
+- **`split`** — non-resizable 50/50 horizontal split between settings form and test panel inside the sidebar.
+
+`step-settings/index.tsx` composes the two layouts via `StepSettingsLayout`. The bottom CTA (`TestStepCTAButton`) shows under the settings form when the drawer is closed; clicking it opens the drawer and auto-fires the test by calling `useActionTestRunner().fireTest()` or `useTriggerTestRunner().fireTest()` from context. `ActionTestRunnerProvider` owns the action mutation and the return-response webhook dialog; `TriggerTestRunnerProvider` owns the trigger piece lookup, the three trigger mutations (`simulate`, `poll`, `saveMock`), the MCP-tool testing dialog, and a `fireTest()` dispatcher that picks the right one based on `triggerEventUtils.getTestType`. Both providers are wired with the Zustand-backed `selectedStep` (not the RHF form values) so `step.valid` stays in sync with the resolver-computed validity that `applyOperation` writes to canvas state — RHF never writes the resolver's `valid` back into its own form store, so reading from `form.getValues()` / `form.formState.isValid` would observe a stale value for freshly-added steps.
+
+`builder/index.tsx` drives the right-sidebar pixel size imperatively: a `useLayoutEffect` on `react-resizable-panels`' `PanelImperativeHandle.resize()` targets `1000px` (initial split open), `850px` (subsequent split open), or `25%` (drawer). A separate `useEffect` attaches a `ResizeObserver` while the user drags the handle and auto-collapses split → drawer once the sidebar drops under `700px`. The old `useAnimateSidebar` hook has been removed in favour of this approach.
