@@ -2,8 +2,14 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { beehiivAuth } from '../common/auth';
 import { publicationId } from '../common/props';
-import { beehiivApiCall, BeehiivPaginatedApiCall } from '../common/client';
+import { beehiivApiCall } from '../common/client';
 import { isNil } from '@activepieces/shared';
+
+type SubscriptionListResponse = {
+	data: Record<string, unknown>[];
+	has_more: boolean;
+	next_cursor: string | null;
+};
 
 export const listSubscriptionsAction = createAction({
 	auth: beehiivAuth,
@@ -22,6 +28,8 @@ export const listSubscriptionsAction = createAction({
 					{ label: 'Active', value: 'active' },
 					{ label: 'Inactive', value: 'inactive' },
 					{ label: 'Pending', value: 'pending' },
+					{ label: 'Validating', value: 'validating' },
+					{ label: 'Invalid', value: 'invalid' },
 				],
 			},
 		}),
@@ -30,44 +38,58 @@ export const listSubscriptionsAction = createAction({
 			description: 'Number of subscriptions to return per page (1-100).',
 			required: false,
 		}),
-		page: Property.Number({
-			displayName: 'Page',
-			description: 'Page number for pagination (default 1).',
+		cursor: Property.ShortText({
+			displayName: 'Cursor',
+			description:
+				'Cursor token for fetching the next page of results. Leave empty to start from the beginning.',
 			required: false,
 		}),
 	},
 	async run(context) {
-		const { publicationId, status, page, limit } = context.propsValue;
+		const { publicationId, status, cursor, limit } = context.propsValue;
 
-		const queryParams: Record<string, string | undefined> = {
+		const baseParams: Record<string, string | number | undefined> = {
 			order_by: 'created',
 			direction: 'desc',
 		};
 
 		if (status && status !== 'all') {
-			queryParams['status'] = status;
+			baseParams['status'] = status;
 		}
 
-		if (isNil(page) && isNil(limit)) {
-			return BeehiivPaginatedApiCall({
+		if (!isNil(cursor) || !isNil(limit)) {
+			return beehiivApiCall<SubscriptionListResponse>({
 				apiKey: context.auth.secret_text,
 				method: HttpMethod.GET,
 				resourceUri: `/publications/${publicationId}/subscriptions`,
-				query: queryParams,
+				query: {
+					...baseParams,
+					...(isNil(limit) ? {} : { limit }),
+					...(isNil(cursor) || cursor === '' ? {} : { cursor }),
+				},
 			});
 		}
 
-		const response = await beehiivApiCall<{ data: Record<string, unknown>[] }>({
-			apiKey: context.auth.secret_text,
-			method: HttpMethod.GET,
-			resourceUri: `/publications/${publicationId}/subscriptions`,
-			query: {
-				page,
-				limit,
-				...queryParams,
-			},
-		});
+		const allData: Record<string, unknown>[] = [];
+		let nextCursor: string | undefined;
 
-		return response.data;
+		do {
+			const response = await beehiivApiCall<SubscriptionListResponse>({
+				apiKey: context.auth.secret_text,
+				method: HttpMethod.GET,
+				resourceUri: `/publications/${publicationId}/subscriptions`,
+				query: {
+					...baseParams,
+					limit: 100,
+					...(nextCursor ? { cursor: nextCursor } : {}),
+				},
+			});
+
+			if (!response.data || response.data.length === 0) break;
+			allData.push(...response.data);
+			nextCursor = response.next_cursor ?? undefined;
+		} while (nextCursor);
+
+		return allData;
 	},
 });
