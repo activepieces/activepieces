@@ -43,7 +43,7 @@ export const generateImage = createAction({
           return {
             disabled: true,
             options: [],
-            placeholder: "Couldn't load models, API key is invalid",
+            placeholder: "Couldn't load models. Check your API key or try again.",
           };
         }
       },
