@@ -190,3 +190,87 @@ export async function workdaySoapRequest(
 export function escapeWql(value: string): string {
 	return value.replace(/'/g, "''");
 }
+
+export function getApiHost(auth: OAuth2PropertyValue): string {
+	return getHost(auth);
+}
+
+export async function workdayWqlRequestAll(
+	auth: OAuth2PropertyValue,
+	query: string,
+): Promise<Record<string, unknown>[]> {
+	const response = await workdayWqlRequest<{ data?: Record<string, unknown>[] }>(
+		auth,
+		query,
+	);
+	return response.body.data ?? [];
+}
+
+export async function workdayGetReport(
+	auth: OAuth2PropertyValue,
+	reportId: string,
+	queryParams?: QueryParams,
+): Promise<Record<string, unknown>> {
+	const response = await workdayRequest<Record<string, unknown>>(
+		auth,
+		HttpMethod.GET,
+		`/reports/${reportId}`,
+		undefined,
+		queryParams,
+		WorkdayService.common,
+	);
+	return response.body;
+}
+
+export async function workdayListCustomObjectDefinitions(
+	auth: OAuth2PropertyValue,
+): Promise<Record<string, unknown>[]> {
+	const tenant = getTenant(auth);
+	const response = await httpClient.sendRequest<{
+		data?: Record<string, unknown>[];
+	}>({
+		method: HttpMethod.GET,
+		url: `https://${getHost(auth)}/ccx/api/customObjects/v1/${tenant}/customObjectDefinitions`,
+		authentication: {
+			type: AuthenticationType.BEARER_TOKEN,
+			token: auth.access_token,
+		},
+	});
+	return response.body.data ?? [];
+}
+
+export async function workdayGetCustomObject(
+	auth: OAuth2PropertyValue,
+	definitionId: string,
+	objectId: string,
+): Promise<Record<string, unknown>> {
+	const tenant = getTenant(auth);
+	const response = await httpClient.sendRequest<Record<string, unknown>>({
+		method: HttpMethod.GET,
+		url: `https://${getHost(auth)}/ccx/api/customObjects/v1/${tenant}/customObjects/${definitionId}`,
+		queryParams: { id: objectId },
+		authentication: {
+			type: AuthenticationType.BEARER_TOKEN,
+			token: auth.access_token,
+		},
+	});
+	return response.body;
+}
+
+export async function workdayUpsertCustomObject(
+	auth: OAuth2PropertyValue,
+	definitionId: string,
+	body: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+	const tenant = getTenant(auth);
+	const response = await httpClient.sendRequest<Record<string, unknown>>({
+		method: HttpMethod.PUT,
+		url: `https://${getHost(auth)}/ccx/api/customObjects/v1/${tenant}/customObjects/${definitionId}`,
+		body,
+		authentication: {
+			type: AuthenticationType.BEARER_TOKEN,
+			token: auth.access_token,
+		},
+	});
+	return response.body;
+}

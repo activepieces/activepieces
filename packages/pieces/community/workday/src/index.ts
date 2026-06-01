@@ -23,6 +23,16 @@ import { hireEmployee } from './lib/action/hire-employee';
 import { updateSupplier } from './lib/action/update-supplier';
 import { updateSupplierInvoice } from './lib/action/update-supplier-invoice';
 
+import { callOperation } from './lib/action/call-operation';
+import { createUpdateCustomObject } from './lib/action/create-update-custom-object';
+import { getBusinessObjectDetailsBatch } from './lib/action/get-business-object-details-batch';
+import { getCustomObjects } from './lib/action/get-custom-objects';
+import { getReport } from './lib/action/get-report';
+import { getReportWqlBatch } from './lib/action/get-report-wql-batch';
+import { listCustomObjectDefinitionsBatch } from './lib/action/list-custom-object-definitions-batch';
+import { searchBusinessObjectBatch } from './lib/action/search-business-object-batch';
+import { updateBusinessObject } from './lib/action/update-business-object';
+
 import { businessProcessCompleted } from './lib/trigger/business-process-completed';
 import { employeeTerminated } from './lib/trigger/employee-terminated';
 import { expenseReportSubmitted } from './lib/trigger/expense-report-submitted';
@@ -33,6 +43,11 @@ import { newSupplier } from './lib/trigger/new-supplier';
 import { newSupplierInvoice } from './lib/trigger/new-supplier-invoice';
 import { runWqlQuery } from './lib/trigger/run-wql-query';
 import { updatedSupplier } from './lib/trigger/updated-supplier';
+
+import { newOrUpdatedBusinessObject } from './lib/trigger/new-or-updated-business-object';
+import { newOrUpdatedBusinessObjectBatch } from './lib/trigger/new-or-updated-business-object-batch';
+import { scheduledReportFetchBatch } from './lib/trigger/scheduled-report-fetch-batch';
+import { scheduledReportFetchWqlBatch } from './lib/trigger/scheduled-report-fetch-wql-batch';
 
 export const workday = createPiece({
 	displayName: 'Workday',
@@ -59,6 +74,15 @@ export const workday = createPiece({
 		hireEmployee,
 		updateSupplier,
 		updateSupplierInvoice,
+		getBusinessObjectDetailsBatch,
+		searchBusinessObjectBatch,
+		updateBusinessObject,
+		callOperation,
+		getCustomObjects,
+		getReport,
+		getReportWqlBatch,
+		listCustomObjectDefinitionsBatch,
+		createUpdateCustomObject,
 		createCustomApiCallAction({
 			baseUrl: (auth) =>
 				`https://wd2-impl-services1.workday.com/ccx/api/v1/${(auth as OAuth2PropertyValue).props?.['tenant']}`,
@@ -79,5 +103,9 @@ export const workday = createPiece({
 		newSupplierInvoice,
 		runWqlQuery,
 		updatedSupplier,
+		newOrUpdatedBusinessObject,
+		newOrUpdatedBusinessObjectBatch,
+		scheduledReportFetchBatch,
+		scheduledReportFetchWqlBatch,
 	],
 });
