@@ -18,7 +18,7 @@ export const googleProvider: AIProviderStrategy<GoogleProviderAuthConfig, Google
             },
         })
         return res.body.models.map((model: GoogleModel) => ({
-            id: model.name,
+            id: model.name.replace('models/', ''),
             name: model.displayName,
             type: model.name.includes('image') ? AIProviderModelType.IMAGE : AIProviderModelType.TEXT,
         }))
