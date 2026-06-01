@@ -1,4 +1,13 @@
+import { AppConnectionStatus } from '@activepieces/shared';
+
 import { ChatUIMessage } from '@/features/chat/lib/chat-types';
+
+export function normalizePieceName(piece: string): string {
+  const shortName = piece.replace(/[^a-z0-9-]/gi, '');
+  return piece.startsWith('@activepieces/')
+    ? piece
+    : `@activepieces/piece-${shortName}`;
+}
 
 export function getTextFromParts(parts: ChatUIMessage['parts']): string {
   return parts
@@ -7,147 +16,25 @@ export function getTextFromParts(parts: ChatUIMessage['parts']): string {
     .join('');
 }
 
-export function parseCodeBlock(
-  content: string,
-  fence: string,
-): { block: string | null; cleanContent: string } {
-  const regex = new RegExp(
-    `\`\`\`\\s*${fence}\\s*\\r?\\n([\\s\\S]*?)\\r?\\n?\\s*\`\`\``,
-  );
-  const match = regex.exec(content);
-  if (!match) return { block: null, cleanContent: content };
-  return {
-    block: match[1],
-    cleanContent: content
-      .replace(match[0], '')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim(),
-  };
-}
+export type { MultiQuestion } from '@/features/chat/lib/chat-store-types';
 
-export function parseQuickReplies(content: string): {
-  replies: string[];
-  cleanContent: string;
-} {
-  const { block, cleanContent } = parseCodeBlock(content, 'quick-replies');
-  if (!block) return { replies: [], cleanContent: content };
-
-  const replies = block
-    .split('\n')
-    .filter((line) => line.startsWith('- '))
-    .map((line) => line.replace(/^-\s+/, '').trim())
-    .filter((line) => line.length > 0 && line.length < 80);
-
-  return { replies, cleanContent };
-}
-
-export function parseAutomationProposal(content: string): {
-  proposal: AutomationProposal | null;
-  cleanContent: string;
-} {
-  const { block, cleanContent } = parseCodeBlock(
-    content,
-    'automation-proposal',
-  );
-  if (!block) return { proposal: null, cleanContent };
-
-  const titleMatch = /^title:\s*(.+)$/m.exec(block);
-  const descMatch = /^description:\s*(.+)$/m.exec(block);
-  const stepsMatch = block.match(/^-\s+.+$/gm);
-
-  if (!titleMatch || !stepsMatch || stepsMatch.length === 0) {
-    return { proposal: null, cleanContent: content };
-  }
-
-  return {
-    proposal: {
-      title: titleMatch[1].trim(),
-      description: descMatch?.[1].trim() ?? '',
-      steps: stepsMatch.map((s) => s.replace(/^-\s+/, '').trim()),
-    },
-    cleanContent,
-  };
-}
-
-export function parseAllConnectionsRequired(content: string): {
-  connections: ConnectionRequired[];
-  cleanContent: string;
-} {
-  const connections: ConnectionRequired[] = [];
-  const regex = /```\s*connection-required\s*\r?\n([\s\S]*?)\r?\n?\s*```/g;
-  let cleaned = content;
-  let match = regex.exec(content);
-
-  while (match) {
-    const block = match[1];
-    const pieceMatch = /^piece:\s*(.+)$/m.exec(block);
-    const nameMatch = /^displayName:\s*(.+)$/m.exec(block);
-    if (pieceMatch) {
-      connections.push({
-        piece: pieceMatch[1].trim(),
-        displayName: nameMatch?.[1].trim() ?? pieceMatch[1].trim(),
-      });
-    }
-    cleaned = cleaned.replace(match[0], '');
-    match = regex.exec(content);
-  }
-
-  return { connections, cleanContent: cleaned.trim() };
-}
-
-export type AutomationProposal = {
-  title: string;
-  description: string;
-  steps: string[];
-};
-
-export type ConnectionRequired = {
+export type ConnectionPickerData = {
   piece: string;
   displayName: string;
+  connections: Array<{
+    label: string;
+    project: string;
+    externalId: string;
+    projectId: string;
+    status: AppConnectionStatus;
+  }>;
 };
 
-export type MultiQuestion = {
-  title?: string;
-  question: string;
-  type: 'choice' | 'text';
-  options?: string[];
-  placeholder?: string;
+export type ProjectPickerData = {
+  suggestedProjects: Array<{
+    name: string;
+    id: string;
+  }>;
 };
 
-export function parseMultiQuestion(content: string): {
-  questions: MultiQuestion[];
-  cleanContent: string;
-} {
-  const { block, cleanContent } = parseCodeBlock(content, 'multi-question');
-  if (!block) return { questions: [], cleanContent: content };
-
-  const questions: MultiQuestion[] = [];
-  const sections = block.split(/^---$/m);
-
-  for (const section of sections) {
-    const questionMatch = /^question:\s*(.+)$/m.exec(section);
-    const typeMatch = /^type:\s*(choice|text)$/m.exec(section);
-    if (!questionMatch || !typeMatch) continue;
-
-    const titleMatch = /^title:\s*(.+)$/m.exec(section);
-    const q: MultiQuestion = {
-      title: titleMatch ? titleMatch[1].trim() : undefined,
-      question: questionMatch[1].trim(),
-      type: typeMatch[1] as 'choice' | 'text',
-    };
-
-    if (q.type === 'choice') {
-      const optionLines = section.match(/^-\s+.+$/gm);
-      q.options = optionLines?.map((l) => l.replace(/^-\s+/, '').trim()) ?? [];
-    }
-
-    const placeholderMatch = /^placeholder:\s*(.+)$/m.exec(section);
-    if (placeholderMatch) {
-      q.placeholder = placeholderMatch[1].trim();
-    }
-
-    questions.push(q);
-  }
-
-  return { questions, cleanContent };
-}
+export type { PlanProgressData } from '@/features/chat/lib/chat-store-types';

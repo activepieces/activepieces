@@ -1,7 +1,8 @@
 import {
+    FlowCreatorType,
     FlowOperationType,
     isNil,
-    McpServer,
+    McpToolContext,
     McpToolDefinition,
     Permission,
 } from '@activepieces/shared'
@@ -16,7 +17,7 @@ const duplicateFlowInput = z.object({
     name: z.string().optional(),
 })
 
-export const apDuplicateFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apDuplicateFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_duplicate_flow',
         permission: Permission.WRITE_FLOW,
@@ -42,6 +43,8 @@ export const apDuplicateFlowTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
 
                 const newFlow = await flowService(log).create({
                     projectId: mcp.projectId,
+                    ownerId: userId,
+                    createdBy: { type: FlowCreatorType.MCP, id: mcp.id },
                     request: {
                         displayName,
                         projectId: mcp.projectId,

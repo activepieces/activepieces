@@ -1,8 +1,7 @@
-import { AIProviderName } from '@activepieces/shared';
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import {
   ChatContainerContent,
@@ -11,10 +10,17 @@ import {
 } from '@/components/prompt-kit/chat-container';
 import { ScrollButton } from '@/components/prompt-kit/scroll-button';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import {
+  ChatStoreProvider,
+  useChatStoreContext,
+} from '@/features/chat/lib/chat-store-context';
 import { useAgentChat } from '@/features/chat/lib/use-chat';
+import { useCreditsState } from '@/features/chat/lib/use-credits-state';
 import { aiProviderQueries } from '@/features/platform-admin';
+import { cn } from '@/lib/utils';
 
+import { AssistantMessage } from './components/assistant-message';
+import { ChatBottomBar } from './components/chat-bottom-bar';
 import {
   EmptyState,
   MessageSkeletons,
@@ -22,14 +28,11 @@ import {
   SuggestionCards,
 } from './components/chat-empty-state';
 import { ChatInput } from './components/chat-input';
-import { ChatMessage } from './components/chat-message';
 import { ChatModelSelector } from './components/chat-model-selector';
-import { QuickReplies } from './components/message-content';
-import {
-  getTextFromParts,
-  parseMultiQuestion,
-  parseQuickReplies,
-} from './lib/message-parsers';
+import { CreditsBanner } from './components/credits-banner';
+import { QuickReplies } from './components/quick-replies';
+import { UserMessage } from './components/user-message';
+import { getTextFromParts } from './lib/message-parsers';
 
 export function AIChatBox({
   incognito,
@@ -43,26 +46,19 @@ export function AIChatBox({
   const chatProvider = providers?.find((p) => p.enabledForChat);
   const hasChatProvider = Boolean(chatProvider);
 
-  if (isLoadingProviders) {
-    return (
-      <div className="flex items-center justify-center h-full flex-1 min-w-0">
-        <Skeleton className="h-8 w-48" />
-      </div>
-    );
-  }
-
-  if (!hasChatProvider) {
+  if (!isLoadingProviders && !hasChatProvider) {
     return <SetupRequiredState />;
   }
 
   return (
-    <ChatBoxContent
-      incognito={incognito}
-      conversationId={conversationId}
-      onTitleUpdate={onTitleUpdate}
-      onConversationCreated={onConversationCreated}
-      chatProviderName={chatProvider?.provider}
-    />
+    <ChatStoreProvider>
+      <ChatBoxContent
+        incognito={incognito}
+        conversationId={conversationId}
+        onTitleUpdate={onTitleUpdate}
+        onConversationCreated={onConversationCreated}
+      />
+    </ChatStoreProvider>
   );
 }
 
@@ -71,8 +67,9 @@ function ChatBoxContent({
   conversationId: initialConversationId,
   onTitleUpdate,
   onConversationCreated,
-  chatProviderName,
 }: AIChatBoxProps) {
+  const credits = useCreditsState();
+
   const {
     messages,
     modelName,
@@ -84,13 +81,15 @@ function ChatBoxContent({
     cancelStream,
     setConversationId,
     setModelName,
-  } = useAgentChat({ onTitleUpdate, onConversationCreated });
-  const [connectedPieces, setConnectedPieces] = useState<Set<string>>(
-    new Set(),
-  );
-  const markPieceConnected = useCallback((piece: string) => {
-    setConnectedPieces((prev) => new Set(prev).add(piece));
-  }, []);
+  } = useAgentChat({
+    onTitleUpdate,
+    onConversationCreated,
+    onCreditsExhausted: () => credits.setCreditsExhausted(true),
+  });
+
+  const quickReplies = useChatStoreContext((s) => s.quickReplies);
+  const displayCard = useChatStoreContext((s) => s.displayCard);
+  const hasBlockingCard = displayCard !== null && !displayCard.resolved;
 
   useEffect(() => {
     if (initialConversationId) {
@@ -107,17 +106,18 @@ function ChatBoxContent({
   );
 
   const handleRetry = useCallback(() => {
-    const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+    const lastUser = messages.findLast((m) => m.role === 'user');
     if (lastUser) void sendMessage(getTextFromParts(lastUser.parts));
   }, [messages, sendMessage]);
 
   const lastMessage = messages[messages.length - 1];
-  const lastMessageText =
-    lastMessage?.role === 'assistant'
-      ? getTextFromParts(lastMessage.parts)
-      : '';
-  const hasActiveForm =
-    parseMultiQuestion(lastMessageText).questions.length > 0;
+  const lastAssistantMessage = useMemo(
+    () => messages.findLast((m) => m.role === 'assistant'),
+    [messages],
+  );
+
+  const showBanner = credits.creditsExhausted || credits.creditsWarning;
+
   const isEmpty = messages.length === 0 && !isLoadingHistory && !isStreaming;
 
   if (isEmpty) {
@@ -128,18 +128,27 @@ function ChatBoxContent({
         <div className="w-full max-w-3xl mt-6">
           <SuggestionCards onSend={handleSend} />
           <div className="mt-3">
-            <ChatInput
-              isStreaming={isStreaming}
-              onSend={handleSend}
-              onStop={cancelStream}
-              leftActions={
-                <ChatModelSelector
-                  chatProviderName={chatProviderName}
-                  selectedModel={modelName}
-                  onModelChange={setModelName}
+            <div className="overflow-hidden rounded-2xl border border-foreground/20 hover:border-foreground/40 focus-within:border-foreground/40 transition-colors">
+              {showBanner && (
+                <CreditsBanner
+                  creditsExhausted={credits.creditsExhausted}
+                  creditsWarning={credits.creditsWarning}
+                  daysUntilReset={credits.daysUntilReset}
+                  onDismiss={credits.dismissCreditsWarning}
                 />
-              }
-            />
+              )}
+              <ChatInput
+                isStreaming={isStreaming}
+                onSend={handleSend}
+                onStop={cancelStream}
+                rightActions={
+                  <ChatModelSelector
+                    selectedModel={modelName}
+                    onModelChange={setModelName}
+                  />
+                }
+              />
+            </div>
           </div>
         </div>
         <div className="flex-1" />
@@ -158,28 +167,42 @@ function ChatBoxContent({
             'linear-gradient(to bottom, black 0%, black calc(100% - 40px), transparent 100%)',
         }}
       >
-        <ChatContainerContent className="max-w-4xl mx-auto px-6 py-8 gap-0">
+        <ChatContainerContent className="max-w-3xl mx-auto px-6 pt-8 pb-16 gap-0">
           {isLoadingHistory && <MessageSkeletons />}
 
           {messages.map((msg, idx) => {
+            if (msg.role === 'user') {
+              return (
+                <UserMessage
+                  key={msg.id}
+                  message={msg}
+                  isLastMessage={idx === messages.length - 1}
+                />
+              );
+            }
+
             const isLastStreamingAssistant =
-              isStreaming &&
-              idx === messages.length - 1 &&
-              msg.role === 'assistant';
+              isStreaming && idx === messages.length - 1;
+
+            const isLastAssistant = idx === messages.length - 1;
 
             return (
-              <ChatMessage
+              <AssistantMessage
                 key={msg.id}
                 message={msg}
                 isStreaming={isLastStreamingAssistant}
-                isLastMessage={idx === messages.length - 1}
-                onSend={handleSend}
-                connectedPieces={connectedPieces}
-                onPieceConnected={markPieceConnected}
+                isLastMessage={isLastAssistant}
                 onRetry={handleRetry}
+                lastAssistantMessage={
+                  isLastAssistant ? lastAssistantMessage : msg
+                }
               />
             );
           })}
+
+          {!isStreaming && !wasCancelled && quickReplies.length > 0 && (
+            <QuickReplies replies={quickReplies} onSend={handleSend} />
+          )}
 
           {wasCancelled && (
             <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground animate-in fade-in duration-200">
@@ -187,19 +210,6 @@ function ChatBoxContent({
               <span>{t('Response stopped')}</span>
             </div>
           )}
-
-          {!wasCancelled &&
-            messages.length > 0 &&
-            messages[messages.length - 1]?.role === 'assistant' && (
-              <QuickReplies
-                replies={
-                  parseQuickReplies(
-                    getTextFromParts(messages[messages.length - 1].parts),
-                  ).replies
-                }
-                onSend={handleSend}
-              />
-            )}
 
           {error && (
             <motion.div
@@ -227,25 +237,34 @@ function ChatBoxContent({
         <ScrollButton className="absolute bottom-4 right-1/2 translate-x-1/2" />
       </ChatContainerRoot>
 
-      {!hasActiveForm && (
-        <div className="pb-4 px-6">
-          <div className="max-w-3xl mx-auto">
-            <ChatInput
+      <div className="px-6 pb-4">
+        <div className="max-w-3xl mx-auto relative">
+          <div
+            className={cn(
+              !hasBlockingCard &&
+                'overflow-hidden rounded-2xl border border-foreground/20 hover:border-foreground/40 focus-within:border-foreground/40 transition-colors',
+            )}
+          >
+            {showBanner && !hasBlockingCard && (
+              <CreditsBanner
+                creditsExhausted={credits.creditsExhausted}
+                creditsWarning={credits.creditsWarning}
+                daysUntilReset={credits.daysUntilReset}
+                onDismiss={credits.dismissCreditsWarning}
+              />
+            )}
+            <ChatBottomBar
               isStreaming={isStreaming}
               onSend={handleSend}
               onStop={cancelStream}
-              placeholder={t('Reply...')}
-              leftActions={
-                <ChatModelSelector
-                  chatProviderName={chatProviderName}
-                  selectedModel={modelName}
-                  onModelChange={setModelName}
-                />
-              }
+              selectedModel={modelName}
+              onModelChange={setModelName}
+              lastAssistantMessage={lastAssistantMessage}
+              lastMessageId={lastMessage?.id}
             />
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -254,6 +273,5 @@ type AIChatBoxProps = {
   incognito: boolean;
   conversationId?: string | null;
   onConversationCreated?: (conversationId: string) => void;
-  onTitleUpdate?: (title: string, conversationId?: string) => void;
-  chatProviderName?: AIProviderName;
+  onTitleUpdate?: (title: string) => void;
 };

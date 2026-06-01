@@ -80,8 +80,8 @@ export function ProjectDashboardLayout({
       hasPermission: true,
     },
     {
-      to: '/chat-with-ai',
-      label: t('Chat with AI'),
+      to: '/chat',
+      label: t('Chat'),
       show: !isEmbedded,
       icon: CompassIcon,
       hasPermission: true,

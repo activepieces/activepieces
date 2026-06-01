@@ -87,8 +87,14 @@ export const CloudflareGatewayProviderConfig = z.object({
 })
 export type CloudflareGatewayProviderConfig = z.infer<typeof CloudflareGatewayProviderConfig>
 
+export const DEFAULT_AZURE_API_VERSION = '2024-10-21'
+
 export const AzureProviderConfig = z.object({
     resourceName: z.string(),
+    apiVersion: z.preprocess(
+        (v) => (typeof v === 'string' && v.trim().length === 0 ? undefined : v),
+        z.string().optional(),
+    ),
 })
 export type AzureProviderConfig = z.infer<typeof AzureProviderConfig>
 
@@ -256,8 +262,8 @@ export type AIErrorResponse = z.infer<typeof AIErrorResponse>
  * wrong-but-confident answer.
  */
 const OPENAI_CHAT_MODELS = ['gpt-5.5', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-4.1', 'gpt-4.1-mini'] as const
-const ANTHROPIC_CHAT_MODELS = ['claude-opus-4-7', 'claude-sonnet-4-6', 'claude-haiku-4-5'] as const
-const ANTHROPIC_OPENROUTER_CHAT_MODELS = ['claude-opus-4.7', 'claude-sonnet-4.6', 'claude-haiku-4.5'] as const
+const ANTHROPIC_CHAT_MODELS = ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5'] as const
+const ANTHROPIC_OPENROUTER_CHAT_MODELS = ['claude-sonnet-4.6', 'claude-opus-4.7', 'claude-haiku-4.5'] as const
 const GOOGLE_CHAT_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] as const
 const X_AI_OPENROUTER_CHAT_MODELS = ['grok-4.20', 'grok-4.1-fast'] as const
 
@@ -266,8 +272,8 @@ export const ALLOWED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, rea
     [AIProviderName.ANTHROPIC]: ANTHROPIC_CHAT_MODELS,
     [AIProviderName.GOOGLE]: GOOGLE_CHAT_MODELS,
     [AIProviderName.ACTIVEPIECES]: [
-        ...OPENAI_CHAT_MODELS.map((m) => `${AIProviderName.OPENAI}/${m}`),
         ...ANTHROPIC_OPENROUTER_CHAT_MODELS.map((m) => `${AIProviderName.ANTHROPIC}/${m}`),
+        ...OPENAI_CHAT_MODELS.map((m) => `${AIProviderName.OPENAI}/${m}`),
         ...GOOGLE_CHAT_MODELS.map((m) => `${AIProviderName.GOOGLE}/${m}`),
         ...X_AI_OPENROUTER_CHAT_MODELS.map((m) => `x-ai/${m}`),
     ],
@@ -371,6 +377,16 @@ function getMaxContextTokens({ provider }: { provider: AIProviderName | undefine
     if (!provider) return DEFAULT_MAX_CONTEXT_TOKENS
     return PROVIDER_MAX_CONTEXT_TOKENS[provider] ?? DEFAULT_MAX_CONTEXT_TOKENS
 }
+
+export const ACTIVEPIECES_CHAT_TIERS = [
+    { id: 'fast', label: 'Fast', modelId: 'anthropic/claude-opus-4.7', thinkingBudget: 5_000 },
+    { id: 'smart', label: 'Expert', modelId: 'anthropic/claude-opus-4.7', thinkingBudget: 10_000 },
+    { id: 'premium', label: 'Heavy', modelId: 'anthropic/claude-opus-4.7', thinkingBudget: 20_000 },
+] as const
+
+export const DEFAULT_CHAT_TIER_ID = 'smart' as const
+
+export type ActivepiecesChatTier = typeof ACTIVEPIECES_CHAT_TIERS[number]
 
 export const aiProviderUtils = {
     getMaxContextTokens,

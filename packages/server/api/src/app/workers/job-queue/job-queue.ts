@@ -1,5 +1,5 @@
 import { apDayjsDuration, memoryLock } from '@activepieces/server-utils'
-import { ApId, EventDestinationJobData, ExecuteFlowJobData, getDefaultJobPriority, isNil, JOB_PRIORITY, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
+import { ApId, EventDestinationJobData, ExecuteChatAgentJobData, ExecuteFlowJobData, getDefaultJobPriority, isNil, JOB_PRIORITY, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { Job, Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
@@ -196,6 +196,6 @@ type BaseAddParams<JD extends Omit<JobData, 'engineToken'>, JT extends JobType> 
 type RepeatingJobAddParams = BaseAddParams<PollingJobData | RenewWebhookJobData, JobType.REPEATING> & {
     scheduleOptions: ScheduleOptions
 }
-type OneTimeJobAddParams = BaseAddParams<ExecuteFlowJobData | WebhookJobData | UserInteractionJobData | EventDestinationJobData, JobType.ONE_TIME>
+type OneTimeJobAddParams = BaseAddParams<ExecuteFlowJobData | WebhookJobData | UserInteractionJobData | EventDestinationJobData | ExecuteChatAgentJobData, JobType.ONE_TIME>
 
 export type AddJobParams<type extends JobType> = type extends JobType.REPEATING ? RepeatingJobAddParams : OneTimeJobAddParams

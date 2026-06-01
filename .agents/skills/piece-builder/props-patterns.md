@@ -120,6 +120,8 @@ Property.StaticMultiSelectDropdown({
 
 ## Dynamic Dropdown (fetches from API)
 
+> **Always pass `auth`.** Every `Property.Dropdown`, `Property.MultiSelectDropdown`, and `Property.DynamicProperties` whose `options`/`props` callback reads `auth` MUST set `auth: <pieceAuth>` (e.g. `auth: myAppAuth`). Without it, `auth` is `undefined` in the callback and the dropdown can never load. Import the auth object from the piece's `auth.ts` (or `../..`). See `packages/pieces/community/github/src/lib/common/index.ts` for the real pattern.
+
 ```typescript
 Property.Dropdown({
   displayName: 'Project',
@@ -133,7 +135,7 @@ Property.Dropdown({
     const response = await httpClient.sendRequest<{ data: { id: string; name: string }[] }>({
       method: HttpMethod.GET,
       url: 'https://api.example.com/v1/projects',
-      authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth as string },
+      authentication: { type: AuthenticationType.BEARER_TOKEN, token: (auth as { secret_text: string }).secret_text },
     });
     return {
       disabled: false,
@@ -161,7 +163,7 @@ Property.Dropdown({
     const response = await httpClient.sendRequest<{ data: { id: string; name: string }[] }>({
       method: HttpMethod.GET,
       url: `https://api.example.com/v1/projects/${project}/tasks`,
-      authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth as string },
+      authentication: { type: AuthenticationType.BEARER_TOKEN, token: (auth as { secret_text: string }).secret_text },
     });
     return {
       disabled: false,

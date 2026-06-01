@@ -49,6 +49,8 @@ import { SplitUpPieceMetadataIntoTools1752004202722 } from './migration/common/1
 import { AddIndexToIssues1756775080449 } from './migration/common/1756775080449-AddIndexToIssues'
 import { AddFlowIndexToTriggerSource1757555419075 } from './migration/common/1757555283659-AddFlowIndexToTriggerSource'
 import { AddIndexForAppEvents1759392852559 } from './migration/common/1759392852559-AddIndexForAppEvents'
+import { AddUiMessagesToChatConversation1778983371000 } from './migration/common/1778983371000-AddUiMessagesToChatConversation'
+import { AddStatusToChatConversation1779500000000 } from './migration/common/1779500000000-AddStatusToChatConversation'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -367,7 +369,18 @@ import { DropChatTokenColumns1782000000000 } from './migration/postgres/17820000
 import { AddUserSandboxTable1784000000000 } from './migration/postgres/1784000000000-AddUserSandboxTable'
 import { ReplacesSandboxWithVercelAiSdk1785000000000 } from './migration/postgres/1785000000000-ReplacesSandboxWithVercelAiSdk'
 import { AddChatCompactionColumns1786000000000 } from './migration/postgres/1786000000000-AddChatCompactionColumns'
+import { AddEmbedSubdomainTable1787000000000 } from './migration/postgres/1787000000000-AddEmbedSubdomainTable'
+import { MakeChatConversationPlatformWide1787000000000 } from './migration/postgres/1787000000000-MakeChatConversationPlatformWide'
 import { AddSsoDomainVerification1787100000000 } from './migration/postgres/1787100000000-AddSsoDomainVerification'
+import { AddProjectIdsGinIndexToAppConnection1787200000000 } from './migration/postgres/1787200000000-AddProjectIdsGinIndexToAppConnection'
+import { AddPlatformMcpServer1788000000000 } from './migration/postgres/1788000000000-AddPlatformMcpServer'
+import { MakeMcpOAuthProjectIdNullable1789000000000 } from './migration/postgres/1789000000000-MakeMcpOAuthProjectIdNullable'
+import { RemoveMcpServerStatus1790000000000 } from './migration/postgres/1790000000000-RemoveMcpServerStatus'
+import { RenameEnabledToolsToDisabledTools1791000000000 } from './migration/postgres/1791000000000-RenameEnabledToolsToDisabledTools'
+import { AddTriggerSourceFlowVersionIdIndex1792000000000 } from './migration/postgres/1792000000000-AddTriggerSourceFlowVersionIdIndex'
+import { AddVariableTable1793000000000 } from './migration/postgres/1793000000000-AddVariableTable'
+import { AddCreatedByToFlow1794000000000 } from './migration/postgres/1794000000000-AddCreatedByToFlow'
+import { AddDataManipulationEnabledToPlatformPlan1794000000000 } from './migration/postgres/1794000000000-AddDataManipulationEnabledToPlatformPlan'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -745,12 +758,25 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddChatTables1776200000000,
         AddMcpServerTokenIndex1776400000000,
         AddRunStatusCoverIndex1777370308000,
+        AddLastLoggedInPlatformIdToUserIdentity1777491000474,
         DropChatTokenColumns1782000000000,
         AddUserSandboxTable1784000000000,
-        AddLastLoggedInPlatformIdToUserIdentity1777491000474,
         ReplacesSandboxWithVercelAiSdk1785000000000,
         AddChatCompactionColumns1786000000000,
+        AddEmbedSubdomainTable1787000000000,
         AddSsoDomainVerification1787100000000,
+        AddProjectIdsGinIndexToAppConnection1787200000000,
+        AddPlatformMcpServer1788000000000,
+        MakeMcpOAuthProjectIdNullable1789000000000,
+        MakeChatConversationPlatformWide1787000000000,
+        RemoveMcpServerStatus1790000000000,
+        RenameEnabledToolsToDisabledTools1791000000000,
+        AddTriggerSourceFlowVersionIdIndex1792000000000,
+        AddUiMessagesToChatConversation1778983371000,
+        AddVariableTable1793000000000,
+        AddCreatedByToFlow1794000000000,
+        AddStatusToChatConversation1779500000000,
+        AddDataManipulationEnabledToPlatformPlan1794000000000,
     ]
     return migrations
 }

@@ -1,4 +1,5 @@
 
+import { loggerRedact } from '@activepieces/server-utils'
 import { Level, pino, transport, TransportTargetOptions } from 'pino'
 import { AppSystemProp, environmentVariables } from '../../system/system-props'
 import { TransportProvider } from './transport-provider'
@@ -10,8 +11,8 @@ export const otelTransport: TransportProvider = {
     },
     createLogger(level: Level, targets: TransportTargetOptions[]) {
         return pino(
-            { level },
-            transport({ 
+            { level, redact: loggerRedact },
+            transport({
                 targets: [
                     {
                         target: 'pino-opentelemetry-transport',

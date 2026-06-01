@@ -1,13 +1,24 @@
 import {
+  AP_FUNCTIONS,
   FlowAction,
   FlowTrigger,
   assertNotNullOrUndefined,
+  formulaEvaluator,
   isNil,
 } from '@activepieces/shared';
 import { MentionNodeAttrs } from '@tiptap/extension-mention';
 import { JSONContent } from '@tiptap/react';
+import { Variable as VariableIcon } from 'lucide-react';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 
 import { StepMetadata } from '@/features/pieces';
+
+import {
+  FUNCTION_END_NODE_TYPE,
+  FUNCTION_SEP_NODE_TYPE,
+  FUNCTION_START_NODE_TYPE,
+} from './extensions/bracket-nodes';
 
 const removeQuotes = (text: string) => {
   if (
@@ -38,6 +49,7 @@ type ApMentionNodeAttrs = {
   logoUrl?: string;
   displayText: string;
   serverValue: string;
+  isVariable?: boolean;
 };
 const flattenNestedKeysRegex = /^flattenNestedKeys\((\w+),\s*\[(.*?)\]\)$/;
 enum TipTapNodeTypes {
@@ -47,63 +59,179 @@ enum TipTapNodeTypes {
   mention = 'mention',
 }
 
-const isMentionNodeText = (item: string) => {
-  const itemIsToken = item.match(/^\{\{(.*)\}\}$/);
-  if (itemIsToken) {
-    const content = itemIsToken[1].trim();
-    const itemIsFlattenedArray = content.match(flattenNestedKeysRegex);
-    if (itemIsFlattenedArray) {
-      return true;
-    }
-    return /^(step_\d+|trigger)/.test(content);
-  }
-  return false;
-};
-
 type StepMetadataWithDisplayName = StepMetadata & { stepDisplayName: string };
+
+const ZWS = '\u200B';
+
+type ExprToken =
+  | { kind: 'fn_open'; name: string; known: boolean }
+  | { kind: 'fn_close' }
+  | { kind: 'fn_sep' }
+  | { kind: 'variable'; value: string }
+  | { kind: 'newline' }
+  | { kind: 'text'; value: string };
+
+function tokenizeExpression(expr: string, allowBroken: boolean): ExprToken[] {
+  const tokens: ExprToken[] = [];
+  const fnNames = new Set(AP_FUNCTIONS.map((f) => f.name));
+  let i = 0;
+  let fnDepth = 0;
+
+  while (i < expr.length) {
+    if (expr[i] === '{' && expr[i + 1] === '{') {
+      const end = expr.indexOf('}}', i + 2);
+      if (end !== -1) {
+        tokens.push({ kind: 'variable', value: expr.slice(i, end + 2) });
+        i = end + 2;
+        continue;
+      }
+    }
+
+    if (expr[i] === '\n') {
+      tokens.push({ kind: 'newline' });
+      i++;
+      continue;
+    }
+
+    const fnMatch = expr.slice(i).match(/^([a-z_][a-z0-9_]*)\(/i);
+    if (fnMatch && (fnNames.has(fnMatch[1]) || allowBroken)) {
+      tokens.push({
+        kind: 'fn_open',
+        name: fnMatch[1],
+        known: fnNames.has(fnMatch[1]),
+      });
+      fnDepth++;
+      i += fnMatch[1].length + 1;
+      continue;
+    }
+
+    if (expr[i] === ')') {
+      tokens.push({ kind: 'fn_close' });
+      if (fnDepth > 0) fnDepth--;
+      i++;
+      continue;
+    }
+
+    if (expr[i] === ';' && fnDepth > 0) {
+      tokens.push({ kind: 'fn_sep' });
+      i++;
+      continue;
+    }
+
+    // Accumulate plain text, tracking string literals so that `)` / `;` / function
+    // names inside quoted arguments don't prematurely close a function node
+    // (e.g. `prefix("(CEO)"; ...)` must round-trip losslessly).
+    let text = '';
+    let inString: '"' | "'" | null = null;
+    while (i < expr.length) {
+      const ch = expr[i];
+      if (inString) {
+        if (ch === inString && expr[i - 1] !== '\\') inString = null;
+        text += ch;
+        i++;
+        continue;
+      }
+      if (ch === '"' || ch === "'") {
+        inString = ch;
+        text += ch;
+        i++;
+        continue;
+      }
+      if (ch === '{' && expr[i + 1] === '{') break;
+      if (ch === '\n') break;
+      if (ch === ')') break;
+      if (ch === ';' && fnDepth > 0) break;
+      const ahead = expr.slice(i).match(/^([a-z_][a-z0-9_]*)\(/i);
+      if (ahead && (fnNames.has(ahead[1]) || allowBroken)) break;
+      text += ch;
+      i++;
+    }
+    if (text) tokens.push({ kind: 'text', value: text });
+  }
+
+  return tokens;
+}
 
 function convertTextToTipTapJsonContent(
   userInputText: string,
   steps: (FlowAction | FlowTrigger)[],
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
-): {
-  type: TipTapNodeTypes.paragraph;
-  content: JSONContent[];
-}[] {
-  const inputSplitToNodesContent = userInputText
-    .split(/(\{\{.*?\}\})/)
-    .map((el) => el.split(new RegExp(`(\n)`)))
-    .flat(1)
-    .filter((el) => el);
-  return inputSplitToNodesContent.reduce(
-    (result, node) => {
-      if (node === '\n') {
-        result.push({
-          type: TipTapNodeTypes.paragraph,
-          content: [],
-        });
-      } else if (isMentionNodeText(node)) {
-        result[result.length - 1].content.push(
-          createMentionNodeFromText(node, steps, stepsMetadata),
-        );
-      } else {
-        result[result.length - 1].content.push({
-          type: TipTapNodeTypes.text,
-          text: node,
-        });
-      }
-      return result;
-    },
-    [
-      {
-        content: [],
-        type: TipTapNodeTypes.paragraph,
-      },
-    ] as {
-      type: TipTapNodeTypes.paragraph;
-      content: JSONContent[];
-    }[],
+  variableByName?: Map<string, string>,
+): { type: TipTapNodeTypes.paragraph; content: JSONContent[] }[] {
+  // Strip ap-formula-v1::{...} wrappers before tokenizing so the editor can
+  // reconstruct function nodes from the inner expression. Saved values use the
+  // wrapper; the editor's internal tree does not.
+  // `allowBroken` only kicks in when the saved value really did contain a
+  // formula wrapper — otherwise typing literal "foo()" in a plain text field
+  // would render as a broken-function badge.
+  const allowBroken = formulaEvaluator.containsWrapper(userInputText);
+  const tokens = tokenizeExpression(
+    formulaEvaluator.unwrap(userInputText),
+    allowBroken,
   );
+  const paragraphs: {
+    type: TipTapNodeTypes.paragraph;
+    content: JSONContent[];
+  }[] = [{ type: TipTapNodeTypes.paragraph, content: [] }];
+  const fnStack: string[] = [];
+
+  for (const token of tokens) {
+    const para = paragraphs[paragraphs.length - 1];
+    switch (token.kind) {
+      case 'fn_open': {
+        const id = crypto.randomUUID();
+        fnStack.push(id);
+        para.content.push({
+          type: FUNCTION_START_NODE_TYPE,
+          attrs: { id, functionName: token.name, broken: !token.known },
+        });
+        // ZWS anchors the cursor visually between the start badge and arg content
+        para.content.push({ type: TipTapNodeTypes.text, text: ZWS });
+        break;
+      }
+      case 'fn_sep': {
+        const openId = fnStack[fnStack.length - 1];
+        if (openId !== undefined) {
+          para.content.push({
+            type: FUNCTION_SEP_NODE_TYPE,
+            attrs: { openId },
+          });
+          para.content.push({ type: TipTapNodeTypes.text, text: ZWS });
+        }
+        break;
+      }
+      case 'fn_close': {
+        const openId = fnStack.pop();
+        if (openId !== undefined) {
+          para.content.push({
+            type: FUNCTION_END_NODE_TYPE,
+            attrs: { openId },
+          });
+        } else {
+          para.content.push({ type: TipTapNodeTypes.text, text: ')' });
+        }
+        break;
+      }
+      case 'variable':
+        para.content.push(
+          createMentionNodeFromText(
+            token.value,
+            steps,
+            stepsMetadata,
+            variableByName,
+          ),
+        );
+        break;
+      case 'newline':
+        paragraphs.push({ type: TipTapNodeTypes.paragraph, content: [] });
+        break;
+      case 'text':
+        para.content.push({ type: TipTapNodeTypes.text, text: token.value });
+        break;
+    }
+  }
+
+  return paragraphs;
 }
 
 function parseFlattenArrayPath(input: string): {
@@ -165,8 +293,19 @@ function parseLabelFromMention(
   mention: string,
   steps: (FlowAction | FlowTrigger)[],
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
+  variableByName?: Map<string, string>,
 ) {
   const { stepName, path } = parseStepAndNameFromMention(mention);
+  if (stepName === 'variables') {
+    const name = path[0] ?? '';
+    const displayName = variableByName?.get(name) ?? name;
+    return {
+      displayText: `Variable · ${displayName}`,
+      serverValue: mention,
+      logoUrl: undefined,
+      isVariable: true,
+    };
+  }
   const stepIdx = steps.findIndex((step) => step.name === stepName);
   if (stepIdx < 0) {
     return {
@@ -189,35 +328,60 @@ function createMentionNodeFromText(
   mention: string,
   steps: (FlowAction | FlowTrigger)[],
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
+  variableByName?: Map<string, string>,
 ) {
   return {
     type: TipTapNodeTypes.mention,
     attrs: {
       id: mention,
       label: JSON.stringify(
-        parseLabelFromMention(mention, steps, stepsMetadata),
+        parseLabelFromMention(mention, steps, stepsMetadata, variableByName),
       ),
     },
   };
 }
 
-function convertTiptapJsonToText(nodes: JSONContent[]): string {
+function convertTiptapJsonToText(
+  nodes: JSONContent[],
+  state: { fnDepth: number } = { fnDepth: 0 },
+): string {
   const res = nodes.map((node, index) => {
     switch (node.type) {
       case TipTapNodeTypes.hardBreak:
         return '\n';
       case TipTapNodeTypes.text: {
-        //replace &nbsp; with a normal space
-        return node.text ? node.text.replaceAll('\u00A0', ' ') : '';
+        return node.text
+          ? node.text.replaceAll('\u00A0', ' ').replaceAll(ZWS, '')
+          : '';
       }
       case TipTapNodeTypes.mention: {
         return node.attrs?.label
           ? JSON.parse(node.attrs.label).serverValue
           : '';
       }
+      case FUNCTION_START_NODE_TYPE: {
+        const attrs = node.attrs as { functionName?: string } | undefined;
+        const isTopLevel = state.fnDepth === 0;
+        state.fnDepth++;
+        const prefix = isTopLevel ? formulaEvaluator.PREFIX : '';
+        return `${prefix}${attrs?.functionName ?? ''}(`;
+      }
+      case FUNCTION_END_NODE_TYPE: {
+        state.fnDepth--;
+        const suffix = state.fnDepth === 0 ? formulaEvaluator.SUFFIX : '';
+        return `)${suffix}`;
+      }
+      case FUNCTION_SEP_NODE_TYPE: {
+        return ';';
+      }
       case TipTapNodeTypes.paragraph: {
+        // Function nodes are inline atoms confined to a single paragraph, so
+        // each paragraph gets a fresh depth counter — sharing state across
+        // paragraphs would let a missing close in one leak into the next.
         return `${
-          isNil(node.content) ? '' : convertTiptapJsonToText(node.content)
+          isNil(node.content)
+            ? ''
+            : convertTiptapJsonToText(node.content, { fnDepth: 0 })
         }${index < nodes.length - 1 ? '\n' : ''}`;
       }
       default:
@@ -226,6 +390,22 @@ function convertTiptapJsonToText(nodes: JSONContent[]): string {
   });
   return res.join('');
 }
+
+// eslint-disable-next-line testing-library/render-result-naming-convention
+const VARIABLE_ICON_SVG_MARKUP = renderToStaticMarkup(
+  createElement(VariableIcon, {
+    className: 'w-4 h-4 shrink-0 text-primary',
+    'aria-hidden': true,
+  }),
+);
+
+const buildVariableIconElement = (): Element => {
+  const template = document.createElement('template');
+  template.innerHTML = VARIABLE_ICON_SVG_MARKUP;
+  const element = template.content.firstElementChild;
+  assertNotNullOrUndefined(element, 'variableIconMarkup');
+  return element;
+};
 
 const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
   const mentionElement = document.createElement('span');
@@ -246,7 +426,9 @@ const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
   mentionElement.dataset.type = TipTapNodeTypes.mention;
   mentionElement.contentEditable = 'false';
 
-  if (apMentionNodeAttrs.logoUrl) {
+  if (apMentionNodeAttrs.isVariable) {
+    mentionElement.appendChild(buildVariableIconElement());
+  } else if (apMentionNodeAttrs.logoUrl) {
     const imgElement = document.createElement('img');
     imgElement.src = apMentionNodeAttrs.logoUrl;
     imgElement.className = 'object-contain w-4 h-4';
@@ -286,6 +468,7 @@ export const textMentionUtils = {
   },
   generateMentionHtmlElement,
   createMentionNodeFromText,
+  parseLabelFromMention,
   inputWithMentionsCssClass,
   dataSelectorCssClassSelector,
   isDataSelectorOrChildOfDataSelector,
