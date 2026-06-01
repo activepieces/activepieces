@@ -1,4 +1,4 @@
-import { PlanStepUpdate } from '@activepieces/shared';
+import { BatchProgressData, PlanStepUpdate } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, RefreshCw, Volume2, VolumeOff } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -28,6 +28,7 @@ import {
 } from '../lib/message-parsers';
 
 import { ThinkingBlock } from './activity-accordion';
+import { BatchProgressCard } from './batch-progress-card';
 import { ConnectionPickerCard } from './connection-picker-card';
 import {
   ConnectionRequiredData,
@@ -99,6 +100,10 @@ export const AssistantMessage = memo(function AssistantMessage({
         flushThinking();
         hasText = true;
         result.push({ kind: 'text', text: p.text });
+      } else if (p.type === 'data-batch-progress' && 'data' in p) {
+        flushThinking();
+        const batchPart = p as { data: BatchProgressData };
+        result.push({ kind: 'batch-progress', data: batchPart.data });
       } else if (p.type === 'reasoning') {
         const thinking = ensureThinking();
         thinking.reasoningText += p.text;
@@ -271,6 +276,10 @@ export const AssistantMessage = memo(function AssistantMessage({
                     lastAssistantMessage={lastAssistantMessage}
                     isStreaming={isStreaming}
                   />
+                );
+              case 'batch-progress':
+                return (
+                  <BatchProgressCard key={`batch-${i}`} progress={block.data} />
                 );
               default:
                 return null;
@@ -509,4 +518,5 @@ type MessageBlock =
     }
   | { kind: 'text'; text: string }
   | { kind: 'display-tool'; part: AnyToolPart }
-  | { kind: 'plan-marker'; part: AnyToolPart };
+  | { kind: 'plan-marker'; part: AnyToolPart }
+  | { kind: 'batch-progress'; data: BatchProgressData };

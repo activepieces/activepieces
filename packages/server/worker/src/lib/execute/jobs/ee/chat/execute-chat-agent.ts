@@ -202,7 +202,7 @@ function buildToolSet({ ctx, writer, log, planApproved, mcpToolSet, projects, co
         },
         waitForApproval,
     })
-    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool })
+    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, writer })
     const thinkingTools = chatWorkerTools.createThinkingTools()
     const gatedMcpTools = chatMcpClient.withApprovalGates({
         mcpToolSet, writer, log, isApproved: () => planApproved.approved, waitForApproval,

@@ -194,6 +194,12 @@ function buildStepParts({ content }: {
                     output: rawOutput,
                     status: result ? PersistedToolCallStatus.COMPLETED : PersistedToolCallStatus.ERROR,
                 })
+                if (toolName === 'ap_execute_action' && typeof rawOutput === 'object' && rawOutput !== null && 'batchProgress' in rawOutput) {
+                    parts.push({
+                        type: PersistedChatPartType.BATCH_PROGRESS,
+                        data: (rawOutput as Record<string, unknown>)['batchProgress'] as Record<string, unknown>,
+                    })
+                }
                 break
             }
         }
