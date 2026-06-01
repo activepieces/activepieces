@@ -186,6 +186,7 @@
         "packages/pieces/community/bonjoro/src/index.ts"
       ],
       "@activepieces/piece-box": ["packages/pieces/community/box/src/index.ts"],
+      "@activepieces/piece-brex": ["packages/pieces/community/brex/src/index.ts"],
       "@activepieces/piece-brilliant-directories": [
         "packages/pieces/community/brilliant-directories/src/index.ts"
       ],
