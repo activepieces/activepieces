@@ -12,11 +12,13 @@ import { AnyToolPart, ChatUIMessage, chatPartUtils } from './chat-types';
 function sendApprovalDecision({
   gateId,
   approved,
+  payload,
 }: {
   gateId: string;
   approved: boolean;
+  payload?: Record<string, unknown>;
 }): void {
-  void chatApi.approveToolCall({ gateId, approved });
+  void chatApi.approveToolCall({ gateId, approved, payload });
 }
 
 function extractQuestionsFromToolParts(
@@ -26,7 +28,8 @@ function extractQuestionsFromToolParts(
   const questionPart = message.parts.find(
     (p) =>
       chatPartUtils.isAnyToolPart(p) &&
-      chatPartUtils.getToolPartName(p) === 'ap_show_questions',
+      chatPartUtils.getToolPartName(p) === 'ap_show_questions' &&
+      p.state !== 'output-available',
   );
   if (!questionPart || !chatPartUtils.isAnyToolPart(questionPart)) return [];
   const input = questionPart.input as
@@ -64,7 +67,12 @@ export type ChatStoreState = {
   pendingPlanApproval: PlanApprovalRequest | null;
   planProgressUpdates: PlanStepUpdate[];
   planRejected: boolean;
-  displayCard: { type: string; data: Record<string, unknown> } | null;
+  displayCard: {
+    type: string;
+    data: Record<string, unknown>;
+    gateId: string;
+    resolved: boolean;
+  } | null;
   quickReplies: string[];
 
   dismissedApprovalGateId: string | null;
@@ -81,6 +89,9 @@ export type ChatStoreState = {
   dismissPlan: () => void;
 
   dismissForm: (messageId: string) => void;
+
+  resolveDisplayCard: (payload: Record<string, unknown>) => void;
+  dismissDisplayCard: () => void;
 
   resetInteractions: () => void;
 };
@@ -139,6 +150,19 @@ export const createChatStore = () =>
       set({ lastDismissedFormId: messageId });
     },
 
+    resolveDisplayCard: (payload: Record<string, unknown>) => {
+      const card = get().displayCard;
+      if (!card || card.resolved) return;
+      set({ displayCard: { ...card, resolved: true } });
+      sendApprovalDecision({ gateId: card.gateId, approved: true, payload });
+    },
+    dismissDisplayCard: () => {
+      const card = get().displayCard;
+      if (!card) return;
+      set({ displayCard: null });
+      sendApprovalDecision({ gateId: card.gateId, approved: false });
+    },
+
     resetInteractions: () => {
       set({
         pendingApprovalRequest: null,
@@ -176,7 +200,10 @@ function selectActiveQuestions({
   state: ChatStoreState;
   lastAssistantMessage: ChatUIMessage | undefined;
 }): MultiQuestion[] {
-  if (state.displayCard?.type === 'data-questions') {
+  if (
+    state.displayCard?.type === 'data-questions' &&
+    !state.displayCard.resolved
+  ) {
     const input = state.displayCard.data as { questions?: MultiQuestion[] };
     return input.questions ?? [];
   }
@@ -193,7 +220,8 @@ function selectHasActiveForm({
   const questions = selectActiveQuestions({ state, lastAssistantMessage });
   return (
     questions.length > 0 &&
-    (state.displayCard?.type === 'data-questions' ||
+    ((state.displayCard?.type === 'data-questions' &&
+      !state.displayCard.resolved) ||
       (!!lastAssistantMessage &&
         lastAssistantMessage.id !== state.lastDismissedFormId))
   );

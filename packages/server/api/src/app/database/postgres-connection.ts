@@ -379,6 +379,7 @@ import { RemoveMcpServerStatus1790000000000 } from './migration/postgres/1790000
 import { RenameEnabledToolsToDisabledTools1791000000000 } from './migration/postgres/1791000000000-RenameEnabledToolsToDisabledTools'
 import { AddTriggerSourceFlowVersionIdIndex1792000000000 } from './migration/postgres/1792000000000-AddTriggerSourceFlowVersionIdIndex'
 import { AddVariableTable1793000000000 } from './migration/postgres/1793000000000-AddVariableTable'
+import { AddCreatedByToFlow1794000000000 } from './migration/postgres/1794000000000-AddCreatedByToFlow'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -772,6 +773,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddTriggerSourceFlowVersionIdIndex1792000000000,
         AddUiMessagesToChatConversation1778983371000,
         AddVariableTable1793000000000,
+        AddCreatedByToFlow1794000000000,
         AddStatusToChatConversation1779500000000,
     ]
     return migrations
