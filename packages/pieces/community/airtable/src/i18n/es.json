@@ -91,10 +91,5 @@
   "Triggers when a new record is added to the selected table.": "Se activa cuando se añade un nuevo registro a la tabla seleccionada.",
   "Triggers when a record is created or updated in selected table.": "Se activa cuando se crea o actualiza un registro en la tabla seleccionada.",
   "Trigger field": "Campo de activación",
-  "**Last Modified Time** field will be used to watch new or updated records.Please create **Last Modified Time** field in your schema,if you don't have any timestamp field.": "El campo **Última Hora Modificada** se utilizará para ver registros nuevos o actualizados. lease create **Last Modified Time** field in your schema,if you don't have any timestamp field.",
-  "Please connect your account": "Por favor, conecta tu cuenta",
-  "Please select a base first": "Por favor, seleccione primero una base",
-  "Please select a table first": "Por favor, seleccione una tabla primero",
-  "Please check your permission scope": "Por favor, comprueba tu ámbito de permisos",
-  "Please select a base and table first": "Seleccione primero una base y tabla"
+  "**Last Modified Time** field will be used to watch new or updated records.Please create **Last Modified Time** field in your schema,if you don't have any timestamp field.": "El campo **Última Hora Modificada** se utilizará para ver registros nuevos o actualizados. lease create **Last Modified Time** field in your schema,if you don't have any timestamp field."
 }
