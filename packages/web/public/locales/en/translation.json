@@ -1846,6 +1846,10 @@
   "{count} mins ago": "",
   "1 hour ago": "",
   "{count} hours ago": "",
+<<<<<<< feat/data-manupilation
+  "AI": "AI",
+  "Created by AI": "Created by AI"
+=======
   "Failed to run test step, please ensure settings are correct.": "Failed to run test step, please ensure settings are correct.",
   "HTTP {status}": "HTTP {status}",
   "What the service said": "What the service said",
@@ -1873,4 +1877,5 @@
   "The service rejected the request. Review the step input and verify each field matches what the service expects.": "The service rejected the request. Review the step input and verify each field matches what the service expects.",
   "The service rejected the request. Review the step input and the message below for details.": "The service rejected the request. Review the step input and the message below for details.",
   "The step did not complete successfully. Check the step configuration and the message below.": "The step did not complete successfully. Check the step configuration and the message below."
+>>>>>>> main
 }
