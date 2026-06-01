@@ -1,4 +1,5 @@
 import {
+    ApEdition,
     ExecutionType,
     ExecutioOutputFile,
     FileCompression,
@@ -28,6 +29,7 @@ import { runsMetadataQueue } from '../../flows/flow-run/flow-runs-queue'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { pubsub } from '../../helper/pubsub'
+import { system } from '../../helper/system/system'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
@@ -67,7 +69,8 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
         },
 
         async uploadRunLog(input) {
-            if (!isNil(input.internalError) && !isNil(input.logsFileId)) {
+            const internalErrorEnabled = system.getEdition() !== ApEdition.CLOUD
+            if (internalErrorEnabled && !isNil(input.internalError) && !isNil(input.logsFileId)) {
                 await persistInternalErrorToLogs({
                     log,
                     projectId: input.projectId,

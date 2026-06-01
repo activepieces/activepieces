@@ -153,9 +153,12 @@ function buildFlowOperation(
 
 function toInternalError(source: RunInternalErrorSource, error: unknown): RunInternalError {
     const isApError = error instanceof ActivepiecesError
+    const base = error instanceof Error
+        ? [error.name, error.message, error.stack].filter(Boolean).join('\n')
+        : inspect(error, { depth: 1 })
     return {
         source,
-        message: inspect(error),
+        message: base,
         code: isApError ? error.error.code : undefined,
         occurredAt: new Date().toISOString(),
     }

@@ -300,6 +300,7 @@
   "Internal error ({source})": "Internal error ({source})",
   "No error details available": "No error details available",
   "Occurred at": "Occurred at",
+  "Platform Admin Only": "Platform Admin Only",
   "Delete Your Account": "",
   "Please enter your email first.": "",
   "Enter your email to delete your account, including your flows, connections, agents, tables and projects.": "",
