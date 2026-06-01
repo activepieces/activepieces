@@ -339,16 +339,18 @@ const StepSettingsContainer = () => {
               isTestPanelOpen={isTestPanelOpen}
               settingsForm={settingsForm}
               testPanelHost={
-                <TestPanelHost
-                  mode={testPanelView === 'split' ? 'split' : 'drawer'}
-                  flowId={flowVersion.flowId}
-                  flowVersionId={flowVersion.id}
-                  projectId={project?.id}
-                  stepType={modifiedStep.type}
-                  showGenerateSampleData={showGenerateSampleData}
-                  showStepInputOutFromRun={showStepInputOutFromRun}
-                  saving={saving}
-                />
+                showTestPanel ? (
+                  <TestPanelHost
+                    mode={testPanelView === 'split' ? 'split' : 'drawer'}
+                    flowId={flowVersion.flowId}
+                    flowVersionId={flowVersion.id}
+                    projectId={project?.id}
+                    stepType={modifiedStep.type}
+                    showGenerateSampleData={showGenerateSampleData}
+                    showStepInputOutFromRun={showStepInputOutFromRun}
+                    saving={saving}
+                  />
+                ) : null
               }
             />
           </StepTestRunnerProvider>
