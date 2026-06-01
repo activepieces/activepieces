@@ -23,23 +23,40 @@ function createRpcWriterForConversation({ sendEvent, userId, conversationId }: {
     }
 }
 
-function createDisplayTools({ writer }: { writer: ChatStreamWriter }): ToolSet {
+function createDisplayTools({ writer, waitForApproval, displayToolTimeoutMs }: {
+    writer: ChatStreamWriter
+    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean, payload?: Record<string, unknown> }>
+    displayToolTimeoutMs: number
+}): ToolSet {
+    function blockingExecute({ dataType, dismissMessage, successKey }: {
+        dataType: string
+        dismissMessage: string
+        successKey: string
+    }) {
+        return async (input: Record<string, unknown>) => {
+            const gateId = apId()
+            writer.write({ type: dataType, data: { ...input, gateId }, transient: true })
+            const decision = await waitForApproval({ gateId, timeoutMs: displayToolTimeoutMs })
+            if (!decision.approved) {
+                return { dismissed: true, message: dismissMessage }
+            }
+            return { [successKey]: true, ...decision.payload }
+        }
+    }
+
     return {
         ap_show_connection_required: tool({
-            description: 'Display a card prompting the user to connect a service. Use when no connection exists for a required piece.',
+            description: 'Display a card prompting the user to connect a service. Use when no connection exists for a required piece. After the user connects, briefly confirm before proceeding.',
             inputSchema: z.object({
                 piece: z.string().describe('Piece short name (e.g. "gmail", "slack")'),
                 displayName: z.string().describe('Human-readable name (e.g. "Gmail", "Slack")'),
                 status: z.enum(['missing', 'error']).optional().describe('Set to "error" when connection exists but needs reconnecting'),
             }),
-            execute: async (input) => {
-                writer.write({ type: 'data-connection-required', data: input, transient: true })
-                return { displayed: true }
-            },
+            execute: blockingExecute({ dataType: 'data-connection-required', dismissMessage: 'User dismissed the connection request.', successKey: 'connected' }),
         }),
 
         ap_show_connection_picker: tool({
-            description: 'Display a card for the user to choose between multiple connections for a piece.',
+            description: 'Display a card for the user to choose between multiple connections for a piece. After selection, briefly confirm which account the user chose before proceeding.',
             inputSchema: z.object({
                 piece: z.string().describe('Piece short name'),
                 displayName: z.string().describe('Human-readable piece name'),
@@ -51,28 +68,22 @@ function createDisplayTools({ writer }: { writer: ChatStreamWriter }): ToolSet {
                     status: z.string().describe('Connection status (ACTIVE, ERROR, etc.)'),
                 })).min(1),
             }),
-            execute: async (input) => {
-                writer.write({ type: 'data-connection-picker', data: input, transient: true })
-                return { displayed: true }
-            },
+            execute: blockingExecute({ dataType: 'data-connection-picker', dismissMessage: 'User dismissed the connection picker.', successKey: 'selected' }),
         }),
 
         ap_show_project_picker: tool({
-            description: 'Display a card for the user to select a project to work in.',
+            description: 'Display a card for the user to select a project to work in. After selection, briefly confirm which project the user chose before proceeding.',
             inputSchema: z.object({
                 suggestedProjects: z.array(z.object({
                     name: z.string().describe('Project display name'),
                     id: z.string().describe('Project ID'),
                 })).min(1),
             }),
-            execute: async (input) => {
-                writer.write({ type: 'data-project-picker', data: input, transient: true })
-                return { displayed: true }
-            },
+            execute: blockingExecute({ dataType: 'data-project-picker', dismissMessage: 'User dismissed the project picker.', successKey: 'selected' }),
         }),
 
         ap_show_questions: tool({
-            description: 'Display a multi-question form to gather structured input from the user.',
+            description: 'Display a multi-question form to gather structured input from the user. After the user answers, briefly acknowledge their responses before proceeding.',
             inputSchema: z.object({
                 questions: z.array(z.object({
                     title: z.string().optional().describe('Section title'),
@@ -82,10 +93,7 @@ function createDisplayTools({ writer }: { writer: ChatStreamWriter }): ToolSet {
                     placeholder: z.string().optional().describe('Placeholder for text-type questions'),
                 })).min(1),
             }),
-            execute: async (input) => {
-                writer.write({ type: 'data-questions', data: input, transient: true })
-                return { displayed: true }
-            },
+            execute: blockingExecute({ dataType: 'data-questions', dismissMessage: 'User dismissed the questions form.', successKey: 'answered' }),
         }),
 
         ap_show_quick_replies: tool({
@@ -178,7 +186,7 @@ function createCrossProjectTools({ executeTool }: {
 function createPlanTools({ writer, onPlanApproved, waitForApproval }: {
     writer: ChatStreamWriter
     onPlanApproved: () => void
-    waitForApproval: (gateId: string) => Promise<boolean>
+    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean }>
 }): ToolSet {
     return {
         ap_request_plan_approval: tool({
@@ -194,8 +202,8 @@ function createPlanTools({ writer, onPlanApproved, waitForApproval }: {
                     data: { gateId, planSummary: input.planSummary, steps: input.steps },
                     transient: true,
                 })
-                const approved = await waitForApproval(gateId)
-                if (approved) {
+                const decision = await waitForApproval({ gateId })
+                if (decision.approved) {
                     onPlanApproved()
                     return { success: true, message: 'Plan approved by the user. Execute each step in order now. Call ap_update_plan to update step statuses as you work.' }
                 }

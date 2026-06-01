@@ -17,6 +17,7 @@ import {
 import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { useCreditsState } from '@/features/chat/lib/use-credits-state';
 import { aiProviderQueries } from '@/features/platform-admin';
+import { cn } from '@/lib/utils';
 
 import { AssistantMessage } from './components/assistant-message';
 import { ChatBottomBar } from './components/chat-bottom-bar';
@@ -87,6 +88,8 @@ function ChatBoxContent({
   });
 
   const quickReplies = useChatStoreContext((s) => s.quickReplies);
+  const displayCard = useChatStoreContext((s) => s.displayCard);
+  const hasBlockingCard = displayCard !== null && !displayCard.resolved;
 
   useEffect(() => {
     if (initialConversationId) {
@@ -190,7 +193,6 @@ function ChatBoxContent({
                 isStreaming={isLastStreamingAssistant}
                 isLastMessage={isLastAssistant}
                 onRetry={handleRetry}
-                onSend={handleSend}
                 lastAssistantMessage={
                   isLastAssistant ? lastAssistantMessage : msg
                 }
@@ -237,8 +239,13 @@ function ChatBoxContent({
 
       <div className="px-6 pb-4">
         <div className="max-w-3xl mx-auto relative">
-          <div className="overflow-hidden rounded-2xl border border-foreground/20 hover:border-foreground/40 focus-within:border-foreground/40 transition-colors">
-            {showBanner && (
+          <div
+            className={cn(
+              !hasBlockingCard &&
+                'overflow-hidden rounded-2xl border border-foreground/20 hover:border-foreground/40 focus-within:border-foreground/40 transition-colors',
+            )}
+          >
+            {showBanner && !hasBlockingCard && (
               <CreditsBanner
                 creditsExhausted={credits.creditsExhausted}
                 creditsWarning={credits.creditsWarning}
