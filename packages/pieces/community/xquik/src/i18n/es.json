@@ -1,6 +1,5 @@
 {
   "Search public X/Twitter posts, users, timelines, and trends for automation workflows.": "Buscar publicaciones públicas de X/Twitter, usuarios, timelines y tendencias para flujos de trabajo de automatización.",
-  "Xquik API Key": "Clave API Xquik",
   "Create an API key in Xquik, then paste it here. API docs: https://docs.xquik.com/api-reference/overview": "Crea una clave API en Xquik, luego pégala aquí. API docs: https://docs.xquik.com/api-reference/overview",
   "Search Tweets": "Buscar Tweets",
   "Get Tweet": "Get Tweet",
@@ -9,9 +8,9 @@
   "Get User Tweets": "Obtener Tweets de Usuario",
   "Get Trends": "Get Trends",
   "Custom API Call": "Llamada API personalizada",
-  "Search public X/Twitter posts with X query operators": "Buscar publicaciones públicas de X/Twitter con operadores de X consultas",
+  "Search public X/Twitter posts with X query operators.": "Buscar publicaciones públicas de X/Twitter con operadores de X consultas.",
   "Look up a public X/Twitter post by ID": "Buscar un post público de X/Twitter por ID",
-  "Search public X/Twitter users by name or username": "Buscar usuarios públicos X/Twitter por nombre o nombre de usuario",
+  "Search public X/Twitter users by name or username.": "Buscar usuarios públicos X/Twitter por nombre o nombre de usuario.",
   "Look up a public X/Twitter user by username or user ID": "Buscar un usuario público X/Twitter por nombre de usuario o ID de usuario",
   "List recent posts from a public X/Twitter user": "Listar mensajes recientes de un usuario público X/Twitter",
   "Get X/Twitter trending topics by region": "Obtén temas de tendencias X/Twitter por región",
