@@ -18,11 +18,17 @@ export const googleProvider: AIProviderStrategy<GoogleProviderAuthConfig, Google
             },
         })
         return res.body.models.map((model: GoogleModel) => ({
-            id: model.name.replace('models/', ''),
+            id: stripModelsPrefix(model.name),
             name: model.displayName,
             type: model.name.includes('image') ? AIProviderModelType.IMAGE : AIProviderModelType.TEXT,
         }))
     },
+}
+
+const GOOGLE_MODEL_PREFIX = 'models/'
+
+function stripModelsPrefix(modelName: string): string {
+    return modelName.startsWith(GOOGLE_MODEL_PREFIX) ? modelName.slice(GOOGLE_MODEL_PREFIX.length) : modelName
 }
 
 type GoogleModel = {
