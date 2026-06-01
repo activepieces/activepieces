@@ -297,6 +297,7 @@ describe('add_file_attachment_to_object', () => {
     expect(req.method).toBe(HttpMethod.POST);
     expect(req.url).toBe('https://acme.coupahost.com/api/purchase_orders/8/attachments');
     expect(req.body).toBeInstanceOf(FormData);
+    expect(String(req.headers?.['content-type'])).toMatch(/^multipart\/form-data; boundary=/);
   });
 
   it('attaches a URL link', async () => {

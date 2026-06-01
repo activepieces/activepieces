@@ -53,10 +53,14 @@ function mockApi(router: (request: HttpRequest) => unknown): void {
   });
 }
 
-function resourceRequest(): HttpRequest {
+function resourceRequests(): HttpRequest[] {
   return sendRequest.mock.calls
     .map((c) => c[0] as HttpRequest)
-    .filter((r) => !isTokenRequest(r))[0];
+    .filter((r) => !isTokenRequest(r));
+}
+
+function resourceRequest(): HttpRequest {
+  return resourceRequests()[0];
 }
 
 beforeEach(() => {
@@ -115,6 +119,38 @@ describe('new_or_updated_object.run (polling dedupe)', () => {
     expect(advanced).toBe(Date.parse('2025-06-01T00:00:00Z'));
 
     expect(resourceRequest().queryParams?.['limit']).toBe('50');
+  });
+
+  it('paginates exhaustively so records beyond one page are not dropped', async () => {
+    const lastPoll = Date.parse('2025-01-01T00:00:00Z');
+    const fullPage = Array.from({ length: 50 }, (_, i) => ({
+      id: i,
+      'po-number': `PO-${i}`,
+      status: 'issued',
+      'updated-at': '2025-06-01T00:00:00Z',
+    }));
+    const overflow = Array.from({ length: 5 }, (_, i) => ({
+      id: 50 + i,
+      'po-number': `PO-${50 + i}`,
+      status: 'issued',
+      'updated-at': '2025-06-01T00:00:00Z',
+    }));
+
+    mockApi((request) => {
+      const offset = Number(request.queryParams?.['offset'] ?? 0);
+      return offset === 0 ? fullPage : overflow;
+    });
+    const store = makeStore({ lastPoll });
+
+    const items = (await newOrUpdatedObject.run(
+      triggerContext(
+        { module: 'purchase_orders', customResource: undefined, additionalFilters: undefined },
+        store
+      )
+    )) as Record<string, unknown>[];
+
+    expect(items).toHaveLength(55);
+    expect(resourceRequests()).toHaveLength(2);
   });
 });
 

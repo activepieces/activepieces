@@ -5,6 +5,7 @@ import {
   HttpRequest,
   QueryParams,
 } from '@activepieces/pieces-common';
+import FormData from 'form-data';
 import { formatCoupaError, normalizeInstanceUrl } from './utils';
 
 export type CoupaAuthProps = {
@@ -118,7 +119,7 @@ export class CoupaClient {
     formData,
   }: {
     resourceUri: string;
-    formData: unknown;
+    formData: FormData;
   }): Promise<T> {
     const token = await this.getAccessToken();
     const path = resourceUri.startsWith('/') ? resourceUri : `/${resourceUri}`;
@@ -130,7 +131,10 @@ export class CoupaClient {
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: 'application/json',
-          'Content-Type': 'multipart/form-data',
+          // form-data generates a unique boundary per instance; getHeaders()
+          // returns `content-type: multipart/form-data; boundary=...`. Without
+          // the boundary the server cannot parse the parts and the upload fails.
+          ...formData.getHeaders(),
         },
         body: formData,
       });

@@ -47,16 +47,23 @@ const polling: Polling<
 
     const query: Record<string, string | number | boolean | undefined> = {
       'updated-at[gt]': updatedAfter,
-      limit: isTest ? 10 : 50,
       fields: STANDARD_FIELDS,
       ...parseOptionalQuery(propsValue.additionalFilters),
     };
 
-    const records = await client.request<Record<string, unknown>[]>({
-      method: HttpMethod.GET,
-      resourceUri: `/${resource}`,
-      query,
-    });
+    // The test run fetches a single small page for a fast preview. Real polls
+    // paginate exhaustively: if more than one page of objects is updated
+    // between two polls, a single limited request would silently drop the
+    // overflow, because the dedupe watermark advances to the newest timestamp
+    // in the batch and the missing records (with older timestamps) are never
+    // re-queried.
+    const records = isTest
+      ? await client.request<Record<string, unknown>[]>({
+          method: HttpMethod.GET,
+          resourceUri: `/${resource}`,
+          query: { ...query, limit: 10 },
+        })
+      : await client.fetchAllRecords(resource, query);
 
     const list = Array.isArray(records) ? records : [];
     const coupaModule =
