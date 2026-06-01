@@ -28,6 +28,7 @@ export enum PersistedChatPartType {
     REASONING = 'reasoning',
     TOOL_CALL = 'tool-call',
     THINKING_STATUS = 'thinking-status',
+    BATCH_PROGRESS = 'batch-progress',
 }
 
 export enum PersistedToolCallStatus {
@@ -65,11 +66,17 @@ const PersistedThinkingStatusPartSchema = z.object({
     text: z.string(),
 })
 
+const PersistedBatchProgressPartSchema = z.object({
+    type: z.literal(PersistedChatPartType.BATCH_PROGRESS),
+    data: z.record(z.string(), z.unknown()),
+})
+
 const PersistedChatPartSchema = z.discriminatedUnion('type', [
     PersistedTextPartSchema,
     PersistedReasoningPartSchema,
     PersistedToolCallPartSchema,
     PersistedThinkingStatusPartSchema,
+    PersistedBatchProgressPartSchema,
 ])
 
 export const PersistedChatMessageSchema = z.object({

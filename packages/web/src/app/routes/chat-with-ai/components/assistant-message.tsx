@@ -1,8 +1,4 @@
-import {
-  BatchProgressData,
-  isObject,
-  PlanStepUpdate,
-} from '@activepieces/shared';
+import { BatchProgressData, PlanStepUpdate } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, RefreshCw, Volume2, VolumeOff } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -97,10 +93,6 @@ export const AssistantMessage = memo(function AssistantMessage({
       return currentThinking;
     }
 
-    const hasBatchProgressDataPart = message.parts.some(
-      (p) => p.type === 'data-batch-progress',
-    );
-
     for (let i = 0; i < message.parts.length; i++) {
       const p = message.parts[i];
 
@@ -137,22 +129,12 @@ export const AssistantMessage = memo(function AssistantMessage({
         if (chatPartUtils.HIDDEN_TOOL_NAMES.has(toolName)) {
           continue;
         }
-        const batchData =
-          toolName === 'ap_execute_action' &&
-          !hasBatchProgressDataPart &&
-          p.state === 'output-available'
-            ? extractBatchProgress(p)
-            : null;
-
         if (chatPartUtils.isDisplayTool(toolName)) {
           flushThinking();
           result.push({ kind: 'display-tool', part: p });
         } else if (toolName === 'ap_request_plan_approval') {
           flushThinking();
           result.push({ kind: 'plan-marker', part: p });
-        } else if (batchData) {
-          flushThinking();
-          result.push({ kind: 'batch-progress', data: batchData });
         } else {
           const thinking = ensureThinking();
           const lastStep = thinking.steps[thinking.steps.length - 1];
@@ -526,13 +508,6 @@ function parseAnswerPairs(
       return { question: match[1], answer: match[2] };
     })
     .filter((p): p is { question: string; answer: string } => p !== null);
-}
-
-function extractBatchProgress(part: AnyToolPart): BatchProgressData | null {
-  const output = chatPartUtils.parseToolOutput(part);
-  if (output.state !== 'success') return null;
-  if (!isObject(output.data) || !('batchProgress' in output.data)) return null;
-  return output.data.batchProgress as BatchProgressData;
 }
 
 type MessageBlock =
