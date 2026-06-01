@@ -161,6 +161,37 @@ export function formatCoupaError(error: unknown): string {
   return `Coupa API error${status ? ` (${status})` : ''}: ${err.message ?? 'Unknown error'}`;
 }
 
+const MIME_TYPES_BY_EXTENSION: Record<string, string> = {
+  pdf: 'application/pdf',
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  svg: 'image/svg+xml',
+  bmp: 'image/bmp',
+  tiff: 'image/tiff',
+  csv: 'text/csv',
+  txt: 'text/plain',
+  html: 'text/html',
+  json: 'application/json',
+  xml: 'application/xml',
+  xls: 'application/vnd.ms-excel',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ppt: 'application/vnd.ms-powerpoint',
+  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  zip: 'application/zip',
+};
+
+export function getMimeType(filename: string, extension?: string): string {
+  const ext = (extension ?? filename.split('.').pop() ?? '')
+    .toLowerCase()
+    .replace(/^\./, '');
+  return MIME_TYPES_BY_EXTENSION[ext] ?? 'application/octet-stream';
+}
+
 export type CoupaModule = 'purchase_orders' | 'suppliers' | 'contracts';
 
 export type StandardCoupaFields = {

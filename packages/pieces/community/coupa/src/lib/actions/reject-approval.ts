@@ -21,6 +21,9 @@ export const rejectApproval = createAction({
   },
   async run({ auth, propsValue }) {
     const client = new CoupaClient(auth.props);
+    // Coupa expects the rejection reason as a URL query parameter, not in the
+    // request body: PUT /api/approvals/{id}/reject?reason=... (the client
+    // URL-encodes it). See Coupa Core API "Approvals" docs.
     const query: Record<string, string | undefined> = {};
     if (propsValue.reason) {
       query['reason'] = propsValue.reason;

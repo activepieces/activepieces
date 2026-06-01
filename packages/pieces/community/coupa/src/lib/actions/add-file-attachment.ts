@@ -12,7 +12,7 @@ import {
   purchaseOrderDropdown,
   supplierDropdown,
 } from '../common/props';
-import { CoupaModule, formatCoupaOutput } from '../common/utils';
+import { CoupaModule, formatCoupaOutput, getMimeType } from '../common/utils';
 
 export const addFileAttachment = createAction({
   auth: coupaAuth,
@@ -112,26 +112,9 @@ export const addFileAttachment = createAction({
       if (!file) {
         throw new Error('A file is required when the attachment type is "Upload a file".');
       }
-      const MIME_MAP: Record<string, string> = {
-        pdf: 'application/pdf',
-        doc: 'application/msword',
-        docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        xls: 'application/vnd.ms-excel',
-        xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        png: 'image/png',
-        jpg: 'image/jpeg',
-        jpeg: 'image/jpeg',
-        gif: 'image/gif',
-        csv: 'text/csv',
-        txt: 'text/plain',
-        xml: 'application/xml',
-        zip: 'application/zip',
-      };
-      const ext = (file.extension ?? '').toLowerCase();
-      const contentType = MIME_MAP[ext] ?? (ext ? `application/${ext}` : undefined);
       formData.append('attachment[file]', file.data, {
         filename: file.filename,
-        contentType,
+        contentType: getMimeType(file.filename, file.extension),
       });
       formData.append('attachment[type]', 'file');
     }

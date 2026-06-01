@@ -22,6 +22,7 @@ export class CoupaClient {
   private readonly tokenUrl: string;
   private accessToken: string | null = null;
   private tokenExpiresAt = 0;
+  private tokenPromise: Promise<string> | null = null;
 
   constructor(private readonly auth: CoupaAuthProps) {
     const host = normalizeInstanceUrl(this.auth.instanceUrl);
@@ -33,7 +34,17 @@ export class CoupaClient {
     if (this.accessToken && Date.now() < this.tokenExpiresAt) {
       return this.accessToken;
     }
+    // Reuse a single in-flight token request so concurrent calls within the
+    // same run don't each hit the token endpoint (avoids a TOCTOU race).
+    if (!this.tokenPromise) {
+      this.tokenPromise = this.fetchAccessToken().finally(() => {
+        this.tokenPromise = null;
+      });
+    }
+    return this.tokenPromise;
+  }
 
+  private async fetchAccessToken(): Promise<string> {
     const response = await httpClient.sendRequest<{
       access_token: string;
       expires_in: number;
