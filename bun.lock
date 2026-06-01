@@ -1991,6 +1991,18 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/coupa": {
+      "name": "@activepieces/piece-coupa",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "dayjs": "1.11.9",
+        "form-data": "4.0.4",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/crisp": {
       "name": "@activepieces/piece-crisp",
       "version": "0.1.5",
@@ -3075,7 +3087,7 @@
     },
     "packages/pieces/community/google-calendar": {
       "name": "@activepieces/piece-google-calendar",
-      "version": "0.9.1",
+      "version": "0.9.2",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -3155,7 +3167,7 @@
     },
     "packages/pieces/community/google-gemini": {
       "name": "@activepieces/piece-google-gemini",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -8608,7 +8620,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.79.0",
+      "version": "0.80.0",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
@@ -9065,6 +9077,8 @@
     "@activepieces/piece-coralogix": ["@activepieces/piece-coralogix@workspace:packages/pieces/community/coralogix"],
 
     "@activepieces/piece-couchbase": ["@activepieces/piece-couchbase@workspace:packages/pieces/community/couchbase"],
+
+    "@activepieces/piece-coupa": ["@activepieces/piece-coupa@workspace:packages/pieces/community/coupa"],
 
     "@activepieces/piece-crisp": ["@activepieces/piece-crisp@workspace:packages/pieces/community/crisp"],
 
