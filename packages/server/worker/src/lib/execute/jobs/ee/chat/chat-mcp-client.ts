@@ -67,7 +67,7 @@ function withApprovalGates({ mcpToolSet, writer, log, isApproved, waitForApprova
     writer: ChatStreamWriter
     log: FastifyBaseLogger
     isApproved: () => boolean
-    waitForApproval: (gateId: string) => Promise<boolean>
+    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean }>
 }): Record<string, unknown> {
     const result: Record<string, unknown> = {}
 
@@ -97,9 +97,9 @@ function withApprovalGates({ mcpToolSet, writer, log, isApproved, waitForApprova
                 })
 
                 log.info({ gateId, toolName: name }, 'Tool approval gate opened')
-                const approved = await waitForApproval(gateId)
+                const decision = await waitForApproval({ gateId })
 
-                if (!approved) {
+                if (!decision.approved) {
                     log.info({ gateId, toolName: name }, 'Tool approval rejected or timed out')
                     return { content: [{ type: 'text', text: 'Action cancelled by user.' }] }
                 }
