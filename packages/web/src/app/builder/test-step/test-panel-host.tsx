@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { cn } from '@/lib/utils';
 
+import { flowCanvasConsts } from '../flow-canvas/utils/consts';
 import { FlowStepInputOutput } from '../run-details/flow-step-input-output';
 
 import { TestStepContainer } from '.';
@@ -49,6 +50,10 @@ const TestPanelHost = ({
       if (!(target instanceof Element)) return;
       if (drawerRef.current?.contains(target)) return;
       if (target.closest(DISMISS_IGNORE_SELECTOR)) return;
+      if (
+        target.closest(`[data-${flowCanvasConsts.STEP_CONTEXT_MENU_ATTRIBUTE}]`)
+      )
+        return;
       setTestPanelOpen(false);
     };
     document.addEventListener('pointerdown', handlePointerDown);
