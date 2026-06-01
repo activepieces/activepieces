@@ -1,10 +1,11 @@
 import { flowStructureUtil, isNil } from '@activepieces/shared';
 import { t } from 'i18next';
-import { SearchXIcon } from 'lucide-react';
+import { Database, SearchXIcon, Variable } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
 import { SearchInput } from '@/components/custom/search-input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
@@ -17,6 +18,7 @@ import {
 } from './data-selector-size-togglers';
 import { DataSelectorTreeNode } from './type';
 import { dataSelectorUtils } from './utils';
+import { VariablesTab } from './variables-tab';
 
 const buildDataSelectorStructure = (
   state: BuilderState,
@@ -84,6 +86,10 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
     [dataSelectorStructure, searchTerm],
   );
   const [showDataSelector, setShowDataSelector] = useState(false);
+  const isTriggerSelected = useBuilderStateContext(
+    (state) => state.selectedStep === 'trigger',
+  );
+  const defaultTab = isTriggerSelected ? 'variables' : 'data';
 
   const checkFocus = useCallback(() => {
     const isTextMentionInputFocused =
@@ -137,35 +143,71 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
         }}
         className="transition-all overflow-hidden"
       >
-        <div className="flex items-center gap-2 px-3 mb-2 mt-0.5">
-          <SearchInput
-            onChange={(e) => setSearchTerm(e)}
-            value={searchTerm}
-          ></SearchInput>
-        </div>
+        <Tabs
+          key={defaultTab}
+          defaultValue={defaultTab}
+          className="h-full flex flex-col gap-0"
+        >
+          <TabsList
+            variant="outline"
+            className="px-3 shrink-0 gap-1 border-b border-border w-full justify-start"
+          >
+            <TabsTrigger
+              value="data"
+              variant="outline"
+              className="gap-2 px-3 py-2 hover:text-foreground rounded-none"
+            >
+              <Database className="w-4 h-4" />
+              {t('Data')}
+            </TabsTrigger>
+            <TabsTrigger
+              value="variables"
+              variant="outline"
+              className="gap-2 px-3 py-2 hover:text-foreground rounded-none"
+            >
+              <Variable className="w-4 h-4" />
+              {t('Variables')}
+            </TabsTrigger>
+          </TabsList>
 
-        <ScrollArea className="transition-all h-[calc(100%-56px)] w-full ">
-          {filteredNodes &&
-            filteredNodes.map((node) => (
-              <DataSelectorNode
-                depth={0}
-                key={node.key}
-                node={node}
-                searchTerm={searchTerm}
-              ></DataSelectorNode>
-            ))}
-          {filteredNodes.length === 0 && (
-            <div className="flex items-center justify-center gap-2 mt-5  flex-col">
-              <SearchXIcon className="w-[35px] h-[35px]"></SearchXIcon>
-              <div className="text-center font-semibold text-md">
-                {t('No matching data')}
-              </div>
-              <div className="text-center ">
-                {t('Try adjusting your search')}
-              </div>
+          <TabsContent
+            value="data"
+            className="flex-1 min-h-0 flex flex-col gap-2 mt-2"
+          >
+            <div className="flex items-center gap-2 px-5">
+              <SearchInput
+                onChange={(e) => setSearchTerm(e)}
+                value={searchTerm}
+              ></SearchInput>
             </div>
-          )}
-        </ScrollArea>
+            <ScrollArea className="transition-all flex-1 w-full ">
+              {filteredNodes &&
+                filteredNodes.map((node) => (
+                  <DataSelectorNode
+                    depth={0}
+                    key={node.key}
+                    node={node}
+                    searchTerm={searchTerm}
+                  ></DataSelectorNode>
+                ))}
+              {filteredNodes.length === 0 && (
+                <div className="flex items-center justify-center gap-2 mt-5  flex-col">
+                  <SearchXIcon className="w-[35px] h-[35px]"></SearchXIcon>
+                  <div className="text-center font-semibold text-md">
+                    {t('No matching data')}
+                  </div>
+                  <div className="text-center ">
+                    {t('Try adjusting your search')}
+                  </div>
+                </div>
+              )}
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent value="variables" className="flex-1 min-h-0 mt-2">
+            <VariablesTab />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

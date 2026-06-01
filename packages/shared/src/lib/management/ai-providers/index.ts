@@ -87,8 +87,14 @@ export const CloudflareGatewayProviderConfig = z.object({
 })
 export type CloudflareGatewayProviderConfig = z.infer<typeof CloudflareGatewayProviderConfig>
 
+export const DEFAULT_AZURE_API_VERSION = '2024-10-21'
+
 export const AzureProviderConfig = z.object({
     resourceName: z.string(),
+    apiVersion: z.preprocess(
+        (v) => (typeof v === 'string' && v.trim().length === 0 ? undefined : v),
+        z.string().optional(),
+    ),
 })
 export type AzureProviderConfig = z.infer<typeof AzureProviderConfig>
 
@@ -374,8 +380,8 @@ function getMaxContextTokens({ provider }: { provider: AIProviderName | undefine
 
 export const ACTIVEPIECES_CHAT_TIERS = [
     { id: 'fast', label: 'Fast', modelId: 'anthropic/claude-opus-4.7', thinkingBudget: 5_000 },
-    { id: 'smart', label: 'Smart', modelId: 'anthropic/claude-opus-4.7', thinkingBudget: 10_000 },
-    { id: 'premium', label: 'Premium', modelId: 'anthropic/claude-opus-4.7', thinkingBudget: 20_000 },
+    { id: 'smart', label: 'Expert', modelId: 'anthropic/claude-opus-4.7', thinkingBudget: 10_000 },
+    { id: 'premium', label: 'Heavy', modelId: 'anthropic/claude-opus-4.7', thinkingBudget: 20_000 },
 ] as const
 
 export const DEFAULT_CHAT_TIER_ID = 'smart' as const

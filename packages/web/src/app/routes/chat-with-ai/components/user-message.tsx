@@ -38,10 +38,12 @@ export const UserMessage = memo(function UserMessage({
     )
     .map((p) => p.filename);
 
+  const isFromHistory = message.id.startsWith('hist-');
+
   return (
     <motion.div
       className="flex justify-end py-3 group/msg"
-      initial={{ opacity: 0, x: 16 }}
+      initial={isFromHistory ? false : { opacity: 0, x: 16 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.25 }}
     >
