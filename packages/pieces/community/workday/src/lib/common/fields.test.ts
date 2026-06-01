@@ -62,16 +62,9 @@ describe('formatWorkdayOutput', () => {
 		});
 	});
 
-	it('maps HR services & time tracking fields', () => {
+	it('maps HR case fields without setting time_entry_id', () => {
 		const out = formatWorkdayOutput(
-			{
-				id: 'case-1',
-				worker: { id: 'w-2' },
-				description: 'Payroll question',
-				status: 'Open',
-				date: '2025-03-01',
-				hours: 8,
-			},
+			{ id: 'case-1', worker: { id: 'w-2' }, description: 'Payroll question', status: 'Open' },
 			'hr_services_time_tracking',
 		);
 		expect(out).toMatchObject({
@@ -79,10 +72,22 @@ describe('formatWorkdayOutput', () => {
 			employee_id: 'w-2',
 			description: 'Payroll question',
 			status: 'Open',
-			time_entry_id: 'case-1',
+		});
+		expect(out['time_entry_id']).toBeUndefined();
+	});
+
+	it('maps HR time-entry fields without polluting case_id', () => {
+		const out = formatWorkdayOutput(
+			{ id: 'te-1', worker: { id: 'w-2' }, date: '2025-03-01', hours: 8, status: 'Submitted' },
+			'hr_services_time_tracking',
+		);
+		expect(out).toMatchObject({
+			time_entry_id: 'te-1',
+			employee_id: 'w-2',
 			date: '2025-03-01',
 			hours: 8,
 		});
+		expect(out['case_id']).toBeUndefined();
 	});
 });
 

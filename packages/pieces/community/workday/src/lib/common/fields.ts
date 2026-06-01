@@ -51,15 +51,31 @@ export function formatWorkdayOutput(
 		standard['hire_date'] = record['hireDate'] ?? record['createdMoment'];
 		standard['status'] = record['status'] ?? record['workerStatus'];
 	} else if (module === 'hr_services_time_tracking') {
-		standard['case_id'] = record['id'] ?? record['workdayID'];
 		standard['employee_id'] =
 			readNestedId(record['worker']) ?? readNestedId(record['employee']) ?? record['workerId'];
-		standard['description'] =
-			record['description'] ?? record['descriptor'] ?? record['subject'];
 		standard['status'] = record['status'];
-		standard['time_entry_id'] = record['id'] ?? record['timeEntryId'];
-		standard['date'] = record['date'] ?? record['entryDate'] ?? record['timeBlockDate'];
-		standard['hours'] = record['hours'] ?? record['quantity'] ?? record['reportedQuantity'];
+
+		// This module covers both Cases and Time Entries. Deriving both case_id and
+		// time_entry_id from the generic `id` would set the wrong field on whichever
+		// object type isn't being queried, so classify by the time-entry-specific
+		// fields and populate only the matching identifier/fields.
+		const isTimeEntry =
+			'hours' in record ||
+			'quantity' in record ||
+			'reportedQuantity' in record ||
+			'timeBlockDate' in record ||
+			'entryDate' in record ||
+			'timeEntryId' in record;
+
+		if (isTimeEntry) {
+			standard['time_entry_id'] = record['id'] ?? record['timeEntryId'];
+			standard['date'] = record['date'] ?? record['entryDate'] ?? record['timeBlockDate'];
+			standard['hours'] = record['hours'] ?? record['quantity'] ?? record['reportedQuantity'];
+		} else {
+			standard['case_id'] = record['id'] ?? record['workdayID'];
+			standard['description'] =
+				record['description'] ?? record['descriptor'] ?? record['subject'];
+		}
 	}
 
 	return { ...flat, ...standard };

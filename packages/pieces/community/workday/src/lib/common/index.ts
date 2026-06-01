@@ -58,15 +58,21 @@ export async function workdayRequest<T extends HttpMessageBody>(
 export async function workdayWqlRequest<T extends HttpMessageBody>(
 	auth: OAuth2PropertyValue,
 	query: string,
+	limit?: number,
+	offset?: number,
 ): Promise<HttpResponse<T>> {
 	if (!auth || !auth.access_token) {
 		throw new Error('Workday connection is not configured. Please select a valid Workday connection.');
 	}
 	const tenant = getTenant(auth);
+	const queryParams: QueryParams = {};
+	if (limit !== undefined) queryParams['limit'] = String(limit);
+	if (offset !== undefined) queryParams['offset'] = String(offset);
 	return httpClient.sendRequest<T>({
 		method: HttpMethod.POST,
 		url: `https://${getHost(auth)}/ccx/api/${WQL_BASE}/${tenant}/data`,
 		body: { query },
+		queryParams,
 		authentication: {
 			type: AuthenticationType.BEARER_TOKEN,
 			token: auth.access_token,
@@ -199,11 +205,29 @@ export async function workdayWqlRequestAll(
 	auth: OAuth2PropertyValue,
 	query: string,
 ): Promise<Record<string, unknown>[]> {
-	const response = await workdayWqlRequest<{ data?: Record<string, unknown>[] }>(
-		auth,
-		query,
-	);
-	return response.body.data ?? [];
+	const allRows: Record<string, unknown>[] = [];
+	const limit = 1000;
+	let offset = 0;
+
+	while (true) {
+		const response = await workdayWqlRequest<{
+			data?: Record<string, unknown>[];
+			total?: number;
+		}>(auth, query, limit, offset);
+		const rows = response.body.data ?? [];
+		allRows.push(...rows);
+
+		const total =
+			typeof response.body.total === 'number'
+				? response.body.total
+				: allRows.length;
+		offset += limit;
+		if (rows.length < limit || offset >= total) {
+			break;
+		}
+	}
+
+	return allRows;
 }
 
 export async function workdayGetReport(

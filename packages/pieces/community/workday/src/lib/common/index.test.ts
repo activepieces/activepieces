@@ -84,6 +84,19 @@ describe('workdayWqlRequestAll', () => {
 		const req = sendRequest.mock.calls[0][0] as HttpRequest;
 		expect(req.url).toContain('/ccx/api/wql/v1/mytenant/data');
 	});
+
+	it('paginates until all rows are fetched', async () => {
+		const fullPage = Array.from({ length: 1000 }, (_, i) => ({ id: i }));
+		const lastPage = Array.from({ length: 500 }, (_, i) => ({ id: 1000 + i }));
+		sendRequest.mockImplementation(async (request: HttpRequest) => {
+			const offset = Number(request.queryParams?.['offset'] ?? 0);
+			return resp({ data: offset === 0 ? fullPage : lastPage, total: 1500 });
+		});
+
+		const rows = await workdayWqlRequestAll(AUTH, 'SELECT id FROM workers');
+		expect(rows).toHaveLength(1500);
+		expect(sendRequest.mock.calls).toHaveLength(2);
+	});
 });
 
 describe('workdayGetReport', () => {

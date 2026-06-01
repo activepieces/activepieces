@@ -33,18 +33,19 @@ export const getBusinessObjectDetailsBatch = createAction({
 			(item) => item.id,
 		);
 
-		const records: Record<string, unknown>[] = [];
-		for (const id of ids) {
-			const response = await workdayRequest<Record<string, unknown>>(
-				auth,
-				HttpMethod.GET,
-				`${businessObjectConfig.path}/${id}`,
-				undefined,
-				undefined,
-				businessObjectConfig.service,
-			);
-			records.push(formatWorkdayOutput(response.body, module));
-		}
+		const records = await Promise.all(
+			ids.map(async (id) => {
+				const response = await workdayRequest<Record<string, unknown>>(
+					auth,
+					HttpMethod.GET,
+					`${businessObjectConfig.path}/${id}`,
+					undefined,
+					undefined,
+					businessObjectConfig.service,
+				);
+				return formatWorkdayOutput(response.body, module);
+			}),
+		);
 
 		return {
 			total_count: records.length,

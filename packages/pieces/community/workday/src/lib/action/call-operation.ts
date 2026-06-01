@@ -46,7 +46,14 @@ export const callOperation = createAction({
 			},
 		}),
 		body: Property.Json({
-			displayName: 'Request Body (JSON or SOAP XML)',
+			displayName: 'Request Body (JSON)',
+			description: 'JSON payload for REST operations.',
+			required: false,
+		}),
+		soapBody: Property.LongText({
+			displayName: 'SOAP Body (XML)',
+			description:
+				'Raw SOAP operation XML, used only for SOAP operations. Leave empty to send an empty operation element.',
 			required: false,
 		}),
 	},
@@ -56,8 +63,8 @@ export const callOperation = createAction({
 				throw new Error('SOAP Service Name is required for SOAP operations.');
 			}
 			const xml =
-				typeof propsValue.body === 'string'
-					? propsValue.body
+				propsValue.soapBody && propsValue.soapBody.trim().length > 0
+					? propsValue.soapBody
 					: `<${propsValue.operationName} xmlns:bsvc="urn:com.workday/bsvc"/>`;
 			const result = await workdaySoapRequest(auth, propsValue.soapService, xml);
 			return flattenRecord(result);
