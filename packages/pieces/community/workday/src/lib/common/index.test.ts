@@ -97,6 +97,19 @@ describe('workdayWqlRequestAll', () => {
 		expect(rows).toHaveLength(1500);
 		expect(sendRequest.mock.calls).toHaveLength(2);
 	});
+
+	it('keeps paginating past the first full page when the API omits total', async () => {
+		const fullPage = Array.from({ length: 1000 }, (_, i) => ({ id: i }));
+		const lastPage = Array.from({ length: 25 }, (_, i) => ({ id: 1000 + i }));
+		sendRequest.mockImplementation(async (request: HttpRequest) => {
+			const offset = Number(request.queryParams?.['offset'] ?? 0);
+			return resp({ data: offset === 0 ? fullPage : lastPage });
+		});
+
+		const rows = await workdayWqlRequestAll(AUTH, 'SELECT id FROM workers');
+		expect(rows).toHaveLength(1025);
+		expect(sendRequest.mock.calls).toHaveLength(2);
+	});
 });
 
 describe('workdayGetReport', () => {

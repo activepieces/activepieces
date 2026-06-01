@@ -217,12 +217,15 @@ export async function workdayWqlRequestAll(
 		const rows = response.body.data ?? [];
 		allRows.push(...rows);
 
-		const total =
-			typeof response.body.total === 'number'
-				? response.body.total
-				: allRows.length;
+		// A short page is the only reliable end-of-data signal. `total` is used to
+		// stop one round-trip early, but ONLY when the API actually returns it —
+		// falling back to allRows.length would halt after the first full page.
+		if (rows.length < limit) {
+			break;
+		}
 		offset += limit;
-		if (rows.length < limit || offset >= total) {
+		const total = response.body.total;
+		if (typeof total === 'number' && offset >= total) {
 			break;
 		}
 	}
