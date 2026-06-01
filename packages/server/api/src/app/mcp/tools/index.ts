@@ -96,10 +96,10 @@ export const ALL_CONTROLLABLE_TOOL_NAMES: string[] = [
     'ap_run_action',
 ]
 
-export const activepiecesTools = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition[] => [
-    apBuildFlowTool(mcp, log),
-    apCreateFlowTool(mcp, log),
-    apDuplicateFlowTool(mcp, log),
+export const activepiecesTools = (mcp: ProjectScopedMcpServer, userId: string | undefined, log: FastifyBaseLogger): McpToolDefinition[] => [
+    apBuildFlowTool({ mcp, userId }, log),
+    apCreateFlowTool({ mcp, userId }, log),
+    apDuplicateFlowTool({ mcp, userId }, log),
     apRenameFlowTool(mcp, log),
     apListFlowsTool(mcp, log),
     apFlowStructureTool(mcp, log),

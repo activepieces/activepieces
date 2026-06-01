@@ -657,6 +657,9 @@
       "@activepieces/piece-jina-ai": [
         "packages/pieces/community/jina-ai/src/index.ts"
       ],
+      "@activepieces/piece-jungle-grid": [
+        "packages/pieces/community/jungle-grid/src/index.ts"
+      ],
       "@activepieces/piece-jira-cloud": [
         "packages/pieces/community/jira-cloud/src/index.ts"
       ],
@@ -1345,6 +1348,9 @@
       ],
       "@activepieces/piece-utility-ai": [
         "packages/pieces/community/utility-ai/src/index.ts"
+      ],
+      "@activepieces/piece-uxsniff": [
+        "packages/pieces/community/uxsniff/src/index.ts"
       ],
       "@activepieces/piece-vadoo-ai": [
         "packages/pieces/community/vadoo-ai/src/index.ts"
