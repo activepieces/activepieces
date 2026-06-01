@@ -657,6 +657,9 @@
       "@activepieces/piece-jina-ai": [
         "packages/pieces/community/jina-ai/src/index.ts"
       ],
+      "@activepieces/piece-jungle-grid": [
+        "packages/pieces/community/jungle-grid/src/index.ts"
+      ],
       "@activepieces/piece-jira-cloud": [
         "packages/pieces/community/jira-cloud/src/index.ts"
       ],
