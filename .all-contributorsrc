@@ -2184,6 +2184,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "exvillager",
+      "name": "Pradeep kumar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/114051448?v=4",
+      "profile": "https://github.com/exvillager",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"
