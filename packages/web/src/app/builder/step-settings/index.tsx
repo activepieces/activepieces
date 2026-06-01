@@ -339,18 +339,16 @@ const StepSettingsContainer = () => {
               isTestPanelOpen={isTestPanelOpen}
               settingsForm={settingsForm}
               testPanelHost={
-                showTestPanel ? (
-                  <TestPanelHost
-                    mode={testPanelView === 'split' ? 'split' : 'drawer'}
-                    flowId={flowVersion.flowId}
-                    flowVersionId={flowVersion.id}
-                    projectId={project?.id}
-                    stepType={modifiedStep.type}
-                    showGenerateSampleData={showGenerateSampleData}
-                    showStepInputOutFromRun={showStepInputOutFromRun}
-                    saving={saving}
-                  />
-                ) : null
+                <TestPanelHost
+                  mode={testPanelView === 'split' ? 'split' : 'drawer'}
+                  flowId={flowVersion.flowId}
+                  flowVersionId={flowVersion.id}
+                  projectId={project?.id}
+                  stepType={modifiedStep.type}
+                  showGenerateSampleData={showGenerateSampleData}
+                  showStepInputOutFromRun={showStepInputOutFromRun}
+                  saving={saving}
+                />
               }
             />
           </StepTestRunnerProvider>
@@ -398,8 +396,15 @@ const StepSettingsLayout = ({
           <TestStepCTAButton />
         </div>
       )}
-      {testPanelHost && isTestPanelOpen && (
-        <div className="absolute bottom-0 left-0 right-0 h-[60%] z-50">
+      {testPanelHost && (
+        <div
+          className={cn(
+            'absolute bottom-0 left-0 right-0 h-0 transition-all z-50',
+            {
+              'h-[60%]': isTestPanelOpen,
+            },
+          )}
+        >
           {testPanelHost}
         </div>
       )}
