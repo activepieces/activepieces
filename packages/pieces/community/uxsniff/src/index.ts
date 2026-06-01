@@ -41,13 +41,13 @@ export const uxsniff = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/uxsniff.png',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE, PieceCategory.MARKETING],
-  authors: ['sanket'],
+  authors: ['sanket-a11y'],
   actions: [
     createCustomApiCallAction({
       baseUrl: () => 'https://api.uxsniff.com/v1',
       auth: uxsniffAuth,
       authMapping: async (auth) => ({
-        Authorization: (auth as { secret_text: string }).secret_text,
+        Authorization: auth.secret_text,
       }),
     }),
   ],
