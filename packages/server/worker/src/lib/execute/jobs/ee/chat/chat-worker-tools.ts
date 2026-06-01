@@ -214,7 +214,7 @@ async function executeBatchAction({ executeTool, writer, pieceName, actionName, 
 }): Promise<unknown> {
     const batchId = apId()
     const total = items.length
-    const label = description ?? `Processing ${total} items`
+    const label = description ?? `Processing ${total} ${total === 1 ? 'item' : 'items'}`
     const results: BatchItemResult[] = []
     let succeeded = 0
     let failed = 0
@@ -242,23 +242,30 @@ async function executeBatchAction({ executeTool, writer, pieceName, actionName, 
 
     for (let i = 0; i < items.length; i++) {
         const itemInput = items[i]
-        const result = await executeTool('ap_execute_action', {
-            pieceName,
-            actionName,
-            input: itemInput,
-            connectionExternalId,
-            projectId,
-        })
-        const success = isSuccessResult(result)
-        if (success) {
-            succeeded++
-            consecutiveFailures = 0
-            results.push({ index: i, success: true, output: result })
+        try {
+            const result = await executeTool('ap_execute_action', {
+                pieceName,
+                actionName,
+                input: itemInput,
+                connectionExternalId,
+                projectId,
+            })
+            const success = isSuccessResult(result)
+            if (success) {
+                succeeded++
+                consecutiveFailures = 0
+                results.push({ index: i, success: true, output: result })
+            }
+            else {
+                failed++
+                consecutiveFailures++
+                results.push({ index: i, success: false, error: extractResultText(result) })
+            }
         }
-        else {
+        catch (err) {
             failed++
             consecutiveFailures++
-            results.push({ index: i, success: false, error: extractResultText(result) })
+            results.push({ index: i, success: false, error: err instanceof Error ? err.message : 'Unexpected error' })
         }
 
         const stoppedEarly = consecutiveFailures >= CONSECUTIVE_FAILURE_LIMIT

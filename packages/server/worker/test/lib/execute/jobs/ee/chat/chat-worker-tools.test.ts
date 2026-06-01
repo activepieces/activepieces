@@ -184,7 +184,7 @@ describe('chatWorkerTools', () => {
 
             const progressEvents = writes.filter((w) => w['type'] === 'data-batch-progress')
             const initial = progressEvents[0]['data'] as Record<string, unknown>
-            expect(initial['label']).toBe('Processing 1 items')
+            expect(initial['label']).toBe('Processing 1 item')
         })
 
         it('uses upsert id for all progress events', async () => {
