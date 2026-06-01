@@ -1,6 +1,6 @@
 import { PlanStepUpdate } from '@activepieces/shared';
 import { t } from 'i18next';
-import { RefreshCw, Volume2, VolumeOff } from 'lucide-react';
+import { Check, RefreshCw, Volume2, VolumeOff } from 'lucide-react';
 import { motion } from 'motion/react';
 import { memo, useMemo } from 'react';
 
@@ -48,17 +48,24 @@ export const AssistantMessage = memo(function AssistantMessage({
   isStreaming,
   isLastMessage = false,
   onRetry,
-  onSend,
   lastAssistantMessage,
 }: {
   message: ChatUIMessage;
   isStreaming: boolean;
   isLastMessage?: boolean;
   onRetry: () => void;
-  onSend: (text: string, files?: File[]) => void;
   lastAssistantMessage?: ChatUIMessage;
 }) {
-  const { blocks, hasContent } = useMemo(() => {
+  const resolveDisplayCard = useChatStoreContext((s) => s.resolveDisplayCard);
+  const displayCard = useChatStoreContext((s) => s.displayCard);
+  const hasActiveDisplayCard =
+    isStreaming && displayCard !== null && !displayCard.resolved;
+
+  const {
+    blocks,
+    hasContent,
+    lastDisplayIdx: lastDisplayToolIdx,
+  } = useMemo(() => {
     const result: MessageBlock[] = [];
     let currentThinking: {
       steps: ThinkingStep[];
@@ -145,26 +152,33 @@ export const AssistantMessage = memo(function AssistantMessage({
 
     flushThinking();
 
-    const lastDisplayIdx = result.findLastIndex(
-      (b) => b.kind === 'display-tool',
-    );
-    if (lastDisplayIdx > -1) {
-      for (let j = result.length - 1; j >= 0; j--) {
-        if (result[j].kind === 'display-tool' && j !== lastDisplayIdx) {
-          result.splice(j, 1);
-        }
+    for (let j = result.length - 1; j > 0; j--) {
+      const block = result[j];
+      const prevBlock = result[j - 1];
+      if (
+        block.kind === 'thinking' &&
+        prevBlock.kind === 'display-tool' &&
+        block.reasoningText.length === 0 &&
+        block.steps.every((s) => s.kind === 'thinking-status')
+      ) {
+        result.splice(j, 1);
       }
     }
 
-    if (
-      isStreaming &&
-      !result.some((b) => b.kind === 'thinking') &&
-      result.length === 0
-    ) {
-      result.push({ kind: 'thinking', steps: [], reasoningText: '' });
+    const lastDisplayIdx = result.findLastIndex(
+      (b) => b.kind === 'display-tool',
+    );
+
+    if (isStreaming) {
+      const hasThinkingAfter = result.some(
+        (b, idx) => b.kind === 'thinking' && idx > lastDisplayIdx,
+      );
+      if (result.length === 0 || (lastDisplayIdx >= 0 && !hasThinkingAfter)) {
+        result.push({ kind: 'thinking', steps: [], reasoningText: '' });
+      }
     }
 
-    return { blocks: result, hasContent: hasText };
+    return { blocks: result, hasContent: hasText, lastDisplayIdx };
   }, [message.parts, isStreaming]);
 
   const fullText = useMemo(
@@ -210,7 +224,12 @@ export const AssistantMessage = memo(function AssistantMessage({
                     key={`thinking-${i}`}
                     thinkingSteps={block.steps}
                     reasoningText={block.reasoningText}
-                    isStreaming={isStreaming && i === lastThinkingIdx}
+                    isStreaming={
+                      isStreaming &&
+                      i === lastThinkingIdx &&
+                      !hasActiveDisplayCard &&
+                      i > lastDisplayToolIdx
+                    }
                     thinkingDurationMs={
                       i === lastThinkingIdx
                         ? (
@@ -228,16 +247,22 @@ export const AssistantMessage = memo(function AssistantMessage({
                     <Markdown>{block.text}</Markdown>
                   </div>
                 );
-              case 'display-tool':
-                if (isStreaming) return null;
-                return (
-                  <DisplayToolCard
-                    key={block.part.toolCallId}
-                    part={block.part}
-                    onSend={onSend}
-                    isInteractive={isLastMessage}
-                  />
-                );
+              case 'display-tool': {
+                const toolCompleted =
+                  block.part.state === 'output-available' ||
+                  block.part.state === 'output-error';
+                if (toolCompleted) {
+                  return (
+                    <DisplayToolCard
+                      key={block.part.toolCallId}
+                      part={block.part}
+                      onResolve={resolveDisplayCard}
+                      isInteractive={false}
+                    />
+                  );
+                }
+                return null;
+              }
               case 'plan-marker':
                 return (
                   <InlinePlanCard
@@ -368,46 +393,112 @@ function InlinePlanCard({
 
 function DisplayToolCard({
   part,
-  onSend,
+  onResolve,
   isInteractive,
 }: {
   part: AnyToolPart;
-  onSend: (text: string, files?: File[]) => void;
+  onResolve: (payload: Record<string, unknown>) => void;
   isInteractive: boolean;
 }) {
   if (!chatPartUtils.isReady(part)) return null;
   const data = part.input as Record<string, unknown>;
   const toolName = chatPartUtils.getToolPartName(part);
+  const parsedOutput = chatPartUtils.parseToolOutput(part);
+  const toolOutput =
+    parsedOutput.state === 'success'
+      ? (parsedOutput.data as Record<string, unknown>)
+      : undefined;
 
   switch (toolName) {
     case 'ap_show_connection_required':
       return (
         <ConnectionsRequiredCard
           connections={[data as unknown as ConnectionRequiredData]}
-          onSend={onSend}
+          onResolve={onResolve}
         />
       );
-    case 'ap_show_connection_picker':
+    case 'ap_show_connection_picker': {
+      const selectedLabel =
+        typeof toolOutput?.['label'] === 'string'
+          ? (toolOutput['label'] as string)
+          : undefined;
       return (
         <ConnectionPickerCard
           picker={data as unknown as ConnectionPickerData}
-          onSelect={onSend}
+          onResolve={onResolve}
           isInteractive={isInteractive}
+          selectedConnectionLabel={selectedLabel}
         />
       );
-    case 'ap_show_project_picker':
+    }
+    case 'ap_show_project_picker': {
+      const selectedProjectId =
+        typeof toolOutput?.['projectId'] === 'string'
+          ? (toolOutput['projectId'] as string)
+          : undefined;
       return (
         <ProjectPickerCard
           picker={data as unknown as ProjectPickerData}
           isInteractive={isInteractive}
-          onSelect={(_projectId, projectName) => {
-            onSend(`Use ${projectName}.`);
-          }}
+          onResolve={onResolve}
+          selectedProjectId={selectedProjectId}
         />
       );
+    }
+    case 'ap_show_questions': {
+      const answersText =
+        typeof toolOutput?.['answers'] === 'string'
+          ? (toolOutput['answers'] as string)
+          : undefined;
+      if (!answersText) return null;
+      return <AnsweredQuestionsCard answersText={answersText} />;
+    }
     default:
       return null;
   }
+}
+
+function AnsweredQuestionsCard({ answersText }: { answersText: string }) {
+  const pairs = useMemo(() => parseAnswerPairs(answersText), [answersText]);
+  if (pairs.length === 0) return null;
+
+  return (
+    <motion.div
+      className="rounded-xl border bg-background overflow-hidden my-2"
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.2 }}
+    >
+      <div className="px-4 py-3 flex items-center gap-2 border-b bg-muted/30">
+        <div className="bg-green-100 dark:bg-green-500/20 rounded-full p-1">
+          <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
+        </div>
+        <span className="text-sm font-medium">{t('Your answers')}</span>
+      </div>
+      <div className="px-4 py-3 space-y-3">
+        {pairs.map((pair, i) => (
+          <div key={i}>
+            <div className="text-xs text-muted-foreground">{pair.question}</div>
+            <div className="text-sm font-medium">{pair.answer}</div>
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+function parseAnswerPairs(
+  text: string,
+): Array<{ question: string; answer: string }> {
+  return text
+    .split('\n')
+    .filter((line) => line.startsWith('- **'))
+    .map((line) => {
+      const match = line.match(/^- \*\*(.+?)\*\*\s*(.*)$/);
+      if (!match) return null;
+      return { question: match[1], answer: match[2] };
+    })
+    .filter((p): p is { question: string; answer: string } => p !== null);
 }
 
 type MessageBlock =

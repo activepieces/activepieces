@@ -9,18 +9,22 @@ import { chunkReducer, DataPart, StreamingState } from './chunk-reducer';
 
 const THROTTLE_MS = 100;
 const STREAM_TIMEOUT_MS = 10 * 60 * 1000;
+const STALE_CHECK_INTERVAL_MS = 15_000;
 
 export function useStreamingReducer({
   onDataPart,
   onStreamFinished,
   onStreamError,
+  onStaleCheck,
 }: {
   onDataPart: (part: DataPart) => void;
   onStreamFinished: (conversationId: string) => void;
   onStreamError: (params: {
     conversationId: string;
     errorMessage: string;
+    errorCode?: string;
   }) => void;
+  onStaleCheck: (conversationId: string) => void;
 }) {
   const socket = useSocket();
 
@@ -42,6 +46,12 @@ export function useStreamingReducer({
   onStreamFinishedRef.current = onStreamFinished;
   const onStreamErrorRef = useRef(onStreamError);
   onStreamErrorRef.current = onStreamError;
+  const onStaleCheckRef = useRef(onStaleCheck);
+  onStaleCheckRef.current = onStaleCheck;
+  const staleCheckTimerRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  );
+  const lastChunkTimeRef = useRef(0);
 
   const updatePhase = useCallback((phase: StreamPhase) => {
     if (streamPhaseRef.current === phase) return;
@@ -85,6 +95,10 @@ export function useStreamingReducer({
       clearTimeout(streamTimeoutRef.current);
       streamTimeoutRef.current = null;
     }
+    if (staleCheckTimerRef.current !== null) {
+      clearInterval(staleCheckTimerRef.current);
+      staleCheckTimerRef.current = null;
+    }
     chunkBufferRef.current = [];
     reducerStateRef.current = null;
   }, []);
@@ -99,6 +113,7 @@ export function useStreamingReducer({
     (conversationId: string) => {
       teardown();
 
+      lastChunkTimeRef.current = Date.now();
       reducerStateRef.current = chunkReducer.createStreamingState();
       setStreamingMessage({
         id: reducerStateRef.current.message.id,
@@ -115,12 +130,18 @@ export function useStreamingReducer({
         onStreamFinishedRef.current(conversationId);
       };
 
-      const handleError = (errorMessage: string) => {
+      const handleError = ({
+        errorMessage,
+        errorCode,
+      }: {
+        errorMessage: string;
+        errorCode?: string;
+      }) => {
         flush();
         teardown();
         setStreamError(errorMessage);
         updatePhase('reconciling');
-        onStreamErrorRef.current({ conversationId, errorMessage });
+        onStreamErrorRef.current({ conversationId, errorMessage, errorCode });
       };
 
       const handler = (event: SocketEvent) => {
@@ -128,6 +149,7 @@ export function useStreamingReducer({
 
         if (event.type === ChatAgentEventType.CHUNK) {
           updatePhase('streaming');
+          lastChunkTimeRef.current = Date.now();
           const chunks = Array.isArray(event.data) ? event.data : [event.data];
           for (const chunk of chunks) {
             chunkBufferRef.current.push(chunk as UIMessageChunk);
@@ -138,11 +160,14 @@ export function useStreamingReducer({
             clearTimeout(streamTimeoutRef.current);
           }
           streamTimeoutRef.current = setTimeout(() => {
-            handleError('Stream timed out');
+            handleError({ errorMessage: 'Stream timed out' });
           }, STREAM_TIMEOUT_MS);
         } else if (event.type === ChatAgentEventType.ERROR) {
-          const errorData = event.data as { message?: string };
-          handleError(errorData?.message ?? 'An error occurred');
+          const errorData = event.data as { message?: string; code?: string };
+          handleError({
+            errorMessage: errorData?.message ?? 'An error occurred',
+            errorCode: errorData?.code,
+          });
         } else if (event.type === ChatAgentEventType.FINISHED) {
           handleFinish();
         }
@@ -151,8 +176,14 @@ export function useStreamingReducer({
       socket.on(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
 
       streamTimeoutRef.current = setTimeout(() => {
-        handleError('Stream timed out');
+        handleError({ errorMessage: 'Stream timed out' });
       }, STREAM_TIMEOUT_MS);
+
+      staleCheckTimerRef.current = setInterval(() => {
+        const timeSinceLastChunk = Date.now() - lastChunkTimeRef.current;
+        if (timeSinceLastChunk < STALE_CHECK_INTERVAL_MS) return;
+        onStaleCheckRef.current(conversationId);
+      }, STALE_CHECK_INTERVAL_MS);
 
       cleanupRef.current = () => {
         socket.off(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);

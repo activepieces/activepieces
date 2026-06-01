@@ -1,44 +1,42 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth } from '../../..';
+import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 
 export const getPersonPaths = createAction({
-  name: 'getPersonPaths',
   auth: villageAuth,
+  name: 'get_person_paths',
   displayName: 'Get Person Paths',
-  description: 'Returns connection paths and warmth score to a LinkedIn profile',
+  description:
+    'Find introduction paths to reach a specific person through your professional network. Provide a LinkedIn URL and get back direct connections, mutual contacts, and connection strength scores (0-100).',
   props: {
     linkedin_url: Property.ShortText({
       displayName: 'LinkedIn URL',
-      description: 'LinkedIn URL of the target person',
-      required: true,
+      description:
+        'LinkedIn profile URL of the target person, e.g. https://linkedin.com/in/johndoe (provide this OR url)',
+      required: false,
     }),
-    user_identifier: Property.ShortText({
-      displayName: 'User Identifier',
-      description: 'Specify the user making the request. This identifier should match the one you used when integrating the user with Village.',
+    url: Property.ShortText({
+      displayName: 'URL',
+      description: 'Generic URL — auto-detected (provide this OR linkedin_url)',
       required: false,
     }),
   },
   async run(context) {
-    const { linkedin_url, user_identifier } = context.propsValue;
-    
-    // Encode the URL for use in the path
-    const encodedUrl = encodeURIComponent(linkedin_url);
-    
-    const headers: Record<string, string> = {
-      'secret-key': context.auth.secret_text,
-    };
-    
-    if (user_identifier) {
-      headers['user-identifier'] = user_identifier;
+    const { linkedin_url, url } = context.propsValue;
+    if (!linkedin_url && !url) {
+      throw new Error('Provide one of: linkedin_url, url');
     }
-    
-    const res = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `https://api.village.do/v1/people/paths/${encodedUrl}`,
-      headers,
+    if (linkedin_url && url) {
+      throw new Error('Provide only one of: linkedin_url, url');
+    }
+    const identifier = linkedin_url ? { linkedin_url } : { url };
+
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: `${VILLAGE_API_BASE_URL}/v2/people/paths`,
+      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      body: identifier,
     });
-    
-    return res.body;
+    return response.body;
   },
 });
