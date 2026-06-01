@@ -1,6 +1,5 @@
 {
   "Search public X/Twitter posts, users, timelines, and trends for automation workflows.": "Zoek openbare X/Twitter posts, gebruikers, tijdlijnen en trends voor automatiseringsworkflows.",
-  "Xquik API Key": "Xquik API-sleutel",
   "Create an API key in Xquik, then paste it here. API docs: https://docs.xquik.com/api-reference/overview": "Maak een API-sleutel in Xquik, en plak deze hier. API docs: https://docs.xquik.com/api-reference/overview",
   "Search Tweets": "Zoek Tweets",
   "Get Tweet": "Get Tweet",
@@ -9,9 +8,9 @@
   "Get User Tweets": "Gebruiker Tweets ophalen",
   "Get Trends": "Get Trends",
   "Custom API Call": "Custom API Call",
-  "Search public X/Twitter posts with X query operators": "Zoek openbare X/Twitter posts met X query operators",
+  "Search public X/Twitter posts with X query operators.": "Zoek openbare X/Twitter berichten met X query operatoren.",
   "Look up a public X/Twitter post by ID": "Een openbare X/Twitter post via ID opzoeken",
-  "Search public X/Twitter users by name or username": "Zoek openbare X/Twitter gebruikers op naam of gebruikersnaam",
+  "Search public X/Twitter users by name or username.": "Zoek openbare X/Twitter gebruikers op naam of gebruikersnaam.",
   "Look up a public X/Twitter user by username or user ID": "Een openbare X/Twitter gebruiker opzoeken door gebruikersnaam of gebruikers-ID",
   "List recent posts from a public X/Twitter user": "Lijst van recente berichten van een openbare X/Twitter gebruiker",
   "Get X/Twitter trending topics by region": "Download X/Twitter trending topics per regio",
