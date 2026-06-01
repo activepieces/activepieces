@@ -91,10 +91,5 @@
   "Triggers when a new record is added to the selected table.": "Wird ausgelöst, wenn ein neuer Datensatz zur ausgewählten Tabelle hinzugefügt wird.",
   "Triggers when a record is created or updated in selected table.": "Wird ausgelöst, wenn ein Datensatz in der ausgewählten Tabelle erstellt oder aktualisiert wird.",
   "Trigger field": "Auslösefeld",
-  "**Last Modified Time** field will be used to watch new or updated records.Please create **Last Modified Time** field in your schema,if you don't have any timestamp field.": "**Zuletzt geändertes Zeit** Feld wird verwendet, um neue oder aktualisierte Datensätze zu sehen. Leasing erstellen Sie das **Zuletzt geänderte Zeit** Feld in Ihrem Schema, wenn Sie kein Zeitstempelfeld haben.",
-  "Please connect your account": "Bitte verbinden Sie Ihr Konto",
-  "Please select a base first": "Bitte wählen Sie zuerst eine Basis",
-  "Please select a table first": "Bitte wählen Sie zuerst eine Tabelle",
-  "Please check your permission scope": "Bitte überprüfen Sie Ihren Berechtigungsbereich",
-  "Please select a base and table first": "Bitte wählen Sie zuerst eine Basis und eine Tabelle"
+  "**Last Modified Time** field will be used to watch new or updated records.Please create **Last Modified Time** field in your schema,if you don't have any timestamp field.": "**Zuletzt geändertes Zeit** Feld wird verwendet, um neue oder aktualisierte Datensätze zu sehen. Leasing erstellen Sie das **Zuletzt geänderte Zeit** Feld in Ihrem Schema, wenn Sie kein Zeitstempelfeld haben."
 }
