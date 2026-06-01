@@ -357,7 +357,7 @@ function buildToolSummary({ part }: { part: AnyToolPart }): {
 } {
   const toolName = chatPartUtils.getToolPartName(part);
   const icon =
-    toolName === 'ap_run_one_time_action'
+    toolName === 'ap_execute_action'
       ? Zap
       : toolName.startsWith('mcp__')
       ? Wrench

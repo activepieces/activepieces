@@ -320,6 +320,57 @@ describe('chunkReducer', () => {
       ]);
       expect(state.message.parts).toHaveLength(0);
     });
+
+    it('upserts batch-progress data parts by id', () => {
+      const state = chunkReducer.createStreamingState({ messageId: 'msg-1' });
+
+      chunkReducer.applyChunks({
+        state,
+        chunks: [
+          {
+            type: 'data-batch-progress',
+            id: 'batch-1',
+            data: { label: 'Sending', total: 3, completed: 0, succeeded: 0, failed: 0, done: false, results: [] },
+          } as unknown as UIMessageChunk,
+        ],
+      });
+      expect(state.message.parts).toHaveLength(1);
+
+      chunkReducer.applyChunks({
+        state,
+        chunks: [
+          {
+            type: 'data-batch-progress',
+            id: 'batch-1',
+            data: { label: 'Sending', total: 3, completed: 2, succeeded: 2, failed: 0, done: false, results: [] },
+          } as unknown as UIMessageChunk,
+        ],
+      });
+      expect(state.message.parts).toHaveLength(1);
+      const data = (state.message.parts[0] as unknown as { data: { completed: number } }).data;
+      expect(data.completed).toBe(2);
+    });
+
+    it('appends separate batch-progress parts with different ids', () => {
+      const state = chunkReducer.createStreamingState({ messageId: 'msg-1' });
+
+      chunkReducer.applyChunks({
+        state,
+        chunks: [
+          {
+            type: 'data-batch-progress',
+            id: 'batch-1',
+            data: { label: 'First', total: 1, completed: 1, succeeded: 1, failed: 0, done: true, results: [] },
+          } as unknown as UIMessageChunk,
+          {
+            type: 'data-batch-progress',
+            id: 'batch-2',
+            data: { label: 'Second', total: 1, completed: 0, succeeded: 0, failed: 0, done: false, results: [] },
+          } as unknown as UIMessageChunk,
+        ],
+      });
+      expect(state.message.parts).toHaveLength(2);
+    });
   });
 
   describe('extractDataParts', () => {

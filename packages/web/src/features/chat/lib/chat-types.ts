@@ -1,4 +1,9 @@
-import { ChatToolName, ChatToolOutputs, isObject } from '@activepieces/shared';
+import {
+  BatchProgressData,
+  ChatToolName,
+  ChatToolOutputs,
+  isObject,
+} from '@activepieces/shared';
 import {
   DynamicToolUIPart,
   getToolName,
@@ -9,6 +14,7 @@ import {
 
 export type ChatDataParts = {
   'session-title': { title: string };
+  'batch-progress': BatchProgressData;
 };
 
 export type ChatUIMessage = UIMessage<unknown, ChatDataParts>;

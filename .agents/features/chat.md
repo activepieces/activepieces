@@ -48,7 +48,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - **Message compaction** — when a conversation exceeds a token threshold, older messages are summarized by the LLM and replaced with a summary to keep context within the model's window
 - **Tool approval gate** — a Redis pub/sub mechanism that pauses destructive tool executions (delete, test, publish) until the user explicitly approves or denies in the UI; times out after 5 minutes
 - **Plan approval** — a multi-step approval mechanism where the agent presents a plan via `ap_request_plan_approval`, the user approves or rejects, and approved plans execute with progress tracking
-- **Local tools** — chat-specific tools not part of MCP: `ap_set_session_title`, `ap_select_project`, `ap_run_one_time_action`, `ap_list_across_projects`, `ap_request_plan_approval`
+- **Local tools** — chat-specific tools not part of MCP: `ap_set_session_title`, `ap_select_project`, `ap_execute_action`, `ap_list_across_projects`, `ap_request_plan_approval`
 - **Display tools** — tools that render interactive UI cards: `ap_show_connection_required`, `ap_show_connection_picker`, `ap_show_project_picker`, `ap_show_questions`, `ap_show_quick_replies`
 - **MCP tools** — project-scoped tools loaded from the Activepieces MCP server when a project is selected; destructive ones are wrapped with the approval gate
 - **AI provider** — a platform-configured LLM provider with an `enabledForChat` flag; the chat resolves the first enabled provider and its default model
@@ -74,7 +74,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 ## Local Tools
 - `ap_set_session_title` — auto-names the conversation after the first exchange
 - `ap_select_project` — switches project context (scopes MCP tools to that project)
-- `ap_run_one_time_action` — executes a single piece action ad-hoc (e.g. "check my inbox"); auto-discovers connections across projects
+- `ap_execute_action` — executes a single piece action ad-hoc (e.g. "check my inbox"); auto-discovers connections across projects
 - `ap_list_across_projects` — lists flows, tables, runs, or connections across all user-accessible projects
 - `ap_request_plan_approval` — presents a multi-step plan to the user for approval before executing destructive or write operations
 
