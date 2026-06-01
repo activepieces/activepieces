@@ -9,7 +9,7 @@ import { claudeAuth } from '../auth';
 import { TextBlock } from '@anthropic-ai/sdk/resources';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
-import { billingIssueMessage, modelOptions, unauthorizedMessage } from '../common/common';
+import { billingIssueMessage, modelDropdown, unauthorizedMessage } from '../common/common';
 const DEFAULT_TOKENS_FOR_THINKING_MODE = 1024;
 export const askClaude = createAction({
   auth: claudeAuth,
@@ -17,17 +17,7 @@ export const askClaude = createAction({
   displayName: 'Ask Claude',
   description: 'Ask Claude anything you want!',
   props: {
-    model: Property.StaticDropdown({
-      displayName: 'Model',
-      required: true,
-      description:
-        'The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.',
-      defaultValue: 'claude-3-haiku-20240307',
-      options: {
-        disabled: false,
-        options: modelOptions,
-      },
-    }),
+    model: modelDropdown,
     systemPrompt: Property.LongText({
       displayName: 'System Prompt',
       required: false,
