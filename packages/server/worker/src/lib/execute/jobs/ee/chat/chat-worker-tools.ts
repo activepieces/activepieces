@@ -5,6 +5,7 @@ import {
     ChatStreamWriter,
     isObject,
     SendChatEventRequest,
+    tryCatch,
 } from '@activepieces/shared'
 import { tool, ToolSet } from 'ai'
 import { z } from 'zod'
@@ -241,31 +242,27 @@ async function executeBatchAction({ executeTool, writer, pieceName, actionName, 
     pushProgress({ done: false })
 
     for (let i = 0; i < items.length; i++) {
-        const itemInput = items[i]
-        try {
-            const result = await executeTool('ap_execute_action', {
-                pieceName,
-                actionName,
-                input: itemInput,
-                connectionExternalId,
-                projectId,
-            })
-            const success = isSuccessResult(result)
-            if (success) {
-                succeeded++
-                consecutiveFailures = 0
-                results.push({ index: i, success: true, output: result })
-            }
-            else {
-                failed++
-                consecutiveFailures++
-                results.push({ index: i, success: false, error: extractResultText(result) })
-            }
-        }
-        catch (err) {
+        const { data: result, error } = await tryCatch(() => executeTool('ap_execute_action', {
+            pieceName,
+            actionName,
+            input: items[i],
+            connectionExternalId,
+            projectId,
+        }))
+        if (error) {
             failed++
             consecutiveFailures++
-            results.push({ index: i, success: false, error: err instanceof Error ? err.message : 'Unexpected error' })
+            results.push({ index: i, success: false, error: error.message })
+        }
+        else if (isSuccessResult(result)) {
+            succeeded++
+            consecutiveFailures = 0
+            results.push({ index: i, success: true, output: result })
+        }
+        else {
+            failed++
+            consecutiveFailures++
+            results.push({ index: i, success: false, error: extractResultText(result) })
         }
 
         const stoppedEarly = consecutiveFailures >= CONSECUTIVE_FAILURE_LIMIT
