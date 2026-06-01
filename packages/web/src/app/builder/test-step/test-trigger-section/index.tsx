@@ -11,6 +11,8 @@ import React from 'react';
 import { triggerEventHooks } from '@/features/flows';
 
 import { useBuilderStateContext } from '../../builder-hooks';
+import { stepPropertiesSnapshotUtils } from '../../data-display/build-step-properties-snapshot';
+import { ErrorExplanationContext } from '../../data-display/explanation-prompt';
 import { TestPanelHeader } from '../test-panel-header';
 import { TestPanelViewToggle } from '../test-panel-view-toggle';
 import { useTriggerTestRunner } from '../test-runner-context';
@@ -97,6 +99,30 @@ const TestTriggerSection = React.memo(
       sampleDataSelected && !isSimulating && !isSavingMockdata;
 
     const triggerName = currentStep.settings.triggerName;
+    const triggerInput = currentStep.settings.input as
+      | Record<string, unknown>
+      | undefined;
+    const explanationContext: ErrorExplanationContext = {
+      pieceName: currentStep.settings.pieceName,
+      pieceVersion: currentStep.settings.pieceVersion,
+      pieceDisplayName: pieceModel?.displayName,
+      pieceAuthType: stepPropertiesSnapshotUtils.findAuthType(pieceModel),
+      stepKind: 'trigger',
+      stepName: triggerName,
+      stepDisplayName: currentStep.displayName,
+      stepDescription: stepPropertiesSnapshotUtils.findDescription({
+        pieceModel,
+        stepKind: 'trigger',
+        stepName: triggerName,
+      }),
+      stepProperties: stepPropertiesSnapshotUtils.build({
+        pieceModel,
+        stepKind: 'trigger',
+        stepName: triggerName,
+        input: triggerInput,
+      }),
+    };
+
     const getSimulationNote = () => {
       switch (testType) {
         case 'simulation':
@@ -183,6 +209,8 @@ const TestTriggerSection = React.memo(
                 errorMessage={errorMessage ?? null}
                 lastTestDate={lastTestDate}
                 isSaving={isSaving}
+                explanationContext={explanationContext}
+                pieceDisplayName={pieceModel?.displayName}
               >
                 {pollResults?.data && !errorMessage && (
                   <TriggerEventSelect

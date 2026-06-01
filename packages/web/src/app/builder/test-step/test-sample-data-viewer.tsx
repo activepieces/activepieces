@@ -3,6 +3,7 @@ import {
   AgentTaskStatus,
   FlowAction,
   isNil,
+  tryParseFriendlyPieceError,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Loader2, Play } from 'lucide-react';
@@ -13,6 +14,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
 import { DataDisplayTabs } from '../data-display/data-display-tabs';
+import { ErrorExplanationContext } from '../data-display/explanation-prompt';
+import { FriendlyErrorView } from '../data-display/friendly-error-view';
 
 import { AgentTestStep, isRunAgent } from './agent-test-step';
 import { TestPanelHeader } from './test-panel-header';
@@ -30,6 +33,8 @@ type TestSampleDataViewerProps = {
   lastTestDate: string | undefined;
   children?: React.ReactNode;
   consoleLogs: string | null;
+  explanationContext?: ErrorExplanationContext;
+  pieceDisplayName?: string;
 } & (
   | {
       hideCancel: true;
@@ -72,6 +77,8 @@ export const TestSampleDataViewer = React.memo(
       hideCancel,
       sampleDataInput,
       consoleLogs,
+      explanationContext,
+      pieceDisplayName,
     } = props;
     const [requestedTab, setActiveTab] = useState<ActiveTab>('Output');
     const hasInput = !isNil(sampleDataInput);
@@ -103,6 +110,10 @@ export const TestSampleDataViewer = React.memo(
         : outputData;
 
     const showAgentView = isRunAgent(currentStep) && !errorMessage;
+    const friendlyError =
+      !isTesting && !showAgentView && activeTab === 'Output'
+        ? tryParseFriendlyPieceError(errorMessage)
+        : null;
 
     return (
       <div className="flex flex-col h-full w-full min-h-0">
@@ -130,6 +141,12 @@ export const TestSampleDataViewer = React.memo(
               <AgentTestStep
                 agentResult={getAgentResult(sampleData)}
                 errorMessage={errorMessage}
+              />
+            ) : friendlyError ? (
+              <FriendlyErrorView
+                error={friendlyError}
+                explanationContext={explanationContext}
+                pieceDisplayName={pieceDisplayName}
               />
             ) : (
               <DataDisplayTabs
