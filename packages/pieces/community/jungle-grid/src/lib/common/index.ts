@@ -31,10 +31,10 @@ async function apiCall<T extends HttpMessageBody>({
 
 function buildJobPayload(propsValue: Record<string, unknown>): Record<string, unknown> {
   const constraints = removeEmptyValues({
-    gpu_type: propsValue['gpu_type'],
-    gpu_class: propsValue['gpu_class'],
+    max_price_per_hour: propsValue['max_price_per_hour'],
+    preferred_gpu_family: propsValue['preferred_gpu_family'],
+    avoid_gpu_families: propsValue['avoid_gpu_families'],
     region_preference: propsValue['region_preference'],
-    region_mode: propsValue['region_mode'],
     latency_priority: propsValue['latency_priority'],
     cost_priority: propsValue['cost_priority'],
   });
@@ -45,13 +45,12 @@ function buildJobPayload(propsValue: Record<string, unknown>): Record<string, un
     image: propsValue['image'],
     command: propsValue['command'],
     args: propsValue['args'],
-    environment: propsValue['environment'],
     model_size_gb: propsValue['model_size_gb'],
-    disk_gb: propsValue['disk_gb'],
     optimize_for: propsValue['optimize_for'],
     constraints: Object.keys(constraints).length > 0 ? constraints : undefined,
-    huggingface_credential_id: propsValue['huggingface_credential_id'],
-    webhook_url: propsValue['webhook_url'],
+    callback_url: propsValue['callback_url'],
+    callback_auth_token: propsValue['callback_auth_token'],
+    callback_metadata: propsValue['callback_metadata'],
   });
 }
 
@@ -155,11 +154,9 @@ const defaultBaseUrl = 'https://api.junglegrid.dev';
 const endpoints = {
   estimateJob: '/v1/jobs/estimate',
   submitJob: '/v1/jobs',
+  listJobs: '/v1/jobs',
   jobStatus: (jobId: string) => `/v1/jobs/${encodeURIComponent(jobId)}`,
-  jobLogs: (jobId: string) => `/v1/jobs/${encodeURIComponent(jobId)}/logs`,
-  artifacts: (jobId: string) => `/v1/jobs/${encodeURIComponent(jobId)}/artifacts`,
-  artifactDownloadUrl: (jobId: string, artifactId: string) =>
-    `/v1/jobs/${encodeURIComponent(jobId)}/artifacts/${encodeURIComponent(artifactId)}/download`,
+  jobRuntime: (jobId: string) => `/v1/jobs/${encodeURIComponent(jobId)}/runtime`,
 };
 
 const asyncInstructions = Property.MarkDown({
@@ -167,19 +164,13 @@ const asyncInstructions = Property.MarkDown({
 
 1. Run **Estimate Job** to preview cost and resources.
 2. Run **Submit Job** to enqueue work. This returns immediately with a \`job_id\`.
-3. Add a Delay or branch, then call **Get Job Status** or **Get Job Logs**.
-4. After completion, call **List Artifacts** and **Get Artifact Download URL**.`,
+3. Add a Delay or branch, then call **Get Job Status** to poll progress.
+4. Call **Get Job Runtime** for runtime tails and exit information once the job is running or finished.`,
 });
 
 const jobId = Property.ShortText({
   displayName: 'Job ID',
   description: 'The `job_id` returned by Submit Job.',
-  required: true,
-});
-
-const artifactId = Property.ShortText({
-  displayName: 'Artifact ID',
-  description: 'The artifact ID returned by List Artifacts.',
   required: true,
 });
 
@@ -219,19 +210,9 @@ const jobPayloadProps = {
     description: 'Optional command arguments, one item per argument.',
     required: false,
   }),
-  environment: Property.Object({
-    displayName: 'Environment Variables',
-    description: 'Key-value environment variables to pass to the job.',
-    required: false,
-  }),
   model_size_gb: Property.Number({
     displayName: 'Model Size (GB)',
     description: 'Approximate model size in GB. This helps Jungle Grid estimate memory and capacity fit.',
-    required: false,
-  }),
-  disk_gb: Property.Number({
-    displayName: 'Disk (GB)',
-    description: 'Optional disk size requirement in GB.',
     required: false,
   }),
   optimize_for: Property.StaticDropdown({
@@ -247,43 +228,30 @@ const jobPayloadProps = {
       ],
     },
   }),
-  gpu_type: Property.ShortText({
-    displayName: 'GPU Type',
-    description:
-      'Optional exact GPU type preference, such as A100 or H100. Leave blank to let Jungle Grid route automatically.',
+  max_price_per_hour: Property.Number({
+    displayName: 'Max Price Per Hour (USD)',
+    description: 'Optional routing constraint. Maximum hourly price in USD that Jungle Grid may pay for placement.',
     required: false,
   }),
-  gpu_class: Property.StaticDropdown({
-    displayName: 'GPU Class',
-    description: 'Optional GPU class preference.',
+  preferred_gpu_family: Property.ShortText({
+    displayName: 'Preferred GPU Family',
+    description:
+      'Optional routing constraint. Preferred GPU family, such as A100 or H100. Leave blank to let Jungle Grid route automatically.',
     required: false,
-    options: {
-      options: [
-        { label: 'Consumer', value: 'consumer' },
-        { label: 'Datacenter', value: 'datacenter' },
-      ],
-    },
+  }),
+  avoid_gpu_families: Property.Array({
+    displayName: 'Avoid GPU Families',
+    description: 'Optional routing constraint. GPU families to exclude from placement, one item per family.',
+    required: false,
   }),
   region_preference: Property.ShortText({
     displayName: 'Region Preference',
-    description: 'Optional preferred region, for example us-east.',
+    description: 'Optional routing constraint. Preferred region, for example us-east.',
     required: false,
-  }),
-  region_mode: Property.StaticDropdown({
-    displayName: 'Region Mode',
-    description: 'Choose whether the region preference is soft or strict.',
-    required: false,
-    defaultValue: 'prefer',
-    options: {
-      options: [
-        { label: 'Prefer', value: 'prefer' },
-        { label: 'Strict', value: 'strict' },
-      ],
-    },
   }),
   latency_priority: Property.StaticDropdown({
     displayName: 'Latency Priority',
-    description: 'Optional latency priority for routing.',
+    description: 'Optional routing constraint for latency.',
     required: false,
     options: {
       options: [
@@ -295,7 +263,7 @@ const jobPayloadProps = {
   }),
   cost_priority: Property.StaticDropdown({
     displayName: 'Cost Priority',
-    description: 'Optional cost priority for routing.',
+    description: 'Optional routing constraint for cost.',
     required: false,
     options: {
       options: [
@@ -305,14 +273,20 @@ const jobPayloadProps = {
       ],
     },
   }),
-  huggingface_credential_id: Property.ShortText({
-    displayName: 'Hugging Face Credential ID',
-    description: 'Optional Jungle Grid credential ID for gated models, private datasets, or model downloads.',
+  callback_url: Property.ShortText({
+    displayName: 'Callback URL',
+    description:
+      'Optional HTTPS callback URL for Jungle Grid job events. Must use HTTPS unless it targets localhost.',
     required: false,
   }),
-  webhook_url: Property.ShortText({
-    displayName: 'Webhook URL',
-    description: 'Optional callback URL for Jungle Grid job events if your workflow has an external receiver.',
+  callback_auth_token: Property.ShortText({
+    displayName: 'Callback Auth Token',
+    description: 'Optional token Jungle Grid sends as an `Authorization: Bearer` header on callback requests.',
+    required: false,
+  }),
+  callback_metadata: Property.Object({
+    displayName: 'Callback Metadata',
+    description: 'Optional custom key-value data echoed back on callback requests for correlation.',
     required: false,
   }),
 };
@@ -320,7 +294,6 @@ const jobPayloadProps = {
 export const jungleGridCommon = {
   apiCall,
   asyncInstructions,
-  artifactId,
   buildJobPayload,
   defaultBaseUrl,
   endpoints,

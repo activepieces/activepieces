@@ -3,23 +3,19 @@ import { createAction } from '@activepieces/pieces-framework';
 import { jungleGridAuth } from '../..';
 import { jungleGridCommon } from '../common';
 
-export const getArtifactDownloadUrl = createAction({
+export const getJobRuntime = createAction({
   auth: jungleGridAuth,
-  name: 'get_artifact_download_url',
-  displayName: 'Get Artifact Download URL',
-  description: 'Get a temporary download URL or download metadata for a Jungle Grid artifact.',
+  name: 'get_job_runtime',
+  displayName: 'Get Job Runtime',
+  description: 'Get runtime tails and exit information for a submitted Jungle Grid job.',
   props: {
     job_id: jungleGridCommon.jobId,
-    artifact_id: jungleGridCommon.artifactId,
   },
   async run(context) {
     const response = await jungleGridCommon.apiCall<Record<string, unknown>>({
       auth: context.auth,
-      method: HttpMethod.POST,
-      path: jungleGridCommon.endpoints.artifactDownloadUrl(
-        context.propsValue.job_id,
-        context.propsValue.artifact_id,
-      ),
+      method: HttpMethod.GET,
+      path: jungleGridCommon.endpoints.jobRuntime(context.propsValue.job_id),
     });
 
     return jungleGridCommon.toFlatRecord(response.body);

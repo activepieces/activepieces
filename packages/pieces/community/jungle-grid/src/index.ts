@@ -2,17 +2,16 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { estimateJob } from './lib/actions/estimate-job';
-import { getArtifactDownloadUrl } from './lib/actions/get-artifact-download-url';
-import { getJobLogs } from './lib/actions/get-job-logs';
+import { getJobRuntime } from './lib/actions/get-job-runtime';
 import { getJobStatus } from './lib/actions/get-job-status';
-import { listArtifacts } from './lib/actions/list-artifacts';
+import { listJobs } from './lib/actions/list-jobs';
 import { submitJob } from './lib/actions/submit-job';
 import { jungleGridCommon } from './lib/common';
 
 export const jungleGridAuth = PieceAuth.CustomAuth({
   displayName: 'Connection',
   description:
-    'Connect with a Jungle Grid API key or bearer token. Use the default API base URL unless your Jungle Grid workspace provides a custom endpoint.',
+    'Connect with a Jungle Grid API key. Create one under **Developer → API Keys** in your Jungle Grid portal, then paste it below. Keep the default API base URL unless your workspace provides a custom endpoint.',
   required: true,
   props: {
     api_base_url: Property.ShortText({
@@ -23,8 +22,9 @@ export const jungleGridAuth = PieceAuth.CustomAuth({
       defaultValue: jungleGridCommon.defaultBaseUrl,
     }),
     api_key: PieceAuth.SecretText({
-      displayName: 'API Key or Bearer Token',
-      description: 'Paste the Jungle Grid API key or bearer token for your workspace.',
+      displayName: 'API Key',
+      description:
+        'Your Jungle Grid API key. Create and copy it from **Developer → API Keys** in the portal. It is sent as a Bearer token in the Authorization header.',
       required: true,
     }),
   },
@@ -45,10 +45,9 @@ export const jungleGrid = createPiece({
   actions: [
     estimateJob,
     submitJob,
+    listJobs,
     getJobStatus,
-    getJobLogs,
-    listArtifacts,
-    getArtifactDownloadUrl,
+    getJobRuntime,
     createCustomApiCallAction({
       auth: jungleGridAuth,
       baseUrl: (auth) =>
