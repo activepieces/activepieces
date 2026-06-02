@@ -3,7 +3,7 @@ import {
   AppConnectionWithoutSensitiveData,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { RefreshCw } from 'lucide-react';
+import { Cable } from 'lucide-react';
 import { useState } from 'react';
 
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
@@ -42,7 +42,7 @@ const ReconnectButtonDialog = ({
             disabled={!hasPermission}
             variant={'ghost'}
           >
-            <RefreshCw className="h-4 w-4" />
+            <Cable className="h-4 w-4" />
           </Button>
         </TooltipTrigger>
         <TooltipContent>

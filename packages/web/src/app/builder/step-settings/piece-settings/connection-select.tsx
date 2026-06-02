@@ -13,7 +13,16 @@ import {
   isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Plus, Globe, Key, RefreshCw, Check } from 'lucide-react';
+import {
+  Plus,
+  Globe,
+  Key,
+  Cable,
+  Check,
+  Unplug,
+  X,
+  LucideIcon,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
@@ -85,8 +94,9 @@ function ConnectionSelect(params: ConnectionSelectProps) {
     form.getValues().settings.propertySettings['auth']?.type ===
     PropertyExecutionType.DYNAMIC;
   const isPLatformAdmin = useIsPlatformAdmin();
-  const isConnectionActive =
-    selectedConnection?.status === AppConnectionStatus.ACTIVE;
+  const statusDisplay = selectedConnection
+    ? getConnectionStatusDisplay(selectedConnection.status)
+    : null;
   const openReconnectDialog = () => {
     setReconnectConnection(selectedConnection ?? null);
     setSelectConnectionOpen(false);
@@ -154,58 +164,41 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                     {field.value &&
                       !field.disabled &&
                       selectedConnection &&
+                      statusDisplay &&
                       (!isGlobalConnection || isPLatformAdmin) && (
                         <div className="z-50 absolute right-8 top-1.5 flex items-center gap-1.5">
-                          {isConnectionActive ? (
-                            <>
-                              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                                <Check className="size-3.5 text-success shrink-0" />
-                                {t('Connected')}
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <statusDisplay.Icon
+                              className={cn(
+                                'size-3.5 shrink-0',
+                                statusDisplay.iconClassName,
+                              )}
+                            />
+                            {statusDisplay.label}
+                          </span>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex">
+                                <Button
+                                  variant="ghost"
+                                  size="icon-xs"
+                                  loading={isLoadingPiece}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openReconnectDialog();
+                                  }}
+                                  disabled={!hasPermissionToCreateConnection}
+                                >
+                                  <Cable className="size-3.5" />
+                                </Button>
                               </span>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span className="inline-flex">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon-xs"
-                                      loading={isLoadingPiece}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        openReconnectDialog();
-                                      }}
-                                      disabled={
-                                        !hasPermissionToCreateConnection
-                                      }
-                                    >
-                                      <RefreshCw className="size-3.5" />
-                                    </Button>
-                                  </span>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  {!hasPermissionToCreateConnection
-                                    ? t('Permission needed')
-                                    : t('Reconnect')}
-                                </TooltipContent>
-                              </Tooltip>
-                            </>
-                          ) : (
-                            <PermissionNeededTooltip
-                              hasPermission={hasPermissionToCreateConnection}
-                            >
-                              <Button
-                                variant="ghost"
-                                size="xs"
-                                loading={isLoadingPiece}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openReconnectDialog();
-                                }}
-                                disabled={!hasPermissionToCreateConnection}
-                              >
-                                {t('Reconnect')}
-                              </Button>
-                            </PermissionNeededTooltip>
-                          )}
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {!hasPermissionToCreateConnection
+                                ? t('Permission needed')
+                                : t('Reconnect')}
+                            </TooltipContent>
+                          </Tooltip>
                         </div>
                       )}
 
@@ -243,6 +236,7 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                       </SelectValue>
                       <div className="grow"></div>
                       {field.value &&
+                        statusDisplay &&
                         connections?.data?.find(
                           (connection) =>
                             connection.externalId ===
@@ -254,8 +248,8 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                             className="z-50 opacity-0 pointer-events-none flex items-center gap-1.5"
                           >
                             <span className="flex items-center gap-1 text-xs">
-                              <Check className="size-3.5 shrink-0" />
-                              {t('Connected')}
+                              <statusDisplay.Icon className="size-3.5 shrink-0" />
+                              {statusDisplay.label}
                             </span>
                             <span className="size-6 shrink-0" />
                           </span>
@@ -340,4 +334,30 @@ function removeBrackets(str: string | undefined) {
     /\{\{connections\['(.*?)'\]\}\}/g,
     (_, connectionName) => connectionName,
   );
+}
+function getConnectionStatusDisplay(status: AppConnectionStatus): {
+  Icon: LucideIcon;
+  iconClassName: string;
+  label: string;
+} {
+  switch (status) {
+    case AppConnectionStatus.ACTIVE:
+      return {
+        Icon: Check,
+        iconClassName: 'text-success',
+        label: t('Connected'),
+      };
+    case AppConnectionStatus.ERROR:
+      return {
+        Icon: X,
+        iconClassName: 'text-destructive',
+        label: t('Error'),
+      };
+    case AppConnectionStatus.MISSING:
+      return {
+        Icon: Unplug,
+        iconClassName: 'text-muted-foreground',
+        label: t('Missing'),
+      };
+  }
 }
