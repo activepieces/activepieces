@@ -14,7 +14,7 @@ export const cloudflareService = (log: FastifyBaseLogger) => ({
             zone_id: zoneId,
             hostname,
             ssl: {
-                method: 'txt',
+                method: 'http',
                 type: 'dv',
                 bundle_method: 'ubiquitous',
             },
@@ -139,18 +139,6 @@ function extractVerificationRecords({ result, hostname, fallbackOrigin }: { resu
         })
     }
 
-    const sslValidationRecords = result.ssl?.validation_records ?? []
-    for (const validation of sslValidationRecords) {
-        if (!isNil(validation.txt_name) && !isNil(validation.txt_value)) {
-            records.push({
-                type: EmbedVerificationRecordType.TXT,
-                name: validation.txt_name,
-                value: validation.txt_value,
-                purpose: EmbedVerificationRecordPurpose.SSL,
-            })
-        }
-    }
-
     return records
 }
 
@@ -165,10 +153,6 @@ type CloudflareCustomHostnameResult = {
     }
     ssl?: {
         status?: string
-        validation_records?: Array<{
-            txt_name?: string
-            txt_value?: string
-        }>
     }
 }
 

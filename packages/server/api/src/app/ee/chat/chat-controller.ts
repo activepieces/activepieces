@@ -116,6 +116,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         await chatApprovalGate.resolveGate({
             gateId: request.params.gateId,
             approved: request.body.approved,
+            payload: request.body.payload,
         })
         return reply.status(StatusCodes.OK).send({ success: true })
     })
@@ -231,7 +232,7 @@ const ToolApprovalRoute = {
         tags: ['chat'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: z.object({ gateId: z.string() }),
-        body: z.object({ approved: z.boolean() }),
+        body: z.object({ approved: z.boolean(), payload: z.record(z.string(), z.unknown()).optional() }),
     },
 }
 
