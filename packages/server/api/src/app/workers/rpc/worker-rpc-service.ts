@@ -7,12 +7,14 @@ import {
     isNil,
     PiecePackage,
     StreamStepProgress,
+    truncateFailedStepMessage,
     WebsocketClientEvent,
     WorkerToApiContract,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { distributedStore } from '../../database/redis-connections'
+import { chatRpcHandlers } from '../../ee/chat/chat-rpc-handlers'
 import { fileService } from '../../file/file.service'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
@@ -65,7 +67,7 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
                 status: input.status,
                 tags: input.tags,
                 logsFileId: input.logsFileId,
-                failedStep: input.failedStep,
+                failedStep: truncateFailedStepMessage(input.failedStep),
                 startTime: input.startTime,
                 finishTime: input.finishTime,
                 stepsCount: input.stepsCount,
@@ -227,6 +229,34 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
                 },
             })
             log.info({ flowId, projectId }, '[workerRpc#disableFlow] Flow disabled by worker request')
+        },
+
+        async sendChatEvent(input) {
+            const { userId, conversationId, event } = input
+            websocketService.to(userId).emit(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, {
+                conversationId,
+                ...event,
+            })
+        },
+
+        async getChatConfig(input) {
+            return chatRpcHandlers(log).getChatConfig(input)
+        },
+
+        async saveChatMessages(input) {
+            return chatRpcHandlers(log).saveChatMessages(input)
+        },
+
+        async updateChatProgress(input) {
+            return chatRpcHandlers(log).updateChatProgress(input)
+        },
+
+        async updateProjectContext(input) {
+            return chatRpcHandlers(log).updateProjectContext(input)
+        },
+
+        async executeChatTool(input) {
+            return chatRpcHandlers(log).executeChatTool(input)
         },
     }
 }

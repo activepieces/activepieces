@@ -48,7 +48,7 @@ export const githubCreateCommitCommentAction = createAction({
     }
 
     const response = await githubApiCall({
-      accessToken: auth.access_token,
+      auth,
       method: HttpMethod.POST,
       resourceUri: `/repos/${owner}/${repo}/commits/${sha}/comments`,
       body: commentData,

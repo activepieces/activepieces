@@ -14,13 +14,32 @@ import { aggregateFieldAction } from './lib/actions/aggregate-field';
 import { batchCreateRowsAction } from './lib/actions/batch-create-rows';
 import { batchUpdateRowsAction } from './lib/actions/batch-update-rows';
 import { batchDeleteRowsAction } from './lib/actions/batch-delete-rows';
+import { upsertRowAction } from './lib/actions/upsert-row';
+import { uploadFileAction } from './lib/actions/upload-file';
 import { rowCreatedTrigger } from './lib/triggers/row-created';
 import { rowUpdatedTrigger } from './lib/triggers/row-updated';
 import { rowDeletedTrigger } from './lib/triggers/row-deleted';
 import { rowsCreatedTrigger } from './lib/triggers/rows-created';
 import { rowsUpdatedTrigger } from './lib/triggers/rows-updated';
 import { rowsDeletedTrigger } from './lib/triggers/rows-deleted';
-import { baserowAuth } from './lib/auth';
+import { rowEventTrigger } from './lib/triggers/row-event';
+import { baserowAuth, baserowAuthHelpers, BaserowAuthValue } from './lib/auth';
+import { BaserowClient } from './lib/common/client';
+
+async function buildCustomApiAuthHeader(auth: BaserowAuthValue): Promise<{ Authorization: string }> {
+  const { apiUrl, token, email, password } = auth.props;
+  if (baserowAuthHelpers.isJwtAuth(auth)) {
+    if (!email || !password) {
+      throw new Error('Email and Password are required for JWT authentication.');
+    }
+    const jwt = await BaserowClient.getJwtToken({ apiUrl, email, password });
+    return { Authorization: `JWT ${jwt}` };
+  }
+  if (!token) {
+    throw new Error('Database Token is required for Database Token authentication.');
+  }
+  return { Authorization: `Token ${token}` };
+}
 
 export const baserow = createPiece({
   displayName: 'Baserow',
@@ -29,19 +48,21 @@ export const baserow = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/baserow.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ["kishanprmr", "MoShizzle", "abuaboud", 'bst1n', 'sanket-a11y'],
+  authors: ["kishanprmr", "MoShizzle", "abuaboud", 'bst1n', 'sanket-a11y', 'onyedikachi-david'],
   actions: [
     createRowAction,
-    deleteRowAction,
     getRowAction,
     listRowsAction,
-    updateRowAction,
     findRowAction,
+    updateRowAction,
+    upsertRowAction,
+    deleteRowAction,
     cleanRowAction,
-    aggregateFieldAction,
     batchCreateRowsAction,
     batchUpdateRowsAction,
     batchDeleteRowsAction,
+    aggregateFieldAction,
+    uploadFileAction,
     createCustomApiCallAction({
       baseUrl: (auth) => {
         if (!auth) {
@@ -50,15 +71,14 @@ export const baserow = createPiece({
         return auth.props.apiUrl;
       },
       auth: baserowAuth,
-      authMapping: async (auth) => {
-        return { Authorization: `Token ${auth.props.token}` };
-      },
+      authMapping: buildCustomApiAuthHeader,
     }),
   ],
   triggers: [
     rowCreatedTrigger,
     rowUpdatedTrigger,
     rowDeletedTrigger,
+    rowEventTrigger,
     rowsCreatedTrigger,
     rowsUpdatedTrigger,
     rowsDeletedTrigger,

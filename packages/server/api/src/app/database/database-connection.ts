@@ -13,8 +13,9 @@ import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entit
 import { AppSumoEntity } from '../ee/appsumo/appsumo.entity'
 import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
 import { OtpEntity } from '../ee/authentication/otp/otp-entity'
+import { ChatConversationEntity } from '../ee/chat/chat-conversation-entity'
 import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
-import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
+import { EmbedSubdomainEntity } from '../ee/embed-subdomain/embed-subdomain.entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
 import { ConcurrencyPoolEntity } from '../ee/platform/concurrency-pool/concurrency-pool.entity'
 import { PlatformPlanEntity } from '../ee/platform/platform-plan/platform-plan.entity'
@@ -59,6 +60,7 @@ import { TriggerSourceEntity } from '../trigger/trigger-source/trigger-source-en
 import { UserBadgeEntity } from '../user/badges/badge-entity'
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
+import { VariableEntity } from '../variable/variable.entity'
 import { DatabaseType } from './database-type'
 import { createPGliteDataSource } from './pglite-connection'
 import { createPostgresDataSource } from './postgres-connection'
@@ -78,6 +80,7 @@ function getEntities(): EntitySchema<unknown>[] {
         StoreEntryEntity,
         UserEntity,
         AppConnectionEntity,
+        VariableEntity,
         FolderEntity,
         PieceMetadataEntity,
         PlatformEntity,
@@ -100,6 +103,7 @@ function getEntities(): EntitySchema<unknown>[] {
         McpOAuthTokenEntity,
         KnowledgeBaseFileEntity,
         KnowledgeBaseChunkEntity,
+        ChatConversationEntity,
         TriggerSourceEntity,
         UserBadgeEntity,
         WaitpointEntity,
@@ -107,7 +111,6 @@ function getEntities(): EntitySchema<unknown>[] {
         ConcurrencyPoolEntity,
         ProjectMemberEntity,
         ProjectPlanEntity,
-        CustomDomainEntity,
         SigningKeyEntity,
         OAuthAppEntity,
         OtpEntity,
@@ -117,6 +120,7 @@ function getEntities(): EntitySchema<unknown>[] {
         AuditEventEntity,
         ProjectReleaseEntity,
         PlatformAnalyticsReportEntity,
+        EmbedSubdomainEntity,
         // CLOUD
         AppSumoEntity,
         ConnectionKeyEntity,

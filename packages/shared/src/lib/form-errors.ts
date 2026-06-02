@@ -4,4 +4,6 @@ export const formErrors = {
     invalidGitRepoBranch: 'invalidGitRepoBranch',
     invalidGitRepoRemoteUrl: 'invalidGitRepoRemoteUrl',
     invalidExternalId: 'invalidExternalId',
+    invalidFileName: 'invalidFileName',
+    messageRequiresContentOrFiles: 'messageRequiresContentOrFiles',
 } as const

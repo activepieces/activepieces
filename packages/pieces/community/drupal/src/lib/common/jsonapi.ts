@@ -20,7 +20,6 @@ import {
 } from '@activepieces/pieces-common';
 import {
   AppConnectionValueForAuthProperty,
-  PiecePropValueSchema,
 } from '@activepieces/pieces-framework';
 import { drupalAuth } from '../auth';
 

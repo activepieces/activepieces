@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { aiprise } from '../common';
-import { aipriseAuth } from '../../';
+import { aipriseAuth } from '../common/auth';
 
 export const searchBusinessesAction = createAction({
   auth: aipriseAuth,
@@ -37,7 +37,7 @@ export const searchBusinessesAction = createAction({
     if (state_code) body['state_code'] = state_code;
 
     return aiprise.makeRequest<Record<string, unknown>>({
-      apiKey: context.auth.secret_text,
+      auth: context.auth.props,
       method: HttpMethod.POST,
       path: '/data/business/search',
       body,
