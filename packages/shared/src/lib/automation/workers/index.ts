@@ -19,6 +19,15 @@ export enum NetworkMode {
 }
 
 
+export const SandboxInformation = z.object({
+    sandboxId: z.string(),
+    boxId: z.number(),
+    busy: z.boolean(),
+    memoryUsageBytes: z.number(),
+})
+
+export type SandboxInformation = z.infer<typeof SandboxInformation>
+
 export const MachineInformation = z.object({
     cpuUsagePercentage: z.number(),
     diskInfo: z.object({
@@ -33,6 +42,7 @@ export const MachineInformation = z.object({
     totalAvailableRamInBytes: z.number(),
     totalCpuCores: z.number(),
     ip: z.string(),
+    sandboxes: z.array(SandboxInformation).default([]),
 })
 
 export type MachineInformation = z.infer<typeof MachineInformation>

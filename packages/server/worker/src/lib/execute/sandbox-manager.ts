@@ -38,6 +38,21 @@ export function createSandboxManager({ boxId, proxyPort }: { boxId: number, prox
         async shutdown(log: Logger): Promise<void> {
             await this.invalidate(log)
         },
+        getActiveSandbox(): ActiveSandboxInfo | null {
+            if (isNil(currentSandbox) || !currentSandbox.isReady()) {
+                return null
+            }
+            const pid = currentSandbox.getPid()
+            if (isNil(pid)) {
+                return null
+            }
+            return {
+                sandboxId: currentSandbox.id,
+                boxId,
+                pid,
+                busy: currentSandbox.isBusy(),
+            }
+        },
     }
 }
 
@@ -57,9 +72,17 @@ function canReuseSandbox(): boolean {
     return false
 }
 
+export type ActiveSandboxInfo = {
+    sandboxId: string
+    boxId: number
+    pid: number
+    busy: boolean
+}
+
 export type SandboxManager = {
     acquire(params: { log: Logger, apiClient: WorkerToApiContract }): Sandbox
     invalidate(log: Logger): Promise<void>
     release(log: Logger): Promise<void>
     shutdown(log: Logger): Promise<void>
+    getActiveSandbox(): ActiveSandboxInfo | null
 }

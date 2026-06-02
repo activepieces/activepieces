@@ -67,6 +67,7 @@ export function createSandbox(
     let connectedSocket: Socket | null = null
     let connectionResolve: (() => void) | null = null
     let wsRpcToken: string | null = null
+    let busy = false
 
     function createSocketServer(): number {
         httpServer = createServer()
@@ -204,6 +205,7 @@ export function createSandbox(
             }, 'Sandbox started')
         },
         execute: async (operationType: EngineOperationType, operation: EngineOperation, executeOptions: SandboxOptions) => {
+            busy = true
             let killedByTimeout = false
             let timeout: NodeJS.Timeout | null = null
             const executeSocket = connectedSocket
@@ -264,6 +266,7 @@ export function createSandbox(
                 return await operationPromise
             }
             finally {
+                busy = false
                 log.debug({
                     sandboxId,
                     operationType,
@@ -278,6 +281,8 @@ export function createSandbox(
             }
         },
         isReady,
+        getPid: () => childProcess?.pid ?? null,
+        isBusy: () => busy,
         shutdown: async () => {
             if (!isNil(childProcess)) {
                 log.debug({ sandboxId }, 'Shutting down sandbox')
