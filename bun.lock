@@ -1140,7 +1140,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
-        "@bilig/headless": "0.107.8",
+        "@bilig/headless": "0.130.1",
         "tslib": "2.6.2",
       },
       "devDependencies": {
@@ -10395,17 +10395,17 @@
 
     "@base44/sdk": ["@base44/sdk@0.8.27", "", { "dependencies": { "axios": "^1.6.2", "socket.io-client": "^4.7.5", "uuid": "^13.0.0" } }, "sha512-TkCQ6TZb0Fqq48Ig6xc1o+SU9LYg0sgzDHTIE0JiRcAmRkoO7Jm8kVzNEe2Nmh3msP6P8sxs0GFwGfukMUoCzg=="],
 
-    "@bilig/core": ["@bilig/core@0.107.8", "", { "dependencies": { "@bilig/formula": "0.107.8", "@bilig/protocol": "0.107.8", "@bilig/wasm-kernel": "0.107.8", "@bilig/workbook": "0.107.8", "effect": "3.21.0" } }, "sha512-HI+I2P4od5Nc7C2BIvf3rsic2eHWgJtnu3VDBndr2szg30Lmgkt9kNgeS2dhvH2SQpsOL64vgvliv1wjtPBpmg=="],
+    "@bilig/core": ["@bilig/core@0.130.1", "", { "dependencies": { "@bilig/formula": "0.130.1", "@bilig/protocol": "0.130.1", "@bilig/wasm-kernel": "0.130.1", "@bilig/workbook": "0.130.1", "effect": "3.21.0" } }, "sha512-nPxXUVrq4NgpeB2IXh2cChaToLorwgeO8jHseEXGyMb7AqEIycxeJUo9KVjFwKnpOOFS6W7BvSyAvg4NxfUFzA=="],
 
-    "@bilig/formula": ["@bilig/formula@0.107.8", "", { "dependencies": { "@bilig/protocol": "0.107.8" } }, "sha512-+EVgMweF+zC9y/kLAyxCn7PeMObI8vmRqPyNhHmaNCBtm6Nh76mKufQLUYLmH1u8XeeNqH8BCkreSii3Go4nNw=="],
+    "@bilig/formula": ["@bilig/formula@0.130.1", "", { "dependencies": { "@bilig/protocol": "0.130.1" } }, "sha512-t00jzEHsaIgkSk/hksbOGp9UpvcSBFlVcTV1EBaqEqOeZMvLahc7RcOpOPZnt4skCppuopqithiipQ14Lb3Qiw=="],
 
-    "@bilig/headless": ["@bilig/headless@0.107.8", "", { "dependencies": { "@bilig/core": "0.107.8", "@bilig/formula": "0.107.8", "@bilig/protocol": "0.107.8", "fast-xml-parser": "5.7.3", "fflate": "0.3.11", "fflate-stream": "npm:fflate@0.8.3", "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz", "xlsx-js-style": "1.2.0" }, "bin": { "bilig-mcp-challenge": "dist/mcp-challenge-bin.js", "bilig-workpaper-mcp": "dist/work-paper-mcp-stdio-bin.js", "bilig-formula-clinic": "dist/formula-clinic-bin.js", "bilig-agent-challenge": "dist/agent-workbook-challenge-bin.js", "bilig-n8n-formula-server": "dist/n8n-forecast-server-bin.js" } }, "sha512-2IXTHISXacAL9Lnt3PIS/Y14JPqIv9FOyT/D6geQw4qmNWtIsqltm94kx9E8ZxwFDwMBdPv8q7Q8AOV2gh9fpg=="],
+    "@bilig/headless": ["@bilig/headless@0.130.1", "", { "dependencies": { "@bilig/core": "0.130.1", "@bilig/formula": "0.130.1", "@bilig/protocol": "0.130.1", "@bilig/wasm-kernel": "0.130.1", "fast-xml-parser": "5.7.3", "fflate": "0.3.11", "fflate-stream": "npm:fflate@0.8.3", "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz", "xlsx-js-style": "1.2.0" }, "bin": { "bilig-mcp-challenge": "dist/mcp-challenge-bin.js", "bilig-workpaper-mcp": "dist/work-paper-mcp-stdio-bin.js", "bilig-formula-clinic": "dist/formula-clinic-bin.js", "bilig-agent-challenge": "dist/agent-workbook-challenge-bin.js", "bilig-n8n-formula-server": "dist/n8n-forecast-server-bin.js" } }, "sha512-oh0jc66FKurFnz03ZLFTXai/Ho2Sl3BA6SrzbybLf1p2fc0JfbVrmIXXZJDcSZDUOgXsrTRKD6v8yx5AahLbig=="],
 
-    "@bilig/protocol": ["@bilig/protocol@0.107.8", "", {}, "sha512-ZhKhl2gqsCQvF6bKgC4rJQ63GvPU1hV0t+jnJIgOan8KiaOrmSmc1ait8wK3mUB2QUwROqUsJX3y/cvANWKf8A=="],
+    "@bilig/protocol": ["@bilig/protocol@0.130.1", "", {}, "sha512-Pr+YFrMFBLFqUsSTxc/foDhh10bWtuEiCZrc/spKKOgnEjNaNvqniiv2YKeFajCqbkgEy6r0vIqne3bfw8y7sg=="],
 
-    "@bilig/wasm-kernel": ["@bilig/wasm-kernel@0.107.8", "", {}, "sha512-dcbehKn16zqOWkyiKK+JAtP74xME7qfou+CSzim/DOddhVBgkddVupAf0YjdIPcyc/OlFu3UTbCXnsiTI/tIZw=="],
+    "@bilig/wasm-kernel": ["@bilig/wasm-kernel@0.130.1", "", {}, "sha512-TowQySvmjx7fCLf1mOBG497uQkOyaB1a1XxhpeATxKDc2r91UL9DS6ZQ8HFJW8YD5KC4tMpwGuH4hDc5je93rg=="],
 
-    "@bilig/workbook": ["@bilig/workbook@0.107.8", "", { "dependencies": { "@bilig/formula": "0.107.8", "@bilig/protocol": "0.107.8" } }, "sha512-KTLK4mUpkOsHdjWDOQvENP0wJeoHFRQi0CLqv7D3o3DRQyHMtULHpfjDtPsadQPxx7pM3ZWStwdRuxvvjPDu/A=="],
+    "@bilig/workbook": ["@bilig/workbook@0.130.1", "", { "dependencies": { "@bilig/formula": "0.130.1", "@bilig/protocol": "0.130.1" } }, "sha512-vWs6E+SZp+TZXRdHYfEXJwoJe5tSgsJ2zaLt9zU3uxLaaCwfi1c8UR2t/0hI4FvGZbMVsiDl4Rv4zBDDT//i8g=="],
 
     "@bull-board/api": ["@bull-board/api@6.10.1", "", { "dependencies": { "redis-info": "^3.1.0" }, "peerDependencies": { "@bull-board/ui": "6.10.1" } }, "sha512-VPkZa2XZI2Wk2MqK1XyiiS+tOhNan54mnm2fpv2KA0fdZ92mQqNjhKkOpsykhQv9XUEc8cCRlZqGxf67YCMJbQ=="],
 
