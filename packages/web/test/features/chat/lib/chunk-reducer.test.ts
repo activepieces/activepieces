@@ -299,48 +299,15 @@ describe('chunkReducer', () => {
     });
   });
 
-  describe('data parts', () => {
-    it('adds non-transient data parts to message', () => {
+  describe('unknown chunk types are ignored', () => {
+    it('ignores data-* chunks (no longer handled by chunk-reducer)', () => {
       const state = createAndApply([
         {
           type: 'data-connection-picker',
           data: { connections: [] },
         } as unknown as UIMessageChunk,
       ]);
-      expect(state.message.parts).toHaveLength(1);
-    });
-
-    it('skips transient data parts from message', () => {
-      const state = createAndApply([
-        {
-          type: 'data-session-title',
-          data: { title: 'Test' },
-          transient: true,
-        } as unknown as UIMessageChunk,
-      ]);
       expect(state.message.parts).toHaveLength(0);
-    });
-  });
-
-  describe('extractDataParts', () => {
-    it('extracts data-* chunks from a batch', () => {
-      const chunks: UIMessageChunk[] = [
-        makeChunk({ type: 'text-start', id: 't1' }),
-        {
-          type: 'data-session-title',
-          data: { title: 'Hello' },
-          transient: true,
-        } as unknown as UIMessageChunk,
-        makeChunk({ type: 'text-delta', id: 't1', delta: 'hi' }),
-        {
-          type: 'data-quick-replies',
-          data: { replies: ['a', 'b'] },
-        } as unknown as UIMessageChunk,
-      ];
-      const parts = chunkReducer.extractDataParts({ chunks });
-      expect(parts).toHaveLength(2);
-      expect(parts[0].type).toBe('data-session-title');
-      expect(parts[1].type).toBe('data-quick-replies');
     });
   });
 

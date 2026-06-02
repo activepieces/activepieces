@@ -40,7 +40,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             provider, auth: config.auth, config: config.providerConfig, modelId: config.modelId,
         })
 
-        const writer = chatWorkerTools.createRpcWriterForConversation({
+        const eventEmitter = chatWorkerTools.createEventEmitter({
             sendEvent: (input) => ctx.apiClient.sendChatEvent(input),
             userId,
             conversationId,
@@ -54,7 +54,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             const planApproved = { approved: false }
 
             const allTools = buildToolSet({
-                ctx, writer, log, planApproved, mcpToolSet,
+                ctx, eventEmitter, log, planApproved, mcpToolSet,
                 projects: config.projects, conversationId, platformId, userId,
             })
 
@@ -119,7 +119,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             if (autoTitle) {
                 await ctx.apiClient.sendChatEvent({
                     userId, conversationId,
-                    event: { type: ChatAgentEventType.CHUNK, data: { type: 'data-session-title', data: { title: autoTitle }, transient: true } },
+                    event: { type: ChatAgentEventType.TITLE_UPDATE, data: { title: autoTitle } },
                 })
             }
 
@@ -157,9 +157,9 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
     },
 }
 
-function buildToolSet({ ctx, writer, log, planApproved, mcpToolSet, projects, conversationId, platformId, userId }: {
+function buildToolSet({ ctx, eventEmitter, log, planApproved, mcpToolSet, projects, conversationId, platformId, userId }: {
     ctx: JobContext
-    writer: ReturnType<typeof chatWorkerTools.createRpcWriterForConversation>
+    eventEmitter: ReturnType<typeof chatWorkerTools.createEventEmitter>
     log: JobContext['log']
     planApproved: { approved: boolean }
     mcpToolSet: Record<string, unknown>
@@ -194,18 +194,17 @@ function buildToolSet({ ctx, writer, log, planApproved, mcpToolSet, projects, co
         },
         projects,
     })
-    const displayTools = chatWorkerTools.createDisplayTools({ writer, waitForApproval, displayToolTimeoutMs: DISPLAY_TOOL_TIMEOUT_MS })
+    const displayTools = chatWorkerTools.createDisplayTools({ waitForApproval, displayToolTimeoutMs: DISPLAY_TOOL_TIMEOUT_MS })
     const planTools = chatWorkerTools.createPlanTools({
-        writer,
         onPlanApproved: () => {
-            planApproved.approved = true 
+            planApproved.approved = true
         },
         waitForApproval,
     })
-    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool })
+    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter })
     const thinkingTools = chatWorkerTools.createThinkingTools()
     const gatedMcpTools = chatMcpClient.withApprovalGates({
-        mcpToolSet, writer, log, isApproved: () => planApproved.approved, waitForApproval,
+        mcpToolSet, eventEmitter, log, isApproved: () => planApproved.approved, waitForApproval,
     })
 
     return { ...localTools, ...displayTools, ...crossProjectTools, ...planTools, ...thinkingTools, ...(gatedMcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
@@ -274,6 +273,7 @@ async function generateTitleIfFirstTurn({ model, userMessage, previousUiMessages
     log: JobContext['log']
     conversationId: string
 }): Promise<string | undefined> {
+    // getChatConfig includes the just-saved user message, so length 1 = first turn
     const isFirstTurn = previousUiMessages.length === 1
     if (!isFirstTurn) return undefined
 

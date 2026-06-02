@@ -11,6 +11,7 @@ import {
     PersistedChatPartType,
     PersistedToolCallStatus,
     splitCloudflareGatewayModelId,
+    spreadIfDefined,
 } from '@activepieces/shared'
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock'
 import { createAnthropic } from '@ai-sdk/anthropic'
@@ -73,6 +74,7 @@ function createChatModel({ provider, auth, config, modelId }: {
                 },
             }).chatModel(modelId)
         }
+        case AIProviderName.MISTRAL:
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
@@ -186,14 +188,24 @@ function buildStepParts({ content }: {
                 }
                 const result = part.toolCallId ? resultMap.get(part.toolCallId) : undefined
                 const rawOutput = result?.output ? chatPersistenceUtils.unwrapToolOutput(result.output) : undefined
+                const title = typeof input['title'] === 'string' ? input['title'] : undefined
+                const description = typeof input['description'] === 'string' ? input['description'] : undefined
                 parts.push({
                     type: PersistedChatPartType.TOOL_CALL,
                     toolCallId: part.toolCallId ?? '',
                     toolName,
+                    ...spreadIfDefined('title', title),
+                    ...spreadIfDefined('description', description),
                     input,
                     output: rawOutput,
                     status: result ? PersistedToolCallStatus.COMPLETED : PersistedToolCallStatus.ERROR,
                 })
+                if (toolName === 'ap_execute_action' && typeof rawOutput === 'object' && rawOutput !== null && 'batchProgress' in rawOutput) {
+                    parts.push({
+                        type: PersistedChatPartType.BATCH_PROGRESS,
+                        data: (rawOutput as Record<string, unknown>)['batchProgress'] as Record<string, unknown>,
+                    })
+                }
                 break
             }
         }

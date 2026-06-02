@@ -3,10 +3,7 @@ import { ApFile, DynamicPropsValue, Property, createAction } from '@activepieces
 import { defaultLLM, getGeminiModelOptions } from '../common/common';
 import { GenerateContentParameters, GoogleGenAI } from '@google/genai';
 import { isEmpty, MarkdownVariant } from '@activepieces/shared';
-import { tmpdir } from 'os';
-import { join } from 'path';
-import { nanoid } from 'nanoid';
-import { promises as fs } from 'fs';
+import mime from 'mime-types';
 
 export const generateContentAction = createAction({
 	description: 'Generate content using Google Gemini using the "gemini-pro" model',
@@ -129,44 +126,35 @@ export const generateContentAction = createAction({
 			case 'file-search': {
 				const { file, fileStoreName } = toolProperties as { file: ApFile; fileStoreName: string };
 
-				const tempFilePath = join(tmpdir(), `gemini-file-${nanoid()}.${file.extension}`);
+				const fileBlob = new Blob([Buffer.from(file.base64, 'base64')], {
+					type: mime.lookup(file.extension || file.filename) || undefined,
+				});
 
-				try {
-					const fileBuffer = Buffer.from(file.base64, 'base64');
-					await fs.mkdir(tmpdir(), { recursive: true });
-					await fs.writeFile(tempFilePath, fileBuffer);
+				const fileSearchStore = await genAI.fileSearchStores.create({
+					config: { displayName: fileStoreName },
+				});
 
-					const fileSearchStore = await genAI.fileSearchStores.create({
-						config: { displayName: fileStoreName },
-					});
-
-					let operation = await genAI.fileSearchStores.uploadToFileSearchStore({
-						file: tempFilePath,
-						fileSearchStoreName: fileSearchStore.name!,
-						config: {
-							displayName: file.filename,
-						},
-					});
-					while (!operation.done) {
-						await new Promise((resolve) => setTimeout(resolve, 5000));
-						operation = await genAI.operations.get({ operation });
-					}
-
-					params.config = {
-						tools: [
-							{
-								fileSearch: {
-									fileSearchStoreNames: [fileSearchStore.name!],
-								},
-							},
-						],
-					};
-				} catch (error) {
-					console.error('Error in generate content with file search:', error);
-					throw error;
-				} finally {
-					await fs.unlink(tempFilePath).catch(() => void 0);
+				let operation = await genAI.fileSearchStores.uploadToFileSearchStore({
+					file: fileBlob,
+					fileSearchStoreName: fileSearchStore.name!,
+					config: {
+						displayName: file.filename,
+					},
+				});
+				while (!operation.done) {
+					await new Promise((resolve) => setTimeout(resolve, 5000));
+					operation = await genAI.operations.get({ operation });
 				}
+
+				params.config = {
+					tools: [
+						{
+							fileSearch: {
+								fileSearchStoreNames: [fileSearchStore.name!],
+							},
+						},
+					],
+				};
 
 				break;
 			}
