@@ -239,7 +239,7 @@ parser.functions.item_at = (list: unknown, idx: unknown) =>
     toArray(list)[Number(idx)]
 parser.functions.count = (list: unknown) => toArray(list).length
 parser.functions.sum = (list: unknown, field: unknown) => {
-    return toArray(list).reduce((acc: number, item) => {
+    return toArray(list).reduce<number>((acc, item) => {
         const v =
             typeof item === 'object' && item !== null
                 ? Number((item as Record<string, unknown>)[String(field)])
@@ -250,7 +250,7 @@ parser.functions.sum = (list: unknown, field: unknown) => {
 parser.functions.average = (list: unknown, field: unknown) => {
     const arr = toArray(list)
     if (!arr.length) return 0
-    const total = arr.reduce((acc: number, item) => {
+    const total = arr.reduce<number>((acc, item) => {
         const v =
             typeof item === 'object' && item !== null
                 ? Number((item as Record<string, unknown>)[String(field)])

@@ -74,6 +74,7 @@ function createChatModel({ provider, auth, config, modelId }: {
                 },
             }).chatModel(modelId)
         }
+        case AIProviderName.MISTRAL:
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
