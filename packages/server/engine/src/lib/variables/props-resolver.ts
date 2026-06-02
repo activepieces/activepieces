@@ -170,7 +170,7 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
     }
     const inputContainsOnlyOneTokenToResolve =
         tokensThatNeedResolving.length === 1 &&
-        tokensThatNeedResolving[0].token === input.trim()
+        tokensThatNeedResolving[0].token === input
 
     if (inputContainsOnlyOneTokenToResolve) {
         const variableName = tokensThatNeedResolving[0].inner
