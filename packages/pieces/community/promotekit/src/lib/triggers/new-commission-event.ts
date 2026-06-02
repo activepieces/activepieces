@@ -12,12 +12,15 @@ export const newCommissionEvent = createTrigger({
     instructions: Property.MarkDown({
       value: `### Setup Instructions
 
-1. Go to your PromoteKit dashboard
-2. Navigate to **Settings > Webhooks**
-3. Click **Add Endpoint**
-4. Paste the webhook URL shown below
-5. Enable the **Commission Created** event
-6. Save the endpoint`,
+1. Go to your PromoteKit dashboard.
+2. Navigate to **Settings > Webhooks**.
+3. Click **Add Endpoint**.
+4. Paste the webhook URL shown below :
+\`\`\`text
+            {{webhookUrl}}
+            \`\`\`
+5. Enable the **Commission Created** event.
+6. Save the endpoint.`,
     }),
   },
   sampleData: {

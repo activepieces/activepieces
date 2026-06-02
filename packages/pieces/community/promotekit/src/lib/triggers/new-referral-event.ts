@@ -24,12 +24,15 @@ export const newReferralEvent = createTrigger({
     instructions: Property.MarkDown({
       value: `### Setup Instructions
 
-1. Go to your PromoteKit dashboard
-2. Navigate to **Settings > Webhooks**
-3. Click **Add Endpoint**
-4. Paste the webhook URL shown below
-5. Enable the referral event types you selected above
-6. Save the endpoint
+1. Go to your PromoteKit dashboard.
+2. Navigate to **Settings > Webhooks**.
+3. Click **Add Endpoint**.
+4. Paste the webhook URL shown below.
+\`\`\`text
+            {{webhookUrl}}
+            \`\`\`
+5. Enable the referral event types you selected above.
+6. Save the endpoint.
 
 **Need different flows for different events?** Create a separate flow with its own webhook URL, and add a new endpoint in PromoteKit for that flow with only the matching event enabled.`,
     }),

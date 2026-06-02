@@ -12,7 +12,7 @@ export const newAffiliateEvent = createTrigger({
   auth: promotekitAuth,
   name: 'new_affiliate_event',
   displayName: 'New Affiliate Event',
-  description: 'Triggers when a PromoteKit affiliate webhook event is received.',
+  description: 'Triggers when a PromoteKit affiliate event is received.',
   props: {
     eventTypes: Property.StaticMultiSelectDropdown({
       displayName: 'Affiliate Event Types',
@@ -24,12 +24,15 @@ export const newAffiliateEvent = createTrigger({
     instructions: Property.MarkDown({
       value: `### Setup Instructions
 
-1. Go to your PromoteKit dashboard
-2. Navigate to **Settings > Webhooks**
-3. Click **Add Endpoint**
-4. Paste the webhook URL shown below
-5. Enable the affiliate event types you selected above
-6. Save the endpoint
+1. Go to your PromoteKit dashboard.
+2. Navigate to **Settings > Webhooks**.
+3. Click **Add Endpoint**.
+4. Paste the webhook URL shown below :
+\`\`\`text
+            {{webhookUrl}}
+            \`\`\`
+5. Enable the affiliate event types you selected above.
+6. Save the endpoint.
 
 **Need different flows for different events?** Create a separate flow with its own webhook URL, and add a new endpoint in PromoteKit for that flow with only the matching event enabled.`,
     }),
