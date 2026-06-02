@@ -66,6 +66,10 @@ const DynamicPropertiesImplementation = React.memo(
     >(undefined);
     const propertyPrefix =
       props.placedInside === 'stepSettings' ? 'settings.input' : '';
+    const dynamicPropertyPath = prependPrefixToPropertyName({
+      propertyName: props.propertyName,
+      prefix: propertyPrefix,
+    });
     const { mutate, isPending } =
       piecesHooks.usePieceOptions<PropertyType.DYNAMIC>({
         onMutate: () => {
@@ -97,18 +101,12 @@ const DynamicPropertiesImplementation = React.memo(
           );
         });
       }
-      form.setValue(
-        prependPrefixToPropertyName({
-          propertyName: props.propertyName,
-          prefix: propertyPrefix,
-        }),
-        null,
-        {
-          shouldValidate: true,
-        },
-      );
+      form.setValue(dynamicPropertyPath, null, {
+        shouldValidate: true,
+      });
     };
     useDeepCompareEffectNoCheck(() => {
+      const valueBeforeClear = form.getValues(dynamicPropertyPath);
       if (!deepEqual(previousRefresherValues.current, refresherValues)) {
         clearPropertyValue();
       }
@@ -129,25 +127,16 @@ const DynamicPropertiesImplementation = React.memo(
         },
         {
           onSuccess: (response) => {
-            const currentValue = form.getValues(
-              prependPrefixToPropertyName({
-                propertyName: props.propertyName,
-                prefix: propertyPrefix,
-              }),
-            );
             const defaultValue = formUtils.getDefaultValueForProperties({
               props: response.options,
-              existingInput: currentValue ?? {},
+              existingInput: valueBeforeClear ?? {},
               propertySettings: props.propertySettings ?? {},
             });
             setPropertyMap(response.options);
             const schemaWithoutDropdownOptions =
               removeOptionsFromDropdownPropertiesSchema(response.options);
             props.updateFormSchema?.(
-              prependPrefixToPropertyName({
-                propertyName: props.propertyName,
-                prefix: propertyPrefix,
-              }),
+              dynamicPropertyPath,
               schemaWithoutDropdownOptions,
             );
 
@@ -158,17 +147,10 @@ const DynamicPropertiesImplementation = React.memo(
                 form,
               );
             }
-            form.setValue(
-              prependPrefixToPropertyName({
-                propertyName: props.propertyName,
-                prefix: propertyPrefix,
-              }),
-              defaultValue,
-              {
-                shouldValidate: true,
-                shouldDirty: true,
-              },
-            );
+            form.setValue(dynamicPropertyPath, defaultValue, {
+              shouldValidate: true,
+              shouldDirty: true,
+            });
           },
         },
       );
@@ -181,10 +163,7 @@ const DynamicPropertiesImplementation = React.memo(
         )}
         {!isPending && propertyMap && (
           <GenericPropertiesForm
-            prefixValue={prependPrefixToPropertyName({
-              propertyName: props.propertyName,
-              prefix: propertyPrefix,
-            })}
+            prefixValue={dynamicPropertyPath}
             props={propertyMap}
             useMentionTextInput={!isNil(props.propertySettings)}
             disabled={props.disabled}
