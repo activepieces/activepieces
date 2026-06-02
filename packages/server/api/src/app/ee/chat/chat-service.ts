@@ -234,7 +234,12 @@ export const chatService = (log: FastifyBaseLogger) => ({
                                 const credits = aiUtils.calculateCredits(usage)
                                 await projectLimitsService(log).incrementAiUsage(selectedProjectId, credits)
                             }
+                        }
+                        catch (creditErr) {
+                            log.error({ err: creditErr, projectId: selectedProjectId }, 'Failed to increment AI usage credits')
+                        }
 
+                        try {
                             await chatHelpers.conversationRepo().update(conversationId, {
                                 messages: updatedMessages,
                                 ...(pendingTitle ? { title: pendingTitle } : {}),
@@ -242,7 +247,7 @@ export const chatService = (log: FastifyBaseLogger) => ({
                             })
                         }
                         catch (saveErr) {
-                            log.error({ err: saveErr, conversationId }, 'Failed to persist conversation messages or update usage')
+                            log.error({ err: saveErr, conversationId }, 'Failed to persist conversation messages')
                         }
 
 
