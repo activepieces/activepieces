@@ -9,10 +9,10 @@ import { utils } from '../utils'
 
 const CONNECTIONS = 'connections'
 const VARIABLES = 'variables'
-// The non-greedy regex /{{(.?)}}/g stops at the first }} it sees,
+const FLATTEN_NESTED_KEYS_PATTERN = /\{\{\s*flattenNestedKeys(.*?)\}\}/g
+// The non-greedy regex /{{(.*?)}}/g stops at the first }} it sees,
 // so expressions with nested braces (object literals, function calls) are
 // truncated and resolve to "". Use a brace-counting tokenizer instead.
-const FLATTEN_NESTED_KEYS_PATTERN = /\{\{\s*flattenNestedKeys(.*?)\}\}/g
 function extractTokens(str: string): { token: string, inner: string, index: number }[] {
     const results: { token: string, inner: string, index: number }[] = []
     let i = 0
