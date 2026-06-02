@@ -55,13 +55,16 @@ export async function request<T = unknown>(
 }
 
 interface ServiceItem {
-  service_code: string;
-  name: string;
+  service_id: string;
+  service_name: string;
+  base_price: number;
 }
 
 interface CountryItem {
-  country_code: string;
-  name: string;
+  country_id: string;
+  country_name: string;
+  min_price: number;
+  services: string;
 }
 
 export async function serviceDropdownOptions(auth: AuthValue | undefined) {
@@ -74,7 +77,7 @@ export async function serviceDropdownOptions(auth: AuthValue | undefined) {
     '/api/v1/customer/services'
   );
   return {
-    options: (resp.services ?? []).map((s) => ({ label: s.name, value: s.service_code })),
+    options: (resp.services ?? []).map((s) => ({ label: `${s.service_name} - $${s.base_price.toFixed(2)}`, value: s.service_id })),
   };
 }
 
@@ -93,6 +96,6 @@ export async function countryDropdownOptions(
     service ? { service: String(service) } : undefined
   );
   return {
-    options: (resp.countries ?? []).map((c) => ({ label: c.name, value: c.country_code })),
+    options: (resp.countries ?? []).map((c) => ({ label: c.country_name, value: c.country_id })),
   };
 }
