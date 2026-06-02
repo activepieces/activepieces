@@ -149,27 +149,11 @@ export type ChatHistoryMessage = {
     thoughts?: string
 }
 
-export type ToolApprovalRequest = {
-    gateId: string
-    toolName: string
-    displayName: string
-}
-
-export type PlanApprovalRequest = {
-    gateId: string
-    planSummary: string
-    steps: string[]
-}
-
 export type PlanStepStatus = 'pending' | 'executing' | 'done' | 'error'
 
 export type PlanStepUpdate = {
     stepIndex: number
     status: PlanStepStatus
-}
-
-export type ChatStreamWriter = {
-    write(part: Record<string, unknown>): void
 }
 
 export type ChatToolOutputs = {

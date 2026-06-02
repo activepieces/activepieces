@@ -1,12 +1,17 @@
-import { ChatStreamWriter } from '@activepieces/shared'
+import { ToolApprovalRequestEvent, ToolProgressEvent } from '@activepieces/shared'
 import { describe, expect, it, vi } from 'vitest'
-import { chatWorkerTools } from '../../../../../../src/lib/execute/jobs/ee/chat/chat-worker-tools'
+import { ChatEventEmitter, chatWorkerTools } from '../../../../../../src/lib/execute/jobs/ee/chat/chat-worker-tools'
 
-function makeMockWriter(): { writer: ChatStreamWriter, writes: Record<string, unknown>[] } {
-    const writes: Record<string, unknown>[] = []
+function makeMockEventEmitter(): { eventEmitter: ChatEventEmitter, progressEvents: ToolProgressEvent[], approvalEvents: ToolApprovalRequestEvent[] } {
+    const progressEvents: ToolProgressEvent[] = []
+    const approvalEvents: ToolApprovalRequestEvent[] = []
     return {
-        writer: { write: (part: Record<string, unknown>) => { writes.push(part) } },
-        writes,
+        eventEmitter: {
+            emitToolProgress: (data: ToolProgressEvent) => { progressEvents.push(data) },
+            emitToolApprovalRequest: (data: ToolApprovalRequestEvent) => { approvalEvents.push(data) },
+        },
+        progressEvents,
+        approvalEvents,
     }
 }
 
@@ -84,11 +89,11 @@ describe('chatWorkerTools', () => {
     })
 
     describe('ap_execute_action batch mode', () => {
-        it('calls executeTool for each item and streams progress', async () => {
-            const { writer, writes } = makeMockWriter()
+        it('calls executeTool for each item and emits progress events', async () => {
+            const { eventEmitter, progressEvents } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue(mcpSuccess('sent'))
 
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, writer })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter })
             const result = await tools.ap_execute_action.execute({
                 pieceName: 'slack',
                 actionName: 'send_message',
@@ -107,21 +112,21 @@ describe('chatWorkerTools', () => {
                 input: { channel: 'C01', text: 'Hi Alice' },
             }))
 
-            const progressEvents = writes.filter((w) => w['type'] === 'data-batch-progress')
             expect(progressEvents.length).toBe(4)
+            expect(progressEvents[0].toolCallId).toBe('tc1')
 
-            const initial = progressEvents[0]['data'] as Record<string, unknown>
-            expect(initial['completed']).toBe(0)
-            expect(initial['total']).toBe(3)
-            expect(initial['done']).toBe(false)
-            expect(initial['label']).toBe('Sending messages')
+            const initial = progressEvents[0].data
+            expect(initial.completed).toBe(0)
+            expect(initial.total).toBe(3)
+            expect(initial.done).toBe(false)
+            expect(initial.label).toBe('Sending messages')
 
-            const final = progressEvents[3]['data'] as Record<string, unknown>
-            expect(final['completed']).toBe(3)
-            expect(final['succeeded']).toBe(3)
-            expect(final['failed']).toBe(0)
-            expect(final['done']).toBe(true)
-            expect((final['results'] as unknown[]).length).toBe(3)
+            const final = progressEvents[3].data
+            expect(final.completed).toBe(3)
+            expect(final.succeeded).toBe(3)
+            expect(final.failed).toBe(0)
+            expect(final.done).toBe(true)
+            expect(final.results.length).toBe(3)
 
             const resultObj = result as { content: Array<{ text: string }>, batchProgress: Record<string, unknown> }
             expect(resultObj.content[0].text).toContain('3/3 succeeded')
@@ -134,13 +139,13 @@ describe('chatWorkerTools', () => {
         })
 
         it('continues on error and reports failures', async () => {
-            const { writer, writes } = makeMockWriter()
+            const { eventEmitter, progressEvents } = makeMockEventEmitter()
             const executeTool = vi.fn()
                 .mockResolvedValueOnce(mcpSuccess('sent'))
                 .mockResolvedValueOnce(mcpFailure('Invalid channel'))
                 .mockResolvedValueOnce(mcpSuccess('sent'))
 
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, writer })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter })
             const result = await tools.ap_execute_action.execute({
                 pieceName: 'slack',
                 actionName: 'send_message',
@@ -153,14 +158,12 @@ describe('chatWorkerTools', () => {
 
             expect(executeTool).toHaveBeenCalledTimes(3)
 
-            const progressEvents = writes.filter((w) => w['type'] === 'data-batch-progress')
-            const final = progressEvents[progressEvents.length - 1]['data'] as Record<string, unknown>
-            expect(final['succeeded']).toBe(2)
-            expect(final['failed']).toBe(1)
-            expect(final['done']).toBe(true)
+            const final = progressEvents[progressEvents.length - 1].data
+            expect(final.succeeded).toBe(2)
+            expect(final.failed).toBe(1)
+            expect(final.done).toBe(true)
 
-            const results = final['results'] as Array<{ index: number, success: boolean, error?: string }>
-            const failedItem = results.find((r) => !r.success)
+            const failedItem = final.results.find((r) => !r.success)
             expect(failedItem).toBeDefined()
             expect(failedItem!.index).toBe(1)
             expect(failedItem!.error).toContain('Invalid channel')
@@ -172,63 +175,59 @@ describe('chatWorkerTools', () => {
         })
 
         it('uses default label when description is not provided', async () => {
-            const { writer, writes } = makeMockWriter()
+            const { eventEmitter, progressEvents } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue(mcpSuccess('done'))
 
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, writer })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter })
             await tools.ap_execute_action.execute({
                 pieceName: 'http',
                 actionName: 'send_request',
                 items: [{ url: 'http://example.com' }],
             }, { toolCallId: 'tc3', messages: [], abortSignal: undefined as unknown as AbortSignal })
 
-            const progressEvents = writes.filter((w) => w['type'] === 'data-batch-progress')
-            const initial = progressEvents[0]['data'] as Record<string, unknown>
-            expect(initial['label']).toBe('Processing 1 item')
+            const initial = progressEvents[0].data
+            expect(initial.label).toBe('Processing 1 item')
         })
 
-        it('uses upsert id for all progress events', async () => {
-            const { writer, writes } = makeMockWriter()
+        it('all progress events share the same toolCallId', async () => {
+            const { eventEmitter, progressEvents } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue(mcpSuccess('done'))
 
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, writer })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter })
             await tools.ap_execute_action.execute({
                 pieceName: 'slack',
                 actionName: 'send_message',
                 items: [{ channel: 'C01', text: 'Hi' }, { channel: 'C02', text: 'Hi' }],
             }, { toolCallId: 'tc4', messages: [], abortSignal: undefined as unknown as AbortSignal })
 
-            const progressEvents = writes.filter((w) => w['type'] === 'data-batch-progress')
-            const ids = progressEvents.map((w) => w['id'])
-            expect(ids.every((id) => id === ids[0])).toBe(true)
+            const ids = progressEvents.map((e) => e.toolCallId)
+            expect(ids.every((id) => id === 'tc4')).toBe(true)
         })
 
         it('sends empty results array for intermediate events', async () => {
-            const { writer, writes } = makeMockWriter()
+            const { eventEmitter, progressEvents } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue(mcpSuccess('done'))
 
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, writer })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter })
             await tools.ap_execute_action.execute({
                 pieceName: 'slack',
                 actionName: 'send_message',
                 items: [{ channel: 'C01', text: 'Hi' }, { channel: 'C02', text: 'Hi' }],
             }, { toolCallId: 'tc5', messages: [], abortSignal: undefined as unknown as AbortSignal })
 
-            const progressEvents = writes.filter((w) => w['type'] === 'data-batch-progress')
             const intermediate = progressEvents.slice(0, -1)
             for (const event of intermediate) {
-                const data = event['data'] as Record<string, unknown>
-                expect(data['results']).toEqual([])
+                expect(event.data.results).toEqual([])
             }
-            const final = progressEvents[progressEvents.length - 1]['data'] as Record<string, unknown>
-            expect((final['results'] as unknown[]).length).toBe(2)
+            const final = progressEvents[progressEvents.length - 1].data
+            expect(final.results.length).toBe(2)
         })
 
         it('falls back to single-item mode when items is absent', async () => {
-            const { writer } = makeMockWriter()
+            const { eventEmitter } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue(mcpSuccess('done'))
 
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, writer })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter })
             await tools.ap_execute_action.execute({
                 pieceName: 'gmail',
                 actionName: 'send_email',
@@ -244,31 +243,30 @@ describe('chatWorkerTools', () => {
         })
 
         it('handles structured error results from executeCrossProjectTool', async () => {
-            const { writer, writes } = makeMockWriter()
+            const { eventEmitter, progressEvents } = makeMockEventEmitter()
             const executeTool = vi.fn()
                 .mockResolvedValueOnce({ success: false, error: 'No projects available' })
 
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, writer })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter })
             const result = await tools.ap_execute_action.execute({
                 pieceName: 'slack',
                 actionName: 'send_message',
                 items: [{ channel: 'C01', text: 'Hi' }],
             }, { toolCallId: 'tc7', messages: [], abortSignal: undefined as unknown as AbortSignal })
 
-            const progressEvents = writes.filter((w) => w['type'] === 'data-batch-progress')
-            const final = progressEvents[progressEvents.length - 1]['data'] as Record<string, unknown>
-            expect(final['failed']).toBe(1)
-            expect(final['succeeded']).toBe(0)
+            const final = progressEvents[progressEvents.length - 1].data
+            expect(final.failed).toBe(1)
+            expect(final.succeeded).toBe(0)
 
             const resultObj = result as { content: Array<{ text: string }> }
             expect(resultObj.content[0].text).toContain('0/1 succeeded')
         })
 
         it('stops early after 3 consecutive failures', async () => {
-            const { writer, writes } = makeMockWriter()
+            const { eventEmitter, progressEvents } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue(mcpFailure('Bad auth'))
 
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, writer })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter })
             const result = await tools.ap_execute_action.execute({
                 pieceName: 'slack',
                 actionName: 'send_message',
@@ -278,12 +276,11 @@ describe('chatWorkerTools', () => {
 
             expect(executeTool).toHaveBeenCalledTimes(3)
 
-            const progressEvents = writes.filter((w) => w['type'] === 'data-batch-progress')
-            const final = progressEvents[progressEvents.length - 1]['data'] as Record<string, unknown>
-            expect(final['failed']).toBe(3)
-            expect(final['completed']).toBe(3)
-            expect(final['total']).toBe(10)
-            expect(final['done']).toBe(true)
+            const final = progressEvents[progressEvents.length - 1].data
+            expect(final.failed).toBe(3)
+            expect(final.completed).toBe(3)
+            expect(final.total).toBe(10)
+            expect(final.done).toBe(true)
 
             const resultObj = result as { content: Array<{ text: string }> }
             expect(resultObj.content[0].text).toContain('Stopped early')
@@ -291,7 +288,7 @@ describe('chatWorkerTools', () => {
         })
 
         it('resets consecutive failure count on success', async () => {
-            const { writer } = makeMockWriter()
+            const { eventEmitter } = makeMockEventEmitter()
             const executeTool = vi.fn()
                 .mockResolvedValueOnce(mcpFailure('err'))
                 .mockResolvedValueOnce(mcpFailure('err'))
@@ -300,7 +297,7 @@ describe('chatWorkerTools', () => {
                 .mockResolvedValueOnce(mcpFailure('err'))
                 .mockResolvedValueOnce(mcpSuccess('ok'))
 
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, writer })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter })
             await tools.ap_execute_action.execute({
                 pieceName: 'slack',
                 actionName: 'send_message',
