@@ -125,10 +125,7 @@ function buildProviderOptions({ provider, tier }: { provider: AIProviderName, ti
             return { anthropic: { thinking: { type: 'enabled', budgetTokens: tier.thinkingBudget } } }
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER:
-            return {
-                openrouter: { cache_control: { type: 'ephemeral' } },
-                anthropic: { thinking: { type: 'enabled', budgetTokens: tier.thinkingBudget } },
-            }
+            return { openrouter: { cache_control: { type: 'ephemeral' }, reasoning: { max_tokens: tier.thinkingBudget } } }
         default:
             return {}
     }
