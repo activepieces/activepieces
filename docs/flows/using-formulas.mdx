@@ -1,0 +1,146 @@
+---
+title: "Using Formulas"
+icon: 'function'
+description: "Transform and combine data inside any text input using formulas"
+---
+
+## Why formulas
+
+[Passing data](./passing-data) lets you insert values from previous steps into the current step's inputs. Formulas let you **transform that data** before it gets used — combine two values into one, change the format, do a calculation, fall back to a default when something is empty, or branch on a condition.
+
+If a mention answers *"which value goes here?"*, a formula answers *"what should I do with that value first?"*.
+
+## The slash trigger
+
+Place your cursor in any text input and type `/`. A search popover appears with every available function. Type to filter, click to insert. Each function is inserted as a styled badge with empty argument slots — fill them in with text, numbers, or mentions from previous steps.
+
+<video
+  autoPlay
+  muted
+  loop
+  playsinline
+  src="/resources/using-formulas-slash-trigger.mp4"
+></video>
+
+## Anatomy of a formula
+
+Once inserted, a formula looks like this in the input:
+
+<img width="450" src="/resources/using-formulas-anatomy.png" alt="A formula badge with function name, argument slots, and semicolon separators" />
+
+- The **function name** appears as a pill on the left.
+- Arguments are separated by **semicolons (`;`)**, not commas.
+- A matching pill closes the formula on the right.
+- A **preview panel** below the input shows the evaluated result while you edit. If the formula has a type problem (e.g. passing text where a number is expected), the panel shows the error.
+
+You can mix plain text, mentions, and formulas in the same input. The formula's result replaces the badge when the flow runs.
+
+## Quoting text values
+
+For text arguments, **quotes are optional**. The editor accepts both styles and gives you the same result:
+
+- Without quotes: `combine(John; Smith; -)` → `John-Smith`
+- With quotes: `combine("John"; "Smith"; "-")` → `John-Smith`
+
+Use whichever feels natural. Quotes are useful when:
+
+- The text contains a semicolon (which would otherwise be read as the next argument's separator)
+- You want to be explicit about where the text starts and ends
+
+**Empty or whitespace-only values are the one case where quotes are required.** Without quotes, the editor treats an empty slot as "no argument" and trims any whitespace, so:
+
+- For an **empty string**, write `""` — e.g. `coalesce(""; John)` → `John`
+- For a **single space** as a separator, write `" "` — e.g. `combine(John; Smith; " ")` → `John Smith`
+
+Without quotes, `combine(John; Smith;  )` would treat the third argument as missing and fall back to no separator.
+
+## Recipes
+
+### Combine a first and last name
+
+`combine(first_name; " "; last_name)` → `"Sara Mitchell"`
+
+Use `combine` whenever you need to glue several values together with a separator.
+
+### Capitalize a customer name
+
+`titlecase(customer_name)` → `"Sara Mitchell"`
+
+Use `uppercase` if you want everything in caps (`"SARA MITCHELL"`), or `lowercase` for the opposite.
+
+### Format a date for display
+
+`format_date(order.created_at; MMM DD, YYYY)` → `"Jan 15, 2025"`
+
+For a fully written-out date, use `format_date_long(order.created_at)` → `"Friday, January 15, 2025"`.
+
+### Get the first item of a list
+
+`first_item(tags)` → the first element. Use `last_item` for the last, or `item_at(tags; 2)` to pick by index.
+
+### Use a fallback when a value is missing
+
+`coalesce(customer.preferred_name; customer.first_name; "Friend")` → returns the first non-empty value, skipping empty ones.
+
+Use `if_empty(value; fallback)` for a single fallback, or `if_null(value; fallback)` when the field could be `null` specifically.
+
+### Branch on a condition
+
+`if(order.total > 1000; "High value"; "Standard")`
+
+The first argument is the condition. The second is what to return when it's true, the third when it's false.
+
+### Strip whitespace and check length
+
+`length(trim(user_input))` → tells you how many characters there are after the leading and trailing spaces are removed. Nest formulas freely — the inner one runs first.
+
+### Extract an email from a longer string
+
+`extract_email(message_body)` → returns the first email address found in the text. Use `extract_url` for URLs.
+
+### Round a calculated total
+
+`round(subtotal * 1.0825; 2)` → `49.99`
+
+The second argument is how many decimal places to keep.
+
+### Sum a number field across a list
+
+`sum(line_items; amount)` → adds up the `amount` field of every item in the list. Use `average` for the mean, or `max_in_list` / `min_in_list` for extremes.
+
+### Compute days between two dates
+
+`days_between(order.created_at; today())` → the integer day count. Combine with `if` to flag overdue records.
+
+### Map a value through a lookup
+
+`switch(country_code; "US"; "North America"; "DE"; "Europe"; "JP"; "Asia")` → returns `"North America"` for `"US"`. Write the pairs inline.
+
+## Advanced tips
+
+### Nesting formulas
+
+Any formula can take another formula as one of its arguments. Read them inside-out: `uppercase(trim(customer_name))` first trims, then uppercases. The hover popover on each badge shows what type each argument expects.
+
+### Mixing static text with formulas
+
+You can drop formulas anywhere inside a regular text input. Type some text, insert a formula, type more text. The output is a single string with the formula's result substituted in.
+
+### Mixing mentions and formulas
+
+Mentions like `{{step.field}}` work as formula arguments. Drop a mention into any argument slot and the formula uses the resolved value at runtime.
+
+### When the preview shows an error
+
+If you see a red error message under the input, it usually means one of:
+
+- **Wrong number of values** — you have too few or too many arguments. Check the hover popover for the expected count.
+- **Type mismatch** — you passed text where a number is expected, or similar. Wrap the value in `to_number(...)` or `to_date(...)` if it needs converting.
+- **Unknown function** — the function name was renamed or removed. Re-insert it with `/` to pick a current name.
+
+The flow won't run a step whose formula is in error — fix it before publishing.
+
+## See also
+
+- [Formula Function Reference](./formula-reference) — every available function, grouped by category, with signature and example
+- [Passing Data](./passing-data) — using mentions to insert values from previous steps

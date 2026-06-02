@@ -4,20 +4,20 @@ import {
   CHAT_ALLOWED_MIME_TYPES,
   DEFAULT_CHAT_TIER_ID,
   ErrorCode,
-  isObject,
-  PlanStepUpdate,
+  isNil,
+  ToolApprovalRequestEvent,
+  ToolProgressEvent,
   tryCatch,
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { api } from '@/lib/api';
 
 import { chatApi } from './chat-api';
 import { useChatStoreApi } from './chat-store-context';
-import { ChatUIMessage } from './chat-types';
+import { ChatUIMessage, chatPartUtils } from './chat-types';
 import { chatUtils } from './chat-utils';
-import { DataPart } from './chunk-reducer';
 import { useStreamingReducer } from './use-streaming-reducer';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -84,13 +84,6 @@ function injectFilePartsIntoLastUserMessage({
   return result;
 }
 
-const DISPLAY_CARD_DATA_TYPES = new Set([
-  'data-connection-required',
-  'data-connection-picker',
-  'data-project-picker',
-  'data-questions',
-]);
-
 type SendStatus =
   | { type: 'idle' }
   | { type: 'submitting' }
@@ -140,82 +133,46 @@ export function useAgentChat({
   const onConversationCreatedRef = useRef(onConversationCreated);
   onConversationCreatedRef.current = onConversationCreated;
 
-  const handleDataPart = useCallback(
-    (dataPart: DataPart) => {
-      if (!isObject(dataPart.data)) return;
-      const d = dataPart.data as Record<string, unknown>;
+  const handleTitleUpdate = useCallback((title: string) => {
+    onTitleUpdateRef.current?.(title);
+  }, []);
 
-      if (
-        dataPart.type === 'data-session-title' &&
-        typeof d['title'] === 'string'
-      ) {
-        onTitleUpdateRef.current?.(d['title']);
-      }
+  const handleToolProgress = useCallback(
+    (event: ToolProgressEvent) => {
+      store.setState((prev) => {
+        const existing = prev.toolCallMeta[event.toolCallId]?.batchProgress;
+        if (
+          existing &&
+          existing.completed === event.data.completed &&
+          existing.done === event.data.done
+        ) {
+          return prev;
+        }
+        return {
+          toolCallMeta: {
+            ...prev.toolCallMeta,
+            [event.toolCallId]: {
+              ...prev.toolCallMeta[event.toolCallId],
+              batchProgress: event.data,
+            },
+          },
+        };
+      });
+    },
+    [store],
+  );
 
-      switch (dataPart.type) {
-        case 'data-approval-request':
-          if (typeof d.gateId === 'string' && typeof d.toolName === 'string') {
-            store.setState({
-              pendingApprovalRequest: {
-                gateId: d.gateId,
-                toolName: d.toolName,
-                displayName:
-                  typeof d.displayName === 'string'
-                    ? d.displayName
-                    : d.toolName,
-              },
-            });
-          }
-          break;
-
-        case 'data-plan-approval-request':
-          if (typeof d.gateId === 'string') {
-            store.setState({
-              pendingPlanApproval: {
-                gateId: d.gateId,
-                planSummary:
-                  typeof d.planSummary === 'string' ? d.planSummary : '',
-                steps: Array.isArray(d.steps) ? (d.steps as string[]) : [],
-              },
-            });
-          }
-          break;
-
-        case 'data-plan-progress':
-          if (typeof d.stepIndex === 'number' && typeof d.status === 'string') {
-            store.setState((prev) => {
-              const stepIndex = d.stepIndex as number;
-              const status = d.status as PlanStepUpdate['status'];
-              const existing = prev.planProgressUpdates.findIndex(
-                (u) => u.stepIndex === stepIndex,
-              );
-              if (existing >= 0) {
-                const updated = [...prev.planProgressUpdates];
-                updated[existing] = { stepIndex, status };
-                return { planProgressUpdates: updated };
-              }
-              return {
-                planProgressUpdates: [
-                  ...prev.planProgressUpdates,
-                  { stepIndex, status },
-                ],
-              };
-            });
-          }
-          break;
-
-        case 'data-quick-replies':
-          if (Array.isArray(d.replies)) {
-            store.setState({ quickReplies: d.replies as string[] });
-          }
-          break;
-
-        default:
-          if (DISPLAY_CARD_DATA_TYPES.has(dataPart.type)) {
-            store.setState({ displayCard: { type: dataPart.type, data: d } });
-          }
-          break;
-      }
+  const handleToolApprovalRequest = useCallback(
+    (event: ToolApprovalRequestEvent) => {
+      store.setState((prev) => ({
+        toolCallMeta: {
+          ...prev.toolCallMeta,
+          [event.toolCallId]: {
+            ...prev.toolCallMeta[event.toolCallId],
+            approvalRequest: event,
+          },
+        },
+      }));
     },
     [store],
   );
@@ -253,7 +210,9 @@ export function useAgentChat({
     stopStream,
     clearStreamingState,
   } = useStreamingReducer({
-    onDataPart: handleDataPart,
+    onTitleUpdate: handleTitleUpdate,
+    onToolProgress: handleToolProgress,
+    onToolApprovalRequest: handleToolApprovalRequest,
     onStreamFinished: (convId) => {
       void reconcile(convId).then(() => clearStreamingState());
     },
@@ -263,7 +222,30 @@ export function useAgentChat({
       }
       void reconcile(convId).then(() => clearStreamingState());
     },
+    onStaleCheck: (convId) => {
+      void tryCatch(async () => {
+        const conv = await chatApi.getConversation(convId);
+        if (
+          !isNil(conv) &&
+          conv.status !== ChatConversationStatus.STREAMING &&
+          conversationIdRef.current === convId
+        ) {
+          void reconcile(convId).then(() => clearStreamingState());
+        }
+      });
+    },
   });
+
+  const streamingQuickReplies = useMemo(
+    () => chatPartUtils.extractQuickRepliesFromParts(streamingMessage),
+    [streamingMessage],
+  );
+
+  useEffect(() => {
+    if (streamingQuickReplies.length > 0) {
+      store.setState({ quickReplies: streamingQuickReplies });
+    }
+  }, [streamingQuickReplies, store]);
 
   const isStreamActive = streamPhase !== 'idle';
   const isStreaming =
