@@ -273,6 +273,7 @@ async function generateTitleIfFirstTurn({ model, userMessage, previousUiMessages
     log: JobContext['log']
     conversationId: string
 }): Promise<string | undefined> {
+    // getChatConfig includes the just-saved user message, so length 1 = first turn
     const isFirstTurn = previousUiMessages.length === 1
     if (!isFirstTurn) return undefined
 
