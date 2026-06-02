@@ -4,6 +4,7 @@ import {
 } from '@activepieces/pieces-framework';
 import {
   AppConnectionScope,
+  AppConnectionStatus,
   AppConnectionWithoutSensitiveData,
   Permission,
   PieceAction,
@@ -12,7 +13,7 @@ import {
   isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Plus, Globe, Key } from 'lucide-react';
+import { Plus, Globe, Key, RefreshCw, Check } from 'lucide-react';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
@@ -30,6 +31,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { appConnectionsQueries } from '@/features/connections';
 import { piecesHooks } from '@/features/pieces';
 import {
@@ -79,6 +85,13 @@ function ConnectionSelect(params: ConnectionSelectProps) {
     form.getValues().settings.propertySettings['auth']?.type ===
     PropertyExecutionType.DYNAMIC;
   const isPLatformAdmin = useIsPlatformAdmin();
+  const isConnectionActive =
+    selectedConnection?.status === AppConnectionStatus.ACTIVE;
+  const openReconnectDialog = () => {
+    setReconnectConnection(selectedConnection ?? null);
+    setSelectConnectionOpen(false);
+    setConnectionDialogOpen(true);
+  };
 
   return (
     <FormField
@@ -142,25 +155,54 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                       !field.disabled &&
                       selectedConnection &&
                       (!isGlobalConnection || isPLatformAdmin) && (
-                        <div className="z-50 absolute right-8 top-1 ">
-                          <PermissionNeededTooltip
-                            hasPermission={hasPermissionToCreateConnection}
-                          >
-                            <Button
-                              variant="ghost"
-                              size="xs"
-                              loading={isLoadingPiece}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setReconnectConnection(selectedConnection);
-                                setSelectConnectionOpen(false);
-                                setConnectionDialogOpen(true);
-                              }}
-                              disabled={!hasPermissionToCreateConnection}
+                        <div className="z-50 absolute right-8 top-1.5 flex items-center gap-1.5">
+                          {isConnectionActive ? (
+                            <>
+                              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Check className="size-3.5 text-success shrink-0" />
+                                {t('Connected')}
+                              </span>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon-xs"
+                                    className="text-muted-foreground"
+                                    loading={isLoadingPiece}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openReconnectDialog();
+                                    }}
+                                    disabled={!hasPermissionToCreateConnection}
+                                  >
+                                    <RefreshCw className="size-3.5" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {!hasPermissionToCreateConnection
+                                    ? t('Permission needed')
+                                    : t('Reconnect')}
+                                </TooltipContent>
+                              </Tooltip>
+                            </>
+                          ) : (
+                            <PermissionNeededTooltip
+                              hasPermission={hasPermissionToCreateConnection}
                             >
-                              {t('Reconnect')}
-                            </Button>
-                          </PermissionNeededTooltip>
+                              <Button
+                                variant="ghost"
+                                size="xs"
+                                loading={isLoadingPiece}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openReconnectDialog();
+                                }}
+                                disabled={!hasPermissionToCreateConnection}
+                              >
+                                {t('Reconnect')}
+                              </Button>
+                            </PermissionNeededTooltip>
+                          )}
                         </div>
                       )}
 
@@ -205,10 +247,14 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                             connection.scope !== AppConnectionScope.PLATFORM,
                         ) && (
                           <span
-                            role="button"
-                            className="z-50 opacity-0 pointer-events-none"
+                            aria-hidden
+                            className="z-50 opacity-0 pointer-events-none flex items-center gap-1.5"
                           >
-                            {t('Reconnect')}
+                            <span className="flex items-center gap-1 text-xs">
+                              <Check className="size-3.5 shrink-0" />
+                              {t('Connected')}
+                            </span>
+                            <span className="size-6 shrink-0" />
                           </span>
                         )}
                     </SelectTrigger>
