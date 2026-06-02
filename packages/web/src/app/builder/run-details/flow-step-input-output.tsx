@@ -25,9 +25,9 @@ import { formatUtils } from '@/lib/format-utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { DataDisplayTabs } from '../data-display/data-display-tabs';
+import { StepDataPanelHeader } from '../step-data/step-data-panel-header';
+import { StepDataPanelViewToggle } from '../step-data/step-data-panel-view-toggle';
 import { isRunAgent } from '../test-step/agent-test-step';
-import { TestPanelHeader } from '../test-step/test-panel-header';
-import { TestPanelViewToggle } from '../test-step/test-panel-view-toggle';
 
 type RunActiveTab = 'input' | 'output' | 'timeline';
 
@@ -107,7 +107,7 @@ export const FlowStepInputOutput = () => {
     return (
       <div className="flex flex-col h-full w-full">
         <div className="flex justify-end px-3 py-2 shrink-0">
-          <TestPanelViewToggle />
+          <StepDataPanelViewToggle />
         </div>
         <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
           <div className="flex items-center justify-center size-12 rounded-full bg-muted text-muted-foreground">
@@ -136,7 +136,7 @@ export const FlowStepInputOutput = () => {
 
   return (
     <div className="h-full flex flex-col">
-      <TestPanelHeader
+      <StepDataPanelHeader
         status={status}
         lastTestDate={run.created}
         viewMode="run"
@@ -155,7 +155,7 @@ export const FlowStepInputOutput = () => {
               )}
               <TabsTrigger value="output">{t('Output')}</TabsTrigger>
             </TabsList>
-            <TestPanelViewToggle />
+            <StepDataPanelViewToggle />
           </div>
 
           <TabsContent value="input">

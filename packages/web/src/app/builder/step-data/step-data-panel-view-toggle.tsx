@@ -5,21 +5,20 @@ import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-type TestPanelViewToggleProps = {
+type StepDataPanelViewToggleProps = {
   disabled?: boolean;
   className?: string;
 };
 
-const TestPanelViewToggle = ({
+const StepDataPanelViewToggle = ({
   disabled = false,
   className,
-}: TestPanelViewToggleProps) => {
-  const [testPanelView, setTestPanelView] = useBuilderStateContext((state) => [
-    state.testPanelView,
-    state.setTestPanelView,
-  ]);
+}: StepDataPanelViewToggleProps) => {
+  const [stepDataPanelView, setStepDataPanelView] = useBuilderStateContext(
+    (state) => [state.stepDataPanelView, state.setStepDataPanelView],
+  );
 
-  const isSplit = testPanelView === 'split';
+  const isSplit = stepDataPanelView === 'split';
   const ToggleIcon = isSplit ? Rows2 : Columns2;
   const toggleLabel = isSplit ? t('Collapse') : t('Split View');
 
@@ -28,7 +27,7 @@ const TestPanelViewToggle = ({
       type="button"
       variant="ghost"
       size="sm"
-      onClick={() => setTestPanelView(isSplit ? 'drawer' : 'split')}
+      onClick={() => setStepDataPanelView(isSplit ? 'drawer' : 'split')}
       disabled={disabled}
       className={cn('text-sm shrink-0', className)}
       aria-label={toggleLabel}
@@ -39,5 +38,5 @@ const TestPanelViewToggle = ({
   );
 };
 
-TestPanelViewToggle.displayName = 'TestPanelViewToggle';
-export { TestPanelViewToggle };
+StepDataPanelViewToggle.displayName = 'StepDataPanelViewToggle';
+export { StepDataPanelViewToggle };

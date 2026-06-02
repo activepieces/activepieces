@@ -1,13 +1,12 @@
-import { FlowActionType, FlowTriggerType } from '@activepieces/shared';
-import { useEffect, useRef } from 'react';
+import { FlowActionType, FlowTriggerType, isNil } from '@activepieces/shared';
+import { useCallback, useRef, useSyncExternalStore } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { cn } from '@/lib/utils';
 
 import { flowCanvasConsts } from '../flow-canvas/utils/consts';
 import { FlowStepInputOutput } from '../run-details/flow-step-input-output';
-
-import { TestStepContainer } from '.';
+import { TestStepContainer } from '../test-step';
 
 const DISMISS_IGNORE_SELECTOR = [
   '[data-test-panel-trigger]',
@@ -17,7 +16,7 @@ const DISMISS_IGNORE_SELECTOR = [
   '[data-panel-resize-handle-id]',
 ].join(',');
 
-type TestPanelHostProps = {
+type StepDataPanelHostProps = {
   mode: 'drawer' | 'split';
   flowId: string;
   flowVersionId: string;
@@ -28,7 +27,7 @@ type TestPanelHostProps = {
   saving: boolean;
 };
 
-const TestPanelHost = ({
+const StepDataPanelHost = ({
   mode,
   flowId,
   flowVersionId,
@@ -37,28 +36,41 @@ const TestPanelHost = ({
   showGenerateSampleData,
   showStepInputOutFromRun,
   saving,
-}: TestPanelHostProps) => {
-  const [setTestPanelOpen, isTestPanelOpen] = useBuilderStateContext(
-    (state) => [state.setTestPanelOpen, state.isTestPanelOpen],
-  );
+}: StepDataPanelHostProps) => {
+  const [setStepDataPanelOpen, isStepDataPanelOpen, run] =
+    useBuilderStateContext((state) => [
+      state.setStepDataPanelOpen,
+      state.isStepDataPanelOpen,
+      state.run,
+    ]);
   const drawerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (mode !== 'drawer' || !isTestPanelOpen) return;
-    const handlePointerDown = (event: PointerEvent) => {
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-      if (drawerRef.current?.contains(target)) return;
-      if (target.closest(DISMISS_IGNORE_SELECTOR)) return;
-      if (
-        target.closest(`[data-${flowCanvasConsts.STEP_CONTEXT_MENU_ATTRIBUTE}]`)
-      )
-        return;
-      setTestPanelOpen(false);
-    };
-    document.addEventListener('pointerdown', handlePointerDown);
-    return () => document.removeEventListener('pointerdown', handlePointerDown);
-  }, [mode, isTestPanelOpen, setTestPanelOpen]);
+  const subscribeToOutsideDismiss = useCallback(
+    (notify: () => void) => {
+      if (mode !== 'drawer' || !isStepDataPanelOpen) return () => {};
+      const handlePointerDown = (event: PointerEvent) => {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+        if (drawerRef.current?.contains(target)) return;
+        if (target.closest(DISMISS_IGNORE_SELECTOR)) return;
+        if (
+          target.closest(
+            `[data-${flowCanvasConsts.STEP_CONTEXT_MENU_ATTRIBUTE}]`,
+          ) &&
+          !isNil(run)
+        )
+          return;
+        setStepDataPanelOpen(false);
+        notify();
+      };
+      document.addEventListener('pointerdown', handlePointerDown);
+      return () =>
+        document.removeEventListener('pointerdown', handlePointerDown);
+    },
+    [mode, isStepDataPanelOpen, setStepDataPanelOpen, run],
+  );
+
+  useSyncExternalStore(subscribeToOutsideDismiss, () => isStepDataPanelOpen);
 
   return (
     <div
@@ -84,5 +96,5 @@ const TestPanelHost = ({
   );
 };
 
-TestPanelHost.displayName = 'TestPanelHost';
-export { TestPanelHost };
+StepDataPanelHost.displayName = 'StepDataPanelHost';
+export { StepDataPanelHost };
