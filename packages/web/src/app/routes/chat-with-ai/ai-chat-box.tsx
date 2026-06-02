@@ -10,6 +10,7 @@ import {
 } from '@/components/prompt-kit/chat-container';
 import { ScrollButton } from '@/components/prompt-kit/scroll-button';
 import { Button } from '@/components/ui/button';
+import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import {
   ChatStoreProvider,
   useChatStoreContext,
@@ -88,8 +89,6 @@ function ChatBoxContent({
   });
 
   const quickReplies = useChatStoreContext((s) => s.quickReplies);
-  const displayCard = useChatStoreContext((s) => s.displayCard);
-  const hasBlockingCard = displayCard !== null && !displayCard.resolved;
 
   useEffect(() => {
     if (initialConversationId) {
@@ -114,6 +113,10 @@ function ChatBoxContent({
   const lastAssistantMessage = useMemo(
     () => messages.findLast((m) => m.role === 'assistant'),
     [messages],
+  );
+
+  const hasBlockingCard = useChatStoreContext((s) =>
+    chatStoreSelectors.hasBlockingCard({ state: s, lastAssistantMessage }),
   );
 
   const showBanner = credits.creditsExhausted || credits.creditsWarning;
@@ -193,9 +196,6 @@ function ChatBoxContent({
                 isStreaming={isLastStreamingAssistant}
                 isLastMessage={isLastAssistant}
                 onRetry={handleRetry}
-                lastAssistantMessage={
-                  isLastAssistant ? lastAssistantMessage : msg
-                }
               />
             );
           })}
