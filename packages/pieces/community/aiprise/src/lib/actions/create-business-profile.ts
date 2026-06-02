@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { aiprise } from '../common';
-import { aipriseAuth } from '../../';
+import { aipriseAuth } from '../common/auth';
 
 export const createBusinessProfileAction = createAction({
   auth: aipriseAuth,
@@ -158,7 +158,7 @@ export const createBusinessProfileAction = createAction({
     if (tags && tags.length > 0) body['tags'] = tags;
 
     return aiprise.makeRequest<Record<string, unknown>>({
-      apiKey: context.auth.secret_text,
+      auth: context.auth.props,
       method: HttpMethod.POST,
       path: '/verify/create_business_profile',
       body,

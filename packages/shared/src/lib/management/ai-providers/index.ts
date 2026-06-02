@@ -87,8 +87,14 @@ export const CloudflareGatewayProviderConfig = z.object({
 })
 export type CloudflareGatewayProviderConfig = z.infer<typeof CloudflareGatewayProviderConfig>
 
+export const DEFAULT_AZURE_API_VERSION = '2024-10-21'
+
 export const AzureProviderConfig = z.object({
     resourceName: z.string(),
+    apiVersion: z.preprocess(
+        (v) => (typeof v === 'string' && v.trim().length === 0 ? undefined : v),
+        z.string().optional(),
+    ),
 })
 export type AzureProviderConfig = z.infer<typeof AzureProviderConfig>
 
@@ -202,6 +208,7 @@ export const AIProviderWithoutSensitiveData = z.object({
     name: z.string(),
     provider: z.nativeEnum(AIProviderName),
     config: AIProviderConfig,
+    enabledForChat: z.boolean(),
 })
 export type AIProviderWithoutSensitiveData = z.infer<typeof AIProviderWithoutSensitiveData>
 
@@ -220,6 +227,7 @@ export const UpdateAIProviderRequest = z.object({
     displayName: z.string().min(1),
     config: AIProviderConfig.optional(),
     auth: AIProviderAuthConfig.optional(),
+    enabledForChat: z.boolean().optional(),
 })
 export type UpdateAIProviderRequest = z.infer<typeof UpdateAIProviderRequest>
 
@@ -242,6 +250,62 @@ export const AIErrorResponse = z.object({
 })
 
 export type AIErrorResponse = z.infer<typeof AIErrorResponse>
+/**
+ * Resolves the effective provider and model for capability decisions. For direct providers
+ * this is the same pair that came in. For Cloudflare Gateway (which tunnels to a submodel
+ * like "openai/gpt-4"), it returns the underlying provider inferred from the prefix and the
+ * submodel portion of the id.
+ *
+ * Callers can use this to decide which provider-specific capabilities apply (e.g. which
+ * web-search tool builder to use, which advancedOptions schema to render). Unrecognized
+ * prefixes or missing input fall back to the raw inputs so callers never end up with a
+ * wrong-but-confident answer.
+ */
+const OPENAI_CHAT_MODELS = ['gpt-5.5', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-4.1', 'gpt-4.1-mini'] as const
+const ANTHROPIC_CHAT_MODELS = ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5'] as const
+const ANTHROPIC_OPENROUTER_CHAT_MODELS = ['claude-sonnet-4.6', 'claude-opus-4.7', 'claude-haiku-4.5'] as const
+const GOOGLE_CHAT_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] as const
+const X_AI_OPENROUTER_CHAT_MODELS = ['grok-4.20', 'grok-4.1-fast'] as const
+
+export const ALLOWED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, readonly string[]>> = {
+    [AIProviderName.OPENAI]: OPENAI_CHAT_MODELS,
+    [AIProviderName.ANTHROPIC]: ANTHROPIC_CHAT_MODELS,
+    [AIProviderName.GOOGLE]: GOOGLE_CHAT_MODELS,
+    [AIProviderName.ACTIVEPIECES]: [
+        ...ANTHROPIC_OPENROUTER_CHAT_MODELS.map((m) => `${AIProviderName.ANTHROPIC}/${m}`),
+        ...OPENAI_CHAT_MODELS.map((m) => `${AIProviderName.OPENAI}/${m}`),
+        ...GOOGLE_CHAT_MODELS.map((m) => `${AIProviderName.GOOGLE}/${m}`),
+        ...X_AI_OPENROUTER_CHAT_MODELS.map((m) => `x-ai/${m}`),
+    ],
+}
+
+export function getEffectiveProviderAndModel({
+    provider,
+    model,
+}: {
+    provider: string | undefined
+    model: string | undefined
+}): { provider: string | undefined, model: string | undefined } {
+    if (provider !== AIProviderName.CLOUDFLARE_GATEWAY || !model) {
+        return { provider, model }
+    }
+    const split = splitCloudflareGatewayModelId(model)
+    // Prefix must match map keys (lowercase); some gateways/UI send "OpenAI/...".
+    const gatewaySubmodelPrefix = (split.provider ?? '').trim().toLowerCase()
+    const mapped = CF_GATEWAY_SUBMODEL_TO_PROVIDER[gatewaySubmodelPrefix]
+    if (!mapped) {
+        return { provider, model }
+    }
+    return { provider: mapped, model: split.model }
+}
+
+const CF_GATEWAY_SUBMODEL_TO_PROVIDER: Record<string, AIProviderName> = {
+    openai: AIProviderName.OPENAI,
+    anthropic: AIProviderName.ANTHROPIC,
+    'google-ai-studio': AIProviderName.GOOGLE,
+    'google-vertex-ai': AIProviderName.GOOGLE,
+}
+
 /**
  * Splits a Cloudflare Gateway model ID into provider and model, i.e. "google-vertex-ai/google/gemini-2.5-pro" -> { provider: "google-vertex-ai", model: "google/gemini-2.5-pro" }.
  * @param modelId - The model ID to split.
@@ -269,7 +333,8 @@ export function splitCloudflareGatewayModelId(modelId: string): {
             publisher: undefined,
         }
     }
-    const provider = modelId.substring(0, slashIndex)
+    // Normalize first path segment: AI Gateway and docs use lowercase (e.g. "openai/gpt-4o").
+    const provider = modelId.substring(0, slashIndex).trim().toLowerCase()
     const rest = modelId.substring(slashIndex + 1)
 
     if (provider === 'google-vertex-ai') {
@@ -294,4 +359,35 @@ export function splitCloudflareGatewayModelId(modelId: string): {
         model: rest,
         publisher: undefined,
     }
+}
+
+const DEFAULT_MAX_CONTEXT_TOKENS = 128_000
+
+const PROVIDER_MAX_CONTEXT_TOKENS: Partial<Record<AIProviderName, number>> = {
+    [AIProviderName.OPENAI]: 128_000,
+    [AIProviderName.ANTHROPIC]: 200_000,
+    [AIProviderName.GOOGLE]: 1_048_576,
+    [AIProviderName.BEDROCK]: 200_000,
+    [AIProviderName.AZURE]: 128_000,
+    [AIProviderName.OPENROUTER]: 128_000,
+    [AIProviderName.ACTIVEPIECES]: 200_000,
+}
+
+function getMaxContextTokens({ provider }: { provider: AIProviderName | undefined }): number {
+    if (!provider) return DEFAULT_MAX_CONTEXT_TOKENS
+    return PROVIDER_MAX_CONTEXT_TOKENS[provider] ?? DEFAULT_MAX_CONTEXT_TOKENS
+}
+
+export const ACTIVEPIECES_CHAT_TIERS = [
+    { id: 'fast', label: 'Fast', modelId: 'anthropic/claude-opus-4.7', thinkingBudget: 5_000 },
+    { id: 'smart', label: 'Expert', modelId: 'anthropic/claude-opus-4.7', thinkingBudget: 10_000 },
+    { id: 'premium', label: 'Heavy', modelId: 'anthropic/claude-opus-4.7', thinkingBudget: 20_000 },
+] as const
+
+export const DEFAULT_CHAT_TIER_ID = 'smart' as const
+
+export type ActivepiecesChatTier = typeof ACTIVEPIECES_CHAT_TIERS[number]
+
+export const aiProviderUtils = {
+    getMaxContextTokens,
 }
