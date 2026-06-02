@@ -2422,6 +2422,16 @@
         "zod": "4.3.6",
       },
     },
+    "packages/pieces/community/editionguard": {
+      "name": "@activepieces/piece-editionguard",
+      "version": "0.1.0",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "^2.3.0",
+      },
+    },
     "packages/pieces/community/elastic-email": {
       "name": "@activepieces/piece-elastic-email",
       "version": "0.2.1",
@@ -2586,6 +2596,16 @@
         "@activepieces/shared": "workspace:*",
         "dayjs": "1.11.9",
         "tslib": "^2.3.0",
+      },
+    },
+    "packages/pieces/community/feedhive": {
+      "name": "@activepieces/piece-feedhive",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
       },
     },
     "packages/pieces/community/fellow": {
@@ -9169,6 +9189,8 @@
 
     "@activepieces/piece-eden-ai": ["@activepieces/piece-eden-ai@workspace:packages/pieces/community/eden-ai"],
 
+    "@activepieces/piece-editionguard": ["@activepieces/piece-editionguard@workspace:packages/pieces/community/editionguard"],
+
     "@activepieces/piece-elastic-email": ["@activepieces/piece-elastic-email@workspace:packages/pieces/community/elastic-email"],
 
     "@activepieces/piece-elevenlabs": ["@activepieces/piece-elevenlabs@workspace:packages/pieces/community/elevenlabs"],
@@ -9200,6 +9222,8 @@
     "@activepieces/piece-fathom-analytics": ["@activepieces/piece-fathom-analytics@workspace:packages/pieces/community/fathom-analytics"],
 
     "@activepieces/piece-feathery": ["@activepieces/piece-feathery@workspace:packages/pieces/community/feathery"],
+
+    "@activepieces/piece-feedhive": ["@activepieces/piece-feedhive@workspace:packages/pieces/community/feedhive"],
 
     "@activepieces/piece-fellow": ["@activepieces/piece-fellow@workspace:packages/pieces/community/fellow"],
 
@@ -15936,6 +15960,8 @@
     "@activepieces/piece-assemblyai/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "@activepieces/piece-crisp/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
+
+    "@activepieces/piece-editionguard/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 
     "@activepieces/piece-frill/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 
