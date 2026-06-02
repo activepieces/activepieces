@@ -67,9 +67,21 @@ export const AssistantMessage = memo(function AssistantMessage({
       reasoningText: string;
     } | null = null;
     let hasText = false;
-    let lastThinkingStatus: string | null = null;
+    let pendingDescription: string | null = null;
+
+    function flushPendingDescription() {
+      if (pendingDescription) {
+        const thinking = ensureThinking();
+        thinking.steps.push({
+          kind: 'thinking-status',
+          text: pendingDescription,
+        });
+        pendingDescription = null;
+      }
+    }
 
     function flushThinking() {
+      flushPendingDescription();
       if (
         currentThinking &&
         (currentThinking.steps.length > 0 ||
@@ -87,6 +99,13 @@ export const AssistantMessage = memo(function AssistantMessage({
       return currentThinking;
     }
 
+    function pushToolStep(p: AnyToolPart) {
+      const thinking = ensureThinking();
+      const description = pendingDescription;
+      pendingDescription = null;
+      thinking.steps.push({ kind: 'tool', part: p, description });
+    }
+
     for (let i = 0; i < message.parts.length; i++) {
       const p = message.parts[i];
 
@@ -95,6 +114,7 @@ export const AssistantMessage = memo(function AssistantMessage({
         hasText = true;
         result.push({ kind: 'text', text: p.text });
       } else if (p.type === 'reasoning') {
+        flushPendingDescription();
         const thinking = ensureThinking();
         thinking.reasoningText += p.text;
         const trimmed = p.text.trim();
@@ -107,12 +127,8 @@ export const AssistantMessage = memo(function AssistantMessage({
           const input = p.input as { status?: string } | undefined;
           const statusText = (input?.status ?? '').trim();
           if (statusText) {
-            const thinking = ensureThinking();
-            thinking.steps.push({
-              kind: 'thinking-status',
-              text: statusText,
-            });
-            lastThinkingStatus = statusText;
+            flushPendingDescription();
+            pendingDescription = statusText;
           }
           continue;
         }
@@ -131,37 +147,9 @@ export const AssistantMessage = memo(function AssistantMessage({
             flushThinking();
             result.push({ kind: 'batch-progress', data: batchPart });
           }
-          const thinking = ensureThinking();
-          const lastStep = thinking.steps[thinking.steps.length - 1];
-          if (
-            lastThinkingStatus &&
-            lastStep?.kind === 'thinking-status' &&
-            lastStep.text === lastThinkingStatus
-          ) {
-            thinking.steps[thinking.steps.length - 1] = {
-              ...lastStep,
-              toolPart: p,
-            };
-          } else {
-            thinking.steps.push({ kind: 'tool', part: p });
-          }
-          lastThinkingStatus = null;
+          pushToolStep(p);
         } else {
-          const thinking = ensureThinking();
-          const lastStep = thinking.steps[thinking.steps.length - 1];
-          if (
-            lastThinkingStatus &&
-            lastStep?.kind === 'thinking-status' &&
-            lastStep.text === lastThinkingStatus
-          ) {
-            thinking.steps[thinking.steps.length - 1] = {
-              ...lastStep,
-              toolPart: p,
-            };
-          } else {
-            thinking.steps.push({ kind: 'tool', part: p });
-          }
-          lastThinkingStatus = null;
+          pushToolStep(p);
         }
       }
     }
