@@ -30,6 +30,7 @@ type MutationDeps = {
   invalidateRoot: () => void;
   invalidateFolder: (folderId: string) => void;
   clearSelection: () => void;
+  treeItems: TreeItem[];
   unpinItem?: (itemId: string) => void;
 };
 
@@ -249,9 +250,17 @@ export function useAutomationsMutations(deps: MutationDeps) {
       const { flowIds, tableIds } = getSelectedIdsByType(selectedItems);
 
       if (flowIds.length > 0) {
-        Promise.all(flowIds.map((id) => flowsApi.get(id)))
-          .then((flows) => exportFlows(flows))
-          .catch(() => toast.error(t('Failed to export flows')));
+        const flowsById = new Map(
+          deps.treeItems
+            .filter(isFlowTreeItem)
+            .map((item) => [item.id, item.data]),
+        );
+        const flowsToExport = flowIds
+          .map((id) => flowsById.get(id))
+          .filter((flow): flow is PopulatedFlow => !isNil(flow));
+        if (flowsToExport.length > 0) {
+          exportFlows(flowsToExport);
+        }
       }
 
       if (tableIds.length > 0) {
@@ -306,4 +315,10 @@ export function useAutomationsMutations(deps: MutationDeps) {
     isDuplicating,
     isExporting: isExportFlowsPending || isExportingTable,
   };
+}
+
+function isFlowTreeItem(
+  item: TreeItem,
+): item is TreeItem & { data: PopulatedFlow } {
+  return item.type === 'flow' && !isNil(item.data);
 }
