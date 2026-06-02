@@ -164,18 +164,22 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                               </span>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon-xs"
-                                    loading={isLoadingPiece}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      openReconnectDialog();
-                                    }}
-                                    disabled={!hasPermissionToCreateConnection}
-                                  >
-                                    <RefreshCw className="size-3.5" />
-                                  </Button>
+                                  <span className="inline-flex">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon-xs"
+                                      loading={isLoadingPiece}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        openReconnectDialog();
+                                      }}
+                                      disabled={
+                                        !hasPermissionToCreateConnection
+                                      }
+                                    >
+                                      <RefreshCw className="size-3.5" />
+                                    </Button>
+                                  </span>
                                 </TooltipTrigger>
                                 <TooltipContent>
                                   {!hasPermissionToCreateConnection
