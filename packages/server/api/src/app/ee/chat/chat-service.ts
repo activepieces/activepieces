@@ -31,6 +31,8 @@ import { mcpProjectSelection } from '../../mcp/mcp-project-selection'
 import { projectLimitsService } from '../projects/project-plan/project-plan.service'
 import { projectService } from '../../project/project-service'
 
+import { aiUtils } from '../../ai/ai-utils'
+import { flagService } from '../../flags/flag.service'
 import { userService } from '../../user/user-service'
 import { chatCompaction } from './chat-compaction'
 import { ChatConversationEntity } from './chat-conversation-entity'
@@ -233,17 +235,16 @@ export const chatService = (log: FastifyBaseLogger) => ({
                     onFinish: async ({ response, usage }) => {
                         const updatedMessages = [...allMessages, ...response.messages]
                         try {
+                            if (flagService(log).aiCreditsEnabled() && providerConfig.provider === AIProviderName.ACTIVEPIECES && selectedProjectId) {
+                                const credits = aiUtils.calculateCredits(usage)
+                                await projectLimitsService(log).incrementAiUsage(selectedProjectId, credits)
+                            }
+
                             await conversationRepo().update(conversationId, {
                                 messages: updatedMessages,
                                 ...(pendingTitle ? { title: pendingTitle } : {}),
                                 ...(isNil(conversation.modelName) ? { modelName } : {}),
                             })
-
-                            if (providerConfig.provider === AIProviderName.ACTIVEPIECES && selectedProjectId) {
-                                // TODO: replace with proper pricing per model
-                                const credits = Math.ceil((usage.inputTokens + usage.outputTokens) * 10 / 1000)
-                                await projectLimitsService(log).incrementAiUsage(selectedProjectId, credits)
-                            }
                         }
                         catch (saveErr) {
                             log.error({ err: saveErr, conversationId }, 'Failed to persist conversation messages or update usage')

@@ -16,6 +16,10 @@ export const askAI = createAction({
       displayName: 'Prompt',
       required: true,
     }),
+    conversationKey: Property.ShortText({
+      displayName: 'Conversation Key',
+      required: false,
+    }),
     systemPrompt: Property.LongText({
       displayName: 'System Prompt',
       required: false,
@@ -48,7 +52,17 @@ export const askAI = createAction({
     ),
   },
   async run(context) {
-    const { provider, model: modelId, prompt, systemPrompt, creativity, maxOutputTokens, webSearch, webSearchOptions } = context.propsValue;
+    const { provider, model: modelId, prompt, systemPrompt, creativity, maxOutputTokens, webSearch, webSearchOptions, conversationKey } = context.propsValue;
+
+    const storage = context.store;
+    const conversationId = conversationKey
+      ? `ask-ai-conversation:${conversationKey}`
+      : null;
+
+    let conversation: ModelMessage[] | null = null;
+    if (conversationId) {
+      conversation = (await storage.get<ModelMessage[]>(conversationId)) ?? [];
+    }
 
     const model = await createAIModel({
       provider: provider as AIProviderName,
@@ -70,6 +84,7 @@ export const askAI = createAction({
     const response = await generateText({
       model,
       messages: [
+        ...(conversation ?? []),
         {
           role: 'user',
           content: prompt,
@@ -98,6 +113,20 @@ export const askAI = createAction({
       }).catch(err => {
         console.error('Failed to report AI usage', err)
       })
+    }
+
+    if (conversationId && conversation) {
+      conversation.push({
+        role: 'user',
+        content: prompt,
+      });
+
+      conversation.push({
+        role: 'assistant',
+        content: response.text ?? '',
+      });
+
+      await storage.put(conversationId, conversation);
     }
 
     const includeSources = webSearch && webSearchOptions?.includeSources;

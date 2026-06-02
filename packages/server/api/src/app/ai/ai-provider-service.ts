@@ -29,6 +29,8 @@ import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
 import { aiProviders } from './providers'
 
+import { aiUtils } from './ai-utils'
+
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
 
 const modelsCache = new Map<string, AIProviderModel[]>()
@@ -293,8 +295,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         if (!flagService(log).aiCreditsEnabled()) {
             return
         }
-        // TODO: replace with proper pricing per model
-        const credits = Math.ceil((usage.inputTokens + usage.outputTokens) * 10 / 1000)
+        const credits = aiUtils.calculateCredits(usage)
         await projectLimitsService(log).incrementAiUsage(projectId, credits)
     },
 })
