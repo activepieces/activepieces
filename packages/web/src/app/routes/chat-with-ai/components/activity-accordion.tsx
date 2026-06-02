@@ -272,7 +272,12 @@ function ToolCard({
   isRunning: boolean;
 }) {
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const input = isObject(part.input) ? part.input : undefined;
+  const rawInput = isObject(part.input) ? part.input : undefined;
+  const input = useMemo(() => {
+    if (!rawInput) return undefined;
+    const { title: _t, description: _d, ...rest } = rawInput;
+    return Object.keys(rest).length > 0 ? rest : undefined;
+  }, [rawInput]);
   const output = chatPartUtils.extractToolOutputText(part);
   const hasInput = input && Object.keys(input).length > 0;
   const hasOutput = Boolean(output);
@@ -282,8 +287,8 @@ function ToolCard({
     [detailsOpen, output],
   );
   const pieceNames = useMemo(
-    () => chatPartUtils.extractPieceNames(input),
-    [input],
+    () => chatPartUtils.extractPieceNames(rawInput),
+    [rawInput],
   );
   const { summaries: pieceSummaries } = piecesHooks.usePieceSummariesByNames({
     names: pieceNames,
@@ -293,8 +298,10 @@ function ToolCard({
   const primaryPiece = pieceSummaries.find((p) => p.logoUrl);
   const resolvedDescription =
     description ??
-    (input && typeof input.description === 'string' && input.description
-      ? input.description
+    (rawInput &&
+    typeof rawInput.description === 'string' &&
+    rawInput.description
+      ? rawInput.description
       : null);
 
   const chip = (
