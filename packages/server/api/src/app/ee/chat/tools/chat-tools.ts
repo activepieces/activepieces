@@ -197,7 +197,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
         case 'ap_discover_action_auth': {
             return findConnectionsForPiece({ pieceName: toolInput.pieceName as string, projects, platformId, log })
         }
-        case 'ap_run_one_time_action': {
+        case 'ap_execute_action': {
             const pieceName = toolInput.pieceName as string
             const actionName = toolInput.actionName as string
             const connectionExternalId = toolInput.connectionExternalId as string | undefined

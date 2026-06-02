@@ -49,7 +49,6 @@ export const ActionBase = z.object({
   name: z.string(),
   displayName: z.string(),
   description: z.string(),
-  llmDescription: z.string().optional(),
   props: PiecePropertyMap,
   requireAuth: z.boolean(),
   errorHandlingOptions: ErrorHandlingOptionsParam.optional(),
@@ -59,7 +58,6 @@ export type ActionBase = {
   name: string,
   displayName: string,
   description: string,
-  llmDescription?: string,
   props: PiecePropertyMap,
   requireAuth: boolean;
   errorHandlingOptions?: ErrorHandlingOptionsParam;
@@ -69,7 +67,6 @@ export const TriggerBase = z.object({
   name: z.string(),
   displayName: z.string(),
   description: z.string(),
-  llmDescription: z.string().optional(),
   props: PiecePropertyMap,
   errorHandlingOptions: ErrorHandlingOptionsParam.optional(),
   type: z.nativeEnum(TriggerStrategy),
