@@ -1,10 +1,10 @@
 {
-  "Lookup product information by barcode number": "Lookup product information by barcode number",
-  "API Key for Barcode Lookup": "API Key for Barcode Lookup",
-  "Search By Barcode": "Search By Barcode",
-  "Search for product information by barcode": "Search for product information by barcode",
+  "Lookup product information by barcode number": "按条码查找产品信息",
+  "API Key for Barcode Lookup": "条码查询的 API 密钥",
+  "Search By Barcode": "按条形码搜索",
+  "Search for product information by barcode": "按条形码搜索产品信息",
   "Barcode": "Barcode",
-  "Formatted Output": "Formatted Output",
-  "The barcode/UPC/EAN number to search for": "The barcode/UPC/EAN number to search for",
-  "Return results in a clean, easy to read format": "Return results in a clean, easy to read format"
+  "Formatted Output": "格式化输出",
+  "The barcode/UPC/EAN number to search for": "要搜索的条形码/UPC/北非号码",
+  "Return results in a clean, easy to read format": "返回的结果是干净、易读的格式"
 }
