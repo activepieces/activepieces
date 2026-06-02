@@ -299,99 +299,15 @@ describe('chunkReducer', () => {
     });
   });
 
-  describe('data parts', () => {
-    it('adds non-transient data parts to message', () => {
+  describe('unknown chunk types are ignored', () => {
+    it('ignores data-* chunks (no longer handled by chunk-reducer)', () => {
       const state = createAndApply([
         {
           type: 'data-connection-picker',
           data: { connections: [] },
         } as unknown as UIMessageChunk,
       ]);
-      expect(state.message.parts).toHaveLength(1);
-    });
-
-    it('skips transient data parts from message', () => {
-      const state = createAndApply([
-        {
-          type: 'data-session-title',
-          data: { title: 'Test' },
-          transient: true,
-        } as unknown as UIMessageChunk,
-      ]);
       expect(state.message.parts).toHaveLength(0);
-    });
-
-    it('upserts batch-progress data parts by id', () => {
-      const state = chunkReducer.createStreamingState({ messageId: 'msg-1' });
-
-      chunkReducer.applyChunks({
-        state,
-        chunks: [
-          {
-            type: 'data-batch-progress',
-            id: 'batch-1',
-            data: { label: 'Sending', total: 3, completed: 0, succeeded: 0, failed: 0, done: false, results: [] },
-          } as unknown as UIMessageChunk,
-        ],
-      });
-      expect(state.message.parts).toHaveLength(1);
-
-      chunkReducer.applyChunks({
-        state,
-        chunks: [
-          {
-            type: 'data-batch-progress',
-            id: 'batch-1',
-            data: { label: 'Sending', total: 3, completed: 2, succeeded: 2, failed: 0, done: false, results: [] },
-          } as unknown as UIMessageChunk,
-        ],
-      });
-      expect(state.message.parts).toHaveLength(1);
-      const data = (state.message.parts[0] as unknown as { data: { completed: number } }).data;
-      expect(data.completed).toBe(2);
-    });
-
-    it('appends separate batch-progress parts with different ids', () => {
-      const state = chunkReducer.createStreamingState({ messageId: 'msg-1' });
-
-      chunkReducer.applyChunks({
-        state,
-        chunks: [
-          {
-            type: 'data-batch-progress',
-            id: 'batch-1',
-            data: { label: 'First', total: 1, completed: 1, succeeded: 1, failed: 0, done: true, results: [] },
-          } as unknown as UIMessageChunk,
-          {
-            type: 'data-batch-progress',
-            id: 'batch-2',
-            data: { label: 'Second', total: 1, completed: 0, succeeded: 0, failed: 0, done: false, results: [] },
-          } as unknown as UIMessageChunk,
-        ],
-      });
-      expect(state.message.parts).toHaveLength(2);
-    });
-  });
-
-  describe('extractDataParts', () => {
-    it('extracts data-* chunks from a batch', () => {
-      const chunks: UIMessageChunk[] = [
-        makeChunk({ type: 'text-start', id: 't1' }),
-        {
-          type: 'data-session-title',
-          data: { title: 'Hello' },
-          transient: true,
-        } as unknown as UIMessageChunk,
-        makeChunk({ type: 'text-delta', id: 't1', delta: 'hi' }),
-        {
-          type: 'data-quick-replies',
-          data: { replies: ['a', 'b'] },
-        } as unknown as UIMessageChunk,
-      ];
-      const parts = chunkReducer.extractDataParts({ chunks });
-      expect(parts).toHaveLength(2);
-      expect(parts[0].type).toBe('data-session-title');
-      expect(parts[1].type).toBe('data-quick-replies');
     });
   });
 

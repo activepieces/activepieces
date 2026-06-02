@@ -168,11 +168,7 @@ function persistedPartToUIPart(
         errorText: part.errorText ?? 'Tool call failed',
       };
     case PersistedChatPartType.BATCH_PROGRESS:
-      return {
-        type: 'data-batch-progress',
-        id: `batch-${idx}`,
-        data: part.data,
-      } as ChatUIMessage['parts'][number];
+      return { type: 'text', text: '' } as ChatUIMessage['parts'][number];
     default: {
       const _exhaustive: never = part;
       throw new Error(
@@ -242,9 +238,6 @@ export const chatUtils = {
     formatToolName({ part }),
   formatToolActionName: ({ part }: { part: AnyToolPart }) =>
     formatToolName({ part, includeContext: false }),
-  extractToolContext,
-  stripPiecePrefix,
-  humanizePieceName,
   mapHistoryToUIMessages,
   extractQuickRepliesFromHistory,
 };
