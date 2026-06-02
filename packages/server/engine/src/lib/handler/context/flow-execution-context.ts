@@ -8,6 +8,7 @@ import {
     FileType,
     FlowActionType,
     FlowRunStatus,
+    flowStructureUtil,
     GenericStepOutput,
     isNil,
     LogSliceRef,
@@ -17,6 +18,7 @@ import {
     StepOutput,
     StepOutputStatus,
     StepOutputType,
+    TriggerStepOutput,
 } from '@activepieces/shared'
 import { engineFileApi } from '../../engine-file-api'
 import { loggingUtils } from '../../helper/logging-utils'
@@ -134,15 +136,37 @@ export class FlowExecutorContext {
             const sliced = this.slicingEnabled
                 ? await maybeSliceOutput(truncated.output, this.engineApi)
                 : undefined
-            finalized = new GenericStepOutput({
-                type: truncated.type,
-                status: truncated.status,
-                input: truncated.input,
-                output: sliced?.ref ?? truncated.output,
-                outputType: sliced ? StepOutputType.SLICE : undefined,
-                duration: truncated.duration,
-                errorMessage: truncated.errorMessage,
-            })
+            if (flowStructureUtil.isTrigger(truncated.type)) {
+                const triggerStep = truncated as TriggerStepOutput
+                const payloadSliced = await maybeSlicePayload({
+                    payload: triggerStep.payload,
+                    output: triggerStep.output,
+                    outputSliced: sliced,
+                    engineApi: this.slicingEnabled ? this.engineApi : undefined,
+                })
+                finalized = new TriggerStepOutput({
+                    type: truncated.type,
+                    status: truncated.status,
+                    input: truncated.input,
+                    payload: payloadSliced?.ref ?? triggerStep.payload,
+                    payloadType: payloadSliced ? StepOutputType.SLICE : triggerStep.payloadType,
+                    output: sliced?.ref ?? truncated.output,
+                    outputType: sliced ? StepOutputType.SLICE : undefined,
+                    duration: truncated.duration,
+                    errorMessage: truncated.errorMessage,
+                })
+            }
+            else {
+                finalized = new GenericStepOutput({
+                    type: truncated.type,
+                    status: truncated.status,
+                    input: truncated.input,
+                    output: sliced?.ref ?? truncated.output,
+                    outputType: sliced ? StepOutputType.SLICE : undefined,
+                    duration: truncated.duration,
+                    errorMessage: truncated.errorMessage,
+                })
+            }
         }
         const steps = executionJournal.upsertStep({ stepName, stepOutput: finalized, path: this.currentPath.path, steps: this.steps })
         return new FlowExecutorContext({
@@ -228,6 +252,13 @@ async function maybeSliceOutput(value: unknown, engineApi?: EngineApiConfig): Pr
     return { ref: { fileId, size, url: readUrl } }
 }
 
+async function maybeSlicePayload({ payload, output, outputSliced, engineApi }: MaybeSlicePayloadParams): Promise<{ ref: LogSliceRef } | undefined> {
+    if (payload === output && !isNil(outputSliced)) {
+        return outputSliced
+    }
+    return maybeSliceOutput(payload, engineApi)
+}
+
 async function materializeStep(step: StepOutput, engineApi: EngineApiConfig | undefined, cache: Map<string, Promise<unknown>>): Promise<unknown> {
     if (step.outputType !== StepOutputType.SLICE) {
         return step.output
@@ -286,4 +317,11 @@ export type EngineApiConfig = {
 export type FlowExecutorContextInit = {
     engineApi?: EngineApiConfig
     slicingEnabled?: boolean
+}
+
+type MaybeSlicePayloadParams = {
+    payload: unknown
+    output: unknown
+    outputSliced: { ref: LogSliceRef } | undefined
+    engineApi?: EngineApiConfig
 }

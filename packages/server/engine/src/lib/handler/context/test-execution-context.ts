@@ -10,6 +10,7 @@ import {
     RouterStepOutput,
     spreadIfDefined,
     StepOutputStatus,
+    TriggerStepOutput,
 } from '@activepieces/shared'
 import { createPropsResolver } from '../../variables/props-resolver'
 import { EngineConstants } from './engine-constants'
@@ -79,14 +80,20 @@ export const testExecutionContext = {
                 }
                 case FlowActionType.PIECE:
                 case FlowActionType.CODE:
-                case FlowTriggerType.EMPTY:
-                case FlowTriggerType.PIECE:
                     flowExecutionContext = await flowExecutionContext.upsertStep(step.name, GenericStepOutput.create({
                         input: {},
                         type: stepType,
                         status: StepOutputStatus.SUCCEEDED,
                         ...spreadIfDefined('output', sampleData?.[step.name]),
                     }))
+                    break
+                case FlowTriggerType.EMPTY:
+                case FlowTriggerType.PIECE:
+                    flowExecutionContext = await flowExecutionContext.upsertStep(step.name, TriggerStepOutput.init({
+                        type: stepType,
+                        status: StepOutputStatus.SUCCEEDED,
+                        payload: sampleData?.[step.name],
+                    }).setOutput(sampleData?.[step.name]))
                     break
             }
         }

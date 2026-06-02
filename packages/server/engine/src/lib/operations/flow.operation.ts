@@ -11,7 +11,6 @@ import {
     FlowActionType,
     FlowRunStatus,
     flowStructureUtil,
-    GenericStepOutput,
     isNil,
     JobPayload,
     LoopStepOutput,
@@ -21,6 +20,7 @@ import {
     StepOutputStatus,
     TriggerHookType,
     TriggerPayload,
+    TriggerStepOutput,
     tryCatch,
 } from '@activepieces/shared'
 import { engineFileApi } from '../engine-file-api'
@@ -107,10 +107,10 @@ async function buildFailedTriggerContext({ input, baseContext, error }: BuildFai
     const trigger = input.flowVersion.trigger
     const message = utils.formatExecutionError(error)
     const triggerPayload = input.executionType === ExecutionType.BEGIN ? input.triggerPayload : undefined
-    const failedTriggerOutput = GenericStepOutput.create({
+    const failedTriggerOutput = TriggerStepOutput.init({
         type: trigger.type,
         status: StepOutputStatus.FAILED,
-        input: triggerPayload ?? {},
+        payload: triggerPayload ?? {},
     }).setErrorMessage(message)
     return (await baseContext.upsertStep(trigger.name, failedTriggerOutput)).setVerdict({
         status: FlowRunStatus.FAILED,
@@ -124,13 +124,13 @@ async function buildFailedTriggerContext({ input, baseContext, error }: BuildFai
 
 async function getFlowExecutionState(input: ResolvedExecuteFlowOperation, constants: EngineConstants, flowContext: FlowExecutorContext): Promise<FlowExecutorContext> {
     if (input.executionType === ExecutionType.BEGIN) {
-        const newPayload = await runOrReturnPayload(input, constants)
+        const { rawPayload, output } = await runOrReturnPayload(input, constants)
         return flowContext.upsertStep(input.flowVersion.trigger.name,
-            GenericStepOutput.create({
+            TriggerStepOutput.init({
                 type: input.flowVersion.trigger.type,
                 status: StepOutputStatus.SUCCEEDED,
-                input: {},
-            }).setOutput(newPayload))
+                payload: rawPayload,
+            }).setOutput(output))
     }
     flowContext = flowContext.addTags(input.executionState.tags)
     const isWaitpointResume = input.resumeReason === ResumeReason.WAITPOINT
@@ -145,9 +145,10 @@ async function getFlowExecutionState(input: ResolvedExecuteFlowOperation, consta
     return flowContext
 }
 
-async function runOrReturnPayload(input: ResolvedBeginExecuteFlowOperation, constants: EngineConstants): Promise<TriggerPayload> {
+async function runOrReturnPayload(input: ResolvedBeginExecuteFlowOperation, constants: EngineConstants): Promise<TriggerExecutionResult> {
+    const rawPayload = input.triggerPayload as TriggerPayload
     if (!input.executeTrigger) {
-        return input.triggerPayload as TriggerPayload
+        return { rawPayload, output: rawPayload }
     }
     const newPayload = await triggerHelper.executeTrigger({
         params: {
@@ -155,11 +156,11 @@ async function runOrReturnPayload(input: ResolvedBeginExecuteFlowOperation, cons
             hookType: TriggerHookType.RUN,
             test: false,
             webhookUrl: '',
-            triggerPayload: input.triggerPayload as TriggerPayload,
+            triggerPayload: rawPayload,
         },
         constants,
     }) as ExecuteTriggerResponse<TriggerHookType.RUN>
-    return newPayload.output[0] as TriggerPayload
+    return { rawPayload, output: newPayload.output[0] as TriggerPayload }
 }
 
 
@@ -264,4 +265,9 @@ type IsStepRestorableParams = {
 type InsertStepsParams = {
     stepOutput: StepOutput
     isWaitpointResume: boolean
+}
+
+type TriggerExecutionResult = {
+    rawPayload: TriggerPayload
+    output: TriggerPayload
 }

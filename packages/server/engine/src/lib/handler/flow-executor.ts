@@ -1,5 +1,5 @@
 import { performance } from 'node:perf_hooks'
-import { EngineGenericError, ExecutionType, FlowAction, FlowActionType, FlowRunStatus, FlowTrigger, GenericStepOutput, isNil, StepOutputStatus } from '@activepieces/shared'
+import { EngineGenericError, ExecutionType, FlowAction, FlowActionType, FlowRunStatus, flowStructureUtil, FlowTrigger, GenericStepOutput, isNil, StepOutputStatus, TriggerStepOutput } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
 import { loggingUtils } from '../helper/logging-utils'
@@ -128,14 +128,21 @@ const applyLogSizeLimitIfExceeded = async (
     if (loggingUtils.isWithinSizeLimit(flowExecutionContext.steps)) {
         return flowExecutionContext
     }
-    const failed = await flowExecutionContext
-        .upsertStep(action.name, GenericStepOutput.create({
-            input: flowExecutionContext.getStepOutput(action.name)?.input,
+    const errorMessage = `Flow run data size exceeded the maximum allowed size of ${loggingUtils.maxLogSizeMb} MB`
+    const existing = flowExecutionContext.getStepOutput(action.name)
+    const failedOutput = flowStructureUtil.isTrigger(action.type)
+        ? TriggerStepOutput.init({
+            type: action.type,
+            status: StepOutputStatus.FAILED,
+            payload: (existing as TriggerStepOutput | undefined)?.payload,
+        }).setErrorMessage(errorMessage)
+        : GenericStepOutput.create({
+            input: existing?.input,
             type: action.type,
             status: StepOutputStatus.FAILED,
             output: undefined,
-        })
-            .setErrorMessage(`Flow run data size exceeded the maximum allowed size of ${loggingUtils.maxLogSizeMb} MB`))
+        }).setErrorMessage(errorMessage)
+    const failed = await flowExecutionContext.upsertStep(action.name, failedOutput)
     return failed.setVerdict({
         status: FlowRunStatus.LOG_SIZE_EXCEEDED,
         failedStep: {

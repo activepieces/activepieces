@@ -20,13 +20,16 @@ import {
     isNil,
     JobPayload,
     LATEST_JOB_DATA_SCHEMA_VERSION,
+    LogSliceRef,
     PlatformId,
     ProjectId,
     ResumeReason,
     RunEnvironment,
     SampleDataFileType,
     SeekPage,
+    StepOutput,
     StepOutputStatus,
+    StepOutputType,
     StreamStepProgress,
     WorkerJobType,
 } from '@activepieces/shared'
@@ -179,7 +182,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     return addToQueue({
                         flowRun: updatedFlowRun,
                         platformId,
-                        payload: triggerStep.input,
+                        payload: await readTriggerPayload({ step: triggerStep, projectId: oldFlowRun.projectId, log }),
                         streamStepProgress: StreamStepProgress.NONE,
                         executeTrigger: true,
                         executionType: ExecutionType.BEGIN,
@@ -203,7 +206,9 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 )
                 const triggerStep = oldFlowRun.steps?.[latestFlowVersion.trigger.name]
                 const triggerFailed = triggerStep?.status === StepOutputStatus.FAILED
-                const payload = triggerFailed ? triggerStep?.input : triggerStep?.output
+                const payload = triggerFailed
+                    ? await readTriggerPayload({ step: triggerStep, projectId: oldFlowRun.projectId, log })
+                    : triggerStep?.output
                 return this.start({
                     flowId: oldFlowRun.flowId,
                     payload,
@@ -691,6 +696,25 @@ export function isOutsideRetentionWindow(createdTime: string, retentionDays: num
     return apDayjs(createdTime).add(retentionDays, 'day').isBefore(apDayjs())
 }
 
+async function readTriggerPayload({ step, projectId, log }: ReadTriggerPayloadParams): Promise<unknown> {
+    if (isNil(step) || !('payload' in step)) {
+        return undefined
+    }
+    if (step.payloadType !== StepOutputType.SLICE) {
+        return step.payload
+    }
+    const ref = step.payload as LogSliceRef
+    const file = await fileService(log).getDataOrUndefined({
+        projectId,
+        fileId: ref.fileId,
+        type: FileType.FLOW_RUN_LOG_SLICE,
+    })
+    if (isNil(file)) {
+        return undefined
+    }
+    return JSON.parse(file.data.toString('utf-8'))
+}
+
 type CreateParams = {
     projectId: ProjectId
     flowVersionId: FlowVersionId
@@ -700,6 +724,12 @@ type CreateParams = {
     stepNameToTest?: string
     flowId: FlowId
     environment: RunEnvironment
+}
+
+type ReadTriggerPayloadParams = {
+    step: StepOutput | undefined
+    projectId: ProjectId
+    log: FastifyBaseLogger
 }
 
 type ListParams = {

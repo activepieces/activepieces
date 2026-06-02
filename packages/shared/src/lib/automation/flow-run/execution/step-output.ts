@@ -109,9 +109,9 @@ export type BaseStepOutput = GenericStepOutput<FlowActionType | FlowTriggerType,
 export type StepOutput =
   | GenericStepOutput<FlowActionType.LOOP_ON_ITEMS, LoopStepResult>
   | GenericStepOutput<FlowActionType.ROUTER, unknown>
+  | TriggerStepOutput
   | GenericStepOutput<
-  | Exclude<FlowActionType, FlowActionType.LOOP_ON_ITEMS | FlowActionType.ROUTER>
-  | FlowTriggerType,
+  Exclude<FlowActionType, FlowActionType.LOOP_ON_ITEMS | FlowActionType.ROUTER>,
   unknown
   >
 
@@ -206,6 +206,51 @@ LoopStepResult
                 index: this.output?.index,
                 iterations: [...(this.output?.iterations ?? []), {}],
             },
+        })
+    }
+}
+
+type TriggerStepOutputParams = BaseStepOutputParams<FlowTriggerType, unknown> & {
+    payload: unknown
+    payloadType?: StepOutputType
+}
+
+export class TriggerStepOutput extends GenericStepOutput<FlowTriggerType, unknown> {
+    payload: unknown
+    payloadType?: StepOutputType
+
+    constructor(step: TriggerStepOutputParams) {
+        super(step)
+        this.payload = step.payload
+        this.payloadType = step.payloadType
+    }
+
+    setPayload(payload: unknown): TriggerStepOutput {
+        return new TriggerStepOutput({ ...this, payload })
+    }
+
+    override setOutput(output: unknown): TriggerStepOutput {
+        return new TriggerStepOutput({ ...this, output })
+    }
+
+    override setStatus(status: StepOutputStatus): TriggerStepOutput {
+        return new TriggerStepOutput({ ...this, status })
+    }
+
+    override setErrorMessage(errorMessage: unknown): TriggerStepOutput {
+        return new TriggerStepOutput({ ...this, errorMessage })
+    }
+
+    override setDuration(duration: number): TriggerStepOutput {
+        return new TriggerStepOutput({ ...this, duration })
+    }
+
+    static init({ type, status, payload }: { type: FlowTriggerType, status: StepOutputStatus, payload: unknown }): TriggerStepOutput {
+        return new TriggerStepOutput({
+            type,
+            status,
+            input: undefined,
+            payload,
         })
     }
 }
