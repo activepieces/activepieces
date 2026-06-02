@@ -85,14 +85,6 @@ export const sendEbookDownloadLinks = createAction({
       watermarkPhone: watermark_phone ?? undefined,
     });
 
-    return {
-      transaction_id: transaction.id ?? null,
-      download_link: transaction.download_link ?? null,
-      resource_id: transaction.resource_id ?? null,
-      customer_email: transaction.customer_email ?? null,
-      order_number: transaction.order_number ?? null,
-      status: transaction.status ?? null,
-      created_at: transaction.created_at ?? null,
-    };
+    return transaction
   },
 });
