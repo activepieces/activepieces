@@ -41,6 +41,7 @@ export const ProjectPlan = z.object({
     name: z.string(),
     piecesFilterType: z.nativeEnum(PiecesFilterType),
     pieces: z.array(z.string()),
+    aiCreditsUsed: z.number().default(0),
 })
 
 export type ProjectPlan = z.infer<typeof ProjectPlan>
@@ -70,6 +71,7 @@ const projectAnalytics = z.object({
     activeUsers: z.number(),
     totalFlows: z.number(),
     activeFlows: z.number(),
+    aiCreditsUsed: z.number(),
 })
 export type Project = z.infer<typeof Project>
 

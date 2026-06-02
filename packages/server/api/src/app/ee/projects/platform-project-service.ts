@@ -276,14 +276,16 @@ async function enrichProjects(
     ])
 
     return projects.map(project => {
+        const plan = plansMap.get(project.id)!
         return {
             ...project,
-            plan: plansMap.get(project.id)!,
+            plan,
             analytics: {
                 activeFlows: activeFlowsMap.get(project.id) ?? 0,
                 totalFlows: totalFlowsMap.get(project.id) ?? 0,
                 totalUsers: totalUsersMap.get(project.id) ?? 0,
                 activeUsers: activeUsersMap.get(project.id) ?? 0,
+                aiCreditsUsed: plan.aiCreditsUsed,
             },
         }
     })

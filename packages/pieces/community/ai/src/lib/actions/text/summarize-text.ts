@@ -1,6 +1,7 @@
 import { AIProviderName } from '@activepieces/shared';
-import { createAIModel } from '../../common/ai-sdk';
+import { createAIModel, reportUsage } from '../../common/ai-sdk';
 import { createAction, Property } from '@activepieces/pieces-framework';
+
 import { generateText } from 'ai';
 import { aiProps } from '../../common/props';
 
@@ -58,6 +59,20 @@ export const summarizeText = createAction({
       }
     });
 
+    if (provider === AIProviderName.ACTIVEPIECES) {
+      await reportUsage({
+        engineToken: context.server.token,
+        apiUrl: context.server.apiUrl,
+        usage: {
+          inputTokens: response.usage.promptTokens,
+          outputTokens: response.usage.completionTokens,
+        },
+      }).catch(err => {
+        console.error('Failed to report AI usage', err)
+      })
+    }
+
     return response.text ?? '';
   },
 });
+

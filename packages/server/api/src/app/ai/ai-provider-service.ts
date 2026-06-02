@@ -19,7 +19,9 @@ import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openrouter-api'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
+import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
 import { flagService } from '../flags/flag.service'
+
 import { encryptUtils } from '../helper/encryption'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { SystemJobName } from '../helper/system-jobs/common'
@@ -286,7 +288,17 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
 
         return result
     },
+
+    async reportUsage({ platformId, projectId, usage }: { platformId: string, projectId: string, usage: { inputTokens: number, outputTokens: number } }): Promise<void> {
+        if (!flagService(log).aiCreditsEnabled()) {
+            return
+        }
+        // TODO: replace with proper pricing per model
+        const credits = Math.ceil((usage.inputTokens + usage.outputTokens) * 10 / 1000)
+        await projectLimitsService(log).incrementAiUsage(projectId, credits)
+    },
 })
+
 
 type GetOrCreateActivepiecesConfigResponse = {
     platformId: PlatformId

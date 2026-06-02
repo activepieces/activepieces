@@ -1,12 +1,9 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import { ModelMessage, generateText, stepCountIs } from 'ai';
-import { AIProviderName, getEffectiveProviderAndModel, spreadIfDefined } from '@activepieces/shared';
+import { AIProviderName } from '@activepieces/shared';
+import { createAIModel, reportUsage } from '../../common/ai-sdk';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { generateText, ModelMessage } from 'ai';
 import { aiProps } from '../../common/props';
-import { createAIModel } from '../../common/ai-sdk';
-import { buildWebSearchOptionsProperty, buildWebSearchConfig, WebSearchOptions } from '../../common/web-search';
+import { buildWebSearchOptionsProperty, buildWebSearchConfig } from '../../common/web-search';
 
 export const askAI = createAction({
   name: 'askAi',
@@ -19,8 +16,8 @@ export const askAI = createAction({
       displayName: 'Prompt',
       required: true,
     }),
-    conversationKey: Property.ShortText({
-      displayName: 'Conversation Key',
+    systemPrompt: Property.LongText({
+      displayName: 'System Prompt',
       required: false,
     }),
     creativity: Property.Number({
@@ -51,23 +48,8 @@ export const askAI = createAction({
     ),
   },
   async run(context) {
-    const provider = context.propsValue.provider;
-    const modelId = context.propsValue.model;
-    const storage = context.store;
-    const webSearchEnabled = !!context.propsValue.webSearch;
-    const webSearchOptions = (context.propsValue.webSearchOptions ?? {}) as WebSearchOptions;
+    const { provider, model: modelId, prompt, systemPrompt, creativity, maxOutputTokens, webSearch, webSearchOptions } = context.propsValue;
 
-    const { tools: webSearchTools, providerOptions } = buildWebSearchConfig({
-      provider,
-      model: modelId,
-      webSearchEnabled,
-      webSearchOptions,
-    });
-
-    const { provider: effectiveProvider } = getEffectiveProviderAndModel({
-      provider: provider as AIProviderName,
-      model: modelId,
-    });
     const model = await createAIModel({
       provider: provider as AIProviderName,
       modelId,
@@ -76,59 +58,53 @@ export const askAI = createAction({
       projectId: context.project.id,
       flowId: context.flows.current.id,
       runId: context.run.id,
-      ...spreadIfDefined('openaiResponsesModel', webSearchEnabled && effectiveProvider === AIProviderName.OPENAI ? true : undefined),
     });
 
-    const conversationKey = context.propsValue.conversationKey
-      ? `ask-ai-conversation:${context.propsValue.conversationKey}`
-      : null;
-
-    let conversation = null;
-    if (conversationKey) {
-      conversation = (await storage.get<ModelMessage[]>(conversationKey)) ?? [];
-      if (!conversation) {
-        await storage.put(conversationKey, { messages: [] });
-      }
-    }
-
-    const stopWhen = webSearchTools
-      ? stepCountIs(webSearchOptions?.maxUses ?? 5)
-      : undefined;
+    const { webSearchTools, providerOptions: webSearchProviderOptions } = await buildWebSearchConfig({
+      webSearch,
+      webSearchOptions,
+      engineToken: context.server.token,
+      apiUrl: context.server.apiUrl,
+    });
 
     const response = await generateText({
       model,
       messages: [
-        ...(conversation ?? []),
         {
           role: 'user',
-          content: context.propsValue.prompt,
+          content: prompt,
         },
       ],
-      maxOutputTokens: context.propsValue.maxOutputTokens,
-      temperature: (context.propsValue.creativity ?? 100) / 100,
+      system: systemPrompt,
+      maxOutputTokens,
+      temperature: (creativity ?? 100) / 100,
       tools: webSearchTools,
-      stopWhen,
-      providerOptions,
+      providerOptions: {
+        ...webSearchProviderOptions,
+        [provider]: {
+          ...(provider === AIProviderName.OPENAI ? { reasoning_effort: 'minimal' } : {}),
+        }
+      }
     });
 
-    conversation?.push({
-      role: 'user',
-      content: context.propsValue.prompt,
-    });
-
-    conversation?.push({
-      role: 'assistant',
-      content: response.text ?? '',
-    });
-
-    if (conversationKey) {
-      await storage.put(conversationKey, conversation);
+    if (provider === AIProviderName.ACTIVEPIECES) {
+      await reportUsage({
+        engineToken: context.server.token,
+        apiUrl: context.server.apiUrl,
+        usage: {
+          inputTokens: response.usage.promptTokens,
+          outputTokens: response.usage.completionTokens,
+        },
+      }).catch(err => {
+        console.error('Failed to report AI usage', err)
+      })
     }
 
-    const includeSources = webSearchTools && webSearchOptions.includeSources;
-    if (includeSources) {
-      return { text: response.text, sources: response.sources };
+    const includeSources = webSearch && webSearchOptions?.includeSources;
+    if (includeSources && 'sources' in response) {
+      return { text: response.text, sources: (response as any).sources };
     }
-    return response.text;
+
+    return response.text ?? '';
   },
 });

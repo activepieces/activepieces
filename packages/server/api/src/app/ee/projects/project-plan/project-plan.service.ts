@@ -67,6 +67,11 @@ export const projectLimitsService = (_log: FastifyBaseLogger) => ({
         return plansMap
     },
 
+    async incrementAiUsage(projectId: string, credits: number): Promise<void> {
+        await projectPlanRepo().increment({ projectId }, 'aiCreditsUsed', credits)
+    },
+
 })
+
 
 

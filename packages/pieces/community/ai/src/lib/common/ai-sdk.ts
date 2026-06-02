@@ -23,7 +23,19 @@ async function fetchProviderConfig(params: { provider: AIProviderName, engineTok
     return body
 }
 
+export async function reportUsage(params: { engineToken: string, apiUrl: string, usage: { inputTokens: number, outputTokens: number } }) {
+    await httpClient.sendRequest({
+        method: HttpMethod.POST,
+        url: `${params.apiUrl}v1/ai-providers/usage`,
+        headers: {
+            Authorization: `Bearer ${params.engineToken}`,
+        },
+        body: params.usage,
+    })
+}
+
 type CreateAIModelParams<IsImage extends boolean = false> = {
+
     provider: AIProviderName;
     modelId: string;
     engineToken: string;

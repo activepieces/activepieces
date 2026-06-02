@@ -45,18 +45,21 @@ const SidebarUsageLimits = React.memo(() => {
     );
   }
 
+  const aiCreditsUsed = project?.analytics?.aiCreditsUsed ?? 0;
+
   return (
     <div className="flex flex-col w-full p-2.5 bg-background rounded-md border">
       <div className="flex flex-col gap-1.5">
         <UsageRow name={t('Runs')} isUnlimited={true} />
         <UsageRow
           name={t('AI Credits')}
-          value={Math.round(platform.usage?.aiCreditsRemaining ?? 0)}
-          suffix={t('remaining')}
+          value={aiCreditsUsed}
+          suffix={t('used')}
           tooltip={t(
             'Used when running AI pieces with Activepieces as the provider instead of your own API keys.',
           )}
         />
+
         <UsageRow
           name={t('Active Flows')}
           value={platform.usage?.activeFlows ?? 0}

@@ -1,4 +1,5 @@
-import { AIProviderModel, AIProviderName, CreateAIProviderRequest, PrincipalType, UpdateAIProviderRequest } from '@activepieces/shared'
+import { ActivepiecesError, AIProviderModel, AIProviderName, CreateAIProviderRequest, ErrorCode, isNil, PrincipalType, UpdateAIProviderRequest } from '@activepieces/shared'
+
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -31,7 +32,36 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
         await aiProviderService(app.log).delete(platformId, request.params.id)
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
+    app.post('/usage', ReportAIUsage, async (request) => {
+        const platformId = request.principal.platform.id
+        const projectId = request.principal.projectId
+        if (isNil(projectId)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityId: 'projectId', entityType: 'Principal' },
+            })
+        }
+        await aiProviderService(app.log).reportUsage({
+            platformId,
+            projectId,
+            usage: request.body,
+        })
+        return { success: true }
+    })
 }
+
+const ReportAIUsage = {
+    config: {
+        security: securityAccess.engine(),
+    },
+    schema: {
+        body: z.object({
+            inputTokens: z.number(),
+            outputTokens: z.number(),
+        }),
+    },
+}
+
 
 const ListAIProviders = {
     config: {
