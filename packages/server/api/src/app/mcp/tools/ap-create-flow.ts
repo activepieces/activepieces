@@ -1,10 +1,10 @@
-import { McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
+import { FlowCreatorType, McpToolContext, McpToolDefinition, Permission } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { mcpUtils } from './mcp-utils'
 
-export const apCreateFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apCreateFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_create_flow',
         permission: Permission.WRITE_FLOW,
@@ -18,6 +18,8 @@ export const apCreateFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
             try {
                 const flow = await flowService(log).create({
                     projectId: mcp.projectId,
+                    ownerId: userId,
+                    createdBy: { type: FlowCreatorType.MCP, id: mcp.id },
                     request: {
                         displayName: flowName,
                         projectId: mcp.projectId,
