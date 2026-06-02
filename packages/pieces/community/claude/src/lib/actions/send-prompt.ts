@@ -9,6 +9,7 @@ import { claudeAuth } from '../auth';
 import { TextBlock } from '@anthropic-ai/sdk/resources';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
+import { isNil, spreadIfDefined } from '@activepieces/shared';
 import { billingIssueMessage, modelDropdown, unauthorizedMessage } from '../common/common';
 const DEFAULT_TOKENS_FOR_THINKING_MODE = 1024;
 export const askClaude = createAction({
@@ -94,10 +95,9 @@ export const askClaude = createAction({
     if (propsValue.model) {
       model = propsValue.model;
     }
-    let temperature = 0.5;
-    if (propsValue.temperature) {
-      temperature = Number(propsValue.temperature);
-    }
+    const temperature = isNil(propsValue.temperature)
+      ? undefined
+      : Number(propsValue.temperature);
     let maxTokens = 1000;
     if (propsValue.maxTokens) {
       maxTokens = Number(propsValue.maxTokens);
@@ -175,15 +175,16 @@ export const askClaude = createAction({
             .filter((block) => block.type === 'text')[0]
             .text.trim();
         } else {
-          const req = await anthropic?.messages.create({
+          const params: Anthropic.Messages.MessageCreateParamsNonStreaming = {
             model: model,
             max_tokens: maxTokens,
-            temperature: temperature,
             system: systemPrompt,
             messages: roles,
-          });
+            ...spreadIfDefined('temperature', temperature),
+          };
+          const req = await anthropic.messages.create(params);
 
-          response = (req?.content[0] as TextBlock).text?.trim();
+          response = (req.content[0] as TextBlock).text?.trim();
         }
 
         break; // Break out of the loop if the request is successful
