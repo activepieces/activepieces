@@ -236,11 +236,16 @@ function registerEmptyResourcesAndPrompts(server: McpServer): void {
     server.registerPrompt('_', {}, () => ({ messages: [] }))
 }
 
+const TOOL_METADATA_SCHEMA = {
+    title: z.string().optional().describe('Short 2-4 word label for the UI tool card'),
+    description: z.string().optional().describe('Brief first-person sentence in a conversational tone, e.g. "Let me search your Gmail for recent emails", "I need to check your Slack connection first", "Building the automation flow now"'),
+}
+
 function buildToolConfig(tool: McpToolDefinition): Record<string, unknown> {
     return {
         title: tool.title,
         description: tool.description,
-        inputSchema: tool.inputSchema,
+        inputSchema: { ...TOOL_METADATA_SCHEMA, ...tool.inputSchema },
         annotations: tool.annotations,
     }
 }

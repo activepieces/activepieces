@@ -166,7 +166,7 @@ function StepRenderer({
         >
           <p
             className={cn(
-              'whitespace-pre-wrap break-words line-clamp-3',
+              'whitespace-pre-wrap break-words',
               isStreaming
                 ? 'text-sm text-foreground'
                 : 'text-xs text-muted-foreground',
@@ -177,16 +177,6 @@ function StepRenderer({
         </StepLayout>
       );
     case 'thinking-status':
-      if (step.toolPart) {
-        return (
-          <ToolStep
-            part={step.toolPart}
-            showConnector={showConnector}
-            showIcon={showIcon}
-            label={step.text}
-          />
-        );
-      }
       return (
         <StepLayout
           showIcon={showIcon}
@@ -206,8 +196,10 @@ function StepRenderer({
       return (
         <ToolStep
           part={step.part}
+          description={step.description}
           showConnector={showConnector}
           showIcon={showIcon}
+          isStreaming={isStreaming}
         />
       );
   }
@@ -241,14 +233,16 @@ function StepLayout({
 
 function ToolStep({
   part,
+  description,
   showConnector,
   showIcon,
-  label,
+  isStreaming,
 }: {
   part: AnyToolPart;
+  description: string | null;
   showConnector: boolean;
   showIcon: boolean;
-  label?: string;
+  isStreaming: boolean;
 }) {
   const status = chatPartUtils.deriveToolStatus(part);
   const icon =
@@ -256,12 +250,27 @@ function ToolStep({
 
   return (
     <StepLayout showIcon={showIcon} showConnector={showConnector} icon={icon}>
-      <ToolCard part={part} label={label} />
+      <ToolCard
+        part={part}
+        description={description}
+        isStreaming={isStreaming}
+        isRunning={status === 'running'}
+      />
     </StepLayout>
   );
 }
 
-function ToolCard({ part, label }: { part: AnyToolPart; label?: string }) {
+function ToolCard({
+  part,
+  description,
+  isStreaming,
+  isRunning,
+}: {
+  part: AnyToolPart;
+  description: string | null;
+  isStreaming: boolean;
+  isRunning: boolean;
+}) {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const input = isObject(part.input) ? part.input : undefined;
   const output = chatPartUtils.extractToolOutputText(part);
@@ -279,11 +288,16 @@ function ToolCard({ part, label }: { part: AnyToolPart; label?: string }) {
   const { summaries: pieceSummaries } = piecesHooks.usePieceSummariesByNames({
     names: pieceNames,
   });
-  const summary = buildToolSummary({ part });
-  const displayLabel = label ?? summary.label;
+  const summary = useMemo(() => buildToolSummary({ part }), [part]);
+  const displayLabel = summary.label;
   const primaryPiece = pieceSummaries.find((p) => p.logoUrl);
+  const resolvedDescription =
+    description ??
+    (input && typeof input.description === 'string' && input.description
+      ? input.description
+      : null);
 
-  return (
+  const chip = (
     <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
       <div
         className={cn(
@@ -348,6 +362,21 @@ function ToolCard({ part, label }: { part: AnyToolPart; label?: string }) {
         </CollapsibleContent>
       )}
     </Collapsible>
+  );
+
+  if (!resolvedDescription) return chip;
+
+  return (
+    <div className="space-y-1">
+      {isStreaming && isRunning ? (
+        <TextShimmer className="text-xs" duration={3}>
+          {resolvedDescription}
+        </TextShimmer>
+      ) : (
+        <p className="text-xs text-muted-foreground">{resolvedDescription}</p>
+      )}
+      {chip}
+    </div>
   );
 }
 
