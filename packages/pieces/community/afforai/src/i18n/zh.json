@@ -1,11 +1,11 @@
 {
-  "Helps you search, summarize, and translate knowledge from hundreds of documents to help you produce trustworthy research.": "Helps you search, summarize, and translate knowledge from hundreds of documents to help you produce trustworthy research.",
+  "Helps you search, summarize, and translate knowledge from hundreds of documents to help you produce trustworthy research.": "帮助您搜索、总结和翻译数以百计的文档中的知识，以帮助您进行值得信赖的研究。",
   "\n  To obtain your API Key, follow these steps:\n  1. Log in to your Afforai account.\n  2. Navigate to **API** section on left panel.\n  3. On the top-right, you can find you API key.\n  ": "\n  To obtain your API Key, follow these steps:\n  1. Log in to your Afforai account.\n  2. Navigate to **API** section on left panel.\n  3. On the top-right, you can find you API key.\n  ",
-  "Ask Chatbot": "Ask Chatbot",
-  "Gets AI-generated completions for a given chatbot.": "Gets AI-generated completions for a given chatbot.",
-  "Chatbot ID": "Chatbot ID",
-  "Chat History": "Chat History",
-  "AI should search more deeply for information in the given files ?": "AI should search more deeply for information in the given files ?",
-  "AI to search for information on Google?": "AI to search for information on Google?",
-  "You can find Chatbot ID by clicking settings button under **Actions** for given chatbot.": "You can find Chatbot ID by clicking settings button under **Actions** for given chatbot."
+  "Ask Chatbot": "询问聊天室",
+  "Gets AI-generated completions for a given chatbot.": "获取给定聊天机器人的 AI生成的补全。",
+  "Chatbot ID": "聊天机器人ID",
+  "Chat History": "聊天历史",
+  "AI should search more deeply for information in the given files ?": "AI 应该更深入地搜索给定文件中的信息？",
+  "AI to search for information on Google?": "在 Google上搜索信息？",
+  "You can find Chatbot ID by clicking settings button under **Actions** for given chatbot.": "您可以通过点击给定聊天机器人的 **Actions** 下的设置按钮找到聊天机器人。"
 }
