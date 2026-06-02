@@ -157,6 +157,7 @@ function createCrossProjectTools({ executeTool, eventEmitter }: {
         ap_discover_action_auth: tool({
             description: 'Check what authentication a piece needs and find available connections. Call this BEFORE ap_execute_action to determine if auth is needed.',
             inputSchema: z.object({
+                title: z.string().optional().describe('Short human-friendly label for the tool card, e.g. "Check Gmail Auth", "Verify Slack Connection"'),
                 pieceName: z.string().describe('Piece name, e.g. "@activepieces/piece-gmail"'),
             }),
             execute: async (input) => {
@@ -167,6 +168,7 @@ function createCrossProjectTools({ executeTool, eventEmitter }: {
         ap_execute_action: tool({
             description: 'Execute a piece action once or in batch. Use ap_discover_action_auth first to check if auth is needed. If the action requires auth, provide connectionExternalId and projectId. For batch execution, provide an items array where each element is a complete input object for one invocation.',
             inputSchema: z.object({
+                title: z.string().optional().describe('Short human-friendly label for the tool card, e.g. "Search Emails", "Send Message", "Create Record"'),
                 pieceName: z.string().describe('Piece name, e.g. "@activepieces/piece-gmail"'),
                 actionName: z.string().describe('Action to run, e.g. "gmail_search_mail"'),
                 input: z.record(z.string(), z.unknown()).optional().describe('Input for the action (single-item mode)'),
@@ -196,6 +198,7 @@ function createCrossProjectTools({ executeTool, eventEmitter }: {
         ap_list_across_projects: tool({
             description: 'List resources across ALL user projects at once. Use instead of switching project context for cross-project queries.',
             inputSchema: z.object({
+                title: z.string().optional().describe('Short human-friendly label for the tool card, e.g. "List Flows", "Find Connections", "Check Recent Runs"'),
                 resource: z.enum(['flows', 'tables', 'runs', 'connections']).describe('The type of resource to list'),
                 status: z.string().optional().describe('Filter by status'),
             }),
@@ -337,6 +340,7 @@ function createPlanTools({ onPlanApproved, waitForApproval }: {
         ap_request_plan_approval: tool({
             description: 'Request user approval for a multi-step plan before executing destructive operations.',
             inputSchema: z.object({
+                title: z.string().optional().describe('Short human-friendly label for the tool card, e.g. "Review Automation Plan", "Approve Setup"'),
                 planSummary: z.string().describe('A brief 1-3 sentence summary of what you will do'),
                 steps: z.array(z.string()).describe('List of concrete actions'),
             }),
