@@ -39,7 +39,7 @@ const polling: Polling<
       { status: 'expired' }
     );
     return (resp.orders ?? []).map((order) => ({
-      epochMilliSeconds: new Date(order.created_at ?? 0).getTime(),
+      epochMilliSeconds: new Date(order.expires_at ?? 0).getTime(),
       data: order,
     }));
   },

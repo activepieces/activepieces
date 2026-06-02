@@ -13,6 +13,7 @@ import { listOrders } from './lib/actions/list-orders';
 import { listServices } from './lib/actions/list-services';
 import { listTransactions } from './lib/actions/list-transactions';
 import { swapNumber } from './lib/actions/swap-number';
+import { lowBalance } from './lib/triggers/low-balance';
 import { orderExpired } from './lib/triggers/order-expired';
 import { orderReceivedSms } from './lib/triggers/order-received-sms';
 
@@ -47,5 +48,5 @@ export const virtualsms = createPiece({
       }),
     }),
   ],
-  triggers: [orderReceivedSms, orderExpired],
+  triggers: [orderReceivedSms, orderExpired, lowBalance],
 });
