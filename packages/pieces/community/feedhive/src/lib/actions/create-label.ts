@@ -19,7 +19,7 @@ export const createLabelAction = createAction({
     const response = await feedhiveCommon.apiCall<{
       data: { id: string; title: string };
     }>({
-      token: context.auth as unknown as string,
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
       path: '/labels',
       body: { title: context.propsValue.title },

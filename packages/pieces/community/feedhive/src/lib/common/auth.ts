@@ -4,9 +4,9 @@ import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces
 export const feedhiveAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   description: `To get your FeedHive API key:
-1. Log in to your FeedHive account
-2. Go to **Settings** → **Account** (or **Workspace**)
-3. Find the **API Key** section and copy your key
+1. Log in to your FeedHive account.
+2. Go to **Settings** → **Account** (or **Workspace**).
+3. Find the **API Key** section and copy your key.
 
 Your key starts with \`fh_\`.`,
   required: true,

@@ -21,7 +21,7 @@ export const feedhive = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/feedhive.png',
   categories: [PieceCategory.MARKETING],
   auth: feedhiveAuth,
-  authors: [],
+  authors: ['bst1n'],
   actions: [
     createPostAction,
     updatePostAction,
@@ -34,7 +34,7 @@ export const feedhive = createPiece({
       baseUrl: () => 'https://api.feedhive.com',
       auth: feedhiveAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth as unknown as string}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],

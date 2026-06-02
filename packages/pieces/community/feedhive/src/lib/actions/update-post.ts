@@ -59,7 +59,7 @@ export const updatePostAction = createAction({
       body['short_link_enabled'] = short_link_enabled;
 
     const response = await feedhiveCommon.apiCall<{ data: Record<string, unknown> }>({
-      token: context.auth as unknown as string,
+      token: context.auth.secret_text,
       method: HttpMethod.PATCH,
       path: `/posts/${post_id}`,
       body,

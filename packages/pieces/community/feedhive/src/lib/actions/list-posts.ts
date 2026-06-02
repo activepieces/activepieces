@@ -43,7 +43,7 @@ export const listPostsAction = createAction({
     const response = await feedhiveCommon.apiCall<{
       data: { items: Record<string, unknown>[]; total: number; has_more: boolean };
     }>({
-      token: context.auth as unknown as string,
+      token: context.auth.secret_text,
       method: HttpMethod.GET,
       path: '/posts',
       queryParams,

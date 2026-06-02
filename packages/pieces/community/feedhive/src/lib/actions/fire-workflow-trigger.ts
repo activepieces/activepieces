@@ -73,7 +73,7 @@ export const fireWorkflowTriggerAction = createAction({
     if (link) body['link'] = link;
 
     const response = await feedhiveCommon.apiCall<{ success: boolean }>({
-      token: context.auth as unknown as string,
+      token: context.auth.secret_text,
       method: HttpMethod.POST,
       path: `/triggers/${trigger_id}`,
       body,

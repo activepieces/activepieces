@@ -23,7 +23,7 @@ const socialsMultiDropdown = Property.MultiSelectDropdown({
     try {
       const response = await apiCall<{
         data: { id: string; platform: string; display_name: string; handle: string; status: string }[];
-      }>({ token: auth as unknown as string, method: HttpMethod.GET, path: '/socials' });
+      }>({ token: auth.secret_text, method: HttpMethod.GET, path: '/socials' });
       return {
         disabled: false,
         options: (response.body.data ?? [])
@@ -56,7 +56,7 @@ const labelsMultiDropdown = Property.MultiSelectDropdown({
     try {
       const response = await apiCall<{
         data: { items: { id: string; title: string }[] };
-      }>({ token: auth as unknown as string, method: HttpMethod.GET, path: '/labels' });
+      }>({ token: auth.secret_text, method: HttpMethod.GET, path: '/labels' });
       return {
         disabled: false,
         options: (response.body.data?.items ?? []).map((l) => ({
@@ -84,7 +84,7 @@ const postDropdown = Property.Dropdown({
       const response = await apiCall<{
         data: { items: { id: string; text: string; status: string }[] };
       }>({
-        token: auth as unknown as string,
+        token: auth.secret_text,
         method: HttpMethod.GET,
         path: '/posts',
         queryParams: { limit: '100' },

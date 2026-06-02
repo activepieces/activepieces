@@ -13,6 +13,9 @@ export const commentNotificationTrigger = createTrigger({
       value: `### Setup Instructions
 
 1. Enable this flow and copy the **Webhook URL** shown below.
+ \`\`\`text
+  {{webhookUrl}}
+  \`\`\`
 2. In FeedHive, go to **Settings → Automation → Notifications**.
 3. Click **Create New Notification**.
 4. Choose **Comment Added** and paste the Webhook URL, then click **Save**.`,
@@ -52,7 +55,7 @@ export const commentNotificationTrigger = createTrigger({
     const response = await feedhiveCommon.apiCall<{
       data: { items: Record<string, unknown>[] };
     }>({
-      token: context.auth as unknown as string,
+      token: context.auth.secret_text,
       method: HttpMethod.GET,
       path: '/posts',
       queryParams: { limit: '5', status: 'published' },

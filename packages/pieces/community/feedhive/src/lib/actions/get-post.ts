@@ -13,7 +13,7 @@ export const getPostAction = createAction({
   },
   async run(context) {
     const response = await feedhiveCommon.apiCall<{ data: Record<string, unknown> }>({
-      token: context.auth as unknown as string,
+      token: context.auth.secret_text,
       method: HttpMethod.GET,
       path: `/posts/${context.propsValue.post_id}`,
     });

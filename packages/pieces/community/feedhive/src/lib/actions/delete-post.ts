@@ -13,7 +13,7 @@ export const deletePostAction = createAction({
   },
   async run(context) {
     await feedhiveCommon.apiCall({
-      token: context.auth as unknown as string,
+      token: context.auth.secret_text,
       method: HttpMethod.DELETE,
       path: `/posts/${context.propsValue.post_id}`,
     });
