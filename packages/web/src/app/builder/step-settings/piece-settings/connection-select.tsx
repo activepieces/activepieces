@@ -167,7 +167,6 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                                   <Button
                                     variant="ghost"
                                     size="icon-xs"
-                                    className="text-muted-foreground"
                                     loading={isLoadingPiece}
                                     onClick={(e) => {
                                       e.stopPropagation();
