@@ -54,17 +54,6 @@ type BaseTriggerParams<
   test?: (context: TestOrRunHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<unknown[]>,
   onStart?: OnStartRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps>,
   sampleData: unknown
-  /**
-   * Metadata that tells an AI agent how and when to use this trigger. Same
-   * shape as on `ActionBase`. All sub-fields optional:
-   * - `description` — when this trigger fires, payload shape, gotchas.
-   * - `outputSchema` — a JSON Schema object for the event payload, serialized to
-   *   the agent surface. The existing required `sampleData` still carries a
-   *   concrete value; `outputSchema` adds the typed (or loose, for dynamic
-   *   payloads like RSS items or event-varying webhooks) shape alongside it.
-   * - `idempotent` — typically left unset on triggers (polling the same cursor is
-   *   naturally idempotent).
-   */
   aiMetadata?: AiMetadata
 }
 

@@ -53,11 +53,7 @@ export const AiMetadata = z.object({
   outputSchema: z.record(z.string(), z.unknown()).optional(),
   idempotent: z.boolean().optional(),
 })
-export type AiMetadata = {
-  description?: string
-  outputSchema?: Record<string, unknown>
-  idempotent?: boolean
-}
+export type AiMetadata = z.infer<typeof AiMetadata>
 
 export const ActionBase = z.object({
   name: z.string(),
@@ -94,7 +90,7 @@ export const TriggerBase = z.object({
   testStrategy: z.nativeEnum(TriggerTestStrategy),
   aiMetadata: AiMetadata.optional(),
 })
-export type TriggerBase = ActionBase & {
+export type TriggerBase = Omit<ActionBase, 'audience'> & {
   type: TriggerStrategy;
   sampleData: unknown,
   handshakeConfiguration?: WebhookHandshakeConfiguration;

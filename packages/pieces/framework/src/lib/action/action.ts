@@ -35,28 +35,7 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty | PieceAuthProperty[
   test?: ActionRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, ActionProps>
   requireAuth?: boolean
   errorHandlingOptions?: ErrorHandlingOptionsParam
-  /**
-   * Visibility/routing for this action.
-   *
-   * - `'human'` — flow-builder only; hidden from the agent surface (MCP / SDK).
-   * - `'ai'`    — agent surface only; hidden from the canvas dropdown.
-   * - `'both'`  — visible everywhere. Treated as the implicit default when omitted.
-   *
-   * Top-level, not LLM-targeted.
-   */
   audience?: Audience
-  /**
-   * Metadata that tells an AI agent how and when to use this action. All
-   * sub-fields optional:
-   * - `description` — agent-targeted prose: when to call, constraints, example inputs.
-   * - `outputSchema` — a JSON Schema object for the result shape, serialized
-   *   verbatim to the MCP `outputSchema` slot. For dynamic outputs (spreadsheet
-   *   cells, raw HTTP responses, SQL rows) use a loose schema
-   *   (`{ type: 'array', items: {} }`, `additionalProperties: true`) and lean on
-   *   `description` + an `examples` entry to convey what varies and a concrete sample.
-   * - `idempotent` — whether re-running with identical inputs is side-effect-safe;
-   *   maps to the MCP `idempotentHint` annotation and guides agent retry behaviour.
-   */
   aiMetadata?: AiMetadata
 }
 
