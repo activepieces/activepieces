@@ -1,7 +1,7 @@
 ---
-title: "Workers"
-description: "Run, scale, and tune the container that executes your flows"
-icon: "gears"
+title: 'Workers'
+description: 'Run, scale, and tune the container that executes your flows'
+icon: 'gears'
 ---
 
 The **worker** is the container that actually runs flows. It pulls jobs from Redis, executes each one inside a sandbox, and streams results back to the app. This page is about operating it: how many to run, how to size them, and what happens when one dies mid-flow.
@@ -22,8 +22,92 @@ Size replicas for throughput, and concurrency for how much a single replica can 
 See [Hardware Requirements](../configuration/hardware) for per-replica memory and CPU sizing.
 
 <Tip>
-In `UNSANDBOXED` and `SANDBOX_CODE_ONLY` modes, sandboxes stay warm across jobs, so steady-state execution is fast. `SANDBOX_PROCESS` spins up a fresh sandbox per run, which trades latency for kernel-level isolation.
+  In `UNSANDBOXED` and `SANDBOX_CODE_ONLY` modes, sandboxes stay warm across
+  jobs, so steady-state execution is fast. `SANDBOX_PROCESS` spins up a fresh
+  sandbox per run, which trades latency for kernel-level isolation.
 </Tip>
+
+### Autoscale Workers With KEDA
+
+On Kubernetes, you can autoscale worker replicas from the queue depth reported by the platform-admin queue metrics endpoint:
+
+```http
+GET /api/v1/worker-machines/queue-metrics
+```
+
+Use a platform-admin API key with KEDA's `metrics-api` scaler. Store the key in a Kubernetes `Secret`, then reference it from a `TriggerAuthentication` so KEDA sends it as a bearer token on each poll.
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ap-keda-auth
+  namespace: activepieces
+type: Opaque
+stringData:
+  apiKey: 'sk-xxxxxxxxxxxxxxxxxxxxxxxx'
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: ap-queue-metrics-auth
+  namespace: activepieces
+spec:
+  secretTargetRef:
+    - parameter: token
+      name: ap-keda-auth
+      key: apiKey
+```
+
+Then scale the worker deployment from the `workerJobs` queue's `waiting` count:
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: activepieces-worker
+  namespace: activepieces
+spec:
+  scaleTargetRef:
+    name: activepieces-worker
+  pollingInterval: 15
+  cooldownPeriod: 180
+  minReplicaCount: 2
+  maxReplicaCount: 30
+  fallback:
+    failureThreshold: 3
+    replicas: 5
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+            - type: Percent
+              value: 100
+              periodSeconds: 30
+            - type: Pods
+              value: 4
+              periodSeconds: 30
+          selectPolicy: Max
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+            - type: Percent
+              value: 25
+              periodSeconds: 60
+  triggers:
+    - type: metrics-api
+      metadata:
+        targetValue: '50'
+        url: 'http://activepieces.activepieces.svc.cluster.local/api/v1/worker-machines/queue-metrics'
+        valueLocation: 'queues.#(name=="workerJobs").waiting'
+        authMode: 'bearer'
+      authenticationRef:
+        name: ap-queue-metrics-auth
+```
+
+Tune `targetValue` against `AP_WORKER_CONCURRENCY`. For example, with `AP_WORKER_CONCURRENCY=5` and `targetValue: "50"`, KEDA aims for roughly 50 waiting jobs per worker pod before adding more replicas. Keep a non-zero `minReplicaCount` if you need workers to pick up jobs immediately after quiet periods, and use `fallback` so a temporary metrics endpoint outage does not scale the worker pool to zero.
 
 ## Failure Behaviour
 
