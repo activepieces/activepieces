@@ -86,7 +86,10 @@ function withApprovalGates({ mcpToolSet, eventEmitter, log, isApproved, waitForA
                 if (isApproved() || !needsApproval) {
                     return originalExecute(args, options)
                 }
-                const toolCallId = options?.toolCallId ?? ''
+                const toolCallId = options?.toolCallId
+                if (!toolCallId) {
+                    return originalExecute(args, options)
+                }
                 const displayName = typeof args === 'object' && args !== null && 'displayName' in args && typeof args.displayName === 'string'
                     ? args.displayName
                     : humanizeToolName(name)
