@@ -7,7 +7,7 @@ import { flowRunUtils } from '@/features/flow-runs';
 import { BuilderState } from '../builder-hooks';
 import { flowCanvasUtils } from '../flow-canvas/utils/flow-canvas-utils';
 
-export type TestPanelView = 'drawer' | 'split';
+export type StepDataPanelView = 'drawer' | 'split';
 
 export type CanvasState = {
   readonly: boolean;
@@ -40,10 +40,10 @@ export type CanvasState = {
     isFocusInsideListMapperModeInput: boolean,
   ) => void;
   deselectStep: () => void;
-  testPanelView: TestPanelView;
-  setTestPanelView: (view: TestPanelView) => void;
-  isTestPanelOpen: boolean;
-  setTestPanelOpen: (open: boolean) => void;
+  stepDataPanelView: StepDataPanelView;
+  setStepDataPanelView: (view: StepDataPanelView) => void;
+  isStepDataPanelOpen: boolean;
+  setStepDataPanelOpen: (open: boolean) => void;
 };
 
 type CanvasStateInitialState = Pick<
@@ -191,21 +191,22 @@ export const createCanvasState = (
         isFocusInsideListMapperModeInput,
       }));
     },
-    testPanelView: getTestPanelViewFromLocalStorage(),
-    setTestPanelView: (view: TestPanelView) => {
-      localStorage.setItem(TEST_PANEL_VIEW_KEY_IN_LOCAL_STORAGE, view);
+    stepDataPanelView: getStepDataPanelViewFromLocalStorage(),
+    setStepDataPanelView: (view: StepDataPanelView) => {
+      localStorage.setItem(STEP_DATA_PANEL_VIEW_KEY_IN_LOCAL_STORAGE, view);
       return set(() => ({
-        testPanelView: view,
+        stepDataPanelView: view,
       }));
     },
-    isTestPanelOpen: getTestPanelOpenFromLocalStorage(),
-    setTestPanelOpen: (open: boolean) => {
+    isStepDataPanelOpen:
+      getTestPanelOpenFromLocalStorage() || !isNil(initialState.run),
+    setStepDataPanelOpen: (open: boolean) => {
       localStorage.setItem(
         TEST_PANEL_OPEN_KEY_IN_LOCAL_STORAGE,
         open ? 'open' : 'closed',
       );
       return set(() => ({
-        isTestPanelOpen: open,
+        isStepDataPanelOpen: open,
       }));
     },
   };
@@ -219,9 +220,10 @@ function getPanningModeFromLocalStorage(): 'grab' | 'pan' {
     : 'pan';
 }
 
-const TEST_PANEL_VIEW_KEY_IN_LOCAL_STORAGE = 'ap.builder.testPanelView';
-function getTestPanelViewFromLocalStorage(): TestPanelView {
-  return localStorage.getItem(TEST_PANEL_VIEW_KEY_IN_LOCAL_STORAGE) === 'split'
+const STEP_DATA_PANEL_VIEW_KEY_IN_LOCAL_STORAGE = 'ap.builder.testPanelView';
+function getStepDataPanelViewFromLocalStorage(): StepDataPanelView {
+  return localStorage.getItem(STEP_DATA_PANEL_VIEW_KEY_IN_LOCAL_STORAGE) ===
+    'split'
     ? 'split'
     : 'drawer';
 }

@@ -6,20 +6,20 @@ import { StepStatusIcon } from '@/features/flow-runs';
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
-type TestPanelHeaderStatus = 'success' | 'failed' | 'testing' | 'idle';
-type TestPanelHeaderViewMode = 'edit' | 'run';
+type StepDataPanelHeaderStatus = 'success' | 'failed' | 'testing' | 'idle';
+type StepDataPanelHeaderViewMode = 'edit' | 'run';
 
-type TestPanelHeaderProps = {
-  status: TestPanelHeaderStatus;
+type StepDataPanelHeaderProps = {
+  status: StepDataPanelHeaderStatus;
   lastTestDate?: string | null;
-  viewMode?: TestPanelHeaderViewMode;
+  viewMode?: StepDataPanelHeaderViewMode;
 };
 
-const TestPanelHeader = ({
+const StepDataPanelHeader = ({
   status,
   lastTestDate,
   viewMode = 'edit',
-}: TestPanelHeaderProps) => {
+}: StepDataPanelHeaderProps) => {
   if (status === 'idle') {
     return null;
   }
@@ -33,7 +33,7 @@ const TestPanelHeader = ({
         status === 'testing' && 'bg-primary/10',
       )}
     >
-      <TestPanelStatusBadge status={status} viewMode={viewMode} />
+      <StepDataPanelStatusBadge status={status} viewMode={viewMode} />
       {lastTestDate && status !== 'testing' && (
         <span
           className={cn(
@@ -49,15 +49,15 @@ const TestPanelHeader = ({
   );
 };
 
-type TestPanelStatusBadgeProps = {
-  status: Exclude<TestPanelHeaderStatus, 'idle'>;
-  viewMode: TestPanelHeaderViewMode;
+type StepDataPanelStatusBadgeProps = {
+  status: Exclude<StepDataPanelHeaderStatus, 'idle'>;
+  viewMode: StepDataPanelHeaderViewMode;
 };
 
-const TestPanelStatusBadge = ({
+const StepDataPanelStatusBadge = ({
   status,
   viewMode,
-}: TestPanelStatusBadgeProps) => {
+}: StepDataPanelStatusBadgeProps) => {
   if (status === 'failed') {
     return (
       <div className="flex items-center gap-1.5 text-sm">
@@ -86,5 +86,5 @@ const TestPanelStatusBadge = ({
   );
 };
 
-TestPanelHeader.displayName = 'TestPanelHeader';
-export { TestPanelHeader };
+StepDataPanelHeader.displayName = 'StepDataPanelHeader';
+export { StepDataPanelHeader };
