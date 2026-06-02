@@ -371,6 +371,13 @@ function convertToIcon(event: ApplicationEvent) {
         icon: <Link2 className="size-4" />,
         tooltip: t('Connection'),
       };
+    case ApplicationEventName.VARIABLE_UPSERTED:
+    case ApplicationEventName.VARIABLE_DELETED:
+    case ApplicationEventName.VARIABLE_VALUE_REVEALED:
+      return {
+        icon: <Link2 className="size-4" />,
+        tooltip: t('Variable'),
+      };
     case ApplicationEventName.USER_SIGNED_UP:
     case ApplicationEventName.USER_SIGNED_IN:
     case ApplicationEventName.USER_PASSWORD_RESET:
@@ -466,7 +473,7 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
       const { connection } = event.data;
       return [
         { label: t('Connection'), value: connection.displayName },
-        { label: t('Piece'), value: connection.pieceName },
+        { label: t('Piece'), value: connection.pieceName ?? t('N/A') },
         {
           label: t('Type'),
           value: formatUtils.convertEnumToHumanReadable(connection.type),
@@ -476,6 +483,12 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
           value: formatUtils.convertEnumToHumanReadable(connection.status),
         },
       ];
+    }
+    case ApplicationEventName.VARIABLE_UPSERTED:
+    case ApplicationEventName.VARIABLE_DELETED:
+    case ApplicationEventName.VARIABLE_VALUE_REVEALED: {
+      const { variable } = event.data;
+      return [{ label: t('Variable'), value: variable.name }];
     }
     case ApplicationEventName.FOLDER_CREATED:
     case ApplicationEventName.FOLDER_UPDATED:

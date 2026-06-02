@@ -10,7 +10,6 @@ import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import Paginator from '../../helper/pagination/paginator'
 import { platformService } from '../../platform/platform.service'
-import { platformUtils } from '../../platform/platform.utils'
 import { userService } from '../../user/user-service'
 import { platformProjectService } from '../projects/platform-project-service'
 
@@ -18,7 +17,7 @@ export const platformListController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/', ListProjectsForPlatforms, async (request) => {
         const loggedInUser = await userService(request.log).getOneOrFail({ id: request.principal.id })
-        const platforms = await getPlatformsForUser(loggedInUser.identityId, request.principal.platform.id, request.log)
+        const platforms = await getPlatformsForUser(loggedInUser.identityId, request.log)
         const projects = await Promise.all(platforms.map(async (platform) => {
             const platformUser = await userService(request.log).getOneByIdentityAndPlatform({ identityId: loggedInUser.identityId, platformId: platform.id })
             assertNotNullOrUndefined(platformUser, `Platform user not found for platform ${platform.id}`)
@@ -39,13 +38,8 @@ export const platformListController: FastifyPluginAsyncZod = async (app) => {
     })
 }
 
-async function getPlatformsForUser(identityId: string, platformId: string, log: FastifyBaseLogger) {
-    const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
-    if (platformUtils.isCustomerOnDedicatedDomain(platform)) {
-        return [platform]
-    }
-    const platforms = await platformService(log).listPlatformsForIdentityWithAtleastProject({ identityId })
-    return platforms.filter((platform) => !platformUtils.isCustomerOnDedicatedDomain(platform))
+async function getPlatformsForUser(identityId: string, log: FastifyBaseLogger) {
+    return platformService(log).listPlatformsForIdentityWithAtleastProject({ identityId })
 }
 
 const ListProjectsForPlatforms = {

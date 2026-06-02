@@ -17,7 +17,7 @@ export const campaignsDropdown = ({
       : 'Select a campaign (optional)',
     required,
     refreshers,
-    async options({ auth }: any) {
+    async options({ auth }) {
       if (!auth) {
         return {
           disabled: true,
@@ -27,7 +27,7 @@ export const campaignsDropdown = ({
       }
 
       try {
-        const campaigns = await lemlistApiService.fetchCampaigns(auth);
+        const campaigns = await lemlistApiService.fetchCampaigns(auth.secret_text);
 
         return {
           options: campaigns.map((c: any) => ({

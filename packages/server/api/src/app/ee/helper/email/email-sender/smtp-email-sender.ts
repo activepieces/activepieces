@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises'
-import { ActivepiecesError, ApEdition, ApEnvironment, ErrorCode, isNil, Platform } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, ErrorCode, isNil, PlatformWithoutFederatedAuth } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import Mustache from 'mustache'
 import nodemailer, { Transporter } from 'nodemailer'
@@ -80,7 +80,7 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
     }
 }
 
-const getPlatform = async (platformId: string | undefined, log: FastifyBaseLogger): Promise<Platform | null> => {
+const getPlatform = async (platformId: string | undefined, log: FastifyBaseLogger): Promise<PlatformWithoutFederatedAuth | null> => {
     return platformId ? platformService(log).getOne(platformId) : null
 }
 
@@ -101,9 +101,6 @@ const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs):
         primaryColorLight,
         fullLogoUrl,
         platformName,
-        checkIssuesEnabled() {
-            return templateData.name === 'issue-created' && templateData.vars.isIssue === 'true'
-        },
         footerContent: edition === ApEdition.CLOUD ? 'Activepieces, Inc. 398 11th Street, 2nd floor, San Francisco, CA 94103' : '',
     },
     {
@@ -132,7 +129,7 @@ const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<s
         'badge-awarded': 'Congratulations, you earned a new badge! 🎉',
         'verify-email': 'Verify your email address ✅',
         'reset-password': 'Reset your password 🔑',
-        'issue-created': `Flow has an issue "${vars.flowName}" ⚠️`,
+        'issue-created': `[${vars.projectName}] Flow has an issue "${vars.flowName}" ⚠️`,
         'scim-user-welcome': 'Welcome! Your account has been created 🎉',
     }
 
@@ -154,6 +151,6 @@ const hexToLightTint = ({ hex, opacity }: { hex: string, opacity: number }): str
 }
 
 type RenderEmailBodyArgs = {
-    platform: Platform | null
+    platform: PlatformWithoutFederatedAuth | null
     templateData: EmailTemplateData
 }

@@ -19,12 +19,12 @@ const keyLoader = jwksClient({
 
 export const googleAuthnProvider = (log: FastifyBaseLogger) => ({
     async getLoginUrl(params: GetLoginUrlParams): Promise<string> {
-        const { clientId, platformId } = params
+        const { clientId } = params
         const loginUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
         loginUrl.searchParams.set('client_id', clientId)
         loginUrl.searchParams.set(
             'redirect_uri',
-            await federatedAuthnService(log).getThirdPartyRedirectUrl(platformId),
+            await federatedAuthnService(log).getThirdPartyRedirectUrl(),
         )
         loginUrl.searchParams.set('scope', 'email profile')
         loginUrl.searchParams.set('response_type', 'code')
@@ -63,7 +63,7 @@ const exchangeCodeForIdToken = async (
             code,
             client_id: clientId,
             client_secret: clientSecret,
-            redirect_uri: await federatedAuthnService(log).getThirdPartyRedirectUrl(platformId),
+            redirect_uri: await federatedAuthnService(log).getThirdPartyRedirectUrl(),
             grant_type: 'authorization_code',
         }),
     })

@@ -1,5 +1,4 @@
 import {
-  ApFlagId,
   isNil,
   PROJECT_COLOR_PALETTE,
   PlatformRole,
@@ -45,7 +44,6 @@ import {
 } from '@/features/projects';
 import { templatesTelemetryApi } from '@/features/templates';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
@@ -73,8 +71,6 @@ export function ProjectDashboardSidebar({
   const navigate = useNavigate();
   const { data: currentUser } = userHooks.useCurrentUser();
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data: showChat } = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_CHAT);
-
   useEffect(() => {
     if (!searchOpen) {
       setSearchQuery('');
@@ -154,7 +150,7 @@ export function ProjectDashboardSidebar({
     type: 'link',
     to: '/chat',
     label: t('Chat'),
-    show: showChat ?? false,
+    show: platform.plan.chatEnabled,
     icon: SendIcon,
     hasPermission: true,
     isSubItem: false,

@@ -5,18 +5,26 @@ import {
 import {
   ApErrorParams,
   AppConnectionScope,
+  AppConnectionStatus,
   AppConnectionWithoutSensitiveData,
   ErrorCode,
   isNil,
   ListAppConnectionsRequestQuery,
+  PLACEHOLDER_CONNECTION_TYPE,
   ReplaceAppConnectionsRequestBody,
   UpsertAppConnectionRequestBody,
 } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useMemo } from 'react';
 import { UseFormReturn } from 'react-hook-form';
+import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import {
+  CURSOR_QUERY_PARAM,
+  LIMIT_QUERY_PARAM,
+} from '@/components/custom/data-table';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { projectMembersApi } from '@/features/members/api/project-members-api';
@@ -90,6 +98,11 @@ export const appConnectionsMutations = {
         if (isGlobalConnection) {
           if (formValues.projectIds.length === 0) {
             throw new NoProjectSelected();
+          }
+          if (formValues.type === PLACEHOLDER_CONNECTION_TYPE) {
+            throw new Error(
+              'Placeholder connections are only supported at the project scope.',
+            );
           }
           return globalConnectionsApi.upsert({
             ...formValues,
@@ -307,6 +320,22 @@ export const appConnectionsQueries = {
       enabled,
       staleTime,
     });
+  },
+
+  useListSearchParams: () => {
+    const { search } = useLocation();
+    return useMemo(() => {
+      const sp = new URLSearchParams(search);
+      const limitParam = sp.get(LIMIT_QUERY_PARAM);
+      return {
+        cursor: sp.get(CURSOR_QUERY_PARAM) ?? undefined,
+        limit: limitParam ? parseInt(limitParam) : 10,
+        displayName: sp.get('displayName') ?? undefined,
+        ownerEmails: sp.getAll('owner'),
+        status: sp.getAll('status') as AppConnectionStatus[],
+        pieceName: sp.get('pieceName') ?? undefined,
+      };
+    }, [search]);
   },
 
   useConnectionsOwners: () => {

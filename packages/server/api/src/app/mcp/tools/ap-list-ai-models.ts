@@ -2,7 +2,6 @@ import { AIProviderModelType, AIProviderName, McpToolDefinition, ProjectScopedMc
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { aiProviderService } from '../../ai/ai-provider-service'
-import { projectService } from '../../project/project-service'
 import { mcpUtils } from './mcp-utils'
 
 const providerSchema = z.enum(Object.values(AIProviderName) as [AIProviderName, ...AIProviderName[]])
@@ -21,9 +20,9 @@ export const apListAiModelsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
             try {
                 const { provider: filterProvider } = listAiModelsInput.parse(args)
 
-                const project = await projectService(log).getOneOrThrow(mcp.projectId)
+                const platformId = await mcpUtils.resolvePlatformId({ mcp, log })
                 const service = aiProviderService(log)
-                const providers = await service.listProviders(project.platformId)
+                const providers = await service.listProviders(platformId)
 
                 if (providers.length === 0) {
                     return {
@@ -49,7 +48,7 @@ export const apListAiModelsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                 const sections = await Promise.all(
                     filteredProviders.map(async (p) => {
                         try {
-                            const models = await service.listModels(project.platformId, p.provider)
+                            const models = await service.listModels(platformId, p.provider)
                             const textModels = models.filter(m => m.type === AIProviderModelType.TEXT)
                             const capped = textModels.slice(0, MAX_MODELS_PER_PROVIDER)
                             structuredProviders.push({

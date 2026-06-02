@@ -43,7 +43,7 @@ export const apUpdateStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
             displayName: z.string().optional().describe('New display name for the step'),
             input: z.record(z.string(), z.unknown()).optional().describe(`Input settings for the step (key-value pairs matching the action schema). ${mcpUtils.STEP_REFERENCE_HINT}`),
             auth: z.string().optional().describe('Connection `externalId` from `ap_list_connections`. The tool wraps it automatically as `{{connections[\'externalId\']}}`.'),
-            actionName: z.string().optional().describe('For PIECE steps: the action to perform. Use ap_list_pieces to get valid values.'),
+            actionName: z.string().optional().describe('For PIECE steps: the action to perform. Use ap_research_pieces to get valid values.'),
             loopItems: z.string().optional().describe('For LOOP steps: expression for the items to iterate over'),
             skip: z.boolean().optional().describe('Whether to skip this step during execution'),
             sourceCode: z.string().optional().describe('For CODE steps only: the JavaScript/TypeScript source code. Must export a `code` function: `export const code = async (inputs) => { ... }`.'),
@@ -180,7 +180,7 @@ export const apUpdateStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                         : null
                     const hint = (diagnosis || null)
                         ?? (step.type === FlowActionType.PIECE
-                            ? 'Use ap_list_pieces to verify pieceName, pieceVersion, actionName and required inputs, then retry.'
+                            ? 'Use ap_research_pieces to verify pieceName, pieceVersion, actionName and required inputs, then retry.'
                             : 'Check the step settings and retry.')
                     return {
                         content: [{
@@ -213,7 +213,7 @@ async function diagnoseMissingInputs({ settings, platformId, log }: {
         const piece = await pieceMetadataService(log).getOrThrow({ platformId, name: pieceName, version: pieceVersion })
         const action = piece.actions[actionName]
         if (isNil(action)) {
-            return `Action "${actionName}" not found in piece "${pieceName}". Use ap_list_pieces with includeActions=true to get valid action names.`
+            return `Action "${actionName}" not found in piece "${pieceName}". Use ap_research_pieces with includeActions=true to get valid action names.`
         }
         const input = settings.input ?? {}
         const { parts } = mcpUtils.diagnosePieceProps({ props: action.props, input, pieceAuth: piece.auth, requireAuth: action.requireAuth, componentType: 'action' })

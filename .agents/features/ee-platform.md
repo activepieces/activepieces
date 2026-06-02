@@ -33,7 +33,7 @@ The EE Platform module manages billing, quota enforcement, AI credits, license k
 
 **AI Credits**: includedAiCredits, lastFreeAiCreditsRenewalDate, aiCreditsAutoTopUpState (ENABLED/DISABLED), aiCreditsAutoTopUpCreditsToAdd, aiCreditsAutoTopUpThreshold, maxAutoTopUpCreditsMonthly.
 
-**Feature Flags** (boolean): tablesEnabled, eventStreamingEnabled, environmentsEnabled, analyticsEnabled, showPoweredBy, auditLogEnabled, embeddingEnabled, agentsEnabled, managePiecesEnabled, manageTemplatesEnabled, customAppearanceEnabled, projectRolesEnabled, customDomainsEnabled, globalConnectionsEnabled, customRolesEnabled, apiKeysEnabled, ssoEnabled, scimEnabled, secretManagersEnabled.
+**Feature Flags** (boolean): tablesEnabled, eventStreamingEnabled, environmentsEnabled, analyticsEnabled, showPoweredBy, auditLogEnabled, embeddingEnabled, agentsEnabled, managePiecesEnabled, manageTemplatesEnabled, customAppearanceEnabled, projectRolesEnabled, globalConnectionsEnabled, customRolesEnabled, apiKeysEnabled, ssoEnabled, scimEnabled, secretManagersEnabled.
 
 **Limits**: activeFlowsLimit (nullable), projectsLimit (nullable), teamProjectsLimit (NONE/ONE/UNLIMITED).
 

@@ -11,12 +11,12 @@ jobs:
     environment:
       name: release
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
           ref: release-candidate
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 24
 
@@ -40,13 +40,13 @@ jobs:
           echo "release=$RELEASE" >> $GITHUB_OUTPUT
 
       - name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -99,6 +99,15 @@ jobs:
             --tag ghcr.io/activepieces/activepieces:${{ steps.version.outputs.release }} \
             --tag ghcr.io/activepieces/activepieces:latest \
             ghcr.io/activepieces/activepieces-cloud:release-candidate
+
+      # Internal-only for now.
+      # To expose them on the GitHub Release for supply-chain audits,
+      # set upload-release: 'true'
+      # and pass github-token: ${{ secrets.GITHUB_TOKEN }}.
+      - uses: ./.github/actions/sbom
+        with:
+          image: ghcr.io/activepieces/activepieces:${{ steps.version.outputs.release }}
+          version: ${{ steps.version.outputs.release }}
 
       - name: Add breaking migration note to release
         if: steps.migration-check.outputs.has_breaking == 'true'

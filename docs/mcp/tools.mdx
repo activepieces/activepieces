@@ -47,15 +47,16 @@ Validate a flow for structural issues without publishing. Checks step validity, 
 |-------|------|----------|-------------|
 | `flowId` | string | Yes | The flow ID |
 
-### ap_list_pieces
+### ap_research_pieces
 
-List available pieces with their actions and triggers. Required before adding or updating steps.
+Research available pieces. Use `pieceNames` for bulk exact lookup (always returns actions and triggers). Use `searchQuery` for fuzzy discovery.
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
+| `pieceNames` | string[] | No | Exact piece names to look up (always returns actions and triggers) |
 | `searchQuery` | string | No | Filter pieces by name |
-| `includeActions` | boolean | No | Include action details |
-| `includeTriggers` | boolean | No | Include trigger details |
+| `includeActions` | boolean | No | Include action details (only applies to searchQuery mode) |
+| `includeTriggers` | boolean | No | Include trigger details (only applies to searchQuery mode) |
 
 ### ap_get_piece_props
 
@@ -499,7 +500,7 @@ Execute a single piece action once without building or saving a flow. Designed f
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
-| `pieceName` | string | Yes | Piece name (e.g. `slack` or `@activepieces/piece-slack`). Use `ap_list_pieces` to discover. |
+| `pieceName` | string | Yes | Piece name (e.g. `slack` or `@activepieces/piece-slack`). Use `ap_research_pieces` to discover. |
 | `actionName` | string | Yes | Action to run (e.g. `send_channel_message`). Use `ap_get_piece_props` for the input shape. |
 | `input` | object | No | Fully-resolved input for the action. Keys must match the piece action's props. Pass raw values — do **not** wrap them in `{{…}}`. Omit entirely if the action has no props. |
 | `connectionExternalId` | string | No | `externalId` from `ap_list_connections`. Required if the piece needs auth. Auto-wrapped server-side as `{{connections['externalId']}}`. Must be a plain ID — special characters are rejected. |

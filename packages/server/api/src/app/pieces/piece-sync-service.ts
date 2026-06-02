@@ -2,13 +2,12 @@ import { groupBy, PieceSyncMode, PieceType, tryCatch } from '@activepieces/share
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
-import { pubsub } from '../helper/pubsub'
 import { system } from '../helper/system/system'
 import { AppSystemProp, apVersionUtil } from '../helper/system/system-props'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
-import { PIECE_METADATA_REFRESH_CHANNEL, PieceMetadataRefreshMessage, PieceMetadataRefreshType } from './metadata/piece-cache'
+import { pieceCache } from './metadata/piece-cache'
 import { PieceMetadataSchema } from './metadata/piece-metadata-entity'
 import { pieceMetadataService, pieceRepos } from './metadata/piece-metadata-service'
 
@@ -97,8 +96,7 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
         }))
     }
     if (newPiecesToFetch.length > 0) {
-        const message: PieceMetadataRefreshMessage = { type: PieceMetadataRefreshType.BULK_SYNC }
-        await pubsub.publish(PIECE_METADATA_REFRESH_CHANNEL, JSON.stringify(message))
+        await pieceCache(log).invalidate()
     }
     return newPiecesToFetch.length
 }

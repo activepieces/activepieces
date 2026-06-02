@@ -9,30 +9,13 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { DynamicToolPart } from '@/features/chat/lib/chat-types';
+import {
+  AnyToolPart,
+  ToolStatus,
+  chatPartUtils,
+} from '@/features/chat/lib/chat-types';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { cn } from '@/lib/utils';
-
-type ToolStatus = 'running' | 'completed' | 'failed' | 'stopped';
-
-function deriveStatus(part: DynamicToolPart): ToolStatus {
-  if (part.state === 'output-available') return 'completed';
-  if (part.state === 'output-error') return 'failed';
-  if (part.state === 'output-denied') return 'stopped';
-  return 'running';
-}
-
-function extractOutput(part: DynamicToolPart): string | undefined {
-  if (part.state === 'output-available' && part.output !== undefined) {
-    return typeof part.output === 'string'
-      ? part.output
-      : JSON.stringify(part.output);
-  }
-  if (part.state === 'output-error' && part.errorText) {
-    return part.errorText;
-  }
-  return undefined;
-}
 
 function StatusIcon({ status }: { status: ToolStatus }) {
   switch (status) {
@@ -60,9 +43,9 @@ function StatusIcon({ status }: { status: ToolStatus }) {
   }
 }
 
-export function ToolCallCard({ toolPart }: { toolPart: DynamicToolPart }) {
-  const status = deriveStatus(toolPart);
-  const output = extractOutput(toolPart);
+export function ToolCallCard({ toolPart }: { toolPart: AnyToolPart }) {
+  const status = chatPartUtils.deriveToolStatus(toolPart);
+  const output = chatPartUtils.extractToolOutputText(toolPart);
   const input = isObject(toolPart.input) ? toolPart.input : undefined;
   const displayName = chatUtils.formatToolLabel({ part: toolPart });
   const hasInput = input && Object.keys(input).length > 0;

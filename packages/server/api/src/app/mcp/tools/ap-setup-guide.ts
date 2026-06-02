@@ -68,7 +68,7 @@ async function connectionGuide(mcp: ProjectScopedMcpServer, log: FastifyBaseLogg
     })
 
     if (isNil(piece)) {
-        return { content: [{ type: 'text', text: `❌ Piece "${pieceName}" not found. Use ap_list_pieces to find valid piece names.` }] }
+        return { content: [{ type: 'text', text: `❌ Piece "${pieceName}" not found. Use ap_research_pieces to find valid piece names.` }] }
     }
 
     const rawAuth = piece.auth

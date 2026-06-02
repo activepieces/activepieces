@@ -59,7 +59,7 @@ Relations (one-to-many): `flows`, `files`, `folders`, `events`, `appConnections`
 ## Service Methods
 
 ### `projectService`
-- `create({ displayName, ownerId, platformId, type, callPostCreateHooks?, entityManager? })` — creates project record with random icon color, calls `projectHooks.postCreate` if enabled
+- `create({ displayName, ownerId, platformId, type, callPostCreateHooks?, postCreateContext?, entityManager? })` — creates project record with random icon color, calls `projectHooks.postCreate(savedProject, postCreateContext)` if enabled. `postCreateContext: ProjectPostCreateContext` carries side-effect inputs forwarded to the EE hook (currently `alertReceiverEmail?: string | null` for auto-subscribing an alert receiver on team projects).
 - `update(projectId, request, entityManager?)` — updates allowed fields; TEAM projects allow `displayName` and `icon` update; PERSONAL projects do not
 - `getOne(projectId)` / `getOneOrThrow(projectId)` — single project fetch
 - `getAllForUser({ platformId, userId, isPrivileged })` — returns all projects visible to a user (admins see all platform projects, members see their assigned projects)
@@ -68,5 +68,5 @@ Relations (one-to-many): `flows`, `files`, `folders`, `events`, `appConnections`
 - `countByPlatformIdAndType(platformId, type)` — used to enforce project limits
 
 ## Side Effects
-- Creating a project calls `projectHooks.postCreate`, which in EE creates an associated `ProjectPlan` and sets piece filters
+- Creating a project calls `projectHooks.postCreate(project, context?)`, which in EE creates an associated `ProjectPlan`, sets piece filters, and (per [alerts.md](./alerts.md)) auto-subscribes an alert receiver: the owner's email for personal projects, or `context.alertReceiverEmail` for team projects.
 - Soft-deleted projects remain in DB and can be hard-deleted by a background job

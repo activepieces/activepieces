@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { kapsoAuth } from '../common';
 import { makeClient } from '../common';
-import { phoneNumberIdDropdown } from '../common/props';
+import { businessAccountIdProp, phoneNumberIdDropdown } from '../common/props';
 
 export const markAsRead = createAction({
   auth: kapsoAuth,
@@ -9,6 +9,7 @@ export const markAsRead = createAction({
   displayName: 'Mark Message as Read',
   description: 'Mark a WhatsApp message as read.',
   props: {
+    businessAccountId: businessAccountIdProp,
     phoneNumberId: phoneNumberIdDropdown,
     messageId: Property.ShortText({
       displayName: 'Message ID',

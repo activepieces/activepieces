@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { chatApi } from '@/features/chat/lib/chat-api';
 
 import { AIChatBox } from './ai-chat-box';
+import { TypewriterText } from './components/typewriter-text';
 import { ConversationList } from './conversation-list';
 
 export function ChatWithAIPage() {
@@ -66,19 +67,13 @@ export function ChatWithAIPage() {
   );
 
   const handleTitleUpdate = useCallback(
-    (title: string, conversationId?: string) => {
+    (title: string) => {
       setConversationTitle(title);
       void queryClient.invalidateQueries({
         queryKey: ['chat-conversations'],
       });
-      if (conversationId && !selectedConversationId) {
-        setPendingConversationId(null);
-        navigate(`/chat/${conversationId}`, {
-          replace: true,
-        });
-      }
     },
-    [queryClient, selectedConversationId, navigate],
+    [queryClient],
   );
 
   const handleRename = useCallback(async () => {
@@ -187,9 +182,10 @@ export function ChatWithAIPage() {
             />
           ) : (
             <>
-              <span className="text-sm font-semibold truncate max-w-[400px]">
-                {displayTitle}
-              </span>
+              <TypewriterText
+                text={displayTitle}
+                className="text-sm font-semibold truncate max-w-[400px]"
+              />
               {activeConversationId && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

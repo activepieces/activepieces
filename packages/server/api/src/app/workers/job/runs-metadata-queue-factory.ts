@@ -1,5 +1,5 @@
 import { apDayjsDuration } from '@activepieces/server-utils'
-import { apId, ApId, FlowRunStatus, RunEnvironment } from '@activepieces/shared'
+import { apId, ApId, FailedStep, FlowRunStatus, RunEnvironment } from '@activepieces/shared'
 import { Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import Redis from 'ioredis'
@@ -112,7 +112,7 @@ export type RunsMetadataUpsertData = {
     finishTime?: string | null
     status?: FlowRunStatus
     tags?: string[]
-    failedStep?: { name: string, displayName: string }
+    failedStep?: FailedStep
     stepNameToTest?: string
     parentRunId?: string
     failParentOnFailure?: boolean

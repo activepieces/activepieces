@@ -17,14 +17,14 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, EntityManager, IsNull, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { userService } from '../user/user-service'
-import { projectHooks } from './project-hooks'
+import { projectHooks, ProjectPostCreateContext } from './project-hooks'
 import { projectRepo } from './project-repo'
 
 export { projectRepo }
 
 export const projectService = (log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<Project> {
-        const { callPostCreateHooks = true, entityManager, ...rest } = params
+        const { callPostCreateHooks = true, entityManager, postCreateContext, ...rest } = params
         const icon = this.createProjectIcon()
         const newProject: NewProject = {
             id: apId(),
@@ -34,7 +34,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
         }
         const savedProject = await projectRepo(entityManager).save(newProject)
         if (callPostCreateHooks) {
-            await this.callProjectPostCreateHooks(savedProject)
+            await this.callProjectPostCreateHooks(savedProject, postCreateContext)
         }
         return savedProject
     },
@@ -209,8 +209,8 @@ export const projectService = (log: FastifyBaseLogger) => ({
         }
         return icon
     },
-    callProjectPostCreateHooks: async (savedProject: Project)=>{
-        await projectHooks.get(log).postCreate(savedProject)
+    callProjectPostCreateHooks: async (savedProject: Project, context?: ProjectPostCreateContext)=>{
+        await projectHooks.get(log).postCreate(savedProject, context)
     },
 })
 
@@ -300,6 +300,7 @@ type CreateParams = {
     metadata?: Metadata
     maxConcurrentJobs?: number
     callPostCreateHooks?: boolean
+    postCreateContext?: ProjectPostCreateContext
     entityManager?: EntityManager
 }
 

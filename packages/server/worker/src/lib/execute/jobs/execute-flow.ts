@@ -12,6 +12,8 @@ import {
     FlowVersion,
     isNil,
     ResumeExecuteFlowOperation,
+    RunInternalError,
+    RunInternalErrorSource,
     tryCatch,
     WorkerJobType,
 } from '@activepieces/shared'
@@ -35,7 +37,7 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
 
         const { data: provisioned, error: provisionError } = await tryCatch(() => provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient }))
         if (provisionError) {
-            await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR)
+            await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR, toInternalError(RunInternalErrorSource.WORKER, provisionError))
             throw provisionError
         }
         if (!provisioned) {
@@ -44,7 +46,6 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
         }
 
         if (data.executionType === ExecutionType.RESUME && isNil(data.logsFileId)) {
-            await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR)
             throw new ActivepiecesError({
                 code: ErrorCode.RESUME_LOGS_FILE_MISSING,
                 params: { runId: data.runId },
@@ -72,7 +73,11 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
             }
 
             if (result.status === EngineResponseStatus.INTERNAL_ERROR) {
-                await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR)
+                await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR, {
+                    source: RunInternalErrorSource.ENGINE,
+                    message: result.error ?? 'Engine reported an internal error without details',
+                    occurredAt: new Date().toISOString(),
+                })
                 return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR, logs: result.logs }
             }
 
@@ -94,7 +99,7 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
                     return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.LOG_SIZE_EXCEEDED }
                 }
             }
-            await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR)
+            await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR, toInternalError(RunInternalErrorSource.WORKER, e))
             throw e
         }
         finally {
@@ -131,6 +136,7 @@ function buildFlowOperation(
             ...base,
             executionType: ExecutionType.RESUME,
             resumePayload: data.payload,
+            resumeReason: data.resumeReason,
         }
     }
 
@@ -143,10 +149,24 @@ function buildFlowOperation(
     }
 }
 
+function toInternalError(source: RunInternalErrorSource, error: unknown): RunInternalError {
+    const isApError = error instanceof ActivepiecesError
+    const base = error instanceof Error
+        ? [error.name, error.message, error.stack].filter(Boolean).join('\n')
+        : inspect(error, { depth: 1 })
+    return {
+        source,
+        message: base,
+        code: isApError ? error.error.code : undefined,
+        occurredAt: new Date().toISOString(),
+    }
+}
+
 async function reportFlowStatus(
     ctx: JobContext,
     data: ExecuteFlowJobData,
     status: FlowRunStatus,
+    internalError?: RunInternalError,
 ): Promise<void> {
     await ctx.apiClient.uploadRunLog({
         runId: data.runId,
@@ -154,6 +174,8 @@ async function reportFlowStatus(
         projectId: data.projectId,
         streamStepProgress: data.streamStepProgress,
         finishTime: new Date().toISOString(),
+        logsFileId: data.logsFileId,
+        internalError,
     })
 
     if (status === FlowRunStatus.INTERNAL_ERROR && isDedicatedWorker()) {

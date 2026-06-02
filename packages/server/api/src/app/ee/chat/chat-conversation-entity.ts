@@ -1,11 +1,11 @@
-import { ChatConversation, Platform, Project } from '@activepieces/shared'
+import { ChatConversation, ChatConversationStatus, Platform, Project, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
 type ChatConversationWithRelations = ChatConversation & {
     platform: Platform
     project: Project
-    user: unknown
+    user: User
 }
 
 export const ChatConversationEntity = new EntitySchema<ChatConversationWithRelations>({
@@ -32,10 +32,19 @@ export const ChatConversationEntity = new EntitySchema<ChatConversationWithRelat
             type: String,
             nullable: true,
         },
+        status: {
+            type: String,
+            nullable: false,
+            default: ChatConversationStatus.IDLE,
+        },
         messages: {
             type: 'jsonb',
             nullable: false,
             default: '[]',
+        },
+        uiMessages: {
+            type: 'jsonb',
+            nullable: true,
         },
         summary: {
             type: 'text',

@@ -2,10 +2,70 @@ import {
   createTrigger,
   TriggerStrategy,
   Property,
+  WebhookRenewStrategy,
 } from '@activepieces/pieces-framework';
-import { googleCalendarCommon, googleCalendarAuth, GoogleCalendarAuthValue } from '../common';
-import { stopWatchEvent, watchEvent, getLatestEvent } from '../common/helper';
+import { isNil } from '@activepieces/shared';
+import {
+  googleCalendarCommon,
+  googleCalendarAuth,
+  GoogleCalendarAuthValue,
+} from '../common';
+import {
+  stopWatchEvent,
+  watchEvent,
+  getLatestEvent,
+  getInitialSyncToken,
+  listEventsWithSyncToken,
+} from '../common/helper';
 import { GoogleWatchResponse, GoogleCalendarEvent } from '../common/types';
+
+const WATCH_STORE_KEY = 'google_calendar_watch';
+const SYNC_TOKEN_STORE_KEY = 'google_calendar_sync_token';
+const SEEN_EVENT_IDS_STORE_KEY = 'google_calendar_seen_event_ids';
+const SEEN_EVENT_IDS_LIMIT = 500;
+
+type EventFilters = {
+  event_types: string[] | undefined;
+  search_filter: string | undefined;
+  exclude_all_day: boolean | undefined;
+};
+
+function matchesFilters(
+  event: GoogleCalendarEvent,
+  { event_types, search_filter, exclude_all_day }: EventFilters
+): boolean {
+  if (event_types && event_types.length > 0) {
+    const eventType = event.eventType || 'default';
+    if (!event_types.includes(eventType)) {
+      return false;
+    }
+  }
+
+  if (search_filter && search_filter.trim()) {
+    const searchTerm = search_filter.toLowerCase().trim();
+    const summary = (event.summary || '').toLowerCase();
+    const description = (event.description || '').toLowerCase();
+    const location = (event.location || '').toLowerCase();
+
+    const matchesSearch =
+      summary.includes(searchTerm) ||
+      description.includes(searchTerm) ||
+      location.includes(searchTerm);
+
+    if (!matchesSearch) {
+      return false;
+    }
+  }
+
+  if (exclude_all_day) {
+    const isAllDay = event.start?.date && !event.start?.dateTime;
+    if (isAllDay) {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 export const newEvent = createTrigger({
   auth: googleCalendarAuth,
@@ -44,6 +104,10 @@ export const newEvent = createTrigger({
     }),
   },
   type: TriggerStrategy.WEBHOOK,
+  renewConfiguration: {
+    strategy: WebhookRenewStrategy.CRON,
+    cronExpression: '0 */12 * * *',
+  },
   sampleData: {
     kind: 'calendar#event',
     etag: '"3419997894982000"',
@@ -79,104 +143,131 @@ export const newEvent = createTrigger({
 
     const response = await watchEvent(calendarId, context.webhookUrl, auth);
 
-    await context.store.put<GoogleWatchResponse>(
-      'google_calendar_watch',
-      response
-    );
+    await context.store.put<GoogleWatchResponse>(WATCH_STORE_KEY, response);
+
+    const initialSyncToken = await getInitialSyncToken({
+      calendarId,
+      authProp: auth,
+    });
+    if (!isNil(initialSyncToken)) {
+      await context.store.put<string>(SYNC_TOKEN_STORE_KEY, initialSyncToken);
+    }
   },
 
   async onDisable(context) {
     const auth = context.auth as GoogleCalendarAuthValue;
     const watch = await context.store.get<GoogleWatchResponse>(
-      'google_calendar_watch'
+      WATCH_STORE_KEY
     );
 
     if (watch) {
       await stopWatchEvent(watch, auth);
     }
+    await context.store.delete(SYNC_TOKEN_STORE_KEY);
+    await context.store.delete(SEEN_EVENT_IDS_STORE_KEY);
+  },
+
+  async onRenew(context) {
+    const calendarId = context.propsValue.calendar_id!;
+    const auth = context.auth as GoogleCalendarAuthValue;
+
+    const existingWatch = await context.store.get<GoogleWatchResponse>(
+      WATCH_STORE_KEY
+    );
+    if (existingWatch) {
+      await stopWatchEvent(existingWatch, auth);
+    }
+
+    const renewed = await watchEvent(calendarId, context.webhookUrl, auth);
+    await context.store.put<GoogleWatchResponse>(WATCH_STORE_KEY, renewed);
   },
 
   async run(context) {
     const payload = context.payload;
     const headers = payload.headers as Record<string, string>;
-    const { event_types, search_filter, exclude_all_day } = context.propsValue;
+    const resourceState = headers['x-goog-resource-state'];
+    const filters: EventFilters = {
+      event_types: context.propsValue.event_types,
+      search_filter: context.propsValue.search_filter,
+      exclude_all_day: context.propsValue.exclude_all_day,
+    };
 
-    if (headers['x-goog-resource-state'] === 'add') {
-      const eventData = payload.body as GoogleCalendarEvent;
-
-      if (event_types && event_types.length > 0) {
-        const eventType = eventData.eventType || 'default';
-        if (!event_types.includes(eventType)) {
-          return [];
-        }
-      }
-
-      if (search_filter && search_filter.trim()) {
-        const searchTerm = search_filter.toLowerCase().trim();
-        const summary = (eventData.summary || '').toLowerCase();
-        const description = (eventData.description || '').toLowerCase();
-        const location = (eventData.location || '').toLowerCase();
-
-        const matchesSearch =
-          summary.includes(searchTerm) ||
-          description.includes(searchTerm) ||
-          location.includes(searchTerm);
-
-        if (!matchesSearch) {
-          return [];
-        }
-      }
-
-      if (exclude_all_day) {
-        const isAllDay = eventData.start?.date && !eventData.start?.dateTime;
-        if (isAllDay) {
-          return [];
-        }
-      }
-
-      return [eventData];
-    } else {
+    if (resourceState === 'sync') {
       return [];
     }
+
+    if (resourceState !== 'exists') {
+      return [];
+    }
+
+    const calendarId = context.propsValue.calendar_id!;
+    const auth = context.auth as GoogleCalendarAuthValue;
+    const syncToken = await context.store.get<string>(SYNC_TOKEN_STORE_KEY);
+    if (isNil(syncToken)) {
+      const fresh = await getInitialSyncToken({ calendarId, authProp: auth });
+      if (!isNil(fresh)) {
+        await context.store.put<string>(SYNC_TOKEN_STORE_KEY, fresh);
+      }
+      return [];
+    }
+
+    const { items, nextSyncToken, syncTokenInvalid } =
+      await listEventsWithSyncToken({
+        calendarId,
+        syncToken,
+        authProp: auth,
+      });
+
+    if (syncTokenInvalid) {
+      const fresh = await getInitialSyncToken({ calendarId, authProp: auth });
+      if (!isNil(fresh)) {
+        await context.store.put<string>(SYNC_TOKEN_STORE_KEY, fresh);
+      }
+      return [];
+    }
+
+    if (!isNil(nextSyncToken)) {
+      await context.store.put<string>(SYNC_TOKEN_STORE_KEY, nextSyncToken);
+    }
+
+    const seenIds = await context.store.get<string[]>(SEEN_EVENT_IDS_STORE_KEY);
+    const seenSet = new Set(seenIds ?? []);
+    const newEvents: GoogleCalendarEvent[] = [];
+    for (const event of items) {
+      if (!event.id || event.status === 'cancelled') {
+        continue;
+      }
+      if (seenSet.has(event.id)) {
+        continue;
+      }
+      seenSet.add(event.id);
+      if (matchesFilters(event, filters)) {
+        newEvents.push(event);
+      }
+    }
+    if (seenSet.size !== (seenIds?.length ?? 0)) {
+      const bounded = Array.from(seenSet).slice(-SEEN_EVENT_IDS_LIMIT);
+      await context.store.put<string[]>(SEEN_EVENT_IDS_STORE_KEY, bounded);
+    }
+
+    return newEvents;
   },
 
   async test(context) {
     const auth = context.auth as GoogleCalendarAuthValue;
-    const { event_types, search_filter, exclude_all_day } = context.propsValue;
+    const filters: EventFilters = {
+      event_types: context.propsValue.event_types,
+      search_filter: context.propsValue.search_filter,
+      exclude_all_day: context.propsValue.exclude_all_day,
+    };
 
     const latestEvent = await getLatestEvent(
       context.propsValue.calendar_id!,
       auth
     );
 
-    if (event_types && event_types.length > 0) {
-      const eventType = latestEvent.eventType || 'default';
-      if (!event_types.includes(eventType)) {
-        return [];
-      }
-    }
-
-    if (search_filter && search_filter.trim()) {
-      const searchTerm = search_filter.toLowerCase().trim();
-      const summary = (latestEvent.summary || '').toLowerCase();
-      const description = (latestEvent.description || '').toLowerCase();
-      const location = (latestEvent.location || '').toLowerCase();
-
-      const matchesSearch =
-        summary.includes(searchTerm) ||
-        description.includes(searchTerm) ||
-        location.includes(searchTerm);
-
-      if (!matchesSearch) {
-        return [];
-      }
-    }
-
-    if (exclude_all_day) {
-      const isAllDay = latestEvent.start?.date && !latestEvent.start?.dateTime;
-      if (isAllDay) {
-        return [];
-      }
+    if (!matchesFilters(latestEvent, filters)) {
+      return [];
     }
 
     return [latestEvent];

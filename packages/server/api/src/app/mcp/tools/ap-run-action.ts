@@ -5,7 +5,7 @@ import { executeAdhocAction } from './flow-run-utils'
 import { mcpUtils } from './mcp-utils'
 
 const runActionInput = z.object({
-    pieceName: z.string().describe('Piece name, e.g. "slack" or "@activepieces/piece-slack". Use ap_list_pieces to discover.'),
+    pieceName: z.string().describe('Piece name, e.g. "slack" or "@activepieces/piece-slack". Use ap_research_pieces to discover.'),
     actionName: z.string().describe('Action to run, e.g. "send_channel_message". Use ap_get_piece_props for the input shape.'),
     input: z.record(z.string(), z.unknown()).optional().describe('Fully-resolved input for the action. Keys must match the piece action\'s props. Pass raw values — do NOT wrap in {{...}}. Omit if the action has no props.'),
     connectionExternalId: z.string().optional().describe('externalId from ap_list_connections. Required if the piece needs auth. Auto-wrapped as {{connections[\'externalId\']}}.'),

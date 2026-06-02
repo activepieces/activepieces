@@ -8,7 +8,7 @@
   <meta name="format-detection" content="address=no" />
   <meta name="format-detection" content="telephone=no" />
   <meta name="x-apple-disable-message-reformatting" />
-  <title>Flow has an issue "{{flowName}}" ⚠️</title>
+  <title>[{{projectName}}] Flow has an issue "{{flowName}}" ⚠️</title>
   <!--[if mso]>
   <style type="text/css">
     body, table, td, p, a { font-family: Arial, sans-serif !important; }
@@ -38,15 +38,29 @@
 
               <tr>
                 <td align="left" style="padding: 16px 40px 0 40px; font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 16px; line-height: 24px; color: #2f2e2e;">
-                  First seen at <strong>{{createdAt}}</strong>.
-                  {{#checkIssuesEnabled}}
-                  Please review the issue, fix it, and mark it as resolved.
-                  {{/checkIssuesEnabled}}
-                  {{^checkIssuesEnabled}}
-                  Please review the flow and fix it.
-                  {{/checkIssuesEnabled}}
+                  First seen at <strong>{{createdAt}}</strong>. To recover, retry this run from the runs table, or update the flow, republish, and retry it again.
                 </td>
               </tr>
+
+              <tr>
+                <td align="left" style="padding: 16px 40px 0 40px; font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 16px; line-height: 24px; color: #2f2e2e;">
+                  <strong>Project:</strong> {{projectName}}
+                </td>
+              </tr>
+
+              <tr>
+                <td align="left" style="padding: 16px 40px 0 40px; font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 16px; line-height: 24px; color: #2f2e2e;">
+                  <strong>Failed at:</strong> {{#failedStepNumber}}{{failedStepNumber}}. {{/failedStepNumber}}{{failedStepDisplayName}}
+                </td>
+              </tr>
+
+              {{#failedStepMessage}}
+              <tr>
+                <td align="left" style="padding: 8px 40px 0 40px; font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 14px; line-height: 22px; color: #2f2e2e; word-break: break-word;">
+                  <strong>Reason:</strong> {{failedStepMessage}}
+                </td>
+              </tr>
+              {{/failedStepMessage}}
 
               <tr>
                 <td align="left" style="padding: 28px 40px 0 40px;">
@@ -54,8 +68,8 @@
                     <tbody>
                       <tr>
                         <td align="left" style="background: {{primaryColor}}; border-radius: 8px;">
-                          <a href="{{issueUrl}}" target="_blank" style="display: block; padding: 12px 18px; font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 16px; font-weight: 500; color: #ffffff; text-decoration: none;">
-                            {{#checkIssuesEnabled}}View Issue{{/checkIssuesEnabled}}{{^checkIssuesEnabled}}View Run{{/checkIssuesEnabled}}
+                          <a href="{{runUrl}}" target="_blank" style="display: block; padding: 12px 18px; font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 16px; font-weight: 500; color: #ffffff; text-decoration: none;">
+                            View Run
                           </a>
                         </td>
                       </tr>
@@ -66,7 +80,7 @@
 
               <tr>
                 <td align="left" style="padding: 12px 40px 0 40px; font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 11px; line-height: 16px; color: #a3a3a3;">
-                  If the button doesn't work, <a href="{{issueUrl}}" style="color: {{primaryColor}}; text-decoration: underline;">click here</a>.
+                  If the button doesn't work, <a href="{{runUrl}}" style="color: {{primaryColor}}; text-decoration: underline;">click here</a>.
                 </td>
               </tr>
 

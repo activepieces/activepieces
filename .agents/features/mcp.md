@@ -27,17 +27,18 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - Cloud: available
 
 ## Domain Terms
-- **McpServer** — the per-project MCP server record (token, enabledTools)
+- **McpServer** — the per-project MCP server record (token, disabledTools)
 - **Locked tools** — tools that are always active when the MCP server is enabled; cannot be disabled
 - **Controllable tools** — tools that platform or project owners can enable/disable individually
 - **Dynamic flow tools** — flows that use the MCP trigger piece and are registered as callable tools; tool name format is `{toolName}_{flowId[0..4]}`
 - **StreamableHTTP** — streaming variant of the MCP protocol used for the primary `/http` endpoint
 - **MCP trigger piece** — `@activepieces/piece-mcp`; a flow with this trigger is exposed as a callable tool via MCP
-- **enabledTools** — JSONB array of controllable tool names currently active; `null` means all controllable tools are enabled
+- **disabledTools** — JSONB array of controllable tool names currently disabled; `null` or `[]` means all controllable tools are enabled
+- **Flow attribution** — `ap_create_flow`, `ap_build_flow`, and `ap_duplicate_flow` stamp `ownerId` (the OAuth-authenticated user who connected the client) and `createdBy: { type: 'MCP', id: <mcpServerId> }` on every flow they create. `ProjectScopedMcpServer` carries `userId?` so the tools can attribute ownership.
 
 ## Entity
 
-**McpServer**: id, projectId (UNIQUE — one per project), token (72-char auth), enabledTools[] (JSONB, nullable — defaults to ALL_CONTROLLABLE_TOOL_NAMES).
+**McpServer**: id, projectId (UNIQUE — one per project), token (72-char auth), disabledTools[] (JSONB, nullable — defaults to []).
 
 ## Tools
 
@@ -45,7 +46,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `ap_list_flows` — list all flows in project
 - `ap_flow_structure` — get flow definition and structure
 - `ap_read_step_code` — read full source code of a CODE step
-- `ap_list_pieces` — browse available pieces
+- `ap_research_pieces` — browse available pieces
 - `ap_list_connections` — list app connections
 
 **Controllable tools** (can be toggled per-project):
@@ -73,7 +74,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 ## Endpoints
 
 - `GET /v1/mcp/:projectId` — get MCP server config + populated flows
-- `POST /v1/mcp/:projectId` — update enabledTools
+- `POST /v1/mcp/:projectId` — update disabledTools
 - `POST /v1/mcp/:projectId/rotate` — rotate auth token
 - `POST /v1/mcp/:projectId/http` — StreamableHTTP MCP protocol endpoint (main protocol handler)
 

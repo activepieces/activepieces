@@ -55,6 +55,7 @@ const QueueMetricsParams = {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
+        tags: ['worker-machines'],
         response: {
             200: z.object({
                 queues: z.array(z.object({

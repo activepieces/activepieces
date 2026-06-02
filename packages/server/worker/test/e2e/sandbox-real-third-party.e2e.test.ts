@@ -1,4 +1,5 @@
-import { chmod, copyFile, mkdtemp } from 'node:fs/promises'
+import { spawnSync } from 'node:child_process'
+import { chmod, copyFile, mkdtemp, stat } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -58,6 +59,10 @@ describe.skipIf(PRIVILEGE_SKIP)('sandbox real third-party connectivity (SANDBOX_
         await copyFile(path.resolve(__dirname, 'fixtures/egress-probe.js'), probeDst)
         await chmod(commonDir, 0o755)
         await chmod(probeDst, 0o644)
+        // Mirror undici into the common dir so the sandbox can require it. Node has no
+        // node:undici built-in; the bundled engine ships its own copy at runtime, but
+        // this probe is a standalone JS fixture that has none.
+        await mirrorUndiciInto(commonDir)
     }, 60_000)
 
     afterAll(async () => {
@@ -97,6 +102,49 @@ describe.skipIf(PRIVILEGE_SKIP)('sandbox real third-party connectivity (SANDBOX_
         const result = await runProbeInSandbox({ commonDir, plan, proxyPort: proxy.port })
         const successes = countConnectivitySuccesses({ results: result.results, hosts: GROUP_B_HOSTS })
         expect(successes, summarizeFailures({ results: result.results, hosts: GROUP_B_HOSTS })).toBeGreaterThanOrEqual(GROUP_B_HOSTS.length - 1)
+    }, 60_000)
+
+    it.skipIf(PRIVILEGE_SKIP)('Group E — globalThis.fetch via undici ProxyAgent reaches the same hosts (real code-piece path)', async (ctx) => {
+        if (internetSkip) ctx.skip()
+        // Smaller curated set: keeps the test deterministic while still exercising
+        // multi-IP / IPv6-fronted / single-A-record DNS shapes.
+        const plan: ProbeAction[] = GROUP_E_HOSTS.map((host) => ({
+            type: 'fetch-via-undici', url: `https://${host}/`, method: 'HEAD', timeoutMs: 8000, tag: `${host}:fetch`,
+        }))
+        const result = await runProbeInSandbox({ commonDir, plan, proxyPort: proxy.port })
+        const fetchResults = result.results.filter((r) => r.action.type === 'fetch-via-undici')
+        const okCount = fetchResults.filter((r) => r.status === 'OK').length
+        const summary = fetchResults
+            .filter((r) => r.status !== 'OK')
+            .map((r) => `  ${r.action.tag} → code=${r.code} cause=${r.causeMessage ?? r.message}`)
+            .join('\n')
+        expect(
+            okCount >= Math.ceil(GROUP_E_HOSTS.length * 0.8),
+            `expected >= 80% of hosts reachable via globalThis.fetch+ProxyAgent; got ${okCount}/${GROUP_E_HOSTS.length}.\n${summary}`,
+        ).toBe(true)
+    }, 90_000)
+
+    it.skipIf(PRIVILEGE_SKIP)('Group F — bug repro: STRICT iptables WITHOUT AP_EGRESS_PROXY_URL → fetch fails with EHOSTUNREACH on every host', async (ctx) => {
+        if (internetSkip) ctx.skip()
+        // Reproduces the exact symptom users see when STRICT-mode iptables is in effect
+        // but the engine never installed undici's ProxyAgent — typically because
+        // AP_EGRESS_PROXY_URL didn't reach the sandbox env. fetch falls back to direct
+        // connect; iptables REJECTs with icmp-host-prohibited; userland reports
+        // EHOSTUNREACH wrapped in "fetch failed". Locking this failure mode in keeps
+        // any future regression that drops the env var while iptables stays armed
+        // failing LOUD against the real kernel + proxy + undici stack.
+        const plan: ProbeAction[] = GROUP_E_HOSTS.map((host) => ({
+            type: 'fetch-via-undici', url: `https://${host}/`, method: 'HEAD', timeoutMs: 4000, tag: `${host}:fetch-noproxy`,
+        }))
+        const result = await runProbeInSandbox({ commonDir, plan, proxyPort: proxy.port, omitProxyUrl: true })
+        const failures = result.results.filter((r) => r.action.type === 'fetch-via-undici')
+        for (const r of failures) {
+            expect(r.status, `${r.action.tag} unexpectedly succeeded with no ProxyAgent: ${JSON.stringify(r)}`).toBe('ERR')
+            expect(
+                r.code === 'EHOSTUNREACH' || r.code === 'ENETUNREACH' || r.code === 'FETCH_ERR',
+                `${r.action.tag} expected EHOSTUNREACH-class failure (iptables REJECT → icmp-host-prohibited), got: ${JSON.stringify(r)}`,
+            ).toBe(true)
+        }
     }, 60_000)
 
     it.skipIf(PRIVILEGE_SKIP)('Group D — SSRF defense-in-depth: cloud-metadata and loopback are blocked', async (ctx) => {
@@ -150,31 +198,34 @@ function summarizeFailures({ results, hosts }: { results: ProbeResult[], hosts: 
     return lines.length > 0 ? `failures:\n${lines.join('\n')}` : 'all hosts succeeded'
 }
 
-async function runProbeInSandbox({ commonDir, plan, proxyPort }: {
+async function runProbeInSandbox({ commonDir, plan, proxyPort, omitProxyUrl }: {
     commonDir: string
     plan: ProbeAction[]
     proxyPort: number
+    omitProxyUrl?: boolean
 }): Promise<{ results: ProbeResult[] }> {
     const logger = silentLogger()
     const maker = isolateProcess(logger, path.join(commonDir, 'egress-probe.js'), commonDir, BOX_ID)
     const proxyUrl = `http://127.0.0.1:${proxyPort}`
+    const baseEnv: Record<string, string> = {
+        HOME: '/tmp/',
+        NODE_PATH: '/usr/src/node_modules',
+        AP_EXECUTION_MODE: 'SANDBOX_PROCESS',
+        AP_SANDBOX_WS_PORT: '0',
+        AP_BASE_CODE_DIRECTORY: '/root/codes',
+        SANDBOX_ID: 'e2e-real-3p',
+        AP_NETWORK_MODE: 'STRICT',
+        AP_UNDICI_REQUIRE_PATH: '/root/common/undici',
+        AP_PROBE_PLAN: JSON.stringify(plan),
+    }
+    if (!omitProxyUrl) baseEnv.AP_EGRESS_PROXY_URL = proxyUrl
     const child = await maker.create({
         sandboxId: 'e2e-real-3p',
         command: [],
         mounts: [
             { hostPath: commonDir, sandboxPath: '/root/common' },
         ],
-        env: {
-            HOME: '/tmp/',
-            NODE_PATH: '/usr/src/node_modules',
-            AP_EXECUTION_MODE: 'SANDBOX_PROCESS',
-            AP_SANDBOX_WS_PORT: '0',
-            AP_BASE_CODE_DIRECTORY: '/root/codes',
-            SANDBOX_ID: 'e2e-real-3p',
-            AP_NETWORK_MODE: 'STRICT',
-            AP_EGRESS_PROXY_URL: proxyUrl,
-            AP_PROBE_PLAN: JSON.stringify(plan),
-        },
+        env: baseEnv,
         resourceLimits: { memoryLimitMb: 256, cpuMsPerSec: 4000, timeLimitSeconds: 90 },
     })
 
@@ -232,13 +283,56 @@ const GROUP_B_HOSTS = [
     'www.figma.com',
 ] as const
 
+// Curated for the fetch-via-undici suite: diverse DNS shapes (multi-A only,
+// Cloudflare-fronted v6+v4, AWS v6+v4, Google Cloud-front) so a regression in
+// any one DNS family is visible without being host-specific.
+const GROUP_E_HOSTS = [
+    'api.airtable.com',
+    'api.github.com',
+    'api.stripe.com',
+    'api.openai.com',
+    'hooks.slack.com',
+    'graph.microsoft.com',
+] as const
+
 const MIN_GROUP_A_SUCCESSES = Math.ceil(GROUP_A_HOSTS.length * 0.8)
+
+async function mirrorUndiciInto(commonDir: string): Promise<void> {
+    const undiciRoot = await locateUndiciRoot()
+    const dest = path.join(commonDir, 'undici')
+    // -L so any symlinks (bun's symlink farm) are dereferenced — the sandbox mount
+    // must hold real files, not links into the worker host's /usr/src/app/node_modules.
+    const r = spawnSync('cp', ['-RL', undiciRoot + '/.', dest], { encoding: 'utf8' })
+    if (r.status !== 0) throw new Error(`failed to copy undici from ${undiciRoot} → ${dest}: ${r.stderr}`)
+    spawnSync('chmod', ['-R', 'a+rX', dest])
+}
+
+async function locateUndiciRoot(): Promise<string> {
+    // Engine ships undici 7.x, bundled at build time. Inside the e2e docker image,
+    // bun installs each package version under node_modules/.bun/<name>@<ver>/.../<name>.
+    // Try the engine version first (matches what real code-pieces use), then any version.
+    const candidates = [
+        '/usr/src/app/node_modules/.bun/undici@7.24.6/node_modules/undici',
+    ]
+    const globResult = spawnSync('bash', ['-c', 'ls -d /usr/src/app/node_modules/.bun/undici@*/node_modules/undici 2>/dev/null | head -1'], { encoding: 'utf8' })
+    if (globResult.stdout.trim()) candidates.push(globResult.stdout.trim())
+    for (const c of candidates) {
+        const { error } = await tryStat(path.join(c, 'package.json'))
+        if (!error) return c
+    }
+    throw new Error(`undici package not found in any of: ${candidates.join(', ')} — ensure the worker test image has bun-installed undici`)
+}
+
+async function tryStat(p: string): Promise<{ error?: Error }> {
+    try { await stat(p); return {} } catch (e) { return { error: e as Error } }
+}
 
 type ProbeAction =
     | { type: 'dns-lookup', hostname: string, tag: string }
     | { type: 'dns-lookup-v6', hostname: string, tag: string }
     | { type: 'https-head-via-proxy', url: string, timeoutMs: number, tag: string }
     | { type: 'direct-tcp-connect', host: string, port: number, tag: string }
+    | { type: 'fetch-via-undici', url: string, method?: string, timeoutMs?: number, tag: string }
 
 type ProbeResult = {
     action: ProbeAction
@@ -246,6 +340,7 @@ type ProbeResult = {
     statusCode?: number
     code?: string
     message?: string
+    causeMessage?: string
     address?: string
     elapsedMs?: number
 }

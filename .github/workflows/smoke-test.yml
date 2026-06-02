@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Build Docker image
         run: docker build -t activepieces-benchmark:local .
@@ -60,6 +60,30 @@ jobs:
         run: |
           chmod +x smoke-test/verify-delay.sh
           smoke-test/verify-delay.sh
+
+      - name: Restart stack in SANDBOX_PROCESS mode
+        run: |
+          docker compose -f benchmark/docker-compose.yml down -v
+          AP_EXECUTION_MODE=SANDBOX_PROCESS \
+          APP_REPLICAS=1 \
+          WORKER_REPLICAS=1 \
+            docker compose -f benchmark/docker-compose.yml up -d
+          echo "Waiting for containers to start..."
+          sleep 5
+          docker compose -f benchmark/docker-compose.yml ps
+
+      - name: Setup isolation probe flow
+        id: setup-isolation
+        run: |
+          chmod +x benchmark/setup.sh
+          FLOW_ID=$(CODE_BODY_FILE=benchmark/probe-fs.js RESPONSE_BODY='{{step_2}}' benchmark/setup.sh)
+          echo "flow_id=$FLOW_ID" >> "$GITHUB_OUTPUT"
+          echo "Flow ID: $FLOW_ID"
+
+      - name: Verify sandbox filesystem isolation
+        run: |
+          chmod +x smoke-test/verify-isolation.sh
+          smoke-test/verify-isolation.sh "${{ steps.setup-isolation.outputs.flow_id }}"
 
       - name: Show app logs on failure
         if: failure()

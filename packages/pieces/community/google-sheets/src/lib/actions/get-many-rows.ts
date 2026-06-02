@@ -21,7 +21,7 @@ export const getManyRowsAction = createAction({
             auth:context.auth,
             sheetId: sheetId as number,
             spreadsheetId: spreadsheetId as string,
-            rowIndex_s:undefined,
+            rowIndex_s: first_row_headers ? 2 : undefined,
             rowIndex_e:undefined,
             headerRow: 1,
           });

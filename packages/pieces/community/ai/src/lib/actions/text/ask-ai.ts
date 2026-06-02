@@ -107,8 +107,8 @@ export const askAI = createAction({
         engineToken: context.server.token,
         apiUrl: context.server.apiUrl,
         usage: {
-          inputTokens: response.usage.promptTokens,
-          outputTokens: response.usage.completionTokens,
+          inputTokens: response.usage.inputTokens,
+          outputTokens: response.usage.outputTokens,
         },
       }).catch(err => {
         console.error('Failed to report AI usage', err)

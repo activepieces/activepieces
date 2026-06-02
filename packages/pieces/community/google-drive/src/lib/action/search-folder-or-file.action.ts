@@ -86,6 +86,7 @@ export const googleDriveSearchFolder = createAction({
         fields: 'nextPageToken, files(id, name, mimeType, createdTime, modifiedTime)',
         includeItemsFromAllDrives: context.propsValue.include_team_drives,
         supportsAllDrives: true,
+        corpora: context.propsValue.include_team_drives ? 'allDrives' : 'user',
         pageSize: 1000,
       };
       if (pageToken) listParams.pageToken = pageToken;

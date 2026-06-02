@@ -33,9 +33,9 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
           'Validate a flow for structural issues without publishing — checks step validity, template references, and empty branches',
       },
       {
-        name: 'ap_list_pieces',
+        name: 'ap_research_pieces',
         description:
-          'List pieces with actions and triggers — required before adding or updating steps',
+          'Research pieces with actions and triggers — required before adding or updating steps',
       },
       {
         name: 'ap_get_piece_props',

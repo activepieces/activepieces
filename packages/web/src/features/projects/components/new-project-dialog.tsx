@@ -96,12 +96,30 @@ const NewProjectForm = ({
     resolver: zodResolver(
       z.object({
         displayName: z.string().min(1, t('Name is required')),
+        alertReceiverEmail: z
+          .email(t('Invalid email'))
+          .nullable()
+          .optional()
+          .or(z.literal('')),
       }),
     ),
     defaultValues: {
       globalConnectionExternalIds: preselectedConnectionExternalIds,
+      alertReceiverEmail: '',
     },
   });
+
+  const handleCreate = () => {
+    const values = form.getValues();
+    const alertReceiverEmail = values.alertReceiverEmail?.trim();
+    mutate({
+      ...values,
+      alertReceiverEmail:
+        alertReceiverEmail && alertReceiverEmail.length > 0
+          ? alertReceiverEmail
+          : null,
+    });
+  };
 
   const { mutate, isPending } = projectCollectionUtils.useCreateProject(
     (data) => {
@@ -122,19 +140,42 @@ const NewProjectForm = ({
       <Form {...form}>
         <form
           className="grid space-y-4"
-          onSubmit={(e) => form.handleSubmit(() => mutate(form.getValues()))(e)}
+          onSubmit={(e) => form.handleSubmit(handleCreate)(e)}
         >
           <FormField
             name="displayName"
             render={({ field }) => (
               <FormItem className="grid space-y-2">
-                <Label htmlFor="displayName">{t('Project Name')}</Label>
+                <Label htmlFor="displayName" showRequiredIndicator>
+                  {t('Project Name')}
+                </Label>
                 <Input
                   {...field}
                   id="displayName"
                   placeholder={t('Project Name')}
                   className="rounded-sm"
                 />
+              </FormItem>
+            )}
+          />
+          <FormField
+            name="alertReceiverEmail"
+            render={({ field }) => (
+              <FormItem className="grid space-y-2">
+                <Label htmlFor="alertReceiverEmail">
+                  {t('Alert Receiver Email')}
+                </Label>
+                <Input
+                  {...field}
+                  id="alertReceiverEmail"
+                  type="email"
+                  placeholder="alerts@example.com"
+                  className="rounded-sm"
+                  value={field.value ?? ''}
+                />
+                <span className="text-xs text-muted-foreground">
+                  {t('Receives flow failure emails for this project.')}
+                </span>
                 <FormMessage />
               </FormItem>
             )}
@@ -166,7 +207,6 @@ const NewProjectForm = ({
                     initialValues={field.value ?? []}
                     showDeselect={(field.value ?? []).length > 0}
                   />
-                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -176,31 +216,32 @@ const NewProjectForm = ({
               {form.formState.errors.root.serverError.message}
             </FormMessage>
           )}
+          <DialogFooter>
+            <Button
+              variant={'outline'}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setOpen(false);
+              }}
+            >
+              {t('Cancel')}
+            </Button>
+            <Button
+              disabled={isPending}
+              loading={isPending}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                form.handleSubmit(handleCreate)(e);
+              }}
+            >
+              {t('Create Project')}
+            </Button>
+          </DialogFooter>
         </form>
       </Form>
-      <DialogFooter>
-        <Button
-          variant={'outline'}
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            setOpen(false);
-          }}
-        >
-          {t('Cancel')}
-        </Button>
-        <Button
-          disabled={isPending}
-          loading={isPending}
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            form.handleSubmit(() => mutate(form.getValues()))(e);
-          }}
-        >
-          {t('Create Project')}
-        </Button>
-      </DialogFooter>
     </>
   );
 };

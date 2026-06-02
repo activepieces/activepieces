@@ -3,8 +3,8 @@ import {
   Property,
   StaticPropsValue,
 } from '@activepieces/pieces-framework';
-import oracledb from 'oracledb';
-import { ensureOracleClient } from './thick-mode';
+import { OracleRunnerError, runnerPool } from './runner-pool';
+import type { RunnerAuth } from './runner-protocol';
 
 export const oracleDbAuth = PieceAuth.CustomAuth({
   description: `Connect to Oracle Database using either Service Name (host/port/service) or a full connection string.`,
@@ -62,60 +62,70 @@ export const oracleDbAuth = PieceAuth.CustomAuth({
   },
 
   validate: async ({ auth }) => {
-    let connection: oracledb.Connection | undefined;
     const typedAuth = auth as StaticPropsValue<(typeof oracleDbAuth)['props']>;
     const logs: string[] = [];
 
-    try {
-      let connectString: string | undefined;
-
-      if (typedAuth.connectionType === 'serviceName') {
-        if (!typedAuth.host || !typedAuth.port || !typedAuth.serviceName) {
-          return {
-            valid: false,
-            error:
-              'Host, Port, and Service Name are required for this connection type.',
-          };
-        }
-        connectString = `${typedAuth.host}:${typedAuth.port}/${typedAuth.serviceName}`;
-        logs.push(`[oracle] Connection type: serviceName → ${connectString}`);
-      } else {
-        if (!typedAuth.connectionString) {
-          return {
-            valid: false,
-            error: 'Connection String is required for this connection type.',
-          };
-        }
-        connectString = typedAuth.connectionString;
-        logs.push(`[oracle] Connection type: connectionString → ${connectString.replace(/\/\/[^:]+:[^@]+@/, '//***:***@')}`);
+    if (typedAuth.connectionType === 'serviceName') {
+      if (!typedAuth.host || !typedAuth.port || !typedAuth.serviceName) {
+        return {
+          valid: false,
+          error:
+            'Host, Port, and Service Name are required for this connection type.',
+        };
       }
+      logs.push(
+        `[oracle] Connection type: serviceName → ${typedAuth.host}:${typedAuth.port}/${typedAuth.serviceName}`
+      );
+    } else {
+      if (!typedAuth.connectionString) {
+        return {
+          valid: false,
+          error: 'Connection String is required for this connection type.',
+        };
+      }
+      logs.push(
+        `[oracle] Connection type: connectionString → ${typedAuth.connectionString.replace(
+          /\/\/[^:]+:[^@]+@/,
+          '//***:***@'
+        )}`
+      );
+    }
 
-      logs.push(`[oracle] Thick mode: ${typedAuth.thickMode === true}`);
-      await ensureOracleClient({ thickMode: typedAuth.thickMode === true, logs });
-      logs.push('[oracle] Oracle client ready. Opening connection...');
+    const runnerAuth: RunnerAuth = {
+      connectionType: typedAuth.connectionType,
+      host: typedAuth.host,
+      port: typedAuth.port,
+      serviceName: typedAuth.serviceName,
+      connectionString: typedAuth.connectionString,
+      user: typedAuth.user,
+      password: typedAuth.password,
+      thickMode: typedAuth.thickMode === true,
+    };
 
-      connection = await oracledb.getConnection({
-        user: typedAuth.user,
-        password: typedAuth.password,
-        connectString: connectString,
+    logs.push(`[oracle] Thick mode: ${runnerAuth.thickMode}`);
+
+    try {
+      const { runner, initLogs } = await runnerPool.acquire(
+        runnerAuth.thickMode ? 'thick' : 'thin'
+      );
+      logs.push(...initLogs);
+      const { logs: invokeLogs } = await runner.invoke<{ valid: boolean }>({
+        cmd: 'validate',
+        auth: runnerAuth,
       });
+      if (invokeLogs) logs.push(...invokeLogs);
       logs.push('[oracle] Connection established successfully.');
       console.log(logs.join('\n'));
       return { valid: true };
     } catch (e) {
-      logs.push(`[oracle] Error: ${(e as Error)?.message ?? 'Unknown error'}`);
+      if (e instanceof OracleRunnerError && e.logs) logs.push(...e.logs);
+      logs.push(
+        `[oracle] Error: ${(e as Error)?.message ?? 'Unknown error'}`
+      );
       return {
         valid: false,
         error: `Connection failed. Debug log:\n${logs.join('\n')}`,
       };
-    } finally {
-      if (connection) {
-        try {
-          await connection.close();
-        } catch {
-          // ignore
-        }
-      }
     }
   },
 });

@@ -6,10 +6,21 @@ import { createTicket } from './lib/actions/create-ticket';
 import { addNoteToTicket } from './lib/actions/add-note-to-ticket';
 import { createRequester } from './lib/actions/create-requester';
 import { requestTicketApproval } from './lib/actions/request-ticket-approval';
+import { createChange } from './lib/actions/create-change';
+import { updateChange } from './lib/actions/update-change';
+import { deleteChange } from './lib/actions/delete-change';
+import { addNoteToChange } from './lib/actions/add-note-to-change';
+import { createChangeTask } from './lib/actions/create-change-task';
+import { updateChangeTask } from './lib/actions/update-change-task';
+import { deleteChangeTask } from './lib/actions/delete-change-task';
 import { newTicket } from './lib/triggers/new-ticket';
 import { updatedTicket } from './lib/triggers/updated-ticket';
 import { newRequester } from './lib/triggers/new-requester';
 import { updatedRequester } from './lib/triggers/updated-requester';
+import { newChange } from './lib/triggers/new-change';
+import { updatedChange } from './lib/triggers/updated-change';
+import { newChangeTask } from './lib/triggers/new-change-task';
+import { updatedChangeTask } from './lib/triggers/updated-change-task';
 import { HttpMethod, httpClient, AuthenticationType } from '@activepieces/pieces-common';
 
 export const freshserviceAuth = PieceAuth.CustomAuth({
@@ -70,6 +81,13 @@ export const freshservice = createPiece({
     addNoteToTicket,
     createRequester,
     requestTicketApproval,
+    createChange,
+    updateChange,
+    deleteChange,
+    addNoteToChange,
+    createChangeTask,
+    updateChangeTask,
+    deleteChangeTask,
     createCustomApiCallAction({
       baseUrl: (auth) =>
         `https://${auth?.props.domain ?? ''}.freshservice.com/api/v2`,
@@ -84,5 +102,5 @@ export const freshservice = createPiece({
       },
     }),
   ],
-  triggers: [newTicket, updatedTicket, newRequester, updatedRequester],
+  triggers: [newTicket, updatedTicket, newRequester, updatedRequester, newChange, updatedChange, newChangeTask, updatedChangeTask],
 });
