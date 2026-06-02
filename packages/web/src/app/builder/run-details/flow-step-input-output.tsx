@@ -49,14 +49,14 @@ export const FlowStepInputOutput = () => {
       state.selectedStep
         ? flowStructureUtil.getStepOrThrow(
             state.selectedStep,
-            state.flowVersion.trigger
+            state.flowVersion.trigger,
           )
         : null,
-    ]
+    ],
   );
   const isAgent = isRunAgent(selectedStep);
   const [requestedTab, setActiveTab] = useState<RunActiveTab>(
-    isAgent ? 'timeline' : 'output'
+    isAgent ? 'timeline' : 'output',
   );
   const activeTab: RunActiveTab =
     requestedTab === 'timeline' && !isAgent ? 'output' : requestedTab;
@@ -65,7 +65,7 @@ export const FlowStepInputOutput = () => {
       ? flowRunUtils.extractStepOutput(
           selectedStep.name,
           loopsIndexes,
-          run.steps
+          run.steps,
         )
       : null;
   }, [run, selectedStep?.name, loopsIndexes, flowVersion.trigger]);
@@ -76,7 +76,7 @@ export const FlowStepInputOutput = () => {
     ? (selectedStepOutput?.output as LogSliceRef | undefined)
     : undefined;
   const friendlyError = tryParseFriendlyPieceError(
-    selectedStepOutput?.errorMessage
+    selectedStepOutput?.errorMessage,
   );
   const stepPieceName =
     selectedStep?.type === FlowActionType.PIECE ||
@@ -107,7 +107,7 @@ export const FlowStepInputOutput = () => {
     ignoreInternalError: true,
   });
   const { data: rententionDays } = flagsHooks.useFlag<number>(
-    ApFlagId.EXECUTION_DATA_RETENTION_DAYS
+    ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
   );
 
   if (
@@ -153,7 +153,7 @@ export const FlowStepInputOutput = () => {
             </span>
             <span className="text-xs text-muted-foreground leading-relaxed">
               {t(
-                'This step was skipped during this run, no input or output was captured.'
+                'This step was skipped during this run, no input or output was captured.',
               )}
             </span>
           </div>
@@ -315,7 +315,7 @@ const SlicedOutputDownload = ({
       <span>
         {t(
           'Output is too large to display inline ({size}). Download to inspect.',
-          { size: formatUtils.formatStorageSize(slicedOutputRef.size) }
+          { size: formatUtils.formatStorageSize(slicedOutputRef.size) },
         )}
       </span>
     </div>
@@ -335,7 +335,7 @@ const SlicedOutputDownload = ({
 
 function handleRunFailureOrEmptyLog(
   run: FlowRun | null,
-  retentionDays: number | null
+  retentionDays: number | null,
 ) {
   if (
     isNil(run) ||
@@ -346,14 +346,14 @@ function handleRunFailureOrEmptyLog(
 
   if ([FlowRunStatus.INTERNAL_ERROR].includes(run.status)) {
     return t(
-      'There are no logs captured for this run, because of an internal error, please contact support.'
+      'There are no logs captured for this run, because of an internal error, please contact support.',
     );
   }
 
   if (isNil(run.logsFileId)) {
     return t(
       'Logs are kept for {days} days after execution and then deleted.',
-      { days: retentionDays }
+      { days: retentionDays },
     );
   }
   return null;
