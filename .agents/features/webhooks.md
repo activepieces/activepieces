@@ -54,7 +54,7 @@ All routes accept GET, POST, PUT, DELETE, PATCH methods.
 **Sync path**:
 1. Create FlowRun with `ProgressUpdateType.WEBHOOK_RESPONSE`
 2. Register one-time listener via `engineResponseWatcher`
-3. Wait for engine to send response (timeout: `AP_WEBHOOK_TIMEOUT_SECONDS`, default 30)
+3. Wait for engine to send response (default timeout: `AP_WEBHOOK_TIMEOUT_SECONDS`, default 30; callers may pass `timeoutMs` to override per-invocation, e.g. MCP uses 5 minutes)
 4. Return flow's response (status, body, headers) or 204 on timeout
 
 ## Request Conversion

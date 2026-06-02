@@ -7,6 +7,8 @@ import { flowRunUtils } from '@/features/flow-runs';
 import { BuilderState } from '../builder-hooks';
 import { flowCanvasUtils } from '../flow-canvas/utils/flow-canvas-utils';
 
+export type TestPanelView = 'drawer' | 'split';
+
 export type CanvasState = {
   readonly: boolean;
   hideTestWidget: boolean;
@@ -14,6 +16,7 @@ export type CanvasState = {
   selectedStep: string | null;
   activeDraggingStep: string | null;
   selectedBranchIndex: number | null;
+  userManuallySelectedStepDuringRun: boolean;
   showMinimap: boolean;
   setShowMinimap: (showMinimap: boolean) => void;
   setSelectedBranchIndex: (index: number | null) => void;
@@ -21,7 +24,11 @@ export type CanvasState = {
   renameFlowClientSide: (newName: string) => void;
   setRightSidebar: (rightSidebar: RightSideBarType) => void;
   removeStepSelection: () => void;
-  selectStepByName: (stepName: string) => void;
+  selectStepByName: (
+    stepName: string,
+    options?: { fromAutoFocus?: boolean },
+  ) => void;
+  resumeLiveFollow: () => void;
   setActiveDraggingStep: (stepName: string | null) => void;
   setReadOnly: (readOnly: boolean) => void;
   selectedNodes: string[];
@@ -33,6 +40,10 @@ export type CanvasState = {
     isFocusInsideListMapperModeInput: boolean,
   ) => void;
   deselectStep: () => void;
+  testPanelView: TestPanelView;
+  setTestPanelView: (view: TestPanelView) => void;
+  isTestPanelOpen: boolean;
+  setTestPanelOpen: (open: boolean) => void;
 };
 
 type CanvasStateInitialState = Pick<
@@ -94,7 +105,10 @@ export const createCanvasState = (
         };
       });
     },
-    selectStepByName: (selectedStep: string) => {
+    selectStepByName: (
+      selectedStep: string,
+      options?: { fromAutoFocus?: boolean },
+    ) => {
       set((state) => {
         const selectedNodes = isNil(selectedStep) ? [] : [selectedStep];
         const rightSidebar =
@@ -107,6 +121,11 @@ export const createCanvasState = (
           selectedStep === 'trigger' &&
           state.flowVersion.trigger.type === FlowTriggerType.EMPTY;
 
+        const userPickedDifferentStepDuringRun =
+          !options?.fromAutoFocus &&
+          !isNil(state.run) &&
+          state.selectedStep !== selectedStep;
+
         return {
           openedPieceSelectorStepNameOrAddButtonId: isEmptyTrigger
             ? 'trigger'
@@ -116,9 +135,26 @@ export const createCanvasState = (
           selectedBranchIndex: null,
           selectedNodes,
           chatDrawerOpenSource: null,
+          userManuallySelectedStepDuringRun:
+            state.userManuallySelectedStepDuringRun ||
+            userPickedDifferentStepDuringRun,
         };
       });
     },
+    resumeLiveFollow: () =>
+      set((state) => {
+        if (isNil(state.run) || isNil(state.run.steps)) {
+          return { userManuallySelectedStepDuringRun: false };
+        }
+        return {
+          userManuallySelectedStepDuringRun: false,
+          loopsIndexes: flowRunUtils.snapLoopsToLatestIteration(
+            state.run,
+            state.loopsIndexes,
+          ),
+        };
+      }),
+    userManuallySelectedStepDuringRun: false,
     exitStepSettings: () =>
       set(() => ({
         rightSidebar: RightSideBarType.NONE,
@@ -155,6 +191,23 @@ export const createCanvasState = (
         isFocusInsideListMapperModeInput,
       }));
     },
+    testPanelView: getTestPanelViewFromLocalStorage(),
+    setTestPanelView: (view: TestPanelView) => {
+      localStorage.setItem(TEST_PANEL_VIEW_KEY_IN_LOCAL_STORAGE, view);
+      return set(() => ({
+        testPanelView: view,
+      }));
+    },
+    isTestPanelOpen: getTestPanelOpenFromLocalStorage(),
+    setTestPanelOpen: (open: boolean) => {
+      localStorage.setItem(
+        TEST_PANEL_OPEN_KEY_IN_LOCAL_STORAGE,
+        open ? 'open' : 'closed',
+      );
+      return set(() => ({
+        isTestPanelOpen: open,
+      }));
+    },
   };
 };
 
@@ -164,4 +217,16 @@ function getPanningModeFromLocalStorage(): 'grab' | 'pan' {
     'grab'
     ? 'grab'
     : 'pan';
+}
+
+const TEST_PANEL_VIEW_KEY_IN_LOCAL_STORAGE = 'ap.builder.testPanelView';
+function getTestPanelViewFromLocalStorage(): TestPanelView {
+  return localStorage.getItem(TEST_PANEL_VIEW_KEY_IN_LOCAL_STORAGE) === 'split'
+    ? 'split'
+    : 'drawer';
+}
+
+const TEST_PANEL_OPEN_KEY_IN_LOCAL_STORAGE = 'ap.builder.testPanelOpen';
+function getTestPanelOpenFromLocalStorage(): boolean {
+  return localStorage.getItem(TEST_PANEL_OPEN_KEY_IN_LOCAL_STORAGE) === 'open';
 }

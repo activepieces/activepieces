@@ -19,7 +19,7 @@ export const McpServer = z.object({
     projectId: ApId.nullable(),
     type: z.enum([McpServerType.PLATFORM, McpServerType.PROJECT]),
     token: ApId,
-    enabledTools: z.array(z.string()).nullable(),
+    disabledTools: z.array(z.string()).nullable(),
 })
 
 export const PopulatedMcpServer = McpServer.extend({
@@ -31,8 +31,13 @@ export type McpServer = z.infer<typeof McpServer>
 
 export type ProjectScopedMcpServer = McpServer & { projectId: string }
 
+export type McpToolContext = {
+    mcp: ProjectScopedMcpServer
+    userId?: string
+}
+
 export const UpdateMcpServerRequest = z.object({
-    enabledTools: z.array(z.string()).optional(),
+    disabledTools: z.array(z.string()).optional(),
 })
 
 export type UpdateMcpServerRequest = z.infer<typeof UpdateMcpServerRequest>
@@ -49,5 +54,11 @@ export type McpToolDefinition = {
         openWorldHint?: boolean
     }
     permission?: Permission
-    execute: (args: Record<string, unknown>) => Promise<{ content: Array<{ type: 'text', text: string }> }>
+    execute: (args: Record<string, unknown>) => Promise<McpToolResult>
+}
+
+export type McpToolResult = {
+    content: Array<{ type: 'text', text: string }>
+    structuredContent?: Record<string, unknown>
+    isError?: boolean
 }

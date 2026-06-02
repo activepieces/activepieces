@@ -1,10 +1,7 @@
 import {
-  AuthenticationType,
-  HttpMethod,
   createCustomApiCallAction,
-  httpClient,
 } from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { airtableCreateRecordAction } from './lib/actions/create-record';
 import { airtableDeleteRecordAction } from './lib/actions/delete-record';

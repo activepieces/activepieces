@@ -74,31 +74,6 @@ export const siteIdDropdown = Property.Dropdown({
   },
 });
 
-export const optionalSiteIdDropdown = Property.Dropdown({
-  displayName: 'Site',
-  description: 'Select a site',
-  required: false,
-  auth: plausibleAuth,
-  refreshers: [],
-  options: async ({ auth }) => {
-    if (!auth) {
-      return {
-        disabled: true,
-        placeholder: 'Connect your account first',
-        options: [],
-      };
-    }
-    const sites = await getSites(auth.secret_text);
-    return {
-      disabled: false,
-      options: sites.map((site) => ({
-        label: site.domain,
-        value: site.domain,
-      })),
-    };
-  },
-});
-
 export async function getTeams(apiKey: string) {
   const response = await plausibleApiCall<{
     teams: { id: string; name: string; api_available: boolean }[];

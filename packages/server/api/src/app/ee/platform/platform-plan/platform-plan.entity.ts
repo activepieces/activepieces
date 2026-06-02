@@ -77,6 +77,9 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         chatEnabled: {
             type: Boolean,
         },
+        dataManipulationEnabled: {
+            type: Boolean,
+        },
         managePiecesEnabled: {
             type: Boolean,
         },
@@ -90,9 +93,6 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: String,
         },
         projectRolesEnabled: {
-            type: Boolean,
-        },
-        customDomainsEnabled: {
             type: Boolean,
         },
         globalConnectionsEnabled: {
@@ -152,6 +152,11 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         canary: {
             type: Boolean,
             default: false,
+        },
+        /** @deprecated custom domains have been removed; column kept for backwards compatibility with existing DBs */
+        customDomainsEnabled: {
+            type: Boolean,
+            nullable: false,
         },
         workerGroupId: {
             type: String,

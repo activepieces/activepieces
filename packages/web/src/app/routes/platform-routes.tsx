@@ -33,9 +33,9 @@ const ProjectRolePage = React.lazy(() =>
 const SecretManagersPage = React.lazy(
   () => import('./platform/security/secret-managers'),
 );
-const SigningKeysPage = React.lazy(() =>
-  import('./platform/security/signing-keys').then((m) => ({
-    default: m.SigningKeysPage,
+const EmbedPage = React.lazy(() =>
+  import('./platform/security/embed').then((m) => ({
+    default: m.EmbedPage,
   })),
 );
 const SSOPage = React.lazy(() =>
@@ -64,6 +64,9 @@ const PlatformTemplatesPage = React.lazy(() =>
   })),
 );
 const UsersPage = React.lazy(() => import('./platform/users'));
+const PlatformConnectionsPage = React.lazy(
+  () => import('./platform/connections'),
+);
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<RouteLoadingBar />}>{children}</Suspense>;
@@ -99,6 +102,18 @@ export const platformRoutes = [
         <PageTitle title="Users">
           <SuspenseWrapper>
             <UsersPage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/connections',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Connections">
+          <SuspenseWrapper>
+            <PlatformConnectionsPage />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
@@ -265,12 +280,12 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/security/signing-keys',
+    path: '/platform/security/embed',
     element: (
       <PlatformLayout>
         <PageTitle title="Embedding">
           <SuspenseWrapper>
-            <SigningKeysPage />
+            <EmbedPage />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
