@@ -74,11 +74,11 @@ export const askAI = createAction({
       runId: context.run.id,
     });
 
-    const { webSearchTools, providerOptions: webSearchProviderOptions } = await buildWebSearchConfig({
-      webSearch,
+    const { tools: webSearchTools, providerOptions: webSearchProviderOptions } = await buildWebSearchConfig({
+      provider: provider as string,
+      model: modelId,
+      webSearchEnabled: webSearch,
       webSearchOptions,
-      engineToken: context.server.token,
-      apiUrl: context.server.apiUrl,
     });
 
     const response = await generateText({
