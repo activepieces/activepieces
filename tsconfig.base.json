@@ -417,6 +417,9 @@
       "@activepieces/piece-eden-ai": [
         "packages/pieces/community/eden-ai/src/index.ts"
       ],
+      "@activepieces/piece-editionguard": [
+        "packages/pieces/community/editionguard/src/index.ts"
+      ],
       "@activepieces/piece-elastic-email": [
         "packages/pieces/community/elastic-email/src/index.ts"
       ],
