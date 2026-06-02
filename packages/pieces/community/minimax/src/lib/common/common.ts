@@ -6,19 +6,15 @@ You can get your API key from https://platform.minimax.io \n`;
 
 export const defaultModels = [
   {
+    label: 'MiniMax-M3',
+    value: 'MiniMax-M3',
+  },
+  {
     label: 'MiniMax-M2.7',
     value: 'MiniMax-M2.7',
   },
   {
     label: 'MiniMax-M2.7-highspeed',
     value: 'MiniMax-M2.7-highspeed',
-  },
-  {
-    label: 'MiniMax-M2.5',
-    value: 'MiniMax-M2.5',
-  },
-  {
-    label: 'MiniMax-M2.5-highspeed',
-    value: 'MiniMax-M2.5-highspeed',
   },
 ];

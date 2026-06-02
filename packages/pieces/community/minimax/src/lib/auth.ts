@@ -18,7 +18,7 @@ export const minimaxAuth = PieceAuth.SecretText({
       });
 
       const response = await openai.chat.completions.create({
-        model: 'MiniMax-M2.5-highspeed',
+        model: 'MiniMax-M3',
         messages: [{ role: 'user', content: 'Hi' }],
         max_tokens: 1,
       });

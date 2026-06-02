@@ -19,8 +19,8 @@ export const askMinimax = createAction({
       displayName: 'Model',
       required: true,
       description:
-        'The model which will generate the completion. MiniMax-M2.7 is the latest flagship model with enhanced reasoning and coding capabilities.',
-      defaultValue: 'MiniMax-M2.7',
+        'The model which will generate the completion. MiniMax-M3 is the latest flagship model with a 512K context window, up to 128K output, and image input support.',
+      defaultValue: 'MiniMax-M3',
       options: {
         options: defaultModels,
       },
@@ -33,7 +33,7 @@ export const askMinimax = createAction({
       displayName: 'Maximum Tokens',
       required: true,
       description:
-        'The maximum number of tokens to generate. Both models support up to 192K output tokens.',
+        'The maximum number of tokens to generate. MiniMax-M3 supports up to 128K output tokens.',
       defaultValue: 4096,
     }),
     temperature: Property.Number({
