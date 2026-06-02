@@ -1,0 +1,11 @@
+{
+  "Access Chess.com player data": "访问 Chess.com 玩家数据",
+  "Get Player Profile": "获取玩家资料",
+  "Get Player Stats": "获取玩家统计",
+  "Get Daily Puzzle": "获取每日拼图",
+  "Retrieve a Chess.com player's public profile by username (avatar, country, join date, followers).": "通过用户名获取Chess.com玩家的公开资料 (头像、国家、加入日期、关注者)。",
+  "Retrieve a Chess.com player's ratings and W/D/L for rapid, blitz, bullet, and chess960.": "获取Chess.com玩家的评级和 W/D/L的快速、 blitz、子弹和chess960。",
+  "Retrieve today's Chess.com daily puzzle.": "获取今日的 Chess.com 每日关卡。",
+  "Username": "用户名",
+  "The Chess.com username to look up.": "要查找的 Chess.com 用户名。"
+}
