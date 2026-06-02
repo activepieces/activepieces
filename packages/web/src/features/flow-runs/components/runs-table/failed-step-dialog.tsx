@@ -1,10 +1,12 @@
 import {
   FlowAction,
   FlowRun,
+  FlowRunStatus,
   FlowTrigger,
   flowStructureUtil,
   isNil,
 } from '@activepieces/shared';
+import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -20,6 +22,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { flowRunsApi } from '@/features/flow-runs/api/flow-runs-api';
 import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
 import { flowHooks } from '@/features/flows/hooks/flow-hooks';
 import { stepsHooks } from '@/features/pieces';
@@ -40,6 +43,8 @@ export const FailedStepDialog = ({
 }: FailedStepDialogProps) => {
   const navigate = useNavigate();
   const failedStep = run?.failedStep;
+  const isInternalError =
+    run?.status === FlowRunStatus.INTERNAL_ERROR && isNil(failedStep);
 
   const { data: populatedFlow } = flowHooks.useGetFlow({
     flowId: run?.flowId ?? '',
@@ -47,7 +52,83 @@ export const FailedStepDialog = ({
     enabled: open && !isNil(run) && !isNil(failedStep),
   });
 
-  if (isNil(run) || isNil(failedStep)) {
+  const { data: populatedRun, isLoading: isLoadingInternalError } = useQuery({
+    queryKey: ['flow-run-internal-error', run?.id],
+    queryFn: () => flowRunsApi.getPopulated(run!.id),
+    enabled: open && !isNil(run) && isInternalError,
+  });
+
+  if (isNil(run) || (isNil(failedStep) && !isInternalError)) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-lg" />
+      </Dialog>
+    );
+  }
+
+  if (isInternalError) {
+    const internalError = populatedRun?.internalError;
+    const flowName = run.flowVersion?.displayName ?? '';
+    const failureTimestamp = run.finishTime ?? run.startTime ?? run.created;
+    const { Icon: RunStatusIcon } = flowRunUtils.getStatusIcon(run.status);
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent
+          className="max-w-lg"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <RunStatusIcon className="size-4 shrink-0 text-destructive-800 dark:text-destructive-200" />
+              <span className="truncate">
+                {flowName || t('Internal error')}
+              </span>
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              {failureTimestamp
+                ? formatUtils.formatDateWithTime(
+                    new Date(failureTimestamp),
+                    true,
+                  )
+                : null}
+            </DialogDescription>
+          </DialogHeader>
+          {isLoadingInternalError ? (
+            <Skeleton className="h-40 w-full rounded-md" />
+          ) : internalError ? (
+            <JsonViewer
+              json={internalError.message}
+              title={t('Internal error ({source})', {
+                source: internalError.source,
+              })}
+              className="max-h-[400px] overflow-auto"
+              hideDownload
+            />
+          ) : (
+            <div className="text-sm italic text-muted-foreground">
+              {t('No error details available')}
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              onClick={() =>
+                navigate(
+                  authenticationSession.appendProjectRoutePrefix(
+                    `/runs/${run.id}`,
+                  ),
+                )
+              }
+            >
+              <ArrowRight className="size-4" />
+              {t('Go to run')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (isNil(failedStep)) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-lg" />

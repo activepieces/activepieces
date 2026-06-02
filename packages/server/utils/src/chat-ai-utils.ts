@@ -118,8 +118,6 @@ function stripThinkingBlocks(messages: ModelMessage[], provider: AIProviderName)
         .filter((msg): msg is ModelMessage => msg !== null)
 }
 
-const OPENROUTER_EFFORT_BY_TIER: Record<string, string> = { fast: 'low', smart: 'medium', premium: 'high' }
-
 function buildProviderOptions({ provider, tier }: { provider: AIProviderName, tier: { id: string, thinkingBudget: number } }): SharedV3ProviderOptions {
     switch (provider) {
         case AIProviderName.ANTHROPIC:
@@ -127,7 +125,7 @@ function buildProviderOptions({ provider, tier }: { provider: AIProviderName, ti
             return { anthropic: { thinking: { type: 'enabled', budgetTokens: tier.thinkingBudget } } }
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER:
-            return { openrouter: { cache_control: { type: 'ephemeral' }, reasoning: { effort: OPENROUTER_EFFORT_BY_TIER[tier.id] ?? 'medium' } } }
+            return { openrouter: { cache_control: { type: 'ephemeral' }, reasoning: { max_tokens: tier.thinkingBudget } } }
         default:
             return {}
     }
