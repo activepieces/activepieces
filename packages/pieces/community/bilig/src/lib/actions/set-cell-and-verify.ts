@@ -32,13 +32,13 @@ export const setCellAndVerify = createAction({
     }),
     readbackCell: Property.ShortText({
       displayName: 'Readback Cell',
-      description: 'A1 cell address to read after the update. Defaults to the updated cell.',
+      description: 'A1 cell address to read after the update. The demo default reads B2.',
       required: false,
       defaultValue: 'B2',
     }),
     readbackSheet: Property.ShortText({
       displayName: 'Readback Sheet',
-      description: 'Optional sheet name for the readback cell. Defaults to the updated sheet.',
+      description: 'Optional sheet name for the readback cell. The demo default reads Summary.',
       required: false,
       defaultValue: 'Summary',
     }),
