@@ -198,6 +198,9 @@
       "@activepieces/piece-bubble": [
         "packages/pieces/community/bubble/src/index.ts"
       ],
+      "@activepieces/piece-buffer": [
+        "packages/pieces/community/buffer/src/index.ts"
+      ],
       "@activepieces/piece-bumpups": [
         "packages/pieces/community/bumpups/src/index.ts"
       ],
@@ -563,8 +566,8 @@
       "@activepieces/piece-gotify": [
         "packages/pieces/community/gotify/src/index.ts"
       ],
-      "@activepieces/piece-greenhouse": [
-        "packages/pieces/community/greenhouse/src/index.ts"
+      "@activepieces/piece-gorgias": [
+        "packages/pieces/community/gorgias/src/index.ts"
       ],
       "@activepieces/piece-granola": [
         "packages/pieces/community/granola/src/index.ts"
@@ -574,6 +577,9 @@
       ],
       "@activepieces/piece-gravityforms": [
         "packages/pieces/community/gravityforms/src/index.ts"
+      ],
+      "@activepieces/piece-greenhouse": [
+        "packages/pieces/community/greenhouse/src/index.ts"
       ],
       "@activepieces/piece-grist": [
         "packages/pieces/community/grist/src/index.ts"
@@ -650,6 +656,9 @@
       ],
       "@activepieces/piece-jina-ai": [
         "packages/pieces/community/jina-ai/src/index.ts"
+      ],
+      "@activepieces/piece-jungle-grid": [
+        "packages/pieces/community/jungle-grid/src/index.ts"
       ],
       "@activepieces/piece-jira-cloud": [
         "packages/pieces/community/jira-cloud/src/index.ts"
@@ -875,6 +884,9 @@
       "@activepieces/piece-okta": [
         "packages/pieces/community/okta/src/index.ts"
       ],
+      "@activepieces/piece-omnisend": [
+        "packages/pieces/community/omnisend/src/index.ts"
+      ],
       "@activepieces/piece-onfleet": [
         "packages/pieces/community/onfleet/src/index.ts"
       ],
@@ -1071,6 +1083,9 @@
       ],
       "@activepieces/piece-salesforce": [
         "packages/pieces/community/salesforce/src/index.ts"
+      ],
+      "@activepieces/piece-salesloft": [
+        "packages/pieces/community/salesloft/src/index.ts"
       ],
       "@activepieces/piece-savvycal": [
         "packages/pieces/community/savvycal/src/index.ts"
@@ -1334,6 +1349,9 @@
       "@activepieces/piece-utility-ai": [
         "packages/pieces/community/utility-ai/src/index.ts"
       ],
+      "@activepieces/piece-uxsniff": [
+        "packages/pieces/community/uxsniff/src/index.ts"
+      ],
       "@activepieces/piece-vadoo-ai": [
         "packages/pieces/community/vadoo-ai/src/index.ts"
       ],
@@ -1393,6 +1411,9 @@
       ],
       "@activepieces/piece-whatsscale": [
         "packages/pieces/community/whatsscale/src/index.ts"
+      ],
+      "@activepieces/piece-wistia": [
+        "packages/pieces/community/wistia/src/index.ts"
       ],
       "@activepieces/piece-wonderchat": [
         "packages/pieces/community/wonderchat/src/index.ts"

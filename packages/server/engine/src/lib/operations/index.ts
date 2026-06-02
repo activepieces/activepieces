@@ -11,6 +11,7 @@ import {
     ExecuteValidateAuthOperation,
     ExecutionError,
     ExecutionErrorType,
+    formatPieceError,
     TriggerHookType,
     tryCatch,
 } from '@activepieces/shared'
@@ -49,7 +50,7 @@ export async function execute(operationType: EngineOperationType, operation: Eng
         return {
             response: undefined,
             status: EngineResponseStatus.INTERNAL_ERROR,
-            error: inspect(result.error),
+            error: JSON.stringify(formatPieceError(result.error, { raw: inspect(result.error) })),
         }
     }
     return result.data

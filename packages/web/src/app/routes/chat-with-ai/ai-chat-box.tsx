@@ -10,12 +10,15 @@ import {
 } from '@/components/prompt-kit/chat-container';
 import { ScrollButton } from '@/components/prompt-kit/scroll-button';
 import { Button } from '@/components/ui/button';
+import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import {
   ChatStoreProvider,
   useChatStoreContext,
 } from '@/features/chat/lib/chat-store-context';
 import { useAgentChat } from '@/features/chat/lib/use-chat';
+import { useCreditsState } from '@/features/chat/lib/use-credits-state';
 import { aiProviderQueries } from '@/features/platform-admin';
+import { cn } from '@/lib/utils';
 
 import { AssistantMessage } from './components/assistant-message';
 import { ChatBottomBar } from './components/chat-bottom-bar';
@@ -27,6 +30,7 @@ import {
 } from './components/chat-empty-state';
 import { ChatInput } from './components/chat-input';
 import { ChatModelSelector } from './components/chat-model-selector';
+import { CreditsBanner } from './components/credits-banner';
 import { QuickReplies } from './components/quick-replies';
 import { UserMessage } from './components/user-message';
 import { getTextFromParts } from './lib/message-parsers';
@@ -65,6 +69,8 @@ function ChatBoxContent({
   onTitleUpdate,
   onConversationCreated,
 }: AIChatBoxProps) {
+  const credits = useCreditsState();
+
   const {
     messages,
     modelName,
@@ -76,7 +82,11 @@ function ChatBoxContent({
     cancelStream,
     setConversationId,
     setModelName,
-  } = useAgentChat({ onTitleUpdate, onConversationCreated });
+  } = useAgentChat({
+    onTitleUpdate,
+    onConversationCreated,
+    onCreditsExhausted: () => credits.setCreditsExhausted(true),
+  });
 
   const quickReplies = useChatStoreContext((s) => s.quickReplies);
 
@@ -105,6 +115,12 @@ function ChatBoxContent({
     [messages],
   );
 
+  const hasBlockingCard = useChatStoreContext((s) =>
+    chatStoreSelectors.hasBlockingCard({ state: s, lastAssistantMessage }),
+  );
+
+  const showBanner = credits.creditsExhausted || credits.creditsWarning;
+
   const isEmpty = messages.length === 0 && !isLoadingHistory && !isStreaming;
 
   if (isEmpty) {
@@ -115,17 +131,27 @@ function ChatBoxContent({
         <div className="w-full max-w-3xl mt-6">
           <SuggestionCards onSend={handleSend} />
           <div className="mt-3">
-            <ChatInput
-              isStreaming={isStreaming}
-              onSend={handleSend}
-              onStop={cancelStream}
-              rightActions={
-                <ChatModelSelector
-                  selectedModel={modelName}
-                  onModelChange={setModelName}
+            <div className="overflow-hidden rounded-2xl border border-foreground/20 hover:border-foreground/40 focus-within:border-foreground/40 transition-colors">
+              {showBanner && (
+                <CreditsBanner
+                  creditsExhausted={credits.creditsExhausted}
+                  creditsWarning={credits.creditsWarning}
+                  daysUntilReset={credits.daysUntilReset}
+                  onDismiss={credits.dismissCreditsWarning}
                 />
-              }
-            />
+              )}
+              <ChatInput
+                isStreaming={isStreaming}
+                onSend={handleSend}
+                onStop={cancelStream}
+                rightActions={
+                  <ChatModelSelector
+                    selectedModel={modelName}
+                    onModelChange={setModelName}
+                  />
+                }
+              />
+            </div>
           </div>
         </div>
         <div className="flex-1" />
@@ -170,10 +196,6 @@ function ChatBoxContent({
                 isStreaming={isLastStreamingAssistant}
                 isLastMessage={isLastAssistant}
                 onRetry={handleRetry}
-                onSend={handleSend}
-                lastAssistantMessage={
-                  isLastAssistant ? lastAssistantMessage : msg
-                }
               />
             );
           })}
@@ -217,15 +239,30 @@ function ChatBoxContent({
 
       <div className="px-6 pb-4">
         <div className="max-w-3xl mx-auto relative">
-          <ChatBottomBar
-            isStreaming={isStreaming}
-            onSend={handleSend}
-            onStop={cancelStream}
-            selectedModel={modelName}
-            onModelChange={setModelName}
-            lastAssistantMessage={lastAssistantMessage}
-            lastMessageId={lastMessage?.id}
-          />
+          <div
+            className={cn(
+              !hasBlockingCard &&
+                'overflow-hidden rounded-2xl border border-foreground/20 hover:border-foreground/40 focus-within:border-foreground/40 transition-colors',
+            )}
+          >
+            {showBanner && !hasBlockingCard && (
+              <CreditsBanner
+                creditsExhausted={credits.creditsExhausted}
+                creditsWarning={credits.creditsWarning}
+                daysUntilReset={credits.daysUntilReset}
+                onDismiss={credits.dismissCreditsWarning}
+              />
+            )}
+            <ChatBottomBar
+              isStreaming={isStreaming}
+              onSend={handleSend}
+              onStop={cancelStream}
+              selectedModel={modelName}
+              onModelChange={setModelName}
+              lastAssistantMessage={lastAssistantMessage}
+              lastMessageId={lastMessage?.id}
+            />
+          </div>
         </div>
       </div>
     </div>

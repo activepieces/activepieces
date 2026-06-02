@@ -31,7 +31,9 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `packages/web/src/features/chat/lib/use-chat.ts` — `useAgentChat()` hook managing message state (persisted, optimistic, streaming) and polling fallback
 - `packages/web/src/features/chat/lib/chunk-reducer.ts` — pure streaming state machine that accumulates `UIMessageChunk` events into a `ChatUIMessage`
 - `packages/web/src/features/chat/lib/use-streaming-reducer.ts` — WebSocket-driven streaming lifecycle hook; buffers chunks and throttles React re-renders
-- `packages/web/src/features/chat/lib/chat-types.ts` — frontend type definitions, tool output parsing, display/hidden tool name sets
+- `packages/web/src/features/chat/lib/chat-types.ts` — frontend type definitions, tool output parsing, display/hidden tool name sets, `CreditsWarning` type
+- `packages/web/src/features/chat/lib/use-credits-state.ts` — `useCreditsState()` hook computing credits warning/exhaustion state from platform usage and AI provider config
+- `packages/web/src/app/routes/chat-with-ai/components/credits-banner.tsx` — amber/red banner shown when AI credits reach warning threshold (>=70%) or are exhausted
 - `packages/web/src/features/chat/lib/use-voice-input.ts` — `useVoiceInput()` hook for speech-to-text via the Web Speech API (`SpeechRecognition`)
 - `packages/web/src/features/chat/lib/use-tts.ts` — `useTts()` hook for text-to-speech via the `SpeechSynthesis` API
 - `packages/web/src/features/chat/components/voice-waveform.tsx` — animated waveform bars shown on the stop-recording button
@@ -46,12 +48,13 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - **Message compaction** — when a conversation exceeds a token threshold, older messages are summarized by the LLM and replaced with a summary to keep context within the model's window
 - **Tool approval gate** — a Redis pub/sub mechanism that pauses destructive tool executions (delete, test, publish) until the user explicitly approves or denies in the UI; times out after 5 minutes
 - **Plan approval** — a multi-step approval mechanism where the agent presents a plan via `ap_request_plan_approval`, the user approves or rejects, and approved plans execute with progress tracking
-- **Local tools** — chat-specific tools not part of MCP: `ap_set_session_title`, `ap_select_project`, `ap_run_one_time_action`, `ap_list_across_projects`, `ap_request_plan_approval`
+- **Local tools** — chat-specific tools not part of MCP: `ap_set_session_title`, `ap_select_project`, `ap_execute_action`, `ap_list_across_projects`, `ap_request_plan_approval`
 - **Display tools** — tools that render interactive UI cards: `ap_show_connection_required`, `ap_show_connection_picker`, `ap_show_project_picker`, `ap_show_questions`, `ap_show_quick_replies`
 - **MCP tools** — project-scoped tools loaded from the Activepieces MCP server when a project is selected; destructive ones are wrapped with the approval gate
 - **AI provider** — a platform-configured LLM provider with an `enabledForChat` flag; the chat resolves the first enabled provider and its default model
 - **Project context** — the currently selected project for a conversation; determines which MCP tools are available and scopes resource access
 - **Chat tiers** — model configurations (fast/smart/premium) with different thinking budgets; displayed as Fast/Expert/Heavy in the UI with per-tier descriptions
+- **Credits warning banner** — a dismissible amber banner shown when Activepieces AI credits usage reaches 70%; a non-dismissible red banner is shown when credits are fully exhausted
 
 ## Data Model
 
@@ -71,7 +74,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 ## Local Tools
 - `ap_set_session_title` — auto-names the conversation after the first exchange
 - `ap_select_project` — switches project context (scopes MCP tools to that project)
-- `ap_run_one_time_action` — executes a single piece action ad-hoc (e.g. "check my inbox"); auto-discovers connections across projects
+- `ap_execute_action` — executes a single piece action ad-hoc (e.g. "check my inbox"); auto-discovers connections across projects
 - `ap_list_across_projects` — lists flows, tables, runs, or connections across all user-accessible projects
 - `ap_request_plan_approval` — presents a multi-step plan to the user for approval before executing destructive or write operations
 
@@ -98,6 +101,7 @@ All chat endpoints require `PrincipalType.USER` authentication at the platform l
 
 ## Message Flow
 1. User sends message via `POST /conversations/:id/messages`
+1a. If the platform's chat provider is ACTIVEPIECES and `usageRemaining <= 0`, the endpoint returns a 402 `AI_CREDIT_LIMIT_EXCEEDED` error before queuing the job; the frontend surfaces a non-dismissible error banner
 2. Service resolves AI provider, connects MCP client, builds system prompt with project list
 3. If conversation is long, compaction summarizes older messages
 4. `streamText()` streams the LLM response with local tools + display tools + MCP tools available

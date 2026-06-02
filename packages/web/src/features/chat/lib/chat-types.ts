@@ -1,4 +1,11 @@
-import { ChatToolName, ChatToolOutputs, isObject } from '@activepieces/shared';
+import {
+  BatchProgressData,
+  ChatToolName,
+  ChatToolOutputs,
+  isObject,
+  parseToJsonIfPossible,
+  PlanStepUpdate,
+} from '@activepieces/shared';
 import {
   DynamicToolUIPart,
   getToolName,
@@ -7,11 +14,7 @@ import {
   UIMessage,
 } from 'ai';
 
-export type ChatDataParts = {
-  'session-title': { title: string };
-};
-
-export type ChatUIMessage = UIMessage<unknown, ChatDataParts>;
+export type ChatUIMessage = UIMessage;
 
 export type AnyToolPart = ToolUIPart | DynamicToolUIPart;
 
@@ -139,9 +142,87 @@ function extractPieceNames(
   return names.map(normalizePieceName);
 }
 
+function getToolCallId(part: AnyToolPart): string {
+  return 'toolCallId' in part ? (part.toolCallId as string) : '';
+}
+
+function findLastToolPart({
+  message,
+  predicate,
+}: {
+  message: ChatUIMessage | undefined;
+  predicate: (name: string, part: AnyToolPart) => boolean;
+}): AnyToolPart | null {
+  if (!message || message.role !== 'assistant') return null;
+  for (let i = message.parts.length - 1; i >= 0; i--) {
+    const p = message.parts[i];
+    if (!isAnyToolPart(p)) continue;
+    if (predicate(getToolPartName(p), p)) return p;
+  }
+  return null;
+}
+
+function extractBatchProgressFromOutput(
+  part: AnyToolPart,
+): BatchProgressData | null {
+  if (part.state !== 'output-available' || !part.output) return null;
+  const output = parseToJsonIfPossible(part.output);
+  if (!output || typeof output !== 'object') return null;
+  const record = output as Record<string, unknown>;
+  if (!record['batchProgress']) return null;
+  return record['batchProgress'] as BatchProgressData;
+}
+
+function extractPlanUpdatesFromMessage(
+  message: ChatUIMessage,
+): PlanStepUpdate[] {
+  const updates: PlanStepUpdate[] = [];
+  for (const p of message.parts) {
+    if (!isAnyToolPart(p)) continue;
+    if (getToolPartName(p) !== 'ap_update_plan') continue;
+    if (p.state === 'input-streaming') continue;
+    const input = p.input as
+      | { updates?: Array<{ stepIndex: number; status: string }> }
+      | undefined;
+    if (!input?.updates) continue;
+    for (const u of input.updates) {
+      const existing = updates.findIndex((e) => e.stepIndex === u.stepIndex);
+      if (existing >= 0) {
+        updates[existing] = {
+          stepIndex: u.stepIndex,
+          status: u.status as PlanStepUpdate['status'],
+        };
+      } else {
+        updates.push({
+          stepIndex: u.stepIndex,
+          status: u.status as PlanStepUpdate['status'],
+        });
+      }
+    }
+  }
+  return updates;
+}
+
+function extractQuickRepliesFromParts(message: ChatUIMessage | null): string[] {
+  if (!message || message.role !== 'assistant') return [];
+  for (let i = message.parts.length - 1; i >= 0; i--) {
+    const p = message.parts[i];
+    if (
+      isAnyToolPart(p) &&
+      getToolPartName(p) === 'ap_show_quick_replies' &&
+      (p.state === 'output-available' || p.state === 'input-available')
+    ) {
+      const input = p.input as { replies?: string[] } | undefined;
+      return input?.replies ?? [];
+    }
+  }
+  return [];
+}
+
 export const chatPartUtils = {
   isAnyToolPart,
   getToolPartName,
+  getToolCallId,
   isReady,
   isDisplayTool,
   isThinkingStatusTool,
@@ -150,6 +231,10 @@ export const chatPartUtils = {
   extractPieceNames,
   parseToolOutput,
   parseTypedToolOutput,
+  findLastToolPart,
+  extractBatchProgressFromOutput,
+  extractPlanUpdatesFromMessage,
+  extractQuickRepliesFromParts,
   HIDDEN_TOOL_NAMES,
   DISPLAY_TOOL_NAMES,
 };
@@ -170,3 +255,7 @@ export type TypedToolOutput<T> =
   | { state: 'pending' }
   | { state: 'success'; data: T }
   | { state: 'error'; errorText: string };
+
+export type CreditsWarning = {
+  percentage: number;
+};

@@ -3,6 +3,7 @@ import {
     AIProviderName,
     ChatAgentEventType,
     EngineResponseStatus,
+    ErrorCode,
     ExecuteChatAgentJobData,
     isNil,
     PersistedChatMessage,
@@ -22,6 +23,7 @@ const BATCH_SIZE = 10
 const BATCH_FLUSH_MS = 50
 const APPROVAL_POLL_INTERVAL_MS = 2_000
 const APPROVAL_TIMEOUT_MS = 5 * 60 * 1_000
+const DISPLAY_TOOL_TIMEOUT_MS = 15 * 60 * 1_000
 
 export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_CHAT_AGENT,
@@ -38,7 +40,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             provider, auth: config.auth, config: config.providerConfig, modelId: config.modelId,
         })
 
-        const writer = chatWorkerTools.createRpcWriterForConversation({
+        const eventEmitter = chatWorkerTools.createEventEmitter({
             sendEvent: (input) => ctx.apiClient.sendChatEvent(input),
             userId,
             conversationId,
@@ -52,7 +54,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             const planApproved = { approved: false }
 
             const allTools = buildToolSet({
-                ctx, writer, log, planApproved, mcpToolSet,
+                ctx, eventEmitter, log, planApproved, mcpToolSet,
                 projects: config.projects, conversationId, platformId, userId,
             })
 
@@ -117,7 +119,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             if (autoTitle) {
                 await ctx.apiClient.sendChatEvent({
                     userId, conversationId,
-                    event: { type: ChatAgentEventType.CHUNK, data: { type: 'data-session-title', data: { title: autoTitle }, transient: true } },
+                    event: { type: ChatAgentEventType.TITLE_UPDATE, data: { title: autoTitle } },
                 })
             }
 
@@ -129,12 +131,13 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
         catch (err) {
             log.error({ err, conversationId }, '[executeChatAgent] Agent job failed')
             const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
+            const errorCode = isCreditExhaustedError(errorMessage) ? ErrorCode.AI_CREDIT_LIMIT_EXCEEDED : undefined
             await ctx.apiClient.saveChatMessages({
                 conversationId, messages: [], uiMessages: [],
             }).catch(() => {})
             await ctx.apiClient.sendChatEvent({
                 userId, conversationId,
-                event: { type: ChatAgentEventType.ERROR, data: { message: errorMessage } },
+                event: { type: ChatAgentEventType.ERROR, data: { message: errorMessage, ...spreadIfDefined('code', errorCode) } },
             }).catch(() => {})
             await ctx.apiClient.sendChatEvent({
                 userId, conversationId,
@@ -154,9 +157,9 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
     },
 }
 
-function buildToolSet({ ctx, writer, log, planApproved, mcpToolSet, projects, conversationId, platformId, userId }: {
+function buildToolSet({ ctx, eventEmitter, log, planApproved, mcpToolSet, projects, conversationId, platformId, userId }: {
     ctx: JobContext
-    writer: ReturnType<typeof chatWorkerTools.createRpcWriterForConversation>
+    eventEmitter: ReturnType<typeof chatWorkerTools.createEventEmitter>
     log: JobContext['log']
     planApproved: { approved: boolean }
     mcpToolSet: Record<string, unknown>
@@ -170,16 +173,19 @@ function buildToolSet({ ctx, writer, log, planApproved, mcpToolSet, projects, co
         return response.result
     }
 
-    const waitForApproval = async (gateId: string): Promise<boolean> => {
-        const deadline = Date.now() + APPROVAL_TIMEOUT_MS
+    const waitForApproval = async ({ gateId, timeoutMs }: { gateId: string, timeoutMs?: number }): Promise<GateDecision> => {
+        const deadline = Date.now() + (timeoutMs ?? APPROVAL_TIMEOUT_MS)
         while (Date.now() < deadline) {
             const response = await ctx.apiClient.executeChatTool({
                 toolName: '__approval_check', toolInput: { gateId }, platformId, userId,
             })
-            if (response.result !== 'pending') return response.result === true
+            if (response.result !== 'pending') {
+                const decision = response.result as GateDecision
+                return { approved: decision.approved, payload: decision.payload }
+            }
             await new Promise((resolve) => setTimeout(resolve, APPROVAL_POLL_INTERVAL_MS))
         }
-        return false
+        return { approved: false }
     }
 
     const localTools = chatWorkerTools.createLocalTools({
@@ -188,18 +194,17 @@ function buildToolSet({ ctx, writer, log, planApproved, mcpToolSet, projects, co
         },
         projects,
     })
-    const displayTools = chatWorkerTools.createDisplayTools({ writer })
+    const displayTools = chatWorkerTools.createDisplayTools({ waitForApproval, displayToolTimeoutMs: DISPLAY_TOOL_TIMEOUT_MS })
     const planTools = chatWorkerTools.createPlanTools({
-        writer,
         onPlanApproved: () => {
-            planApproved.approved = true 
+            planApproved.approved = true
         },
         waitForApproval,
     })
-    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool })
+    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter })
     const thinkingTools = chatWorkerTools.createThinkingTools()
     const gatedMcpTools = chatMcpClient.withApprovalGates({
-        mcpToolSet, writer, log, isApproved: () => planApproved.approved, waitForApproval,
+        mcpToolSet, eventEmitter, log, isApproved: () => planApproved.approved, waitForApproval,
     })
 
     return { ...localTools, ...displayTools, ...crossProjectTools, ...planTools, ...thinkingTools, ...(gatedMcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
@@ -268,6 +273,7 @@ async function generateTitleIfFirstTurn({ model, userMessage, previousUiMessages
     log: JobContext['log']
     conversationId: string
 }): Promise<string | undefined> {
+    // getChatConfig includes the just-saved user message, so length 1 = first turn
     const isFirstTurn = previousUiMessages.length === 1
     if (!isFirstTurn) return undefined
 
@@ -283,4 +289,15 @@ async function generateTitleIfFirstTurn({ model, userMessage, previousUiMessages
         log.warn({ conversationId }, 'Failed to auto-generate title')
     }
     return generatedTitle ?? undefined
+}
+
+const CREDIT_ERROR_PATTERNS = [/credits/i, /\b402\b/, /payment.required/i]
+
+function isCreditExhaustedError(message: string): boolean {
+    return CREDIT_ERROR_PATTERNS.some((pattern) => pattern.test(message))
+}
+
+type GateDecision = {
+    approved: boolean
+    payload?: Record<string, unknown>
 }
