@@ -2,46 +2,50 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 
-import { buyNumber } from './lib/action/buy-number';
-import { cancelOrder } from './lib/action/cancel-order';
-import { checkPrice } from './lib/action/check-price';
-import { getBalance } from './lib/action/get-balance';
-import { getOrderStatus } from './lib/action/get-order-status';
-import { listCountries } from './lib/action/list-countries';
-import { listServices } from './lib/action/list-services';
-
-import { lowBalance } from './lib/trigger/low-balance';
-import { orderExpired } from './lib/trigger/order-expired';
-import { orderReceivedSms } from './lib/trigger/order-received-sms';
+import { buyNumber } from './lib/actions/buy-number';
+import { cancelOrder } from './lib/actions/cancel-order';
+import { checkPrice } from './lib/actions/check-price';
+import { getBalance } from './lib/actions/get-balance';
+import { getOrderStatus } from './lib/actions/get-order-status';
+import { getProfile } from './lib/actions/get-profile';
+import { listCountries } from './lib/actions/list-countries';
+import { listOrders } from './lib/actions/list-orders';
+import { listServices } from './lib/actions/list-services';
+import { listTransactions } from './lib/actions/list-transactions';
+import { swapNumber } from './lib/actions/swap-number';
+import { orderExpired } from './lib/triggers/order-expired';
+import { orderReceivedSms } from './lib/triggers/order-received-sms';
 
 import { virtualSmsAuth } from './lib/common';
-
-export { virtualSmsAuth };
 
 export const virtualsms = createPiece({
   displayName: 'VirtualSMS',
   description:
-    'Real-SIM SMS verification across 145+ countries and 2,500+ services. Buy disposable phone numbers and receive OTP codes via polling triggers. Long-term rentals also supported.',
+    'Real-SIM SMS verification across 145+ countries and 2,500+ services. Buy disposable phone numbers and receive OTP codes.',
   auth: virtualSmsAuth,
-  minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://virtualsms.io/branding/icon-256.png',
-  authors: ['virtualsms-io'],
+  minimumSupportedRelease: '0.36.1',
+  logoUrl: 'https://cdn.activepieces.com/pieces/virtualsms.png',
+  authors: ['virtualsms-io', 'sanket-a11y'],
   categories: [PieceCategory.COMMUNICATION],
   actions: [
     buyNumber,
     getOrderStatus,
     cancelOrder,
+    swapNumber,
+    listOrders,
     listServices,
     listCountries,
     checkPrice,
     getBalance,
+    getProfile,
+    listTransactions,
     createCustomApiCallAction({
       baseUrl: () => 'https://virtualsms.io',
       auth: virtualSmsAuth,
       authMapping: async (auth) => ({
-        'X-API-Key': String(auth),
+        'X-API-Key': auth.secret_text,
       }),
     }),
   ],
-  triggers: [orderReceivedSms, orderExpired, lowBalance],
+  triggers: [orderReceivedSms, orderExpired],
 });

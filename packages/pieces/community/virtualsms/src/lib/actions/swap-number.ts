@@ -2,11 +2,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { request, virtualSmsAuth } from '../common';
 
-export const getOrderStatus = createAction({
+export const swapNumber = createAction({
   auth: virtualSmsAuth,
-  name: 'get_order_status',
-  displayName: 'Get Order Status',
-  description: 'Get current status and any received SMS for an order',
+  name: 'swap_number',
+  displayName: 'Swap Number',
+  description:
+    'Get a replacement phone number for an active order. Use this when the current number is not receiving SMS. A 2-minute cooldown applies after purchase.',
   props: {
     order_id: Property.ShortText({
       displayName: 'Order ID',
@@ -17,8 +18,8 @@ export const getOrderStatus = createAction({
   async run({ auth, propsValue }) {
     return request(
       auth,
-      HttpMethod.GET,
-      `/api/v1/customer/order/${encodeURIComponent(propsValue.order_id)}`
+      HttpMethod.POST,
+      `/api/v1/customer/swap/${encodeURIComponent(propsValue.order_id)}`
     );
   },
 });
