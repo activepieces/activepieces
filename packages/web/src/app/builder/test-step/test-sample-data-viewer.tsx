@@ -14,10 +14,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
 import { DataDisplayTabs } from '../data-display/data-display-tabs';
-import { StepDataPanelHeader } from '../step-data/step-data-panel-header';
-import { StepDataPanelViewToggle } from '../step-data/step-data-panel-view-toggle';
 import { ErrorExplanationContext } from '../data-display/explanation-prompt';
 import { FriendlyErrorView } from '../data-display/friendly-error-view';
+import { StepDataPanelHeader } from '../step-data/step-data-panel-header';
+import { StepDataPanelViewToggle } from '../step-data/step-data-panel-view-toggle';
 
 import { AgentTestStep, isRunAgent } from './agent-test-step';
 import { TestButtonTooltip } from './test-step-tooltip';

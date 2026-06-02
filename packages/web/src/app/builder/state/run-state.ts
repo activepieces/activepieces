@@ -99,7 +99,7 @@ export const createRunState = (
           userManuallySelectedStepDuringRun: isNewRun
             ? false
             : state.userManuallySelectedStepDuringRun,
-          isStepDataPanelOpen: true,
+          isStepDataPanelOpen: isNewRun ? true : state.isStepDataPanelOpen,
         };
       }),
     selectFailedStep: () => {

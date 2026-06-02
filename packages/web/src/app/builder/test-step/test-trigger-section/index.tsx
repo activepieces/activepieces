@@ -11,10 +11,10 @@ import React from 'react';
 import { triggerEventHooks } from '@/features/flows';
 
 import { useBuilderStateContext } from '../../builder-hooks';
-import { StepDataPanelHeader } from '../../step-data/step-data-panel-header';
-import { StepDataPanelViewToggle } from '../../step-data/step-data-panel-view-toggle';
 import { stepPropertiesSnapshotUtils } from '../../data-display/build-step-properties-snapshot';
 import { ErrorExplanationContext } from '../../data-display/explanation-prompt';
+import { StepDataPanelHeader } from '../../step-data/step-data-panel-header';
+import { StepDataPanelViewToggle } from '../../step-data/step-data-panel-view-toggle';
 import { useTriggerTestRunner } from '../test-runner-context';
 import { TestSampleDataViewer } from '../test-sample-data-viewer';
 
