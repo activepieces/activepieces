@@ -9,6 +9,7 @@ import type {
 } from '@bilig/headless';
 
 type BiligRuntime = typeof import('@bilig/headless');
+type BiligRuntimeLoader = () => Promise<BiligRuntime>;
 type JsonObject = Record<string, unknown>;
 type JsonCell = string | number | boolean | null;
 
@@ -65,7 +66,14 @@ interface SetCellAndVerifyResult {
 
 const WORK_PAPER_DOCUMENT_FORMAT = 'bilig.headless.work-paper.document.v1';
 
-let loadBiligRuntime = importBiligRuntime;
+function createBiligWorkpaperUtils(loadRuntime: BiligRuntimeLoader) {
+  return {
+    createDemoWorkpaper,
+    readRange: (params: ReadRangeParams) => readRange({ ...params, loadRuntime }),
+    setCellAndVerify: (params: SetCellAndVerifyParams) => setCellAndVerify({ ...params, loadRuntime }),
+    validateFormula: (formula: string) => validateFormula({ formula, loadRuntime }),
+  };
+}
 
 function createDemoWorkpaper(): PersistedWorkPaperDocument {
   return {
@@ -91,10 +99,6 @@ function createDemoWorkpaper(): PersistedWorkPaperDocument {
   };
 }
 
-function setBiligRuntimeLoaderForTesting(loader: () => Promise<BiligRuntime>): void {
-  loadBiligRuntime = loader;
-}
-
 async function importBiligRuntime(): Promise<BiligRuntime> {
   // Preserve native dynamic import after CommonJS compilation because @bilig/headless is ESM-only.
   const runtime: unknown = await Function('return import("@bilig/headless")')();
@@ -104,10 +108,10 @@ async function importBiligRuntime(): Promise<BiligRuntime> {
   return runtime;
 }
 
-async function validateFormula(formula: string): Promise<FormulaValidation> {
-  const trimmedFormula = formula.trim();
+async function validateFormula(args: { formula: string; loadRuntime: BiligRuntimeLoader }): Promise<FormulaValidation> {
+  const trimmedFormula = args.formula.trim();
   const errors: string[] = [];
-  const runtime = await loadBiligRuntime();
+  const runtime = await args.loadRuntime();
   const workbook = runtime.WorkPaper.buildEmpty();
 
   try {
@@ -129,8 +133,8 @@ async function validateFormula(formula: string): Promise<FormulaValidation> {
   }
 }
 
-async function readRange(params: ReadRangeParams): Promise<ReadRangeResult> {
-  const runtime = await loadBiligRuntime();
+async function readRange(params: ReadRangeParams & { loadRuntime: BiligRuntimeLoader }): Promise<ReadRangeResult> {
+  const runtime = await params.loadRuntime();
   const workbook = await createWorkbook({ runtime, input: params.workpaper });
   const defaultSheetId = requireSheet({ workbook, sheetName: params.sheet });
   const range = requireRange({ workbook, range: params.range, defaultSheetId });
@@ -152,8 +156,8 @@ async function readRange(params: ReadRangeParams): Promise<ReadRangeResult> {
   };
 }
 
-async function setCellAndVerify(params: SetCellAndVerifyParams): Promise<SetCellAndVerifyResult> {
-  const runtime = await loadBiligRuntime();
+async function setCellAndVerify(params: SetCellAndVerifyParams & { loadRuntime: BiligRuntimeLoader }): Promise<SetCellAndVerifyResult> {
+  const runtime = await params.loadRuntime();
   const workbook = await createWorkbook({ runtime, input: params.workpaper });
   const sheetId = requireSheet({ workbook, sheetName: params.sheet });
   const address = requireCellAddress({ workbook, sheetName: params.sheet, address: params.cell, defaultSheetId: sheetId });
@@ -189,10 +193,6 @@ async function createWorkbook(args: { runtime: BiligRuntime; input: unknown }): 
 
   if (args.runtime.isPersistedWorkPaperDocument(args.input)) {
     return args.runtime.createWorkPaperFromDocument(args.input);
-  }
-
-  if (args.input['format'] === WORK_PAPER_DOCUMENT_FORMAT) {
-    return args.runtime.createWorkPaperFromDocument(args.runtime.parseWorkPaperDocument(JSON.stringify(args.input)));
   }
 
   return args.runtime.WorkPaper.buildFromSheets(normalizeLegacySheets(args.input));
@@ -367,13 +367,8 @@ function messageOf(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
 }
 
-export const biligWorkpaperUtils = {
-  createDemoWorkpaper,
-  readRange,
-  setCellAndVerify,
-  validateFormula,
-};
+export const biligWorkpaperUtils = createBiligWorkpaperUtils(importBiligRuntime);
 
 export const biligWorkpaperTestUtils = {
-  setBiligRuntimeLoaderForTesting,
+  createUtilsWithRuntimeLoader: createBiligWorkpaperUtils,
 };

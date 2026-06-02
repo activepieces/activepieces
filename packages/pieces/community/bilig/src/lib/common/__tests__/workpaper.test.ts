@@ -1,14 +1,12 @@
 import * as biligRuntime from '@bilig/headless';
-import { beforeAll, describe, expect, it } from 'vitest';
-import { biligWorkpaperTestUtils, biligWorkpaperUtils } from '../workpaper';
+import { describe, expect, it } from 'vitest';
+import { biligWorkpaperTestUtils } from '../workpaper';
 
 describe('biligWorkpaperUtils', () => {
-  beforeAll(() => {
-    biligWorkpaperTestUtils.setBiligRuntimeLoaderForTesting(async () => biligRuntime);
-  });
+  const workpaperUtils = biligWorkpaperTestUtils.createUtilsWithRuntimeLoader(async () => biligRuntime);
 
   it('validates formulas with the Bilig WorkPaper runtime', async () => {
-    await expect(biligWorkpaperUtils.validateFormula('=SUM(1, 2)')).resolves.toEqual({
+    await expect(workpaperUtils.validateFormula('=SUM(1, 2)')).resolves.toEqual({
       valid: true,
       formula: '=SUM(1, 2)',
       errors: [],
@@ -16,15 +14,15 @@ describe('biligWorkpaperUtils', () => {
   });
 
   it('rejects formulas without an equals prefix', async () => {
-    await expect(biligWorkpaperUtils.validateFormula('Inputs!B2*Inputs!B3')).resolves.toMatchObject({
+    await expect(workpaperUtils.validateFormula('Inputs!B2*Inputs!B3')).resolves.toMatchObject({
       valid: false,
       errors: ['formula_invalid'],
     });
   });
 
   it('reads recalculated range values from a persisted demo WorkPaper document', async () => {
-    const result = await biligWorkpaperUtils.readRange({
-      workpaper: biligWorkpaperUtils.createDemoWorkpaper(),
+    const result = await workpaperUtils.readRange({
+      workpaper: workpaperUtils.createDemoWorkpaper(),
       sheet: 'Summary',
       range: 'A1:B2',
     });
@@ -72,8 +70,8 @@ describe('biligWorkpaperUtils', () => {
   });
 
   it('sets an input and verifies dependent readback through the Bilig runtime', async () => {
-    const result = await biligWorkpaperUtils.setCellAndVerify({
-      workpaper: biligWorkpaperUtils.createDemoWorkpaper(),
+    const result = await workpaperUtils.setCellAndVerify({
+      workpaper: workpaperUtils.createDemoWorkpaper(),
       sheet: 'Inputs',
       cell: 'B2',
       value: '32',
@@ -93,7 +91,7 @@ describe('biligWorkpaperUtils', () => {
   });
 
   it('also accepts a compact sheets-map WorkPaper shape', async () => {
-    const result = await biligWorkpaperUtils.setCellAndVerify({
+    const result = await workpaperUtils.setCellAndVerify({
       workpaper: {
         sheets: {
           Sheet1: [
@@ -115,8 +113,8 @@ describe('biligWorkpaperUtils', () => {
   });
 
   it('normalizes padded scalar input before writing it', async () => {
-    const result = await biligWorkpaperUtils.setCellAndVerify({
-      workpaper: biligWorkpaperUtils.createDemoWorkpaper(),
+    const result = await workpaperUtils.setCellAndVerify({
+      workpaper: workpaperUtils.createDemoWorkpaper(),
       sheet: 'Inputs',
       cell: 'B2',
       value: '  unquoted text  ',
@@ -129,8 +127,8 @@ describe('biligWorkpaperUtils', () => {
 
   it('reports a clear error when the input address targets another sheet', async () => {
     await expect(
-      biligWorkpaperUtils.setCellAndVerify({
-        workpaper: biligWorkpaperUtils.createDemoWorkpaper(),
+      workpaperUtils.setCellAndVerify({
+        workpaper: workpaperUtils.createDemoWorkpaper(),
         sheet: 'Inputs',
         cell: 'Summary!B2',
         value: '32',
