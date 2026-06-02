@@ -1,4 +1,4 @@
-import { PlanStepUpdate } from '@activepieces/shared';
+import { BatchProgressData, PlanStepUpdate } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, RefreshCw, Volume2, VolumeOff } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -10,7 +10,6 @@ import {
   MessageAction,
   MessageActions,
 } from '@/components/prompt-kit/message';
-import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
 import {
   AnyToolPart,
@@ -28,6 +27,7 @@ import {
 } from '../lib/message-parsers';
 
 import { ThinkingBlock } from './activity-accordion';
+import { BatchProgressCard } from './batch-progress-card';
 import { ConnectionPickerCard } from './connection-picker-card';
 import {
   ConnectionRequiredData,
@@ -48,18 +48,13 @@ export const AssistantMessage = memo(function AssistantMessage({
   isStreaming,
   isLastMessage = false,
   onRetry,
-  lastAssistantMessage,
 }: {
   message: ChatUIMessage;
   isStreaming: boolean;
   isLastMessage?: boolean;
   onRetry: () => void;
-  lastAssistantMessage?: ChatUIMessage;
 }) {
-  const resolveDisplayCard = useChatStoreContext((s) => s.resolveDisplayCard);
-  const displayCard = useChatStoreContext((s) => s.displayCard);
-  const hasActiveDisplayCard =
-    isStreaming && displayCard !== null && !displayCard.resolved;
+  const approveGate = useChatStoreContext((s) => s.approveGate);
 
   const {
     blocks,
@@ -130,6 +125,27 @@ export const AssistantMessage = memo(function AssistantMessage({
         } else if (toolName === 'ap_request_plan_approval') {
           flushThinking();
           result.push({ kind: 'plan-marker', part: p });
+        } else if (toolName === 'ap_execute_action') {
+          const batchPart = chatPartUtils.extractBatchProgressFromOutput(p);
+          if (batchPart) {
+            flushThinking();
+            result.push({ kind: 'batch-progress', data: batchPart });
+          }
+          const thinking = ensureThinking();
+          const lastStep = thinking.steps[thinking.steps.length - 1];
+          if (
+            lastThinkingStatus &&
+            lastStep?.kind === 'thinking-status' &&
+            lastStep.text === lastThinkingStatus
+          ) {
+            thinking.steps[thinking.steps.length - 1] = {
+              ...lastStep,
+              toolPart: p,
+            };
+          } else {
+            thinking.steps.push({ kind: 'tool', part: p });
+          }
+          lastThinkingStatus = null;
         } else {
           const thinking = ensureThinking();
           const lastStep = thinking.steps[thinking.steps.length - 1];
@@ -178,7 +194,11 @@ export const AssistantMessage = memo(function AssistantMessage({
       }
     }
 
-    return { blocks: result, hasContent: hasText, lastDisplayIdx };
+    return {
+      blocks: result,
+      hasContent: hasText,
+      lastDisplayIdx,
+    };
   }, [message.parts, isStreaming]);
 
   const fullText = useMemo(
@@ -206,6 +226,9 @@ export const AssistantMessage = memo(function AssistantMessage({
 
   const isFromHistory = message.id.startsWith('hist-');
   const lastThinkingIdx = blocks.findLastIndex((b) => b.kind === 'thinking');
+  const hasActiveDisplayCard = blocks.some(
+    (b) => b.kind === 'display-tool' && b.part.state === 'input-available',
+  );
 
   return (
     <motion.div
@@ -256,7 +279,7 @@ export const AssistantMessage = memo(function AssistantMessage({
                     <DisplayToolCard
                       key={block.part.toolCallId}
                       part={block.part}
-                      onResolve={resolveDisplayCard}
+                      onResolve={approveGate}
                       isInteractive={false}
                     />
                   );
@@ -268,9 +291,13 @@ export const AssistantMessage = memo(function AssistantMessage({
                   <InlinePlanCard
                     key={`plan-${i}`}
                     planPart={block.part}
-                    lastAssistantMessage={lastAssistantMessage}
+                    message={message}
                     isStreaming={isStreaming}
                   />
+                );
+              case 'batch-progress':
+                return (
+                  <BatchProgressCard key={`batch-${i}`} progress={block.data} />
                 );
               default:
                 return null;
@@ -330,21 +357,14 @@ export const AssistantMessage = memo(function AssistantMessage({
 
 function InlinePlanCard({
   planPart,
-  lastAssistantMessage,
+  message,
   isStreaming,
 }: {
   planPart: AnyToolPart;
-  lastAssistantMessage?: ChatUIMessage;
+  message: ChatUIMessage;
   isStreaming: boolean;
 }) {
-  const storePlanProgress = useChatStoreContext((s) =>
-    chatStoreSelectors.planProgress({ state: s, lastAssistantMessage }),
-  );
-  const storePlanUpdates = useChatStoreContext((s) =>
-    chatStoreSelectors.effectivePlanUpdates({ state: s }),
-  );
-
-  const localPlan = (() => {
+  const localPlan = useMemo(() => {
     const toolOutput = chatPartUtils.parseTypedToolOutput(
       planPart,
       'ap_request_plan_approval',
@@ -356,35 +376,41 @@ function InlinePlanCard({
     const steps = input?.steps ?? [];
     if (steps.length === 0) return null;
     return { title: input?.planSummary ?? '', steps };
-  })();
+  }, [planPart]);
 
-  const progress = storePlanProgress ?? localPlan;
+  const planCompleted = useMemo(
+    () =>
+      !isStreaming &&
+      (() => {
+        const output = chatPartUtils.parseTypedToolOutput(
+          planPart,
+          'ap_request_plan_approval',
+        );
+        return output.state === 'success' && output.data.success;
+      })(),
+    [isStreaming, planPart],
+  );
 
-  const planCompleted =
-    !isStreaming &&
-    (() => {
-      const output = chatPartUtils.parseTypedToolOutput(
-        planPart,
-        'ap_request_plan_approval',
-      );
-      return output.state === 'success' && output.data.success;
-    })();
+  const messageUpdates = useMemo(
+    () => chatPartUtils.extractPlanUpdatesFromMessage(message),
+    [message],
+  );
 
   const updates = useMemo(() => {
-    if (!progress) return [];
+    if (!localPlan) return [];
     if (planCompleted) {
-      return progress.steps.map(
+      return localPlan.steps.map(
         (_stepText, i): PlanStepUpdate => ({ stepIndex: i, status: 'done' }),
       );
     }
-    return storePlanUpdates;
-  }, [storePlanUpdates, progress, planCompleted]);
+    return messageUpdates;
+  }, [messageUpdates, localPlan, planCompleted]);
 
-  if (!progress) return null;
+  if (!localPlan) return null;
 
   return (
     <PlanProgressCard
-      progress={progress}
+      progress={localPlan}
       updates={updates}
       isStreaming={isStreaming}
     />
@@ -397,7 +423,7 @@ function DisplayToolCard({
   isInteractive,
 }: {
   part: AnyToolPart;
-  onResolve: (payload: Record<string, unknown>) => void;
+  onResolve: (gateId: string, payload?: Record<string, unknown>) => void;
   isInteractive: boolean;
 }) {
   if (!chatPartUtils.isReady(part)) return null;
@@ -408,13 +434,14 @@ function DisplayToolCard({
     parsedOutput.state === 'success'
       ? (parsedOutput.data as Record<string, unknown>)
       : undefined;
+  const toolCallId = chatPartUtils.getToolCallId(part);
 
   switch (toolName) {
     case 'ap_show_connection_required':
       return (
         <ConnectionsRequiredCard
           connections={[data as unknown as ConnectionRequiredData]}
-          onResolve={onResolve}
+          onResolve={(payload) => onResolve(toolCallId, payload)}
         />
       );
     case 'ap_show_connection_picker': {
@@ -425,7 +452,7 @@ function DisplayToolCard({
       return (
         <ConnectionPickerCard
           picker={data as unknown as ConnectionPickerData}
-          onResolve={onResolve}
+          onResolve={(payload) => onResolve(toolCallId, payload)}
           isInteractive={isInteractive}
           selectedConnectionLabel={selectedLabel}
         />
@@ -440,7 +467,7 @@ function DisplayToolCard({
         <ProjectPickerCard
           picker={data as unknown as ProjectPickerData}
           isInteractive={isInteractive}
-          onResolve={onResolve}
+          onResolve={(payload) => onResolve(toolCallId, payload)}
           selectedProjectId={selectedProjectId}
         />
       );
@@ -509,4 +536,5 @@ type MessageBlock =
     }
   | { kind: 'text'; text: string }
   | { kind: 'display-tool'; part: AnyToolPart }
-  | { kind: 'plan-marker'; part: AnyToolPart };
+  | { kind: 'plan-marker'; part: AnyToolPart }
+  | { kind: 'batch-progress'; data: BatchProgressData };

@@ -2,6 +2,8 @@ import {
   StepOutputStatus,
   flowStructureUtil,
   AgentResult,
+  FlowActionType,
+  FlowTriggerType,
   isFlowRunStateTerminal,
   FlowRun,
   FlowRunStatus,
@@ -9,6 +11,7 @@ import {
   ApFlagId,
   LogSliceRef,
   StepOutputType,
+  tryParseFriendlyPieceError,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Download, Info } from 'lucide-react';
@@ -20,13 +23,17 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AgentTimeline } from '@/features/agents';
 import { flowRunUtils } from '@/features/flow-runs';
+import { piecesHooks } from '@/features/pieces';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { formatUtils } from '@/lib/format-utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
+import { stepPropertiesSnapshotUtils } from '../data-display/build-step-properties-snapshot';
 import { DataDisplayTabs } from '../data-display/data-display-tabs';
 import { StepDataPanelHeader } from '../step-data/step-data-panel-header';
 import { StepDataPanelViewToggle } from '../step-data/step-data-panel-view-toggle';
+import { ErrorExplanationContext } from '../data-display/explanation-prompt';
+import { FriendlyErrorView } from '../data-display/friendly-error-view';
 import { isRunAgent } from '../test-step/agent-test-step';
 
 type RunActiveTab = 'input' | 'output' | 'timeline';
@@ -66,6 +73,24 @@ export const FlowStepInputOutput = () => {
   const slicedOutputRef = isSlicedOutput
     ? (selectedStepOutput?.output as LogSliceRef | undefined)
     : undefined;
+  const friendlyError = tryParseFriendlyPieceError(
+    selectedStepOutput?.errorMessage,
+  );
+  const stepPieceName =
+    selectedStep?.type === FlowActionType.PIECE ||
+    selectedStep?.type === FlowTriggerType.PIECE
+      ? selectedStep.settings.pieceName
+      : undefined;
+  const stepPieceVersion =
+    selectedStep?.type === FlowActionType.PIECE ||
+    selectedStep?.type === FlowTriggerType.PIECE
+      ? selectedStep.settings.pieceVersion
+      : undefined;
+  const { pieceModel } = piecesHooks.usePiece({
+    name: stepPieceName ?? '',
+    version: stepPieceVersion,
+    enabled: !isNil(stepPieceName),
+  });
   const parsedOutput = isSlicedOutput
     ? undefined
     : selectedStepOutput?.errorMessage ??
@@ -134,6 +159,40 @@ export const FlowStepInputOutput = () => {
       ? 'testing'
       : 'success';
 
+  const stepKind: 'action' | 'trigger' =
+    selectedStep.type === FlowTriggerType.PIECE ? 'trigger' : 'action';
+  const stepName =
+    selectedStep.type === FlowActionType.PIECE
+      ? selectedStep.settings.actionName
+      : selectedStep.type === FlowTriggerType.PIECE
+      ? selectedStep.settings.triggerName
+      : selectedStep.type;
+  const stepInput =
+    selectedStep.type === FlowActionType.PIECE ||
+    selectedStep.type === FlowTriggerType.PIECE
+      ? (selectedStep.settings.input as Record<string, unknown> | undefined)
+      : undefined;
+  const explanationContext: ErrorExplanationContext = {
+    pieceName: stepPieceName,
+    pieceVersion: stepPieceVersion,
+    pieceDisplayName: pieceModel?.displayName,
+    pieceAuthType: stepPropertiesSnapshotUtils.findAuthType(pieceModel),
+    stepKind,
+    stepName,
+    stepDisplayName: selectedStep.displayName,
+    stepDescription: stepPropertiesSnapshotUtils.findDescription({
+      pieceModel,
+      stepKind,
+      stepName,
+    }),
+    stepProperties: stepPropertiesSnapshotUtils.build({
+      pieceModel,
+      stepKind,
+      stepName,
+      input: stepInput,
+    }),
+  };
+
   return (
     <div className="h-full flex flex-col">
       <StepDataPanelHeader
@@ -179,6 +238,12 @@ export const FlowStepInputOutput = () => {
               <StepOutputSkeleton className="p-4" />
             ) : slicedOutputRef ? (
               <SlicedOutputDownload slicedOutputRef={slicedOutputRef} />
+            ) : friendlyError ? (
+              <FriendlyErrorView
+                error={friendlyError}
+                explanationContext={explanationContext}
+                pieceDisplayName={pieceModel?.displayName}
+              />
             ) : (
               <DataDisplayTabs
                 data={parsedOutput}

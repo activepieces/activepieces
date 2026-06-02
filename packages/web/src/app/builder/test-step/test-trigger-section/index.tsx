@@ -13,6 +13,8 @@ import { triggerEventHooks } from '@/features/flows';
 import { useBuilderStateContext } from '../../builder-hooks';
 import { StepDataPanelHeader } from '../../step-data/step-data-panel-header';
 import { StepDataPanelViewToggle } from '../../step-data/step-data-panel-view-toggle';
+import { stepPropertiesSnapshotUtils } from '../../data-display/build-step-properties-snapshot';
+import { ErrorExplanationContext } from '../../data-display/explanation-prompt';
 import { useTriggerTestRunner } from '../test-runner-context';
 import { TestSampleDataViewer } from '../test-sample-data-viewer';
 
@@ -97,6 +99,30 @@ const TestTriggerSection = React.memo(
       sampleDataSelected && !isSimulating && !isSavingMockdata;
 
     const triggerName = currentStep.settings.triggerName;
+    const triggerInput = currentStep.settings.input as
+      | Record<string, unknown>
+      | undefined;
+    const explanationContext: ErrorExplanationContext = {
+      pieceName: currentStep.settings.pieceName,
+      pieceVersion: currentStep.settings.pieceVersion,
+      pieceDisplayName: pieceModel?.displayName,
+      pieceAuthType: stepPropertiesSnapshotUtils.findAuthType(pieceModel),
+      stepKind: 'trigger',
+      stepName: triggerName,
+      stepDisplayName: currentStep.displayName,
+      stepDescription: stepPropertiesSnapshotUtils.findDescription({
+        pieceModel,
+        stepKind: 'trigger',
+        stepName: triggerName,
+      }),
+      stepProperties: stepPropertiesSnapshotUtils.build({
+        pieceModel,
+        stepKind: 'trigger',
+        stepName: triggerName,
+        input: triggerInput,
+      }),
+    };
+
     const getSimulationNote = () => {
       switch (testType) {
         case 'simulation':
@@ -183,6 +209,8 @@ const TestTriggerSection = React.memo(
                 errorMessage={errorMessage ?? null}
                 lastTestDate={lastTestDate}
                 isSaving={isSaving}
+                explanationContext={explanationContext}
+                pieceDisplayName={pieceModel?.displayName}
               >
                 {pollResults?.data && !errorMessage && (
                   <TriggerEventSelect

@@ -10,8 +10,11 @@ import { FlaskConical, Play } from 'lucide-react';
 import React, { useContext } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { piecesHooks } from '@/features/pieces';
 
 import { useBuilderStateContext } from '../builder-hooks';
+import { stepPropertiesSnapshotUtils } from '../data-display/build-step-properties-snapshot';
+import { ErrorExplanationContext } from '../data-display/explanation-prompt';
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
 import { StepDataPanelHeader } from '../step-data/step-data-panel-header';
 import { StepDataPanelViewToggle } from '../step-data/step-data-panel-view-toggle';
@@ -59,6 +62,49 @@ const TestStepSectionImplementation = React.memo(
 
     const isTesting = runner?.isTesting ?? false;
     const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
+
+    const pieceName =
+      currentStep.type === FlowActionType.PIECE
+        ? currentStep.settings.pieceName
+        : undefined;
+    const pieceVersion =
+      currentStep.type === FlowActionType.PIECE
+        ? currentStep.settings.pieceVersion
+        : undefined;
+    const { pieceModel } = piecesHooks.usePiece({
+      name: pieceName ?? '',
+      version: pieceVersion,
+      enabled: !isNil(pieceName),
+    });
+    const stepKind = 'action';
+    const stepName =
+      currentStep.type === FlowActionType.PIECE
+        ? currentStep.settings.actionName
+        : currentStep.type;
+    const stepInput =
+      currentStep.type === FlowActionType.PIECE
+        ? (currentStep.settings.input as Record<string, unknown> | undefined)
+        : undefined;
+    const explanationContext: ErrorExplanationContext = {
+      pieceName,
+      pieceVersion,
+      pieceDisplayName: pieceModel?.displayName,
+      pieceAuthType: stepPropertiesSnapshotUtils.findAuthType(pieceModel),
+      stepKind,
+      stepName,
+      stepDisplayName: currentStep.displayName,
+      stepDescription: stepPropertiesSnapshotUtils.findDescription({
+        pieceModel,
+        stepKind,
+        stepName,
+      }),
+      stepProperties: stepPropertiesSnapshotUtils.build({
+        pieceModel,
+        stepKind,
+        stepName,
+        input: stepInput,
+      }),
+    };
 
     return (
       <>
@@ -109,6 +155,8 @@ const TestStepSectionImplementation = React.memo(
             onRetest={onTestButtonClick}
             errorMessage={errorMessage}
             consoleLogs={consoleLogs}
+            explanationContext={explanationContext}
+            pieceDisplayName={pieceModel?.displayName}
             onCancelTesting={() => {
               removeStepTestListener(currentStep.name);
               revertSampleDataLocally?.();
