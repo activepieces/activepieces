@@ -183,6 +183,11 @@ const extractResponseHttpDetails = (error: Record<string, unknown>): HttpDetails
     }
 }
 
+// SDK clients (Anthropic, OpenAI, etc.) expose status/error/headers at the top level
+// instead of nesting them under `response`. This is deliberately a broad match: any error
+// carrying a numeric HTTP-range `status` is treated as an HTTP error. To keep false
+// positives contained (e.g. a non-HTTP library that reuses a `status` field), it runs only
+// as a fallback after the stricter response-shape extractor — see `extractHttpDetails`.
 const extractClientHttpDetails = (error: Record<string, unknown>): HttpDetails | null => {
     const status = toHttpStatus(error['status'])
     if (isNil(status)) {

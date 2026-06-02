@@ -14,6 +14,13 @@ class TestSdkError extends Error {
     }
 }
 
+class TestSdkBodyError extends Error {
+    constructor(public readonly status: number, public readonly body: unknown, public readonly headers?: Record<string, unknown>) {
+        super(`${status} ${JSON.stringify(body)}`)
+        this.name = 'NotFoundError'
+    }
+}
+
 describe('formatPieceError', () => {
     it('extracts status, request, response, and apiMessage from a Jira-style 403 HttpError', () => {
         const error = new TestHttpError(
@@ -103,6 +110,22 @@ describe('formatPieceError', () => {
 
         expect(result.status).toBe(429)
         expect(result.apiMessage).toBe('Rate limit reached for requests')
+    })
+
+    it('extracts status and apiMessage from a client error that surfaces a top-level body (no error property)', () => {
+        const error = new TestSdkBodyError(
+            404,
+            { message: 'The requested resource was not found' },
+            { 'x-request-id': 'req_abc123' },
+        )
+
+        const result = formatPieceError(error)
+
+        expect(result.status).toBe(404)
+        expect(result.apiMessage).toBe('The requested resource was not found')
+        expect(result.message).toBe('The requested resource was not found')
+        expect(result.responseBody).toEqual({ message: 'The requested resource was not found' })
+        expect(result.responseHeaders).toEqual({ 'x-request-id': 'req_abc123' })
     })
 
     it('handles a 5xx with a string body', () => {
