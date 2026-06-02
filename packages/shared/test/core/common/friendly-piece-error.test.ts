@@ -7,6 +7,13 @@ class TestHttpError extends Error {
     }
 }
 
+class TestSdkError extends Error {
+    constructor(public readonly status: number, public readonly error: unknown, public readonly headers?: Record<string, unknown>) {
+        super(`${status} ${JSON.stringify(error)}`)
+        this.name = 'BadRequestError'
+    }
+}
+
 describe('formatPieceError', () => {
     it('extracts status, request, response, and apiMessage from a Jira-style 403 HttpError', () => {
         const error = new TestHttpError(
@@ -69,6 +76,33 @@ describe('formatPieceError', () => {
 
         expect(result.status).toBe(400)
         expect(result.apiMessage).toBe('The provided authorization grant is invalid')
+    })
+
+    it('extracts status and apiMessage from an Anthropic SDK-style error (top-level status/error)', () => {
+        const error = new TestSdkError(
+            400,
+            {
+                type: 'error',
+                error: { type: 'invalid_request_error', message: '`temperature` is deprecated for this model.' },
+                request_id: 'req_011CbeGhWkQBXpy99GUmspz1',
+            },
+            { 'request-id': 'req_011CbeGhWkQBXpy99GUmspz1' },
+        )
+
+        const result = formatPieceError(error)
+
+        expect(result.status).toBe(400)
+        expect(result.apiMessage).toBe('`temperature` is deprecated for this model.')
+        expect(result.message).toBe('`temperature` is deprecated for this model.')
+    })
+
+    it('extracts status and apiMessage from an OpenAI SDK-style error (top-level status/error)', () => {
+        const error = new TestSdkError(429, { message: 'Rate limit reached for requests', type: 'requests', code: 'rate_limit_exceeded' })
+
+        const result = formatPieceError(error)
+
+        expect(result.status).toBe(429)
+        expect(result.apiMessage).toBe('Rate limit reached for requests')
     })
 
     it('handles a 5xx with a string body', () => {
