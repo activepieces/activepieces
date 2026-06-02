@@ -46,12 +46,10 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
         }
 
         if (data.executionType === ExecutionType.RESUME && isNil(data.logsFileId)) {
-            const resumeError = new ActivepiecesError({
+            throw new ActivepiecesError({
                 code: ErrorCode.RESUME_LOGS_FILE_MISSING,
                 params: { runId: data.runId },
             }, 'logsFileId is missing for RESUME operation')
-            await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR, toInternalError(RunInternalErrorSource.WORKER, resumeError))
-            throw resumeError
         }
 
         const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
