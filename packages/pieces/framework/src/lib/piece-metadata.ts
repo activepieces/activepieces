@@ -50,7 +50,6 @@ export type Audience = z.infer<typeof Audience>
 
 export const AiMetadata = z.object({
   description: z.string().optional(),
-  outputSchema: z.record(z.string(), z.unknown()).optional(),
   idempotent: z.boolean().optional(),
 })
 export type AiMetadata = z.infer<typeof AiMetadata>
