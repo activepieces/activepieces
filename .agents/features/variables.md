@@ -60,6 +60,8 @@ Worker route (engine-only, via engine principal token):
 
 ## Engine Resolution
 
+When the input contains an `ap-formula-v1::{...}` wrapper, `resolveInputAsync` routes the input through the formula evaluator first; the evaluator's `preResolveFormulaVars` calls back into the same `resolveSingleToken` path described below for each `{{var}}` it finds inside the expression. See `formula.md` for the wrapper format and pipeline.
+
 The engine's `resolveSingleToken` checks for the `variables` prefix first, then `connections`, then evaluates the token as a regular step reference. The `variables` branch:
 
 1. Parses the name out of `variables['NAME']` (bracket form) or `variables.NAME` (dot form).

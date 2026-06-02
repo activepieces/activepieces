@@ -112,7 +112,7 @@ async function resolveIdentity({ token, scope, log }: { token: string, scope: Mc
     return null
 }
 
-async function resolveMcpAndUser({ identity, log }: { identity: ResolvedIdentity, log: FastifyBaseLogger }): Promise<{ mcp: PopulatedMcpServer | null, userId: string | null }> {
+async function resolveMcpAndUser({ identity, log }: { identity: ResolvedIdentity, log: FastifyBaseLogger }): Promise<{ mcp: PopulatedMcpServer | null, userId?: string }> {
     try {
         if (identity.type === McpServerType.PLATFORM) {
             rejectedPromiseHandler(telemetry(log).trackPlatform(identity.platformId, {
@@ -137,7 +137,7 @@ async function resolveMcpAndUser({ identity, log }: { identity: ResolvedIdentity
     }
     catch (err) {
         log.debug({ err }, 'Failed to resolve MCP server')
-        return { mcp: null, userId: null }
+        return { mcp: null }
     }
 }
 

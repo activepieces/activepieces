@@ -119,7 +119,7 @@ export const AutomationsTable = ({
               {t('Owner')}
             </div>
           )}
-          <div className="w-[120px] shrink-0 px-2 flex items-center gap-1.5">
+          <div className="w-[160px] shrink-0 px-2 flex items-center gap-1.5">
             <Activity className="h-3.5 w-3.5" />
             {t('Status')}
           </div>
