@@ -1,11 +1,12 @@
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import { apId, ApEdition, FilteredPieceBehavior,
+import { apId, ApEdition, FileCompression, FileLocation, FileType, FilteredPieceBehavior,
     FlowOperationStatus,
     FlowStatus,
     PlanName,
     PlatformRole,
     PrincipalType,
     UpdatePlatformRequestBody,
+    UserIdentityProvider,
 } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
@@ -15,7 +16,7 @@ import { system } from '../../../../src/app/helper/system/system'
 import { systemJobsQueue } from '../../../../src/app/helper/system-jobs/system-job'
 import { db } from '../../../helpers/db'
 import { generateMockToken } from '../../../helpers/auth'
-import { checkIfSolutionExistsInDb, createMockConnection, createMockFlow, createMockFlowRun, createMockFlowVersion, createMockSolutionAndSave, createMockUser, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
+import { checkIfSolutionExistsInDb, createMockConnection, createMockFile, createMockFlow, createMockFlowRun, createMockFlowVersion, createMockSolutionAndSave, createMockUser, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
@@ -69,7 +70,7 @@ describe('Platform API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                
+
                 platform: { id: mockPlatform.id },
             })
             const requestBody: UpdatePlatformRequestBody = {
@@ -115,8 +116,6 @@ describe('Platform API', () => {
             expect(responseBody.filteredPieceBehavior).toBe('ALLOWED')
             expect(responseBody.emailAuthEnabled).toBe(false)
             expect(responseBody.federatedAuthProviders).toStrictEqual({
-                google: null,
-                github: null,
                 saml: null,
             })
             expect(responseBody.cloudAuthEnabled).toBe(false)
@@ -133,7 +132,7 @@ describe('Platform API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                
+
                 platform: { id: mockPlatform.id },
             })
             const formData = new FormData()
@@ -235,7 +234,7 @@ describe('Platform API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
-                
+
                 platform: { id: mockPlatform.id },
             })
 
@@ -255,6 +254,45 @@ describe('Platform API', () => {
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
 
+        it('rejects cross-tenant platform update (IDOR)', async () => {
+            // arrange — two independent platforms with their own admin owners
+            const { mockOwner: ownerOfPlatformA, mockPlatform: platformA } = await mockAndSaveBasicSetup()
+            const { mockOwner: ownerOfPlatformB, mockPlatform: platformB } = await mockAndSaveBasicSetup({
+                platform: { name: 'platform-b-original-name' },
+            })
+
+            const attackerToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: ownerOfPlatformA.id,
+                platform: { id: platformA.id },
+            })
+
+            // act — attacker (admin of platform A) points the write at platform B
+            const attackResponse = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${platformB.id}`,
+                headers: { authorization: `Bearer ${attackerToken}` },
+                body: { name: 'pwned' },
+            })
+
+            // assert — request is rejected
+            expect(attackResponse?.statusCode).toBe(StatusCodes.FORBIDDEN)
+
+            // assert — platform B was NOT mutated (defense-in-depth check)
+            const victimToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: ownerOfPlatformB.id,
+                platform: { id: platformB.id },
+            })
+            const victimReadResponse = await app?.inject({
+                method: 'GET',
+                url: `/api/v1/platforms/${platformB.id}`,
+                headers: { authorization: `Bearer ${victimToken}` },
+            })
+            expect(victimReadResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(victimReadResponse?.json().name).toBe('platform-b-original-name')
+        })
+
     })
 
     describe('get platform endpoint', () => {
@@ -263,10 +301,6 @@ describe('Platform API', () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 platform: {
                     federatedAuthProviders: {
-                        google: {
-                            clientId: faker.internet.password(),
-                            clientSecret: faker.internet.password(),
-                        },
                         saml: {
                             idpCertificate: faker.internet.password(),
                             idpMetadata: faker.internet.password(),
@@ -278,7 +312,7 @@ describe('Platform API', () => {
             const mockToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                
+
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -298,13 +332,10 @@ describe('Platform API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            expect(Object.keys(responseBody).length).toBe(19)
+            expect(Object.keys(responseBody).length).toBe(23)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.ownerId).toBe(mockOwner.id)
             expect(responseBody.name).toBe(mockPlatform.name)
-            expect(responseBody.federatedAuthProviders.google).toStrictEqual({
-                clientId: mockPlatform.federatedAuthProviders?.google?.clientId,
-            })
             expect(responseBody.federatedAuthProviders.saml).toStrictEqual({})
             expect(responseBody.primaryColor).toBe(mockPlatform.primaryColor)
             expect(responseBody.logoIconUrl).toBe(mockPlatform.logoIconUrl)
@@ -312,6 +343,80 @@ describe('Platform API', () => {
             expect(responseBody.favIconUrl).toBe(mockPlatform.favIconUrl)
         })
 
+
+        it('Hides license key from JWT provider (embedded) users', async () => {
+            // arrange
+            const { mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    licenseKey: 'test-license-key',
+                },
+            })
+
+            const { mockUser: embeddedUser } = await mockBasicUser({
+                userIdentity: {
+                    provider: UserIdentityProvider.JWT,
+                },
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
+            })
+
+            const mockToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: embeddedUser.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${mockToken}`,
+                },
+            })
+
+            const responseBody = response?.json()
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(responseBody.plan.licenseKey).toBeNull()
+        })
+
+        it('Returns license key for non-embedded users', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    licenseKey: 'test-license-key',
+                },
+            })
+
+            const mockToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${mockToken}`,
+                },
+            })
+
+            const responseBody = response?.json()
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(responseBody.plan.licenseKey).toBe('test-license-key')
+        })
 
         it('Fails if user is not a platform member', async () => {
             const { mockOwner: mockOwner1, mockPlatform: mockPlatform1 } = await mockAndSaveBasicSetup()
@@ -604,7 +709,7 @@ describe('Platform API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                
+
                 platform: { id: mockPlatform.id },
             })
             // act
@@ -632,7 +737,7 @@ describe('Platform API', () => {
         const testToken = await generateMockToken({
             type: PrincipalType.USER,
             id: mockUser.id,
-            
+
             platform: { id: mockPlatform.id },
         })
         // act
@@ -645,5 +750,97 @@ describe('Platform API', () => {
         })
         // assert
         expect(response?.statusCode).toBe(StatusCodes.OK)
+    })
+
+    describe('get platform asset endpoint', () => {
+        it('serves a public platform asset', async () => {
+            // arrange
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const assetData = Buffer.from('public-logo-bytes')
+            const assetFile = createMockFile({
+                platformId: mockPlatform.id,
+                projectId: null,
+                type: FileType.PLATFORM_ASSET,
+                compression: FileCompression.NONE,
+                location: FileLocation.DB,
+                data: assetData,
+                fileName: 'logo.png',
+                metadata: { mimetype: 'image/png' },
+            })
+            await db.save('file', assetFile)
+
+            // act — public endpoint, no auth
+            const response = await app?.inject({
+                method: 'GET',
+                url: `/api/v1/platforms/assets/${assetFile.id}`,
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.headers['content-type']).toContain('image/png')
+            expect(response?.rawPayload.equals(assetData)).toBe(true)
+        })
+
+        it('serves a public user profile picture', async () => {
+            // arrange
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const pictureData = Buffer.from('user-profile-picture-bytes')
+            const pictureFile = createMockFile({
+                platformId: mockPlatform.id,
+                projectId: null,
+                type: FileType.USER_PROFILE_PICTURE,
+                compression: FileCompression.NONE,
+                location: FileLocation.DB,
+                data: pictureData,
+                fileName: 'avatar.png',
+                metadata: { mimetype: 'image/png' },
+            })
+            await db.save('file', pictureFile)
+
+            // act — public endpoint, no auth
+            const response = await app?.inject({
+                method: 'GET',
+                url: `/api/v1/platforms/assets/${pictureFile.id}`,
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.headers['content-type']).toContain('image/png')
+            expect(response?.rawPayload.equals(pictureData)).toBe(true)
+        })
+
+        it('rejects access to non-PLATFORM_ASSET files (IDOR via public asset endpoint)', async () => {
+            // arrange — a sensitive flow run log file stored under a project
+            const { mockProject } = await mockAndSaveBasicSetup()
+            const sensitiveData = Buffer.from(JSON.stringify({ secret: 'super-secret-api-key' }))
+            const sensitiveFile = createMockFile({
+                projectId: mockProject.id,
+                type: FileType.FLOW_RUN_LOG,
+                compression: FileCompression.NONE,
+                location: FileLocation.DB,
+                data: sensitiveData,
+                fileName: 'flow-run.json',
+                metadata: { mimetype: 'application/json' },
+            })
+            await db.save('file', sensitiveFile)
+
+            // act — unauthenticated attacker hits the public asset endpoint
+            const response = await app?.inject({
+                method: 'GET',
+                url: `/api/v1/platforms/assets/${sensitiveFile.id}`,
+            })
+
+            // assert — non-asset file types must NOT be served by this endpoint
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            expect(response?.rawPayload.includes(sensitiveData)).toBe(false)
+        })
+
+        it('returns 404 for unknown asset ids', async () => {
+            const response = await app?.inject({
+                method: 'GET',
+                url: `/api/v1/platforms/assets/${apId()}`,
+            })
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
     })
 })

@@ -1,0 +1,242 @@
+import { ChatConversation } from '@activepieces/shared';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { t } from 'i18next';
+import { ChevronDown, MessageSquare, Plus, Search, Trash2 } from 'lucide-react';
+import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
+
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { chatApi } from '@/features/chat/lib/chat-api';
+import { cn } from '@/lib/utils';
+
+import { DelayedTooltip } from './components/delayed-tooltip';
+
+export function ConversationList({
+  onSelect,
+  onNewChat,
+  selectedId,
+}: {
+  onSelect?: (id: string) => void;
+  onNewChat?: () => void;
+  selectedId?: string | null;
+}) {
+  const queryClient = useQueryClient();
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [showTopFade, setShowTopFade] = useState(false);
+  const [showBottomFade, setShowBottomFade] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const { data: conversationsPage, isLoading: isLoadingConversations } =
+    useQuery({
+      queryKey: ['chat-conversations'],
+      queryFn: () => chatApi.listConversations({ limit: 100 }),
+    });
+
+  const selectedIdRef = useRef(selectedId);
+  selectedIdRef.current = selectedId;
+
+  const { mutate: deleteConv } = useMutation({
+    mutationFn: (id: string) => chatApi.deleteConversation(id),
+    onSuccess: (_data, deletedId) => {
+      void queryClient.invalidateQueries({
+        queryKey: ['chat-conversations'],
+      });
+      if (selectedIdRef.current === deletedId) {
+        onNewChat?.();
+      }
+    },
+  });
+
+  const allConversations = conversationsPage?.data ?? [];
+
+  const conversations = useMemo(() => {
+    if (!searchQuery.trim()) return allConversations;
+    const query = searchQuery.toLowerCase();
+    return allConversations.filter((c) =>
+      (c.title ?? '').toLowerCase().includes(query),
+    );
+  }, [allConversations, searchQuery]);
+
+  const checkFades = useCallback(() => {
+    const el = listRef.current;
+    if (!el) return;
+    setShowTopFade(el.scrollTop > 5);
+    setShowBottomFade(el.scrollTop + el.clientHeight < el.scrollHeight - 5);
+  }, []);
+
+  useEffect(() => {
+    checkFades();
+  }, [collapsed, conversations, checkFades]);
+
+  const { today, yesterday, older } = useMemo(() => {
+    const todayStr = new Date().toDateString();
+    const y = new Date();
+    y.setDate(y.getDate() - 1);
+    const yesterdayStr = y.toDateString();
+
+    const groups: {
+      today: ChatConversation[];
+      yesterday: ChatConversation[];
+      older: ChatConversation[];
+    } = {
+      today: [],
+      yesterday: [],
+      older: [],
+    };
+    for (const c of conversations) {
+      const dateStr = new Date(c.created).toDateString();
+      if (dateStr === todayStr) groups.today.push(c);
+      else if (dateStr === yesterdayStr) groups.yesterday.push(c);
+      else groups.older.push(c);
+    }
+    return groups;
+  }, [conversations]);
+
+  const handleClick = (conv: ChatConversation) => {
+    onSelect?.(conv.id);
+  };
+
+  const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    deleteConv(id);
+  };
+
+  const toggleGroup = (label: string) => {
+    setCollapsed((prev) => ({ ...prev, [label]: !prev[label] }));
+  };
+
+  const renderGroup = (label: string, items: ChatConversation[]) => {
+    if (items.length === 0) return null;
+    const isCollapsed = collapsed[label];
+    return (
+      <div className="mb-2 flex flex-col gap-px">
+        <button
+          type="button"
+          className="flex items-center gap-0.5 rounded-md bg-transparent border-none cursor-pointer text-[11px] font-semibold px-2 py-1 uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+          onClick={() => toggleGroup(label)}
+        >
+          {label}
+          <ChevronDown
+            size={10}
+            className={cn(
+              'shrink-0 transition-transform duration-150',
+              isCollapsed && '-rotate-90',
+            )}
+          />
+        </button>
+        {!isCollapsed &&
+          items.map((conv, index) => (
+            <button
+              type="button"
+              key={conv.id}
+              className={cn(
+                'group flex items-center w-full px-2 py-1.5 rounded-md bg-transparent border-none cursor-pointer text-left text-xs transition-all hover:bg-muted relative animate-in fade-in slide-in-from-top-1 duration-200',
+                selectedId === conv.id &&
+                  'bg-muted font-semibold border-l-2 border-l-primary',
+              )}
+              style={{ animationDelay: `${index * 30}ms` }}
+              onClick={() => handleClick(conv)}
+            >
+              <span className="overflow-hidden text-ellipsis whitespace-nowrap pr-5 flex-1">
+                {conv.title ?? t('New conversation')}
+              </span>
+              <DelayedTooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
+                    onClick={(e) => handleDelete(e, conv.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.stopPropagation();
+                        deleteConv(conv.id);
+                      }
+                    }}
+                  >
+                    <Trash2 size={12} />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="right"
+                  align="center"
+                  className="pointer-events-none"
+                >
+                  {t('Delete')}
+                </TooltipContent>
+              </DelayedTooltip>
+            </button>
+          ))}
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex flex-col h-full shrink-0" style={{ width: '220px' }}>
+      <div className="px-2 pt-3 pb-2 space-y-2">
+        <button
+          type="button"
+          className="flex items-center justify-between gap-1.5 w-full px-2 py-1.5 rounded-md border border-border bg-transparent cursor-pointer text-xs text-foreground transition-colors hover:bg-accent"
+          onClick={() => {
+            onNewChat?.();
+          }}
+        >
+          <span className="flex items-center gap-1.5">
+            <Plus size={14} />
+            {t('New chat')}
+          </span>
+          <span className="text-[11px] opacity-50">⇧⌘O</span>
+        </button>
+        {allConversations.length > 5 && (
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t('Search...')}
+              className="h-7 pl-7 text-xs rounded-md"
+            />
+          </div>
+        )}
+      </div>
+      <div className="flex-1 relative min-h-0">
+        {showTopFade && (
+          <div className="absolute top-0 left-0 right-0 h-5 pointer-events-none z-[1] bg-gradient-to-b from-background to-transparent" />
+        )}
+        <div
+          ref={listRef}
+          onScroll={checkFades}
+          className="h-full overflow-y-auto px-2 pb-3 scrollbar-thin"
+        >
+          {isLoadingConversations ? (
+            <div className="space-y-2 px-2 pt-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-7 w-full rounded-md" />
+              ))}
+            </div>
+          ) : conversations.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+              <MessageSquare className="h-8 w-8 text-muted-foreground/30 mb-2" />
+              <p className="text-xs text-muted-foreground">
+                {searchQuery.trim()
+                  ? t('No chats found')
+                  : t('Start your first chat')}
+              </p>
+            </div>
+          ) : (
+            <>
+              {renderGroup(t('Today'), today)}
+              {renderGroup(t('Yesterday'), yesterday)}
+              {renderGroup(t('Older'), older)}
+            </>
+          )}
+        </div>
+        {showBottomFade && (
+          <div className="absolute bottom-0 left-0 right-0 h-[70px] pointer-events-none z-[1] bg-gradient-to-t from-background to-transparent" />
+        )}
+      </div>
+    </div>
+  );
+}

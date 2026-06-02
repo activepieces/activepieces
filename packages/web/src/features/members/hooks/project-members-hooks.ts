@@ -17,7 +17,6 @@ export const projectMembersHooks = {
     const { platform } = platformHooks.useCurrentPlatform();
     const query = useQuery<ProjectMemberWithUser[]>({
       queryKey: ['project-members', authenticationSession.getProjectId()],
-      meta: { showErrorDialog: true, loadSubsetOptions: {} },
       queryFn: async () => {
         const projectId = authenticationSession.getProjectId();
         assertNotNullOrUndefined(projectId, 'Project ID is null');
@@ -44,13 +43,15 @@ export const projectMembersMutations = {
     onSuccess,
     onError,
   }: {
-    onSuccess: () => void;
+    onSuccess: (variables: { memberId: string; role: string }) => void;
     onError: () => void;
   }) => {
     return useMutation({
       mutationFn: ({ memberId, role }: { memberId: string; role: string }) =>
         projectMembersApi.update(memberId, { role }),
-      onSuccess,
+      onSuccess: (_data, variables) => {
+        onSuccess(variables);
+      },
       onError,
     });
   },

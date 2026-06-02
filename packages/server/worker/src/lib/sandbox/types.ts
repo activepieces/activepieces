@@ -48,8 +48,10 @@ export type SandboxInitOptions = {
     memoryLimitMb: number
     cpuMsPerSec: number
     timeLimitSeconds: number
+    reusable: boolean
     command?: string[]
     baseMounts?: SandboxMount[]
+    wsRpcPort?: number
 }
 
 export type SandboxOptions = {

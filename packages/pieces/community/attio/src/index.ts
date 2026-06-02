@@ -5,6 +5,7 @@ import { PieceCategory } from '@activepieces/shared';
 import { createRecordAction } from './lib/actions/create-record';
 import { updateRecordAction } from './lib/actions/update-record';
 import { findRecordAction } from './lib/actions/find-record';
+import { getRecordAction } from './lib/actions/get-record';
 import { createEntryAction } from './lib/actions/create-entry';
 import { updateEntryAction } from './lib/actions/update-entry';
 import { findListEntryAction } from './lib/actions/find-list-entry';
@@ -38,6 +39,7 @@ export const attio = createPiece({
 		createRecordAction,
 		updateRecordAction,
 		findRecordAction,
+		getRecordAction,
 		createEntryAction,
 		updateEntryAction,
 		findListEntryAction,
