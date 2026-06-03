@@ -380,7 +380,6 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
                   key={node.key}
                   node={node}
                   searchTerm={searchTerm}
-                  showTypeIcons={viewMode === 'friendly'}
                 ></DataSelectorNode>
               ))}
               {filteredNodes.length === 0 && (

@@ -15,14 +15,12 @@ type DataSelectorNodeProps = {
   node: DataSelectorTreeNode;
   depth: number;
   searchTerm: string;
-  showTypeIcons?: boolean;
 };
 
 const DataSelectorNode = ({
   node,
   depth,
   searchTerm,
-  showTypeIcons,
 }: DataSelectorNodeProps) => {
   const [expanded, setExpanded] = useState(depth === 0);
 
@@ -48,7 +46,6 @@ const DataSelectorNode = ({
             expanded={expanded}
             setExpanded={setExpanded}
             depth={depth}
-            showTypeIcons={showTypeIcons}
           ></DataSelectorNodeContent>
         </CollapsibleTrigger>
         <CollapsibleContent className="w-full">
@@ -60,7 +57,6 @@ const DataSelectorNode = ({
                   node={node}
                   key={node.key}
                   searchTerm={searchTerm}
-                  showTypeIcons={showTypeIcons}
                 ></DataSelectorNode>
               ))}
             </div>

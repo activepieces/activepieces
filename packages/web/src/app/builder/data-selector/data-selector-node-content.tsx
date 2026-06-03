@@ -25,7 +25,6 @@ type DataSelectorNodeContentProps = {
   setExpanded: (expanded: boolean) => void;
   depth: number;
   node: DataSelectorTreeNode;
-  showTypeIcons?: boolean;
 };
 
 const handleKeyPress = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -42,7 +41,6 @@ const DataSelectorNodeContent = ({
   expanded,
   setExpanded,
   depth,
-  showTypeIcons,
 }: DataSelectorNodeContentProps) => {
   const flowVersion = useBuilderStateContext((state) => state.flowVersion);
   const insertMention = useBuilderStateContext((state) => state.insertMention);
@@ -123,7 +121,7 @@ const DataSelectorNodeContent = ({
         {isStepRoot && stepForRoot && <StepRootIcon step={stepForRoot} />}
 
         <div className="flex items-center gap-1.5 min-w-0 flex-1">
-          {showTypeIcons && !isStepRoot && node.data.type === 'value' && (
+          {!isStepRoot && node.data.type === 'value' && (
             <FieldTypeIcon value={node.data.value} />
           )}
 
