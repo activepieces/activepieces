@@ -14,6 +14,7 @@ import { apDeleteTableTool } from './ap-delete-table'
 import { apDuplicateFlowTool } from './ap-duplicate-flow'
 import { apFindRecordsTool } from './ap-find-records'
 import { apFlowStructureTool } from './ap-flow-structure'
+import { apGetGuideTool } from './ap-get-guide'
 import { apGetPiecePropsTool } from './ap-get-piece-props'
 import { apGetRunTool } from './ap-get-run'
 import { apInsertRecordsTool } from './ap-insert-records'
@@ -59,6 +60,7 @@ export const LOCKED_TOOL_NAMES: string[] = [
     'ap_list_runs',
     'ap_get_run',
     'ap_setup_guide',
+    'ap_get_guide',
 ]
 
 export const PLATFORM_LEVEL_TOOL_NAMES: string[] = [
@@ -140,4 +142,5 @@ export const activepiecesTools = (mcp: ProjectScopedMcpServer, userId: string | 
     apRetryRunTool(mcp, log),
     apRunActionTool(mcp, log),
     apSetupGuideTool(mcp, log),
+    apGetGuideTool(),
 ]

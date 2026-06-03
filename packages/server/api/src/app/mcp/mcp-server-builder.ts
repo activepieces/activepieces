@@ -15,6 +15,9 @@ const MCP_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
 
 const MCP_SERVER_INSTRUCTIONS = `## Activepieces MCP Server
 
+### Guides — read before building or when unsure how something behaves
+Call \`ap_get_guide\` for in-depth, battle-tested how-tos and the gotchas that actually break flows. Topics: \`flow-building\` (the build loop, step refs, auth, limits — read first), \`patterns\`, \`control-flow\`, \`state\`, \`tables\`, \`ai\`, \`error-handling\`.
+
 ### Workflow
 1. Discover: ap_research_pieces, ap_list_connections, ap_list_ai_models
 2. Schema: ap_get_piece_props (get field names/types before configuring)
