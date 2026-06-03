@@ -16,7 +16,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { workerGroupService } from '../../ee/platform/platform-plan/worker-group.service'
 import { domainHelper } from '../../helper/domain-helper'
 import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-props'
+import { AppSystemProp, apVersionUtil } from '../../helper/system/system-props'
 import { workerMachineCache } from './machine-cache'
 
 dayjs.extend(utc)
@@ -62,6 +62,7 @@ async function buildSettingsResponse(_log: FastifyBaseLogger): Promise<WorkerSet
         SSRF_ALLOW_LIST: system.get(AppSystemProp.SSRF_ALLOW_LIST)?.split(',').map(f => f.trim()) ?? [],
         NETWORK_MODE: system.getOrThrow<NetworkMode>(AppSystemProp.NETWORK_MODE),
         PAGE_ONCALL_WEBHOOK: system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK),
+        APP_VERSION: await apVersionUtil.getCurrentRelease(),
     }
     settingsCache.set(cacheKey, settings)
     return settings

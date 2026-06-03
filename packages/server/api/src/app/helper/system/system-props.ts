@@ -1,5 +1,4 @@
-import path from 'path'
-import { environmentMigrations } from '@activepieces/server-utils'
+import { apVersion, environmentMigrations } from '@activepieces/server-utils'
 import { assertNotNullOrUndefined } from '@activepieces/shared'
 
 export type SystemProp = AppSystemProp
@@ -161,9 +160,7 @@ export const environmentVariables = {
 
 export const apVersionUtil = {
     async getCurrentRelease(): Promise<string> {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const packageJson = require(path.resolve(process.cwd(), 'package.json'))
-        return packageJson.version
+        return apVersion.getCurrentRelease()
     },
     async getLatestRelease(): Promise<string> {
         try {
