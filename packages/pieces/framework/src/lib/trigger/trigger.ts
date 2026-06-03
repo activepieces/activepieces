@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { OnStartContext, TestOrRunHookContext, TriggerHookContext } from '../context';
-import { OutputDisplayHints } from '../output-display-hints';
+import type { OutputDisplayHints } from '../output-display-hints';
 import { TriggerBase } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { ExtractPieceAuthPropertyTypeForMethods, PieceAuthProperty } from '../property/authentication';

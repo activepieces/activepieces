@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { ActionContext } from '../context';
-import { OutputDisplayHints } from '../output-display-hints';
+import type { OutputDisplayHints } from '../output-display-hints';
 import { ActionBase } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { ExtractPieceAuthPropertyTypeForMethods, PieceAuthProperty } from '../property/authentication';
