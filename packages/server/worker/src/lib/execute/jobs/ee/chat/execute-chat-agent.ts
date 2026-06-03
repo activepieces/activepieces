@@ -104,14 +104,23 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             if (abortController.signal.aborted) {
                 log.info({ conversationId }, 'Chat agent cancelled by user')
                 const thinkingDurationMs = Date.now() - thinkingStartTime
-                await ctx.apiClient.saveChatMessages({
+                const cancelSavePayload = {
                     conversationId,
                     messages: [...(config.allMessages as ModelMessage[])],
                     uiMessages: [
                         ...(config.previousUiMessages as PersistedChatMessage[]),
                         ...(uiParts.length > 0 ? [{ role: PersistedChatRole.ASSISTANT, parts: uiParts, thinkingDurationMs }] : []),
                     ],
-                }).catch(() => {})
+                }
+                const { error: cancelSaveError } = await tryCatch(() => ctx.apiClient.saveChatMessages(cancelSavePayload))
+                if (cancelSaveError) {
+                    log.warn({ err: cancelSaveError, conversationId }, 'Cancel save failed, retrying')
+                    await new Promise((resolve) => setTimeout(resolve, 1_000))
+                    const { error: retryError } = await tryCatch(() => ctx.apiClient.saveChatMessages(cancelSavePayload))
+                    if (retryError) {
+                        log.error({ err: retryError, conversationId }, 'Cancel save retry also failed')
+                    }
+                }
                 await ctx.apiClient.sendChatEvent({
                     userId, conversationId,
                     event: { type: ChatAgentEventType.FINISHED, data: { conversationId } },
