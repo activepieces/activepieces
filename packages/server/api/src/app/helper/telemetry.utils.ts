@@ -1,10 +1,11 @@
+import { apVersionUtil } from '@activepieces/server-utils'
 import { ProjectId, TelemetryEvent, User, UserId, UserIdentity } from '@activepieces/shared'
 import { Analytics } from '@segment/analytics-node'
 import { FastifyBaseLogger } from 'fastify'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
 import { system } from './system/system'
-import { AppSystemProp, apVersionUtil } from './system/system-props'
+import { AppSystemProp } from './system/system-props'
 
 const telemetryEnabled = system.getBoolean(AppSystemProp.TELEMETRY_ENABLED)
 
@@ -67,7 +68,7 @@ export const telemetry = (log: FastifyBaseLogger) => ({
 })
 
 async function getMetadata() {
-    const currentVersion = await apVersionUtil.getCurrentRelease()
+    const currentVersion = apVersionUtil.getCurrentRelease()
     const edition = system.getEdition()
     return {
         activepiecesVersion: currentVersion,
