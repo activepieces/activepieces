@@ -156,7 +156,7 @@ export function ChatWithAIPage() {
   }, [handleNewChat]);
 
   const activeConversationId = selectedConversationId ?? pendingConversationId;
-  const displayTitle = conversationTitle ?? t('New conversation');
+  const displayTitle = conversationTitle ?? t('New Chat');
 
   return (
     <div className="flex h-full overflow-hidden">

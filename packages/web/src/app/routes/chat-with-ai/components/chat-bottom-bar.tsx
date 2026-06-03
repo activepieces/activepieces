@@ -36,6 +36,8 @@ export function ChatBottomBar({
   onModelChange,
   lastAssistantMessage,
   lastMessageId,
+  placeholder,
+  defaultValue,
 }: ChatBottomBarProps) {
   const pendingPlanPart = useChatStoreContext((s) =>
     chatStoreSelectors.pendingPlanApproval({
@@ -149,7 +151,8 @@ export function ChatBottomBar({
         isStreaming={isStreaming}
         onSend={onSend}
         onStop={onStop}
-        placeholder={t('Reply...')}
+        placeholder={placeholder ?? t('Reply...')}
+        defaultValue={defaultValue}
         rightActions={
           <ChatModelSelector
             selectedModel={selectedModel}
@@ -221,4 +224,6 @@ type ChatBottomBarProps = {
   onModelChange: (modelId: string) => void;
   lastAssistantMessage: ChatUIMessage | undefined;
   lastMessageId: string | undefined;
+  placeholder?: string;
+  defaultValue?: string;
 };

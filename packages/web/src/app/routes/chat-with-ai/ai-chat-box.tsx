@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   ChatContainerContent,
@@ -26,7 +26,6 @@ import {
   EmptyState,
   MessageSkeletons,
   SetupRequiredState,
-  SuggestionCards,
 } from './components/chat-empty-state';
 import { CreditsBanner } from './components/credits-banner';
 import { QuickReplies } from './components/quick-replies';
@@ -143,14 +142,22 @@ function ChatBoxContent({
 
   const isEmpty = messages.length === 0 && !isLoadingHistory && !isStreaming;
 
+  const prefillTextRef = useRef<string | undefined>(undefined);
+  const [prefillKey, setPrefillKey] = useState(0);
+
+  const handleSuggestionClick = useCallback((text: string) => {
+    prefillTextRef.current = text;
+    setPrefillKey((k) => k + 1);
+  }, []);
+
   return (
     <div className="flex flex-col h-full flex-1 min-w-0">
       {isEmpty ? (
-        <div className="flex flex-col flex-1 items-center justify-center px-6 min-h-0">
-          <EmptyState incognito={incognito} />
-          <div className="w-full max-w-3xl mt-6">
-            <SuggestionCards onSend={handleSend} />
-          </div>
+        <div className="flex-1 overflow-y-auto min-h-0">
+          <EmptyState
+            onSuggestionClick={handleSuggestionClick}
+            incognito={incognito}
+          />
         </div>
       ) : (
         <ChatContainerRoot
@@ -247,6 +254,7 @@ function ChatBoxContent({
               />
             )}
             <ChatBottomBar
+              key={prefillKey}
               isStreaming={isStreaming}
               onSend={handleSend}
               onStop={cancelStream}
@@ -254,6 +262,10 @@ function ChatBoxContent({
               onModelChange={setModelName}
               lastAssistantMessage={lastAssistantMessage}
               lastMessageId={lastMessage?.id}
+              placeholder={
+                isEmpty ? t('Ask, build, or run a task...') : undefined
+              }
+              defaultValue={prefillTextRef.current}
             />
           </div>
         </div>

@@ -24,6 +24,7 @@ export function ChatInput({
   onSend,
   onStop,
   placeholder,
+  defaultValue,
   leftActions,
   rightActions,
 }: {
@@ -31,10 +32,11 @@ export function ChatInput({
   onSend: (text: string, files?: File[]) => void;
   onStop?: () => void;
   placeholder?: string;
+  defaultValue?: string;
   leftActions?: React.ReactNode;
   rightActions?: React.ReactNode;
 }) {
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState(defaultValue ?? '');
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [interimText, setInterimText] = useState('');
 
