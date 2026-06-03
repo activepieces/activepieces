@@ -51,7 +51,7 @@ describe('MCP Tool RBAC', () => {
             const mcp = makeMcp(ctx.project.id)
 
             const checker = await resolvePermissionChecker({ userId: memberCtx.user.id, projectId: ctx.project.id, log: mockLog })
-            const tool = apCreateFlowTool(mcp, mockLog)
+            const tool = apCreateFlowTool({ mcp, userId: memberCtx.user.id }, mockLog)
             const execute = checker.wrapExecute({ execute: tool.execute, permission: tool.permission, toolTitle: tool.title })
             const result = await execute({ flowName: 'Editor Flow' })
 

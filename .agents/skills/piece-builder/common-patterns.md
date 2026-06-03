@@ -119,6 +119,7 @@ export async function myAppApiCall<T extends HttpMessageBody>({
 export const myAppCommon = {
   projectDropdown: Property.Dropdown({
     displayName: 'Project',
+    auth: myAppAuth,
     refreshers: [],
     required: true,
     options: async ({ auth }) => {
@@ -126,7 +127,7 @@ export const myAppCommon = {
         return { disabled: true, options: [], placeholder: 'Connect your account first' };
       }
       const response = await myAppApiCall<{ data: { id: string; name: string }[] }>({
-        token: auth as string,
+        token: (auth as { secret_text: string }).secret_text,
         method: HttpMethod.GET,
         path: '/projects',
       });
@@ -158,7 +159,7 @@ export const listTasksAction = createAction({
   },
   async run(context) {
     const response = await myAppApiCall<{ data: any[] }>({
-      token: context.auth as string,
+      token: context.auth.secret_text,
       method: HttpMethod.GET,
       path: `/projects/${context.propsValue.project}/tasks`,
     });

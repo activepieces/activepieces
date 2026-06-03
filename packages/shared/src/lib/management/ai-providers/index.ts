@@ -11,6 +11,7 @@ export enum AIProviderName {
     CLOUDFLARE_GATEWAY = 'cloudflare-gateway',
     CUSTOM = 'custom',
     BEDROCK = 'bedrock',
+    MISTRAL = 'mistral',
 }
 
 
@@ -56,6 +57,9 @@ export const BedrockProviderAuthConfig = z.object({
 })
 export type BedrockProviderAuthConfig = z.infer<typeof BedrockProviderAuthConfig>
 
+export const MistralProviderAuthConfig = BaseAIProviderAuthConfig
+export type MistralProviderAuthConfig = z.infer<typeof MistralProviderAuthConfig>
+
 export const AnthropicProviderConfig = z.object({})
 export type AnthropicProviderConfig = z.infer<typeof AnthropicProviderConfig>
 
@@ -87,8 +91,14 @@ export const CloudflareGatewayProviderConfig = z.object({
 })
 export type CloudflareGatewayProviderConfig = z.infer<typeof CloudflareGatewayProviderConfig>
 
+export const DEFAULT_AZURE_API_VERSION = '2024-10-21'
+
 export const AzureProviderConfig = z.object({
     resourceName: z.string(),
+    apiVersion: z.preprocess(
+        (v) => (typeof v === 'string' && v.trim().length === 0 ? undefined : v),
+        z.string().optional(),
+    ),
 })
 export type AzureProviderConfig = z.infer<typeof AzureProviderConfig>
 
@@ -106,6 +116,9 @@ export const BedrockProviderConfig = z.object({
 })
 export type BedrockProviderConfig = z.infer<typeof BedrockProviderConfig>
 
+export const MistralProviderConfig = z.object({})
+export type MistralProviderConfig = z.infer<typeof MistralProviderConfig>
+
 export const AIProviderAuthConfig = z.union([
     AnthropicProviderAuthConfig,
     AzureProviderAuthConfig,
@@ -116,6 +129,7 @@ export const AIProviderAuthConfig = z.union([
     OpenAICompatibleProviderAuthConfig,
     ActivePiecesProviderAuthConfig,
     BedrockProviderAuthConfig,
+    MistralProviderAuthConfig,
 ])
 export type AIProviderAuthConfig = z.infer<typeof AIProviderAuthConfig>
 // Order matters, put schemas with required fields first, empty ones last. This is to avoid empty objects matching any object.
@@ -129,6 +143,7 @@ export const AIProviderConfig = z.union([
     OpenAIProviderConfig,
     OpenRouterProviderConfig,
     ActivePiecesProviderConfig,
+    MistralProviderConfig,
 ])
 export type AIProviderConfig = z.infer<typeof AIProviderConfig>
 
@@ -186,6 +201,12 @@ const ProviderConfigUnion = z.discriminatedUnion('provider', [
         provider: z.literal(AIProviderName.BEDROCK),
         config: BedrockProviderConfig,
         auth: BedrockProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.MISTRAL),
+        config: MistralProviderConfig,
+        auth: MistralProviderAuthConfig,
     }),
 ])
 
@@ -365,6 +386,7 @@ const PROVIDER_MAX_CONTEXT_TOKENS: Partial<Record<AIProviderName, number>> = {
     [AIProviderName.AZURE]: 128_000,
     [AIProviderName.OPENROUTER]: 128_000,
     [AIProviderName.ACTIVEPIECES]: 200_000,
+    [AIProviderName.MISTRAL]: 128_000,
 }
 
 function getMaxContextTokens({ provider }: { provider: AIProviderName | undefined }): number {
@@ -373,9 +395,9 @@ function getMaxContextTokens({ provider }: { provider: AIProviderName | undefine
 }
 
 export const ACTIVEPIECES_CHAT_TIERS = [
-    { id: 'fast', label: 'Fast', modelId: 'anthropic/claude-opus-4.7', thinkingBudget: 5_000 },
-    { id: 'smart', label: 'Smart', modelId: 'anthropic/claude-opus-4.7', thinkingBudget: 10_000 },
-    { id: 'premium', label: 'Premium', modelId: 'anthropic/claude-opus-4.7', thinkingBudget: 20_000 },
+    { id: 'fast', label: 'Fast', modelId: 'anthropic/claude-haiku-4.5', thinkingBudget: 5_000 },
+    { id: 'smart', label: 'Expert', modelId: 'anthropic/claude-sonnet-4.6', thinkingBudget: 10_000 },
+    { id: 'premium', label: 'Heavy', modelId: 'anthropic/claude-opus-4.8', thinkingBudget: 20_000 },
 ] as const
 
 export const DEFAULT_CHAT_TIER_ID = 'smart' as const

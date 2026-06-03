@@ -1,54 +1,55 @@
-import { redisConnections } from '../../database/redis-connections'
+import { distributedStore } from '../../database/redis-connections'
 import { pubsub } from '../../helper/pubsub'
 
-const GATE_TIMEOUT_MS = 5 * 60 * 1000
+const GATE_TTL_SECONDS = 15 * 60
+const CANCEL_TTL_SECONDS = 10 * 60
+const KEY_PREFIX = 'tool-approval-decision:'
 const CHANNEL_PREFIX = 'tool-approval:'
+const CANCEL_KEY_PREFIX = 'chat-cancel:'
+
+function decisionKey(gateId: string): string {
+    return `${KEY_PREFIX}${gateId}`
+}
 
 function channelName(gateId: string): string {
     return `${CHANNEL_PREFIX}${gateId}`
 }
 
-async function waitForApproval({ gateId }: { gateId: string }): Promise<boolean> {
-    const channel = channelName(gateId)
-    const subscriber = await redisConnections.create()
-
-    return new Promise<boolean>((resolve) => {
-        let settled = false
-
-        const cleanup = () => {
-            if (settled) return
-            settled = true
-            subscriber.unsubscribe(channel).then(() => subscriber.quit()).catch(() => undefined)
-        }
-
-        const timeout = setTimeout(() => {
-            cleanup()
-            resolve(false)
-        }, GATE_TIMEOUT_MS)
-
-        subscriber.on('message', (_ch, message) => {
-            if (_ch !== channel) return
-            clearTimeout(timeout)
-            cleanup()
-            try {
-                const parsed = JSON.parse(message)
-                resolve(parsed.approved === true)
-            }
-            catch {
-                resolve(false)
-            }
-        })
-
-        void subscriber.subscribe(channel)
-    })
+async function resolveGate({ gateId, approved, payload }: { gateId: string, approved: boolean, payload?: Record<string, unknown> }): Promise<void> {
+    const wasSet = await distributedStore.putIfAbsent(decisionKey(gateId), { approved, payload }, GATE_TTL_SECONDS)
+    if (wasSet) {
+        await pubsub.publish(channelName(gateId), JSON.stringify({ approved, payload }))
+    }
 }
 
-async function resolveGate({ gateId, approved }: { gateId: string, approved: boolean }): Promise<void> {
-    const channel = channelName(gateId)
-    await pubsub.publish(channel, JSON.stringify({ approved }))
+async function checkDecision({ gateId }: { gateId: string }): Promise<GateDecision | 'pending'> {
+    const raw = await distributedStore.get<GateDecision>(decisionKey(gateId))
+    if (!raw) return 'pending'
+    return { approved: raw.approved === true, payload: raw.payload }
+}
+
+async function requestCancel({ conversationId }: { conversationId: string }): Promise<void> {
+    await distributedStore.put(`${CANCEL_KEY_PREFIX}${conversationId}`, { cancelled: true }, CANCEL_TTL_SECONDS)
+}
+
+async function isCancelled({ conversationId }: { conversationId: string }): Promise<boolean> {
+    const raw = await distributedStore.get<{ cancelled: boolean }>(`${CANCEL_KEY_PREFIX}${conversationId}`)
+    return raw?.cancelled === true
+}
+
+async function clearCancel({ conversationId }: { conversationId: string }): Promise<void> {
+    await distributedStore.delete(`${CANCEL_KEY_PREFIX}${conversationId}`)
 }
 
 export const chatApprovalGate = {
-    waitForApproval,
     resolveGate,
+    checkDecision,
+    requestCancel,
+    isCancelled,
+    clearCancel,
+}
+
+type GateDecision = {
+    approved: boolean
+    payload?: Record<string, unknown>
 }

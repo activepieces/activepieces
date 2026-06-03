@@ -1,8 +1,4 @@
-import {
-  allowedEmbedOriginSchema,
-  ApFlagId,
-  MAX_ALLOWED_EMBED_ORIGINS,
-} from '@activepieces/shared';
+import { allowedEmbedOriginSchema, ApFlagId } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -35,7 +31,6 @@ const isValidOrigin = (value: string): boolean =>
 const AllowedOriginsForm = z.object({
   origins: z
     .array(z.string())
-    .max(MAX_ALLOWED_EMBED_ORIGINS, 'tooManyEmbedOrigins')
     .refine((items) => items.every(isValidOrigin), 'invalidEmbedOrigin'),
 });
 

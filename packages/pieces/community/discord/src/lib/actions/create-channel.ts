@@ -19,6 +19,11 @@ export const discordCreateChannel = createAction({
       description: 'The name of the new channel',
       required: true,
     }),
+    topic: Property.LongText({
+      displayName: 'Topic',
+      description: 'The topic of the new channel',
+      required: false,
+    }),
   },
 
   async run(configValue) {
@@ -27,6 +32,7 @@ export const discordCreateChannel = createAction({
       url: `https://discord.com/api/v9/guilds/${configValue.propsValue.guild_id}/channels`,
       body: {
         name: configValue.propsValue.name,
+        topic: configValue.propsValue.topic,
       },
       headers: {
         authorization: `Bot ${configValue.auth.secret_text}`,

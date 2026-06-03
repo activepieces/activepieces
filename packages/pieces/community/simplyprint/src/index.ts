@@ -91,7 +91,7 @@ export const simplyprint = createPiece({
     '3D printer fleet management: monitor printers, manage the print queue, track filament, and automate print jobs.',
   auth: simplyprintAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.simplyprint.io/i/static/logo/svg/icon_white_background_rounded.svg',
+  logoUrl: 'https://cdn.activepieces.com/pieces/simplyprint.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: ['SimplyPrint'],
   actions: [

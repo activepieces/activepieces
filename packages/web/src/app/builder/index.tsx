@@ -5,7 +5,9 @@ import {
   FlowTriggerType,
   flowStructureUtil,
 } from '@activepieces/shared';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { PanelImperativeHandle } from 'react-resizable-panels';
+import { usePrevious } from 'react-use';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { DataSelector } from '@/app/builder/data-selector';
@@ -35,10 +37,11 @@ import { CursorPositionProvider } from './state/cursor-position-context';
 import { StepSettingsContainer } from './step-settings';
 const animateResizeClassName = `transition-all `;
 
-const SPLIT_MODE_SIDEBAR_SIZE = '55%';
+const SPLIT_MODE_INITIAL_OPEN_SIZE_PX = 1000;
+const SPLIT_MODE_SIDEBAR_SIZE_PX = 850;
 const DEFAULT_SIDEBAR_SIZE = '25%';
-const SPLIT_MODE_MIN_SIZE = '700px';
 const DEFAULT_MIN_SIZE = '400px';
+const SPLIT_MODE_COLLAPSE_THRESHOLD_PX = 700;
 
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -48,8 +51,10 @@ const BuilderPage = () => {
     selectedStepName,
     removeAllStepTestsListeners,
     selectedStep,
-    testPanelView,
-    isTestPanelOpen,
+    stepDataPanelView,
+    isStepDataPanelOpen,
+    setStepDataPanelView,
+    setStepDataPanelOpen,
   ] = useBuilderStateContext((state) => [
     state.flowVersion,
     state.rightSidebar,
@@ -59,8 +64,10 @@ const BuilderPage = () => {
       state.selectedStep ?? '',
       state.flowVersion.trigger,
     ),
-    state.testPanelView,
-    state.isTestPanelOpen,
+    state.stepDataPanelView,
+    state.isStepDataPanelOpen,
+    state.setStepDataPanelView,
+    state.setStepDataPanelOpen,
   ]);
   useEffect(() => {
     return () => {
@@ -78,25 +85,53 @@ const BuilderPage = () => {
   }, []);
   const isSplitForPiece =
     rightSidebar === RightSideBarType.PIECE_SETTINGS &&
-    testPanelView === 'split' &&
-    isTestPanelOpen;
-  const preferredSize = isSplitForPiece
-    ? SPLIT_MODE_SIDEBAR_SIZE
-    : DEFAULT_SIDEBAR_SIZE;
-  const rightHandleRef = flowCanvasHooks.useAnimateSidebar(
-    rightSidebar,
-    preferredSize,
-  );
-  useEffect(() => {
-    const currentSize = rightHandleRef.current?.getSize()?.asPercentage ?? 0;
-    if (currentSize === 0) return;
-    if (isSplitForPiece && currentSize < 50) {
-      rightHandleRef.current?.resize(SPLIT_MODE_SIDEBAR_SIZE);
-    } else if (!isSplitForPiece && currentSize > 50) {
-      rightHandleRef.current?.resize(DEFAULT_SIDEBAR_SIZE);
-    }
-  }, [isSplitForPiece, rightHandleRef]);
+    stepDataPanelView === 'split' &&
+    isStepDataPanelOpen;
+  const prefersSplitLayout =
+    rightSidebar === RightSideBarType.PIECE_SETTINGS &&
+    stepDataPanelView === 'split';
+
+  const rightHandleRef = useRef<PanelImperativeHandle>(null);
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
+  const previousRightSidebar = usePrevious(rightSidebar);
+
+  useLayoutEffect(() => {
+    const handle = rightHandleRef.current;
+    if (!handle) return;
+    if (rightSidebar === RightSideBarType.NONE) {
+      handle.resize('0%');
+      return;
+    }
+    const isInitialOpen = previousRightSidebar === RightSideBarType.NONE;
+    const targetSize = prefersSplitLayout
+      ? isInitialOpen
+        ? SPLIT_MODE_INITIAL_OPEN_SIZE_PX
+        : SPLIT_MODE_SIDEBAR_SIZE_PX
+      : DEFAULT_SIDEBAR_SIZE;
+    handle.resize(targetSize);
+    const rafId = window.requestAnimationFrame(() => handle.resize(targetSize));
+    return () => window.cancelAnimationFrame(rafId);
+  }, [prefersSplitLayout, previousRightSidebar, rightSidebar]);
+
+  useEffect(() => {
+    if (!isSplitForPiece || !isDraggingHandle) return;
+    const el = rightSidePanelRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect.width ?? 0;
+      if (width > 0 && width < SPLIT_MODE_COLLAPSE_THRESHOLD_PX) {
+        setStepDataPanelView('drawer');
+        setStepDataPanelOpen(false);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [
+    isSplitForPiece,
+    isDraggingHandle,
+    setStepDataPanelView,
+    setStepDataPanelOpen,
+  ]);
   const { pieceModel, refetch: refetchPiece } =
     piecesHooks.usePieceModelForStepSettings({
       name: selectedStep?.settings.pieceName,
@@ -151,6 +186,8 @@ const BuilderPage = () => {
           disabled={rightSidebar === RightSideBarType.NONE}
           withHandle={rightSidebar !== RightSideBarType.NONE}
           onPointerDown={() => setIsDraggingHandle(true)}
+          onPointerUp={() => setIsDraggingHandle(false)}
+          onPointerCancel={() => setIsDraggingHandle(false)}
           className={
             rightSidebar === RightSideBarType.NONE ? 'bg-transparent' : ''
           }
@@ -162,17 +199,13 @@ const BuilderPage = () => {
           collapsedSize="0%"
           defaultSize="0%"
           minSize={
-            rightSidebar === RightSideBarType.NONE
-              ? '0%'
-              : isSplitForPiece
-              ? SPLIT_MODE_MIN_SIZE
-              : DEFAULT_MIN_SIZE
+            rightSidebar === RightSideBarType.NONE ? '0%' : DEFAULT_MIN_SIZE
           }
           maxSize={
             rightSidebar === RightSideBarType.NONE
               ? '0%'
-              : isSplitForPiece
-              ? '80%'
+              : prefersSplitLayout
+              ? '95%'
               : '60%'
           }
           className={cn('min-w-0 bg-background z-30', {

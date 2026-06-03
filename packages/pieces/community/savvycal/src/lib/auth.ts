@@ -1,4 +1,4 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, PieceAuth } from '@activepieces/pieces-framework';
 import { AppConnectionType } from '@activepieces/shared';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 import { SAVVYCAL_BASE_URL } from './common';
@@ -47,11 +47,11 @@ export const savvyCalAuth = [
   }),
 ];
 
-export type SavvyCalAuthValue =
-  | { type: AppConnectionType.OAUTH2; access_token: string }
-  | { type: AppConnectionType.CUSTOM_AUTH; props: { token: string } };
+export type SavvyCalAuthValue = AppConnectionValueForAuthProperty<typeof savvyCalAuth>
 
 export function getToken(auth: SavvyCalAuthValue): string {
-  if (auth.type === AppConnectionType.OAUTH2) return auth.access_token;
-  return auth.props.token;
+  if (auth.type === AppConnectionType.CUSTOM_AUTH) {
+    return auth.props.token;
+  }
+  return auth.access_token;
 }

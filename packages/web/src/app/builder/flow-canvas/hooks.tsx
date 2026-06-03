@@ -10,11 +10,9 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import { useEffect, useRef } from 'react';
-import { PanelImperativeHandle } from 'react-resizable-panels';
 import { useLocation, usePrevious } from 'react-use';
 import { useDebouncedCallback } from 'use-debounce';
 
-import { RightSideBarType } from '@/app/builder/types';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { useSocket } from '@/components/providers/socket-provider';
 import { flowRunsApi, flowRunUtils } from '@/features/flow-runs';
@@ -25,23 +23,6 @@ import { useBuilderStateContext } from '../builder-hooks';
 import { textMentionUtils } from '../piece-properties/text-input-with-mentions/text-input-utils';
 
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
-
-export const useAnimateSidebar = (
-  sidebarValue: RightSideBarType,
-  preferredSize: string = '25%',
-) => {
-  const handleRef = useRef<PanelImperativeHandle>(null);
-  const sidebarClosed = sidebarValue === RightSideBarType.NONE;
-  useEffect(() => {
-    const sidebarSize = handleRef.current?.getSize()?.asPercentage ?? 0;
-    if (sidebarClosed) {
-      handleRef.current?.collapse();
-    } else if (sidebarSize === 0) {
-      handleRef.current?.resize(preferredSize);
-    }
-  }, [handleRef, sidebarValue, sidebarClosed, preferredSize]);
-  return handleRef;
-};
 
 const useSetSocketListener = (refetchPiece: () => void) => {
   const socket = useSocket();
@@ -242,7 +223,6 @@ export const useResizeCanvas = (
 };
 
 export const flowCanvasHooks = {
-  useAnimateSidebar,
   useSetSocketListener,
   useShowBuilderIsSavingWarningBeforeLeaving,
   useIsFocusInsideListMapperModeInput,

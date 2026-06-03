@@ -11,6 +11,7 @@ import { systemJobsQueue } from '../../helper/system-jobs/system-job'
 import { jobQueue } from './job-queue'
 
 const QUEUE_BASE_PATH = '/ui'
+const QUEUE_UI_FULL_PATH = `/api${QUEUE_BASE_PATH}`
 
 export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
     const isQueueEnabled = (system.getBoolean(AppSystemProp.QUEUE_UI_ENABLED) ?? false)
@@ -21,7 +22,7 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
     const queueUsername = system.getOrThrow(AppSystemProp.QUEUE_UI_USERNAME)
     const queuePassword = system.getOrThrow(AppSystemProp.QUEUE_UI_PASSWORD)
     app.log.info(
-        '[setupBullMQBoard] Setting up bull board, visit /ui to see the queues',
+        `[setupBullMQBoard] Setting up bull board, visit ${QUEUE_UI_FULL_PATH} to see the queues`,
     )
 
     await app.register(basicAuth, {
@@ -54,11 +55,11 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
         serverAdapter,
     })
 
-    serverAdapter.setBasePath(`/api${QUEUE_BASE_PATH}`)
+    serverAdapter.setBasePath(QUEUE_UI_FULL_PATH)
     app.addHook('onRequest', (req, reply, next) => {
         const routerPath = req.routeOptions.url
-        assertNotNullOrUndefined(routerPath, 'routerPath is undefined'  )    
-        if (!routerPath.startsWith(QUEUE_BASE_PATH)) {
+        assertNotNullOrUndefined(routerPath, 'routerPath is undefined'  )
+        if (!routerPath.startsWith(QUEUE_UI_FULL_PATH)) {
             next()
         }
         else {

@@ -94,6 +94,7 @@ import { triggerModule } from './trigger/trigger.module'
 import { userBadgeModule } from './user/badges/badge-module'
 import { platformUserModule } from './user/platform/platform-user-module'
 import { invitationModule } from './user-invitations/user-invitation.module'
+import { variableModule } from './variable/variable.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 
@@ -187,6 +188,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(webhookModule)
     await app.register(appConnectionModule)
     await app.register(platformAppConnectionModule)
+    await app.register(variableModule)
     await app.register(openapiModule)
     await app.register(appEventRoutingModule)
     await app.register(authenticationModule)

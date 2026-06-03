@@ -1,6 +1,6 @@
 import { PlanStepStatus, PlanStepUpdate } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Check, ListChecks, Loader2, X } from 'lucide-react';
+import { Check, ListChecks, Loader2, Pause, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useMemo } from 'react';
 
@@ -31,9 +31,11 @@ function computeStepStatuses({
 function StepIndicator({
   status,
   index,
+  isStreaming,
 }: {
   status: PlanStepStatus;
   index: number;
+  isStreaming: boolean;
 }) {
   switch (status) {
     case 'done':
@@ -43,6 +45,13 @@ function StepIndicator({
         </span>
       );
     case 'executing':
+      if (!isStreaming) {
+        return (
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted">
+            <Pause className="h-3 w-3 text-muted-foreground" />
+          </span>
+        );
+      }
       return (
         <span className="flex h-5 w-5 items-center justify-center">
           <Loader2 className="h-4 w-4 text-primary animate-spin" />
@@ -125,9 +134,14 @@ export function PlanProgressCard({
               <X className="h-3 w-3" />
               {t('Error')}
             </span>
-          ) : status === 'executing' ? (
+          ) : status === 'executing' && isStreaming ? (
             <span className="text-xs text-muted-foreground">
               {done}/{total}
+            </span>
+          ) : status === 'executing' && !isStreaming ? (
+            <span className="inline-flex items-center gap-1 text-muted-foreground text-xs font-medium">
+              <Pause className="h-3 w-3" />
+              {t('Paused')}
             </span>
           ) : null}
         </div>
@@ -150,7 +164,11 @@ export function PlanProgressCard({
                   }}
                   transition={{ duration: 0.2 }}
                 >
-                  <StepIndicator status={stepStatus} index={index} />
+                  <StepIndicator
+                    status={stepStatus}
+                    index={index}
+                    isStreaming={isStreaming}
+                  />
                   <div className="flex items-center gap-2 min-w-0">
                     <span
                       className={cn(
@@ -158,7 +176,11 @@ export function PlanProgressCard({
                         stepStatus === 'done' &&
                           'line-through text-muted-foreground',
                         stepStatus === 'executing' &&
+                          isStreaming &&
                           'font-medium text-foreground',
+                        stepStatus === 'executing' &&
+                          !isStreaming &&
+                          'text-muted-foreground',
                         stepStatus === 'error' && 'text-destructive',
                         stepStatus === 'pending' && 'text-muted-foreground',
                       )}
@@ -166,8 +188,15 @@ export function PlanProgressCard({
                       {step}
                     </span>
                     {stepStatus === 'executing' && (
-                      <span className="text-[11px] text-primary font-medium shrink-0">
-                        {t('Running')}
+                      <span
+                        className={cn(
+                          'text-[11px] font-medium shrink-0',
+                          isStreaming
+                            ? 'text-primary'
+                            : 'text-muted-foreground',
+                        )}
+                      >
+                        {isStreaming ? t('Running') : t('Paused')}
                       </span>
                     )}
                   </div>
