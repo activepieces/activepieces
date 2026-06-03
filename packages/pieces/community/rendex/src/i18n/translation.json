@@ -1,0 +1,21 @@
+{
+  "Rendex": "Rendex",
+  "Render raw HTML, a URL, or Markdown to a PNG, JPEG, or WebP image or a PDF via the Rendex API.": "Render raw HTML, a URL, or Markdown to a PNG, JPEG, or WebP image or a PDF via the Rendex API.",
+  "API Key": "API Key",
+  "Your Rendex API key. Create one in your dashboard at rendex.dev under API Keys (the free tier includes 500 renders per month).": "Your Rendex API key. Create one in your dashboard at rendex.dev under API Keys (the free tier includes 500 renders per month).",
+  "Render to Image": "Render to Image",
+  "Render raw HTML or a URL to a PNG, JPEG, or WebP image (or a PDF) and get back the result as base64.": "Render raw HTML or a URL to a PNG, JPEG, or WebP image (or a PDF) and get back the result as base64.",
+  "Source": "Source",
+  "Render from raw HTML or from a live URL.": "Render from raw HTML or from a live URL.",
+  "HTML": "HTML",
+  "The HTML markup to render. Used when Source is \"HTML\".": "The HTML markup to render. Used when Source is \"HTML\".",
+  "URL": "URL",
+  "The page URL to render. Used when Source is \"URL\".": "The page URL to render. Used when Source is \"URL\".",
+  "Format": "Format",
+  "PNG": "PNG",
+  "JPEG": "JPEG",
+  "WebP": "WebP",
+  "PDF": "PDF",
+  "Full Page": "Full Page",
+  "Capture the full scrollable page instead of just the viewport.": "Capture the full scrollable page instead of just the viewport."
+}
