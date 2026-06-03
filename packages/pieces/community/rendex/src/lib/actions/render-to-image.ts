@@ -24,12 +24,12 @@ export const renderToImage = createAction({
     }),
     html: Property.LongText({
       displayName: 'HTML',
-      description: 'The HTML markup to render. Used when Source is "HTML".',
+      description: 'The HTML markup to render. Required when Source is "HTML".',
       required: false,
     }),
     url: Property.ShortText({
       displayName: 'URL',
-      description: 'The page URL to render. Used when Source is "URL".',
+      description: 'The page URL to render. Required when Source is "URL".',
       required: false,
     }),
     format: Property.StaticDropdown({
@@ -55,6 +55,17 @@ export const renderToImage = createAction({
   async run(context) {
     const { auth, propsValue } = context;
     const { source_type, html, url, format, full_page } = propsValue;
+
+    // Guard the source-specific field: both html and url are optional at the
+    // form level (only one applies), so fail clearly here instead of sending a
+    // body with neither key (JSON.stringify drops undefined) and getting an
+    // opaque server-side error.
+    if (source_type === 'url' && !url) {
+      throw new Error('A URL is required when Source is set to "URL".');
+    }
+    if (source_type === 'html' && !html) {
+      throw new Error('HTML is required when Source is set to "HTML".');
+    }
 
     const body: Record<string, unknown> = {
       format: format ?? 'png',
