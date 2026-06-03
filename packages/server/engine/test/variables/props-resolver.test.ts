@@ -149,7 +149,7 @@ describe('Props resolver', () => {
     test('Test two adjacent {{ }} tokens resolve independently', async () => {
         // Regression for #13094: greedy/non-greedy regex merged adjacent tokens.
         const { resolvedInput } = await propsResolverService.resolve({
-            unresolvedInput: '{{trigger.output.name}} costs {{trigger.output.price}}',
+            unresolvedInput: '{{trigger.name}} costs {{trigger.price}}',
             executionState,
         })
         expect(resolvedInput).toEqual('John costs 6.4')
@@ -323,7 +323,7 @@ describe('Props resolver', () => {
 
     test('AP formula: evaluates a wrapped pure formula expression', async () => {
         const { resolvedInput } = await propsResolverService.resolve({
-            unresolvedInput: formulaEvaluator.wrap('uppercase({{trigger.output.name}})'),
+            unresolvedInput: formulaEvaluator.wrap('uppercase({{trigger.name}})'),
             executionState,
         })
         expect(resolvedInput).toEqual('JOHN')
@@ -331,7 +331,7 @@ describe('Props resolver', () => {
 
     test('AP formula: mixed-content field with wrapped formula evaluates and concatenates with text', async () => {
         const { resolvedInput } = await propsResolverService.resolve({
-            unresolvedInput: `Dear ${formulaEvaluator.wrap('uppercase({{trigger.output.name}})')},`,
+            unresolvedInput: `Dear ${formulaEvaluator.wrap('uppercase({{trigger.name}})')},`,
             executionState,
         })
         expect(resolvedInput).toEqual('Dear JOHN,')
@@ -355,7 +355,7 @@ describe('Props resolver', () => {
 
     test('AP formula: variable substitution inside a wrapped pure formula', async () => {
         const { resolvedInput } = await propsResolverService.resolve({
-            unresolvedInput: formulaEvaluator.wrap('combine({{trigger.output.name}};"!")'),
+            unresolvedInput: formulaEvaluator.wrap('combine({{trigger.name}};"!")'),
             executionState,
         })
         expect(resolvedInput).toEqual('John!')
@@ -364,7 +364,7 @@ describe('Props resolver', () => {
     test('AP formula: wrapped formula failure throws FormulaEvaluationError', async () => {
         await expect(
             propsResolverService.resolve({
-                unresolvedInput: formulaEvaluator.wrap('divide({{trigger.output.price}}; 0)'),
+                unresolvedInput: formulaEvaluator.wrap('divide({{trigger.price}}; 0)'),
                 executionState,
             }),
         ).rejects.toThrow(/Formula error/)
@@ -373,7 +373,7 @@ describe('Props resolver', () => {
     test('AP formula: wrapped formula failure inside mixed content also throws (no silent fallback)', async () => {
         await expect(
             propsResolverService.resolve({
-                unresolvedInput: `Score: ${formulaEvaluator.wrap('divide({{trigger.output.price}}; 0)')}`,
+                unresolvedInput: `Score: ${formulaEvaluator.wrap('divide({{trigger.price}}; 0)')}`,
                 executionState,
             }),
         ).rejects.toThrow(/Formula error/)
@@ -381,7 +381,7 @@ describe('Props resolver', () => {
 
     test('AP formula: duplicate variables in a single formula resolve to the same value (one resolution per unique token)', async () => {
         const { resolvedInput } = await propsResolverService.resolve({
-            unresolvedInput: formulaEvaluator.wrap('combine({{trigger.output.name}};{{trigger.output.name}};" + ")'),
+            unresolvedInput: formulaEvaluator.wrap('combine({{trigger.name}};{{trigger.name}};" + ")'),
             executionState,
         })
         expect(resolvedInput).toEqual('John + John')
