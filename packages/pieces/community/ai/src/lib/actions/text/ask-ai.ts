@@ -1,9 +1,13 @@
-import { AIProviderName, getEffectiveProviderAndModel } from '@activepieces/shared';
-import { createAIModel, reportUsage } from '../../common/ai-sdk';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { generateText, ModelMessage, stepCountIs } from 'ai';
+import {
+  createAction,
+  Property,
+  PieceAuth,
+} from '@activepieces/pieces-framework';
+import { ModelMessage, generateText, stepCountIs } from 'ai';
+import { AIProviderName, getEffectiveProviderAndModel, spreadIfDefined } from '@activepieces/shared';
 import { aiProps } from '../../common/props';
-import { buildWebSearchOptionsProperty, buildWebSearchConfig } from '../../common/web-search';
+import { createAIModel, reportUsage } from '../../common/ai-sdk';
+import { buildWebSearchOptionsProperty, buildWebSearchConfig, WebSearchOptions } from '../../common/web-search';
 
 export const askAI = createAction({
   name: 'askAi',
@@ -16,12 +20,12 @@ export const askAI = createAction({
       displayName: 'Prompt',
       required: true,
     }),
-    conversationKey: Property.ShortText({
-      displayName: 'Conversation Key',
-      required: false,
-    }),
     systemPrompt: Property.LongText({
       displayName: 'System Prompt',
+      required: false,
+    }),
+    conversationKey: Property.ShortText({
+      displayName: 'Conversation Key',
       required: false,
     }),
     creativity: Property.Number({
@@ -53,8 +57,31 @@ export const askAI = createAction({
   },
   async run(context) {
     const { provider, model: modelId, prompt, systemPrompt, creativity, maxOutputTokens, webSearch, webSearchOptions, conversationKey } = context.propsValue;
-
     const storage = context.store;
+    const webSearchEnabled = !!webSearch;
+
+    const { tools: webSearchTools, providerOptions } = buildWebSearchConfig({
+      provider: provider as string,
+      model: modelId,
+      webSearchEnabled,
+      webSearchOptions: (webSearchOptions ?? {}) as WebSearchOptions,
+    });
+
+    const { provider: effectiveProvider } = getEffectiveProviderAndModel({
+      provider: provider as AIProviderName,
+      model: modelId,
+    });
+    const model = await createAIModel({
+      provider: provider as AIProviderName,
+      modelId,
+      engineToken: context.server.token,
+      apiUrl: context.server.apiUrl,
+      projectId: context.project.id,
+      flowId: context.flows.current.id,
+      runId: context.run.id,
+      ...spreadIfDefined('openaiResponsesModel', webSearchEnabled && effectiveProvider === AIProviderName.OPENAI ? true : undefined),
+    });
+
     const conversationId = conversationKey
       ? `ask-ai-conversation:${conversationKey}`
       : null;
@@ -64,28 +91,9 @@ export const askAI = createAction({
       conversation = (await storage.get<ModelMessage[]>(conversationId)) ?? [];
     }
 
-    const { provider: effectiveProvider } = getEffectiveProviderAndModel({
-      provider: provider as AIProviderName,
-      model: modelId,
-    });
-
-    const model = await createAIModel({
-      provider: provider as AIProviderName,
-      modelId,
-      engineToken: context.server.token,
-      apiUrl: context.server.apiUrl,
-      projectId: context.project.id,
-      flowId: context.flows.current.id,
-      runId: context.run.id,
-      openaiResponsesModel: webSearch && effectiveProvider === AIProviderName.OPENAI,
-    });
-
-    const { tools: webSearchTools, providerOptions: webSearchProviderOptions } = await buildWebSearchConfig({
-      provider: provider as string,
-      model: modelId,
-      webSearchEnabled: webSearch,
-      webSearchOptions,
-    });
+    const stopWhen = webSearchTools
+      ? stepCountIs(webSearchOptions?.maxUses ?? 5)
+      : undefined;
 
     const response = await generateText({
       model,
@@ -100,13 +108,8 @@ export const askAI = createAction({
       maxOutputTokens,
       temperature: (creativity ?? 100) / 100,
       tools: webSearchTools,
-      stopWhen: webSearchTools ? stepCountIs(webSearchOptions?.maxUses ?? 5) : undefined,
-      providerOptions: {
-        ...webSearchProviderOptions,
-        [provider]: {
-          ...(provider === AIProviderName.OPENAI ? { reasoning_effort: 'minimal' } : {}),
-        }
-      }
+      stopWhen,
+      providerOptions,
     });
 
     if (provider === AIProviderName.ACTIVEPIECES) {
@@ -136,11 +139,10 @@ export const askAI = createAction({
       await storage.put(conversationId, conversation);
     }
 
-    const includeSources = webSearch && webSearchOptions?.includeSources;
+    const includeSources = webSearchTools && (webSearchOptions as any).includeSources;
     if (includeSources && 'sources' in response) {
       return { text: response.text, sources: (response as any).sources };
     }
-
     return response.text ?? '';
   },
 });
