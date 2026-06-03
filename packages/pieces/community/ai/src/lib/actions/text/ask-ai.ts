@@ -1,7 +1,7 @@
-import { AIProviderName } from '@activepieces/shared';
+import { AIProviderName, getEffectiveProviderAndModel } from '@activepieces/shared';
 import { createAIModel, reportUsage } from '../../common/ai-sdk';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { generateText, ModelMessage } from 'ai';
+import { generateText, ModelMessage, stepCountIs } from 'ai';
 import { aiProps } from '../../common/props';
 import { buildWebSearchOptionsProperty, buildWebSearchConfig } from '../../common/web-search';
 
@@ -64,6 +64,11 @@ export const askAI = createAction({
       conversation = (await storage.get<ModelMessage[]>(conversationId)) ?? [];
     }
 
+    const { provider: effectiveProvider } = getEffectiveProviderAndModel({
+      provider: provider as AIProviderName,
+      model: modelId,
+    });
+
     const model = await createAIModel({
       provider: provider as AIProviderName,
       modelId,
@@ -72,6 +77,7 @@ export const askAI = createAction({
       projectId: context.project.id,
       flowId: context.flows.current.id,
       runId: context.run.id,
+      openaiResponsesModel: webSearch && effectiveProvider === AIProviderName.OPENAI,
     });
 
     const { tools: webSearchTools, providerOptions: webSearchProviderOptions } = await buildWebSearchConfig({
@@ -94,6 +100,7 @@ export const askAI = createAction({
       maxOutputTokens,
       temperature: (creativity ?? 100) / 100,
       tools: webSearchTools,
+      stopWhen: webSearchTools ? stepCountIs(webSearchOptions?.maxUses ?? 5) : undefined,
       providerOptions: {
         ...webSearchProviderOptions,
         [provider]: {
