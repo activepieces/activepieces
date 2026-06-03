@@ -1,4 +1,5 @@
 import { PlatformMetricsReport } from '@activepieces/shared';
+import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { CheckCircle2, ListChecks } from 'lucide-react';
 import { ReactNode } from 'react';
@@ -37,6 +38,13 @@ export function RunsTab({ report, isLoading }: RunsTabProps) {
 
   return (
     <div className="flex flex-col gap-4">
+      {report && (
+        <p className="px-5 text-xs text-muted-foreground">
+          {t('Showing cached data · next refresh after {time}', {
+            time: dayjs(report.nextRefreshAt).format('MMM D, h:mm A'),
+          })}
+        </p>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <MetricCard
           icon={ListChecks}

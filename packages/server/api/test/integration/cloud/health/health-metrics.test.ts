@@ -41,6 +41,7 @@ describe('Health Metrics API', () => {
             })
             expect(Array.isArray(body.statusTimeseries)).toBe(true)
             expect(Array.isArray(body.internalErrors)).toBe(true)
+            expect(typeof body.nextRefreshAt).toBe('string')
         })
 
         it('non-platform-admin member is rejected with 403', async () => {

@@ -209,9 +209,10 @@ export const healthMetricsService = (log: FastifyBaseLogger) => ({
             return cached
         }
 
+        const nextRefreshAt = dayjs().add(REPORT_TTL_SECONDS, 'second').toISOString()
         const projectIds = await projectService(log).getProjectIdsByPlatform(platformId)
         if (projectIds.length === 0) {
-            return { summary: { completed: 0, successRate: 0, previousCompleted: 0, previousSuccessRate: 0 }, statusTimeseries: [], internalErrors: [] }
+            return { summary: { completed: 0, successRate: 0, previousCompleted: 0, previousSuccessRate: 0 }, statusTimeseries: [], internalErrors: [], nextRefreshAt }
         }
 
         const [currentCounts, previousCounts, statusTimeseries, internalErrors] = await Promise.all([
@@ -232,6 +233,7 @@ export const healthMetricsService = (log: FastifyBaseLogger) => ({
             },
             statusTimeseries,
             internalErrors,
+            nextRefreshAt,
         }
         await distributedStore.put(cacheKey, value, REPORT_TTL_SECONDS)
         return value

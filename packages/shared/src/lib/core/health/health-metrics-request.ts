@@ -32,6 +32,7 @@ export const PlatformMetricsReport = z.object({
     summary: PlatformMetricsSummary,
     statusTimeseries: z.array(PlatformMetricsStatusPoint),
     internalErrors: z.array(InternalErrorImpactItem),
+    nextRefreshAt: z.string(),
 })
 
 export const StuckJob = z.object({
