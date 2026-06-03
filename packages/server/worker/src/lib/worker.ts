@@ -1,6 +1,6 @@
 import { createServer } from 'http'
 import os from 'os'
-import { apVersion, systemUsage } from '@activepieces/server-utils'
+import { apVersionUtil, systemUsage } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
     ConsumeJobRequest,
@@ -31,7 +31,7 @@ import { JobContext, JobResult, JobResultKind } from './execute/types'
 
 const tracer = trace.getTracer('worker')
 
-const AP_VERSION = apVersion.getCurrentRelease()
+const AP_VERSION = apVersionUtil.getCurrentRelease()
 
 const VERSION_MISMATCH_POLL_PAUSE_MS = 10_000
 

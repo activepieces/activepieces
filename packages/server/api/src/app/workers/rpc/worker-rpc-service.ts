@@ -1,3 +1,4 @@
+import { apVersionUtil } from '@activepieces/server-utils'
 import {
     ApEdition,
     ExecutionType,
@@ -30,7 +31,6 @@ import { flowVersionService } from '../../flows/flow-version/flow-version.servic
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { pubsub } from '../../helper/pubsub'
 import { system } from '../../helper/system/system'
-import { apVersionUtil } from '../../helper/system/system-props'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
@@ -50,7 +50,7 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
             log.info({ workerId: input.workerId, workerGroupId }, '[workerRpc#poll] Poll request received')
             await machineService(log).onConnection(input, workerGroupId)
             const workerVersion = input.workerProps.version
-            const appVersion = await apVersionUtil.getCurrentRelease()
+            const appVersion = apVersionUtil.getCurrentRelease()
             if (workerVersion !== appVersion) {
                 log.warn({ workerId: input.workerId, workerVersion, appVersion }, '[workerRpc#poll] Withholding job — worker version does not match app; worker will idle until upgraded')
                 return null

@@ -1,4 +1,4 @@
-export { apVersion } from './ap-version'
+export { apVersionUtil } from './ap-version'
 export { cryptoUtils } from './crypto'
 export { DatabaseType } from './database-type'
 export { environmentMigrations } from './env-migrations'
