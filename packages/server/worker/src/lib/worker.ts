@@ -1,5 +1,7 @@
+import fs from 'fs'
 import { createServer } from 'http'
 import os from 'os'
+import path from 'path'
 import { systemUsage } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
@@ -9,9 +11,11 @@ import {
     ExecutionMode,
     isNil,
     JobData,
+    LATEST_FLOW_SCHEMA_VERSION,
     tryCatch,
     WebsocketServerEvent,
     WorkerMachineHealthcheckRequest,
+    WorkerProps,
     WorkerSettingsResponse,
     WorkerToApiContract,
 } from '@activepieces/shared'
@@ -29,6 +33,10 @@ import { JobContext, JobResult, JobResultKind } from './execute/types'
 
 
 const tracer = trace.getTracer('worker')
+
+const AP_VERSION = readApVersion()
+
+const SCHEMA_MISMATCH_POLL_PAUSE_MS = 10_000
 
 let socket: Socket | null = null
 let polling = false
@@ -141,6 +149,13 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
     workerLog.info('Polling worker started')
 
     while (polling && connectionGeneration === generation) {
+        const appSchemaVersion = workerSettings.getSettings().LATEST_FLOW_SCHEMA_VERSION_FOR_APP
+        if (appSchemaVersion !== LATEST_FLOW_SCHEMA_VERSION) {
+            workerLog.warn({ appSchemaVersion, workerSchemaVersion: LATEST_FLOW_SCHEMA_VERSION }, 'Connected app flow schema version mismatch — pausing polling until reconnect to a compatible app')
+            await sleep(SCHEMA_MISMATCH_POLL_PAUSE_MS)
+            continue
+        }
+
         const { data: machineInfo, error: machineError } = await tryCatch(buildMachineInfo)
         if (machineError) {
             workerLog.error({ error: machineError }, 'Failed to build machine info')
@@ -274,7 +289,7 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
     })
 }
 
-function getWorkerProps(): Record<string, string> {
+function getWorkerProps(): WorkerProps {
     try {
         const settings = workerSettings.getSettings()
         return {
@@ -282,10 +297,22 @@ function getWorkerProps(): Record<string, string> {
             WORKER_CONCURRENCY: system.get(WorkerSystemProp.WORKER_CONCURRENCY)!,
             SANDBOX_MEMORY_LIMIT: settings.SANDBOX_MEMORY_LIMIT,
             REUSE_SANDBOX: system.get(WorkerSystemProp.REUSE_SANDBOX) ?? 'false',
+            LATEST_FLOW_SCHEMA_VERSION_FOR_WORKER: LATEST_FLOW_SCHEMA_VERSION,
+            version: AP_VERSION,
         }
     }
     catch {
         return {}
+    }
+}
+
+function readApVersion(): string | undefined {
+    try {
+        const packageJson = JSON.parse(fs.readFileSync(path.resolve(process.cwd(), 'package.json'), 'utf-8')) as { version?: string }
+        return typeof packageJson.version === 'string' ? packageJson.version : undefined
+    }
+    catch {
+        return undefined
     }
 }
 

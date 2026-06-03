@@ -8,6 +8,7 @@ import {
     FlowStatus,
     isFlowRunStateTerminal,
     isNil,
+    LATEST_FLOW_SCHEMA_VERSION,
     logSerializer,
     PiecePackage,
     RunInternalError,
@@ -48,6 +49,11 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
         async poll(input) {
             log.info({ workerId: input.workerId, workerGroupId }, '[workerRpc#poll] Poll request received')
             await machineService(log).onConnection(input, workerGroupId)
+            const workerSchemaVersion = input.workerProps.LATEST_FLOW_SCHEMA_VERSION_FOR_WORKER
+            if (workerSchemaVersion !== LATEST_FLOW_SCHEMA_VERSION) {
+                log.warn({ workerId: input.workerId, workerSchemaVersion, appSchemaVersion: LATEST_FLOW_SCHEMA_VERSION }, '[workerRpc#poll] Withholding job — worker flow schema version does not match app; worker will idle until upgraded')
+                return null
+            }
             const pollQueueName = getPollQueueName(workerGroupId)
             const job = await jobBroker(log).poll(pollQueueName)
             if (job) {

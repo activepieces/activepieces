@@ -1,6 +1,7 @@
 import {
     ExecutionMode,
     isNil,
+    LATEST_FLOW_SCHEMA_VERSION,
     NetworkMode,
     partition,
     WorkerMachineHealthcheckRequest,
@@ -62,6 +63,7 @@ async function buildSettingsResponse(_log: FastifyBaseLogger): Promise<WorkerSet
         SSRF_ALLOW_LIST: system.get(AppSystemProp.SSRF_ALLOW_LIST)?.split(',').map(f => f.trim()) ?? [],
         NETWORK_MODE: system.getOrThrow<NetworkMode>(AppSystemProp.NETWORK_MODE),
         PAGE_ONCALL_WEBHOOK: system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK),
+        LATEST_FLOW_SCHEMA_VERSION_FOR_APP: LATEST_FLOW_SCHEMA_VERSION,
     }
     settingsCache.set(cacheKey, settings)
     return settings

@@ -19,6 +19,17 @@ export enum NetworkMode {
 }
 
 
+export const WorkerProps = z.object({
+    EXECUTION_MODE: z.string().optional(),
+    WORKER_CONCURRENCY: z.string().optional(),
+    SANDBOX_MEMORY_LIMIT: z.string().optional(),
+    REUSE_SANDBOX: z.string().optional(),
+    LATEST_FLOW_SCHEMA_VERSION_FOR_WORKER: z.string().optional(),
+    version: z.string().optional(),
+})
+
+export type WorkerProps = z.infer<typeof WorkerProps>
+
 export const MachineInformation = z.object({
     cpuUsagePercentage: z.number(),
     diskInfo: z.object({
@@ -28,7 +39,7 @@ export const MachineInformation = z.object({
         percentage: z.number(),
     }),
     workerId: z.string(),
-    workerProps: z.record(z.string(), z.string()),
+    workerProps: WorkerProps,
     ramUsagePercentage: z.number(),
     totalAvailableRamInBytes: z.number(),
     totalCpuCores: z.number(),
@@ -109,6 +120,7 @@ export const WorkerSettingsResponse = z.object({
     NETWORK_MODE: z.enum(NetworkMode),
     SSRF_ALLOW_LIST: z.array(z.string()),
     PAGE_ONCALL_WEBHOOK: z.string().optional(),
+    LATEST_FLOW_SCHEMA_VERSION_FOR_APP: z.string().optional(),
 })
 
 export type WorkerSettingsResponse = z.infer<typeof WorkerSettingsResponse>
