@@ -29,7 +29,6 @@ import {
   DataSelectorSizeState,
   DataSelectorSizeTogglers,
 } from './data-selector-size-togglers';
-import { FriendlyDataSelectorNode } from './friendly-data-selector-node';
 import { DataSelectorTreeNode } from './type';
 import { dataSelectorUtils } from './utils';
 import { hintsTreeUtils } from './utils-hints';
@@ -375,22 +374,15 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
               </Tabs>
             </div>
             <ScrollArea className="transition-all flex-1 w-full ">
-              {viewMode === 'friendly'
-                ? filteredNodes.map((node) => (
-                    <FriendlyDataSelectorNode
-                      key={node.key}
-                      node={node}
-                      searchTerm={searchTerm}
-                    />
-                  ))
-                : filteredNodes.map((node) => (
-                    <DataSelectorNode
-                      depth={0}
-                      key={node.key}
-                      node={node}
-                      searchTerm={searchTerm}
-                    ></DataSelectorNode>
-                  ))}
+              {filteredNodes.map((node) => (
+                <DataSelectorNode
+                  depth={0}
+                  key={node.key}
+                  node={node}
+                  searchTerm={searchTerm}
+                  showTypeIcons={viewMode === 'friendly'}
+                ></DataSelectorNode>
+              ))}
               {filteredNodes.length === 0 && (
                 <div className="flex items-center justify-center gap-2 mt-5  flex-col">
                   <SearchXIcon className="w-[35px] h-[35px]"></SearchXIcon>

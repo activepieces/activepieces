@@ -6,6 +6,7 @@ import {
 import { t } from 'i18next';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 
+import { FieldTypeIcon } from '@/components/custom/smart-output-viewer/field-type-icon';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { useApRipple } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,7 @@ type DataSelectorNodeContentProps = {
   setExpanded: (expanded: boolean) => void;
   depth: number;
   node: DataSelectorTreeNode;
+  showTypeIcons?: boolean;
 };
 
 const handleKeyPress = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -40,6 +42,7 @@ const DataSelectorNodeContent = ({
   expanded,
   setExpanded,
   depth,
+  showTypeIcons,
 }: DataSelectorNodeContentProps) => {
   const flowVersion = useBuilderStateContext((state) => state.flowVersion);
   const insertMention = useBuilderStateContext((state) => state.insertMention);
@@ -120,10 +123,14 @@ const DataSelectorNodeContent = ({
         {isStepRoot && stepForRoot && <StepRootIcon step={stepForRoot} />}
 
         <div className="flex items-center gap-1.5 min-w-0 flex-1">
+          {showTypeIcons && !isStepRoot && node.data.type === 'value' && (
+            <FieldTypeIcon value={node.data.value} />
+          )}
+
           {node.data.type !== 'test' && (
             <span
               className={cn(
-                'truncate min-w-0 shrink-0 max-w-[40%]',
+                'truncate min-w-0 shrink-0 max-w-[30ch]',
                 isStepRoot
                   ? 'font-medium text-foreground text-sm'
                   : 'text-foreground text-sm',
