@@ -282,3 +282,9 @@ export const myTrigger = createTrigger({
 | `TriggerStrategy.POLLING` | API has no webhooks | Use `pollingHelper` with TIMEBASED or LAST_ITEM |
 | `TriggerStrategy.WEBHOOK` | API supports webhook registration | Register in `onEnable`, delete in `onDisable` |
 | `TriggerStrategy.APP_WEBHOOK` | OAuth2 apps with platform-level webhooks (Slack) | Use `context.app.createListeners()` |
+
+---
+
+## AI-Ready Metadata (optional)
+
+Triggers accept an optional `aiMetadata` field (`{ description?, idempotent? }`) to describe the event for AI agents. They do **not** take `audience` — that field is actions-only, since a trigger is an event rather than an agent-callable operation. The field is additive and changes nothing for human users. See `ai-metadata.md`.
