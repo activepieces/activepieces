@@ -106,6 +106,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                     const { data: repaired } = await tryCatch(async () => {
                         const { text } = await generateText({
                             model,
+                            abortSignal: abortController.signal,
                             prompt: `Fix this malformed JSON tool call for "${toolCall.toolName}". The error was: ${error.message}\n\nOriginal input:\n${toolCall.input}\n\nReturn ONLY the corrected JSON input, nothing else.`,
                         })
                         return { ...toolCall, input: text }
