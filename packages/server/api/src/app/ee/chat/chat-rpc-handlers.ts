@@ -76,6 +76,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             uiMessages: JSON.parse(JSON.stringify(uiMessagesWithUser)),
             status: ChatConversationStatus.STREAMING,
         })
+        await chatApprovalGate.clearCancel({ conversationId })
 
         const estimatedTokens = chatCompaction.estimateTokenCount({ messages: allMessages, systemPromptLength: systemPromptText.length })
         let compactionState = { summary: conversation.summary ?? null, summarizedUpToIndex: conversation.summarizedUpToIndex ?? null }
@@ -159,6 +160,14 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
     },
 
     async executeChatTool(input: ExecuteChatToolRequest): Promise<ExecuteChatToolResponse> {
+        if (input.toolName === '__cancel_check') {
+            const conversationId = input.toolInput.conversationId
+            if (typeof conversationId !== 'string') {
+                return { result: false }
+            }
+            const cancelled = await chatApprovalGate.isCancelled({ conversationId })
+            return { result: cancelled }
+        }
         if (input.toolName === '__approval_check') {
             const gateId = input.toolInput.gateId
             if (typeof gateId !== 'string') {
