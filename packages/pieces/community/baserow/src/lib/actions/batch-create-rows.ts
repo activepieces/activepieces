@@ -4,7 +4,7 @@ import { baserowCommon, makeClient } from '../common';
 
 export const batchCreateRowsAction = createAction({
   name: 'baserow_batch_create_rows',
-  displayName: 'Batch Create Rows',
+  displayName: 'Create Rows (Batch)',
   description:
     'Creates multiple rows in a single request. Accepts up to 200 rows.',
   auth: baserowAuth,

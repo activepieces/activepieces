@@ -4,7 +4,7 @@ import { baserowCommon, makeClient } from '../common';
 
 export const batchDeleteRowsAction = createAction({
   name: 'baserow_batch_delete_rows',
-  displayName: 'Batch Delete Rows',
+  displayName: 'Delete Rows (Batch)',
   description:
     'Deletes multiple rows in a single request. Accepts up to 200 row IDs.',
   auth: baserowAuth,
