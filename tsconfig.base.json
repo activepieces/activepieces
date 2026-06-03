@@ -729,6 +729,9 @@
       "@activepieces/piece-linkedin": [
         "packages/pieces/community/linkedin/src/index.ts"
       ],
+      "@activepieces/piece-litellm": [
+        "packages/pieces/community/litellm/src/index.ts"
+      ],
       "@activepieces/piece-llmrails": [
         "packages/pieces/community/llmrails/src/index.ts"
       ],
