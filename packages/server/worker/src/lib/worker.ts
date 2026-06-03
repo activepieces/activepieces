@@ -224,7 +224,7 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
             log.debug({ handlerType: handler.jobType }, 'Executing job with handler')
             const { data: result, error } = await tryCatch(() => handler.execute(ctx, jobData))
             if (error) {
-                log.error({ error }, 'Job execution failed')
+                log.error({ err: error }, 'Job execution failed')
                 span.recordException(error)
                 throw error
             }

@@ -16,6 +16,8 @@ function channelName(gateId: string): string {
 }
 
 async function resolveGate({ gateId, approved, payload }: { gateId: string, approved: boolean, payload?: Record<string, unknown> }): Promise<void> {
+    const existing = await distributedStore.get(decisionKey(gateId))
+    if (existing) return
     await distributedStore.put(decisionKey(gateId), { approved, payload }, GATE_TTL_SECONDS)
     await pubsub.publish(channelName(gateId), JSON.stringify({ approved, payload }))
 }
