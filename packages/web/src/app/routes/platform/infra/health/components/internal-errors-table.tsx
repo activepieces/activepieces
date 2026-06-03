@@ -3,7 +3,13 @@ import { t } from 'i18next';
 import { CircleCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -39,6 +45,11 @@ export function InternalErrorsTable({
             </span>
           )}
         </CardTitle>
+        <CardDescription>
+          {t(
+            'Internal errors are failures inside Activepieces itself (engine or worker), not in your flow logic. Grouped by the project and flow they affected.',
+          )}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
