@@ -73,7 +73,7 @@ export const UserMessage = memo(function UserMessage({
             'justify-end mt-1 transition-opacity',
             isLastMessage
               ? 'opacity-100'
-              : 'opacity-0 group-hover/msg:opacity-100',
+              : 'opacity-0 group-hover/msg:opacity-100 focus-within:opacity-100',
           )}
         >
           <MessageAction tooltip={t('Copy')}>

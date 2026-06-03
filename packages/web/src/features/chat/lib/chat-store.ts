@@ -91,6 +91,7 @@ export const createChatStore = () =>
         quickReplies: [],
         toolCallMeta: {},
         dismissedGateIds: {},
+        lastDismissedFormId: null,
       });
     },
   }));
