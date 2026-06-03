@@ -30,7 +30,7 @@ type MutationDeps = {
   invalidateRoot: () => void;
   invalidateFolder: (folderId: string) => void;
   clearSelection: () => void;
-  flows: PopulatedFlow[];
+  treeItems: TreeItem[];
   unpinItem?: (itemId: string) => void;
 };
 
@@ -250,7 +250,14 @@ export function useAutomationsMutations(deps: MutationDeps) {
       const { flowIds, tableIds } = getSelectedIdsByType(selectedItems);
 
       if (flowIds.length > 0) {
-        const flowsToExport = deps.flows.filter((f) => flowIds.includes(f.id));
+        const flowsById = new Map(
+          deps.treeItems
+            .filter(isFlowTreeItem)
+            .map((item) => [item.id, item.data]),
+        );
+        const flowsToExport = flowIds
+          .map((id) => flowsById.get(id))
+          .filter((flow): flow is PopulatedFlow => !isNil(flow));
         if (flowsToExport.length > 0) {
           exportFlows(flowsToExport);
         }
@@ -308,4 +315,10 @@ export function useAutomationsMutations(deps: MutationDeps) {
     isDuplicating,
     isExporting: isExportFlowsPending || isExportingTable,
   };
+}
+
+function isFlowTreeItem(
+  item: TreeItem,
+): item is TreeItem & { data: PopulatedFlow } {
+  return item.type === 'flow' && !isNil(item.data);
 }
