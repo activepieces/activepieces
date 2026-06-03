@@ -21,7 +21,7 @@ import { chatWorkerTools } from './chat-worker-tools'
 const MAX_STEPS = 30
 const BATCH_SIZE = 10
 const BATCH_FLUSH_MS = 50
-const APPROVAL_POLL_INTERVAL_MS = 2_000
+const APPROVAL_POLL_INTERVAL_MS = 500
 const APPROVAL_TIMEOUT_MS = 5 * 60 * 1_000
 const DISPLAY_TOOL_TIMEOUT_MS = 15 * 60 * 1_000
 
@@ -52,6 +52,16 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
 
         try {
             const planApproved = { approved: false }
+            const abortController = new AbortController()
+
+            const checkCancelled = async () => {
+                const response = await ctx.apiClient.executeChatTool({
+                    toolName: '__cancel_check', toolInput: { conversationId }, platformId, userId,
+                })
+                if (response.result === true) {
+                    abortController.abort()
+                }
+            }
 
             const allTools = buildToolSet({
                 ctx, eventEmitter, log, planApproved, mcpToolSet,
@@ -63,6 +73,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
 
             const result = streamText({
                 model,
+                abortSignal: abortController.signal,
                 system: chatAiUtils.buildSystemPromptWithCaching({ systemPrompt: config.systemPrompt, provider }),
                 messages: chatAiUtils.stripThinkingBlocks(config.messages as ModelMessage[], provider),
                 tools: allTools,
@@ -79,6 +90,9 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                     }).catch((err: unknown) => {
                         log.warn({ err, conversationId }, 'Failed to save chat progress')
                     })
+                    checkCancelled().catch((err: unknown) => {
+                        log.warn({ err, conversationId }, 'Failed to check cancellation')
+                    })
                 },
                 onError: ({ error }) => {
                     log.error({ err: error, conversationId }, 'Chat streamText error')
@@ -86,6 +100,24 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             })
 
             await streamChunksToClient({ result, ctx, userId, conversationId, log })
+
+            if (abortController.signal.aborted) {
+                log.info({ conversationId }, 'Chat agent cancelled by user')
+                const thinkingDurationMs = Date.now() - thinkingStartTime
+                await ctx.apiClient.saveChatMessages({
+                    conversationId,
+                    messages: [...(config.allMessages as ModelMessage[])],
+                    uiMessages: [
+                        ...(config.previousUiMessages as PersistedChatMessage[]),
+                        ...(uiParts.length > 0 ? [{ role: PersistedChatRole.ASSISTANT, parts: uiParts, thinkingDurationMs }] : []),
+                    ],
+                }).catch(() => {})
+                await ctx.apiClient.sendChatEvent({
+                    userId, conversationId,
+                    event: { type: ChatAgentEventType.FINISHED, data: { conversationId } },
+                }).catch(() => {})
+                return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
+            }
 
             const [response, usage, autoTitle] = await Promise.all([
                 result.response,
@@ -105,7 +137,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             }, 'Chat message completed')
 
             const thinkingDurationMs = Date.now() - thinkingStartTime
-            await ctx.apiClient.saveChatMessages({
+            const savePayload = {
                 conversationId,
                 messages: [...(config.allMessages as ModelMessage[]), ...response.messages],
                 uiMessages: [
@@ -114,7 +146,17 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 ],
                 ...spreadIfDefined('title', autoTitle),
                 ...spreadIfDefined('modelName', isNil(data.modelName) ? config.tier.id : undefined),
-            })
+            }
+            const { error: saveError } = await tryCatch(() => ctx.apiClient.saveChatMessages(savePayload))
+            if (saveError) {
+                log.warn({ err: saveError, conversationId }, 'First saveChatMessages attempt failed, retrying')
+                await new Promise((resolve) => setTimeout(resolve, 1_000))
+                const { error: retryError } = await tryCatch(() => ctx.apiClient.saveChatMessages(savePayload))
+                if (retryError) {
+                    log.error({ err: retryError, conversationId }, 'saveChatMessages retry also failed')
+                    throw retryError
+                }
+            }
 
             if (autoTitle) {
                 await ctx.apiClient.sendChatEvent({

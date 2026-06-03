@@ -148,9 +148,22 @@ function useVoiceInput({
     };
 
     recognition.onerror = (event) => {
-      if (event.error !== 'aborted' && event.error !== 'no-speech') {
-        onError('Could not access microphone. Check browser permissions.');
+      if (event.error === 'aborted' || event.error === 'no-speech') {
+        setIsRecording(false);
+        recognitionRef.current = null;
+        return;
       }
+      const errorMessages: Record<string, string> = {
+        'not-allowed':
+          'Could not access microphone. Check browser permissions.',
+        'service-not-allowed':
+          'Could not access microphone. Check browser permissions.',
+        network: 'Voice input failed due to a network error.',
+        'audio-capture': 'No microphone detected. Check your audio device.',
+      };
+      onError(
+        errorMessages[event.error] ?? 'Voice input encountered an error.',
+      );
       setIsRecording(false);
       recognitionRef.current = null;
     };
