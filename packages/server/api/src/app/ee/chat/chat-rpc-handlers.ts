@@ -81,7 +81,9 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             messages: allMessages,
             uiMessages: JSON.parse(JSON.stringify(uiMessagesWithUser)),
         })
-        await chatApprovalGate.clearCancel({ conversationId })
+        setTimeout(() => {
+            chatApprovalGate.clearCancel({ conversationId }).catch(() => {})
+        }, 5_000)
 
         const estimatedTokens = chatCompaction.estimateTokenCount({ messages: allMessages, systemPromptLength: systemPromptText.length })
         let compactionState = { summary: conversation.summary ?? null, summarizedUpToIndex: conversation.summarizedUpToIndex ?? null }
