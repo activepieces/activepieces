@@ -1,10 +1,7 @@
-import path from 'path'
 import { environmentMigrations } from '@activepieces/server-utils'
 import { assertNotNullOrUndefined } from '@activepieces/shared'
 
 export type SystemProp = AppSystemProp
-
-let cachedVersion: string | undefined
 
 export enum AppSystemProp {
     ALLOWED_EMBED_ORIGINS = 'ALLOWED_EMBED_ORIGINS',
@@ -159,33 +156,3 @@ export const environmentVariables = {
     },
 }
 
-export const apVersionUtil = {
-    async getCurrentRelease(): Promise<string> {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const packageJson = require(path.resolve(process.cwd(), 'package.json'))
-        return packageJson.version
-    },
-    async getLatestRelease(): Promise<string> {
-        try {
-            if (cachedVersion) {
-                return cachedVersion
-            }
-            const response = await fetch(
-                'https://raw.githubusercontent.com/activepieces/activepieces/main/package.json',
-                {
-                    signal: AbortSignal.timeout(5000),
-                },
-            )
-            const data: PackageJson = await response.json()
-            cachedVersion = data.version
-            return data.version
-        }
-        catch (ex) {
-            return '0.0.0'
-        }
-    },
-}
-
-type PackageJson = {
-    version: string
-}

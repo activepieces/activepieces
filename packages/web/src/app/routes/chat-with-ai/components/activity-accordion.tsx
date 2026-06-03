@@ -93,13 +93,13 @@ export function ThinkingBlock({
           disabled={!isExpandable}
           onClick={() => setIsOpen(!isOpen)}
           className={cn(
-            'flex items-center gap-1.5 text-xs text-muted-foreground text-left w-full',
+            'flex items-center gap-1.5 text-sm text-muted-foreground text-left w-full',
             isExpandable &&
               'hover:text-foreground transition-colors cursor-pointer',
           )}
         >
           {isStreaming ? (
-            <TextShimmer className="text-xs" duration={3}>
+            <TextShimmer className="text-sm" duration={1.5}>
               {t('Thinking...')}
             </TextShimmer>
           ) : (
