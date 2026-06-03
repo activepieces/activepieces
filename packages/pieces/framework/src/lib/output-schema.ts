@@ -11,7 +11,7 @@ export type FieldFormat =
   | 'filesize'
   | 'duration';
 
-export type HintField = {
+export type OutputSchemaField = {
   key: string;
   label?: string;
   value?: string;
@@ -19,10 +19,10 @@ export type HintField = {
   description?: string;
   dynamicKey?: boolean;
   currency?: string;
-  children?: HintField[];
-  listItems?: HintField[];
+  children?: OutputSchemaField[];
+  listItems?: OutputSchemaField[];
 };
 
-export type OutputDisplayHints = {
-  fields: HintField[];
+export type OutputSchema = {
+  fields: OutputSchemaField[];
 };

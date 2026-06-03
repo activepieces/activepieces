@@ -182,9 +182,9 @@ export const FlowStepInputOutput = () => {
     selectedStep.type === FlowTriggerType.PIECE
       ? (selectedStep.settings.input as Record<string, unknown> | undefined)
       : undefined;
-  const pieceHints =
-    pieceModel?.actions[stepName ?? '']?.outputDisplayHints ??
-    pieceModel?.triggers[stepName ?? '']?.outputDisplayHints ??
+  const pieceSchema =
+    pieceModel?.actions[stepName ?? '']?.outputSchema ??
+    pieceModel?.triggers[stepName ?? '']?.outputSchema ??
     null;
   const explanationContext: ErrorExplanationContext = {
     pieceName: stepPieceName,
@@ -262,7 +262,7 @@ export const FlowStepInputOutput = () => {
               <SmartOutputViewer
                 json={parsedOutput}
                 title={t('Output')}
-                pieceHints={pieceHints}
+                pieceSchema={pieceSchema}
               />
             ) : (
               <DataDisplayTabs

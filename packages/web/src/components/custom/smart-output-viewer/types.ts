@@ -1,7 +1,7 @@
 import type {
   FieldFormat,
-  HintField,
-  OutputDisplayHints,
+  OutputSchemaField,
+  OutputSchema,
 } from '@activepieces/pieces-framework';
 
-export type { FieldFormat, HintField, OutputDisplayHints };
+export type { FieldFormat, OutputSchemaField, OutputSchema };

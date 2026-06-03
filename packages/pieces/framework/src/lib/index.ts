@@ -4,7 +4,7 @@ export * from './trigger/trigger';
 export * from './context';
 export * from './piece';
 export * from './piece-metadata';
-export * from './output-display-hints';
+export * from './output-schema';
 export * from './i18n'
 export * from './context/versioning'
 export * from './test'

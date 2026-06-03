@@ -18,7 +18,7 @@ import { OutputArrayList } from './output-array-list';
 import { OutputFieldList } from './output-field-list';
 import { OutputGenericFieldList } from './output-generic-field-list';
 import { isTabularArray, OutputTableView } from './output-table-view';
-import { OutputDisplayHints } from './types';
+import { OutputSchema } from './types';
 
 function OutputTextDisplay({ text }: { text: string }) {
   if (text === '') {
@@ -111,9 +111,9 @@ function OutputViewerShell({
 function SmartOutputViewer({
   json,
   title,
-  pieceHints,
+  pieceSchema,
 }: SmartOutputViewerProps) {
-  const pieceDefinedHints = pieceHints ?? null;
+  const pieceDefinedSchema = pieceSchema ?? null;
   const isJsonObject = isObject(json);
 
   if (typeof json === 'string') {
@@ -143,13 +143,13 @@ function SmartOutputViewer({
     );
   }
 
-  if (pieceDefinedHints && isJsonObject) {
+  if (pieceDefinedSchema && isJsonObject) {
     return (
       <OutputViewerShell
         json={json}
         title={title}
         friendlyContent={
-          <OutputFieldList json={json} hints={pieceDefinedHints} />
+          <OutputFieldList json={json} schema={pieceDefinedSchema} />
         }
       />
     );
@@ -173,5 +173,5 @@ export { SmartOutputViewer };
 type SmartOutputViewerProps = {
   json: unknown;
   title: string;
-  pieceHints?: OutputDisplayHints | null;
+  pieceSchema?: OutputSchema | null;
 };

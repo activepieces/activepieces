@@ -1,10 +1,10 @@
 import { isNil, isObject } from '@activepieces/shared';
 import { t } from 'i18next';
 
-import { hintUtils } from '@/components/custom/smart-output-viewer/resolve-hints';
+import { schemaUtils } from '@/components/custom/smart-output-viewer/resolve-schema';
 import {
-  HintField,
-  OutputDisplayHints,
+  OutputSchemaField,
+  OutputSchema,
 } from '@/components/custom/smart-output-viewer/types';
 import { pathUtils } from '@/lib/path-utils';
 import { stringUtils } from '@/lib/string-utils';
@@ -19,11 +19,11 @@ function buildFieldChildNode({
   parentPath,
 }: {
   stepName: string;
-  child: HintField;
+  child: OutputSchemaField;
   sampleData: unknown;
   parentPath: string;
 }): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
-  const rawPath = hintUtils.resolveFieldPath(child, parentPath);
+  const rawPath = schemaUtils.resolveFieldPath(child, parentPath);
   const { value, resolvedPath } = pathUtils.resolvePathWithWrapperFallback(
     sampleData,
     rawPath,
@@ -38,9 +38,10 @@ function buildFieldChildNode({
     data: {
       type: 'value',
       value,
-      displayName: hintUtils.resolveFieldLabel(child),
+      displayName: schemaUtils.resolveFieldLabel(child),
       propertyPath,
       insertable: true,
+      format: child.format,
     },
   };
 }
@@ -53,12 +54,12 @@ function buildItemChildNode({
   sampleData,
 }: {
   stepName: string;
-  child: HintField;
+  child: OutputSchemaField;
   parentArrayPath: string;
   itemIndex: number;
   sampleData: unknown;
 }): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
-  const relativePath = hintUtils.resolveItemFieldPath(child);
+  const relativePath = schemaUtils.resolveItemFieldPath(child);
   const fullPath = `${parentArrayPath}[${itemIndex}].${relativePath}`;
   const { value, resolvedPath } = pathUtils.resolvePathWithWrapperFallback(
     sampleData,
@@ -74,9 +75,10 @@ function buildItemChildNode({
     data: {
       type: 'value',
       value,
-      displayName: hintUtils.resolveFieldLabel(child),
+      displayName: schemaUtils.resolveFieldLabel(child),
       propertyPath,
       insertable: true,
+      format: child.format,
     },
   };
 }
@@ -87,7 +89,7 @@ function buildFieldNode({
   sampleData,
 }: {
   stepName: string;
-  field: HintField;
+  field: OutputSchemaField;
   sampleData: unknown;
 }): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
   const rawValuePath = field.value ?? field.key;
@@ -97,7 +99,7 @@ function buildFieldNode({
     stepName,
     valuePath,
   );
-  const label = hintUtils.resolveFieldLabel(field);
+  const label = schemaUtils.resolveFieldLabel(field);
 
   if (field.listItems && field.listItems.length > 0 && Array.isArray(value)) {
     const listItems = field.listItems;
@@ -143,7 +145,7 @@ function buildFieldNode({
   if (
     !field.listItems &&
     Array.isArray(value) &&
-    hintUtils.isPrimitiveArray(value)
+    schemaUtils.isPrimitiveArray(value)
   ) {
     const itemChildren = value.map((itemValue, idx) => {
       const itemPath = pathHelpers.convertValuePathToPropertyPath(
@@ -169,6 +171,7 @@ function buildFieldNode({
         displayName: label,
         propertyPath,
         insertable: true,
+        format: field.format,
       },
       children: itemChildren.length > 0 ? itemChildren : undefined,
     };
@@ -199,6 +202,7 @@ function buildFieldNode({
         displayName: label,
         propertyPath,
         insertable: true,
+        format: field.format,
       },
       children: dynamicChildren,
     };
@@ -221,6 +225,7 @@ function buildFieldNode({
         displayName: label,
         propertyPath,
         insertable: true,
+        format: field.format,
       },
       children: childNodes,
     };
@@ -234,22 +239,23 @@ function buildFieldNode({
       displayName: label,
       propertyPath,
       insertable: true,
+      format: field.format,
     },
   };
 }
 
-function buildTreeFromHints({
+function buildTreeFromSchema({
   stepName,
   displayName,
-  hints,
+  schema,
   sampleData,
 }: {
   stepName: string;
   displayName: string;
-  hints: OutputDisplayHints;
+  schema: OutputSchema;
   sampleData: unknown;
 }): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
-  const fields = hints.fields ?? [];
+  const fields = schema.fields ?? [];
   const children = fields.map((field) =>
     buildFieldNode({ stepName, field, sampleData }),
   );
@@ -363,4 +369,4 @@ function buildTreeFromArray({
   };
 }
 
-export const hintsTreeUtils = { buildTreeFromHints, buildTreeFromArray };
+export const schemaTreeUtils = { buildTreeFromSchema, buildTreeFromArray };

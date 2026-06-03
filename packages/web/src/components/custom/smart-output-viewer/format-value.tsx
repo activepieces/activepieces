@@ -5,8 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { formatUtils } from '@/lib/format-utils';
 import { pathUtils } from '@/lib/path-utils';
 
-import { hintUtils } from './resolve-hints';
-import { HintField, FieldFormat } from './types';
+import { schemaUtils } from './resolve-schema';
+import { OutputSchemaField, FieldFormat } from './types';
 
 const SAFE_URL_PROTOCOLS = new Set(['http:', 'https:']);
 
@@ -14,7 +14,7 @@ function getValueByDotPath(obj: unknown, path: string): unknown {
   return pathUtils.getValueByDotPath(obj, path);
 }
 
-function resolveValue(json: unknown, field: HintField): unknown {
+function resolveValue(json: unknown, field: OutputSchemaField): unknown {
   const path = field.value ?? field.key;
   return getValueByDotPath(json, path);
 }
@@ -210,7 +210,7 @@ function FormatValue({ value, field }: FormatValueProps) {
   }
 
   if (Array.isArray(value) && !field.listItems) {
-    if (hintUtils.isPrimitiveArray(value)) {
+    if (schemaUtils.isPrimitiveArray(value)) {
       return (
         <PrimitiveArrayPreview
           items={value}
@@ -254,5 +254,5 @@ export {
 
 type FormatValueProps = {
   value: unknown;
-  field: HintField;
+  field: OutputSchemaField;
 };

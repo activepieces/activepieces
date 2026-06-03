@@ -122,7 +122,7 @@ const DataSelectorNodeContent = ({
 
         <div className="flex items-center gap-1.5 min-w-0 flex-1">
           {!isStepRoot && node.data.type === 'value' && (
-            <FieldTypeIcon value={node.data.value} />
+            <FieldTypeIcon value={node.data.value} format={node.data.format} />
           )}
 
           {node.data.type !== 'test' && (
@@ -211,6 +211,7 @@ const formatValuePreview = (value: unknown): string => {
   if (value === null || value === undefined) return '—';
   if (typeof value === 'string') {
     const trimmed = value.replace(/\s+/g, ' ').trim();
+    if (trimmed === '') return '—';
     return trimmed.length > VALUE_PREVIEW_MAX_LENGTH
       ? `${trimmed.slice(0, VALUE_PREVIEW_MAX_LENGTH)}…`
       : trimmed;

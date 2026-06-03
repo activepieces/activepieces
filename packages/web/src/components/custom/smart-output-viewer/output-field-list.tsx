@@ -1,13 +1,13 @@
 import { OutputFieldRow } from './output-field-row';
-import { OutputDisplayHints } from './types';
+import { OutputSchema } from './types';
 
 type OutputFieldListProps = {
   json: Record<string, unknown>;
-  hints: OutputDisplayHints;
+  schema: OutputSchema;
 };
 
-function OutputFieldList({ json, hints }: OutputFieldListProps) {
-  const fields = hints.fields ?? [];
+function OutputFieldList({ json, schema }: OutputFieldListProps) {
+  const fields = schema.fields ?? [];
 
   if (fields.length === 0) return null;
 

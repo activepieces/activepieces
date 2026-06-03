@@ -10,7 +10,7 @@ import { Loader2, Play } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { SmartOutputViewer } from '@/components/custom/smart-output-viewer';
-import type { OutputDisplayHints } from '@/components/custom/smart-output-viewer/types';
+import type { OutputSchema } from '@/components/custom/smart-output-viewer/types';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -37,7 +37,7 @@ type TestSampleDataViewerProps = {
   consoleLogs: string | null;
   explanationContext?: ErrorExplanationContext;
   pieceDisplayName?: string;
-  pieceHints?: OutputDisplayHints | null;
+  pieceSchema?: OutputSchema | null;
 } & (
   | {
       hideCancel: true;
@@ -82,7 +82,7 @@ export const TestSampleDataViewer = React.memo(
       consoleLogs,
       explanationContext,
       pieceDisplayName,
-      pieceHints,
+      pieceSchema,
     } = props;
     const [requestedTab, setActiveTab] = useState<ActiveTab>('Output');
     const hasInput = !isNil(sampleDataInput);
@@ -156,7 +156,7 @@ export const TestSampleDataViewer = React.memo(
               <SmartOutputViewer
                 json={outputData}
                 title={t('Output')}
-                pieceHints={pieceHints ?? null}
+                pieceSchema={pieceSchema ?? null}
               />
             ) : (
               <DataDisplayTabs

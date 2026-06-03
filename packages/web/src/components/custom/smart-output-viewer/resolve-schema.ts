@@ -1,18 +1,21 @@
 import { stringUtils } from '@/lib/string-utils';
 
-import type { HintField } from './types';
+import type { OutputSchemaField } from './types';
 
-function resolveFieldLabel(field: HintField): string {
+function resolveFieldLabel(field: OutputSchemaField): string {
   return field.label ?? stringUtils.titleCase(field.key);
 }
 
-function resolveFieldPath(field: HintField, parentPath?: string): string {
+function resolveFieldPath(
+  field: OutputSchemaField,
+  parentPath?: string,
+): string {
   if (field.value) return field.value;
   if (parentPath) return `${parentPath}.${field.key}`;
   return field.key;
 }
 
-function resolveItemFieldPath(field: HintField): string {
+function resolveItemFieldPath(field: OutputSchemaField): string {
   return field.value ?? field.key;
 }
 
@@ -21,7 +24,7 @@ function isPrimitiveArray(value: unknown): value is Array<unknown> {
   return value.every((item) => item === null || typeof item !== 'object');
 }
 
-export const hintUtils = {
+export const schemaUtils = {
   resolveFieldLabel,
   resolveFieldPath,
   resolveItemFieldPath,

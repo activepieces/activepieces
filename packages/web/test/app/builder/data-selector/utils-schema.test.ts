@@ -4,12 +4,12 @@ vi.mock('i18next', () => ({
   t: (key: string) => key,
 }));
 
-import { hintsTreeUtils } from '@/app/builder/data-selector/utils-hints';
-import type { OutputDisplayHints } from '@/components/custom/smart-output-viewer/types';
+import { schemaTreeUtils } from '@/app/builder/data-selector/utils-schema';
+import type { OutputSchema } from '@/components/custom/smart-output-viewer/types';
 
-describe('hintsTreeUtils.buildTreeFromHints — primitive arrays', () => {
-  it('expands a primitive array hint into per-item insertable nodes', () => {
-    const hints: OutputDisplayHints = {
+describe('schemaTreeUtils.buildTreeFromSchema — primitive arrays', () => {
+  it('expands a primitive array schema into per-item insertable nodes', () => {
+    const schema: OutputSchema = {
       fields: [
         {
           key: 'labelIds',
@@ -26,10 +26,10 @@ describe('hintsTreeUtils.buildTreeFromHints — primitive arrays', () => {
       },
     };
 
-    const tree = hintsTreeUtils.buildTreeFromHints({
+    const tree = schemaTreeUtils.buildTreeFromSchema({
       stepName: 'step_1',
       displayName: 'Gmail',
-      hints,
+      schema,
       sampleData,
     });
 
@@ -63,14 +63,14 @@ describe('hintsTreeUtils.buildTreeFromHints — primitive arrays', () => {
   });
 
   it('returns no children for an empty primitive array', () => {
-    const hints: OutputDisplayHints = {
+    const schema: OutputSchema = {
       fields: [{ key: 'tags', value: 'tags' }],
     };
 
-    const tree = hintsTreeUtils.buildTreeFromHints({
+    const tree = schemaTreeUtils.buildTreeFromSchema({
       stepName: 'step_1',
       displayName: 'Step',
-      hints,
+      schema,
       sampleData: { tags: [] },
     });
 
@@ -85,7 +85,7 @@ describe('hintsTreeUtils.buildTreeFromHints — primitive arrays', () => {
   });
 
   it('still uses listItems when explicitly provided (object array)', () => {
-    const hints: OutputDisplayHints = {
+    const schema: OutputSchema = {
       fields: [
         {
           key: 'attachments',
@@ -95,10 +95,10 @@ describe('hintsTreeUtils.buildTreeFromHints — primitive arrays', () => {
       ],
     };
 
-    const tree = hintsTreeUtils.buildTreeFromHints({
+    const tree = schemaTreeUtils.buildTreeFromSchema({
       stepName: 'step_1',
       displayName: 'Step',
-      hints,
+      schema,
       sampleData: {
         attachments: [
           { fileName: 'a.pdf', size: 1024 },
@@ -120,14 +120,14 @@ describe('hintsTreeUtils.buildTreeFromHints — primitive arrays', () => {
   });
 
   it('does not auto-expand arrays that contain objects when no listItems is set', () => {
-    const hints: OutputDisplayHints = {
+    const schema: OutputSchema = {
       fields: [{ key: 'rows', value: 'rows' }],
     };
 
-    const tree = hintsTreeUtils.buildTreeFromHints({
+    const tree = schemaTreeUtils.buildTreeFromSchema({
       stepName: 'step_1',
       displayName: 'Step',
-      hints,
+      schema,
       sampleData: { rows: [{ id: 1 }, { id: 2 }] },
     });
 

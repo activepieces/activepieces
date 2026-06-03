@@ -16,7 +16,7 @@ import { useTranslation } from 'react-i18next';
 
 import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
 import { SearchInput } from '@/components/custom/search-input';
-import { OutputDisplayHints } from '@/components/custom/smart-output-viewer/types';
+import { OutputSchema } from '@/components/custom/smart-output-viewer/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { piecesApi } from '@/features/pieces';
 import { cn } from '@/lib/utils';
@@ -31,7 +31,7 @@ import {
 } from './data-selector-size-togglers';
 import { DataSelectorTreeNode } from './type';
 import { dataSelectorUtils } from './utils';
-import { hintsTreeUtils } from './utils-hints';
+import { schemaTreeUtils } from './utils-schema';
 import { VariablesTab } from './variables-tab';
 
 type StepInfo = (FlowAction | FlowTrigger) & { dfsIndex: number };
@@ -172,13 +172,13 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
     })),
   });
 
-  const hintsMap = useMemo<Record<string, OutputDisplayHints | null>>(() => {
-    const result: Record<string, OutputDisplayHints | null> = {};
+  const schemaMap = useMemo<Record<string, OutputSchema | null>>(() => {
+    const result: Record<string, OutputSchema | null> = {};
     piecePairs.forEach(({ stepName, stepKey }, idx) => {
       const piece = pieceQueries[idx]?.data as PieceMetadataModel | undefined;
       result[stepName] =
-        piece?.triggers?.[stepKey]?.outputDisplayHints ??
-        piece?.actions?.[stepKey]?.outputDisplayHints ??
+        piece?.triggers?.[stepKey]?.outputSchema ??
+        piece?.actions?.[stepKey]?.outputSchema ??
         null;
     });
     return result;
@@ -230,19 +230,19 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
         }
 
         if (Array.isArray(stepData) && stepData.length > 0) {
-          return hintsTreeUtils.buildTreeFromArray({
+          return schemaTreeUtils.buildTreeFromArray({
             stepName: step.name,
             displayName,
             items: stepData,
           });
         }
 
-        const hints = hintsMap[step.name];
-        if (hints) {
-          return hintsTreeUtils.buildTreeFromHints({
+        const schema = schemaMap[step.name];
+        if (schema) {
+          return schemaTreeUtils.buildTreeFromSchema({
             stepName: step.name,
             displayName,
-            hints,
+            schema,
             sampleData: stepData,
           });
         }
@@ -262,7 +262,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
           };
         }
       }),
-    [steps, sampleData, hintsMap, isFocusInsideListMapperModeInput],
+    [steps, sampleData, schemaMap, isFocusInsideListMapperModeInput],
   );
 
   const currentStructure =

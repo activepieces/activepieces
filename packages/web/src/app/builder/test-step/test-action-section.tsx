@@ -157,8 +157,8 @@ const TestStepSectionImplementation = React.memo(
             consoleLogs={consoleLogs}
             explanationContext={explanationContext}
             pieceDisplayName={pieceModel?.displayName}
-            pieceHints={
-              pieceModel?.actions[stepName ?? '']?.outputDisplayHints ?? null
+            pieceSchema={
+              pieceModel?.actions[stepName ?? '']?.outputSchema ?? null
             }
             onCancelTesting={() => {
               removeStepTestListener(currentStep.name);

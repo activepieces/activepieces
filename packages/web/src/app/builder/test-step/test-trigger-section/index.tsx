@@ -209,9 +209,8 @@ const TestTriggerSection = React.memo(
                 errorMessage={errorMessage ?? null}
                 lastTestDate={lastTestDate}
                 isSaving={isSaving}
-                pieceHints={
-                  pieceModel?.triggers[triggerName ?? '']?.outputDisplayHints ??
-                  null
+                pieceSchema={
+                  pieceModel?.triggers[triggerName ?? '']?.outputSchema ?? null
                 }
                 explanationContext={explanationContext}
                 pieceDisplayName={pieceModel?.displayName}

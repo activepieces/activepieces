@@ -16,20 +16,20 @@ import {
   FormatValue,
   getValueByDotPath,
 } from './format-value';
-import { hintUtils } from './resolve-hints';
+import { schemaUtils } from './resolve-schema';
 import { truncateValue } from './shared-value-rendering';
-import { HintField } from './types';
+import { OutputSchemaField } from './types';
 
 function ChildFieldRow({
   child,
   json,
   parentPath,
 }: {
-  child: HintField;
+  child: OutputSchemaField;
   json: unknown;
   parentPath?: string;
 }) {
-  const path = hintUtils.resolveFieldPath(child, parentPath);
+  const path = schemaUtils.resolveFieldPath(child, parentPath);
   const childValue = getValueByDotPath(json, path);
 
   return (
@@ -38,7 +38,7 @@ function ChildFieldRow({
         <FieldTypeIcon value={childValue} format={child.format} />
       </span>
       <span className="text-sm text-muted-foreground min-w-[120px] max-w-[160px] shrink-0 truncate">
-        {hintUtils.resolveFieldLabel(child)}
+        {schemaUtils.resolveFieldLabel(child)}
       </span>
       <span className="flex-1 text-sm min-w-0">
         {isNil(childValue) || childValue === '' ? (
@@ -64,7 +64,7 @@ function ListItemRow({
   item: unknown;
   itemKey: string;
   itemLabel: string;
-  itemChildren: HintField[];
+  itemChildren: OutputSchemaField[];
 }) {
   const [itemExpanded, setItemExpanded] = useState(false);
 
@@ -108,7 +108,7 @@ function ListItemRow({
           {itemChildren.map((child) => {
             const childValue = getValueByDotPath(
               item,
-              hintUtils.resolveItemFieldPath(child),
+              schemaUtils.resolveItemFieldPath(child),
             );
             return (
               <div
@@ -116,7 +116,7 @@ function ListItemRow({
                 className="flex items-start gap-3 py-1.5 px-3 pl-16 hover:bg-accent/50"
               >
                 <span className="text-sm text-muted-foreground min-w-[100px] max-w-[140px] shrink-0 truncate">
-                  {hintUtils.resolveFieldLabel(child)}
+                  {schemaUtils.resolveFieldLabel(child)}
                 </span>
                 <span className="flex-1 text-sm min-w-0">
                   {isNil(childValue) || childValue === '' ? (
@@ -143,8 +143,8 @@ function ListItemRow({
 function OutputFieldRow({ field, json }: OutputFieldRowProps) {
   const [expanded, setExpanded] = useState(false);
 
-  const label = hintUtils.resolveFieldLabel(field);
-  const path = hintUtils.resolveFieldPath(field);
+  const label = schemaUtils.resolveFieldLabel(field);
+  const path = schemaUtils.resolveFieldPath(field);
   const value = getValueByDotPath(json, path);
 
   const isDynamicMap = field.dynamicKey === true && isObject(value);
@@ -161,7 +161,7 @@ function OutputFieldRow({ field, json }: OutputFieldRowProps) {
     !field.listItems &&
     Array.isArray(value) &&
     value.length > 0 &&
-    hintUtils.isPrimitiveArray(value);
+    schemaUtils.isPrimitiveArray(value);
   const isExpandable = hasChildren || isList || isPrimitiveList;
   const listItems: unknown[] = isList && Array.isArray(value) ? value : [];
   const primitiveItems: unknown[] = isPrimitiveList ? value : [];
@@ -312,6 +312,6 @@ function OutputFieldRow({ field, json }: OutputFieldRowProps) {
 export { OutputFieldRow };
 
 type OutputFieldRowProps = {
-  field: HintField;
+  field: OutputSchemaField;
   json: unknown;
 };
