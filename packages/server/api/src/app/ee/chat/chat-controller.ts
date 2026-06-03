@@ -121,6 +121,15 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         return reply.status(StatusCodes.OK).send({ success: true })
     })
 
+    app.post('/conversations/:id/cancel', CancelConversationRoute, async (request, reply) => {
+        const conversationId = request.params.id
+        const platformId = request.principal.platform.id
+        const userId = request.principal.id
+        await chatService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
+        await chatApprovalGate.requestCancel({ conversationId })
+        return reply.status(StatusCodes.OK).send({ success: true })
+    })
+
 }
 
 async function assertAiCreditsNotExhausted({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
@@ -233,6 +242,17 @@ const ToolApprovalRoute = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: z.object({ gateId: z.string() }),
         body: z.object({ approved: z.boolean(), payload: z.record(z.string(), z.unknown()).optional() }),
+    },
+}
+
+const CancelConversationRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: CONVERSATION_PARAMS,
     },
 }
 

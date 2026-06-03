@@ -32,8 +32,8 @@ function wrapStepReferencesInOutputProperty <T>(value: T, stepNames: string[]): 
     return value
 }
 
-export const migrateV20StepOutputNesting: Migration = {
-    targetSchemaVersion: '20',
+export const migrateV21StepOutputNesting: Migration = {
+    targetSchemaVersion: '21',
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         const stepNames = flowStructureUtil.getAllSteps(flowVersion.trigger).map((step) => step.name)
         const newFlowVersion = flowStructureUtil.transferFlow(flowVersion, (step: Step) => ({
@@ -42,7 +42,7 @@ export const migrateV20StepOutputNesting: Migration = {
         }))
         return {
             ...newFlowVersion,
-            schemaVersion: '21',
+            schemaVersion: '22',
         }
     },
 }
