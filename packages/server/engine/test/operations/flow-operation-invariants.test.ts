@@ -12,7 +12,6 @@ import {
     StreamStepProgress,
     RunEnvironment,
     StepOutputStatus,
-    StepOutputType,
 } from '@activepieces/shared'
 import type { BeginExecuteFlowOperation, FlowAction, FlowVersion, ResumeExecuteFlowOperation } from '@activepieces/shared'
 
@@ -454,41 +453,6 @@ describe('flow operation invariants', () => {
 
             expect(mockCreateWaitpoint).not.toHaveBeenCalled()
         })
-
-        it('preserves trigger payload across a JSON-hydrated RESUME rebuild', async () => {
-            // Regression: insertSuccessStepsOrPausedRecursively returns the trigger step from the
-            // logs file as plain JSON. upsertStep's rebuild branch must detect it structurally
-            // (via flowStructureUtil.isTrigger) and rebuild a TriggerStepOutput preserving
-            // `payload` + `payloadType`. Without this, the post-resume logs file loses the
-            // payload, and any later retry fires the trigger with `undefined`.
-            mockSendUpdate.mockClear()
-            mockDownload.mockReset()
-
-            const persistedPayload = { body: { event: 'persisted-across-resume' } }
-            mockDownload.mockResolvedValue(
-                new TextEncoder().encode(JSON.stringify({
-                    executionState: {
-                        steps: {
-                            trigger_1: {
-                                type: FlowTriggerType.EMPTY,
-                                status: StepOutputStatus.SUCCEEDED,
-                                payload: persistedPayload,
-                                output: persistedPayload,
-                            },
-                        },
-                        tags: [],
-                    },
-                })),
-            )
-
-            const operation = makeResumeOperation()
-            await flowOperation.execute(operation)
-
-            const finalSendUpdate = mockSendUpdate.mock.calls[mockSendUpdate.mock.calls.length - 1][0]
-            const triggerStep = finalSendUpdate.flowExecutorContext.steps.trigger_1
-            expect(triggerStep.payload).toEqual(persistedPayload)
-            expect(triggerStep.payloadType).toBeUndefined()
-        })
     })
 
     describe('BEGIN payload hydration', () => {
@@ -557,8 +521,7 @@ describe('flow operation invariants', () => {
             const triggerStep = finalCtx.steps.trigger_1
             expect(triggerStep.status).toBe(StepOutputStatus.FAILED)
             expect(triggerStep.errorMessage).toEqual(expect.stringContaining('connection (missing-conn) not found'))
-            expect(triggerStep.payload).toEqual(triggerPayload)
-            expect(triggerStep.input).toBeUndefined()
+            expect(triggerStep.output).toEqual(triggerPayload)
         })
 
         it('non-USER engine errors from the trigger still propagate (caller will map to INTERNAL_ERROR)', async () => {
@@ -572,8 +535,8 @@ describe('flow operation invariants', () => {
         })
     })
 
-    describe('trigger success payload/output shape', () => {
-        it('executeTrigger=true stores raw payload and run()-transformed first item separately', async () => {
+    describe('trigger success output shape', () => {
+        it('executeTrigger=true stores the run()-transformed first item as output', async () => {
             mockSendUpdate.mockClear()
             mockBackup.mockClear()
             const rawPayload = { body: { id: 42, raw: true } }
@@ -591,12 +554,10 @@ describe('flow operation invariants', () => {
             const finalSendUpdate = mockSendUpdate.mock.calls[mockSendUpdate.mock.calls.length - 1][0]
             const triggerStep = finalSendUpdate.flowExecutorContext.steps.trigger_1
             expect(triggerStep.status).toBe(StepOutputStatus.SUCCEEDED)
-            expect(triggerStep.payload).toEqual(rawPayload)
             expect(triggerStep.output).toEqual(transformed)
-            expect(triggerStep.input).toBeUndefined()
         })
 
-        it('executeTrigger=false stores payload === output (no run() transformation)', async () => {
+        it('executeTrigger=false stores the raw payload as output (no run() transformation)', async () => {
             mockSendUpdate.mockClear()
             mockBackup.mockClear()
             const rawPayload = { body: { id: 7 } }
@@ -612,43 +573,7 @@ describe('flow operation invariants', () => {
             const finalSendUpdate = mockSendUpdate.mock.calls[mockSendUpdate.mock.calls.length - 1][0]
             const triggerStep = finalSendUpdate.flowExecutorContext.steps.trigger_1
             expect(triggerStep.status).toBe(StepOutputStatus.SUCCEEDED)
-            expect(triggerStep.payload).toEqual(rawPayload)
             expect(triggerStep.output).toEqual(rawPayload)
-            expect(triggerStep.input).toBeUndefined()
-        })
-
-        it('large trigger payload is offloaded to a LogSliceRef and dedupes with output when identical', async () => {
-            mockSendUpdate.mockClear()
-            mockBackup.mockClear()
-            mockUpload.mockReset()
-            mockUpload.mockImplementation(async ({ fileId }: { fileId: string }) => ({
-                fileId,
-                readUrl: `https://files.local/${fileId}`,
-            }))
-
-            const bigString = 'x'.repeat(64 * 1024)
-            const rawPayload = { body: { blob: bigString } }
-
-            const operation = makeBeginOperation({
-                triggerPayload: { type: 'inline', value: rawPayload },
-                executeTrigger: false,
-            })
-
-            const response = await flowOperation.execute(operation)
-            expect(response.status).toBe(EngineResponseStatus.OK)
-
-            const finalSendUpdate = mockSendUpdate.mock.calls[mockSendUpdate.mock.calls.length - 1][0]
-            const triggerStep = finalSendUpdate.flowExecutorContext.steps.trigger_1
-
-            expect(triggerStep.payloadType).toBe(StepOutputType.SLICE)
-            expect(triggerStep.outputType).toBe(StepOutputType.SLICE)
-            expect(triggerStep.payload).toEqual(triggerStep.output)
-            expect(triggerStep.payload).toMatchObject({
-                fileId: expect.any(String),
-                size: expect.any(Number),
-                url: expect.stringContaining('https://files.local/'),
-            })
-            expect(mockUpload).toHaveBeenCalledTimes(1)
         })
     })
 })
