@@ -10,7 +10,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `packages/server/api/src/app/ee/chat/chat-conversation-entity.ts` — ChatConversation TypeORM entity
 - `packages/server/api/src/app/ee/chat/chat-model-factory.ts` — creates AI SDK `LanguageModel` from provider config (OpenAI, Anthropic, Google, Azure, Bedrock, Cloudflare, Custom)
 - `packages/server/api/src/app/ee/chat/chat-compaction.ts` — long-conversation context management via summarization
-- `packages/server/api/src/app/ee/chat/chat-approval-gate.ts` — Redis pub/sub gate for tool execution approval (5-min timeout)
+- `packages/server/api/src/app/ee/chat/chat-approval-gate.ts` — Redis pub/sub gate for tool execution approval (5-min timeout); also stores per-conversation cancel signals with a 10-min TTL
 - `packages/server/api/src/app/ee/chat/chat-file-utils.ts` — file attachment processing (base64, MIME validation, 10MB limit)
 - `packages/server/api/src/app/ee/chat/tools/chat-tools.ts` — local LLM tools (title, project selection, action execution, cross-project listing, plan approval)
 - `packages/server/api/src/app/ee/chat/tools/chat-display-tools.ts` — display tools for interactive UI cards (connection picker, project picker, questions, quick replies)
@@ -53,6 +53,8 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - **MCP tools** — project-scoped tools loaded from the Activepieces MCP server when a project is selected; destructive ones are wrapped with the approval gate
 - **Tool call UX metadata** — optional `title` (2-4 word chip label) and `description` (first-person conversational sentence) stored on `PersistedToolCallPart`; description is sourced from the preceding `ap_update_thinking_status` text with `input.description` as fallback, rendered above the tool card chip
 - **AI provider** — a platform-configured LLM provider with an `enabledForChat` flag; the chat resolves the first enabled provider and its default model
+- **Streaming cancel** — a Redis key (10-min TTL) signals the worker to abort via AbortController at the next `onStepFinish` boundary; partial UI parts are saved before the conversation returns to IDLE
+- **Stale recovery** — when `getConversationOrThrow` fetches a conversation stuck in STREAMING for more than 15 minutes, it automatically resets the status to IDLE before returning
 - **Project context** — the currently selected project for a conversation; determines which MCP tools are available and scopes resource access
 - **Chat tiers** — model configurations (fast/smart/premium) with different thinking budgets; displayed as Fast/Expert/Heavy in the UI with per-tier descriptions
 - **Credits warning banner** — a dismissible amber banner shown when Activepieces AI credits usage reaches 70%; a non-dismissible red banner is shown when credits are fully exhausted
@@ -65,8 +67,8 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 
 ## Key Service Methods
 - `createConversation()` — creates a new conversation for a user on a platform
-- `listConversations()` — cursor-paginated list of user's conversations, ordered by creation date descending
-- `getConversationOrThrow()` — fetches a conversation, enforcing ownership (platformId + userId)
+- `listConversations()` — cursor-paginated list of user's conversations, ordered by creation date descending; excludes messages, uiMessages, and summary columns for performance
+- `getConversationOrThrow()` — fetches a conversation, enforcing ownership (platformId + userId); auto-recovers stale STREAMING conversations to IDLE after a 15-minute timeout
 - `updateConversation()` — updates title and/or modelName
 - `deleteConversation()` — deletes a conversation after ownership check
 - `getMessages()` — reconstructs `ChatHistoryMessage[]` from stored `ModelMessage[]`
@@ -95,6 +97,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `GET /v1/chat/conversations/:id/messages` — get conversation messages
 - `POST /v1/chat/conversations/:id/messages` — send message (streaming response)
 - `POST /v1/chat/tool-approvals/:gateId` — approve or deny a tool execution
+- `POST /v1/chat/conversations/:id/cancel` — cancel an in-progress streaming response
 
 - `POST /v1/admin/chat/sync-all` — bulk historical sync of all conversations to console analytics (admin API key required)
 

@@ -127,16 +127,15 @@ export function ConversationList({
           />
         </button>
         {!isCollapsed &&
-          items.map((conv, index) => (
+          items.map((conv) => (
             <button
               type="button"
               key={conv.id}
               className={cn(
-                'group flex items-center w-full px-2 py-1.5 rounded-md bg-transparent border-none cursor-pointer text-left text-xs transition-all hover:bg-muted relative animate-in fade-in slide-in-from-top-1 duration-200',
+                'group flex items-center w-full px-2 py-1.5 rounded-md bg-transparent border-none cursor-pointer text-left text-xs transition-colors hover:bg-muted relative',
                 selectedId === conv.id &&
                   'bg-muted font-semibold border-l-2 border-l-primary',
               )}
-              style={{ animationDelay: `${index * 30}ms` }}
               onClick={() => handleClick(conv)}
             >
               <span className="overflow-hidden text-ellipsis whitespace-nowrap pr-5 flex-1">

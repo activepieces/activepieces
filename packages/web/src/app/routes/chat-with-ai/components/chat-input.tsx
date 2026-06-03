@@ -1,5 +1,6 @@
 import { t } from 'i18next';
 import { ArrowUp, Mic, Paperclip, Square, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -103,33 +104,46 @@ export function ChatInput({
         onSubmit={handleSubmit}
         className="border-0 rounded-none shadow-none"
       >
-        {attachedFiles.length > 0 && (
-          <div className="flex flex-wrap gap-2 px-3 pt-2">
-            {attachedFiles.map((file) => (
-              <div
-                key={file.name}
-                className="flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-1.5 text-sm"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Paperclip className="size-3.5 shrink-0 text-muted-foreground" />
-                <span className="max-w-[150px] truncate text-foreground/80">
-                  {file.name}
-                </span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setAttachedFiles((prev) =>
-                      prev.filter((f) => f.name !== file.name),
-                    )
-                  }
-                  className="text-muted-foreground hover:text-foreground rounded-full p-0.5 transition-colors"
-                >
-                  <X className="size-3.5" />
-                </button>
+        <AnimatePresence>
+          {attachedFiles.length > 0 && (
+            <motion.div
+              className="flex flex-wrap gap-2 px-3 overflow-hidden"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+            >
+              <div className="flex flex-wrap gap-2 pt-2 pb-0.5">
+                {attachedFiles.map((file) => (
+                  <motion.div
+                    key={file.name}
+                    className="flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-1.5 text-sm"
+                    onClick={(e) => e.stopPropagation()}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.15 }}
+                  >
+                    <Paperclip className="size-3.5 shrink-0 text-muted-foreground" />
+                    <span className="max-w-[150px] truncate text-foreground/80">
+                      {file.name}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setAttachedFiles((prev) =>
+                          prev.filter((f) => f.name !== file.name),
+                        )
+                      }
+                      className="text-muted-foreground hover:text-foreground rounded-full p-0.5 transition-colors"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </motion.div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
         {isRecording ? (
           <div className="min-h-[44px] px-3 py-2 text-sm text-foreground whitespace-pre-wrap break-words">
             {interimText || (
