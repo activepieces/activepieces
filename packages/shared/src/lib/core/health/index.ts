@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+export * from './health-metrics-request'
+
 export const GetSystemHealthChecksResponse = z.object({
     cpu: z.boolean(),
     disk: z.boolean(),
