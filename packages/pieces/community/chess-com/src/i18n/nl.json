@@ -1,0 +1,11 @@
+{
+  "Access Chess.com player data": "Toegang tot Chess.com spelergegevens",
+  "Get Player Profile": "Verkrijg Speler Profiel",
+  "Get Player Stats": "Krijg Speler Statistieken",
+  "Get Daily Puzzle": "Verkrijg Dagelijkse Puzzel",
+  "Retrieve a Chess.com player's public profile by username (avatar, country, join date, followers).": "Haal een Chess.com spelers publiek profiel op met hun gebruikersnaam (avatar, land, aansluitingsdatum, volgers).",
+  "Retrieve a Chess.com player's ratings and W/D/L for rapid, blitz, bullet, and chess960.": "Haal een Chess.com speler's beoordelingen op en W/D/L voor snelle, blitz, kogel en schaak960.",
+  "Retrieve today's Chess.com daily puzzle.": "Haal de Chess.com dagelijkse puzzel van vandaag op.",
+  "Username": "Gebruikersnaam",
+  "The Chess.com username to look up.": "De Chess.com gebruikersnaam om op te zoeken."
+}
