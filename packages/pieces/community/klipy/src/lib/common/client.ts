@@ -101,17 +101,12 @@ async function search<T>({
   if (contentFilter) queryParams['content_filter'] = contentFilter;
   if (formatFilter) queryParams['format_filter'] = formatFilter;
 
-  try {
-    const response = await httpClient.sendRequest<SearchResponse<T>>({
-      method: HttpMethod.GET,
-      url: `${BASE_URL}/api/v1/${appKey}/${endpoint}`,
-      queryParams,
-    });
-    return response.body;
-  } catch (error) {
-    console.error('Error during KLIPY API call:', error);
-    throw error;
-  }
+  const response = await httpClient.sendRequest<SearchResponse<T>>({
+    method: HttpMethod.GET,
+    url: `${BASE_URL}/api/v1/${appKey}/${endpoint}`,
+    queryParams,
+  });
+  return response.body;
 }
 
 function flattenGifSticker(item: GifSticker) {
