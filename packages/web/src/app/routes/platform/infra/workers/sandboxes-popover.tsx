@@ -55,7 +55,7 @@ export const SandboxesPopover: React.FC<Props> = ({ sandboxes }) => {
                     {t('Box')} #{sandbox.boxId}
                   </td>
                   <td className="px-3 py-2">
-                    <Badge variant={sandbox.busy ? 'success' : 'secondary'}>
+                    <Badge variant={sandbox.busy ? 'accent' : 'secondary'}>
                       {sandbox.busy ? t('Busy') : t('Idle')}
                     </Badge>
                   </td>
