@@ -1,7 +1,6 @@
 import {
   createAction,
   Property,
-  PieceAuth,
 } from '@activepieces/pieces-framework';
 import { ModelMessage, generateText, stepCountIs } from 'ai';
 import { AIProviderName, getEffectiveProviderAndModel, spreadIfDefined } from '@activepieces/shared';
@@ -71,6 +70,7 @@ export const askAI = createAction({
       provider: provider as AIProviderName,
       model: modelId,
     });
+
     const model = await createAIModel({
       provider: provider as AIProviderName,
       modelId,
