@@ -105,12 +105,11 @@ const RunsList = React.memo(() => {
 
       {isError && <div>{t('Error, please try again.')}</div>}
 
-      {runs &&
-        runs.pages.flatMap((page) => page.data).length === 0 &&
-        !isLoading &&
-        !isRefetching && <CardListEmpty message={t('No runs found')} />}
+      {runs && dedupedRuns.length === 0 && !isLoading && !isRefetching && (
+        <CardListEmpty message={t('No runs found')} />
+      )}
 
-      {runs && runs.pages.flatMap((page) => page.data).length > 0 && (
+      {runs && dedupedRuns.length > 0 && (
         <VirtualizedScrollArea
           className="w-full grow max-w-[calc(100%-6px)]"
           items={allViewedRuns}
