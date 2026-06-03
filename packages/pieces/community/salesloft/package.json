@@ -1,7 +1,7 @@
 {
   "name": "@activepieces/piece-salesloft",
-  "version": "0.0.1",
-   "main": "./dist/src/index.js",
+  "version": "0.0.2",
+  "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
