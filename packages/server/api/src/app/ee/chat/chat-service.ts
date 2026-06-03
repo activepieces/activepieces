@@ -49,6 +49,17 @@ export const chatService = (log: FastifyBaseLogger) => ({
 
         const queryBuilder = chatHelpers.conversationRepo()
             .createQueryBuilder('chat_conversation')
+            .select([
+                'chat_conversation.id',
+                'chat_conversation.created',
+                'chat_conversation.updated',
+                'chat_conversation.platformId',
+                'chat_conversation.projectId',
+                'chat_conversation.userId',
+                'chat_conversation.title',
+                'chat_conversation.modelName',
+                'chat_conversation.status',
+            ])
             .where({ platformId, userId })
 
         const { data, cursor: paginationCursor } = await paginator.paginate(queryBuilder)
