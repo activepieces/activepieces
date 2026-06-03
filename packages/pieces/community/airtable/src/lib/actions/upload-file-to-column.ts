@@ -25,7 +25,7 @@ export const airtableUploadFileToColumnAction = createAction({
       options: async ({ auth, base, tableId }) => {
         if (!auth || !base || !tableId) {
           return {
-            placeholder: 'Please select table first',
+            placeholder: 'Please select a base and table first',
             options: [],
             disabled: true,
           };

@@ -29,7 +29,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof myAppAuth>, Reco
       url: 'https://api.example.com/v1/records',
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth as string,
+        token: auth.secret_text,
       },
       queryParams: {
         sort: 'created_at',
@@ -164,7 +164,7 @@ export const newRecordWebhookTrigger = createTrigger({
       url: 'https://api.example.com/v1/webhooks',
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth as string,
+        token: context.auth.secret_text,
       },
       body: {
         url: context.webhookUrl,         // Activepieces provides this
@@ -183,7 +183,7 @@ export const newRecordWebhookTrigger = createTrigger({
         url: `https://api.example.com/v1/webhooks/${webhookId}`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: context.auth as string,
+          token: context.auth.secret_text,
         },
       });
     }
@@ -201,7 +201,7 @@ export const newRecordWebhookTrigger = createTrigger({
       url: 'https://api.example.com/v1/records',
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth as string,
+        token: context.auth.secret_text,
       },
       queryParams: { limit: '5' },
     });

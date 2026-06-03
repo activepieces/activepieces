@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { ActionContext } from '../context';
 import type { OutputDisplayHints } from '../output-display-hints';
-import { ActionBase } from '../piece-metadata';
+import { ActionBase, Audience, AiMetadata } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { ExtractPieceAuthPropertyTypeForMethods, PieceAuthProperty } from '../property/authentication';
 
@@ -37,6 +37,8 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty | PieceAuthProperty[
   requireAuth?: boolean
   errorHandlingOptions?: ErrorHandlingOptionsParam
   outputDisplayHints?: OutputDisplayHints
+  audience?: Audience
+  aiMetadata?: AiMetadata
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -51,6 +53,8 @@ export class IAction<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] |
     public readonly requireAuth: boolean,
     public readonly errorHandlingOptions: ErrorHandlingOptionsParam,
     public readonly outputDisplayHints?: OutputDisplayHints,
+    public readonly audience?: Audience,
+    public readonly aiMetadata?: AiMetadata,
   ) { }
 }
 
@@ -84,5 +88,7 @@ export const createAction = <
       }
     },
     params.outputDisplayHints,
+    params.audience,
+    params.aiMetadata,
   )
 }

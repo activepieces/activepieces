@@ -10,20 +10,21 @@ import {
 } from '@activepieces/shared';
 import { useQueries } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { SearchXIcon } from 'lucide-react';
+import { Database, SearchXIcon, Variable } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
 import { SearchInput } from '@/components/custom/search-input';
 import { OutputDisplayHints } from '@/components/custom/smart-output-viewer/types';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { piecesApi } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { BuilderState, useBuilderStateContext } from '../builder-hooks';
 
+import { DataSelectorNode } from './data-selector-node';
 import {
   DataSelectorSizeState,
   DataSelectorSizeTogglers,
@@ -32,6 +33,7 @@ import { FriendlyDataSelectorNode } from './friendly-data-selector-node';
 import { DataSelectorTreeNode } from './type';
 import { dataSelectorUtils } from './utils';
 import { hintsTreeUtils } from './utils-hints';
+import { VariablesTab } from './variables-tab';
 
 type StepInfo = (FlowAction | FlowTrigger) & { dfsIndex: number };
 
@@ -107,15 +109,18 @@ const doesElementHaveAnInputThatUsesMentions = (
 const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { i18n } = useTranslation();
-  const [sizeState, setSizeState] = useState<DataSelectorSizeState>(
-    DataSelectorSizeState.DOCKED,
-  );
+  const [dataSelectorSize, setDataSelectorSize] =
+    useState<DataSelectorSizeState>(DataSelectorSizeState.DOCKED);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'friendly' | 'advanced'>('friendly');
   const [showDataSelector, setShowDataSelector] = useState(false);
 
   const { steps, sampleData, isFocusInsideListMapperModeInput } =
     useBuilderStateContext(getStepsAndData);
+  const isTriggerSelected = useBuilderStateContext(
+    (state) => state.selectedStep === 'trigger',
+  );
+  const defaultTab = isTriggerSelected ? 'variables' : 'data';
 
   const piecePairs = useMemo(
     () =>
@@ -285,81 +290,125 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
     };
   }, [checkFocus]);
 
-  const contentHeight =
-    sizeState === DataSelectorSizeState.COLLAPSED
-      ? '0px'
-      : sizeState === DataSelectorSizeState.DOCKED
-      ? '450px'
-      : `${parentHeight - 100}px`;
-
-  const contentWidth =
-    sizeState !== DataSelectorSizeState.EXPANDED
-      ? '450px'
-      : `${parentWidth - 40}px`;
-
   return (
     <div
       ref={containerRef}
       tabIndex={0}
       className={cn(
-        'absolute bottom-0 mr-5 mb-5 right-0 z-50 transition-all border border-solid border-outline overflow-x-hidden bg-background shadow-lg rounded-md',
+        'absolute bottom-0 mr-5 mb-5 right-0 z-50 transition-all  border border-solid border-outline overflow-x-hidden bg-background shadow-lg rounded-md',
         {
           'opacity-0 pointer-events-none': !showDataSelector,
         },
         textMentionUtils.dataSelectorCssClassSelector,
       )}
     >
-      <div className="flex items-center justify-between px-4 pt-1 pb-1">
-        <span className="text-sm font-semibold">{t('Data Selector')}</span>
-        <div className="flex items-center gap-0">
-          <DataSelectorSizeTogglers
-            state={sizeState}
-            setListSizeState={setSizeState}
-          />
-        </div>
+      <div className="text-lg items-center px-3 py-2 flex gap-2">
+        {t('Data Selector')} <div className="grow"></div>{' '}
+        <DataSelectorSizeTogglers
+          state={dataSelectorSize}
+          setListSizeState={setDataSelectorSize}
+        ></DataSelectorSizeTogglers>
       </div>
-
       <div
-        style={{ height: contentHeight, width: contentWidth }}
+        style={{
+          height:
+            dataSelectorSize === DataSelectorSizeState.COLLAPSED
+              ? '0px'
+              : dataSelectorSize === DataSelectorSizeState.DOCKED
+              ? '450px'
+              : `${parentHeight - 100}px`,
+          width:
+            dataSelectorSize !== DataSelectorSizeState.EXPANDED
+              ? '450px'
+              : `${parentWidth - 40}px`,
+        }}
         className="transition-all overflow-hidden"
       >
-        <div className="flex items-center gap-2 px-4 pb-2">
-          <SearchInput onChange={(e) => setSearchTerm(e)} value={searchTerm} />
-          <Tabs
-            value={viewMode}
-            onValueChange={(v) => setViewMode(v as 'friendly' | 'advanced')}
+        <Tabs
+          key={defaultTab}
+          defaultValue={defaultTab}
+          className="h-full flex flex-col gap-0"
+        >
+          <TabsList
+            variant="outline"
+            className="px-3 shrink-0 gap-1 border-b border-border w-full justify-start"
           >
-            <TabsList className="h-9 shrink-0">
-              <TabsTrigger value="friendly" className="text-xs px-2.5 h-7">
-                {t('Friendly View')}
-              </TabsTrigger>
-              <TabsTrigger value="advanced" className="text-xs px-2.5 h-7">
-                {t('Advanced')}
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
+            <TabsTrigger
+              value="data"
+              variant="outline"
+              className="gap-2 px-3 py-2 hover:text-foreground rounded-none"
+            >
+              <Database className="w-4 h-4" />
+              {t('Data')}
+            </TabsTrigger>
+            <TabsTrigger
+              value="variables"
+              variant="outline"
+              className="gap-2 px-3 py-2 hover:text-foreground rounded-none"
+            >
+              <Variable className="w-4 h-4" />
+              {t('Variables')}
+            </TabsTrigger>
+          </TabsList>
 
-        <ScrollArea className="transition-all h-[calc(100%-52px)] w-full [mask-image:linear-gradient(to_bottom,transparent_0px,black_8px)]">
-          {filteredNodes.map((node) => (
-            <FriendlyDataSelectorNode
-              key={node.key}
-              node={node}
-              searchTerm={searchTerm}
-            />
-          ))}
-          {filteredNodes.length === 0 && (
-            <div className="flex items-center justify-center gap-2 mt-8 flex-col">
-              <SearchXIcon className="w-8 h-8 text-muted-foreground" />
-              <div className="text-center font-medium text-sm">
-                {t('No matching data')}
-              </div>
-              <div className="text-center text-sm text-muted-foreground">
-                {t('Try adjusting your search')}
-              </div>
+          <TabsContent
+            value="data"
+            className="flex-1 min-h-0 flex flex-col gap-2 mt-2"
+          >
+            <div className="flex items-center gap-2 px-5">
+              <SearchInput
+                onChange={(e) => setSearchTerm(e)}
+                value={searchTerm}
+              ></SearchInput>
+              <Tabs
+                value={viewMode}
+                onValueChange={(v) => setViewMode(v as 'friendly' | 'advanced')}
+              >
+                <TabsList className="h-9 shrink-0">
+                  <TabsTrigger value="friendly" className="text-xs px-2.5 h-7">
+                    {t('Friendly View')}
+                  </TabsTrigger>
+                  <TabsTrigger value="advanced" className="text-xs px-2.5 h-7">
+                    {t('Advanced')}
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
-          )}
-        </ScrollArea>
+            <ScrollArea className="transition-all flex-1 w-full ">
+              {viewMode === 'friendly'
+                ? filteredNodes.map((node) => (
+                    <FriendlyDataSelectorNode
+                      key={node.key}
+                      node={node}
+                      searchTerm={searchTerm}
+                    />
+                  ))
+                : filteredNodes.map((node) => (
+                    <DataSelectorNode
+                      depth={0}
+                      key={node.key}
+                      node={node}
+                      searchTerm={searchTerm}
+                    ></DataSelectorNode>
+                  ))}
+              {filteredNodes.length === 0 && (
+                <div className="flex items-center justify-center gap-2 mt-5  flex-col">
+                  <SearchXIcon className="w-[35px] h-[35px]"></SearchXIcon>
+                  <div className="text-center font-semibold text-md">
+                    {t('No matching data')}
+                  </div>
+                  <div className="text-center ">
+                    {t('Try adjusting your search')}
+                  </div>
+                </div>
+              )}
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent value="variables" className="flex-1 min-h-0 mt-2">
+            <VariablesTab />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

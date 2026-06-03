@@ -44,6 +44,7 @@ const BASE_ENV: Record<string, string> = {
     NODE_PATH: '/usr/src/node_modules',
     AP_EXECUTION_MODE: 'SANDBOX_PROCESS',
     AP_SANDBOX_WS_PORT: '12345',
+    AP_SANDBOX_WS_TOKEN: 'test-token-aaaaaaaaaaaaaaaaaaaaaaaa',
 }
 
 const etcDir = path.resolve(process.cwd(), 'packages/server/api/src/assets/etc')
@@ -243,6 +244,7 @@ describe('isolateProcess', () => {
             'NODE_PATH',
             'AP_EXECUTION_MODE',
             'AP_SANDBOX_WS_PORT',
+            'AP_SANDBOX_WS_TOKEN',
         ])('throws when required env "%s" is missing', async (missingKey) => {
             const env = { ...BASE_ENV } as Record<string, string>
             delete env[missingKey]
@@ -256,6 +258,7 @@ describe('isolateProcess', () => {
             'HOME',
             'NODE_PATH',
             'AP_EXECUTION_MODE',
+            'AP_SANDBOX_WS_TOKEN',
         ])('throws when required env "%s" is empty string', async (key) => {
             const env = { ...BASE_ENV, [key]: '' }
             await expect(callCreate({ env })).rejects.toThrow(/Required sandbox env/)

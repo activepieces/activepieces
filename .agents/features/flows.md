@@ -16,12 +16,15 @@ Flows are the core automation primitive in Activepieces. Each flow is a versione
 - `packages/shared/src/lib/automation/flows/triggers/trigger.ts` — `FlowTrigger` discriminated union
 - `packages/web/src/features/flows/api/flows-api.tsx` — `flowsApi` (list, create, update, get, versions, delete, count)
 - `packages/web/src/features/flows/hooks/flow-hooks.tsx` — `flowHooks` (status change, export, import, test, version management)
-- `packages/web/src/features/flows/components/` — `FlowStatusToggle`, `ImportFlowDialog`, `ShareTemplateDialog`, `ChangeOwnerDialog`
+- `packages/web/src/features/flows/components/` — `FlowStatusToggle`, `ImportFlowDialog`, `ShareTemplateDialog`, `ChangeOwnerDialog`, `FlowCreatedByBadge`
 - `packages/web/src/features/flows/utils/flows-utils.tsx` — download, zip, template parsing helpers
 - `packages/web/src/app/builder/index.tsx` — visual flow builder entry point
 - `packages/web/src/app/builder/flow-canvas/` — XYFlow canvas (nodes, edges, drag layer, context menu)
 - `packages/web/src/app/builder/state/` — Zustand-based builder state (flow, run, canvas, notes, step form, piece selector)
-- `packages/web/src/app/builder/step-settings/` — step configuration panel
+- `packages/web/src/app/builder/step-settings/` — step configuration panel and split/drawer layout for the step data panel
+- `packages/web/src/app/builder/step-data/` — step data panel UI (`step-data-panel-host.tsx` / `StepDataPanelHost`, `step-data-panel-header.tsx`, `step-data-panel-view-toggle.tsx`)
+- `packages/web/src/app/builder/test-step/` — test execution UI (action/trigger sections, sample-data viewer, CTA buttons); `test-runner-context.tsx` hoists `useTestAction` + the webhook-return dialog so the bottom CTA can fire the test in-tree
+- `packages/web/src/app/builder/data-display/` — failed-step error UI: `friendly-error-view.tsx` (the friendly error card), `copy-ai-prompt.tsx` ("Copy Error for AI" button), `explanation-prompt.ts` (sanitized AI prompt builder), and `build-step-properties-snapshot.ts` (step-properties snapshot helper). Used by both the test panel and the run-details output view.
 - `packages/web/src/app/builder/pieces-selector/` — piece/action browser
 - `packages/web/src/app/builder/data-selector/` — variable picker (mentions / data selector); `index.tsx` hosts both **Advanced** (existing tree) and **Friendly** tabs. When a step is a PIECE action/trigger, friendly mode builds its tree from the piece's `outputDisplayHints` via `utils-hints.ts` and renders rows through `friendly-data-selector-node.tsx`; otherwise it falls back to a generic field list. Hints are fetched via `usePieceOutputHints` (see [pieces.md](../features/pieces.md))
 - `packages/web/src/components/custom/smart-output-viewer/` — the new **Smart Output Viewer** used by test-step output and run details. `index.tsx` chooses between a labelled "Friendly view" (`output-field-list.tsx` → `output-field-row.tsx`, table-shaped arrays via `output-table-view.tsx`, generic fallback via `output-generic-field-list.tsx`) and the existing Raw JSON view. Values render through `format-value.tsx` which applies per-field `FieldFormat` rendering (clickable email/url, inline image, formatted date / currency / filesize / duration / boolean / HTML badge) and enforces an SSRF/XSS-safe URL allow-list (`http(s)` only). Path resolution and the common wrapper-key fallback (`data.*`, `body.*`, `payload.*`, …) live in `packages/web/src/lib/path-utils.ts`
@@ -43,10 +46,11 @@ Flows are the core automation primitive in Activepieces. Each flow is a versione
 - **Sample Data**: Captured step output (input + output) stored as File entities per flow version, used for testing downstream steps without live execution.
 - **Human Input**: Flows that expose a public form (`/form/:flowId`) or chat interface (`/chat/:flowId`) as their trigger UI.
 - **operationStatus**: Tracks in-progress mutations (ENABLING, DISABLING, DELETING) to prevent race conditions on concurrent state changes.
+- **createdBy**: Records the automated source that created the flow as a discriminated union (`FlowCreator`: `{ type: 'MCP' | 'AGENT', id }`). Null for human-created flows. Server-set only — surfaced in the UI as the "AI" badge (`FlowCreatedByBadge`). Distinct from `ownerId`, which is the current owning user.
 
 ## Entities
 
-**Flow**: id, projectId, folderId (nullable), status (ENABLED/DISABLED), externalId, publishedVersionId (nullable, unique FK), metadata (JSONB), operationStatus (NONE/DELETING/ENABLING/DISABLING), timeSavedPerRun, ownerId, templateId. Relations: project, folder, owner, publishedVersion (one-to-one), versions (one-to-many), runs, events, tableWebhooks.
+**Flow**: id, projectId, folderId (nullable), status (ENABLED/DISABLED), externalId, publishedVersionId (nullable, unique FK), metadata (JSONB), operationStatus (NONE/DELETING/ENABLING/DISABLING), timeSavedPerRun, ownerId, templateId, createdBy (nullable JSONB — `FlowCreator`). Relations: project, folder, owner, publishedVersion (one-to-one), versions (one-to-many), runs, events, tableWebhooks.
 
 **FlowVersion**: id, flowId, displayName, schemaVersion, trigger (JSONB — full flow graph), connectionIds[], agentIds[], updatedBy, valid, state (DRAFT/LOCKED), backupFiles (JSONB), notes[] (JSONB). Relations: flow, updatedByUser.
 
@@ -100,7 +104,7 @@ When CHANGE_STATUS to DISABLED:
 The visual builder (`packages/web/src/app/builder/`) uses XYFlow for the canvas. State is split into focused Zustand slices, composed by `builder-state-provider.tsx`:
 - `flow-state.ts` — current flow and version, pending operations
 - `run-state.ts` — active test run, step results, focused/failed step (used by the run-info widget's "See error" affordance); `setRun` resets `userManuallySelectedStepDuringRun` whenever a new run id arrives
-- `canvas-state.ts` — viewport, selected node, drag state, plus the `userManuallySelectedStepDuringRun` flag and `resumeLiveFollow` action that gate auto-follow. The auto-focus effect lives in `useFocusOnStep` (`flow-canvas/hooks.tsx`): it calls `selectStepByName(step, { fromAutoFocus: true })` to pan the canvas to the latest engine step, and short-circuits whenever `userManuallySelectedStepDuringRun` is set. The flag flips to `true` when the user picks a different step mid-run (any `selectStepByName` call without `fromAutoFocus`) and clears via `resumeLiveFollow` or when `setRun` receives a new run id
+- `canvas-state.ts` — viewport, selected node, drag state, plus the `userManuallySelectedStepDuringRun` flag and `resumeLiveFollow` action that gate auto-follow. The auto-focus effect lives in `useFocusOnStep` (`flow-canvas/hooks.tsx`): it calls `selectStepByName(step, { fromAutoFocus: true })` to pan the canvas to the latest engine step, and short-circuits whenever `userManuallySelectedStepDuringRun` is set. The flag flips to `true` when the user picks a different step mid-run (any `selectStepByName` call without `fromAutoFocus`) and clears via `resumeLiveFollow` or when `setRun` receives a new run id. Also owns the step-data-panel layout state: `stepDataPanelView` (`StepDataPanelView` = `'split' | 'drawer'`, persisted via localStorage) and `isStepDataPanelOpen`
 - `step-form-state.ts` — open/focused step configuration
 - `piece-selector-state.ts` — piece browser visibility and search
 - `notes-state.tsx` — sticky notes overlay
@@ -108,11 +112,21 @@ The visual builder (`packages/web/src/app/builder/`) uses XYFlow for the canvas.
 
 `flowHooks.useChangeFlowStatus` handles both publish and enable/disable, surfaces `TRIGGER_UPDATE_STATUS` errors via an `ApErrorDialog`, and maps gateway timeout errors to a user-readable message. `flowHooks.importFlowsFromTemplates` replaces `externalId` references across a multi-flow template import to maintain cross-flow links.
 
+## Step Data Panel (Builder)
+
+The step-settings sidebar hosts a step data panel with two layouts, switched via `stepDataPanelView` in canvas state:
+- **`drawer`** — slides up from the bottom of the sidebar, occupies 60% height, sits at `z-50` over the settings form. Dismisses on outside-click (pointerdown listener in `step-data/step-data-panel-host.tsx`, ignoring Radix poppers, role="dialog", and resizable handles).
+- **`split`** — non-resizable 50/50 horizontal split between settings form and step data panel inside the sidebar.
+
+`step-settings/index.tsx` composes the two layouts via `StepSettingsLayout`, rendering `StepDataPanelHost` for the active view. The bottom CTA (`TestStepCTAButton`) shows under the settings form when the drawer is closed; clicking it opens the drawer and auto-fires the test by calling `useActionTestRunner().fireTest()` or `useTriggerTestRunner().fireTest()` from context. `ActionTestRunnerProvider` owns the action mutation and the return-response webhook dialog; `TriggerTestRunnerProvider` owns the trigger piece lookup, the three trigger mutations (`simulate`, `poll`, `saveMock`), the MCP-tool testing dialog, and a `fireTest()` dispatcher that picks the right one based on `triggerEventUtils.getTestType`. Both providers are wired with the Zustand-backed `selectedStep` (not the RHF form values) so `step.valid` stays in sync with the resolver-computed validity that `applyOperation` writes to canvas state — RHF never writes the resolver's `valid` back into its own form store, so reading from `form.getValues()` / `form.formState.isValid` would observe a stale value for freshly-added steps.
+
+`builder/index.tsx` drives the right-sidebar pixel size imperatively: a `useLayoutEffect` on `react-resizable-panels`' `PanelImperativeHandle.resize()` targets `1000px` (initial split open), `850px` (subsequent split open), or `25%` (drawer). A separate `useEffect` attaches a `ResizeObserver` while the user drags the handle and auto-collapses split → drawer once the sidebar drops under `700px`. The old `useAnimateSidebar` hook has been removed in favour of this approach.
+
 ### Step Output Surfaces (Smart Output Viewer + Data Selector)
 
 Two builder surfaces consume an action/trigger's optional `outputDisplayHints` (defined on the piece — see [pieces.md](./pieces.md)):
 
-- **Smart Output Viewer** (`components/custom/smart-output-viewer/`) — used by the test-step output pane and run details. With hints, renders a labelled friendly view driven by the hints' `fields` array (type icons, copy-to-clipboard, expandable nested values via `children` / `listItems`, automatic table view for arrays of records, formatted images / emails / dates / file sizes / durations / currencies). Without hints, falls back to a generic field list for arbitrary JSON. A Raw JSON tab is always available.
+- **Smart Output Viewer** (`components/custom/smart-output-viewer/`) — used by the step data panel's output pane and run details. With hints, renders a labelled friendly view driven by the hints' `fields` array (type icons, copy-to-clipboard, expandable nested values via `children` / `listItems`, automatic table view for arrays of records, formatted images / emails / dates / file sizes / durations / currencies). Without hints, falls back to a generic field list for arbitrary JSON. A Raw JSON tab is always available.
 - **Data Selector** (`app/builder/data-selector/`) — variable picker. With hints, the Friendly tab shows labelled rows with value previews (purple values, same formatting as the viewer); inserting a row produces a fully-qualified mention path (e.g. `step_1["thread"]["data"]["messages"][0]["subject"]`). Without hints, falls back to a generic per-step field list. The Advanced tab is the existing raw tree.
 
 Both surfaces fetch hints via `usePieceOutputHints({ pieceName, pieceVersion, stepName })`, which reads from the cached `['piece', name, version]` React Query entry — no extra network calls. Hint path lookups use `pathUtils.getValueByDotPath` (`packages/web/src/lib/path-utils.ts`), which supports dot/bracket notation and a wrapper-key fallback (`data.*`, `body.*`, `payload.*`, …) so common API envelopes resolve transparently.

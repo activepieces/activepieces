@@ -49,6 +49,7 @@ export const common = {
             q: qParts.join(' and '),
             includeItemsFromAllDrives: include_team_drives ? 'true' : 'false',
             supportsAllDrives: 'true',
+            corpora: include_team_drives ? 'allDrives' : 'user',
             pageSize: String(FOLDER_DROPDOWN_PAGE_SIZE),
             fields: 'nextPageToken, files(id, name)',
           },
@@ -125,6 +126,7 @@ export const common = {
         orderBy: order ?? 'createdTime desc',
         supportsAllDrives: true,
         includeItemsFromAllDrives: search?.includeTeamDrive,
+        corpora: search?.includeTeamDrive ? 'allDrives' : 'user',
       };
       if (pageToken) listParams.pageToken = pageToken;
       const response = await drive.files.list(listParams);
@@ -167,6 +169,7 @@ export const common = {
         orderBy: order ?? 'createdTime desc',
         supportsAllDrives: true,
         includeItemsFromAllDrives: search?.includeTeamDrive,
+        corpora: search?.includeTeamDrive ? 'allDrives' : 'user',
       };
       if (pageToken) listParams.pageToken = pageToken;
       const response = await drive.files.list(listParams);

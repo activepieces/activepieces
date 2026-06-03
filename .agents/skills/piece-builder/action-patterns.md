@@ -31,7 +31,7 @@ export const createRecordAction = createAction({
       url: 'https://api.example.com/v1/records',
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth as string,
+        token: context.auth.secret_text,
       },
       body: {
         name: context.propsValue.name,
@@ -42,6 +42,8 @@ export const createRecordAction = createAction({
   },
 });
 ```
+
+The `token` field above assumes a `PieceAuth.SecretText()` auth. For other auth types, swap to `context.auth.access_token` (OAuth2), `context.auth.username`/`.password` (BasicAuth), or `context.auth.props.<field>` (CustomAuth). See `auth-patterns.md` for the full table.
 
 **Real example:** `packages/pieces/community/github/src/lib/actions/create-issue.ts`
 

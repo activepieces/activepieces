@@ -19,11 +19,11 @@ import { normalizePieceName } from '../lib/message-parsers';
 
 export function ConnectionsRequiredCard({
   connections,
-  onSend,
+  onResolve,
   projectId: selectedProjectId,
 }: {
   connections: ConnectionRequiredData[];
-  onSend?: (text: string) => void;
+  onResolve?: (payload: Record<string, unknown>) => void;
   projectId?: string | null;
 }) {
   const queryClient = useQueryClient();
@@ -132,13 +132,15 @@ export function ConnectionsRequiredCard({
                 {t('All connected')}
               </div>
             ) : (
-              onSend && (
+              onResolve && (
                 <Button
                   size="sm"
                   className="gap-1.5"
                   onClick={() => {
                     setContinued(true);
-                    onSend(t('All connections are ready, continue building.'));
+                    onResolve({
+                      message: 'All connections are ready, continue building.',
+                    });
                   }}
                 >
                   <Check className="h-3.5 w-3.5" />

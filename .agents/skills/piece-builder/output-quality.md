@@ -100,7 +100,7 @@ async run(context) {
   const response = await httpClient.sendRequest<ApiContact>({
     method: HttpMethod.GET,
     url: `https://api.example.com/v1/contacts/${context.propsValue.contactId}`,
-    authentication: { type: AuthenticationType.BEARER_TOKEN, token: context.auth as string },
+    authentication: { type: AuthenticationType.BEARER_TOKEN, token: context.auth.secret_text },
   });
 
   const contact = response.body;
@@ -128,7 +128,7 @@ async run(context) {
   const response = await httpClient.sendRequest<{ data: ApiContact[] }>({
     method: HttpMethod.GET,
     url: 'https://api.example.com/v1/contacts',
-    authentication: { type: AuthenticationType.BEARER_TOKEN, token: context.auth as string },
+    authentication: { type: AuthenticationType.BEARER_TOKEN, token: context.auth.secret_text },
     queryParams: { limit: String(context.propsValue.limit ?? 100) },
   });
 

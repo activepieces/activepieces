@@ -7,9 +7,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const outputPath = path.resolve(__dirname, '../../../dist/packages/engine/main.js')
 const outdir = path.resolve(__dirname, '../../../dist/packages/engine')
 
+const watch = process.argv.includes('--watch')
+
 fs.rmSync(outdir, { recursive: true, force: true })
 
-const result = await esbuild.build({
+const buildOptions = {
     entryPoints: [path.resolve(__dirname, 'src/main.ts')],
     bundle: true,
     platform: 'node',
@@ -17,7 +19,7 @@ const result = await esbuild.build({
     outfile: outputPath,
     format: 'cjs',
     sourcemap: true,
-    minify: true,
+    minify: !watch,
     metafile: true,
     treeShaking: true,
     alias: {
@@ -26,6 +28,35 @@ const result = await esbuild.build({
         '@activepieces/pieces-common': path.resolve(__dirname, '../../pieces/common/src'),
     },
     external: ['isolated-vm', 'utf-8-validate', 'bufferutil'],
-})
+    plugins: [
+        {
+            name: 'engine-rebuild-logger',
+            setup(build) {
+                let startedAt = 0
+                build.onStart(() => {
+                    startedAt = Date.now()
+                    console.log('[engine] rebuilding…')
+                })
+                build.onEnd((result) => {
+                    if (result.metafile) {
+                        fs.writeFileSync(outputPath + '.meta.json', JSON.stringify(result.metafile))
+                    }
+                    const errors = result.errors?.length ?? 0
+                    if (errors > 0) {
+                        console.log(`[engine] rebuild failed with ${errors} error(s)`)
+                    } else {
+                        console.log(`[engine] rebuild done in ${Date.now() - startedAt}ms`)
+                    }
+                })
+            },
+        },
+    ],
+}
 
-fs.writeFileSync(outputPath + '.meta.json', JSON.stringify(result.metafile))
+if (watch) {
+    const ctx = await esbuild.context(buildOptions)
+    await ctx.rebuild()
+    await ctx.watch()
+} else {
+    await esbuild.build(buildOptions)
+}

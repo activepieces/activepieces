@@ -16,6 +16,7 @@ import { healthModule } from './health/health.module'
 import { embedSecurity } from './helper/embed-security'
 import { errorHandler } from './helper/error-handler'
 import { exceptionHandler } from './helper/exception-handler'
+import { networkUtils } from './helper/network-utils'
 import { rejectedPromiseHandler } from './helper/promise-handler'
 import { system } from './helper/system/system'
 import { AppSystemProp } from './helper/system/system-props'
@@ -98,7 +99,7 @@ export const setupServer = async (): Promise<FastifyInstance> => {
         void reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
         if (!reply.hasHeader('Content-Security-Policy')) {
             const frameAncestors = await embedSecurity(request.log).getFrameAncestorsHeader({
-                hostname: request.hostname,
+                hostname: networkUtils.getRequestHost(request),
             })
             void reply.header('Content-Security-Policy', frameAncestors)
         }

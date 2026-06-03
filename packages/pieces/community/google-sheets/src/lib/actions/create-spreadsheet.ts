@@ -54,6 +54,7 @@ export const createSpreadsheetAction = createAction({
 							q: "mimeType='application/vnd.google-apps.folder' and trashed = false",
 							includeItemsFromAllDrives: includeTeamDrives || isServiceAccountWithoutImpersonation ? 'true' : 'false',
 							supportsAllDrives: 'true',
+							corpora: includeTeamDrives || isServiceAccountWithoutImpersonation ? 'allDrives' : 'user',
 						},
 						authentication: {
 							type: AuthenticationType.BEARER_TOKEN,

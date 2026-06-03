@@ -34,6 +34,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof googleSheetsAuth
 				orderBy: 'createdTime desc',
 				supportsAllDrives: true,
 				includeItemsFromAllDrives: propsValue.includeTeamDrives,
+				corpora: propsValue.includeTeamDrives ? 'allDrives' : 'user',
 				pageToken: nextPageToken,
 			});
 			const fileList: drive_v3.Schema$FileList = response.data;

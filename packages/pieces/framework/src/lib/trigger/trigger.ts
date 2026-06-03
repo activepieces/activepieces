@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { OnStartContext, TestOrRunHookContext, TriggerHookContext } from '../context';
 import type { OutputDisplayHints } from '../output-display-hints';
-import { TriggerBase } from '../piece-metadata';
+import { AiMetadata, TriggerBase } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { ExtractPieceAuthPropertyTypeForMethods, PieceAuthProperty } from '../property/authentication';
 import { isNil, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration, WebhookHandshakeStrategy } from '@activepieces/shared';
@@ -54,8 +54,9 @@ type BaseTriggerParams<
   run: (context: TestOrRunHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<unknown[]>
   test?: (context: TestOrRunHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<unknown[]>,
   onStart?: OnStartRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps>,
-  sampleData: unknown,
-  outputDisplayHints?: OutputDisplayHints,
+  sampleData: unknown
+  outputDisplayHints?: OutputDisplayHints
+  aiMetadata?: AiMetadata
 }
 
 type WebhookTriggerParams<
@@ -101,6 +102,7 @@ export class ITrigger<
     public readonly sampleData: unknown,
     public readonly testStrategy: TriggerTestStrategy,
     public readonly outputDisplayHints?: OutputDisplayHints,
+    public readonly aiMetadata?: AiMetadata,
   ) { }
 }
 
@@ -138,6 +140,7 @@ export const createTrigger = <
         params.sampleData,
         params.test ? TriggerTestStrategy.TEST_FUNCTION : TriggerTestStrategy.SIMULATION,
         params.outputDisplayHints,
+        params.aiMetadata,
       )
     case TriggerStrategy.POLLING:
       return new ITrigger(
@@ -159,6 +162,7 @@ export const createTrigger = <
         params.sampleData,
         TriggerTestStrategy.TEST_FUNCTION,
         params.outputDisplayHints,
+        params.aiMetadata,
       )
     case TriggerStrategy.MANUAL:
       return new ITrigger(
@@ -180,6 +184,7 @@ export const createTrigger = <
         params.sampleData,
         TriggerTestStrategy.TEST_FUNCTION,
         params.outputDisplayHints,
+        params.aiMetadata,
       )
     case TriggerStrategy.APP_WEBHOOK:
       return new ITrigger(
@@ -201,6 +206,7 @@ export const createTrigger = <
         params.sampleData,
         (isNil(params.sampleData) && isNil(params.test)) ? TriggerTestStrategy.SIMULATION : TriggerTestStrategy.TEST_FUNCTION,
         params.outputDisplayHints,
+        params.aiMetadata,
       )
   }
 }
