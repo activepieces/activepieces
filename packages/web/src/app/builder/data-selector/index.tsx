@@ -37,7 +37,6 @@ const buildDataSelectorStructure = (
         step,
         state.outputSampleData,
         state.isFocusInsideListMapperModeInput,
-        selectedStep,
       );
     } catch (error) {
       console.error('Failed to traverse step:', error);

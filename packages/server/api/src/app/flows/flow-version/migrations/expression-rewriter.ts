@@ -92,6 +92,96 @@ function rewriteToken(code: string, stepNames: Set<string>): string | null {
     return applyRewrites(code, rewrites)
 }
 
+/**
+ * Inverse of {@link rewriteStepReferences}: strips the `['output']` member that
+ * the forward rewriter injected immediately after a step reference, recovering
+ * the original flat expression (`step_1['output'].foo` → `step_1.foo`). Locally
+ * shadowed names are left untouched, mirroring the forward pass.
+ */
+function unwrapStepReferences({ input, stepNames }: { input: string, stepNames: string[] }): string {
+    if (!input.includes('{{')) {
+        return input
+    }
+    const stepNameSet = new Set<string>(stepNames)
+    stepNameSet.add(TRIGGER_NAME)
+    return input.replace(VARIABLE_PATTERN, (match, content: string) => {
+        const rewritten = unwrapToken(content, stepNameSet)
+        if (rewritten === null) {
+            return match
+        }
+        return `{{${rewritten}}}`
+    })
+}
+
+function unwrapToken(code: string, stepNames: Set<string>): string | null {
+    if (code.trim().length === 0) {
+        return null
+    }
+    let ast: AnyNode
+    try {
+        ast = parse(`(${code})`, { ecmaVersion: ECMA_VERSION, sourceType: 'script', ranges: true })
+    }
+    catch {
+        return null
+    }
+    let scopeManager
+    try {
+        scopeManager = analyze(ast, { ecmaVersion: ECMA_VERSION, sourceType: 'script' })
+    }
+    catch {
+        return null
+    }
+
+    const globalScope = scopeManager.scopes[0]
+
+    const unresolvedIdentifiers = new Set<unknown>()
+    for (const ref of globalScope.through) {
+        unresolvedIdentifiers.add(ref.identifier)
+    }
+
+    const rewrites: Rewrite[] = []
+
+    ancestor(ast, {
+        MemberExpression(node, _state, ancestors) {
+            if (!isOutputMemberOfStepRef(node, stepNames, unresolvedIdentifiers)) {
+                return
+            }
+            const objectName = (node.object as Identifier).name
+            const parent = ancestors.length >= 2 ? ancestors[ancestors.length - 2] : null
+            if (
+                parent !== null && parent.type === 'Property' && !parent.shorthand && !parent.computed
+                && parent.value === node && parent.key.type === 'Identifier' && parent.key.name === objectName
+            ) {
+                // inverse of `{step_1} ==> {step_1: step_1['output']}`
+                rewrites.push({
+                    start: parent.start - WRAP_OFFSET,
+                    end: parent.end - WRAP_OFFSET,
+                    text: objectName,
+                })
+                return
+            }
+            // `step_1['output']` ==> `step_1`
+            rewrites.push({
+                start: node.object.end - WRAP_OFFSET,
+                end: node.end - WRAP_OFFSET,
+                text: '',
+            })
+        },
+    })
+
+    return applyRewrites(code, rewrites)
+}
+
+function isOutputMemberOfStepRef(node: MemberExpression, stepNames: Set<string>, unresolvedIdentifiers: Set<unknown>): boolean {
+    if (!node.computed || node.object.type !== 'Identifier') {
+        return false
+    }
+    if (!isStepRef(node.object.name, stepNames) || !unresolvedIdentifiers.has(node.object)) {
+        return false
+    }
+    return node.property.type === 'Literal' && node.property.value === OUTPUT_PROPERTY_NAME
+}
+
 function applyRewrites(source: string, rewrites: Rewrite[]): string {
     const ordered = [...rewrites].sort((a, b) => a.start - b.start)
     const chunks: string[] = []
@@ -152,12 +242,14 @@ function isVariableReferenceInProperty(node: Identifier, parent: Property | Assi
 
 export const expressionRewriter = {
     rewriteStepReferences,
+    unwrapStepReferences,
 }
 
 const VARIABLE_PATTERN = /\{\{(.*?)\}\}/g
 const STEP_NAME_PATTERN = /^step_\d+$/
 const TRIGGER_NAME = 'trigger'
 const OUTPUT_INSERT = '[\'output\']'
+const OUTPUT_PROPERTY_NAME = 'output'
 const ECMA_VERSION = 2024
 // Input is parsed as `(${code})` so bare expressions (e.g. `step_1.foo`) are accepted as a complete program.
 // The leading `(` shifts every AST `start`/`end` position by 1 — subtract this when mapping back to `code`.

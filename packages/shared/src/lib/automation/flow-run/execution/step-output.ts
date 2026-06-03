@@ -17,7 +17,7 @@ type BaseStepOutputParams<T extends FlowActionType | FlowTriggerType, OUTPUT> = 
     output?: OUTPUT
     outputType?: StepOutputType
     duration?: number
-    errorMessage?: string
+    errorMessage?: unknown
 }
 
 export class GenericStepOutput<T extends FlowActionType | FlowTriggerType, OUTPUT> {
@@ -27,7 +27,7 @@ export class GenericStepOutput<T extends FlowActionType | FlowTriggerType, OUTPU
     output?: OUTPUT
     outputType?: StepOutputType
     duration?: number
-    errorMessage?: string
+    errorMessage?: unknown
 
     constructor(step: BaseStepOutputParams<T, OUTPUT>) {
         this.type = step.type
@@ -53,7 +53,7 @@ export class GenericStepOutput<T extends FlowActionType | FlowTriggerType, OUTPU
         })
     }
 
-    setErrorMessage(errorMessage: string): GenericStepOutput<T, OUTPUT> {
+    setErrorMessage(errorMessage: unknown): GenericStepOutput<T, OUTPUT> {
         return new GenericStepOutput<T, OUTPUT>({
             ...this,
             errorMessage,

@@ -89,8 +89,8 @@ async function setupSubflowFixtures() {
                 mode: 'simple',
                 response: {
                     response: {
-                        greeting: "{{step_1['output'].greeting}}",
-                        processed: "{{step_1['output'].processed}}",
+                        greeting: '{{step_1.greeting}}',
+                        processed: '{{step_1.processed}}',
                     },
                 },
             },
@@ -115,7 +115,7 @@ async function setupSubflowFixtures() {
                 packageJson: '{}',
             },
             input: {
-                name: "{{trigger['output'].data.name}}",
+                name: '{{trigger.data.name}}',
             },
             errorHandlingOptions: {},
         },
@@ -182,7 +182,7 @@ async function setupSubflowFixtures() {
                 mode: 'simple',
                 flowProps: {
                     payload: {
-                        name: "{{trigger['output'].body.name}}",
+                        name: '{{trigger.body.name}}',
                     },
                 },
                 waitForResponse: true,
@@ -254,7 +254,7 @@ async function setupSubflowWithWebhookResponseFixtures() {
                 mode: 'simple',
                 response: {
                     response: {
-                        echo: "{{trigger['output'].data.message}}",
+                        echo: '{{trigger.data.message}}',
                     },
                 },
             },
@@ -316,7 +316,7 @@ async function setupSubflowWithWebhookResponseFixtures() {
                 fields: {
                     status: 200,
                     headers: {},
-                    body: { echo: "{{step_1['output'].data.echo}}" },
+                    body: { echo: '{{step_1.data.echo}}' },
                 },
             },
             propertySettings: {},
@@ -345,7 +345,7 @@ async function setupSubflowWithWebhookResponseFixtures() {
                 mode: 'simple',
                 flowProps: {
                     payload: {
-                        message: "{{trigger['output'].body.message}}",
+                        message: '{{trigger.body.message}}',
                     },
                 },
                 waitForResponse: true,
@@ -451,7 +451,7 @@ describe('Execute Flow E2E', () => {
                     packageJson: '{}',
                 },
                 input: {
-                    data: "{{step_1['output']}}",
+                    data: '{{step_1}}',
                 },
                 errorHandlingOptions: {},
             },
@@ -468,8 +468,8 @@ describe('Execute Flow E2E', () => {
                 actionName: 'advanced_mapping',
                 input: {
                     mapping: {
-                        fullName: "{{trigger['output'].body.name}}",
-                        emailAddress: "{{trigger['output'].body.email}}",
+                        fullName: '{{trigger.body.name}}',
+                        emailAddress: '{{trigger.body.email}}',
                     },
                 },
                 propertySettings: {},
@@ -839,7 +839,7 @@ describe('Execute Flow E2E', () => {
                     packageJson: '{}',
                 },
                 input: {
-                    received: '{{step_1.output.big}}',
+                    received: '{{step_1.big}}',
                 },
                 errorHandlingOptions: {},
             },

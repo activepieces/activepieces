@@ -10,7 +10,7 @@ describe('flow with looping', () => {
         const codeAction = buildCodeAction({
             name: 'echo_step',
             input: {
-                'index': '{{loop.output.index}}',
+                'index': '{{loop.index}}',
             },
         })
         const result = await flowExecutor.execute({
@@ -38,7 +38,7 @@ describe('flow with looping', () => {
             },
             nextAction: buildSimpleLoopAction({
                 name: 'loop',
-                loopItems: '{{ echo_step.output.array }}',
+                loopItems: '{{ echo_step.array }}',
                 firstLoopAction: buildCodeAction({
                     name: 'runtime',
                     input: {},

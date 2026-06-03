@@ -46,18 +46,21 @@ const DataSelectorNodeContent = ({
 
   const [ripple, rippleEvent] = useApRipple();
 
-  const isRootStep = depth === 0;
-  const rootStepName =
-    isRootStep && (node.data.type === 'value' || node.data.type === 'test')
-      ? node.data.stepName
+  const stepForRoot =
+    depth === 0 && node.data.type === 'value'
+      ? flowStructureUtil.getStep(node.data.propertyPath, flowVersion.trigger)
+      : depth === 0 && node.data.type === 'test'
+      ? flowStructureUtil.getStep(node.data.stepName, flowVersion.trigger)
       : undefined;
-  const rootStep = rootStepName
-    ? flowStructureUtil.getStep(rootStepName, flowVersion.trigger)
-    : undefined;
 
   const isExpandable = !!node.children && node.children.length > 0;
+  const isStepRoot = depth === 0;
+  const isPrimitiveStepRoot = isStepRoot && !isExpandable;
+  const isLeafValue =
+    !isExpandable && node.data.type === 'value' && !isStepRoot;
   const isInsertable =
     node.data.type === 'value' && node.data.insertable && !node.isLoopStepNode;
+  const showInsertButton = isInsertable;
 
   const arrayValue =
     node.data.type === 'value' && Array.isArray(node.data.value)
@@ -77,7 +80,7 @@ const DataSelectorNodeContent = ({
     }
   };
 
-  const showValuePreview = !isExpandable && isInsertable;
+  const showValuePreview = (isLeafValue || isPrimitiveStepRoot) && isInsertable;
   const valuePreview =
     showValuePreview && node.data.type === 'value'
       ? formatValuePreview(node.data.value)
@@ -98,11 +101,11 @@ const DataSelectorNodeContent = ({
       <div
         className={cn(
           'flex items-center gap-1.5 pr-2 min-w-0',
-          isRootStep ? 'min-h-[40px] py-1.5' : 'min-h-[32px]',
+          isStepRoot ? 'min-h-[40px] py-1.5' : 'min-h-[32px]',
         )}
         style={{ paddingLeft: depth * INDENT_PER_DEPTH + 12 }}
       >
-        {!isRootStep && isExpandable && (
+        {!isStepRoot && isExpandable && (
           <ChevronRight
             className={cn(
               'size-3.5 shrink-0 text-muted-foreground transition-transform',
@@ -110,21 +113,20 @@ const DataSelectorNodeContent = ({
             )}
           />
         )}
-        {!isRootStep && !isExpandable && (
+        {!isStepRoot && !isExpandable && (
           <div className="size-3.5 shrink-0" aria-hidden />
         )}
 
-        {isRootStep && rootStep && <StepRootIcon step={rootStep} />}
+        {isStepRoot && stepForRoot && <StepRootIcon step={stepForRoot} />}
 
         <div className="flex items-center gap-1.5 min-w-0 flex-1">
           {node.data.type !== 'test' && (
             <span
               className={cn(
                 'truncate min-w-0 shrink-0 max-w-[40%]',
-                isRootStep
+                isStepRoot
                   ? 'font-medium text-foreground text-sm'
                   : 'text-foreground text-sm',
-                node.data.displayNameClassName,
               )}
             >
               {node.data.displayName}
@@ -151,7 +153,7 @@ const DataSelectorNodeContent = ({
           )}
         </div>
 
-        {isInsertable && (
+        {showInsertButton && (
           <Button
             variant="basic"
             size="sm"
@@ -171,7 +173,7 @@ const DataSelectorNodeContent = ({
           </Button>
         )}
 
-        {isRootStep && isExpandable && (
+        {isStepRoot && isExpandable && (
           <ChevronDown
             className={cn(
               'size-4 shrink-0 text-muted-foreground transition-transform',

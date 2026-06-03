@@ -95,11 +95,7 @@ export const flowExecutor = {
                 executionState: flowExecutionContext,
                 constants,
             })
-            flowExecutionContext = await runContinueOnFailureBranchIfNeeded({
-                action: currentAction,
-                executionState: flowExecutionContext,
-                constants,
-            })
+
             flowExecutionContext = await applyLogSizeLimitIfExceeded(flowExecutionContext, currentAction)
 
             const shouldBreakExecution = flowExecutionContext.verdict.status !== FlowRunStatus.RUNNING || testSingleStepMode
@@ -123,39 +119,6 @@ export const flowExecutor = {
         const flowEndTime = performance.now()
         return flowExecutionContext.setDuration(flowEndTime - flowStartTime)
     },
-}
-
-async function runContinueOnFailureBranchIfNeeded({ action, executionState, constants }: {
-    action: FlowAction
-    executionState: FlowExecutorContext
-    constants: EngineConstants
-}): Promise<FlowExecutorContext> {
-    if (action.type !== FlowActionType.CODE && action.type !== FlowActionType.PIECE) {
-        return executionState
-    }
-    const errorHandlingOptions = action.settings.errorHandlingOptions
-    const cofEnabled = errorHandlingOptions?.continueOnFailure?.value
-    if (!cofEnabled) {
-        return executionState
-    }
-    const branches = errorHandlingOptions?.continueOnFailureBranches
-    if (isNil(branches?.onSuccess) && isNil(branches?.onFailure)) {
-        return executionState
-    }
-    if (executionState.verdict.status !== FlowRunStatus.RUNNING) {
-        return executionState
-    }
-    const stepOutput = executionState.getStepOutput(action.name)
-    const stepFailed = stepOutput?.status === StepOutputStatus.FAILED
-    const branchHead = stepFailed ? branches?.onFailure : branches?.onSuccess
-    if (isNil(branchHead)) {
-        return executionState
-    }
-    return flowExecutor.execute({
-        action: branchHead,
-        executionState,
-        constants,
-    })
 }
 
 const applyLogSizeLimitIfExceeded = async (

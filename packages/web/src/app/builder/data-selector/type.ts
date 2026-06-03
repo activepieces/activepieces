@@ -1,7 +1,6 @@
 export type DataSelectorTreeChunkNodeData = {
   type: 'chunk';
   displayName: string;
-  displayNameClassName?: string;
 };
 
 export type DataSelectorTreeNodeData = {
@@ -10,9 +9,6 @@ export type DataSelectorTreeNodeData = {
   displayName: string;
   propertyPath: string;
   insertable: boolean;
-  hideStepIcon?: boolean;
-  displayNameClassName?: string;
-  stepName?: string;
 };
 
 export type DataSelectorTestNodeData = {

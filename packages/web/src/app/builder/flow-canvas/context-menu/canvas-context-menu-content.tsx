@@ -100,14 +100,6 @@ export const CanvasContextMenuContent = ({
     firstSelectedStep?.type === FlowActionType.ROUTER &&
     !readonly &&
     contextMenuType === ContextMenuType.STEP;
-  const showPasteAsCofBranchChild =
-    selectedNodes.length === 1 &&
-    (firstSelectedStep?.type === FlowActionType.CODE ||
-      firstSelectedStep?.type === FlowActionType.PIECE) &&
-    firstSelectedStep.settings.errorHandlingOptions?.continueOnFailure
-      ?.value === true &&
-    !readonly &&
-    contextMenuType === ContextMenuType.STEP;
   const showPasteAfterCurrentStep =
     selectedNodes.length === 1 &&
     !readonly &&
@@ -149,7 +141,6 @@ export const CanvasContextMenuContent = ({
     showSkip ||
     showPasteAsFirstLoopAction ||
     showPasteAsBranchChild ||
-    showPasteAsCofBranchChild ||
     showPasteAfterCurrentStep ||
     showPasteAfterLastStep ||
     showDelete;
@@ -217,7 +208,6 @@ export const CanvasContextMenuContent = ({
         )}
         {(showPasteAsFirstLoopAction ||
           showPasteAsBranchChild ||
-          showPasteAsCofBranchChild ||
           showPasteAfterCurrentStep) && (
           <ContextMenuSeparator></ContextMenuSeparator>
         )}
@@ -331,47 +321,6 @@ export const CanvasContextMenuContent = ({
                 }}
               >
                 + {t('New Branch')}
-              </ContextMenuItem>
-            </ContextMenuSubContent>
-          </ContextMenuSub>
-        )}
-
-        {showPasteAsCofBranchChild && (
-          <ContextMenuSub>
-            <ContextMenuSubTrigger className="flex items-center gap-2">
-              <ClipboardPaste className="w-4 h-4"></ClipboardPaste>{' '}
-              {t('Paste Inside...')}
-            </ContextMenuSubTrigger>
-            <ContextMenuSubContent>
-              <ContextMenuItem
-                onClick={() => {
-                  pasteNodes(
-                    flowVersion,
-                    {
-                      parentStepName: selectedNodes[0],
-                      stepLocationRelativeToParent:
-                        StepLocationRelativeToParent.INSIDE_ON_SUCCESS_BRANCH,
-                    },
-                    applyOperation,
-                  );
-                }}
-              >
-                {t('Success')}
-              </ContextMenuItem>
-              <ContextMenuItem
-                onClick={() => {
-                  pasteNodes(
-                    flowVersion,
-                    {
-                      parentStepName: selectedNodes[0],
-                      stepLocationRelativeToParent:
-                        StepLocationRelativeToParent.INSIDE_ON_FAILURE_BRANCH,
-                    },
-                    applyOperation,
-                  );
-                }}
-              >
-                {t('Failure')}
               </ContextMenuItem>
             </ContextMenuSubContent>
           </ContextMenuSub>

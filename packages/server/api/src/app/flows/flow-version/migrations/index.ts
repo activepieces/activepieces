@@ -15,6 +15,7 @@ import { migrateV19StripPieceVersionWildcards } from './migrate-v19-strip-piece-
 import { migrateAgentPieceV2 } from './migrate-v2-agent-piece'
 import { migrateV20GoogleModelPrefix } from './migrate-v20-google-model-prefix'
 import { migrateV21StepOutputNesting } from './migrate-v21-step-output-nesting'
+import { migrateV22RevertStepOutputNesting } from './migrate-v22-revert-step-output-nesting'
 import { migrateAgentPieceV3 } from './migrate-v3-agent-piece'
 import { migrateAgentPieceV4 } from './migrate-v4-agent-piece'
 import { migrateHttpToWebhookV5 } from './migrate-v5-http-to-webhook'
@@ -56,6 +57,7 @@ const migrations: Migration[] = [
     migrateV19StripPieceVersionWildcards,
     migrateV20GoogleModelPrefix,
     migrateV21StepOutputNesting,
+    migrateV22RevertStepOutputNesting,
 ] as const
 
 export const flowMigrations = {
