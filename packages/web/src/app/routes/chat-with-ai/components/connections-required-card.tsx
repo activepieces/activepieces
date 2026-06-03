@@ -67,16 +67,10 @@ export function ConnectionsRequiredCard({
       if (cancelled) return;
       const map: Record<string, AppConnectionWithoutSensitiveData> = {};
       const alreadyActive = new Set<string>();
-      const aiErrorPieces = new Set(
-        connections.filter((c) => c.status === 'error').map((c) => c.piece),
-      );
       for (const { piece, connection } of results) {
         if (connection) {
           map[piece] = connection;
-          if (
-            connection.status === AppConnectionStatus.ACTIVE &&
-            !aiErrorPieces.has(piece)
-          ) {
+          if (connection.status === AppConnectionStatus.ACTIVE) {
             alreadyActive.add(piece);
           }
         }

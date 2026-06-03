@@ -17,7 +17,7 @@ import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { ChatConversationEntity } from './chat-conversation-entity'
 
-const STREAMING_STALENESS_TIMEOUT_MS = 15 * 60 * 1_000
+const STREAMING_STALENESS_TIMEOUT_MS = 20 * 60 * 1_000
 
 const conversationRepo = repoFactory(ChatConversationEntity)
 
