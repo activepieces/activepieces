@@ -113,7 +113,7 @@ const CreateRequest = {
 
 const GetRecordByIdRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.READ_TABLE, {
             type: ProjectResourceType.TABLE,
             tableName: RecordEntity,
         }),
