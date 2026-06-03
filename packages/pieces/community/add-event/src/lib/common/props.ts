@@ -226,11 +226,23 @@ const eventFields = ({ mode }: { mode: 'create' | 'update' }) => {
         'Same format as the start. Defaults to one hour after the start.',
       required: false,
     }),
-    all_day_event: Property.Checkbox({
-      displayName: 'All-day Event',
-      required: false,
-      defaultValue: isCreate ? false : undefined,
-    }),
+    all_day_event: isCreate
+      ? Property.Checkbox({
+          displayName: 'All-day Event',
+          required: false,
+          defaultValue: false,
+        })
+      : Property.StaticDropdown({
+          displayName: 'All-day Event',
+          description: 'Leave blank to keep the current value.',
+          required: false,
+          options: {
+            options: [
+              { label: 'Yes', value: true },
+              { label: 'No', value: false },
+            ],
+          },
+        }),
     timezone: timezone({ required: false }),
     description: Property.LongText({
       displayName: 'Description',
@@ -300,11 +312,23 @@ const eventFields = ({ mode }: { mode: 'create' | 'update' }) => {
       description: "A custom landing page template ID, or 'default'.",
       required: false,
     }),
-    rsvp_enabled: Property.Checkbox({
-      displayName: 'Enable RSVP',
-      required: false,
-      defaultValue: isCreate ? false : undefined,
-    }),
+    rsvp_enabled: isCreate
+      ? Property.Checkbox({
+          displayName: 'Enable RSVP',
+          required: false,
+          defaultValue: false,
+        })
+      : Property.StaticDropdown({
+          displayName: 'Enable RSVP',
+          description: 'Leave blank to keep the current value.',
+          required: false,
+          options: {
+            options: [
+              { label: 'Yes', value: true },
+              { label: 'No', value: false },
+            ],
+          },
+        }),
     rsvp_form_id: Property.ShortText({
       displayName: 'RSVP Form ID',
       description:

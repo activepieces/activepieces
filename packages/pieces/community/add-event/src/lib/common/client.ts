@@ -37,7 +37,7 @@ async function apiCall<T extends HttpMessageBody>({
       token: apiKey,
     },
     queryParams,
-    body,
+    body: compactBody(body),
   };
 
   const response = await httpClient.sendRequest<T>(request);
@@ -74,6 +74,32 @@ async function getAllPages<T extends HttpMessageBody>({
   } while (page <= totalPages && (maxPages === undefined || page <= maxPages));
 
   return results;
+}
+
+// AddEvent treats an omitted field as "no change" (or its default); an explicit
+// null or empty value would instead overwrite existing data or be rejected.
+// Blank optional inputs reach us as null (dropdowns), false (checkboxes — handled
+// at the prop level for updates), or {} (objects), so strip nil/empty top-level
+// values before sending. Shallow only — never mutate user-supplied nested data.
+function compactBody(body: unknown): unknown {
+  if (body === null || typeof body !== 'object' || Array.isArray(body)) {
+    return body;
+  }
+  const entries = Object.entries(body).filter(
+    ([, value]) => !isNilOrEmptyObject(value)
+  );
+  return Object.fromEntries(entries);
+}
+
+function isNilOrEmptyObject(value: unknown): boolean {
+  if (value === null || value === undefined) {
+    return true;
+  }
+  return (
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    Object.keys(value).length === 0
+  );
 }
 
 export const addEventApi = {
