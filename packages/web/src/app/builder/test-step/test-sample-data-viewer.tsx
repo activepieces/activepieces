@@ -16,10 +16,10 @@ import { cn } from '@/lib/utils';
 import { DataDisplayTabs } from '../data-display/data-display-tabs';
 import { ErrorExplanationContext } from '../data-display/explanation-prompt';
 import { FriendlyErrorView } from '../data-display/friendly-error-view';
+import { StepDataPanelHeader } from '../step-data/step-data-panel-header';
+import { StepDataPanelViewToggle } from '../step-data/step-data-panel-view-toggle';
 
 import { AgentTestStep, isRunAgent } from './agent-test-step';
-import { TestPanelHeader } from './test-panel-header';
-import { TestPanelViewToggle } from './test-panel-view-toggle';
 import { TestButtonTooltip } from './test-step-tooltip';
 
 type TestSampleDataViewerProps = {
@@ -117,7 +117,7 @@ export const TestSampleDataViewer = React.memo(
 
     return (
       <div className="flex flex-col h-full w-full min-h-0">
-        <TestPanelHeader status={status} lastTestDate={lastTestDate} />
+        <StepDataPanelHeader status={status} lastTestDate={lastTestDate} />
         {!isTesting && children}
         <div className="flex-1 flex flex-col w-full text-start min-h-0">
           {errorMessage && !isTesting && (
@@ -200,7 +200,7 @@ const TestPanelToolbar = ({
       hasLogs={hasLogs}
       disabled={disabled}
     />
-    <TestPanelViewToggle disabled={disabled} />
+    <StepDataPanelViewToggle disabled={disabled} />
   </div>
 );
 

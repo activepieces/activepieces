@@ -36,12 +36,13 @@ import {
 import { CopyIconButton } from './copy-icon-button';
 import { PlanProgressCard } from './plan-progress-card';
 import { ProjectPickerCard } from './project-picker-card';
+import { StreamingText } from './streaming-text';
 
 const PROSE_CLASSES =
   'max-w-none break-words text-sm [&_p]:mb-4 [&_p:last-child]:mb-0 [&_table]:mb-4 [&_h1]:text-[18px] [&_h2]:text-[18px] [&_h3]:text-[18px]';
 
 const ACTION_BUTTON_CLASS =
-  'flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground';
+  'flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring';
 
 export const AssistantMessage = memo(function AssistantMessage({
   message,
@@ -60,6 +61,7 @@ export const AssistantMessage = memo(function AssistantMessage({
     blocks,
     hasContent,
     lastDisplayIdx: lastDisplayToolIdx,
+    lastTextIdx,
   } = useMemo(() => {
     const result: MessageBlock[] = [];
     let currentThinking: {
@@ -67,9 +69,21 @@ export const AssistantMessage = memo(function AssistantMessage({
       reasoningText: string;
     } | null = null;
     let hasText = false;
-    let lastThinkingStatus: string | null = null;
+    let pendingDescription: string | null = null;
+
+    function flushPendingDescription() {
+      if (pendingDescription) {
+        const thinking = ensureThinking();
+        thinking.steps.push({
+          kind: 'thinking-status',
+          text: pendingDescription,
+        });
+        pendingDescription = null;
+      }
+    }
 
     function flushThinking() {
+      flushPendingDescription();
       if (
         currentThinking &&
         (currentThinking.steps.length > 0 ||
@@ -87,6 +101,13 @@ export const AssistantMessage = memo(function AssistantMessage({
       return currentThinking;
     }
 
+    function pushToolStep(p: AnyToolPart) {
+      const thinking = ensureThinking();
+      const description = pendingDescription;
+      pendingDescription = null;
+      thinking.steps.push({ kind: 'tool', part: p, description });
+    }
+
     for (let i = 0; i < message.parts.length; i++) {
       const p = message.parts[i];
 
@@ -95,6 +116,7 @@ export const AssistantMessage = memo(function AssistantMessage({
         hasText = true;
         result.push({ kind: 'text', text: p.text });
       } else if (p.type === 'reasoning') {
+        flushPendingDescription();
         const thinking = ensureThinking();
         thinking.reasoningText += p.text;
         const trimmed = p.text.trim();
@@ -107,12 +129,8 @@ export const AssistantMessage = memo(function AssistantMessage({
           const input = p.input as { status?: string } | undefined;
           const statusText = (input?.status ?? '').trim();
           if (statusText) {
-            const thinking = ensureThinking();
-            thinking.steps.push({
-              kind: 'thinking-status',
-              text: statusText,
-            });
-            lastThinkingStatus = statusText;
+            flushPendingDescription();
+            pendingDescription = statusText;
           }
           continue;
         }
@@ -131,37 +149,9 @@ export const AssistantMessage = memo(function AssistantMessage({
             flushThinking();
             result.push({ kind: 'batch-progress', data: batchPart });
           }
-          const thinking = ensureThinking();
-          const lastStep = thinking.steps[thinking.steps.length - 1];
-          if (
-            lastThinkingStatus &&
-            lastStep?.kind === 'thinking-status' &&
-            lastStep.text === lastThinkingStatus
-          ) {
-            thinking.steps[thinking.steps.length - 1] = {
-              ...lastStep,
-              toolPart: p,
-            };
-          } else {
-            thinking.steps.push({ kind: 'tool', part: p });
-          }
-          lastThinkingStatus = null;
+          pushToolStep(p);
         } else {
-          const thinking = ensureThinking();
-          const lastStep = thinking.steps[thinking.steps.length - 1];
-          if (
-            lastThinkingStatus &&
-            lastStep?.kind === 'thinking-status' &&
-            lastStep.text === lastThinkingStatus
-          ) {
-            thinking.steps[thinking.steps.length - 1] = {
-              ...lastStep,
-              toolPart: p,
-            };
-          } else {
-            thinking.steps.push({ kind: 'tool', part: p });
-          }
-          lastThinkingStatus = null;
+          pushToolStep(p);
         }
       }
     }
@@ -185,19 +175,20 @@ export const AssistantMessage = memo(function AssistantMessage({
       (b) => b.kind === 'display-tool',
     );
 
-    if (isStreaming) {
-      const hasThinkingAfter = result.some(
-        (b, idx) => b.kind === 'thinking' && idx > lastDisplayIdx,
-      );
-      if (result.length === 0 || (lastDisplayIdx >= 0 && !hasThinkingAfter)) {
+    if (isStreaming && !hasText) {
+      const hasThinkingBlock = result.some((b) => b.kind === 'thinking');
+      if (!hasThinkingBlock) {
         result.push({ kind: 'thinking', steps: [], reasoningText: '' });
       }
     }
+
+    const lastTextIdx = result.findLastIndex((b) => b.kind === 'text');
 
     return {
       blocks: result,
       hasContent: hasText,
       lastDisplayIdx,
+      lastTextIdx,
     };
   }, [message.parts, isStreaming]);
 
@@ -233,7 +224,7 @@ export const AssistantMessage = memo(function AssistantMessage({
   return (
     <motion.div
       className="py-3 group/msg"
-      initial={isFromHistory ? false : { opacity: 0, y: 10 }}
+      initial={isFromHistory || isStreaming ? false : { opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
@@ -264,12 +255,21 @@ export const AssistantMessage = memo(function AssistantMessage({
                     }
                   />
                 );
-              case 'text':
+              case 'text': {
+                const isActiveText = isStreaming && i === lastTextIdx;
                 return (
                   <div key={`text-${i}`} className={PROSE_CLASSES}>
-                    <Markdown>{block.text}</Markdown>
+                    {isActiveText ? (
+                      <StreamingText text={block.text} isStreaming={true} />
+                    ) : (
+                      <Markdown>{block.text}</Markdown>
+                    )}
+                    {isActiveText && lastTextIdx === blocks.length - 1 && (
+                      <StreamingCursor />
+                    )}
                   </div>
                 );
+              }
               case 'display-tool': {
                 const toolCompleted =
                   block.part.state === 'output-available' ||
@@ -309,7 +309,7 @@ export const AssistantMessage = memo(function AssistantMessage({
               'gap-1 transition-opacity',
               isLastMessage
                 ? 'opacity-100'
-                : 'opacity-0 group-hover/msg:opacity-100',
+                : 'opacity-0 group-hover/msg:opacity-100 focus-within:opacity-100',
             )}
           >
             {hasContent && !isStreaming && (
@@ -511,6 +511,12 @@ function AnsweredQuestionsCard({ answersText }: { answersText: string }) {
         ))}
       </div>
     </motion.div>
+  );
+}
+
+function StreamingCursor() {
+  return (
+    <span className="inline-block w-[3px] h-[1.1em] bg-foreground/70 rounded-sm align-text-bottom ml-0.5 animate-pulse" />
   );
 }
 
