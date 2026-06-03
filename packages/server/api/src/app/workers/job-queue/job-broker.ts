@@ -1,4 +1,4 @@
-import { ConsumeJobRequest, ConsumeJobResponse, EngineResponseStatus, isNil, JobData, tryCatch } from '@activepieces/shared'
+import { ConsumeJobRequest, ConsumeJobResponse, EngineResponseStatus, ErrorCode, isNil, JobData, tryCatch } from '@activepieces/shared'
 import { Worker as BullMQWorker, Job, UnrecoverableError } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
@@ -17,6 +17,7 @@ import { createQueueDispatcher, QueueDispatcher } from './queue-dispatcher'
 
 const DRAIN_DELAY_SECONDS = 15
 const LOCK_DURATION_MS = 120_000
+const SCHEMA_MISMATCH_REQUEUE_DELAY_MS = 10_000
 
 const interceptors: JobInterceptor[] = [rateLimiterInterceptor, zombiePollingInterceptor]
 const workerPromises = new Map<string, Promise<BullMQWorker>>()
@@ -207,6 +208,14 @@ function buildFailedReason(errorMessage: string, logs?: string): string {
     return `${errorMessage}\n${logs}`
 }
 
+function isFlowVersionSchemaMismatch(input: ConsumeJobResponse): boolean {
+    if (input.status !== EngineResponseStatus.INTERNAL_ERROR || isNil(input.errorMessage)) {
+        return false
+    }
+    return input.errorMessage === ErrorCode.FLOW_VERSION_SCHEMA_MISMATCH
+        || input.errorMessage.startsWith(`${ErrorCode.FLOW_VERSION_SCHEMA_MISMATCH}:`)
+}
+
 export { tryDequeue }
 
 export const jobBroker = (log: FastifyBaseLogger) => ({
@@ -229,6 +238,23 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
 
         const jobData = JobData.parse(job.data)
         const userJobData = isUserInteractionJobData(jobData) ? jobData : null
+
+        if (isFlowVersionSchemaMismatch(input)) {
+            const { error: requeueError } = await tryCatch(() => job.moveToDelayed(Date.now() + SCHEMA_MISMATCH_REQUEUE_DELAY_MS, input.token))
+            if (requeueError) {
+                log.error({ jobId: input.jobId, error: String(requeueError) }, '[jobBroker#completeJob] Failed to requeue job — leaving for stalled-scan recovery')
+            }
+            else {
+                log.warn({ jobId: input.jobId, delayMs: SCHEMA_MISMATCH_REQUEUE_DELAY_MS, reason: input.errorMessage }, '[jobBroker#completeJob] Requeued job for a compatible worker (no attempt consumed)')
+            }
+            for (const interceptor of interceptors) {
+                const { error: interceptorError } = await tryCatch(() => interceptor.onJobFinished({ jobId: input.jobId, jobData, failed: false, log }))
+                if (interceptorError) {
+                    log.error({ jobId: input.jobId, error: String(interceptorError) }, '[jobBroker#completeJob] Interceptor onJobFinished failed during requeue')
+                }
+            }
+            return
+        }
 
         const { error } = await tryCatch(async () => {
             if (input.status === EngineResponseStatus.INTERNAL_ERROR) {

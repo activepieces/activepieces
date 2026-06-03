@@ -1,5 +1,5 @@
 import path from 'path'
-import { FlowVersion, FlowVersionId, FlowVersionState, isNil, LATEST_FLOW_SCHEMA_VERSION, WorkerToApiContract } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, FlowVersion, FlowVersionId, FlowVersionState, isNil, LATEST_FLOW_SCHEMA_VERSION, WorkerToApiContract } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import { Logger } from 'pino'
 import { getGlobalCacheFlowsPath } from '../cache-paths'
@@ -58,7 +58,12 @@ export const flowCache = (log: Logger, apiClient: WorkerToApiContract) => ({
             if (isNil(state)) {
                 return null
             }
-            return JSON.parse(state as string) as FlowVersion
+            const flowVersion = JSON.parse(state as string) as FlowVersion | null
+            if (isNil(flowVersion)) {
+                return null
+            }
+            assertSchemaVersionMatchesWorker(flowVersion)
+            return flowVersion
         }
         catch (e) {
             if (e instanceof Error && 'status' in e && (e as unknown as { status: number }).status === 404) {
@@ -68,6 +73,20 @@ export const flowCache = (log: Logger, apiClient: WorkerToApiContract) => ({
         }
     },
 })
+
+function assertSchemaVersionMatchesWorker(flowVersion: FlowVersion): void {
+    if (flowVersion.schemaVersion === LATEST_FLOW_SCHEMA_VERSION) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.FLOW_VERSION_SCHEMA_MISMATCH,
+        params: {
+            flowVersionId: flowVersion.id,
+            expectedSchemaVersion: LATEST_FLOW_SCHEMA_VERSION,
+            actualSchemaVersion: flowVersion.schemaVersion ?? undefined,
+        },
+    })
+}
 
 type GetFlowRequest = {
     flowVersionId: FlowVersionId

@@ -92,6 +92,7 @@ export type ApErrorParams =
     | SecretManagerKeyNotSecretParams
     | InvalidAIProviderCredentialsParams
     | FlowMigrationFailedParams
+    | FlowVersionSchemaMismatchParams
     | ResumeLogsFileMissingParams
     | ExecutionStateMissingParams
     | GenericErrorParams
@@ -479,6 +480,12 @@ export type FlowMigrationFailedParams = BaseErrorParams<ErrorCode.FLOW_MIGRATION
     message: string
 }>
 
+export type FlowVersionSchemaMismatchParams = BaseErrorParams<ErrorCode.FLOW_VERSION_SCHEMA_MISMATCH, {
+    flowVersionId: string
+    expectedSchemaVersion: string
+    actualSchemaVersion: string | undefined
+}>
+
 export type ResumeLogsFileMissingParams = BaseErrorParams<ErrorCode.RESUME_LOGS_FILE_MISSING, {
     runId: string
 }>
@@ -564,6 +571,7 @@ export enum ErrorCode {
     SECRET_MANAGER_KEY_NOT_SECRET = 'SECRET_MANAGER_KEY_NOT_SECRET',
     INVALID_AI_PROVIDER_CREDENTIALS = 'INVALID_AI_PROVIDER_CREDENTIALS',
     FLOW_MIGRATION_FAILED = 'FLOW_MIGRATION_FAILED',
+    FLOW_VERSION_SCHEMA_MISMATCH = 'FLOW_VERSION_SCHEMA_MISMATCH',
     RESUME_LOGS_FILE_MISSING = 'RESUME_LOGS_FILE_MISSING',
     EXECUTION_STATE_MISSING = 'EXECUTION_STATE_MISSING',
     GENERIC_ERROR = 'GENERIC_ERROR',
