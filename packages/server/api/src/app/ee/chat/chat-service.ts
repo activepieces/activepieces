@@ -229,15 +229,6 @@ export const chatService = (log: FastifyBaseLogger) => ({
                     },
                     onFinish: async ({ response, usage }) => {
                         const updatedMessages = [...allMessages, ...response.messages]
-                        try {
-                            if (flagService(log).aiCreditsEnabled() && providerConfig.provider === AIProviderName.ACTIVEPIECES && selectedProjectId) {
-                                const credits = aiUtils.calculateCredits(usage)
-                                await projectLimitsService(log).incrementAiUsage(selectedProjectId, credits)
-                            }
-                        }
-                        catch (creditErr) {
-                            log.error({ err: creditErr, projectId: selectedProjectId }, 'Failed to increment AI usage credits')
-                        }
 
                         try {
                             await chatHelpers.conversationRepo().update(conversationId, {
@@ -250,13 +241,22 @@ export const chatService = (log: FastifyBaseLogger) => ({
                             log.error({ err: saveErr, conversationId }, 'Failed to persist conversation messages')
                         }
 
+                        try {
+                            if (flagService(log).aiCreditsEnabled() && providerConfig.provider === AIProviderName.ACTIVEPIECES && selectedProjectId) {
+                                const credits = aiUtils.calculateCredits(usage)
+                                await projectLimitsService(log).incrementAiUsage(selectedProjectId, credits)
+                            }
+                        }
+                        catch (creditErr) {
+                            log.error({ err: creditErr, projectId: selectedProjectId }, 'Failed to increment AI usage credits')
+                        }
 
                         log.info({
                             conversationId,
                             inputTokens: usage.inputTokens,
                             outputTokens: usage.outputTokens,
-                            ...spreadIfDefined('cacheReadTokens', usage.inputTokenDetails.cacheReadTokens),
-                            ...spreadIfDefined('cacheWriteTokens', usage.inputTokenDetails.cacheWriteTokens),
+                            ...spreadIfDefined('cacheReadTokens', usage.inputTokenDetails?.cacheReadTokens),
+                            ...spreadIfDefined('cacheWriteTokens', usage.inputTokenDetails?.cacheWriteTokens),
                             provider: providerConfig.provider,
                         }, 'Chat message completed')
                     },
