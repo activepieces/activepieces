@@ -15,7 +15,7 @@ Flows are the core automation primitive in Activepieces. Each flow is a versione
 - `packages/shared/src/lib/automation/flows/actions/action.ts` — `FlowAction` discriminated union
 - `packages/shared/src/lib/automation/flows/triggers/trigger.ts` — `FlowTrigger` discriminated union
 - `packages/shared/src/lib/automation/flows/util/expression-rewriter.ts` — AST-based rewriter that inserts `['output']` into step-reference expressions during schema migration
-- `packages/server/api/src/app/flows/flow-version/migrations/migrate-v20-step-output-nesting.ts` — schema v20→v21 migration that wraps step references in the new output/error shape
+- `packages/server/api/src/app/flows/flow-version/migrations/migrate-v21-step-output-nesting.ts` — schema v21→v22 migration that wraps step references in the new output/error shape
 - `packages/web/src/features/flows/api/flows-api.tsx` — `flowsApi` (list, create, update, get, versions, delete, count)
 - `packages/web/src/features/flows/hooks/flow-hooks.tsx` — `flowHooks` (status change, export, import, test, version management)
 - `packages/web/src/features/flows/components/` — `FlowStatusToggle`, `ImportFlowDialog`, `ShareTemplateDialog`, `ChangeOwnerDialog`, `FlowCreatedByBadge`
@@ -53,7 +53,7 @@ Flows are the core automation primitive in Activepieces. Each flow is a versione
 
 **Flow**: id, projectId, folderId (nullable), status (ENABLED/DISABLED), externalId, publishedVersionId (nullable, unique FK), metadata (JSONB), operationStatus (NONE/DELETING/ENABLING/DISABLING), timeSavedPerRun, ownerId, templateId, createdBy (nullable JSONB — `FlowCreator`). Relations: project, folder, owner, publishedVersion (one-to-one), versions (one-to-many), runs, events, tableWebhooks.
 
-**FlowVersion**: id, flowId, displayName, schemaVersion (current latest: `'21'`), trigger (JSONB — full flow graph), connectionIds[], agentIds[], updatedBy, valid, state (DRAFT/LOCKED), backupFiles (JSONB), notes[] (JSONB). Relations: flow, updatedByUser.
+**FlowVersion**: id, flowId, displayName, schemaVersion (current latest: `'22'`), trigger (JSONB — full flow graph), connectionIds[], agentIds[], updatedBy, valid, state (DRAFT/LOCKED), backupFiles (JSONB), notes[] (JSONB). Relations: flow, updatedByUser.
 
 **Folder**: id, projectId, displayName. Used to organize flows and tables. Case-insensitive uniqueness.
 
