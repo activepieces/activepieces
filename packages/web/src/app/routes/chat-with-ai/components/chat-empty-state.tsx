@@ -7,25 +7,32 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { userHooks } from '@/hooks/user-hooks';
+import { cn } from '@/lib/utils';
 
 export function EmptyState({
   onSuggestionClick,
   incognito,
+  showFlowCards,
 }: {
   onSuggestionClick: (text: string) => void;
   incognito: boolean;
+  showFlowCards: boolean;
 }) {
   const { data: currentUser } = userHooks.useCurrentUser();
   const firstName = currentUser?.firstName ?? '';
 
   return (
-    <div className="max-w-3xl mx-auto px-6 pt-8 pb-6">
-      <Greeting firstName={firstName} incognito={incognito} />
+    <div className="pt-8 pb-6">
+      <div className="max-w-3xl mx-auto px-6">
+        <Greeting firstName={firstName} incognito={incognito} />
+      </div>
       {!incognito && (
         <>
-          <FlowCards onSuggestionClick={onSuggestionClick} />
-          <Separator className="my-6" />
-          <TextSuggestions onSuggestionClick={onSuggestionClick} />
+          {showFlowCards && <FlowCards onSuggestionClick={onSuggestionClick} />}
+          <div className="max-w-3xl mx-auto px-6">
+            <Separator className="my-6" />
+            <TextSuggestions onSuggestionClick={onSuggestionClick} />
+          </div>
         </>
       )}
     </div>
@@ -87,13 +94,18 @@ function Greeting({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <h1 className="text-4xl font-bold leading-tight text-balance">
-        {incognito
-          ? t('Private Chat')
-          : firstName
-          ? t("Let's get unbusy, {name}?", { name: firstName })
-          : t("Let's get unbusy?")}{' '}
-        {!incognito && '👋'}
+      <h1 className="text-4xl font-bold leading-tight text-balance font-sentient">
+        {incognito ? (
+          t('Private Chat')
+        ) : firstName ? (
+          <>
+            {t("Let's get")}
+            <br />
+            {t('unbusy, {name}?', { name: firstName })} 👋
+          </>
+        ) : (
+          <>{t("Let's get unbusy?")} 👋</>
+        )}
       </h1>
       {!incognito && (
         <p className="text-base text-muted-foreground">
@@ -110,21 +122,27 @@ function FlowCards({
   onSuggestionClick: (text: string) => void;
 }) {
   return (
-    <div className="mt-6 flex gap-4 overflow-x-auto scrollbar-none pb-1">
+    <div
+      className="mt-6 flex gap-4 overflow-x-auto scrollbar-none pb-1 pr-6"
+      style={{
+        paddingLeft: 'max(1.5rem, calc((100% - 48rem) / 2 + 1.5rem))',
+      }}
+    >
       {FLOW_CARDS.map((card, i) => (
         <motion.button
           key={card.title}
           type="button"
-          className="shrink-0 w-[240px] text-left cursor-pointer group"
+          className="shrink-0 flex-1 min-w-0 text-left cursor-pointer group"
           onClick={() => onSuggestionClick(card.description)}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.2 + i * 0.1 }}
         >
-          <div className="h-40 rounded-xl overflow-hidden group-hover:shadow-md transition-shadow">
+          <div className="h-[245px] rounded-xl overflow-hidden">
             <img
               src={card.image}
               alt={card.title}
+              loading="lazy"
               className="w-full h-full object-cover"
             />
           </div>
@@ -151,7 +169,7 @@ function TextSuggestions({
         <motion.button
           key={suggestion.title}
           type="button"
-          className="flex items-center gap-4 rounded-xl px-3 py-3 text-left hover:bg-accent transition-colors cursor-pointer"
+          className="flex items-center gap-4 rounded-xl p-2 text-left hover:bg-accent transition-colors cursor-pointer"
           onClick={() => onSuggestionClick(suggestion.description)}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -162,8 +180,19 @@ function TextSuggestions({
               src={suggestion.icon}
               alt=""
               loading="lazy"
-              className="max-w-full max-h-full object-contain"
+              className={cn(
+                'max-w-full max-h-full object-contain',
+                suggestion.darkIcon && 'dark:hidden',
+              )}
             />
+            {suggestion.darkIcon && (
+              <img
+                src={suggestion.darkIcon}
+                alt=""
+                loading="lazy"
+                className="max-w-full max-h-full object-contain hidden dark:block"
+              />
+            )}
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="text-sm font-medium">{t(suggestion.title)}</h3>
@@ -218,6 +247,7 @@ const TEXT_SUGGESTIONS: TextSuggestionData[] = [
   },
   {
     icon: '/chat-suggestions/icon-summarize-emails.svg',
+    darkIcon: '/chat-suggestions/icon-summarize-emails-dark.svg',
     title: 'Summarize Daily Emails',
     description:
       "Scan today's inbox, find the emails you haven't replied to yet, and flag them all for you.",
@@ -230,6 +260,7 @@ const TEXT_SUGGESTIONS: TextSuggestionData[] = [
   },
   {
     icon: '/chat-suggestions/icon-screen-candidates.svg',
+    darkIcon: '/chat-suggestions/icon-screen-candidates-dark.svg',
     title: 'Screen Job Candidates',
     description:
       'Read every candidate in this sheet, score them on the filled info, and write the score back in.',
@@ -242,6 +273,7 @@ const TEXT_SUGGESTIONS: TextSuggestionData[] = [
   },
   {
     icon: '/chat-suggestions/icon-cleanup-spam.svg',
+    darkIcon: '/chat-suggestions/icon-cleanup-spam-dark.svg',
     title: 'Cleanup Spam Emails',
     description:
       'Find all promotional emails from the last week and move every one of them straight to spam.',
@@ -262,6 +294,7 @@ type FlowCardData = {
 
 type TextSuggestionData = {
   icon: string;
+  darkIcon?: string;
   title: string;
   description: string;
 };
