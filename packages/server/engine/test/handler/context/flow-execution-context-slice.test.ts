@@ -17,7 +17,7 @@ describe('FlowExecutorContext.upsertStep — outputType: StepOutputType.SLICE pr
 
         const stepOutput = next.steps.echo_step
         expect(stepOutput.outputType).toBe(StepOutputType.SLICE)
-        // The ref must survive as the stored output so materializeStep can fetch the
+        // The ref must survive as the stored output so resolveStepOutput can fetch the
         // real payload on demand later.
         expect(stepOutput.output).toEqual({
             fileId: 'file-1',
