@@ -22,6 +22,7 @@ import { ChevronRight, XCircle } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { inputClass } from '@/components/ui/input';
 import { stepsHooks } from '@/features/pieces';
 import { variablesQueries } from '@/features/variables/hooks/variables-hooks';
@@ -124,7 +125,9 @@ export const TiptapEditor = ({
   enableMarkdown,
 }: TiptapEditorProps) => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const formulaEnabled = platform.plan.dataManipulationEnabled;
+  const { embedState } = useEmbedding();
+  const formulaEnabled =
+    platform.plan.dataManipulationEnabled && !embedState.isEmbedded;
   const steps = useBuilderStateContext((state) =>
     flowStructureUtil.getAllSteps(state.flowVersion.trigger),
   );

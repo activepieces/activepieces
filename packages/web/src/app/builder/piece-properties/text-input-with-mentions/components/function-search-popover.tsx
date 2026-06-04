@@ -106,7 +106,7 @@ export function FunctionSearchPopover({
         {t('to apply')}
       </div>
       <a
-        href="https://www.activepieces.com/docs/workflows/data-manipulation"
+        href="https://www.activepieces.com/docs/flows/using-formulas"
         target="_blank"
         rel="noopener noreferrer"
         className={cn(buttonVariants({ variant: 'link', size: 'xs' }))}
