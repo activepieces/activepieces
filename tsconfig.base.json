@@ -35,6 +35,9 @@
       "@activepieces/piece-acumbamail": [
         "packages/pieces/community/acumbamail/src/index.ts"
       ],
+      "@activepieces/piece-add-event": [
+        "packages/pieces/community/add-event/src/index.ts"
+      ],
       "@activepieces/piece-afforai": [
         "packages/pieces/community/afforai/src/index.ts"
       ],
@@ -1038,6 +1041,9 @@
       "@activepieces/piece-rabbitmq": [
         "packages/pieces/community/rabbitmq/src/index.ts"
       ],
+      "@activepieces/piece-raindrop": [
+        "packages/pieces/community/raindrop/src/index.ts"
+      ],
       "@activepieces/piece-razorpay": [
         "packages/pieces/community/razorpay/src/index.ts"
       ],
@@ -1183,6 +1189,9 @@
       ],
       "@activepieces/piece-slack": [
         "packages/pieces/community/slack/src/index.ts"
+      ],
+      "@activepieces/piece-slashed": [
+        "packages/pieces/community/slashed/src/index.ts"
       ],
       "@activepieces/piece-slidespeak": [
         "packages/pieces/community/slidespeak/src/index.ts"
