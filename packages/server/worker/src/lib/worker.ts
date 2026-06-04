@@ -170,10 +170,10 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
             })
         }, 30_000)
 
+        sbManager.beginExecution()
         const { data: result, error: execError } = await tryCatch(() =>
             executeJob(apiClient, job, sbManager),
         )
-
 
         const { error: completeError } = await tryCatch(() =>
             apiClient.completeJob({
@@ -189,11 +189,11 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
             }),
         )
 
-        clearInterval(lockExtensionInterval)
-
         if (completeError) {
             workerLog.error({ error: completeError, jobId: job.jobId }, 'Failed to complete job')
         }
+        clearInterval(lockExtensionInterval)
+        sbManager.endExecution()
     }
 }
 

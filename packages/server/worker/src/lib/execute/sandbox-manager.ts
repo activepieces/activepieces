@@ -7,8 +7,23 @@ import { createSandboxForJob } from './create-sandbox-for-job'
 
 export function createSandboxManager({ boxId, proxyPort }: { boxId: number, proxyPort: number | null }): SandboxManager {
     let currentSandbox: Sandbox | null = null
+    let inFlightExecution: Promise<void> | null = null
+    let resolveInFlightExecution: (() => void) | null = null
 
     return {
+        beginExecution(): void {
+            if (!isNil(inFlightExecution)) {
+                return
+            }
+            inFlightExecution = new Promise<void>((resolve) => {
+                resolveInFlightExecution = resolve
+            })
+        },
+        endExecution(): void {
+            resolveInFlightExecution?.()
+            inFlightExecution = null
+            resolveInFlightExecution = null
+        },
         acquire(params: { log: Logger, apiClient: WorkerToApiContract }): Sandbox {
             if (canReuseSandbox() && currentSandbox && currentSandbox.isReady()) {
                 return currentSandbox
@@ -36,6 +51,10 @@ export function createSandboxManager({ boxId, proxyPort }: { boxId: number, prox
             }
         },
         async shutdown(log: Logger): Promise<void> {
+            if (!isNil(inFlightExecution)) {
+                log.info('Waiting for in-flight execution to finish before shutting down sandbox')
+                await inFlightExecution
+            }
             await this.invalidate(log)
         },
     }
@@ -58,6 +77,8 @@ function canReuseSandbox(): boolean {
 }
 
 export type SandboxManager = {
+    beginExecution(): void
+    endExecution(): void
     acquire(params: { log: Logger, apiClient: WorkerToApiContract }): Sandbox
     invalidate(log: Logger): Promise<void>
     release(log: Logger): Promise<void>
