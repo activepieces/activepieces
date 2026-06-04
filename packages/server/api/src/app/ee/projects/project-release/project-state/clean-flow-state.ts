@@ -1,4 +1,4 @@
-import { FlowAction, FlowActionType, FlowState, FlowTrigger, FlowTriggerType, FlowVersion, isNil } from '@activepieces/shared'
+import { ContinueOnFailureBranches, FlowAction, FlowActionType, FlowState, FlowTrigger, FlowTriggerType, FlowVersion, isNil } from '@activepieces/shared'
 
 function cleanFlowState(flowState: FlowState): FlowState {
     return {
@@ -68,9 +68,9 @@ function cleanAction(action: FlowAction): FlowAction {
 
     switch (action.type) {
         case FlowActionType.CODE:
-            return { ...commonProps, type: action.type, settings: action.settings, nextAction }
+            return { ...commonProps, type: action.type, settings: action.settings, nextAction, continueOnFailureBranches: cleanBranches(action.continueOnFailureBranches) }
         case FlowActionType.PIECE:
-            return { ...commonProps, type: action.type, settings: action.settings, nextAction }
+            return { ...commonProps, type: action.type, settings: action.settings, nextAction, continueOnFailureBranches: cleanBranches(action.continueOnFailureBranches) }
         case FlowActionType.LOOP_ON_ITEMS:
             return {
                 ...commonProps, type: action.type, settings: action.settings, nextAction,
@@ -81,6 +81,16 @@ function cleanAction(action: FlowAction): FlowAction {
                 ...commonProps, type: action.type, settings: action.settings, nextAction,
                 children: action.children.map((child) => isNil(child) ? null : cleanAction(child)),
             }
+    }
+}
+
+function cleanBranches(branches: ContinueOnFailureBranches | undefined): ContinueOnFailureBranches | undefined {
+    if (isNil(branches) || (isNil(branches.onSuccess) && isNil(branches.onFailure))) {
+        return undefined
+    }
+    return {
+        onSuccess: isNil(branches.onSuccess) ? undefined : cleanAction(branches.onSuccess),
+        onFailure: isNil(branches.onFailure) ? undefined : cleanAction(branches.onFailure),
     }
 }
 

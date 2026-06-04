@@ -45,6 +45,9 @@ const LICENSE_PROPS_MAP = {
   customRolesEnabled: {
     label: 'Custom Roles',
   },
+  dataManipulationEnabled: {
+    label: 'Data Manipulation',
+  },
   eventStreamingEnabled: {
     label: 'Event Streaming',
   },
