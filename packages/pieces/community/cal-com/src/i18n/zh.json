@@ -1,10 +1,10 @@
 {
-  "Open-source alternative to Calendly": "Calendly 的开源选项",
-  "API Key provided by cal.com": "API 密钥由 cal.com 提供",
-  "Booking Cancelled": "预订已取消",
-  "Booking Created": "预订已创建",
-  "Booking Rescheduled": "预订已重新安排",
-  "Create a webhook to monitor when Booking Cancelled": "在预订取消时创建网络钩子监视器",
-  "Create a webhook to monitor when Booking Created": "创建预订时要显示的 web 钩子",
-  "Create a webhook to monitor when Booking Rescheduled": "在重新安排预订时间时创建一个web钩子以监视器"
+  "Open-source alternative to Calendly": "Open-source alternative to Calendly",
+  "API Key provided by cal.com": "API Key provided by cal.com",
+  "Booking Cancelled": "Booking Cancelled",
+  "Booking Created": "Booking Created",
+  "Booking Rescheduled": "Booking Rescheduled",
+  "Create a webhook to monitor when Booking Cancelled": "Create a webhook to monitor when Booking Cancelled",
+  "Create a webhook to monitor when Booking Created": "Create a webhook to monitor when Booking Created",
+  "Create a webhook to monitor when Booking Rescheduled": "Create a webhook to monitor when Booking Rescheduled"
 }
