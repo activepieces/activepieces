@@ -690,6 +690,9 @@
       "@activepieces/piece-klaviyo": [
         "packages/pieces/community/klaviyo/src/index.ts"
       ],
+      "@activepieces/piece-klipy": [
+        "packages/pieces/community/klipy/src/index.ts"
+      ],
       "@activepieces/piece-klenty": [
         "packages/pieces/community/klenty/src/index.ts"
       ],
