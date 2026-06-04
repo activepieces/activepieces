@@ -86,6 +86,11 @@ function tokenizeExpression(expr: string, allowBroken: boolean): ExprToken[] {
         i = end + 2;
         continue;
       }
+      // Unclosed "{{": emit it as literal text and advance so the tokenizer
+      // doesn't spin forever while the user is still typing the closing braces.
+      tokens.push({ kind: 'text', value: '{{' });
+      i += 2;
+      continue;
     }
 
     if (expr[i] === '\n') {

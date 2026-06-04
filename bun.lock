@@ -5964,6 +5964,16 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/raindrop": {
+      "name": "@activepieces/piece-raindrop",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/rapidtext-ai": {
       "name": "@activepieces/piece-rapidtext-ai",
       "version": "0.1.4",
@@ -6612,6 +6622,16 @@
         "@activepieces/shared": "workspace:*",
         "form-data": "4.0.4",
         "tslib": "^2.3.0",
+      },
+    },
+    "packages/pieces/community/slite": {
+      "name": "@activepieces/piece-slite",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
       },
     },
     "packages/pieces/community/smaily": {
@@ -9889,6 +9909,8 @@
 
     "@activepieces/piece-raia-ai": ["@activepieces/piece-raia-ai@workspace:packages/pieces/community/raia-ai"],
 
+    "@activepieces/piece-raindrop": ["@activepieces/piece-raindrop@workspace:packages/pieces/community/raindrop"],
+
     "@activepieces/piece-rapidtext-ai": ["@activepieces/piece-rapidtext-ai@workspace:packages/pieces/community/rapidtext-ai"],
 
     "@activepieces/piece-razorpay": ["@activepieces/piece-razorpay@workspace:packages/pieces/community/razorpay"],
@@ -10016,6 +10038,8 @@
     "@activepieces/piece-slashed": ["@activepieces/piece-slashed@workspace:packages/pieces/community/slashed"],
 
     "@activepieces/piece-slidespeak": ["@activepieces/piece-slidespeak@workspace:packages/pieces/community/slidespeak"],
+
+    "@activepieces/piece-slite": ["@activepieces/piece-slite@workspace:packages/pieces/community/slite"],
 
     "@activepieces/piece-smaily": ["@activepieces/piece-smaily@workspace:packages/pieces/community/smaily"],
 
