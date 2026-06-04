@@ -7,6 +7,7 @@ import {
     Cursor,
     ErrorCode,
     Flow,
+    FlowCreator,
     FlowId,
     FlowOperationRequest,
     FlowOperationStatus,
@@ -58,7 +59,7 @@ import { flowRepo } from './flow.repo'
 
 
 export const flowService = (log: FastifyBaseLogger) => ({
-    async create({ projectId, request, externalId, ownerId, templateId }: CreateParams): Promise<PopulatedFlow> {
+    async create({ projectId, request, externalId, ownerId, templateId, createdBy }: CreateParams): Promise<PopulatedFlow> {
         const folderId = await getFolderIdFromRequest({ projectId, folderId: request.folderId, folderName: request.folderName, log })
         const newFlow: NewFlow = {
             id: apId(),
@@ -71,6 +72,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             metadata: request.metadata,
             operationStatus: FlowOperationStatus.NONE,
             templateId,
+            createdBy,
         }
         const savedFlow = await flowRepo().save(newFlow)
 
@@ -753,6 +755,7 @@ type CreateParams = {
     ownerId?: UserId
     externalId?: string
     templateId?: string
+    createdBy?: FlowCreator
 }
 
 type ListParamsBase = {

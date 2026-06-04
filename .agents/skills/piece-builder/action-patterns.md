@@ -31,7 +31,7 @@ export const createRecordAction = createAction({
       url: 'https://api.example.com/v1/records',
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth as string,
+        token: context.auth.secret_text,
       },
       body: {
         name: context.propsValue.name,
@@ -43,6 +43,12 @@ export const createRecordAction = createAction({
 });
 ```
 
+The `token` field above assumes a `PieceAuth.SecretText()` auth. For other auth types, swap to `context.auth.access_token` (OAuth2), `context.auth.username`/`.password` (BasicAuth), or `context.auth.props.<field>` (CustomAuth). See `auth-patterns.md` for the full table.
+
 **Real example:** `packages/pieces/community/github/src/lib/actions/create-issue.ts`
 
 For all available property types (`Property.ShortText`, `Property.Dropdown`, `Property.Array`, etc.) read `props-patterns.md`.
+
+## AI-Ready Metadata (optional)
+
+Actions accept two optional fields that tune how they appear to AI agents: `audience` (`'human' | 'ai' | 'both'`) and `aiMetadata` (`{ description?, idempotent? }`). They are additive and change nothing for human users. Skip them unless you are deliberately tuning the action for agents — see `ai-metadata.md`.

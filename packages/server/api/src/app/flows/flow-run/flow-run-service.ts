@@ -24,6 +24,7 @@ import {
     ProjectId,
     ResumeReason,
     RunEnvironment,
+    RunInternalError,
     SampleDataFileType,
     SeekPage,
     StepOutputStatus,
@@ -451,15 +452,18 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
     async getOnePopulatedOrThrow(params: GetOneParams): Promise<FlowRun> {
         const flowRun = await this.getOneOrThrow(params)
         let steps = {}
+        let internalError: RunInternalError | undefined = undefined
         if (!isNil(flowRun.logsFileId)) {
             const stateFile = await readLogsFile(log, flowRun.logsFileId, flowRun.projectId)
             if (!isNil(stateFile)) {
                 steps = stateFile.executionState.steps
+                internalError = stateFile.internalError
             }
         }
         return {
             ...flowRun,
             steps,
+            internalError,
         }
     },
 })

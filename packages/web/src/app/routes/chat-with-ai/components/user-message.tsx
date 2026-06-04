@@ -38,10 +38,12 @@ export const UserMessage = memo(function UserMessage({
     )
     .map((p) => p.filename);
 
+  const isFromHistory = message.id.startsWith('hist-');
+
   return (
     <motion.div
       className="flex justify-end py-3 group/msg"
-      initial={{ opacity: 0, x: 16 }}
+      initial={isFromHistory ? false : { opacity: 0, x: 16 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.25 }}
     >
@@ -71,7 +73,7 @@ export const UserMessage = memo(function UserMessage({
             'justify-end mt-1 transition-opacity',
             isLastMessage
               ? 'opacity-100'
-              : 'opacity-0 group-hover/msg:opacity-100',
+              : 'opacity-0 group-hover/msg:opacity-100 focus-within:opacity-100',
           )}
         >
           <MessageAction tooltip={t('Copy')}>

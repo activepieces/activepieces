@@ -8,7 +8,7 @@
   "Mode": "Modus",
   "Wait for Response": "Wacht op reactie",
   "Response": "Antwoord",
-  "The flow to execute": "De stroom om uit te voeren",
+  "The flow to execute. Only published flows with a \"Callable Flow\" trigger appear here — unpublished or disabled subflows are hidden.": "De stroom om uit te voeren. Alleen gepubliceerde flows met een \"Callable Flow\" trigger verschijnen hier — ongepubliceerde of uitgeschakelde substromen worden verborgen.",
   "Choose Simple for key-value or Advanced for JSON.": "Kies Simpel voor sleutelwaarde of Geavanceerd voor JSON.",
   "Simple": "Eenvoudig",
   "Advanced": "Geavanceerd",

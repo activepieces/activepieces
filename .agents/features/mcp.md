@@ -34,6 +34,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - **StreamableHTTP** — streaming variant of the MCP protocol used for the primary `/http` endpoint
 - **MCP trigger piece** — `@activepieces/piece-mcp`; a flow with this trigger is exposed as a callable tool via MCP
 - **disabledTools** — JSONB array of controllable tool names currently disabled; `null` or `[]` means all controllable tools are enabled
+- **Flow attribution** — `ap_create_flow`, `ap_build_flow`, and `ap_duplicate_flow` stamp `ownerId` (the OAuth-authenticated user who connected the client) and `createdBy: { type: 'MCP', id: <mcpServerId> }` on every flow they create. `ProjectScopedMcpServer` carries `userId?` so the tools can attribute ownership.
 
 ## Entity
 

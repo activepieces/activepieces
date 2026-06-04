@@ -139,6 +139,7 @@ Copy config files from an existing simple piece (e.g. `packages/pieces/core/qrco
 | HTTP client, shared helpers, pagination         | `common-patterns.md`  |
 | Every prop and dropdown **(mandatory for all)** | `ux-guidelines.md`    |
 | Every return value **(mandatory for all)**      | `output-quality.md`   |
+| Tagging an action/trigger for AI agents         | `ai-metadata.md`      |
 
 `ux-guidelines.md` and `output-quality.md` apply to **every** action and trigger -- read them before starting, not only when unsure.
 
@@ -165,7 +166,7 @@ npx turbo run build --filter=@activepieces/piece-<name>
 
 `bun install` is required for new pieces so the workspace symlinks are created before TypeScript can resolve imports. Skip it on subsequent rebuilds.
 
-Fix TypeScript errors and rebuild. Common causes: missing import in `src/index.ts`, missing `tsconfig.base.json` entry, wrong type cast on `context.auth` (use `context.auth as unknown as string` for SecretText), missing `sampleData` on a trigger.
+Fix TypeScript errors and rebuild. Common causes: missing import in `src/index.ts`, missing `tsconfig.base.json` entry, accessing `context.auth` as a string for SecretText (use `context.auth.secret_text` instead — see Quick Auth Reference), missing `sampleData` on a trigger.
 
 #### Test locally
 
@@ -208,13 +209,17 @@ packages/pieces/community/<piece-name>/
 
 ## Quick Auth Reference
 
-| API Auth Method        | Activepieces Type        | Access Pattern                       |
-| ---------------------- | ------------------------ | ------------------------------------ |
-| API key / Bearer token | `PieceAuth.SecretText()` | `context.auth` (string)              |
-| OAuth2                 | `PieceAuth.OAuth2()`     | `context.auth.access_token`          |
-| Username + password    | `PieceAuth.BasicAuth()`  | `context.auth.username`, `.password` |
-| Multiple fields        | `PieceAuth.CustomAuth()` | `context.auth.<field_name>`          |
-| No auth needed         | `PieceAuth.None()`       | No `context.auth` available          |
+In actions and triggers, `context.auth` is the resolved connection object — not a flat string. Access fields per type below:
+
+| API Auth Method        | Activepieces Type        | Access Pattern                                                                |
+| ---------------------- | ------------------------ | ----------------------------------------------------------------------------- |
+| API key / Bearer token | `PieceAuth.SecretText()` | `context.auth.secret_text`                                                    |
+| OAuth2                 | `PieceAuth.OAuth2()`     | `context.auth.access_token`; extra props via `context.auth.props?.['<key>']`  |
+| Username + password    | `PieceAuth.BasicAuth()`  | `context.auth.username`, `context.auth.password`                              |
+| Multiple fields        | `PieceAuth.CustomAuth()` | `context.auth.props.<field_name>`                                             |
+| No auth needed         | `PieceAuth.None()`       | No `context.auth` available                                                   |
+
+Inside the auth's own `validate` callback the shape is different (it receives the raw entered values — e.g. `auth` is the plain string for SecretText, the flat `{ base_url, api_key }` for CustomAuth). The patterns above apply to action/trigger `run()` only.
 
 Full code examples: read `auth-patterns.md`
 
@@ -287,6 +292,15 @@ Every action output must be directly mappable to Google Sheets, Excel, and Activ
 5. **Use human-readable key names** -- `company_name` not `cName`. These become column headers.
 
 Full patterns and examples: read `output-quality.md`
+
+## AI-Ready Metadata (Optional)
+
+Pieces are also called by AI agents through the MCP server. Two optional fields let an action or trigger declare how it appears to agents — both are additive and change nothing for human users:
+
+-   **`audience`** (actions only): `'human' | 'ai' | 'both'` — fence an action to one surface. Omit for "both" (the default).
+-   **`aiMetadata`** (actions and triggers): `{ description?, idempotent? }` — an agent-facing tool description and a safe-retry hint.
+
+Skip both unless you are deliberately tuning a piece for agents. Full guidance and examples: read `ai-metadata.md`
 
 ## Critical Reminders
 

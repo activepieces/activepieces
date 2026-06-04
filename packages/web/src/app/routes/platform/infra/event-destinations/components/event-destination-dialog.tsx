@@ -197,7 +197,7 @@ const EventDestinationForm = ({
           },
         ),
         sampleDataNoteContent: t(
-          '**Test different scenarios**\n\nOpen the trigger and edit its **Sample Data** to swap in a different event payload (for example, a failed run) and test each branch without firing real audit events.',
+          '**Test different scenarios**\n\nOpen the trigger and edit its **Sample Data** to swap in a different event payload and test each branch without firing real audit events.',
         ),
       },
     });

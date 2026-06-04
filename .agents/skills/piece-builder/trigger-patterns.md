@@ -29,7 +29,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof myAppAuth>, Reco
       url: 'https://api.example.com/v1/records',
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth as string,
+        token: auth.secret_text,
       },
       queryParams: {
         sort: 'created_at',
@@ -164,7 +164,7 @@ export const newRecordWebhookTrigger = createTrigger({
       url: 'https://api.example.com/v1/webhooks',
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth as string,
+        token: context.auth.secret_text,
       },
       body: {
         url: context.webhookUrl,         // Activepieces provides this
@@ -183,7 +183,7 @@ export const newRecordWebhookTrigger = createTrigger({
         url: `https://api.example.com/v1/webhooks/${webhookId}`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: context.auth as string,
+          token: context.auth.secret_text,
         },
       });
     }
@@ -201,7 +201,7 @@ export const newRecordWebhookTrigger = createTrigger({
       url: 'https://api.example.com/v1/records',
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth as string,
+        token: context.auth.secret_text,
       },
       queryParams: { limit: '5' },
     });
@@ -282,3 +282,9 @@ export const myTrigger = createTrigger({
 | `TriggerStrategy.POLLING` | API has no webhooks | Use `pollingHelper` with TIMEBASED or LAST_ITEM |
 | `TriggerStrategy.WEBHOOK` | API supports webhook registration | Register in `onEnable`, delete in `onDisable` |
 | `TriggerStrategy.APP_WEBHOOK` | OAuth2 apps with platform-level webhooks (Slack) | Use `context.app.createListeners()` |
+
+---
+
+## AI-Ready Metadata (optional)
+
+Triggers accept an optional `aiMetadata` field (`{ description?, idempotent? }`) to describe the event for AI agents. They do **not** take `audience` — that field is actions-only, since a trigger is an event rather than an agent-callable operation. The field is additive and changes nothing for human users. See `ai-metadata.md`.

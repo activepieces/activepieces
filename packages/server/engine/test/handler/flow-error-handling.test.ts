@@ -1,5 +1,5 @@
 
-import { BranchOperator, FlowRunStatus, RouterExecutionType } from '@activepieces/shared'
+import { BranchOperator, FlowRunStatus, RouterExecutionType, tryParseFriendlyPieceError } from '@activepieces/shared'
 import { codeExecutor } from '../../src/lib/handler/code-executor'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { loopExecutor } from '../../src/lib/handler/loop-executor'
@@ -60,23 +60,21 @@ describe('piece with error handling', () => {
             }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
         })
 
-        const expectedError = {
-            response: {
-                status: 404,
-                body: {
-                    statusCode: 404,
-                    error: 'Not Found',
-                    message: 'Route not found',
-                },
-            },
-            request: {},
-        }
-
         expect(result.verdict).toStrictEqual({
             status: FlowRunStatus.RUNNING,
         })
         expect(result.steps.send_http.status).toBe('FAILED')
-        expect(result.steps.send_http.errorMessage).toEqual(JSON.stringify(expectedError, null, 2))
+
+        const error = tryParseFriendlyPieceError(result.steps.send_http.errorMessage)
+        expect(error?.status).toBe(404)
+        expect(error?.errorName).toBe('HttpError')
+        expect(error?.message).toBe('Route not found')
+        expect(error?.apiMessage).toBe('Route not found')
+        expect(error?.responseBody).toEqual({
+            statusCode: 404,
+            error: 'Not Found',
+            message: 'Route not found',
+        })
 
     }, 10000)
 

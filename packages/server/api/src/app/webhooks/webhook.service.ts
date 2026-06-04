@@ -53,6 +53,7 @@ export const webhookService = {
         onRunCreated,
         parentRunId,
         failParentOnFailure,
+        timeoutMs,
     }: HandleWebhookParams): Promise<EngineHttpResponse> {
         return tracer.startActiveSpan('webhook.service.handle', {
             attributes: {
@@ -175,6 +176,7 @@ export const webhookService = {
                     onRunCreated,
                     parentRunId,
                     failParentOnFailure,
+                    timeoutMs,
                 })
                 return {
                     status: flowHttpResponse.status,
@@ -259,7 +261,7 @@ async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse
         },
     }, async (span) => {
         try {
-            const { payload, projectId, flow, logger, webhookRequestId, workerHandlerId, flowVersionIdToRun, runEnvironment, saveSampleData, flowVersionToRun, parentRunId, failParentOnFailure, platformId } = params
+            const { payload, projectId, flow, logger, webhookRequestId, workerHandlerId, flowVersionIdToRun, runEnvironment, saveSampleData, flowVersionToRun, parentRunId, failParentOnFailure, platformId, timeoutMs } = params
 
             if (saveSampleData) {
                 rejectedPromiseHandler(savePayload({
@@ -305,7 +307,7 @@ async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse
             span.setAttribute('webhook.runId', createdRun.id)
             params.onRunCreated?.(createdRun)
 
-            const listenerResult = await engineResponseWatcher(logger).oneTimeListener<EngineHttpResponse>(webhookRequestId, true, WEBHOOK_TIMEOUT_MS, {
+            const listenerResult = await engineResponseWatcher(logger).oneTimeListener<EngineHttpResponse>(webhookRequestId, true, timeoutMs ?? WEBHOOK_TIMEOUT_MS, {
                 status: StatusCodes.NO_CONTENT,
                 body: {},
                 headers: {},
@@ -349,6 +351,7 @@ type HandleWebhookParams = {
     onRunCreated?: (run: FlowRun) => void
     parentRunId?: string
     failParentOnFailure: boolean
+    timeoutMs?: number
 }
 
 type AsyncWebhookParams = {
@@ -381,4 +384,5 @@ type SyncWebhookParams = {
     onRunCreated?: (run: FlowRun) => void
     parentRunId?: string
     failParentOnFailure: boolean
+    timeoutMs?: number
 }

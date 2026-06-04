@@ -10,6 +10,7 @@ export const routesThatRequireProjectId = {
   automations: '/automations',
   connections: '/connections',
   singleConnection: '/connections/:connectionId',
+  variables: '/variables',
   tables: '/tables',
   singleTable: '/tables/:tableId',
   settings: '/settings',

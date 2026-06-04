@@ -157,6 +157,7 @@ export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, do
             redirectUrl: request.body.redirectUrl,
             props: request.body.props,
             projectId: request.projectId,
+            scopes: request.body.scopes,
         })
     })
     done()

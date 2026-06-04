@@ -1,5 +1,7 @@
+import { t } from 'i18next';
 import { Check, Copy } from 'lucide-react';
 import { forwardRef, useState, type ButtonHTMLAttributes } from 'react';
+import { toast } from 'sonner';
 
 import { cn } from '@/lib/utils';
 
@@ -16,9 +18,9 @@ export const CopyIconButton = forwardRef<
     try {
       await navigator.clipboard.writeText(textToCopy);
       setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      setTimeout(() => setCopied(false), 2500);
     } catch {
-      // ignore — clipboard not available
+      toast.error(t('Failed to copy to clipboard'));
     }
   };
 

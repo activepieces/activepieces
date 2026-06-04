@@ -17,6 +17,12 @@ export const listEventsAction = createAction({
         options: [
           { label: 'Confirmed', value: 'confirmed' },
           { label: 'Canceled', value: 'canceled' },
+          { label: 'Awaiting Reschedule', value: 'awaiting_reschedule' },
+          { label: 'Awaiting Checkout', value: 'awaiting_checkout' },
+          { label: 'Checkout Expired', value: 'checkout_expired' },
+          { label: 'Awaiting Approval', value: 'awaiting_approval' },
+          { label: 'Declined', value: 'declined' },
+          { label: 'Tentative', value: 'tentative' },
         ],
       },
     }),
