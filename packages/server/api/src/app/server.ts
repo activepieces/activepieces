@@ -41,9 +41,10 @@ export const setupServer = async (): Promise<FastifyInstance> => {
     }, { prefix: '/api' })
 
     if (system.isApp()) {
+        const flowRunLogSizeLimitBytes = (system.getNumber(AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB) ?? 0) * 1024 * 1024
         await app.register(fastifySocketIO, {
             cors: { origin: '*' },
-            maxHttpBufferSize: 1e8,
+            maxHttpBufferSize: Math.max(flowRunLogSizeLimitBytes, 1e8),
             path: '/api/socket.io',
             ...spreadIfDefined('adapter', await getAdapter()),
             transports: ['websocket'],
