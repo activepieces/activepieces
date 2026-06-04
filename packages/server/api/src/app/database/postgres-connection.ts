@@ -22,6 +22,7 @@ import { AddDatasourcesLimit1695916063833 } from '../ee/database/migrations/post
 import { AddPlatform1697717995884 } from '../ee/database/migrations/postgres/1697717995884-add-platform'
 import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres/1698077078271-AddCustomDomain'
 import { AddMetadataFieldToFlowTemplates1744780800000 } from '../ee/database/migrations/postgres/1744780800000-AddMetadataFieldToFlowTemplates'
+import { AddAiCreditsUsedToProjectPlan1790000000001 } from './migration/postgres/1790000000001-AddAiCreditsUsedToProjectPlan'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { commonProperties } from './database-connection'
@@ -777,6 +778,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddCreatedByToFlow1794000000000,
         AddStatusToChatConversation1779500000000,
         AddDataManipulationEnabledToPlatformPlan1794000000000,
+        AddAiCreditsUsedToProjectPlan1790000000001,
     ]
     return migrations
 }
