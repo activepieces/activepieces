@@ -19,7 +19,7 @@
   "Short description or summary of the page": "Courte description ou résumé de la page",
   "Note": "Note",
   "Personal note to attach to this bookmark": "Note personnelle à attacher à ce marque-page",
-  "Collection": "Collection",
+  "Collection": "Collecte",
   "Select the collection to use. Leave empty to use \"Unsorted\" (default inbox).": "Choisissez la collection à utiliser. Laissez vide pour utiliser « Non classés » (dossier par défaut).",
   "Select the collection to save the bookmark in. Leave empty to save to Unsorted.": "Choisissez la collection où enregistrer le marque-page. Laissez vide pour enregistrer dans Non classés.",
   "Tags": "Tags",
@@ -42,5 +42,5 @@
   "Filter bookmarks by keyword. Supports operators like #tag or type:article. Leave empty to list all bookmarks.": "Filtrer les marque-pages par mot-clé. Supporte les opérateurs comme #tag ou type:article. Laissez vide pour lister tous les marque-pages.",
   "Limit": "Limite",
   "Maximum number of bookmarks to return (max 50)": "Nombre maximum de marque-pages à retourner (max 50)",
-  "Custom API Call": "Appel API personnalisé"
+  "Custom API Call": "Appel d'API personnalisé"
 }
