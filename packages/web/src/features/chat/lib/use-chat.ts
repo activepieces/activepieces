@@ -440,6 +440,10 @@ export function useAgentChat({
         conversationIdRef.current = null;
         setConversationIdState(null);
         setIsLoadingHistory(false);
+        updateSendStatus({
+          type: 'error',
+          message: 'Conversation not found',
+        });
         return;
       }
       const mapped = chatUtils.mapHistoryToUIMessages(historyResult.data.data);
