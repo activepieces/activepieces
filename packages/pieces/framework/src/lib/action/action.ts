@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { ActionContext } from '../context';
-import { ActionBase } from '../piece-metadata';
+import { ActionBase, Audience, AiMetadata } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { ExtractPieceAuthPropertyTypeForMethods, PieceAuthProperty } from '../property/authentication';
 
@@ -35,6 +35,8 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty | PieceAuthProperty[
   test?: ActionRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, ActionProps>
   requireAuth?: boolean
   errorHandlingOptions?: ErrorHandlingOptionsParam
+  audience?: Audience
+  aiMetadata?: AiMetadata
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -48,6 +50,8 @@ export class IAction<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] |
     public readonly test: ActionRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, ActionProps>,
     public readonly requireAuth: boolean,
     public readonly errorHandlingOptions: ErrorHandlingOptionsParam,
+    public readonly audience?: Audience,
+    public readonly aiMetadata?: AiMetadata,
   ) { }
 }
 
@@ -80,5 +84,7 @@ export const createAction = <
         defaultValue: false,
       }
     },
+    params.audience,
+    params.aiMetadata,
   )
 }

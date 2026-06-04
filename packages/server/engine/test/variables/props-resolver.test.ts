@@ -146,6 +146,14 @@ describe('Props resolver', () => {
         ).toEqual('Price is 6.4')
     })
 
+    test('Test two adjacent {{ }} tokens resolve independently', async () => {
+        // Regression for #13094: greedy/non-greedy regex merged adjacent tokens.
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: '{{trigger.name}} costs {{trigger.price}}',
+            executionState,
+        })
+        expect(resolvedInput).toEqual('John costs 6.4')
+    })
 
     test('Test resolve object steps variables', async () => {
         const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{ {"where": "a"} }}', executionState })

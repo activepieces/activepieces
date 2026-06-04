@@ -1,7 +1,8 @@
 import { tryCatch } from '@activepieces/shared'
 import { createMCPClient } from '@ai-sdk/mcp'
+import { ToolExecutionOptions } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
-import { ChatEventEmitter } from './chat-worker-tools'
+import { ChatEventEmitter, chatWorkerTools } from './chat-worker-tools'
 
 const CONVERSATION_ID_HEADER = 'x-ap-conversation-id'
 
@@ -59,7 +60,7 @@ function humanizeToolName(name: string): string {
         .replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
-function hasExecute(tool: object): tool is object & { execute: (args: unknown, options?: { toolCallId: string }) => Promise<unknown> } {
+function hasExecute(tool: object): tool is object & { execute: (args: unknown, options?: ToolExecutionOptions) => Promise<unknown> } {
     return 'execute' in tool && typeof tool.execute === 'function'
 }
 
@@ -80,19 +81,26 @@ function withApprovalGates({ mcpToolSet, eventEmitter, log, isApproved, waitForA
 
         const originalExecute = tool.execute.bind(tool)
         const needsApproval = requiresApproval(name)
+        const executeWithTimeout = (args: unknown, options?: ToolExecutionOptions) =>
+            chatWorkerTools.withToolTimeout({
+                fn: (timeoutSignal) => originalExecute(args, options ? { ...options, abortSignal: timeoutSignal } : undefined),
+                timeoutMs: chatWorkerTools.TOOL_EXECUTION_TIMEOUT_MS,
+                toolName: name,
+            })
 
         result[name] = Object.assign({}, tool, {
-            execute: async (args: unknown, options?: { toolCallId: string }) => {
+            execute: async (args: unknown, options?: ToolExecutionOptions) => {
                 if (isApproved() || !needsApproval) {
-                    return originalExecute(args, options)
+                    return executeWithTimeout(args, options)
                 }
                 const toolCallId = options?.toolCallId
                 if (!toolCallId) {
-                    return originalExecute(args, options)
+                    return executeWithTimeout(args, options)
                 }
-                const displayName = typeof args === 'object' && args !== null && 'displayName' in args && typeof args.displayName === 'string'
-                    ? args.displayName
-                    : humanizeToolName(name)
+                const argsObj = typeof args === 'object' && args !== null ? args as Record<string, unknown> : {}
+                const displayName = (typeof argsObj['title'] === 'string' && argsObj['title'])
+                    || (typeof argsObj['displayName'] === 'string' && argsObj['displayName'])
+                    || humanizeToolName(name)
 
                 eventEmitter.emitToolApprovalRequest({
                     toolCallId,
@@ -109,7 +117,7 @@ function withApprovalGates({ mcpToolSet, eventEmitter, log, isApproved, waitForA
                 }
 
                 log.info({ toolCallId, toolName: name }, 'Tool approval granted')
-                return originalExecute(args, options)
+                return executeWithTimeout(args, options)
             },
         })
     }

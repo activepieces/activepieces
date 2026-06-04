@@ -1,4 +1,6 @@
 import { t } from 'i18next';
+import { motion } from 'motion/react';
+import { useEffect, useRef } from 'react';
 
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
@@ -65,6 +67,15 @@ export function ChatBottomBar({
   const dismissGate = useChatStoreContext((s) => s.dismissGate);
   const dismissForm = useChatStoreContext((s) => s.dismissForm);
 
+  const wasStreamingRef = useRef(isStreaming);
+  useEffect(() => {
+    if (wasStreamingRef.current && !isStreaming && activeDisplayTool) {
+      const toolCallId = chatPartUtils.getToolCallId(activeDisplayTool);
+      dismissGate(toolCallId);
+    }
+    wasStreamingRef.current = isStreaming;
+  }, [isStreaming, activeDisplayTool, dismissGate]);
+
   // Plan approval from tool state
   if (pendingPlanPart) {
     const input = pendingPlanPart.input as
@@ -129,18 +140,24 @@ export function ChatBottomBar({
   }
 
   return (
-    <ChatInput
-      isStreaming={isStreaming}
-      onSend={onSend}
-      onStop={onStop}
-      placeholder={t('Reply...')}
-      rightActions={
-        <ChatModelSelector
-          selectedModel={selectedModel}
-          onModelChange={onModelChange}
-        />
-      }
-    />
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
+    >
+      <ChatInput
+        isStreaming={isStreaming}
+        onSend={onSend}
+        onStop={onStop}
+        placeholder={t('Reply...')}
+        rightActions={
+          <ChatModelSelector
+            selectedModel={selectedModel}
+            onModelChange={onModelChange}
+          />
+        }
+      />
+    </motion.div>
   );
 }
 
