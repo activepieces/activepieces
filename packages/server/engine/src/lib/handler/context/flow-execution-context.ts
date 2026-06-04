@@ -36,7 +36,7 @@ export class FlowExecutorContext {
     stepNameToTest?: boolean
     stepsCount: number
     engineApi?: EngineApiConfig
-    materializeCache: Map<string, Promise<unknown>>
+    resolvedStepOutputCache: Map<string, Promise<unknown>>
     slicingEnabled: boolean
 
     /**
@@ -53,7 +53,7 @@ export class FlowExecutorContext {
         this.stepNameToTest = copyFrom?.stepNameToTest ?? false
         this.stepsCount = copyFrom?.stepsCount ?? 0
         this.engineApi = copyFrom?.engineApi
-        this.materializeCache = copyFrom?.materializeCache ?? new Map()
+        this.resolvedStepOutputCache  = copyFrom?.resolvedStepOutputCache  ?? new Map()
         this.slicingEnabled = copyFrom?.slicingEnabled ?? true
     }
 
@@ -182,7 +182,6 @@ export class FlowExecutorContext {
             stepsCount: this.stepsCount + 1,
         })
     }
-
     public async currentState(referencedStepNames?: string[]): Promise<Record<string, unknown>> {
         const referencedSteps = referencedStepNames
             ? referencedStepNames.reduce((acc, stepName) => {
@@ -191,7 +190,7 @@ export class FlowExecutorContext {
             }, {} as Record<string, StepOutput>)
             : this.steps
 
-        let flattenedSteps: Record<string, unknown> = await materializeSteps(referencedSteps, this.engineApi, this.materializeCache)
+        let flattened: Record<string, unknown> = await extractStepView(referencedSteps, this.engineApi, this.resolvedStepOutputCache )
         let targetMap = this.steps
 
         for (const [stepName, iteration] of this.currentPath.path) {
@@ -200,13 +199,25 @@ export class FlowExecutorContext {
                 throw new EngineGenericError('NotInstanceOfLoopOnItemsStepOutputError', '[ExecutionState#getTargetMap] Not instance of Loop On Items step output')
             }
             targetMap = stepOutput.output.iterations[iteration]
-            flattenedSteps = {
-                ...flattenedSteps,
-                ...await materializeSteps(targetMap, this.engineApi, this.materializeCache),
+            flattened = {
+                ...flattened,
+                ...await extractStepView(targetMap, this.engineApi, this.resolvedStepOutputCache ),
             }
         }
-        return flattenedSteps
+        return flattened
     }
+}
+
+async function extractStepView(steps: Record<string, StepOutput>, engineApi: EngineApiConfig | undefined, cache: Map<string, Promise<unknown>>): Promise<Record<string, unknown>> {
+    const result: Record<string, unknown> = {}
+    for (const [stepName, step] of Object.entries(steps)) {
+        const output = await resolveStepOutput(step, engineApi, cache)
+        const error = step.status === StepOutputStatus.FAILED && step.errorMessage !== undefined
+            ? { message: step.errorMessage }
+            : undefined
+        result[stepName] = { output, error }
+    }
+    return result
 }
 
 async function maybeSliceOutput(value: unknown, engineApi?: EngineApiConfig): Promise<{ ref: LogSliceRef } | undefined> {
@@ -228,7 +239,7 @@ async function maybeSliceOutput(value: unknown, engineApi?: EngineApiConfig): Pr
     return { ref: { fileId, size, url: readUrl } }
 }
 
-async function materializeStep(step: StepOutput, engineApi: EngineApiConfig | undefined, cache: Map<string, Promise<unknown>>): Promise<unknown> {
+async function resolveStepOutput(step: StepOutput, engineApi: EngineApiConfig | undefined, cache: Map<string, Promise<unknown>>): Promise<unknown> {
     if (step.outputType !== StepOutputType.SLICE) {
         return step.output
     }
@@ -244,14 +255,6 @@ async function materializeStep(step: StepOutput, engineApi: EngineApiConfig | un
         .then((bytes) => JSON.parse(new TextDecoder('utf-8').decode(bytes)))
     cache.set(ref.fileId, promise)
     return promise
-}
-
-async function materializeSteps(steps: Record<string, StepOutput>, engineApi: EngineApiConfig | undefined, cache: Map<string, Promise<unknown>>): Promise<Record<string, unknown>> {
-    const result: Record<string, unknown> = {}
-    for (const [stepName, step] of Object.entries(steps)) {
-        result[stepName] = await materializeStep(step, engineApi, cache)
-    }
-    return result
 }
 
 function withTruncatedInput<T extends BaseStepOutput>(stepOutput: T): T {
