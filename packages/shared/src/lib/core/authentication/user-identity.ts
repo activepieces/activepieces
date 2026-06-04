@@ -20,6 +20,7 @@ export const UserIdentity = z.object({
     tokenVersion: z.string().optional(),
     provider: z.nativeEnum(UserIdentityProvider),
     imageUrl: Nullable(z.string()),
+    lastLoggedInPlatformId: Nullable(z.string()),
 })
 
 export type UserIdentity = z.infer<typeof UserIdentity>

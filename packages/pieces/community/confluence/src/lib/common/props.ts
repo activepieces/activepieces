@@ -4,47 +4,77 @@ import { confluenceAuth } from '../auth';
 import {
 	DropdownOption,
 	DynamicPropsValue,
-	PiecePropValueSchema,
 	Property,
 } from '@activepieces/pieces-framework';
 import { parseStringPromise } from 'xml2js';
 
-export const spaceIdProp = Property.Dropdown({
-	auth: confluenceAuth,
-	displayName: 'Space',
-	refreshers: [],
-	required: true,
-	options: async ({ auth }) => {
-		if (!auth) {
-			return {
-				disabled: true,
-				options: [],
-				placeholder: 'Please connect your account first.',
-			};
-		}
-
-		const spaces = await confluencePaginatedApiCall<{ id: string; name: string }>({
-			domain: auth.props.confluenceDomain,
-			username: auth.props.username,
-			password: auth.props.password,
-			version: 'v2',
-			method: HttpMethod.GET,
-			resourceUri: '/spaces',
-		});
-
-		const options: DropdownOption<string>[] = [];
-		for (const space of spaces) {
-			options.push({
-				label: space.name,
-				value: space.id,
+function buildSpaceDropdown(required: boolean) {
+	return Property.Dropdown({
+		auth: confluenceAuth,
+		displayName: 'Space',
+		refreshers: [],
+		required,
+		options: async ({ auth }) => {
+			if (!auth) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: 'Please connect your account first.',
+				};
+			}
+			const spaces = await confluencePaginatedApiCall<{ id: string; name: string }>({
+				domain: auth.props.confluenceDomain,
+				username: auth.props.username,
+				password: auth.props.password,
+				version: 'v2',
+				method: HttpMethod.GET,
+				resourceUri: '/spaces',
 			});
-		}
-		return {
-			disabled: false,
-			options,
-		};
-	},
-});
+			return {
+				disabled: false,
+				options: spaces.map((space) => ({ label: space.name, value: space.id })),
+			};
+		},
+	});
+}
+
+export const spaceIdProp = buildSpaceDropdown(true);
+export const spaceIdPropOptional = buildSpaceDropdown(false);
+
+function buildPageDropdown(displayName: string, required: boolean) {
+	return Property.Dropdown({
+		auth: confluenceAuth,
+		displayName,
+		refreshers: ['spaceId'],
+		required,
+		options: async ({ auth, spaceId }) => {
+			if (!auth) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: 'Please connect your account first.',
+				};
+			}
+			const resourceUri = spaceId ? `/spaces/${spaceId}/pages` : `/pages`;
+			const pages = await confluencePaginatedApiCall<{ id: string; title: string }>({
+				domain: auth.props.confluenceDomain,
+				username: auth.props.username,
+				password: auth.props.password,
+				version: 'v2',
+				method: HttpMethod.GET,
+				resourceUri,
+			});
+			return {
+				disabled: false,
+				options: pages.map((page) => ({ label: page.title, value: page.id })),
+			};
+		},
+	});
+}
+
+export const pageIdProp = buildPageDropdown('Page', true);
+export const pageIdPropOptional = buildPageDropdown('Page', false);
+export const parentPageIdProp = buildPageDropdown('Parent Page', false);
 
 export const templateIdProp = Property.Dropdown({
 	displayName: 'Template',
@@ -143,7 +173,7 @@ export const templateVariablesProp = Property.DynamicProperties({
 	displayName: 'Template Variables',
 	auth: confluenceAuth,
 	refreshers: ['templateId'],
-	required: true,
+	required: false,
 	props: async ({ auth, templateId }) => {
 		if (!auth) return {};
 		if (!templateId) return {};

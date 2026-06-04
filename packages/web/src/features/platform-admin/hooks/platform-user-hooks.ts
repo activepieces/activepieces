@@ -1,5 +1,7 @@
 import {
   InvitationType,
+  isNil,
+  Permission,
   SeekPage,
   UpdateUserRequestBody,
   User,
@@ -12,6 +14,8 @@ import { toast } from 'sonner';
 
 import { platformUserApi } from '@/api/platform-user-api';
 import { userInvitationApi } from '@/features/members/api/user-invitation';
+import { useAuthorization } from '@/hooks/authorization-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 
 export const platformUserKeys = {
   users: ['users'] as const,
@@ -20,6 +24,11 @@ export const platformUserKeys = {
 
 export const platformUserHooks = {
   useUsers: () => {
+    const { data: currentUser } = userHooks.useCurrentUser();
+    const { checkAccess, isFetchingProjectRole } = useAuthorization();
+    const hasInvitePermission = checkAccess(Permission.WRITE_INVITATION);
+    const canListUsers =
+      !isNil(currentUser) && hasInvitePermission && !isFetchingProjectRole;
     return useQuery<SeekPage<UserWithMetaInformation>, Error>({
       queryKey: platformUserKeys.users,
       queryFn: async () => {
@@ -28,6 +37,7 @@ export const platformUserHooks = {
         });
         return results;
       },
+      enabled: canListUsers,
     });
   },
   usePlatformInvitations: () => {
@@ -44,6 +54,7 @@ export const platformUserHooks = {
       },
       queryKey: platformUserKeys.invitations,
       staleTime: 0,
+      meta: { showErrorDialog: true, loadSubsetOptions: {} },
     });
   },
 };

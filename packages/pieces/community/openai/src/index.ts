@@ -1,10 +1,7 @@
 import {
-  AuthenticationType,
-  HttpMethod,
   createCustomApiCallAction,
-  httpClient,
 } from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory,  } from '@activepieces/shared';
 import { askAssistant } from './lib/actions/ask-assistant';
 import { generateImage } from './lib/actions/generate-image';
@@ -15,6 +12,7 @@ import { translateAction } from './lib/actions/translation';
 import { visionPrompt } from './lib/actions/vision-prompt';
 import { baseUrl } from './lib/common/common';
 import { extractStructuredDataAction } from './lib/actions/extract-structure-data.action';
+import { editImage } from './lib/actions/edit-image';
 import { openaiAuth } from './lib/auth';
 
 export const openai = createPiece({
@@ -28,6 +26,7 @@ export const openai = createPiece({
     askOpenAI,
     askAssistant,
     generateImage,
+    editImage,
     visionPrompt,
     textToSpeech,
     transcribeAction,
@@ -54,6 +53,7 @@ export const openai = createPiece({
     'khaledmashaly',
     'abuaboud',
     'amrdb',
+    'onyedikachi-david'
   ],
   triggers: [],
 });

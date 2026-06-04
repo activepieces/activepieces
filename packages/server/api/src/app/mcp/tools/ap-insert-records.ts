@@ -1,8 +1,8 @@
-import { McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
+import { McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { recordService } from '../../tables/record/record.service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 import { resolveFieldNamesForTable } from './table-utils'
 
 const insertRecordsInput = z.object({
@@ -10,11 +10,11 @@ const insertRecordsInput = z.object({
     records: z.array(z.record(z.string(), z.string())).min(1).max(50).describe('Array of records (1–50). Each record maps field names to values. Example: [{"Name": "Alice", "Age": "30"}]'),
 })
 
-export const apInsertRecordsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apInsertRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_insert_records',
         permission: Permission.WRITE_TABLE,
-        description: 'Insert one or more records into a table. Each record is an object mapping field names to string values. Use ap_list_tables to discover field names. Max 50 records per call.',
+        description: 'Insert one or more records into a table. Max 50 records per call.',
         inputSchema: insertRecordsInput.shape,
         annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
@@ -50,7 +50,7 @@ export const apInsertRecordsTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
             }
             catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_insert_records failed')
-                return mcpToolError('Failed to insert records', err)
+                return mcpUtils.mcpToolError('Failed to insert records', err)
             }
         },
     }

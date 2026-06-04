@@ -1,3 +1,4 @@
+import { loggerRedact } from '@activepieces/server-utils'
 import { Level, pino, TransportTargetOptions } from 'pino'
 import 'pino-loki'
 import { AppSystemProp, environmentVariables } from '../../system/system-props'
@@ -15,6 +16,7 @@ export const lokiTransport: TransportProvider = {
 
         return pino({
             level,
+            redact: loggerRedact,
             transport: {
                 targets: [
                     {

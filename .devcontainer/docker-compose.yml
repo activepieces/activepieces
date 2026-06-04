@@ -13,6 +13,7 @@ services:
 
     volumes:
       - ..:/workspace:cached
+      - ~/.claude:/root/.claude:cached
 
     # Connect the app to the same network as db and redis
     networks:
@@ -20,6 +21,9 @@ services:
 
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
     # Uncomment the next line to use a non-root user for all processes.
     # user: node

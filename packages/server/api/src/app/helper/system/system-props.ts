@@ -1,12 +1,10 @@
-import path from 'path'
+import { environmentMigrations } from '@activepieces/server-utils'
 import { assertNotNullOrUndefined } from '@activepieces/shared'
-import { environmentMigrations } from './env-migrations'
 
 export type SystemProp = AppSystemProp
 
-let cachedVersion: string | undefined
-
 export enum AppSystemProp {
+    ALLOWED_EMBED_ORIGINS = 'ALLOWED_EMBED_ORIGINS',
     API_KEY = 'API_KEY',
     TEMPLATES_API_KEY = 'TEMPLATES_API_KEY',
     TEMPLATE_MANAGER_API_KEY = 'TEMPLATE_MANAGER_API_KEY',
@@ -21,9 +19,11 @@ export enum AppSystemProp {
     CLOUD_AUTH_ENABLED = 'CLOUD_AUTH_ENABLED',
     CLOUDFLARE_API_BASE = 'CLOUDFLARE_API_BASE',
     CLOUDFLARE_API_TOKEN = 'CLOUDFLARE_API_TOKEN',
+    CLOUDFLARE_SAAS_FALLBACK_ORIGIN = 'CLOUDFLARE_SAAS_FALLBACK_ORIGIN',
     CLOUDFLARE_ZONE_ID = 'CLOUDFLARE_ZONE_ID',
     CONFIG_PATH = 'CONFIG_PATH',
     DB_TYPE = 'DB_TYPE',
+    DEFAULT_CONCURRENT_JOBS_LIMIT = 'DEFAULT_CONCURRENT_JOBS_LIMIT',
     DEV_PIECES = 'DEV_PIECES',
     EDITION = 'EDITION',
     ENABLE_FLOW_ON_PUBLISH = 'ENABLE_FLOW_ON_PUBLISH',
@@ -48,7 +48,6 @@ export enum AppSystemProp {
     LOKI_PASSWORD = 'LOKI_PASSWORD',
     LOKI_URL = 'LOKI_URL',
     LOKI_USERNAME = 'LOKI_USERNAME',
-    MAX_CONCURRENT_JOBS_PER_PROJECT = 'MAX_CONCURRENT_JOBS_PER_PROJECT',
     MAX_FIELDS_PER_TABLE = 'MAX_FIELDS_PER_TABLE',
     MAX_FILE_SIZE_MB = 'MAX_FILE_SIZE_MB',
     MAX_FLOW_RUN_LOG_SIZE_MB = 'MAX_FLOW_RUN_LOG_SIZE_MB',
@@ -58,7 +57,6 @@ export enum AppSystemProp {
     OTEL_ENABLED = 'OTEL_ENABLED',
     PAGE_ONCALL_WEBHOOK = 'PAGE_ONCALL_WEBHOOK',
     PAUSED_FLOW_TIMEOUT_DAYS = 'PAUSED_FLOW_TIMEOUT_DAYS',
-    PIECES_CACHE_MAX_ENTRIES = 'PIECES_CACHE_MAX_ENTRIES',
     PIECES_SYNC_MODE = 'PIECES_SYNC_MODE',
     WORKERS = 'WORKERS',
     POSTGRES_DATABASE = 'POSTGRES_DATABASE',
@@ -119,12 +117,13 @@ export enum AppSystemProp {
     OPENROUTER_PROVISION_KEY = 'OPENROUTER_PROVISION_KEY',
     EVENT_DESTINATION_TIMEOUT_SECONDS = 'EVENT_DESTINATION_TIMEOUT_SECONDS',
     CANARY_APP_URL = 'CANARY_APP_URL',
+    IS_CANARY_APP = 'IS_CANARY_APP',
     SSRF_ALLOW_LIST = 'SSRF_ALLOW_LIST',
-    SSRF_PROTECTION_ENABLED = 'SSRF_PROTECTION_ENABLED',
-    MCP_OAUTH_ISSUER_URL = 'MCP_OAUTH_ISSUER_URL',
+    NETWORK_MODE = 'NETWORK_MODE',
     CONTAINER_TYPE = 'CONTAINER_TYPE',
     FRONTEND_URL = 'FRONTEND_URL',
     PORT = 'PORT',
+    CONSOLE_API_SECRET_KEY = 'CONSOLE_API_SECRET_KEY',
 }
 
 export enum ContainerType {
@@ -157,33 +156,3 @@ export const environmentVariables = {
     },
 }
 
-export const apVersionUtil = {
-    async getCurrentRelease(): Promise<string> {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const packageJson = require(path.resolve(process.cwd(), 'package.json'))
-        return packageJson.version
-    },
-    async getLatestRelease(): Promise<string> {
-        try {
-            if (cachedVersion) {
-                return cachedVersion
-            }
-            const response = await fetch(
-                'https://raw.githubusercontent.com/activepieces/activepieces/main/package.json',
-                {
-                    signal: AbortSignal.timeout(5000),
-                },
-            )
-            const data: PackageJson = await response.json()
-            cachedVersion = data.version
-            return data.version
-        }
-        catch (ex) {
-            return '0.0.0'
-        }
-    },
-}
-
-type PackageJson = {
-    version: string
-}

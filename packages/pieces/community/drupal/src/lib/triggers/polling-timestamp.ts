@@ -1,7 +1,6 @@
 import {
   createTrigger,
   TriggerStrategy,
-  PiecePropValueSchema,
   Property,
 } from '@activepieces/pieces-framework';
 import {

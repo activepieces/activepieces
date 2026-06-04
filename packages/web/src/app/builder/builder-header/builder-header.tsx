@@ -18,6 +18,7 @@ import {
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { RightSideBarType } from '@/app/builder/types';
+import { ActiveUsersWidget } from '@/components/custom/active-users-widget';
 import EditableText from '@/components/custom/editable-text';
 import { HomeButton } from '@/components/custom/home-button';
 import { PageHeader } from '@/components/custom/page-header';
@@ -32,6 +33,7 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { flowHooks } from '@/features/flows';
+import { FlowCreatedByBadge } from '@/features/flows/components/flow-created-by-badge';
 import { foldersHooks } from '@/features/folders';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -185,6 +187,7 @@ export const BuilderHeader = () => {
           {t('Support')}
         </Button>
       )}
+      <ActiveUsersWidget resourceId={flow.id} />
       {hasPermissionToReadRuns && (
         <Button
           variant="ghost"
@@ -197,6 +200,7 @@ export const BuilderHeader = () => {
       )}
 
       <BuilderFlowStatusSection></BuilderFlowStatusSection>
+      <FlowCreatedByBadge createdBy={flow.createdBy} />
     </div>
   );
 

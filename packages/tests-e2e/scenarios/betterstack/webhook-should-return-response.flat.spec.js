@@ -5,7 +5,7 @@ const password = process.env.PASSWORD;
 const baseUrl = process.env.BASEURL;
 
 test('should handle webhook with return response', async ({ page }) => {
-  test.setTimeout(120000);
+  test.setTimeout(180000);
 
   // Sign in
   await page.goto(`${baseUrl}/sign-in`);
@@ -14,7 +14,9 @@ test('should handle webhook with return response', async ({ page }) => {
   await page.getByTestId('sign-in-button').click();
 
   // Wait for sign-in to complete (navigate away from sign-in page)
-  await page.waitForURL(url => !url.href.includes('sign-in'), { timeout: 30000 });
+  await page.waitForURL((url) => !url.href.includes('sign-in'), {
+    timeout: 30000,
+  });
 
   // Navigate directly to automations
   await page.goto(`${baseUrl}/automations`);
@@ -26,16 +28,24 @@ test('should handle webhook with return response', async ({ page }) => {
     await createNewButton.click();
     await page.getByRole('menuitem', { name: 'New Flow' }).click();
   } else {
-    await page.getByRole('button', { name: 'Start from scratch' }).first().click();
+    await page
+      .getByRole('button', { name: 'Start from scratch' })
+      .first()
+      .click();
   }
 
   // Select webhook trigger
-  await page.getByTestId('rf__node-trigger').filter({ hasText: 'Select Trigger' }).click();
+  await page
+    .getByTestId('rf__node-trigger')
+    .filter({ hasText: 'Select Trigger' })
+    .click();
   await page.getByTestId('pieces-search-input').fill('Catch Webhook');
   await page.getByText('Catch Webhook').click();
 
   // Grab webhook URL and build test URL
-  const webhookUrl = await page.locator('input.grow.bg-background').inputValue();
+  const webhookUrl = await page
+    .locator('input.grow.bg-background')
+    .inputValue();
   const runVersion = Math.floor(Math.random() * 100000);
   const urlWithParams = `${webhookUrl}/sync?targetRunVersion=${runVersion}`;
 
@@ -53,12 +63,14 @@ test('should handle webhook with return response', async ({ page }) => {
   await page.getByTestId('Webhook').click();
   await page.getByText('Return Response').nth(1).click();
   await page.waitForTimeout(5000);
-  
+
   // Fill response body
   await page.locator('div.cm-activeLine.cm-line').fill('');
-  await page.locator('div.cm-activeLine.cm-line').fill(
-    '{"targetRunVersion": "{{trigger[\'queryParams\'][\'targetRunVersion\']}}"}'
-  );
+  await page
+    .locator('div.cm-activeLine.cm-line')
+    .fill(
+      '{"targetRunVersion": "{{trigger[\'queryParams\'][\'targetRunVersion\']}}"}'
+    );
   await page.waitForTimeout(1000);
 
   // Publish

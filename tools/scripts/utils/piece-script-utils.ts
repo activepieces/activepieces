@@ -1,20 +1,26 @@
 
+import { execFileSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { readdir, stat } from 'node:fs/promises'
 import { resolve, join, relative } from 'node:path'
 import { cwd } from 'node:process'
-import { extractPieceFromModule } from '@activepieces/shared'
 import * as semver from 'semver'
 import { readPackageJson } from './files'
 import { StatusCodes } from 'http-status-codes'
-import { pieceTranslation,PieceMetadata } from '@activepieces/pieces-framework'
-type SubPiece = {
-    name: string;
-    displayName: string;
-    version: string;
-    minimumSupportedRelease?: string;
-    maximumSupportedRelease?: string;
-    metadata(): Omit<PieceMetadata, 'name' | 'version'>;
+import { pieceTranslation, PieceMetadata } from '@activepieces/pieces-framework'
+
+const LOAD_PIECE_METADATA_CHILD = resolve(
+    __dirname,
+    '..',
+    'pieces',
+    'load-piece-metadata-child.mjs',
+)
+
+type LoadedPieceChildPayload = {
+    metadata: Omit<PieceMetadata, 'name' | 'version'>;
+    minimumSupportedRelease: string | null;
+    maximumSupportedRelease: string | null;
+    authors: string[];
 };
 
 export const AP_CLOUD_API_BASE = 'https://cloud.activepieces.com/api/v1';
@@ -180,32 +186,18 @@ async function traverseFolder(folderPath: string): Promise<string[]> {
 async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | null> {
     try {
         const packageJson = await readPackageJson(folderPath);
-
-        const module = await import(
-            join(folderPath, 'src', 'index')
-        )
-
-        const { name: pieceName, version: pieceVersion } = packageJson
-        const piece = extractPieceFromModule<SubPiece>({
-            module,
-            pieceName,
-            pieceVersion
-        });
-        const originalMetadata = piece.metadata()
+        const payload = loadPieceViaChildProcess(folderPath);
         const i18n = await pieceTranslation.initializeI18n(folderPath)
-        const metadata = {
-            ...originalMetadata,
+        const metadata: PieceMetadata = {
+            ...payload.metadata,
             name: packageJson.name,
             version: packageJson.version,
-            i18n
+            i18n,
+            authors: payload.authors,
+            directoryPath: folderPath,
+            minimumSupportedRelease: payload.minimumSupportedRelease ?? '0.0.0',
+            maximumSupportedRelease: payload.maximumSupportedRelease ?? '99999.99999.9999',
         };
-        metadata.directoryPath = folderPath;
-        metadata.name = packageJson.name;
-        metadata.version = packageJson.version;
-        metadata.minimumSupportedRelease = piece.minimumSupportedRelease ?? '0.0.0';
-        metadata.maximumSupportedRelease =
-            piece.maximumSupportedRelease ?? '99999.99999.9999';
-
 
         validateMetadata(metadata);
         return metadata;
@@ -214,5 +206,14 @@ async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | 
         console.error(ex)
     }
     return null
+}
+
+function loadPieceViaChildProcess(folderPath: string): LoadedPieceChildPayload {
+    const stdout = execFileSync('node', [LOAD_PIECE_METADATA_CHILD, folderPath], {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'inherit'],
+        maxBuffer: 64 * 1024 * 1024,
+    })
+    return JSON.parse(stdout) as LoadedPieceChildPayload
 }
 

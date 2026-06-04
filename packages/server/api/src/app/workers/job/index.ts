@@ -1,8 +1,8 @@
 import {
     EngineOperationType,
     JobData,
-    ProgressUpdateType,
     RunEnvironment,
+    StreamStepProgress,
 } from '@activepieces/shared'
 import { z } from 'zod'
 
@@ -47,8 +47,8 @@ export type SavePayloadRequest = z.infer<typeof SavePayloadRequest>
 export const SubmitPayloadsRequest = z.object({
     flowVersionId: z.string(),
     projectId: z.string(),
-    progressUpdateType: z.nativeEnum(ProgressUpdateType),
-    synchronousHandlerId: z.string().optional(),
+    streamStepProgress: z.nativeEnum(StreamStepProgress),
+    workerHandlerId: z.string().optional(),
     httpRequestId: z.string().optional(),
     payloads: z.array(z.unknown()),
     environment: z.nativeEnum(RunEnvironment),

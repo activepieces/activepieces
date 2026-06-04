@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient, AuthenticationType } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { mistralAuth } from '../common/auth';
 import { parseMistralError } from '../common/props';
+import { mistralRequest } from '../common/request';
 
 export const createEmbeddings = createAction({
 	auth: mistralAuth,
@@ -18,6 +19,7 @@ export const createEmbeddings = createAction({
 	},
 	async run(context) {
 		const { input, timeout } = context.propsValue;
+		const { baseUrl, headers } = mistralRequest.getConfig(context.auth);
 		let inputArr: string[] = [];
 		try {
 			if (typeof input === 'string') {
@@ -40,11 +42,8 @@ export const createEmbeddings = createAction({
 			try {
 				const response = await httpClient.sendRequest({
 					method: HttpMethod.POST,
-					url: 'https://api.mistral.ai/v1/embeddings',
-					authentication: {
-						type: AuthenticationType.BEARER_TOKEN,
-						token: context.auth.secret_text,
-					},
+					url: `${baseUrl}/embeddings`,
+					headers,
 					body,
 					timeout: timeout ?? 30000,
 				});

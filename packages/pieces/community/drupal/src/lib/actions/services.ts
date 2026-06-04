@@ -1,5 +1,4 @@
 import {
-  PiecePropValueSchema,
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
@@ -9,7 +8,6 @@ import {
   HttpRequest,
 } from '@activepieces/pieces-common';
 import { drupalAuth } from '../auth';
-type DrupalAuthType = PiecePropValueSchema<typeof drupalAuth>;
 
 export const drupalCallServiceAction = createAction({
   auth: drupalAuth,
@@ -74,7 +72,7 @@ export const drupalCallServiceAction = createAction({
       props: async ({ service }) => {
         console.debug('Service config input', service);
         const fields: Record<string, any> = {};
-        const items = (service as {config: DrupalServiceConfig[]}).config;
+        const items = (service as { config: DrupalServiceConfig[] }).config;
         items.forEach((config: any) => {
           if (config.type === 'boolean') {
             fields[config.key] = Property.Checkbox({
@@ -107,7 +105,8 @@ export const drupalCallServiceAction = createAction({
                 options: config.options.map((option: any) => ({
                   label: option.name,
                   value: option.key,
-                }))},
+                }))
+              },
             });
           } else {
 

@@ -3,14 +3,24 @@ import { createBedrockClient } from './common';
 import { ListFoundationModelsCommand } from '@aws-sdk/client-bedrock';
 
 export const awsBedrockAuth = PieceAuth.CustomAuth({
-  description: 'AWS Bedrock authentication using Access Key and Secret Key.',
+  description: `Connect your AWS account to use Amazon Bedrock AI models.
+
+**How to get your credentials:**
+1. Open the [AWS IAM Console](https://console.aws.amazon.com/iam/) and go to **Users**.
+2. Select your user (or create a new one), then go to **Security credentials**.
+3. Click **Create access key** — copy both the Access Key ID and Secret Access Key.
+4. Make sure the IAM user has the **AmazonBedrockFullAccess** policy attached.
+
+**Enable model access:** In the [AWS Bedrock Console](https://console.aws.amazon.com/bedrock/), go to **Model access** and request access to the models you want to use.`,
   props: {
     accessKeyId: Property.ShortText({
       displayName: 'Access Key ID',
+      description: 'Your AWS access key ID. Found in AWS IAM Console → Users → Security credentials.',
       required: true,
     }),
     secretAccessKey: PieceAuth.SecretText({
       displayName: 'Secret Access Key',
+      description: 'Your AWS secret access key. Only shown once when you create the access key — store it safely.',
       required: true,
     }),
     region: Property.StaticDropdown({

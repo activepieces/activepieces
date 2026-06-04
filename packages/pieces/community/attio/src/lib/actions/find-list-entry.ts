@@ -1,7 +1,8 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { attioAuth } from '../auth';
-import { attioPaginatedApiCall } from '../common/client';
+import { attioPaginatedApiCall, buildMembersMap, normalizeRecord } from '../common/client';
+import { AttioRecordResponse } from '../common/types';
 import { formatInputFields, listFields, listIdDropdown } from '../common/props';
 
 export const findListEntryAction = createAction({
@@ -29,7 +30,7 @@ export const findListEntryAction = createAction({
 		const formattedFields = await formatInputFields(accessToken, 'lists', listId, inputFields, true);
 
 		// https://docs.attio.com/rest-api/endpoint-reference/entries/list-entries
-		const response = await attioPaginatedApiCall({
+		const records = await attioPaginatedApiCall<AttioRecordResponse>({
 			method: HttpMethod.POST,
 			accessToken,
 			resourceUri: `/lists/${listId}/entries/query`,
@@ -38,9 +39,10 @@ export const findListEntryAction = createAction({
 			},
 		});
 
+		const membersMap = await buildMembersMap(accessToken, records);
 		return {
-			found: response.length > 0,
-			result: response,
+			found: records.length > 0,
+			result: records.map((r) => normalizeRecord(r, membersMap)),
 		};
 	},
 });

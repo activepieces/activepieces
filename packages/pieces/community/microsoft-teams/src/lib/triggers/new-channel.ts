@@ -6,7 +6,7 @@ import {
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { microsoftTeamsCommon } from '../common';
-import { createGraphClient } from '../common/graph';
+import { createGraphClient, withGraphRetry } from '../common/graph';
 import { PageCollection } from '@microsoft/microsoft-graph-client';
 import { Channel } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
@@ -67,7 +67,9 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftTeamsAu
 		const channels: Channel[] = [];
 		const filter = lastFetchEpochMS === 0 ? '' : `?$filter=createdDateTime gt ${lastFetchDate}`;
 
-		let response: PageCollection = await client.api(`/teams/${teamId}/channels${filter}`).get();
+		let response: PageCollection = await withGraphRetry(() =>
+			client.api(`/teams/${teamId}/channels${filter}`).get(),
+		);
 
 		while (response.value && response.value.length > 0) {
 			for (const channel of response.value as Channel[]) {
@@ -76,8 +78,9 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftTeamsAu
 				}
 				channels.push(channel);
 			}
-			if (lastFetchEpochMS !== 0 && response['@odata.nextLink']) {
-				response = await client.api(response['@odata.nextLink']).get();
+			const nextLink = response['@odata.nextLink'];
+			if (lastFetchEpochMS !== 0 && nextLink) {
+				response = await withGraphRetry(() => client.api(nextLink).get());
 			} else {
 				break;
 			}

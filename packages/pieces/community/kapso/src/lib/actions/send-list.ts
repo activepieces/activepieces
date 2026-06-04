@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { kapsoAuth } from '../common';
 import { makeClient } from '../common';
-import { phoneNumberIdDropdown } from '../common/props';
+import { businessAccountIdProp, phoneNumberIdDropdown } from '../common/props';
 
 export const sendList = createAction({
   auth: kapsoAuth,
@@ -9,6 +9,7 @@ export const sendList = createAction({
   displayName: 'Send List Message',
   description: 'Send an interactive list message via WhatsApp.',
   props: {
+    businessAccountId: businessAccountIdProp,
     phoneNumberId: phoneNumberIdDropdown,
     to: Property.ShortText({
       displayName: 'Recipient Phone Number',

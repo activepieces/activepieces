@@ -7,12 +7,14 @@ import {
     Cursor,
     ErrorCode,
     Flow,
+    FlowCreator,
     FlowId,
     FlowOperationRequest,
     FlowOperationStatus,
     FlowOperationType,
     flowPieceUtil,
     FlowStatus,
+    FlowTriggerType,
     FlowVersion,
     FlowVersionId,
     FlowVersionState,
@@ -57,7 +59,7 @@ import { flowRepo } from './flow.repo'
 
 
 export const flowService = (log: FastifyBaseLogger) => ({
-    async create({ projectId, request, externalId, ownerId, templateId }: CreateParams): Promise<PopulatedFlow> {
+    async create({ projectId, request, externalId, ownerId, templateId, createdBy }: CreateParams): Promise<PopulatedFlow> {
         const folderId = await getFolderIdFromRequest({ projectId, folderId: request.folderId, folderName: request.folderName, log })
         const newFlow: NewFlow = {
             id: apId(),
@@ -70,6 +72,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             metadata: request.metadata,
             operationStatus: FlowOperationStatus.NONE,
             templateId,
+            createdBy,
         }
         const savedFlow = await flowRepo().save(newFlow)
 
@@ -752,6 +755,7 @@ type CreateParams = {
     ownerId?: UserId
     externalId?: string
     templateId?: string
+    createdBy?: FlowCreator
 }
 
 type ListParamsBase = {
@@ -865,16 +869,31 @@ async function createNewDraftIfVersionIsPublished({
             displayName: lockedVersion.displayName,
             notes: lockedVersion.notes,
         })
-        lastVersion = await flowVersionService(log).applyOperation({
-            userId,
-            projectId,
-            platformId,
-            flowVersion: lastVersion,
-            userOperation: {
-                type: FlowOperationType.IMPORT_FLOW,
-                request: lockedVersion,
-            },
-        })
+        const operations: FlowOperationRequest[] = [{
+            type: FlowOperationType.IMPORT_FLOW,
+            request: lockedVersion,
+        }]
+        if (
+            lockedVersion.trigger.type === FlowTriggerType.PIECE &&
+            !isNil(lockedVersion.trigger.settings.sampleData)
+        ) {
+            operations.push({
+                type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
+                request: {
+                    stepName: lockedVersion.trigger.name,
+                    sampleDataSettings: lockedVersion.trigger.settings.sampleData,
+                },
+            })
+        }
+        for (const operation of operations) {
+            lastVersion = await flowVersionService(log).applyOperation({
+                userId,
+                projectId,
+                platformId,
+                flowVersion: lastVersion,
+                userOperation: operation,
+            })
+        }
     }
     return lastVersion
 }

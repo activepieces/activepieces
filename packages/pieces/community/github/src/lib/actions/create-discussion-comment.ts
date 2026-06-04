@@ -44,7 +44,7 @@ export const githubCreateDiscussionCommentAction = createAction({
 		}`;
 
     const response = await githubApiCall({
-      accessToken: auth.access_token,
+      auth,
       method: HttpMethod.POST,
       resourceUri: '/graphql',
       body: {

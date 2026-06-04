@@ -40,6 +40,12 @@ export type EnginePrincipal = {
 }
 
 
+export type OnboardingPrincipal = {
+    id: ApId
+    type: PrincipalType.ONBOARDING
+    tokenVersion?: string
+}
+
 export type PrincipalForType<T extends PrincipalType> = Extract<Principal, { type: T }>
 
 export type PrincipalForTypes<R extends readonly PrincipalType[]> = PrincipalForType<R[number]>
@@ -50,3 +56,4 @@ export type Principal =
     | ServicePrincipal
     | UserPrincipal
     | EnginePrincipal
+    | OnboardingPrincipal

@@ -54,10 +54,13 @@ CREATE SECURITY INTEGRATION "activepieces"
   OAUTH_CLIENT_TYPE = 'CONFIDENTIAL'
   OAUTH_REDIRECT_URI = 'https://cloud.activepieces.com/redirect'
   ENABLED = TRUE
-  OAUTH_ISSUE_REFRESH_TOKENS = TRUE;
+  OAUTH_ISSUE_REFRESH_TOKENS = TRUE
+  OAUTH_USE_SECONDARY_ROLES = IMPLICIT;
 \`\`\`
 
 > Replace the redirect URI with the one shown on your Activepieces OAuth connection page.
+>
+> \`OAUTH_USE_SECONDARY_ROLES = IMPLICIT\` lets the access token use any role granted to the user. Without it, the token is bound to the user's default Snowflake role and the **Default Role** field below will be ignored.
 
 ---
 
@@ -85,7 +88,7 @@ Copy the **Account Identifier** (e.g. \`xy12345.us-east-1\` or \`orgname-account
 Enter the **Client ID** and **Client Secret** in the Activepieces OAuth2 settings for this connection, fill in the **Account Identifier** below, then click **Connect**.`,
   authUrl: 'https://{account}.snowflakecomputing.com/oauth/authorize',
   tokenUrl: 'https://{account}.snowflakecomputing.com/oauth/token-request',
-  scope: ['session:role-any', 'refresh_token'],
+  scope: ['refresh_token'],
   pkce: false,
   authorizationMethod: OAuth2AuthorizationMethod.BODY,
   required: true,

@@ -36,6 +36,7 @@ export const platformWebhooksController: FastifyPluginAsyncZod = async (app) => 
             platformId: req.principal.platform.id,
             projectId: undefined,
             url: req.body.url,
+            event: req.body.event,
         })
     })
 }

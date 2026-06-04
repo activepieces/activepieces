@@ -3,7 +3,7 @@ import { kapsoAuth } from '../common';
 import { makeClient } from '../common';
 import {
   phoneNumberIdDropdown,
-  businessAccountIdDropdown,
+  businessAccountIdProp,
   templateDropdown,
 } from '../common/props';
 
@@ -13,7 +13,7 @@ export const sendTemplate = createAction({
   displayName: 'Send Template Message',
   description: 'Send a pre-approved WhatsApp template message.',
   props: {
-    businessAccountId: businessAccountIdDropdown,
+    businessAccountId: businessAccountIdProp,
     phoneNumberId: phoneNumberIdDropdown,
     to: Property.ShortText({
       displayName: 'Recipient Phone Number',

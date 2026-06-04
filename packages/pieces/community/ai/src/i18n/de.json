@@ -20,6 +20,7 @@
   "Web Search": "Websuche",
   "Web Search Options": "Websuche Optionen",
   "Text": "Text",
+  "Input Images": "Input Images",
   "Advanced Options": "Erweiterte Optionen",
   "Text to Classify": "Zu klassifizierender Text",
   "Categories": "Kategorien",
@@ -33,12 +34,14 @@
   "Max steps": "Max. Schritte",
   "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.": "Kontrolliert die Kreativität der KI-Reaktion. Ein höherer Wert macht die KI kreativer und ein niedrigerer Wert macht sie deterministischer.",
   "Whether to use web search to find information for the AI to use in its response.": "Ob Websuche verwendet werden soll, um Informationen für die KI in ihrer Antwort zu finden.",
+  "Provide images for editing, variation, or merging. Support depends on the selected model.": "Bilder zur Bearbeitung, Variation oder Zusammenführung bereitstellen. Unterstützung hängt vom gewählten Modell ab.",
   "Categories to classify text into.": "Kategorien in die Text klassifiziert werden soll.",
   "Text to extract structured data from.": "Text zum Extrahieren strukturierter Daten.",
   "Prompt to guide the AI.": "Aufforderung zur Führung der KI.",
   "For complex schema, you can use advanced mode.": "Für ein komplexes Schema können Sie den erweiterten Modus verwenden.",
   "Describe what you want the assistant to do.": "Beschreiben Sie, was der Assistent tun soll.",
-  "The numbder of interations the agent can do": "Der numbder der Interationen, die der Agent tun kann",
+  "The number of iterations the agent can do": "Die Anzahl der Iterationen, die der Agent tun kann",
+  "Whether to use web search to find information for the AI to use.": "Ob Websuche verwendet werden soll, um Informationen für die KI zu finden.",
   "Simple": "Einfach",
   "Advanced": "Erweitert"
 }

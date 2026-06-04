@@ -1,7 +1,7 @@
 import { confluenceAuth } from '../auth';
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { folderIdProp, spaceIdProp, templateIdProp, templateVariablesProp } from "../common/props";
-import { confluenceApiCall } from "../common";
+import { confluenceApiCall, escapeStorageValue } from "../common";
 import { HttpMethod } from "@activepieces/pieces-common";
 
 export const createPageFromTemplateAction = createAction({
@@ -55,7 +55,8 @@ export const createPageFromTemplateAction = createAction({
         let content = body.replace(/<at:declarations>[\s\S]*?<\/at:declarations>/, "").trim();
         Object.entries(variables).forEach(([key, value]) => {
             const varRegex = new RegExp(`<at:var at:name=(['"])${key}\\1\\s*\\/?>`, "g");
-            content = content.replace(varRegex, value);
+            const safeValue = typeof value === 'string' ? escapeStorageValue(value) : '';
+            content = content.replace(varRegex, safeValue);
           });
 
         const response = await confluenceApiCall({

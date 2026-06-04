@@ -5,7 +5,9 @@ import {
   FlowTriggerType,
   flowStructureUtil,
 } from '@activepieces/shared';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { PanelImperativeHandle } from 'react-resizable-panels';
+import { usePrevious } from 'react-use';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { DataSelector } from '@/app/builder/data-selector';
@@ -28,15 +30,18 @@ import { BuilderHeader } from './builder-header/builder-header';
 import { FlowCanvas } from './flow-canvas';
 import { flowCanvasHooks } from './flow-canvas/hooks';
 import { flowCanvasConsts } from './flow-canvas/utils/consts';
-import PublishFlowReminderWidget from './flow-canvas/widgets/publish-flow-reminder-widget';
-import { RunInfoWidget } from './flow-canvas/widgets/run-info-widget';
-import { ViewingOldVersionWidget } from './flow-canvas/widgets/viewing-old-version-widget';
+import { BuilderBanner } from './flow-canvas/widgets/builder-banner';
 import { FlowVersionsList } from './flow-versions';
 import { RunsList } from './run-list';
 import { CursorPositionProvider } from './state/cursor-position-context';
 import { StepSettingsContainer } from './step-settings';
-import { ResizableVerticalPanelsProvider } from './step-settings/resizable-vertical-panels-context';
 const animateResizeClassName = `transition-all `;
+
+const SPLIT_MODE_INITIAL_OPEN_SIZE_PX = 1000;
+const SPLIT_MODE_SIDEBAR_SIZE_PX = 850;
+const DEFAULT_SIDEBAR_SIZE = '25%';
+const DEFAULT_MIN_SIZE = '400px';
+const SPLIT_MODE_COLLAPSE_THRESHOLD_PX = 700;
 
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -46,6 +51,10 @@ const BuilderPage = () => {
     selectedStepName,
     removeAllStepTestsListeners,
     selectedStep,
+    stepDataPanelView,
+    isStepDataPanelOpen,
+    setStepDataPanelView,
+    setStepDataPanelOpen,
   ] = useBuilderStateContext((state) => [
     state.flowVersion,
     state.rightSidebar,
@@ -55,6 +64,10 @@ const BuilderPage = () => {
       state.selectedStep ?? '',
       state.flowVersion.trigger,
     ),
+    state.stepDataPanelView,
+    state.isStepDataPanelOpen,
+    state.setStepDataPanelView,
+    state.setStepDataPanelOpen,
   ]);
   useEffect(() => {
     return () => {
@@ -70,8 +83,55 @@ const BuilderPage = () => {
     window.addEventListener('pointerup', handlePointerUp);
     return () => window.removeEventListener('pointerup', handlePointerUp);
   }, []);
-  const rightHandleRef = flowCanvasHooks.useAnimateSidebar(rightSidebar);
+  const isSplitForPiece =
+    rightSidebar === RightSideBarType.PIECE_SETTINGS &&
+    stepDataPanelView === 'split' &&
+    isStepDataPanelOpen;
+  const prefersSplitLayout =
+    rightSidebar === RightSideBarType.PIECE_SETTINGS &&
+    stepDataPanelView === 'split';
+
+  const rightHandleRef = useRef<PanelImperativeHandle>(null);
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
+  const previousRightSidebar = usePrevious(rightSidebar);
+
+  useLayoutEffect(() => {
+    const handle = rightHandleRef.current;
+    if (!handle) return;
+    if (rightSidebar === RightSideBarType.NONE) {
+      handle.resize('0%');
+      return;
+    }
+    const isInitialOpen = previousRightSidebar === RightSideBarType.NONE;
+    const targetSize = prefersSplitLayout
+      ? isInitialOpen
+        ? SPLIT_MODE_INITIAL_OPEN_SIZE_PX
+        : SPLIT_MODE_SIDEBAR_SIZE_PX
+      : DEFAULT_SIDEBAR_SIZE;
+    handle.resize(targetSize);
+    const rafId = window.requestAnimationFrame(() => handle.resize(targetSize));
+    return () => window.cancelAnimationFrame(rafId);
+  }, [prefersSplitLayout, previousRightSidebar, rightSidebar]);
+
+  useEffect(() => {
+    if (!isSplitForPiece || !isDraggingHandle) return;
+    const el = rightSidePanelRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect.width ?? 0;
+      if (width > 0 && width < SPLIT_MODE_COLLAPSE_THRESHOLD_PX) {
+        setStepDataPanelView('drawer');
+        setStepDataPanelOpen(false);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [
+    isSplitForPiece,
+    isDraggingHandle,
+    setStepDataPanelView,
+    setStepDataPanelOpen,
+  ]);
   const { pieceModel, refetch: refetchPiece } =
     piecesHooks.usePieceModelForStepSettings({
       name: selectedStep?.settings.pieceName,
@@ -100,9 +160,7 @@ const BuilderPage = () => {
               ></FlowCanvas>
             </CursorPositionProvider>
 
-            <PublishFlowReminderWidget />
-            <RunInfoWidget />
-            <ViewingOldVersionWidget />
+            <BuilderBanner />
             {middlePanelRef.current &&
               middlePanelRef.current.clientWidth > 0 && (
                 <CanvasControls
@@ -128,6 +186,8 @@ const BuilderPage = () => {
           disabled={rightSidebar === RightSideBarType.NONE}
           withHandle={rightSidebar !== RightSideBarType.NONE}
           onPointerDown={() => setIsDraggingHandle(true)}
+          onPointerUp={() => setIsDraggingHandle(false)}
+          onPointerCancel={() => setIsDraggingHandle(false)}
           className={
             rightSidebar === RightSideBarType.NONE ? 'bg-transparent' : ''
           }
@@ -138,8 +198,16 @@ const BuilderPage = () => {
           id="right-sidebar"
           collapsedSize="0%"
           defaultSize="0%"
-          minSize={rightSidebar === RightSideBarType.NONE ? '0%' : '400px'}
-          maxSize={rightSidebar === RightSideBarType.NONE ? '0%' : '60%'}
+          minSize={
+            rightSidebar === RightSideBarType.NONE ? '0%' : DEFAULT_MIN_SIZE
+          }
+          maxSize={
+            rightSidebar === RightSideBarType.NONE
+              ? '0%'
+              : prefersSplitLayout
+              ? '95%'
+              : '60%'
+          }
           className={cn('min-w-0 bg-background z-30', {
             [animateResizeClassName]: !isDraggingHandle,
           })}
@@ -152,19 +220,17 @@ const BuilderPage = () => {
           <div ref={rightSidePanelRef} className="h-full w-full">
             {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
               selectedStep && (
-                <ResizableVerticalPanelsProvider>
-                  <StepSettingsProvider
-                    pieceModel={pieceModel}
-                    selectedStep={selectedStep}
-                    key={constructContainerKey({
-                      flowVersionId: flowVersion.id,
-                      step: selectedStep,
-                      hasPieceModelLoaded: !!pieceModel,
-                    })}
-                  >
-                    <StepSettingsContainer />
-                  </StepSettingsProvider>
-                </ResizableVerticalPanelsProvider>
+                <StepSettingsProvider
+                  pieceModel={pieceModel}
+                  selectedStep={selectedStep}
+                  key={constructContainerKey({
+                    flowVersionId: flowVersion.id,
+                    step: selectedStep,
+                    hasPieceModelLoaded: !!pieceModel,
+                  })}
+                >
+                  <StepSettingsContainer />
+                </StepSettingsProvider>
               )}
             {rightSidebar === RightSideBarType.RUNS && <RunsList />}
             {rightSidebar === RightSideBarType.VERSIONS && <FlowVersionsList />}

@@ -4,9 +4,8 @@ import {
   FilesService,
 } from '@activepieces/pieces-framework';
 import { GmailProps } from '../common/props';
-import { gmailAuth } from '../auth';
+import { gmailAuth, createGoogleClient } from '../auth';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 import { parseStream, convertAttachment } from '../common/data';
 
 async function enrichGmailMessage({
@@ -68,8 +67,7 @@ export const gmailNewLabeledEmailTrigger = createTrigger({
   sampleData: {},
   type: TriggerStrategy.POLLING,
   onEnable: async (context) => {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
     const gmail = google.gmail({ version: 'v1', auth: authClient });
 
     const profile = await gmail.users.getProfile({
@@ -82,8 +80,7 @@ export const gmailNewLabeledEmailTrigger = createTrigger({
     await context.store.delete('lastHistoryId');
   },
   run: async (context) => {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
     const gmail = google.gmail({ version: 'v1', auth: authClient });
 
     const lastHistoryId = await context.store.get('lastHistoryId');
@@ -156,8 +153,7 @@ export const gmailNewLabeledEmailTrigger = createTrigger({
     return results;
   },
   test: async (context) => {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
     const gmail = google.gmail({ version: 'v1', auth: authClient });
 
     const messagesResponse = await gmail.users.messages.list({

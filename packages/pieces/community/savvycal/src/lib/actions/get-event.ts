@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { savvyCalApiCall, flattenEvent, SavvyCalEvent } from '../common';
-import { savvyCalAuth } from '../../';
+import { savvyCalAuth, getToken } from '../auth';
 
 export const getEventAction = createAction({
   auth: savvyCalAuth,
@@ -17,7 +17,7 @@ export const getEventAction = createAction({
   },
   async run(context) {
     const response = await savvyCalApiCall<SavvyCalEvent>({
-      token: context.auth.secret_text,
+      token: getToken(context.auth),
       method: HttpMethod.GET,
       path: `/events/${context.propsValue.event_id}`,
     });

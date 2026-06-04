@@ -1,9 +1,9 @@
-import { apId, FieldType, McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
+import { apId, FieldType, McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { fieldService } from '../../tables/field/field.service'
 import { tableService } from '../../tables/table/table.service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 import { fieldTypeSchema, formatFieldInfo } from './table-utils'
 
 const createTableInput = z.object({
@@ -15,11 +15,11 @@ const createTableInput = z.object({
     })).describe('Fields to create. Max 100 fields per table.'),
 })
 
-export const apCreateTableTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apCreateTableTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_create_table',
         permission: Permission.WRITE_TABLE,
-        description: 'Create a new table with an initial set of fields. Field types: TEXT, NUMBER, DATE, STATIC_DROPDOWN (requires options). The new table will be empty — use ap_insert_records to add data.',
+        description: 'Create a new table with an initial set of fields. Types: TEXT, NUMBER, DATE, STATIC_DROPDOWN.',
         inputSchema: createTableInput.shape,
         annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
@@ -65,7 +65,7 @@ export const apCreateTableTool = (mcp: McpServer, log: FastifyBaseLogger): McpTo
             }
             catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_create_table failed')
-                return mcpToolError('Failed to create table', err)
+                return mcpUtils.mcpToolError('Failed to create table', err)
             }
         },
     }

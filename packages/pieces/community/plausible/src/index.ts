@@ -1,12 +1,14 @@
+import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import {
+  createCustomApiCallAction,
   AuthenticationType,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import { plausibleCommon } from './lib/common';
-import { listTeams } from './lib/actions/list-teams';
+import { getRealtimeVisitors } from './lib/actions/get-realtime-visitors.action';
+import { getAggregateStats } from './lib/actions/get-aggregate-stats.action';
+import { getBreakdown } from './lib/actions/get-breakdown.action';
 import { listSites } from './lib/actions/list-sites';
 import { getSite } from './lib/actions/get-site';
 import { createSite } from './lib/actions/create-site';
@@ -22,6 +24,10 @@ import { deleteCustomProperty } from './lib/actions/delete-custom-property';
 import { listGuests } from './lib/actions/list-guests';
 import { inviteGuest } from './lib/actions/invite-guest';
 import { removeGuest } from './lib/actions/remove-guest';
+import { listTeams } from './lib/actions/list-teams';
+import { trafficSpike } from './lib/triggers/traffic-spike.trigger';
+
+const BASE_URL = 'https://plausible.io/api/v1';
 
 export const plausibleAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -29,39 +35,37 @@ export const plausibleAuth = PieceAuth.SecretText({
 1. Log in to your Plausible Analytics account
 2. Click your account name in the top-right menu and go to **Settings**
 3. Go to **API Keys** in the left sidebar
-4. Click **New API Key**, choose **Sites API**, and save the key`,
+4. Click **New API Key**, choose **Stats API** or **Sites API**, and save the key`,
   required: true,
   validate: async ({ auth }) => {
     try {
       await httpClient.sendRequest({
-        url: `${plausibleCommon.baseUrl}/sites`,
         method: HttpMethod.GET,
+        url: `${BASE_URL}/sites`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
           token: auth,
         },
       });
-      return {
-        valid: true,
-      };
-    } catch (e) {
-      return {
-        valid: false,
-        error: 'Invalid API key',
-      };
+      return { valid: true };
+    } catch {
+      return { valid: false, error: 'Invalid API key. Please check your Plausible API key.' };
     }
   },
 });
 
 export const plausible = createPiece({
-  displayName: 'Plausible',
-  description: 'Privacy-friendly web analytics',
+  displayName: 'Plausible Analytics',
+  description: 'Privacy-friendly website analytics',
   auth: plausibleAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/plausible.png',
-  authors: ['onyedikachi-david'],
+  categories: [PieceCategory.MARKETING],
+  authors: ['Tosh94'],
   actions: [
-    listTeams,
+    getRealtimeVisitors,
+    getAggregateStats,
+    getBreakdown,
     listSites,
     getSite,
     createSite,
@@ -77,7 +81,14 @@ export const plausible = createPiece({
     listGuests,
     inviteGuest,
     removeGuest,
+    listTeams,
+    createCustomApiCallAction({
+      baseUrl: () => BASE_URL,
+      auth: plausibleAuth,
+      authMapping: async (auth) => ({
+        Authorization: `Bearer ${(auth as { secret_text: string }).secret_text}`,
+      }),
+    }),
   ],
-  triggers: [],
-  categories: [PieceCategory.MARKETING],
+  triggers: [trafficSpike],
 });

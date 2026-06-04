@@ -21,6 +21,7 @@ const pieceIconVariants = cva(
         md: 'size-[36px] min-w-[36px] min-h-[36px]',
         sm: 'size-[30px] min-w-[30px] min-h-[30px]',
         xs: 'size-[25px] min-w-[25px] min-h-[25px]',
+        xxs: 'size-[16px] min-w-[16px] min-h-[16px]',
       },
       border: {
         true: 'border border-solid',
@@ -39,6 +40,7 @@ const pieceIconVariantsWithPadding = cva('', {
       md: 'p-1.75',
       sm: 'p-1.25',
       xs: 'p-1.25',
+      xxs: 'p-0.5',
     },
   },
 });

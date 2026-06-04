@@ -64,7 +64,7 @@ export const githubUpdateIssueAction = createAction({
       body.milestone = propsValue.milestone;
 
     const response = await githubApiCall({
-      accessToken: auth.access_token,
+      auth,
       method: HttpMethod.PATCH,
       resourceUri: `/repos/${owner}/${repo}/issues/${propsValue.issue_number}`,
       body: body,

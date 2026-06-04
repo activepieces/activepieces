@@ -172,6 +172,145 @@ describe('Templates', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
+
+        it('should not delete official template even as platform admin', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await createMockPlatformTemplate({ platformId: apId() })
+            const officialTemplate = createMockTemplate({
+                platformId: CLOUD_PLATFORM_ID,
+                type: TemplateType.OFFICIAL,
+            })
+            await db.save('template', officialTemplate)
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/api/v1/templates/${officialTemplate.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('should not delete custom template from another platform (IDOR)', async () => {
+            // arrange
+            const { mockPlatformTemplate } = await createMockPlatformTemplate({ platformId: apId() })
+
+            const { mockOwner: otherOwner, mockPlatform: otherPlatform } =
+                await createMockPlatformTemplate({ platformId: apId() })
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: otherOwner.id,
+                platform: { id: otherPlatform.id },
+            })
+
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/api/v1/templates/${mockPlatformTemplate.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+    })
+
+    describe('Update Template', () => {
+        it('should not update official template even as platform admin', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await createMockPlatformTemplate({ platformId: apId() })
+            const officialTemplate = createMockTemplate({
+                platformId: CLOUD_PLATFORM_ID,
+                type: TemplateType.OFFICIAL,
+            })
+            await db.save('template', officialTemplate)
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/templates/${officialTemplate.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: {
+                    name: 'hacked-name',
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('should not update custom template from another platform (IDOR)', async () => {
+            // arrange
+            const { mockPlatformTemplate } = await createMockPlatformTemplate({ platformId: apId() })
+
+            const { mockOwner: otherOwner, mockPlatform: otherPlatform } =
+                await createMockPlatformTemplate({ platformId: apId() })
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: otherOwner.id,
+                platform: { id: otherPlatform.id },
+            })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/templates/${mockPlatformTemplate.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: {
+                    name: 'hacked-name',
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('should update own custom template as platform owner', async () => {
+            // arrange
+            const { mockOwner, mockPlatform, mockPlatformTemplate } =
+                await createMockPlatformTemplate({ platformId: apId() })
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/templates/${mockPlatformTemplate.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: {
+                    name: 'updated-name',
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().name).toBe('updated-name')
+        })
     })
 })
 

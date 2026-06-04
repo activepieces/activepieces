@@ -1,5 +1,10 @@
 import { z } from 'zod'
 import { BaseModelSchema, Nullable } from '../../core/common/base-model'
+import { formErrors } from '../../form-errors'
+
+const SAFE_SLUG_PATTERN = /^(?!\.{1,2}$)[A-Za-z0-9._-]{1,128}$/
+const SAFE_BRANCH_PATTERN = /^(?!-)[A-Za-z0-9._/-]{1,255}$/
+const SAFE_REMOTE_URL_PATTERN = /^git@[A-Za-z0-9.-]+:[A-Za-z0-9._/-]+(\.git)?$/
 
 export enum GitBranchType {
     PRODUCTION = 'PRODUCTION',
@@ -57,11 +62,11 @@ export type PushGitRepoRequest = z.infer<typeof PushGitRepoRequest>
 
 export const ConfigureRepoRequest = z.object({
     projectId: z.string().min(1),
-    remoteUrl: z.string().regex(/^git@/),
-    branch: z.string().min(1),
+    remoteUrl: z.string().regex(SAFE_REMOTE_URL_PATTERN, formErrors.invalidGitRepoRemoteUrl),
+    branch: z.string().regex(SAFE_BRANCH_PATTERN, formErrors.invalidGitRepoBranch),
     branchType: z.nativeEnum(GitBranchType),
     sshPrivateKey: z.string().min(1),
-    slug: z.string().min(1),
+    slug: z.string().regex(SAFE_SLUG_PATTERN, formErrors.invalidGitRepoSlug),
 })
 
 export type ConfigureRepoRequest = z.infer<typeof ConfigureRepoRequest>

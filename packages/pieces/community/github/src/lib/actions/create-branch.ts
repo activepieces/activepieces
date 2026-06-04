@@ -25,14 +25,14 @@ export const githubCreateBranchAction = createAction({
     const { owner, repo } = propsValue.repository!;
 
     const sourceBranchInfo = await githubApiCall<{ commit: { sha: string } }>({
-      accessToken: auth.access_token,
+      auth,
       method: HttpMethod.GET,
       resourceUri: `/repos/${owner}/${repo}/branches/${propsValue.source_branch}`,
     });
     const sourceSha = sourceBranchInfo.body.commit.sha;
 
     const response = await githubApiCall({
-      accessToken: auth.access_token,
+      auth,
       method: HttpMethod.POST,
       resourceUri: `/repos/${owner}/${repo}/git/refs`,
       body: {

@@ -11,6 +11,7 @@ const AIProviderEncrypted = z.object({
     provider: z.nativeEnum(AIProviderName),
     auth: EncryptedObject,
     config: AIProviderConfig,
+    enabledForChat: z.boolean().default(false),
 })
 type AIProviderEncrypted = z.infer<typeof AIProviderEncrypted>
 
@@ -42,6 +43,11 @@ export const AIProviderEntity = new EntitySchema<AIProviderSchema>({
         displayName: {
             type: String,
             nullable: false,
+        },
+        enabledForChat: {
+            type: Boolean,
+            nullable: false,
+            default: false,
         },
     },
     indices: [

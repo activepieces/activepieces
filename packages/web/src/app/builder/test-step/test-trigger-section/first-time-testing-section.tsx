@@ -50,7 +50,6 @@ export const FirstTimeTestingSection = ({
             onKeyboardShortcut={onSimulateTrigger}
             disabled={!isValid || isLoadingDynamicProperties}
             loading={isSaving}
-            data-testid="test-trigger-button"
           >
             <Dot animation={true} variant={'primary'}></Dot>
             {t('Test Trigger')}

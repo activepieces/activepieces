@@ -1,0 +1,89 @@
+---
+title: "Testing Strategy"
+description: "Canonical 4-layer testing taxonomy for Activepieces"
+icon: "shield-check"
+---
+
+## Overview
+
+Activepieces tests live in four distinct layers. Each layer owns a different failure mode — picking the wrong layer produces slow, redundant, or silently ineffective tests.
+
+## The Four Layers
+
+### Unit
+
+A single module or function in isolation. Mocks are allowed for collaborators. No real I/O, no real infrastructure. Runs in-process under Vitest.
+
+### Integration
+
+Multiple modules (and sometimes multiple packages) wired together against real infrastructure — a real database, queue, filesystem, iptables rule set, HTTP server, or V8 isolate. The scope still sits inside a single package, but the collaborators are real. Runs under Vitest, in-process plus local services.
+
+### E2E
+
+The full product stack, exercised through a public interface — either a browser UI or the public HTTP API. Runs under Playwright against docker-compose or a deployed environment.
+
+### Smoke
+
+Minimal post-deploy liveness checks against a real running environment. Implemented as bash plus `curl`. Runs against production-like stacks after deploy.
+
+## Which package owns which layer
+
+| Layer | Lives in |
+|---|---|
+| Unit | `packages/server/api/test/unit/`, most of `packages/server/worker/test/lib/`, engine `test/variables/` + `test/helper/` + `test/utils.test.ts` + `test/network/ssrf-guard.test.ts` |
+| Integration | `packages/server/api/test/integration/{ce,ee,cloud}/`, `packages/server/worker/test/e2e/` (see warning below), engine `test/handler/` + `test/core/code/` + `test/piece-context/` + `test/operations/` |
+| E2E | `packages/tests-e2e/` |
+| Smoke | `smoke-test/` |
+
+## Picking the right layer
+
+<Steps>
+  <Step title="Does the test touch only one module?">
+    It is a **Unit** test. Keep mocks for collaborators and run it in-process.
+  </Step>
+
+  <Step title="Does it need real infra (DB, queue, filesystem, iptables, V8 isolate)?">
+    It is an **Integration** test. Stay within one package, but let the collaborators be real.
+  </Step>
+
+  <Step title="Does it exercise the full product through a public interface?">
+    It is an **E2E** test. Write it with Playwright under `packages/tests-e2e/`.
+  </Step>
+
+  <Step title="Is it a post-deploy liveness check?">
+    It is a **Smoke** test. Drop it under `smoke-test/` as a bash + `curl` script.
+  </Step>
+</Steps>
+
+## Common pitfalls
+
+<Warning>
+The four files in `packages/server/worker/test/e2e/` are **privileged integration tests**, not full-stack E2E. They exercise the engine SSRF guard plus iptables lockdown plus egress proxy against real Linux kernel primitives, inside a single package. The folder is named `e2e/` for historical reasons; under this taxonomy they belong to the Integration layer. See `packages/server/worker/test/README.md` for the full story.
+</Warning>
+
+<Tip>
+If you are tempted to mock a database, a queue, or a kernel primitive, and your test still feels like it is testing real behaviour, move it up one layer. Mocks that nearly reimplement the real thing are a smell.
+</Tip>
+
+## Classification debt
+
+- **`packages/server/api/test/unit/app/core/canary/canary-proxy.integration.test.ts`** — already carries an `.integration.` suffix but lives under `test/unit/`. Spins up two real Fastify instances listening on real TCP ports. Target: move to `packages/server/api/test/integration/ce/core/canary/`.
+- **`packages/server/api/test/integration/ce/authentication/password-hasher.test.ts`** — pure bcrypt/scrypt logic, no `setupTestEnvironment`, no DB, no Fastify. Target: move to `packages/server/api/test/unit/app/authentication/`.
+- **`packages/server/engine/test/handler/*.test.ts`** (13 files) — load real `@activepieces/piece-http`, `@activepieces/piece-data-mapper`, etc. and make real outbound HTTP calls from the executor. Target: relabel as integration (either move to a new `test/integration/` subtree, or document in the engine test README that the flat folder mixes unit and integration).
+- **`packages/server/engine/test/core/code/v8-isolate-code-sandbox.test.ts`** — runs a real V8 isolate. Target: same as above (integration).
+- **`packages/server/worker/test/e2e/*.e2e.test.ts`** (4 files) — privileged integration, not full-stack E2E. Target: rename folder to `test/integration/` (or similar) and drop the `.e2e.` infix.
+- **`packages/server/worker/test/piece-installer.test.ts`** — does real filesystem work against temp dirs; borderline integration. Target: decide on a threshold (temp-dir I/O alone = unit, vs. temp-dir I/O + subprocess = integration) and relabel accordingly.
+- **Duplication: `api/test/integration/ce/flows/flow/flow.test.ts` vs `api/test/integration/cloud/flow/flow.test.ts`** — both assert identical "Create flow" shapes; only role-permission checks differ. Target: extract the shared CRUD assertions into CE and keep only the cloud-specific role permutations under `cloud/`.
+
+This list is a backlog, not a to-do list for this playbook. Tackle items opportunistically as you touch the adjacent code.
+
+## What is NOT duplication (defense-in-depth)
+
+- SSRF is tested at three layers (egress proxy, iptables lockdown, engine SSRF guard). Each defends a different attack surface — keep all three.
+- Flow execution is tested at engine (pure logic), API integration (queue + worker dispatch), and smoke (post-deploy liveness). Each owns different failure modes.
+- Sandbox isolation is tested at engine (V8 code sandbox), worker (process orchestration), and worker `test/e2e/` (real kernel egress). Distinct concerns.
+
+## Related documentation
+
+- [E2E Tests playbook](/handbook/engineering/playbooks/e2e-tests) — full-stack browser E2E deep dive
+- Per-package READMEs live at `packages/server/api/test/README.md`, `packages/server/engine/test/README.md`, `packages/server/worker/test/README.md`, `packages/tests-e2e/README.md`, and `smoke-test/README.md`.

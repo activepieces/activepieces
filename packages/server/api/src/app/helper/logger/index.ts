@@ -1,3 +1,4 @@
+import { loggerRedact } from '@activepieces/server-utils'
 import { FastifyBaseLogger } from 'fastify'
 import pino, { Level, Logger } from 'pino'
 import { AppSystemProp, environmentVariables } from '../system/system-props'
@@ -12,6 +13,7 @@ export const pinoLogging = {
         if (pretty) {
             return pino({
                 level,
+                redact: loggerRedact,
                 transport: {
                     target: 'pino-pretty',
                     options: {
@@ -38,6 +40,7 @@ export const pinoLogging = {
 
         return pino({
             level,
+            redact: loggerRedact,
             transport: {
                 targets: defaultTargets,
             },

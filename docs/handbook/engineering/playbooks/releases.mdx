@@ -13,7 +13,7 @@ Five separate workflows cover the full delivery lifecycle:
 2. **Staging freeze (5 PM UTC)** — merges to `main` after 5 PM UTC are accepted but **not deployed** to staging. The content team uses the frozen staging environment overnight.
 3. **Daily 9 AM UTC** — `continuous-delivery-canary.yml` builds a `version.sha.canary` image from the latest `main` and deploys it to the **canary** environment. Breaking migrations block the deployment. See the [Canary Deployment playbook](/handbook/engineering/playbooks/canary-deployment) for details.
 4. **Thursday 5 PM UTC** — `tag-release-candidate` job tags the current staging image and commit as `release-candidate`.
-5. **Sunday 9 AM UTC** — `continuous-delivery-cloud.yml` promotes `release-candidate` to production and creates a `deploy/cloud/YYYY-MM-DD` branch.
+5. **Sunday 9 AM UTC** — `continuous-delivery-cloud.yml` runs a fresh canary build from `main` (by calling `continuous-delivery-canary.yml` as a reusable workflow), then promotes `release-candidate` to production and creates a `deploy/cloud/YYYY-MM-DD` branch.
 6. **Monday 9 AM UTC** — `continuous-delivery-release.yml` re-tags the `release-candidate` image and publishes the self-hosted release.
 
 ## Environments
@@ -58,7 +58,7 @@ To run any workflow manually, go to the repo's **Actions** tab, select the workf
 
 | Trigger | What happens |
 |---|---|
-| **Scheduled (Sunday 9 AM UTC)** | Promotes `release-candidate` to production (requires approval via the `production` GitHub Environment). After promotion, creates a `deploy/cloud/YYYY-MM-DD` branch and runs a smoke test. |
+| **Scheduled (Sunday 9 AM UTC)** | Triggers `continuous-delivery-canary.yml` as a reusable workflow to refresh the canary environment from the latest `main`, then promotes `release-candidate` to production (requires approval via the `production` GitHub Environment). After promotion, creates a `deploy/cloud/YYYY-MM-DD` branch and runs a smoke test. |
 | **`workflow_call`** | Same as above, triggered by another workflow. |
 | **Manual dispatch — `cloud-hotfix`** | Builds the image from the current branch and deploys directly to production, bypassing staging. Trigger this **on the hotfix branch** (`deploy/cloud/YYYY-MM-DD`), not `main`. After promotion, merge the hotfix branch into `main` to automatically retag `release-candidate`. Blocked automatically if the next scheduled Sunday promotion is within 1 hour. |
 
@@ -71,7 +71,11 @@ To run any workflow manually, go to the repo's **Actions** tab, select the workf
 
 ### `continuous-delivery-canary.yml` — Canary
 
-Scheduled (daily 9 AM UTC) — builds a `version.sha.canary` image from the latest `main`, deploys the canary app and workers, and optionally updates platform routing in the database. Breaking migrations always block the deployment.
+| Trigger | What happens |
+|---|---|
+| **Scheduled (daily 9 AM UTC)** | Builds a `version.sha.canary` image from the latest `main`, checks migrations, deploys the canary app and workers. Breaking migrations always block the deployment. |
+| **`workflow_call`** | Same as scheduled, triggered by `continuous-delivery-cloud.yml` on the Sunday promotion so the canary always receives a fresh build just before production is updated. |
+| **Manual dispatch** | Same as scheduled, on demand. |
 
 See the [Canary Deployment playbook](/handbook/engineering/playbooks/canary-deployment) for full details.
 

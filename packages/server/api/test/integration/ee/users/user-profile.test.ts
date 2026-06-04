@@ -4,7 +4,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { createTestContext } from '../../../helpers/test-context'
+import { createServiceContext, createTestContext } from '../../../helpers/test-context'
 
 let app: FastifyInstance | null = null
 
@@ -45,6 +45,29 @@ describe('User Profile API', () => {
             const ctx2 = await createTestContext(app!)
 
             const response = await ctx2.get(`/v1/users/${ctx1.user.id}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+
+        it('should allow API-key (SERVICE) callers to fetch a user on their platform', async () => {
+            const ctx = await createTestContext(app!)
+            const serviceCtx = await createServiceContext(app!, ctx)
+
+            const response = await serviceCtx.get(`/v1/users/${ctx.user.id}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(body.id).toBe(ctx.user.id)
+            expect(body.platformId).toBe(ctx.platform.id)
+            expect(body.email).toBe(ctx.userIdentity.email)
+        })
+
+        it('should return 404 when an API-key tries to fetch a user on a different platform', async () => {
+            const ctx1 = await createTestContext(app!)
+            const ctx2 = await createTestContext(app!)
+            const serviceCtx2 = await createServiceContext(app!, ctx2)
+
+            const response = await serviceCtx2.get(`/v1/users/${ctx1.user.id}`)
 
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })

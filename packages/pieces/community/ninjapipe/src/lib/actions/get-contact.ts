@@ -1,0 +1,23 @@
+﻿import { createAction } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { ninjapipeAuth } from '../../';
+import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon } from '../common';
+
+export const getContact = createAction({
+  auth: ninjapipeAuth,
+  name: 'get_contact',
+  displayName: 'Get Contact',
+  description: 'Retrieves a contact by ID.',
+  props: {
+    contactId: ninjapipeCommon.contactDropdownRequired,
+  },
+  async run(context) {
+    const auth = getAuth(context);
+    const response = await ninjapipeApiCall<Record<string, unknown>>({
+      auth,
+      method: HttpMethod.GET,
+      path: `/contacts/${encodeURIComponent(String(context.propsValue.contactId))}`,
+    });
+    return flattenCustomFields(response.body);
+  },
+});

@@ -25,7 +25,10 @@ export const testExecutionContext = {
         sampleData,
         engineConstants,
     }: TestExecutionParams): Promise<FlowExecutorContext> {
-        let flowExecutionContext = FlowExecutorContext.empty()
+        let flowExecutionContext = FlowExecutorContext.empty({
+            engineApi: { engineToken, internalApiUrl: apiUrl },
+            slicingEnabled: false,
+        })
         if (isNil(flowVersion)) {
             return flowExecutionContext
         }
@@ -41,7 +44,7 @@ export const testExecutionContext = {
             const stepType = step.type
             switch (stepType) {
                 case FlowActionType.ROUTER:
-                    flowExecutionContext = flowExecutionContext.upsertStep(
+                    flowExecutionContext = await flowExecutionContext.upsertStep(
                         step.name,
                         RouterStepOutput.create({
                             input: step.settings,
@@ -62,7 +65,7 @@ export const testExecutionContext = {
                         unresolvedInput: step.settings,
                         executionState: flowExecutionContext,
                     })
-                    flowExecutionContext = flowExecutionContext.upsertStep(
+                    flowExecutionContext = await flowExecutionContext.upsertStep(
                         step.name,
                         LoopStepOutput.init({
                             input: step.settings,
@@ -78,7 +81,7 @@ export const testExecutionContext = {
                 case FlowActionType.CODE:
                 case FlowTriggerType.EMPTY:
                 case FlowTriggerType.PIECE:
-                    flowExecutionContext = flowExecutionContext.upsertStep(step.name, GenericStepOutput.create({
+                    flowExecutionContext = await flowExecutionContext.upsertStep(step.name, GenericStepOutput.create({
                         input: {},
                         type: stepType,
                         status: StepOutputStatus.SUCCEEDED,

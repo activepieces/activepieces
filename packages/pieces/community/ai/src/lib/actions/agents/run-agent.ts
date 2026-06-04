@@ -19,6 +19,7 @@ import {
   KnowledgeBaseSourceType,
   normalizeToolOutputToExecuteResponse,
   spreadIfDefined,
+  getEffectiveProviderAndModel,
 } from '@activepieces/shared';
 import { hasToolCall, stepCountIs, streamText } from 'ai';
 import { agentOutputBuilder } from './agent-output-builder';
@@ -129,7 +130,10 @@ export const runAgent = createAction({
         'Whether to use web search to find information for the AI to use.',
     }),
     [AgentPieceProps.WEB_SEARCH_OPTIONS]: buildWebSearchOptionsProperty(
-      (propsValue) => (propsValue['aiProviderModel'] as unknown as AgentProviderModel)?.provider,
+      (propsValue) => {
+        const aiProviderModel = propsValue['aiProviderModel'] as AgentProviderModel | undefined;
+        return { provider: aiProviderModel?.provider, model: aiProviderModel?.model };
+      },
       ['webSearch', 'aiProviderModel'],
       { showIncludeSources: false },
     ),
@@ -143,10 +147,15 @@ export const runAgent = createAction({
 
     const { tools: webSearchTools, providerOptions } = buildWebSearchConfig({
       provider,
+      model: agentProviderModel.model,
       webSearchEnabled,
       webSearchOptions,
     });
 
+    const { provider: effectiveProvider } = getEffectiveProviderAndModel({
+      provider,
+      model: agentProviderModel.model,
+    });
     const model = await createAIModel({
       modelId: agentProviderModel.model,
       provider,
@@ -155,7 +164,7 @@ export const runAgent = createAction({
       projectId: context.project.id,
       flowId: context.flows.current.id,
       runId: context.run.id,
-      ...spreadIfDefined('openaiResponsesModel', webSearchEnabled && provider === AIProviderName.OPENAI ? true : undefined),
+      ...spreadIfDefined('openaiResponsesModel', webSearchEnabled && effectiveProvider === AIProviderName.OPENAI ? true : undefined),
     });
     const outputBuilder = agentOutputBuilder(prompt);
     const hasStructuredOutput =

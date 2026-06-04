@@ -20,7 +20,6 @@ import {
   isNil,
   RouterActionSchema,
   RouterBranchesSchema,
-  SampleDataSetting,
   RouterExecutionType,
   UpsertCloudOAuth2Request,
   UpsertCustomAuthRequest,
@@ -485,7 +484,6 @@ export const formUtils = {
             settings: z.object({
               branches: RouterBranchesSchema(true),
               executionType: z.enum(RouterExecutionType),
-              sampleData: SampleDataSetting,
             }),
           }).shape,
         );

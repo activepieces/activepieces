@@ -1,4 +1,3 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     apId,
     ApplicationEventName,
@@ -7,10 +6,10 @@ import {
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { faker } from '@faker-js/faker'
 import { generateMockToken } from '../../../helpers/auth'
 import { mockBasicUser } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -132,6 +131,29 @@ describe('Event Destinations API', () => {
             const nonExistentId = apId()
 
             const response = await ctx.delete(`/v1/event-destinations/${nonExistentId}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+        })
+    })
+
+    describe('POST /v1/event-destinations/test', () => {
+        it('should accept a test request with a webhook URL and an event name', async () => {
+            const ctx = await createTestContext(app!)
+
+            const response = await ctx.post('/v1/event-destinations/test', {
+                url: 'https://example.com/webhook',
+                event: ApplicationEventName.FLOW_CREATED,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+        })
+
+        it('should accept a test request with no event (defaults to flow.created)', async () => {
+            const ctx = await createTestContext(app!)
+
+            const response = await ctx.post('/v1/event-destinations/test', {
+                url: 'https://example.com/webhook',
+            })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
         })

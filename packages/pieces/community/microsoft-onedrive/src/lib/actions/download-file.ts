@@ -7,31 +7,89 @@ import {
 import { oneDriveAuth } from '../auth';
 import { oneDriveCommon } from '../common/common';
 
+type SearchItem = {
+  id: string;
+  name: string;
+  file?: { mimeType: string };
+};
+
+type DriveItem = {
+  id: string;
+  name: string;
+  size: number;
+  createdDateTime: string;
+  lastModifiedDateTime: string;
+  webUrl: string;
+  file?: { mimeType: string };
+  parentReference?: { path: string; driveId: string };
+};
+
 export const downloadFile = createAction({
   auth: oneDriveAuth,
   name: 'download_file',
-  description: 'Download a file from your Microsoft OneDrive',
-  displayName: 'Download file',
+  description: 'Get and download a file using a File ID or filename.',
+  displayName: 'Get File',
   props: {
-    fileId: Property.ShortText({
-      displayName: 'File ID',
-      description: 'The ID of the file to download',
+    lookupBy: Property.StaticDropdown({
+      displayName: 'Look Up By',
+      required: true,
+      defaultValue: 'id',
+      options: {
+        options: [
+          { label: 'File ID', value: 'id' },
+          { label: 'File Name', value: 'name' },
+        ],
+      },
+    }),
+    fileIdentifier: Property.ShortText({
+      displayName: 'File ID / File Name',
+      description:
+        'Enter the File ID or the exact filename depending on the "Look Up By" selection',
       required: true,
     }),
   },
   async run(context) {
-    const fileId = context.propsValue.fileId;
+    const { lookupBy, fileIdentifier } = context.propsValue;
     const cloud = context.auth.props?.['cloud'] as string | undefined;
     const baseUrl = oneDriveCommon.getBaseUrl(cloud);
 
-    const fileDetails = await httpClient.sendRequest<{name:string}>({
-      method:HttpMethod.GET,
-      url:`${baseUrl}/items/${fileId}?$select=name`,
+    let fileId: string;
+
+    if (lookupBy === 'name') {
+      const escapedName = fileIdentifier.replace(/'/g, "''");
+      const searchRes = await httpClient.sendRequest<{ value: SearchItem[] }>({
+        method: HttpMethod.GET,
+        url: `${baseUrl}/root/search(q='${encodeURIComponent(escapedName)}')`,
+        queryParams: { $select: 'id,name,file', $top: '999' },
+        authentication: {
+          type: AuthenticationType.BEARER_TOKEN,
+          token: context.auth.access_token,
+        },
+      });
+
+      const match = searchRes.body.value.find(
+        (item) => item.name === fileIdentifier && item.file !== undefined,
+      );
+      if (!match) {
+        throw new Error(`No file found with name "${fileIdentifier}"`);
+      }
+      fileId = match.id;
+    } else {
+      fileId = fileIdentifier;
+    }
+
+    const fileDetails = await httpClient.sendRequest<DriveItem>({
+      method: HttpMethod.GET,
+      url: `${baseUrl}/items/${fileId}`,
+      queryParams: {
+        $select:
+          'id,name,size,createdDateTime,lastModifiedDateTime,webUrl,file,parentReference',
+      },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
       },
-    })
+    });
 
     const result = await httpClient.sendRequest({
       method: HttpMethod.GET,
@@ -40,30 +98,26 @@ export const downloadFile = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
       },
-      responseType:'arraybuffer'
+      responseType: 'arraybuffer',
     });
 
-    const desiredHeaders = [
-      'content-length',
-      'content-type',
-      'content-location',
-      'expires',
-    ];
-    const filteredHeaders: any = {};
-
-    if (result.headers) {
-      for (const key of desiredHeaders) {
-        filteredHeaders[key] = result.headers[key];
-      }
-    }
+    const { id, name, size, createdDateTime, lastModifiedDateTime, webUrl, file, parentReference } =
+      fileDetails.body;
 
     return {
-      ...filteredHeaders,
-      data:await context.files.write({
-        fileName: fileDetails.body.name,
+      id,
+      name,
+      size,
+      mimeType: file?.mimeType,
+      createdDateTime,
+      lastModifiedDateTime,
+      webUrl,
+      folderPath: parentReference?.path,
+      driveId: parentReference?.driveId,
+      data: await context.files.write({
+        fileName: name,
         data: Buffer.from(result.body),
-      })
-
-    }
+      }),
+    };
   },
 });

@@ -69,6 +69,7 @@ export const findDocumentAction = createAction({
 			fields: '*',
 			pageSize: 1,
 			includeItemsFromAllDrives: true,
+			corpora: 'allDrives',
 		});
 
 		const existingFile = response.data.files?.[0];

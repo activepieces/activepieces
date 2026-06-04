@@ -116,6 +116,9 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('password', params.password ? await passwordHasher.hash(params.password) : undefined),
         })
     },
+    async updateLastLoggedInPlatformId({ id, lastLoggedInPlatformId }: UpdateLastLoggedInPlatformIdParams): Promise<void> {
+        await userIdentityRepository().update(id, { lastLoggedInPlatformId })
+    },
 })
 
 
@@ -138,6 +141,11 @@ type UpdateParams = {
     lastName?: string
     password?: string
     imageUrl?: string | null
+}
+
+type UpdateLastLoggedInPlatformIdParams = {
+    id: string
+    lastLoggedInPlatformId: string
 }
 
 type VerifyIdentityPasswordParams = {

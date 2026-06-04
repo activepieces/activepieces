@@ -5,6 +5,8 @@ import {
   AnthropicProviderConfig,
   AzureProviderAuthConfig,
   AzureProviderConfig,
+  BedrockProviderAuthConfig,
+  BedrockProviderConfig,
   CloudflareGatewayProviderAuthConfig,
   CloudflareGatewayProviderConfig,
   CreateAIProviderRequest,
@@ -51,7 +53,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SUPPORTED_AI_PROVIDERS } from '@/features/agents';
-import { aiProviderApi } from '@/features/platform-admin';
+import {
+  aiProviderApi,
+  hasAnyAuthFieldFilled,
+} from '@/features/platform-admin';
 
 import { ApMarkdown } from '../../../../../../components/custom/markdown';
 
@@ -165,7 +170,7 @@ export const UpsertAIProviderDialogContent = ({
         const updateData: UpdateAIProviderRequest = {
           displayName: data.displayName,
           config: data.config,
-          ...(data.auth?.apiKey?.length > 0 ? { auth: data.auth } : {}),
+          ...(hasAnyAuthFieldFilled(data.auth) ? { auth: data.auth } : {}),
         };
         return aiProviderApi.update(providerId, updateData);
       } else {
@@ -284,6 +289,8 @@ export const UpsertAIProviderDialogContent = ({
 const OptionalAuthSchema = z
   .object({
     apiKey: z.string().optional(),
+    accessKeyId: z.string().optional(),
+    secretAccessKey: z.string().optional(),
   })
   .optional();
 
@@ -310,6 +317,14 @@ const createFormSchema = (provider: AIProviderName, editMode: boolean) => {
       provider: z.literal(AIProviderName.CUSTOM),
       config: OpenAICompatibleProviderConfig,
       auth: editMode ? OptionalAuthSchema : OpenAICompatibleProviderAuthConfig,
+    });
+  }
+  if (provider === AIProviderName.BEDROCK) {
+    return z.object({
+      displayName: z.string().min(1),
+      provider: z.literal(AIProviderName.BEDROCK),
+      config: BedrockProviderConfig,
+      auth: editMode ? OptionalAuthSchema : BedrockProviderAuthConfig,
     });
   }
   const authSchema = z.union([

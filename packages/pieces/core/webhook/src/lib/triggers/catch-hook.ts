@@ -239,18 +239,24 @@ function verifyAuth(
 
 function verifyHeaderAuth(
   headers: Record<string, string>,
-  headerName: string,
-  headerSecret: string
+  headerName: string | undefined,
+  headerSecret: string | undefined
 ) {
+  if (!headerName || !headerSecret) {
+    return false;
+  }
   const headerValue = headers[headerName.toLocaleLowerCase()];
   return headerValue === headerSecret;
 }
 
 function verifyBasicAuth(
-  headerValue: string,
-  username: string,
-  password: string
+  headerValue: string | undefined,
+  username: string | undefined,
+  password: string | undefined
 ) {
+  if (!headerValue || !username || !password) {
+    return false;
+  }
   if (!headerValue.toLocaleLowerCase().startsWith('basic ')) {
     return false;
   }
@@ -263,12 +269,15 @@ function verifyBasicAuth(
 export function verifyHmacAuth(
   headers: Record<string, string>,
   rawBody: unknown,
-  headerName: string,
-  secret: string,
+  headerName: string | undefined,
+  secret: string | undefined,
   algorithm: string,
   encoding: 'hex' | 'base64',
   signaturePrefix: string
 ): boolean {
+  if (!headerName || !secret) {
+    return false;
+  }
   // Get signature from header
   const headerValue = headers[headerName.toLowerCase()];
   if (!headerValue) {

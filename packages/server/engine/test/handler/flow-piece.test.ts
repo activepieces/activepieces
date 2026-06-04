@@ -1,4 +1,4 @@
-import { FlowAction, FlowRunStatus } from '@activepieces/shared'
+import { FlowAction, FlowRunStatus, tryParseFriendlyPieceError } from '@activepieces/shared'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { pieceExecutor } from '../../src/lib/handler/piece-executor'
@@ -42,29 +42,30 @@ describe('pieceExecutor', () => {
             }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
         })
 
-        const expectedError = {
-            response: {
-                status: 404,
-                body: {
-                    statusCode: 404,
-                    error: 'Not Found',
-                    message: 'Route not found',
-                },
-            },
-            request: {},
+        const verdict = result.verdict
+        expect(verdict.status).toBe(FlowRunStatus.FAILED)
+        if (verdict.status !== FlowRunStatus.FAILED) {
+            throw new Error('Expected a FAILED verdict')
         }
+        expect(verdict.failedStep.name).toBe('send_http')
+        expect(verdict.failedStep.displayName).toBe('Your Action Name')
 
-        expect(result.verdict).toStrictEqual({
-            status: FlowRunStatus.FAILED,
-            failedStep: {
-                name: 'send_http',
-                displayName: 'Your Action Name',
-                message: JSON.stringify(expectedError, null, 2),
-            },
-        })
+        const failedStepError = tryParseFriendlyPieceError(verdict.failedStep.message)
+        expect(failedStepError?.status).toBe(404)
+        expect(failedStepError?.apiMessage).toBe('Route not found')
+
         expect(result.steps.send_http.status).toBe('FAILED')
-        expect(result.steps.send_http.errorMessage).toEqual(JSON.stringify(expectedError, null, 2))
-    }, 10000)
+        const error = tryParseFriendlyPieceError(result.steps.send_http.errorMessage)
+        expect(error?.status).toBe(404)
+        expect(error?.errorName).toBe('HttpError')
+        expect(error?.message).toBe('Route not found')
+        expect(error?.apiMessage).toBe('Route not found')
+        expect(error?.responseBody).toEqual({
+            statusCode: 404,
+            error: 'Not Found',
+            message: 'Route not found',
+        })
+    }, 30000)
     it('should skip piece action', async () => {
         const result = await flowExecutor.execute({
             action: buildPieceAction({

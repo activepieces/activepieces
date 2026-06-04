@@ -97,8 +97,25 @@ export class InvalidCronExpressionError extends ExecutionError {
     }
 }
 
+export class FormulaEvaluationError extends ExecutionError {
+    constructor({ expression, message, cause }: { expression: string, message: string, cause?: unknown }) {
+        super('FormulaEvaluationError', formatMessage(`Formula error: ${message} (expression: ${expression})`), ExecutionErrorType.USER, cause)
+    }
+}
+
 export class EngineGenericError extends ExecutionError {
     constructor(name: string, message: string, cause?: unknown) {
         super(name, formatMessage(message), ExecutionErrorType.ENGINE, cause)
+    }
+}
+
+export class SSRFBlockedError extends ExecutionError {
+    constructor({ host, ip, cause }: { host: string, ip: string, cause?: unknown }) {
+        super(
+            'SSRFBlockedError',
+            formatMessage(`SSRF protection: refusing to connect to ${host} (resolved ${ip}) — private, loopback, link-local, or multicast address`),
+            ExecutionErrorType.USER,
+            cause,
+        )
     }
 }

@@ -4,6 +4,7 @@ import {
     PiecePropertyMap,
 } from '@activepieces/pieces-framework'
 import {
+    CodeActionSettings,
     FlowActionType,
     FlowOperationRequest,
     FlowOperationType,
@@ -15,6 +16,7 @@ import {
     PieceTriggerSettings,
     PlatformId,
     RouterActionSettingsWithValidation,
+    SourceCode,
     UserId,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -25,6 +27,12 @@ const loopSettingsValidator = LoopOnItemsActionSettings.and(z.object({
     items: z.string().min(1),
 }))
 const routerSettingsValidator = RouterActionSettingsWithValidation
+const codeSettingsValidator = CodeActionSettings.and(z.object({
+    sourceCode: SourceCode.and(z.object({
+        code: z.string().min(1),
+        packageJson: z.string().min(1),
+    })),
+}))
 
 type ValidationResult = {
     valid: boolean
@@ -59,9 +67,11 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                             clonedRequest.request.action.settings,
                         ).success
                         break
-                    case FlowActionType.CODE: {
+                    case FlowActionType.CODE:
+                        clonedRequest.request.action.valid = codeSettingsValidator.safeParse(
+                            clonedRequest.request.action.settings,
+                        ).success
                         break
-                    }
                 }
                 break
             case FlowOperationType.UPDATE_ACTION:
@@ -87,9 +97,11 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                             clonedRequest.request.settings,
                         ).success
                         break
-                    case FlowActionType.CODE: {
+                    case FlowActionType.CODE:
+                        clonedRequest.request.valid = codeSettingsValidator.safeParse(
+                            clonedRequest.request.settings,
+                        ).success
                         break
-                    }
                 }
                 break
             case FlowOperationType.UPDATE_TRIGGER:

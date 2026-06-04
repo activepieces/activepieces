@@ -45,7 +45,7 @@ export const githubFindIssueAction = createAction({
       total_count: number;
       items: Array<{ id: number }>;
     }>({
-      accessToken: auth.access_token,
+      auth,
       method: HttpMethod.GET,
       resourceUri: `/search/issues`,
       query: { q, per_page: 1 },

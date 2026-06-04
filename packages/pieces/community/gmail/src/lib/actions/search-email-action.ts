@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { gmailAuth } from '../auth';
+import { gmailAuth, createGoogleClient } from '../auth';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 import { convertAttachment, parseStream } from '../common/data';
 import { GmailProps } from '../common/props';
 import { GmailLabel } from '../common/models';
@@ -11,7 +10,7 @@ export const gmailSearchMailAction = createAction({
   name: 'gmail_search_mail',
   displayName: 'Find Email',
   description:
-    'Find emails using advanced search criteria. At least one search filter (from, to, subject, label, category, date, content, or attachment) is required.',
+    'Find emails using advanced search criteria. If no filters are provided, the latest emails are returned.',
   props: {
     from: GmailProps.from,
     to: GmailProps.to,
@@ -60,8 +59,7 @@ export const gmailSearchMailAction = createAction({
     }),
   },
   async run(context) {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
 
     const gmail = google.gmail({ version: 'v1', auth: authClient });
 
@@ -116,10 +114,6 @@ export const gmailSearchMailAction = createAction({
 
     const searchQuery = queryParts.join(' ');
 
-    if (!searchQuery.trim()) {
-      throw new Error('Please provide at least one search criterion');
-    }
-
     const maxResults = Math.min(
       Math.max(context.propsValue.max_results || 10, 1),
       500
@@ -128,7 +122,7 @@ export const gmailSearchMailAction = createAction({
     try {
       const searchResponse = await gmail.users.messages.list({
         userId: 'me',
-        q: searchQuery,
+        ...(searchQuery.trim() ? { q: searchQuery } : {}),
         maxResults: maxResults,
         includeSpamTrash: context.propsValue.include_spam_trash,
       });

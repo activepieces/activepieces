@@ -137,6 +137,7 @@ const EmbedPage = React.memo(() => {
                   disableNavigationInBuilder:
                     event.data.data.disableNavigationInBuilder !== false,
                   hideFolders: event.data.data.hideFolders ?? false,
+                  hideTables: event.data.data.hideTables ?? false,
                   sdkVersion: event.data.data.sdkVersion,
                   fontUrl: event.data.data.fontUrl,
                   fontFamily: event.data.data.fontFamily,
@@ -159,7 +160,9 @@ const EmbedPage = React.memo(() => {
                 });
               });
               memoryRouter.navigate(initialRoute);
-              handleVendorNavigation({ projectId: data.projectId });
+              if (data.projectId) {
+                handleVendorNavigation({ projectId: data.projectId });
+              }
               handleClientNavigation();
               notifyVendorPostAuthentication();
             },

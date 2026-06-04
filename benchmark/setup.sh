@@ -48,6 +48,23 @@ if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
   echo "$SIGNUP_RESPONSE" >&2
   exit 1
 fi
+
+# Cloud edition returns an ONBOARDING token with projectId=null.
+# Complete onboarding by creating a platform + project, which returns a fresh USER token.
+if [ "$PROJECT_ID" = "null" ] || [ -z "$PROJECT_ID" ]; then
+  echo "Completing onboarding (creating platform + project)..." >&2
+  PLATFORM_RESPONSE=$(curl -s --fail-with-body "$BASE_URL/platforms" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $TOKEN" \
+    -d '{"name":"Benchmark"}')
+  TOKEN=$(echo "$PLATFORM_RESPONSE" | jq -r '.token')
+  PROJECT_ID=$(echo "$PLATFORM_RESPONSE" | jq -r '.projectId')
+  if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ] || [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" = "null" ]; then
+    echo "ERROR: Failed to complete onboarding" >&2
+    echo "$PLATFORM_RESPONSE" >&2
+    exit 1
+  fi
+fi
 echo "Signed up. Project: $PROJECT_ID" >&2
 
 AUTH="Authorization: Bearer $TOKEN"
@@ -62,99 +79,113 @@ FLOW_RESPONSE=$(curl -s --fail-with-body "$BASE_URL/flows" \
 FLOW_ID=$(echo "$FLOW_RESPONSE" | jq -r '.id')
 echo "Flow created: $FLOW_ID" >&2
 
+# Resolve the CODE step body and Return Response body (parameterizable for isolation smoke).
+if [ -n "${CODE_BODY_FILE:-}" ]; then
+  if [ ! -f "$CODE_BODY_FILE" ]; then
+    echo "ERROR: CODE_BODY_FILE=$CODE_BODY_FILE not found" >&2
+    exit 1
+  fi
+  CODE_STEP_SRC=$(cat "$CODE_BODY_FILE")
+else
+  CODE_STEP_SRC=$'export const code = async (inputs) => {\n  return true;\n};\n'
+fi
+
+if [ -z "${RESPONSE_BODY:-}" ]; then
+  RESPONSE_BODY_JSON='{"hello":"world"}'
+elif [ "$RESPONSE_BODY" = "{{step_2}}" ]; then
+  RESPONSE_BODY_JSON='"{{step_2}}"'
+else
+  RESPONSE_BODY_JSON="$RESPONSE_BODY"
+fi
+
+IMPORT_PAYLOAD=$(jq -n \
+  --arg code "$CODE_STEP_SRC" \
+  --argjson body "$RESPONSE_BODY_JSON" \
+  '{
+    type: "IMPORT_FLOW",
+    request: {
+      displayName: "Benchmark Flow",
+      schemaVersion: "17",
+      notes: [],
+      trigger: {
+        name: "trigger",
+        valid: true,
+        displayName: "Catch Webhook",
+        type: "PIECE_TRIGGER",
+        settings: {
+          pieceName: "@activepieces/piece-webhook",
+          pieceVersion: "~0.1.29",
+          triggerName: "catch_webhook",
+          input: { authType: "none", authFields: {} },
+          propertySettings: {
+            authType: { type: "MANUAL" },
+            authFields: { type: "MANUAL", schema: {} },
+            liveMarkdown: { type: "MANUAL" },
+            syncMarkdown: { type: "MANUAL" },
+            testMarkdown: { type: "MANUAL" }
+          },
+          sampleData: {}
+        },
+        nextAction: {
+          name: "step_2",
+          skip: false,
+          type: "CODE",
+          valid: true,
+          settings: {
+            input: {},
+            sampleData: {},
+            sourceCode: { code: $code, packageJson: "{}" },
+            errorHandlingOptions: {
+              retryOnFailure: { value: false },
+              continueOnFailure: { value: false }
+            }
+          },
+          displayName: "Code",
+          nextAction: {
+            name: "step_1",
+            skip: false,
+            type: "PIECE",
+            valid: true,
+            settings: {
+              input: {
+                fields: { body: $body, status: 200, headers: {} },
+                respond: "stop",
+                responseType: "json"
+              },
+              pieceName: "@activepieces/piece-webhook",
+              actionName: "return_response",
+              sampleData: {},
+              pieceVersion: "~0.1.29",
+              propertySettings: {
+                fields: {
+                  type: "MANUAL",
+                  schema: {
+                    body: { type: "JSON", required: true, displayName: "JSON Body" },
+                    status: { type: "NUMBER", required: false, displayName: "Status", defaultValue: 200 },
+                    headers: { type: "OBJECT", required: false, displayName: "Headers" }
+                  }
+                },
+                respond: { type: "MANUAL" },
+                responseType: { type: "MANUAL" }
+              },
+              errorHandlingOptions: {
+                retryOnFailure: { value: false },
+                continueOnFailure: { value: false }
+              }
+            },
+            displayName: "Return Response"
+          }
+        }
+      }
+    }
+  }')
+
 # Import full flow via IMPORT_FLOW operation
 echo "Importing flow definition..." >&2
 curl -s --fail-with-body "$BASE_URL/flows/$FLOW_ID" \
   -H "Content-Type: application/json" \
   -H "$AUTH" \
-  -d '{
-    "type": "IMPORT_FLOW",
-    "request": {
-      "displayName": "Benchmark Flow",
-      "schemaVersion": "17",
-      "notes": [],
-      "trigger": {
-        "name": "trigger",
-        "valid": true,
-        "displayName": "Catch Webhook",
-        "type": "PIECE_TRIGGER",
-        "settings": {
-          "pieceName": "@activepieces/piece-webhook",
-          "pieceVersion": "~0.1.29",
-          "triggerName": "catch_webhook",
-          "input": {
-            "authType": "none",
-            "authFields": {}
-          },
-          "propertySettings": {
-            "authType": { "type": "MANUAL" },
-            "authFields": { "type": "MANUAL", "schema": {} },
-            "liveMarkdown": { "type": "MANUAL" },
-            "syncMarkdown": { "type": "MANUAL" },
-            "testMarkdown": { "type": "MANUAL" }
-          },
-          "sampleData": {}
-        },
-        "nextAction": {
-          "name": "step_2",
-          "skip": false,
-          "type": "CODE",
-          "valid": true,
-          "settings": {
-            "input": {},
-            "sampleData": {},
-            "sourceCode": {
-              "code": "export const code = async (inputs) => {\n  return true;\n};\n",
-              "packageJson": "{}"
-            },
-            "errorHandlingOptions": {
-              "retryOnFailure": { "value": false },
-              "continueOnFailure": { "value": false }
-            }
-          },
-          "displayName": "Code",
-          "nextAction": {
-            "name": "step_1",
-            "skip": false,
-            "type": "PIECE",
-            "valid": true,
-            "settings": {
-              "input": {
-                "fields": {
-                  "body": { "hello": "world" },
-                  "status": 200,
-                  "headers": {}
-                },
-                "respond": "stop",
-                "responseType": "json"
-              },
-              "pieceName": "@activepieces/piece-webhook",
-              "actionName": "return_response",
-              "sampleData": {},
-              "pieceVersion": "~0.1.29",
-              "propertySettings": {
-                "fields": {
-                  "type": "MANUAL",
-                  "schema": {
-                    "body": { "type": "JSON", "required": true, "displayName": "JSON Body" },
-                    "status": { "type": "NUMBER", "required": false, "displayName": "Status", "defaultValue": 200 },
-                    "headers": { "type": "OBJECT", "required": false, "displayName": "Headers" }
-                  }
-                },
-                "respond": { "type": "MANUAL" },
-                "responseType": { "type": "MANUAL" }
-              },
-              "errorHandlingOptions": {
-                "retryOnFailure": { "value": false },
-                "continueOnFailure": { "value": false }
-              }
-            },
-            "displayName": "Return Response"
-          }
-        }
-      }
-    }
-  }' > /dev/null
+  --data-binary "$IMPORT_PAYLOAD" > /dev/null
 
 # Publish flow
 echo "Publishing flow..." >&2

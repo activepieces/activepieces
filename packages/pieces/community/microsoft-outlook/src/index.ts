@@ -21,10 +21,10 @@ import { requestApprovalInMail } from './lib/actions/request-approval-send-email
 export const microsoftOutlook = createPiece({
 	displayName: 'Microsoft Outlook',
 	auth: microsoftOutlookAuth,
-	minimumSupportedRelease: '0.36.1',
-	logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-outlook.jpg',
+	minimumSupportedRelease: '0.82.0',
+	logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-outlook.png',
 	categories: [PieceCategory.PRODUCTIVITY],
-	authors: ['lucaslimasouza', 'kishanprmr','sanket-a11y'],
+	authors: ['lucaslimasouza', 'kishanprmr', 'sanket-a11y'],
 	actions: [
 		sendEmailAction,
 		downloadAttachmentAction,

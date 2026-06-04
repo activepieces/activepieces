@@ -50,7 +50,13 @@ export const projectReleaseController: FastifyPluginAsyncZod = async (app) => {
     app.post('/diff', DiffProjectReleaseRequest, async (req) => {
         const platform = await platformService(req.log).getOneOrThrow(req.principal.platform.id)
         const ownerId = platform.ownerId
-        return projectReleaseService.releasePlan(req.projectId, ownerId, req.body, req.log)
+        return projectReleaseService.releasePlan({
+            projectId: req.projectId,
+            userId: ownerId,
+            platformId: req.principal.platform.id,
+            params: req.body,
+            log: req.log,
+        })
     })
 }
 

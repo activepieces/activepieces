@@ -1,14 +1,10 @@
 import {
-  PiecePropValueSchema,
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { drupalAuth } from '../auth';
 import { drupal } from '../common/jsonapi';
 import { fetchEntityTypesForReading } from '../common/drupal-entities';
-
-type DrupalAuthType = PiecePropValueSchema<typeof drupalAuth>;
 
 export const drupalDeleteEntityAction = createAction({
   auth: drupalAuth,
@@ -32,7 +28,7 @@ export const drupalDeleteEntityAction = createAction({
   },
   async run({ auth, propsValue }) {
     const entityInfo = propsValue.entity_type as any;
-    
+
     return await drupal.deleteEntity(
       auth,
       entityInfo.entity_type,

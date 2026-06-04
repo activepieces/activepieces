@@ -120,6 +120,8 @@ Property.StaticMultiSelectDropdown({
 
 ## Dynamic Dropdown (fetches from API)
 
+> **Always pass `auth`.** Every `Property.Dropdown`, `Property.MultiSelectDropdown`, and `Property.DynamicProperties` whose `options`/`props` callback reads `auth` MUST set `auth: <pieceAuth>` (e.g. `auth: myAppAuth`). Without it, `auth` is `undefined` in the callback and the dropdown can never load. Import the auth object from the piece's `auth.ts` (or `../..`). See `packages/pieces/community/github/src/lib/common/index.ts` for the real pattern.
+
 ```typescript
 Property.Dropdown({
   displayName: 'Project',
@@ -133,7 +135,7 @@ Property.Dropdown({
     const response = await httpClient.sendRequest<{ data: { id: string; name: string }[] }>({
       method: HttpMethod.GET,
       url: 'https://api.example.com/v1/projects',
-      authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth as string },
+      authentication: { type: AuthenticationType.BEARER_TOKEN, token: (auth as { secret_text: string }).secret_text },
     });
     return {
       disabled: false,
@@ -161,7 +163,7 @@ Property.Dropdown({
     const response = await httpClient.sendRequest<{ data: { id: string; name: string }[] }>({
       method: HttpMethod.GET,
       url: `https://api.example.com/v1/projects/${project}/tasks`,
-      authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth as string },
+      authentication: { type: AuthenticationType.BEARER_TOKEN, token: (auth as { secret_text: string }).secret_text },
     });
     return {
       disabled: false,
@@ -196,11 +198,11 @@ Property.DynamicProperties({
   displayName: 'Record Fields',
   refreshers: ['tableId'],
   required: true,
-  auth:myAppAuth,
-  props: async ({ auth, tableId }) => {
+  auth: myAppAuth,
+  props: async ({ auth, tableId }): Promise<DynamicPropsValue> => {
     if (!auth || !tableId) return {};
     const fields = await fetchTableFields(auth, tableId);
-    const properties: Record<string, any> = {};
+    const properties: DynamicPropsValue = {};
     for (const field of fields) {
       properties[field.id] = Property.ShortText({
         displayName: field.name,
@@ -210,6 +212,67 @@ Property.DynamicProperties({
     return properties;
   },
 })
+```
+
+## Dynamic Properties as Source Selector (mutually exclusive inputs)
+
+When a user must choose between two mutually exclusive input methods (upload vs S3, URL vs file, etc.), use a `StaticDropdown` selector refresher + `DynamicProperties`:
+
+```typescript
+source: Property.StaticDropdown({
+  displayName: 'File Source',
+  description: 'Choose how to provide the file.',
+  required: true,
+  defaultValue: 'file',
+  options: {
+    options: [
+      { label: 'Upload a file', value: 'file' },
+      { label: 'From S3 bucket', value: 's3' },
+    ],
+  },
+}),
+document: Property.DynamicProperties({
+  auth: myAppAuth,
+  displayName: 'File',
+  required: true,
+  refreshers: ['source'],
+  // IMPORTANT: explicit Promise<DynamicPropsValue> return type is required
+  // for the UI to re-render when the source selector changes.
+  props: async ({ source }): Promise<DynamicPropsValue> => {
+    if (source === 's3') {
+      return {
+        s3Bucket: Property.ShortText({
+          displayName: 'S3 Bucket',
+          required: true,
+        }),
+        s3Key: Property.ShortText({
+          displayName: 'S3 File Path',
+          required: true,
+        }),
+      };
+    }
+    return {
+      file: Property.File({
+        displayName: 'File',
+        required: true,
+      }),
+    };
+  },
+}),
+```
+
+**Rules:**
+- Always use `Promise<DynamicPropsValue>` as the explicit return type — without it the UI will not react to selector changes
+- Return object literals per branch — do NOT build a mutable object and conditionally assign keys
+- Always end with a fallback `return {}` after all branches
+- Compare the selector value directly (`source === 's3'`) — no `as unknown as string` cast needed
+- Set `defaultValue` on the selector so the first branch renders on load
+
+**Reading values in `run`:**
+```typescript
+const file = source === 'file' ? document['file'] : undefined;
+const s3Bucket = source === 's3' ? (document['s3Bucket'] as string) : undefined;
+const s3Key = source === 's3' ? (document['s3Key'] as string) : undefined;
 ```
 
 ## Markdown (display-only, no user input)

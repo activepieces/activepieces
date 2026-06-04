@@ -63,7 +63,7 @@ async function handleRouterExecution({ action, executionState, constants, censor
             evaluation: evaluatedConditions[index],
         })),
     }).setDuration(stepEndTime - stepStartTime)
-    executionState = executionState.upsertStep(action.name, routerOutput)
+    executionState = await executionState.upsertStep(action.name, routerOutput)
 
     const { data: executionStateResult, error: executionStateError } = await utils.tryCatchAndThrowOnEngineError(async () => {
         for (let i = 0; i < resolvedInput.branches.length; i++) {
@@ -90,7 +90,7 @@ async function handleRouterExecution({ action, executionState, constants, censor
     })
     if (executionStateError) {
         const failedStepOutput = routerOutput.setStatus(StepOutputStatus.FAILED)
-        return executionState.upsertStep(action.name, failedStepOutput).setVerdict({ status: FlowRunStatus.FAILED, failedStep: {
+        return (await executionState.upsertStep(action.name, failedStepOutput)).setVerdict({ status: FlowRunStatus.FAILED, failedStep: {
             name: action.name,
             displayName: action.displayName,
             message: utils.formatError(executionStateError),

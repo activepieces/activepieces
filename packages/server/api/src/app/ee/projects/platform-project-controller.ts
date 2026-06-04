@@ -46,6 +46,7 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
             metadata: request.body.metadata ?? undefined,
             maxConcurrentJobs: request.body.maxConcurrentJobs ?? undefined,
             globalConnectionExternalIds: request.body.globalConnectionExternalIds ?? undefined,
+            alertReceiverEmail: request.body.alertReceiverEmail ?? undefined,
         })
         await reply.status(StatusCodes.CREATED).send(projectWithUsage)
     })
@@ -56,12 +57,14 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
         return platformProjectService(request.log).getForPlatform({
             platformId: request.principal.platform.id,
             externalId: request.query.externalId,
+            externalUserId: request.query.externalUserId,
             cursorRequest: request.query.cursor ?? null,
             displayName: request.query.displayName,
             types: request.query.types,
             limit: request.query.limit ?? DEFAULT_LIMIT_SIZE,
             userId,
             isPrivileged: userService(request.log).isUserPrivileged(user),
+            principalType: request.principal.type,
         })
     })
 
@@ -90,7 +93,7 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.delete('/:id', DeleteProjectRequest, async (req, res) => {
-        await assertProjectToDeleteIsNotPersonalProject(req.params.id, req.log)
+        await assertProjectIsSafeToDelete(req.params.id, req.principal.platform.id, req.log)
         await platformProjectService(req.log).markForDeletion({
             id: req.params.id,
             platformId: req.principal.platform.id,
@@ -128,8 +131,17 @@ async function isPlatformAdmin(principal: {
 
 
 
-async function assertProjectToDeleteIsNotPersonalProject(projectId: string, log: FastifyBaseLogger): Promise<void> {
+async function assertProjectIsSafeToDelete(projectId: string, callerPlatformId: string, log: FastifyBaseLogger): Promise<void> {
     const project = await projectService(log).getOneOrThrow(projectId)
+    if (project.platformId !== callerPlatformId) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: {
+                entityType: 'project',
+                entityId: projectId,
+            },
+        })
+    }
     if (project.type === ProjectType.PERSONAL) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,

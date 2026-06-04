@@ -1,4 +1,3 @@
-import { HttpMethod } from '@activepieces/pieces-common';
 import { FlowAction, ApFlagId, FlowTrigger } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -30,6 +29,15 @@ enum BodyType {
   JSON = 'json',
   TEXT = 'text',
   FORM_DATA = 'form-data',
+}
+
+enum HttpMethod {
+  GET = 'GET',
+  POST = 'POST',
+  PATCH = 'PATCH',
+  PUT = 'PUT',
+  DELETE = 'DELETE',
+  HEAD = 'HEAD',
 }
 
 const BodyFormInput = ({

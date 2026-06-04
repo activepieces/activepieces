@@ -6,7 +6,7 @@ import {
     isNil,
     parseToJsonIfPossible,
     PieceTrigger,
-    ProgressUpdateType,
+    StreamStepProgress,
     TriggerHookType,
     TriggerPayload,
     tryCatch,
@@ -148,7 +148,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
                     payloads: triggerResult.output,
                     httpRequestId: data.requestId,
                     environment: data.runEnvironment,
-                    progressUpdateType: ProgressUpdateType.NONE,
+                    streamStepProgress: StreamStepProgress.NONE,
                     parentRunId: data.parentRunId,
                     failParentOnFailure: data.failParentOnFailure,
                 })

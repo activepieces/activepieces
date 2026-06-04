@@ -1,4 +1,4 @@
-import { apId, assertNotNullOrUndefined, EngineHttpResponse, EventPayload, ExecutionType, Flow, FlowRun, FlowStatus, FlowVersionId, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PlatformId, ProgressUpdateType, ProjectId, RunEnvironment, TriggerPayload, WorkerJobType } from '@activepieces/shared'
+import { apId, assertNotNullOrUndefined, EngineHttpResponse, EventPayload, ExecutionType, Flow, FlowRun, FlowStatus, FlowVersionId, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PlatformId, ProjectId, RunEnvironment, StreamStepProgress, TriggerPayload, WorkerJobType } from '@activepieces/shared'
 import { context, propagation, trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -53,6 +53,7 @@ export const webhookService = {
         onRunCreated,
         parentRunId,
         failParentOnFailure,
+        timeoutMs,
     }: HandleWebhookParams): Promise<EngineHttpResponse> {
         return tracer.startActiveSpan('webhook.service.handle', {
             attributes: {
@@ -168,13 +169,14 @@ export const webhookService = {
                     runEnvironment: flowVersionToRun === WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST ? RunEnvironment.PRODUCTION : RunEnvironment.TESTING,
                     logger: pinoLogger,
                     webhookRequestId,
-                    synchronousHandlerId: engineResponseWatcher(pinoLogger).getServerId(),
+                    workerHandlerId: engineResponseWatcher(pinoLogger).getServerId(),
                     flowVersionIdToRun,
                     saveSampleData,
                     flowVersionToRun,
                     onRunCreated,
                     parentRunId,
                     failParentOnFailure,
+                    timeoutMs,
                 })
                 return {
                     status: flowHttpResponse.status,
@@ -232,7 +234,6 @@ async function handleAsync(params: AsyncWebhookParams): Promise<EngineHttpRespon
                     failParentOnFailure,
                     traceContext,
                 },
-                dependOnJobId: !isNil(parentRunId) && failParentOnFailure ? parentRunId : undefined,
             })
             logger.info('Async webhook request completed')
             span.setAttribute('webhook.queuedSuccessfully', true)
@@ -260,7 +261,7 @@ async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse
         },
     }, async (span) => {
         try {
-            const { payload, projectId, flow, logger, webhookRequestId, synchronousHandlerId, flowVersionIdToRun, runEnvironment, saveSampleData, flowVersionToRun, parentRunId, failParentOnFailure, platformId } = params
+            const { payload, projectId, flow, logger, webhookRequestId, workerHandlerId, flowVersionIdToRun, runEnvironment, saveSampleData, flowVersionToRun, parentRunId, failParentOnFailure, platformId, timeoutMs } = params
 
             if (saveSampleData) {
                 rejectedPromiseHandler(savePayload({
@@ -293,12 +294,12 @@ async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse
                 flowId: flow.id,
                 flowVersionId: flowVersionIdToRun,
                 payload,
-                synchronousHandlerId,
+                workerHandlerId,
                 projectId,
                 executeTrigger: true,
                 httpRequestId: webhookRequestId,
                 executionType: ExecutionType.BEGIN,
-                progressUpdateType: ProgressUpdateType.WEBHOOK_RESPONSE,
+                streamStepProgress: StreamStepProgress.NONE,
                 parentRunId,
                 failParentOnFailure,
             })
@@ -306,7 +307,7 @@ async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse
             span.setAttribute('webhook.runId', createdRun.id)
             params.onRunCreated?.(createdRun)
 
-            const listenerResult = await engineResponseWatcher(logger).oneTimeListener<EngineHttpResponse>(webhookRequestId, true, WEBHOOK_TIMEOUT_MS, {
+            const listenerResult = await engineResponseWatcher(logger).oneTimeListener<EngineHttpResponse>(webhookRequestId, true, timeoutMs ?? WEBHOOK_TIMEOUT_MS, {
                 status: StatusCodes.NO_CONTENT,
                 body: {},
                 headers: {},
@@ -350,6 +351,7 @@ type HandleWebhookParams = {
     onRunCreated?: (run: FlowRun) => void
     parentRunId?: string
     failParentOnFailure: boolean
+    timeoutMs?: number
 }
 
 type AsyncWebhookParams = {
@@ -377,9 +379,10 @@ type SyncWebhookParams = {
     flow: Flow
     logger: FastifyBaseLogger
     webhookRequestId: string
-    synchronousHandlerId: string
+    workerHandlerId: string
     flowVersionIdToRun: FlowVersionId
     onRunCreated?: (run: FlowRun) => void
     parentRunId?: string
     failParentOnFailure: boolean
+    timeoutMs?: number
 }

@@ -2,7 +2,7 @@ import {
   createAction,
   Property,
 } from '@activepieces/pieces-framework';
-import { ExecutionType, PauseType } from '@activepieces/shared';
+import { ExecutionType } from '@activepieces/shared';
 import { markdownDescription } from '../common';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
@@ -67,13 +67,12 @@ export const delayForAction = createAction({
       // use flow pause
       const currentTime = new Date();
       const futureTime = new Date(currentTime.getTime() + delayInMs);
-      ctx.run.pause({
-        pauseMetadata: {
-          type: PauseType.DELAY,
-          resumeDateTime: futureTime.toUTCString(),
-        },
+      const waitpoint = await ctx.run.createWaitpoint({
+        type: 'DELAY',
+        resumeDateTime: futureTime.toUTCString(),
       });
-      return {}; // irrelevant as the flow is being paused, not completed
+      ctx.run.waitForWaitpoint(waitpoint.id);
+      return {};
     } else {
       // use setTimeout
       await new Promise((resolve) => setTimeout(resolve, delayInMs));

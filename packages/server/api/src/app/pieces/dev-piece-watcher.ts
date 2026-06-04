@@ -8,6 +8,7 @@ import { FastifyInstance } from 'fastify'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { filePiecesUtils } from './metadata/utils/file-pieces-utils'
+import { invalidateDevPieceCache } from './metadata/utils/piece-cache-utils'
 
 const PIECES_BUILDER_MUTEX_KEY = 'pieces-builder'
 
@@ -48,6 +49,7 @@ async function buildPieces(app: FastifyInstance, piecesInfo: PieceInfo[]): Promi
             }
         }))
 
+        invalidateDevPieceCache()
         app.io.emit(WebsocketClientEvent.REFRESH_PIECE)
         app.log.info('Changes are ready! Please refresh the frontend to see the new updates.')
     }

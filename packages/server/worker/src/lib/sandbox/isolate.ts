@@ -3,15 +3,53 @@ import { mkdir } from 'fs/promises'
 import path from 'path'
 import { arch } from 'process'
 import { execPromise } from '../utils/exec'
-import { CreateSandboxProcessParams, SandboxLogger, SandboxProcessMaker } from './types'
+import { CreateSandboxProcessParams, SandboxLogger, SandboxMount, SandboxProcessMaker } from './types'
 
-const getIsolateExecutableName = (): string => {
+export function getIsolateExecutableName(nodeArch: NodeJS.Architecture = arch): string {
     const defaultName = 'isolate'
-    const executableNameMap: Partial<Record<typeof arch, string>> = {
+    const executableNameMap: Partial<Record<NodeJS.Architecture, string>> = {
         arm: 'isolate-arm',
         arm64: 'isolate-arm',
     }
-    return executableNameMap[arch] ?? defaultName
+    return executableNameMap[nodeArch] ?? defaultName
+}
+
+function assertMountInsideRoot(mount: SandboxMount): void {
+    const normalized = path.posix.normalize(mount.sandboxPath)
+    if (!normalized.startsWith('/root/') && normalized !== '/root') {
+        throw new Error(`Refusing to mount outside sandbox rootfs: sandboxPath="${mount.sandboxPath}"`)
+    }
+}
+
+const ENV_KEY_RE = /^[A-Za-z_][A-Za-z0-9_]*$/
+const FORBIDDEN_VALUE_CHARS = /[\n\r\0]/
+const REQUIRED_SANDBOX_ENV_KEYS: readonly string[] = [
+    'HOME',
+    'NODE_PATH',
+    'AP_EXECUTION_MODE',
+    'AP_SANDBOX_WS_PORT',
+    'AP_SANDBOX_WS_TOKEN',
+    'AP_BASE_CODE_DIRECTORY',
+    'SANDBOX_ID',
+]
+
+function assertSandboxEnv(env: Record<string, string>): void {
+    for (const [key, value] of Object.entries(env)) {
+        if (!ENV_KEY_RE.test(key)) {
+            throw new Error(`Invalid sandbox env key: "${key}" — must match ${ENV_KEY_RE}`)
+        }
+        if (typeof value !== 'string') {
+            throw new Error(`Invalid sandbox env value for "${key}": expected string, got ${typeof value}`)
+        }
+        if (FORBIDDEN_VALUE_CHARS.test(value)) {
+            throw new Error(`Invalid sandbox env value for "${key}": must not contain newlines or NUL bytes`)
+        }
+    }
+    for (const key of REQUIRED_SANDBOX_ENV_KEYS) {
+        if (typeof env[key] !== 'string' || env[key].length === 0) {
+            throw new Error(`Required sandbox env "${key}" is missing or empty`)
+        }
+    }
 }
 
 const isolateBinaryPath = path.resolve(process.cwd(), 'packages/server/api/src/assets', getIsolateExecutableName())
@@ -22,20 +60,24 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
         create: async (params: CreateSandboxProcessParams) => {
             const { sandboxId, mounts, env } = params
 
-            await execPromise(`${isolateBinaryPath} --box-id=${boxId} --cleanup`)
-            await execPromise(`${isolateBinaryPath} --box-id=${boxId} --init`)
+            for (const mount of mounts) {
+                assertMountInsideRoot(mount)
+            }
 
-            // Pre-create /root and mount subdirs in the sandbox rootfs (isolate doesn't create /root by default)
-            const sandboxRootfs = `/var/local/lib/isolate/${boxId}/root`
-            await mkdir(`${sandboxRootfs}/root/common`, { recursive: true })
-            await mkdir(`${sandboxRootfs}/root/codes`, { recursive: true })
-
-            // Engine runs at /root/common/<filename> inside the sandbox (common dir is mounted there)
             const engineSandboxPath = path.join('/root/common', path.basename(enginePath))
             const sandboxEnv = {
                 ...env,
                 AP_BASE_CODE_DIRECTORY: '/root/codes',
                 SANDBOX_ID: sandboxId,
+            }
+            assertSandboxEnv(sandboxEnv)
+
+            await execPromise(`${isolateBinaryPath} --box-id=${boxId} --cleanup`)
+            await execPromise(`${isolateBinaryPath} --box-id=${boxId} --init`)
+
+            const sandboxRootfs = `/var/local/lib/isolate/${boxId}/root`
+            for (const mount of mounts) {
+                await mkdir(`${sandboxRootfs}${mount.sandboxPath}`, { recursive: true })
             }
 
             const envArgs = Object.entries(sandboxEnv)
@@ -47,10 +89,20 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
             })
 
             const args = [
+                '--no-default-dirs',
+                '--dir=/bin/',
+                '--dir=/lib/',
+                '--dir=/lib64/:maybe',
                 '--dir=/usr/bin/',
+                '--dir=/usr/lib/',
                 '--dir=/usr/local/',
                 `--dir=/etc/=${etcDir}`,
                 '--dir=/usr/src/node_modules/',
+                '--dir=proc=proc:fs',
+                '--dir=/dev=/dev:dev',
+                // isolate uses /box internally as its initial working dir, even when --chdir overrides it.
+                // With --no-default-dirs that auto-mount disappears, so we add it back explicitly.
+                `--dir=/box=/var/local/lib/isolate/${boxId}/box:rw`,
                 ...dirArgs,
                 '--share-net',
                 `--box-id=${boxId}`,

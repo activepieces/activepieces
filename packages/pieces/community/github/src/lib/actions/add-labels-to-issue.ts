@@ -19,7 +19,7 @@ export const githubAddLabelsToIssueAction = createAction({
     const labels = propsValue.labels;
 
     const response = await githubApiCall({
-      accessToken: auth.access_token,
+      auth,
       method: HttpMethod.POST,
       resourceUri: `/repos/${owner}/${repo}/issues/${issue_number}/labels`,
       body: {

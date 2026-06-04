@@ -26,7 +26,7 @@ jobs:
     steps:
       - name: Check if PR exists with ready-for-e2e label for this SHA
         id: check-if-pr-has-label
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             // Always run on manual workflow dispatch
@@ -77,14 +77,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           path: ./artifacts
           pattern: "*"
           merge-multiple: false
 
       - name: Re-upload consolidated artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: e2e-test-artifacts-all
@@ -93,7 +93,7 @@ jobs:
 
       - name: Comment on PR with test results
         if: always() && github.event_name == 'pull_request_target'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             // Determine which tests failed

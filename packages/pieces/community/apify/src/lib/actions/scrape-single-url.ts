@@ -28,10 +28,6 @@ export const scrapeSingleUrl = createAction({
             value: 'cheerio',
           },
           {
-            label: 'JSDOM',
-            value: 'jsdom',
-          },
-          {
             label: 'Playwright Adaptive',
             value: 'playwright:adaptive',
           },

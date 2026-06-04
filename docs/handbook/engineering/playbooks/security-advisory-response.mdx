@@ -1,0 +1,164 @@
+---
+title: "Security Advisory Response"
+description: "Internal lifecycle for handling security reports from intake to public disclosure"
+icon: "shield-halved"
+---
+
+A security advisory is the public artifact we publish after a vulnerability is reported and fixed. This playbook is the lifecycle that produces one. Reporter-facing policy lives in [SECURITY.md](https://github.com/activepieces/activepieces/blob/main/SECURITY.md).
+
+## Triage
+
+<Steps>
+  <Step title="Reproduce">
+    Reproduce locally before scoring. If it doesn't reproduce, ask the reporter for clarification.
+  </Step>
+
+  <Step title="Check scope">
+    Compare against the **Out of scope** list in [SECURITY.md](https://github.com/activepieces/activepieces/blob/main/SECURITY.md). If out of scope, reply with the reason and close.
+  </Step>
+
+  <Step title="Score with CVSS 4.0">
+    Use the [FIRST calculator](https://www.first.org/cvss/calculator/4-0). Record the score and vector. \
+    Buckets: 0.1–3.9 low, 4.0–6.9 medium, 7.0–8.9 high, 9.0–10 critical.
+  </Step>
+
+  <Step title="Acknowledge within 3 business days">
+    Reply to the reporter with severity, expected resolution date, and a confidentiality reminder. Clock starts at the report timestamp.
+  </Step>
+</Steps>
+
+## Private fix
+
+<Steps>
+  <Step title="Open a draft advisory">
+    Repo → **Security** → **Advisories** → **New draft security advisory**. \
+    Set affected versions, severity, and a neutral summary. \
+    Save as draft. You'll fill the rest of the metadata in [Draft advisory](#draft-advisory) later.
+  </Step>
+
+  <Step title="Use a temporary private fork">
+    From the draft advisory, click **Start a temporary private fork**. \
+    Fix on a `security/<ghsa-id>` branch inside it.
+  </Step>
+
+  <Step title="Add a regression test, then merge">
+    Run `npm run lint-dev`, `npm run test-unit`, `npm run test-api`. \
+    Add a regression test. Merge the PR inside the private fork.
+
+    <Warning>
+    A public PR or push collapses the embargo. Double-check the remote URL before pushing.
+    </Warning>
+  </Step>
+</Steps>
+
+## Draft advisory
+
+<Steps>
+  <Step title="Request CVE ID (optional)">
+    In the draft advisory: **CVE ID** → **Request CVE**. GitHub assigns one within ~1 business day.
+  </Step>
+
+  <Step title="Fill the metadata">
+    Fields must match the in-app `SecurityAdvisory` shape: `summary`, `description`, `severity`, `cvssScore`, `vulnerableVersionRange` (e.g. `< 0.71.1`), `patchedVersion`. Use the [advisory body template](#advisory-body-template) for the `description`.
+  </Step>
+
+  <Step title="Set the embargo">
+    Default 60 days. Hold publication until the patch is on cloud production and customers have been notified.
+    Publish sooner if actively exploited or the reporter has set an earlier date.
+  </Step>
+</Steps>
+
+## Patch release
+
+<Warning>
+Always a patch bump (e.g. `0.71.0` → `0.71.1`). Never bundle with feature commits.
+</Warning>
+
+<Steps>
+  <Step title="Cut a hotfix branch">
+    Follow the cloud-hotfix flow in [Releases](/handbook/engineering/playbooks/releases): `deploy/cloud/YYYY-MM-DD` branch, then trigger `continuous-delivery-cloud.yml` with `cloud-hotfix`.
+  </Step>
+
+  <Step title="Bump versions">
+    Patch-bump root [package.json](https://github.com/activepieces/activepieces/blob/main/package.json). Bump `packages/shared` if touched. If the fix has a migration, set `release = '<patched-version>'` per [Database Migrations](/handbook/engineering/playbooks/database-migration).
+  </Step>
+
+  <Step title="Verify on canary">
+    Wait for canary to confirm before promoting to production.
+  </Step>
+
+  <Step title="Draft the changelog entry">
+    Draft (don't post yet) for [docs/about/changelog.mdx](https://github.com/activepieces/activepieces/blob/main/docs/about/changelog.mdx):
+
+    ```mdx
+    <Update label="<Month Year>" description="Security advisory <CVE-ID>">
+      ### Security
+      Fixed <one-line summary> (<CVE-ID>, <severity>). Upgrade to <patched-version> immediately.
+    </Update>
+    ```
+  </Step>
+</Steps>
+
+## Customer disclosure
+
+7-day lead time before public publication. Patched version must already be on cloud production before sending.
+
+```
+Subject: [Security] Activepieces <severity> advisory <CVE-ID> — patched in <version>
+
+Cloud customers are already protected — the fix was deployed on <date>.
+Self-managed customers should upgrade to <patched-version> before
+<public-disclosure-date>, when we'll publish CVE <CVE-ID> on GitHub.
+
+Mitigation if you cannot upgrade: <workaround or "none">
+```
+
+Re-confirm the disclosure date with the reporter before sending.
+
+## Public publication
+
+<Steps>
+  <Step title="Publish the advisory">
+    In the draft advisory, click **Publish advisory**. This makes the CVE public.
+  </Step>
+
+  <Step title="Confirm the advisory reaches admins">
+    Confirm the new advisory appears on the platform health page (`/platform/infrastructure/health`). Source feeds cache for 15 minutes, so allow that delay before troubleshooting.
+  </Step>
+
+  <Step title="Post the changelog">
+    Commit the changelog entry drafted in [Patch release](#patch-release).
+  </Step>
+
+</Steps>
+
+## Postmortem
+
+Required for high/critical, optional for medium, skip for low.
+
+Create `docs/handbook/engineering/postmortems/YYYY-MM-DD-<slug>.mdx` using the existing structure (see [2026-03-19 Redis and delay overload](/handbook/engineering/postmortems/2026-03-19-redis-and-delay-overload)).
+
+## References
+
+- [SECURITY.md](https://github.com/activepieces/activepieces/blob/main/SECURITY.md)
+- [GitHub Security Advisories docs](https://docs.github.com/en/code-security/security-advisories)
+- [FIRST CVSS 4.0 calculator](https://www.first.org/cvss/calculator/4-0)
+
+## Advisory body template
+
+````markdown
+## Summary
+One paragraph plain-language explanation of the vulnerability — what it is, no exploit detail.
+
+## Impact
+What an attacker can achieve, what data or systems are at risk, and which versions and configurations are affected.
+
+## Patches
+The patched version and how to upgrade.
+
+## Workarounds
+Mitigations available to users who cannot upgrade immediately, or note that the only safe option is to upgrade.
+
+## References
+The fix commit (visible after publication), related CVEs or upstream advisories, and reporter credit.
+````

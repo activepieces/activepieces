@@ -3,38 +3,35 @@ import {
   DropdownState,
   Property,
 } from '@activepieces/pieces-framework';
+import { tryCatch, unique } from '@activepieces/shared';
 import {
   baserowAuth,
   BaserowAuthValue,
-  BaserowJwtAuthValue,
-  isDatabaseTokenAuth,
+  baserowAuthHelpers,
 } from '../auth';
 import { BaserowClient } from './client';
 import { BaserowFieldType } from './constants';
+import { BaserowField } from './types';
 
 export async function makeClient(
   auth: BaserowAuthValue
 ): Promise<BaserowClient> {
-  if (isDatabaseTokenAuth(auth)) {
-    return new BaserowClient(auth.props.apiUrl, `Token ${auth.props.token}`);
+  const { apiUrl, token, email, password } = auth.props;
+  if (baserowAuthHelpers.isJwtAuth(auth)) {
+    if (!email || !password) {
+      throw new Error(
+        'Email and Password are required for JWT authentication. Update your Baserow connection.'
+      );
+    }
+    const jwt = await BaserowClient.getJwtToken({ apiUrl, email, password });
+    return new BaserowClient(apiUrl, `JWT ${jwt}`, true);
   }
-  const jwt = await BaserowClient.getJwtToken(
-    auth.props.apiUrl,
-    auth.props.email,
-    auth.props.password
-  );
-  return new BaserowClient(auth.props.apiUrl, `JWT ${jwt}`);
-}
-
-export async function makeJwtClient(
-  auth: BaserowJwtAuthValue
-): Promise<BaserowClient> {
-  const jwt = await BaserowClient.getJwtToken(
-    auth.props.apiUrl,
-    auth.props.email,
-    auth.props.password
-  );
-  return new BaserowClient(auth.props.apiUrl, `JWT ${jwt}`);
+  if (!token) {
+    throw new Error(
+      'Database Token is required for Database Token authentication. Update your Baserow connection.'
+    );
+  }
+  return new BaserowClient(apiUrl, `Token ${token}`);
 }
 
 export function formatFieldValues(
@@ -103,6 +100,56 @@ export function formatFieldValues(
   return result;
 }
 
+export async function ensureSelectOptionsExist({
+  fields,
+  payload,
+  client,
+}: {
+  fields: BaserowField[];
+  payload: Record<string, unknown>;
+  client: BaserowClient;
+}): Promise<void> {
+  for (const field of fields) {
+    if (
+      field.type !== BaserowFieldType.SINGLE_SELECT &&
+      field.type !== BaserowFieldType.MULTI_SELECT
+    ) {
+      continue;
+    }
+    const value = payload[field.name];
+    if (value === undefined || value === null || value === '') continue;
+
+    const requested = collectRequestedSelectValues(value);
+    if (requested.length === 0) continue;
+
+    const existingValues = new Set(field.select_options.map((o) => o.value));
+    const missing = unique(requested.filter((v) => !existingValues.has(v)));
+    if (missing.length === 0) continue;
+
+    const result = await tryCatch(() =>
+      client.updateFieldSelectOptions({
+        fieldId: field.id,
+        existingOptions: field.select_options,
+        newOptions: missing,
+      }),
+    );
+    if (result.error) {
+      console.error(
+        `[baserow] Failed to auto-create missing select options for field "${field.name}":`,
+        result.error,
+      );
+    }
+  }
+}
+
+function collectRequestedSelectValues(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((v): v is string => typeof v === 'string' && v.length > 0);
+  }
+  if (typeof value === 'string' && value.length > 0) return [value];
+  return [];
+}
+
 export const baserowCommon = {
   tableId: (required = true) =>
     Property.Dropdown({
@@ -143,11 +190,7 @@ export const baserowCommon = {
           };
         }
         const client = await makeClient(auth);
-        const response = (await client.listRows(
-          table_id,
-          undefined,
-          200
-        )) as { results: Record<string, unknown>[] };
+        const response = await client.listRows(table_id, undefined, 200);
         return {
           disabled: false,
           options: response.results.map((row) => {
@@ -155,10 +198,8 @@ export const baserowCommon = {
               .filter(([k]) => k !== 'id' && k !== 'order')
               .map(([, v]) => (typeof v === 'string' && v ? v : null))
               .find(Boolean);
-            const label = primaryValue
-              ? `#${row['id']} ${primaryValue}`
-              : `Row #${row['id']}`;
-            return { label, value: row['id'] as number };
+            const label = primaryValue ? `#${row.id} ${primaryValue}` : `Row #${row.id}`;
+            return { label, value: row.id };
           }),
         };
       },
@@ -201,9 +242,7 @@ export const baserowCommon = {
                     required: false,
                     description: `Enter date in ${field.date_format} format ${
                       field.date_include_time
-                        ? 'and time in ' +
-                          field.date_time_format +
-                          ' hour format'
+                        ? 'and time in ' + field.date_time_format + ' hour format'
                         : ''
                     }.`,
                   });

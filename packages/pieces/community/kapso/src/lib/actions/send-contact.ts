@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { kapsoAuth } from '../common';
 import { makeClient } from '../common';
-import { phoneNumberIdDropdown } from '../common/props';
+import { businessAccountIdProp, phoneNumberIdDropdown } from '../common/props';
 
 export const sendContact = createAction({
   auth: kapsoAuth,
@@ -9,6 +9,7 @@ export const sendContact = createAction({
   displayName: 'Send Contact',
   description: 'Send a contact card via WhatsApp.',
   props: {
+    businessAccountId: businessAccountIdProp,
     phoneNumberId: phoneNumberIdDropdown,
     to: Property.ShortText({
       displayName: 'Recipient Phone Number',

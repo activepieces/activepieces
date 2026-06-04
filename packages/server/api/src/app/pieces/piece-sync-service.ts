@@ -1,14 +1,14 @@
+import { apVersionUtil } from '@activepieces/server-utils'
 import { groupBy, PieceSyncMode, PieceType, tryCatch } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
-import { pubsub } from '../helper/pubsub'
 import { system } from '../helper/system/system'
-import { AppSystemProp, apVersionUtil } from '../helper/system/system-props'
+import { AppSystemProp } from '../helper/system/system-props'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
-import { PIECE_METADATA_REFRESH_CHANNEL, PieceMetadataRefreshMessage, PieceMetadataRefreshType } from './metadata/piece-cache'
+import { pieceCache } from './metadata/piece-cache'
 import { PieceMetadataSchema } from './metadata/piece-metadata-entity'
 import { pieceMetadataService, pieceRepos } from './metadata/piece-metadata-service'
 
@@ -95,8 +95,9 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
                 log.debug({ pieceName: piece.name, version: piece.version }, '[pieceSyncService#installNewPieces] Piece already exists, skipping')
             }
         }))
-        const message: PieceMetadataRefreshMessage = { type: PieceMetadataRefreshType.BULK_SYNC }
-        await pubsub.publish(PIECE_METADATA_REFRESH_CHANNEL, JSON.stringify(message))
+    }
+    if (newPiecesToFetch.length > 0) {
+        await pieceCache(log).invalidate()
     }
     return newPiecesToFetch.length
 }
@@ -105,7 +106,7 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
 async function listCloudPieces(): Promise<PieceRegistryResponse[]> {
     const queryParams = new URLSearchParams()
     queryParams.append('edition', system.getEdition())
-    queryParams.append('release', await apVersionUtil.getCurrentRelease())
+    queryParams.append('release', apVersionUtil.getCurrentRelease())
     const response = await fetch(`${CLOUD_API_URL}/registry?${queryParams.toString()}`)
     if (!response.ok) {
         throw new Error(`Failed to fetch cloud pieces: ${response.status}`)

@@ -15,6 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { LoadingSpinner } from '@/components/custom/spinner';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -75,6 +76,7 @@ const ImportFlowDialog = (
   props: ImportFlowDialogProps & { children: React.ReactNode },
 ) => {
   const { capture } = useTelemetry();
+  const { embedState } = useEmbedding();
   const [templates, setTemplates] = useState<Template[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -135,17 +137,19 @@ const ImportFlowDialog = (
         }),
       );
 
+      setIsDialogOpen(false);
+
+      if (props.insideBuilder) {
+        navigate(`/flow-import-redirect/${flows[0].id}`);
+        return;
+      }
+
       if (flows.length === 1) {
         navigate(`/flows/${flows[0].id}`);
         return;
       }
-      setIsDialogOpen(false);
-      if (flows.length === 1 || props.insideBuilder) {
-        navigate(`/flow-import-redirect/${flows[0].id}`);
-      }
-      if (!props.insideBuilder) {
-        props.onRefresh();
-      }
+
+      props.onRefresh();
     },
     onError: (err) => {
       if (
@@ -258,7 +262,7 @@ const ImportFlowDialog = (
               onChange={handleFileChange}
             />
           </div>
-          {!props.insideBuilder && (
+          {!props.insideBuilder && !embedState.hideFolders && (
             <div className="w-full flex flex-col gap-2 justify-between items-start">
               <span className="w-16 text-sm font-medium text-gray-700">
                 {t('Folder')}

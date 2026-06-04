@@ -1,3 +1,4 @@
+import React, { Suspense } from 'react';
 import {
   RouterProvider,
   createBrowserRouter,
@@ -9,16 +10,46 @@ import { authRoutes } from '@/app/routes/auth-routes';
 import { platformRoutes } from '@/app/routes/platform-routes';
 import { projectRoutes } from '@/app/routes/project-routes';
 import { publicRoutes } from '@/app/routes/public-routes';
+import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { useEmbedding } from '@/components/providers/embed-provider';
+
+import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
+import { ProjectDashboardLayout } from '../components/project-layout';
 
 import { DefaultRoute } from './default-route';
 import { TokenCheckerWrapper } from './project-route-wrapper';
+
+const ChatWithAIPage = React.lazy(() =>
+  import('@/app/routes/chat-with-ai').then((m) => ({
+    default: m.ChatWithAIPage,
+  })),
+);
+
+function chatElement() {
+  return (
+    <AllowOnlyLoggedInUserOnlyGuard>
+      <ProjectDashboardLayout>
+        <PageTitle title="Chat">
+          <Suspense fallback={<RouteLoadingBar />}>
+            <ChatWithAIPage />
+          </Suspense>
+        </PageTitle>
+      </ProjectDashboardLayout>
+    </AllowOnlyLoggedInUserOnlyGuard>
+  );
+}
+
+const chatRoutes = [
+  { path: '/chat', element: chatElement() },
+  { path: '/chat/:conversationId', element: chatElement() },
+];
 
 const routes = [
   ...publicRoutes,
   ...projectRoutes,
   ...authRoutes,
   ...platformRoutes,
+  ...chatRoutes,
   {
     path: '/projects/:projectId',
     element: (

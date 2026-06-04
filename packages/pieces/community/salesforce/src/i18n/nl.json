@@ -1,10 +1,8 @@
 {
   "CRM software solutions and enterprise cloud computing": "CRM software oplossingen en enterprise cloud computing",
-  "Environment": "Milieu",
-  "Choose environment": "Kies omgeving",
-  "Production": "Productie",
-  "Development": "Ontwikkeling",
-  "Authenticate with Salesforce Production": "Authenticeer met Salesforce-productie",
+  "Salesforce Domain": "Salesforce-domein",
+  "Enter your Salesforce domain. Use \"login.salesforce.com\" for Production, \"test.salesforce.com\" for Sandbox, or your custom My Domain (e.g. \"mycompany.my.salesforce.com\" or \"mycompany.sandbox.my.salesforce.com\").": "Voer je verkoopdomein in. Gebruik \"login.salesforce.com\" voor Productie, \"test.salesforce.com\" voor Sandbox, of je eigen domein (bijv. \"mijnbedrijf.my.salesforce.com\" of \"mycompany.sandbox.salesforce.com\").",
+  "Authenticate with Salesforce": "Authenticeer met Salesforce",
   "Add Contact to Campaign": "Contact toevoegen aan campagne",
   "Add File to Record": "Voeg bestand toe aan Record",
   "Add Lead to Campaign": "Voeg Lead toe aan Campagne",

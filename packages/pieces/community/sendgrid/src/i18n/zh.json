@@ -1,6 +1,5 @@
 {
   "Email delivery service for sending transactional and marketing emails": "Email delivery service for sending transactional and marketing emails",
-  "API key acquired from your SendGrid settings": "API key acquired from your SendGrid settings",
   "Send Email": "Send Email",
   "Send Dynamic Template": "Send Dynamic Template",
   "Custom API Call": "自定义 API 呼叫",
@@ -14,6 +13,7 @@
   "Subject": "Subject",
   "Content Type": "Content Type",
   "Content": "Content",
+  "Attachments": "Attachments",
   "Template Id": "Template Id",
   "Template Data": "Template Data",
   "Method": "方法",

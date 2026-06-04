@@ -41,7 +41,7 @@ export const githubCreateIssueAction = createAction({
     }
 
     const response = await githubApiCall({
-      accessToken: auth.access_token,
+      auth,
       method: HttpMethod.POST,
       resourceUri: `/repos/${owner}/${repo}/issues`,
       body: issueFields,

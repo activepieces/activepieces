@@ -20,6 +20,7 @@
   "Web Search": "ウェブ検索",
   "Web Search Options": "ウェブ検索オプション",
   "Text": "テキスト",
+  "Input Images": "Input Images",
   "Advanced Options": "詳細オプション",
   "Text to Classify": "分類するテキスト",
   "Categories": "カテゴリ",
@@ -33,12 +34,14 @@
   "Max steps": "最大歩数",
   "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.": "AIレスポンスの創造性をコントロールする 価値が高いほど、AIはより創造的になり、価値が低いほどより決定的になります。",
   "Whether to use web search to find information for the AI to use in its response.": "Web検索を使用してAIが応答に使用する情報を見つけるかどうか。",
+  "Provide images for editing, variation, or merging. Support depends on the selected model.": "編集、バリエーション、マージのための画像を提供します。サポートは選択したモデルに依存します。",
   "Categories to classify text into.": "テキストを分類するカテゴリ。",
   "Text to extract structured data from.": "構造化されたデータを抽出するテキスト。",
   "Prompt to guide the AI.": "AIを導くように促します。",
   "For complex schema, you can use advanced mode.": "複雑なスキーマでは、高度なモードを使用できます。",
   "Describe what you want the assistant to do.": "アシスタントに何をさせたいのか説明してください。",
-  "The numbder of interations the agent can do": "エージェントが行うことができる干渉のしびれです",
+  "The number of iterations the agent can do": "エージェントが実行できる反復回数です。",
+  "Whether to use web search to find information for the AI to use.": "Web検索を使用してAIが使用する情報を見つけるかどうか。",
   "Simple": "単純な",
   "Advanced": "高度な設定"
 }

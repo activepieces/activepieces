@@ -1,5 +1,5 @@
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import { apAxios } from '../../../../src/app/helper/ap-axios'
+import { safeHttp } from '@activepieces/server-utils'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { MockInstance } from 'vitest'
@@ -28,7 +28,7 @@ afterAll(async () => {
 })
 
 beforeEach(() => {
-    axiosRequestSpy = vi.spyOn(apAxios, 'request')
+    axiosRequestSpy = vi.spyOn(safeHttp.retryingAxios, 'request')
     vaultMock = hashicorpMock(axiosRequestSpy)
 })
 

@@ -41,6 +41,32 @@ export const securityAccess = {
     },
     
     /**
+     * Creates a security configuration that allows platform administrators
+     * and non-embed (non-JWT) identity provider users.
+     *
+     * **Conditions for access:**
+     * - Principal type of token must be one of the allowedPrincipals
+     * - User must be a platform admin OR have a non-JWT identity provider
+     *
+     * **Effects:**
+     * - platformId field is available on the request.principal (request.principal.platformId)
+     *
+     * @param allowedPrincipals - Array of allowed principal types (USER, ENGINE, or SERVICE)
+     * @returns Security configuration for admin or non-embed user routes
+     */
+    nonEmbedUsersOnly: (allowedPrincipals: readonly (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[]) => {
+        return {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.PLATFORM,
+                allowedPrincipals,
+                adminOnly: false,
+                nonEmbedUsersOnly: true,
+            },
+        } as const
+    },
+
+    /**
      * Creates a security configuration for public platform routes.
      *
      * **Conditions for access:**

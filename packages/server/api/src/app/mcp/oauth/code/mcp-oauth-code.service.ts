@@ -52,7 +52,7 @@ export const mcpOAuthCodeService = {
 type CreateCodeParams = {
     clientId: string
     userId: string
-    projectId: string
+    projectId: string | null
     platformId: string
     redirectUri: string
     codeChallenge: string

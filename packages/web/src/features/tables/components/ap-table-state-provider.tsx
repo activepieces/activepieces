@@ -6,7 +6,7 @@ import { createContext, useContext, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useStore } from 'zustand';
 
-import { LoadingScreen } from '@/components/custom/loading-screen';
+import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { buttonVariants } from '@/components/ui/button';
 import {
   TableState,
@@ -98,11 +98,7 @@ export function ApTableStateProvider({
   });
 
   if (isTableLoading || isFieldsLoading || isRecordsLoading) {
-    return (
-      <div className="flex justify-center items-center h-full w-full pb-6">
-        <LoadingScreen mode="container" />
-      </div>
-    );
+    return <RouteLoadingBar />;
   }
 
   if (

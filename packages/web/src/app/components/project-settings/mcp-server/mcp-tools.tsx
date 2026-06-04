@@ -1,4 +1,3 @@
-import { PopulatedMcpServer } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Lock } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -16,53 +15,52 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
-import { mcpHooks } from './utils/mcp-hooks';
-import {
-  ALL_CONTROLLABLE_TOOL_NAMES,
-  TOOL_CATEGORIES,
-} from './utils/mcp-tools-metadata';
+import { TOOL_CATEGORIES } from './utils/mcp-tools-metadata';
 
 type McpToolsProps = {
-  mcpServer: PopulatedMcpServer;
+  disabledTools: string[] | null;
+  isPending: boolean;
+  onUpdateDisabledTools: (tools: string[]) => void;
 };
 
-export function McpTools({ mcpServer }: McpToolsProps) {
-  const currentProjectId = authenticationSession.getProjectId();
-  const { mutate: updateMcpServer, isPending } = mcpHooks.useUpdateMcpServer(
-    currentProjectId!,
-  );
-
-  const [enabledTools, setEnabledTools] = useState<string[]>(
-    () => mcpServer.enabledTools ?? ALL_CONTROLLABLE_TOOL_NAMES,
+export function McpTools({
+  disabledTools: externalDisabledTools,
+  isPending,
+  onUpdateDisabledTools,
+}: McpToolsProps) {
+  const [disabledTools, setDisabledTools] = useState<string[]>(
+    () => externalDisabledTools ?? [],
   );
 
   useEffect(() => {
     if (!isPending) {
-      setEnabledTools(mcpServer.enabledTools ?? ALL_CONTROLLABLE_TOOL_NAMES);
+      setDisabledTools(externalDisabledTools ?? []);
     }
-  }, [mcpServer.enabledTools, isPending]);
+  }, [externalDisabledTools, isPending]);
 
-  const saveEnabledTools = useDebouncedCallback((tools: string[]) => {
-    updateMcpServer({ enabledTools: tools });
+  const saveDisabledTools = useDebouncedCallback((tools: string[]) => {
+    onUpdateDisabledTools(tools);
   }, 300);
 
   const toggleTool = (name: string, checked: boolean) => {
     const next = checked
-      ? [...enabledTools, name]
-      : enabledTools.filter((n) => n !== name);
-    setEnabledTools(next);
-    saveEnabledTools(next);
+      ? disabledTools.filter((n) => n !== name)
+      : [...disabledTools, name];
+    setDisabledTools(next);
+    saveDisabledTools(next);
   };
 
   const toggleCategory = (toolNames: string[], checked: boolean) => {
     const next = checked
-      ? [...enabledTools, ...toolNames.filter((n) => !enabledTools.includes(n))]
-      : enabledTools.filter((n) => !toolNames.includes(n));
-    setEnabledTools(next);
-    saveEnabledTools(next);
+      ? disabledTools.filter((n) => !toolNames.includes(n))
+      : [
+          ...disabledTools,
+          ...toolNames.filter((n) => !disabledTools.includes(n)),
+        ];
+    setDisabledTools(next);
+    saveDisabledTools(next);
   };
 
   return (
@@ -71,7 +69,7 @@ export function McpTools({ mcpServer }: McpToolsProps) {
         const toolNames = category.tools.map((tool) => tool.name);
         const enabledInCategory = category.locked
           ? toolNames
-          : toolNames.filter((n) => enabledTools.includes(n));
+          : toolNames.filter((n) => !disabledTools.includes(n));
         const allChecked = enabledInCategory.length === toolNames.length;
         const someChecked =
           enabledInCategory.length > 0 &&
@@ -121,7 +119,7 @@ export function McpTools({ mcpServer }: McpToolsProps) {
               <div className="divide-y">
                 {category.tools.map((tool) => {
                   const isChecked =
-                    category.locked || enabledTools.includes(tool.name);
+                    category.locked || !disabledTools.includes(tool.name);
                   return (
                     <div
                       key={tool.name}

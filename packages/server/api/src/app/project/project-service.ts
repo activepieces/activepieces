@@ -16,18 +16,15 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, EntityManager, IsNull, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
-import { repoFactory } from '../core/db/repo-factory'
-import { getProjectMaxConcurrentJobsKey } from '../database/redis/keys'
-import { distributedStore } from '../database/redis-connections'
 import { userService } from '../user/user-service'
-import { ProjectEntity } from './project-entity'
-import { projectHooks } from './project-hooks'
+import { projectHooks, ProjectPostCreateContext } from './project-hooks'
+import { projectRepo } from './project-repo'
 
-export const projectRepo = repoFactory(ProjectEntity)
+export { projectRepo }
 
 export const projectService = (log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<Project> {
-        const { callPostCreateHooks = true, entityManager, ...rest } = params
+        const { callPostCreateHooks = true, entityManager, postCreateContext, ...rest } = params
         const icon = this.createProjectIcon()
         const newProject: NewProject = {
             id: apId(),
@@ -37,7 +34,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
         }
         const savedProject = await projectRepo(entityManager).save(newProject)
         if (callPostCreateHooks) {
-            await this.callProjectPostCreateHooks(savedProject)
+            await this.callProjectPostCreateHooks(savedProject, postCreateContext)
         }
         return savedProject
     },
@@ -86,7 +83,8 @@ export const projectService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('externalId', externalId),
             ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
             ...spreadIfDefined('metadata', request.metadata),
-            ...spreadIfDefined('maxConcurrentJobs', request.maxConcurrentJobs),
+            ...(request.poolId !== undefined ? { poolId: request.poolId } : {}),
+            ...(request.maxConcurrentJobs !== undefined ? { maxConcurrentJobs: request.maxConcurrentJobs } : {}),
         }
 
         const teamUpdate = request.type === ProjectType.TEAM ? {
@@ -155,7 +153,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
 
     async getAllForUser(params: GetAllForUserParams): Promise<Project[]> {
         assertNotNullOrUndefined(params.platformId, 'platformId is undefined')
-        
+
         const queryBuilder = projectRepo()
             .createQueryBuilder('project')
             .where('project."platformId" = :platformId', { platformId: params.platformId })
@@ -174,7 +172,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
     },
     async userHasProjects(params: GetAllForUserParams): Promise<boolean> {
         assertNotNullOrUndefined(params.platformId, 'platformId is undefined')
-        
+
         const queryBuilder = projectRepo()
             .createQueryBuilder('project')
             .where('project."platformId" = :platformId', { platformId: params.platformId })
@@ -211,11 +209,8 @@ export const projectService = (log: FastifyBaseLogger) => ({
         }
         return icon
     },
-    callProjectPostCreateHooks: async (savedProject: Project)=>{
-        await projectHooks.get(log).postCreate(savedProject)
-        if (!isNil(savedProject.maxConcurrentJobs)) {
-            await distributedStore.put(getProjectMaxConcurrentJobsKey(savedProject.id), savedProject.maxConcurrentJobs)
-        }
+    callProjectPostCreateHooks: async (savedProject: Project, context?: ProjectPostCreateContext)=>{
+        await projectHooks.get(log).postCreate(savedProject, context)
     },
 })
 
@@ -280,7 +275,8 @@ type UpdateTeamProjectParams = {
     externalId?: string
     releasesEnabled?: boolean
     metadata?: Metadata
-    maxConcurrentJobs?: number
+    poolId?: string | null
+    maxConcurrentJobs?: number | null
     icon?: ProjectIcon
 }
 
@@ -289,7 +285,8 @@ type UpdatePersonalProjectParams = {
     externalId?: string
     releasesEnabled?: boolean
     metadata?: Metadata
-    maxConcurrentJobs?: number
+    poolId?: string | null
+    maxConcurrentJobs?: number | null
 }
 
 type UpdateParams = UpdateTeamProjectParams | UpdatePersonalProjectParams
@@ -303,6 +300,7 @@ type CreateParams = {
     metadata?: Metadata
     maxConcurrentJobs?: number
     callPostCreateHooks?: boolean
+    postCreateContext?: ProjectPostCreateContext
     entityManager?: EntityManager
 }
 
