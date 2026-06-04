@@ -72,6 +72,7 @@ Models listed per provider are cached in memory. Cache cleared daily at midnight
 - `GET /:provider/config` — get provider config + decrypted auth (engine-only access)
 - `GET /:provider/models` — list available models (cached)
 - `POST /` — create provider (validates credentials first)
+- `POST /usage` — report AI usage credits for a project (calculates credits based on tokens and increments `project_plan.aiCreditsUsed`)
 - `POST /:id` — update provider (re-validates if auth changed, cannot update ACTIVEPIECES)
 - `DELETE /:id` — delete provider (cannot delete ACTIVEPIECES)
 
