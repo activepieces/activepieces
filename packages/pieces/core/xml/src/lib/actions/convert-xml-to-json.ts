@@ -13,7 +13,7 @@ export const convertXmlToJson = createAction({
     }),
     ignoreAttributes: Property.Checkbox({
       displayName: 'Ignore Attributes',
-      description: 'Ignore XML tag attributes during parsing',
+      description: 'Ignore XML tag attributes during parsing. When unchecked, attributes are included in the output with a "@_" prefix (e.g. id="42" becomes {"@_id": "42"}).',
       required: false,
       defaultValue: false,
     }),
