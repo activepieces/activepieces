@@ -312,19 +312,7 @@ props: {
 }
 ```
 
-**Critical implementation rules for `DynamicProperties` source selectors:**
-- Always add an **explicit `Promise<DynamicPropsValue>` return type** to the `props` function — without it the UI will not re-render when the selector changes
-- Return **object literals per branch** (`return { ... }`) — do NOT build a mutable `fields` object and conditionally assign keys
-- Always end with a **fallback `return {}`** after all branches
-- Compare the selector value **directly** (`source === 's3'`) — no `as unknown as string` cast needed
-- Set a **`defaultValue`** on the source selector so the first branch renders on initial load
-
-In the `run` function, read dynamic prop values by key:
-```typescript
-const file = source === 'file' ? document['file'] : undefined;
-const s3Bucket = source === 's3' ? (document['s3Bucket'] as string) : undefined;
-const s3Key = source === 's3' ? (document['s3Key'] as string) : undefined;
-```
+This is the UX rationale — *when* and *why* to reach for a source selector. The implementation mechanics (the explicit `Promise<DynamicPropsValue>` return type, object-literal branches, fallback `return {}`, default value, and how to read the chosen branch in `run`) live in one place: see the **Dynamic Properties as Source Selector** section in `props-patterns.md`. Follow those rules there so the UI re-renders correctly when the selector changes.
 
 ---
 

@@ -68,13 +68,13 @@ async run(context) {
 }
 ```
 
-For custom API call actions with OAuth2:
+For custom API call actions with OAuth2 — `authMapping`'s `auth` is already typed from `auth: myAppAuth`, so read `auth.access_token` directly, no cast:
 ```typescript
 createCustomApiCallAction({
   baseUrl: () => 'https://api.example.com',
   auth: myAppAuth,
   authMapping: async (auth) => ({
-    Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+    Authorization: `Bearer ${auth.access_token}`,
   }),
 })
 ```
