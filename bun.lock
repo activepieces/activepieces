@@ -458,6 +458,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/add-event": {
+      "name": "@activepieces/piece-add-event",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/afforai": {
       "name": "@activepieces/piece-afforai",
       "version": "0.1.3",
@@ -6583,6 +6593,16 @@
         "zod": "4.3.6",
       },
     },
+    "packages/pieces/community/slashed": {
+      "name": "@activepieces/piece-slashed",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/slidespeak": {
       "name": "@activepieces/piece-slidespeak",
       "version": "0.1.4",
@@ -6996,7 +7016,7 @@
     },
     "packages/pieces/community/telegram-bot": {
       "name": "@activepieces/piece-telegram-bot",
-      "version": "0.5.7",
+      "version": "0.6.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -8827,6 +8847,8 @@
 
     "@activepieces/piece-acumbamail": ["@activepieces/piece-acumbamail@workspace:packages/pieces/community/acumbamail"],
 
+    "@activepieces/piece-add-event": ["@activepieces/piece-add-event@workspace:packages/pieces/community/add-event"],
+
     "@activepieces/piece-afforai": ["@activepieces/piece-afforai@workspace:packages/pieces/community/afforai"],
 
     "@activepieces/piece-agentx": ["@activepieces/piece-agentx@workspace:packages/pieces/community/agentx"],
@@ -9990,6 +10012,8 @@
     "@activepieces/piece-skyvern": ["@activepieces/piece-skyvern@workspace:packages/pieces/community/skyvern"],
 
     "@activepieces/piece-slack": ["@activepieces/piece-slack@workspace:packages/pieces/community/slack"],
+
+    "@activepieces/piece-slashed": ["@activepieces/piece-slashed@workspace:packages/pieces/community/slashed"],
 
     "@activepieces/piece-slidespeak": ["@activepieces/piece-slidespeak@workspace:packages/pieces/community/slidespeak"],
 
