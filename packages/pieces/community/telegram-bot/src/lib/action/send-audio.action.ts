@@ -17,6 +17,8 @@ export const telegramSendAudioAction = createAction({
   name: 'send_audio',
   displayName: 'Send Audio',
   description: 'Send an audio file to a Telegram chat (.MP3/.M4A — shown in the music player)',
+  audience: 'both',
+  aiMetadata: { description: 'Sends an audio file (.MP3/.M4A) to a Telegram chat where it appears in the music player, supplied as a file or a previously uploaded file_id, with optional performer and track title. Use for music or audio tracks; for raw file attachments use Send Document. Not idempotent: each call sends a new message.', idempotent: false },
   props: {
     instructions: telegramCommons.chatIdInstructions(),
     chat_id: telegramCommons.chatIdProp(),

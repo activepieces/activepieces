@@ -7,6 +7,8 @@ export const telegramSendMessageAction = createAction({
   auth: telegramBotAuth,
   name: 'send_text_message',
   description: 'Send a text message through a Telegram bot',
+  audience: 'both',
+  aiMetadata: { description: 'Posts a text message to a Telegram chat, group, or channel via the bot, addressed by chat_id (numeric id or @channelusername the bot can reach). Use to deliver notifications, replies, or alerts; supports Markdown/HTML formatting and inline keyboards. Not idempotent: each call sends a new message.', idempotent: false },
   displayName: 'Send Text Message',
   props: {
     instructions: telegramCommons.chatIdInstructions(),

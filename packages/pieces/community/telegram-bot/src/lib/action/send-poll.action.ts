@@ -8,6 +8,8 @@ export const telegramSendPollAction = createAction({
   name: 'send_poll',
   displayName: 'Send Poll',
   description: 'Send a native Telegram poll (regular or quiz) to a chat',
+  audience: 'both',
+  aiMetadata: { description: 'Posts a native Telegram poll (regular or quiz) to a chat with 2–10 answer options. Use to collect votes or run a quiz; quiz polls require a correct_option_id and cannot allow multiple answers, and open_period and close_date are mutually exclusive. Not idempotent: each call creates a new poll.', idempotent: false },
   props: {
     instructions: telegramCommons.chatIdInstructions(),
     chat_id: telegramCommons.chatIdProp(),

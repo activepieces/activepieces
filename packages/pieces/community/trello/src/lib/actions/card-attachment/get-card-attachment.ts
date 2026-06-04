@@ -12,6 +12,8 @@ export const getCardAttachment = createAction({
   name: 'get_card_attachment',
   displayName: 'Get Card Attachment',
   description: 'Gets a specific attachment on a card.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the details of one specific attachment on a Trello card, identified by both card_id and attachment_id. Use to inspect a single attachment when you already know its id (e.g. from Get All Card Attachments). Read-only and idempotent.', idempotent: true },
   props: {
     card_id: Property.ShortText({
       description: 'The ID of the card',
