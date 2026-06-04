@@ -82,6 +82,19 @@ A built-in relational database feature that lets users store structured data dir
 - `record.update()` — update cells (empty fields unchanged)
 - `record.delete()` / `record.deleteAll()` — bulk delete
 
+## Access Control
+
+All table / field / record routes use `securityAccess.project([...], <permission>, <resource>)`. The required permission per resource:
+
+- **Read** (`GET /v1/tables`, `GET /v1/tables/:id`, `GET /v1/fields`, `GET /v1/fields/:id`, `GET /v1/records`, `GET /v1/records/:id`): `READ_TABLE`
+- **Write** (`POST /v1/tables`, `POST /v1/tables/:id`, `DELETE /v1/tables/:id`, `POST /v1/fields`, `POST /v1/fields/:id`, `DELETE /v1/fields/:id`, `POST /v1/records`, `POST /v1/records/:id`, `DELETE /v1/records`): `WRITE_TABLE`
+
+Default project roles: `ADMIN` and `EDITOR` have both; `VIEWER` has only `READ_TABLE`. Custom roles inherit whatever permissions are configured.
+
+`ENGINE` and `SERVICE` principals skip the per-role permission check entirely — `ENGINE` is gated on `principal.projectId === projectId` and `SERVICE` on platform-equality only — so flow steps that call the records API and service API keys are unaffected by the role-permission model.
+
+When adding a new route (read or write) on tables / fields / records, the `permission` argument to `securityAccess.project(...)` is required; passing `undefined` short-circuits the rbac check to allow any project member.
+
 ## Side Effects
 
 After record create/update/delete, `recordSideEffects.handleRecordsEvent()`:

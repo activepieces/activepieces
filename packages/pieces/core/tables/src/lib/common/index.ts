@@ -287,6 +287,30 @@ export const tablesCommon = {
   }
 }
 
+export const csvUtils = {
+  buildCsv({ fields, rows, includeHeaders }: { fields: { name: string }[], rows: Record<string, string>[], includeHeaders: boolean }): string {
+    const columnNames = fields.map((f) => f.name);
+    const lines: string[] = [];
+
+    if (includeHeaders) {
+      lines.push(columnNames.map(this.escapeCsvCell).join(','));
+    }
+
+    for (const row of rows) {
+      lines.push(columnNames.map((name) => this.escapeCsvCell(row[name] ?? '')).join(','));
+    }
+
+    return lines.join('\n');
+  },
+
+  escapeCsvCell(value: string): string {
+    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+      return `"${value.replace(/"/g, '""')}"`;
+    }
+    return value;
+  },
+}
+
 const fetchAllTables = async (context: { server: { apiUrl: string, token: string }, project: { id: string } }): Promise<Table[]> => {
   const res = await httpClient.sendRequest({
     method: HttpMethod.GET,

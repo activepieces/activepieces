@@ -31,14 +31,14 @@ const TestStepCTAButton = () => {
     selectedStep,
     flowVersion,
     isStepBeingTested,
-    setTestPanelOpen,
+    setStepDataPanelOpen,
     run,
     saving,
   ] = useBuilderStateContext((state) => [
     state.selectedStep,
     state.flowVersion,
     state.isStepBeingTested,
-    state.setTestPanelOpen,
+    state.setStepDataPanelOpen,
     state.run,
     state.saving,
   ]);
@@ -55,7 +55,7 @@ const TestStepCTAButton = () => {
     currentStep.settings?.sampleData?.lastTestDate,
   );
   const stepIsRunning = isStepBeingTested(currentStep.name);
-  const onOpenPanel = () => setTestPanelOpen(true);
+  const onOpenPanel = () => setStepDataPanelOpen(true);
 
   if (isFlowAction(currentStep)) {
     return (

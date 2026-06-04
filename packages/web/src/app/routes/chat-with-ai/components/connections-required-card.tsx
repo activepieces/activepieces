@@ -19,11 +19,11 @@ import { normalizePieceName } from '../lib/message-parsers';
 
 export function ConnectionsRequiredCard({
   connections,
-  onSend,
+  onResolve,
   projectId: selectedProjectId,
 }: {
   connections: ConnectionRequiredData[];
-  onSend?: (text: string) => void;
+  onResolve?: (payload: Record<string, unknown>) => void;
   projectId?: string | null;
 }) {
   const queryClient = useQueryClient();
@@ -67,16 +67,10 @@ export function ConnectionsRequiredCard({
       if (cancelled) return;
       const map: Record<string, AppConnectionWithoutSensitiveData> = {};
       const alreadyActive = new Set<string>();
-      const aiErrorPieces = new Set(
-        connections.filter((c) => c.status === 'error').map((c) => c.piece),
-      );
       for (const { piece, connection } of results) {
         if (connection) {
           map[piece] = connection;
-          if (
-            connection.status === AppConnectionStatus.ACTIVE &&
-            !aiErrorPieces.has(piece)
-          ) {
+          if (connection.status === AppConnectionStatus.ACTIVE) {
             alreadyActive.add(piece);
           }
         }
@@ -132,13 +126,15 @@ export function ConnectionsRequiredCard({
                 {t('All connected')}
               </div>
             ) : (
-              onSend && (
+              onResolve && (
                 <Button
                   size="sm"
                   className="gap-1.5"
                   onClick={() => {
                     setContinued(true);
-                    onSend(t('All connections are ready, continue building.'));
+                    onResolve({
+                      message: 'All connections are ready, continue building.',
+                    });
                   }}
                 >
                   <Check className="h-3.5 w-3.5" />

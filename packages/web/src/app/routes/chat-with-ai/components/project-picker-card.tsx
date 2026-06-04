@@ -28,7 +28,7 @@ import { ProjectPickerData } from '../lib/message-parsers';
 
 export function ProjectPickerCard({
   picker,
-  onSelect,
+  onResolve,
   isInteractive = true,
   selectedProjectId,
 }: ProjectPickerCardProps) {
@@ -48,7 +48,7 @@ export function ProjectPickerCard({
 
   function handleSelect(projectId: string, name: string) {
     setSelected(projectId);
-    onSelect(projectId, name);
+    onResolve({ projectId, projectName: name });
   }
 
   if (selected || !isInteractive) {
@@ -194,7 +194,7 @@ export function ProjectPickerCard({
 
 type ProjectPickerCardProps = {
   picker: ProjectPickerData;
-  onSelect: (projectId: string, projectName: string) => void;
+  onResolve: (payload: Record<string, unknown>) => void;
   isInteractive?: boolean;
   selectedProjectId?: string | null;
 };

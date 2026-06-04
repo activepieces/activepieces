@@ -22,6 +22,7 @@ contactId: Property.ShortText({
 contactId: Property.Dropdown({
   displayName: 'Contact',
   description: 'Select the contact to update',
+  auth: myAppAuth,
   refreshers: [],
   required: true,
   options: async ({ auth }) => {

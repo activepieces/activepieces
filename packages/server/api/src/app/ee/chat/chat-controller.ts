@@ -1,6 +1,10 @@
 import {
+    ActivepiecesError,
+    AIProviderName,
     apId,
+    ChatConversationStatus,
     CreateChatConversationRequest,
+    ErrorCode,
     LATEST_JOB_DATA_SCHEMA_VERSION,
     PrincipalType,
     SendChatMessageRequest,
@@ -8,12 +12,16 @@ import {
     UpdateChatConversationRequest,
     WorkerJobType,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { aiProviderService } from '../../ai/ai-provider-service'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
+import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-credits.service'
 import { chatApprovalGate } from './chat-approval-gate'
+import { chatHelpers } from './chat-helpers'
 import { chatService } from './chat-service'
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
@@ -85,6 +93,8 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             userId,
         })
 
+        await assertAiCreditsNotExhausted({ platformId, log })
+
         await jobQueue(log).add({
             id: apId(),
             type: JobType.ONE_TIME,
@@ -108,10 +118,40 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         await chatApprovalGate.resolveGate({
             gateId: request.params.gateId,
             approved: request.body.approved,
+            payload: request.body.payload,
         })
         return reply.status(StatusCodes.OK).send({ success: true })
     })
 
+    app.post('/conversations/:id/cancel', CancelConversationRoute, async (request, reply) => {
+        const conversationId = request.params.id
+        const platformId = request.principal.platform.id
+        const userId = request.principal.id
+        await chatService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
+        await chatApprovalGate.requestCancel({ conversationId })
+        await chatHelpers.conversationRepo().update(conversationId, {
+            status: ChatConversationStatus.IDLE,
+        })
+        return reply.status(StatusCodes.OK).send({ success: true })
+    })
+
+}
+
+async function assertAiCreditsNotExhausted({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
+    const chatProvider = await aiProviderService(log).getChatProvider({ platformId })
+    if (!chatProvider || chatProvider.provider !== AIProviderName.ACTIVEPIECES) {
+        return
+    }
+    const usage = await platformAiCreditsService(log).getUsage(platformId)
+    if (usage.usageRemaining <= 0) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AI_CREDIT_LIMIT_EXCEEDED,
+            params: {
+                usage: usage.usage,
+                limit: usage.limit,
+            },
+        })
+    }
 }
 
 const CreateConversationRoute = {
@@ -206,7 +246,18 @@ const ToolApprovalRoute = {
         tags: ['chat'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: z.object({ gateId: z.string() }),
-        body: z.object({ approved: z.boolean() }),
+        body: z.object({ approved: z.boolean(), payload: z.record(z.string(), z.unknown()).optional() }),
+    },
+}
+
+const CancelConversationRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: CONVERSATION_PARAMS,
     },
 }
 

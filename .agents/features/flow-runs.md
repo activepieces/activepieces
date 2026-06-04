@@ -36,6 +36,7 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
 - **ResumeReason**: `WAITPOINT` | `RETRY`. Set on every `ExecutionType.RESUME` engine operation and threaded through `ExecuteFlowJobData`. Determines whether the engine restores FAILED steps from the journal — waitpoint resumes preserve them, retry resumes drop them so the failed step re-executes. The two resume paths share the same `ExecutionType`, so this field is the only discriminator.
 - **Subflow**: A child run linked via `parentRunId`, created when a flow calls another flow as a step.
 - **failedStep**: JSONB snapshot of `{ name, displayName, message? }` for the step that caused failure. Enables filtered retries, the runs-table error-message search, the failure email's "Reason" line, and the builder's jump-to-failed-step affordance. `message` is truncated via `truncateString` from `@activepieces/shared` before being persisted, and the engine populates `failedStep` for every status in `FAILED_STATES` (FAILED, TIMEOUT, INTERNAL_ERROR, QUOTA_EXCEEDED, MEMORY_LIMIT_EXCEEDED) — not just `FAILED`.
+- **FriendlyPieceError**: Structured error shape (`__apErrorVersion`, `message`, optional `status`, `errorName`, `requestBody`, `responseBody`, `apiMessage`, `raw`) produced by `formatPieceError` in the engine when a piece step throws (replacing the old `util.inspect` dump). The builder parses it with `tryParseFriendlyPieceError` and renders a `FriendlyErrorView` card — plain-language headline, the service's message, a "Copy Error for AI" button, and a "Technical Details" disclosure holding the `raw` dump — in both the test panel and the run-details output view.
 
 ## Entity
 
@@ -48,7 +49,7 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
 
 ## Endpoints
 
-- `GET /` — List runs (cursor pagination, filters: projectId, flowId, status, tags, createdAfter/Before, failedStepName, failedStepMessage). `failedStepMessage` is a case-insensitive `ILIKE '%…%'` against `failedStep->>'message'`. The status and failedStepMessage filters are independent — combining a non-failure status with a failedStepMessage simply returns empty (no implicit narrowing).
+- `GET /` — List runs (cursor pagination, filters: projectId, flowId, status, tags, createdAfter/Before, failedStepName, failedStepMessage). Paginates by a composite `(created DESC, id DESC)` cursor — `id` is the unique tiebreaker that keeps page boundaries stable when runs share a `created` timestamp (e.g. same-transaction inserts). `failedStepMessage` is a case-insensitive `ILIKE '%…%'` against `failedStep->>'message'`. The status and failedStepMessage filters are independent — combining a non-failure status with a failedStepMessage simply returns empty (no implicit narrowing).
 - `GET /:id` — Get single run with populated data
 - `POST /:id/retry` — Retry single run (strategy: FROM_FAILED_STEP or ON_LATEST_VERSION)
 - `POST /retry` — Bulk retry with filters
@@ -92,7 +93,7 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
 
 ## Frontend Integration
 
-`flowRunsApi.subscribeToTestFlowOrManualRun()` uses Socket.IO to start a test run and stream progress updates via `WebsocketClientEvent.UPDATE_RUN_PROGRESS`. The builder's run-list sidebar polls for recent runs and the run-details panel renders step-by-step input/output from the populated run's execution logs. `flowRunMutations.useRetryRun` handles the `FLOW_RUN_RETRY_OUTSIDE_RETENTION` error code with a user-facing toast showing the retention window.
+`flowRunsApi.subscribeToTestFlowOrManualRun()` uses Socket.IO to start a test run and stream progress updates via `WebsocketClientEvent.UPDATE_RUN_PROGRESS`. The builder's run-list sidebar polls for recent runs (infinite query, auto-refetching every 15s while runs are still executing) and deduplicates entries by `id` when flattening pages — a safeguard against page overlap during live refetch. The run-details panel renders step-by-step input/output from the populated run's execution logs. `flowRunMutations.useRetryRun` handles the `FLOW_RUN_RETRY_OUTSIDE_RETENTION` error code with a user-facing toast showing the retention window.
 
 ### Runs Table Filters
 

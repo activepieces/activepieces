@@ -2,6 +2,7 @@ import {
     ACTIVEPIECES_CHAT_TIERS,
     ActivepiecesError,
     AIProviderName,
+    ChatConversationStatus,
     DEFAULT_CHAT_TIER_ID,
     ErrorCode,
     GetProviderConfigResponse,
@@ -16,6 +17,8 @@ import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { ChatConversationEntity } from './chat-conversation-entity'
 
+const STREAMING_STALENESS_TIMEOUT_MS = 20 * 60 * 1_000
+
 const conversationRepo = repoFactory(ChatConversationEntity)
 
 async function getConversationOrThrow({ id, platformId, userId }: { id: string, platformId: string, userId: string }) {
@@ -25,6 +28,13 @@ async function getConversationOrThrow({ id, platformId, userId }: { id: string, 
             code: ErrorCode.ENTITY_NOT_FOUND,
             params: { entityId: id, entityType: 'ChatConversation' },
         })
+    }
+    if (conversation.status === ChatConversationStatus.STREAMING) {
+        const msSinceUpdate = Date.now() - new Date(conversation.updated).getTime()
+        if (msSinceUpdate > STREAMING_STALENESS_TIMEOUT_MS) {
+            await conversationRepo().update(id, { status: ChatConversationStatus.IDLE })
+            conversation.status = ChatConversationStatus.IDLE
+        }
     }
     return conversation
 }
