@@ -1,14 +1,14 @@
 ---
-title: "Using Formulas"
+title: "Data Manipulation"
 icon: 'function'
-description: "Transform and combine data inside any text input using formulas"
+description: "Transform and combine data inside any text input using data manipulation"
 ---
 
-## Why formulas
+## Why data manipulation
 
-[Passing data](./passing-data) lets you insert values from previous steps into the current step's inputs. Formulas let you **transform that data** before it gets used — combine two values into one, change the format, do a calculation, fall back to a default when something is empty, or branch on a condition.
+[Passing data](./passing-data) lets you insert values from previous steps into the current step's inputs. Data manipulation lets you **transform that data** before it gets used — combine two values into one, change the format, do a calculation, fall back to a default when something is empty, or branch on a condition.
 
-If a mention answers *"which value goes here?"*, a formula answers *"what should I do with that value first?"*.
+If a mention answers *"which value goes here?"*, a data manipulation function answers *"what should I do with that value first?"*.
 
 ## The slash trigger
 
@@ -22,18 +22,18 @@ Place your cursor in any text input and type `/`. A search popover appears with 
   src="/resources/using-formulas-slash-trigger.mp4"
 ></video>
 
-## Anatomy of a formula
+## Anatomy of a data manipulation function
 
-Once inserted, a formula looks like this in the input:
+Once inserted, a function looks like this in the input:
 
-<img width="450" src="/resources/using-formulas-anatomy.png" alt="A formula badge with function name, argument slots, and semicolon separators" />
+<img width="450" src="/resources/using-formulas-anatomy.png" alt="A function badge with function name, argument slots, and semicolon separators" />
 
 - The **function name** appears as a pill on the left.
 - Arguments are separated by **semicolons (`;`)**, not commas.
-- A matching pill closes the formula on the right.
-- A **preview panel** below the input shows the evaluated result while you edit. If the formula has a type problem (e.g. passing text where a number is expected), the panel shows the error.
+- A matching pill closes the function on the right.
+- A **preview panel** below the input shows the evaluated result while you edit. If the function has a type problem (e.g. passing text where a number is expected), the panel shows the error.
 
-You can mix plain text, mentions, and formulas in the same input. The formula's result replaces the badge when the flow runs.
+You can mix plain text, mentions, and functions in the same input. The function's result replaces the badge when the flow runs.
 
 ## Quoting text values
 
@@ -92,7 +92,7 @@ The first argument is the condition. The second is what to return when it's true
 
 ### Strip whitespace and check length
 
-`length(trim(user_input))` → tells you how many characters there are after the leading and trailing spaces are removed. Nest formulas freely — the inner one runs first.
+`length(trim(user_input))` → tells you how many characters there are after the leading and trailing spaces are removed. Nest functions freely — the inner one runs first.
 
 ### Extract an email from a longer string
 
@@ -118,17 +118,17 @@ The second argument is how many decimal places to keep.
 
 ## Advanced tips
 
-### Nesting formulas
+### Nesting functions
 
-Any formula can take another formula as one of its arguments. Read them inside-out: `uppercase(trim(customer_name))` first trims, then uppercases. The hover popover on each badge shows what type each argument expects.
+Any function can take another function as one of its arguments. Read them inside-out: `uppercase(trim(customer_name))` first trims, then uppercases. The hover popover on each badge shows what type each argument expects.
 
-### Mixing static text with formulas
+### Mixing static text with functions
 
-You can drop formulas anywhere inside a regular text input. Type some text, insert a formula, type more text. The output is a single string with the formula's result substituted in.
+You can drop functions anywhere inside a regular text input. Type some text, insert a function, type more text. The output is a single string with the function's result substituted in.
 
-### Mixing mentions and formulas
+### Mixing mentions and functions
 
-Mentions like `{{step.field}}` work as formula arguments. Drop a mention into any argument slot and the formula uses the resolved value at runtime.
+Mentions like `{{step.field}}` work as function arguments. Drop a mention into any argument slot and the function uses the resolved value at runtime.
 
 ### When the preview shows an error
 
@@ -138,9 +138,9 @@ If you see a red error message under the input, it usually means one of:
 - **Type mismatch** — you passed text where a number is expected, or similar. Wrap the value in `to_number(...)` or `to_date(...)` if it needs converting.
 - **Unknown function** — the function name was renamed or removed. Re-insert it with `/` to pick a current name.
 
-The flow won't run a step whose formula is in error — fix it before publishing.
+The flow won't run a step whose function is in error — fix it before publishing.
 
 ## See also
 
-- [Formula Function Reference](./formula-reference) — every available function, grouped by category, with signature and example
+- [Data Manipulation Functions](./formula-reference) — every available function, grouped by category, with signature and example
 - [Passing Data](./passing-data) — using mentions to insert values from previous steps

@@ -1053,6 +1053,9 @@
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"
       ],
+      "@activepieces/piece-readwise": [
+        "packages/pieces/community/readwise/src/index.ts"
+      ],
       "@activepieces/piece-reddit": [
         "packages/pieces/community/reddit/src/index.ts"
       ],
@@ -1195,6 +1198,9 @@
       ],
       "@activepieces/piece-slidespeak": [
         "packages/pieces/community/slidespeak/src/index.ts"
+      ],
+      "@activepieces/piece-slite": [
+        "packages/pieces/community/slite/src/index.ts"
       ],
       "@activepieces/piece-smaily": [
         "packages/pieces/community/smaily/src/index.ts"

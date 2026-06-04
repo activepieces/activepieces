@@ -51,7 +51,8 @@ type ApMentionNodeAttrs = {
   serverValue: string;
   isVariable?: boolean;
 };
-const flattenNestedKeysRegex = /^flattenNestedKeys\((\w+),\s*\[(.*?)\]\)$/;
+const flattenNestedKeysRegex =
+  /^flattenNestedKeys\((\w+)(?:\['output'\])?,\s*\[(.*?)\]\)$/;
 enum TipTapNodeTypes {
   paragraph = 'paragraph',
   text = 'text',
@@ -85,6 +86,11 @@ function tokenizeExpression(expr: string, allowBroken: boolean): ExprToken[] {
         i = end + 2;
         continue;
       }
+      // Unclosed "{{": emit it as literal text and advance so the tokenizer
+      // doesn't spin forever while the user is still typing the closing braces.
+      tokens.push({ kind: 'text', value: '{{' });
+      i += 2;
+      continue;
     }
 
     if (expr[i] === '\n') {
@@ -315,13 +321,26 @@ function parseLabelFromMention(
     };
   }
   const stepMetadata = stepsMetadata[stepIdx];
+  const friendlyPath = collapseEngineReservedPath(path);
   return {
     displayText: `${stepIdx + 1}. ${
       stepMetadata?.stepDisplayName ?? ''
-    } ${path.join(' ')}`,
+    } ${friendlyPath.join(' ')}`,
     serverValue: mention,
     logoUrl: stepMetadata?.logoUrl,
   };
+}
+
+function collapseEngineReservedPath(path: string[]): string[] {
+  // Engine error channel: {{step.error.message}} → display as "Error message"
+  if (path.length === 2 && path[0] === 'error' && path[1] === 'message') {
+    return ['Error message'];
+  }
+  // Engine output channel: {{step.output.foo}} → hide the leading 'output'
+  if (path[0] === 'output') {
+    return path.slice(1);
+  }
+  return path;
 }
 
 function createMentionNodeFromText(

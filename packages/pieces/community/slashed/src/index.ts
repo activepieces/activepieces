@@ -17,7 +17,7 @@ export const slashedAuth = PieceAuth.SecretText({
 });
 
 export const slashed = createPiece({
-  displayName: 'Slashed',
+  displayName: 'SlashedCloud',
   description: 'AV1 video encoding and transcoding via slashed.cloud.',
   auth: slashedAuth,
   minimumSupportedRelease: '0.36.1',
