@@ -10,6 +10,7 @@ import {
     ActivepiecesError,
     ErrorCode,
     isNil,
+    AIProviderName,
 } from '@activepieces/shared'
 import { ModelMessage, streamText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -20,10 +21,8 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { mcpProjectSelection } from '../../mcp/mcp-project-selection'
 import { projectLimitsService } from '../projects/project-plan/project-plan.service'
-import { projectService } from '../../project/project-service'
 import { aiUtils } from '../../ai/ai-utils'
 import { flagService } from '../../flags/flag.service'
-import { userService } from '../../user/user-service'
 import { chatCompaction } from './chat-compaction'
 import { ChatConversationEntity } from './chat-conversation-entity'
 import { chatHelpers } from './chat-helpers'
@@ -39,7 +38,6 @@ import { buildSystemPromptWithCaching } from './prompt/build-system-prompt-with-
 import { buildProviderOptions } from './utils/build-provider-options'
 import { resolveCompactionState } from './chat-compaction-resolver'
 import { buildUserContentWithFiles } from './chat-file-utils'
-import { AIProviderName } from '@activepieces/shared'
 
 const MAX_STEPS = 10
 
