@@ -1,5 +1,5 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { createPiece, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { raindropAuth } from './lib/auth';
 import { createRaindropAction } from './lib/actions/create-raindrop';
@@ -17,7 +17,7 @@ export const raindrop = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/raindrop.png',
   categories: [PieceCategory.PRODUCTIVITY, PieceCategory.CONTENT_AND_FILES],
   auth: raindropAuth,
-  authors: [],
+  authors: ['bs1tn'],
   actions: [
     createRaindropAction,
     getRaindropAction,
@@ -28,7 +28,7 @@ export const raindrop = createPiece({
       baseUrl: () => 'https://api.raindrop.io/rest/v1',
       auth: raindropAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        Authorization: `Bearer ${auth.access_token}`,
       }),
     }),
   ],

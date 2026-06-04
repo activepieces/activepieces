@@ -1,5 +1,5 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { raindropAuth } from '../auth';
 import { raindropCommons } from '../common';
 
@@ -47,7 +47,7 @@ export const createRaindropAction = createAction({
   async run(context) {
     const { link, title, excerpt, note, collection_id, tags, important } =
       context.propsValue;
-    const accessToken = (context.auth as OAuth2PropertyValue).access_token;
+    const accessToken = context.auth.access_token;
 
     const body: Record<string, unknown> = {
       link,

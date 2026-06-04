@@ -1,5 +1,5 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import {Property } from '@activepieces/pieces-framework';
 import { raindropAuth } from '../auth';
 
 const BASE_URL = 'https://api.raindrop.io/rest/v1';
@@ -19,7 +19,7 @@ const collectionDropdown = Property.Dropdown({
         placeholder: 'Please connect your account first',
       };
     }
-    const accessToken = (auth as OAuth2PropertyValue).access_token;
+    const accessToken = auth.access_token;
     try {
       const [rootResp, childResp] = await Promise.all([
         httpClient.sendRequest<{ items: CollectionItem[] }>({

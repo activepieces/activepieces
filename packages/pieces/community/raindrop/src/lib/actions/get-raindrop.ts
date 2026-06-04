@@ -1,5 +1,5 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { raindropAuth } from '../auth';
 import { raindropCommons } from '../common';
 
@@ -18,7 +18,7 @@ export const getRaindropAction = createAction({
   },
   async run(context) {
     const { raindrop_id } = context.propsValue;
-    const accessToken = (context.auth as OAuth2PropertyValue).access_token;
+    const accessToken = context.auth.access_token;
 
     const response = await httpClient.sendRequest<{ item: RaindropApiResponse }>({
       method: HttpMethod.GET,

@@ -1,5 +1,5 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { raindropAuth } from '../auth';
 import { raindropCommons } from '../common';
 
@@ -25,7 +25,7 @@ export const findRaindropsAction = createAction({
   },
   async run(context) {
     const { collection_id, search, limit } = context.propsValue;
-    const accessToken = (context.auth as OAuth2PropertyValue).access_token;
+    const accessToken = context.auth.access_token;
 
     const collectionIdToUse = collection_id ?? 0;
     const perpage = Math.min(limit ?? 25, 50);
