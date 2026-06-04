@@ -36,7 +36,7 @@ function _deleteAction(
                 }
                 case FlowActionType.CODE:
                 case FlowActionType.PIECE: {
-                    const branches = parentStep.settings.errorHandlingOptions?.continueOnFailureBranches
+                    const branches = parentStep.continueOnFailureBranches
                     if (branches?.onSuccess?.name === name) {
                         branches.onSuccess = branches.onSuccess.nextAction
                     }

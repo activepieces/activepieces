@@ -7,8 +7,6 @@ import {
 import { expressionRewriter } from './expression-rewriter'
 import { Migration } from '.'
 
-const COF_BRANCHES_KEY = 'continueOnFailureBranches'
-
 function wrapStepReferencesInOutputProperty <T>(value: T, stepNames: string[]): T {
     if (typeof value === 'string') {
         return expressionRewriter.rewriteStepReferences({ input: value, stepNames }) as T
@@ -19,12 +17,6 @@ function wrapStepReferencesInOutputProperty <T>(value: T, stepNames: string[]): 
     if (!isNil(value) && typeof value === 'object') {
         const result: Record<string, unknown> = {}
         for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
-            // Skip continueOnFailureBranches: transferStep recurses into onSuccess/onFailure
-            // separately, so descending here would double-rewrite their string contents.
-            if (key === COF_BRANCHES_KEY) {
-                result[key] = child
-                continue
-            }
             result[key] = wrapStepReferencesInOutputProperty(child, stepNames)
         }
         return result as T

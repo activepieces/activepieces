@@ -47,14 +47,14 @@ function createAction(request: UpdateActionRequest, {
             action = {
                 ...baseProperties,
                 type: FlowActionType.PIECE,
-                settings: stripContinueOnFailureBranches(request.settings),
+                settings: request.settings,
             }
             break
         case FlowActionType.CODE:
             action = {
                 ...baseProperties,
                 type: FlowActionType.CODE,
-                settings: stripContinueOnFailureBranches(request.settings),
+                settings: request.settings,
             }
             break
     }
@@ -63,24 +63,6 @@ function createAction(request: UpdateActionRequest, {
     return {
         ...action,
         valid,
-    }
-}
-
-function stripContinueOnFailureBranches<S extends { errorHandlingOptions?: { continueOnFailureBranches?: { onSuccess?: FlowAction, onFailure?: FlowAction } } }>(settings: S): S {
-    const branches = settings.errorHandlingOptions?.continueOnFailureBranches
-    if (isNil(branches)) {
-        return settings
-    }
-    return {
-        ...settings,
-        errorHandlingOptions: {
-            ...settings.errorHandlingOptions,
-            continueOnFailureBranches: {
-                ...branches,
-                onSuccess: undefined,
-                onFailure: undefined,
-            },
-        },
     }
 }
 
@@ -138,8 +120,7 @@ function handleContinueOnFailureBranches(parentStep: Step, request: AddActionReq
             },
         })
     }
-    const errorHandlingOptions = parentStep.settings.errorHandlingOptions ?? {}
-    const branches = errorHandlingOptions.continueOnFailureBranches ?? {}
+    const branches = parentStep.continueOnFailureBranches ?? {}
     if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_ON_SUCCESS_BRANCH) {
         branches.onSuccess = createAction(request.action, {
             nextAction: branches.onSuccess,
@@ -150,13 +131,7 @@ function handleContinueOnFailureBranches(parentStep: Step, request: AddActionReq
             nextAction: branches.onFailure,
         })
     }
-    parentStep.settings = {
-        ...parentStep.settings,
-        errorHandlingOptions: {
-            ...errorHandlingOptions,
-            continueOnFailureBranches: branches,
-        },
-    }
+    parentStep.continueOnFailureBranches = branches
     return parentStep
 }
 

@@ -106,7 +106,7 @@ function transferStep<T extends Step>(
     }
 
     if (updatedStep.type === FlowActionType.CODE || updatedStep.type === FlowActionType.PIECE) {
-        const branches = updatedStep.settings.errorHandlingOptions?.continueOnFailureBranches
+        const branches = updatedStep.continueOnFailureBranches
         if (branches?.onSuccess) {
             const transferred = transferStep(branches.onSuccess, transferFunction)
             if (isStepAction(transferred)) {

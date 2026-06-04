@@ -491,9 +491,9 @@ function buildCofCodeAction({
             errorHandlingOptions: {
                 continueOnFailure: { value: true },
                 retryOnFailure: { value: false },
-                continueOnFailureBranches: { onSuccess, onFailure },
             },
         },
+        continueOnFailureBranches: { onSuccess, onFailure },
         nextAction,
     }
 }

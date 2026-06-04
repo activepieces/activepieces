@@ -9,6 +9,7 @@ import {
     FlowVersion,
     FlowVersionState,
     flowStructureUtil,
+    PieceAction,
     StepLocationRelativeToParent,
 } from '../../src'
 import { FlowAction as FlowActionSchema } from '../../src/lib/automation/flows/actions/action'
@@ -39,11 +40,48 @@ function buildCodeAction({
             errorHandlingOptions: {
                 continueOnFailure: { value: cof },
                 retryOnFailure: { value: false },
-                ...(cof && (onSuccess || onFailure)
-                    ? { continueOnFailureBranches: { onSuccess, onFailure } }
-                    : {}),
             },
         },
+        ...(cof && (onSuccess || onFailure)
+            ? { continueOnFailureBranches: { onSuccess, onFailure } }
+            : {}),
+        nextAction,
+    }
+}
+
+function buildPieceAction({
+    name,
+    cof = false,
+    onSuccess,
+    onFailure,
+    nextAction,
+}: {
+    name: string
+    cof?: boolean
+    onSuccess?: FlowAction
+    onFailure?: FlowAction
+    nextAction?: FlowAction
+}): PieceAction {
+    return {
+        name,
+        type: FlowActionType.PIECE,
+        valid: true,
+        displayName: name,
+        lastUpdatedDate: '2026-05-02T00:00:00.000Z',
+        settings: {
+            pieceName: '@activepieces/piece-store',
+            pieceVersion: '0.0.1',
+            actionName: 'get',
+            input: {},
+            propertySettings: {},
+            errorHandlingOptions: {
+                continueOnFailure: { value: cof },
+                retryOnFailure: { value: false },
+            },
+        },
+        ...(cof && (onSuccess || onFailure)
+            ? { continueOnFailureBranches: { onSuccess, onFailure } }
+            : {}),
         nextAction,
     }
 }
@@ -125,7 +163,7 @@ describe('Continue-on-Failure branches', () => {
             const after = flowOperations.apply(flow, op)
             const updatedHead = after.trigger.nextAction as CodeAction
             const branches =
-                updatedHead.settings.errorHandlingOptions?.continueOnFailureBranches
+                updatedHead.continueOnFailureBranches
             expect(branches?.onSuccess?.name).toBe('success_head')
             expect(branches?.onFailure).toBeUndefined()
         })
@@ -144,7 +182,7 @@ describe('Continue-on-Failure branches', () => {
             const after = flowOperations.apply(flow, op)
             const updatedHead = after.trigger.nextAction as CodeAction
             const branches =
-                updatedHead.settings.errorHandlingOptions?.continueOnFailureBranches
+                updatedHead.continueOnFailureBranches
             expect(branches?.onFailure?.name).toBe('failure_head')
         })
 
@@ -167,7 +205,7 @@ describe('Continue-on-Failure branches', () => {
             const after = flowOperations.apply(flow, op)
             const updatedHead = after.trigger.nextAction as CodeAction
             const onSuccess =
-                updatedHead.settings.errorHandlingOptions?.continueOnFailureBranches?.onSuccess
+                updatedHead.continueOnFailureBranches?.onSuccess
             expect(onSuccess?.name).toBe('new_head')
             expect(onSuccess?.nextAction?.name).toBe('existing_head')
         })
@@ -193,7 +231,7 @@ describe('Continue-on-Failure branches', () => {
             const placed = (after.trigger.nextAction as CodeAction).nextAction as CodeAction
             expect(placed.name).toBe('rich')
             const branches =
-                placed.settings.errorHandlingOptions?.continueOnFailureBranches
+                placed.continueOnFailureBranches
             expect(branches?.onSuccess).toBeUndefined()
             expect(branches?.onFailure).toBeUndefined()
             const allNames = flowStructureUtil.getAllSteps(after.trigger).map((s) => s.name)
@@ -220,7 +258,7 @@ describe('Continue-on-Failure branches', () => {
             const after = flowOperations.apply(flow, op)
             const updatedHead = after.trigger.nextAction as CodeAction
             const onSuccess =
-                updatedHead.settings.errorHandlingOptions?.continueOnFailureBranches?.onSuccess
+                updatedHead.continueOnFailureBranches?.onSuccess
             expect(onSuccess?.name).toBe('success_tail')
         })
 
@@ -262,7 +300,7 @@ describe('Continue-on-Failure branches', () => {
             const after = flowOperations.apply(flow, op)
             const updatedHead = after.trigger.nextAction as CodeAction
             const onSuccess =
-                updatedHead.settings.errorHandlingOptions?.continueOnFailureBranches?.onSuccess
+                updatedHead.continueOnFailureBranches?.onSuccess
             expect(onSuccess).toBeUndefined()
         })
     })
@@ -326,9 +364,144 @@ describe('Continue-on-Failure branches', () => {
             expect(allNames.filter((n) => n === 'failure_head')).toHaveLength(1)
             const movedCof = allSteps.find((s) => s.name === 'cof_step') as CodeAction
             const branches =
-                movedCof.settings.errorHandlingOptions?.continueOnFailureBranches
+                movedCof.continueOnFailureBranches
             expect(branches?.onSuccess?.name).toBe('success_head')
             expect(branches?.onSuccess?.nextAction?.name).toBe('success_tail')
+            expect(branches?.onFailure?.name).toBe('failure_head')
+        })
+    })
+
+    describe('UPDATE_ACTION', () => {
+        it('preserves CoF branches when updating a Code action (settings cannot carry them)', () => {
+            const head = buildCodeAction({
+                name: 'step_1',
+                cof: true,
+                onSuccess: buildCodeAction({
+                    name: 'success_head',
+                    nextAction: buildCodeAction({ name: 'success_tail' }),
+                }),
+                onFailure: buildCodeAction({ name: 'failure_head' }),
+            })
+            const flow = buildFlow(head)
+            const op: FlowOperationRequest = {
+                type: FlowOperationType.UPDATE_ACTION,
+                request: {
+                    type: FlowActionType.CODE,
+                    name: 'step_1',
+                    displayName: 'step_1 (renamed)',
+                    valid: true,
+                    settings: {
+                        sourceCode: { code: 'export const code = () => 2', packageJson: '{}' },
+                        input: { changed: true },
+                        errorHandlingOptions: {
+                            continueOnFailure: { value: true },
+                            retryOnFailure: { value: false },
+                        },
+                    },
+                },
+            }
+            const after = flowOperations.apply(flow, op)
+            const updatedHead = after.trigger.nextAction as CodeAction
+            expect(updatedHead.displayName).toBe('step_1 (renamed)')
+            const branches = updatedHead.continueOnFailureBranches
+            expect(branches?.onSuccess?.name).toBe('success_head')
+            expect(branches?.onSuccess?.nextAction?.name).toBe('success_tail')
+            expect(branches?.onFailure?.name).toBe('failure_head')
+        })
+
+        it('preserves CoF branches when updating a Piece action', () => {
+            const head = buildPieceAction({
+                name: 'step_1',
+                cof: true,
+                onSuccess: buildPieceAction({ name: 'success_head' }),
+                onFailure: buildPieceAction({ name: 'failure_head' }),
+            })
+            const flow = buildFlow(head)
+            const op: FlowOperationRequest = {
+                type: FlowOperationType.UPDATE_ACTION,
+                request: {
+                    type: FlowActionType.PIECE,
+                    name: 'step_1',
+                    displayName: 'step_1 (renamed)',
+                    valid: true,
+                    settings: {
+                        pieceName: '@activepieces/piece-store',
+                        pieceVersion: '0.0.1',
+                        actionName: 'put',
+                        input: { changed: true },
+                        propertySettings: {},
+                        errorHandlingOptions: {
+                            continueOnFailure: { value: true },
+                            retryOnFailure: { value: false },
+                        },
+                    },
+                },
+            }
+            const after = flowOperations.apply(flow, op)
+            const updatedHead = after.trigger.nextAction as PieceAction
+            const branches = updatedHead.continueOnFailureBranches
+            expect(branches?.onSuccess?.name).toBe('success_head')
+            expect(branches?.onFailure?.name).toBe('failure_head')
+        })
+
+        it('keeps branches undefined when updating a Code action that has none', () => {
+            const head = buildCodeAction({ name: 'step_1' })
+            const flow = buildFlow(head)
+            const op: FlowOperationRequest = {
+                type: FlowOperationType.UPDATE_ACTION,
+                request: {
+                    type: FlowActionType.CODE,
+                    name: 'step_1',
+                    displayName: 'step_1',
+                    valid: true,
+                    settings: {
+                        sourceCode: { code: '', packageJson: '{}' },
+                        input: {},
+                        errorHandlingOptions: {
+                            continueOnFailure: { value: false },
+                            retryOnFailure: { value: false },
+                        },
+                    },
+                },
+            }
+            const after = flowOperations.apply(flow, op)
+            const updatedHead = after.trigger.nextAction as CodeAction
+            expect(updatedHead.continueOnFailureBranches).toBeUndefined()
+        })
+
+        it('preserves CoF branches when changing a step from Code to Piece', () => {
+            const head = buildCodeAction({
+                name: 'step_1',
+                cof: true,
+                onSuccess: buildCodeAction({ name: 'success_head' }),
+                onFailure: buildCodeAction({ name: 'failure_head' }),
+            })
+            const flow = buildFlow(head)
+            const op: FlowOperationRequest = {
+                type: FlowOperationType.UPDATE_ACTION,
+                request: {
+                    type: FlowActionType.PIECE,
+                    name: 'step_1',
+                    displayName: 'step_1',
+                    valid: true,
+                    settings: {
+                        pieceName: '@activepieces/piece-store',
+                        pieceVersion: '0.0.1',
+                        actionName: 'get',
+                        input: {},
+                        propertySettings: {},
+                        errorHandlingOptions: {
+                            continueOnFailure: { value: true },
+                            retryOnFailure: { value: false },
+                        },
+                    },
+                },
+            }
+            const after = flowOperations.apply(flow, op)
+            const updatedHead = after.trigger.nextAction as PieceAction
+            expect(updatedHead.type).toBe(FlowActionType.PIECE)
+            const branches = updatedHead.continueOnFailureBranches
+            expect(branches?.onSuccess?.name).toBe('success_head')
             expect(branches?.onFailure?.name).toBe('failure_head')
         })
     })

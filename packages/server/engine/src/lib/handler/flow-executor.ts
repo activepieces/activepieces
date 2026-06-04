@@ -133,12 +133,11 @@ async function runContinueOnFailureBranchIfNeeded({ action, executionState, cons
     if (action.type !== FlowActionType.CODE && action.type !== FlowActionType.PIECE) {
         return executionState
     }
-    const errorHandlingOptions = action.settings.errorHandlingOptions
-    const cofEnabled = errorHandlingOptions?.continueOnFailure?.value
+    const cofEnabled = action.settings.errorHandlingOptions?.continueOnFailure?.value
     if (!cofEnabled) {
         return executionState
     }
-    const branches = errorHandlingOptions?.continueOnFailureBranches
+    const branches = action.continueOnFailureBranches
     if (isNil(branches?.onSuccess) && isNil(branches?.onFailure)) {
         return executionState
     }

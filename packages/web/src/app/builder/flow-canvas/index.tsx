@@ -274,8 +274,7 @@ const getChildrenKey = (step: Step) => {
     case FlowActionType.PIECE: {
       const cofEnabled =
         sharedFlowCanvasUtils.hasContinueOnFailureBranches(step);
-      const branches =
-        step.settings.errorHandlingOptions?.continueOnFailureBranches;
+      const branches = step.continueOnFailureBranches;
       const onSuccessKey = branches?.onSuccess
         ? flowStructureUtil
             .getAllSteps(branches.onSuccess)

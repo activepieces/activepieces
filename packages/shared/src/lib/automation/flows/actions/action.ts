@@ -37,7 +37,6 @@ export const ActionErrorHandlingOptions = z.object({
     continueOnFailure: z.object({
         value: z.boolean().optional(),
     }).optional(),
-    continueOnFailureBranches: z.lazy(() => ContinueOnFailureBranches).optional(),
     retryOnFailure: z.object({
         value: z.boolean().optional(),
     }).optional(),
@@ -45,7 +44,6 @@ export const ActionErrorHandlingOptions = z.object({
 
 export type ActionErrorHandlingOptions = {
     continueOnFailure?: { value?: boolean }
-    continueOnFailureBranches?: ContinueOnFailureBranches
     retryOnFailure?: { value?: boolean }
 } | undefined
 
@@ -293,9 +291,11 @@ export const FlowAction: z.ZodType<FlowAction> = z.lazy(() =>
     z.union([
         CodeActionSchema.extend({
             nextAction: FlowAction.optional(),
+            continueOnFailureBranches: ContinueOnFailureBranches.optional(),
         }),
         PieceActionSchema.extend({
             nextAction: FlowAction.optional(),
+            continueOnFailureBranches: ContinueOnFailureBranches.optional(),
         }),
         LoopOnItemsActionSchema.extend({
             nextAction: FlowAction.optional(),
@@ -339,8 +339,8 @@ type BaseActionProps = {
 }
 
 export type FlowAction =
-    | (BaseActionProps & { type: FlowActionType.CODE, settings: CodeActionSettings, nextAction?: FlowAction })
-    | (BaseActionProps & { type: FlowActionType.PIECE, settings: PieceActionSettings, nextAction?: FlowAction })
+    | (BaseActionProps & { type: FlowActionType.CODE, settings: CodeActionSettings, nextAction?: FlowAction, continueOnFailureBranches?: ContinueOnFailureBranches })
+    | (BaseActionProps & { type: FlowActionType.PIECE, settings: PieceActionSettings, nextAction?: FlowAction, continueOnFailureBranches?: ContinueOnFailureBranches })
     | (BaseActionProps & { type: FlowActionType.LOOP_ON_ITEMS, settings: LoopOnItemsActionSettings, nextAction?: FlowAction, firstLoopAction?: FlowAction })
     | (BaseActionProps & { type: FlowActionType.ROUTER, settings: RouterActionSettings, nextAction?: FlowAction, children: (FlowAction | null)[] })
 
@@ -362,12 +362,14 @@ export type PieceAction = BaseActionProps & {
     type: FlowActionType.PIECE
     settings: PieceActionSettings
     nextAction?: FlowAction
+    continueOnFailureBranches?: ContinueOnFailureBranches
 }
 
 export type CodeAction = BaseActionProps & {
     type: FlowActionType.CODE
     settings: CodeActionSettings
     nextAction?: FlowAction
+    continueOnFailureBranches?: ContinueOnFailureBranches
 }
 
 

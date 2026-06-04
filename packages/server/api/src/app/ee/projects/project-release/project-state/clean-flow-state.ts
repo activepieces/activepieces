@@ -1,4 +1,4 @@
-import { CodeActionSettings, FlowAction, FlowActionType, FlowState, FlowTrigger, FlowTriggerType, FlowVersion, isNil, PieceActionSettings } from '@activepieces/shared'
+import { ContinueOnFailureBranches, FlowAction, FlowActionType, FlowState, FlowTrigger, FlowTriggerType, FlowVersion, isNil } from '@activepieces/shared'
 
 function cleanFlowState(flowState: FlowState): FlowState {
     return {
@@ -68,9 +68,9 @@ function cleanAction(action: FlowAction): FlowAction {
 
     switch (action.type) {
         case FlowActionType.CODE:
-            return { ...commonProps, type: action.type, settings: cleanSettingsWithBranches(action.settings), nextAction }
+            return { ...commonProps, type: action.type, settings: action.settings, nextAction, continueOnFailureBranches: cleanBranches(action.continueOnFailureBranches) }
         case FlowActionType.PIECE:
-            return { ...commonProps, type: action.type, settings: cleanSettingsWithBranches(action.settings), nextAction }
+            return { ...commonProps, type: action.type, settings: action.settings, nextAction, continueOnFailureBranches: cleanBranches(action.continueOnFailureBranches) }
         case FlowActionType.LOOP_ON_ITEMS:
             return {
                 ...commonProps, type: action.type, settings: action.settings, nextAction,
@@ -84,20 +84,13 @@ function cleanAction(action: FlowAction): FlowAction {
     }
 }
 
-function cleanSettingsWithBranches<S extends CodeActionSettings | PieceActionSettings>(settings: S): S {
-    const branches = settings.errorHandlingOptions?.continueOnFailureBranches
+function cleanBranches(branches: ContinueOnFailureBranches | undefined): ContinueOnFailureBranches | undefined {
     if (isNil(branches) || (isNil(branches.onSuccess) && isNil(branches.onFailure))) {
-        return settings
+        return undefined
     }
     return {
-        ...settings,
-        errorHandlingOptions: {
-            ...settings.errorHandlingOptions,
-            continueOnFailureBranches: {
-                onSuccess: isNil(branches.onSuccess) ? undefined : cleanAction(branches.onSuccess),
-                onFailure: isNil(branches.onFailure) ? undefined : cleanAction(branches.onFailure),
-            },
-        },
+        onSuccess: isNil(branches.onSuccess) ? undefined : cleanAction(branches.onSuccess),
+        onFailure: isNil(branches.onFailure) ? undefined : cleanAction(branches.onFailure),
     }
 }
 

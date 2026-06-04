@@ -167,7 +167,7 @@ function buildFlowStructure(trigger: Step): { structure: StepInfo[], stepByName:
                 }
             }
             if (parent.type === FlowActionType.CODE || parent.type === FlowActionType.PIECE) {
-                const branches = parent.settings.errorHandlingOptions?.continueOnFailureBranches
+                const branches = parent.continueOnFailureBranches
                 if (branches?.onSuccess?.name === step.name) {
                     parentName = parent.name
                     relationship = 'on_success_branch'

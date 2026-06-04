@@ -409,7 +409,7 @@ const buildRouterChildGraph = (step: RouterAction) => {
 const buildContinueOnFailureBranchesGraph = (step: FlowAction): ApGraph => {
   const branches =
     step.type === FlowActionType.CODE || step.type === FlowActionType.PIECE
-      ? step.settings.errorHandlingOptions?.continueOnFailureBranches
+      ? step.continueOnFailureBranches
       : undefined;
   const branchOrder = [
     {

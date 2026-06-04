@@ -176,7 +176,7 @@ function hasContinueOnFailureBranches(step: Step | FlowAction): step is CodeActi
 }
 
 function getContinueOnFailureBranchPair(step: CodeAction | PieceAction): (FlowAction | undefined)[] {
-    const branches = step.settings.errorHandlingOptions?.continueOnFailureBranches
+    const branches = step.continueOnFailureBranches
     return [branches?.onSuccess, branches?.onFailure]
 }
 
