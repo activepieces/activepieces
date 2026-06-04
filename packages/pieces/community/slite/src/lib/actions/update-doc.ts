@@ -63,7 +63,7 @@ export const sliteUpdateDocAction = createAction({
         url,
         iconURL: icon_url,
         status: status_label
-          ? { label: status_label, colorHex: status_color }
+          ? { label: status_label, ...(status_color ? { colorHex: status_color } : {}) }
           : undefined,
       },
     });
