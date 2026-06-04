@@ -18,7 +18,7 @@ Formulas let users transform input values inside any text input in the flow buil
 - `extensions/function-slash-extension.ts` — ProseMirror plugin that watches for `/`, opens the search popover, inserts at the cursor.
 - `components/function-search-popover.tsx` — filter-as-you-type list backed by `AP_FUNCTIONS`.
 - `components/function-hover-popover.tsx` — per-badge tooltip with signature, description, example, deprecation marker.
-- `text-input-utils.ts` — tokenizer + serializer: TipTap doc ⇄ wrapped string. Recognizes `{{step.x}}` and `{{variables.x}}` mentions inside formula args.
+- `text-input-utils.ts` — tokenizer + serializer: TipTap doc ⇄ wrapped string. Recognizes `{{step.x}}` and `{{variables.x}}` mentions inside formula args. An unclosed `{{` (mid-typing state) is emitted as literal text so the tokenizer always makes forward progress.
 
 ### Engine wiring (`packages/server/engine/src/lib/variables/`)
 - `props-resolver.ts:105` — formula pre-pass. Before any other resolution, `resolveInputAsync` checks `formulaEvaluator.containsWrapper(input)`; if true it calls `preResolveFormulaVars` (lines 272–299) to dedup and resolve every `{{var}}` once, then `formulaEvaluator.evaluate({ expression, sampleData })`. **Unconditional** — runs regardless of the plan flag, so saved formulas keep evaluating even on platforms that have the editor flag off.
@@ -36,6 +36,9 @@ Formulas let users transform input values inside any text input in the flow buil
 - `function-evaluator.test.ts` — 161 tests, one+ per function plus pipeline cases (lazy if, var dedup, wrapper detection, embedded formulas in strings).
 - `type-checker.test.ts` — 13 tests for arg-count, type-mismatch, expression-arg skip.
 - `serializer-roundtrip.test.ts` — 22 tests for TipTap doc ⇄ wrapped-string round-trips.
+
+### Web-side (`packages/web/test/app/builder/piece-properties/text-input-with-mentions/`)
+- `text-input-utils.test.ts` — unclosed-`{{` resilience (previously caused an infinite loop / tab freeze), literal-text fallback rendering, and complete `{{...}}` mention-node creation via `convertTextToTipTapJsonContent`.
 
 ## Edition Availability
 - Community (CE): available when `platform.plan.dataManipulationEnabled` is true (defaults to `false` on `OPEN_SOURCE_PLAN`).
