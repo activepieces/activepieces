@@ -1,8 +1,8 @@
 {
-  "Read connections dynamically": "动态读取连接",
-  "Read Connection": "读取连接",
-  "Fetch connection by name": "通过名称获取连接",
+  "Read connections dynamically": "Read connections dynamically",
+  "Read Connection": "Read Connection",
+  "Fetch connection by name": "Fetch connection by name",
   "Markdown": "Markdown",
-  "Connection External ID": "连接外部ID",
-  "\n**Advanced Piece**\n<br>\nUse this piece if you are unsure which connection to use beforehand, such as when the connection external ID is sent through a webhook message.\n\n**Notes:**\n- You can retrieve the external ID from the connection settings page by hovering over the connection name.\n- Use this action to retrieve connection values by their external IDs from this project.\n- After testing the step, you can use the dynamic value in the piece by clicking (X) and referring to this step.\n": "\n**高级片段**\n<br>\n如果你在事先不确定要使用哪个连接，例如连接外部 ID 是通过 Webhook 消息发送过来时，请使用此片段。\n\n**注意：**\n- 你可以在连接设置页面中通过将鼠标悬停在连接名称上来获取外部 ID。\n- 使用此操作可根据该项目中的外部 ID 检索连接值。\n- 测试步骤后，你可以通过点击 (X) 并引用此步骤，在片段中使用动态值。\n"
+  "Connection External ID": "Connection External ID",
+  "\n**Advanced Piece**\n<br>\nUse this piece if you are unsure which connection to use beforehand, such as when the connection external ID is sent through a webhook message.\n\n**Notes:**\n- You can retrieve the external ID from the connection settings page by hovering over the connection name.\n- Use this action to retrieve connection values by their external IDs from this project.\n- After testing the step, you can use the dynamic value in the piece by clicking (X) and referring to this step.\n": "\n**Advanced Piece**\n<br>\nUse this piece if you are unsure which connection to use beforehand, such as when the connection external ID is sent through a webhook message.\n\n**Notes:**\n- You can retrieve the external ID from the connection settings page by hovering over the connection name.\n- Use this action to retrieve connection values by their external IDs from this project.\n- After testing the step, you can use the dynamic value in the piece by clicking (X) and referring to this step.\n"
 }
