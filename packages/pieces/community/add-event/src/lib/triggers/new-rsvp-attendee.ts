@@ -1,6 +1,5 @@
 import {
   DedupeStrategy,
-  HttpMethod,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
@@ -13,7 +12,7 @@ import {
 import { addEventAuth } from '../auth';
 import { addEventApi } from '../common/client';
 import { addEventProps } from '../common/props';
-import { AddEventPage } from '../common/types';
+import { AddEventRsvpAttendee } from '../common/types';
 
 const props = {
   event_id: addEventProps.eventId({ required: true }),
@@ -24,24 +23,20 @@ const polling: Polling<
   StaticPropsValue<typeof props>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue }) => {
+  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     if (!propsValue.event_id) {
       return [];
     }
-    const response = await addEventApi.call<AddEventPage>({
+    const rsvps = await addEventApi.getItemsSince<AddEventRsvpAttendee>({
       apiKey: auth.secret_text,
-      method: HttpMethod.GET,
       resourceUri: '/rsvps',
-      query: {
-        event_ids: [propsValue.event_id],
-        page_size: addEventApi.maxPageSize,
-        sort_by: 'created',
-        sort_order: 'desc',
-      },
+      select: (page) => page.rsvps ?? [],
+      getCreated: (rsvp) => rsvp.created,
+      sinceEpochMs: lastFetchEpochMS,
+      query: { event_ids: [propsValue.event_id] },
     });
-    const rsvps = response.rsvps ?? [];
     return rsvps.map((rsvp) => ({
-      epochMilliSeconds: new Date(rsvp.created.replace(' ', 'T')).getTime(),
+      epochMilliSeconds: addEventApi.toEpochMs(rsvp.created),
       data: rsvp,
     }));
   },

@@ -10,6 +10,7 @@ import { AddEventPage } from './types';
 
 const BASE_URL = 'https://api.addevent.com/calevent/v2';
 const MAX_PAGE_SIZE = 20;
+const MAX_POLL_PAGES = 100;
 
 async function apiCall<T extends HttpMessageBody>({
   apiKey,
@@ -76,6 +77,64 @@ async function getAllPages<T extends HttpMessageBody>({
   return results;
 }
 
+// Polling: neither /subscribers nor /rsvps supports a "created after" filter, and
+// the TIMEBASED cutoff jumps to the newest item each poll — so fetching a single
+// page would permanently skip anything beyond it during a burst. Page through
+// created-desc results until we cross the stored cutoff (MAX_POLL_PAGES is only a
+// runaway backstop; the timestamp is the real stop condition).
+async function getItemsSince<T extends HttpMessageBody>({
+  apiKey,
+  resourceUri,
+  select,
+  getCreated,
+  sinceEpochMs,
+  query,
+  maxPages = MAX_POLL_PAGES,
+}: {
+  apiKey: string;
+  resourceUri: string;
+  select: (page: AddEventPage) => T[];
+  getCreated: (item: T) => string;
+  sinceEpochMs: number;
+  query?: AddEventQuery;
+  maxPages?: number;
+}): Promise<T[]> {
+  const results: T[] = [];
+  let page = 1;
+  let totalPages = 1;
+  let reachedCutoff = false;
+
+  do {
+    const response = await apiCall<AddEventPage>({
+      apiKey,
+      method: HttpMethod.GET,
+      resourceUri,
+      query: {
+        ...query,
+        page,
+        page_size: MAX_PAGE_SIZE,
+        sort_by: 'created',
+        sort_order: 'desc',
+      },
+    });
+    for (const item of select(response)) {
+      if (toEpochMs(getCreated(item)) > sinceEpochMs) {
+        results.push(item);
+      } else {
+        reachedCutoff = true;
+      }
+    }
+    totalPages = response.pagination.total_pages;
+    page += 1;
+  } while (!reachedCutoff && page <= totalPages && page <= maxPages);
+
+  return results;
+}
+
+function toEpochMs(created: string): number {
+  return new Date(created.replace(' ', 'T')).getTime();
+}
+
 // AddEvent treats an omitted field as "no change" (or its default); an explicit
 // null or empty value would instead overwrite existing data or be rejected.
 // Blank optional inputs reach us as null (dropdowns), false (checkboxes — handled
@@ -107,6 +166,8 @@ export const addEventApi = {
   maxPageSize: MAX_PAGE_SIZE,
   call: apiCall,
   getAllPages,
+  getItemsSince,
+  toEpochMs,
 };
 
 export type AddEventQuery = Record<

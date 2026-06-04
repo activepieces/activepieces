@@ -1,6 +1,5 @@
 import {
   DedupeStrategy,
-  HttpMethod,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
@@ -13,7 +12,7 @@ import {
 import { addEventAuth } from '../auth';
 import { addEventApi } from '../common/client';
 import { addEventProps } from '../common/props';
-import { AddEventPage } from '../common/types';
+import { AddEventSubscriber } from '../common/types';
 
 const props = {
   calendar_id: addEventProps.calendarId({ required: false }),
@@ -24,25 +23,19 @@ const polling: Polling<
   StaticPropsValue<typeof props>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue }) => {
-    const response = await addEventApi.call<AddEventPage>({
+  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
+    const subscribers = await addEventApi.getItemsSince<AddEventSubscriber>({
       apiKey: auth.secret_text,
-      method: HttpMethod.GET,
       resourceUri: '/subscribers',
-      query: {
-        calendar_ids: propsValue.calendar_id
-          ? [propsValue.calendar_id]
-          : undefined,
-        page_size: addEventApi.maxPageSize,
-        sort_by: 'created',
-        sort_order: 'desc',
-      },
+      select: (page) => page.subscribers ?? [],
+      getCreated: (subscriber) => subscriber.created,
+      sinceEpochMs: lastFetchEpochMS,
+      query: propsValue.calendar_id
+        ? { calendar_ids: [propsValue.calendar_id] }
+        : undefined,
     });
-    const subscribers = response.subscribers ?? [];
     return subscribers.map((subscriber) => ({
-      epochMilliSeconds: new Date(
-        subscriber.created.replace(' ', 'T')
-      ).getTime(),
+      epochMilliSeconds: addEventApi.toEpochMs(subscriber.created),
       data: subscriber,
     }));
   },
