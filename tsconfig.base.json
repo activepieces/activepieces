@@ -1196,6 +1196,9 @@
       "@activepieces/piece-slidespeak": [
         "packages/pieces/community/slidespeak/src/index.ts"
       ],
+      "@activepieces/piece-slite": [
+        "packages/pieces/community/slite/src/index.ts"
+      ],
       "@activepieces/piece-smaily": [
         "packages/pieces/community/smaily/src/index.ts"
       ],
