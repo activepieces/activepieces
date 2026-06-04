@@ -5,7 +5,6 @@ import { streamToBuffer } from '../common/common';
 
 type Voice = 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer';
 type ResponseFormat = 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm';
-type Model = 'tts-1' | 'tts-1-hd';
 
 export const textToSpeech = createAction({
 	auth: openaiAuth,
@@ -39,11 +38,18 @@ export const textToSpeech = createAction({
 					const ttsModels = response.data
 						.filter((m) => m.id.startsWith('tts-') || /^gpt-.*-tts$/.test(m.id))
 						.sort((a, b) => b.created - a.created);
+					if (ttsModels.length === 0) {
+						return {
+							disabled: true,
+							options: [],
+							placeholder: 'No text-to-speech models available for this API key.',
+						};
+					}
 					return {
 						disabled: false,
 						options: ttsModels.map((m) => ({ label: m.id, value: m.id })),
 					};
-				} catch (error) {
+				} catch {
 					return {
 						disabled: true,
 						options: [],
@@ -105,7 +111,7 @@ export const textToSpeech = createAction({
 		const { voice, format, model, text, speed, fileName } = propsValue;
 		
 		const audio = await openai.audio.speech.create({
-			model: model as Model,
+			model: model,
 			input: text,
 			response_format: format as ResponseFormat,
 			voice: voice as Voice,
