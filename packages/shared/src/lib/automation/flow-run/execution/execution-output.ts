@@ -17,8 +17,23 @@ export const ExecutionState = z.object({
     tags: z.array(z.string()),
 })
 
+export enum RunInternalErrorSource {
+    ENGINE = 'ENGINE',
+    WORKER = 'WORKER',
+}
+
+export const RunInternalError = z.object({
+    source: z.enum(RunInternalErrorSource),
+    message: z.string(),
+    code: z.string().optional(),
+    occurredAt: z.string(),
+})
+
+export type RunInternalError = z.infer<typeof RunInternalError>
+
 export type ExecutioOutputFile = {
     executionState: ExecutionState
+    internalError?: RunInternalError
     version?: number
 }
 

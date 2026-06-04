@@ -4,6 +4,7 @@ module.exports = {
   input: ['src/**/*.{js,jsx,ts,tsx}'], // Where to find your React files
   defaultNamespace: 'translation', // Default namespace if not specified
   createOldCatalogs: false, // Don’t maintain the existing structure with old keys
+  defaultValue: (locale, namespace, key) => (locale === 'en' ? key : ''), // en is the Crowdin source: value must equal the key, other locales stay empty until translated
   lexers: {
     js: ['JavascriptLexer'],
     jsx: ['JavascriptLexer'],

@@ -3,7 +3,7 @@ import { ErrorCode } from '../../core/common/activepieces-error'
 import { BaseModelSchema, Nullable } from '../../core/common/base-model'
 import { ApId } from '../../core/common/id-generator'
 import { isNil, truncateString } from '../../core/common/utils/utils'
-import { ExecutionState } from './execution/execution-output'
+import { ExecutionState, RunInternalError } from './execution/execution-output'
 import { FlowRunStatus } from './execution/flow-execution'
 
 export const FAILED_STEP_MESSAGE_MAX_LENGTH = 700
@@ -75,6 +75,8 @@ export const FlowRun = z.object({
     stepNameToTest: z.string().optional(),
     archivedAt: Nullable(z.string()),
     stepsCount: z.number().optional(),
+    // Populated only for platform admins on INTERNAL_ERROR runs; stripped from the response otherwise.
+    internalError: RunInternalError.optional(),
 })
 
 export type FlowRun = z.infer<typeof FlowRun> & ExecutionState

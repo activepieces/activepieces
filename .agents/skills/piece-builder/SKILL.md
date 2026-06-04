@@ -139,6 +139,7 @@ Copy config files from an existing simple piece (e.g. `packages/pieces/core/qrco
 | HTTP client, shared helpers, pagination         | `common-patterns.md`  |
 | Every prop and dropdown **(mandatory for all)** | `ux-guidelines.md`    |
 | Every return value **(mandatory for all)**      | `output-quality.md`   |
+| Tagging an action/trigger for AI agents         | `ai-metadata.md`      |
 
 `ux-guidelines.md` and `output-quality.md` apply to **every** action and trigger -- read them before starting, not only when unsure.
 
@@ -291,6 +292,15 @@ Every action output must be directly mappable to Google Sheets, Excel, and Activ
 5. **Use human-readable key names** -- `company_name` not `cName`. These become column headers.
 
 Full patterns and examples: read `output-quality.md`
+
+## AI-Ready Metadata (Optional)
+
+Pieces are also called by AI agents through the MCP server. Two optional fields let an action or trigger declare how it appears to agents — both are additive and change nothing for human users:
+
+-   **`audience`** (actions only): `'human' | 'ai' | 'both'` — fence an action to one surface. Omit for "both" (the default).
+-   **`aiMetadata`** (actions and triggers): `{ description?, idempotent? }` — an agent-facing tool description and a safe-retry hint.
+
+Skip both unless you are deliberately tuning a piece for agents. Full guidance and examples: read `ai-metadata.md`
 
 ## Critical Reminders
 
