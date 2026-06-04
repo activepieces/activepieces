@@ -340,6 +340,29 @@ describe('migrateV21StepOutputNesting', () => {
             expect(code.settings.sourceCode.code).toBe(sourceCode)
         })
 
+        it('O15b. source code containing a {{...}} mention literal is left intact while input is rewritten', async () => {
+            const sourceCode = 'export const code = async () => "{{step_1.foo}}"'
+            const version = baseVersion({
+                ...triggerWithNoNext(),
+                nextAction: {
+                    type: FlowActionType.CODE,
+                    name: 'step_2',
+                    displayName: 'Code',
+                    skip: false,
+                    valid: true,
+                    lastUpdatedDate: new Date().toISOString(),
+                    settings: {
+                        sourceCode: { code: sourceCode, packageJson: '{}' },
+                        input: { email: '{{step_1.foo}}' },
+                    },
+                },
+            })
+            const result = await migrateV21StepOutputNesting.migrate(version)
+            const code = result.trigger.nextAction as never as { settings: { input: { email: string }, sourceCode: { code: string } } }
+            expect(code.settings.input.email).toBe('{{step_1[\'output\'].foo}}')
+            expect(code.settings.sourceCode.code).toBe(sourceCode)
+        })
+
         it('O16. multiple bracket-notation expressions in one input value — each rewritten', async () => {
             const version = baseVersion({
                 ...triggerWithNoNext(),

@@ -1,4 +1,5 @@
 import {
+    FlowActionType,
     flowStructureUtil,
     FlowVersion,
     isNil,
@@ -28,10 +29,16 @@ export const migrateV21StepOutputNesting: Migration = {
     targetSchemaVersion: '21',
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         const stepNames = flowStructureUtil.getAllSteps(flowVersion.trigger).map((step) => step.name)
-        const newFlowVersion = flowStructureUtil.transferFlow(flowVersion, (step: Step) => ({
-            ...step,
-            settings: wrapStepReferencesInOutputProperty(step.settings, stepNames),
-        }))
+        const newFlowVersion = flowStructureUtil.transferFlow(flowVersion, (step: Step) => {
+            const newStep = {
+                ...step,
+                settings: wrapStepReferencesInOutputProperty(step.settings, stepNames),
+            }
+            if (newStep.type === FlowActionType.CODE) {
+                newStep.settings.sourceCode = step.settings.sourceCode
+            }
+            return newStep
+        })
         return {
             ...newFlowVersion,
             schemaVersion: '22',
