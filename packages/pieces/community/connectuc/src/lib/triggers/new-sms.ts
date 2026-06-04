@@ -1,7 +1,7 @@
 import { createTrigger, TriggerStrategy, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { connectucAuth } from '../../index';
 import { registerConnectUCWebhook, unregisterConnectUCWebhook } from '../common/webhook-helpers';
-import { domainProp, usersProp, smsRecipientsProp } from '../common/props';
+import { domainProp, userProp, smsRecipientsProp } from '../common/props';
 
 export const newSms = createTrigger({
     auth: connectucAuth,
@@ -13,7 +13,7 @@ export const newSms = createTrigger({
     },
     props: {
         domain: domainProp(),
-        users: usersProp(),
+        users: userProp(),
         recipients: smsRecipientsProp(),
     },
     sampleData: {
