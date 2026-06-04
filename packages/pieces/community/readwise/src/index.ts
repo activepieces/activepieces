@@ -1,31 +1,33 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/shared';
+import { readwiseAuth } from './lib/common/auth';
+import { READWISE_BASE_URL } from './lib/common/client';
 import { getHighlights } from './lib/actions/get-highlights';
 import { createHighlight } from './lib/actions/create-highlight';
 import { newHighlight } from './lib/triggers/new-highlight';
 
-export const readwiseAuth = PieceAuth.SecretText({
-  displayName: 'Access Token',
-  description:
-    'Your Readwise access token. Get it at https://readwise.io/access_token',
-  required: true,
-  validate: async ({ auth }) => {
-    const response = await fetch('https://readwise.io/api/v2/auth/', {
-      headers: { Authorization: `Token ${auth}` },
-    });
-    if (response.status === 204) return { valid: true };
-    return { valid: false, error: 'Invalid Readwise access token.' };
-  },
-});
-
 export const readwise = createPiece({
   displayName: 'Readwise',
-  description: 'Save and retrieve your highlights from Readwise — your reading notes, all in one place.',
+  description:
+    'Save and retrieve your highlights from Readwise — your reading notes, all in one place.',
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/readwise.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: ['tosh2308'],
   auth: readwiseAuth,
-  actions: [getHighlights, createHighlight],
+  actions: [
+    getHighlights,
+    createHighlight,
+    createCustomApiCallAction({
+      baseUrl: () => READWISE_BASE_URL,
+      auth: readwiseAuth,
+      authMapping: async (auth) => ({
+        Authorization: `Token ${auth.secret_text}`,
+      }),
+    }),
+  ],
   triggers: [newHighlight],
 });
+
+export { readwiseAuth };

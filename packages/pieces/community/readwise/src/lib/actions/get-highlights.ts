@@ -1,51 +1,58 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { readwiseAuth } from '../../index';
+import { readwiseAuth } from '../common/auth';
 import {
   makeReadwiseRequest,
   ReadwisePaginatedResponse,
   ReadwiseHighlight,
 } from '../common/client';
+import { readwiseProps } from '../common/props';
 
 export const getHighlights = createAction({
   name: 'get_highlights',
   displayName: 'Get Highlights',
-  description: 'Retrieve your Readwise highlights, optionally filtered by book or date.',
+  description:
+    'Retrieve your Readwise highlights, optionally filtered by book or date.',
   auth: readwiseAuth,
   props: {
-    book_id: Property.ShortText({
-      displayName: 'Book ID (optional)',
-      description: 'Filter highlights by a specific book ID.',
-      required: false,
-    }),
+    book_id: readwiseProps.bookId({ required: false }),
     updated_after: Property.DateTime({
-      displayName: 'Updated After (optional)',
+      displayName: 'Updated After',
       description: 'Return only highlights updated after this date.',
       required: false,
     }),
     page_size: Property.Number({
       displayName: 'Page Size',
-      description: 'Number of highlights to return (max 1000).',
+      description: 'Number of highlights to return per page (max 1000).',
       required: false,
       defaultValue: 100,
+    }),
+    page: Property.Number({
+      displayName: 'Page',
+      description: 'Which page of results to return (starts at 1).',
+      required: false,
     }),
   },
   async run(context) {
     const token = context.auth.secret_text;
-    const queryParams: Record<string, string> = {
-      page_size: String(context.propsValue.page_size ?? 100),
+    const { book_id, updated_after, page_size, page } = context.propsValue;
+    const params: Record<string, string> = {
+      page_size: String(page_size ?? 100),
     };
-    if (context.propsValue.book_id) {
-      queryParams['book_id'] = context.propsValue.book_id;
+    if (book_id) {
+      params['book_id'] = book_id;
     }
-    if (context.propsValue.updated_after) {
-      queryParams['updated__gt'] = new Date(context.propsValue.updated_after).toISOString();
+    if (updated_after) {
+      params['updated__gt'] = new Date(updated_after).toISOString();
+    }
+    if (page) {
+      params['page'] = String(page);
     }
     return makeReadwiseRequest<ReadwisePaginatedResponse<ReadwiseHighlight>>({
       token,
       method: HttpMethod.GET,
       endpoint: '/highlights/',
-      params: queryParams,
+      params,
     });
   },
 });

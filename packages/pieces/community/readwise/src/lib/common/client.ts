@@ -42,14 +42,48 @@ export interface ReadwiseHighlight {
   color: string;
   highlighted_at: string | null;
   created_at: string;
-  updated_at: string;
+  updated: string;
   external_id: string | null;
   end_location: number | null;
   url: string | null;
   book_id: number;
   tags: { id: number; name: string }[];
-  is_favorite: boolean;
-  is_discard: boolean;
+  readwise_url: string;
+}
+
+export interface ReadwiseBook {
+  id: number;
+  title: string;
+  author: string;
+  category: string;
+  source: string;
+  num_highlights: number;
+  last_highlight_at: string | null;
+  updated: string;
+  cover_image_url: string;
+  highlights_url: string;
+  source_url: string | null;
+  asin: string | null;
+  tags: { id: number; name: string }[];
+  document_note: string;
+}
+
+export interface ReadwiseCreatedSource {
+  id: number;
+  title: string;
+  author: string;
+  category: string;
+  source: string;
+  num_highlights: number;
+  last_highlight_at: string | null;
+  updated: string;
+  cover_image_url: string;
+  highlights_url: string;
+  source_url: string | null;
+  asin: string | null;
+  tags: { id: number; name: string }[];
+  document_note: string;
+  modified_highlights: number[];
 }
 
 export interface ReadwisePaginatedResponse<T> {
