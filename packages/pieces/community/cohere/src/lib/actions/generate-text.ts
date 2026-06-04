@@ -99,9 +99,10 @@ export const generateText = createAction({
             },
           });
 
-          const options = response.body.models
-            .filter((model) => model.endpoints.includes('chat'))
-            .map((model) => ({ label: model.name, value: model.name }));
+          const options = response.body.models.map((model) => ({
+            label: model.name,
+            value: model.name,
+          }));
 
           return { disabled: false, options };
         } catch {
