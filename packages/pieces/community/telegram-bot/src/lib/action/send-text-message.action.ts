@@ -3,76 +3,32 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
 
-const chatId = `
-
-**How to obtain Chat ID:**
-1. Search for the bot "@getmyid_bot" in Telegram.
-2. Start a conversation with the bot.
-3. Send the command "/my_id" to the bot.
-4. The bot will reply with your chat ID.
-
-**Note: Remember to initiate the chat with the bot, or you'll get an error for "chat not found.**
-`;
-const format = `
-[Link example](https://core.telegram.org/bots/api#formatting-options)
-`;
 export const telegramSendMessageAction = createAction({
   auth: telegramBotAuth,
   name: 'send_text_message',
-  description: 'Send a message through a Telegram bot',
+  description: 'Send a text message through a Telegram bot',
   displayName: 'Send Text Message',
   props: {
-    instructions: Property.MarkDown({
-      value: chatId,
-    }),
-    chat_id: Property.ShortText({
-      displayName: 'Chat Id',
-      required: true,
-    }),
-    message_thread_id: Property.ShortText({
-      displayName: 'Message Thread Id',
-      description:
-        'Unique identifier for the target message thread of the forums; for forums supergroups only',
-      required: false,
-    }),
-    format: Property.StaticDropdown({
-      displayName: 'Format',
-      description: 'Choose format you want ',
-      required: false,
-      options: {
-        options: [
-          {
-            label: 'Markdown',
-            value: 'MarkdownV2',
-          },
-          {
-            label: 'HTML',
-            value: 'HTML',
-          },
-        ],
-      },
-      defaultValue: 'MarkdownV2',
-    }),
-    instructions_format: Property.MarkDown({
-      value: format,
-    }),
+    instructions: telegramCommons.chatIdInstructions(),
+    chat_id: telegramCommons.chatIdProp(),
+    message_thread_id: telegramCommons.messageThreadIdProp(),
+    format: telegramCommons.parseModeProp(),
+    instructions_format: telegramCommons.formatLinkInstructions(),
     web_page_preview: Property.Checkbox({
       displayName: 'Disable Web Page Preview',
-      description: 'Disable link previews for links in this message',
+      description: 'Disable link previews for links in this message.',
       required: false,
       defaultValue: false,
     }),
+    disable_notification: telegramCommons.disableNotificationProp(),
+    protect_content: telegramCommons.protectContentProp(),
+    reply_to_message_id: telegramCommons.replyToMessageIdProp(),
     message: Property.LongText({
       displayName: 'Message',
       description: 'The message to be sent',
       required: true,
     }),
-    reply_markup: Property.Json({
-      required: false,
-      displayName: 'Reply Markup',
-      description:
-        'Additional interface options. A JSON-serialized object for an inline keyboard, custom reply keyboard, instructions to remove reply keyboard or to force a reply from the user. Use special actions such as Build Inline Keyboard to generate this JSON object.',
-    }),
+    reply_markup: telegramCommons.replyMarkupProp(),
   },
   async run(ctx) {
     return await httpClient.sendRequest<never>({
@@ -82,9 +38,12 @@ export const telegramSendMessageAction = createAction({
         chat_id: ctx.propsValue['chat_id'],
         text: ctx.propsValue['message'],
         message_thread_id: ctx.propsValue['message_thread_id'] ?? undefined,
-        parse_mode: ctx.propsValue['format'] ?? 'MarkdownV2',
+        parse_mode: telegramCommons.resolveParseMode(ctx.propsValue['format']),
         reply_markup: ctx.propsValue['reply_markup'] ?? undefined,
         disable_web_page_preview: ctx.propsValue['web_page_preview'] ?? false,
+        disable_notification: ctx.propsValue['disable_notification'] ?? false,
+        protect_content: ctx.propsValue['protect_content'] ?? false,
+        reply_to_message_id: ctx.propsValue['reply_to_message_id'] ?? undefined,
       },
     });
   },

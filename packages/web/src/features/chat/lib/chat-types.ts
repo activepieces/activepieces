@@ -241,8 +241,8 @@ export const chatPartUtils = {
 
 export type ThinkingStep =
   | { kind: 'reasoning'; text: string }
-  | { kind: 'thinking-status'; text: string; toolPart?: AnyToolPart }
-  | { kind: 'tool'; part: AnyToolPart };
+  | { kind: 'thinking-status'; text: string }
+  | { kind: 'tool'; part: AnyToolPart; description: string | null };
 
 export type ToolStatus = 'running' | 'completed' | 'failed' | 'stopped';
 

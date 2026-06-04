@@ -1,4 +1,5 @@
 import { PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary, PiecePackageInformation, pieceTranslation } from '@activepieces/pieces-framework'
+import { apVersionUtil } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
     apId,
@@ -24,7 +25,6 @@ import semVer from 'semver'
 import { EntityManager, In, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
-import { apVersionUtil } from '../../helper/system/system-props'
 import { pieceTagService } from '../tags/pieces/piece-tag.service'
 import { pieceCache, PieceRegistryEntry } from './piece-cache'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
@@ -291,7 +291,7 @@ const findExactVersion = async (
 ): Promise<{ name: string, version: string, platformId: string | undefined } | undefined> => {
     const { name, version, platformId } = params
     const versionToSearch = findNextExcludedVersion(version)
-    const currentRelease = await apVersionUtil.getCurrentRelease()
+    const currentRelease = apVersionUtil.getCurrentRelease()
     const registry = filterRegistry(await loadRegistry(log), { release: currentRelease, platformId })
     const matchingRegistryEntries = registry.filter((entry) => {
         if (entry.name !== name) {
@@ -365,7 +365,7 @@ const increaseMajorVersion = (version: string): string => {
 }
 
 async function fetchLatestPieces({ platformId, locale = LocalesEnum.ENGLISH, log }: FetchLatestPiecesParams): Promise<PieceMetadataSchema[]> {
-    const currentRelease = await apVersionUtil.getCurrentRelease()
+    const currentRelease = apVersionUtil.getCurrentRelease()
 
     const latestPieces = await dedupe(`latest-pieces:${currentRelease}`, () => fetchLatestCompatiblePiecesFromDB(currentRelease))
     const translatedPieces = translatePieces(latestPieces, locale)

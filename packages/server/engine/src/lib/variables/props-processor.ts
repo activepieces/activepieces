@@ -1,6 +1,5 @@
 import { getAuthPropertyForValue, InputPropertyMap, PieceAuthProperty, PieceProperty, PiecePropertyMap, PropertyType, StaticPropsValue } from '@activepieces/pieces-framework'
 import { AppConnectionValue, AUTHENTICATION_PROPERTY_NAME, isNil, isObject, PropertySettings } from '@activepieces/shared'
-import { z } from 'zod'
 import { processors } from './processors'
 import { arrayZipperProcessor } from './processors/array-zipper'
 
@@ -108,84 +107,44 @@ export const propsProcessor = {
 }
 
 const validateProperty = (property: PieceProperty, value: unknown, originalValue: unknown): string[] => {
-    let schema
+    if (property.type === PropertyType.JSON) {
+        if (!property.required && originalValue === '') {
+            return []
+        }
+        if (!isNil(originalValue) && isNil(value)) {
+            return [`Expected JSON, received: ${originalValue}`]
+        }
+        if (!property.required && isNil(value)) {
+            return []
+        }
+        if (!isObject(value) && !Array.isArray(value)) {
+            return [`Expected JSON, received: ${originalValue}`]
+        }
+        return []
+    }
+
+    if (!property.required && isNil(value)) {
+        return []
+    }
+
     switch (property.type) {
         case PropertyType.SHORT_TEXT:
         case PropertyType.LONG_TEXT:
-            schema = z.string({
-                error: `Expected string, received: ${originalValue}`,
-            })
-            break
+            return typeof value === 'string' ? [] : [`Expected string, received: ${originalValue}`]
         case PropertyType.NUMBER:
-            schema = z.number({
-                error: `Expected number, received: ${originalValue}`,
-            })
-            break
+            return typeof value === 'number' && !Number.isNaN(value) ? [] : [`Expected number, received: ${originalValue}`]
         case PropertyType.CHECKBOX:
-            schema = z.boolean({
-                error: `Expected boolean, received: ${originalValue}`,
-            })
-            break
+            return typeof value === 'boolean' ? [] : [`Expected boolean, received: ${originalValue}`]
         case PropertyType.DATE_TIME:
-            schema = z.string({
-                error: `Invalid datetime format. Expected ISO format (e.g. 2024-03-14T12:00:00.000Z), received: ${originalValue}`,
-            })
-            break
+            return typeof value === 'string' ? [] : [`Invalid datetime format. Expected ISO format (e.g. 2024-03-14T12:00:00.000Z), received: ${originalValue}`]
         case PropertyType.ARRAY:
-            schema = z.array(z.any(), {
-                error: `Expected array, received: ${originalValue}`,
-            })
-            break
+            return Array.isArray(value) ? [] : [`Expected array, received: ${originalValue}`]
         case PropertyType.OBJECT:
-            schema = z.record(z.any(), z.any(), {
-                error: `Expected object, received: ${originalValue}`,
-            })
-            break
-        case PropertyType.JSON: {
-            if (!property.required && originalValue === '') {
-                return []
-            }
-            const originalValueProvidedAndFailed = !isNil(originalValue) && isNil(value)
-            if (originalValueProvidedAndFailed) {
-                return [`Expected JSON, received: ${originalValue}`]
-            }
-            schema = z.any().refine(
-                (val) => isObject(val) || Array.isArray(val),
-                {
-                    message: `Expected JSON, received: ${originalValue}`,
-                },
-            )
-            break
-        }
-        case PropertyType.FILE: {
-            schema = z.any().refine(
-                (val) => isObject(val),
-                {
-                    message: `Expected file url or base64 with mimeType, received: ${originalValue}`,
-                },
-            )
-            break
-        }
+            return isObject(value) ? [] : [`Expected object, received: ${originalValue}`]
+        case PropertyType.FILE:
+            return isObject(value) ? [] : [`Expected file url or base64 with mimeType, received: ${originalValue}`]
         default:
-            schema = z.any()
-    }
-    let finalSchema
-    if (property.required) {
-        finalSchema = schema
-    }
-    else {
-        finalSchema = schema.nullable().optional()
-    }
-
-    try {
-        finalSchema.parse(value)
-        return []
-    }
-    catch (err) {
-        if (err instanceof z.ZodError) {
-            return err.issues.map(e => e.message)
-        }
-        return []
+            return []
     }
 }
 

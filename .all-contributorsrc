@@ -1768,7 +1768,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/187646079?v=4",
       "profile": "https://github.com/rimjhimyadav",
       "contributions": [
-        "plugin"
+        "plugin",
+        "code"
       ]
     },
     {
@@ -2190,6 +2191,15 @@
       "name": "Pradeep kumar",
       "avatar_url": "https://avatars.githubusercontent.com/u/114051448?v=4",
       "profile": "https://github.com/exvillager",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Khizarshah01",
+      "name": "khizar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/109973520?v=4",
+      "profile": "http://khizar.tech",
       "contributions": [
         "code"
       ]
