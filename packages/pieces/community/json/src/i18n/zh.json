@@ -1,15 +1,15 @@
 {
-  "Convert JSON to text and vice versa": "将 JSON 转换为文本，反之亦然。",
-  "Convert Json to Text": "转换 Json 为文本",
-  "Convert Text to Json": "将文本转换为 Json",
-  "Run JSONata Query": "运行 JSONata 查询",
-  "Stringifies JSON.": "字符串化JSON。",
-  "Parses text into JSON.": "解析文本到 JSON",
-  "Use the JSONata language to filter, map, and transform complex JSON payloads natively in JavaScript.": "使用 JSONata 语言筛选、地图和在 JavaScript 中本地转换复杂的 JSON 有效载荷。",
+  "Convert JSON to text and vice versa": "Convert JSON to text and vice versa",
+  "Convert Json to Text": "Convert Json to Text",
+  "Convert Text to Json": "Convert Text to Json",
+  "Run JSONata Query": "Run JSONata Query",
+  "Stringifies JSON.": "Stringifies JSON.",
+  "Parses text into JSON.": "Parses text into JSON.",
+  "Use the JSONata language to filter, map, and transform complex JSON payloads natively in JavaScript.": "Use the JSONata language to filter, map, and transform complex JSON payloads natively in JavaScript.",
   "JSON": "JSON",
   "Text": "文本",
-  "JSON Data": "JSON 数据",
-  "JSONata Query": "JSONata 查询",
-  "Map the array or object you want to manipulate.": "映射你想要操作的数组或对象。",
-  "Write a JSONata expression to manipulate your data. You can filter arrays, extract specific fields, group items, or reshape the JSON. (e.g., $[status=\"active\"])": "写一个 JSONata 表达式来操纵您的数据。您可以过滤数组，提取特定的字段，组项，或重置JSON (例如，$[status=\"活动\"])"
+  "JSON Data": "JSON Data",
+  "JSONata Query": "JSONata Query",
+  "Map the array or object you want to manipulate.": "Map the array or object you want to manipulate.",
+  "Write a JSONata expression to manipulate your data. You can filter arrays, extract specific fields, group items, or reshape the JSON. (e.g., $[status=\"active\"])": "Write a JSONata expression to manipulate your data. You can filter arrays, extract specific fields, group items, or reshape the JSON. (e.g., $[status=\"active\"])"
 }
