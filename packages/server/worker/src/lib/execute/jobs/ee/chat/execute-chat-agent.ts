@@ -1,6 +1,7 @@
 import { chatAiUtils, ContentPartLike } from '@activepieces/server-utils'
 import {
     AIProviderName,
+    ChatAgentEvent,
     ChatAgentEventType,
     EngineResponseStatus,
     ErrorCode,
@@ -13,17 +14,18 @@ import {
     tryCatch,
     WorkerJobType,
 } from '@activepieces/shared'
-import { createUIMessageStream, generateText, ModelMessage, stepCountIs, streamText } from 'ai'
+import { createUIMessageStream, generateText, isLoopFinished, ModelMessage, streamText } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { chatMcpClient } from './chat-mcp-client'
 import { chatWorkerTools } from './chat-worker-tools'
 
-const MAX_STEPS = 30
 const BATCH_SIZE = 10
 const BATCH_FLUSH_MS = 50
 const APPROVAL_POLL_INTERVAL_MS = 500
 const APPROVAL_TIMEOUT_MS = 5 * 60 * 1_000
 const DISPLAY_TOOL_TIMEOUT_MS = 15 * 60 * 1_000
+const RETRY_MAX_ATTEMPTS = 3
+const RETRY_BASE_DELAY_MS = 1_000
 
 export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_CHAT_AGENT,
@@ -44,24 +46,36 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             sendEvent: (input) => ctx.apiClient.sendChatEvent(input),
             userId,
             conversationId,
+            log,
         })
 
         const { mcpClient, mcpToolSet } = await chatMcpClient.connect({
             mcpCredentials: config.mcpCredentials, conversationId, log,
         })
 
+        const sendEventWithRetry = ({ event }: { event: ChatAgentEvent }) =>
+            retryWithBackoff({
+                fn: () => ctx.apiClient.sendChatEvent({ userId, conversationId, event }),
+                log,
+            })
+
+        const abortController = new AbortController()
+
+        const checkCancelled = async () => {
+            const { data: response } = await tryCatch(() => ctx.apiClient.executeChatTool({
+                toolName: '__cancel_check', toolInput: { conversationId }, platformId, userId,
+            }))
+            if (response?.result === true) {
+                abortController.abort()
+            }
+        }
+
+        const cancelCheckInterval = setInterval(() => {
+            checkCancelled().catch(() => {})
+        }, 3_000)
+
         try {
             const planApproved = { approved: false }
-            const abortController = new AbortController()
-
-            const checkCancelled = async () => {
-                const response = await ctx.apiClient.executeChatTool({
-                    toolName: '__cancel_check', toolInput: { conversationId }, platformId, userId,
-                })
-                if (response.result === true) {
-                    abortController.abort()
-                }
-            }
 
             const allTools = buildToolSet({
                 ctx, eventEmitter, log, planApproved, mcpToolSet,
@@ -70,28 +84,58 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
 
             const uiParts: PersistedChatPart[] = []
             const thinkingStartTime = Date.now()
+            let abortedStepMessages: ModelMessage[] = []
+
+            const postApprovalTools = Object.keys(allTools).filter((name) => name !== 'ap_request_plan_approval')
 
             const result = streamText({
                 model,
+                maxRetries: 3,
                 abortSignal: abortController.signal,
                 system: chatAiUtils.buildSystemPromptWithCaching({ systemPrompt: config.systemPrompt, provider }),
                 messages: chatAiUtils.stripThinkingBlocks(config.messages as ModelMessage[], provider),
                 tools: allTools,
                 providerOptions: chatAiUtils.buildProviderOptions({ provider, tier: config.tier }),
-                stopWhen: stepCountIs(MAX_STEPS),
+                stopWhen: isLoopFinished(),
+                prepareStep: ({ stepNumber }) => {
+                    if (stepNumber === 0 || !planApproved.approved) return undefined
+                    return { activeTools: postApprovalTools }
+                },
+                experimental_repairToolCall: async ({ toolCall, error }) => {
+                    log.warn({ toolName: toolCall.toolName, err: error, conversationId }, 'Repairing malformed tool call')
+                    const { data: repaired } = await tryCatch(async () => {
+                        const { text } = await generateText({
+                            model,
+                            abortSignal: abortController.signal,
+                            prompt: `Fix this malformed JSON tool call for "${toolCall.toolName}". The error was: ${error.message}\n\nOriginal input:\n${toolCall.input}\n\nReturn ONLY the corrected JSON input, nothing else.`,
+                        })
+                        return { ...toolCall, input: text }
+                    })
+                    return repaired ?? null
+                },
+                experimental_onToolCallFinish: (result) => {
+                    if (result.success) {
+                        log.info({ toolName: result.toolCall.toolName, durationMs: result.durationMs, conversationId }, 'Tool call completed')
+                    }
+                    else {
+                        log.warn({ toolName: result.toolCall.toolName, durationMs: result.durationMs, err: result.error, conversationId }, 'Tool call failed')
+                    }
+                },
+                onAbort: ({ steps }) => {
+                    abortedStepMessages = steps.flatMap((step) => step.response.messages) as ModelMessage[]
+                },
                 onStepFinish: ({ content }) => {
                     uiParts.push(...chatAiUtils.buildStepParts({ content: content as ContentPartLike[] }))
-                    ctx.apiClient.updateChatProgress({
-                        conversationId,
-                        uiMessages: [
-                            ...(config.previousUiMessages as PersistedChatMessage[]),
-                            { role: PersistedChatRole.ASSISTANT, parts: [...uiParts], thinkingDurationMs: Date.now() - thinkingStartTime },
-                        ],
-                    }).catch((err: unknown) => {
-                        log.warn({ err, conversationId }, 'Failed to save chat progress')
-                    })
-                    checkCancelled().catch((err: unknown) => {
-                        log.warn({ err, conversationId }, 'Failed to check cancellation')
+                    void retryWithBackoff({
+                        fn: () => ctx.apiClient.updateChatProgress({
+                            conversationId,
+                            uiMessages: [
+                                ...(config.previousUiMessages as PersistedChatMessage[]),
+                                { role: PersistedChatRole.ASSISTANT, parts: [...uiParts], thinkingDurationMs: Date.now() - thinkingStartTime },
+                            ],
+                        }),
+                        maxAttempts: 2,
+                        log,
                     })
                 },
                 onError: ({ error }) => {
@@ -102,11 +146,11 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             await streamChunksToClient({ result, ctx, userId, conversationId, log })
 
             if (abortController.signal.aborted) {
-                log.info({ conversationId }, 'Chat agent cancelled by user')
+                log.info({ conversationId, completedSteps: abortedStepMessages.length }, 'Chat agent cancelled by user')
                 const thinkingDurationMs = Date.now() - thinkingStartTime
                 const cancelSavePayload = {
                     conversationId,
-                    messages: [...(config.allMessages as ModelMessage[])],
+                    messages: [...(config.allMessages as ModelMessage[]), ...abortedStepMessages],
                     uiMessages: [
                         ...(config.previousUiMessages as PersistedChatMessage[]),
                         ...(uiParts.length > 0 ? [{ role: PersistedChatRole.ASSISTANT, parts: uiParts, thinkingDurationMs }] : []),
@@ -121,10 +165,9 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                         log.error({ err: retryError, conversationId }, 'Cancel save retry also failed')
                     }
                 }
-                await ctx.apiClient.sendChatEvent({
-                    userId, conversationId,
+                await sendEventWithRetry({
                     event: { type: ChatAgentEventType.FINISHED, data: { conversationId } },
-                }).catch(() => {})
+                })
                 return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
             }
 
@@ -168,14 +211,12 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             }
 
             if (autoTitle) {
-                await ctx.apiClient.sendChatEvent({
-                    userId, conversationId,
+                await sendEventWithRetry({
                     event: { type: ChatAgentEventType.TITLE_UPDATE, data: { title: autoTitle } },
                 })
             }
 
-            await ctx.apiClient.sendChatEvent({
-                userId, conversationId,
+            await sendEventWithRetry({
                 event: { type: ChatAgentEventType.FINISHED, data: { conversationId } },
             })
         }
@@ -186,17 +227,16 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             await ctx.apiClient.saveChatMessages({
                 conversationId, messages: [], uiMessages: [],
             }).catch(() => {})
-            await ctx.apiClient.sendChatEvent({
-                userId, conversationId,
+            await sendEventWithRetry({
                 event: { type: ChatAgentEventType.ERROR, data: { message: errorMessage, ...spreadIfDefined('code', errorCode) } },
-            }).catch(() => {})
-            await ctx.apiClient.sendChatEvent({
-                userId, conversationId,
+            })
+            await sendEventWithRetry({
                 event: { type: ChatAgentEventType.FINISHED, data: { conversationId } },
-            }).catch(() => {})
+            })
             throw err
         }
         finally {
+            clearInterval(cancelCheckInterval)
             if (mcpClient) {
                 await mcpClient.close().catch((closeErr: unknown) => {
                     log.warn({ err: closeErr }, 'Failed to close MCP client')
@@ -227,10 +267,13 @@ function buildToolSet({ ctx, eventEmitter, log, planApproved, mcpToolSet, projec
     const waitForApproval = async ({ gateId, timeoutMs }: { gateId: string, timeoutMs?: number }): Promise<GateDecision> => {
         const deadline = Date.now() + (timeoutMs ?? APPROVAL_TIMEOUT_MS)
         while (Date.now() < deadline) {
-            const response = await ctx.apiClient.executeChatTool({
+            const { data: response, error } = await tryCatch(() => ctx.apiClient.executeChatTool({
                 toolName: '__approval_check', toolInput: { gateId }, platformId, userId,
-            })
-            if (response.result !== 'pending') {
+            }))
+            if (error) {
+                log.warn({ err: error, gateId }, 'Approval poll RPC failed, retrying next interval')
+            }
+            else if (response.result !== 'pending') {
                 const decision = response.result as GateDecision
                 return { approved: decision.approved, payload: decision.payload }
             }
@@ -275,9 +318,13 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, log }
         if (chunkBuffer.length === 0) return
         const batch = chunkBuffer
         chunkBuffer = []
-        await ctx.apiClient.sendChatEvent({
-            userId, conversationId,
-            event: { type: ChatAgentEventType.CHUNK, data: batch },
+        await retryWithBackoff({
+            fn: () => ctx.apiClient.sendChatEvent({
+                userId, conversationId,
+                event: { type: ChatAgentEventType.CHUNK, data: batch },
+            }),
+            maxAttempts: 2,
+            log,
         })
     }
 
@@ -346,6 +393,24 @@ const CREDIT_ERROR_PATTERNS = [/credits/i, /\b402\b/, /payment.required/i]
 
 function isCreditExhaustedError(message: string): boolean {
     return CREDIT_ERROR_PATTERNS.some((pattern) => pattern.test(message))
+}
+
+async function retryWithBackoff({ fn, maxAttempts = RETRY_MAX_ATTEMPTS, log }: {
+    fn: () => Promise<void>
+    maxAttempts?: number
+    log?: { warn: (obj: Record<string, unknown>, msg: string) => void }
+}): Promise<void> {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        const { error } = await tryCatch(fn)
+        if (!error) return
+        if (attempt === maxAttempts) {
+            log?.warn({ err: error, attempt }, 'All retry attempts exhausted')
+            return
+        }
+        const jitter = Math.random() * 0.5 + 0.75
+        const delayMs = RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1) * jitter
+        await new Promise((resolve) => setTimeout(resolve, delayMs))
+    }
 }
 
 type GateDecision = {
