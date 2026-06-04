@@ -124,7 +124,7 @@ function convertArrayToZippedView(
     const stepName = propertyPath[0];
     const subPath = [...propertyPath.slice(1), key];
 
-    const propertyPathWithFlattenArray = `flattenNestedKeys(${stepName}, ['${subPath
+    const propertyPathWithFlattenArray = `flattenNestedKeys(${stepName}['output'], ['${subPath
       .map((s) => String(s))
       .join("', '")}'])`;
     const joinedValues = node.values.join(', ');

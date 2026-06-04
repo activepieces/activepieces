@@ -1,5 +1,5 @@
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { applyFunctionToValues, FormulaEvaluationError, formulaEvaluator, isNil, isString } from '@activepieces/shared'
+import { applyFunctionToValues, extractMustacheTokens, FormulaEvaluationError, formulaEvaluator, isNil, isString } from '@activepieces/shared'
 
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -10,45 +10,11 @@ import { utils } from '../utils'
 const CONNECTIONS = 'connections'
 const VARIABLES = 'variables'
 const FLATTEN_NESTED_KEYS_PATTERN = /\{\{\s*flattenNestedKeys(.*?)\}\}/g
-// The non-greedy regex /{{(.*?)}}/g stops at the first }} it sees,
-// so expressions with nested braces (object literals, function calls) are
-// truncated and resolve to "". Use a brace-counting tokenizer instead.
-function extractTokens(str: string): { token: string, inner: string, index: number }[] {
-    const results: { token: string, inner: string, index: number }[] = []
-    let i = 0
-    while (i < str.length - 1) {
-        if (str[i] === '{' && str[i + 1] === '{') {
-            const start = i
-            let depth = 1
-            i += 2
-            while (i < str.length - 1 && depth > 0) {
-                if (str[i] === '{' && str[i + 1] === '{') {
-                    depth++; i += 2 
-                }
-                else if (str[i] === '}' && str[i + 1] === '}') {
-                    depth--; i += 2 
-                }
-                else {
-                    i++ 
-                }
-            }
-            if (depth === 0) {
-                const token = str.slice(start, i)
-                const inner = token.slice(2, -2).trim()
-                results.push({ token, inner, index: start })
-            }
-        }
-        else {
-            i++ 
-        }
-    }
-    return results
-}
 async function replaceTokensAsync(
     str: string,
     replacer: (token: string, inner: string) => Promise<string>,
 ): Promise<string> {
-    const tokens = extractTokens(str)
+    const tokens = extractMustacheTokens(str)
     let result = ''
     let lastIndex = 0
     for (const { token, inner, index } of tokens) {
@@ -160,7 +126,7 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
         return result ?? ''
     }
 
-    const tokensThatNeedResolving = extractTokens(input)
+    const tokensThatNeedResolving = extractMustacheTokens(input)
     const resolveOptions = {
         engineToken,
         projectId,
@@ -173,7 +139,7 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
         tokensThatNeedResolving[0].token === input
 
     if (inputContainsOnlyOneTokenToResolve) {
-        const variableName = tokensThatNeedResolving[0].inner
+        const variableName = tokensThatNeedResolving[0].inner.trim()
         return resolveSingleToken({
             ...resolveOptions,
             variableName,
@@ -188,7 +154,7 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
     return replaceTokensAsync(input, async (_fullMatch, variableName) => {
         const result = await resolveSingleToken({
             ...resolveOptions,
-            variableName,
+            variableName: variableName.trim(),
             contextVersion: params.contextVersion,
         })
         return isString(result) ? result : JSON.stringify(result)

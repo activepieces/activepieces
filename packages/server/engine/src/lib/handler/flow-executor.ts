@@ -95,11 +95,13 @@ export const flowExecutor = {
                 executionState: flowExecutionContext,
                 constants,
             })
-            flowExecutionContext = await runContinueOnFailureBranchIfNeeded({
-                action: currentAction,
-                executionState: flowExecutionContext,
-                constants,
-            })
+            if (!testSingleStepMode) {
+                flowExecutionContext = await runContinueOnFailureBranchIfNeeded({
+                    action: currentAction,
+                    executionState: flowExecutionContext,
+                    constants,
+                })
+            }
             flowExecutionContext = await applyLogSizeLimitIfExceeded(flowExecutionContext, currentAction)
 
             const shouldBreakExecution = flowExecutionContext.verdict.status !== FlowRunStatus.RUNNING || testSingleStepMode

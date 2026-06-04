@@ -1,3 +1,4 @@
+import { extractMustacheTokens } from '@activepieces/shared'
 import { AnyNode, AssignmentProperty, Identifier, MemberExpression, parse, Property } from 'acorn'
 import { ancestor } from 'acorn-walk'
 import { analyze } from 'eslint-scope'
@@ -21,13 +22,20 @@ function rewriteStepReferences({ input, stepNames }: { input: string, stepNames:
     }
     const stepNameSet = new Set<string>(stepNames)
     stepNameSet.add(TRIGGER_NAME)
-    return input.replace(VARIABLE_PATTERN, (match, content: string) => {
-        const rewritten = rewriteToken(content, stepNameSet)
-        if (rewritten === null) {
-            return match
-        }
-        return `{{${rewritten}}}`
-    })
+    const tokens = extractMustacheTokens(input)
+    if (tokens.length === 0) {
+        return input
+    }
+    const chunks: string[] = []
+    let cursor = 0
+    for (const { token, inner, index } of tokens) {
+        chunks.push(input.slice(cursor, index))
+        const rewritten = rewriteToken(inner, stepNameSet)
+        chunks.push(rewritten === null ? token : `{{${rewritten}}}`)
+        cursor = index + token.length
+    }
+    chunks.push(input.slice(cursor))
+    return chunks.join('')
 }
 
 function rewriteToken(code: string, stepNames: Set<string>): string | null {
@@ -154,7 +162,6 @@ export const expressionRewriter = {
     rewriteStepReferences,
 }
 
-const VARIABLE_PATTERN = /\{\{(.*?)\}\}/g
 const STEP_NAME_PATTERN = /^step_\d+$/
 const TRIGGER_NAME = 'trigger'
 const OUTPUT_INSERT = '[\'output\']'

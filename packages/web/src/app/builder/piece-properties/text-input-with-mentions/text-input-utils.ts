@@ -51,7 +51,8 @@ type ApMentionNodeAttrs = {
   serverValue: string;
   isVariable?: boolean;
 };
-const flattenNestedKeysRegex = /^flattenNestedKeys\((\w+),\s*\[(.*?)\]\)$/;
+const flattenNestedKeysRegex =
+  /^flattenNestedKeys\((\w+)(?:\['output'\])?,\s*\[(.*?)\]\)$/;
 enum TipTapNodeTypes {
   paragraph = 'paragraph',
   text = 'text',
