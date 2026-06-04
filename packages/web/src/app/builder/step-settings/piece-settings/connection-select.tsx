@@ -93,10 +93,12 @@ function ConnectionSelect(params: ConnectionSelectProps) {
   const dynamicInputModeToggled =
     form.getValues().settings.propertySettings['auth']?.type ===
     PropertyExecutionType.DYNAMIC;
-  const isPLatformAdmin = useIsPlatformAdmin();
+  const isPlatformAdmin = useIsPlatformAdmin();
   const statusDisplay = selectedConnection
     ? getConnectionStatusDisplay(selectedConnection.status)
     : null;
+  const canShowConnectionStatus =
+    !!selectedConnection && (!isGlobalConnection || isPlatformAdmin);
   const openReconnectDialog = () => {
     setReconnectConnection(selectedConnection ?? null);
     setSelectConnectionOpen(false);
@@ -163,9 +165,8 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                   <div className="relative">
                     {field.value &&
                       !field.disabled &&
-                      selectedConnection &&
-                      statusDisplay &&
-                      (!isGlobalConnection || isPLatformAdmin) && (
+                      canShowConnectionStatus &&
+                      statusDisplay && (
                         <div className="z-50 absolute right-8 top-1.5 flex items-center gap-1.5">
                           <span className="flex items-center gap-1 text-xs text-muted-foreground">
                             <statusDisplay.Icon
@@ -236,13 +237,9 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                       </SelectValue>
                       <div className="grow"></div>
                       {field.value &&
-                        statusDisplay &&
-                        connections?.data?.find(
-                          (connection) =>
-                            connection.externalId ===
-                              removeBrackets(field.value) &&
-                            connection.scope !== AppConnectionScope.PLATFORM,
-                        ) && (
+                        !field.disabled &&
+                        canShowConnectionStatus &&
+                        statusDisplay && (
                           <span
                             aria-hidden
                             className="z-50 opacity-0 pointer-events-none flex items-center gap-1.5"
