@@ -22,6 +22,7 @@ import { AgentTimeline } from '@/features/agents';
 import { flowRunUtils } from '@/features/flow-runs';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { formatUtils } from '@/lib/format-utils';
+import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { DataDisplayTabs } from '../data-display/data-display-tabs';
@@ -45,11 +46,16 @@ export const FlowStepInputOutput = () => {
     ],
   );
   const isAgent = isRunAgent(selectedStep);
+  const isTrigger =
+    !isNil(selectedStep) && flowStructureUtil.isTrigger(selectedStep.type);
   const [requestedTab, setActiveTab] = useState<RunActiveTab>(
     isAgent ? 'timeline' : 'output',
   );
   const activeTab: RunActiveTab =
-    requestedTab === 'timeline' && !isAgent ? 'output' : requestedTab;
+    (requestedTab === 'timeline' && !isAgent) ||
+    (requestedTab === 'input' && isTrigger)
+      ? 'output'
+      : requestedTab;
   const selectedStepOutput = useMemo(() => {
     return run && selectedStep && run.steps
       ? flowRunUtils.extractStepOutput(
@@ -71,8 +77,13 @@ export const FlowStepInputOutput = () => {
       selectedStepOutput?.output ??
       'No output';
 
-  const tabCount = isAgent ? 3 : 2;
-  const gridCols = tabCount === 3 ? 'grid-cols-3' : 'grid-cols-2';
+  const tabCount = isAgent ? 3 : isTrigger ? 1 : 2;
+  const gridCols =
+    tabCount === 3
+      ? 'grid-cols-3'
+      : tabCount === 1
+      ? 'grid-cols-1'
+      : 'grid-cols-2';
   if (!run) {
     return <></>;
   }
@@ -148,20 +159,24 @@ export const FlowStepInputOutput = () => {
           onValueChange={(value) => setActiveTab(value as RunActiveTab)}
           className="w-full"
         >
-          <TabsList className={`w-full grid h-9 ${gridCols}`}>
-            <TabsTrigger value="input">{t('Input')}</TabsTrigger>
+          <TabsList className={cn('w-full grid h-9', gridCols)}>
+            {!isTrigger && (
+              <TabsTrigger value="input">{t('Input')}</TabsTrigger>
+            )}
             {isAgent && (
               <TabsTrigger value="timeline">{t('Timeline')}</TabsTrigger>
             )}
             <TabsTrigger value="output">{t('Output')}</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="input">
-            <DataDisplayTabs
-              data={selectedStepOutput.input}
-              title={t('Input')}
-            />
-          </TabsContent>
+          {!isTrigger && (
+            <TabsContent value="input">
+              <DataDisplayTabs
+                data={selectedStepOutput.input}
+                title={t('Input')}
+              />
+            </TabsContent>
+          )}
 
           {isAgent && (
             <TabsContent value="timeline">
