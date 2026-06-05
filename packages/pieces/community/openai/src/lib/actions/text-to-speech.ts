@@ -5,7 +5,6 @@ import { streamToBuffer } from '../common/common';
 
 type Voice = 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer';
 type ResponseFormat = 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm';
-type Model = 'tts-1' | 'tts-1-hd';
 
 export const textToSpeech = createAction({
 	auth: openaiAuth,
@@ -18,23 +17,45 @@ export const textToSpeech = createAction({
 			description: 'The text you want to hear.',
 			required: true,
 		}),
-		model: Property.StaticDropdown({
+		model: Property.Dropdown({
+			auth: openaiAuth,
 			displayName: 'Model',
 			required: true,
 			description: 'The model which will generate the audio.',
 			defaultValue: 'tts-1',
-			options: {
-				disabled: false,
-				options: [
-					{
-						label: 'tts-1',
-						value: 'tts-1',
-					},
-					{
-						label: 'tts-1-hd',
-						value: 'tts-1-hd',
-					},
-				],
+			refreshers: [],
+			options: async ({ auth }) => {
+				if (!auth) {
+					return {
+						disabled: true,
+						placeholder: 'Enter your API key first',
+						options: [],
+					};
+				}
+				try {
+					const openai = new OpenAI({ apiKey: auth.secret_text });
+					const response = await openai.models.list();
+					const ttsModels = response.data
+						.filter((m) => m.id.startsWith('tts-') || /^gpt-.*-tts$/.test(m.id))
+						.sort((a, b) => b.created - a.created);
+					if (ttsModels.length === 0) {
+						return {
+							disabled: true,
+							options: [],
+							placeholder: 'No text-to-speech models available for this API key.',
+						};
+					}
+					return {
+						disabled: false,
+						options: ttsModels.map((m) => ({ label: m.id, value: m.id })),
+					};
+				} catch {
+					return {
+						disabled: true,
+						options: [],
+						placeholder: "Couldn't load models. Check your API key or try again.",
+					};
+				}
 			},
 		}),
 		speed: Property.Number({
@@ -90,7 +111,7 @@ export const textToSpeech = createAction({
 		const { voice, format, model, text, speed, fileName } = propsValue;
 		
 		const audio = await openai.audio.speech.create({
-			model: model as Model,
+			model: model,
 			input: text,
 			response_format: format as ResponseFormat,
 			voice: voice as Voice,

@@ -13,7 +13,7 @@ Formulas let users transform input values inside any text input in the flow buil
 
 ### Editor UI (`packages/web/src/app/builder/piece-properties/text-input-with-mentions/`)
 - `index.tsx` — 14-line wrapper, just re-exports `TiptapEditor`.
-- `tiptap-editor.tsx` — main editor (747 LOC): plan-flag gate at line 125 (`formulaEnabled = platform.plan.dataManipulationEnabled`), conditional slash-extension registration, live preview, type-checker integration, variable mentions integration.
+- `tiptap-editor.tsx` — main editor (747 LOC): editor gate at line 127 (`formulaEnabled = platform.plan.dataManipulationEnabled && !embedState.isEmbedded`) — requires both the plan flag **and** a non-embedded builder, conditional slash-extension registration, live preview, type-checker integration, variable mentions integration.
 - `extensions/bracket-nodes.tsx` — three TipTap inline atom nodes (`function_start`, `function_sep`, `function_end`) rendered as badges. **Always registered**, even when the flag is off, so saved formulas display read-only.
 - `extensions/function-slash-extension.ts` — ProseMirror plugin that watches for `/`, opens the search popover, inserts at the cursor.
 - `components/function-search-popover.tsx` — filter-as-you-type list backed by `AP_FUNCTIONS`.
@@ -44,8 +44,9 @@ Formulas let users transform input values inside any text input in the flow buil
 - Community (CE): available when `platform.plan.dataManipulationEnabled` is true (defaults to `false` on `OPEN_SOURCE_PLAN`).
 - Enterprise (EE): available when `platform.plan.dataManipulationEnabled` is true (default `false`; toggled per platform via license key).
 - Cloud: available when `platform.plan.dataManipulationEnabled` is true (default `false` on `FREEMIUM_PLAN`; toggled per platform via license key).
+- Embedded builder: **never available**, regardless of the plan flag — the editor gate also requires `!embedState.isEmbedded`.
 
-**The engine path is not gated.** The flag only affects the editor UI: slash trigger, popovers, type checker, and slash insertion. Bracket nodes always render so saved formulas display read-only even when the flag is off. Existing saved formulas continue to evaluate regardless of the flag's current value.
+**The engine path is not gated.** The editor gate (plan flag + non-embedded) only affects the editor UI: slash trigger, popovers, type checker, and slash insertion. Bracket nodes always render so saved formulas display read-only even when the gate is off. Existing saved formulas continue to evaluate regardless of the gate's current value.
 
 ## Domain Terms
 - **Formula** — a function-based expression inserted into a text input that transforms data at runtime.
@@ -106,7 +107,7 @@ The pre-pass:
 ## Editor Composition
 
 `tiptap-editor.tsx`:
-- Reads `platform.plan.dataManipulationEnabled` via `platformHooks.useCurrentPlatform()`.
+- Reads `platform.plan.dataManipulationEnabled` via `platformHooks.useCurrentPlatform()` and `embedState.isEmbedded` via `useEmbedding()`; `formulaEnabled` is the AND of (flag true) and (not embedded).
 - `getExtensions({ formulaEnabled })` always includes `FunctionStartNode`, `FunctionEndNode`, `FunctionArgSeparatorNode` (so existing formulas render as badges no matter the flag); conditionally includes `FunctionSlashExtension` only when `formulaEnabled` is true.
 - Holds slash-state, active-function-info, focus, type-errors, preview-result in component state. `typeCheckTiptapDoc(doc)` runs on doc updates; errors map to badge highlights and the preview panel.
 - Variables integration: fetches the project's variables via `variablesQueries.useVariables(...)` and threads the `name → name` map into `createMentionNodeFromText` and `convertTextToTipTapJsonContent` so variable mentions render with their display name.
@@ -122,6 +123,7 @@ Documented in `.claude/plans/glimmering-percolating-unicorn.md`. Summary:
 
 ## Frontend Hooks
 - `platformHooks.useCurrentPlatform()` — provides `platform.plan.dataManipulationEnabled` for the editor gate.
+- `useEmbedding()` (`@/components/providers/embed-provider`) — provides `embedState.isEmbedded`; the editor gate ANDs `!isEmbedded` with the plan flag, so the formula UI never shows in an embedded builder.
 - `variablesQueries.useVariables(...)` — fetches the project's variables (see `variables.md`); used by the editor to render variable mention labels inside formula args.
 
 ## What's NOT in this feature

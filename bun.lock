@@ -1861,7 +1861,7 @@
     },
     "packages/pieces/community/cohere": {
       "name": "@activepieces/piece-cohere",
-      "version": "0.0.2",
+      "version": "0.0.3",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -5249,7 +5249,7 @@
     },
     "packages/pieces/community/openai": {
       "name": "@activepieces/piece-openai",
-      "version": "0.8.2",
+      "version": "0.8.3",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -6007,6 +6007,16 @@
     "packages/pieces/community/reachinbox": {
       "name": "@activepieces/piece-reachinbox",
       "version": "0.1.4",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
+    "packages/pieces/community/readwise": {
+      "name": "@activepieces/piece-readwise",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -8430,11 +8440,12 @@
     },
     "packages/pieces/core/xml": {
       "name": "@activepieces/piece-xml",
-      "version": "0.1.13",
+      "version": "0.1.14",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
+        "fast-xml-parser": "5.7.0",
         "json2xml": "0.1.3",
         "tslib": "2.6.2",
       },
@@ -8516,6 +8527,8 @@
         "@sentry/node": "7.120.0",
         "@smithy/node-http-handler": "4.4.14",
         "@socket.io/redis-adapter": "8.3.0",
+        "acorn": "8.16.0",
+        "acorn-walk": "8.3.5",
         "ai": "^6.0.0",
         "ai-gateway-provider": "3.1.1",
         "async-mutex": "0.4.0",
@@ -8532,6 +8545,7 @@
         "decompress": "4.2.1",
         "deep-equal": "2.2.2",
         "dotenv": "17.2.3",
+        "eslint-scope": "7.2.2",
         "fast-xml-parser": "^5.5.6",
         "fastify": "5.8.5",
         "fastify-favicon": "5.0.0",
@@ -8585,6 +8599,7 @@
         "@types/content-disposition": "0.5.9",
         "@types/decompress": "4.2.4",
         "@types/deep-equal": "1.0.1",
+        "@types/eslint-scope": "3.7.7",
         "@types/jsonwebtoken": "9.0.10",
         "@types/mime-types": "2.1.1",
         "@types/mustache": "4.2.4",
@@ -9924,6 +9939,8 @@
     "@activepieces/piece-razorpay": ["@activepieces/piece-razorpay@workspace:packages/pieces/community/razorpay"],
 
     "@activepieces/piece-reachinbox": ["@activepieces/piece-reachinbox@workspace:packages/pieces/community/reachinbox"],
+
+    "@activepieces/piece-readwise": ["@activepieces/piece-readwise@workspace:packages/pieces/community/readwise"],
 
     "@activepieces/piece-recall-ai": ["@activepieces/piece-recall-ai@workspace:packages/pieces/community/recall-ai"],
 
@@ -16072,6 +16089,8 @@
     "@activepieces/piece-text-helper/jsdom": ["jsdom@24.1.3", "", { "dependencies": { "cssstyle": "^4.0.1", "data-urls": "^5.0.0", "decimal.js": "^10.4.3", "form-data": "^4.0.0", "html-encoding-sniffer": "^4.0.0", "http-proxy-agent": "^7.0.2", "https-proxy-agent": "^7.0.5", "is-potential-custom-element-name": "^1.0.1", "nwsapi": "^2.2.12", "parse5": "^7.1.2", "rrweb-cssom": "^0.7.1", "saxes": "^6.0.0", "symbol-tree": "^3.2.4", "tough-cookie": "^4.1.4", "w3c-xmlserializer": "^5.0.0", "webidl-conversions": "^7.0.0", "whatwg-encoding": "^3.1.1", "whatwg-mimetype": "^4.0.0", "whatwg-url": "^14.0.0", "ws": "^8.18.0", "xml-name-validator": "^5.0.0" }, "peerDependencies": { "canvas": "^2.11.2" }, "optionalPeers": ["canvas"] }, "sha512-MyL55p3Ut3cXbeBEG7Hcv0mVM8pp8PBNWxRqchZnSfAiES1v1mRnMeFfaHWIPULpwsYfvO+ZmMZz5tGCnjzDUQ=="],
 
     "@activepieces/piece-workday/fast-xml-parser": ["fast-xml-parser@5.7.0", "", { "dependencies": { "@nodable/entities": "^2.1.0", "fast-xml-builder": "^1.1.5", "path-expression-matcher": "^1.5.0", "strnum": "^2.2.3" }, "bin": { "fxparser": "src/cli/cli.js" } }, "sha512-MTcrUoRQ1GSQ9iG3QJzBGquYYYeA7piZaJoIWbPFGbRn6Jj6z7xgoAyi4DrZX4y2ZIQQBF59gc/zmvvejjgoFQ=="],
+
+    "@activepieces/piece-xml/fast-xml-parser": ["fast-xml-parser@5.7.0", "", { "dependencies": { "@nodable/entities": "^2.1.0", "fast-xml-builder": "^1.1.5", "path-expression-matcher": "^1.5.0", "strnum": "^2.2.3" }, "bin": { "fxparser": "src/cli/cli.js" } }, "sha512-MTcrUoRQ1GSQ9iG3QJzBGquYYYeA7piZaJoIWbPFGbRn6Jj6z7xgoAyi4DrZX4y2ZIQQBF59gc/zmvvejjgoFQ=="],
 
     "@actual-app/api/better-sqlite3": ["better-sqlite3@12.10.0", "", { "dependencies": { "bindings": "^1.5.0", "prebuild-install": "^7.1.1" } }, "sha512-CyzaZRQKyHkB2ZInfTTl2nvT33EbDpjkLEbE8/Zck3Ll6O0qqvuGdrJ45HgtH+HykRg88ITY3AdreBGN70aBSQ=="],
 
