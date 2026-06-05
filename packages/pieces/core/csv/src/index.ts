@@ -2,6 +2,7 @@ import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { csvToJsonAction } from './lib/actions/convert-csv-to-json';
 import { jsonToCsvAction } from './lib/actions/convert-json-to-csv';
+import { excelToCsvAction } from './lib/actions/convert-excel-to-csv';
 
 export const csv = createPiece({
   displayName: 'CSV',
@@ -10,7 +11,7 @@ export const csv = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/new-core/csv.svg',
   auth: PieceAuth.None(),
   categories: [PieceCategory.CORE],
-  actions: [csvToJsonAction, jsonToCsvAction],
-  authors: ["kishanprmr", "MoShizzle", "khaledmashaly", "abuaboud"],
+  actions: [csvToJsonAction, jsonToCsvAction, excelToCsvAction],
+  authors: ["kishanprmr", "MoShizzle", "khaledmashaly", "abuaboud", 'sanket-a11y'],
   triggers: [],
 });

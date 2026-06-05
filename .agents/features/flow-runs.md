@@ -49,7 +49,7 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
 
 ## Endpoints
 
-- `GET /` — List runs (cursor pagination, filters: projectId, flowId, status, tags, createdAfter/Before, failedStepName, failedStepMessage). `failedStepMessage` is a case-insensitive `ILIKE '%…%'` against `failedStep->>'message'`. The status and failedStepMessage filters are independent — combining a non-failure status with a failedStepMessage simply returns empty (no implicit narrowing).
+- `GET /` — List runs (cursor pagination, filters: projectId, flowId, status, tags, createdAfter/Before, failedStepName, failedStepMessage). Paginates by a composite `(created DESC, id DESC)` cursor — `id` is the unique tiebreaker that keeps page boundaries stable when runs share a `created` timestamp (e.g. same-transaction inserts). `failedStepMessage` is a case-insensitive `ILIKE '%…%'` against `failedStep->>'message'`. The status and failedStepMessage filters are independent — combining a non-failure status with a failedStepMessage simply returns empty (no implicit narrowing).
 - `GET /:id` — Get single run with populated data
 - `POST /:id/retry` — Retry single run (strategy: FROM_FAILED_STEP or ON_LATEST_VERSION)
 - `POST /retry` — Bulk retry with filters
@@ -94,7 +94,7 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
 
 ## Frontend Integration
 
-`flowRunsApi.subscribeToTestFlowOrManualRun()` uses Socket.IO to start a test run and stream progress updates via `WebsocketClientEvent.UPDATE_RUN_PROGRESS`. The builder's run-list sidebar polls for recent runs and the run-details panel renders step-by-step input/output from the populated run's execution logs. `flowRunMutations.useRetryRun` handles the `FLOW_RUN_RETRY_OUTSIDE_RETENTION` error code with a user-facing toast showing the retention window.
+`flowRunsApi.subscribeToTestFlowOrManualRun()` uses Socket.IO to start a test run and stream progress updates via `WebsocketClientEvent.UPDATE_RUN_PROGRESS`. The builder's run-list sidebar polls for recent runs (infinite query, auto-refetching every 15s while runs are still executing) and deduplicates entries by `id` when flattening pages — a safeguard against page overlap during live refetch. The run-details panel renders step-by-step input/output from the populated run's execution logs. `flowRunMutations.useRetryRun` handles the `FLOW_RUN_RETRY_OUTSIDE_RETENTION` error code with a user-facing toast showing the retention window.
 
 ### Runs Table Filters
 
