@@ -72,6 +72,7 @@ const defaultOptions = {
     cpuMsPerSec: 1000,
     timeLimitSeconds: 300,
     reusable: false,
+    maxHttpBufferSizeBytes: 100 * 1024 * 1024,
 }
 
 const startOptions = {

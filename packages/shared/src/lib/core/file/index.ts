@@ -76,3 +76,10 @@ export const File = z.object({
 export type File = z.infer<typeof File> & {
     data: Buffer
 }
+
+const SOCKET_BUFFER_FLOOR_MB = 100
+const SOCKET_BUFFER_OVERHEAD_MB = 4
+
+export function maxSocketHttpBufferSizeBytes(maxFileSizeMb: number): number {
+    return Math.max(maxFileSizeMb + SOCKET_BUFFER_OVERHEAD_MB, SOCKET_BUFFER_FLOOR_MB) * 1024 * 1024
+}

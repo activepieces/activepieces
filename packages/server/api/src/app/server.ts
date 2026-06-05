@@ -1,5 +1,5 @@
 import path from 'path'
-import { ApEnvironment, apId, ApMultipartFile, spreadIfDefined } from '@activepieces/shared'
+import { ApEnvironment, apId, ApMultipartFile, maxSocketHttpBufferSizeBytes, spreadIfDefined } from '@activepieces/shared'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
 import fastifyMultipart, { MultipartFile } from '@fastify/multipart'
@@ -43,7 +43,7 @@ export const setupServer = async (): Promise<FastifyInstance> => {
     if (system.isApp()) {
         await app.register(fastifySocketIO, {
             cors: { origin: '*' },
-            maxHttpBufferSize: 1e8,
+            maxHttpBufferSize: maxSocketHttpBufferSizeBytes(system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB)),
             path: '/api/socket.io',
             ...spreadIfDefined('adapter', await getAdapter()),
             transports: ['websocket'],

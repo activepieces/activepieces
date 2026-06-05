@@ -70,7 +70,7 @@ export function createSandbox(
         httpServer = createServer()
         io = new SocketIOServer(httpServer, {
             path: '/worker/ws',
-            maxHttpBufferSize: 1e8,
+            maxHttpBufferSize: options.maxHttpBufferSizeBytes,
             cors: { origin: '*' },
         })
 
