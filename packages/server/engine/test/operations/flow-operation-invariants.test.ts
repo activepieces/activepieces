@@ -456,7 +456,7 @@ describe('flow operation invariants', () => {
     })
 
     describe('BEGIN payload hydration', () => {
-        it('inline payload is forwarded without calling getPayloadFile', async () => {
+        it('inline payload is forwarded without hitting the engine file client', async () => {
             mockDownload.mockReset()
             const operation = makeBeginOperation({
                 triggerPayload: { type: 'inline', value: { hello: 'world' } },
@@ -574,6 +574,48 @@ describe('flow operation invariants', () => {
             const triggerStep = finalSendUpdate.flowExecutorContext.steps.trigger_1
             expect(triggerStep.status).toBe(StepOutputStatus.SUCCEEDED)
             expect(triggerStep.output).toEqual(rawPayload)
+        })
+    })
+
+    describe('RESUME payload hydration', () => {
+        it('resolves a ref resumePayload via the engine file client', async () => {
+            mockDownload.mockReset()
+            mockCreateWaitpoint.mockReset()
+            mockDownload.mockImplementation(({ fileId }: { fileId: string }) => {
+                if (fileId === 'logs-file-1') {
+                    return Promise.resolve(new TextEncoder().encode(JSON.stringify({
+                        executionState: {
+                            steps: {
+                                trigger_1: {
+                                    type: FlowTriggerType.EMPTY,
+                                    status: StepOutputStatus.SUCCEEDED,
+                                    input: {},
+                                    output: {},
+                                },
+                            },
+                            tags: [],
+                        },
+                    })))
+                }
+                return Promise.resolve(new TextEncoder().encode(JSON.stringify({ resumed: 'from-ref' })))
+            })
+
+            const operation = makeResumeOperation({
+                resumePayload: { type: 'ref', fileId: 'resume-file-1' },
+            })
+
+            try {
+                await flowOperation.execute(operation)
+            }
+            catch {
+                // downstream execution may fail; we only assert the resume payload was resolved
+            }
+
+            expect(mockDownload).toHaveBeenCalledWith({
+                apiUrl: 'http://localhost:3000/',
+                engineToken: 'test-token',
+                fileId: 'resume-file-1',
+            })
         })
     })
 })

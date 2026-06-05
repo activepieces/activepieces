@@ -13,7 +13,6 @@ import {
     flowStructureUtil,
     GenericStepOutput,
     isNil,
-    JobPayload,
     LoopStepOutput,
     ResumePayload,
     ResumeReason,
@@ -31,6 +30,7 @@ import { flowExecutor } from '../handler/flow-executor'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
 import { triggerHelper } from '../helper/trigger-helper'
 import { utils } from '../utils'
+import { resolveJobPayload } from './utils/resolve-job-payload'
 
 export const flowOperation = {
     execute: async (operation: ExecuteFlowOperation): Promise<EngineResponse<undefined>> => {
@@ -155,7 +155,7 @@ async function runOrReturnPayload(input: ResolvedBeginExecuteFlowOperation, cons
             hookType: TriggerHookType.RUN,
             test: false,
             webhookUrl: '',
-            triggerPayload: input.triggerPayload as TriggerPayload,
+            triggerPayload: input.triggerPayload,
         },
         constants,
     }) as ExecuteTriggerResponse<TriggerHookType.RUN>
@@ -190,7 +190,7 @@ async function resolveExecuteFlowOperation(operation: ExecuteFlowOperation): Pro
     if (operation.executionType === ExecutionType.BEGIN) {
         return {
             ...operation,
-            triggerPayload: await resolveJobPayload(operation.triggerPayload, operation),
+            triggerPayload: await resolveJobPayload({ payload: operation.triggerPayload, apiUrl: operation.internalApiUrl, engineToken: operation.engineToken }),
         }
     }
     const executionState = await fetchExecutionStateFromLogs(operation.logsFileId, operation)
@@ -199,21 +199,9 @@ async function resolveExecuteFlowOperation(operation: ExecuteFlowOperation): Pro
     }
     return {
         ...operation,
-        resumePayload: await resolveJobPayload(operation.resumePayload, operation) as ResumePayload,
+        resumePayload: await resolveJobPayload({ payload: operation.resumePayload, apiUrl: operation.internalApiUrl, engineToken: operation.engineToken }) as ResumePayload,
         executionState,
     }
-}
-
-async function resolveJobPayload(payload: JobPayload, operation: ExecuteFlowOperation): Promise<unknown> {
-    if (payload.type === 'inline') {
-        return payload.value
-    }
-    const bytes = await engineFileApi.download({
-        fileId: payload.fileId,
-        apiUrl: operation.internalApiUrl,
-        engineToken: operation.engineToken,
-    })
-    return JSON.parse(new TextDecoder('utf-8').decode(bytes))
 }
 
 async function fetchExecutionStateFromLogs(logsFileId: string | undefined, operation: ExecuteFlowOperation): Promise<ExecutionState> {
