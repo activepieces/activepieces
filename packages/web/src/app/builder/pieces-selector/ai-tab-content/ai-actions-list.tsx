@@ -49,17 +49,17 @@ export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
     state.handleAddingOrUpdatingStep,
   ]);
   const { data: isAgentsConfigured } = flagsHooks.useFlag<boolean>(
-    ApFlagId.AGENTS_CONFIGURED,
+    ApFlagId.AGENTS_CONFIGURED
   );
   const navigate = useNavigate();
 
   const aiActions = convertStepMetadataToPieceSelectorItems(
-    stepMetadataWithSuggestions,
+    stepMetadataWithSuggestions
   );
 
   return (
     <ScrollArea className="h-full" viewPortClassName="h-full">
-      <div className="grid grid-cols-3 p-2 gap-3 min-w-[350px]">
+      <div className="grid min-w-[350px] grid-cols-2 gap-3 p-3 sm:grid-cols-3">
         {aiActions.map((item, index) => {
           const actionIcon =
             item.type === FlowActionType.PIECE
@@ -78,7 +78,7 @@ export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
                 if (!isAgentsConfigured) {
                   toast('Connect to OpenAI', {
                     description: t(
-                      "To create an agent, you'll first need to connect to OpenAI in platform settings.",
+                      "To create an agent, you'll first need to connect to OpenAI in platform settings."
                     ),
                     action: {
                       label: 'Set Up',
