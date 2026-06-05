@@ -439,7 +439,7 @@ describe('flow operation invariants', () => {
     })
 
     describe('BEGIN payload hydration', () => {
-        it('inline payload is forwarded without calling getPayloadFile', async () => {
+        it('inline payload is forwarded without hitting the engine file client', async () => {
             mockDownload.mockReset()
             const operation = makeBeginOperation({
                 triggerPayload: { type: 'inline', value: { hello: 'world' } },
