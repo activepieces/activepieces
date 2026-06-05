@@ -3,11 +3,12 @@ import { PlatformId } from '../../management/platform'
 import { ProjectId } from '../../management/project/project'
 import { ExecutionToolStatus, PredefinedInputsStructure } from '../agents'
 import { AppConnectionValue } from '../app-connection/app-connection'
-import { ExecutionState, ExecutionType, ResumePayload } from '../flow-run/execution/execution-output'
+import { ExecutionState, ExecutionType } from '../flow-run/execution/execution-output'
 import { FlowRunId, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
 import { PiecePackage } from '../pieces'
 import { ScheduleOptions } from '../trigger'
+import { JobPayload } from '../workers/job-data'
 
 export enum EngineOperationType {
     EXTRACT_PIECE_METADATA = 'EXTRACT_PIECE_METADATA',
@@ -105,12 +106,12 @@ export enum StreamStepProgress {
 }
 
 export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.BEGIN> & {
-    triggerPayload: unknown
+    triggerPayload: JobPayload
     executeTrigger: boolean
 }
 
 export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.RESUME> & {
-    resumePayload: ResumePayload
+    resumePayload: JobPayload
 }
 
 export type ExecuteFlowOperation = BeginExecuteFlowOperation | ResumeExecuteFlowOperation
@@ -121,7 +122,7 @@ export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOper
     test: boolean
     flowVersion: FlowVersion
     webhookUrl: string
-    triggerPayload?: TriggerPayload
+    triggerPayload?: JobPayload
     appWebhookUrl?: string
     webhookSecret?: string | Record<string, string>
 }

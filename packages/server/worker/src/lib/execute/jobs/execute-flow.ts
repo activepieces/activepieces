@@ -13,7 +13,6 @@ import {
     FlowVersion,
     isNil,
     ResumeExecuteFlowOperation,
-    ResumePayload,
     tryCatch,
     WorkerJobType,
     WorkerToApiContract,
@@ -23,7 +22,6 @@ import { system, WorkerSystemProp } from '../../config/configs'
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 import { provisionFlowPieces } from '../utils/flow-helpers'
-import { resolvePayload } from '../utils/resolve-payload'
 
 export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_FLOW,
@@ -55,8 +53,7 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
                 mounts: [],
             })
 
-            const resolvedPayload = await resolvePayload(data.payload, data.projectId, ctx.apiClient)
-            const operation = await buildFlowOperation(ctx, data, resolvedPayload, flowVersion, timeoutInSeconds)
+            const operation = await buildFlowOperation(ctx, data, flowVersion, timeoutInSeconds)
             const result = await sandbox.execute(
                 EngineOperationType.EXECUTE_FLOW,
                 operation,
@@ -103,7 +100,6 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
 async function buildFlowOperation(
     ctx: JobContext,
     data: ExecuteFlowJobData,
-    resolvedPayload: unknown,
     flowVersion: FlowVersion,
     timeoutInSeconds: number,
 ): Promise<BeginExecuteFlowOperation | ResumeExecuteFlowOperation> {
@@ -140,7 +136,7 @@ async function buildFlowOperation(
             ...base,
             executionType: ExecutionType.RESUME,
             executionState,
-            resumePayload: resolvedPayload as ResumePayload,
+            resumePayload: data.payload,
         }
     }
 
@@ -148,7 +144,7 @@ async function buildFlowOperation(
         ...base,
         executionType: ExecutionType.BEGIN,
         executionState: { steps: {}, tags: [] },
-        triggerPayload: resolvedPayload,
+        triggerPayload: data.payload,
         executeTrigger: data.executeTrigger ?? false,
         sampleData: data.sampleData,
     }
@@ -161,7 +157,7 @@ async function fetchExecutionState({ apiClient, data }: { apiClient: WorkerToApi
             params: { runId: data.runId },
         }, 'logsFileId is missing for RESUME operation')
     }
-    const buffer = await apiClient.getPayloadFile({ fileId: data.logsFileId, projectId: data.projectId })
+    const buffer = await apiClient.getFile({ fileId: data.logsFileId, projectId: data.projectId })
     const parsed = JSON.parse(buffer.toString('utf-8'))
     if (isNil(parsed.executionState)) {
         throw new ActivepiecesError({

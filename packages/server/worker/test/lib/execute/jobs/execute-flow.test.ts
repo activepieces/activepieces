@@ -32,10 +32,6 @@ vi.mock('../../../../src/lib/execute/utils/flow-helpers', () => ({
     provisionFlowPieces: vi.fn().mockResolvedValue(true),
 }))
 
-vi.mock('../../../../src/lib/execute/utils/resolve-payload', () => ({
-    resolvePayload: vi.fn().mockImplementation((payload: unknown) => Promise.resolve(payload)),
-}))
-
 import { executeFlowJob } from '../../../../src/lib/execute/jobs/execute-flow'
 import { JobResultKind } from '../../../../src/lib/execute/types'
 
@@ -117,7 +113,7 @@ function makeMockContext(apiOverrides?: Record<string, vi.Mock>) {
             debug: vi.fn(),
         },
         apiClient: {
-            getPayloadFile: vi.fn(),
+            getFile: vi.fn(),
             uploadRunLog: vi.fn(),
             ...apiOverrides,
         },
@@ -140,7 +136,7 @@ describe('executeFlowJob', () => {
     describe('RESUME execution state validation', () => {
         it('should throw VALIDATION error when RESUME has empty execution state', async () => {
             const ctx = makeMockContext()
-            ctx.apiClient.getPayloadFile.mockResolvedValue(
+            ctx.apiClient.getFile.mockResolvedValue(
                 Buffer.from(JSON.stringify({ executionState: { steps: {}, tags: [] } })),
             )
 
@@ -167,7 +163,7 @@ describe('executeFlowJob', () => {
 
         it('should proceed normally when RESUME has non-empty execution state', async () => {
             const ctx = makeMockContext()
-            ctx.apiClient.getPayloadFile.mockResolvedValue(
+            ctx.apiClient.getFile.mockResolvedValue(
                 Buffer.from(JSON.stringify({
                     executionState: {
                         steps: {

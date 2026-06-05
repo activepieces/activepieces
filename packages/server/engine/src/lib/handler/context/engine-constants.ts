@@ -1,5 +1,5 @@
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, EngineGenericError, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, flowStructureUtil, FlowVersionState, PlatformId, Project, ProjectId, ResumePayload, RunEnvironment, StreamStepProgress, TriggerHookType } from '@activepieces/shared'
+import { BeginExecuteFlowOperation, DEFAULT_MCP_DATA, EngineGenericError, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, flowStructureUtil, FlowVersionState, PlatformId, Project, ProjectId, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment, StreamStepProgress, TriggerHookType } from '@activepieces/shared'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
@@ -118,7 +118,7 @@ export class EngineConstants {
         this.stepNames = params.stepNames
     }
   
-    public static fromExecuteFlowInput(input: ExecuteFlowOperation): EngineConstants {
+    public static fromExecuteFlowInput(input: ResolvedExecuteFlowOperation): EngineConstants {
         return new EngineConstants({
             flowId: input.flowVersion.flowId,
             flowVersionId: input.flowVersion.id,
@@ -192,7 +192,7 @@ export class EngineConstants {
         })
     }
 
-    public static fromExecuteTriggerInput(input: ExecuteTriggerOperation<TriggerHookType>): EngineConstants {
+    public static fromExecuteTriggerInput(input: ResolvedExecuteTriggerOperation<TriggerHookType>): EngineConstants {
         return new EngineConstants({
             flowId: input.flowVersion.flowId,
             flowVersionId: input.flowVersion.id,
@@ -250,4 +250,18 @@ export class EngineConstants {
 
 const addTrailingSlashIfMissing = (url: string): string => {
     return url.endsWith('/') ? url : url + '/'
+}
+
+export type ResolvedBeginExecuteFlowOperation = Omit<BeginExecuteFlowOperation, 'triggerPayload'> & {
+    triggerPayload: unknown
+}
+
+export type ResolvedResumeExecuteFlowOperation = Omit<ResumeExecuteFlowOperation, 'resumePayload'> & {
+    resumePayload: ResumePayload
+}
+
+export type ResolvedExecuteFlowOperation = ResolvedBeginExecuteFlowOperation | ResolvedResumeExecuteFlowOperation
+
+export type ResolvedExecuteTriggerOperation<HT extends TriggerHookType> = Omit<ExecuteTriggerOperation<HT>, 'triggerPayload'> & {
+    triggerPayload?: unknown
 }

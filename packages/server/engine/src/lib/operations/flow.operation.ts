@@ -1,5 +1,4 @@
 import {
-    BeginExecuteFlowOperation,
     EngineGenericError,
     EngineResponse,
     EngineResponseStatus,
@@ -12,21 +11,23 @@ import {
     GenericStepOutput,
     isNil,
     LoopStepOutput,
+    ResumePayload,
     StepOutput,
     StepOutputStatus,
     TriggerHookType,
     TriggerPayload,
 } from '@activepieces/shared'
-import { EngineConstants } from '../handler/context/engine-constants'
+import { EngineConstants, ResolvedBeginExecuteFlowOperation, ResolvedExecuteFlowOperation } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { testExecutionContext } from '../handler/context/test-execution-context'
 import { flowExecutor } from '../handler/flow-executor'
 import { runProgressService } from '../handler/run-progress'
 import { triggerHelper } from '../helper/trigger-helper'
+import { resolveJobPayload } from './utils/resolve-job-payload'
 
 export const flowOperation = {
     execute: async (operation: ExecuteFlowOperation): Promise<EngineResponse<undefined>> => {
-        const input = operation as ExecuteFlowOperation
+        const input = await resolveExecuteFlowOperation(operation)
         const constants = EngineConstants.fromExecuteFlowInput(input)
         const output: FlowExecutorContext = (await executieSingleStepOrFlowOperation(input)).finishExecution()
         await runProgressService.backup({
@@ -43,7 +44,7 @@ export const flowOperation = {
     },
 }
 
-const executieSingleStepOrFlowOperation = async (input: ExecuteFlowOperation): Promise<FlowExecutorContext> => {
+const executieSingleStepOrFlowOperation = async (input: ResolvedExecuteFlowOperation): Promise<FlowExecutorContext> => {
     const constants = EngineConstants.fromExecuteFlowInput(input)
     const testSingleStepMode = !isNil(constants.stepNameToTest)
     if (testSingleStepMode) {
@@ -70,7 +71,7 @@ const executieSingleStepOrFlowOperation = async (input: ExecuteFlowOperation): P
     })
 }
 
-async function getFlowExecutionState(input: ExecuteFlowOperation, flowContext: FlowExecutorContext): Promise<FlowExecutorContext> {
+async function getFlowExecutionState(input: ResolvedExecuteFlowOperation, flowContext: FlowExecutorContext): Promise<FlowExecutorContext> {
     switch (input.executionType) {
         case ExecutionType.BEGIN: {
             if (Object.keys(input.executionState.steps).length > 0) {
@@ -101,7 +102,7 @@ async function getFlowExecutionState(input: ExecuteFlowOperation, flowContext: F
     return flowContext
 }
 
-async function runOrReturnPayload(input: BeginExecuteFlowOperation): Promise<TriggerPayload> {
+async function runOrReturnPayload(input: ResolvedBeginExecuteFlowOperation): Promise<TriggerPayload> {
     if (!input.executeTrigger) {
         return input.triggerPayload as TriggerPayload
     }
@@ -111,11 +112,32 @@ async function runOrReturnPayload(input: BeginExecuteFlowOperation): Promise<Tri
             hookType: TriggerHookType.RUN,
             test: false,
             webhookUrl: '',
-            triggerPayload: input.triggerPayload as TriggerPayload,
+            triggerPayload: input.triggerPayload,
         },
         constants: EngineConstants.fromExecuteFlowInput(input),
     }) as ExecuteTriggerResponse<TriggerHookType.RUN>
     return newPayload.output[0] as TriggerPayload
+}
+
+async function resolveExecuteFlowOperation(operation: ExecuteFlowOperation): Promise<ResolvedExecuteFlowOperation> {
+    if (operation.executionType === ExecutionType.BEGIN) {
+        return {
+            ...operation,
+            triggerPayload: await resolveJobPayload({
+                payload: operation.triggerPayload,
+                apiUrl: operation.internalApiUrl,
+                engineToken: operation.engineToken,
+            }),
+        }
+    }
+    return {
+        ...operation,
+        resumePayload: await resolveJobPayload({
+            payload: operation.resumePayload,
+            apiUrl: operation.internalApiUrl,
+            engineToken: operation.engineToken,
+        }) as ResumePayload,
+    }
 }
 
 
