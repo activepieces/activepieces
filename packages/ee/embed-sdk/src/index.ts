@@ -115,6 +115,7 @@ export interface ActivepiecesVendorInit {
     mode?: 'light' | 'dark';
     hideFlowsPageNavbar?: boolean;
     hidePageHeader?: boolean;
+    hideGlobalSearch?: boolean;
   };
 }
 
@@ -151,6 +152,7 @@ type EmbeddingParam = {
   hideDuplicateFlow?: boolean;
   hideFolders?: boolean;
   hideTables?: boolean;
+  hideGlobalSearch?: boolean;
   navigation?: {
     handler?: (data: { route: string }) => void;
   }
@@ -272,6 +274,7 @@ class ActivepiecesEmbedded {
                 hideDuplicateFlow: this._embeddingState?.hideDuplicateFlow ?? false,
                 mode: this._embeddingState?.styling?.mode,
                 hidePageHeader: this._embeddingState?.dashboard?.hidePageHeader ?? false,
+                hideGlobalSearch: this._embeddingState?.hideGlobalSearch ?? false,
               },
             };
             targetWindow.postMessage(apEvent, '*');

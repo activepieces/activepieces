@@ -2,14 +2,18 @@ import { t } from 'i18next';
 import { Search } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { cn } from '@/lib/utils';
 
 import { useGlobalSearch } from './global-search-context';
 
 export function GlobalSearchCommand() {
+  const { embedState } = useEmbedding();
   const { setOpen } = useGlobalSearch();
   const isMac =
     typeof navigator !== 'undefined' && /(Mac)/i.test(navigator.userAgent);
+
+  if (embedState.hideGlobalSearch) return null;
 
   return (
     <Button

@@ -18,6 +18,7 @@ import {
   CommandList,
   CommandSeparator,
 } from '@/components/ui/command';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { projectCollectionUtils } from '@/features/projects';
 
 import { recordAccess, type AccessedItemType } from './access-history';
@@ -225,8 +226,10 @@ export function GlobalSearchProvider({
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const { embedState } = useEmbedding();
 
   useEffect(() => {
+    if (embedState.hideGlobalSearch) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
@@ -235,7 +238,7 @@ export function GlobalSearchProvider({
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [embedState.hideGlobalSearch]);
 
   return (
     <GlobalSearchContext.Provider value={{ open, setOpen }}>
