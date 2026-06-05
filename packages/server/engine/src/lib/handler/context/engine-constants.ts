@@ -192,7 +192,7 @@ export class EngineConstants {
         })
     }
 
-    public static fromExecuteTriggerInput(input: ExecuteTriggerOperation<TriggerHookType>): EngineConstants {
+    public static fromExecuteTriggerInput(input: ResolvedExecuteTriggerOperation<TriggerHookType>): EngineConstants {
         return new EngineConstants({
             flowId: input.flowVersion.flowId,
             flowVersionId: input.flowVersion.id,
@@ -254,6 +254,10 @@ const addTrailingSlashIfMissing = (url: string): string => {
 
 export type ResolvedBeginExecuteFlowOperation = Omit<BeginExecuteFlowOperation, 'triggerPayload'> & {
     triggerPayload: unknown
+}
+
+export type ResolvedExecuteTriggerOperation<HT extends TriggerHookType> = Omit<ExecuteTriggerOperation<HT>, 'triggerPayload'> & {
+    triggerPayload?: unknown
 }
 
 export type ResolvedResumeExecuteFlowOperation = Omit<ResumeExecuteFlowOperation, 'resumePayload'> & {

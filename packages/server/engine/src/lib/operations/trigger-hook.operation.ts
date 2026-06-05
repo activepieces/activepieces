@@ -6,14 +6,22 @@ import {
     ExecuteTriggerResponse,
     TriggerHookType,
 } from '@activepieces/shared'
-import { EngineConstants } from '../handler/context/engine-constants'
+import { EngineConstants, ResolvedExecuteTriggerOperation } from '../handler/context/engine-constants'
 import { triggerHelper } from '../helper/trigger-helper'
 import { utils } from '../utils'
+import { resolveJobPayload } from './utils/resolve-job-payload'
 
 
 export const triggerHookOperation = {
     execute: async (operation: ExecuteTriggerOperation<TriggerHookType>): Promise<EngineResponse<ExecuteTriggerResponse<TriggerHookType>>> => {
-        const input = operation as ExecuteTriggerOperation<TriggerHookType>
+        const input: ResolvedExecuteTriggerOperation<TriggerHookType> = {
+            ...operation,
+            triggerPayload: await resolveJobPayload({
+                payload: operation.triggerPayload,
+                apiUrl: operation.internalApiUrl,
+                engineToken: operation.engineToken,
+            }),
+        }
         const { data: output, error } = await utils.tryCatchAndThrowOnEngineError(() =>
             triggerHelper.executeTrigger({
                 params: input,

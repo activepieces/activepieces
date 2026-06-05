@@ -177,14 +177,6 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
             await jobBroker(log).extendLock(input)
         },
 
-        async getPayloadFile(input) {
-            const { data } = await fileService(log).getDataOrThrow({
-                fileId: input.fileId,
-                projectId: input.projectId,
-            })
-            return data
-        },
-
         async getPieceArchive(input) {
             const { data } = await fileService(log).getDataOrThrow({
                 fileId: input.archiveId,
