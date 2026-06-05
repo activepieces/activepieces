@@ -125,6 +125,7 @@ export function createSandbox(
     return {
         id: sandboxId,
         start: async ({ flowVersionId, platformId, mounts }) => {
+            killedByShutdown = false
             if (isReady()) {
                 return
             }
