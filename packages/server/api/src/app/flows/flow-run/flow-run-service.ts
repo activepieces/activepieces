@@ -185,7 +185,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     return addToQueue({
                         flowRun: updatedFlowRun,
                         platformId,
-                        payload: await resolveStepOutput({ step: triggerStep, projectId: oldFlowRun.projectId, log }),
+                        payload: await resolveStepOutput({ step: triggerStep, flowRun: oldFlowRun, log }),
                         streamStepProgress: StreamStepProgress.NONE,
                         executeTrigger: true,
                         executionType: ExecutionType.BEGIN,
@@ -209,7 +209,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 )
                 const triggerStep = oldFlowRun.steps?.[latestFlowVersion.trigger.name]
                 const triggerFailed = triggerStep?.status === StepOutputStatus.FAILED
-                const payload = await resolveStepOutput({ step: triggerStep, projectId: oldFlowRun.projectId, log })
+                const payload = await resolveStepOutput({ step: triggerStep, flowRun: oldFlowRun, log })
                 return this.start({
                     flowId: oldFlowRun.flowId,
                     payload,
@@ -656,7 +656,7 @@ function queryBuilderForFlowRun(repo: Repository<FlowRun>): SelectQueryBuilder<F
         .addSelect(['"flowVersion"."displayName"'])
 }
 
-async function resolveStepOutput({ step, projectId, log }: ResolveStepOutputParams): Promise<unknown> {
+async function resolveStepOutput({ step, flowRun, log }: ResolveStepOutputParams): Promise<unknown> {
     if (isNil(step)) {
         return undefined
     }
@@ -665,12 +665,12 @@ async function resolveStepOutput({ step, projectId, log }: ResolveStepOutputPara
     }
     const ref = step.output as LogSliceRef
     const file = await fileService(log).getDataOrUndefined({
-        projectId,
+        projectId: flowRun.projectId,
         fileId: ref.fileId,
         type: FileType.FLOW_RUN_LOG_SLICE,
     })
     if (isNil(file)) {
-        log.warn({ fileId: ref.fileId, projectId }, '[resolveStepOutput] sliced step output file not found; the retried run will start without the trigger payload')
+        log.warn({ fileId: ref.fileId, flowRunId: flowRun.id, flowId: flowRun.flowId, projectId: flowRun.projectId }, '[resolveStepOutput] sliced step output file not found; the retried run will start without the trigger payload')
         return undefined
     }
     return JSON.parse(file.data.toString('utf-8'))
@@ -754,7 +754,7 @@ type GetOneParams = {
 
 type ResolveStepOutputParams = {
     step: StepOutput | undefined
-    projectId: ProjectId
+    flowRun: FlowRun
     log: FastifyBaseLogger
 }
 
