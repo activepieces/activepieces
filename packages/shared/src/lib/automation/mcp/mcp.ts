@@ -31,6 +31,11 @@ export type McpServer = z.infer<typeof McpServer>
 
 export type ProjectScopedMcpServer = McpServer & { projectId: string }
 
+export type McpToolContext = {
+    mcp: ProjectScopedMcpServer
+    userId?: string
+}
+
 export const UpdateMcpServerRequest = z.object({
     disabledTools: z.array(z.string()).optional(),
 })

@@ -1,8 +1,11 @@
 import {
+    ActivepiecesError,
     apId,
     ChatConversation,
+    ChatConversationStatus,
     ChatHistoryMessage,
     CreateChatConversationRequest,
+    ErrorCode,
     PersistedChatMessage,
     SeekPage,
     spreadIfDefined,
@@ -49,6 +52,17 @@ export const chatService = (log: FastifyBaseLogger) => ({
 
         const queryBuilder = chatHelpers.conversationRepo()
             .createQueryBuilder('chat_conversation')
+            .select([
+                'chat_conversation.id',
+                'chat_conversation.created',
+                'chat_conversation.updated',
+                'chat_conversation.platformId',
+                'chat_conversation.projectId',
+                'chat_conversation.userId',
+                'chat_conversation.title',
+                'chat_conversation.modelName',
+                'chat_conversation.status',
+            ])
             .where({ platformId, userId })
 
         const { data, cursor: paginationCursor } = await paginator.paginate(queryBuilder)
@@ -74,6 +88,12 @@ export const chatService = (log: FastifyBaseLogger) => ({
 
     async deleteConversation({ id, platformId, userId }: ConversationIdentifier): Promise<void> {
         const conversation = await this.getConversationOrThrow({ id, platformId, userId })
+        if (conversation.status === ChatConversationStatus.STREAMING) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: 'Cannot delete a conversation while an agent is running. Please cancel it first.' },
+            })
+        }
         await chatHelpers.conversationRepo().delete(conversation.id)
         log.info({ conversationId: id, platformId, userId }, '[chatService] Conversation deleted')
     },

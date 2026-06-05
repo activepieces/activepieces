@@ -34,7 +34,7 @@
   "Finds a branch by name and returns its details.": "Encuentra una rama por nombre y devuelve sus detalles.",
   "Finds an issue based title.": "Encuentra un título basado en incidencias.",
   "Finds a user by their login name.": "Encuentra un usuario por su nombre de usuario.",
-  "Create a GitHub Gist": "Create a GitHub Gist",
+  "Create a GitHub Gist. Requires an OAuth connection — Gists cannot be created with GitHub App authentication.": "Crear GitHub Gist. Requiere una conexión OAuth — Las listas no se pueden crear con autenticación de la aplicación de GitHub.",
   "Make a custom API call to a specific endpoint": "Hacer una llamada API personalizada a un extremo específico",
   "Repository": "Repositorio",
   "Title": "Título",

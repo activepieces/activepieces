@@ -51,10 +51,10 @@ const BuilderPage = () => {
     selectedStepName,
     removeAllStepTestsListeners,
     selectedStep,
-    testPanelView,
-    isTestPanelOpen,
-    setTestPanelView,
-    setTestPanelOpen,
+    stepDataPanelView,
+    isStepDataPanelOpen,
+    setStepDataPanelView,
+    setStepDataPanelOpen,
   ] = useBuilderStateContext((state) => [
     state.flowVersion,
     state.rightSidebar,
@@ -64,10 +64,10 @@ const BuilderPage = () => {
       state.selectedStep ?? '',
       state.flowVersion.trigger,
     ),
-    state.testPanelView,
-    state.isTestPanelOpen,
-    state.setTestPanelView,
-    state.setTestPanelOpen,
+    state.stepDataPanelView,
+    state.isStepDataPanelOpen,
+    state.setStepDataPanelView,
+    state.setStepDataPanelOpen,
   ]);
   useEffect(() => {
     return () => {
@@ -85,11 +85,11 @@ const BuilderPage = () => {
   }, []);
   const isSplitForPiece =
     rightSidebar === RightSideBarType.PIECE_SETTINGS &&
-    testPanelView === 'split' &&
-    isTestPanelOpen;
+    stepDataPanelView === 'split' &&
+    isStepDataPanelOpen;
   const prefersSplitLayout =
     rightSidebar === RightSideBarType.PIECE_SETTINGS &&
-    testPanelView === 'split';
+    stepDataPanelView === 'split';
 
   const rightHandleRef = useRef<PanelImperativeHandle>(null);
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
@@ -120,13 +120,18 @@ const BuilderPage = () => {
     const observer = new ResizeObserver((entries) => {
       const width = entries[0]?.contentRect.width ?? 0;
       if (width > 0 && width < SPLIT_MODE_COLLAPSE_THRESHOLD_PX) {
-        setTestPanelView('drawer');
-        setTestPanelOpen(false);
+        setStepDataPanelView('drawer');
+        setStepDataPanelOpen(false);
       }
     });
     observer.observe(el);
     return () => observer.disconnect();
-  }, [isSplitForPiece, isDraggingHandle, setTestPanelView, setTestPanelOpen]);
+  }, [
+    isSplitForPiece,
+    isDraggingHandle,
+    setStepDataPanelView,
+    setStepDataPanelOpen,
+  ]);
   const { pieceModel, refetch: refetchPiece } =
     piecesHooks.usePieceModelForStepSettings({
       name: selectedStep?.settings.pieceName,

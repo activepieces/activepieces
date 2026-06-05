@@ -1,6 +1,6 @@
 import { createServer } from 'http'
 import os from 'os'
-import { systemUsage } from '@activepieces/server-utils'
+import { apVersionUtil, systemUsage } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
     ConsumeJobRequest,
@@ -12,6 +12,7 @@ import {
     tryCatch,
     WebsocketServerEvent,
     WorkerMachineHealthcheckRequest,
+    WorkerProps,
     WorkerSettingsResponse,
     WorkerToApiContract,
 } from '@activepieces/shared'
@@ -29,6 +30,10 @@ import { JobContext, JobResult, JobResultKind } from './execute/types'
 
 
 const tracer = trace.getTracer('worker')
+
+const AP_VERSION = apVersionUtil.getCurrentRelease()
+
+const VERSION_MISMATCH_POLL_PAUSE_MS = 10_000
 
 let socket: Socket | null = null
 let polling = false
@@ -141,6 +146,13 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
     workerLog.info('Polling worker started')
 
     while (polling && connectionGeneration === generation) {
+        const appVersion = workerSettings.getSettings().APP_VERSION
+        if (appVersion !== AP_VERSION) {
+            workerLog.warn({ appVersion, workerVersion: AP_VERSION }, 'Connected app version mismatch — pausing polling until reconnect to a compatible app')
+            await sleep(VERSION_MISMATCH_POLL_PAUSE_MS)
+            continue
+        }
+
         const { data: machineInfo, error: machineError } = await tryCatch(buildMachineInfo)
         if (machineError) {
             workerLog.error({ error: machineError }, 'Failed to build machine info')
@@ -224,7 +236,7 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
             log.debug({ handlerType: handler.jobType }, 'Executing job with handler')
             const { data: result, error } = await tryCatch(() => handler.execute(ctx, jobData))
             if (error) {
-                log.error({ error }, 'Job execution failed')
+                log.error({ err: error }, 'Job execution failed')
                 span.recordException(error)
                 throw error
             }
@@ -274,7 +286,7 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
     })
 }
 
-function getWorkerProps(): Record<string, string> {
+function getWorkerProps(): WorkerProps {
     try {
         const settings = workerSettings.getSettings()
         return {
@@ -282,6 +294,7 @@ function getWorkerProps(): Record<string, string> {
             WORKER_CONCURRENCY: system.get(WorkerSystemProp.WORKER_CONCURRENCY)!,
             SANDBOX_MEMORY_LIMIT: settings.SANDBOX_MEMORY_LIMIT,
             REUSE_SANDBOX: system.get(WorkerSystemProp.REUSE_SANDBOX) ?? 'false',
+            version: AP_VERSION,
         }
     }
     catch {
