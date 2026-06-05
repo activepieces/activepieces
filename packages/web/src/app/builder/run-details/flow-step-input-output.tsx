@@ -55,11 +55,16 @@ export const FlowStepInputOutput = () => {
     ],
   );
   const isAgent = isRunAgent(selectedStep);
+  const isTrigger =
+    !isNil(selectedStep) && flowStructureUtil.isTrigger(selectedStep.type);
   const [requestedTab, setActiveTab] = useState<RunActiveTab>(
     isAgent ? 'timeline' : 'output',
   );
   const activeTab: RunActiveTab =
-    requestedTab === 'timeline' && !isAgent ? 'output' : requestedTab;
+    (requestedTab === 'timeline' && !isAgent) ||
+    (requestedTab === 'input' && isTrigger)
+      ? 'output'
+      : requestedTab;
   const selectedStepOutput = useMemo(() => {
     return run && selectedStep && run.steps
       ? flowRunUtils.extractStepOutput(
@@ -217,7 +222,9 @@ export const FlowStepInputOutput = () => {
         >
           <div className="flex items-center justify-between gap-2 shrink-0 mb-2">
             <TabsList className="h-9">
-              <TabsTrigger value="input">{t('Input')}</TabsTrigger>
+              {!isTrigger && (
+                <TabsTrigger value="input">{t('Input')}</TabsTrigger>
+              )}
               {isAgent && (
                 <TabsTrigger value="timeline">{t('Timeline')}</TabsTrigger>
               )}
@@ -226,14 +233,16 @@ export const FlowStepInputOutput = () => {
             <StepDataPanelViewToggle />
           </div>
 
-          <TabsContent value="input">
-            <DataDisplayTabs
-              data={selectedStepOutput.input}
-              title={t('Input')}
-              copyableData={selectedStepOutput.input}
-              downloadFileName={`${selectedStep.name}-input`}
-            />
-          </TabsContent>
+          {!isTrigger && (
+            <TabsContent value="input">
+              <DataDisplayTabs
+                data={selectedStepOutput.input}
+                title={t('Input')}
+                copyableData={selectedStepOutput.input}
+                downloadFileName={`${selectedStep.name}-input`}
+              />
+            </TabsContent>
+          )}
 
           {isAgent && (
             <TabsContent value="timeline">
