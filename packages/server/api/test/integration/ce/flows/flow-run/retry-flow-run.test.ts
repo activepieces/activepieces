@@ -195,4 +195,62 @@ describe('Retry flow run', () => {
 
         offloadSpy.mockRestore()
     })
+
+    it('should fail with 404 on ON_LATEST_VERSION retry when the sliced trigger output file is gone', async () => {
+        const projectId = ctx.project.id
+        const platformId = ctx.platform.id
+
+        const flow = createMockFlow({ projectId })
+        await db.save('flow', flow)
+
+        const flowVersion = createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.LOCKED,
+        })
+        await db.save('flow_version', flowVersion)
+
+        // The trigger output is a slice ref, but the backing FLOW_RUN_LOG_SLICE file was never
+        // created (simulating a deleted / orphaned slice) — retry must fail rather than run with no payload.
+        const sliceRef = { fileId: 'missing-slice-file-id', size: 75770, url: 'http://localhost/api/v1/files/missing-slice-file-id' }
+        const logContent = {
+            executionState: {
+                steps: {
+                    [flowVersion.trigger.name]: {
+                        type: FlowTriggerType.EMPTY,
+                        status: StepOutputStatus.SUCCEEDED,
+                        input: {},
+                        output: sliceRef,
+                        outputType: StepOutputType.SLICE,
+                    },
+                },
+                tags: [],
+            },
+        }
+        const logData = Buffer.from(JSON.stringify(logContent), 'utf-8')
+        const logFile = await fileService(app.log).save({
+            projectId,
+            platformId,
+            type: FileType.FLOW_RUN_LOG,
+            data: logData,
+            size: logData.length,
+            compression: FileCompression.NONE,
+        })
+
+        const flowRun = createMockFlowRun({
+            projectId,
+            flowId: flow.id,
+            flowVersionId: flowVersion.id,
+            status: FlowRunStatus.SUCCEEDED,
+            environment: RunEnvironment.PRODUCTION,
+            logsFileId: logFile.id,
+        })
+        await db.save('flow_run', flowRun)
+
+        const response = await ctx.post(`/v1/flow-runs/${flowRun.id}/retry`, {
+            strategy: FlowRetryStrategy.ON_LATEST_VERSION,
+            projectId,
+        })
+
+        expect(response.statusCode).toBe(404)
+    })
 })

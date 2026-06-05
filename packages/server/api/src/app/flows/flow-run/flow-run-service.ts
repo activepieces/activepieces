@@ -169,6 +169,9 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 const flowVersion = await flowVersionService(log).getOneOrThrow(oldFlowRun.flowVersionId)
                 const triggerStep = oldFlowRun.steps?.[flowVersion.trigger.name]
                 const triggerFailed = triggerStep?.status === StepOutputStatus.FAILED
+                const triggerPayload = triggerFailed
+                    ? await resolveStepOutput({ step: triggerStep, flowRun: oldFlowRun, log })
+                    : undefined
 
                 await flowRunRepo().update({
                     id: oldFlowRun.id,
@@ -185,7 +188,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     return addToQueue({
                         flowRun: updatedFlowRun,
                         platformId,
-                        payload: await resolveStepOutput({ step: triggerStep, flowRun: oldFlowRun, log }),
+                        payload: triggerPayload,
                         streamStepProgress: StreamStepProgress.NONE,
                         executeTrigger: true,
                         executionType: ExecutionType.BEGIN,
@@ -670,8 +673,14 @@ async function resolveStepOutput({ step, flowRun, log }: ResolveStepOutputParams
         type: FileType.FLOW_RUN_LOG_SLICE,
     })
     if (isNil(file)) {
-        log.warn({ fileId: ref.fileId, flowRunId: flowRun.id, flowId: flowRun.flowId, projectId: flowRun.projectId }, '[resolveStepOutput] sliced step output file not found; the retried run will start without the trigger payload')
-        return undefined
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: {
+                entityType: 'file',
+                entityId: ref.fileId,
+                message: `Trigger output was offloaded to storage but its slice file is missing; flow run ${flowRun.id} cannot be retried without the trigger payload`,
+            },
+        })
     }
     return JSON.parse(file.data.toString('utf-8'))
 }
