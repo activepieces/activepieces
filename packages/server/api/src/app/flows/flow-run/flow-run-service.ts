@@ -670,6 +670,7 @@ async function resolveStepOutput({ step, projectId, log }: ResolveStepOutputPara
         type: FileType.FLOW_RUN_LOG_SLICE,
     })
     if (isNil(file)) {
+        log.warn({ fileId: ref.fileId, projectId }, '[resolveStepOutput] sliced step output file not found; the retried run will start without the trigger payload')
         return undefined
     }
     return JSON.parse(file.data.toString('utf-8'))
