@@ -2,7 +2,8 @@ import { EngineGenericError } from '@activepieces/shared'
 
 export const payloadFileClient = {
     get: async ({ apiUrl, engineToken, fileId }: GetPayloadFileRequest): Promise<Buffer> => {
-        const response = await fetch(`${apiUrl}v1/engine/files/${fileId}`, {
+        const baseUrl = apiUrl.endsWith('/') ? apiUrl : `${apiUrl}/`
+        const response = await fetch(`${baseUrl}v1/engine/files/${fileId}`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${engineToken}`,

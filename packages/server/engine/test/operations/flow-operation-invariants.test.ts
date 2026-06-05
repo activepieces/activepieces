@@ -126,6 +126,16 @@ describe('flow operation invariants', () => {
             await expect(flowOperation.execute(operation)).rejects.toThrow('executionState is missing in logs file')
         })
 
+        it('throws a descriptive error when steps is missing from executionState', async () => {
+            mockGetPayloadFile.mockReset()
+            mockGetPayloadFile.mockResolvedValue(Buffer.from(JSON.stringify({ executionState: { tags: [] } })))
+
+            const operation = makeResumeOperation()
+
+            await expect(flowOperation.execute(operation)).rejects.toThrow(EngineGenericError)
+            await expect(flowOperation.execute(operation)).rejects.toThrow('executionState is missing in logs file')
+        })
+
         it('proceeds past hydration when logs file has non-empty execution state', async () => {
             mockGetPayloadFile.mockReset()
             mockGetPayloadFile.mockResolvedValue(

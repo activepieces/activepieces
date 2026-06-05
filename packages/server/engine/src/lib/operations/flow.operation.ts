@@ -158,7 +158,7 @@ async function fetchExecutionStateFromLogs(logsFileId: string | undefined, opera
     }
     const buffer = await payloadFileClient.get({ apiUrl: operation.internalApiUrl, engineToken: operation.engineToken, fileId: logsFileId })
     const parsed = JSON.parse(buffer.toString('utf-8'))
-    if (isNil(parsed?.executionState)) {
+    if (isNil(parsed?.executionState?.steps)) {
         throw new EngineGenericError('ExecutionStateMissing', 'executionState is missing in logs file')
     }
     return parsed.executionState as ExecutionState
