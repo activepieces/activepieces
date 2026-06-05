@@ -183,7 +183,7 @@ The **UX Quality** and **Output Quality** rules below are non-negotiable for eve
     "@activepieces/piece-<name>": ["packages/pieces/community/<name>/src/index.ts"]
     ```
     **Build fails without this step.** (New pieces only — an existing piece is already registered.)
--   [ ] **Editing an existing piece? Bump its `version` in `package.json`** per semver — see the **"Versioning an existing piece"** section. Adding an action/trigger is usually MINOR; a bug fix is usually PATCH.
+-   [ ] **Editing an existing piece? Bump its `version` in `package.json`** per semver — see the **"Versioning an existing piece"** section. Adding an action/trigger or fixing a bug is PATCH; only breaking changes are MAJOR.
 
 #### Build and lint
 
@@ -220,12 +220,11 @@ Pick the segment to bump by what your change does to the piece's *public surface
 | Bump | When | Examples |
 |---|---|---|
 | **MAJOR** | You break existing flows | Remove an action/trigger; remove a prop (required *or* optional); add a **required** prop to an existing action/trigger; remove an output attribute; change what an existing action/trigger does |
-| **MINOR** | You add capability without breaking anything | Add a new action or trigger; add an **optional** prop; add a new attribute to an output |
-| **PATCH** | You fix a bug without touching the public surface | Fix incorrect behavior, error handling, a typo in a description |
+| **PATCH** | All non-breaking changes | Add a new action or trigger; add an **optional** prop; add a new attribute to an output; fix a bug without touching the public surface |
 
-Rule of thumb: **any removal is breaking, any new required prop is breaking, everything else is not.** When in doubt between two segments, prefer the higher one — under-bumping silently breaks live flows, which is far worse than a conservative bump.
+Rule of thumb: **any removal is breaking, any new required prop is breaking, everything else is a PATCH.** When in doubt between PATCH and MAJOR, prefer MAJOR — under-bumping silently breaks live flows.
 
-Map this onto the two existing-piece modes: *Add action/trigger* is almost always a **MINOR** bump (unless the new prop you add to a shared/existing action is required → MAJOR); *Fix a bug* is a **PATCH** (unless the fix changes documented behavior → MAJOR). Source of truth: `docs/build-pieces/piece-reference/piece-versioning.mdx`.
+Map this onto the two existing-piece modes: *Add action/trigger* → **PATCH**; *Fix a bug* → **PATCH** (unless the fix changes documented behavior → MAJOR). Source of truth: `docs/build-pieces/piece-reference/piece-versioning.mdx`.
 
 ---
 
