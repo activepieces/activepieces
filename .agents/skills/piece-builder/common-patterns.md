@@ -64,12 +64,6 @@ const response = await httpClient.sendRequest({
 });
 ```
 
-### Available HttpMethod values
-`GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS`
-
-### Available AuthenticationType values
-`BEARER_TOKEN`, `BASIC`
-
 ---
 
 ## Common API Helper Pattern
