@@ -1,5 +1,7 @@
-import { FlowRetryStrategy, FlowRunStatus, FlowVersionState, RunEnvironment } from '@activepieces/shared'
+import { FileCompression, FileType, FlowRetryStrategy, FlowRunStatus, FlowTriggerType, FlowVersionState, RunEnvironment, StepOutputStatus, StepOutputType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
+import { fileService } from '../../../../../src/app/file/file.service'
+import { payloadOffloader } from '../../../../../src/app/workers/payload-offloader'
 import { createTestContext, TestContext } from '../../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../../helpers/mocks'
@@ -110,5 +112,87 @@ describe('Retry flow run', () => {
         })
 
         expect(response.statusCode).toBe(400)
+    })
+
+    it('should materialize a sliced trigger output on ON_LATEST_VERSION retry instead of replaying the LogSliceRef', async () => {
+        const projectId = ctx.project.id
+        const platformId = ctx.platform.id
+
+        const flow = createMockFlow({ projectId })
+        await db.save('flow', flow)
+
+        const flowVersion = createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.LOCKED,
+        })
+        await db.save('flow_version', flowVersion)
+
+        // The real (>32 KB) trigger payload that was offloaded to object storage on the original run.
+        const realTriggerOutput = {
+            issues: Array.from({ length: 200 }, (_, i) => ({ id: i, summary: 'x'.repeat(300) })),
+        }
+        const sliceData = Buffer.from(JSON.stringify(realTriggerOutput), 'utf-8')
+        const sliceFile = await fileService(app.log).save({
+            projectId,
+            platformId,
+            type: FileType.FLOW_RUN_LOG_SLICE,
+            data: sliceData,
+            size: sliceData.length,
+            compression: FileCompression.NONE,
+        })
+
+        // The run log stores a LogSliceRef in the trigger's output slot, not the real data.
+        const sliceRef = { fileId: sliceFile.id, size: sliceData.length, url: `http://localhost/api/v1/files/${sliceFile.id}` }
+        const logContent = {
+            executionState: {
+                steps: {
+                    [flowVersion.trigger.name]: {
+                        type: FlowTriggerType.EMPTY,
+                        status: StepOutputStatus.SUCCEEDED,
+                        input: {},
+                        output: sliceRef,
+                        outputType: StepOutputType.SLICE,
+                    },
+                },
+                tags: [],
+            },
+        }
+        const logData = Buffer.from(JSON.stringify(logContent), 'utf-8')
+        const logFile = await fileService(app.log).save({
+            projectId,
+            platformId,
+            type: FileType.FLOW_RUN_LOG,
+            data: logData,
+            size: logData.length,
+            compression: FileCompression.NONE,
+        })
+
+        const flowRun = createMockFlowRun({
+            projectId,
+            flowId: flow.id,
+            flowVersionId: flowVersion.id,
+            status: FlowRunStatus.SUCCEEDED,
+            environment: RunEnvironment.PRODUCTION,
+            logsFileId: logFile.id,
+        })
+        await db.save('flow_run', flowRun)
+
+        const offloadSpy = vi.spyOn(payloadOffloader, 'offloadPayload')
+
+        const response = await ctx.post(`/v1/flow-runs/${flowRun.id}/retry`, {
+            strategy: FlowRetryStrategy.ON_LATEST_VERSION,
+            projectId,
+        })
+
+        expect(response.statusCode).toBe(200)
+        expect(offloadSpy).toHaveBeenCalled()
+
+        // The payload enqueued for the new run must be the materialized trigger data,
+        // never the raw LogSliceRef pointer.
+        const enqueuedPayload = offloadSpy.mock.calls[offloadSpy.mock.calls.length - 1][1]
+        expect(enqueuedPayload).toEqual(realTriggerOutput)
+        expect(enqueuedPayload).not.toHaveProperty('fileId')
+
+        offloadSpy.mockRestore()
     })
 })
