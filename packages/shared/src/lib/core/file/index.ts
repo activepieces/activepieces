@@ -76,3 +76,14 @@ export const File = z.object({
 export type File = z.infer<typeof File> & {
     data: Buffer
 }
+
+const SOCKET_BUFFER_OVERHEAD_MB = 4
+
+export function maxSocketHttpBufferSizeBytes({ webhookPayloadSizeMb, logFileRunSizeMb }: MaxSocketHttpBufferSizeParams): number {
+    return (Math.max(webhookPayloadSizeMb, logFileRunSizeMb) + SOCKET_BUFFER_OVERHEAD_MB) * 1024 * 1024
+}
+
+type MaxSocketHttpBufferSizeParams = {
+    webhookPayloadSizeMb: number
+    logFileRunSizeMb: number
+}

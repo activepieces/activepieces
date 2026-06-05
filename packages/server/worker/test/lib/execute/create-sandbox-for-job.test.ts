@@ -50,6 +50,7 @@ type Settings = {
     APP_WEBHOOK_SECRETS: string
     MAX_FLOW_RUN_LOG_SIZE_MB: number
     MAX_FILE_SIZE_MB: number
+    MAX_WEBHOOK_PAYLOAD_SIZE_MB: number
     SANDBOX_MEMORY_LIMIT: string
     SANDBOX_PROPAGATED_ENV_VARS: string[]
     DEV_PIECES: string[]
@@ -76,6 +77,7 @@ function buildSettings(overrides: Partial<Settings> = {}): Settings {
         APP_WEBHOOK_SECRETS: '{}',
         MAX_FLOW_RUN_LOG_SIZE_MB: 10,
         MAX_FILE_SIZE_MB: 10,
+        MAX_WEBHOOK_PAYLOAD_SIZE_MB: 10,
         SANDBOX_MEMORY_LIMIT: '1048576',
         SANDBOX_PROPAGATED_ENV_VARS: [],
         DEV_PIECES: [],

@@ -90,6 +90,7 @@ export const WorkerSettingsResponse = z.object({
     APP_WEBHOOK_SECRETS: z.string(),
     MAX_FLOW_RUN_LOG_SIZE_MB: z.number(),
     MAX_FILE_SIZE_MB: z.number(),
+    MAX_WEBHOOK_PAYLOAD_SIZE_MB: z.number(),
     SANDBOX_MEMORY_LIMIT: z.string(),
     SANDBOX_PROPAGATED_ENV_VARS: z.array(z.string()),
     DEV_PIECES: z.array(z.string()),
