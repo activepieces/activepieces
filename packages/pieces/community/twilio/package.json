@@ -1,6 +1,7 @@
 {
   "name": "@activepieces/piece-twilio",
-  "version": "0.4.5",
+  "version": "0.4.6",
+  "aiReady": true,
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
