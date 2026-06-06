@@ -215,9 +215,22 @@ async function extractStepView(steps: Record<string, StepOutput>, engineApi: Eng
         const error = step.status === StepOutputStatus.FAILED && step.errorMessage !== undefined
             ? { message: step.errorMessage }
             : undefined
-        result[stepName] = { output, error }
+        result[stepName] = buildStepReferenceView({ output, error })
     }
     return result
+}
+
+// The step-output-nesting schema (v22) exposes a step as `{ output, error }`,
+// so references are authored as `{{ step.output.field }}`. To keep flows that
+// still use the pre-nesting form (`{{ step.field }}`) working — e.g. imported
+// templates, MCP/API-created flows, or any flow that reached v22 without the
+// rewrite migration — also surface the output's own keys at the top level.
+// The `output`/`error` accessors always win over a colliding output key.
+function buildStepReferenceView({ output, error }: { output: unknown, error: unknown }): Record<string, unknown> {
+    if (!isNil(output) && typeof output === 'object' && !Array.isArray(output)) {
+        return { ...output, output, error }
+    }
+    return { output, error }
 }
 
 async function maybeSliceOutput(value: unknown, engineApi?: EngineApiConfig): Promise<{ ref: LogSliceRef } | undefined> {

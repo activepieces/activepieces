@@ -98,14 +98,21 @@ else
   RESPONSE_BODY_JSON="$RESPONSE_BODY"
 fi
 
+# Schema version of the imported flow. Defaults to "17" so the IMPORT_FLOW
+# migration chain runs. Set to the latest version (e.g. "22") to import a flow
+# verbatim — used by the data-mapping smoke to exercise step references that
+# reach the engine without being rewritten by a migration.
+FLOW_SCHEMA_VERSION="${FLOW_SCHEMA_VERSION:-17}"
+
 IMPORT_PAYLOAD=$(jq -n \
   --arg code "$CODE_STEP_SRC" \
+  --arg schemaVersion "$FLOW_SCHEMA_VERSION" \
   --argjson body "$RESPONSE_BODY_JSON" \
   '{
     type: "IMPORT_FLOW",
     request: {
       displayName: "Benchmark Flow",
-      schemaVersion: "17",
+      schemaVersion: $schemaVersion,
       notes: [],
       trigger: {
         name: "trigger",

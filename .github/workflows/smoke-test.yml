@@ -61,6 +61,19 @@ jobs:
           chmod +x smoke-test/verify-delay.sh
           smoke-test/verify-delay.sh
 
+      - name: Setup data-mapping flow
+        id: setup-data-mapping
+        run: |
+          chmod +x benchmark/setup.sh
+          FLOW_ID=$(FLOW_SCHEMA_VERSION=22 RESPONSE_BODY='{"name":"{{trigger.body.firstName}}"}' benchmark/setup.sh)
+          echo "flow_id=$FLOW_ID" >> "$GITHUB_OUTPUT"
+          echo "Data-mapping flow ID: $FLOW_ID"
+
+      - name: Run data-mapping smoke test
+        run: |
+          chmod +x smoke-test/verify-data-mapping.sh
+          smoke-test/verify-data-mapping.sh "${{ steps.setup-data-mapping.outputs.flow_id }}"
+
       - name: Restart stack in SANDBOX_PROCESS mode
         run: |
           docker compose -f benchmark/docker-compose.yml down -v
