@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/button';
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { cn } from '@/lib/utils';
 
 import { InvalidStepIcon } from '../../../../components/custom/alert-icon';
 import {
@@ -89,94 +88,90 @@ const BranchSingleCondition = ({
       ('secondValue' in condition && condition.secondValue?.length === 0);
   return (
     <>
-      <div className="flex items-center gap-2">
-        {isInvalid && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div>
-                <InvalidStepIcon className="h-4 w-4 shrink-0"></InvalidStepIcon>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              {t('Incomplete condition')}
-            </TooltipContent>
-          </Tooltip>
-        )}
-        <div
-          className={cn('grid gap-2 grow', {
-            'grid-cols-2': isSingleValueCondition,
-            'grid-cols-3': !isSingleValueCondition,
-          })}
-        >
-          <FormField
-            name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.firstValue`}
-            control={form.control}
-            render={({ field }) => {
-              return (
-                <FormItem>
-                  <TextInputWithMentions
-                    disabled={readonly}
-                    placeholder={t('First value')}
-                    onChange={(value) => {
-                      field.onChange(value);
-                      form.trigger();
-                    }}
-                    initialValue={field.value}
-                  ></TextInputWithMentions>
-                </FormItem>
-              );
-            }}
-          />
-          <FormField
-            name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.operator`}
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <SearchableSelect
+      <div className="flex flex-col gap-3 grow">
+        <FormField
+          name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.firstValue`}
+          control={form.control}
+          render={({ field }) => {
+            return (
+              <FormItem className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <Label>{t('First value')}</Label>
+                  {isInvalid && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div>
+                          <InvalidStepIcon className="h-4 w-4 shrink-0"></InvalidStepIcon>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        {t('Incomplete condition')}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
+                <TextInputWithMentions
                   disabled={readonly}
-                  value={field.value}
-                  options={operationOptions}
-                  placeholder={''}
-                  onChange={(e) => {
-                    if (
-                      isSingleValueCondition &&
-                      e !== null &&
-                      !singleValueConditions.includes(e as BranchOperator)
-                    ) {
-                      //TODO: fix this
-                      //@ts-expect-ignore
-                      form.setValue(
-                        `settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.secondValue`,
-                        '' as any,
-                      );
-                    }
-                    field.onChange(e);
+                  onChange={(value) => {
+                    field.onChange(value);
                     form.trigger();
                   }}
-                />
+                  initialValue={field.value}
+                ></TextInputWithMentions>
+              </FormItem>
+            );
+          }}
+        />
+        <FormField
+          name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.operator`}
+          control={form.control}
+          render={({ field }) => (
+            <FormItem className="flex flex-col gap-1">
+              <Label>{t('Condition')}</Label>
+              <SearchableSelect
+                disabled={readonly}
+                value={field.value}
+                options={operationOptions}
+                placeholder={''}
+                onChange={(e) => {
+                  if (
+                    isSingleValueCondition &&
+                    e !== null &&
+                    !singleValueConditions.includes(e as BranchOperator)
+                  ) {
+                    //TODO: fix this
+                    //@ts-expect-ignore
+                    form.setValue(
+                      `settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.secondValue`,
+                      '' as any,
+                    );
+                  }
+                  field.onChange(e);
+                  form.trigger();
+                }}
+              />
+            </FormItem>
+          )}
+        />
+        {!isSingleValueCondition && (
+          <FormField
+            name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.secondValue`}
+            control={form.control}
+            render={({ field }) => (
+              <FormItem className="flex flex-col gap-1">
+                <Label>{t('Second value')}</Label>
+                <TextInputWithMentions
+                  disabled={readonly}
+                  initialValue={field.value || ''}
+                  onChange={(value) => {
+                    field.onChange(value);
+                    form.trigger();
+                  }}
+                ></TextInputWithMentions>
               </FormItem>
             )}
           />
-          {!isSingleValueCondition && (
-            <FormField
-              name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.secondValue`}
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <TextInputWithMentions
-                    placeholder={t('Second value')}
-                    disabled={readonly}
-                    initialValue={field.value || ''}
-                    onChange={(value) => {
-                      field.onChange(value);
-                      form.trigger();
-                    }}
-                  ></TextInputWithMentions>
-                </FormItem>
-              )}
-            />
-          )}
-        </div>
+        )}
       </div>
 
       <div className="flex justify-start items-center gap-2 mt-2">
