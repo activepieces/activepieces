@@ -34,7 +34,7 @@ export function ToolShimmerPills({
     names: pieceNames,
   });
 
-  const description = lastStep?.description ?? lastThinkingStatus;
+  const description = lastThinkingStatus ?? lastStep?.description;
 
   return (
     <AnimatePresence mode="wait">
