@@ -364,7 +364,7 @@ function rewriteAllReferences<C = unknown>({ input, loopItems, conditions, trigg
     const stepNames = flowStructureUtil.getAllSteps(trigger).map(s => s.name)
     return {
         input: input ? expressionRewriter.rewriteDeep(input, stepNames, true) : undefined,
-        loopItems: loopItems ? expressionRewriter.rewriteStepReferences({ input: loopItems, stepNames, idempotent: true }) : loopItems,
+        loopItems: loopItems != null ? expressionRewriter.rewriteStepReferences({ input: loopItems, stepNames, idempotent: true }) : loopItems,
         conditions: conditions ? expressionRewriter.rewriteDeep(conditions, stepNames, true) : conditions,
     }
 }
