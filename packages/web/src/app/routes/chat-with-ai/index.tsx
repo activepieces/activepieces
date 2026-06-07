@@ -109,18 +109,20 @@ export function ChatWithAIPage() {
     }
   }, [selectedConversationId, pendingConversationId, renameValue, queryClient]);
 
-  const handleDelete = useCallback(async () => {
+  const handleDelete = useCallback(() => {
     const convId = selectedConversationId ?? pendingConversationId;
     if (!convId) return;
-    try {
-      await chatApi.deleteConversation(convId);
-      void queryClient.invalidateQueries({
-        queryKey: ['chat-conversations'],
-      });
-      handleNewChat();
-    } catch {
-      toast.error(t('Failed to delete conversation'));
-    }
+    handleNewChat();
+    chatApi.deleteConversation(convId).then(
+      () => {
+        void queryClient.invalidateQueries({
+          queryKey: ['chat-conversations'],
+        });
+      },
+      () => {
+        toast.error(t('Failed to delete conversation'));
+      },
+    );
   }, [
     selectedConversationId,
     pendingConversationId,
