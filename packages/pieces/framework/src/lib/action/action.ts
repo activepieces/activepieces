@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ActionContext } from '../context';
+import type { OutputSchema } from '../output-schema';
 import { ActionBase, Audience, AiMetadata } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { ExtractPieceAuthPropertyTypeForMethods, PieceAuthProperty } from '../property/authentication';
@@ -35,6 +36,7 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty | PieceAuthProperty[
   test?: ActionRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, ActionProps>
   requireAuth?: boolean
   errorHandlingOptions?: ErrorHandlingOptionsParam
+  outputSchema?: OutputSchema
   audience?: Audience
   aiMetadata?: AiMetadata
 }
@@ -50,6 +52,7 @@ export class IAction<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] |
     public readonly test: ActionRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, ActionProps>,
     public readonly requireAuth: boolean,
     public readonly errorHandlingOptions: ErrorHandlingOptionsParam,
+    public readonly outputSchema?: OutputSchema,
     public readonly audience?: Audience,
     public readonly aiMetadata?: AiMetadata,
   ) { }
@@ -84,6 +87,7 @@ export const createAction = <
         defaultValue: false,
       }
     },
+    params.outputSchema,
     params.audience,
     params.aiMetadata,
   )
