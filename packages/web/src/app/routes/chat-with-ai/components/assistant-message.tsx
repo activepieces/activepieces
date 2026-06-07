@@ -2,7 +2,7 @@ import { BatchProgressData, PlanStepUpdate } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, RefreshCw, Volume2, VolumeOff } from 'lucide-react';
 import { motion } from 'motion/react';
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useState } from 'react';
 
 import { Markdown } from '@/components/prompt-kit/markdown';
 import {
@@ -37,6 +37,7 @@ import { CopyIconButton } from './copy-icon-button';
 import { PlanProgressCard } from './plan-progress-card';
 import { ProjectPickerCard } from './project-picker-card';
 import { StreamingText } from './streaming-text';
+import { ToolShimmerPills } from './tool-shimmer-pills';
 
 const PROSE_CLASSES =
   'max-w-none break-words text-sm [&_p]:mb-4 [&_p:last-child]:mb-0 [&_table]:mb-4 [&_h1]:text-[18px] [&_h2]:text-[18px] [&_h3]:text-[18px]';
@@ -60,7 +61,7 @@ export const AssistantMessage = memo(function AssistantMessage({
   const {
     blocks,
     hasContent,
-    lastDisplayIdx: lastDisplayToolIdx,
+    lastDisplayIdx: _,
     lastTextIdx,
   } = useMemo(() => {
     const result: MessageBlock[] = [];
@@ -198,6 +199,7 @@ export const AssistantMessage = memo(function AssistantMessage({
   );
 
   const { isSpeaking, isSupported: isTtsSupported, speak, stop } = useTts();
+  const [isAccordionOpen, setIsAccordionOpen] = useState(false);
 
   const hasPlanMarker = blocks.some((b) => b.kind === 'plan-marker');
   const hasRenderedContent = blocks.some(
@@ -231,19 +233,37 @@ export const AssistantMessage = memo(function AssistantMessage({
       <Message>
         <div className="min-w-0 flex-1">
           {blocks.map((block, i) => {
+            const prevBlock = i > 0 ? blocks[i - 1] : null;
+            const needsSectionGap =
+              block.kind === 'thinking' && prevBlock?.kind === 'text';
             switch (block.kind) {
-              case 'thinking':
+              case 'thinking': {
+                const hasTextAfter = blocks
+                  .slice(i + 1)
+                  .some((b) => b.kind === 'text');
+                const isMessageStreaming =
+                  isStreaming &&
+                  i === lastThinkingIdx &&
+                  !hasActiveDisplayCard &&
+                  !hasTextAfter;
+                const lastStep =
+                  block.steps.length > 0
+                    ? block.steps[block.steps.length - 1]
+                    : null;
+                const lastToolStep =
+                  lastStep?.kind === 'tool' ? lastStep : null;
+                const lastThinkingStatus =
+                  block.steps.filter((s) => s.kind === 'thinking-status').at(-1)
+                    ?.text ?? null;
                 return (
-                  <div key={`thinking-${i}`} className="py-2">
+                  <div
+                    key={`thinking-${i}`}
+                    className={cn('py-2', needsSectionGap && 'mt-6')}
+                  >
                     <ThinkingBlock
                       thinkingSteps={block.steps}
                       reasoningText={block.reasoningText}
-                      isStreaming={
-                        isStreaming &&
-                        i === lastThinkingIdx &&
-                        !hasActiveDisplayCard &&
-                        i > lastDisplayToolIdx
-                      }
+                      isStreaming={isMessageStreaming}
                       thinkingDurationMs={
                         i === lastThinkingIdx
                           ? (
@@ -253,9 +273,29 @@ export const AssistantMessage = memo(function AssistantMessage({
                             ).thinkingDurationMs
                           : undefined
                       }
+                      onOpenChange={setIsAccordionOpen}
                     />
+                    {isMessageStreaming &&
+                      !isAccordionOpen &&
+                      lastStep &&
+                      (lastToolStep ? (
+                        <ToolShimmerPills
+                          toolSteps={block.steps.filter(
+                            (s): s is ThinkingStep & { kind: 'tool' } =>
+                              s.kind === 'tool',
+                          )}
+                          lastThinkingStatus={lastThinkingStatus}
+                        />
+                      ) : (
+                        lastStep.kind !== 'tool' && (
+                          <p className="pt-2 text-sm text-muted-foreground">
+                            {lastStep.text}
+                          </p>
+                        )
+                      ))}
                   </div>
                 );
+              }
               case 'text': {
                 const isActiveText = isStreaming && i === lastTextIdx;
                 return (
@@ -522,7 +562,10 @@ function AnsweredQuestionsCard({ answersText }: { answersText: string }) {
 
 function StreamingCursor() {
   return (
-    <span className="inline-block w-[3px] h-[1.1em] bg-foreground/70 rounded-sm align-text-bottom ml-0.5 animate-pulse" />
+    <span
+      className="inline-block w-[3px] h-[1.1em] bg-foreground/70 rounded-sm align-text-bottom ml-0.5 animate-pulse"
+      style={{ animationDuration: '3s' }}
+    />
   );
 }
 

@@ -132,8 +132,17 @@ export function ConnectionsRequiredCard({
                   className="gap-1.5"
                   onClick={() => {
                     setContinued(true);
+                    const confirmedConnections = connections.map((conn) => {
+                      const existing = existingConns[conn.piece];
+                      return {
+                        piece: conn.piece,
+                        displayName: conn.displayName,
+                        connectionExternalId: existing?.externalId ?? null,
+                      };
+                    });
                     onResolve({
                       message: 'All connections are ready, continue building.',
+                      connections: confirmedConnections,
                     });
                   }}
                 >
@@ -155,6 +164,10 @@ export function ConnectionsRequiredCard({
           setOpen={(open, createdConnection) => {
             if (!open) {
               if (createdConnection) {
+                setExistingConns((prev) => ({
+                  ...prev,
+                  [activeConnection.piece]: createdConnection,
+                }));
                 setConnectedSet((prev) => {
                   const next = new Set(prev);
                   next.add(activeConnection.piece);

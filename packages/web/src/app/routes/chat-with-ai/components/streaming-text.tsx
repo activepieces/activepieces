@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { Markdown } from '@/components/prompt-kit/markdown';
 
-const CHARS_PER_FRAME = 3;
+const CHARS_PER_FRAME = 2;
 
 export function StreamingText({
   text,
