@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   ChatContainerContent,
@@ -143,6 +143,8 @@ function ChatBoxContent({
 
   const showBanner = credits.creditsExhausted || credits.creditsWarning;
 
+  const [hasInput, setHasInput] = useState(false);
+
   const isEmpty = messages.length === 0 && !isLoadingHistory && !isStreaming;
 
   const cachedConversations = queryClient.getQueryData<
@@ -164,6 +166,7 @@ function ChatBoxContent({
               onSuggestionClick={(text) => void handleSend(text)}
               incognito={incognito}
               showFlowCards={!hasConversations}
+              hasInput={hasInput}
             />
           </motion.div>
         ) : (
@@ -273,6 +276,7 @@ function ChatBoxContent({
               isStreaming={isStreaming}
               onSend={handleSend}
               onStop={cancelStream}
+              onInputChange={setHasInput}
               selectedModel={modelName}
               onModelChange={setModelName}
               lastAssistantMessage={lastAssistantMessage}

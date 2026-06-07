@@ -13,10 +13,12 @@ export function EmptyState({
   onSuggestionClick,
   incognito,
   showFlowCards,
+  hasInput,
 }: {
   onSuggestionClick: (text: string) => void;
   incognito: boolean;
   showFlowCards: boolean;
+  hasInput: boolean;
 }) {
   const { data: currentUser } = userHooks.useCurrentUser();
   const firstName = currentUser?.firstName ?? '';
@@ -27,13 +29,24 @@ export function EmptyState({
         <Greeting firstName={firstName} incognito={incognito} />
       </div>
       {!incognito && (
-        <>
-          {showFlowCards && <FlowCards onSuggestionClick={onSuggestionClick} />}
-          <div className="max-w-3xl mx-auto px-6">
-            <Separator className="my-6" />
-            <TextSuggestions onSuggestionClick={onSuggestionClick} />
+        <div
+          className={cn(
+            'grid transition-all duration-300 ease-out',
+            hasInput
+              ? 'grid-rows-[0fr] opacity-0'
+              : 'grid-rows-[1fr] opacity-100',
+          )}
+        >
+          <div className="overflow-hidden">
+            {showFlowCards && (
+              <FlowCards onSuggestionClick={onSuggestionClick} />
+            )}
+            <div className="max-w-3xl mx-auto px-6">
+              <Separator className="my-6" />
+              <TextSuggestions onSuggestionClick={onSuggestionClick} />
+            </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

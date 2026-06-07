@@ -32,6 +32,7 @@ export function ChatBottomBar({
   isStreaming,
   onSend,
   onStop,
+  onInputChange,
   selectedModel,
   onModelChange,
   lastAssistantMessage,
@@ -150,6 +151,7 @@ export function ChatBottomBar({
         isStreaming={isStreaming}
         onSend={onSend}
         onStop={onStop}
+        onInputChange={onInputChange}
         placeholder={placeholder ?? t('Reply...')}
         rightActions={
           <ChatModelSelector
@@ -218,6 +220,7 @@ type ChatBottomBarProps = {
   isStreaming: boolean;
   onSend: (text: string, files?: File[]) => void;
   onStop: () => void;
+  onInputChange?: (hasInput: boolean) => void;
   selectedModel: string | null;
   onModelChange: (modelId: string) => void;
   lastAssistantMessage: ChatUIMessage | undefined;
