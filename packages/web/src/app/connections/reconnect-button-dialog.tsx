@@ -37,13 +37,15 @@ const ReconnectButtonDialog = ({
     <>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            onClick={() => setOpen(true)}
-            disabled={!hasPermission}
-            variant={'ghost'}
-          >
-            <Cable className="h-4 w-4" />
-          </Button>
+          <span className="inline-flex">
+            <Button
+              onClick={() => setOpen(true)}
+              disabled={!hasPermission}
+              variant={'ghost'}
+            >
+              <Cable className="h-4 w-4" />
+            </Button>
+          </span>
         </TooltipTrigger>
         <TooltipContent>
           {!hasPermission ? (
