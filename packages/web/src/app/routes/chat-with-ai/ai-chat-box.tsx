@@ -5,18 +5,6 @@ import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { AssistantMessage } from './components/assistant-message';
-import { ChatBottomBar } from './components/chat-bottom-bar';
-import {
-  EmptyState,
-  MessageSkeletons,
-  SetupRequiredState,
-} from './components/chat-empty-state';
-import { CreditsBanner } from './components/credits-banner';
-import { QuickReplies } from './components/quick-replies';
-import { UserMessage } from './components/user-message';
-import { getTextFromParts } from './lib/message-parsers';
-
 import {
   ChatContainerContent,
   ChatContainerRoot,
@@ -33,6 +21,18 @@ import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { useCreditsState } from '@/features/chat/lib/use-credits-state';
 import { aiProviderQueries } from '@/features/platform-admin';
 import { cn } from '@/lib/utils';
+
+import { AssistantMessage } from './components/assistant-message';
+import { ChatBottomBar } from './components/chat-bottom-bar';
+import {
+  EmptyState,
+  MessageSkeletons,
+  SetupRequiredState,
+} from './components/chat-empty-state';
+import { CreditsBanner } from './components/credits-banner';
+import { QuickReplies } from './components/quick-replies';
+import { UserMessage } from './components/user-message';
+import { getTextFromParts } from './lib/message-parsers';
 
 export function AIChatBox({
   incognito,
