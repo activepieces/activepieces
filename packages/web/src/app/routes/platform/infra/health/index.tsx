@@ -51,7 +51,7 @@ export default function SettingsHealthPage() {
   const { data: report, isLoading: isReportLoading } =
     healthMetricsQueries.useRunMetrics(range, activeTab === 'runs');
   const { data: live, isLoading: isLiveLoading } =
-    healthMetricsQueries.useQueueMetrics(activeTab === 'queue');
+    healthMetricsQueries.useQueueMetrics(range, activeTab === 'queue');
 
   const setTab = (tab: TabValue) => {
     const newParams = new URLSearchParams(searchParams);
@@ -75,7 +75,7 @@ export default function SettingsHealthPage() {
         title={t('Health')}
         description={t('Check the status of your platform and its components')}
       >
-        {activeTab === 'runs' && (
+        {(activeTab === 'runs' || activeTab === 'queue') && (
           <Select value={selectedMonth} onValueChange={handleMonthChange}>
             <SelectTrigger className="w-auto gap-2 h-8">
               <Calendar className="h-4 w-4" />
