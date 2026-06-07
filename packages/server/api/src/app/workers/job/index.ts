@@ -5,6 +5,8 @@ import {
     StreamStepProgress,
 } from '@activepieces/shared'
 import { z } from 'zod'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 
 export * from './runs-metadata-queue-factory'
 
@@ -16,11 +18,17 @@ export enum JobStatus {
 export enum QueueName {
     WORKER_JOBS = 'workerJobs',
     RUNS_METADATA = 'runsMetadata',
+    RUNS_METADATA_CANARY = 'runsMetadataCanary',
 }
 
 export const getWorkerGroupQueueName = (workerGroupId: string): string => {
     // TODO Rename this to workerGroups-workerGroupId-jobs in the future and migrate existings jobs there.
     return `platform-${workerGroupId}-jobs`
+}
+
+export const getRunsMetadataQueueName = (): QueueName => {
+    const isCanary = system.getBoolean(AppSystemProp.IS_CANARY_APP) ?? false
+    return isCanary ? QueueName.RUNS_METADATA_CANARY : QueueName.RUNS_METADATA
 }
 
 export const ApQueueJob = z.object({

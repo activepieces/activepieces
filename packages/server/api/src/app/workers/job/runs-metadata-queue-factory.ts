@@ -4,7 +4,6 @@ import { Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import Redis from 'ioredis'
 import { DistributedStore } from '../../database/redis/distributed-store-factory'
-import { QueueName } from './index'
 
 export const redisMetadataKey = (runId: ApId): string => `runs_metadata:${runId}`
 
@@ -16,9 +15,9 @@ export const runsMetadataQueueFactory = ({
 
     return {
         async init(config: RunsMetadataQueueConfig): Promise<void> {
-            queueInstance = new Queue<RunsMetadataJobData>(QueueName.RUNS_METADATA, {
+            queueInstance = new Queue<RunsMetadataJobData>(config.queueName, {
                 connection: await createRedisConnection(),
-                telemetry: config.isOtelEnabled ? new BullMQOtel(QueueName.RUNS_METADATA) : undefined,
+                telemetry: config.isOtelEnabled ? new BullMQOtel(config.queueName) : undefined,
                 defaultJobOptions: {
                     attempts: 5,
                     backoff: {
@@ -95,6 +94,7 @@ export type RunsMetadataJobData = {
 }
 
 export type RunsMetadataQueueConfig = {
+    queueName: string
     isOtelEnabled: boolean
     redisFailedJobRetentionDays: number
     redisFailedJobRetentionMaxCount: number
