@@ -1,5 +1,5 @@
 import '@fastify/reply-from'
-import { isNil, PrincipalType, tryCatch } from '@activepieces/shared'
+import { ApEdition, isNil, PrincipalType, tryCatch } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { workerGroupService } from '../../ee/platform/platform-plan/worker-group.service'
 import { flowExecutionCache } from '../../flows/flow/flow-execution-cache'
@@ -15,7 +15,9 @@ export const canaryRoutingMiddleware = async (request: FastifyRequest, reply: Fa
 
     const canaryAppUrl = system.get(AppSystemProp.CANARY_APP_URL)
     if (isNil(canaryAppUrl)) {
-        request.log.warn({ platformId, host: request.headers.host }, '[canaryRoutingMiddleware] request handled by the canary app')
+        if (system.getEdition() === ApEdition.CLOUD) {
+            request.log.warn({ platformId, host: request.headers.host }, '[canaryRoutingMiddleware] request handled by the canary app')
+        }
         return
     }
 
