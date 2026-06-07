@@ -22,10 +22,43 @@ function humanizePieceName(raw: string): string {
 }
 
 const TOOL_FALLBACK_LABELS: Record<string, string> = {
-  ap_execute_action: 'Running Action',
-  ap_discover_action_auth: 'Checking Connections',
-  ap_list_across_projects: 'Listing Resources',
-  ap_request_plan_approval: 'Requesting Approval',
+  ap_execute_action: 'Running action',
+  ap_discover_action_auth: 'Checking connections',
+  ap_list_across_projects: 'Listing resources',
+  ap_request_plan_approval: 'Requesting approval',
+  ap_research_pieces: 'Searching integrations',
+  ap_build_flow: 'Building automation',
+  ap_create_flow: 'Creating automation',
+  ap_validate_step_config: 'Validating setup',
+  ap_validate_flow: 'Validating automation',
+  ap_test_flow: 'Testing automation',
+  ap_add_step: 'Adding step',
+  ap_update_step: 'Updating step',
+  ap_update_trigger: 'Updating starting event',
+  ap_manage_notes: 'Adding notes',
+  ap_list_connections: 'Checking connections',
+  ap_get_piece_props: 'Loading settings',
+  ap_resolve_property_options: 'Loading options',
+};
+
+const TOOL_DONE_LABELS: Record<string, string> = {
+  ap_execute_action: 'Ran action',
+  ap_discover_action_auth: 'Checked connections',
+  ap_list_across_projects: 'Listed resources',
+  ap_request_plan_approval: 'Requested approval',
+  ap_research_pieces: 'Searched integrations',
+  ap_build_flow: 'Built automation',
+  ap_create_flow: 'Created automation',
+  ap_validate_step_config: 'Validated setup',
+  ap_validate_flow: 'Validated automation',
+  ap_test_flow: 'Tested automation',
+  ap_add_step: 'Added step',
+  ap_update_step: 'Updated step',
+  ap_update_trigger: 'Updated starting event',
+  ap_manage_notes: 'Added notes',
+  ap_list_connections: 'Checked connections',
+  ap_get_piece_props: 'Loaded settings',
+  ap_resolve_property_options: 'Loaded options',
 };
 
 function cleanMcpToolName(raw: string): string {
@@ -254,11 +287,27 @@ function extractQuickRepliesFromHistory(messages: ChatUIMessage[]): string[] {
   return [];
 }
 
+function formatToolDoneTitle({ part }: { part: AnyToolPart }): string {
+  const input = isObject(part.input) ? part.input : undefined;
+  if (input && typeof input.doneTitle === 'string' && input.doneTitle) {
+    return input.doneTitle;
+  }
+  const raw = chatPartUtils.getToolPartName(part);
+  if (raw.startsWith('mcp__')) {
+    return cleanMcpToolName(raw);
+  }
+  return (
+    TOOL_DONE_LABELS[raw] ??
+    formatUtils.convertEnumToHumanReadable(raw.replace(/^ap_/, ''))
+  );
+}
+
 export const chatUtils = {
   formatToolLabel: ({ part }: { part: AnyToolPart }) =>
     formatToolName({ part }),
   formatToolActionName: ({ part }: { part: AnyToolPart }) =>
     formatToolName({ part, includeContext: false }),
+  formatToolDoneTitle,
   mapHistoryToUIMessages,
   extractQuickRepliesFromHistory,
 };
