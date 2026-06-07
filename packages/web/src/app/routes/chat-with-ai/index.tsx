@@ -1,9 +1,14 @@
+import { ChatConversation, SeekPage } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Ellipsis, Pencil, Trash2 } from 'lucide-react';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
+
+import { AIChatBox } from './ai-chat-box';
+import { TypewriterText } from './components/typewriter-text';
+import { ConversationList } from './conversation-list';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -13,11 +18,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { chatApi } from '@/features/chat/lib/chat-api';
-
-import { AIChatBox } from './ai-chat-box';
-import { TypewriterText } from './components/typewriter-text';
-import { ConversationList } from './conversation-list';
 
 export function ChatWithAIPage() {
   const queryClient = useQueryClient();
@@ -156,7 +158,18 @@ export function ChatWithAIPage() {
   }, [handleNewChat]);
 
   const activeConversationId = selectedConversationId ?? pendingConversationId;
-  const displayTitle = conversationTitle ?? t('New Chat');
+  const cachedTitle = useMemo(() => {
+    if (conversationTitle) return conversationTitle;
+    if (!selectedConversationId) return null;
+    const cached = queryClient.getQueryData<SeekPage<ChatConversation>>([
+      'chat-conversations',
+    ]);
+    return (
+      cached?.data?.find((c) => c.id === selectedConversationId)?.title ?? null
+    );
+  }, [conversationTitle, selectedConversationId, queryClient]);
+  const isTitleLoading = !!selectedConversationId && !cachedTitle;
+  const displayTitle = cachedTitle ?? t('New Chat');
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -186,10 +199,14 @@ export function ChatWithAIPage() {
             />
           ) : (
             <>
-              <TypewriterText
-                text={displayTitle}
-                className="text-sm font-semibold truncate max-w-[400px]"
-              />
+              {isTitleLoading ? (
+                <Skeleton className="h-4 w-32" />
+              ) : (
+                <TypewriterText
+                  text={displayTitle}
+                  className="text-sm font-semibold truncate max-w-[400px]"
+                />
+              )}
               {activeConversationId && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
