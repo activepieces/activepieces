@@ -118,9 +118,12 @@ function ChatBoxContent({
     return () => window.removeEventListener('keydown', handler);
   }, [isStreaming, cancelStream]);
 
+  const [hasSentMessage, setHasSentMessage] = useState(false);
+
   const handleSend = useCallback(
     async (text: string, files?: File[]) => {
       if (!text.trim() && (!files || files.length === 0)) return;
+      setHasSentMessage(true);
       await sendMessage(text.trim(), files);
     },
     [sendMessage],
@@ -145,7 +148,14 @@ function ChatBoxContent({
 
   const [hasInput, setHasInput] = useState(false);
 
-  const isEmpty = messages.length === 0 && !isLoadingHistory && !isStreaming;
+  const isAwaitingLoad =
+    !!initialConversationId && messages.length === 0 && !error;
+  const isEmpty =
+    messages.length === 0 &&
+    !isLoadingHistory &&
+    !isStreaming &&
+    !isAwaitingLoad &&
+    !hasSentMessage;
 
   const cachedConversations = queryClient.getQueryData<
     SeekPage<ChatConversation>
@@ -154,21 +164,16 @@ function ChatBoxContent({
 
   return (
     <div className="flex flex-col h-full flex-1 min-w-0">
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {isEmpty ? (
-          <motion.div
-            key="empty-state"
-            className="flex-1 overflow-y-auto min-h-0"
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.25 }}
-          >
+          <div key="empty-state" className="flex-1 overflow-y-auto min-h-0">
             <EmptyState
               onSuggestionClick={(text) => void handleSend(text)}
               incognito={incognito}
               showFlowCards={!hasConversations}
               hasInput={hasInput}
             />
-          </motion.div>
+          </div>
         ) : (
           <motion.div
             key="chat-container"

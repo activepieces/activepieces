@@ -237,20 +237,20 @@ const FLOW_CARDS: FlowCardData[] = [
   {
     title: 'Cleanup Spam Emails',
     description:
-      'Find all promotional emails from last week and move them to spam',
+      'Find promotional emails from the last week and move them to spam automatically',
     image: '/chat-suggestions/card-cleanup-spam.svg',
     bgImage: '/chat-suggestions/card-background-1.svg',
   },
   {
     title: 'Lead Enrichment',
-    description: 'Enrich all leads in this sheet with person and company info',
+    description: 'Enrich my leads with person and company info automatically',
     image: '/chat-suggestions/card-lead-enrichment.svg',
     bgImage: '/chat-suggestions/card-background-2.svg',
   },
   {
     title: 'Triage Support Tickets',
     description:
-      'Classify incoming emails to a shared inbox and forward each to the right person',
+      'Classify incoming support emails and forward each to the right person automatically',
     image: '/chat-suggestions/card-triage-support.svg',
     bgImage: '/chat-suggestions/card-background-3.svg',
     wide: true,
@@ -262,58 +262,58 @@ const TEXT_SUGGESTIONS: TextSuggestionData[] = [
     icon: '/chat-suggestions/icon-route-emails.svg',
     title: 'Route Incoming Emails',
     description:
-      'Classify every incoming email by topic and automatically route it to the right person or team.',
+      'Classify every incoming email by topic and route it to the right person automatically.',
   },
   {
     icon: '/chat-suggestions/icon-sync-contacts.svg',
-    title: 'Sync Sheet Contacts',
+    title: 'Sync Contacts to CRM',
     description:
-      'Take every row in this spreadsheet and add it as a new contact inside your CRM automatically.',
+      'Sync new contacts from a spreadsheet into my CRM automatically.',
   },
   {
     icon: '/chat-suggestions/icon-plan-crm.svg',
-    title: 'Plan CRM Tasks',
+    title: 'Plan Daily Tasks',
     description:
-      "Check your CRM deals, find today's top priorities, and build a clear task list for your day.",
+      "Check my deals, find today's top priorities, and build a clear task list for the day.",
   },
   {
     icon: '/chat-suggestions/icon-summarize-emails.svg',
     darkIcon: '/chat-suggestions/icon-summarize-emails-dark.svg',
     title: 'Summarize Daily Emails',
     description:
-      "Scan today's inbox, find the emails you haven't replied to yet, and flag them all for you.",
+      "Scan my inbox, find the emails I haven't replied to yet, and flag them for me.",
   },
   {
     icon: '/chat-suggestions/icon-slack-bot.svg',
     title: 'Build a Slack Bot',
     description:
-      "Answer your team's questions on Slack instantly using your company's internal knowledge base.",
+      "Answer my team's questions on Slack using our internal knowledge base.",
   },
   {
     icon: '/chat-suggestions/icon-screen-candidates.svg',
     darkIcon: '/chat-suggestions/icon-screen-candidates-dark.svg',
     title: 'Screen Job Candidates',
     description:
-      'Read every candidate in this sheet, score them on the filled info, and write the score back in.',
+      'Score candidates from a spreadsheet based on their info and write the scores back.',
   },
   {
     icon: '/chat-suggestions/icon-lead-enrichment.svg',
     title: 'Lead Enrichment',
     description:
-      'Take every lead in this sheet and enrich it with full person and company info automatically.',
+      'Enrich my leads with full person and company info automatically.',
   },
   {
     icon: '/chat-suggestions/icon-cleanup-spam.svg',
     darkIcon: '/chat-suggestions/icon-cleanup-spam-dark.svg',
     title: 'Cleanup Spam Emails',
     description:
-      'Find all promotional emails from the last week and move every one of them straight to spam.',
+      'Find promotional emails from the last week and move them to spam automatically.',
   },
   {
     icon: '/chat-suggestions/icon-triage-support.svg',
     title: 'Triage Support Tickets',
     description:
-      "Read your open tickets, classify each by type and urgency, then tag them so the team knows what's first.",
+      'Read open support tickets, classify by type and urgency, and tag them for the team.',
   },
 ];
 
