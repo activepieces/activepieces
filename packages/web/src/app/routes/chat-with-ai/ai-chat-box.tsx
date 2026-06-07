@@ -5,6 +5,18 @@ import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { AssistantMessage } from './components/assistant-message';
+import { ChatBottomBar } from './components/chat-bottom-bar';
+import {
+  EmptyState,
+  MessageSkeletons,
+  SetupRequiredState,
+} from './components/chat-empty-state';
+import { CreditsBanner } from './components/credits-banner';
+import { QuickReplies } from './components/quick-replies';
+import { UserMessage } from './components/user-message';
+import { getTextFromParts } from './lib/message-parsers';
+
 import {
   ChatContainerContent,
   ChatContainerRoot,
@@ -21,18 +33,6 @@ import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { useCreditsState } from '@/features/chat/lib/use-credits-state';
 import { aiProviderQueries } from '@/features/platform-admin';
 import { cn } from '@/lib/utils';
-
-import { AssistantMessage } from './components/assistant-message';
-import { ChatBottomBar } from './components/chat-bottom-bar';
-import {
-  EmptyState,
-  MessageSkeletons,
-  SetupRequiredState,
-} from './components/chat-empty-state';
-import { CreditsBanner } from './components/credits-banner';
-import { QuickReplies } from './components/quick-replies';
-import { UserMessage } from './components/user-message';
-import { getTextFromParts } from './lib/message-parsers';
 
 export function AIChatBox({
   incognito,
@@ -118,9 +118,12 @@ function ChatBoxContent({
     return () => window.removeEventListener('keydown', handler);
   }, [isStreaming, cancelStream]);
 
+  const [hasSentMessage, setHasSentMessage] = useState(false);
+
   const handleSend = useCallback(
     async (text: string, files?: File[]) => {
       if (!text.trim() && (!files || files.length === 0)) return;
+      setHasSentMessage(true);
       await sendMessage(text.trim(), files);
     },
     [sendMessage],
@@ -151,7 +154,8 @@ function ChatBoxContent({
     messages.length === 0 &&
     !isLoadingHistory &&
     !isStreaming &&
-    !isAwaitingLoad;
+    !isAwaitingLoad &&
+    !hasSentMessage;
 
   const cachedConversations = queryClient.getQueryData<
     SeekPage<ChatConversation>
@@ -160,21 +164,16 @@ function ChatBoxContent({
 
   return (
     <div className="flex flex-col h-full flex-1 min-w-0">
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {isEmpty ? (
-          <motion.div
-            key="empty-state"
-            className="flex-1 overflow-y-auto min-h-0"
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.25 }}
-          >
+          <div key="empty-state" className="flex-1 overflow-y-auto min-h-0">
             <EmptyState
               onSuggestionClick={(text) => void handleSend(text)}
               incognito={incognito}
               showFlowCards={!hasConversations}
               hasInput={hasInput}
             />
-          </motion.div>
+          </div>
         ) : (
           <motion.div
             key="chat-container"
