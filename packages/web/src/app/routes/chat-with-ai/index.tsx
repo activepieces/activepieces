@@ -34,6 +34,7 @@ export function ChatWithAIPage() {
   const [conversationTitle, setConversationTitle] = useState<string | null>(
     null,
   );
+  const [titleResolved, setTitleResolved] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
   const renameCancelledRef = useRef(false);
@@ -44,6 +45,7 @@ export function ChatWithAIPage() {
     setResetKey((k) => k + 1);
     setPendingConversationId(null);
     setConversationTitle(null);
+    setTitleResolved(false);
     navigate('/chat', { replace: true });
   }, [navigate]);
 
@@ -51,6 +53,7 @@ export function ChatWithAIPage() {
     (conversationId: string) => {
       setPendingConversationId(null);
       setConversationTitle(null);
+      setTitleResolved(false);
       navigate(`/chat/${conversationId}`, {
         replace: true,
       });
@@ -136,9 +139,13 @@ export function ChatWithAIPage() {
     chatApi
       .getConversation(selectedConversationId)
       .then((conv) => {
-        if (!cancelled && conv.title) setConversationTitle(conv.title);
+        if (cancelled) return;
+        if (conv.title) setConversationTitle(conv.title);
+        setTitleResolved(true);
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (!cancelled) setTitleResolved(true);
+      });
     return () => {
       cancelled = true;
     };
@@ -170,7 +177,8 @@ export function ChatWithAIPage() {
       cached?.data?.find((c) => c.id === selectedConversationId)?.title ?? null
     );
   }, [conversationTitle, selectedConversationId, queryClient]);
-  const isTitleLoading = !!selectedConversationId && !cachedTitle;
+  const isTitleLoading =
+    !!selectedConversationId && !cachedTitle && !titleResolved;
   const displayTitle = cachedTitle ?? t('New Chat');
 
   return (
