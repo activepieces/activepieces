@@ -1,5 +1,5 @@
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { applyFunctionToValues, FormulaEvaluationError, formulaEvaluator, isNil, isString } from '@activepieces/shared'
+import { applyFunctionToValues, extractMustacheTokens, FormulaEvaluationError, formulaEvaluator, isNil, isString } from '@activepieces/shared'
 
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -7,10 +7,24 @@ import { createConnectionResolver } from '../piece-context/connection-resolver'
 import { createVariableResolver } from '../piece-context/variable-resolver'
 import { utils } from '../utils'
 
-const VARIABLE_PATTERN = /\{\{(.*?)\}\}/g
 const CONNECTIONS = 'connections'
 const VARIABLES = 'variables'
 const FLATTEN_NESTED_KEYS_PATTERN = /\{\{\s*flattenNestedKeys(.*?)\}\}/g
+async function replaceTokensAsync(
+    str: string,
+    replacer: (token: string, inner: string) => Promise<string>,
+): Promise<string> {
+    const tokens = extractMustacheTokens(str)
+    let result = ''
+    let lastIndex = 0
+    for (const { token, inner, index } of tokens) {
+        result += str.slice(lastIndex, index)
+        result += await replacer(token, inner)
+        lastIndex = index + token.length
+    }
+    result += str.slice(lastIndex)
+    return result
+}
 
 
 export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVersion, stepNames }: PropsResolverParams) => {
@@ -112,8 +126,7 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
         return result ?? ''
     }
 
-    const tokensThatNeedResolving = input.match(VARIABLE_PATTERN)
-    const inputContainsOnlyOneTokenToResolve = tokensThatNeedResolving !== null && tokensThatNeedResolving.length === 1 && tokensThatNeedResolving[0] === input
+    const tokensThatNeedResolving = extractMustacheTokens(input)
     const resolveOptions = {
         engineToken,
         projectId,
@@ -121,10 +134,12 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
         currentState,
         censoredInput,
     }
+    const inputContainsOnlyOneTokenToResolve =
+        tokensThatNeedResolving.length === 1 &&
+        tokensThatNeedResolving[0].token === input
 
     if (inputContainsOnlyOneTokenToResolve) {
-        const trimmedInput = input.trim()
-        const variableName = trimmedInput.substring(2, trimmedInput.length - 2)
+        const variableName = tokensThatNeedResolving[0].inner.trim()
         return resolveSingleToken({
             ...resolveOptions,
             variableName,
@@ -132,14 +147,14 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
         })
     }
     const inputIncludesFlattenNestedKeysTokens = input.match(FLATTEN_NESTED_KEYS_PATTERN)
-    if (!isNil(inputIncludesFlattenNestedKeysTokens) && !isNil(tokensThatNeedResolving)) {
-        return mergeFlattenedKeysArraysIntoOneArray(input, tokensThatNeedResolving, resolveOptions, params.contextVersion)
+    if (!isNil(inputIncludesFlattenNestedKeysTokens) && tokensThatNeedResolving.length > 0) {
+        return mergeFlattenedKeysArraysIntoOneArray(input, tokensThatNeedResolving.map(t => t.token), resolveOptions, params.contextVersion)
     }
 
-    return stringReplaceAsync(input, VARIABLE_PATTERN, async (_fullMatch, variableName) => {
+    return replaceTokensAsync(input, async (_fullMatch, variableName) => {
         const result = await resolveSingleToken({
             ...resolveOptions,
-            variableName,
+            variableName: variableName.trim(),
             contextVersion: params.contextVersion,
         })
         return isString(result) ? result : JSON.stringify(result)
@@ -328,24 +343,6 @@ type ResolveResult<T = unknown> = {
     censoredInput: unknown
 }
 
-async function stringReplaceAsync(str: string, regex: RegExp, replacer: (...args: string[]) => Promise<string>): Promise<string> {
-    const matches: { match: string, groups: string[], index: number }[] = []
-    str.replace(regex, (match, ...args) => {
-        const groups = args.slice(0, -2) as string[]
-        const index = args[args.length - 2] as unknown as number
-        matches.push({ match, groups, index })
-        return match
-    })
-    let result = ''
-    let lastIndex = 0
-    for (const { match, groups, index } of matches) {
-        result += str.slice(lastIndex, index)
-        result += await replacer(match, ...groups)
-        lastIndex = index + match.length
-    }
-    result += str.slice(lastIndex)
-    return result
-}
 
 type PropsResolverParams = {
     engineToken: string

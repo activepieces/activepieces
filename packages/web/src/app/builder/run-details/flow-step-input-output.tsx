@@ -11,13 +11,15 @@ import {
   ApFlagId,
   LogSliceRef,
   StepOutputType,
+  RunInternalError,
   tryParseFriendlyPieceError,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Download, Info } from 'lucide-react';
+import { Download, Info, ShieldAlert } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { StepOutputSkeleton } from '@/app/components/step-output-skeleton';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -53,11 +55,16 @@ export const FlowStepInputOutput = () => {
     ],
   );
   const isAgent = isRunAgent(selectedStep);
+  const isTrigger =
+    !isNil(selectedStep) && flowStructureUtil.isTrigger(selectedStep.type);
   const [requestedTab, setActiveTab] = useState<RunActiveTab>(
     isAgent ? 'timeline' : 'output',
   );
   const activeTab: RunActiveTab =
-    requestedTab === 'timeline' && !isAgent ? 'output' : requestedTab;
+    (requestedTab === 'timeline' && !isAgent) ||
+    (requestedTab === 'input' && isTrigger)
+      ? 'output'
+      : requestedTab;
   const selectedStepOutput = useMemo(() => {
     return run && selectedStep && run.steps
       ? flowRunUtils.extractStepOutput(
@@ -107,6 +114,13 @@ export const FlowStepInputOutput = () => {
   const { data: rententionDays } = flagsHooks.useFlag<number>(
     ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
   );
+
+  if (
+    run.status === FlowRunStatus.INTERNAL_ERROR &&
+    !isNil(run.internalError)
+  ) {
+    return <InternalErrorPanel internalError={run.internalError} />;
+  }
 
   if (
     !isRunDone &&
@@ -208,7 +222,9 @@ export const FlowStepInputOutput = () => {
         >
           <div className="flex items-center justify-between gap-2 shrink-0 mb-2">
             <TabsList className="h-9">
-              <TabsTrigger value="input">{t('Input')}</TabsTrigger>
+              {!isTrigger && (
+                <TabsTrigger value="input">{t('Input')}</TabsTrigger>
+              )}
               {isAgent && (
                 <TabsTrigger value="timeline">{t('Timeline')}</TabsTrigger>
               )}
@@ -217,14 +233,16 @@ export const FlowStepInputOutput = () => {
             <StepDataPanelViewToggle />
           </div>
 
-          <TabsContent value="input">
-            <DataDisplayTabs
-              data={selectedStepOutput.input}
-              title={t('Input')}
-              copyableData={selectedStepOutput.input}
-              downloadFileName={`${selectedStep.name}-input`}
-            />
-          </TabsContent>
+          {!isTrigger && (
+            <TabsContent value="input">
+              <DataDisplayTabs
+                data={selectedStepOutput.input}
+                title={t('Input')}
+                copyableData={selectedStepOutput.input}
+                downloadFileName={`${selectedStep.name}-input`}
+              />
+            </TabsContent>
+          )}
 
           {isAgent && (
             <TabsContent value="timeline">
@@ -258,6 +276,42 @@ export const FlowStepInputOutput = () => {
     </div>
   );
 };
+
+const InternalErrorPanel = ({
+  internalError,
+}: {
+  internalError: RunInternalError;
+}) => (
+  <ScrollArea className="h-full">
+    <div className="flex flex-col gap-3 p-4">
+      <div className="flex items-center gap-2 flex-wrap">
+        <ShieldAlert className="w-4 h-4 text-destructive shrink-0" />
+        <span className="text-sm font-medium">{t('Internal error')}</span>
+        <Badge variant="outline" className="gap-1">
+          <ShieldAlert className="w-3 h-3" />
+          {t('Platform Admin Only')}
+        </Badge>
+      </div>
+      <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+        <span>
+          {t('Source')}: {internalError.source}
+        </span>
+        {internalError.code && (
+          <span>
+            {t('Code')}: {internalError.code}
+          </span>
+        )}
+        <span>
+          {t('Occurred at')}:{' '}
+          {formatUtils.formatDate(new Date(internalError.occurredAt))}
+        </span>
+      </div>
+      <pre className="text-xs bg-muted rounded-md p-3 whitespace-pre-wrap break-words font-mono">
+        {internalError.message}
+      </pre>
+    </div>
+  </ScrollArea>
+);
 
 const SlicedOutputDownload = ({
   slicedOutputRef,

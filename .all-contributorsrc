@@ -2194,6 +2194,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "Khizarshah01",
+      "name": "khizar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/109973520?v=4",
+      "profile": "http://khizar.tech",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"

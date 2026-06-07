@@ -68,12 +68,13 @@ export function createSandbox(
     let connectionResolve: (() => void) | null = null
     let wsRpcToken: string | null = null
     let busy = false
+    let killedByShutdown = false
 
     function createSocketServer(): number {
         httpServer = createServer()
         io = new SocketIOServer(httpServer, {
             path: '/worker/ws',
-            maxHttpBufferSize: 1e8,
+            maxHttpBufferSize: options.maxHttpBufferSizeBytes,
             cors: { origin: '*' },
         })
 
@@ -245,6 +246,7 @@ export function createSandbox(
                         code,
                         signal,
                         killedByTimeout,
+                        killedByShutdown,
                         stdOut,
                         stdError,
                         reject,
@@ -285,6 +287,7 @@ export function createSandbox(
         isBusy: () => busy,
         shutdown: async () => {
             if (!isNil(childProcess)) {
+                killedByShutdown = true
                 log.debug({ sandboxId }, 'Shutting down sandbox')
                 await killProcess(childProcess, log)
                 childProcess = null
@@ -303,15 +306,16 @@ export function createSandbox(
 }
 
 function handleProcessExit(log: SandboxLogger, params: ProcessExitParams): void {
-    const { sandboxId, operationType, code, signal, killedByTimeout, stdOut, stdError, reject } = params
+    const { sandboxId, operationType, code, signal, killedByTimeout, killedByShutdown, stdOut, stdError, reject } = params
     log.info({
         sandboxId,
         operationType,
         code: String(code),
         signal: signal ?? 'null',
         killedByTimeout: String(killedByTimeout),
+        killedByShutdown: String(killedByShutdown),
     }, '[Sandbox] Process exit event fired')
-    const isRamIssue = stdError.includes('JavaScript heap out of memory') || stdError.includes('Allocation failed - JavaScript heap out of memory') || (code === 134 || signal === 'SIGABRT' || signal === 'SIGKILL')
+    const isRamIssue = stdError.includes('JavaScript heap out of memory') || stdError.includes('Allocation failed - JavaScript heap out of memory') || (code === 134 || signal === 'SIGABRT' || (signal === 'SIGKILL' && !killedByShutdown))
     const isLogSizeExceeded = stdError.includes('Flow run data size exceeded the maximum allowed size')
 
     if (killedByTimeout) {
@@ -398,6 +402,7 @@ type ProcessExitParams = {
     code: number | null
     signal: string | null
     killedByTimeout: boolean
+    killedByShutdown: boolean
     stdOut: string
     stdError: string
     reject: (error: ActivepiecesError) => void

@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { Ellipsis, Pencil, Trash2 } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -91,12 +92,15 @@ export function ChatWithAIPage() {
       await chatApi.updateConversation(convId, {
         title: renameValue.trim(),
       });
-      setConversationTitle(renameValue.trim());
+      const currentConvId = selectedConversationId ?? pendingConversationId;
+      if (currentConvId === convId) {
+        setConversationTitle(renameValue.trim());
+      }
       void queryClient.invalidateQueries({
         queryKey: ['chat-conversations'],
       });
     } catch {
-      // keep existing title on failure
+      toast.error(t('Failed to rename conversation'));
     } finally {
       renameCancelledRef.current = false;
       setIsRenaming(false);
@@ -113,7 +117,7 @@ export function ChatWithAIPage() {
       });
       handleNewChat();
     } catch {
-      // silently fail — conversation stays
+      toast.error(t('Failed to delete conversation'));
     }
   }, [
     selectedConversationId,
@@ -156,7 +160,7 @@ export function ChatWithAIPage() {
 
   return (
     <div className="flex h-full overflow-hidden">
-      <div className="shrink-0 overflow-hidden opacity-40 hover:opacity-100 transition-opacity duration-200">
+      <div className="shrink-0 overflow-hidden opacity-70 hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200">
         <ConversationList
           onNewChat={handleNewChat}
           onSelect={handleSelectConversation}

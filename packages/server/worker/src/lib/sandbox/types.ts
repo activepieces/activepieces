@@ -51,6 +51,7 @@ export type SandboxInitOptions = {
     cpuMsPerSec: number
     timeLimitSeconds: number
     reusable: boolean
+    maxHttpBufferSizeBytes: number
     command?: string[]
     baseMounts?: SandboxMount[]
     wsRpcPort?: number

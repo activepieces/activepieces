@@ -92,20 +92,18 @@ const polling: Polling<undefined, Record<string, never>> = {
 
 ### Polling with Props
 
-When the trigger has user-configurable props (e.g., filter by project):
+When the trigger has user-configurable props (e.g., a project filter), update the Polling generic type to include them:
 
 ```typescript
-const props = {
-  projectId: Property.Dropdown({ /* ... */ }),
-};
+const props = { projectId: Property.Dropdown({ /* ... */ }) };
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof myAppAuth>,
-  StaticPropsValue<typeof props>
+  StaticPropsValue<typeof props>  // ← add your props type here
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue }) => {
-    // propsValue.projectId is available here
+    // propsValue.projectId is now available and typed
     const response = await httpClient.sendRequest<{ data: any[] }>({
       method: HttpMethod.GET,
       url: `https://api.example.com/v1/projects/${propsValue.projectId}/records`,
@@ -117,18 +115,9 @@ const polling: Polling<
     }));
   },
 };
-
-export const newRecordTrigger = createTrigger({
-  auth: myAppAuth,
-  name: 'new_record',
-  displayName: 'New Record',
-  description: 'Triggers when a new record is created in a project',
-  props,
-  sampleData: {},
-  type: TriggerStrategy.POLLING,
-  // test, onEnable, onDisable, run -- same pattern as above
-});
 ```
+
+Pass `props` to `createTrigger` — everything else follows the same pattern as the basic TIMEBASED example above.
 
 ---
 
@@ -282,3 +271,9 @@ export const myTrigger = createTrigger({
 | `TriggerStrategy.POLLING` | API has no webhooks | Use `pollingHelper` with TIMEBASED or LAST_ITEM |
 | `TriggerStrategy.WEBHOOK` | API supports webhook registration | Register in `onEnable`, delete in `onDisable` |
 | `TriggerStrategy.APP_WEBHOOK` | OAuth2 apps with platform-level webhooks (Slack) | Use `context.app.createListeners()` |
+
+---
+
+## AI-Ready Metadata (optional)
+
+Triggers accept an optional `aiMetadata` field (`{ description?, idempotent? }`) to describe the event for AI agents. They do **not** take `audience` — that field is actions-only, since a trigger is an event rather than an agent-callable operation. The field is additive and changes nothing for human users. See `ai-metadata.md`.
