@@ -141,7 +141,7 @@ function validateRouter(settings: Record<string, unknown> | undefined): McpToolR
                     branchName: 'Branch 1',
                     branchType: BranchExecutionType.CONDITION,
                     conditions: [[{
-                        firstValue: '{{trigger.status}}',
+                        firstValue: '{{trigger[\'output\'].status}}',
                         operator: 'TEXT_EXACTLY_MATCHES',
                         secondValue: 'active',
                     }]],

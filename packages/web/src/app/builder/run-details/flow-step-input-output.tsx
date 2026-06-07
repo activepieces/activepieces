@@ -19,6 +19,7 @@ import { Download, Info, ShieldAlert } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { StepOutputSkeleton } from '@/app/components/step-output-skeleton';
+import { SmartOutputViewer } from '@/components/custom/smart-output-viewer';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -186,6 +187,10 @@ export const FlowStepInputOutput = () => {
     selectedStep.type === FlowTriggerType.PIECE
       ? (selectedStep.settings.input as Record<string, unknown> | undefined)
       : undefined;
+  const pieceSchema =
+    pieceModel?.actions[stepName ?? '']?.outputSchema ??
+    pieceModel?.triggers[stepName ?? '']?.outputSchema ??
+    null;
   const explanationContext: ErrorExplanationContext = {
     pieceName: stepPieceName,
     pieceVersion: stepPieceVersion,
@@ -261,6 +266,12 @@ export const FlowStepInputOutput = () => {
                 error={friendlyError}
                 explanationContext={explanationContext}
                 pieceDisplayName={pieceModel?.displayName}
+              />
+            ) : status === 'success' ? (
+              <SmartOutputViewer
+                json={parsedOutput}
+                title={t('Output')}
+                pieceSchema={pieceSchema}
               />
             ) : (
               <DataDisplayTabs

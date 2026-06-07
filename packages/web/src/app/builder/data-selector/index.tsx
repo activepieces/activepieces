@@ -1,11 +1,24 @@
-import { flowStructureUtil, isNil } from '@activepieces/shared';
+import { PieceMetadataModel } from '@activepieces/pieces-framework';
+import {
+  FlowAction,
+  FlowActionType,
+  FlowTrigger,
+  FlowTriggerType,
+  LocalesEnum,
+  flowStructureUtil,
+  isNil,
+} from '@activepieces/shared';
+import { useQueries } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Database, SearchXIcon, Variable } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
 import { SearchInput } from '@/components/custom/search-input';
+import { OutputSchema } from '@/components/custom/smart-output-viewer/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { piecesApi } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
@@ -18,39 +31,60 @@ import {
 } from './data-selector-size-togglers';
 import { DataSelectorTreeNode } from './type';
 import { dataSelectorUtils } from './utils';
+import { schemaTreeUtils } from './utils-schema';
 import { VariablesTab } from './variables-tab';
 
-const buildDataSelectorStructure = (
-  state: BuilderState,
-): DataSelectorTreeNode[] => {
+type StepInfo = (FlowAction | FlowTrigger) & { dfsIndex: number };
+
+function getStepsAndData(state: BuilderState): {
+  steps: StepInfo[];
+  sampleData: Record<string, unknown>;
+  isFocusInsideListMapperModeInput: boolean;
+} {
   const { selectedStep, flowVersion } = state;
   if (!selectedStep || !flowVersion || !flowVersion.trigger) {
-    return [];
+    return {
+      steps: [],
+      sampleData: {},
+      isFocusInsideListMapperModeInput: false,
+    };
   }
   const pathToTargetStep = flowStructureUtil.findPathToStep(
     flowVersion.trigger,
     selectedStep,
   );
-  return pathToTargetStep.map((step) => {
+  return {
+    steps: pathToTargetStep,
+    sampleData: state.outputSampleData,
+    isFocusInsideListMapperModeInput: state.isFocusInsideListMapperModeInput,
+  };
+}
+
+function buildAdvancedStructure(
+  steps: StepInfo[],
+  sampleData: Record<string, unknown>,
+  isFocusInsideListMapperModeInput: boolean,
+  targetStepName: string,
+): DataSelectorTreeNode[] {
+  return steps.map((step) => {
     try {
       return dataSelectorUtils.traverseStep(
         step,
-        state.outputSampleData,
-        state.isFocusInsideListMapperModeInput,
-        selectedStep,
+        sampleData,
+        isFocusInsideListMapperModeInput,
+        targetStepName,
       );
-    } catch (error) {
-      console.error('Failed to traverse step:', error);
+    } catch {
       return {
         key: `error-${step.name}`,
         data: {
-          type: 'chunk',
+          type: 'chunk' as const,
           displayName: `Error loading ${step.name}`,
         },
       };
     }
   });
-};
+}
 
 type DataSelectorProps = {
   parentHeight: number;
@@ -68,28 +102,188 @@ const doesElementHaveAnInputThatUsesMentions = (
   }
   const parent = element.parentElement;
   if (parent) {
-    return parent && doesElementHaveAnInputThatUsesMentions(parent);
+    return doesElementHaveAnInputThatUsesMentions(parent);
   }
   return false;
 };
 
 const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [DataSelectorSize, setDataSelectorSize] =
+  const { i18n } = useTranslation();
+  const [dataSelectorSize, setDataSelectorSize] =
     useState<DataSelectorSizeState>(DataSelectorSizeState.DOCKED);
   const [searchTerm, setSearchTerm] = useState('');
-  const dataSelectorStructure = useBuilderStateContext(
-    buildDataSelectorStructure,
-  );
-  const filteredNodes = useMemo(
-    () => dataSelectorUtils.filterBy(dataSelectorStructure, searchTerm),
-    [dataSelectorStructure, searchTerm],
-  );
+  const [viewMode, setViewMode] = useState<'friendly' | 'advanced'>('friendly');
   const [showDataSelector, setShowDataSelector] = useState(false);
+
+  const { steps, sampleData, isFocusInsideListMapperModeInput } =
+    useBuilderStateContext(getStepsAndData);
   const isTriggerSelected = useBuilderStateContext(
     (state) => state.selectedStep === 'trigger',
   );
+  const selectedStepName = useBuilderStateContext(
+    (state) => state.selectedStep ?? '',
+  );
   const defaultTab = isTriggerSelected ? 'variables' : 'data';
+
+  const piecePairs = useMemo(
+    () =>
+      steps
+        .map((step) => {
+          if (step.type === FlowActionType.PIECE) {
+            return {
+              stepName: step.name,
+              pieceName: step.settings.pieceName,
+              pieceVersion: step.settings.pieceVersion,
+              stepKey: step.settings.actionName,
+            };
+          }
+          if (step.type === FlowTriggerType.PIECE) {
+            return {
+              stepName: step.name,
+              pieceName: step.settings.pieceName,
+              pieceVersion: step.settings.pieceVersion,
+              stepKey: step.settings.triggerName,
+            };
+          }
+          return null;
+        })
+        .filter(
+          (
+            entry,
+          ): entry is {
+            stepName: string;
+            pieceName: string;
+            pieceVersion: string;
+            stepKey: string;
+          } =>
+            entry !== null &&
+            Boolean(entry.pieceName) &&
+            Boolean(entry.stepKey),
+        ),
+    [steps],
+  );
+
+  const pieceQueries = useQueries({
+    queries: piecePairs.map(({ pieceName, pieceVersion }) => ({
+      queryKey: ['piece', pieceName, pieceVersion],
+      queryFn: () =>
+        piecesApi.get({
+          name: pieceName,
+          version: pieceVersion,
+          locale: i18n.language as LocalesEnum,
+        }),
+      staleTime: Infinity,
+    })),
+  });
+
+  const schemaMap = useMemo<Record<string, OutputSchema | null>>(() => {
+    const result: Record<string, OutputSchema | null> = {};
+    piecePairs.forEach(({ stepName, stepKey }, idx) => {
+      const piece = pieceQueries[idx]?.data as PieceMetadataModel | undefined;
+      result[stepName] =
+        piece?.triggers?.[stepKey]?.outputSchema ??
+        piece?.actions?.[stepKey]?.outputSchema ??
+        null;
+    });
+    return result;
+  }, [piecePairs, pieceQueries]);
+
+  const advancedStructure = useMemo(
+    () =>
+      buildAdvancedStructure(
+        steps,
+        sampleData,
+        isFocusInsideListMapperModeInput,
+        selectedStepName,
+      ),
+    [steps, sampleData, isFocusInsideListMapperModeInput, selectedStepName],
+  );
+
+  const friendlyStructure = useMemo(
+    () =>
+      steps.map((step) => {
+        const displayName = `${step.dfsIndex + 1}. ${step.displayName}`;
+        const stepData = sampleData[step.name];
+
+        if (
+          typeof stepData === 'string' ||
+          typeof stepData === 'number' ||
+          typeof stepData === 'boolean'
+        ) {
+          return {
+            key: step.name,
+            data: {
+              type: 'value' as const,
+              value: '',
+              displayName,
+              propertyPath: step.name,
+              insertable: false,
+            },
+            children: [
+              {
+                key: `${step.name}_value`,
+                data: {
+                  type: 'value' as const,
+                  value: stepData,
+                  displayName: t('Result'),
+                  propertyPath: step.name,
+                  insertable: true,
+                },
+              },
+            ],
+          };
+        }
+
+        if (Array.isArray(stepData) && stepData.length > 0) {
+          return schemaTreeUtils.buildTreeFromArray({
+            stepName: step.name,
+            displayName,
+            items: stepData,
+          });
+        }
+
+        const schema = schemaMap[step.name];
+        if (schema) {
+          return schemaTreeUtils.buildTreeFromSchema({
+            stepName: step.name,
+            displayName,
+            schema,
+            sampleData: stepData,
+          });
+        }
+        try {
+          return dataSelectorUtils.traverseStep(
+            step,
+            sampleData,
+            isFocusInsideListMapperModeInput,
+            selectedStepName,
+          );
+        } catch {
+          return {
+            key: `error-${step.name}`,
+            data: {
+              type: 'chunk' as const,
+              displayName: `Error loading ${step.name}`,
+            },
+          };
+        }
+      }),
+    [
+      steps,
+      sampleData,
+      schemaMap,
+      isFocusInsideListMapperModeInput,
+      selectedStepName,
+    ],
+  );
+
+  const currentStructure =
+    viewMode === 'friendly' ? friendlyStructure : advancedStructure;
+  const filteredNodes = useMemo(
+    () => dataSelectorUtils.filterBy(currentStructure, searchTerm),
+    [currentStructure, searchTerm],
+  );
 
   const checkFocus = useCallback(() => {
     const isTextMentionInputFocused =
@@ -102,7 +296,6 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
   useEffect(() => {
     document.addEventListener('focusin', checkFocus);
     document.addEventListener('focusout', checkFocus);
-
     return () => {
       document.removeEventListener('focusin', checkFocus);
       document.removeEventListener('focusout', checkFocus);
@@ -124,20 +317,20 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
       <div className="text-lg items-center px-3 py-2 flex gap-2">
         {t('Data Selector')} <div className="grow"></div>{' '}
         <DataSelectorSizeTogglers
-          state={DataSelectorSize}
+          state={dataSelectorSize}
           setListSizeState={setDataSelectorSize}
         ></DataSelectorSizeTogglers>
       </div>
       <div
         style={{
           height:
-            DataSelectorSize === DataSelectorSizeState.COLLAPSED
+            dataSelectorSize === DataSelectorSizeState.COLLAPSED
               ? '0px'
-              : DataSelectorSize === DataSelectorSizeState.DOCKED
+              : dataSelectorSize === DataSelectorSizeState.DOCKED
               ? '450px'
               : `${parentHeight - 100}px`,
           width:
-            DataSelectorSize !== DataSelectorSizeState.EXPANDED
+            dataSelectorSize !== DataSelectorSizeState.EXPANDED
               ? '450px'
               : `${parentWidth - 40}px`,
         }}
@@ -179,17 +372,29 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
                 onChange={(e) => setSearchTerm(e)}
                 value={searchTerm}
               ></SearchInput>
+              <Tabs
+                value={viewMode}
+                onValueChange={(v) => setViewMode(v as 'friendly' | 'advanced')}
+              >
+                <TabsList className="h-9 shrink-0">
+                  <TabsTrigger value="friendly" className="text-xs px-2.5 h-7">
+                    {t('Friendly View')}
+                  </TabsTrigger>
+                  <TabsTrigger value="advanced" className="text-xs px-2.5 h-7">
+                    {t('Advanced')}
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
             <ScrollArea className="transition-all flex-1 w-full ">
-              {filteredNodes &&
-                filteredNodes.map((node) => (
-                  <DataSelectorNode
-                    depth={0}
-                    key={node.key}
-                    node={node}
-                    searchTerm={searchTerm}
-                  ></DataSelectorNode>
-                ))}
+              {filteredNodes.map((node) => (
+                <DataSelectorNode
+                  depth={0}
+                  key={node.key}
+                  node={node}
+                  searchTerm={searchTerm}
+                ></DataSelectorNode>
+              ))}
               {filteredNodes.length === 0 && (
                 <div className="flex items-center justify-center gap-2 mt-5  flex-col">
                   <SearchXIcon className="w-[35px] h-[35px]"></SearchXIcon>

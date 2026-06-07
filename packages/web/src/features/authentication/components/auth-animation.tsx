@@ -1198,8 +1198,7 @@ function AuthAnimation() {
         <div className="absolute top-24 left-0 right-0 z-50 flex justify-center">
           <span
             key={activeIndex}
-            className="text-[24px] font-bold text-black animate-[blur-in_0.6s_ease-out]"
-            style={{ fontFamily: "'Sentient', serif" }}
+            className="text-[24px] font-bold text-black animate-[blur-in_0.6s_ease-out] font-sentient"
           >
             {SCENE_LABELS[activeIndex]}
           </span>
