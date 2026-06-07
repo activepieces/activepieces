@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { ArrowUp, Mic, Paperclip, Square, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -23,6 +23,7 @@ export function ChatInput({
   isStreaming,
   onSend,
   onStop,
+  onInputChange,
   placeholder,
   leftActions,
   rightActions,
@@ -30,6 +31,7 @@ export function ChatInput({
   isStreaming: boolean;
   onSend: (text: string, files?: File[]) => void;
   onStop?: () => void;
+  onInputChange?: (hasInput: boolean) => void;
   placeholder?: string;
   leftActions?: React.ReactNode;
   rightActions?: React.ReactNode;
@@ -37,6 +39,19 @@ export function ChatInput({
   const [value, setValue] = useState('');
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [interimText, setInterimText] = useState('');
+  const lastHasInputRef = useRef(false);
+
+  const handleValueChange = useCallback(
+    (v: string) => {
+      setValue(v);
+      const hasInput = v.trim().length > 0;
+      if (hasInput !== lastHasInputRef.current) {
+        lastHasInputRef.current = hasInput;
+        onInputChange?.(hasInput);
+      }
+    },
+    [onInputChange],
+  );
 
   const handleTranscript = useCallback((text: string) => {
     setValue((prev) => {
@@ -100,7 +115,7 @@ export function ChatInput({
       <PromptInput
         isLoading={isStreaming}
         value={value}
-        onValueChange={setValue}
+        onValueChange={handleValueChange}
         onSubmit={handleSubmit}
         className="border-0 rounded-none shadow-none"
       >
