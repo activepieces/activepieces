@@ -17,7 +17,7 @@ export const textToSpeechAction = createAction({
     model: Property.Dropdown({
       auth: deepgramAuth,
       displayName: 'Voice',
-      required: true,
+      required: false,
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) {
@@ -61,7 +61,7 @@ export const textToSpeechAction = createAction({
     }),
   },
   async run(context) {
-    const { text, model, encoding } = context.propsValue;
+    const { text, model = 'aura-asteria-en', encoding } = context.propsValue;
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
