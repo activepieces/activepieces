@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import './styles/globals.css';
 @custom-variant dark (&:is(.dark *));
 
 /* Sentient Variable Font */
@@ -175,6 +176,7 @@
     alternate;
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif,
     'Apple Color Emoji', 'Segoe UI Emoji', Segoe UI Symbol, 'Noto Color Emoji';
+  --font-sentient: 'Sentient', serif;
   --shadow-step-container: 0px 0px 22px hsl(var(--border) / 0.3);
   --shadow-add-button: var(--add-button-shadow);
   --color-builder-background: var(--builder-background);

@@ -1,8 +1,10 @@
+import { ChatConversation, SeekPage } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Ellipsis, Pencil, Trash2 } from 'lucide-react';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -12,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { chatApi } from '@/features/chat/lib/chat-api';
 
 import { AIChatBox } from './ai-chat-box';
@@ -31,6 +34,7 @@ export function ChatWithAIPage() {
   const [conversationTitle, setConversationTitle] = useState<string | null>(
     null,
   );
+  const [titleResolved, setTitleResolved] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
   const renameCancelledRef = useRef(false);
@@ -41,6 +45,7 @@ export function ChatWithAIPage() {
     setResetKey((k) => k + 1);
     setPendingConversationId(null);
     setConversationTitle(null);
+    setTitleResolved(false);
     navigate('/chat', { replace: true });
   }, [navigate]);
 
@@ -48,6 +53,7 @@ export function ChatWithAIPage() {
     (conversationId: string) => {
       setPendingConversationId(null);
       setConversationTitle(null);
+      setTitleResolved(false);
       navigate(`/chat/${conversationId}`, {
         replace: true,
       });
@@ -91,30 +97,35 @@ export function ChatWithAIPage() {
       await chatApi.updateConversation(convId, {
         title: renameValue.trim(),
       });
-      setConversationTitle(renameValue.trim());
+      const currentConvId = selectedConversationId ?? pendingConversationId;
+      if (currentConvId === convId) {
+        setConversationTitle(renameValue.trim());
+      }
       void queryClient.invalidateQueries({
         queryKey: ['chat-conversations'],
       });
     } catch {
-      // keep existing title on failure
+      toast.error(t('Failed to rename conversation'));
     } finally {
       renameCancelledRef.current = false;
       setIsRenaming(false);
     }
   }, [selectedConversationId, pendingConversationId, renameValue, queryClient]);
 
-  const handleDelete = useCallback(async () => {
+  const handleDelete = useCallback(() => {
     const convId = selectedConversationId ?? pendingConversationId;
     if (!convId) return;
-    try {
-      await chatApi.deleteConversation(convId);
-      void queryClient.invalidateQueries({
-        queryKey: ['chat-conversations'],
-      });
-      handleNewChat();
-    } catch {
-      // silently fail — conversation stays
-    }
+    handleNewChat();
+    chatApi.deleteConversation(convId).then(
+      () => {
+        void queryClient.invalidateQueries({
+          queryKey: ['chat-conversations'],
+        });
+      },
+      () => {
+        toast.error(t('Failed to delete conversation'));
+      },
+    );
   }, [
     selectedConversationId,
     pendingConversationId,
@@ -128,9 +139,13 @@ export function ChatWithAIPage() {
     chatApi
       .getConversation(selectedConversationId)
       .then((conv) => {
-        if (!cancelled && conv.title) setConversationTitle(conv.title);
+        if (cancelled) return;
+        if (conv.title) setConversationTitle(conv.title);
+        setTitleResolved(true);
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (!cancelled) setTitleResolved(true);
+      });
     return () => {
       cancelled = true;
     };
@@ -152,11 +167,23 @@ export function ChatWithAIPage() {
   }, [handleNewChat]);
 
   const activeConversationId = selectedConversationId ?? pendingConversationId;
-  const displayTitle = conversationTitle ?? t('New conversation');
+  const cachedTitle = useMemo(() => {
+    if (conversationTitle) return conversationTitle;
+    if (!selectedConversationId) return null;
+    const cached = queryClient.getQueryData<SeekPage<ChatConversation>>([
+      'chat-conversations',
+    ]);
+    return (
+      cached?.data?.find((c) => c.id === selectedConversationId)?.title ?? null
+    );
+  }, [conversationTitle, selectedConversationId, queryClient]);
+  const isTitleLoading =
+    !!selectedConversationId && !cachedTitle && !titleResolved;
+  const displayTitle = cachedTitle ?? t('New Chat');
 
   return (
     <div className="flex h-full overflow-hidden">
-      <div className="shrink-0 overflow-hidden opacity-40 hover:opacity-100 transition-opacity duration-200">
+      <div className="shrink-0 overflow-hidden opacity-70 hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200">
         <ConversationList
           onNewChat={handleNewChat}
           onSelect={handleSelectConversation}
@@ -182,10 +209,14 @@ export function ChatWithAIPage() {
             />
           ) : (
             <>
-              <TypewriterText
-                text={displayTitle}
-                className="text-sm font-semibold truncate max-w-[400px]"
-              />
+              {isTitleLoading ? (
+                <Skeleton className="h-4 w-32" />
+              ) : (
+                <TypewriterText
+                  text={displayTitle}
+                  className="text-sm font-semibold truncate max-w-[400px]"
+                />
+              )}
               {activeConversationId && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

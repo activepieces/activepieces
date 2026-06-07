@@ -27,22 +27,26 @@ function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): 
         let updatedAction: FlowAction
         switch (request.type) {
             case FlowActionType.CODE: {
+                const existingContinueOnFailureBranches = stepToUpdate.type === FlowActionType.CODE || stepToUpdate.type === FlowActionType.PIECE ? stepToUpdate.continueOnFailureBranches : undefined
                 const existingSampleData = stepToUpdate.type === FlowActionType.CODE ? stepToUpdate.settings.sampleData : undefined
                 updatedAction = {
                     ...baseProps,
                     settings: { ...request.settings, sampleData: existingSampleData },
                     type: FlowActionType.CODE,
                     nextAction: stepToUpdate.nextAction,
+                    continueOnFailureBranches: existingContinueOnFailureBranches,
                 }
                 break
             }
             case FlowActionType.PIECE: {
+                const existingContinueOnFailureBranches = stepToUpdate.type === FlowActionType.CODE || stepToUpdate.type === FlowActionType.PIECE ? stepToUpdate.continueOnFailureBranches : undefined
                 const existingSampleData = stepToUpdate.type === FlowActionType.PIECE ? stepToUpdate.settings.sampleData : undefined
                 updatedAction = {
                     ...baseProps,
                     settings: { ...request.settings, sampleData: existingSampleData },
                     type: FlowActionType.PIECE,
                     nextAction: stepToUpdate.nextAction,
+                    continueOnFailureBranches: existingContinueOnFailureBranches,
                 }
                 break
             }

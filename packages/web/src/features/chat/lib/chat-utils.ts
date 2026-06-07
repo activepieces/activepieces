@@ -21,6 +21,19 @@ function humanizePieceName(raw: string): string {
   );
 }
 
+const TOOL_FALLBACK_LABELS: Record<string, string> = {
+  ap_execute_action: 'Running Action',
+  ap_discover_action_auth: 'Checking Connections',
+  ap_list_across_projects: 'Listing Resources',
+  ap_request_plan_approval: 'Requesting Approval',
+};
+
+function cleanMcpToolName(raw: string): string {
+  const mcpMatch = /^mcp__[^_]+__(.+)$/.exec(raw);
+  if (!mcpMatch) return raw;
+  return formatUtils.convertEnumToHumanReadable(mcpMatch[1]);
+}
+
 function formatToolName({
   part,
   includeContext = true,
@@ -28,19 +41,25 @@ function formatToolName({
   part: AnyToolPart;
   includeContext?: boolean;
 }): string {
+  const input = isObject(part.input) ? part.input : undefined;
+
+  if (input && typeof input.title === 'string' && input.title) {
+    return input.title;
+  }
+
   const raw = chatPartUtils.getToolPartName(part);
-  const mcpMatch = /^mcp__[^_]+__(.+)$/.exec(raw);
-  const name = mcpMatch ? mcpMatch[1] : raw;
-  const baseName = formatUtils.convertEnumToHumanReadable(
-    name.replace(/^ap_/, ''),
-  );
+
+  if (raw.startsWith('mcp__')) {
+    return cleanMcpToolName(raw);
+  }
+
+  const baseName =
+    TOOL_FALLBACK_LABELS[raw] ??
+    formatUtils.convertEnumToHumanReadable(raw.replace(/^ap_/, ''));
 
   if (!includeContext) return baseName;
-
-  const input = isObject(part.input) ? part.input : undefined;
   const context = extractToolContext({ input });
-  if (!context) return baseName;
-  return `${baseName} — ${context}`;
+  return context ? `${baseName} — ${context}` : baseName;
 }
 
 function extractToolContext({
@@ -143,13 +162,14 @@ function persistedPartToUIPart(
         input: { status: part.text },
         output: JSON.stringify({ success: true }),
       };
-    case PersistedChatPartType.TOOL_CALL:
+    case PersistedChatPartType.TOOL_CALL: {
+      const toolTitle = part.title ?? part.toolName;
       if (part.status === PersistedToolCallStatus.COMPLETED) {
         return {
           type: 'dynamic-tool',
           toolCallId: part.toolCallId,
           toolName: part.toolName,
-          title: part.toolName,
+          title: toolTitle,
           state: 'output-available',
           input: part.input,
           output:
@@ -162,11 +182,14 @@ function persistedPartToUIPart(
         type: 'dynamic-tool',
         toolCallId: part.toolCallId,
         toolName: part.toolName,
-        title: part.toolName,
+        title: toolTitle,
         state: 'output-error',
         input: part.input,
         errorText: part.errorText ?? 'Tool call failed',
       };
+    }
+    case PersistedChatPartType.BATCH_PROGRESS:
+      return { type: 'text', text: '' } as ChatUIMessage['parts'][number];
     default: {
       const _exhaustive: never = part;
       throw new Error(
@@ -236,9 +259,6 @@ export const chatUtils = {
     formatToolName({ part }),
   formatToolActionName: ({ part }: { part: AnyToolPart }) =>
     formatToolName({ part, includeContext: false }),
-  extractToolContext,
-  stripPiecePrefix,
-  humanizePieceName,
   mapHistoryToUIMessages,
   extractQuickRepliesFromHistory,
 };

@@ -146,11 +146,7 @@ export const ApRouterStartCanvasEdge = ({
       >
         <BranchLabel
           key={branchLabelProps.label + branchLabelProps.targetNodeName}
-          sourceNodeName={source}
-          targetNodeName={target}
-          stepLocationRelativeToParent={data.stepLocationRelativeToParent}
-          branchIndex={data.branchIndex}
-          label={data.label}
+          {...branchLabelProps}
         />
       </foreignObject>
     </>

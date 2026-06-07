@@ -1,23 +1,32 @@
-import { ChatAgentEventType, WebsocketClientEvent } from '@activepieces/shared';
+import {
+  ChatAgentEventType,
+  ToolApprovalRequestEvent,
+  ToolProgressEvent,
+  WebsocketClientEvent,
+} from '@activepieces/shared';
 import { UIMessageChunk } from 'ai';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useSocket } from '@/components/providers/socket-provider';
 
 import { ChatUIMessage } from './chat-types';
-import { chunkReducer, DataPart, StreamingState } from './chunk-reducer';
+import { chunkReducer, StreamingState } from './chunk-reducer';
 
 const THROTTLE_MS = 100;
 const STREAM_TIMEOUT_MS = 10 * 60 * 1000;
 const STALE_CHECK_INTERVAL_MS = 15_000;
 
 export function useStreamingReducer({
-  onDataPart,
+  onTitleUpdate,
+  onToolProgress,
+  onToolApprovalRequest,
   onStreamFinished,
   onStreamError,
   onStaleCheck,
 }: {
-  onDataPart: (part: DataPart) => void;
+  onTitleUpdate: (title: string) => void;
+  onToolProgress: (event: ToolProgressEvent) => void;
+  onToolApprovalRequest: (event: ToolApprovalRequestEvent) => void;
   onStreamFinished: (conversationId: string) => void;
   onStreamError: (params: {
     conversationId: string;
@@ -40,8 +49,12 @@ export function useStreamingReducer({
   const streamTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
 
-  const onDataPartRef = useRef(onDataPart);
-  onDataPartRef.current = onDataPart;
+  const onTitleUpdateRef = useRef(onTitleUpdate);
+  onTitleUpdateRef.current = onTitleUpdate;
+  const onToolProgressRef = useRef(onToolProgress);
+  onToolProgressRef.current = onToolProgress;
+  const onToolApprovalRequestRef = useRef(onToolApprovalRequest);
+  onToolApprovalRequestRef.current = onToolApprovalRequest;
   const onStreamFinishedRef = useRef(onStreamFinished);
   onStreamFinishedRef.current = onStreamFinished;
   const onStreamErrorRef = useRef(onStreamError);
@@ -64,11 +77,6 @@ export function useStreamingReducer({
     const chunks = chunkBufferRef.current;
     if (chunks.length === 0) return;
     chunkBufferRef.current = [];
-
-    const dataParts = chunkReducer.extractDataParts({ chunks });
-    for (const dp of dataParts) {
-      onDataPartRef.current(dp);
-    }
 
     const state = reducerStateRef.current;
     if (!state) return;
@@ -170,6 +178,19 @@ export function useStreamingReducer({
           });
         } else if (event.type === ChatAgentEventType.FINISHED) {
           handleFinish();
+        } else if (event.type === ChatAgentEventType.TITLE_UPDATE) {
+          const titleData = event.data as { title?: string };
+          if (titleData?.title) {
+            onTitleUpdateRef.current(titleData.title);
+          }
+        } else if (event.type === ChatAgentEventType.TOOL_PROGRESS) {
+          lastChunkTimeRef.current = Date.now();
+          onToolProgressRef.current(event.data as ToolProgressEvent);
+        } else if (event.type === ChatAgentEventType.TOOL_APPROVAL_REQUEST) {
+          lastChunkTimeRef.current = Date.now();
+          onToolApprovalRequestRef.current(
+            event.data as ToolApprovalRequestEvent,
+          );
         }
       };
 

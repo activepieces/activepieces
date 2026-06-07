@@ -35,6 +35,9 @@
       "@activepieces/piece-acumbamail": [
         "packages/pieces/community/acumbamail/src/index.ts"
       ],
+      "@activepieces/piece-add-event": [
+        "packages/pieces/community/add-event/src/index.ts"
+      ],
       "@activepieces/piece-afforai": [
         "packages/pieces/community/afforai/src/index.ts"
       ],
@@ -417,6 +420,9 @@
       "@activepieces/piece-eden-ai": [
         "packages/pieces/community/eden-ai/src/index.ts"
       ],
+      "@activepieces/piece-editionguard": [
+        "packages/pieces/community/editionguard/src/index.ts"
+      ],
       "@activepieces/piece-elastic-email": [
         "packages/pieces/community/elastic-email/src/index.ts"
       ],
@@ -438,6 +444,9 @@
       ],
       "@activepieces/piece-fathom-analytics": [
         "packages/pieces/community/fathom-analytics/src/index.ts"
+      ],
+      "@activepieces/piece-feedhive": [
+        "packages/pieces/community/feedhive/src/index.ts"
       ],
       "@activepieces/piece-figma": [
         "packages/pieces/community/figma/src/index.ts"
@@ -683,6 +692,9 @@
       ],
       "@activepieces/piece-klaviyo": [
         "packages/pieces/community/klaviyo/src/index.ts"
+      ],
+      "@activepieces/piece-klipy": [
+        "packages/pieces/community/klipy/src/index.ts"
       ],
       "@activepieces/piece-klenty": [
         "packages/pieces/community/klenty/src/index.ts"
@@ -1023,8 +1035,14 @@
       "@activepieces/piece-quickzu": [
         "packages/pieces/community/quickzu/src/index.ts"
       ],
+      "@activepieces/piece-quizell": [
+        "packages/pieces/community/quizell/src/index.ts"
+      ],
       "@activepieces/piece-rabbitmq": [
         "packages/pieces/community/rabbitmq/src/index.ts"
+      ],
+      "@activepieces/piece-raindrop": [
+        "packages/pieces/community/raindrop/src/index.ts"
       ],
       "@activepieces/piece-razorpay": [
         "packages/pieces/community/razorpay/src/index.ts"
@@ -1034,6 +1052,9 @@
       ],
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"
+      ],
+      "@activepieces/piece-readwise": [
+        "packages/pieces/community/readwise/src/index.ts"
       ],
       "@activepieces/piece-reddit": [
         "packages/pieces/community/reddit/src/index.ts"
@@ -1172,8 +1193,14 @@
       "@activepieces/piece-slack": [
         "packages/pieces/community/slack/src/index.ts"
       ],
+      "@activepieces/piece-slashed": [
+        "packages/pieces/community/slashed/src/index.ts"
+      ],
       "@activepieces/piece-slidespeak": [
         "packages/pieces/community/slidespeak/src/index.ts"
+      ],
+      "@activepieces/piece-slite": [
+        "packages/pieces/community/slite/src/index.ts"
       ],
       "@activepieces/piece-smaily": [
         "packages/pieces/community/smaily/src/index.ts"
