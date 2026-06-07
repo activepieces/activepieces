@@ -1,5 +1,5 @@
 import '@fastify/reply-from'
-import { ApEdition, isNil, PrincipalType, tryCatch } from '@activepieces/shared'
+import { isNil, PrincipalType, tryCatch } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { workerGroupService } from '../../ee/platform/platform-plan/worker-group.service'
 import { flowExecutionCache } from '../../flows/flow/flow-execution-cache'
@@ -9,17 +9,11 @@ import { AppSystemProp } from '../../helper/system/system-props'
 export const canaryRoutingMiddleware = async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
     if (request.headers.upgrade === 'websocket') return
 
+    const isCanaryApp = system.getBoolean(AppSystemProp.IS_CANARY_APP) ?? false
+    if (isCanaryApp) return
 
     const { data: platformId, error: resolveError } = await tryCatch(() => resolvePlatformId(request, request.log))
     if (resolveError || isNil(platformId)) return
-
-    const canaryAppUrl = system.get(AppSystemProp.CANARY_APP_URL)
-    if (isNil(canaryAppUrl)) {
-        if (system.getEdition() === ApEdition.CLOUD) {
-            request.log.warn({ platformId, host: request.headers.host }, '[canaryRoutingMiddleware] request handled by the canary app')
-        }
-        return
-    }
 
     const { data: shouldForward, error: canaryLookupError } = await tryCatch(() =>
         workerGroupService(request.log).isCanaryPlatform({ platformId }),
