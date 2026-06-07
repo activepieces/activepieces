@@ -123,27 +123,41 @@ function FlowCards({
 }) {
   return (
     <div
-      className="mt-6 flex gap-4 overflow-x-auto scrollbar-none pb-1 pr-6"
+      className="mt-6 flex gap-4 overflow-x-auto scrollbar-none pb-1"
       style={{
         paddingLeft: 'max(1.5rem, calc((100% - 48rem) / 2 + 1.5rem))',
+        paddingRight: 'max(1.5rem, calc((100% - 48rem) / 2 + 1.5rem))',
       }}
     >
       {FLOW_CARDS.map((card, i) => (
         <motion.button
           key={card.title}
           type="button"
-          className="shrink-0 flex-1 min-w-0 text-left cursor-pointer group"
+          className={cn(
+            'shrink-0 text-left cursor-pointer group',
+            card.wide ? 'w-[380px]' : 'w-[245px]',
+          )}
           onClick={() => onSuggestionClick(card.description)}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.2 + i * 0.1 }}
         >
-          <div className="h-[245px] rounded-xl overflow-hidden">
+          <div
+            className={cn(
+              'h-[245px] rounded-xl overflow-hidden relative',
+              !card.wide && 'aspect-square',
+            )}
+          >
+            <img
+              src={card.bgImage}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover"
+            />
             <img
               src={card.image}
               alt={card.title}
               loading="lazy"
-              className="w-full h-full object-cover"
+              className="absolute inset-0 m-auto w-[79%] h-[69%] object-contain transition-transform duration-300 ease-out group-hover:scale-105"
             />
           </div>
           <h3 className="mt-3 text-sm font-semibold group-hover:text-primary transition-colors">
@@ -212,17 +226,21 @@ const FLOW_CARDS: FlowCardData[] = [
     description:
       'Find all promotional emails from last week and move them to spam',
     image: '/chat-suggestions/card-cleanup-spam.svg',
+    bgImage: '/chat-suggestions/card-background-1.svg',
   },
   {
     title: 'Lead Enrichment',
     description: 'Enrich all leads in this sheet with person and company info',
     image: '/chat-suggestions/card-lead-enrichment.svg',
+    bgImage: '/chat-suggestions/card-background-2.svg',
   },
   {
     title: 'Triage Support Tickets',
     description:
       'Classify incoming emails to a shared inbox and forward each to the right person',
     image: '/chat-suggestions/card-triage-support.svg',
+    bgImage: '/chat-suggestions/card-background-3.svg',
+    wide: true,
   },
 ];
 
@@ -290,6 +308,8 @@ type FlowCardData = {
   title: string;
   description: string;
   image: string;
+  bgImage: string;
+  wide?: boolean;
 };
 
 type TextSuggestionData = {
