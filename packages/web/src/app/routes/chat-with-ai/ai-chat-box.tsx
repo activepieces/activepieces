@@ -145,7 +145,13 @@ function ChatBoxContent({
 
   const [hasInput, setHasInput] = useState(false);
 
-  const isEmpty = messages.length === 0 && !isLoadingHistory && !isStreaming;
+  const isAwaitingLoad =
+    !!initialConversationId && messages.length === 0 && !error;
+  const isEmpty =
+    messages.length === 0 &&
+    !isLoadingHistory &&
+    !isStreaming &&
+    !isAwaitingLoad;
 
   const cachedConversations = queryClient.getQueryData<
     SeekPage<ChatConversation>
