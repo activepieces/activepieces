@@ -483,7 +483,8 @@ function DisplayToolCard({
   const toolCallId = chatPartUtils.getToolCallId(part);
 
   switch (toolName) {
-    case 'ap_show_connection_required':
+    case 'ap_show_connection_required': {
+      if (!isInteractive && toolOutput?.['dismissed'] === true) return null;
       return (
         <ConnectionsRequiredCard
           connections={[data as unknown as ConnectionRequiredData]}
@@ -491,6 +492,7 @@ function DisplayToolCard({
           isInteractive={isInteractive}
         />
       );
+    }
     case 'ap_show_connection_picker': {
       const selectedLabel =
         typeof toolOutput?.['label'] === 'string'
