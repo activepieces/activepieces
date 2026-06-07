@@ -1,6 +1,5 @@
 import { t } from 'i18next';
 import { motion } from 'motion/react';
-import { useEffect, useRef } from 'react';
 
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
@@ -68,15 +67,6 @@ export function ChatBottomBar({
   const rejectGate = useChatStoreContext((s) => s.rejectGate);
   const dismissGate = useChatStoreContext((s) => s.dismissGate);
   const dismissForm = useChatStoreContext((s) => s.dismissForm);
-
-  const wasStreamingRef = useRef(isStreaming);
-  useEffect(() => {
-    if (wasStreamingRef.current && !isStreaming && activeDisplayTool) {
-      const toolCallId = chatPartUtils.getToolCallId(activeDisplayTool);
-      dismissGate(toolCallId);
-    }
-    wasStreamingRef.current = isStreaming;
-  }, [isStreaming, activeDisplayTool, dismissGate]);
 
   // Plan approval from tool state
   if (pendingPlanPart) {
