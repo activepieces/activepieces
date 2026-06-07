@@ -64,6 +64,7 @@ function buildAdvancedStructure(
   steps: StepInfo[],
   sampleData: Record<string, unknown>,
   isFocusInsideListMapperModeInput: boolean,
+  targetStepName: string,
 ): DataSelectorTreeNode[] {
   return steps.map((step) => {
     try {
@@ -71,6 +72,7 @@ function buildAdvancedStructure(
         step,
         sampleData,
         isFocusInsideListMapperModeInput,
+        targetStepName,
       );
     } catch {
       return {
@@ -118,6 +120,9 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
     useBuilderStateContext(getStepsAndData);
   const isTriggerSelected = useBuilderStateContext(
     (state) => state.selectedStep === 'trigger',
+  );
+  const selectedStepName = useBuilderStateContext(
+    (state) => state.selectedStep ?? '',
   );
   const defaultTab = isTriggerSelected ? 'variables' : 'data';
 
@@ -190,8 +195,9 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
         steps,
         sampleData,
         isFocusInsideListMapperModeInput,
+        selectedStepName,
       ),
-    [steps, sampleData, isFocusInsideListMapperModeInput],
+    [steps, sampleData, isFocusInsideListMapperModeInput, selectedStepName],
   );
 
   const friendlyStructure = useMemo(
@@ -251,6 +257,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
             step,
             sampleData,
             isFocusInsideListMapperModeInput,
+            selectedStepName,
           );
         } catch {
           return {
@@ -262,7 +269,13 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
           };
         }
       }),
-    [steps, sampleData, schemaMap, isFocusInsideListMapperModeInput],
+    [
+      steps,
+      sampleData,
+      schemaMap,
+      isFocusInsideListMapperModeInput,
+      selectedStepName,
+    ],
   );
 
   const currentStructure =

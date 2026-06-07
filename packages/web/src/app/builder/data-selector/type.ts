@@ -3,6 +3,7 @@ import { FieldFormat } from '@/components/custom/smart-output-viewer/types';
 export type DataSelectorTreeChunkNodeData = {
   type: 'chunk';
   displayName: string;
+  displayNameClassName?: string;
 };
 
 export type DataSelectorTreeNodeData = {
@@ -12,6 +13,9 @@ export type DataSelectorTreeNodeData = {
   propertyPath: string;
   insertable: boolean;
   format?: FieldFormat;
+  hideStepIcon?: boolean;
+  displayNameClassName?: string;
+  stepName?: string;
 };
 
 export type DataSelectorTestNodeData = {

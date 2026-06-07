@@ -132,6 +132,7 @@ const DataSelectorNodeContent = ({
                 isStepRoot
                   ? 'font-medium text-foreground text-sm'
                   : 'text-foreground text-sm',
+                node.data.displayNameClassName,
               )}
             >
               {node.data.displayName}

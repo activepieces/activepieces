@@ -82,7 +82,7 @@ describe('Health Metrics API', () => {
         it('platform admin gets the queue metrics', async () => {
             const ctx = await createTestContext(app!)
 
-            const response = await ctx.get('/v1/health/queue-metrics')
+            const response = await ctx.get('/v1/health/queue-metrics', reportRange)
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
@@ -96,7 +96,7 @@ describe('Health Metrics API', () => {
         it('unauthenticated request is rejected', async () => {
             const response = await app?.inject({
                 method: 'GET',
-                url: '/api/v1/health/queue-metrics',
+                url: '/api/v1/health/queue-metrics?createdAfter=2026-01-01T00:00:00.000Z&createdBefore=2026-02-01T00:00:00.000Z',
             })
 
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)

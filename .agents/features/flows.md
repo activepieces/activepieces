@@ -14,6 +14,8 @@ Flows are the core automation primitive in Activepieces. Each flow is a versione
 - `packages/shared/src/lib/automation/flows/operations/` — `FlowOperationRequest` union and all 26 op types
 - `packages/shared/src/lib/automation/flows/actions/action.ts` — `FlowAction` discriminated union
 - `packages/shared/src/lib/automation/flows/triggers/trigger.ts` — `FlowTrigger` discriminated union
+- `packages/shared/src/lib/automation/flows/util/expression-rewriter.ts` — AST-based rewriter that inserts `['output']` into step-reference expressions during schema migration
+- `packages/server/api/src/app/flows/flow-version/migrations/migrate-v21-step-output-nesting.ts` — schema v21→v22 migration that wraps step references in the new output/error shape
 - `packages/web/src/features/flows/api/flows-api.tsx` — `flowsApi` (list, create, update, get, versions, delete, count)
 - `packages/web/src/features/flows/hooks/flow-hooks.tsx` — `flowHooks` (status change, export, import, test, version management)
 - `packages/web/src/features/flows/components/` — `FlowStatusToggle`, `ImportFlowDialog`, `ShareTemplateDialog`, `ChangeOwnerDialog`, `FlowCreatedByBadge`
@@ -46,13 +48,15 @@ Flows are the core automation primitive in Activepieces. Each flow is a versione
 - **Sample Data**: Captured step output (input + output) stored as File entities per flow version, used for testing downstream steps without live execution.
 - **Human Input**: Flows that expose a public form (`/form/:flowId`) or chat interface (`/chat/:flowId`) as their trigger UI.
 - **operationStatus**: Tracks in-progress mutations (ENABLING, DISABLING, DELETING) to prevent race conditions on concurrent state changes.
+- **Continue on Failure (CoF) Branches**: CODE and PIECE actions with `continueOnFailure.value: true` can carry an `onSuccess` and/or `onFailure` sub-action tree inside `settings.errorHandlingOptions.continueOnFailureBranches`. The engine routes execution into the matching branch based on the step outcome.
+- **Step output nesting (schema v21)**: All step outputs in execution state are wrapped as `{ output: <return value>, error: { message: <string> } | undefined }`. Expressions must use the `['output']` accessor; the v20→v21 migration rewrites existing expressions automatically via `expression-rewriter`.
 - **createdBy**: Records the automated source that created the flow as a discriminated union (`FlowCreator`: `{ type: 'MCP' | 'AGENT', id }`). Null for human-created flows. Server-set only — surfaced in the UI as the "AI" badge (`FlowCreatedByBadge`). Distinct from `ownerId`, which is the current owning user.
 
 ## Entities
 
 **Flow**: id, projectId, folderId (nullable), status (ENABLED/DISABLED), externalId, publishedVersionId (nullable, unique FK), metadata (JSONB), operationStatus (NONE/DELETING/ENABLING/DISABLING), timeSavedPerRun, ownerId, templateId, createdBy (nullable JSONB — `FlowCreator`). Relations: project, folder, owner, publishedVersion (one-to-one), versions (one-to-many), runs, events, tableWebhooks.
 
-**FlowVersion**: id, flowId, displayName, schemaVersion, trigger (JSONB — full flow graph), connectionIds[], agentIds[], updatedBy, valid, state (DRAFT/LOCKED), backupFiles (JSONB), notes[] (JSONB). Relations: flow, updatedByUser.
+**FlowVersion**: id, flowId, displayName, schemaVersion (current latest: `'22'`), trigger (JSONB — full flow graph), connectionIds[], agentIds[], updatedBy, valid, state (DRAFT/LOCKED), backupFiles (JSONB), notes[] (JSONB). Relations: flow, updatedByUser.
 
 **Folder**: id, projectId, displayName. Used to organize flows and tables. Case-insensitive uniqueness.
 
@@ -60,7 +64,7 @@ Flows are the core automation primitive in Activepieces. Each flow is a versione
 
 All flow modifications go through `POST /v1/flows/:id` with a `FlowOperationRequest` discriminated union. **26 operation types**:
 
-- Structure: ADD_ACTION, UPDATE_ACTION, DELETE_ACTION, DUPLICATE_ACTION, MOVE_ACTION, SET_SKIP_ACTION
+- Structure: ADD_ACTION, UPDATE_ACTION, DELETE_ACTION, DUPLICATE_ACTION, MOVE_ACTION, SET_SKIP_ACTION (ADD_ACTION's `stepLocationRelativeToParent` also accepts `INSIDE_ON_SUCCESS_BRANCH` / `INSIDE_ON_FAILURE_BRANCH` for CoF sub-actions)
 - Branching: ADD_BRANCH, DELETE_BRANCH, DUPLICATE_BRANCH, MOVE_BRANCH
 - Trigger: UPDATE_TRIGGER
 - Publishing: LOCK_AND_PUBLISH, USE_AS_DRAFT, LOCK_FLOW, CHANGE_STATUS
