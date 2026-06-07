@@ -4,8 +4,6 @@ import { ChevronDown } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useCallback, useMemo, useState } from 'react';
 
-import { StreamingText } from './streaming-text';
-
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { TextShimmer } from '@/components/ui/text-shimmer';
@@ -18,6 +16,8 @@ import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { cn } from '@/lib/utils';
+
+import { StreamingText } from './streaming-text';
 
 export function ThinkingBlock({
   thinkingSteps,
