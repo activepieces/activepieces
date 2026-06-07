@@ -69,7 +69,7 @@ export const newDocumentTrigger = createTrigger({
 	description: 'Triggers when a new document is added to a specific folder(optional).',
 	aiMetadata: {
 		description:
-			'Fires when a new Google Docs document is created, optionally limited to a specific Drive folder. Represents a freshly created document; each event carries the new document\'s Drive file metadata.',
+			'Fires when a new Google Docs document is created, optionally limited to a specific Drive folder. Use to react when a document first appears; it does not fire on edits to existing documents.',
 	},
 	type: TriggerStrategy.POLLING,
 	props: {

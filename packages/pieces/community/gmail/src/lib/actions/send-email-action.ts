@@ -12,7 +12,7 @@ export const gmailSendEmailAction = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Composes and sends a new email from the connected Gmail account to one or more recipients, with optional CC/BCC, attachments, and plain-text or HTML body. Use this to originate a fresh message; to answer an existing thread prefer Reply to Email instead. Set the draft flag to save it as a draft instead of sending. Not idempotent: each call sends (or drafts) a separate message.',
+      'Composes and sends a new email from the connected Gmail account to one or more recipients, with optional CC/BCC, attachments, and plain-text or HTML body. Use this to originate a fresh message; to answer an existing thread prefer Reply to Email instead, or pass an original Message-ID to send this message into that existing thread. Set the draft flag to save it as a draft instead of sending. Not idempotent: each call sends (or drafts) a separate message.',
     idempotent: false,
   },
   displayName: 'Send Email',
