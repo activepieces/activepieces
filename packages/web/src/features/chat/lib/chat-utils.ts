@@ -21,44 +21,51 @@ function humanizePieceName(raw: string): string {
   );
 }
 
-const TOOL_FALLBACK_LABELS: Record<string, string> = {
-  ap_execute_action: 'Running action',
-  ap_discover_action_auth: 'Checking connections',
-  ap_list_across_projects: 'Listing resources',
-  ap_request_plan_approval: 'Requesting approval',
-  ap_research_pieces: 'Searching integrations',
-  ap_build_flow: 'Building automation',
-  ap_create_flow: 'Creating automation',
-  ap_validate_step_config: 'Validating setup',
-  ap_validate_flow: 'Validating automation',
-  ap_test_flow: 'Testing automation',
-  ap_add_step: 'Adding step',
-  ap_update_step: 'Updating step',
-  ap_update_trigger: 'Updating starting event',
-  ap_manage_notes: 'Adding notes',
-  ap_list_connections: 'Checking connections',
-  ap_get_piece_props: 'Loading settings',
-  ap_resolve_property_options: 'Loading options',
-};
-
-const TOOL_DONE_LABELS: Record<string, string> = {
-  ap_execute_action: 'Ran action',
-  ap_discover_action_auth: 'Checked connections',
-  ap_list_across_projects: 'Listed resources',
-  ap_request_plan_approval: 'Requested approval',
-  ap_research_pieces: 'Searched integrations',
-  ap_build_flow: 'Built automation',
-  ap_create_flow: 'Created automation',
-  ap_validate_step_config: 'Validated setup',
-  ap_validate_flow: 'Validated automation',
-  ap_test_flow: 'Tested automation',
-  ap_add_step: 'Added step',
-  ap_update_step: 'Updated step',
-  ap_update_trigger: 'Updated starting event',
-  ap_manage_notes: 'Added notes',
-  ap_list_connections: 'Checked connections',
-  ap_get_piece_props: 'Loaded settings',
-  ap_resolve_property_options: 'Loaded options',
+const TOOL_LABELS: Record<string, { active: string; done: string }> = {
+  ap_execute_action: { active: 'Running action', done: 'Ran action' },
+  ap_discover_action_auth: {
+    active: 'Checking connections',
+    done: 'Checked connections',
+  },
+  ap_list_across_projects: {
+    active: 'Listing resources',
+    done: 'Listed resources',
+  },
+  ap_request_plan_approval: {
+    active: 'Requesting approval',
+    done: 'Requested approval',
+  },
+  ap_research_pieces: {
+    active: 'Searching integrations',
+    done: 'Searched integrations',
+  },
+  ap_build_flow: { active: 'Building automation', done: 'Built automation' },
+  ap_create_flow: { active: 'Creating automation', done: 'Created automation' },
+  ap_validate_step_config: {
+    active: 'Validating setup',
+    done: 'Validated setup',
+  },
+  ap_validate_flow: {
+    active: 'Validating automation',
+    done: 'Validated automation',
+  },
+  ap_test_flow: { active: 'Testing automation', done: 'Tested automation' },
+  ap_add_step: { active: 'Adding step', done: 'Added step' },
+  ap_update_step: { active: 'Updating step', done: 'Updated step' },
+  ap_update_trigger: {
+    active: 'Updating starting event',
+    done: 'Updated starting event',
+  },
+  ap_manage_notes: { active: 'Adding notes', done: 'Added notes' },
+  ap_list_connections: {
+    active: 'Checking connections',
+    done: 'Checked connections',
+  },
+  ap_get_piece_props: { active: 'Loading settings', done: 'Loaded settings' },
+  ap_resolve_property_options: {
+    active: 'Loading options',
+    done: 'Loaded options',
+  },
 };
 
 function cleanMcpToolName(raw: string): string {
@@ -87,7 +94,7 @@ function formatToolName({
   }
 
   const baseName =
-    TOOL_FALLBACK_LABELS[raw] ??
+    TOOL_LABELS[raw]?.active ??
     formatUtils.convertEnumToHumanReadable(raw.replace(/^ap_/, ''));
 
   if (!includeContext) return baseName;
@@ -297,7 +304,7 @@ function formatToolDoneTitle({ part }: { part: AnyToolPart }): string {
     return cleanMcpToolName(raw);
   }
   return (
-    TOOL_DONE_LABELS[raw] ??
+    TOOL_LABELS[raw]?.done ??
     formatUtils.convertEnumToHumanReadable(raw.replace(/^ap_/, ''))
   );
 }

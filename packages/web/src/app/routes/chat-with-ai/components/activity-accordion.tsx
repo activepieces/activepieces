@@ -2,7 +2,7 @@ import { isObject } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
@@ -34,10 +34,13 @@ export function ThinkingBlock({
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleOpenChange = (open: boolean) => {
-    setIsOpen(open);
-    onOpenChange?.(open);
-  };
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      setIsOpen(open);
+      onOpenChange?.(open);
+    },
+    [onOpenChange],
+  );
 
   const hasReasoning = reasoningText.length > 0;
   const hasSteps = thinkingSteps.length > 0;
