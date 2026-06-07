@@ -662,7 +662,7 @@ describe('MCP Tools integration', () => {
 
     // ── Fix 1: Step output reference format ───────────────────────────
 
-    it('28. ap_flow_structure — reference hint uses {{stepName.field}} without .output.', async () => {
+    it('28. ap_flow_structure — reference hint uses {{stepName[\'output\'].field}} bracket notation', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
         const flowId = await createFlowAndGetId(mcp, 'Reference Format Test')
@@ -670,28 +670,27 @@ describe('MCP Tools integration', () => {
         const result = await apFlowStructureTool(mcp, mockLog).execute({ flowId })
         const output = text(result)
 
-        expect(output).toContain('{{stepName.field}}')
+        expect(output).toContain('{{stepName[\'output\'].field}}')
         expect(output).not.toContain('{{stepName.output.field}}')
-        expect(output).not.toContain('{{trigger.output.')
     })
 
-    it('29. ap_update_step — input description uses {{stepName.field}} not {{stepName.output.field}}', async () => {
+    it('29. ap_update_step — input description uses {{stepName[\'output\'].field}} bracket notation', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
         const tool = apUpdateStepTool(mcp, mockLog)
         const inputDesc = tool.inputSchema.input.description ?? ''
 
-        expect(inputDesc).toContain('{{stepName.field}}')
+        expect(inputDesc).toContain('{{stepName[\'output\'].field}}')
         expect(inputDesc).not.toContain('{{stepName.output.field}}')
     })
 
-    it('30. ap_update_trigger — input description uses {{stepName.field}} not {{stepName.output.field}}', async () => {
+    it('30. ap_update_trigger — input description uses {{stepName[\'output\'].field}} bracket notation', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
         const tool = apUpdateTriggerTool(mcp, mockLog)
         const inputDesc = tool.inputSchema.input.description ?? ''
 
-        expect(inputDesc).toContain('{{stepName.field}}')
+        expect(inputDesc).toContain('{{stepName[\'output\'].field}}')
         expect(inputDesc).not.toContain('{{stepName.output.field}}')
     })
 
