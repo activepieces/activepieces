@@ -25,6 +25,31 @@ const isTtsModel = (model: GeminiModel): boolean =>
 const isVeoModel = (model: GeminiModel): boolean =>
   model.name.toLowerCase().includes('veo');
 
+const listAllModels = async ({
+  auth,
+}: {
+  auth: GeminiAuth;
+}): Promise<GeminiModel[]> => {
+  const models: GeminiModel[] = [];
+  let pageToken: string | undefined = undefined;
+
+  do {
+    const { body } = await httpClient.sendRequest<GeminiListModelsResponse>({
+      method: HttpMethod.GET,
+      url: 'https://generativelanguage.googleapis.com/v1beta/models',
+      queryParams: {
+        key: auth.secret_text,
+        pageSize: '1000',
+        ...(pageToken ? { pageToken } : {}),
+      },
+    });
+    models.push(...(body.models ?? []));
+    pageToken = body.nextPageToken;
+  } while (pageToken);
+
+  return models;
+};
+
 const fetchModelOptions = async ({
   auth,
   filter,
@@ -41,11 +66,8 @@ const fetchModelOptions = async ({
   }
 
   try {
-    const { body } = await httpClient.sendRequest<GeminiListModelsResponse>({
-      method: HttpMethod.GET,
-      url: `https://generativelanguage.googleapis.com/v1beta/models?key=${auth.secret_text}`,
-    });
-    const options = body.models.filter(filter).map((model) => ({
+    const models = await listAllModels({ auth });
+    const options = models.filter(filter).map((model) => ({
       label: model.displayName ?? model.name.replace('models/', ''),
       value: model.name.replace('models/', ''),
     }));
@@ -84,5 +106,6 @@ type GeminiModel = {
 };
 
 type GeminiListModelsResponse = {
-  models: GeminiModel[];
+  models?: GeminiModel[];
+  nextPageToken?: string;
 };
