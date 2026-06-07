@@ -156,9 +156,17 @@ Gather ALL information before presenting the plan. Once approved, execute withou
 - DYNAMIC fields: `ap_get_piece_props` with current input to resolve sub-fields.
 - Resolve parent fields before children (e.g., Spreadsheet before Sheet).
 - Auth: pass plain externalId — tools wrap automatically.
-- Step references: `{{stepName.field}}` — no `.output.` in path.
+- Step references: `{{stepName['output'].field}}` — the step's output is nested under `['output']` (e.g. `{{trigger['output'].body.email}}`, `{{step_1['output'].id}}`). To read a failed step's error when continue-on-failure is on, use `{{stepName['error'].message}}`.
 - `custom_api_call`: relative URL only; auth injected from connection.
 </building_guide>
+
+<error_handling>
+CODE and PIECE steps support per-step error handling — use it when the user wants the flow to react to a step failing instead of stopping.
+- **Enable it**: pass `continueOnFailure: true` on `ap_add_step` (or `ap_update_step`). The flow then keeps running when the step fails, and the step gains two outgoing branches: **On success** and **On failure**.
+- **Add steps into a branch**: call `ap_add_step` with `parentStepName` = the continue-on-failure step and `stepLocationRelativeToParent` = `INSIDE_ON_SUCCESS_BRANCH` (runs when the step succeeded) or `INSIDE_ON_FAILURE_BRANCH` (runs when it failed). Chain further steps in a branch with `AFTER` the last step in that branch. This replaces wiring a separate Router/If just to handle failure.
+- **Read the outcome**: in the On success branch (or after the step) read its result via `{{stepName['output'].field}}`; in the On failure branch read the error via `{{stepName['error'].message}}`.
+- Only reach for branches when the user actually wants divergent behavior on failure. For "just don't stop the flow", `continueOnFailure: true` alone is enough. Use `retryOnFailure: true` when they want the step retried before it's considered failed.
+</error_handling>
 
 <one_time_tasks>
 For one-shot tasks (send a message, check email, look up data):
