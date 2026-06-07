@@ -8,14 +8,14 @@ import { Check } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useEffect, useMemo, useState } from 'react';
 
+import { normalizePieceName } from '../lib/message-parsers';
+
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
 import { Button } from '@/components/ui/button';
 import { appConnectionsApi } from '@/features/connections/api/app-connections';
 import { piecesHooks } from '@/features/pieces';
 import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
 import { authenticationSession } from '@/lib/authentication-session';
-
-import { normalizePieceName } from '../lib/message-parsers';
 
 export function ConnectionsRequiredCard({
   connections,
@@ -132,8 +132,17 @@ export function ConnectionsRequiredCard({
                   className="gap-1.5"
                   onClick={() => {
                     setContinued(true);
+                    const confirmedConnections = connections.map((conn) => {
+                      const existing = existingConns[conn.piece];
+                      return {
+                        piece: conn.piece,
+                        displayName: conn.displayName,
+                        connectionExternalId: existing?.externalId ?? null,
+                      };
+                    });
                     onResolve({
                       message: 'All connections are ready, continue building.',
+                      connections: confirmedConnections,
                     });
                   }}
                 >
