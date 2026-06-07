@@ -151,6 +151,17 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
 
 ## 🦫 Contributors
 
+## 🚀 New MCP Piece: Gmail
+
+This release introduces the Gmail MCP (Model Context Protocol) server integration, enabling powerful email automation within Activepieces. With this new piece, you can seamlessly:
+
+*   **Send Emails:** Craft and dispatch emails directly from your workflows.
+*   **Read Inbox Messages:** Access and process incoming emails from your Gmail inbox.
+*   **Search Messages:** Efficiently find specific emails based on various criteria.
+*   **Reply to Threads:** Engage in email conversations by replying to existing threads.
+
+The Gmail piece leverages the official Gmail API and supports OAuth2 authentication for secure and robust integration. This enhancement significantly expands the capabilities of Activepieces for managing email-based workflows.
+
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
