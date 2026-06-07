@@ -1413,6 +1413,7 @@
   "Password is required": "Se requiere contraseña",
   "Password": "Contraseña",
   "Confirm": "Confirmar",
+  "Condition": "Condición",
   "Verification email resent, if previous one expired.": "Correo de verificación reenviado, si el anterior ha caducado.",
   "Password reset link resent, if previous one expired.": "Enlace de restablecimiento de contraseña reenviado, si el anterior ha caducado.",
   "We sent you a link to complete your registration to": "Te hemos enviado un enlace para completar tu registro",

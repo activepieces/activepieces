@@ -1413,6 +1413,7 @@
   "Password is required": "密码是必需的",
   "Password": "密码",
   "Confirm": "确认",
+  "Condition": "条件",
   "Verification email resent, if previous one expired.": "验证邮件重新发送，如果前一封已过期。",
   "Password reset link resent, if previous one expired.": "密码重置链接重新发送，如果前一个链接已过期。",
   "We sent you a link to complete your registration to": "我们向您发送了一个链接来完成您的注册到",
