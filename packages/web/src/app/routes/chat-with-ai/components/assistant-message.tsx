@@ -246,10 +246,12 @@ export const AssistantMessage = memo(function AssistantMessage({
                   i === lastThinkingIdx &&
                   !hasActiveDisplayCard &&
                   !hasTextAfter;
-                const toolSteps = block.steps.filter(
-                  (s): s is ThinkingStep & { kind: 'tool' } =>
-                    s.kind === 'tool',
-                );
+                const lastStep =
+                  block.steps.length > 0
+                    ? block.steps[block.steps.length - 1]
+                    : null;
+                const lastToolStep =
+                  lastStep?.kind === 'tool' ? lastStep : null;
                 const lastThinkingStatus =
                   block.steps.filter((s) => s.kind === 'thinking-status').at(-1)
                     ?.text ?? null;
@@ -275,15 +277,19 @@ export const AssistantMessage = memo(function AssistantMessage({
                     />
                     {isMessageStreaming &&
                       !isAccordionOpen &&
-                      (toolSteps.length > 0 ? (
+                      lastStep &&
+                      (lastToolStep ? (
                         <ToolShimmerPills
-                          toolSteps={toolSteps}
+                          toolSteps={block.steps.filter(
+                            (s): s is ThinkingStep & { kind: 'tool' } =>
+                              s.kind === 'tool',
+                          )}
                           lastThinkingStatus={lastThinkingStatus}
                         />
                       ) : (
-                        lastThinkingStatus && (
+                        'text' in lastStep && (
                           <p className="pt-2 text-sm text-muted-foreground">
-                            {lastThinkingStatus}
+                            {lastStep.text}
                           </p>
                         )
                       ))}
