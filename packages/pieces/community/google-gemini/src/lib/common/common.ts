@@ -1,4 +1,9 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import {
+  httpClient,
+  HttpMethod,
+  HttpResponse,
+  QueryParams,
+} from '@activepieces/pieces-common';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { googleGeminiAuth } from '../auth';
 
@@ -34,15 +39,20 @@ const listAllModels = async ({
   let pageToken: string | undefined = undefined;
 
   do {
-    const { body } = await httpClient.sendRequest<GeminiListModelsResponse>({
-      method: HttpMethod.GET,
-      url: 'https://generativelanguage.googleapis.com/v1beta/models',
-      queryParams: {
-        key: auth.secret_text,
-        pageSize: '1000',
-        ...(pageToken ? { pageToken } : {}),
-      },
-    });
+    const queryParams: QueryParams = {
+      key: auth.secret_text,
+      pageSize: '1000',
+    };
+    if (pageToken) {
+      queryParams['pageToken'] = pageToken;
+    }
+
+    const { body }: HttpResponse<GeminiListModelsResponse> =
+      await httpClient.sendRequest<GeminiListModelsResponse>({
+        method: HttpMethod.GET,
+        url: 'https://generativelanguage.googleapis.com/v1beta/models',
+        queryParams,
+      });
     models.push(...(body.models ?? []));
     pageToken = body.nextPageToken;
   } while (pageToken);
