@@ -488,6 +488,7 @@ function DisplayToolCard({
         <ConnectionsRequiredCard
           connections={[data as unknown as ConnectionRequiredData]}
           onResolve={(payload) => onResolve(toolCallId, payload)}
+          isInteractive={isInteractive}
         />
       );
     case 'ap_show_connection_picker': {
