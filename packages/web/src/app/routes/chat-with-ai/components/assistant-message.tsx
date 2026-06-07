@@ -229,36 +229,37 @@ export const AssistantMessage = memo(function AssistantMessage({
       transition={{ duration: 0.3 }}
     >
       <Message>
-        <div className="min-w-0 space-y-2 flex-1">
+        <div className="min-w-0 flex-1">
           {blocks.map((block, i) => {
             switch (block.kind) {
               case 'thinking':
                 return (
-                  <ThinkingBlock
-                    key={`thinking-${i}`}
-                    thinkingSteps={block.steps}
-                    reasoningText={block.reasoningText}
-                    isStreaming={
-                      isStreaming &&
-                      i === lastThinkingIdx &&
-                      !hasActiveDisplayCard &&
-                      i > lastDisplayToolIdx
-                    }
-                    thinkingDurationMs={
-                      i === lastThinkingIdx
-                        ? (
-                            message as ChatUIMessage & {
-                              thinkingDurationMs?: number;
-                            }
-                          ).thinkingDurationMs
-                        : undefined
-                    }
-                  />
+                  <div key={`thinking-${i}`} className="py-2">
+                    <ThinkingBlock
+                      thinkingSteps={block.steps}
+                      reasoningText={block.reasoningText}
+                      isStreaming={
+                        isStreaming &&
+                        i === lastThinkingIdx &&
+                        !hasActiveDisplayCard &&
+                        i > lastDisplayToolIdx
+                      }
+                      thinkingDurationMs={
+                        i === lastThinkingIdx
+                          ? (
+                              message as ChatUIMessage & {
+                                thinkingDurationMs?: number;
+                              }
+                            ).thinkingDurationMs
+                          : undefined
+                      }
+                    />
+                  </div>
                 );
               case 'text': {
                 const isActiveText = isStreaming && i === lastTextIdx;
                 return (
-                  <div key={`text-${i}`} className={PROSE_CLASSES}>
+                  <div key={`text-${i}`} className={cn('py-1', PROSE_CLASSES)}>
                     {isActiveText ? (
                       <StreamingText text={block.text} isStreaming={true} />
                     ) : (
@@ -276,28 +277,32 @@ export const AssistantMessage = memo(function AssistantMessage({
                   block.part.state === 'output-error';
                 if (toolCompleted) {
                   return (
-                    <DisplayToolCard
-                      key={block.part.toolCallId}
-                      part={block.part}
-                      onResolve={approveGate}
-                      isInteractive={false}
-                    />
+                    <div key={block.part.toolCallId} className="py-2">
+                      <DisplayToolCard
+                        part={block.part}
+                        onResolve={approveGate}
+                        isInteractive={false}
+                      />
+                    </div>
                   );
                 }
                 return null;
               }
               case 'plan-marker':
                 return (
-                  <InlinePlanCard
-                    key={`plan-${i}`}
-                    planPart={block.part}
-                    message={message}
-                    isStreaming={isStreaming}
-                  />
+                  <div key={`plan-${i}`} className="py-2">
+                    <InlinePlanCard
+                      planPart={block.part}
+                      message={message}
+                      isStreaming={isStreaming}
+                    />
+                  </div>
                 );
               case 'batch-progress':
                 return (
-                  <BatchProgressCard key={`batch-${i}`} progress={block.data} />
+                  <div key={`batch-${i}`} className="py-2">
+                    <BatchProgressCard progress={block.data} />
+                  </div>
                 );
               default:
                 return null;
@@ -398,6 +403,7 @@ function InlinePlanCard({
 
   const updates = useMemo(() => {
     if (!localPlan) return [];
+    if (messageUpdates.length > 0) return messageUpdates;
     if (planCompleted) {
       return localPlan.steps.map(
         (_stepText, i): PlanStepUpdate => ({ stepIndex: i, status: 'done' }),

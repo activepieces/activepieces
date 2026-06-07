@@ -1,8 +1,11 @@
 import {
+    ActivepiecesError,
     apId,
     ChatConversation,
+    ChatConversationStatus,
     ChatHistoryMessage,
     CreateChatConversationRequest,
+    ErrorCode,
     PersistedChatMessage,
     SeekPage,
     spreadIfDefined,
@@ -85,6 +88,12 @@ export const chatService = (log: FastifyBaseLogger) => ({
 
     async deleteConversation({ id, platformId, userId }: ConversationIdentifier): Promise<void> {
         const conversation = await this.getConversationOrThrow({ id, platformId, userId })
+        if (conversation.status === ChatConversationStatus.STREAMING) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: 'Cannot delete a conversation while an agent is running. Please cancel it first.' },
+            })
+        }
         await chatHelpers.conversationRepo().delete(conversation.id)
         log.info({ conversationId: id, platformId, userId }, '[chatService] Conversation deleted')
     },

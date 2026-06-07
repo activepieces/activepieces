@@ -21,6 +21,13 @@ export const distributedStoreFactory = (getRedisClient: () => Promise<Redis>) =>
         return JSON.parse(value) as T
     },
 
+    async putIfAbsent(key: string, value: unknown, ttlInSeconds: number): Promise<boolean> {
+        const serializedValue = JSON.stringify(value)
+        const redisClient = await getRedisClient()
+        const result = await redisClient.set(key, serializedValue, 'EX', ttlInSeconds, 'NX')
+        return result === 'OK'
+    },
+
     async delete(keys: string | string[]): Promise<void> {
         const keysArray = Array.isArray(keys) ? keys : [keys]
         if (keysArray.length === 0) return
