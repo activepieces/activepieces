@@ -454,6 +454,9 @@
       "@activepieces/piece-file-helper": [
         "packages/pieces/core/file-helper/src/index.ts"
       ],
+      "@activepieces/piece-filetopdf": [
+        "packages/pieces/community/filetopdf/src/index.ts"
+      ],
       "@activepieces/piece-fillout-forms": [
         "packages/pieces/community/fillout-forms/src/index.ts"
       ],
