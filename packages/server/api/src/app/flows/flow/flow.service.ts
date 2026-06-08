@@ -81,6 +81,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             {
                 displayName: request.displayName,
                 notes: [],
+                schemaVersion: null,
             },
         )
 
@@ -756,6 +757,7 @@ type CreateParams = {
     externalId?: string
     templateId?: string
     createdBy?: FlowCreator
+    schemaVersion?: string
 }
 
 type ListParamsBase = {
@@ -868,6 +870,7 @@ async function createNewDraftIfVersionIsPublished({
         lastVersion = await flowVersionService(log).createEmptyVersion(flowId, {
             displayName: lockedVersion.displayName,
             notes: lockedVersion.notes,
+            schemaVersion: lockedVersion.schemaVersion,
         })
         const operations: FlowOperationRequest[] = [{
             type: FlowOperationType.IMPORT_FLOW,
