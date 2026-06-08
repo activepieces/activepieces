@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  Property,
+  DynamicPropsValue,
+} from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { rendexAuth } from '../common/auth';
 import { RENDEX_BASE_URL } from '../common/common';
@@ -8,29 +12,54 @@ export const renderToImage = createAction({
   name: 'render_to_image',
   displayName: 'Render to Image',
   description:
-    'Render raw HTML or a URL to a PNG, JPEG, or WebP image (or a PDF) and get back the result as base64.',
+    'Render raw HTML, a URL, or Markdown to an image (PNG, JPEG, WebP) or a PDF.',
   props: {
     source_type: Property.StaticDropdown({
       displayName: 'Source',
-      description: 'Render from raw HTML or from a live URL.',
+      description: 'Render from raw HTML, a live URL, or Markdown.',
       required: true,
       defaultValue: 'html',
       options: {
         options: [
           { label: 'HTML', value: 'html' },
           { label: 'URL', value: 'url' },
+          { label: 'Markdown', value: 'markdown' },
         ],
       },
     }),
-    html: Property.LongText({
-      displayName: 'HTML',
-      description: 'The HTML markup to render. Required when Source is "HTML".',
-      required: false,
-    }),
-    url: Property.ShortText({
-      displayName: 'URL',
-      description: 'The page URL to render. Required when Source is "URL".',
-      required: false,
+    content: Property.DynamicProperties({
+      auth: rendexAuth,
+      displayName: 'Content',
+      description: 'The content to render, based on the Source you selected.',
+      required: true,
+      refreshers: ['source_type'],
+      props: async ({ source_type }): Promise<DynamicPropsValue> => {
+        if (source_type === 'url') {
+          return {
+            url: Property.ShortText({
+              displayName: 'URL',
+              description: 'The page URL to render.',
+              required: true,
+            }),
+          };
+        }
+        if (source_type === 'markdown') {
+          return {
+            markdown: Property.LongText({
+              displayName: 'Markdown',
+              description: 'The Markdown to render.',
+              required: true,
+            }),
+          };
+        }
+        return {
+          html: Property.LongText({
+            displayName: 'HTML',
+            description: 'The HTML markup to render.',
+            required: true,
+          }),
+        };
+      },
     }),
     format: Property.StaticDropdown({
       displayName: 'Format',
@@ -53,38 +82,24 @@ export const renderToImage = createAction({
     }),
   },
   async run(context) {
-    const { auth, propsValue } = context;
-    const { source_type, html, url, format, full_page } = propsValue;
+    const { auth, propsValue, files } = context;
+    const { source_type, content, format, full_page } = propsValue;
 
-    // Guard the source-specific field: both html and url are optional at the
-    // form level (only one applies), so fail clearly here instead of sending a
-    // body with neither key (JSON.stringify drops undefined) and getting an
-    // opaque server-side error.
-    if (source_type === 'url' && !url) {
-      throw new Error('A URL is required when Source is set to "URL".');
-    }
-    if (source_type === 'html' && !html) {
-      throw new Error('HTML is required when Source is set to "HTML".');
+    // The Source values ("html" | "url" | "markdown") map 1:1 onto both the
+    // dynamic field key and the Rendex request field, so the value is forwarded
+    // under the same name.
+    const sourceValue = content[source_type];
+    if (!sourceValue) {
+      throw new Error('Please provide content for the selected source.');
     }
 
     const body: Record<string, unknown> = {
+      [source_type]: sourceValue,
       format: format ?? 'png',
       fullPage: full_page ?? false,
     };
-    if (source_type === 'url') {
-      body['url'] = url;
-    } else {
-      body['html'] = html;
-    }
 
-    const response = await httpClient.sendRequest<{
-      data: {
-        image: string;
-        contentType: string;
-        format: string;
-        bytesSize: number;
-      };
-    }>({
+    const response = await httpClient.sendRequest<RendexRenderResponse>({
       method: HttpMethod.POST,
       url: `${RENDEX_BASE_URL}/v1/screenshot/json`,
       headers: {
@@ -94,6 +109,29 @@ export const renderToImage = createAction({
       body,
     });
 
-    return response.body.data;
+    const { image, ...metadata } = response.body.data;
+    const file = await files.write({
+      fileName: `rendex-capture.${metadata.format}`,
+      data: Buffer.from(image, 'base64'),
+    });
+
+    return { file, ...metadata };
   },
 });
+
+type RendexRenderResponse = {
+  data: {
+    image: string;
+    contentType: string;
+    url: string;
+    width: number;
+    height: number;
+    format: string;
+    bytesSize: number;
+    capturedAt: string;
+    quality: string;
+    waitStrategy: string;
+    loadTimeMs: number;
+    renderingEngine: string;
+  };
+};
