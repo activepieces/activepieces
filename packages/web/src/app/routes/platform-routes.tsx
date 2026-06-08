@@ -5,7 +5,6 @@ import { PageTitle } from '@/app/components/page-title';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { PlatformLayout } from '../components/platform-layout';
 
-const SettingsBilling = React.lazy(() => import('./platform/billing'));
 const EventDestinationsPage = React.lazy(
   () => import('./platform/infra/event-destinations'),
 );
@@ -15,30 +14,6 @@ const SettingsWorkersPage = React.lazy(
   () => import('./platform/infra/workers'),
 );
 const ProjectsPage = React.lazy(() => import('./platform/projects'));
-const ApiKeysPage = React.lazy(() =>
-  import('./platform/security/api-keys').then((m) => ({
-    default: m.ApiKeysPage,
-  })),
-);
-const AuditLogsPage = React.lazy(
-  () => import('./platform/security/audit-logs'),
-);
-const ProjectRolePage = React.lazy(() =>
-  import('./platform/security/project-role').then((m) => ({
-    default: m.ProjectRolePage,
-  })),
-);
-const SecretManagersPage = React.lazy(
-  () => import('./platform/security/secret-managers'),
-);
-const EmbedPage = React.lazy(() =>
-  import('./platform/security/embed').then((m) => ({
-    default: m.EmbedPage,
-  })),
-);
-const SSOPage = React.lazy(() =>
-  import('./platform/security/sso').then((m) => ({ default: m.SSOPage })),
-);
 const AIProvidersPage = React.lazy(() => import('./platform/setup/ai'));
 const PlatformMcpPage = React.lazy(() => import('./platform/setup/mcp'));
 const BrandingPage = React.lazy(() =>
@@ -194,100 +169,6 @@ export const platformRoutes = [
         <PageTitle title="Branding">
           <SuspenseWrapper>
             <BrandingPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/setup/billing',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Billing">
-          <SuspenseWrapper>
-            <SettingsBilling />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/security',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Platform Security">
-          <Navigate to="/platform/security/audit-logs" replace />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/security/api-keys',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="API Keys">
-          <SuspenseWrapper>
-            <ApiKeysPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/security/secret-managers',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Secret managers">
-          <SuspenseWrapper>
-            <SecretManagersPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/security/audit-logs',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Audit Logs">
-          <SuspenseWrapper>
-            <AuditLogsPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/security/embed',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Embedding">
-          <SuspenseWrapper>
-            <EmbedPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/security/sso',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="SSO">
-          <SuspenseWrapper>
-            <SSOPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/security/project-roles',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Project Roles">
-          <SuspenseWrapper>
-            <ProjectRolePage />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>

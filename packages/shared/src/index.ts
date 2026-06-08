@@ -81,6 +81,8 @@ export * from './lib/automation/agents'
 export * from './lib/automation/knowledge-base'
 export * from './lib/automation/tables'
 export * from './lib/automation/websocket'
+export * from './lib/automation/events'
+export * from './lib/automation/event-destinations'
 export * from './lib/management/project/project-requests'
 
 // formula

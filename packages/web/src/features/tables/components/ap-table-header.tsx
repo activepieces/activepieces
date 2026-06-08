@@ -5,7 +5,6 @@ import {
   RefreshCw,
   Trash2,
   Download,
-  UploadCloud,
   Edit2,
   Import,
   FileJson,
@@ -34,8 +33,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
-import { gitSyncHooks } from '@/features/project-releases/hooks/git-sync-hooks';
 import {
   getProjectName,
   projectCollectionUtils,
@@ -85,11 +82,6 @@ export function ApTableHeader({
     Permission.WRITE_TABLE,
   );
   const canEdit = userHasTableWritePermission && !lockedByOtherUser;
-  const userHasPermissionToPushToGit = useAuthorization().checkAccess(
-    Permission.WRITE_PROJECT_RELEASE,
-  );
-  const showPushToGit = gitSyncHooks.useShowPushToGit();
-
   const exportTemplate = async () => {
     const tableTemplate = await tablesApi.getTemplate(table.id);
     downloadFile({
@@ -158,27 +150,7 @@ export function ApTableHeader({
                     <FileJson className="mr-2 h-4 w-4" />
                     {t('Export Template')}
                   </DropdownMenuItem>
-                  {showPushToGit && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <PermissionNeededTooltip
-                        hasPermission={userHasPermissionToPushToGit}
-                      >
-                        <PushToGitDialog type="table" tables={[table]}>
-                          <DropdownMenuItem
-                            disabled={!userHasPermissionToPushToGit}
-                            onSelect={(e) => e.preventDefault()}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <UploadCloud className="mr-2 h-4 w-4" />
-                            {t('Push to Git')}
-                          </DropdownMenuItem>
-                        </PushToGitDialog>
-                      </PermissionNeededTooltip>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
-                  {!showPushToGit && <DropdownMenuSeparator />}
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onSelect={downloadCsv}>
                     <Download className="mr-2 h-4 w-4" />
                     {t('Download Data')}

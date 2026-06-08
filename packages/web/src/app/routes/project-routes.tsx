@@ -20,12 +20,6 @@ const FlowBuilderPage = React.lazy(() =>
 );
 const AnalyticsPage = React.lazy(() => import('./impact'));
 const LeaderboardPage = React.lazy(() => import('./leaderboard'));
-const ProjectReleasesPage = React.lazy(() =>
-  import('./project-release').then((m) => ({
-    default: m.ProjectReleasesPage,
-  })),
-);
-const ViewRelease = React.lazy(() => import('./project-release/view-release'));
 const RunsPage = React.lazy(() =>
   import('./runs').then((m) => ({ default: m.RunsPage })),
 );
@@ -136,18 +130,6 @@ export const projectRoutes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.singleRelease,
-    element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Releases">
-          <SuspenseWrapper>
-            <ViewRelease />
-          </SuspenseWrapper>
-        </PageTitle>
-      </ProjectDashboardLayout>
-    ),
-  }),
-  ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.tables,
     element: <Navigate to={routesThatRequireProjectId.automations} replace />,
   }),
@@ -196,18 +178,6 @@ export const projectRoutes = [
             </SuspenseWrapper>
           </PageTitle>
         </RoutePermissionGuard>
-      </ProjectDashboardLayout>
-    ),
-  }),
-  ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.releases,
-    element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Releases">
-          <SuspenseWrapper>
-            <ProjectReleasesPage />
-          </SuspenseWrapper>
-        </PageTitle>
       </ProjectDashboardLayout>
     ),
   }),

@@ -2,6 +2,7 @@
 import { z } from 'zod'
 import { isNil } from '../../core/common'
 import { ResumeReason, StreamStepProgress, TriggerHookType, TriggerPayload } from '../engine'
+import { ApplicationEvent } from '../events'
 import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
@@ -52,6 +53,7 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
         case WorkerJobType.RENEW_WEBHOOK:
             return 'veryLow'
         case WorkerJobType.EXECUTE_WEBHOOK:
+        case WorkerJobType.EVENT_DESTINATION:
             return 'medium'
         case WorkerJobType.EXECUTE_FLOW:
             return getExecuteFlowPriority(job.environment, job.workerHandlerId)
@@ -62,6 +64,8 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
             return 'critical'
         case WorkerJobType.EXECUTE_CHAT_AGENT:
             return 'high'
+        default:
+            return 'medium'
     }
 }
 
@@ -75,6 +79,7 @@ export enum WorkerJobType {
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_EXTRACT_PIECE_INFORMATION = 'EXECUTE_EXTRACT_PIECE_INFORMATION',
+    EVENT_DESTINATION = 'EVENT_DESTINATION',
     EXECUTE_CHAT_AGENT = 'EXECUTE_CHAT_AGENT',
 }
 
@@ -235,6 +240,17 @@ export const UserInteractionJobDataWithoutWatchingInformation = z.union([
 ])
 export type UserInteractionJobDataWithoutWatchingInformation = z.infer<typeof UserInteractionJobDataWithoutWatchingInformation>
 
+export const EventDestinationJobData = z.object({
+    schemaVersion: z.number(),
+    platformId: z.string(),
+    projectId: z.string().optional(),
+    webhookId: z.string(),
+    webhookUrl: z.string(),
+    payload: ApplicationEvent,
+    jobType: z.literal(WorkerJobType.EVENT_DESTINATION),
+})
+export type EventDestinationJobData = z.infer<typeof EventDestinationJobData>
+
 export const ExecuteChatAgentJobData = z.object({
     schemaVersion: z.number(),
     jobType: z.literal(WorkerJobType.EXECUTE_CHAT_AGENT),
@@ -258,6 +274,7 @@ export const JobData = z.union([
     ExecuteFlowJobData,
     WebhookJobData,
     UserInteractionJobData,
+    EventDestinationJobData,
     ExecuteChatAgentJobData,
 ])
 export type JobData = z.infer<typeof JobData>
