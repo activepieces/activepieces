@@ -37,7 +37,7 @@ export const flowVersionOutputRepairService = (log: FastifyBaseLogger) => ({
 
         const erroneousLevels = await countErroneousLevels({
             flowId: flowVersion.flowId,
-            created: flowVersion.created,
+            flowVersionId,
         })
         if (erroneousLevels <= 0) {
             return { flowVersionId, erroneousLevels: 0, stepsChanged: 0, alreadyRepaired: false }
@@ -82,11 +82,14 @@ export const flowVersionOutputRepairService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function countErroneousLevels({ flowId, created }: { flowId: string, created: string }): Promise<number> {
+async function countErroneousLevels({ flowId, flowVersionId }: { flowId: string, flowVersionId: string }): Promise<number> {
+    // Compare against the stored `created` value via a subquery rather than passing
+    // `flowVersion.created` from JS: the JS value is truncated to millisecond precision,
+    // while Postgres stores microseconds, so a `<=` filter would exclude the version itself.
     const lineageCount = await flowVersionRepo()
         .createQueryBuilder('flow_version')
         .where('flow_version."flowId" = :flowId', { flowId })
-        .andWhere('flow_version."created" <= :created', { created })
+        .andWhere('flow_version."created" <= (SELECT lineage."created" FROM flow_version lineage WHERE lineage.id = :flowVersionId)', { flowVersionId })
         .andWhere('jsonb_exists(flow_version."backupFiles", \'21\')')
         .getCount()
     return Math.max(0, lineageCount - 1)
