@@ -482,6 +482,34 @@ describe('migrateV21StepOutputNesting', () => {
             expect(result.displayName).toBe(version.displayName)
         })
 
+        it('P4. unparseable token from a user typo still has its head step ref repaired', async () => {
+            const version = baseVersion({
+                ...triggerWithNoNext(),
+                nextAction: {
+                    type: FlowActionType.PIECE,
+                    name: 'step_5',
+                    displayName: 'Step 5',
+                    skip: false,
+                    valid: true,
+                    lastUpdatedDate: new Date().toISOString(),
+                    settings: {
+                        pieceName: '@activepieces/piece-webhook',
+                        pieceVersion: '0.0.1',
+                        actionName: 'return_response',
+                        input: {
+                            body: '{\n  "result": "{{step_15[\'body\'][\'url]}}",\n  "record": {{step_13[\'body\']}}\n}',
+                        },
+                        propertySettings: {},
+                    },
+                },
+            })
+            const result = await migrateV21StepOutputNesting.migrate(version)
+            const next = result.trigger.nextAction
+            expect(next?.settings.input.body).toBe(
+                '{\n  "result": "{{step_15[\'output\'][\'body\'][\'url]}}",\n  "record": {{step_13[\'output\'][\'body\']}}\n}',
+            )
+        })
+
         it('P3. multi-step flow with nested router children', async () => {
             const version = baseVersion({
                 ...triggerWithNoNext(),
