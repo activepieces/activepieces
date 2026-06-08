@@ -30,7 +30,7 @@ export const convertMarkdown = createAction({
   },
   async run(context) {
     const { markdown, css, ...rawOptions } = context.propsValue;
-    const options = stringifyOptions(rawOptions as Record<string, unknown>);
+    const options = stringifyOptions(rawOptions);
     const body: Record<string, unknown> = { markdown, ...options };
     if (css) body['css'] = css;
 

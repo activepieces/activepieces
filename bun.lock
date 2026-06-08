@@ -2640,6 +2640,17 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/filetopdf": {
+      "name": "@activepieces/piece-filetopdf",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "form-data": "4.0.4",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/fillout-forms": {
       "name": "@activepieces/piece-fillout-forms",
       "version": "0.1.4",
@@ -9308,6 +9319,8 @@
     "@activepieces/piece-figma": ["@activepieces/piece-figma@workspace:packages/pieces/community/figma"],
 
     "@activepieces/piece-file-helper": ["@activepieces/piece-file-helper@workspace:packages/pieces/core/file-helper"],
+
+    "@activepieces/piece-filetopdf": ["@activepieces/piece-filetopdf@workspace:packages/pieces/community/filetopdf"],
 
     "@activepieces/piece-fillout-forms": ["@activepieces/piece-fillout-forms@workspace:packages/pieces/community/fillout-forms"],
 

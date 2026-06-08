@@ -29,7 +29,7 @@ export const convertHtml = createAction({
   },
   async run(context) {
     const { html, css, ...rawOptions } = context.propsValue;
-    const options = stringifyOptions(rawOptions as Record<string, unknown>);
+    const options = stringifyOptions(rawOptions);
     const body: Record<string, unknown> = { html, ...options };
     if (css) body['css'] = css;
 

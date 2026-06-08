@@ -14,7 +14,7 @@ export const filetopdf = createPiece({
   minimumSupportedRelease: '0.82.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/filetopdf.png',
   categories: [PieceCategory.CONTENT_AND_FILES, PieceCategory.PRODUCTIVITY],
-  authors: ['esnwebservices'],
+  authors: ['FileToPDF'],
   actions: [convertFile, convertHtml, convertMarkdown, getAccount],
   triggers: [],
 });

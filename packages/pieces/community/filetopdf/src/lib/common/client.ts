@@ -5,7 +5,41 @@ import {
   HttpHeaders,
 } from '@activepieces/pieces-common';
 
-export const BASE_URL = 'https://api.filetopdf.dev';
+/**
+ * Single entry point for every FileToPDF call. Sends the API key in the
+ * `x-api-key` header (the API has no bearer scheme) and asks for the JSON
+ * envelope by default so conversions return base64 PDF + metadata. Any non-2xx
+ * is converted to a friendly Error.
+ */
+export async function filetopdfApiCall<T extends HttpMessageBody>({
+  apiKey,
+  method,
+  resourceUri,
+  body,
+  headers,
+}: FileToPdfRequest): Promise<T> {
+  try {
+    const response = await httpClient.sendRequest<T>({
+      method,
+      url: `${BASE_URL}${resourceUri}`,
+      headers: {
+        'x-api-key': apiKey,
+        Accept: 'application/json',
+        ...headers,
+      },
+      body,
+    });
+    return response.body;
+  } catch (e) {
+    const response = isRecord(e) ? e['response'] : undefined;
+    if (isRecord(response) && typeof response['status'] === 'number') {
+      throwFriendly(response['status'], response['body']);
+    }
+    throw new Error(e instanceof Error ? e.message : 'FileToPDF request failed.');
+  }
+}
+
+const BASE_URL = 'https://api.filetopdf.dev';
 
 /**
  * Error codes that mean "the connection/plan is misconfigured" rather than "this
@@ -20,15 +54,36 @@ const CONFIG_ERROR_CODES = new Set([
   'upgrade_required',
 ]);
 
-interface FileToPdfErrorBody {
-  status?: string;
-  error?: {
-    code?: string;
-    message?: string;
-    upgrade_url?: string;
-    parameter?: string;
-    remaining?: number;
-    concurrent_limit?: number;
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function safeJsonParse(value: string): unknown {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Normalise the API's error envelope from an unknown response body into the
+ * fields worth special-casing. Anything missing or mistyped is dropped.
+ */
+function readErrorEnvelope(body: unknown): FileToPdfError {
+  const raw = typeof body === 'string' ? safeJsonParse(body) : body;
+  if (!isRecord(raw) || !isRecord(raw['error'])) {
+    return {};
+  }
+  const error = raw['error'];
+  return {
+    code: typeof error['code'] === 'string' ? error['code'] : undefined,
+    message: typeof error['message'] === 'string' ? error['message'] : undefined,
+    upgrade_url: typeof error['upgrade_url'] === 'string' ? error['upgrade_url'] : undefined,
+    parameter: typeof error['parameter'] === 'string' ? error['parameter'] : undefined,
+    remaining: typeof error['remaining'] === 'number' ? error['remaining'] : undefined,
+    concurrent_limit:
+      typeof error['concurrent_limit'] === 'number' ? error['concurrent_limit'] : undefined,
   };
 }
 
@@ -37,11 +92,7 @@ interface FileToPdfErrorBody {
  * Ported verbatim from the Zapier middleware so the copy stays identical across
  * integrations. Everything else falls back to the API's own message + code.
  */
-export function friendlyMessage(
-  code: string,
-  error: NonNullable<FileToPdfErrorBody['error']>,
-  status: number
-): string {
+function friendlyMessage(code: string, error: FileToPdfError, status: number): string {
   switch (code) {
     case 'upgrade_required': {
       const param = error.parameter
@@ -76,25 +127,24 @@ export function friendlyMessage(
 /**
  * Turn a non-2xx FileToPDF error envelope into a clean thrown Error. The message
  * is the friendly text plus the stable error code, mirroring the Zapier/Pipedream
- * connectors. Config-type codes are flagged so callers can reword if desired.
+ * connectors. Config-type codes are prefixed so they read as connection problems.
  */
 function throwFriendly(status: number, body: unknown): never {
-  let envelope: FileToPdfErrorBody = {};
-  if (body && typeof body === 'object') {
-    envelope = body as FileToPdfErrorBody;
-  } else if (typeof body === 'string') {
-    try {
-      envelope = JSON.parse(body) as FileToPdfErrorBody;
-    } catch {
-      envelope = {};
-    }
-  }
-  const error = envelope.error || {};
+  const error = readErrorEnvelope(body);
   const code = error.code || 'error';
   const message = friendlyMessage(code, error, status);
   const prefix = CONFIG_ERROR_CODES.has(code) ? 'FileToPDF connection problem: ' : '';
   throw new Error(`${prefix}${message} (${code})`);
 }
+
+type FileToPdfError = {
+  code?: string;
+  message?: string;
+  upgrade_url?: string;
+  parameter?: string;
+  remaining?: number;
+  concurrent_limit?: number;
+};
 
 interface FileToPdfRequest {
   apiKey: string;
@@ -103,38 +153,4 @@ interface FileToPdfRequest {
   body?: HttpMessageBody;
   /** Extra headers (e.g. multipart boundary from form-data.getHeaders()). */
   headers?: HttpHeaders;
-}
-
-/**
- * Single entry point for every FileToPDF call. Sends the API key in the
- * `x-api-key` header (the API has no bearer scheme) and asks for the JSON
- * envelope by default so conversions return base64 PDF + metadata. Any non-2xx
- * is converted to a friendly Error.
- */
-export async function filetopdfApiCall<T extends HttpMessageBody>({
-  apiKey,
-  method,
-  resourceUri,
-  body,
-  headers,
-}: FileToPdfRequest): Promise<T> {
-  try {
-    const response = await httpClient.sendRequest<T>({
-      method,
-      url: `${BASE_URL}${resourceUri}`,
-      headers: {
-        'x-api-key': apiKey,
-        Accept: 'application/json',
-        ...headers,
-      },
-      body,
-    });
-    return response.body;
-  } catch (e) {
-    const err = e as { response?: { status?: number; body?: unknown }; message?: string };
-    if (err.response && typeof err.response.status === 'number') {
-      throwFriendly(err.response.status, err.response.body);
-    }
-    throw new Error(err.message || 'FileToPDF request failed.');
-  }
 }

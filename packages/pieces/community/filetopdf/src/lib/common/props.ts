@@ -52,12 +52,12 @@ export const CHROMIUM_OPTION_PROPS = {
   }),
   pdfa: PDFA_DROPDOWN,
   pdfua: Property.Checkbox({ displayName: 'PDF/UA (Accessibility)', required: false }),
-  userPassword: Property.SecretText({
+  userPassword: Property.ShortText({
     displayName: 'Output Open Password',
     description: 'Encrypt the resulting PDF; this password is required to open it.',
     required: false,
   }),
-  ownerPassword: Property.SecretText({
+  ownerPassword: Property.ShortText({
     displayName: 'Output Permissions Password',
     description: 'Restrict editing/printing of the resulting PDF.',
     required: false,
@@ -78,17 +78,17 @@ export const FILE_OPTION_PROPS = {
   }),
   pdfa: PDFA_DROPDOWN,
   pdfua: Property.Checkbox({ displayName: 'PDF/UA (Accessibility)', required: false }),
-  password: Property.SecretText({
+  password: Property.ShortText({
     displayName: 'Source Document Password',
     description: 'Password to open a protected source document (office files only).',
     required: false,
   }),
-  userPassword: Property.SecretText({
+  userPassword: Property.ShortText({
     displayName: 'Output Open Password',
     description: 'Encrypt the resulting PDF; this password is required to open it.',
     required: false,
   }),
-  ownerPassword: Property.SecretText({
+  ownerPassword: Property.ShortText({
     displayName: 'Output Permissions Password',
     description: 'Restrict editing/printing of the resulting PDF.',
     required: false,

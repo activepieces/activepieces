@@ -14,7 +14,7 @@ export const filetopdfAuth = PieceAuth.SecretText({
     try {
       // GET /account is free and never rate-limited — the recommended connection test.
       await filetopdfApiCall({
-        apiKey: auth as string,
+        apiKey: auth,
         method: HttpMethod.GET,
         resourceUri: '/account',
       });
@@ -22,7 +22,7 @@ export const filetopdfAuth = PieceAuth.SecretText({
     } catch (e) {
       return {
         valid: false,
-        error: (e as Error).message || 'Invalid API Key.',
+        error: e instanceof Error ? e.message : 'Invalid API Key.',
       };
     }
   },

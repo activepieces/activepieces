@@ -3,16 +3,6 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { filetopdfAuth } from '../common/auth';
 import { filetopdfApiCall } from '../common/client';
 
-interface AccountEnvelope {
-  status: string;
-  data: {
-    workspace_id: string;
-    plan: string;
-    credits_remaining: number;
-    subscription_status: string;
-  };
-}
-
 export const getAccount = createAction({
   auth: filetopdfAuth,
   name: 'get_account',
@@ -26,12 +16,22 @@ export const getAccount = createAction({
       method: HttpMethod.GET,
       resourceUri: '/account',
     });
-    const data = envelope.data || ({} as AccountEnvelope['data']);
+    const data = envelope.data;
     return {
-      workspaceId: data.workspace_id,
-      plan: data.plan,
-      creditsRemaining: data.credits_remaining,
-      subscriptionStatus: data.subscription_status,
+      workspaceId: data?.workspace_id,
+      plan: data?.plan,
+      creditsRemaining: data?.credits_remaining,
+      subscriptionStatus: data?.subscription_status,
     };
   },
 });
+
+interface AccountEnvelope {
+  status: string;
+  data?: {
+    workspace_id: string;
+    plan: string;
+    credits_remaining: number;
+    subscription_status: string;
+  };
+}
