@@ -7,12 +7,33 @@ import {
 } from '@activepieces/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { useSocket } from '@/components/providers/socket-provider';
 import { authenticationSession } from '@/lib/authentication-session';
 
-function useResourceLock({ resourceId }: UseResourceLockParams) {
+async function completeTakeOver({
+  isEmbedded,
+  onTakeOver,
+  reload,
+}: {
+  isEmbedded: boolean;
+  onTakeOver?: () => Promise<void> | void;
+  reload: () => void;
+}) {
+  if (isEmbedded && onTakeOver) {
+    await onTakeOver();
+    return;
+  }
+
+  reload();
+}
+
+function useResourceLock({ resourceId, onTakeOver }: UseResourceLockParams) {
   const socket = useSocket();
   const currentUserId = authenticationSession.getCurrentUserId();
+  const {
+    embedState: { isEmbedded },
+  } = useEmbedding();
   const isOwner = useRef(false);
   const [lockedBy, setLockedBy] = useState<{
     userId: string;
@@ -85,20 +106,26 @@ function useResourceLock({ resourceId }: UseResourceLockParams) {
     socket.emit(
       WebsocketServerEvent.LOCK_RESOURCE,
       { resourceId, force: true },
-      (response: LockResourceResponse) => {
+      async (response: LockResourceResponse) => {
         if (response.acquired) {
-          isOwner.current = false;
-          window.location.reload();
+          isOwner.current = true;
+          setLockedBy(null);
+          await completeTakeOver({
+            isEmbedded,
+            onTakeOver,
+            reload: () => window.location.reload(),
+          });
         }
       },
     );
-  }, [resourceId, socket]);
+  }, [resourceId, socket, isEmbedded, onTakeOver]);
 
   return { lockedBy, takeOver };
 }
 
-export { useResourceLock };
+export { completeTakeOver, useResourceLock };
 
 type UseResourceLockParams = {
   resourceId: string;
+  onTakeOver?: () => Promise<void> | void;
 };

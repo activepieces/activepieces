@@ -1,6 +1,6 @@
 import { ApFlagId, Permission } from '@activepieces/shared';
 import { nanoid } from 'nanoid';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import DataGrid, { DataGridHandle } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import { useNavigate } from 'react-router-dom';
@@ -16,6 +16,9 @@ import {
   ROW_HEIGHT_MAP,
   RowHeight,
 } from '@/features/tables';
+import { fieldsApi } from '@/features/tables/api/fields-api';
+import { recordsApi } from '@/features/tables/api/records-api';
+import { tablesApi } from '@/features/tables/api/tables-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { useResourceLock } from '@/hooks/use-resource-lock';
@@ -37,6 +40,7 @@ const ApTableEditorPage = () => {
     records,
     table,
     setLockedByOtherUser,
+    replaceFromServer,
   ] = useTableState((state) => [
     state.selectedRecords,
     state.setSelectedRecords,
@@ -47,10 +51,31 @@ const ApTableEditorPage = () => {
     state.records,
     state.table,
     state.setLockedByOtherUser,
+    state.replaceFromServer,
   ]);
+
+  const refreshTableAfterTakeOver = useCallback(async () => {
+    const [nextTable, nextFields, nextRecords] = await Promise.all([
+      tablesApi.getById(table.id),
+      fieldsApi.list({ tableId: table.id }),
+      recordsApi.list({
+        tableId: table.id,
+        limit: 99999999,
+        cursor: undefined,
+      }),
+    ]);
+
+    replaceFromServer({
+      table: nextTable,
+      fields: nextFields,
+      records: nextRecords.data,
+    });
+    setLockedByOtherUser(false);
+  }, [replaceFromServer, setLockedByOtherUser, table.id]);
 
   const { lockedBy, takeOver } = useResourceLock({
     resourceId: table.id,
+    onTakeOver: refreshTableAfterTakeOver,
   });
 
   useEffect(() => {

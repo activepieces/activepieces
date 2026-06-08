@@ -82,6 +82,11 @@ export type TableState = {
   setLockedByOtherUser: (locked: boolean) => void;
   serverFields: Field[];
   serverRecords: PopulatedRecord[];
+  replaceFromServer: (params: {
+    table: Table;
+    fields: Field[];
+    records: PopulatedRecord[];
+  }) => void;
 };
 
 export const createApTableStore = (
@@ -90,7 +95,7 @@ export const createApTableStore = (
   records: PopulatedRecord[],
 ) => {
   return create<TableState>((set) => {
-    const serverState = createServerState(
+    let serverState = createServerState(
       table,
       fields,
       records,
@@ -255,6 +260,39 @@ export const createApTableStore = (
       lockedByOtherUser: false,
       setLockedByOtherUser: (locked: boolean) =>
         set({ lockedByOtherUser: locked }),
+
+      replaceFromServer: ({ table, fields, records }) => {
+        serverState = createServerState(
+          table,
+          fields,
+          records,
+          (isSaving: boolean) => set({ isSaving }),
+        );
+        return set(() => ({
+          table,
+          fields: fields.map((field) => {
+            if (field.type === FieldType.STATIC_DROPDOWN) {
+              return {
+                uuid: field.id,
+                name: field.name,
+                type: field.type,
+                data: field.data,
+              };
+            }
+            return {
+              uuid: field.id,
+              name: field.name,
+              type: field.type,
+            };
+          }),
+          records: mapRecorddToClientRecordsData(records, fields),
+          serverFields: serverState.fields,
+          serverRecords: serverState.records,
+          selectedRecords: new Set(),
+          selectedCell: records.length > 0 ? { rowIdx: 0, columnIdx: 1 } : null,
+          selectedAgentRunId: null,
+        }));
+      },
       serverFields: serverState.fields,
       serverRecords: serverState.records,
     };
