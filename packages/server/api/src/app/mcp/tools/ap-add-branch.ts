@@ -44,6 +44,8 @@ export const apAddBranchTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
                     return { content: [{ type: 'text', text: '❌ Flow not found' }] }
                 }
 
+                const rewritten = mcpUtils.rewriteAllReferences({ conditions, trigger: flow.version.trigger })
+
                 const resolved = mcpUtils.resolveRouterStep({ stepName: routerStepName, trigger: flow.version.trigger })
                 if (resolved.error) {
                     return resolved.error
@@ -61,7 +63,7 @@ export const apAddBranchTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
                         branchIndex,
                         branchName,
                         // .min(1) and .superRefine on the input schema align the runtime shape with BranchCondition's discriminated union.
-                        conditions: (conditions ?? [[]]) as BranchCondition[][],
+                        conditions: (rewritten.conditions ?? [[]]) as BranchCondition[][],
                     },
                 }
 

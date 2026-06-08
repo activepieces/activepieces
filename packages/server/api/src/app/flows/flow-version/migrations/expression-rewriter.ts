@@ -1,4 +1,4 @@
-import { extractMustacheTokens } from '@activepieces/shared'
+import { extractMustacheTokens, isNil } from '@activepieces/shared'
 import { AnyNode, AssignmentProperty, Identifier, MemberExpression, parse, Property } from 'acorn'
 import { ancestor } from 'acorn-walk'
 import { analyze } from 'eslint-scope'
@@ -16,29 +16,13 @@ import { analyze } from 'eslint-scope'
  *    https://eslint.org/docs/latest/extend/scope-manager-interface
  */
 
-function rewriteStepReferences({ input, stepNames }: { input: string, stepNames: string[] }): string {
-    if (!input.includes('{{')) {
-        return input
-    }
+function rewriteStepReferences({ input, stepNames, idempotent }: { input: string, stepNames: string[], idempotent?: boolean }): string {
     const stepNameSet = new Set<string>(stepNames)
     stepNameSet.add(TRIGGER_NAME)
-    const tokens = extractMustacheTokens(input)
-    if (tokens.length === 0) {
-        return input
-    }
-    const chunks: string[] = []
-    let cursor = 0
-    for (const { token, inner, index } of tokens) {
-        chunks.push(input.slice(cursor, index))
-        const rewritten = rewriteToken(inner, stepNameSet)
-        chunks.push(rewritten === null ? token : `{{${rewritten}}}`)
-        cursor = index + token.length
-    }
-    chunks.push(input.slice(cursor))
-    return chunks.join('')
+    return rewriteStringWithSet({ input, stepNameSet, idempotent: idempotent ?? false })
 }
 
-function rewriteToken(code: string, stepNames: Set<string>): string | null {
+function rewriteToken(code: string, stepNames: Set<string>, idempotent: boolean): string | null {
     if (code.trim().length === 0) {
         return null
     }
@@ -76,6 +60,9 @@ function rewriteToken(code: string, stepNames: Set<string>): string | null {
             }
             const parent = ancestors.length >= 2 ? ancestors[ancestors.length - 2] : null
             if (!isVariableReference(node, parent)) {
+                return
+            }
+            if (idempotent && alreadyHasOutputAccess(node, parent)) {
                 return
             }
             const start = node.start - WRAP_OFFSET
@@ -141,6 +128,17 @@ function isVariableReference(node: Identifier, parent: AnyNode | null): boolean 
     }
 }
 
+function alreadyHasOutputAccess(node: Identifier, parent: AnyNode | null): boolean {
+    if (parent === null || parent.type !== 'MemberExpression') {
+        return false
+    }
+    if (parent.object !== node || !parent.computed) {
+        return false
+    }
+    const prop = parent.property
+    return prop.type === 'Literal' && (prop.value === 'output' || prop.value === 'error')
+}
+
 function isVariableReferenceInMemberExpression(node: Identifier, parent: MemberExpression): boolean {
     if (parent.object === node) {
         return true
@@ -158,8 +156,52 @@ function isVariableReferenceInProperty(node: Identifier, parent: Property | Assi
     return true
 }
 
+function rewriteDeep<T>(value: T, stepNames: string[], idempotent = false): T {
+    const stepNameSet = new Set<string>(stepNames)
+    stepNameSet.add(TRIGGER_NAME)
+    return rewriteDeepWithSet(value, stepNameSet, idempotent)
+}
+
+function rewriteDeepWithSet<T>(value: T, stepNameSet: Set<string>, idempotent: boolean): T {
+    if (typeof value === 'string') {
+        return rewriteStringWithSet({ input: value, stepNameSet, idempotent }) as T
+    }
+    if (Array.isArray(value)) {
+        return value.map((item) => rewriteDeepWithSet(item, stepNameSet, idempotent)) as T
+    }
+    if (!isNil(value) && typeof value === 'object') {
+        const result: Record<string, unknown> = {}
+        for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+            result[key] = rewriteDeepWithSet(child, stepNameSet, idempotent)
+        }
+        return result as T
+    }
+    return value
+}
+
+function rewriteStringWithSet({ input, stepNameSet, idempotent }: { input: string, stepNameSet: Set<string>, idempotent: boolean }): string {
+    if (!input.includes('{{')) {
+        return input
+    }
+    const tokens = extractMustacheTokens(input)
+    if (tokens.length === 0) {
+        return input
+    }
+    const chunks: string[] = []
+    let cursor = 0
+    for (const { token, inner, index } of tokens) {
+        chunks.push(input.slice(cursor, index))
+        const rewritten = rewriteToken(inner, stepNameSet, idempotent)
+        chunks.push(rewritten === null ? token : `{{${rewritten}}}`)
+        cursor = index + token.length
+    }
+    chunks.push(input.slice(cursor))
+    return chunks.join('')
+}
+
 export const expressionRewriter = {
     rewriteStepReferences,
+    rewriteDeep,
 }
 
 const STEP_NAME_PATTERN = /^step_\d+$/

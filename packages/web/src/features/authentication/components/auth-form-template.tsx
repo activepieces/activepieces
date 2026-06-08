@@ -204,10 +204,7 @@ const AuthFormTemplate = React.memo(
       <AuthLayout isSignUp={isSignUp}>
         {!showCheckYourEmailNote && (
           <div className="mb-6 text-center">
-            <h1
-              className="text-2xl font-bold tracking-tight"
-              style={{ fontFamily: "'Sentient', serif" }}
-            >
+            <h1 className="text-2xl font-bold tracking-tight font-sentient">
               {data.title}
             </h1>
           </div>

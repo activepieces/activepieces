@@ -96,7 +96,7 @@ function summarize(counts: Map<FlowRunStatus, number>): { completed: number, suc
     return { completed, successRate }
 }
 
-async function liveStatusCounts(projectIds: string[]): Promise<Map<FlowRunStatus, number>> {
+async function queueStatusCounts(projectIds: string[], window: ReportWindow): Promise<Map<FlowRunStatus, number>> {
     const rows: Array<{ status: FlowRunStatus, count: string }> = await flowRunRepo().query(`
         SELECT status, COUNT(*) AS count
         FROM flow_run
@@ -104,8 +104,10 @@ async function liveStatusCounts(projectIds: string[]): Promise<Map<FlowRunStatus
           AND environment = $2
           AND "archivedAt" IS NULL
           AND status = ANY($3)
+          AND created >= $4
+          AND created <= $5
         GROUP BY status
-    `, [projectIds, RunEnvironment.PRODUCTION, [FlowRunStatus.RUNNING, FlowRunStatus.QUEUED]])
+    `, [projectIds, RunEnvironment.PRODUCTION, [FlowRunStatus.RUNNING, FlowRunStatus.QUEUED], window.createdAfter, window.createdBefore])
     return new Map(rows.map((row) => [row.status, Number(row.count)]))
 }
 
@@ -114,7 +116,7 @@ function stuckBeforeIso(): string {
     return dayjs().subtract(flowTimeoutSeconds, 'second').toISOString()
 }
 
-async function buildStuckJobs(projectIds: string[]): Promise<StuckJob[]> {
+async function buildStuckJobs(projectIds: string[], window: ReportWindow): Promise<StuckJob[]> {
     const rows: Array<{ flowRunId: string, flowId: string, projectId: string, status: FlowRunStatus, flowName: string | null, projectName: string | null }> = await flowRunRepo().query(`
         SELECT fr.id AS "flowRunId",
                fr."flowId" AS "flowId",
@@ -132,9 +134,11 @@ async function buildStuckJobs(projectIds: string[]): Promise<StuckJob[]> {
           AND fr."startTime" IS NOT NULL
           AND fr."finishTime" IS NULL
           AND fr."startTime" < $4
+          AND fr.created >= $5
+          AND fr.created <= $6
         ORDER BY fr."startTime" ASC
-        LIMIT $5
-    `, [projectIds, RunEnvironment.PRODUCTION, FlowRunStatus.RUNNING, stuckBeforeIso(), STUCK_JOBS_LIMIT])
+        LIMIT $7
+    `, [projectIds, RunEnvironment.PRODUCTION, FlowRunStatus.RUNNING, stuckBeforeIso(), window.createdAfter, window.createdBefore, STUCK_JOBS_LIMIT])
     return rows.map((row) => ({
         flowRunId: row.flowRunId,
         flowId: row.flowId,
@@ -238,14 +242,14 @@ export const healthMetricsService = (log: FastifyBaseLogger) => ({
         await distributedStore.put(cacheKey, value, REPORT_TTL_SECONDS)
         return value
     },
-    getQueueMetrics: async (platformId: PlatformId): Promise<PlatformMetricsLive> => {
+    getQueueMetrics: async (platformId: PlatformId, window: ReportWindow): Promise<PlatformMetricsLive> => {
         const projectIds = await projectService(log).getProjectIdsByPlatform(platformId)
         if (projectIds.length === 0) {
             return { running: 0, queued: 0, stuckJobs: [] }
         }
         const [counts, stuckJobs] = await Promise.all([
-            liveStatusCounts(projectIds),
-            buildStuckJobs(projectIds),
+            queueStatusCounts(projectIds, window),
+            buildStuckJobs(projectIds, window),
         ])
         return {
             running: counts.get(FlowRunStatus.RUNNING) ?? 0,
