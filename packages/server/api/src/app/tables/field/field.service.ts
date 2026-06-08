@@ -29,7 +29,7 @@ export const fieldService = {
                         name: field.name,
                         type: field.type,
                         tableId,
-                        data: field.data,
+                        data: field.data as { options: { value: string }[] },
                         externalId: field.externalId,
                     },
                 })

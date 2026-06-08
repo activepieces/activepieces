@@ -1,4 +1,4 @@
-import { isCloudPlanButNotEnterprise, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -23,7 +23,6 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 
 export const DeleteAccount = () => {
-  const { platform } = platformHooks.useCurrentPlatform();
   const { data: user } = userHooks.useCurrentUser();
   const userEmail = user?.email;
   const form = useForm<{ email: string }>({
@@ -47,7 +46,7 @@ export const DeleteAccount = () => {
     !isNil(form.formState.errors.email) ||
     form.getValues('email') !== userEmail;
 
-  if (!isCloudPlanButNotEnterprise(platform.plan.plan) || isNil(userEmail)) {
+  if (isNil(userEmail)) {
     return null;
   }
 

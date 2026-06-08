@@ -180,8 +180,8 @@ const skipInternalDestinationsOnFlowCycle = async ({
             .map(({ flowId }) => flowId)
             .filter((flowId): flowId is string => !isNil(flowId)),
     )
-    const eventFlowId = event.data.flowRun.flowId
-    if (!internalFlowIds.has(eventFlowId)) {
+    const eventFlowId = (event.data['flowRun'] as Record<string, unknown> | undefined)?.['flowId'] as string | undefined
+    if (!eventFlowId || !internalFlowIds.has(eventFlowId)) {
         return destinations
     }
     log.warn({

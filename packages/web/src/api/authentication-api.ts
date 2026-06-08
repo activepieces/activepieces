@@ -1,12 +1,7 @@
 import {
-  CreateOtpRequestBody,
-  GetCurrentProjectMemberRoleQuery,
-  ResetPasswordRequestBody,
-  VerifyEmailRequestBody,
   AuthenticationResponse,
   ClaimTokenRequest,
   FederatedAuthnLoginResponse,
-  ProjectRole,
   SignInRequest,
   SignUpRequest,
   SwitchPlatformRequest,
@@ -34,22 +29,13 @@ export const authenticationApi = {
       providerName,
     });
   },
-  getCurrentProjectRole(query: GetCurrentProjectMemberRoleQuery) {
-    return api.get<ProjectRole | null>('/v1/project-members/role', query);
-  },
   claimThirdPartyRequest(request: ClaimTokenRequest) {
     return api.post<AuthenticationResponse>(
       '/v1/authn/federated/claim',
       request,
     );
   },
-  sendOtpEmail(request: CreateOtpRequestBody) {
-    return api.post<void>('/v1/otp', request);
-  },
-  resetPassword(request: ResetPasswordRequestBody) {
-    return api.post<void>('/v1/authn/local/reset-password', request);
-  },
-  verifyEmail(request: VerifyEmailRequestBody) {
+  verifyEmail(request: { otp: string; identityId: string }) {
     return api.post<UserIdentity>('/v1/authn/local/verify-email', request);
   },
   switchPlatform(request: SwitchPlatformRequest) {

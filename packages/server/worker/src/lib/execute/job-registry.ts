@@ -1,5 +1,4 @@
 import { JobData, WorkerJobType } from '@activepieces/shared'
-import { executeChatAgentJob } from './jobs/ee/chat/execute-chat-agent'
 import { eventDestinationJob } from './jobs/event-destination'
 import { executeFlowJob } from './jobs/execute-flow'
 import { executePollingJob } from './jobs/execute-polling'
@@ -21,7 +20,7 @@ const registry: Record<WorkerJobType, JobHandler> = {
     [WorkerJobType.EXECUTE_VALIDATION]: executeValidationJob,
     [WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION]: extractPieceInfoJob,
     [WorkerJobType.EVENT_DESTINATION]: eventDestinationJob,
-    [WorkerJobType.EXECUTE_CHAT_AGENT]: executeChatAgentJob,
+    [WorkerJobType.EXECUTE_CHAT_AGENT]: { execute: async () => { throw new Error('Chat agent not supported in Community Edition') } },
 }
 
 export function getHandler(jobType: WorkerJobType): JobHandler<JobData> {

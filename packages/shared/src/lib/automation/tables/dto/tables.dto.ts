@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { Nullable } from '../../../core/common'
 import { OptionalArrayFromQuery } from '../../../core/common/base-model'
 import { formErrors } from '../../../form-errors'
-import { FieldState } from '../../project-release/project-state'
+import { FieldState } from '../field'
 import { TableAutomationStatus, TableAutomationTrigger } from '../table'
 import { TableWebhookEventType } from '../table-webhook'
 

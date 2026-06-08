@@ -22,6 +22,9 @@ export enum ApplicationEventName {
     USER_EMAIL_VERIFIED = 'USER_EMAIL_VERIFIED',
     USER_INVITATION_CREATED = 'USER_INVITATION_CREATED',
     USER_INVITATION_ACCEPTED = 'USER_INVITATION_ACCEPTED',
+    VARIABLE_UPSERTED = 'VARIABLE_UPSERTED',
+    VARIABLE_VALUE_REVEALED = 'VARIABLE_VALUE_REVEALED',
+    VARIABLE_DELETED = 'VARIABLE_DELETED',
 }
 
 export const ApplicationEvent = z.object({
@@ -39,7 +42,13 @@ export const ApplicationEvent = z.object({
 })
 export type ApplicationEvent = z.infer<typeof ApplicationEvent>
 
-export type FlowRunEvent = ApplicationEvent
+export type FlowRunEvent = Omit<ApplicationEvent, 'data'> & {
+    data: { flowRun: Record<string, unknown> } & Record<string, unknown>
+}
+
+export type FlowUpdatedEvent = Omit<ApplicationEvent, 'data'> & {
+    data: { request: Record<string, unknown>; flowVersion: Record<string, unknown> } & Record<string, unknown>
+}
 
 export type ListAuditEventsRequest = {
     platformId: string
@@ -52,13 +61,14 @@ export type ListAuditEventsRequest = {
     createdBefore?: string
 }
 
-export function buildMockEvent(action: ApplicationEventName, platformId: string): ApplicationEvent {
+export function buildMockEvent({ event, platformId, projectId }: { event: ApplicationEventName; platformId: string; projectId?: string }): ApplicationEvent {
     return {
         id: 'mock-id',
         created: new Date().toISOString(),
         updated: new Date().toISOString(),
         platformId,
-        action,
+        projectId,
+        action: event,
         data: {},
     }
 }

@@ -9,10 +9,11 @@ export const flowsBadgesCheck: BadgeCheck = {
             return { userId: null, badges: [] }
         }
         const flowUpdatedEvent = event as FlowUpdatedEvent
-        if (![FlowOperationType.LOCK_AND_PUBLISH, FlowOperationType.CHANGE_STATUS].includes(flowUpdatedEvent.data.request.type)) {
+        const requestType = flowUpdatedEvent.data.request['type'] as FlowOperationType
+        if (![FlowOperationType.LOCK_AND_PUBLISH, FlowOperationType.CHANGE_STATUS].includes(requestType)) {
             return { userId: null, badges: [] }
         }
-        const currentFlowId = flowUpdatedEvent.data.flowVersion.flowId
+        const currentFlowId = flowUpdatedEvent.data.flowVersion['flowId'] as string
         if (isNil(currentFlowId)) {
             return { userId: null, badges: [] }
         }
@@ -28,8 +29,9 @@ export const flowsBadgesCheck: BadgeCheck = {
             },
         })
         const uniqueActiveFlows = new Set(activeFlows.map(flow => flow.id))
-        const turnTheFlowOn = flowUpdatedEvent.data.request.type === FlowOperationType.CHANGE_STATUS && flowUpdatedEvent.data.request.request.status === FlowStatus.ENABLED
-        if ((flowUpdatedEvent.data.request.type === FlowOperationType.LOCK_AND_PUBLISH || turnTheFlowOn)) {
+        const nestedRequest = flowUpdatedEvent.data.request['request'] as Record<string, unknown> | undefined
+        const turnTheFlowOn = requestType === FlowOperationType.CHANGE_STATUS && nestedRequest?.['status'] === FlowStatus.ENABLED
+        if ((requestType === FlowOperationType.LOCK_AND_PUBLISH || turnTheFlowOn)) {
             uniqueActiveFlows.add(currentFlowId)
         }
         else {

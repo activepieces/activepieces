@@ -9,14 +9,15 @@ export const flowRunsBadgesCheck: BadgeCheck = {
             return { userId: null, badges }
         }
         const flowRunEvent = event as FlowRunEvent
-        if (flowRunEvent.data.flowRun.environment !== RunEnvironment.TESTING || !isNil(flowRunEvent.data.flowRun.stepNameToTest)) {
+        const flowRun = flowRunEvent.data.flowRun as Record<string, unknown>
+        if (flowRun['environment'] !== RunEnvironment.TESTING || !isNil(flowRun['stepNameToTest'])) {
             return { userId: null, badges }
         }
-        const triggeredBy = flowRunEvent.data.flowRun.triggeredBy
+        const triggeredBy = flowRun['triggeredBy'] as string | null | undefined
         if (isNil(triggeredBy)) {
             return { userId: null, badges }
         }
-        const status = flowRunEvent.data.flowRun.status as FlowRunStatus
+        const status = flowRun['status'] as FlowRunStatus
 
         if (isFailedState(status)) {
             badges.push('back-again')

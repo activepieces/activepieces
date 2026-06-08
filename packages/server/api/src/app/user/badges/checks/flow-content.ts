@@ -15,10 +15,10 @@ export const flowContentBadgesCheck: BadgeCheck = {
             return { userId, badges: [] }
         }
         const flowUpdatedEvent = event as FlowUpdatedEvent
-        if (flowUpdatedEvent.data.request.type !== FlowOperationType.LOCK_AND_PUBLISH) {
+        if ((flowUpdatedEvent.data.request['type'] as FlowOperationType) !== FlowOperationType.LOCK_AND_PUBLISH) {
             return { userId, badges: [] }
         }
-        const flowVersionId = flowUpdatedEvent.data.flowVersion.id
+        const flowVersionId = flowUpdatedEvent.data.flowVersion['id'] as string
         const flowVersion = await flowVersionRepo().findOneBy({ id: flowVersionId })
         if (!flowVersion || !flowVersion.trigger) {
             return { userId, badges: [] }

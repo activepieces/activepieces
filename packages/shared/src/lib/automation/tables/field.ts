@@ -35,3 +35,11 @@ export const StaticDropdownEmptyOption = {
     label: '',
     value: '',
 }
+
+export const FieldState = z.object({
+    name: z.string(),
+    externalId: z.string().optional(),
+    type: z.nativeEnum(FieldType),
+    data: z.record(z.string(), z.unknown()).optional().nullable(),
+})
+export type FieldState = z.infer<typeof FieldState>

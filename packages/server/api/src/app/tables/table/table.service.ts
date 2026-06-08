@@ -161,7 +161,8 @@ export const tableService = {
                 name: f.name,
                 type: f.type,
                 externalId: f.externalId,
-                data: f.data ?? null,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                data: (f as any).data ?? null,
             })),
             status: populatedTable.status ?? null,
             trigger: populatedTable.trigger ?? null,

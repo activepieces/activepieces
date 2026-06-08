@@ -152,3 +152,5 @@ export const resolveValueFromProps = (props: Record<string, unknown> | undefined
     })
     return resolvedScope
 }
+
+export type ConnectionState = { externalId: string; pieceName: string; displayName: string }
