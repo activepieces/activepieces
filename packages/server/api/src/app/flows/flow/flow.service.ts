@@ -757,7 +757,6 @@ type CreateParams = {
     externalId?: string
     templateId?: string
     createdBy?: FlowCreator
-    schemaVersion?: string
 }
 
 type ListParamsBase = {
