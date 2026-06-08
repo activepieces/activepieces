@@ -1,7 +1,6 @@
 
 import { z } from 'zod'
 import { isNil } from '../../core/common'
-import { ApplicationEvent } from '../../ee/audit-events'
 import { ResumeReason, StreamStepProgress, TriggerHookType, TriggerPayload } from '../engine'
 import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
@@ -53,7 +52,6 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
         case WorkerJobType.RENEW_WEBHOOK:
             return 'veryLow'
         case WorkerJobType.EXECUTE_WEBHOOK:
-        case WorkerJobType.EVENT_DESTINATION:
             return 'medium'
         case WorkerJobType.EXECUTE_FLOW:
             return getExecuteFlowPriority(job.environment, job.workerHandlerId)
@@ -77,7 +75,6 @@ export enum WorkerJobType {
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_EXTRACT_PIECE_INFORMATION = 'EXECUTE_EXTRACT_PIECE_INFORMATION',
-    EVENT_DESTINATION = 'EVENT_DESTINATION',
     EXECUTE_CHAT_AGENT = 'EXECUTE_CHAT_AGENT',
 }
 
@@ -255,25 +252,12 @@ export const ExecuteChatAgentJobData = z.object({
 })
 export type ExecuteChatAgentJobData = z.infer<typeof ExecuteChatAgentJobData>
 
-export const EventDestinationJobData = z.object({
-    schemaVersion: z.number(),
-    platformId: z.string(),
-    projectId: z.string().optional(),
-    webhookId: z.string(),
-    webhookUrl: z.string(),
-    payload: ApplicationEvent,
-    jobType: z.literal(WorkerJobType.EVENT_DESTINATION),
-})
-
-export type EventDestinationJobData = z.infer<typeof EventDestinationJobData>
-
 export const JobData = z.union([
     PollingJobData,
     RenewWebhookJobData,
     ExecuteFlowJobData,
     WebhookJobData,
     UserInteractionJobData,
-    EventDestinationJobData,
     ExecuteChatAgentJobData,
 ])
 export type JobData = z.infer<typeof JobData>

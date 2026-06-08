@@ -2,26 +2,6 @@ import { TlsOptions } from 'node:tls'
 import 'pg'
 import { isNil, spreadIfDefined } from '@activepieces/shared'
 import { DataSource } from 'typeorm'
-import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
-import { AddTemplates1685538145476 } from '../ee/database/migrations/postgres/1685538145476-addTemplates'
-import { ChangeToJsonToKeepKeysOrder1685991260335 } from '../ee/database/migrations/postgres/1685991260335-ChangeToJsonToPeserveKeys'
-import { AddPinnedAndBlogUrlToTemplates1686133672743 } from '../ee/database/migrations/postgres/1686133672743-AddPinnedAndBlogUrlToTemplates'
-import { AddPinnedOrder1686154285890 } from '../ee/database/migrations/postgres/1686154285890-add_pinned_order'
-import { AddProjectIdToTemplate1688083336934 } from '../ee/database/migrations/postgres/1688083336934-AddProjectIdToTemplate'
-import { AddBillingParameters1688739844617 } from '../ee/database/migrations/postgres/1688739844617-AddBillingParameters'
-import { AddAppSumo1688943462327 } from '../ee/database/migrations/postgres/1688943462327-AddAppSumo'
-import { AddProjectMembers1689177797092 } from '../ee/database/migrations/postgres/1689177797092-AddProjectMembers'
-import { AddTasksPerDays1689336533370 } from '../ee/database/migrations/postgres/1689336533370-AddTasksPerDays'
-import { RemoveCalculatedMetrics1689806173642 } from '../ee/database/migrations/postgres/1689806173642-RemoveCalculatedMetrics'
-import { AddReferral1690459469381 } from '../ee/database/migrations/postgres/1690459469381-AddReferral'
-import { FlowTemplateAddUserIdAndImageUrl1694379223109 } from '../ee/database/migrations/postgres/1694379223109-flow-template-add-user-id-and-image-url'
-import { ProjectMemberRelations1694381968985 } from '../ee/database/migrations/postgres/1694381968985-project-member-relations'
-import { AddFeaturedDescriptionAndFlagToTemplates1694604120205 } from '../ee/database/migrations/postgres/1694604120205-AddFeaturedDescriptionAndFlagToTemplates'
-import { ModifyBilling1694902537045 } from '../ee/database/migrations/postgres/1694902537045-ModifyBilling'
-import { AddDatasourcesLimit1695916063833 } from '../ee/database/migrations/postgres/1695916063833-AddDatasourcesLimit'
-import { AddPlatform1697717995884 } from '../ee/database/migrations/postgres/1697717995884-add-platform'
-import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres/1698077078271-AddCustomDomain'
-import { AddMetadataFieldToFlowTemplates1744780800000 } from '../ee/database/migrations/postgres/1744780800000-AddMetadataFieldToFlowTemplates'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { commonProperties } from './database-connection'
@@ -589,16 +569,6 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddIconToProject1763377380235,
         AddProjectType1763644863137,
         AddFlowOperationStatusField1764079041445,
-        AddTemplates1685538145476,
-        AddPinnedAndBlogUrlToTemplates1686133672743,
-        AddPinnedOrder1686154285890,
-        AddProjectIdToTemplate1688083336934,
-        FlowTemplateAddUserIdAndImageUrl1694379223109,
-        AddFeaturedDescriptionAndFlagToTemplates1694604120205,
-        AddProjectMembers1689177797092,
-        ProjectMemberRelations1694381968985,
-        AddPlatform1697717995884,
-        AddCustomDomain1698077078271,
         AddSigningKey1698602417745,
         AddDisplayNameToSigningKey1698698190965,
         AddOAuth2AppEntiity1699221414907,
@@ -606,13 +576,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddSmtpAndPrivacyUrlToPlatform1699491705906,
         AddOtpEntity1700396157624,
         AddPlatformDefaultLanguage1700406308445,
-        MakeStripeSubscriptionNullable1685053959806,
-        AddBillingParameters1688739844617,
-        AddTasksPerDays1689336533370,
-        RemoveCalculatedMetrics1689806173642,
-        ModifyBilling1694902537045,
         RemoveUnusedFieldsinBilling1700132368636,
-        AddDatasourcesLimit1695916063833,
         MakeStripeCustomerIdNullable1700751925992,
         AddStateToOtp1701084418793,
         ModifyProjectMembersAndRemoveUserId1701647565290,
@@ -639,16 +603,12 @@ export const getMigrations = (): (new () => Migration)[] => {
         PiecesProjectLimits1712279318440,
 
         // Cloud Only Migrations, before unifing the migrations.
-        ChangeToJsonToKeepKeysOrder1685991260335,
         AddPieceTypeAndPackageTypeToFlowTemplate1696245170062,
         RemoveUniqueonAppNameAppCredentials1705586178452,
         CascadeProjectDeleteAppCredentialsAndConnectionKey1710720610669,
         // Enterprise Only Migrations, before unifing the migrations.
-        MigrateEeUsersToOldestPlatform1701261357197,
         UnifyEnterpriseWithCloud1714249840058,
         // Cloud Only Entities, But we need to run them for Enterprise as well.
-        AddAppSumo1688943462327,
-        AddReferral1690459469381,
         AddUserEmailToReferral1709500213947,
         AddProjectBilling1708811745694,
 
@@ -667,7 +627,6 @@ export const getMigrations = (): (new () => Migration)[] => {
         ProjectIdNullableInTemplate1741357285896,
         UpdateNotifyStatusOnEmbedding1741963410825,
         AddManualTaskCommentTable1742305104390,
-        AddMetadataFieldToFlowTemplates1744780800000,
         AddLimitsOnPlatformPlan1747921788059,
         AddPlanNameOnPlatformPlan1748549003744,
         AddPlatformIdToAiUsage1750526457504,

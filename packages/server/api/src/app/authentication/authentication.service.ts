@@ -1,7 +1,6 @@
 import { cryptoUtils } from '@activepieces/server-utils'
-import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, OtpType, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { otpService } from '../ee/authentication/otp/otp-service'
 import { flagService } from '../flags/flag.service'
 import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
@@ -200,22 +199,7 @@ async function getUserForPlatform(identityId: string, platform: PlatformWithoutS
 }
 
 async function sendVerificationOrAutoVerify(userIdentity: UserIdentity, log: FastifyBaseLogger): Promise<void> {
-    const edition = system.getEdition()
-    switch (edition) {
-        case ApEdition.CLOUD:
-            if (!userIdentity.verified) {
-                await otpService(log).createAndSend({
-                    platformId: null,
-                    email: userIdentity.email,
-                    type: OtpType.EMAIL_VERIFICATION,
-                })
-            }
-            break
-        case ApEdition.COMMUNITY:
-        case ApEdition.ENTERPRISE:
-            await userIdentityService(log).verify(userIdentity.id)
-            break
-    }
+    await userIdentityService(log).verify(userIdentity.id)
 }
 
 async function getPreferredPlatformIdForFederatedAuthn(email: string, log: FastifyBaseLogger): Promise<string | null> {

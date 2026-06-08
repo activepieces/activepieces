@@ -3,8 +3,8 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
-import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
-import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
+import { federatedAuthnHooks } from '../authentication/federated-authn-hooks'
+import { emailSenderHooks } from '../helper/email-sender-hooks'
 import { domainHelper } from '../helper/domain-helper'
 import { system } from '../helper/system/system'
 import { AppSystemProp, apVersionUtil } from '../helper/system/system-props'
@@ -163,7 +163,7 @@ export const flagService = (log: FastifyBaseLogger) => ({
             },
             {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
-                value: await federatedAuthnService(log).getThirdPartyRedirectUrl(),
+                value: await federatedAuthnHooks.get(log).getThirdPartyRedirectUrl(),
                 created,
                 updated,
             },
@@ -303,7 +303,7 @@ export const flagService = (log: FastifyBaseLogger) => ({
             },
             {
                 id: ApFlagId.SMTP_CONFIGURED,
-                value: smtpEmailSender(log).isSmtpConfigured(),
+                value: emailSenderHooks.get(log).isSmtpConfigured(),
                 created,
                 updated,
             },

@@ -11,7 +11,6 @@ import { ActivepiecesError,
 } from '@activepieces/shared'
 import { AxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
-import { secretManagersService } from '../../../../ee/secret-managers/secret-managers.service'
 import {
     ClaimOAuth2Request,
     OAuth2Service,
@@ -113,19 +112,13 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
     },
 
     async refresh({
-        platformId,
-        projectId,
         connectionValue: appConnection,
     }: RefreshOAuth2Request<OAuth2ConnectionValueWithApp>): Promise<OAuth2ConnectionValueWithApp> {
         if (!oauth2Util(log).isExpired(appConnection)) {
             return appConnection
         }
-        const smService = secretManagersService(log)
-        const resolveParams = { platformId, projectIds: projectId ? [projectId] : undefined, throwOnFailure: true }
-        const [client_id, client_secret] = await Promise.all([
-            smService.resolveString({ key: appConnection.client_id, ...resolveParams }),
-            smService.resolveString({ key: appConnection.client_secret, ...resolveParams }),
-        ])
+        const client_id = appConnection.client_id
+        const client_secret = appConnection.client_secret
         const grantType =
             appConnection.grant_type ?? OAuth2GrantType.AUTHORIZATION_CODE   
         const body: Record<string, string> = {}

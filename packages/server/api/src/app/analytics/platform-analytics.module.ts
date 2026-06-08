@@ -2,13 +2,11 @@ import { ActivepiecesError, AnalyticsReportRequest, ErrorCode, LeaderboardReques
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
-import { platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
 import { userIdentityHelper } from '../helper/user-identity-helper'
 import { piecesAnalyticsService } from './pieces-analytics.service'
 import { platformAnalyticsReportService } from './platform-analytics-report.service'
 
 export const platformAnalyticsModule: FastifyPluginAsyncZod = async (app) => {
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.analyticsEnabled))
     await piecesAnalyticsService(app.log).init()
     await app.register(platformAnalyticsController, { prefix: '/v1/analytics' })
 }

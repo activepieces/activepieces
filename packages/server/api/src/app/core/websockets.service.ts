@@ -2,7 +2,6 @@ import { ActivepiecesError, ErrorCode, isNil, Principal, PrincipalForType, Princ
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
-import { projectMemberService } from '../ee/projects/project-members/project-member.service'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { app } from '../server'
 
@@ -93,25 +92,12 @@ export const websocketService = {
     },
 }
 
-const validateProjectId = async ({ userId, projectId, log }: ValidateProjectIdArgs): Promise<void> => {
+const validateProjectId = async ({ projectId }: ValidateProjectIdArgs): Promise<void> => {
     if (isNil(projectId)) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHENTICATION,
             params: {
                 message: 'Project ID is required',
-            },
-        })
-    }
-    const role = await projectMemberService(log).getRole({
-        projectId,
-        userId,
-    })
-
-    if (isNil(role)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.AUTHORIZATION,
-            params: {
-                message: 'User not allowed to access this project',
             },
         })
     }

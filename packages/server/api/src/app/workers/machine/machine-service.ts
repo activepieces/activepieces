@@ -13,7 +13,6 @@ import {
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { FastifyBaseLogger } from 'fastify'
-import { workerGroupService } from '../../ee/platform/platform-plan/worker-group.service'
 import { domainHelper } from '../../helper/domain-helper'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
@@ -88,7 +87,7 @@ export const machineService = (log: FastifyBaseLogger) => {
             }, existingWorker)
             return buildSettingsResponse(log)
         },
-        async list(platformId: string): Promise<WorkerMachineWithStatus[]> {
+        async list(_platformId: string): Promise<WorkerMachineWithStatus[]> {
             const allWorkers = await workerMachineCache().find()
 
             const offlineThreshold = dayjs().subtract(60, 'seconds').utc()
@@ -97,18 +96,12 @@ export const machineService = (log: FastifyBaseLogger) => {
 
             await workerMachineCache().delete(offLineWorkers.map(worker => worker.id))
 
-            const platformWorkerGroupId = await workerGroupService(log).getWorkerGroupId({ platformId })
             return onlineWorkers
-                .filter(worker => {
-                    if (worker.type === WorkerMachineType.DEDICATED) {
-                        return !isNil(platformWorkerGroupId) && worker.workerGroupId === platformWorkerGroupId
-                    }
-                    return isNil(platformWorkerGroupId)
-                })
+                .filter(worker => worker.type !== WorkerMachineType.DEDICATED)
                 .map(worker => ({
                     ...worker,
                     status: WorkerMachineStatus.ONLINE,
-                    type: worker.type === 'DEDICATED' ? WorkerMachineType.DEDICATED : WorkerMachineType.SHARED,
+                    type: WorkerMachineType.SHARED,
                     workerGroupId: worker.workerGroupId,
                 }))
         },

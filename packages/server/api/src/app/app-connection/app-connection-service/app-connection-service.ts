@@ -1,6 +1,5 @@
 import {
     ActivepiecesError,
-    ApEdition,
     ApEnvironment,
     apId,
     AppConnection,
@@ -42,8 +41,6 @@ import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
 import { ArrayContains, Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
-import { projectMemberService } from '../../ee/projects/project-members/project-member.service'
-import { containsSecretManagerReference, secretManagersService } from '../../ee/secret-managers/secret-managers.service'
 import { flowService } from '../../flows/flow/flow.service'
 import { encryptUtils } from '../../helper/encryption'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -90,7 +87,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         }
 
         const validatedConnectionValue = await validateConnectionValue({
-            value: await secretManagersService(log).resolveObject({ value, platformId, projectIds }),
+            value,
             pieceName,
             pieceVersion,
             projectId: projectIds[0],
@@ -359,10 +356,10 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
     removeSensitiveData: (
         appConnection: AppConnection | AppConnectionSchema,
     ): AppConnectionWithoutSensitiveData => {
-        const { value, ...appConnectionWithoutSensitiveData } = appConnection
+        const { value: _value, ...appConnectionWithoutSensitiveData } = appConnection
         return {
             ...appConnectionWithoutSensitiveData,
-            usingSecretManager: containsSecretManagerReference(value),
+            usingSecretManager: false,
         }
     },
 
@@ -389,29 +386,12 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async getOwners({ projectId, platformId }: { projectId: ProjectId, platformId: PlatformId }): Promise<AppConnectionOwners[]> {
-        const platformAdmins = (await userService(log).getByPlatformRole(platformId, PlatformRole.ADMIN)).map(user => ({
+    async getOwners({ platformId }: { projectId: ProjectId, platformId: PlatformId }): Promise<AppConnectionOwners[]> {
+        return (await userService(log).getByPlatformRole(platformId, PlatformRole.ADMIN)).map(user => ({
             firstName: user.identity.firstName,
             lastName: user.identity.lastName,
             email: user.identity.email,
         }))
-        const edition = system.getOrThrow(AppSystemProp.EDITION)
-        if (edition === ApEdition.COMMUNITY) {
-            return platformAdmins
-        }
-        const projectMembers = await projectMemberService(log).list({
-            platformId,
-            projectId,
-            cursorRequest: null,
-            limit: 1000,
-            projectRoleId: undefined,
-        })
-        const projectMembersDetails = projectMembers.data.map(pm => ({
-            firstName: pm.user.firstName,
-            lastName: pm.user.lastName,
-            email: pm.user.email,
-        }))
-        return [...platformAdmins, ...projectMembersDetails]
     },
 
     async listForPlatform(params: ListForPlatformParams): Promise<SeekPage<PlatformAppConnectionsListItem>> {

@@ -1,6 +1,6 @@
 import { DefaultProjectRole, rolePermissions, RoleType } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
-import { ProjectRoleEntity } from '../../ee/projects/project-role/project-role.entity'
+import { ProjectRoleEntity } from '../../project/project-role.entity'
 import { system } from '../../helper/system/system'
 import { DataSeed } from './data-seed'
 
@@ -16,7 +16,7 @@ const roleIds: Record<DefaultProjectRole, string> = {
 export const rolesSeed: DataSeed = {
     run: async () => {
         system.globalLogger().info({ name: 'rolesSeed' }, 'Seeding roles')
-        for (const role of Object.values(DefaultProjectRole)) {
+        for (const role of Object.values(DefaultProjectRole) as DefaultProjectRole[]) {
             const permissions = rolePermissions[role]
             await projectMemberRoleRepo().upsert({
                 name: role,

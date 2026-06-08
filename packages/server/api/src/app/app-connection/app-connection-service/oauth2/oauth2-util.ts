@@ -15,7 +15,6 @@ import { ActivepiecesError,
 import { isAxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
-import { secretManagersService } from '../../../ee/secret-managers/secret-managers.service'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 
 export const oauth2Util = (log: FastifyBaseLogger) => ({
@@ -119,12 +118,7 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
             })
         }
 
-        const resolvedClientId = await secretManagersService(log).resolveString({
-            key: clientId,
-            platformId,
-            throwOnFailure: true,
-            projectIds: projectId ? [projectId] : undefined,
-        })
+        const resolvedClientId = clientId
         const authUrl = resolveValueFromProps(props, pieceAuth.authUrl)
         const selectedScopes = resolveSelectedScopes(scopes, pieceAuth.scope)
         const scope = resolveValueFromProps(props, selectedScopes.join(' '))

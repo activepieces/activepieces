@@ -1,6 +1,5 @@
 import {
     ActivepiecesError,
-    ApEdition,
     apId,
     assertNotNullOrUndefined,
     Cursor,
@@ -25,11 +24,8 @@ import { nanoid } from 'nanoid'
 import { In, IsNull } from 'typeorm'
 import { userIdentityRepository, userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
-import { platformProjectService } from '../ee/projects/platform-project-service'
-import { projectMemberRepo } from '../ee/projects/project-role/project-role.service'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
-import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
 import { UserEntity, UserSchema } from './user-entity'
@@ -172,10 +168,6 @@ export const userService = (log: FastifyBaseLogger) => ({
     },
     async delete({ id, platformId }: DeleteParams): Promise<void> {
         await assertNotPlatformOwner({ id, platformId, log })
-        await platformProjectService(log).deletePersonalProjectForUser({
-            userId: id,
-            platformId,
-        })
         await userRepo().delete({
             id,
             platformId,
@@ -184,10 +176,6 @@ export const userService = (log: FastifyBaseLogger) => ({
     async removeFromPlatform({ id, platformId }: DeleteParams): Promise<void> {
         await assertNotPlatformOwner({ id, platformId, log })
         const user = await this.getOneOrFail({ id })
-        await platformProjectService(log).deletePersonalProjectForUser({
-            userId: id,
-            platformId,
-        })
         await userRepo().update({
             id,
             platformId,
@@ -270,14 +258,8 @@ async function assertNotPlatformOwner({ id, platformId, log }: DeleteParams & { 
     }
 }
 
-async function getUsersForProject(platformId: PlatformId, projectId: string): Promise<UserId[]> {
-    const platformAdmins = await userRepo().find({ where: { platformId, platformRole: PlatformRole.ADMIN } }).then((users) => users.map((user) => user.id))
-    const edition = system.getEdition()
-    if (edition === ApEdition.COMMUNITY) {
-        return platformAdmins
-    }
-    const projectMembers = await projectMemberRepo().find({ where: { projectId, platformId } }).then((members) => members.map((member) => member.userId))
-    return [...platformAdmins, ...projectMembers]
+async function getUsersForProject(platformId: PlatformId, _projectId: string): Promise<UserId[]> {
+    return userRepo().find({ where: { platformId, platformRole: PlatformRole.ADMIN } }).then((users) => users.map((user) => user.id))
 }
 
 type UpdateLastActiveDateParams = {

@@ -1,8 +1,6 @@
-import { ActivepiecesError, ErrorCode, isNil, Permission, PlatformRole, Principal, PrincipalType, UserIdentityProvider } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil, PlatformRole, Principal, PrincipalType, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../../../authentication/user-identity/user-identity-service'
-import { rbacService } from '../../../../ee/authentication/project-role/rbac-service'
-import { projectMemberService } from '../../../../ee/projects/project-members/project-member.service'
 import { userService } from '../../../../user/user-service'
 import { AuthorizationRouteSecurity, ProjectAuthorizationConfig } from '../../authorization/authorization'
 import { AuthorizationType, RouteKind } from '../../authorization/common'
@@ -51,27 +49,6 @@ async function assertNonEmbedOrAdmin(principal: Principal, log: FastifyBaseLogge
             },
         })
     }
-    if (isNil(user.platformId)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.AUTHORIZATION,
-            params: {
-                message: 'User is not associated with a platform.',
-            },
-        })
-    }
-    const hasInvitePermission = await projectMemberService(log).hasPermissionOnAnyProject({
-        userId: user.id,
-        platformId: user.platformId,
-        permission: Permission.WRITE_INVITATION,
-    })
-    if (!hasInvitePermission) {
-        throw new ActivepiecesError({
-            code: ErrorCode.AUTHORIZATION,
-            params: {
-                message: 'User does not have invite permission on any project.',
-            },
-        })
-    }
 }
 
 async function assertPlatformIsOwnedByCurrentPrincipal(principal: Principal, log: FastifyBaseLogger): Promise<void> {
@@ -90,7 +67,7 @@ async function assertPlatformIsOwnedByCurrentPrincipal(principal: Principal, log
 }
 
 
-async function assertAccessToProject(principal: Principal, projectSecurity: ProjectAuthorizationConfig, log: FastifyBaseLogger): Promise<void> {
+async function assertAccessToProject(principal: Principal, projectSecurity: ProjectAuthorizationConfig, _log: FastifyBaseLogger): Promise<void> {
     if (isNil(projectSecurity.projectId)) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,
@@ -99,7 +76,6 @@ async function assertAccessToProject(principal: Principal, projectSecurity: Proj
             },
         })
     }
-    await rbacService(log).assertPrinicpalAccessToProject({ principal, permission: projectSecurity.permission, projectId: projectSecurity.projectId })
 }
 
 

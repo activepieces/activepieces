@@ -19,7 +19,6 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
-import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { flagService } from '../flags/flag.service'
 import { migrateFlowVersionTemplateList } from '../flows/flow-version/migrations'
 import { system } from '../helper/system/system'
@@ -78,7 +77,7 @@ export const templateController: FastifyPluginAsyncZod = async (app) => {
 
         switch (type) {
             case TemplateType.CUSTOM: {
-                await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+
                 platformId = request.principal.platform.id
             }
                 break
@@ -113,7 +112,7 @@ export const templateController: FastifyPluginAsyncZod = async (app) => {
                     params: { message: 'Cannot update official or shared templates' },
                 })
             case TemplateType.CUSTOM: {
-                await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+
                 assertTemplateBelongsToPlatform({
                     templatePlatformId: template.platformId,
                     principalPlatformId: request.principal.platform.id,
@@ -137,7 +136,7 @@ export const templateController: FastifyPluginAsyncZod = async (app) => {
                     params: { message: 'Cannot delete official or shared templates' },
                 })
             case TemplateType.CUSTOM: {
-                await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+
                 assertTemplateBelongsToPlatform({
                     templatePlatformId: template.platformId,
                     principalPlatformId: request.principal.platform.id,

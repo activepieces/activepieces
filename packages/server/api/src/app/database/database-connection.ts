@@ -7,25 +7,6 @@ import { AIProviderEntity } from '../ai/ai-provider-entity'
 import { PlatformAnalyticsReportEntity } from '../analytics/platform-analytics-report.entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
-import { AlertEntity } from '../ee/alerts/alerts-entity'
-import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
-import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
-import { AppSumoEntity } from '../ee/appsumo/appsumo.entity'
-import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
-import { OtpEntity } from '../ee/authentication/otp/otp-entity'
-import { ChatConversationEntity } from '../ee/chat/chat-conversation-entity'
-import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
-import { EmbedSubdomainEntity } from '../ee/embed-subdomain/embed-subdomain.entity'
-import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
-import { ConcurrencyPoolEntity } from '../ee/platform/concurrency-pool/concurrency-pool.entity'
-import { PlatformPlanEntity } from '../ee/platform/platform-plan/platform-plan.entity'
-import { ProjectMemberEntity } from '../ee/projects/project-members/project-member.entity'
-import { ProjectPlanEntity } from '../ee/projects/project-plan/project-plan.entity'
-import { GitRepoEntity } from '../ee/projects/project-release/git-sync/git-sync.entity'
-import { ProjectReleaseEntity } from '../ee/projects/project-release/project-release.entity'
-import { ProjectRoleEntity } from '../ee/projects/project-role/project-role.entity'
-import { SecretManagerEntity } from '../ee/secret-managers/secret-manager.entity'
-import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
 import { EventDestinationEntity } from '../event-destinations/event-destinations.entity'
 import { FileEntity } from '../file/file.entity'
 import { FlagEntity } from '../flags/flag.entity'
@@ -47,6 +28,7 @@ import { PieceTagEntity } from '../pieces/tags/pieces/piece-tag.entity'
 import { TagEntity } from '../pieces/tags/tag-entity'
 import { PlatformEntity } from '../platform/platform.entity'
 import { ProjectEntity } from '../project/project-entity'
+import { ProjectRoleEntity } from '../project/project-role.entity'
 import { StoreEntryEntity } from '../store-entry/store-entry-entity'
 import { FieldEntity } from '../tables/field/field.entity'
 import { CellEntity } from '../tables/record/cell.entity'
@@ -77,6 +59,7 @@ function getEntities(): EntitySchema<unknown>[] {
         FlowVersionEntity,
         FlowRunEntity,
         ProjectEntity,
+        ProjectRoleEntity,
         StoreEntryEntity,
         UserEntity,
         AppConnectionEntity,
@@ -84,13 +67,10 @@ function getEntities(): EntitySchema<unknown>[] {
         FolderEntity,
         PieceMetadataEntity,
         PlatformEntity,
-        SecretManagerEntity,
         TagEntity,
         PieceTagEntity,
-        AlertEntity,
         UserInvitationEntity,
         AIProviderEntity,
-        ProjectRoleEntity,
         TableEntity,
         FieldEntity,
         RecordEntity,
@@ -103,31 +83,12 @@ function getEntities(): EntitySchema<unknown>[] {
         McpOAuthTokenEntity,
         KnowledgeBaseFileEntity,
         KnowledgeBaseChunkEntity,
-        ChatConversationEntity,
         TriggerSourceEntity,
         UserBadgeEntity,
         WaitpointEntity,
-        // Enterprise
-        ConcurrencyPoolEntity,
-        ProjectMemberEntity,
-        ProjectPlanEntity,
-        SigningKeyEntity,
-        OAuthAppEntity,
-        OtpEntity,
-        ApiKeyEntity,
         TemplateEntity,
-        GitRepoEntity,
-        AuditEventEntity,
-        ProjectReleaseEntity,
         PlatformAnalyticsReportEntity,
-        EmbedSubdomainEntity,
-        // CLOUD
-        AppSumoEntity,
-        ConnectionKeyEntity,
-        AppCredentialEntity,
-        PlatformPlanEntity,
         EventDestinationEntity,
-
     ]
 }
 

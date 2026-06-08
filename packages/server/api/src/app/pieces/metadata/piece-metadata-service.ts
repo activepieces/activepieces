@@ -23,7 +23,6 @@ import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
 import { EntityManager, In, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
-import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
 import { apVersionUtil } from '../../helper/system/system-props'
 import { pieceTagService } from '../tags/pieces/piece-tag.service'
 import { pieceCache, PieceRegistryEntry } from './piece-cache'
@@ -63,7 +62,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 version: piece.version,
             }))
         },
-        async get({ projectId, platformId, version, name }: GetOrThrowParams): Promise<PieceMetadataModel | undefined> {
+        async get({ platformId, version, name }: GetOrThrowParams): Promise<PieceMetadataModel | undefined> {
             const bestMatch = await findExactVersion(log, { name, version, platformId })
             if (isNil(bestMatch)) {
                 return undefined
@@ -79,14 +78,6 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 return undefined
             }
 
-            const isFiltered = await enterpriseFilteringUtils(log).isFiltered({
-                piece,
-                projectId,
-                platformId,
-            })
-            if (isFiltered) {
-                return undefined
-            }
             return piece
         },
         async getOrThrow({ version, name, platformId, locale }: GetOrThrowParams): Promise<PieceMetadataModel> {

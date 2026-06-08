@@ -4,10 +4,9 @@ import { Job, Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
-import { workerGroupService } from '../../ee/platform/platform-plan/worker-group.service'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
-import { getWorkerGroupQueueName, QueueName } from '../job'
+import { QueueName } from '../job'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
 const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds()
@@ -170,15 +169,8 @@ export function isUserInteractionJobData(jobData: JobData): jobData is UserInter
     return USER_INTERACTION_JOB_TYPES.has(jobData.jobType)
 }
 
-async function getQueueName(platformId: string | null, log: FastifyBaseLogger): Promise<string> {
-    if (!platformId) {
-        return QueueName.WORKER_JOBS
-    }
-    const groupId = await workerGroupService(log).getWorkerGroupId({ platformId })
-    if (isNil(groupId)) {
-        return QueueName.WORKER_JOBS
-    }
-    return getWorkerGroupQueueName(groupId)
+async function getQueueName(_platformId: string | null, _log: FastifyBaseLogger): Promise<string> {
+    return QueueName.WORKER_JOBS
 }
 
 

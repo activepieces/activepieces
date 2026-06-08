@@ -1,7 +1,7 @@
 import { ApEdition, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { lru, LRU } from 'tiny-lru'
-import { embedSubdomainService } from '../ee/embed-subdomain/embed-subdomain.service'
+import { embedSubdomainHooks } from './embed-subdomain-hooks'
 import { platformService } from '../platform/platform.service'
 import { system } from './system/system'
 import { AppSystemProp } from './system/system-props'
@@ -31,8 +31,8 @@ async function resolveAllowedOrigins({ hostname, log }: { hostname: string, log:
 
     try {
         if (edition === ApEdition.CLOUD) {
-            const record = await embedSubdomainService(log).getByHostname({ hostname })
-            if (isNil(record)) {
+            const record = await embedSubdomainHooks.get(log).getByHostname({ hostname })
+            if (record === null || record === undefined) {
                 cache.set(cacheKey, envOrigins)
                 return envOrigins
             }

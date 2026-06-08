@@ -5,6 +5,7 @@ import {
     CreateTableWebhookRequest,
     ErrorCode,
     ExportTableResponse,
+    Field,
     isNil,
     PopulatedTable,
     SeekPage,
@@ -25,7 +26,6 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, ILike, In, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
-import { projectStateService } from '../../ee/projects/project-release/project-state/project-state.service'
 import { getFolderIdFromRequest } from '../../flows/flow/flow.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -154,7 +154,19 @@ export const tableService = {
             fields,
         }
 
-        const tableState = projectStateService(log).getTableState(populatedTable)
+        const tableState: TableTemplate = {
+            name: populatedTable.name,
+            externalId: populatedTable.externalId,
+            fields: populatedTable.fields.map((f: Field) => ({
+                name: f.name,
+                type: f.type,
+                externalId: f.externalId,
+                data: f.data ?? null,
+            })),
+            status: populatedTable.status ?? null,
+            trigger: populatedTable.trigger ?? null,
+            data: null,
+        }
 
         const records = await recordRepo().find({
             where: { tableId: table.id, projectId },

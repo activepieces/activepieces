@@ -20,7 +20,6 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { distributedStore } from '../../database/redis-connections'
-import { chatRpcHandlers } from '../../ee/chat/chat-rpc-handlers'
 import { fileCompressor } from '../../file/file-compressor'
 import { fileService } from '../../file/file.service'
 import { flowService } from '../../flows/flow/flow.service'
@@ -256,24 +255,24 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
             })
         },
 
-        async getChatConfig(input) {
-            return chatRpcHandlers(log).getChatConfig(input)
+        async getChatConfig(_input) {
+            throw new Error('Chat is not supported in Community Edition')
         },
 
-        async saveChatMessages(input) {
-            return chatRpcHandlers(log).saveChatMessages(input)
+        async saveChatMessages(_input) {
+            // no-op in CE
         },
 
-        async updateChatProgress(input) {
-            return chatRpcHandlers(log).updateChatProgress(input)
+        async updateChatProgress(_input) {
+            // no-op in CE
         },
 
-        async updateProjectContext(input) {
-            return chatRpcHandlers(log).updateProjectContext(input)
+        async updateProjectContext(_input) {
+            // no-op in CE
         },
 
-        async executeChatTool(input) {
-            return chatRpcHandlers(log).executeChatTool(input)
+        async executeChatTool(_input) {
+            throw new Error('Chat tools are not supported in Community Edition')
         },
     }
 }
