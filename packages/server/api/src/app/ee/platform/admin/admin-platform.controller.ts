@@ -6,7 +6,6 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
-import { flowVersionOutputRepairService } from '../../../flows/flow-version/flow-version-output-repair.service'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
@@ -75,13 +74,6 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
         await workerGroupService(req.log).moveJobsToTargetQueue({ platformId, workerGroupId: canary ? CANARY_WORKER_GROUP_ID : null })
         await workerGroupService(req.log).updateCanary({ platformId, canary })
         return res.status(StatusCodes.OK).send()
-    })
-
-    app.post('/flow-versions/repair-output-nesting', RepairOutputNestingRequest, async (req) => {
-        return flowVersionOutputRepairService(req.log).repairOutputNesting({
-            flowVersionId: req.body.flowVersionId,
-            forceSingleOutput: req.body.forceSingleOutput,
-        })
     })
 
     app.post('/chat/sync-all', SyncAllConversationsRequest, async (req, res) => {
@@ -205,18 +197,6 @@ const CreatePieceRequest = {
 }
 
 const SyncAllConversationsRequest = {
-    config: {
-        security: securityAccess.public(),
-    },
-}
-
-const RepairOutputNestingRequest = {
-    schema: {
-        body: z.object({
-            flowVersionId: z.string(),
-            forceSingleOutput: z.boolean().optional(),
-        }),
-    },
     config: {
         security: securityAccess.public(),
     },
