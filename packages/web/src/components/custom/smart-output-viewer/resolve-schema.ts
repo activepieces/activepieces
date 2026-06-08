@@ -39,7 +39,8 @@ function resolveTemplateLabel({
     if (isNil(resolved) || typeof resolved === 'object') return '';
     return String(resolved);
   });
-  return label.trim().length > 0 ? label : fallback;
+  const trimmed = label.trim();
+  return trimmed.length > 0 ? trimmed : fallback;
 }
 
 function resolveFieldPath(

@@ -161,14 +161,14 @@ describe('schemaUtils.resolveTemplateLabel', () => {
     ).toBe('ADS-69: Booking issue');
   });
 
-  it('renders missing placeholders as empty but keeps resolved ones', () => {
+  it('renders missing placeholders as empty and trims separator artifacts', () => {
     expect(
       schemaUtils.resolveTemplateLabel({
         value: { key: 'ADS-66' },
         template: '{key}: {fields.summary}',
         fallback: 'Item 1',
       }),
-    ).toBe('ADS-66: ');
+    ).toBe('ADS-66:');
   });
 
   it('falls back when the template resolves to a blank string', () => {
@@ -188,7 +188,7 @@ describe('schemaUtils.resolveTemplateLabel', () => {
         template: '{key} {fields.nested}',
         fallback: 'Item 1',
       }),
-    ).toBe('ADS-1 ');
+    ).toBe('ADS-1');
   });
 });
 
