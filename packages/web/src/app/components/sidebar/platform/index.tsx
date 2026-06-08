@@ -1,4 +1,4 @@
-import { ApEdition, ApFlagId, TeamProjectsLimit } from '@activepieces/shared';
+import { TeamProjectsLimit } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ComponentType, useRef } from 'react';
 import { Link } from 'react-router-dom';
@@ -18,7 +18,6 @@ import { LogInIcon } from '@/components/icons/log-in';
 import { MousePointerClickIcon } from '@/components/icons/mouse-pointer-click';
 import { PaletteIcon } from '@/components/icons/palette';
 import { PuzzleIcon } from '@/components/icons/puzzle';
-import { ReceiptIcon } from '@/components/icons/receipt';
 import { ServerIcon } from '@/components/icons/server';
 import { Settings2Icon } from '@/components/icons/settings2';
 import { SquareDashedBottomCodeIcon } from '@/components/icons/square-dashed-bottom-code';
@@ -38,7 +37,6 @@ import {
   SidebarSeparator,
 } from '@/components/ui/sidebar-shadcn';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { determineDefaultRoute } from '@/lib/route-utils';
 import { cn } from '@/lib/utils';
@@ -48,7 +46,6 @@ import { SidebarUser } from '../sidebar-user';
 
 export function PlatformSidebar() {
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { checkAccess } = useAuthorization();
   const defaultRoute = determineDefaultRoute(checkAccess);
   const chevronRef = useRef<ChevronLeftIconHandle>(null);
@@ -87,12 +84,6 @@ export function PlatformSidebar() {
       label: t('Templates'),
       icon: LayoutGridIcon,
       locked: !platform.plan.manageTemplatesEnabled,
-    },
-    {
-      to: '/platform/setup/billing',
-      label: t('Billing'),
-      icon: ReceiptIcon,
-      locked: edition === ApEdition.COMMUNITY,
     },
     {
       to: '/platform/security/embed',

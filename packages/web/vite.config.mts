@@ -102,7 +102,7 @@ export default defineConfig(({ command, mode }) => {
         ),
         'ee-embed-sdk': path.resolve(
           __dirname,
-          '../../packages/ee/embed-sdk/src',
+          './src/lib/embed-sdk-types.ts',
         ),
         '@activepieces/pieces-framework': path.resolve(
           __dirname,

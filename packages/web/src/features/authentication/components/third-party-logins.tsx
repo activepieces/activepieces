@@ -1,5 +1,4 @@
 import {
-  ApEdition,
   ApFlagId,
   ThirdPartyAuthnProviderEnum,
   ThirdPartyAuthnProvidersToShowMap,
@@ -12,7 +11,6 @@ import GoogleIcon from '@/assets/img/custom/auth/google-icon.svg';
 import SamlIcon from '@/assets/img/custom/auth/saml.svg';
 import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { SamlDomainDialog } from '@/features/authentication/components/saml-domain-dialog';
 import { oauth2Utils } from '@/features/connections/utils/oauth2-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
@@ -28,8 +26,6 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
   const { data: thirdPartyRedirectUrl } = flagsHooks.useFlag<string>(
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
   );
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const isCloud = edition === ApEdition.CLOUD;
   const thirdPartyLogin = oauth2Utils.useThirdPartyLogin();
 
   const handleProviderClick = async (
@@ -65,17 +61,7 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
             : `${t(`Sign in With`)} ${t('Google')}`}
         </Button>
       )}
-      {isCloud && (
-        <SamlDomainDialog>
-          <Button variant="outline" className="w-full rounded-sm">
-            <ThirdPartyIcon icon={SamlIcon} />
-            {isSignUp
-              ? `${t(`Sign up With`)} ${t('SAML')}`
-              : `${t(`Sign in With`)} ${t('SAML')}`}
-          </Button>
-        </SamlDomainDialog>
-      )}
-      {!isCloud && thirdPartyAuthProviders?.saml && (
+      {thirdPartyAuthProviders?.saml && (
         <Button
           variant="outline"
           className="w-full rounded-sm"

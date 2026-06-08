@@ -1,6 +1,5 @@
 import {
   OtpType,
-  ApEdition,
   ApFlagId,
   AuthenticationResponse,
   ErrorCode,
@@ -47,8 +46,6 @@ const SignInForm: React.FC = () => {
     },
     mode: 'onChange',
   });
-
-  const { data: edition } = flagsHooks.useFlag(ApFlagId.EDITION);
 
   const { data: userCreated } = flagsHooks.useFlag(ApFlagId.USER_CREATED);
   const redirectAfterLogin = useRedirectAfterLogin();
@@ -165,14 +162,12 @@ const SignInForm: React.FC = () => {
               <FormItem className="grid space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">{t('Password')}</Label>
-                  {edition !== ApEdition.COMMUNITY && (
-                    <Link
-                      to="/forget-password"
-                      className="text-muted-foreground text-xs hover:text-primary transition-all duration-200"
-                    >
-                      {t('Forgot your password?')}
-                    </Link>
-                  )}
+                  <Link
+                    to="/forget-password"
+                    className="text-muted-foreground text-xs hover:text-primary transition-all duration-200"
+                  >
+                    {t('Forgot your password?')}
+                  </Link>
                 </div>
                 <div className="relative">
                   <Input

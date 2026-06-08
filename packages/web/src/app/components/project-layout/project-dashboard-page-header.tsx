@@ -1,28 +1,23 @@
 import {
   ApFlagId,
-  isNil,
   Permission,
   PlatformRole,
   ProjectType,
-  UserStatus,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { UsersRound, Lock } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { PageHeader } from '@/components/custom/page-header';
 import { SettingsIcon } from '@/components/icons/settings';
-import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
-import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { InviteUserDialog, projectMembersHooks } from '@/features/members';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { ApProjectDisplay } from '@/features/projects/components/ap-project-display';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -41,43 +36,22 @@ export const ProjectDashboardPageHeader = ({
 }) => {
   const { project } = projectCollectionUtils.useCurrentProject();
   const { platform } = platformHooks.useCurrentPlatform();
-  const [inviteOpen, setInviteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState<
     'general' | 'members' | 'alerts' | 'pieces' | 'environment'
   >('general');
   const location = useLocation();
-  const { projectMembers } = projectMembersHooks.useProjectMembers();
-  const activeProjectMembers = projectMembers?.filter(
-    (member) => member.user.status === UserStatus.ACTIVE,
-  );
   const { checkAccess } = useAuthorization();
   const { data: user } = userHooks.useCurrentUser();
-  const userHasPermissionToReadProjectMembers = checkAccess(
-    Permission.READ_PROJECT_MEMBER,
-  );
 
   const { data: showProjectMembersFlag } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_PROJECT_MEMBERS,
   );
 
-  const userHasPermissionToInviteUser = checkAccess(
-    Permission.WRITE_INVITATION,
+  const userHasPermissionToReadProjectMembers = checkAccess(
+    Permission.READ_PROJECT_MEMBER,
   );
 
-  const showProjectMembersIcons =
-    showProjectMembersFlag &&
-    userHasPermissionToReadProjectMembers &&
-    !isNil(activeProjectMembers) &&
-    project.type === ProjectType.TEAM;
-
-  const userCanInviteToProject =
-    userHasPermissionToInviteUser &&
-    project.type === ProjectType.TEAM &&
-    platform.plan.projectRolesEnabled;
-  const userCanInviteToPlatform = user?.platformRole === PlatformRole.ADMIN;
-  const showInviteUserButton =
-    userCanInviteToProject || userCanInviteToPlatform;
   const isProjectPage = location.pathname.includes('/projects/');
 
   const hasGeneralSettings =
@@ -130,35 +104,6 @@ export const ProjectDashboardPageHeader = ({
 
   const rightContent = isProjectPage ? (
     <div className="flex items-center gap-3">
-      {showProjectMembersIcons && (
-        <Button
-          variant="ghost"
-          className="gap-2"
-          aria-label={`View ${activeProjectMembers?.length} team member${
-            activeProjectMembers?.length !== 1 ? 's' : ''
-          }`}
-          onClick={() => {
-            setSettingsInitialTab('members');
-            setSettingsOpen(true);
-          }}
-        >
-          <UsersRound className="w-4 h-4" />
-          <span className="text-sm font-medium">
-            {activeProjectMembers?.length}
-          </span>
-        </Button>
-      )}
-      {showInviteUserButton && (
-        <AnimatedIconButton
-          icon={UserRoundPlusIcon}
-          iconSize={16}
-          variant="ghost"
-          size="sm"
-          onClick={() => setInviteOpen(true)}
-        >
-          <span className="text-sm font-medium">{t('Add Members')}</span>
-        </AnimatedIconButton>
-      )}
       <AnimatedIconButton
         icon={SettingsIcon}
         iconSize={16}
@@ -184,7 +129,6 @@ export const ProjectDashboardPageHeader = ({
         showSidebarToggle={true}
         className="min-w-full"
       />
-      <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />
       <ProjectSettingsDialog
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}

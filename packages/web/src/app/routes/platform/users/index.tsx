@@ -5,14 +5,11 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { User } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { DataTable } from '@/components/custom/data-table';
-import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
-import { Button } from '@/components/ui/button';
-import { InviteUserDialog } from '@/features/members';
 import {
   platformUserHooks,
   platformUserMutations,
@@ -34,8 +31,6 @@ export type UserRowData =
     };
 
 export default function UsersPage() {
-  const [inviteOpen, setInviteOpen] = useState(false);
-
   const {
     data: usersData,
     isLoading: usersLoading,
@@ -129,17 +124,7 @@ export default function UsersPage() {
           }}
           hidePagination={true}
           isLoading={isLoading}
-          toolbarButtons={[
-            <Button
-              key="invite"
-              className="gap-2"
-              size="sm"
-              onClick={() => setInviteOpen(true)}
-            >
-              <UserRoundPlusIcon size={16} />
-              <span className="text-sm font-medium">{t('Invite')}</span>
-            </Button>,
-          ]}
+          toolbarButtons={[]}
           actions={[
             (row) => (
               <UserActions
@@ -153,11 +138,6 @@ export default function UsersPage() {
           ]}
         />
       </div>
-      <InviteUserDialog
-        open={inviteOpen}
-        setOpen={setInviteOpen}
-        onInviteSuccess={refetch}
-      />
     </LockedFeatureGuard>
   );
 }

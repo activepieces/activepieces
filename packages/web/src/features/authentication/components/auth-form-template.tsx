@@ -1,5 +1,4 @@
 import {
-  ApEdition,
   ApFlagId,
   ThirdPartyAuthnProvidersToShowMap,
 } from '@activepieces/shared';
@@ -55,12 +54,8 @@ const TermsFooter = () => {
   const { data: privacyPolicyUrl } = flagsHooks.useFlag<string>(
     ApFlagId.PRIVACY_POLICY_URL,
   );
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
-  if (
-    edition !== ApEdition.CLOUD ||
-    (!termsOfServiceUrl && !privacyPolicyUrl)
-  ) {
+  if (!termsOfServiceUrl && !privacyPolicyUrl) {
     return null;
   }
 
@@ -100,10 +95,8 @@ const AuthSeparator = ({
     flagsHooks.useFlag<ThirdPartyAuthnProvidersToShowMap>(
       ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
     );
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const isCloud = edition === ApEdition.CLOUD;
   const hasThirdPartyLogin =
-    thirdPartyAuthProviders?.google || thirdPartyAuthProviders?.saml || isCloud;
+    thirdPartyAuthProviders?.google || thirdPartyAuthProviders?.saml;
 
   return hasThirdPartyLogin && isEmailAuthEnabled ? (
     <HorizontalSeparatorWithText className="my-5 text-muted-foreground">

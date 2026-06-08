@@ -14,9 +14,7 @@
       "@activepieces/pieces-framework": [
         "../../packages/pieces/framework/src"
       ],
-      "ee-embed-sdk": [
-        "../../packages/ee/embed-sdk/src"
-      ],
+
       "@activepieces/piece-ai": [
         "../../packages/pieces/community/ai/src"
       ]

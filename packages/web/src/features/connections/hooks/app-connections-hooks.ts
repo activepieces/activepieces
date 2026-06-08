@@ -25,9 +25,7 @@ import {
   CURSOR_QUERY_PARAM,
   LIMIT_QUERY_PARAM,
 } from '@/components/custom/data-table';
-import { useEmbedding } from '@/components/providers/embed-provider';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { projectMembersApi } from '@/features/members/api/project-members-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -340,7 +338,6 @@ export const appConnectionsQueries = {
 
   useConnectionsOwners: () => {
     const projectId = authenticationSession.getProjectId() ?? '';
-    const isEmbedding = useEmbedding().embedState.isEmbedded;
 
     return useQuery({
       queryKey: ['app-connections-owners', projectId],
@@ -348,20 +345,6 @@ export const appConnectionsQueries = {
         const { data: owners } = await appConnectionsApi.getOwners({
           projectId,
         });
-        const { data: projectMembers } = await projectMembersApi.list({
-          projectId,
-        });
-        if (isEmbedding) {
-          return owners.filter(
-            (owner) =>
-              !isNil(
-                projectMembers.find(
-                  (member) => member.user.email === owner.email,
-                ),
-              ),
-          );
-        }
-
         return owners;
       },
     });

@@ -17,8 +17,6 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@activepieces/ee-auth": ["packages/ee/auth/src/index.ts"],
-      "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
       "@activepieces/engine": ["packages/server/engine/src/main.ts"],
       "@activepieces/piece-activecampaign": [
         "packages/pieces/community/activecampaign/src/index.ts"
@@ -1501,7 +1499,7 @@
       ],
       "@activepieces/server-utils": ["packages/server/utils/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
-      "@ee/*": ["packages/ee/*"],
+
       "Aminos": ["packages/pieces/community/Aminos/src/index.ts"],
       "activepieces/piece-microsoft-dynamics-365-business-central": [
         "packages/pieces/community/microsoft-dynamics-365-business-central/src/index.ts"
@@ -1521,7 +1519,7 @@
       "activepieces/piece-cashfree-payments": [
         "packages/pieces/community/cashfree-payments/src/index.ts"
       ],
-      "ee-embed-sdk": ["packages/ee/embed-sdk/src/index.ts"],
+
       "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"],
       "@activepieces/piece-kissflow": [
         "packages/pieces/community/kissflow/src/index.ts"

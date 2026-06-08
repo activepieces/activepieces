@@ -1,23 +1,13 @@
 import {
-  ApEdition,
-  ApFlagId,
   WorkerMachineStatus,
-  WorkerMachineType,
   WorkerMachineWithStatus,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Server, Clock, Cpu, MemoryStick, HardDrive, Zap } from 'lucide-react';
+import { Server, Clock, Cpu, MemoryStick, HardDrive } from 'lucide-react';
 import prettyBytes from 'pretty-bytes';
 import React from 'react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { RequestTrial } from '@/app/components/request-trial';
-import {
-  Alert,
-  AlertAction,
-  AlertDescription,
-  AlertTitle,
-} from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import {
   Card,
@@ -25,24 +15,14 @@ import {
   CardFooter,
   CardHeader,
 } from '@/components/ui/card';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { workersQueries } from '@/features/platform-admin';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { useTimeAgo } from '@/hooks/use-time-ago';
 import { cn } from '@/lib/utils';
 
 import { WorkerConfigsPopover } from './worker-configs-popover';
 
 export default function WorkersPage() {
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const isCloud = edition === ApEdition.CLOUD;
   const { data: workersData, isLoading } = workersQueries.useWorkerMachines();
-
-  const fleetType = workersData?.[0]?.type;
 
   return (
     <div className="flex flex-col w-full gap-4 px-4">
@@ -50,35 +30,6 @@ export default function WorkersPage() {
         description={t('Check the health of your workers')}
         title={t('Workers')}
       ></DashboardPageHeader>
-      {isCloud && fleetType === WorkerMachineType.SHARED && (
-        <Alert variant="primary">
-          <Zap size={16} />
-          <AlertTitle>{t('Upgrade to Dedicated Workers')}</AlertTitle>
-          <AlertDescription className="text-xs">
-            {t(
-              'Your automations run on shared workers where strict sandboxing adds overhead to every execution. Dedicated workers give you your own execution pool that stays warm and ready, so your automations start much faster.',
-            )}
-          </AlertDescription>
-          <AlertAction>
-            <RequestTrial
-              featureKey="DEDICATED_WORKERS"
-              buttonVariant="default"
-              buttonSize="xs"
-            />
-          </AlertAction>
-        </Alert>
-      )}
-      {isCloud && fleetType === WorkerMachineType.DEDICATED && (
-        <Alert variant="success">
-          <Zap size={16} />
-          <AlertTitle>{t('Dedicated Workers Active')}</AlertTitle>
-          <AlertDescription className="text-xs">
-            {t(
-              'Your workers run exclusively for your platform. The execution pool stays warm with no sandboxing overhead, so your automations start instantly.',
-            )}
-          </AlertDescription>
-        </Alert>
-      )}
 
       {isLoading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -122,7 +73,6 @@ export default function WorkersPage() {
               key={worker.id}
               worker={worker}
               index={index}
-              isCloud={isCloud}
             />
           ))}
         </div>
@@ -162,7 +112,7 @@ function StatBar({ label, value, detail }: StatBarProps) {
   );
 }
 
-function WorkerCard({ worker, index, isCloud }: WorkerCardProps) {
+function WorkerCard({ worker, index }: WorkerCardProps) {
   const timeAgo = useTimeAgo(new Date(worker.updated));
   const isOnline = worker.status === WorkerMachineStatus.ONLINE;
 
@@ -202,32 +152,6 @@ function WorkerCard({ worker, index, isCloud }: WorkerCardProps) {
             </div>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
-            {isCloud && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge
-                    variant={
-                      worker.type === WorkerMachineType.DEDICATED
-                        ? 'success'
-                        : 'secondary'
-                    }
-                  >
-                    {worker.type === WorkerMachineType.DEDICATED
-                      ? t('Dedicated')
-                      : t('Shared')}
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  {worker.type === WorkerMachineType.DEDICATED
-                    ? t(
-                        'This worker runs exclusively for your platform with no sandboxing overhead.',
-                      )
-                    : t(
-                        'This worker is shared across platforms and uses strict sandboxing for isolation.',
-                      )}
-                </TooltipContent>
-              </Tooltip>
-            )}
             <Badge variant={isOnline ? 'success' : 'destructive'}>
               {t(worker.status.toLowerCase())}
             </Badge>

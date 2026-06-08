@@ -18,7 +18,7 @@
     "db-migration": "npx turbo run db-migration --filter=api --",
     "check-migrations": "npx turbo run check-migrations --filter=api",
     "rollback": "npm run rollback --workspace=packages/server/api --",
-    "lint-core": "turbo run lint --filter=@activepieces/shared --filter=@activepieces/engine --filter=api --filter=web --filter=@activepieces/server-utils --filter=worker --filter=ee-embed-sdk",
+    "lint-core": "turbo run lint --filter=@activepieces/shared --filter=@activepieces/engine --filter=api --filter=web --filter=@activepieces/server-utils --filter=worker",
     "lint-pieces": "turbo run lint --filter='@activepieces/piece-*'",
     "lint-affected": "turbo run lint --affected",
     "lint-dev": "turbo run lint --filter='!@activepieces/piece-*' --force -- --fix",
@@ -393,7 +393,7 @@
     "packages/server/api",
     "packages/server/utils",
     "packages/server/worker",
-    "packages/ee/embed-sdk",
+
     "packages/tests-e2e",
     "packages/pieces/framework",
     "packages/pieces/common",

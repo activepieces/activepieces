@@ -3,8 +3,6 @@ import { Navigate } from 'react-router-dom';
 
 import { PageTitle } from '@/app/components/page-title';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
-import { Error, Success } from '@/features/billing';
-
 import { PlatformLayout } from '../components/platform-layout';
 
 const SettingsBilling = React.lazy(() => import('./platform/billing'));
@@ -209,26 +207,6 @@ export const platformRoutes = [
           <SuspenseWrapper>
             <SettingsBilling />
           </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/setup/billing/success',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Billing">
-          <Success />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/setup/billing/error',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Billing">
-          <Error />
         </PageTitle>
       </PlatformLayout>
     ),

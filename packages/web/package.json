@@ -56,7 +56,7 @@
     "date-fns": "4.1.0",
     "dayjs": "1.11.9",
     "deep-equal": "2.2.2",
-    "ee-embed-sdk": "workspace:*",
+
     "embla-carousel-react": "8.6.0",
     "fast-average-color": "9.5.0",
     "fuse.js": "7.0.0",

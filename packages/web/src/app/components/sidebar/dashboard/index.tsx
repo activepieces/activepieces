@@ -55,7 +55,6 @@ import { SidebarGeneralItemType } from '../ap-sidebar-group';
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
 import ProjectSideBarItem from '../project';
 import { AppSidebarHeader } from '../sidebar-header';
-import SidebarUsageLimits from '../sidebar-usage-limits';
 import { SidebarUser } from '../sidebar-user';
 
 export function ProjectDashboardSidebar({
@@ -344,28 +343,12 @@ export function ProjectDashboardSidebar({
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter>
-          {state === 'expanded' && <DelayedSidebarUsageLimits />}
           <SidebarPlatformAdminLink />
           <SidebarUser />
         </SidebarFooter>
       </Sidebar>
     )
   );
-}
-
-function DelayedSidebarUsageLimits() {
-  const [show, setShow] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setShow(true), 250);
-    return () => clearTimeout(timer);
-  }, []);
-
-  return show ? (
-    <div>
-      <SidebarUsageLimits />
-    </div>
-  ) : null;
 }
 
 function SidebarPlatformAdminLink() {

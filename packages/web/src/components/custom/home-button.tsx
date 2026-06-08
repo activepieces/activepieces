@@ -1,4 +1,3 @@
-import { ActivepiecesClientEventName } from 'ee-embed-sdk';
 import { t } from 'i18next';
 import { ChevronLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -19,7 +18,7 @@ const HomeButtonWrapper = ({ children }: { children: React.ReactNode }) => {
     const handleClick = () => {
       window.parent.postMessage(
         {
-          type: ActivepiecesClientEventName.CLIENT_BUILDER_HOME_BUTTON_CLICKED,
+          type: 'CLIENT_BUILDER_HOME_BUTTON_CLICKED',
           data: {
             route: '/flows',
           },

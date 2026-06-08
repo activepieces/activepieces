@@ -1,18 +1,14 @@
-import { ApEdition, ApFlagId } from '@activepieces/shared';
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
-import { PurchaseExtraFlowsDialog } from '@/features/billing';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
 import { GlobalSearchProvider } from './global-search/global-search-context';
 import { PlatformSidebar } from './sidebar/platform';
 
 export function PlatformLayout({ children }: { children: React.ReactNode }) {
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const showPlatformAdminDashboard = useIsPlatformAdmin();
 
   return (
@@ -37,7 +33,6 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
         ) : (
           <Navigate to="/" />
         )}
-        {edition === ApEdition.CLOUD && <PurchaseExtraFlowsDialog />}
       </GlobalSearchProvider>
     </AllowOnlyLoggedInUserOnlyGuard>
   );
