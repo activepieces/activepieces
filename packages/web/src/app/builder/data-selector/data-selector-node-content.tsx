@@ -49,7 +49,10 @@ const DataSelectorNodeContent = ({
 
   const stepForRoot =
     depth === 0 && node.data.type === 'value'
-      ? flowStructureUtil.getStep(node.data.propertyPath, flowVersion.trigger)
+      ? flowStructureUtil.getStep(
+          node.data.stepName ?? node.data.propertyPath,
+          flowVersion.trigger,
+        )
       : depth === 0 && node.data.type === 'test'
       ? flowStructureUtil.getStep(node.data.stepName, flowVersion.trigger)
       : undefined;

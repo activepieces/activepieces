@@ -103,8 +103,12 @@ function buildFieldNode({
 
   if (field.listItems && field.listItems.length > 0 && Array.isArray(value)) {
     const listItems = field.listItems;
-    const listChildren = value.map((_, idx) => {
-      const itemLabel = `${label} ${idx + 1}`;
+    const listChildren = value.map((itemValue, idx) => {
+      const itemLabel = schemaUtils.resolveEntryLabel({
+        value: itemValue,
+        labelKey: field.labelKey,
+        fallback: `${label} ${idx + 1}`,
+      });
       const itemChildren = listItems.map((child) =>
         buildItemChildNode({
           stepName,
@@ -188,7 +192,11 @@ function buildFieldNode({
           data: {
             type: 'value' as const,
             value: childValue,
-            displayName: key,
+            displayName: schemaUtils.resolveEntryLabel({
+              value: childValue,
+              labelKey: field.labelKey,
+              fallback: key,
+            }),
             propertyPath: childPath,
             insertable: true,
           },
@@ -369,4 +377,58 @@ function buildTreeFromArray({
   };
 }
 
-export const schemaTreeUtils = { buildTreeFromSchema, buildTreeFromArray };
+function buildTreeFromArrayWithSchema({
+  stepName,
+  displayName,
+  schema,
+  items,
+}: {
+  stepName: string;
+  displayName: string;
+  schema: OutputSchema;
+  items: unknown[];
+}): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
+  const fields = schema.fields ?? [];
+  const children = items.map((item, idx) => {
+    const itemBase = `${stepName}[${idx}]`;
+    const itemLabel = schema.itemLabel
+      ? schemaUtils.resolveTemplateLabel({
+          value: item,
+          template: schema.itemLabel,
+          fallback: `${t('Item')} ${idx + 1}`,
+        })
+      : `${t('Item')} ${idx + 1}`;
+
+    return {
+      key: itemBase,
+      data: {
+        type: 'value' as const,
+        value: '',
+        displayName: itemLabel,
+        propertyPath: itemBase,
+        insertable: true,
+      },
+      children: fields.map((field) =>
+        buildFieldNode({ stepName: itemBase, field, sampleData: item }),
+      ),
+    };
+  });
+
+  return {
+    key: stepName,
+    data: {
+      type: 'value',
+      value: t('itemCount', { count: items.length }),
+      displayName,
+      propertyPath: stepName,
+      insertable: false,
+    },
+    children,
+  };
+}
+
+export const schemaTreeUtils = {
+  buildTreeFromSchema,
+  buildTreeFromArray,
+  buildTreeFromArrayWithSchema,
+};

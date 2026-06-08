@@ -17,6 +17,7 @@ import {
 import { OutputArrayList } from './output-array-list';
 import { OutputFieldList } from './output-field-list';
 import { OutputGenericFieldList } from './output-generic-field-list';
+import { OutputSchemaArrayList } from './output-schema-array-list';
 import { isTabularArray, OutputTableView } from './output-table-view';
 import { OutputSchema } from './types';
 
@@ -127,6 +128,17 @@ function SmartOutputViewer({
   }
 
   if (Array.isArray(json) && json.length > 0) {
+    if (pieceDefinedSchema) {
+      return (
+        <OutputViewerShell
+          json={json}
+          title={title}
+          friendlyContent={
+            <OutputSchemaArrayList items={json} schema={pieceDefinedSchema} />
+          }
+        />
+      );
+    }
     const tabular = isTabularArray(json);
     return (
       <OutputViewerShell

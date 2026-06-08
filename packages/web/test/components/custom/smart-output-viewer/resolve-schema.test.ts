@@ -68,6 +68,130 @@ describe('schemaUtils.resolveItemFieldPath', () => {
   });
 });
 
+describe('schemaUtils.resolveEntryLabel', () => {
+  it('returns the fallback when no labelKey is given', () => {
+    expect(
+      schemaUtils.resolveEntryLabel({
+        value: { name: 'Roadmap' },
+        labelKey: undefined,
+        fallback: 'uuid-1',
+      }),
+    ).toBe('uuid-1');
+  });
+
+  it('resolves the labelKey value from the entry', () => {
+    expect(
+      schemaUtils.resolveEntryLabel({
+        value: { name: 'Roadmap', id: 'uuid-1' },
+        labelKey: 'name',
+        fallback: 'uuid-1',
+      }),
+    ).toBe('Roadmap');
+  });
+
+  it('resolves a nested dot-path labelKey', () => {
+    expect(
+      schemaUtils.resolveEntryLabel({
+        value: { profile: { fullName: 'Ada Lovelace' } },
+        labelKey: 'profile.fullName',
+        fallback: 'Item 1',
+      }),
+    ).toBe('Ada Lovelace');
+  });
+
+  it('stringifies non-string primitive label values', () => {
+    expect(
+      schemaUtils.resolveEntryLabel({
+        value: { count: 42 },
+        labelKey: 'count',
+        fallback: 'Item 1',
+      }),
+    ).toBe('42');
+  });
+
+  it('falls back when the labelKey value is missing', () => {
+    expect(
+      schemaUtils.resolveEntryLabel({
+        value: { id: 'uuid-1' },
+        labelKey: 'name',
+        fallback: 'uuid-1',
+      }),
+    ).toBe('uuid-1');
+  });
+
+  it('falls back when the labelKey value is an empty string', () => {
+    expect(
+      schemaUtils.resolveEntryLabel({
+        value: { name: '' },
+        labelKey: 'name',
+        fallback: 'Item 1',
+      }),
+    ).toBe('Item 1');
+  });
+
+  it('falls back when the labelKey value is an object', () => {
+    expect(
+      schemaUtils.resolveEntryLabel({
+        value: { name: { nested: true } },
+        labelKey: 'name',
+        fallback: 'Item 1',
+      }),
+    ).toBe('Item 1');
+  });
+
+  it('falls back when the entry itself is not an object', () => {
+    expect(
+      schemaUtils.resolveEntryLabel({
+        value: 'plain',
+        labelKey: 'name',
+        fallback: 'Item 1',
+      }),
+    ).toBe('Item 1');
+  });
+});
+
+describe('schemaUtils.resolveTemplateLabel', () => {
+  it('replaces multiple placeholders resolved against the item', () => {
+    expect(
+      schemaUtils.resolveTemplateLabel({
+        value: { key: 'ADS-69', fields: { summary: 'Booking issue' } },
+        template: '{key}: {fields.summary}',
+        fallback: 'Item 1',
+      }),
+    ).toBe('ADS-69: Booking issue');
+  });
+
+  it('renders missing placeholders as empty but keeps resolved ones', () => {
+    expect(
+      schemaUtils.resolveTemplateLabel({
+        value: { key: 'ADS-66' },
+        template: '{key}: {fields.summary}',
+        fallback: 'Item 1',
+      }),
+    ).toBe('ADS-66: ');
+  });
+
+  it('falls back when the template resolves to a blank string', () => {
+    expect(
+      schemaUtils.resolveTemplateLabel({
+        value: {},
+        template: '{key}',
+        fallback: 'Item 1',
+      }),
+    ).toBe('Item 1');
+  });
+
+  it('ignores object-valued placeholders', () => {
+    expect(
+      schemaUtils.resolveTemplateLabel({
+        value: { key: 'ADS-1', fields: { nested: { x: 1 } } },
+        template: '{key} {fields.nested}',
+        fallback: 'Item 1',
+      }),
+    ).toBe('ADS-1 ');
+  });
+});
+
 describe('schemaUtils.isPrimitiveArray', () => {
   it('returns true for an array of strings', () => {
     expect(schemaUtils.isPrimitiveArray(['INBOX', 'UNREAD'])).toBe(true);

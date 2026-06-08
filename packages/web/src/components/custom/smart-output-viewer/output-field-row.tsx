@@ -229,7 +229,7 @@ function OutputFieldRow({ field, json }: OutputFieldRowProps) {
 
       {expanded && isDynamicMap && (
         <div className="pb-1">
-          {dynamicEntries.map(([entryKey]) => {
+          {dynamicEntries.map(([entryKey, entryValue]) => {
             const quotedKey = entryKey
               .replace(/\\/g, '\\\\')
               .replace(/"/g, '\\"');
@@ -238,7 +238,11 @@ function OutputFieldRow({ field, json }: OutputFieldRowProps) {
                 key={entryKey}
                 child={{
                   key: entryKey,
-                  label: entryKey,
+                  label: schemaUtils.resolveEntryLabel({
+                    value: entryValue,
+                    labelKey: field.labelKey,
+                    fallback: entryKey,
+                  }),
                   value: `${path}["${quotedKey}"]`,
                 }}
                 json={json}
@@ -268,7 +272,11 @@ function OutputFieldRow({ field, json }: OutputFieldRowProps) {
               key={`${path}-${idx}`}
               itemKey={`${path}-${idx}`}
               item={item}
-              itemLabel={`${label} ${idx + 1}`}
+              itemLabel={schemaUtils.resolveEntryLabel({
+                value: item,
+                labelKey: field.labelKey,
+                fallback: `${label} ${idx + 1}`,
+              })}
               itemChildren={itemChildren}
             />
           ))}

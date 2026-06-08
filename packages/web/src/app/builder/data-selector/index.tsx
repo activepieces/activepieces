@@ -235,7 +235,17 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
           };
         }
 
+        const schema = schemaMap[step.name];
+
         if (Array.isArray(stepData) && stepData.length > 0) {
+          if (schema) {
+            return schemaTreeUtils.buildTreeFromArrayWithSchema({
+              stepName: step.name,
+              displayName,
+              schema,
+              items: stepData,
+            });
+          }
           return schemaTreeUtils.buildTreeFromArray({
             stepName: step.name,
             displayName,
@@ -243,7 +253,6 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
           });
         }
 
-        const schema = schemaMap[step.name];
         if (schema) {
           return schemaTreeUtils.buildTreeFromSchema({
             stepName: step.name,

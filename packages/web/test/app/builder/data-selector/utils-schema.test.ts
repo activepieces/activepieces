@@ -7,6 +7,14 @@ vi.mock('i18next', () => ({
 import { schemaTreeUtils } from '@/app/builder/data-selector/utils-schema';
 import type { OutputSchema } from '@/components/custom/smart-output-viewer/types';
 
+function childDisplayNames(
+  node: ReturnType<typeof schemaTreeUtils.buildTreeFromArrayWithSchema>,
+): string[] {
+  return (node.children ?? []).map((child) =>
+    child.data.type === 'value' ? child.data.displayName : '',
+  );
+}
+
 describe('schemaTreeUtils.buildTreeFromSchema — primitive arrays', () => {
   it('expands a primitive array schema into per-item insertable nodes', () => {
     const schema: OutputSchema = {
@@ -136,6 +144,154 @@ describe('schemaTreeUtils.buildTreeFromSchema — primitive arrays', () => {
     expect(rowsNode?.data).toMatchObject({
       displayName: 'Rows',
       insertable: true,
+    });
+  });
+});
+
+describe('schemaTreeUtils.buildTreeFromArrayWithSchema', () => {
+  const issueSchema: OutputSchema = {
+    itemLabel: '{key}: {fields.summary}',
+    fields: [
+      { key: 'key', label: 'Key' },
+      { key: 'summary', label: 'Summary', value: 'fields.summary' },
+      { key: 'status', label: 'Status', value: 'fields.status.name' },
+    ],
+  };
+
+  const issues = [
+    { key: 'ADS-69', fields: { summary: 'Booking issue', status: { name: 'To Do' } } },
+    { key: 'ADS-66', fields: { summary: 'Email responses', status: { name: 'In Progress' } } },
+  ];
+
+  it('labels each item via the itemLabel template', () => {
+    const tree = schemaTreeUtils.buildTreeFromArrayWithSchema({
+      stepName: 'step_1',
+      displayName: 'Search Issues',
+      schema: issueSchema,
+      items: issues,
+    });
+
+    expect(childDisplayNames(tree)).toEqual([
+      'ADS-69: Booking issue',
+      'ADS-66: Email responses',
+    ]);
+  });
+
+  it('resolves each field against its own item with a bracketed indexed path', () => {
+    const tree = schemaTreeUtils.buildTreeFromArrayWithSchema({
+      stepName: 'step_1',
+      displayName: 'Search Issues',
+      schema: issueSchema,
+      items: issues,
+    });
+
+    const firstItem = tree.children?.[0];
+    expect(firstItem?.data.type === 'value' && firstItem.data.propertyPath).toBe(
+      'step_1[0]',
+    );
+
+    const summaryNode = firstItem?.children?.[1];
+    expect(summaryNode?.data).toMatchObject({
+      displayName: 'Summary',
+      value: 'Booking issue',
+    });
+    expect(
+      summaryNode?.data.type === 'value' && summaryNode.data.propertyPath,
+    ).toBe("step_1[0]['fields']['summary']");
+  });
+
+  it('falls back to Item N when no itemLabel is set', () => {
+    const tree = schemaTreeUtils.buildTreeFromArrayWithSchema({
+      stepName: 'step_1',
+      displayName: 'Search Issues',
+      schema: { fields: issueSchema.fields },
+      items: issues,
+    });
+
+    expect(childDisplayNames(tree)).toEqual(['Item 1', 'Item 2']);
+  });
+});
+
+describe('schemaTreeUtils.buildTreeFromSchema — labelKey', () => {
+  it('labels dynamicKey entries by labelKey while keeping the opaque-key path', () => {
+    const schema: OutputSchema = {
+      fields: [
+        { key: 'boards', label: 'Boards', dynamicKey: true, labelKey: 'name' },
+      ],
+    };
+
+    const tree = schemaTreeUtils.buildTreeFromSchema({
+      stepName: 'step_1',
+      displayName: 'Step',
+      schema,
+      sampleData: {
+        boards: {
+          'uuid-1': { name: 'Roadmap', id: 'uuid-1' },
+          'uuid-2': { name: 'Backlog', id: 'uuid-2' },
+        },
+      },
+    });
+
+    const boardsNode = tree.children?.[0];
+    expect(boardsNode?.children).toHaveLength(2);
+
+    const first = boardsNode?.children?.[0];
+    expect(first?.data).toMatchObject({
+      type: 'value',
+      displayName: 'Roadmap',
+      insertable: true,
+    });
+    expect(
+      first?.data.type === 'value' && first.data.propertyPath,
+    ).toContain("['uuid-1']");
+  });
+
+  it('falls back to the raw key when labelKey is missing on an entry', () => {
+    const schema: OutputSchema = {
+      fields: [
+        { key: 'boards', label: 'Boards', dynamicKey: true, labelKey: 'name' },
+      ],
+    };
+
+    const tree = schemaTreeUtils.buildTreeFromSchema({
+      stepName: 'step_1',
+      displayName: 'Step',
+      schema,
+      sampleData: { boards: { 'uuid-1': { id: 'uuid-1' } } },
+    });
+
+    expect(tree.children?.[0]?.children?.[0]?.data).toMatchObject({
+      displayName: 'uuid-1',
+    });
+  });
+
+  it('labels listItems by labelKey, falling back to Item N when absent', () => {
+    const schema: OutputSchema = {
+      fields: [
+        {
+          key: 'items',
+          label: 'Items',
+          labelKey: 'name',
+          listItems: [{ key: 'id' }, { key: 'name' }],
+        },
+      ],
+    };
+
+    const tree = schemaTreeUtils.buildTreeFromSchema({
+      stepName: 'step_1',
+      displayName: 'Step',
+      schema,
+      sampleData: {
+        items: [{ id: 'a', name: 'Alpha' }, { id: 'b' }],
+      },
+    });
+
+    const itemsNode = tree.children?.[0];
+    expect(itemsNode?.children?.[0]?.data).toMatchObject({
+      displayName: 'Alpha',
+    });
+    expect(itemsNode?.children?.[1]?.data).toMatchObject({
+      displayName: 'Items 2',
     });
   });
 });
