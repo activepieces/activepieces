@@ -22,7 +22,7 @@ afterAll(async () => {
     await teardownTestEnvironment()
 })
 
-function corruptedTrigger(): FlowVersion['trigger'] {
+function corruptedTrigger(actionInput: Record<string, unknown>): FlowVersion['trigger'] {
     return {
         name: 'trigger',
         type: FlowTriggerType.PIECE,
@@ -43,13 +43,15 @@ function corruptedTrigger(): FlowVersion['trigger'] {
                 pieceName: '@activepieces/piece-google-sheets',
                 pieceVersion: '0.10.13',
                 actionName: 'insert_row',
-                input: {
-                    bank: "{{trigger['output']['output']['body']['senderName']}}",
-                    amount: "{{step_1['output']['output']['amount']}}",
-                },
+                input: actionInput,
             },
         },
     } as unknown as FlowVersion['trigger']
+}
+
+const doubleOutputInput = {
+    bank: "{{trigger['output']['output']['body']['senderName']}}",
+    amount: "{{step_1['output']['output']['amount']}}",
 }
 
 describe('Flow Version Output Repair', () => {
@@ -69,7 +71,7 @@ describe('Flow Version Output Repair', () => {
             schemaVersion: LATEST_FLOW_SCHEMA_VERSION,
             state: FlowVersionState.DRAFT,
             backupFiles: { '21': 'draft-backup' },
-            trigger: corruptedTrigger(),
+            trigger: corruptedTrigger(doubleOutputInput),
         })
         await db.save('flow_version', [publishedVersion, draftVersion])
 
@@ -84,7 +86,7 @@ describe('Flow Version Output Repair', () => {
             ['2026-06-07 11:38:53.229771+00', draftVersion.id],
         )
 
-        const result = await flowVersionOutputRepairService(app!.log).repairOutputNesting(draftVersion.id)
+        const result = await flowVersionOutputRepairService(app!.log).repairOutputNesting({ flowVersionId: draftVersion.id })
 
         expect(result.alreadyRepaired).toBe(false)
         expect(result.erroneousLevels).toBe(1)
@@ -108,13 +110,58 @@ describe('Flow Version Output Repair', () => {
             schemaVersion: LATEST_FLOW_SCHEMA_VERSION,
             state: FlowVersionState.DRAFT,
             backupFiles: { '21': 'only-backup' },
-            trigger: corruptedTrigger(),
+            trigger: corruptedTrigger(doubleOutputInput),
         })
         await db.save('flow_version', onlyVersion)
 
-        const result = await flowVersionOutputRepairService(app!.log).repairOutputNesting(onlyVersion.id)
+        const result = await flowVersionOutputRepairService(app!.log).repairOutputNesting({ flowVersionId: onlyVersion.id })
 
         expect(result.erroneousLevels).toBe(0)
         expect(result.stepsChanged).toBe(0)
+    })
+
+    it('forceSingleOutput collapses any number of repeated output levels down to one, bypassing the lineage heuristic', async () => {
+        const { mockProject } = await mockAndSaveBasicSetup()
+        const flow = createMockFlow({ projectId: mockProject.id })
+        await db.save('flow', flow)
+
+        // Single version, single backup file -> the heuristic computes 0 erroneous levels
+        // and would no-op, yet the expressions carry up to triple ['output'] nesting.
+        const draftVersion = createMockFlowVersion({
+            flowId: flow.id,
+            schemaVersion: LATEST_FLOW_SCHEMA_VERSION,
+            state: FlowVersionState.DRAFT,
+            backupFiles: { '21': 'only-backup' },
+            trigger: corruptedTrigger({
+                body: "{{step_1['output']['output']['output']['draftText']}}",
+                subject: "Re: {{trigger['output']['message']['subject']}}",
+                doubled: "{{step_1['output']['output']['amount']}}",
+            }),
+        })
+        await db.save('flow_version', draftVersion)
+
+        const heuristic = await flowVersionOutputRepairService(app!.log).repairOutputNesting({ flowVersionId: draftVersion.id })
+        expect(heuristic.stepsChanged).toBe(0)
+
+        const forced = await flowVersionOutputRepairService(app!.log).repairOutputNesting({
+            flowVersionId: draftVersion.id,
+            forceSingleOutput: true,
+        })
+        expect(forced.alreadyRepaired).toBe(false)
+        expect(forced.stepsChanged).toBe(1)
+
+        const repaired = await db.findOneByOrFail<FlowVersion>('flow_version', { id: draftVersion.id })
+        expect(repaired.trigger.nextAction?.settings.input).toEqual({
+            body: "{{step_1['output']['draftText']}}",
+            subject: "Re: {{trigger['output']['message']['subject']}}",
+            doubled: "{{step_1['output']['amount']}}",
+        })
+
+        // Re-running force is idempotent: nothing left to collapse.
+        const rerun = await flowVersionOutputRepairService(app!.log).repairOutputNesting({
+            flowVersionId: draftVersion.id,
+            forceSingleOutput: true,
+        })
+        expect(rerun.stepsChanged).toBe(0)
     })
 })

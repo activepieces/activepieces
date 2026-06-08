@@ -78,7 +78,10 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
     })
 
     app.post('/flow-versions/repair-output-nesting', RepairOutputNestingRequest, async (req) => {
-        return flowVersionOutputRepairService(req.log).repairOutputNesting(req.body.flowVersionId)
+        return flowVersionOutputRepairService(req.log).repairOutputNesting({
+            flowVersionId: req.body.flowVersionId,
+            forceSingleOutput: req.body.forceSingleOutput,
+        })
     })
 
     app.post('/chat/sync-all', SyncAllConversationsRequest, async (req, res) => {
@@ -211,6 +214,7 @@ const RepairOutputNestingRequest = {
     schema: {
         body: z.object({
             flowVersionId: z.string(),
+            forceSingleOutput: z.boolean().optional(),
         }),
     },
     config: {

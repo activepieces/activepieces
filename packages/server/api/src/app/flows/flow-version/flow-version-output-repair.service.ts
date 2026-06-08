@@ -5,6 +5,7 @@ import {
     flowStructureUtil,
     Metadata,
     Step,
+    unique,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { transaction } from '../../core/db/transaction'
@@ -13,7 +14,7 @@ import { flowVersionRepo } from './flow-version.service'
 import { expressionRewriter } from './migrations/expression-rewriter'
 
 export const flowVersionOutputRepairService = (log: FastifyBaseLogger) => ({
-    async repairOutputNesting(flowVersionId: string): Promise<RepairOutputNestingResponse> {
+    async repairOutputNesting({ flowVersionId, forceSingleOutput = false }: RepairOutputNestingParams): Promise<RepairOutputNestingResponse> {
         const flowVersion = await flowVersionRepo().findOneBy({ id: flowVersionId })
         if (flowVersion === null) {
             throw new ActivepiecesError({
@@ -30,15 +31,18 @@ export const flowVersionOutputRepairService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        if (getRepairedVersionIds(flow.metadata).includes(flowVersionId)) {
+        // forceSingleOutput collapses every `['output']` chain down to exactly one,
+        // regardless of how many erroneous migrations the lineage suggests. It is
+        // idempotent (re-collapsing a single output is a no-op), so it intentionally
+        // bypasses the already-repaired guard to recover flows the heuristic missed.
+        if (!forceSingleOutput && getRepairedVersionIds(flow.metadata).includes(flowVersionId)) {
             log.info({ flowVersionId }, 'Flow version output nesting already repaired, skipping')
             return { flowVersionId, erroneousLevels: 0, stepsChanged: 0, alreadyRepaired: true }
         }
 
-        const erroneousLevels = await countErroneousLevels({
-            flowId: flowVersion.flowId,
-            flowVersionId,
-        })
+        const erroneousLevels = forceSingleOutput
+            ? COLLAPSE_TO_SINGLE_OUTPUT_LEVELS
+            : await countErroneousLevels({ flowId: flowVersion.flowId, flowVersionId })
         if (erroneousLevels <= 0) {
             return { flowVersionId, erroneousLevels: 0, stepsChanged: 0, alreadyRepaired: false }
         }
@@ -63,7 +67,10 @@ export const flowVersionOutputRepairService = (log: FastifyBaseLogger) => ({
                 .setLock('pessimistic_write')
                 .where('flow.id = :id', { id: flowVersion.flowId })
                 .getOne()
-            if (lockedFlow === null || getRepairedVersionIds(lockedFlow.metadata).includes(flowVersionId)) {
+            if (lockedFlow === null) {
+                return false
+            }
+            if (!forceSingleOutput && getRepairedVersionIds(lockedFlow.metadata).includes(flowVersionId)) {
                 return false
             }
             await flowVersionRepo(entityManager).update(flowVersion.id, { trigger: repaired.trigger })
@@ -76,7 +83,7 @@ export const flowVersionOutputRepairService = (log: FastifyBaseLogger) => ({
             log.info({ flowVersionId }, 'Flow version output nesting already repaired, skipping')
             return { flowVersionId, erroneousLevels: 0, stepsChanged: 0, alreadyRepaired: true }
         }
-        log.info({ flowVersionId, erroneousLevels, stepsChanged }, 'Repaired flow version output nesting')
+        log.info({ flowVersionId, forceSingleOutput, stepsChanged }, 'Repaired flow version output nesting')
 
         return { flowVersionId, erroneousLevels, stepsChanged, alreadyRepaired: false }
     },
@@ -106,11 +113,20 @@ function getRepairedVersionIds(metadata: Metadata | undefined | null): string[] 
 function addRepairedVersionId(metadata: Metadata | undefined | null, flowVersionId: string): Metadata {
     return {
         ...(metadata ?? {}),
-        [OUTPUT_NESTING_REPAIRED_VERSIONS_KEY]: [...getRepairedVersionIds(metadata), flowVersionId],
+        [OUTPUT_NESTING_REPAIRED_VERSIONS_KEY]: unique([...getRepairedVersionIds(metadata), flowVersionId]),
     }
 }
 
 const OUTPUT_NESTING_REPAIRED_VERSIONS_KEY = 'outputNestingRepairedVersionIds'
+
+// Larger than any real `['output']` chain; stripOutputDeep caps per-reference at
+// (chain depth - 1), so this collapses every chain to exactly one output.
+const COLLAPSE_TO_SINGLE_OUTPUT_LEVELS = 1000
+
+export type RepairOutputNestingParams = {
+    flowVersionId: string
+    forceSingleOutput?: boolean
+}
 
 export type RepairOutputNestingResponse = {
     flowVersionId: string
