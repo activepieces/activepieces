@@ -199,9 +199,133 @@ function rewriteStringWithSet({ input, stepNameSet, idempotent }: { input: strin
     return chunks.join('')
 }
 
+function collectOutputChain(node: Identifier, ancestors: AnyNode[]): MemberExpression[] {
+    const chain: MemberExpression[] = []
+    let child: AnyNode = node
+    let index = ancestors.length - 1
+    while (index - 1 >= 0) {
+        const parent = ancestors[index - 1]
+        if (parent.type !== 'MemberExpression') {
+            break
+        }
+        if (parent.object !== child || !parent.computed) {
+            break
+        }
+        const prop = parent.property
+        if (prop.type !== 'Literal' || prop.value !== 'output') {
+            break
+        }
+        chain.push(parent)
+        child = parent
+        index -= 1
+    }
+    return chain
+}
+
+function stripOutputToken(code: string, stepNames: Set<string>, levels: number): string | null {
+    if (levels <= 0) {
+        return null
+    }
+    let ast: AnyNode
+    try {
+        ast = parse(`(${code})`, { ecmaVersion: ECMA_VERSION, sourceType: 'script', ranges: true })
+    }
+    catch {
+        return null
+    }
+    let scopeManager
+    try {
+        scopeManager = analyze(ast, { ecmaVersion: ECMA_VERSION, sourceType: 'script' })
+    }
+    catch {
+        return null
+    }
+
+    const globalScope = scopeManager.scopes[0]
+    const unresolvedIdentifiers = new Set<unknown>()
+    for (const ref of globalScope.through) {
+        unresolvedIdentifiers.add(ref.identifier)
+    }
+
+    const rewrites: Rewrite[] = []
+    ancestor(ast, {
+        Identifier(node, _state, ancestors) {
+            if (!isStepRef(node.name, stepNames)) {
+                return
+            }
+            if (!unresolvedIdentifiers.has(node)) {
+                return
+            }
+            const parent = ancestors.length >= 2 ? ancestors[ancestors.length - 2] : null
+            if (!isVariableReference(node, parent)) {
+                return
+            }
+            const outputChain = collectOutputChain(node, [...ancestors])
+            const stripCount = Math.min(levels, outputChain.length - 1)
+            for (let i = 0; i < stripCount; i++) {
+                const member = outputChain[i]
+                rewrites.push({
+                    start: member.object.end - WRAP_OFFSET,
+                    end: member.end - WRAP_OFFSET,
+                    text: '',
+                })
+            }
+        },
+    })
+
+    if (rewrites.length === 0) {
+        return null
+    }
+    return applyRewrites(code, rewrites)
+}
+
+function stripOutputDeep<T>(value: T, stepNames: string[], levels: number): T {
+    const stepNameSet = new Set<string>(stepNames)
+    stepNameSet.add(TRIGGER_NAME)
+    return stripOutputDeepWithSet(value, stepNameSet, levels)
+}
+
+function stripOutputDeepWithSet<T>(value: T, stepNameSet: Set<string>, levels: number): T {
+    if (typeof value === 'string') {
+        return stripOutputString({ input: value, stepNameSet, levels }) as T
+    }
+    if (Array.isArray(value)) {
+        return value.map((item) => stripOutputDeepWithSet(item, stepNameSet, levels)) as T
+    }
+    if (!isNil(value) && typeof value === 'object') {
+        const result: Record<string, unknown> = {}
+        for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+            result[key] = stripOutputDeepWithSet(child, stepNameSet, levels)
+        }
+        return result as T
+    }
+    return value
+}
+
+function stripOutputString({ input, stepNameSet, levels }: { input: string, stepNameSet: Set<string>, levels: number }): string {
+    if (!input.includes('{{')) {
+        return input
+    }
+    const tokens = extractMustacheTokens(input)
+    if (tokens.length === 0) {
+        return input
+    }
+    const chunks: string[] = []
+    let cursor = 0
+    for (const { token, inner, index } of tokens) {
+        chunks.push(input.slice(cursor, index))
+        const rewritten = stripOutputToken(inner, stepNameSet, levels)
+        chunks.push(rewritten === null ? token : `{{${rewritten}}}`)
+        cursor = index + token.length
+    }
+    chunks.push(input.slice(cursor))
+    return chunks.join('')
+}
+
 export const expressionRewriter = {
     rewriteStepReferences,
     rewriteDeep,
+    stripOutputDeep,
 }
 
 const STEP_NAME_PATTERN = /^step_\d+$/
