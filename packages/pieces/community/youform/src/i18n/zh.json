@@ -1,6 +1,6 @@
 {
-  "You can obtain API token from [Account Settings](https://app.youform.com/account).": "You can obtain API token from [Account Settings](https://app.youform.com/account).",
-  "New Submission": "New Submission",
-  "Triggers When a new submission is recieved.": "Triggers When a new submission is recieved.",
-  "Form": "Form"
+  "You can obtain API token from [Account Settings](https://app.youform.com/account).": "您可以从 [Account Settings](https://app.youform.com/account) 获取 API token。",
+  "New Submission": "新建提交",
+  "Triggers When a new submission is recieved.": "当收到新的划界案时触发。",
+  "Form": "形式"
 }
