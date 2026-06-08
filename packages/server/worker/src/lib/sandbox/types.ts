@@ -35,6 +35,8 @@ export type Sandbox = {
     execute: (operationType: EngineOperationType, operation: EngineOperation, options: SandboxOptions) => Promise<SandboxResult>
     shutdown: () => Promise<void>
     isReady: () => boolean
+    getPid: () => number | null
+    isBusy: () => boolean
 }
 
 export type SandboxStartOptions = {

@@ -6,6 +6,7 @@ import {
 import { t } from 'i18next';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 
+import { FieldTypeIcon } from '@/components/custom/smart-output-viewer/field-type-icon';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { useApRipple } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
@@ -46,18 +47,21 @@ const DataSelectorNodeContent = ({
 
   const [ripple, rippleEvent] = useApRipple();
 
-  const isRootStep = depth === 0;
-  const rootStepName =
-    isRootStep && (node.data.type === 'value' || node.data.type === 'test')
-      ? node.data.stepName
+  const stepForRoot =
+    depth === 0 && node.data.type === 'value'
+      ? flowStructureUtil.getStep(node.data.propertyPath, flowVersion.trigger)
+      : depth === 0 && node.data.type === 'test'
+      ? flowStructureUtil.getStep(node.data.stepName, flowVersion.trigger)
       : undefined;
-  const rootStep = rootStepName
-    ? flowStructureUtil.getStep(rootStepName, flowVersion.trigger)
-    : undefined;
 
   const isExpandable = !!node.children && node.children.length > 0;
+  const isStepRoot = depth === 0;
+  const isPrimitiveStepRoot = isStepRoot && !isExpandable;
+  const isLeafValue =
+    !isExpandable && node.data.type === 'value' && !isStepRoot;
   const isInsertable =
     node.data.type === 'value' && node.data.insertable && !node.isLoopStepNode;
+  const showInsertButton = isInsertable;
 
   const arrayValue =
     node.data.type === 'value' && Array.isArray(node.data.value)
@@ -77,7 +81,7 @@ const DataSelectorNodeContent = ({
     }
   };
 
-  const showValuePreview = !isExpandable && isInsertable;
+  const showValuePreview = (isLeafValue || isPrimitiveStepRoot) && isInsertable;
   const valuePreview =
     showValuePreview && node.data.type === 'value'
       ? formatValuePreview(node.data.value)
@@ -98,11 +102,11 @@ const DataSelectorNodeContent = ({
       <div
         className={cn(
           'flex items-center gap-1.5 pr-2 min-w-0',
-          isRootStep ? 'min-h-[40px] py-1.5' : 'min-h-[32px]',
+          isStepRoot ? 'min-h-[40px] py-1.5' : 'min-h-[32px]',
         )}
         style={{ paddingLeft: depth * INDENT_PER_DEPTH + 12 }}
       >
-        {!isRootStep && isExpandable && (
+        {!isStepRoot && isExpandable && (
           <ChevronRight
             className={cn(
               'size-3.5 shrink-0 text-muted-foreground transition-transform',
@@ -110,18 +114,22 @@ const DataSelectorNodeContent = ({
             )}
           />
         )}
-        {!isRootStep && !isExpandable && (
+        {!isStepRoot && !isExpandable && (
           <div className="size-3.5 shrink-0" aria-hidden />
         )}
 
-        {isRootStep && rootStep && <StepRootIcon step={rootStep} />}
+        {isStepRoot && stepForRoot && <StepRootIcon step={stepForRoot} />}
 
         <div className="flex items-center gap-1.5 min-w-0 flex-1">
+          {!isStepRoot && node.data.type === 'value' && (
+            <FieldTypeIcon value={node.data.value} format={node.data.format} />
+          )}
+
           {node.data.type !== 'test' && (
             <span
               className={cn(
-                'truncate min-w-0 shrink-0 max-w-[40%]',
-                isRootStep
+                'truncate min-w-0 shrink-0 max-w-[30ch]',
+                isStepRoot
                   ? 'font-medium text-foreground text-sm'
                   : 'text-foreground text-sm',
                 node.data.displayNameClassName,
@@ -151,7 +159,7 @@ const DataSelectorNodeContent = ({
           )}
         </div>
 
-        {isInsertable && (
+        {showInsertButton && (
           <Button
             variant="basic"
             size="sm"
@@ -171,7 +179,7 @@ const DataSelectorNodeContent = ({
           </Button>
         )}
 
-        {isRootStep && isExpandable && (
+        {isStepRoot && isExpandable && (
           <ChevronDown
             className={cn(
               'size-4 shrink-0 text-muted-foreground transition-transform',
@@ -204,12 +212,22 @@ const formatValuePreview = (value: unknown): string => {
   if (value === null || value === undefined) return '—';
   if (typeof value === 'string') {
     const trimmed = value.replace(/\s+/g, ' ').trim();
+    if (trimmed === '') return '—';
     return trimmed.length > VALUE_PREVIEW_MAX_LENGTH
       ? `${trimmed.slice(0, VALUE_PREVIEW_MAX_LENGTH)}…`
       : trimmed;
   }
   if (typeof value === 'number' || typeof value === 'boolean') {
     return String(value);
+  }
+  if (Array.isArray(value) && value.length === 0) return t('Empty List');
+  if (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.keys(value).length === 0
+  ) {
+    return t('Empty Object');
   }
   const json = JSON.stringify(value);
   return json.length > VALUE_PREVIEW_MAX_LENGTH

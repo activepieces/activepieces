@@ -1062,6 +1062,9 @@
       "@activepieces/piece-reddit": [
         "packages/pieces/community/reddit/src/index.ts"
       ],
+      "@activepieces/piece-rendex": [
+        "packages/pieces/community/rendex/src/index.ts"
+      ],
       "@activepieces/piece-reoon-verifier": [
         "packages/pieces/community/reoon-verifier/src/index.ts"
       ],

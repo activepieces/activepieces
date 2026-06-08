@@ -9,6 +9,7 @@ import {
     ExecutionMode,
     isNil,
     JobData,
+    SandboxInformation,
     tryCatch,
     WebsocketServerEvent,
     WorkerMachineHealthcheckRequest,
@@ -25,7 +26,7 @@ import { logger } from './config/logger'
 import { workerSettings } from './config/worker-settings'
 import { EgressStack, startEgressStack } from './egress/lifecycle'
 import { getHandler } from './execute/job-registry'
-import { createSandboxManager, SandboxManager } from './execute/sandbox-manager'
+import { ActiveSandboxInfo, createSandboxManager, SandboxManager } from './execute/sandbox-manager'
 import { JobContext, JobResult, JobResultKind } from './execute/types'
 
 
@@ -315,7 +316,21 @@ async function buildMachineInfo(): Promise<WorkerMachineHealthcheckRequest> {
         totalAvailableRamInBytes: memInfo.totalRamInBytes,
         totalCpuCores: cpuCores,
         ip: workerHostname,
+        sandboxes: await buildSandboxInfo(),
     }
+}
+
+async function buildSandboxInfo(): Promise<SandboxInformation[]> {
+    const activeSandboxes = sandboxManagers
+        .map((sandboxManager) => sandboxManager.getActiveSandbox())
+        .filter((sandbox): sandbox is ActiveSandboxInfo => !isNil(sandbox))
+
+    return Promise.all(activeSandboxes.map(async (sandbox) => ({
+        sandboxId: sandbox.sandboxId,
+        boxId: sandbox.boxId,
+        busy: sandbox.busy,
+        memoryUsageBytes: await systemUsage.getProcessTreeMemoryBytes(sandbox.pid),
+    })))
 }
 
 async function warmupPiecesOnStartup(apiClient: WorkerToApiContract): Promise<void> {
