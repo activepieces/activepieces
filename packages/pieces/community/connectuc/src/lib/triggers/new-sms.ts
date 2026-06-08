@@ -18,12 +18,12 @@ export const newSms = createTrigger({
         direction: Property.StaticDropdown({
             displayName: 'Direction',
             description: 'Filter by message direction',
-            required: false,
+            required: true,
             options: {
                 options: [
                     { label: 'Incoming', value: 'incoming' },
                     { label: 'Outgoing', value: 'outgoing' },
-                    { label: 'Both', value: 'both' },
+                    { label: 'Both', value: '*' },
                 ],
             },
             defaultValue: 'incoming',
