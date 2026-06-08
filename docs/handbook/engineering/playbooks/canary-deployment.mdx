@@ -27,40 +27,11 @@ Browser / External Webhook
 
 All traffic enters the primary app. The `canaryRoutingMiddleware` runs as a Fastify `preHandler` hook on every request. If the resolved `platformId` is in the canary list, the request is proxied in-process to the canary app and the response is returned directly to the caller — the primary app never processes it further.
 
-## Scope: what canary can and cannot validate
-
-<Warning>
-  Canary is a **backend-only** environment. It is built to validate API, engine, worker, trigger, and webhook changes against live production data — **not** frontend changes, and **not** changes that alter the shape of data the frontend reads.
-</Warning>
-
-A canary-routed platform runs a **mixed-version stack**:
-
-```
-Cloud (current prod) frontend ──XHR──▶ Primary app ──proxy──▶ Canary backend (new build)
-                                                                └─▶ Canary worker (new engine)
-```
-
-- **The UI is served from the production (cloud) deployment, never from canary.** The canary CD workflow deploys only the app (`config/app-canary.yml`) and workers (`config/worker-canary.yml`) — there is no canary frontend. The React SPA is a separate deployment behind `AP_FRONTEND_URL`; the API server does not serve it, and `canaryRoutingMiddleware` runs *after* authentication on API requests only, so it never proxies static assets. Canary users therefore load the **current prod frontend** and only their authenticated API calls reach the canary backend.
-- **The engine is aligned with the backend.** Canary workers are deployed from the same image tag as the canary app and run the bundled engine from that build, and canary-platform jobs are routed only to the canary worker queue. So backend + engine are always the same version — this is the safe part.
-
-### Implication: do not canary changes that migrate the flow data model
-
-Flow-version migrations (`flowVersionMigrationService`) run **on read** and **persist forward** to the shared database — they bump `schemaVersion` and rewrite the stored `trigger`, with no inverse migration. Combined with the mixed-version stack, this creates two hazards:
-
-1. **Frontend/backend skew.** If a PR bumps `LATEST_FLOW_SCHEMA_VERSION` *and* changes the builder UI (new step shapes, new expression/output format), the canary backend migrates a canary platform's flows to the new shape, but those users are served the **old** prod frontend, which cannot render the new shape correctly and may **corrupt the flow on save**. For example, a migration that rewrites `{{step_1.foo}}` into `{{step_1['output'].foo}}` will display as raw tokens in the old UI's data selector.
-2. **Forward-only / rollback risk.** Once a canary platform's flow is migrated, the row is permanently at the new schema version. Moving the platform off canary, or rolling the canary image back (older engine, same migrated data), leaves the old code unable to execute it correctly. The pre-migration snapshot is kept in `backupFiles[<oldSchemaVersion>]`, but recovery is manual.
-
-**Rule of thumb:** full-stack PRs and any PR that bumps `LATEST_FLOW_SCHEMA_VERSION` should ride a **full production promotion** (frontend + backend shipped together, short rolling-deploy skew window, roll-forward-only) rather than a backend-only canary. If such a change must go through canary, the migration must be gated off for canary platforms until the frontend they are served also understands the new shape.
-
 ## Canary membership: DB-backed with Redis cache
 
-Canary membership is one case of a general **worker-group** model. A platform's group is stored in the `platform_plan.workerGroupId` column, and a platform is "canary" when `workerGroupId === 'canary'`. On each lookup, the group is fetched from Redis under a per-platform key (`platform:<platformId>:worker_group_id:v2`, 5-minute TTL; a `__none__` sentinel is cached for platforms with no group). On cache miss the value is read from the database and cached. When the group is changed via the API, that platform's cache key is invalidated immediately.
+Canary platform membership is stored in the `platform_plan.canary` boolean column. On each lookup, the list of canary platform IDs is fetched from Redis (`canary-platform-ids` key). On cache miss the list is read from the database and cached. When the canary flag is changed via the API, the cache is invalidated immediately.
 
-This removes the need to keep canary membership in sync across services and allows runtime changes without a redeploy.
-
-<Note>
-  The legacy `platform_plan.canary` boolean column is **deprecated** (removal planned in `0.83.0`) and was migrated into `workerGroupId` by the `MergeCanaryAndDedicatedWorkersIntoWorkerGroupId` migration (release `0.82.0`). The same migration folded the old `dedicatedWorkers` concept into `workerGroupId`, so any code or query touching canary membership should read `workerGroupId`, not `canary`.
-</Note>
+This removes the need to keep `AP_CANARY_PLATFORM_IDS` in sync across services and allows runtime changes without a redeploy.
 
 ## Components
 
@@ -107,11 +78,9 @@ Socket.IO is configured with a **Redis adapter** (`@socket.io/redis-adapter`). E
 | `workerJobs` | ✅ Consumed by primary workers | Not consumed |
 | `runsMetadata` | ✅ Consumed | ✅ Consumed |
 | `system-job-queue` | ✅ Consumed | ✅ Consumed |
-| `platform-canary-jobs` | Not consumed | ✅ Consumed by canary workers |
+| `canaryWorkerJobs` | Not consumed | ✅ Consumed by canary workers |
 
-Jobs for canary platforms are enqueued to `platform-canary-jobs`, which only canary workers poll — fully isolated from the primary worker fleet. The queue name is derived per worker group as `platform-<workerGroupId>-jobs`, so the canary group (`workerGroupId = 'canary'`) maps to `platform-canary-jobs`.
-
-When a platform is moved into or out of the canary group, any already-enqueued jobs are drained from the source queue to the target queue before the flag is flipped, so toggling canary never strands in-flight work.
+Jobs for canary platforms are enqueued to `canaryWorkerJobs`, which only canary workers poll — fully isolated from the primary worker fleet.
 
 
 ## Deploying a New Canary Build
@@ -162,8 +131,4 @@ curl -X POST https://cloud.activepieces.com/v1/admin/platforms/canary \
   -d '{"platformId": "<platformId>", "canary": false}'
 ```
 
-Both calls set `platform_plan.workerGroupId` (to `canary` or `null`) in the database, migrate any in-flight queued jobs to the target queue, and invalidate that platform's Redis cache key (`platform:<platformId>:worker_group_id:v2`). The `{ canary: true | false }` request body is kept for backwards compatibility — internally it writes `workerGroupId`. The change takes effect on the next request — no restart required.
-
-<Tip>
-  To route a platform to an arbitrary (non-canary) worker group, use the sibling endpoint `POST /v1/admin/platforms/worker-group` with a `{ platformId, workerGroupId }` body.
-</Tip>
+Both calls update `platform_plan.canary` in the database and invalidate the Redis cache (`canary-platform-ids`). The change takes effect on the next request — no restart required.
