@@ -3,6 +3,7 @@ import { BranchOperator, FlowActionType, flowStructureUtil, isNil, isObject, Mcp
 import type { RouterAction, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
+import { expressionRewriter } from '../../flows/flow-version/migrations/expression-rewriter'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 
@@ -20,7 +21,7 @@ const RESOLVABLE_PROP_TYPES = new Set<PropertyType>([
     PropertyType.DYNAMIC,
 ])
 
-const STEP_REFERENCE_HINT = 'Reference a prior step\'s output with {{stepName[\'output\'].field}} (output is nested under [\'output\'], e.g. {{trigger[\'output\'].body.email}}, {{step_1[\'output\'].id}}). For a continue-on-failure step\'s error, use {{stepName[\'error\'].message}}.'
+const STEP_REFERENCE_HINT = 'Reference a prior step\'s output with {{stepName[\'output\'].field}} (output is nested under [\'output\'], e.g. {{trigger[\'output\'].body.email}}, {{send_email[\'output\'].id}}). For a continue-on-failure step\'s error, use {{stepName[\'error\'].message}}.'
 
 function mcpToolError(prefix: string, err: unknown): McpToolResult {
     const entityDetail = extractEntityNotFoundDetail(err)
@@ -354,6 +355,20 @@ function isProjectScoped(mcp: ProjectScopedMcpServer): boolean {
     return mcp.type === McpServerType.PROJECT
 }
 
+function rewriteAllReferences<C = unknown>({ input, loopItems, conditions, trigger }: {
+    input?: Record<string, unknown>
+    loopItems?: string
+    conditions?: C
+    trigger: Step
+}): { input?: Record<string, unknown>, loopItems?: string, conditions?: C } {
+    const stepNames = flowStructureUtil.getAllSteps(trigger).map(s => s.name)
+    return {
+        input: input ? expressionRewriter.rewriteDeep(input, stepNames, true) : undefined,
+        loopItems: loopItems != null ? expressionRewriter.rewriteStepReferences({ input: loopItems, stepNames, idempotent: true }) : loopItems,
+        conditions: conditions ? expressionRewriter.rewriteDeep(conditions, stepNames, true) : conditions,
+    }
+}
+
 export const mcpUtils = {
     mcpToolError,
     truncate,
@@ -372,6 +387,7 @@ export const mcpUtils = {
     resolvePlatformId,
     isProjectScoped,
     withTimeout,
+    rewriteAllReferences,
     STEP_REFERENCE_HINT,
     BRANCH_CONDITIONS_INPUT_SCHEMA,
 }

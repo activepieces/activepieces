@@ -77,8 +77,10 @@ export const apAddStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogge
                 return authError
             }
 
+            const rewritten = mcpUtils.rewriteAllReferences({ input, loopItems, trigger: flow.version.trigger })
+
             const resolvedInput = {
-                ...(input ?? {}),
+                ...(rewritten.input ?? {}),
                 ...(auth !== undefined && { auth: `{{connections['${auth}']}}` }),
             }
 
@@ -140,7 +142,7 @@ export const apAddStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogge
                         displayName,
                         valid: false,
                         settings: {
-                            items: loopItems ?? '',
+                            items: rewritten.loopItems ?? '',
                         },
                     }
                     break
