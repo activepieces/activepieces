@@ -22,9 +22,9 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `packages/server/api/src/app/ee/chat/chat-sync-job.ts` — fire-and-forget telemetry sync to console.activepieces.com (cloud-only); also exposes `chatAnalyticsBulkSync` for admin bulk sync; falls back to reconstructing messages from raw ModelMessage[] when uiMessages is null
 - `packages/shared/src/lib/ee/chat/index.ts` — shared Zod schemas, types (ChatConversation, request DTOs, ChatHistoryMessage), typed tool outputs (`ChatToolOutputs`); `PersistedToolCallPartSchema` includes optional `title` and `description` fields for UI chip label and conversational status text
 - `packages/web/src/app/routes/chat-with-ai/index.tsx` — main chat page component
-- `packages/web/src/app/routes/chat-with-ai/ai-chat-box.tsx` — chat interface with provider check, message streaming, Zustand store provider
+- `packages/web/src/app/routes/chat-with-ai/ai-chat-box.tsx` — chat interface with provider check, message streaming, Zustand store provider; manages suggestion prefill via counter-based key remount on empty-state suggestion clicks
 - `packages/web/src/app/routes/chat-with-ai/conversation-list.tsx` — conversation history sidebar
-- `packages/web/src/app/routes/chat-with-ai/components/` — sub-components (input, assistant message, user message, thinking details panel, plan progress card, approval forms, connection picker)
+- `packages/web/src/app/routes/chat-with-ai/components/` — sub-components (input, assistant message, user message, thinking details panel, plan progress card, approval forms, connection picker); `chat-empty-state.tsx` renders a personalized greeting with the user's first name, horizontal flow cards with images, and a vertical text-suggestion list with lazy-loaded icons
 - `packages/web/src/features/chat/lib/chat-api.ts` — API client for `/v1/chat/*` endpoints
 - `packages/web/src/features/chat/lib/chat-store.ts` — Zustand store for interaction state (approvals, plan progress, display cards, thinking panel)
 - `packages/web/src/features/chat/lib/chat-store-context.tsx` — React context provider and `useChatStoreContext` selector hook
