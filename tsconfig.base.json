@@ -854,6 +854,9 @@
       "@activepieces/piece-moxie-crm": [
         "packages/pieces/community/moxie-crm/src/index.ts"
       ],
+      "@activepieces/piece-muna-ai": [
+        "packages/pieces/community/muna-ai/src/index.ts"
+      ],
       "@activepieces/piece-murf-api": [
         "packages/pieces/community/murf-api/src/index.ts"
       ],
