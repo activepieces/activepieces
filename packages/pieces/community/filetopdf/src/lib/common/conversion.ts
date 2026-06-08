@@ -40,7 +40,7 @@ export function stringifyOptions(
   const out: Record<string, string> = {};
   for (const [key, value] of Object.entries(options || {})) {
     if (value === undefined || value === null || value === '') continue;
-    out[key] = typeof value === 'boolean' ? String(value) : String(value);
+    out[key] = String(value);
   }
   return out;
 }
