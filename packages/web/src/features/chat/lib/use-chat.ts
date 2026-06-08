@@ -436,28 +436,26 @@ export function useAgentChat({
         tryCatch(async () => chatApi.getConversation(id)),
       ]);
       if (conversationIdRef.current !== id) return;
-      if (historyResult.error) {
+      if (historyResult.error || convResult.error) {
+        conversationIdRef.current = null;
+        setConversationIdState(null);
+        setIsLoadingHistory(false);
         updateSendStatus({
           type: 'error',
-          message: 'Failed to load conversation history',
+          message: 'Conversation not found',
         });
-      } else {
-        const mapped = chatUtils.mapHistoryToUIMessages(
-          historyResult.data.data,
-        );
-        setPersistedMessages(mapped);
-        const restoredReplies =
-          chatUtils.extractQuickRepliesFromHistory(mapped);
-        if (restoredReplies.length > 0) {
-          store.setState({ quickReplies: restoredReplies });
-        }
+        return;
       }
-      if (convResult.data) {
-        modelNameRef.current = convResult.data.modelName ?? null;
-        setModelNameState(convResult.data.modelName ?? null);
-        if (convResult.data.status === ChatConversationStatus.STREAMING) {
-          setIsPollingForAgentReply(true);
-        }
+      const mapped = chatUtils.mapHistoryToUIMessages(historyResult.data.data);
+      setPersistedMessages(mapped);
+      const restoredReplies = chatUtils.extractQuickRepliesFromHistory(mapped);
+      if (restoredReplies.length > 0) {
+        store.setState({ quickReplies: restoredReplies });
+      }
+      modelNameRef.current = convResult.data.modelName ?? null;
+      setModelNameState(convResult.data.modelName ?? null);
+      if (convResult.data.status === ChatConversationStatus.STREAMING) {
+        setIsPollingForAgentReply(true);
       }
       setIsLoadingHistory(false);
     },
