@@ -3,6 +3,8 @@ api_token_env: CROWDIN_PERSONAL_TOKEN
 base_path: .
 base_url: 'https://api.crowdin.com'
 preserve_hierarchy: 1
+commit_message: 'New Crowdin translations %original_file_name% (%language%)'
+append_commit_message: false
 files:
   - type: i18next_json
     source: packages/web/public/locales/en/translation.json

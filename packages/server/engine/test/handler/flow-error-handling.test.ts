@@ -1,9 +1,11 @@
 
-import { FlowRunStatus, tryParseFriendlyPieceError } from '@activepieces/shared'
+import { BranchOperator, FlowRunStatus, RouterExecutionType, tryParseFriendlyPieceError } from '@activepieces/shared'
 import { codeExecutor } from '../../src/lib/handler/code-executor'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
+import { loopExecutor } from '../../src/lib/handler/loop-executor'
 import { pieceExecutor } from '../../src/lib/handler/piece-executor'
-import { buildCodeAction, buildPieceAction, generateMockEngineConstants } from './test-helper'
+import { routerExecuter } from '../../src/lib/handler/router-executor'
+import { buildCodeAction, buildPieceAction, buildRouterWithOneCondition, buildSimpleLoopAction, generateMockEngineConstants } from './test-helper'
 
 describe('code piece with error handling', () => {
 
@@ -75,5 +77,70 @@ describe('piece with error handling', () => {
         })
 
     }, 10000)
+
+})
+
+describe('action input resolution failures surface as FAILED step', () => {
+
+    afterEach(() => {
+        vi.restoreAllMocks()
+    })
+
+    it('code-executor: missing connection in input fails the step instead of throwing INTERNAL_ERROR', async () => {
+        vi.spyOn(global, 'fetch').mockResolvedValue(new Response(null, { status: 404 }))
+
+        const result = await codeExecutor.handle({
+            action: buildCodeAction({
+                name: 'echo_step',
+                input: {
+                    storedIds: '{{connections[\'missing-conn\']}}',
+                },
+            }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
+        })
+
+        expect(result.verdict.status).toBe(FlowRunStatus.FAILED)
+        expect(result.steps.echo_step.status).toBe('FAILED')
+        expect(result.steps.echo_step.errorMessage).toContain('connection (missing-conn) not found')
+    })
+
+    it('loop-executor: missing connection in items fails the step instead of throwing INTERNAL_ERROR', async () => {
+        vi.spyOn(global, 'fetch').mockResolvedValue(new Response(null, { status: 404 }))
+
+        const result = await loopExecutor.handle({
+            action: buildSimpleLoopAction({
+                name: 'loop',
+                loopItems: '{{connections[\'missing-conn\']}}',
+            }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
+        })
+
+        expect(result.verdict.status).toBe(FlowRunStatus.FAILED)
+        expect(result.steps.loop.status).toBe('FAILED')
+        expect(result.steps.loop.errorMessage).toContain('connection (missing-conn) not found')
+    })
+
+    it('router-executor: missing connection in branch condition fails the step instead of throwing INTERNAL_ERROR', async () => {
+        vi.spyOn(global, 'fetch').mockResolvedValue(new Response(null, { status: 404 }))
+
+        const result = await routerExecuter.handle({
+            action: buildRouterWithOneCondition({
+                children: [null],
+                conditions: [{
+                    operator: BranchOperator.BOOLEAN_IS_TRUE,
+                    firstValue: '{{connections[\'missing-conn\']}}',
+                }],
+                executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+            }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
+        })
+
+        expect(result.verdict.status).toBe(FlowRunStatus.FAILED)
+        expect(result.steps.router.status).toBe('FAILED')
+        expect(result.steps.router.errorMessage).toContain('connection (missing-conn) not found')
+    })
 
 })

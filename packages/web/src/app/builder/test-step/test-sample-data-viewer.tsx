@@ -9,6 +9,8 @@ import { t } from 'i18next';
 import { Loader2, Play } from 'lucide-react';
 import React, { useState } from 'react';
 
+import { SmartOutputViewer } from '@/components/custom/smart-output-viewer';
+import type { OutputSchema } from '@/components/custom/smart-output-viewer/types';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -35,6 +37,7 @@ type TestSampleDataViewerProps = {
   consoleLogs: string | null;
   explanationContext?: ErrorExplanationContext;
   pieceDisplayName?: string;
+  pieceSchema?: OutputSchema | null;
 } & (
   | {
       hideCancel: true;
@@ -79,6 +82,7 @@ export const TestSampleDataViewer = React.memo(
       consoleLogs,
       explanationContext,
       pieceDisplayName,
+      pieceSchema,
     } = props;
     const [requestedTab, setActiveTab] = useState<ActiveTab>('Output');
     const hasInput = !isNil(sampleDataInput);
@@ -147,6 +151,12 @@ export const TestSampleDataViewer = React.memo(
                 error={friendlyError}
                 explanationContext={explanationContext}
                 pieceDisplayName={pieceDisplayName}
+              />
+            ) : activeTab === 'Output' && !errorMessage ? (
+              <SmartOutputViewer
+                json={outputData}
+                title={t('Output')}
+                pieceSchema={pieceSchema ?? null}
               />
             ) : (
               <DataDisplayTabs
