@@ -33,6 +33,14 @@ export const sendSmsAction = createAction({
     async run(context) {
         const { recipients, content, sender, attachment_urls } = context.propsValue;
 
+        const recipientList = (recipients ?? [])
+            .map((recipient) => String(recipient).trim())
+            .filter((recipient) => recipient.length > 0);
+
+        if (recipientList.length === 0) {
+            throw new Error('At least one SMS destination is required');
+        }
+
         const media = attachment_urls && attachment_urls.length > 0 ? attachment_urls.map((url) => {
             const urlStr = String(url);
             return {
@@ -45,7 +53,7 @@ export const sendSmsAction = createAction({
             application: 'connectuc',
             content: content,
             media: media,
-            recipients: recipients,
+            recipients: recipientList,
             referenceId: randomUUID(),
             sender: sender,
         };

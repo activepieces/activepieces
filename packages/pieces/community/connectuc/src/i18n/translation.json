@@ -76,5 +76,11 @@
   "Select the SMS recipient numbers to which this trigger applies": "Select the SMS recipient numbers to which this trigger applies",
   "Ringing": "Ringing",
   "Answered": "Answered",
-  "Both": "Both"
+  "Both": "Both",
+  "SMS Numbers": "SMS Numbers",
+  "Direction": "Direction",
+  "Filter by message direction": "Filter by message direction",
+  "Incoming": "Incoming",
+  "Outgoing": "Outgoing",
+  "Triggers when a new SMS message is received or sent": "Triggers when a new SMS message is received or sent"
 }

@@ -241,7 +241,7 @@ export const smsNumberProp = () =>
  */
 export const smsRecipientsProp = () =>
     Property.MultiSelectDropdown({
-        displayName: 'Select Recipients',
+        displayName: 'SMS Numbers',
         description: 'Select the SMS recipient numbers to which this trigger applies',
         required: false,
         auth: connectucAuth,

@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { connectucAuth } from '../../index';
 import { registerConnectUCWebhook, unregisterConnectUCWebhook } from '../common/webhook-helpers';
 import { domainProp, userProp, smsRecipientsProp } from '../common/props';
@@ -7,7 +7,7 @@ export const newSms = createTrigger({
     auth: connectucAuth,
     name: 'newSms',
     displayName: 'New SMS',
-    description: 'Triggers when a new SMS message is received',
+    description: 'Triggers when a new SMS message is received or sent',
     aiMetadata: {
         description: 'Fires when a new inbound SMS/MMS message is received for the selected ConnectUC domain, users, and recipient numbers. Represents an incoming text with its content, sender, recipients, and any media attachments.',
     },
@@ -15,6 +15,19 @@ export const newSms = createTrigger({
         domain: domainProp(),
         users: userProp(),
         recipients: smsRecipientsProp(),
+        direction: Property.StaticDropdown({
+            displayName: 'Direction',
+            description: 'Filter by message direction',
+            required: false,
+            options: {
+                options: [
+                    { label: 'Incoming', value: 'incoming' },
+                    { label: 'Outgoing', value: 'outgoing' },
+                    { label: 'Both', value: 'both' },
+                ],
+            },
+            defaultValue: 'incoming',
+        }),
     },
     sampleData: {
         conversationId: 1234567,
