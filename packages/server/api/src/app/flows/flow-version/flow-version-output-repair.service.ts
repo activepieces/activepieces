@@ -7,6 +7,7 @@ import {
     Step,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { transaction } from '../../core/db/transaction'
 import { flowRepo } from '../flow/flow.repo'
 import { flowVersionRepo } from './flow-version.service'
 import { expressionRewriter } from './migrations/expression-rewriter'
@@ -56,9 +57,25 @@ export const flowVersionOutputRepairService = (log: FastifyBaseLogger) => ({
             return newStep
         })
 
-        await flowVersionRepo().update(flowVersion.id, { trigger: repaired.trigger })
-        flow.metadata = addRepairedVersionId(flow.metadata, flowVersionId)
-        await flowRepo().save(flow)
+        const didRepair = await transaction(async (entityManager) => {
+            const lockedFlow = await flowRepo(entityManager)
+                .createQueryBuilder('flow')
+                .setLock('pessimistic_write')
+                .where('flow.id = :id', { id: flowVersion.flowId })
+                .getOne()
+            if (lockedFlow === null || getRepairedVersionIds(lockedFlow.metadata).includes(flowVersionId)) {
+                return false
+            }
+            await flowVersionRepo(entityManager).update(flowVersion.id, { trigger: repaired.trigger })
+            lockedFlow.metadata = addRepairedVersionId(lockedFlow.metadata, flowVersionId)
+            await flowRepo(entityManager).save(lockedFlow)
+            return true
+        })
+
+        if (!didRepair) {
+            log.info({ flowVersionId }, 'Flow version output nesting already repaired, skipping')
+            return { flowVersionId, erroneousLevels: 0, stepsChanged: 0, alreadyRepaired: true }
+        }
         log.info({ flowVersionId, erroneousLevels, stepsChanged }, 'Repaired flow version output nesting')
 
         return { flowVersionId, erroneousLevels, stepsChanged, alreadyRepaired: false }
