@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-amazon-s3",
-  "version": "0.5.8",
+  "version": "0.5.9",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {

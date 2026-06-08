@@ -15,6 +15,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 
 import { chatApi } from './chat-api';
+import { chatStoreSelectors } from './chat-store';
 import { useChatStoreApi } from './chat-store-context';
 import { ChatUIMessage, chatPartUtils } from './chat-types';
 import { chatUtils } from './chat-utils';
@@ -188,7 +189,8 @@ export function useAgentChat({
       const { data: result } = await tryCatch(() =>
         chatApi.getMessages(convId),
       );
-      if (result && conversationIdRef.current === convId) {
+      if (conversationIdRef.current !== convId) return;
+      if (result) {
         const mapped = chatUtils.mapHistoryToUIMessages(result.data);
         setPersistedMessages(mapped);
         const restoredReplies =
@@ -225,13 +227,25 @@ export function useAgentChat({
     onStaleCheck: (convId) => {
       void tryCatch(async () => {
         const conv = await chatApi.getConversation(convId);
-        if (
-          !isNil(conv) &&
-          conv.status !== ChatConversationStatus.STREAMING &&
-          conversationIdRef.current === convId
-        ) {
+        if (isNil(conv) || conversationIdRef.current !== convId) return;
+
+        if (conv.status !== ChatConversationStatus.STREAMING) {
           void reconcile(convId).then(() => clearStreamingState());
+          return;
         }
+
+        const latestAssistant =
+          streamingMessage ??
+          persistedMessagesRef.current.findLast((m) => m.role === 'assistant');
+        const hasBlockingCard = chatStoreSelectors.hasBlockingCard({
+          state: store.getState(),
+          lastAssistantMessage: latestAssistant,
+        });
+        if (hasBlockingCard) return;
+
+        stopStream();
+        setIsPollingForAgentReply(true);
+        void reconcile(convId);
       });
     },
   });
@@ -274,8 +288,13 @@ export function useAgentChat({
 
   const cancelStream = useCallback(() => {
     stopStream();
+    setIsPollingForAgentReply(false);
     updateSendStatus({ type: 'cancelled' });
     setOptimisticUserMessage(null);
+    const convId = conversationIdRef.current;
+    if (convId) {
+      void chatApi.cancelConversation(convId);
+    }
   }, [stopStream, updateSendStatus]);
 
   const createConversation = useCallback(
@@ -417,28 +436,26 @@ export function useAgentChat({
         tryCatch(async () => chatApi.getConversation(id)),
       ]);
       if (conversationIdRef.current !== id) return;
-      if (historyResult.error) {
+      if (historyResult.error || convResult.error) {
+        conversationIdRef.current = null;
+        setConversationIdState(null);
+        setIsLoadingHistory(false);
         updateSendStatus({
           type: 'error',
-          message: 'Failed to load conversation history',
+          message: 'Conversation not found',
         });
-      } else {
-        const mapped = chatUtils.mapHistoryToUIMessages(
-          historyResult.data.data,
-        );
-        setPersistedMessages(mapped);
-        const restoredReplies =
-          chatUtils.extractQuickRepliesFromHistory(mapped);
-        if (restoredReplies.length > 0) {
-          store.setState({ quickReplies: restoredReplies });
-        }
+        return;
       }
-      if (convResult.data) {
-        modelNameRef.current = convResult.data.modelName ?? null;
-        setModelNameState(convResult.data.modelName ?? null);
-        if (convResult.data.status === ChatConversationStatus.STREAMING) {
-          setIsPollingForAgentReply(true);
-        }
+      const mapped = chatUtils.mapHistoryToUIMessages(historyResult.data.data);
+      setPersistedMessages(mapped);
+      const restoredReplies = chatUtils.extractQuickRepliesFromHistory(mapped);
+      if (restoredReplies.length > 0) {
+        store.setState({ quickReplies: restoredReplies });
+      }
+      modelNameRef.current = convResult.data.modelName ?? null;
+      setModelNameState(convResult.data.modelName ?? null);
+      if (convResult.data.status === ChatConversationStatus.STREAMING) {
+        setIsPollingForAgentReply(true);
       }
       setIsLoadingHistory(false);
     },

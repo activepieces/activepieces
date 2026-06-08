@@ -340,15 +340,18 @@ export function ConnectionPickerCard({
               void queryClient.invalidateQueries({
                 queryKey: ['app-connections'],
               });
+              const resolvedProjectId =
+                selectedProjectId ?? authenticationSession.getProjectId() ?? '';
               setSelectedConnection({
                 label: createdConnection.displayName,
                 project: '',
                 externalId: createdConnection.externalId,
-                projectId: '',
+                projectId: resolvedProjectId,
                 status: AppConnectionStatus.ACTIVE,
               });
               onResolve({
                 connectionExternalId: createdConnection.externalId,
+                projectId: resolvedProjectId,
                 label: createdConnection.displayName,
               });
             }

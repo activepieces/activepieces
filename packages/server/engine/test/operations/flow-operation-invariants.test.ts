@@ -1,8 +1,11 @@
 import { describe, it, expect, vi } from 'vitest'
 import {
+    ConnectionNotFoundError,
     EngineGenericError,
+    EngineResponseStatus,
     ExecutionType,
     FlowActionType,
+    FlowRunStatus,
     FlowTriggerType,
     FlowVersionState,
     ResumeReason,
@@ -12,11 +15,25 @@ import {
 } from '@activepieces/shared'
 import type { BeginExecuteFlowOperation, FlowAction, FlowVersion, ResumeExecuteFlowOperation } from '@activepieces/shared'
 
+const { mockSendUpdate, mockBackup } = vi.hoisted(() => ({
+    mockSendUpdate: vi.fn().mockResolvedValue(undefined),
+    mockBackup: vi.fn().mockResolvedValue(undefined),
+}))
 vi.mock('../../src/lib/helper/flow-run-progress-reporter', () => ({
     flowRunProgressReporter: {
-        sendUpdate: vi.fn().mockResolvedValue(undefined),
-        backup: vi.fn().mockResolvedValue(undefined),
+        sendUpdate: mockSendUpdate,
+        backup: mockBackup,
         createOutputContext: vi.fn().mockReturnValue({ update: vi.fn().mockResolvedValue(undefined) }),
+    },
+}))
+
+const { mockExecuteTrigger } = vi.hoisted(() => ({
+    mockExecuteTrigger: vi.fn(),
+}))
+vi.mock('../../src/lib/helper/trigger-helper', () => ({
+    triggerHelper: {
+        executeTrigger: mockExecuteTrigger,
+        executeOnStart: vi.fn().mockResolvedValue(undefined),
     },
 }))
 
@@ -439,7 +456,7 @@ describe('flow operation invariants', () => {
     })
 
     describe('BEGIN payload hydration', () => {
-        it('inline payload is forwarded without calling getPayloadFile', async () => {
+        it('inline payload is forwarded without hitting the engine file client', async () => {
             mockDownload.mockReset()
             const operation = makeBeginOperation({
                 triggerPayload: { type: 'inline', value: { hello: 'world' } },
@@ -473,6 +490,131 @@ describe('flow operation invariants', () => {
                 apiUrl: 'http://localhost:3000/',
                 engineToken: 'test-token',
                 fileId: 'payload-file-1',
+            })
+        })
+    })
+
+    describe('trigger input resolution failure', () => {
+        it('surfaces a USER ExecutionError from the trigger as a FAILED trigger step + OK engine response (instead of INTERNAL_ERROR)', async () => {
+            mockSendUpdate.mockClear()
+            mockBackup.mockClear()
+            mockExecuteTrigger.mockRejectedValue(new ConnectionNotFoundError('missing-conn'))
+
+            const triggerPayload = { headers: { 'x-source': 'webhook' }, body: { foo: 'bar' } }
+            const operation = makeBeginOperation({
+                triggerPayload: { type: 'inline', value: triggerPayload },
+                executeTrigger: true,
+            })
+
+            const response = await flowOperation.execute(operation)
+
+            expect(response.status).toBe(EngineResponseStatus.OK)
+
+            const finalSendUpdate = mockSendUpdate.mock.calls[mockSendUpdate.mock.calls.length - 1][0]
+            const finalCtx = finalSendUpdate.flowExecutorContext
+            expect(finalCtx.verdict.status).toBe(FlowRunStatus.FAILED)
+            expect(finalCtx.verdict.failedStep).toEqual({
+                name: 'trigger_1',
+                displayName: 'Test Trigger',
+                message: expect.stringContaining('connection (missing-conn) not found'),
+            })
+            const triggerStep = finalCtx.steps.trigger_1
+            expect(triggerStep.status).toBe(StepOutputStatus.FAILED)
+            expect(triggerStep.errorMessage).toEqual(expect.stringContaining('connection (missing-conn) not found'))
+            expect(triggerStep.output).toEqual(triggerPayload)
+        })
+
+        it('non-USER engine errors from the trigger still propagate (caller will map to INTERNAL_ERROR)', async () => {
+            mockExecuteTrigger.mockRejectedValue(new EngineGenericError('SomeEngineFailure', 'boom'))
+            const operation = makeBeginOperation({
+                triggerPayload: { type: 'inline', value: {} },
+                executeTrigger: true,
+            })
+
+            await expect(flowOperation.execute(operation)).rejects.toThrow(EngineGenericError)
+        })
+    })
+
+    describe('trigger success output shape', () => {
+        it('executeTrigger=true stores the run()-transformed first item as output', async () => {
+            mockSendUpdate.mockClear()
+            mockBackup.mockClear()
+            const rawPayload = { body: { id: 42, raw: true } }
+            const transformed = { id: 42, normalized: true }
+            mockExecuteTrigger.mockResolvedValue({ output: [transformed] })
+
+            const operation = makeBeginOperation({
+                triggerPayload: { type: 'inline', value: rawPayload },
+                executeTrigger: true,
+            })
+
+            const response = await flowOperation.execute(operation)
+            expect(response.status).toBe(EngineResponseStatus.OK)
+
+            const finalSendUpdate = mockSendUpdate.mock.calls[mockSendUpdate.mock.calls.length - 1][0]
+            const triggerStep = finalSendUpdate.flowExecutorContext.steps.trigger_1
+            expect(triggerStep.status).toBe(StepOutputStatus.SUCCEEDED)
+            expect(triggerStep.output).toEqual(transformed)
+        })
+
+        it('executeTrigger=false stores the raw payload as output (no run() transformation)', async () => {
+            mockSendUpdate.mockClear()
+            mockBackup.mockClear()
+            const rawPayload = { body: { id: 7 } }
+
+            const operation = makeBeginOperation({
+                triggerPayload: { type: 'inline', value: rawPayload },
+                executeTrigger: false,
+            })
+
+            const response = await flowOperation.execute(operation)
+            expect(response.status).toBe(EngineResponseStatus.OK)
+
+            const finalSendUpdate = mockSendUpdate.mock.calls[mockSendUpdate.mock.calls.length - 1][0]
+            const triggerStep = finalSendUpdate.flowExecutorContext.steps.trigger_1
+            expect(triggerStep.status).toBe(StepOutputStatus.SUCCEEDED)
+            expect(triggerStep.output).toEqual(rawPayload)
+        })
+    })
+
+    describe('RESUME payload hydration', () => {
+        it('resolves a ref resumePayload via the engine file client', async () => {
+            mockDownload.mockReset()
+            mockCreateWaitpoint.mockReset()
+            mockDownload.mockImplementation(({ fileId }: { fileId: string }) => {
+                if (fileId === 'logs-file-1') {
+                    return Promise.resolve(new TextEncoder().encode(JSON.stringify({
+                        executionState: {
+                            steps: {
+                                trigger_1: {
+                                    type: FlowTriggerType.EMPTY,
+                                    status: StepOutputStatus.SUCCEEDED,
+                                    input: {},
+                                    output: {},
+                                },
+                            },
+                            tags: [],
+                        },
+                    })))
+                }
+                return Promise.resolve(new TextEncoder().encode(JSON.stringify({ resumed: 'from-ref' })))
+            })
+
+            const operation = makeResumeOperation({
+                resumePayload: { type: 'ref', fileId: 'resume-file-1' },
+            })
+
+            try {
+                await flowOperation.execute(operation)
+            }
+            catch {
+                // downstream execution may fail; we only assert the resume payload was resolved
+            }
+
+            expect(mockDownload).toHaveBeenCalledWith({
+                apiUrl: 'http://localhost:3000/',
+                engineToken: 'test-token',
+                fileId: 'resume-file-1',
             })
         })
     })

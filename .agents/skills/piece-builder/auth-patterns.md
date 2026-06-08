@@ -2,7 +2,9 @@
 
 ## API Key (SecretText)
 
-Most common for simple APIs. Inside `validate`, `auth` is a plain string. Inside actions/triggers, the resolved value is the full connection object, so read the secret via `context.auth.secret_text`.
+Most common. Use for simple APIs that issue a single API key or token.
+
+Inside `validate`, `auth` is a plain string. Inside actions/triggers, it's the full connection object — read the secret via `context.auth.secret_text`.
 
 ```typescript
 import { PieceAuth } from '@activepieces/pieces-framework';
@@ -68,13 +70,13 @@ async run(context) {
 }
 ```
 
-For custom API call actions with OAuth2:
+For custom API call actions with OAuth2 — `authMapping`'s `auth` is already typed from `auth: myAppAuth`, so read `auth.access_token` directly, no cast:
 ```typescript
 createCustomApiCallAction({
   baseUrl: () => 'https://api.example.com',
   auth: myAppAuth,
   authMapping: async (auth) => ({
-    Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+    Authorization: `Bearer ${auth.access_token}`,
   }),
 })
 ```
@@ -126,7 +128,7 @@ export const myAppAuth = PieceAuth.BasicAuth({
 
 ## Custom Auth
 
-For APIs needing multiple fields (e.g., instance URL + API key, or region + credentials).
+For APIs needing multiple fields — e.g. instance URL + API key, or region + credentials.
 
 ```typescript
 import { PieceAuth, Property } from '@activepieces/pieces-framework';

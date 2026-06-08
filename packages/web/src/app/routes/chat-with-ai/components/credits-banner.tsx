@@ -29,11 +29,11 @@ export function CreditsBanner({
       : t("You've reached your credits limit.")
     : daysUntilReset != null
     ? t("You've used {percentage}% of your credits. Resets in {days} days.", {
-        percentage: creditsWarning?.percentage,
+        percentage: creditsWarning?.percentage ?? 0,
         days: daysUntilReset,
       })
     : t("You've used {percentage}% of your credits.", {
-        percentage: creditsWarning?.percentage,
+        percentage: creditsWarning?.percentage ?? 0,
       });
 
   return (

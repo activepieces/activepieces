@@ -13,8 +13,8 @@ import { triggerEventHooks } from '@/features/flows';
 import { useBuilderStateContext } from '../../builder-hooks';
 import { stepPropertiesSnapshotUtils } from '../../data-display/build-step-properties-snapshot';
 import { ErrorExplanationContext } from '../../data-display/explanation-prompt';
-import { TestPanelHeader } from '../test-panel-header';
-import { TestPanelViewToggle } from '../test-panel-view-toggle';
+import { StepDataPanelHeader } from '../../step-data/step-data-panel-header';
+import { StepDataPanelViewToggle } from '../../step-data/step-data-panel-view-toggle';
 import { useTriggerTestRunner } from '../test-runner-context';
 import { TestSampleDataViewer } from '../test-sample-data-viewer';
 
@@ -87,9 +87,9 @@ const TestTriggerSection = React.memo(
     if (isPieceLoading || isNil(testType)) {
       return (
         <div className="flex flex-col h-full">
-          <TestPanelHeader status="idle" />
+          <StepDataPanelHeader status="idle" />
           <div className="flex justify-end px-3 py-2 shrink-0">
-            <TestPanelViewToggle />
+            <StepDataPanelViewToggle />
           </div>
         </div>
       );
@@ -161,9 +161,9 @@ const TestTriggerSection = React.memo(
       <div className="flex flex-col h-full">
         {showFirstTimeTestingSection && !errorMessage && (
           <div className="flex flex-col h-full">
-            <TestPanelHeader status="idle" />
+            <StepDataPanelHeader status="idle" />
             <div className="flex justify-end px-3 py-2 shrink-0">
-              <TestPanelViewToggle />
+              <StepDataPanelViewToggle />
             </div>
             <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
               <div className="flex items-center justify-center size-12 rounded-full bg-primary/10 text-primary">
@@ -209,6 +209,9 @@ const TestTriggerSection = React.memo(
                 errorMessage={errorMessage ?? null}
                 lastTestDate={lastTestDate}
                 isSaving={isSaving}
+                pieceSchema={
+                  pieceModel?.triggers[triggerName ?? '']?.outputSchema ?? null
+                }
                 explanationContext={explanationContext}
                 pieceDisplayName={pieceModel?.displayName}
               >

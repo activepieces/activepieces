@@ -173,6 +173,25 @@ function extractBatchProgressFromOutput(
   return record['batchProgress'] as BatchProgressData;
 }
 
+function extractToolTitles(part: AnyToolPart): {
+  title: string;
+  activeTitle: string | undefined;
+  doneTitle: string | undefined;
+} {
+  const input = isObject(part.input) ? part.input : undefined;
+  const title =
+    input && typeof input.title === 'string' && input.title
+      ? input.title
+      : getToolPartName(part);
+  const activeTitle =
+    input && typeof input.activeTitle === 'string'
+      ? input.activeTitle
+      : undefined;
+  const doneTitle =
+    input && typeof input.doneTitle === 'string' ? input.doneTitle : undefined;
+  return { title, activeTitle, doneTitle };
+}
+
 function extractPlanUpdatesFromMessage(
   message: ChatUIMessage,
 ): PlanStepUpdate[] {
@@ -228,6 +247,7 @@ export const chatPartUtils = {
   isThinkingStatusTool,
   deriveToolStatus,
   extractToolOutputText,
+  extractToolTitles,
   extractPieceNames,
   parseToolOutput,
   parseTypedToolOutput,
@@ -241,8 +261,8 @@ export const chatPartUtils = {
 
 export type ThinkingStep =
   | { kind: 'reasoning'; text: string }
-  | { kind: 'thinking-status'; text: string; toolPart?: AnyToolPart }
-  | { kind: 'tool'; part: AnyToolPart };
+  | { kind: 'thinking-status'; text: string }
+  | { kind: 'tool'; part: AnyToolPart; description: string | null };
 
 export type ToolStatus = 'running' | 'completed' | 'failed' | 'stopped';
 

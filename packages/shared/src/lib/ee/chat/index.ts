@@ -55,6 +55,8 @@ const PersistedToolCallPartSchema = z.object({
     type: z.literal(PersistedChatPartType.TOOL_CALL),
     toolCallId: z.string(),
     toolName: z.string(),
+    title: z.string().optional(),
+    description: z.string().optional(),
     input: z.record(z.string(), z.unknown()),
     output: z.unknown().optional(),
     status: z.enum([PersistedToolCallStatus.COMPLETED, PersistedToolCallStatus.ERROR]),

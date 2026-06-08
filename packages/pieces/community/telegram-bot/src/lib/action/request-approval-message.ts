@@ -7,16 +7,6 @@ import {
   ExecutionType,
 } from '@activepieces/shared';
 
-const chatIdInfo = `
-**How to obtain Chat ID:**
-1. Search for the bot "@getmyid_bot" in Telegram.
-2. Start a conversation with the bot.
-3. Send the command "/my_id" to the bot.
-4. The bot will reply with your chat ID.
-
-**Note: Remember to initiate the chat with the bot, or you'll get an error for "chat not found."**
-`;
-
 export const telegramRequestApprovalMessageAction = createAction({
   auth: telegramBotAuth,
   name: 'request_approval_message',
@@ -24,40 +14,14 @@ export const telegramRequestApprovalMessageAction = createAction({
   description:
     'Send an approval message to a chat and wait until the message is approved or disapproved',
   props: {
-    instructions: Property.MarkDown({
-      value: chatIdInfo,
-    }),
-    chat_id: Property.ShortText({
-      displayName: 'Chat Id',
-      required: true,
-    }),
+    instructions: telegramCommons.chatIdInstructions(),
+    chat_id: telegramCommons.chatIdProp(),
     message: Property.LongText({
       displayName: 'Message',
       description: 'The approval message to be sent',
       required: true,
     }),
-    parse_mode: Property.StaticDropdown({
-      displayName: 'Format',
-      description: 'Choose format for the message',
-      required: false,
-      options: {
-        options: [
-          {
-            label: 'Markdown',
-            value: 'MarkdownV2',
-          },
-          {
-            label: 'HTML',
-            value: 'HTML',
-          },
-          {
-            label: 'Plain Text',
-            value: 'None',
-          },
-        ],
-      },
-      defaultValue: 'MarkdownV2',
-    }),
+    parse_mode: telegramCommons.parseModeProp(),
     approve_button_text: Property.ShortText({
       displayName: 'Approve Button Text',
       description: 'Text for the approve button',
@@ -102,7 +66,7 @@ export const telegramRequestApprovalMessageAction = createAction({
         body: {
           chat_id,
           text: message,
-          parse_mode: parse_mode || 'MarkdownV2',
+          parse_mode: telegramCommons.resolveParseMode(parse_mode),
           reply_markup: {
             inline_keyboard: [
               [

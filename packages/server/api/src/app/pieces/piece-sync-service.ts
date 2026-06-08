@@ -1,9 +1,10 @@
+import { apVersionUtil } from '@activepieces/server-utils'
 import { groupBy, PieceSyncMode, PieceType, tryCatch } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
-import { AppSystemProp, apVersionUtil } from '../helper/system/system-props'
+import { AppSystemProp } from '../helper/system/system-props'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
@@ -105,7 +106,7 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
 async function listCloudPieces(): Promise<PieceRegistryResponse[]> {
     const queryParams = new URLSearchParams()
     queryParams.append('edition', system.getEdition())
-    queryParams.append('release', await apVersionUtil.getCurrentRelease())
+    queryParams.append('release', apVersionUtil.getCurrentRelease())
     const response = await fetch(`${CLOUD_API_URL}/registry?${queryParams.toString()}`)
     if (!response.ok) {
         throw new Error(`Failed to fetch cloud pieces: ${response.status}`)
