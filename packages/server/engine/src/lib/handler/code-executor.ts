@@ -23,18 +23,19 @@ export const codeExecutor: BaseExecutor<CodeAction> = {
 
 const executeAction: ActionHandler<CodeAction> = async ({ action, executionState, constants }) => {
     const stepStartTime = performance.now()
-    const { censoredInput, resolvedInput } = await constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<Record<string, unknown>>({
-        unresolvedInput: action.settings.input,
-        executionState,
-    })
-
     const stepOutput = GenericStepOutput.create({
-        input: censoredInput,
+        input: {},
         type: FlowActionType.CODE,
         status: StepOutputStatus.RUNNING,
     })
 
     const { data: executionStateResult, error: executionStateError } = await utils.tryCatchAndThrowOnEngineError((async () => {
+        const { censoredInput, resolvedInput } = await constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<Record<string, unknown>>({
+            unresolvedInput: action.settings.input,
+            executionState,
+        })
+        stepOutput.input = censoredInput
+
         await flowRunProgressReporter.sendUpdate({
             engineConstants: constants,
             flowExecutorContext: await executionState.upsertStep(action.name, stepOutput),

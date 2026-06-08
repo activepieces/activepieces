@@ -71,9 +71,10 @@ export const apUpdateTriggerTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 : null
 
             const { auth: _rawAuth, ...rawInputWithoutAuth } = rawInput ?? {}
+            const rewritten = mcpUtils.rewriteAllReferences({ input: rawInputWithoutAuth, trigger: flow.version.trigger })
             const input = {
                 ...(existingPieceSettings?.input ?? {}),
-                ...rawInputWithoutAuth,
+                ...(rewritten.input ?? {}),
                 ...(auth !== undefined && { auth: `{{connections['${auth}']}}` }),
             }
 
