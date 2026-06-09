@@ -7,11 +7,22 @@ import {
 	AuthenticationType,
 } from '@activepieces/pieces-common';
 import {
+	AgentResponse,
+	AgentSpaceResponse,
+	CreateProjectFromTemplateParams,
+	CreateProjectParams,
+	CreateProjectResponse,
 	CreateTaskDateParams,
 	CreateTaskParams,
 	ListAPIResponse,
+	MoveTaskParams,
 	ProjectResponse,
+	ProjectTemplateResponse,
 	CreateTaskResponse,
+	RunAgentParams,
+	RunAgentResponse,
+	TaskActionResponse,
+	UpdateTaskParams,
 	WorkspaceFolderResponse,
 	WorkspaceResponse,
 	TaskResponse,
@@ -28,7 +39,25 @@ export class TaskadeAPIClient {
 		query?: RequestParams,
 		body: any | undefined = undefined,
 	): Promise<T> {
-		const baseUrl = 'https://www.taskade.com/api/v1';
+		return await this.sendRequest<T>('https://www.taskade.com/api/v1', method, resourceUri, query, body);
+	}
+
+	async makeV2Request<T extends HttpMessageBody>(
+		method: HttpMethod,
+		resourceUri: string,
+		query?: RequestParams,
+		body: any | undefined = undefined,
+	): Promise<T> {
+		return await this.sendRequest<T>('https://www.taskade.com/api/v2', method, resourceUri, query, body);
+	}
+
+	private async sendRequest<T extends HttpMessageBody>(
+		baseUrl: string,
+		method: HttpMethod,
+		resourceUri: string,
+		query?: RequestParams,
+		body: any | undefined = undefined,
+	): Promise<T> {
 		const qs: QueryParams = {};
 
 		if (query) {
@@ -101,5 +130,68 @@ export class TaskadeAPIClient {
 
 	async deleteTask(projectId: string, taskId: string) {
 		return await this.makeRequest(HttpMethod.DELETE, `/projects/${projectId}/tasks/${taskId}`);
+	}
+
+	async updateTask(
+		projectId: string,
+		taskId: string,
+		params: UpdateTaskParams,
+	): Promise<TaskActionResponse> {
+		return await this.makeRequest(
+			HttpMethod.PUT,
+			`/projects/${projectId}/tasks/${taskId}`,
+			undefined,
+			params,
+		);
+	}
+
+	async uncompleteTask(projectId: string, taskId: string) {
+		return await this.makeRequest(
+			HttpMethod.POST,
+			`/projects/${projectId}/tasks/${taskId}/uncomplete`,
+			undefined,
+			{},
+		);
+	}
+
+	async moveTask(
+		projectId: string,
+		taskId: string,
+		params: MoveTaskParams,
+	): Promise<TaskActionResponse> {
+		return await this.makeRequest(
+			HttpMethod.PUT,
+			`/projects/${projectId}/tasks/${taskId}/move`,
+			undefined,
+			params,
+		);
+	}
+
+	async createProject(params: CreateProjectParams): Promise<CreateProjectResponse> {
+		return await this.makeRequest(HttpMethod.POST, '/projects', undefined, params);
+	}
+
+	async createProjectFromTemplate(
+		params: CreateProjectFromTemplateParams,
+	): Promise<CreateProjectResponse> {
+		return await this.makeRequest(HttpMethod.POST, '/projects/from-template', undefined, params);
+	}
+
+	async listProjectTemplates(
+		folderId: string,
+	): Promise<ListAPIResponse<ProjectTemplateResponse>> {
+		return await this.makeRequest(HttpMethod.GET, `/folders/${folderId}/project-templates`);
+	}
+
+	async listAgentSpaces(): Promise<ListAPIResponse<AgentSpaceResponse>> {
+		return await this.makeV2Request(HttpMethod.POST, '/listSpaces', undefined, {});
+	}
+
+	async listAgents(spaceId: string): Promise<ListAPIResponse<AgentResponse>> {
+		return await this.makeV2Request(HttpMethod.POST, '/listAgents', undefined, { spaceId });
+	}
+
+	async runAgent(params: RunAgentParams): Promise<RunAgentResponse> {
+		return await this.makeV2Request(HttpMethod.POST, '/promptAgent', undefined, params);
 	}
 }

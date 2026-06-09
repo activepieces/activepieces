@@ -130,4 +130,123 @@ export const taskadeProps = {
 			};
 		},
 	}),
+	target_task_id: Property.Dropdown({
+		auth: taskadeAuth,
+		displayName: 'Target Task',
+		refreshers: ['project_id'],
+		required: true,
+		options: async ({ auth, project_id }) => {
+			if (!auth) {
+				return createEmptyOptions('Please connect account first.');
+			}
+			if (!project_id) {
+				return createEmptyOptions('Please select project.');
+			}
+
+			const client = new TaskadeAPIClient(auth.secret_text);
+			const options: DropdownOption<string>[] = [];
+
+			let after;
+			let moreTasks = true;
+			while (moreTasks) {
+				const response = await client.listTasks(project_id as string, { limit: 100, after });
+				if (response.items.length === 0) {
+					moreTasks = false;
+				} else {
+					after = response.items[response.items.length - 1].id;
+					for (const task of response.items) {
+						options.push({ label: task.text, value: task.id });
+					}
+				}
+			}
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	}),
+	template_id: Property.Dropdown({
+		auth: taskadeAuth,
+		displayName: 'Template',
+		refreshers: ['workspace_id', 'folder_id'],
+		required: true,
+		options: async ({ auth, workspace_id, folder_id }) => {
+			if (!auth) {
+				return createEmptyOptions('Please connect account first.');
+			}
+			if (!workspace_id) {
+				return createEmptyOptions('Please select workspace.');
+			}
+
+			const workspaceId = workspace_id as string;
+			const folderId = (folder_id as string) ?? workspaceId;
+
+			const client = new TaskadeAPIClient(auth.secret_text);
+			const response = await client.listProjectTemplates(folderId);
+
+			const options: DropdownOption<string>[] = [];
+
+			for (const template of response.items) {
+				options.push({ label: template.name, value: template.id });
+			}
+
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	}),
+	space_id: Property.Dropdown({
+		auth: taskadeAuth,
+		displayName: 'Workspace',
+		refreshers: [],
+		required: true,
+		options: async ({ auth }) => {
+			if (!auth) {
+				return createEmptyOptions('Please connect account first.');
+			}
+
+			const client = new TaskadeAPIClient(auth.secret_text);
+			const response = await client.listAgentSpaces();
+
+			const options: DropdownOption<string>[] = [];
+
+			for (const space of response.items) {
+				options.push({ label: space.name, value: space.id });
+			}
+
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	}),
+	agent_id: Property.Dropdown({
+		auth: taskadeAuth,
+		displayName: 'Agent',
+		refreshers: ['space_id'],
+		required: true,
+		options: async ({ auth, space_id }) => {
+			if (!auth) {
+				return createEmptyOptions('Please connect account first.');
+			}
+			if (!space_id) {
+				return createEmptyOptions('Please select workspace.');
+			}
+
+			const client = new TaskadeAPIClient(auth.secret_text);
+			const response = await client.listAgents(space_id as string);
+
+			const options: DropdownOption<string>[] = [];
+
+			for (const agent of response.items) {
+				options.push({ label: agent.name, value: agent.id });
+			}
+
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	}),
 };

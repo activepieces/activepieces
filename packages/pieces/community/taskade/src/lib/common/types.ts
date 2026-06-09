@@ -11,6 +11,8 @@ export interface BaseResponse {
 export type WorkspaceResponse = BaseResponse;
 export type WorkspaceFolderResponse = BaseResponse;
 export type ProjectResponse = BaseResponse;
+export type ProjectTemplateResponse = BaseResponse;
+export type AgentSpaceResponse = BaseResponse;
 
 export interface CreateTaskParams {
 	contentType: string;
@@ -39,4 +41,54 @@ export interface CreateTaskDateParams {
 		date: string;
 		time: string;
 	};
+}
+
+export interface UpdateTaskParams {
+	contentType: string;
+	content: string;
+}
+
+export interface MoveTaskParams {
+	target: {
+		taskId: string;
+		position: string;
+	};
+}
+
+export interface TaskActionResponse {
+	ok: boolean;
+	item: TaskResponse;
+}
+
+export interface CreateProjectParams {
+	folderId: string;
+	contentType: string;
+	content: string;
+}
+
+export interface CreateProjectFromTemplateParams {
+	folderId: string;
+	templateId: string;
+}
+
+export interface CreateProjectResponse {
+	ok: boolean;
+	item: ProjectResponse;
+}
+
+export interface AgentResponse {
+	id: string;
+	name: string;
+	description: string;
+}
+
+export interface RunAgentParams {
+	spaceId: string;
+	agentId: string;
+	prompt: string;
+}
+
+export interface RunAgentResponse {
+	ok: boolean;
+	summary: string;
 }
