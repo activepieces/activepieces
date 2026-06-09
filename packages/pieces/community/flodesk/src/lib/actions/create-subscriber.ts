@@ -39,11 +39,17 @@ export const createSubscriberAction = createAction({
       description: 'Key-value pairs for subscriber custom fields.',
     }),
     segments: flodeskCommon.segments_multi(false),
-    double_optin: Property.Checkbox({
+    double_optin: Property.StaticDropdown({
       displayName: 'Require Double Opt-In',
+      description: 'Choose whether to require double opt-in, bypass it, or use your Flodesk account default.',
       required: false,
-      defaultValue: false,
-      description: 'If true, a double opt-in email will be sent to the subscriber.',
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Yes (Require Double Opt-In)', value: 'true' },
+          { label: 'No (Direct Opt-In)', value: 'false' },
+        ],
+      },
     }),
   },
   async run(context) {
@@ -68,8 +74,8 @@ export const createSubscriberAction = createAction({
     if (props.segments && props.segments.length > 0) {
       body['segment_ids'] = props.segments;
     }
-    if (props.double_optin !== undefined) {
-      body['double_optin'] = props.double_optin;
+    if (props.double_optin !== undefined && props.double_optin !== null) {
+      body['double_optin'] = props.double_optin === 'true';
     }
 
     const response = await flodeskApiCall({

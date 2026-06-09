@@ -26,7 +26,7 @@ describe('createSubscriberAction', () => {
         last_name: 'Doe',
         status: 'active',
         segments: ['seg_123'],
-        double_optin: true,
+        double_optin: 'true',
       },
     });
 
@@ -65,5 +65,37 @@ describe('createSubscriberAction', () => {
       first_name: 'John',
       status: 'active',
     });
+  });
+
+  it('should omit double_optin if not provided', async () => {
+    const sendRequestSpy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue({
+      body: {
+        id: 'sub_123',
+        email: 'test@example.com',
+      },
+    } as any);
+
+    const mockContext = createMockActionContext({
+      propsValue: {
+        email: 'test@example.com',
+      },
+    });
+
+    const context = {
+      ...mockContext,
+      auth: {
+        secret_text: 'test_api_key',
+      },
+    } as any;
+
+    await createSubscriberAction.run(context);
+
+    expect(sendRequestSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: {
+          email: 'test@example.com',
+        },
+      })
+    );
   });
 });
