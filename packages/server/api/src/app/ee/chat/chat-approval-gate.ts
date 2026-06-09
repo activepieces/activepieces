@@ -48,7 +48,7 @@ async function waitForDecision({ gateId, timeoutMs }: { gateId: string, timeoutM
             if (settled) return
             settled = true
             clearTimeout(timeout)
-            subscriber.unsubscribe(channel).then(() => subscriber.quit()).catch(() => undefined)
+            subscriber.unsubscribe(channel).catch(() => undefined).finally(() => subscriber.quit().catch(() => undefined))
             resolve(result)
         }
 
