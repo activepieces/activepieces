@@ -164,6 +164,9 @@
       "@activepieces/piece-bettermode": [
         "packages/pieces/community/bettermode/src/index.ts"
       ],
+      "@activepieces/piece-bocha-search": [
+        "packages/pieces/community/bocha-search/src/index.ts"
+      ],
       "@activepieces/piece-bigcommerce": [
         "packages/pieces/community/bigcommerce/src/index.ts"
       ],
