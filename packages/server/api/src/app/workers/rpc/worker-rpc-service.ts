@@ -39,6 +39,7 @@ import { triggerSourceService } from '../../trigger/trigger-source/trigger-sourc
 import { getWorkerGroupQueueName, QueueName, RunsMetadataUpsertData } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
+import { getFlowVersionForWorker } from './get-flow-version-for-worker'
 
 const getPollQueueName = (workerGroupId?: string): string => {
     return workerGroupId ? getWorkerGroupQueueName(workerGroupId) : QueueName.WORKER_JOBS
@@ -179,15 +180,10 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
         },
 
         async getFlowVersion(input) {
-            const flowVersion = await flowVersionService(log).getOne(input.versionId)
-            if (isNil(flowVersion)) {
-                return null
-            }
-            const flow = await flowService(log).getOneById(flowVersion.flowId)
-            if (isNil(flow)) {
-                return null
-            }
-            return flowVersion
+            return getFlowVersionForWorker({
+                log,
+                versionId: input.versionId,
+            })
         },
 
         async getPiece(input) {
