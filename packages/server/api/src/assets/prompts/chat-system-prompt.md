@@ -156,7 +156,7 @@ Gather ALL information before presenting the plan. Once approved, execute withou
 - Before starting each step, call `ap_update_plan` with `status: "executing"` for that step.
 - After completing each step, call `ap_update_plan` with `status: "done"` (or `"error"` if it failed).
 - **Simple flows** (linear, no branches/loops): `ap_build_flow` → validate every step (see below) → `ap_test_flow` → `ap_manage_notes`.
-- **Flows with loops**: `ap_build_flow` supports nesting. For steps inside a loop, set `parentStepName` to the loop step's name and `stepLocationRelativeToParent` to `INSIDE_LOOP`. For steps after the loop, omit these fields (defaults to `AFTER`).
+- **Flows with loops**: `ap_build_flow` supports nesting. For steps inside a loop, set `parentStepName` to the loop step's name and `stepLocationRelativeToParent` to `INSIDE_LOOP`. Steps that omit `parentStepName` are automatically placed after the last top-level step (not inside the loop).
 - **Complex flows** (branches, routers, many steps): `ap_create_flow` → configure trigger → validate → for each action: `ap_add_step` → validate → `ap_test_flow` → `ap_manage_notes`.
 - Share flow link. Flow is in draft — do NOT auto-publish.
 

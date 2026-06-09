@@ -125,12 +125,12 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     operation: { type: FlowOperationType.UPDATE_TRIGGER, request: triggerPayload },
                 })
                 const skippedSteps: string[] = []
+                let lastTopLevelStepName: string | null = null
 
                 for (const step of steps) {
                     const latestTrigger = currentFlow!.version.trigger
                     const stepName = flowStructureUtil.findUnusedName(latestTrigger)
                     const allSteps = flowStructureUtil.getAllSteps(latestTrigger)
-                    const lastStep = allSteps[allSteps.length - 1]
 
                     let resolvedPieceVersion: string | undefined
                     let resolvedPieceName: string | undefined
@@ -158,12 +158,13 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     }
 
                     const location = step.stepLocationRelativeToParent ?? StepLocationRelativeToParent.AFTER
-                    let parentStepName = lastStep.name
+                    let parentStepName: string
                     if (step.parentStepName) {
                         const found = allSteps.find((s) => s.name === step.parentStepName)
-                        if (found) {
-                            parentStepName = found.name
-                        }
+                        parentStepName = found ? found.name : (lastTopLevelStepName ?? allSteps[allSteps.length - 1].name)
+                    }
+                    else {
+                        parentStepName = lastTopLevelStepName ?? allSteps[allSteps.length - 1].name
                     }
 
                     currentFlow = await flowService(log).update({
@@ -177,6 +178,10 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                             },
                         },
                     })
+
+                    if (location === StepLocationRelativeToParent.AFTER) {
+                        lastTopLevelStepName = stepName
+                    }
                 }
 
                 const allSteps = flowStructureUtil.getAllSteps(currentFlow.version.trigger)
