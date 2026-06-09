@@ -27,7 +27,7 @@ export const updateTeam = createAction({
     }),
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth.secret_text);
 
     const options: any = {};
     if (context.propsValue.name) options.name = context.propsValue.name;

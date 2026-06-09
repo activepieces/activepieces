@@ -1,7 +1,5 @@
 # pieces-ghostcms
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-ghostcms` to build the library.
+Run `turbo run build --filter=@activepieces/piece-ghostcms` to build the library.

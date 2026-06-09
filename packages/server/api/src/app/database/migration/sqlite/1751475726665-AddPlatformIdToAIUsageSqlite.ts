@@ -21,25 +21,6 @@ export class AddPlatformIdToAIUsageSqlite1751475726665 implements MigrationInter
             )
         `)
         await queryRunner.query(`
-            INSERT INTO "temporary_ai_usage"(
-                    "id",
-                    "created",
-                    "updated",
-                    "provider",
-                    "model",
-                    "cost",
-                    "projectId"
-                )
-            SELECT "id",
-                "created",
-                "updated",
-                "provider",
-                "model",
-                "cost",
-                "projectId"
-            FROM "ai_usage"
-        `)
-        await queryRunner.query(`
             DROP TABLE "ai_usage"
         `)
         await queryRunner.query(`

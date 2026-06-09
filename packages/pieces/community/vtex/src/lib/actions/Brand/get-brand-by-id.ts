@@ -15,7 +15,7 @@ export const getBrandById = createAction({
     }),
   },
   async run(context) {
-    const { hostUrl, appKey, appToken } = context.auth;
+    const { hostUrl, appKey, appToken } = context.auth.props;
     const { BrandId } = context.propsValue;
 
     const brand = new Brand(hostUrl, appKey, appToken);

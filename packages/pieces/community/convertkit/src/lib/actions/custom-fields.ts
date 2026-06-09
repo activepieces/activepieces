@@ -17,7 +17,7 @@ export const listFields = createAction({
   description: 'Returns a list of all custom fields',
   props: {},
   async run(context) {
-    return fetchCustomFields(context.auth);
+    return fetchCustomFields(context.auth.secret_text);
   },
 });
 
@@ -33,7 +33,7 @@ export const createField = createAction({
     const url = CUSTOM_FIELDS_API_ENDPOINT;
 
     const body = {
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
       label: context.propsValue.fields,
     };
 
@@ -69,7 +69,7 @@ export const updateField = createAction({
     const url = `${CUSTOM_FIELDS_API_ENDPOINT}/${label}`;
 
     const body = {
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
       label: new_label,
     };
 
@@ -104,7 +104,7 @@ export const deleteField = createAction({
     const url = `${CUSTOM_FIELDS_API_ENDPOINT}/${label}`;
 
     const body = {
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
     };
 
     const request: HttpRequest = {

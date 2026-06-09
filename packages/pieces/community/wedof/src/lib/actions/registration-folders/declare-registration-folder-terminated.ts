@@ -1,5 +1,5 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 import dayjs from 'dayjs';
@@ -24,6 +24,7 @@ export const declareRegistrationFolderTerminated = createAction({
       defaultValue: dayjs(new Date()).format('YYYY-MM-DD'),
     }),
     code: Property.Dropdown({
+      auth: wedofAuth,
       displayName: 'Raison de la sortie de formation',
       description: 'Sélectionner la raison de sortie de formation',
       required: true,
@@ -44,7 +45,7 @@ export const declareRegistrationFolderTerminated = createAction({
               '/registrationFoldersReasons?type=terminated',
             headers: {
               'Content-Type': 'application/json',
-              'X-Api-Key': auth as string,
+              'X-Api-Key': auth.secret_text,
             },
           })
         ).body;
@@ -87,7 +88,7 @@ export const declareRegistrationFolderTerminated = createAction({
         body: message,
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': context.auth as string,
+          'X-Api-Key': context.auth.secret_text,
         },
       })
     ).body;

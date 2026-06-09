@@ -72,31 +72,10 @@ import { certificationPartnerRefused } from './lib/triggers/certification-partne
 import { certificationPartnerRevoked } from './lib/triggers/certification-partner/certificationPartner-revoked';
 import { certificationPartnerSuspended } from './lib/triggers/certification-partner/certificationPartner-suspended';
 import { addExecutionTag } from './lib/actions/add-execution-tag';
-
-
-export const wedofAuth = PieceAuth.SecretText({
-    displayName: 'Clé API',
-    required: true,
-    description: 'Veuillez saisir votre clé API fournie par wedof',
-    validate: async ({auth}) => {
-        try {
-            await httpClient.sendRequest({
-                method: HttpMethod.GET,
-                url: wedofCommon.baseUrl + '/users/me',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Api-Key': auth,
-                },
-            });
-            return {valid: true};
-        } catch (error) {
-            return {
-                valid: false,
-                error: 'Clé Api invalide',
-            };
-        }
-    },
-});
+import { listPartnerStats } from './lib/actions/certification/certification-partner-stats';
+import { createCertificationFolder } from './lib/actions/certification-folders/create-certification-folder';
+import { createRegistrationFolder } from './lib/actions/registration-folders/create-registration-folder';
+import { wedofAuth } from './lib/auth';
 
 export const wedof = createPiece({
   displayName: 'Wedof',
@@ -112,6 +91,8 @@ export const wedof = createPiece({
   ],
   authors: ['vbarrier','obenazouz'],
   actions: [
+    /////////////// certification /////////////////
+    listPartnerStats,
     ////////////// registrationFolders ////////////
     getRegistrationFolder,
     searchRegistrationFolder,
@@ -126,6 +107,7 @@ export const wedof = createPiece({
     getMinimalSessionDates,
     getRegistrationFolderDocuments,
     updateCompletionRate,
+    createRegistrationFolder,
     ////////////// certificationFolders ////////////
     getCertificationFolder,
     searchCertificationFolder,
@@ -139,6 +121,7 @@ export const wedof = createPiece({
     abortCertificationFolder,
     getCertificationFolderDocuments,
     updateCertificationFolder,
+    createCertificationFolder,
     ////////////// general ////////////
     listActivitiesAndTasks,
     createTask,

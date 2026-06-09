@@ -1,4 +1,4 @@
-import { scrapelessApiAuth } from '../../index';
+import { scrapelessApiAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { createScrapelessClient } from '../services/scrapeless-api-client';
 
@@ -23,7 +23,7 @@ export const crawlCrawlApi = createAction({
   },
   async run({ propsValue, auth }) {
     try {
-      const client = createScrapelessClient(auth);
+      const client = createScrapelessClient(auth.secret_text);
 
       const url = propsValue.url;
       const limit = propsValue.limit;

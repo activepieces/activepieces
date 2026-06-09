@@ -1,12 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
-import { exaAuth } from '../../index';
+import { exaAuth } from '../auth';
 
 export const findSimilarLinksAction = createAction({
   name: 'find_similar_links',
   displayName: 'Find Similar Links',
   description: 'Find pages similar to a given URL.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Finds web pages semantically similar to a single reference URL via Exa. Use when an agent has one example page and wants more of the same kind rather than searching by a text query; results can be narrowed by domain include/exclude lists, crawl/publish date ranges, and required/forbidden text. Requires a reference URL. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: exaAuth,
   props: {
     url: Property.ShortText({
@@ -61,7 +66,7 @@ export const findSimilarLinksAction = createAction({
     }),
   },
   async run(context) {
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     const {
       url,

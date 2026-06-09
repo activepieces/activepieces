@@ -6,6 +6,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
   OAuth2PropertyValue,
   TriggerStrategy,
@@ -18,6 +19,9 @@ export const newReview = createTrigger({
   name: 'new_review',
   displayName: 'New Review',
   description: 'Triggers when there is new review',
+  aiMetadata: {
+    description: 'Fires when a new customer review is posted for the selected Google Business Profile account and location. Each event represents one newly created review and can be used to react to incoming customer feedback.',
+  },
   auth: googleAuth,
   props: {
     account: googleBusinessCommon.account,
@@ -48,7 +52,7 @@ export const newReview = createTrigger({
 });
 
 const polling: Polling<
-  OAuth2PropertyValue,
+  AppConnectionValueForAuthProperty<typeof googleAuth>,
   { location: string; account: string }
 > = {
   strategy: DedupeStrategy.TIMEBASED,

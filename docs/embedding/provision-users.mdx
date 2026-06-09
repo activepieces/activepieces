@@ -62,6 +62,7 @@ To achieve this, the backend will generate a signed token that contains all the 
     |-------------------|-------------------------------------------------|
     | externalUserId    | Unique identification of the user in **your** software |
     | externalProjectId | Unique identification of the user's project in **your** software |
+    | projectDisplayName| Display name of the user's project |
     | firstName         | First name of the user                           |
     | lastName          | Last name of the user                            |
     | role              | Role of the user in the Activepieces project (e.g., **EDITOR**, **VIEWER**, **ADMIN**)           |
@@ -70,6 +71,8 @@ To achieve this, the backend will generate a signed token that contains all the 
     | piecesTags        | Customize the project pieces, check [customize pieces](/embedding/customize-pieces)  |
     | tasks             | Customize the tasks limit for your user's project |
     | aiCredits         | Customize the ai credits limit for your user's project |
+    | concurrencyPoolKey   | Pool identifier. Projects sharing the same key share the same concurrency limit. Must be used with `concurrencyPoolLimit`. See [Manage Concurrency](/admin-guide/guides/manage-concurrency) |
+    | concurrencyPoolLimit | Maximum concurrent flow runs for the pool. Must be used with `concurrencyPoolKey`. |
 
     You can use any JWT library to generate the token. Here is an example using the jsonwebtoken library in Node.js:
 

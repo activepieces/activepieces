@@ -1,11 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpError, QueryParams } from '@activepieces/pieces-common';
-import { dimoAuth } from '../../../index';
+import { dimoAuth } from '../../auth';
 import { DimoClient } from '../../common/helpers';
 
 const deviceDefinitionApiAction = createAction({
 	auth: dimoAuth,
-	name: 'decode-vin',
+	name: 'device-definitions-decode-vin',
 	displayName: 'Device Definitions : Decode VIN',
 	description:
 		'Submits a decoding request for vehicle identification number, returns the device definition ID corresponding to the VIN.',
@@ -22,7 +22,7 @@ const deviceDefinitionApiAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 
 		const { countryCode, vin } = context.propsValue;
 
@@ -46,7 +46,7 @@ const deviceDefinitionApiAction = createAction({
 
 const deviceDefinitionsSearchAction = createAction({
 	auth: dimoAuth,
-	name: 'lookup-device-definitions',
+	name: 'device-definitions-lookup-device-definitions',
 	displayName: 'Device Definitions : Lookup',
 	description: 'Search for device definitions by query and filters.',
 	props: {
@@ -82,7 +82,7 @@ const deviceDefinitionsSearchAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 		const { query, makeSlug, modelSlug, year, page, pageSize } = context.propsValue;
 
 		const dimo = new DimoClient({

@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { zooAuth } from '../../../index'
+import { zooAuth } from '../../auth'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const deleteUserAction = createAction({
@@ -14,7 +14,7 @@ export const deleteUserAction = createAction({
       method: HttpMethod.DELETE,
       url: 'https://api.zoo.dev/user',
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
     });
     return response.body;

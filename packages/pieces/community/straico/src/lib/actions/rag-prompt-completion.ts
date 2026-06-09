@@ -1,4 +1,4 @@
-import { straicoAuth } from '../../index';
+import { straicoAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
@@ -24,6 +24,8 @@ export const ragPromptCompletion = createAction({
       description: 'A text prompt for the RAG model',
     }),
     model: Property.Dropdown({
+  auth: straicoAuth,
+
       displayName: 'Model',
       required: true,
       description: 'The specific LLM to be used',
@@ -50,7 +52,7 @@ export const ragPromptCompletion = createAction({
             method: HttpMethod.GET,
             authentication: {
               type: AuthenticationType.BEARER_TOKEN,
-              token: auth as string,
+              token: auth.secret_text,
             },
           });
           
@@ -154,7 +156,7 @@ export const ragPromptCompletion = createAction({
       method: HttpMethod.POST,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth as string,
+        token: auth.secret_text,
       },
       body: requestBody,
     });

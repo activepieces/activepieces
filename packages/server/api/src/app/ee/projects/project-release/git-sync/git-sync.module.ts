@@ -1,17 +1,17 @@
 import {
     ConfigureRepoRequest,
     GitRepoWithoutSensitiveData,
-    PushGitRepoRequest,
-} from '@activepieces/ee-shared'
-import { Permission, PrincipalType, SeekPage } from '@activepieces/shared'
-import {
-    FastifyPluginCallbackTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
+    Permission,
+    PrincipalType, PushGitRepoRequest, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsync } from 'fastify'
+import { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { entitiesMustBeOwnedByCurrentProject } from '../../../../authentication/authorization'
+import { ProjectResourceType } from '../../../../core/security/authorization/common'
+import { securityAccess } from '../../../../core/security/authorization/fastify-security'
 import { platformMustHaveFeatureEnabled } from '../../../authentication/ee-authorization'
+import { GitRepoEntity } from './git-sync.entity'
 import { gitRepoService } from './git-sync.service'
 
 export const gitRepoModule: FastifyPluginAsync = async (app) => {
@@ -20,7 +20,7 @@ export const gitRepoModule: FastifyPluginAsync = async (app) => {
     await app.register(gitRepoController, { prefix: '/v1/git-repos' })
 }
 
-export const gitRepoController: FastifyPluginCallbackTypebox = (
+export const gitRepoController: FastifyPluginCallbackZod = (
     app,
     _options,
     done,
@@ -51,7 +51,7 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
     app.delete('/:id', DeleteRepoRequestSchema, async (request, reply) => {
         await gitRepoService(request.log).delete({
             id: request.params.id,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
         })
         await reply.status(StatusCodes.NO_CONTENT).send()
     })
@@ -62,16 +62,18 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
 
 const DeleteRepoRequestSchema = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
-        permission: Permission.WRITE_PROJECT_RELEASE,
+        security: securityAccess.project([PrincipalType.USER], Permission.WRITE_PROJECT_RELEASE, {
+            type: ProjectResourceType.TABLE,
+            tableName: GitRepoEntity,
+        }),
     },
     schema: {
         description: 'Delete a git repository information for a project.',
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
         response: {
-            [StatusCodes.NO_CONTENT]: Type.Never(),
+            [StatusCodes.NO_CONTENT]: z.never(),
         },
     },
 }
@@ -79,26 +81,29 @@ const DeleteRepoRequestSchema = {
 
 const PushRepoRequestSchema = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
-        permission: Permission.WRITE_PROJECT_RELEASE,
+        security: securityAccess.project([PrincipalType.USER], Permission.WRITE_PROJECT_RELEASE, {
+            type: ProjectResourceType.TABLE,
+            tableName: GitRepoEntity,
+        }),
     },
     schema: {
         description:
             'Push single flow to the git repository',
         body: PushGitRepoRequest,
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
         response: {
-            [StatusCodes.OK]: Type.Never(),
+            [StatusCodes.OK]: z.never(),
         },
     },
 }
 
 const ConfigureRepoRequestSchema = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        permission: Permission.WRITE_PROJECT_RELEASE,
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_PROJECT_RELEASE, {
+            type: ProjectResourceType.BODY,
+        }),
     },
     schema: {
         tags: ['git-repos'],
@@ -112,12 +117,13 @@ const ConfigureRepoRequestSchema = {
 
 const ListRepoRequestSchema = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        permission: Permission.READ_PROJECT_RELEASE,
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.READ_PROJECT_RELEASE, {
+            type: ProjectResourceType.QUERY,
+        }),
     },
     schema: {
-        querystring: Type.Object({
-            projectId: Type.String(),
+        querystring: z.object({
+            projectId: z.string(),
         }),
         response: {
             [StatusCodes.OK]: SeekPage(GitRepoWithoutSensitiveData),

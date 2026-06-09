@@ -1,10 +1,7 @@
-import {
-  createAction,
-  OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
-import { notionAuth } from '../..';
-import { notionCommon } from '../common';
+import { notionAuth } from '../auth';
+import { getNotionToken, notionCommon } from '../common';
 
 export const restoreDatabaseItem = createAction({
   auth: notionAuth,
@@ -12,6 +9,12 @@ export const restoreDatabaseItem = createAction({
   displayName: 'Restore Database Item',
   description:
     'Restore an archived database item back to active status. Perfect for recovering accidentally archived tasks, projects, or records.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Un-archives a previously archived Notion database item, returning it to active status. Use when an agent must recover a record that was archived; requires the database_id and the archived item id. Idempotent: restoring an already-active item leaves it active.',
+    idempotent: true,
+  },
   props: {
     database_id: notionCommon.database_id,
     archived_item_id: notionCommon.archived_database_item_id,
@@ -28,7 +31,7 @@ export const restoreDatabaseItem = createAction({
     }
 
     const notion = new Client({
-      auth: (context.auth as OAuth2PropertyValue).access_token,
+      auth: getNotionToken(context.auth),
       notionVersion: '2022-02-22',
     });
 
@@ -43,7 +46,12 @@ export const restoreDatabaseItem = createAction({
 
       if ('properties' in response && response.properties) {
         const firstProperty = Object.values(response.properties)[0];
-        if (firstProperty && 'title' in firstProperty && firstProperty.title) {
+        if (
+          firstProperty &&
+          typeof firstProperty === 'object' &&
+          'title' in firstProperty &&
+          firstProperty.title
+        ) {
           itemTitle =
             (firstProperty.title as any)[0]?.plain_text || 'Untitled item';
         }

@@ -7,6 +7,8 @@ export default createAction({
   name: 'find_and_replace_documents',
   displayName: 'Find and Replace Documents',
   description: 'Replace documents that match a filter with a new document',
+  audience: 'both',
+  aiMetadata: { description: 'Replaces the first document matching a filter with an entirely new document via replaceOne (the whole document is overwritten, not patched), and can return either the before or after version. Choose this over Update Documents when swapping a full document rather than applying field-level operators. Filter and replacement are required; supports upsert. Mutating and not idempotent.', idempotent: false },
   props: {
     database: mongodbCommon.database,
     collection: mongodbCommon.collection(),
@@ -55,7 +57,7 @@ export default createAction({
         throw new Error('Replacement document is required');
       }
 
-      const databaseName = context.propsValue.database || context.auth.database;
+      const databaseName = context.propsValue.database || context.auth.props.database;
       if (!databaseName) {
         throw new Error('Database is required. Please specify it in the connection settings or in this action.');
       }

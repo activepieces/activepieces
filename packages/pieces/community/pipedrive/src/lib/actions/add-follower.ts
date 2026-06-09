@@ -1,4 +1,4 @@
-import { pipedriveAuth } from '../../index';
+import { pipedriveAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { ownerIdProp } from '../common/props';
 import { pipedriveApiCall } from '../common';
@@ -71,7 +71,7 @@ export const addFollowerAction = createAction({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.POST,
-			resourceUri: endpoint,
+			resourceUri: `/v2${endpoint}`,
 			body: {
 				user_id: followerId,
 			},

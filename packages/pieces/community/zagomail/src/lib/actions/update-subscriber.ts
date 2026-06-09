@@ -1,4 +1,4 @@
-import { zagomailAuth } from '../../';
+import { zagomailAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { zagoMailApiService } from '../common/request';
 import { listFields, listUId } from '../common/props';
@@ -43,7 +43,7 @@ export const updateSubscriber = createAction({
     }
 
     return await zagoMailApiService.updateSubscriber(
-      auth,
+      auth.secret_text,
       listUId,
       subsriberUid,
       payload

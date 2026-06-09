@@ -1,5 +1,6 @@
 import { Property } from '@activepieces/pieces-framework';
 import { fetchSequences } from '../../common/service';
+import { convertkitAuth } from '../../..';
 
 export const sequenceId = Property.ShortText({
   displayName: 'Sequence ID',
@@ -11,6 +12,7 @@ export const sequenceIdDropdown = Property.Dropdown({
   displayName: 'Sequence',
   required: true,
   refreshers: ['auth'],
+  auth: convertkitAuth,
   options: async ({ auth }) => {
     if (!auth) {
       return {
@@ -20,7 +22,7 @@ export const sequenceIdDropdown = Property.Dropdown({
       };
     }
 
-    const sequences = await fetchSequences(auth.toString());
+    const sequences = await fetchSequences(auth.secret_text);
 
     // loop through data and map to options
     const options = sequences.map((field: { id: string; name: string }) => {

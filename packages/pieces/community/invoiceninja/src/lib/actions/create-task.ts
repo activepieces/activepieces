@@ -40,7 +40,7 @@ export const createTask = createAction({
   },
 
   async run(context) {
-    const INapiToken = context.auth.access_token;
+    const INapiToken = context.auth.props.access_token;
 
     const headers = {
       'X-Api-Token': INapiToken,
@@ -55,7 +55,7 @@ export const createTask = createAction({
       queryParams.append('rate', context.propsValue.rate?.toString() || '0');
     }
     // Remove trailing slash from base_url
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
+    const baseUrl = context.auth.props.base_url.replace(/\/$/, '');
     const url = `${baseUrl}/api/v1/tasks?${queryParams.toString()}`;
     const httprequestdata = {
       method: HttpMethod.POST,

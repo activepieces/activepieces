@@ -1,13 +1,13 @@
-import { googleSheetsAuth } from '../../index';
+import { googleSheetsAuth } from '../common/common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
 	areSheetIdsValid,
 	columnToLabel,
+	createGoogleClient,
 	getHeaderRow,
 	ValueInputOption,
 } from '../common/common';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 import { getWorkSheetName } from '../triggers/helpers';
 import { commonProps } from '../common/props';
 
@@ -15,7 +15,13 @@ export const createColumnAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'create-column',
 	displayName: 'Create Spreadsheet Column',
-	description: 'Adds a new column to a spreadsheet.',
+	description: 'Creates a new column in a specific spreadsheet.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Inserts a new column into a worksheet and writes a header name into its first row, either at a given column index or after the last existing column. Use when an agent needs to add a field to a sheet. Not idempotent — each call inserts another column.',
+		idempotent: false,
+	},
 	props: {
 		...commonProps,
 		columnName: Property.ShortText({
@@ -36,8 +42,7 @@ export const createColumnAction = createAction({
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
 
-		const authClient = new OAuth2Client();
-		authClient.setCredentials(context.auth);
+		const authClient = await createGoogleClient(context.auth);
 		const sheets = google.sheets({ version: 'v4', auth: authClient });
 
 		let columnLabel;
@@ -52,7 +57,7 @@ export const createColumnAction = createAction({
 								range: {
 									sheetId,
 									dimension: 'COLUMNS',
-									startIndex: columnIndex -1,
+									startIndex: columnIndex - 1,
 									endIndex: columnIndex,
 								},
 							},
@@ -60,12 +65,12 @@ export const createColumnAction = createAction({
 					],
 				},
 			});
-			columnLabel = columnToLabel(columnIndex-1);
+			columnLabel = columnToLabel(columnIndex - 1);
 		} else {
 			const headers = await getHeaderRow({
-				spreadsheetId:spreadsheetId as string,
-				sheetId :sheetId as number,
-				accessToken: context.auth.access_token,
+				spreadsheetId: spreadsheetId as string,
+				sheetId: sheetId as number,
+				auth: context.auth,
 			});
 
 			const newColumnIndex = headers === undefined ? 0 : headers.length;
@@ -90,7 +95,11 @@ export const createColumnAction = createAction({
 			columnLabel = columnToLabel(newColumnIndex);
 		}
 
-		const sheetName = await getWorkSheetName(context.auth, spreadsheetId as string	, sheetId as number);
+		const sheetName = await getWorkSheetName(
+			context.auth,
+			spreadsheetId as string,
+			sheetId as number,
+		);
 
 		const response = await sheets.spreadsheets.values.update({
 			range: `${sheetName}!${columnLabel}1`,

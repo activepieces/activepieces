@@ -1,18 +1,18 @@
-import { PrincipalType } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { securityAccess } from '../core/security/authorization/fastify-security'
 import { projectService } from './project-service'
 
-export const projectWorkerController: FastifyPluginAsyncTypebox = async (
+export const projectWorkerController: FastifyPluginAsyncZod = async (
     app,
 ) => {
     app.get('/', GetWorkerProjectRequest, async (req) => {
         const projectId = req.principal.projectId
-        return projectService.getOneOrThrow(projectId)
+        return projectService(req.log).getOneOrThrow(projectId)
     })
 }
 
 const GetWorkerProjectRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
+        security: securityAccess.engine(),
     },
 }

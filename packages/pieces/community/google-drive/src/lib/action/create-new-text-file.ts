@@ -5,13 +5,15 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import FormData from 'form-data';
-import { googleDriveAuth } from '../../';
+import { googleDriveAuth, getAccessToken } from '../auth';
 import { common } from '../common';
 
 export const googleDriveCreateNewTextFile = createAction({
   auth: googleDriveAuth,
   name: 'create_new_gdrive_file',
   description: 'Create a new text file in your Google Drive from text',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new file in Google Drive from inline text content as plain text, CSV, or XML, optionally inside a parent folder. Use when an agent has generated text it needs to persist as a Drive file. Not idempotent: each call creates a new file.', idempotent: false },
   displayName: 'Create new file',
   props: {
     fileName: Property.ShortText({
@@ -79,7 +81,7 @@ export const googleDriveCreateNewTextFile = createAction({
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.access_token,
+        token: await getAccessToken(context.auth),
       },
     });
 

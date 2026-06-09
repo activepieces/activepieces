@@ -1,7 +1,7 @@
 import { Property, createAction } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod, HttpError } from "@activepieces/pieces-common";
 import { PdfCoErrorResponse } from "../common/types"; // Use common error response type
-import { pdfCoAuth } from "../../index";
+import { pdfCoAuth } from '../auth';
 import { BASE_URL, commonProps } from "../common/props";
 // Interface for the Document Parser API request body
 interface PdfDocumentParserRequestBody {
@@ -112,7 +112,7 @@ export const extractTablesFromPdf = createAction({
                 method: HttpMethod.POST,
                 url: `${BASE_URL}/pdf/documentparser`,
                 headers: {
-                    'x-api-key': auth as string,
+                    'x-api-key': auth.secret_text,
                     'Content-Type': 'application/json',
                 },
                 body: requestBody,

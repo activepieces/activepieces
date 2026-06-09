@@ -9,7 +9,7 @@ import {
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { generatebannersAuth } from '../../';
+import { generatebannersAuth } from '../auth';
 
 export const renderTemplate = createAction({
   auth: generatebannersAuth,
@@ -19,11 +19,12 @@ export const renderTemplate = createAction({
   props: {
     template_id: Property.Dropdown({
       displayName: 'Template',
+      auth: generatebannersAuth,
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
-        const authentication = auth as BasicAuthPropertyValue;
-        if (!auth) {
+        const authentication = auth;
+        if (!authentication) {
           return {
             disabled: true,
             options: [],
@@ -83,6 +84,7 @@ export const renderTemplate = createAction({
     }),
     variables: Property.DynamicProperties({
       displayName: 'Variables',
+      auth: generatebannersAuth,
       required: true,
       refreshers: ['template_id'],
       props: async ({ auth, template_id }) => {

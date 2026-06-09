@@ -1,14 +1,29 @@
+import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import {
-  OAuth2PropertyValue,
+  AppConnectionValueForAuthProperty,
   Property,
   DynamicPropsValue,
 } from '@activepieces/pieces-framework';
+import { AppConnectionType } from '@activepieces/shared';
 import { Client } from '@notionhq/client';
 import { NotionFieldMapping } from './models';
+import { notionAuth } from '../auth';
+
+export type NotionAuthValue = AppConnectionValueForAuthProperty<
+  typeof notionAuth
+>;
+
+export function getNotionToken(auth: NotionAuthValue): string {
+  if (auth.type === AppConnectionType.CUSTOM_AUTH) {
+    return auth.props.accessToken;
+  }
+  return getAccessTokenOrThrow(auth);
+}
 
 export const notionCommon = {
   baseUrl: 'https://api.notion.com/v1',
-  database_id: Property.Dropdown<string>({
+  database_id: Property.Dropdown<string, true, typeof notionAuth>({
+    auth: notionAuth,
     displayName: 'Database',
     required: true,
     description:
@@ -23,7 +38,7 @@ export const notionCommon = {
         };
       }
       const notion = new Client({
-        auth: (auth as OAuth2PropertyValue).access_token,
+        auth: getNotionToken(auth as NotionAuthValue),
         notionVersion: '2022-02-22',
       });
       const databases = await notion.search({
@@ -44,6 +59,7 @@ export const notionCommon = {
     },
   }),
   database_item_id: Property.Dropdown({
+    auth: notionAuth,
     displayName: 'Database Item',
     description: 'Select the item you want to update',
     required: true,
@@ -58,7 +74,7 @@ export const notionCommon = {
         };
       }
       const notion = new Client({
-        auth: (auth as OAuth2PropertyValue).access_token,
+        auth: getNotionToken(auth as NotionAuthValue),
         notionVersion: '2022-02-22',
       });
       const { results } = await notion.databases.query({
@@ -78,6 +94,7 @@ export const notionCommon = {
     },
   }),
   archived_database_item_id: Property.Dropdown({
+    auth: notionAuth,
     displayName: 'Archived Item',
     description:
       'Choose which archived item to restore from the selected database',
@@ -95,7 +112,7 @@ export const notionCommon = {
 
       try {
         const notion = new Client({
-          auth: (auth as OAuth2PropertyValue).access_token,
+          auth: getNotionToken(auth as NotionAuthValue),
           notionVersion: '2022-02-22',
         });
 
@@ -136,6 +153,7 @@ export const notionCommon = {
     },
   }),
   databaseFields: Property.DynamicProperties({
+    auth: notionAuth,
     displayName: 'Fields',
     required: true,
     refreshers: ['database_id'],
@@ -151,7 +169,7 @@ export const notionCommon = {
       const fields: DynamicPropsValue = {};
       try {
         const notion = new Client({
-          auth: (auth as OAuth2PropertyValue).access_token,
+          auth: getNotionToken(auth as NotionAuthValue),
           notionVersion: '2022-02-22',
         });
         const { properties } = await notion.databases.retrieve({
@@ -216,6 +234,7 @@ export const notionCommon = {
     },
   }),
   filterDatabaseFields: Property.DynamicProperties({
+    auth: notionAuth,
     displayName: 'Fields',
     required: true,
     refreshers: ['database_id'],
@@ -231,37 +250,61 @@ export const notionCommon = {
       const fields: DynamicPropsValue = {};
       try {
         const notion = new Client({
-          auth: (auth as OAuth2PropertyValue).access_token,
+          auth: getNotionToken(auth as NotionAuthValue),
           notionVersion: '2022-02-22',
         });
         const { properties } = await notion.databases.retrieve({
           database_id: database_id as unknown as string,
         });
-
         for (const key in properties) {
-          const property = properties[key];
-          if (
-            [
-              'rollup',
-              'button',
-              'files',
-              'verification',
-              'status',
-              'multi_select',
-              'formula',
-              'unique_id',
-              'relation',
-              'checkbox',
-              'created_by',
-              'created_time',
-              'last_edited_by',
-              'last_edited_time',
-            ].includes(property.type)
-          ) {
-            continue;
+          try {
+            const property = properties[key];
+            if (
+              [
+                'rollup',
+                'button',
+                'files',
+                'verification',
+                'formula',
+                'unique_id',
+                'relation',
+                'created_by',
+                'created_time',
+                'last_edited_by',
+                'last_edited_time',
+              ].includes(property.type)
+            ) {
+              continue;
+            }
+            if (property.type === 'people') {
+              const { results } = await notion.users.list({ page_size: 100 });
+              fields[property.name] = Property.StaticDropdown({
+                displayName: property.name,
+                required: false,
+                options: {
+                  disabled: false,
+                  options: results
+                    .filter(
+                      (user) => user.type === 'person' && user.name !== null
+                    )
+                    .map((option) => ({
+                      label: option.name as string,
+                      value: option.id,
+                    })),
+                },
+              });
+            } else {
+              fields[property.name] =
+                NotionFieldMapping[property.type].buildActivepieceType(
+                  property
+                );
+            }
+          } catch (e) {
+            console.error(
+              'Notion: could not generate dynamic filter property',
+              e
+            );
           }
-          fields[property.name] =
-            NotionFieldMapping[property.type].buildActivepieceType(property);
         }
       } catch (e) {
         console.debug(e);
@@ -270,7 +313,8 @@ export const notionCommon = {
     },
   }),
 
-  page: Property.Dropdown<string>({
+  page: Property.Dropdown({
+    auth: notionAuth,
     displayName: 'Page',
     required: true,
     description:
@@ -284,7 +328,7 @@ export const notionCommon = {
           options: [],
         };
       }
-      const pages = await getPages(auth as OAuth2PropertyValue);
+      const pages = await getPages(auth as NotionAuthValue);
 
       return {
         placeholder: 'Select a page',
@@ -301,7 +345,7 @@ export const notionCommon = {
 };
 
 export async function getPages(
-  auth: OAuth2PropertyValue,
+  auth: NotionAuthValue,
   search?: {
     editedAfter?: Date;
     createdAfter?: Date;
@@ -312,7 +356,7 @@ export async function getPages(
   }
 ): Promise<any[]> {
   const notion = new Client({
-    auth: auth.access_token,
+    auth: getNotionToken(auth),
     notionVersion: '2022-02-22',
   });
 

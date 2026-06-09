@@ -7,17 +7,18 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { discordAuth } from '../..';
+import { discordAuth } from '../auth';
 import { discordCommon } from '../common';
 
 import { Message } from '../common/models';
 
-const polling: Polling<string, { channel: string | undefined; limit: number }> =
+const polling: Polling<AppConnectionValueForAuthProperty<typeof discordAuth>, { channel: string | undefined; limit: number }> =
   {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, propsValue: { channel, limit } }) => {
@@ -31,7 +32,7 @@ const polling: Polling<string, { channel: string | undefined; limit: number }> =
           '/messages?limit=' +
           limit,
         headers: {
-          Authorization: 'Bot ' + auth,
+           Authorization: 'Bot ' + auth.secret_text,
         },
       };
 
@@ -50,6 +51,9 @@ export const newMessage = createTrigger({
   name: 'new_message',
   displayName: 'New message',
   description: 'Triggers when a message is sent in a channel',
+  aiMetadata: {
+    description: 'Fires when a new message is posted in the selected Discord channel, emitting one event per message. Polls the channel periodically, so detection is near-real-time rather than instant.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     limit: Property.Number({

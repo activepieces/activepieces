@@ -1,4 +1,4 @@
-import { medullarAuth } from '../../index';
+import { medullarAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { medullarCommon, getUser } from '../common';
@@ -19,7 +19,7 @@ export const createSpace = createAction({
 
     const spaceResponse = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${medullarCommon.exploratorUrl}/spaces/`,
+      url: `${medullarCommon.aiUrl}/spaces/`,
       body: {
         name: context.propsValue['space_name'],
         company: {
@@ -27,7 +27,7 @@ export const createSpace = createAction({
         },
       },
       headers: {
-        Authorization: `Bearer ${context.auth}`,
+        Authorization: `Bearer ${context.auth.secret_text}`,
       },
     });
 

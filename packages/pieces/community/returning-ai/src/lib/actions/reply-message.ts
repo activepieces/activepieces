@@ -1,7 +1,7 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { getApiEndpoint } from '../common';
-import { returningAiAuth } from '../../index';
+import { returningAiAuth } from '../auth';
 
 /**
  * This action allows you to reply to a specific message as a chosen user in a channel.
@@ -52,7 +52,7 @@ export const replyMessage = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const authToken = auth as string;
+    const authToken = auth.secret_text;
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${getApiEndpoint(authToken)}/apis/v1/messages/reply`,

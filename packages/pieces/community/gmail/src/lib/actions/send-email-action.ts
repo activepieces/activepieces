@@ -1,21 +1,20 @@
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
 import mime from 'mime-types';
 import MailComposer from 'nodemailer/lib/mail-composer';
 import Mail, { Attachment } from 'nodemailer/lib/mailer';
-import { gmailAuth } from '../../';
+import { gmailAuth, createGoogleClient, getUserEmail } from '../auth';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 
 export const gmailSendEmailAction = createAction({
   auth: gmailAuth,
   name: 'send_email',
   description: 'Send an email through a Gmail account',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Composes and sends a new email from the connected Gmail account to one or more recipients, with optional CC/BCC, attachments, and plain-text or HTML body. Use this to originate a fresh message; to answer an existing thread prefer Reply to Email instead, or pass an original Message-ID to send this message into that existing thread. Set the draft flag to save it as a draft instead of sending. Not idempotent: each call sends (or drafts) a separate message.',
+    idempotent: false,
+  },
   displayName: 'Send Email',
   props: {
     receiver: Property.Array({
@@ -76,15 +75,21 @@ export const gmailSendEmailAction = createAction({
         "The address must be listed in your GMail account's settings",
       required: false,
     }),
-    attachment: Property.File({
-      displayName: 'Attachment',
-      description: 'File to attach to the email you want to send',
+    attachments: Property.Array({
+      displayName: 'Attachments',
       required: false,
-    }),
-    attachment_name: Property.ShortText({
-      displayName: 'Attachment Name',
-      description: 'In case you want to change the name of the attachment',
-      required: false,
+      properties: {
+        file: Property.File({
+          displayName: 'File',
+          description: 'File to attach to the email you want to send.',
+          required: true,
+        }),
+        name: Property.ShortText({
+          displayName: 'Attachment Name',
+          description: 'In case you want to change the name of the attachment.',
+          required: false,
+        }),
+      },
     }),
     in_reply_to: Property.ShortText({
       displayName: 'In reply to',
@@ -99,15 +104,17 @@ export const gmailSendEmailAction = createAction({
     }),
   },
   async run(context) {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
 
     const gmail = google.gmail({ version: 'v1', auth: authClient });
 
     const subjectBase64 = Buffer.from(context.propsValue['subject']).toString(
       'base64'
     );
-    const attachment = context.propsValue['attachment'];
+    const attachments = context.propsValue.attachments as {
+      file: ApFile;
+      name: string | undefined;
+    }[];
     const replyTo = context.propsValue['reply_to']?.filter(
       (email) => email !== ''
     );
@@ -152,27 +159,28 @@ export const gmailSendEmailAction = createAction({
     }
 
     const senderEmail =
-      context.propsValue.from ||
-      (await google.oauth2({ version: 'v2', auth: authClient }).userinfo.get())
-        .data.email;
+      context.propsValue.from || (await getUserEmail(context.auth, authClient));
     if (senderEmail) {
       mailOptions.from = context.propsValue.sender_name
         ? `${context.propsValue['sender_name']} <${senderEmail}>`
         : senderEmail;
     }
 
-    if (attachment) {
-      const lookupResult = mime.lookup(
-        attachment.extension ? attachment.extension : ''
+    if (attachments && attachments.length > 0) {
+      const attachmentOption: Attachment[] = attachments.map(
+        ({ file, name }) => {
+          const lookupResult = mime.lookup(
+            file.extension ? file.extension : ''
+          );
+          return {
+            filename: name ?? file.filename,
+            content: file?.base64,
+            contentType: lookupResult ? lookupResult : undefined,
+            encoding: 'base64',
+          };
+        }
       );
-      const attachmentOption: Attachment[] = [
-        {
-          filename: context.propsValue.attachment_name ?? attachment.filename,
-          content: attachment?.base64,
-          contentType: lookupResult ? lookupResult : undefined,
-          encoding: 'base64',
-        },
-      ];
+
       mailOptions.attachments = attachmentOption;
     }
 

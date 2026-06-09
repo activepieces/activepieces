@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { closeAuth } from './../../index';
+import { closeAuth } from '../auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { closeApiCall } from '../common/client';
 import { customFields, statusId } from '../common/props';
@@ -17,7 +17,7 @@ export const createLead = createAction({
 		}),
 		url: Property.ShortText({
 			displayName: 'URL',
-			required: false,
+			required: false,	
 		}),
 		description: Property.LongText({
 			displayName: 'Description',
@@ -148,7 +148,7 @@ export const createLead = createAction({
 		};
 
 		const response = await closeApiCall({
-			accessToken: context.auth,
+			accessToken: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: '/lead/',
 			body: payload,

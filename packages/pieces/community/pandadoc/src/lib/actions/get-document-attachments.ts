@@ -14,7 +14,7 @@ export const getDocumentAttachments = createAction({
   },
   async run({ auth, propsValue }) {
     return await pandadocClient.makeRequest(
-      auth as string,
+      auth.secret_text,
       HttpMethod.GET,
       `/documents/${propsValue.document_id}/attachments/${propsValue.attachment_id}`
     );

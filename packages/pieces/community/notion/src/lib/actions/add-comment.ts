@@ -1,11 +1,7 @@
-import {
-  createAction,
-  OAuth2PropertyValue,
-  Property,
-} from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
-import { notionAuth } from '../..';
-import { notionCommon } from '../common';
+import { notionAuth } from '../auth';
+import { getNotionToken, notionCommon } from '../common';
 
 export const addComment = createAction({
   auth: notionAuth,
@@ -13,6 +9,12 @@ export const addComment = createAction({
   displayName: 'Add Comment',
   description:
     'Add a comment to any Notion page to start discussions, provide feedback, or leave notes for team collaboration.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Posts a new comment thread on a Notion page. Use when an agent must leave feedback or a note on a page for collaborators; requires the page id and comment text, and the integration must have comment-insert capability. Not idempotent: each call posts a separate comment.',
+    idempotent: false,
+  },
   props: {
     page_id: notionCommon.page,
     comment_text: Property.LongText({
@@ -30,7 +32,7 @@ export const addComment = createAction({
     }
 
     const notion = new Client({
-      auth: (context.auth as OAuth2PropertyValue).access_token,
+      auth: getNotionToken(context.auth),
       notionVersion: '2022-02-22',
     });
 

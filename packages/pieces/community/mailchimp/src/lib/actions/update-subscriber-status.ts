@@ -8,6 +8,8 @@ export const updateSubscriberInList = createAction({
   name: 'update_member_in_list',
   displayName: 'Update Member in an Audience (List)',
   description: 'Update a member in an existing Mailchimp audience (list)',
+  audience: 'both',
+  aiMetadata: { description: 'Updates the subscription status (subscribed, unsubscribed, cleaned, pending, transactional) of an existing member in an audience (list), identified by email. Use to change a known contact\'s status; the member must already exist, or the call fails. Idempotent: setting the same status repeatedly converges to that state.', idempotent: true },
   props: {
     email: Property.ShortText({
       displayName: 'Email',
@@ -21,7 +23,6 @@ export const updateSubscriberInList = createAction({
       displayName: 'Status',
       required: true,
       options: {
-        disabled: false,
         options: [
           { label: 'Subscribed', value: 'subscribed' },
           { label: 'Unsubscribed', value: 'unsubscribed' },
@@ -33,6 +34,7 @@ export const updateSubscriberInList = createAction({
     }),
   },
   async run(context) {
+    const { list_id, email, status } = context.propsValue;
     const access_token = context.auth.access_token;
     const mailChimpServerPrefix =
       await mailchimpCommon.getMailChimpServerPrefix(access_token);
@@ -41,10 +43,10 @@ export const updateSubscriberInList = createAction({
       server: mailChimpServerPrefix,
     });
     return await mailchimp.lists.updateListMember(
-      context.propsValue.list_id!,
-      context.propsValue.email!,
+      list_id as string,
+      email!,
       {
-        status: context.propsValue.status!,
+        status: status!,
       }
     );
   },

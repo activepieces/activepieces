@@ -1,10 +1,7 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  OAuth2PropertyValue,
-  PieceAuth,
-  createPiece,
-} from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
+import { githubAuthHelpers, GithubAuthValue } from './lib/common/auth-helpers';
 import { githubCreateIssueAction } from './lib/actions/create-issue';
 import { githubUnlockIssueAction } from './lib/actions/unlock-issue';
 import { githubTriggers } from './lib/trigger';
@@ -15,13 +12,17 @@ import { githubRawGraphqlQuery } from './lib/actions/raw-graphql-query';
 import { githubCreatePullRequestReviewCommentAction } from './lib/actions/create-pull-request-review-comment';
 import { githubCreateCommitCommentAction } from './lib/actions/create-commit-comment';
 import { githubCreateDiscussionCommentAction } from './lib/actions/create-discussion-comment';
+import { githubAddLabelsToIssueAction } from './lib/actions/add-labels-to-issue';
+import { githubCreateBranchAction } from './lib/actions/create-branch';
+import { githubDeleteBranchAction } from './lib/actions/delete-branch';
+import { githubUpdateIssueAction } from './lib/actions/update-issue';
+import { githubCreateGistAction } from './lib/actions/create-gist';
 
-export const githubAuth = PieceAuth.OAuth2({
-  required: true,
-  authUrl: 'https://github.com/login/oauth/authorize',
-  tokenUrl: 'https://github.com/login/oauth/access_token',
-  scope: ['admin:repo_hook', 'admin:org', 'repo'],
-});
+import { githubFindBranchAction } from './lib/actions/find-branch';
+import { githubFindIssueAction } from './lib/actions/find-issue';
+import { githubFindUserAction } from './lib/actions/find-user';
+
+import { githubAuth } from './lib/auth';
 
 export const github = createPiece({
   displayName: 'GitHub',
@@ -42,11 +43,21 @@ export const github = createPiece({
     githubCreatePullRequestReviewCommentAction,
     githubCreateCommitCommentAction,
     githubCreateDiscussionCommentAction,
+    githubAddLabelsToIssueAction,
+    githubCreateBranchAction,
+    githubDeleteBranchAction,
+    githubUpdateIssueAction,
+    githubFindBranchAction,
+    githubFindIssueAction,
+    githubFindUserAction,
+    githubCreateGistAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.github.com',
       auth: githubAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        Authorization: `Bearer ${await githubAuthHelpers.getBearerToken(
+          auth as GithubAuthValue
+        )}`,
       }),
     }),
   ],
@@ -57,6 +68,8 @@ export const github = createPiece({
     'khaledmashaly',
     'abuaboud',
     'tintinthedev',
+    'murex971',
+    'sanket-a11y',
   ],
   triggers: githubTriggers,
 });

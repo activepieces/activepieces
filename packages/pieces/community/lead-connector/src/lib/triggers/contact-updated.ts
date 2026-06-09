@@ -1,4 +1,4 @@
-import { OAuth2PropertyValue, createTrigger } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, OAuth2PropertyValue, createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -8,7 +8,7 @@ import {
 import { leadConnectorAuth } from '../..';
 import { getContacts } from '../common';
 
-const polling: Polling<OAuth2PropertyValue, unknown> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof leadConnectorAuth>, unknown> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth }) => {
     const currentValues =
@@ -31,6 +31,9 @@ export const contactUpdated = createTrigger({
   name: 'contact_updated',
   displayName: 'Contact Created or Updated',
   description: 'Trigger when a contact is created or updated.',
+  aiMetadata: {
+    description: 'Fires when a contact in the GoHighLevel/LeadConnector location is created or has any field changed, polling by last-updated timestamp. Represents the latest state of the affected contact.',
+  },
   props: {},
   type: TriggerStrategy.POLLING,
   sampleData: {},

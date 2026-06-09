@@ -17,6 +17,7 @@ export const pauseWarmup = createAction({
   description: 'Pause warmup for selected email accounts.',
   props: {
     accountId: Property.Dropdown({
+  auth: ReachinboxAuth,
       displayName: 'Select Email Accounts to Pause Warmup',
       description: 'Choose email accounts that are currently warming up.',
       required: true,
@@ -70,7 +71,7 @@ export const pauseWarmup = createAction({
         method: HttpMethod.POST,
         url: `${reachinboxCommon.baseUrl}account/warmup/pause`,
         headers: {
-          Authorization: `Bearer ${context.auth}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
           'Content-Type': 'application/json',
         },
         body,

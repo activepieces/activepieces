@@ -1,16 +1,14 @@
 import {
-    ListOAuth2AppRequest,
-    OAuthApp,
-    UpsertOAuth2AppRequest,
-} from '@activepieces/ee-shared'
-import {
     ActivepiecesError,
     apId,
     deleteProps,
+
     ErrorCode,
     isNil,
+    ListOAuth2AppRequest,
+    OAuthApp,
     SeekPage,
-} from '@activepieces/shared'
+    UpsertOAuth2AppRequest } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { encryptUtils } from '../../helper/encryption'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -31,7 +29,7 @@ export const oauthAppService = {
             {
                 platformId,
                 ...request,
-                clientSecret: encryptUtils.encryptString(request.clientSecret),
+                clientSecret: await encryptUtils.encryptString(request.clientSecret),
                 id: apId(),
             },
             ['platformId', 'pieceName'],
@@ -58,7 +56,7 @@ export const oauthAppService = {
         })
         return {
             ...oauthApp,
-            clientSecret: encryptUtils.decryptString(oauthApp.clientSecret),
+            clientSecret: await encryptUtils.decryptString(oauthApp.clientSecret),
         }
     },
     async list({

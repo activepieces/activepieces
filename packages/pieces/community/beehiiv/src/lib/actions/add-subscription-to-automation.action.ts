@@ -9,6 +9,8 @@ export const addSubscriptionToAutomationAction = createAction({
 	name: 'add_subscription_to_automation',
 	displayName: 'Add Subscription to Automation',
 	description: 'Adds an existing subscription to a specific automation flow.',
+	audience: 'both',
+	aiMetadata: { description: 'Enrolls an existing subscriber into a beehiiv automation journey for the given publication and automation ID. The subscriber can be identified either by email or by subscription ID — provide exactly one. Use to start a subscriber on an automation. Not idempotent: each call creates a new journey enrollment.', idempotent: false },
 	props: {
 		publicationId: publicationId,
 		automationId: automationId('Automation ID', '', true,true),
@@ -44,7 +46,7 @@ export const addSubscriptionToAutomationAction = createAction({
 		}
 
 		const response = await beehiivApiCall({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/publications/${publicationId}/automations/${automationId}/journeys`,
 			body,

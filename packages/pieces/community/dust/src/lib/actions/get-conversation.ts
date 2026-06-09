@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { getConversationContent, timeoutProp } from '../common';
-import { dustAuth, DustAuthType } from '../..';
+import { dustAuth } from '../..';
+import { DustAuthType } from '../..';
 
 export const getConversation = createAction({
   name: 'getConversation',
@@ -18,7 +19,7 @@ export const getConversation = createAction({
     return await getConversationContent(
       propsValue.conversationSid,
       propsValue.timeout,
-      auth as DustAuthType
+      auth.props
     );
   },
 });

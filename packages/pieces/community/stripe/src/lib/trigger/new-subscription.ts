@@ -2,12 +2,18 @@ import { createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { stripeCommon } from '../common';
 import { stripeAuth } from '../..';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { isEmpty } from '@activepieces/shared';
 
 export const stripeNewSubscription = createTrigger({
   auth: stripeAuth,
   name: 'new_subscription',
   displayName: 'New Subscription',
   description: 'Triggers when a new subscription is made',
+  aiMetadata: {
+    description:
+      'Fires when a new subscription is created in Stripe (the customer.subscription.created event), emitting the new subscription. Use to react to a customer starting recurring billing, such as provisioning access or sending an onboarding flow.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
@@ -150,7 +156,7 @@ export const stripeNewSubscription = createTrigger({
     const webhook = await stripeCommon.subscribeWebhook(
       'customer.subscription.created',
       context.webhookUrl!,
-      context.auth
+      context.auth.secret_text
     );
     await context.store?.put<WebhookInformation>(
       '_new_customer_subscription_trigger',
@@ -164,8 +170,25 @@ export const stripeNewSubscription = createTrigger({
       '_new_customer_subscription_trigger'
     );
     if (response !== null && response !== undefined) {
-      await stripeCommon.unsubscribeWebhook(response.webhookId, context.auth);
+      await stripeCommon.unsubscribeWebhook(response.webhookId, context.auth.secret_text);
     }
+  },
+  async test(context) {
+    const response = await httpClient.sendRequest<{ data: { id: string }[] }>({
+      method: HttpMethod.GET,
+      url: 'https://api.stripe.com/v1/subscriptions',
+      headers: {
+        Authorization: 'Bearer ' + context.auth.secret_text,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      queryParams: {
+        limit: '5',
+      },
+    });
+
+    if (isEmpty(response.body) || isEmpty(response.body.data)) return [];
+
+    return response.body.data;
   },
   async run(context) {
     const payloadBody = context.payload.body as PayloadBody;

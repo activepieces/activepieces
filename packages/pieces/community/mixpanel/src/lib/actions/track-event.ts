@@ -4,7 +4,7 @@ import {
   HttpMethod,
   AuthenticationType,
 } from '@activepieces/pieces-common';
-import { mixpanelAuth } from '../../index';
+import { mixpanelAuth } from '../auth';
 
 const API_URL = 'https://api.mixpanel.com';
 
@@ -57,7 +57,7 @@ export const trackEvent = createAction({
       },
       authentication: {
         type: AuthenticationType.BASIC,
-        username: projectToken,
+        username: projectToken.secret_text,
         password: '',
       },
     });

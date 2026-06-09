@@ -1,18 +1,21 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { ElevenAuthType, createClient, ExtendedReadableStream } from '../common';
+import { createClient, ExtendedReadableStream } from '../common';
+import { elevenlabsAuth } from '../..';
 
 export const textToSpeech = createAction({
   description: 'Convert text to speech using Elevenlabs',
   displayName: 'Text to Speech',
   name: 'elevenlabs-text-to-speech',
+  auth: elevenlabsAuth,
   props: {
     model: Property.Dropdown({
+      auth: elevenlabsAuth,
       displayName: 'Model',
       required: false,
       refreshers: [],
       refreshOnSearch: false,
       options: async ({ auth }) => {
-        const apiAuth = auth as ElevenAuthType
+        const apiAuth = auth
 
         if (!apiAuth) {
           return {
@@ -47,13 +50,14 @@ export const textToSpeech = createAction({
       },
     }),
     voice: Property.Dropdown({
+      auth: elevenlabsAuth,
       displayName: 'Voice',
       required: true,
       description: 'Select the voice for the text to speech',
       refreshers: [],
       refreshOnSearch: false,
       options: async ({ auth }) => {
-        const apiAuth = auth as ElevenAuthType
+        const apiAuth = auth
 
         if (!apiAuth) {
           return {
@@ -92,7 +96,7 @@ export const textToSpeech = createAction({
     }),
   },
   async run({ auth, propsValue, files }) {
-    const elevenlabs = createClient(auth as ElevenAuthType);
+    const elevenlabs = createClient(auth);
 
     const audioStream = await elevenlabs.textToSpeech.stream(
       propsValue.voice,

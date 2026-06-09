@@ -1,6 +1,6 @@
 .angular
 .dockerignore
-.env
+**/.env
 .git
 .gitattributes
 .github
@@ -14,4 +14,4 @@ deploy
 Dockerfile
 dist
 docs
-node_modules
+**/node_modules

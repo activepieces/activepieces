@@ -15,7 +15,7 @@ export const getSkuByProductId = createAction({
     }),
   },
   async run(context) {
-    const { hostUrl, appKey, appToken } = context.auth;
+    const { hostUrl, appKey, appToken } = context.auth.props;
     const { productId } = context.propsValue;
 
     const sku = new Sku(hostUrl, appKey, appToken);

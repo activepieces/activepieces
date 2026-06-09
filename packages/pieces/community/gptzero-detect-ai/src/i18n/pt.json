@@ -1,0 +1,12 @@
+{
+  "Detect AI-generated text with GPTZero API": "Detectar texto gerado por IA com GPTZero API",
+  "https://app.gptzero.me/app/api to get your API key": "https://app.gptzero.me/app/api para obter a chave de API",
+  "Scan File": "Verificar arquivo",
+  "Scan Text": "Escanear Texto",
+  "Scan a file for AI-generated content detection": "Escanear um arquivo para detecção de conteúdo gerado pelo IA",
+  "Scan text content for AI-generated content detection": "Escanear conteúdo de texto para detecção de conteúdo gerado pela IA",
+  "File": "Arquivo",
+  "Text": "texto",
+  "The file to scan for AI-generated content": "O arquivo para procurar conteúdo gerado por IA",
+  "The text content to scan for AI-generated content": "O conteúdo do texto para escanear conteúdo gerado por IA"
+}

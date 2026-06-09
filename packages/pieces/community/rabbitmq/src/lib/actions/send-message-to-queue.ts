@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { rabbitmqAuth } from '../..';
+import { rabbitmqAuth } from '../auth';
 import { rabbitmqConnect } from '../common';
 
 export const sendMessageToQueue = createAction({
@@ -29,7 +29,7 @@ export const sendMessageToQueue = createAction({
     let connection;
     let channel;
     try {
-      connection = await rabbitmqConnect(context.auth);
+      connection = await rabbitmqConnect(context.auth.props);
       channel = await connection.createChannel();
 
       await channel.checkQueue(queue);

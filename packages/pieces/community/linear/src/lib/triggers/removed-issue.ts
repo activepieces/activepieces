@@ -8,6 +8,9 @@ export const linearRemovedIssue = createTrigger({
   name: 'removed_issue',
   displayName: 'Removed Issue',
   description: 'Triggers when an existing Linear issue is removed',
+  aiMetadata: {
+    description: 'Fires when an existing issue is deleted from the selected Linear team. Represents the issue as it was at the time of removal.',
+  },
   props: {
     team_id: props.team_id()
   },
@@ -63,7 +66,7 @@ export const linearRemovedIssue = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth);
     const webhook = await client.createWebhook({
       label: 'ActivePieces Updated Issue',
       url: context.webhookUrl,
@@ -79,7 +82,7 @@ export const linearRemovedIssue = createTrigger({
     }
   },
   async onDisable(context) {
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth);
     const response = await context.store?.get<WebhookInformation>(
       '_removed_issue_trigger'
     );

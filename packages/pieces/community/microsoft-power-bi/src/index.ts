@@ -1,23 +1,13 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { getMicrosoftCloudFromAuth, getPowerBiBaseUrl } from './lib/common/microsoft-cloud';
 import {
   createPiece,
   OAuth2PropertyValue,
-  PieceAuth,
 } from '@activepieces/pieces-framework';
-import { pushRowsToDatasetTableAction } from './lib/actions/push-rows-to-table';
-import { createDatasetAction } from './lib/actions/create-dataset';
 import { PieceCategory } from '@activepieces/shared';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-
-export const microsoftPowerBiAuth = PieceAuth.OAuth2({
-  description: 'Authentication for Microsoft Power BI',
-  authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-  tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
-  required: true,
-  scope: [
-    'https://analysis.windows.net/powerbi/api/Dataset.ReadWrite.All',
-    'offline_access',
-  ],
-});
+import { createDatasetAction } from './lib/actions/create-dataset';
+import { pushRowsToDatasetTableAction } from './lib/actions/push-rows-to-table';
+import { microsoftPowerBiAuth } from './lib/auth';
 
 export const microsoftPowerBi = createPiece({
   displayName: 'Microsoft Power BI',
@@ -32,7 +22,10 @@ export const microsoftPowerBi = createPiece({
     pushRowsToDatasetTableAction,
     createCustomApiCallAction({
       auth: microsoftPowerBiAuth,
-      baseUrl: () => 'https://api.powerbi.com/v1.0/myorg/datasets',
+      baseUrl: (auth) => {
+        const cloud = getMicrosoftCloudFromAuth(auth as OAuth2PropertyValue);
+        return getPowerBiBaseUrl(cloud) + '/datasets';
+      },
       authMapping: async (auth) => {
         return {
           Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,

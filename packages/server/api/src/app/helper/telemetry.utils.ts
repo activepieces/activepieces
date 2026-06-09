@@ -1,28 +1,29 @@
-import { AppSystemProp, apVersionUtil } from '@activepieces/server-shared'
+import { apVersionUtil } from '@activepieces/server-utils'
 import { ProjectId, TelemetryEvent, User, UserId, UserIdentity } from '@activepieces/shared'
 import { Analytics } from '@segment/analytics-node'
 import { FastifyBaseLogger } from 'fastify'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
 import { system } from './system/system'
+import { AppSystemProp } from './system/system-props'
 
 const telemetryEnabled = system.getBoolean(AppSystemProp.TELEMETRY_ENABLED)
 
 const analytics = new Analytics({ writeKey: '42TtMD2Fh9PEIcDO2CagCGFmtoPwOmqK' })
 
 export const telemetry = (log: FastifyBaseLogger) => ({
-    async identify(user: User, identity: UserIdentity, projectId: ProjectId): Promise<void> {
+    async identify(identity: UserIdentity, user?: User, projectId?: ProjectId): Promise<void> {
         if (!telemetryEnabled) {
             return
         }
         const identify = {
-            userId: user.id,
+            userId: user?.id ?? identity.id,
             traits: {
                 email: identity.email,
                 firstName: identity.firstName,
                 lastName: identity.lastName,
                 projectId,
-                firstSeenAt: user.created,
+                firstSeenAt: user?.created ?? identity.created,
                 ...(await getMetadata()),
             },
         }
@@ -32,7 +33,7 @@ export const telemetry = (log: FastifyBaseLogger) => ({
         if (!telemetryEnabled) {
             return
         }
-        const platform = await platformService.getOneOrThrow(platformId)
+        const platform = await platformService(log).getOneOrThrow(platformId)
         await this.trackUser(platform.ownerId, event)
     },
     async trackProject(
@@ -42,9 +43,9 @@ export const telemetry = (log: FastifyBaseLogger) => ({
         if (!telemetryEnabled) {
             return
         }
-        const project = await projectService.getOne(projectId)
+        const project = await projectService(log).getOne(projectId)
         this.trackUser(project!.ownerId, event).catch((e) =>
-            log.error(e, '[Telemetry#trackProject] this.trackUser'),
+            log.error({ err: e }, '[telemetry#trackProject] Failed to track user'),
         )
     },
     isEnabled: () => telemetryEnabled,
@@ -67,7 +68,7 @@ export const telemetry = (log: FastifyBaseLogger) => ({
 })
 
 async function getMetadata() {
-    const currentVersion = await apVersionUtil.getCurrentRelease()
+    const currentVersion = apVersionUtil.getCurrentRelease()
     const edition = system.getEdition()
     return {
         activepiecesVersion: currentVersion,

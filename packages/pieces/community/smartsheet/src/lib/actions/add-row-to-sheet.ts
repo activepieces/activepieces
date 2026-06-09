@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { smartsheetAuth } from '../../index';
+import { smartsheetAuth } from '../auth';
 import { smartsheetCommon, addRowToSmartsheet } from '../common';
 
 export const addRowToSheet = createAction({
@@ -73,7 +73,7 @@ export const addRowToSheet = createAction({
 
 		try {
 			const result = await addRowToSmartsheet(
-				context.auth as string,
+				context.auth.secret_text,
 				sheet_id as string,
 				rowPayload,
 			);

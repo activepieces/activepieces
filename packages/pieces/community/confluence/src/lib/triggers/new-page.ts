@@ -1,11 +1,11 @@
 import {
 	createTrigger,
 	TriggerStrategy,
-	PiecePropValueSchema,
+	AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
-import { confluenceAuth } from '../../index';
-import { confluenceApiCall, confluencePaginatedApiCall, PaginatedResponse } from '../common';
+import { confluenceAuth, confluenceAuthValue } from '../auth';
+import { confluenceApiCall, PaginatedResponse } from '../common';
 import { isNil } from '@activepieces/shared';
 import { spaceIdProp } from '../common/props';
 
@@ -21,55 +21,36 @@ interface ConfluencePage {
 	};
 }
 
-type Props = {
-	spaceId: string;
+const props = {
+	spaceId: spaceIdProp,
 };
 
-const polling: Polling<PiecePropValueSchema<typeof confluenceAuth>, Props> = {
+const PAGE_FETCH_LIMIT = 100;
+
+const polling: Polling<confluenceAuthValue,  { spaceId?: string,pageId?: string }> = {
 	strategy: DedupeStrategy.TIMEBASED,
-	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const pages = [];
-		if (lastFetchEpochMS === 0) {
-			const response = await confluenceApiCall<PaginatedResponse<ConfluencePage>>({
-				domain: auth.confluenceDomain,
-				username: auth.username,
-				password: auth.password,
-				version: 'v2',
-				method: HttpMethod.GET,
-				resourceUri: `/spaces/${propsValue.spaceId}/pages`,
-				query: {
-					limit: '10',
-					sort: '-created-date',
-				},
-			});
-			if (isNil(response.results)) {
-				return [];
-			}
-			pages.push(...response.results);
-		} else {
-			const response = await confluencePaginatedApiCall<ConfluencePage>({
-				domain: auth.confluenceDomain,
-				username: auth.username,
-				password: auth.password,
-				method: HttpMethod.GET,
-				version: 'v2',
-				resourceUri: `/spaces/${propsValue.spaceId}/pages`,
-				query: {
-					sort: '-created-date',
-				},
-			});
-			if (isNil(response)) {
-				return [];
-			}
-			pages.push(...response);
+	async items({ auth, propsValue }) {
+		const response = await confluenceApiCall<PaginatedResponse<ConfluencePage>>({
+			domain: auth.props.confluenceDomain,
+			username: auth.props.username,
+			password: auth.props.password,
+			version: 'v2',
+			method: HttpMethod.GET,
+			resourceUri: `/spaces/${propsValue.spaceId}/pages`,
+			query: {
+				limit: String(PAGE_FETCH_LIMIT),
+				sort: '-created-date',
+			},
+		});
+
+		if (isNil(response.results)) {
+			return [];
 		}
 
-		return pages.map((page) => {
-			return {
-				epochMilliSeconds: new Date(page.createdAt).getTime(),
-				data: page,
-			};
-		});
+		return response.results.map((page) => ({
+			epochMilliSeconds: new Date(page.createdAt).getTime(),
+			data: page,
+		}));
 	},
 };
 
@@ -77,12 +58,12 @@ export const newPageTrigger = createTrigger({
 	name: 'new-page',
 	displayName: 'New Page',
 	description: 'Triggers when a new page is created.',
+	aiMetadata: {
+		description: 'Fires when a new page is created in the selected Confluence space. Polls for recently created pages; each event represents one newly created page with its metadata.',
+	},
 	auth: confluenceAuth,
 	type: TriggerStrategy.POLLING,
-	props: {
-		spaceId: spaceIdProp,
-	},
-
+	props,
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, context);
 	},

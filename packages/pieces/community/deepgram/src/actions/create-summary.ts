@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { deepgramAuth } from '../common/auth';
-import { BASE_URL, LANG_OPTIONS, MODEL_OPTIONS } from '../common/constants';
+import { BASE_URL, LANG_OPTIONS } from '../common/constants';
+import { deepgramModels } from '../common/models';
 import mime from 'mime-types';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
@@ -14,11 +15,32 @@ export const createSummaryAction = createAction({
       displayName: 'Audio File',
       required: true,
     }),
-    model: Property.StaticDropdown({
+    model: Property.Dropdown({
+      auth: deepgramAuth,
       displayName: 'Model',
       required: false,
-      options: {
-        options: MODEL_OPTIONS,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Enter your API key first',
+            options: [],
+          };
+        }
+        try {
+          const options = await deepgramModels.fetchSttModelOptions({
+            apiKey: auth.secret_text,
+          });
+          return { disabled: false, options };
+        } catch (error) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder:
+              "Couldn't load models, check your API key or try again.",
+          };
+        }
       },
     }),
     language: Property.StaticDropdown({
@@ -50,7 +72,7 @@ export const createSummaryAction = createAction({
       url: BASE_URL + '/listen',
       method: HttpMethod.POST,
       headers: {
-        Authorization: `Token ${context.auth}`,
+        Authorization: `Token ${context.auth.secret_text}`,
         'Content-Type': mimeType,
       },
       body: audioFile.data,

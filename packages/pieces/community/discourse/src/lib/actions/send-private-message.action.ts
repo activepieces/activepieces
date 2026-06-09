@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { discourseAuth } from '../../index';
+import { discourseAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 
 export const sendPrivateMessage = createAction({
@@ -30,10 +30,10 @@ export const sendPrivateMessage = createAction({
 
     return await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${context.auth.website_url.trim()}/posts.json`,
+      url: `${context.auth.props.website_url.trim()}/posts.json`,
       headers: {
-        'Api-Key': context.auth.api_key,
-        'Api-Username': context.auth.api_username,
+        'Api-Key': context.auth.props.api_key,
+        'Api-Username': context.auth.props.api_username,
       },
       body: {
         raw: raw,

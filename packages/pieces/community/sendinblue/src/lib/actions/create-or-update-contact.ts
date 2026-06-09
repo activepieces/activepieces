@@ -7,6 +7,12 @@ export const createOrUpdateContact = createAction({
   name: 'create_or_update_contact',
   displayName: 'Create or Update Contact',
   description: 'Create or update an existing contact',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Upserts a Brevo (formerly Sendinblue) contact keyed on its email address, setting attributes, list membership, and email/SMS blacklist flags. Use to add a new subscriber or sync changes to an existing one; because it is keyed on email with update enabled, re-running with the same input is idempotent and does not create duplicates. Email is required, and any attributes referenced must already exist in the Brevo account.',
+    idempotent: true,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email',
@@ -90,7 +96,7 @@ export const createOrUpdateContact = createAction({
       url: `https://api.sendinblue.com/v3/contacts`,
       body,
       headers: {
-        'api-key': context.auth,
+        'api-key': context.auth.secret_text,
       },
     });
     console.debug('Contact update response', updateResponse);
@@ -99,7 +105,7 @@ export const createOrUpdateContact = createAction({
       method: HttpMethod.GET,
       url: `https://api.sendinblue.com/v3/contacts/${encodeURI(identifier)}`,
       headers: {
-        'api-key': context.auth,
+        'api-key': context.auth.secret_text,
       },
     });
     return contactREsponse.body;

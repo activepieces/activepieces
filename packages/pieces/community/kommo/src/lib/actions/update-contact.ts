@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { kommoAuth } from '../../index';
+import { kommoAuth } from '../auth';
 import { makeRequest } from '../common';
 import { contactDropdown, userDropdown } from '../common/props';
 
@@ -63,7 +63,7 @@ export const updateContactAction = createAction({
     const tagsToAdd = context.propsValue.tags_to_add ?? [];
     const tagsToDelete = context.propsValue.tags_to_delete ?? [];
 
-    const { subdomain, apiToken } = context.auth;
+    const { subdomain, apiToken } = context.auth.props;
 
     const customFields: KommoCustomFieldValue[] = [];
 

@@ -1,5 +1,4 @@
 {
-  "Asana": "Asana",
   "Work management platform designed to help teams organize, track, and manage their work.": "Work management platform designed to help teams organize, track, and manage their work.",
   "Create Task": "Create Task",
   "Custom API Call": "Custom API Call",
@@ -15,9 +14,12 @@
   "Method": "Method",
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
+  "Body Type": "Body Type",
   "Body": "Body",
+  "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Asana workspace to create the task in": "Asana workspace to create the task in",
   "Asana Project to create the task in": "Asana Project to create the task in",
   "The name of the task to create": "The name of the task to create",
@@ -26,10 +28,15 @@
   "Tags to add to the task": "Tags to add to the task",
   "Assignee for the task": "Assignee for the task",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
+  "Enable for files like PDFs, images, etc.": "Enable for files like PDFs, images, etc.",
   "GET": "GET",
   "POST": "POST",
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "DELETE",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "None": "None",
+  "JSON": "JSON",
+  "Form Data": "Form Data",
+  "Raw": "Raw"
 }

@@ -1,7 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { BASE_URL, subscriberId, tagIdDropdown } from '../common/props';
-import { manychatAuth } from '../../index';
+import { manychatAuth } from '../auth';
 
 export const removeTagFromUserAction = createAction({
   name: 'removeTagFromUser',
@@ -20,7 +20,7 @@ export const removeTagFromUserAction = createAction({
           method: HttpMethod.POST,
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
-            token: auth,
+            token: auth.secret_text,
           },
           body: {
             subscriber_id: subscriberId,
@@ -37,7 +37,7 @@ export const removeTagFromUserAction = createAction({
           url: `${BASE_URL}/subscriber/getInfo`,
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
-            token: auth,
+            token: auth.secret_text,
           },
           queryParams: {
             subscriber_id: subscriberId.toString(),

@@ -1,12 +1,12 @@
 
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
+import { safeHttp } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
     AppConnectionType,
     CloudOAuth2ConnectionValue,
     ErrorCode,
 } from '@activepieces/shared'
-import axios from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../../helper/system/system'
 import {
@@ -29,8 +29,8 @@ export const cloudOAuth2Service = (log: FastifyBaseLogger): OAuth2Service<CloudO
             tokenUrl: connectionValue.token_url,
         }
         const response = (
-            await axios.post('https://secrets.activepieces.com/refresh', requestBody, {
-                timeout: 10000,
+            await safeHttp.retryingAxios.post('https://secrets.activepieces.com/refresh', requestBody, {
+                timeout: 20000,
             })
         ).data
         return {
@@ -55,7 +55,7 @@ export const cloudOAuth2Service = (log: FastifyBaseLogger): OAuth2Service<CloudO
                 edition: system.getEdition(),
             }
             const value = (
-                await axios.post<CloudOAuth2ConnectionValue>(
+                await safeHttp.retryingAxios.post<CloudOAuth2ConnectionValue>(
                     'https://secrets.activepieces.com/claim',
                     cloudRequest,
                     {

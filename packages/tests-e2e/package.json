@@ -1,0 +1,14 @@
+{
+  "name": "tests-e2e",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "test-e2e": "npx playwright test --config=playwright.config.ts",
+    "lint": "eslint 'scenarios/**/*.ts'"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@playwright/test": "1.54.1",
+    "checkly": "6.9.10"
+  }
+}

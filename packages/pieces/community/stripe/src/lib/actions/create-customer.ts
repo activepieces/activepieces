@@ -7,6 +7,12 @@ export const stripeCreateCustomer = createAction({
   auth: stripeAuth,
   displayName: 'Create Customer',
   description: 'Create a customer in stripe',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new customer record in Stripe from an email and name, with optional contact and address fields. Use when onboarding a new payer before charging, invoicing, or subscribing them. Not idempotent: each call creates a distinct customer even with identical input.',
+    idempotent: false,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email',
@@ -64,7 +70,7 @@ export const stripeCreateCustomer = createAction({
       method: HttpMethod.POST,
       url: 'https://api.stripe.com/v1/customers',
       headers: {
-        Authorization: 'Bearer ' + context.auth,
+        Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: {

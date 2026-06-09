@@ -1,6 +1,6 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { serpApiAuth } from '../../index';
+import { serpApiAuth } from '../auth';
 import { COUNTRY_OPTIONS } from '../constants/countries';
 import { GOOGLE_DOMAIN_OPTIONS } from '../constants/google-domains';
 import { LANGUAGE_OPTIONS } from '../constants/languages';
@@ -12,6 +12,8 @@ export const googleSearch = createAction({
   name: 'google_search',
   displayName: 'Google Search',
   description: 'Retrieves organic search results for specific keywords with advanced filtering options for SEO monitoring and competitor analysis.',
+  audience: 'both',
+  aiMetadata: { description: 'Runs a Google web search via SerpApi and returns organic results for a query. Use to look up current web information, check rankings, or research a topic with controls for location, language, country, device, and pagination. Read-only and idempotent; requires the search query and a SerpApi API key.', idempotent: true },
 
   props: {
     query: Property.ShortText({
@@ -27,6 +29,7 @@ export const googleSearch = createAction({
     }),
 
     location: Property.Dropdown({
+      auth: serpApiAuth,
       displayName: 'Location',
       description: 'Geographic location for results',
       required: false,
@@ -198,7 +201,7 @@ export const googleSearch = createAction({
 
       // Build search configuration
       const searchConfig: GoogleSearchConfig = {
-        api_key: auth,
+        api_key: auth.secret_text,
         engine: SerpApiEngine.GOOGLE,
         q: propsValue.query,
         hl: propsValue.hl,

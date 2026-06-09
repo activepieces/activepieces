@@ -1,5 +1,8 @@
 import {
+    ActivepiecesError,
     assertNotEqual,
+    ErrorCode,
+    isNil,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import jwksClient from 'jwks-rsa'
@@ -16,12 +19,12 @@ const keyLoader = jwksClient({
 
 export const googleAuthnProvider = (log: FastifyBaseLogger) => ({
     async getLoginUrl(params: GetLoginUrlParams): Promise<string> {
-        const { clientId, platformId } = params
+        const { clientId } = params
         const loginUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
         loginUrl.searchParams.set('client_id', clientId)
         loginUrl.searchParams.set(
             'redirect_uri',
-            await federatedAuthnService(log).getThirdPartyRedirectUrl(platformId),
+            await federatedAuthnService(log).getThirdPartyRedirectUrl(),
         )
         loginUrl.searchParams.set('scope', 'email profile')
         loginUrl.searchParams.set('response_type', 'code')
@@ -60,13 +63,19 @@ const exchangeCodeForIdToken = async (
             code,
             client_id: clientId,
             client_secret: clientSecret,
-            redirect_uri: await federatedAuthnService(log).getThirdPartyRedirectUrl(platformId),
+            redirect_uri: await federatedAuthnService(log).getThirdPartyRedirectUrl(),
             grant_type: 'authorization_code',
         }),
     })
 
-    const { id_token: idToken } = await response.json()
-    return idToken
+    const responseBody = await response.json() as { id_token?: string }
+    if (isNil(responseBody.id_token)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.INVALID_CREDENTIALS,
+            params: null,
+        }, 'Google OAuth token exchange failed: no id_token returned')
+    }
+    return responseBody.id_token
 }
 
 const verifyIdToken = async (
@@ -90,6 +99,7 @@ const verifyIdToken = async (
         email: payload.email,
         firstName: payload.given_name,
         lastName: payload.family_name,
+        imageUrl: payload.picture,
     }
 }
 
@@ -98,6 +108,7 @@ type IdTokenPayloadRaw = {
     email_verified: boolean
     given_name: string
     family_name: string
+    picture?: string
     sub: string
     aud: string
     iss: string
@@ -119,4 +130,5 @@ export type FebderatedAuthnIdToken = {
     email: string
     firstName: string
     lastName: string
+    imageUrl?: string
 }

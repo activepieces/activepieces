@@ -1,4 +1,4 @@
-import { clarifaiAuth } from '../../';
+import { clarifaiAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import {
   CommonClarifaiProps,
@@ -37,7 +37,7 @@ export const postInputsAction = createAction({
     const input = fileToInput(file);
 
     const inputs = await callPostInputs({
-      auth,
+      auth: auth.secret_text,
       userId,
       appId,
       input,

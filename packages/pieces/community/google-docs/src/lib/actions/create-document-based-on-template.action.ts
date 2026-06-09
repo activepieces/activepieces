@@ -1,14 +1,30 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { googleDocsAuth } from '../../index';
+import { googleDocsAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
+
+const PLACEHOLDER_FORMATS: Record<string, string> = {
+  'curly_braces': '{{KEY}}',
+  'square_brackets': '[[KEY]]',
+  'single_curly': '{KEY}',
+  'single_square': '[KEY]',
+  '{{KEY}}': '{{KEY}}',
+  '[[KEY]]': '[[KEY]]',
+  '{KEY}': '{KEY}',
+  '[KEY]': '[KEY]',
+};
 
 export const createDocumentBasedOnTemplate = createAction({
   auth: googleDocsAuth,
   name: 'create_document_based_on_template',
   description:
     'Edit a template file and replace the values with the ones provided',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fills a Google Docs template in place by find-and-replacing placeholder tokens (e.g. [[KEY]] or {{KEY}}) with supplied key/value pairs and swapping placeholder images by object ID. Use when an agent has an existing template document and wants to merge data into it rather than build a doc from scratch. Requires the target document ID and the matching placeholder format; idempotent since re-running with the same values replaces no remaining placeholders and leaves the document unchanged.',
+    idempotent: true,
+  },
   displayName: 'Edit template file',
   props: {
     template: Property.ShortText({
@@ -31,12 +47,14 @@ export const createDocumentBasedOnTemplate = createAction({
       displayName: 'Placeholder Format',
       description: 'Choose the format of placeholders in your template',
       required: true,
-      defaultValue: '[[]]',
+      defaultValue: 'square_brackets',
       options: {
           disabled: false,
           options: [
-              { label: 'Curly Braces {{}}', value: '{{}}' },
-              { label: 'Square Brackets [[]]', value: '[[]]' }
+              { label: 'Curly Braces {{}}', value: 'curly_braces' },
+              { label: 'Square Brackets [[]]', value: 'square_brackets' },
+              { label: 'Single Curly Braces {}', value: 'single_curly' },
+              { label: 'Single Square Brackets []', value: 'single_square' }
           ],
         },
   }),
@@ -44,19 +62,18 @@ export const createDocumentBasedOnTemplate = createAction({
   async run(context) {
     const documentId: string = context.propsValue.template;
     const values = context.propsValue.values;
-    const placeholder_format = context.propsValue.placeholder_format;
+    const placeholderType = context.propsValue.placeholder_format;
+    const placeholder_format = PLACEHOLDER_FORMATS[placeholderType] || '[[KEY]]';
 
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
     const docs = google.docs('v1');
 
     const requests = [];
 
     for (const key in values) {
       const value = values[key];
-      const new_key = placeholder_format === '[[]]' 
-                        ? `[[${key}]]` 
-                        : `{{${key}}}`;
+      const new_key = placeholder_format.replace('KEY', key);
+
       requests.push({
         replaceAllText: {
           containsText: {

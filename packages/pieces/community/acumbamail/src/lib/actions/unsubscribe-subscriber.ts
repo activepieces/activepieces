@@ -1,4 +1,4 @@
-import { acumbamailAuth } from '../..';
+import { acumbamailAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { acumbamailCommon } from '../common';
 import {
@@ -26,7 +26,7 @@ export const unsubscribeAction = createAction({
       method: HttpMethod.DELETE,
       url: acumbamailCommon.baseUrl + '/unsubscribeSubscriber/',
       queryParams: {
-        auth_token: context.auth,
+        auth_token: context.auth.secret_text,
         list_id: listId.toString(),
         email: email,
       },

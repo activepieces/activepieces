@@ -6,7 +6,7 @@ import {
 	PdfCoImageAnnotation,
 	PdfCoAddImagesRequestBody,
 } from '../common/types';
-import { pdfCoAuth } from '../../index';
+import { pdfCoAuth } from '../auth';
 import { BASE_URL, commonProps } from '../common/props';
 
 // Interface for /barcode/generate request
@@ -129,7 +129,7 @@ export const addBarcodeToPdf = createAction({
 				method: HttpMethod.POST,
 				url: `${BASE_URL}/barcode/generate`,
 				headers: {
-					'x-api-key': auth as string,
+					'x-api-key': auth.secret_text,
 					'Content-Type': 'application/json',
 				},
 				body: generateBarcodeBody,
@@ -189,7 +189,7 @@ export const addBarcodeToPdf = createAction({
 				method: HttpMethod.POST,
 				url: `${BASE_URL}/pdf/edit/add`,
 				headers: {
-					'x-api-key': auth as string,
+					'x-api-key': auth.secret_text,
 					'Content-Type': 'application/json',
 				},
 				body: addImageBody,

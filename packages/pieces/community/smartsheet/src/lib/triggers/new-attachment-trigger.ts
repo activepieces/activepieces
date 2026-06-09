@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { smartsheetAuth } from '../../index';
+import { smartsheetAuth } from '../auth';
 import {
 	smartsheetCommon,
 	findOrCreateWebhook,
@@ -52,7 +52,7 @@ export const newAttachmentTrigger = createTrigger({
 
 		const triggerIdentifier = context.webhookUrl.substring(context.webhookUrl.lastIndexOf('/') + 1);
 		const webhook = await findOrCreateWebhook(
-			context.auth as string,
+			context.auth.secret_text,
 			context.webhookUrl,
 			sheet_id as string,
 			triggerIdentifier,
@@ -71,7 +71,7 @@ export const newAttachmentTrigger = createTrigger({
 
 		const triggerIdentifier = context.webhookUrl.substring(context.webhookUrl.lastIndexOf('/') + 1);
 		const webhook = await findOrCreateWebhook(
-			context.auth as string,
+			context.auth.secret_text,
 			context.webhookUrl,
 			sheet_id as string,
 			triggerIdentifier,
@@ -120,7 +120,7 @@ export const newAttachmentTrigger = createTrigger({
 				if (objectSheetId) {
 					try {
 						eventOutput.attachmentData = await getAttachmentFullDetails(
-							context.auth as string,
+							context.auth.secret_text,
 							objectSheetId,
 							event.id.toString(),
 						);

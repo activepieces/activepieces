@@ -1,12 +1,14 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import Odoo from "../../commom/index";
-import { odooAuth } from "../..";
+import { odooAuth } from '../auth';
 
 export default createAction({
     name: 'create_company', // Must be a unique across the piece, this shouldn't be changed.
     auth: odooAuth,
     displayName: 'Create company',
     description: 'Create/Update company on Odoo',
+    audience: 'both',
+    aiMetadata: { description: 'Upserts a company partner (res.partner with is_company set) in Odoo by name: it searches for a company with the same name, updating it if found or creating one otherwise, setting phone and email. Use to add or refresh a company record. Not idempotent in effect — the first call may create a record and matching is by exact name.', idempotent: false },
     props: {
         // Properties to ask from the user, in this ask we will take number of
         name: Property.ShortText({
@@ -27,11 +29,11 @@ export default createAction({
     },
     async run(context) {
         const odoo = new Odoo({
-            url: context.auth.base_url,
+            url: context.auth.props.base_url,
             port: 443,
-            db: context.auth.database,
-            username: context.auth.username,
-            password: context.auth.api_key,
+            db: context.auth.props.database,
+            username: context.auth.props.username,
+            password: context.auth.props.api_key,
         })
 
         try {

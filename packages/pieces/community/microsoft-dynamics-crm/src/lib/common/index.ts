@@ -9,7 +9,8 @@ import {
   PiecePropValueSchema,
   Property,
 } from '@activepieces/pieces-framework';
-import { dynamicsCRMAuth, getBaseUrl } from '../../';
+import { dynamicsCRMAuth } from '../auth';
+import { getBaseUrl } from '../../';
 import { DynamicsCRMClient } from './client';
 import { EntityAttributeType } from './constants';
 
@@ -25,6 +26,7 @@ export function makeClient(auth: PiecePropValueSchema<typeof dynamicsCRMAuth>) {
 export const DynamicsCRMCommon = {
   entityType: (description: string) =>
     Property.Dropdown({
+      auth: dynamicsCRMAuth,
       displayName: 'Entity Type',
       refreshers: [],
       description,
@@ -39,7 +41,7 @@ export const DynamicsCRMCommon = {
         }
 
         const client = makeClient(
-          auth as PiecePropValueSchema<typeof dynamicsCRMAuth>
+          auth
         );
 
         const res = await client.fetchEntityTypes();
@@ -55,7 +57,8 @@ export const DynamicsCRMCommon = {
         };
       },
     }),
-  recordId: Property.Dropdown({
+      recordId: Property.Dropdown({
+    auth: dynamicsCRMAuth,
     displayName: 'Record ID',
     refreshers: ['entityType'],
     required: true,
@@ -133,6 +136,7 @@ export const DynamicsCRMCommon = {
   }),
   entityFields: (isCreate = true) =>
     Property.DynamicProperties({
+      auth: dynamicsCRMAuth,
       displayName: 'Entity Fields',
       refreshers: ['auth', 'entityType'],
       required: true,
@@ -143,7 +147,7 @@ export const DynamicsCRMCommon = {
         const fields: DynamicPropsValue = {};
 
         const client = makeClient(
-          auth as PiecePropValueSchema<typeof dynamicsCRMAuth>
+          auth
         );
 
         const typeRes = await client.fetchEntityTypeAttributes(

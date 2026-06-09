@@ -2,13 +2,15 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
 import { formIdDropdown } from '../common/props';
-import { filloutFormsAuth } from '../../index';
+import { filloutFormsAuth } from '../auth';
 
 export const getFormResponses = createAction({
   auth: filloutFormsAuth,
   name: 'getFormResponses',
   displayName: 'Get Form Responses',
   description: 'Fetch all responses for a Fillout form, with optional filters.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists submissions for a specific Fillout form (identified by form ID), optionally narrowed by date range, search text, completion status (finished by default, or in-progress), sort order, limit, and offset for pagination. With no filters it returns all submissions; supply filters to fetch only matching ones. Use to retrieve or page through collected form responses. Read-only and idempotent.', idempotent: true },
   props: {
     formId: formIdDropdown,
     limit: Property.Number({
@@ -69,7 +71,7 @@ export const getFormResponses = createAction({
     })
   },
   async run(context) {
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     const formId = context.propsValue['formId'];
     const queryParams: Record<string, any> = {};

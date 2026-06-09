@@ -32,6 +32,8 @@ export const postStatus = createAction({
   name: 'post_status',
   displayName: 'Post Status',
   description: 'Post a status to Mastodon',
+  audience: 'both',
+  aiMetadata: { description: 'Publishes a new status (toot) to a Mastodon instance from the authenticated account, optionally attaching a single media file uploaded alongside the post. Use to broadcast a message or share content on Mastodon. Requires status text; not idempotent — each call creates a separate post.', idempotent: false },
   props: {
     status: Property.LongText({
       displayName: 'Status',
@@ -45,11 +47,11 @@ export const postStatus = createAction({
     }),
   },
   async run(context) {
-    const token = context.auth.access_token;
+    const token = context.auth.props.access_token;
     const status = context.propsValue.status;
     const media = context.propsValue.media;
     // Remove trailing slash from base_url
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
+    const baseUrl = context.auth.props.base_url.replace(/\/$/, '');
 
     let mediaId: string | undefined = undefined;
     if (media) {

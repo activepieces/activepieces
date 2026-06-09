@@ -32,10 +32,10 @@ const totalcmsAPI = async (
     body: data,
     queryParams: query,
     method: method,
-    url: `${auth.domain}/rw_common/plugins/stacks/total-cms/totalapi.php`,
+    url: `${auth.props.domain}/rw_common/plugins/stacks/total-cms/totalapi.php`,
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'total-key': auth.license,
+      'total-key': auth.props.license,
     },
   };
   const response = await httpClient.sendRequest(request);
@@ -75,10 +75,10 @@ const totalcmsUploadAPI = async (
   const request: HttpRequest = {
     body: formData,
     method: HttpMethod.POST,
-    url: `${auth.domain}/rw_common/plugins/stacks/total-cms/totalapi.php`,
+    url: `${auth.props.domain}/rw_common/plugins/stacks/total-cms/totalapi.php`,
     headers: {
       'Content-Type': 'multipart/form-data',
-      'total-key': auth.license,
+      'total-key': auth.props.license,
     },
   };
   const response = await httpClient.sendRequest(request);

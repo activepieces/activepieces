@@ -2,14 +2,9 @@ import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { askClaude } from './lib/actions/send-prompt';
 import { baseUrl } from './lib/common/common';
-import { PieceCategory, SUPPORTED_AI_PROVIDERS } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/shared';
 import { extractStructuredDataAction } from './lib/actions/extract-structured-data';
-
-export const claudeAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  required: true,
-  description: SUPPORTED_AI_PROVIDERS.find(p => p.provider === 'anthropic')?.markdown,
-});
+import { claudeAuth } from './lib/auth';
 
 export const claude = createPiece({
   displayName: 'Anthropic Claude',
@@ -26,7 +21,7 @@ export const claude = createPiece({
       baseUrl: () => baseUrl,
       authMapping: async (auth) => {
         return {
-          'x-api-key': `${auth}`,
+          'x-api-key': `${auth.secret_text}`,
         };
       },
     }),

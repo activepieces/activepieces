@@ -7,6 +7,7 @@ import { twitterAuth } from '../..';
 import { twitterCommon } from '../common';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
+import mime from 'mime-types';
 
 export const createTweet = createAction({
   auth: twitterAuth,
@@ -14,6 +15,8 @@ export const createTweet = createAction({
   name: 'create-tweet',
   displayName: 'Create Tweet',
   description: 'Create a tweet',
+  audience: 'both',
+  aiMetadata: { description: 'Posts a new tweet to the authenticated X/Twitter account, optionally attaching up to three images. Use this to publish a standalone post (not a reply). Tweet text is required and must be non-empty; this is not idempotent, so each call publishes a separate new tweet.', idempotent: false },
   props: {
     text: twitterCommon.text,
     image_1: twitterCommon.image_1,
@@ -26,7 +29,7 @@ export const createTweet = createAction({
     });
 
     const { consumerKey, consumerSecret, accessToken, accessTokenSecret } =
-      context.auth;
+      context.auth.props;
     const userClient = new TwitterApi({
       appKey: consumerKey,
       appSecret: consumerSecret,
@@ -44,7 +47,7 @@ export const createTweet = createAction({
       media.forEach((m) => {
         uploadedMedia.push(
           userClient.v1.uploadMedia(Buffer.from(m.base64, 'base64'), {
-            mimeType: 'image/png',
+           mimeType: m.extension ?mime.lookup(m.extension)|| 'image/png':'image/png',
             target: 'tweet',
           })
         );

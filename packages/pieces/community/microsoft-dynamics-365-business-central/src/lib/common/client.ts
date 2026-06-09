@@ -1,4 +1,4 @@
-import { businessCentralAuth } from '../../';
+import { businessCentralAuth } from '../auth';
 import {
   HttpMessageBody,
   HttpMethod,
@@ -8,7 +8,16 @@ import {
   AuthenticationType,
   HttpHeaders,
 } from '@activepieces/pieces-common';
-import { PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, PiecePropValueSchema } from '@activepieces/pieces-framework';
+
+const BUSINESS_CENTRAL_HOSTS: Record<string, string> = {
+  'login.microsoftonline.com': 'api.businesscentral.dynamics.com',
+  'login.microsoftonline.us': 'api.businesscentral.dynamics.us',
+};
+
+function getBusinessCentralHost(cloud?: string | null): string {
+  return BUSINESS_CENTRAL_HOSTS[cloud ?? 'login.microsoftonline.com'] ?? BUSINESS_CENTRAL_HOSTS['login.microsoftonline.com'];
+}
 
 interface ListAPIResponse<T> {
   '@odata.context': string;
@@ -26,7 +35,7 @@ export type filterParams = Record<
 >;
 
 export class BusinessCentralAPIClient {
-  constructor(private environment: string, private accessToken: string) {}
+  constructor(private environment: string, private accessToken: string, private cloud?: string | null) {}
 
   async makeRequest<T extends HttpMessageBody>(
     method: HttpMethod,
@@ -34,7 +43,8 @@ export class BusinessCentralAPIClient {
     query?: filterParams,
     body: any | undefined = undefined
   ): Promise<T> {
-    const baseUrl = `https://api.businesscentral.dynamics.com/v2.0/${this.environment}/api/v2.0`;
+    const host = getBusinessCentralHost(this.cloud);
+    const baseUrl = `https://${host}/v2.0/${this.environment}/api/v2.0`;
     const params: QueryParams = {};
     const headers: HttpHeaders = {};
 
@@ -110,11 +120,12 @@ export class BusinessCentralAPIClient {
 }
 
 export function makeClient(
-  auth: PiecePropValueSchema<typeof businessCentralAuth>
+  auth: AppConnectionValueForAuthProperty<typeof businessCentralAuth>
 ) {
   const client = new BusinessCentralAPIClient(
-    auth.props?.['environment'],
-    auth.access_token
+    auth.props?.['environment'] as string ?? '',
+    auth.access_token,
+    auth.props?.['cloud'] as string | undefined,
   );
   return client;
 }

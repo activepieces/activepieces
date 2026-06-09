@@ -1,0 +1,982 @@
+import { ApFile, LATEST_CONTEXT_VERSION, PieceAuth, Property } from '@activepieces/pieces-framework'
+import { FlowActionType, FlowTriggerType, formulaEvaluator, GenericStepOutput, PropertyExecutionType, PropertySettings, StepOutputStatus } from '@activepieces/shared'
+import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
+import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
+import { propsProcessor } from '../../src/lib/variables/props-processor'
+import { createPropsResolver } from '../../src/lib/variables/props-resolver'
+
+const propsResolverService = createPropsResolver({
+    projectId: 'PROJECT_ID',
+    engineToken: 'WORKER_TOKEN',
+    apiUrl: 'http://127.0.0.1:3000',
+    contextVersion: LATEST_CONTEXT_VERSION,
+    stepNames: ['trigger', 'step_1', 'step_2', 'step_3', 'step_4', 'step_5', 'step_6', 'step_7', 'step_8'],
+})
+
+const buildExecutionState = async (): Promise<FlowExecutorContext> => {
+    let state = await FlowExecutorContext.empty().upsertStep(
+        'trigger',
+        GenericStepOutput.create({
+            type: FlowTriggerType.PIECE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: {
+                items: [5, 'a'],
+                name: 'John',
+                price: 6.4,
+                users: [
+                    {
+                        name: 'Alice',
+                    },
+                    {
+                        name: 'Bob',
+                    },
+                ],
+                lastNames: [
+                    'Smith',
+                    'Doe',
+                ],
+            },
+        }),
+    )
+    state = await state.upsertStep('step_1',
+        GenericStepOutput.create({
+
+            type: FlowActionType.PIECE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: {
+                success: true,
+            },
+        }))
+    state = await state.upsertStep('step_2', GenericStepOutput.create({
+        type: FlowActionType.PIECE,
+        status: StepOutputStatus.SUCCEEDED,
+        input: {},
+        output: 'memory://{"fileName":"hello.png","data":"iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z"}',
+    }))
+    return state
+}
+let executionState: FlowExecutorContext
+beforeAll(async () => {
+    executionState = await buildExecutionState()
+})
+
+const buildStateWithFailedStep = (stepName: string, message: string) =>
+    FlowExecutorContext.empty().upsertStep(stepName, GenericStepOutput.create({
+        type: FlowActionType.PIECE,
+        status: StepOutputStatus.FAILED,
+        input: {},
+    }).setErrorMessage(message))
+
+
+
+describe('Props resolver', () => {
+
+
+    test('Test resolve inside nested loops', async () => {
+
+        const upserted = await executionState.upsertStep('step_3', GenericStepOutput.create({
+            type: FlowActionType.LOOP_ON_ITEMS,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: {
+                iterations: [
+                    {
+                        'step_8': GenericStepOutput.create({
+                            type: FlowActionType.PIECE,
+                            status: StepOutputStatus.SUCCEEDED,
+                            input: {},
+                            output: {
+                                delayForInMs: 20000,
+                                success: true,
+                            },
+                        }),
+                        'step_4': GenericStepOutput.create({
+                            type: FlowActionType.LOOP_ON_ITEMS,
+                            status: StepOutputStatus.SUCCEEDED,
+                            input: {},
+                            output: {
+                                iterations: [
+                                    {
+                                        'step_7': GenericStepOutput.create({
+                                            'type': FlowActionType.PIECE,
+                                            'status': StepOutputStatus.SUCCEEDED,
+                                            'input': {
+                                                'unit': 'seconds',
+                                                'delayFor': '20',
+                                            },
+                                            'output': {
+                                                'delayForInMs': 20000,
+                                                'success': true,
+                                            },
+                                        }),
+                                    },
+                                ],
+                                item: 1,
+                                index: 0,
+                            },
+                        }),
+                    },
+                ],
+                item: 1,
+                index: 0,
+            },
+        }))
+        const modifiedExecutionState = upserted.setCurrentPath(StepExecutionPath.empty()
+            .loopIteration({
+                loopName: 'step_3',
+                iteration: 0,
+            })
+            .loopIteration({
+                loopName: 'step_4',
+                iteration: 0,
+            }),
+        )
+
+        const { resolvedInput: secondLevelResolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{step_7.output.delayForInMs}}', executionState: modifiedExecutionState })
+        expect(secondLevelResolvedInput).toEqual(20000)
+        const { resolvedInput: firstLevelResolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{step_8.output.delayForInMs}}', executionState: modifiedExecutionState })
+        expect(firstLevelResolvedInput).toEqual(20000)
+
+    })
+    test('Test resolve text with no variables', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: 'Hello world!', executionState })
+        expect(resolvedInput).toEqual(
+            'Hello world!',
+        )
+    })
+
+    test('Test resolve text with double variables', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: 'Price is {{ trigger.output.price }}', executionState })
+        expect(resolvedInput,
+        ).toEqual('Price is 6.4')
+    })
+
+    test('Test two adjacent {{ }} tokens resolve independently', async () => {
+        // Regression for #13094: greedy/non-greedy regex merged adjacent tokens.
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: '{{trigger.output.name}} costs {{trigger.output.price}}',
+            executionState,
+        })
+        expect(resolvedInput).toEqual('John costs 6.4')
+    })
+
+    test('Test resolve object steps variables', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{ {"where": "a"} }}', executionState })
+        expect(resolvedInput).toEqual(
+            {
+                where: 'a',
+            },
+        )
+    })
+
+    test('Test resolve object steps variables', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{trigger.output}}', executionState })
+        expect(resolvedInput).toEqual(
+            {
+                items: [5, 'a'],
+                name: 'John',
+                price: 6.4,
+                users: [
+                    {
+                        name: 'Alice',
+                    },
+                    {
+                        name: 'Bob',
+                    },
+                ],
+                lastNames: [
+                    'Smith',
+                    'Doe',
+                ],
+            },
+        )
+    })
+
+    test('flatten array path', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{flattenNestedKeys(trigger.output, [\'users\',\'name\'])}}', executionState })
+        expect(resolvedInput).toEqual(['Alice', 'Bob'])
+    })
+
+    test('merge multiple flatten array paths', async ()=>{
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{flattenNestedKeys(trigger.output, [\'users\',\'name\'])}} {{trigger.output.lastNames}}', executionState })
+        expect(resolvedInput).toEqual(['Alice Smith', 'Bob Doe'])
+    })
+
+    test('Test resolve steps variables', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{trigger.output.name}}', executionState })
+        expect(resolvedInput).toEqual(
+            'John',
+        )
+    })
+
+    test('Test resolve multiple variables', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{trigger.output.name}} {{trigger.output.name}}', executionState })
+        expect(
+            resolvedInput,
+        ).toEqual('John John')
+    })
+
+    test('Test resolve variable array items', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput:
+                '{{trigger.output.items[0]}} {{trigger.output.items[1]}}',
+            executionState,
+        })
+        expect(
+            resolvedInput,
+        ).toEqual('5 a')
+    })
+
+    test('Test resolve array variable', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{trigger.output.items}}', executionState })
+        expect(resolvedInput).toEqual(
+            [5, 'a'],
+        )
+    })
+
+    test('Test resolve integer from variables', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{trigger.output.items[0]}}', executionState })
+        expect(
+            resolvedInput,
+        ).toEqual(5)
+    })
+
+    test('Test resolve text with undefined variables', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput:
+                'test {{configs.bar}} {{trigger.output.items[4]}}',
+            executionState,
+        })
+        expect(
+            resolvedInput,
+        ).toEqual('test  ')
+    })
+
+    test('failed step output resolves to empty string', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: '{{step_4.output}}',
+            executionState: await buildStateWithFailedStep('step_4', 'Custom Runtime Error'),
+        })
+        expect(resolvedInput).toEqual('')
+    })
+
+    test('failed step output resolves to undefined inside an expression', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: '{{step_4.output === undefined}}',
+            executionState: await buildStateWithFailedStep('step_4', 'Custom Runtime Error'),
+        })
+        expect(resolvedInput).toEqual(true)
+    })
+
+    test('error channel exposes the failure message via bracket path', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: "{{step_4['error']['message']}}",
+            executionState: await buildStateWithFailedStep('step_4', 'Custom Runtime Error'),
+        })
+        expect(resolvedInput).toEqual('Custom Runtime Error')
+    })
+
+    test('error channel exposes the failure message via dot path', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: '{{step_4.error.message}}',
+            executionState: await buildStateWithFailedStep('step_4', 'Custom Runtime Error'),
+        })
+        expect(resolvedInput).toEqual('Custom Runtime Error')
+    })
+
+    test('error is undefined for SUCCEEDED step', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: '{{step_1.error}}',
+            executionState,
+        })
+        expect(resolvedInput).toEqual('')
+    })
+
+    test('non-existent step resolves to empty string', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: '{{step_99}}',
+            executionState: FlowExecutorContext.empty(),
+        })
+        expect(resolvedInput).toEqual('')
+    })
+
+    test('error channel resolves a failure inside a loop iteration', async () => {
+        const stateWithLoopFailure = (await FlowExecutorContext.empty().upsertStep('step_3', GenericStepOutput.create({
+            type: FlowActionType.LOOP_ON_ITEMS,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: {
+                iterations: [
+                    {
+                        step_8: GenericStepOutput.create({
+                            type: FlowActionType.PIECE,
+                            status: StepOutputStatus.FAILED,
+                            input: {},
+                        }).setErrorMessage('inner failure'),
+                    },
+                ],
+                item: 1,
+                index: 0,
+            },
+        }))).setCurrentPath(StepExecutionPath.empty().loopIteration({
+            loopName: 'step_3',
+            iteration: 0,
+        }))
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: "{{step_8['error']['message']}}",
+            executionState: stateWithLoopFailure,
+        })
+        expect(resolvedInput).toEqual('inner failure')
+    })
+
+    test('Q5. loop current-iteration item from inside loop subgraph', async () => {
+        const stateInsideLoop = (await FlowExecutorContext.empty().upsertStep('step_3', GenericStepOutput.create({
+            type: FlowActionType.LOOP_ON_ITEMS,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: {
+                iterations: [{}],
+                item: { a: 42 },
+                index: 0,
+            },
+        }))).setCurrentPath(StepExecutionPath.empty().loopIteration({
+            loopName: 'step_3',
+            iteration: 0,
+        }))
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: "{{step_3['output']['item']['a']}}",
+            executionState: stateInsideLoop,
+        })
+        expect(resolvedInput).toEqual(42)
+    })
+
+    test('Q7. step output is null (resolver normalizes nullish to empty string)', async () => {
+        const stateWithNullOutput = await FlowExecutorContext.empty().upsertStep('step_1', GenericStepOutput.create({
+            type: FlowActionType.PIECE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: null,
+        }))
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: "{{step_1['output']}}",
+            executionState: stateWithNullOutput,
+        })
+        expect(resolvedInput).toEqual('')
+    })
+
+    test('Q8. step output is a primitive number', async () => {
+        const stateWithPrimitive = await FlowExecutorContext.empty().upsertStep('step_1', GenericStepOutput.create({
+            type: FlowActionType.PIECE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: 42,
+        }))
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: "{{step_1['output']}}",
+            executionState: stateWithPrimitive,
+        })
+        expect(resolvedInput).toEqual(42)
+    })
+
+    test('Q9. step output is an array', async () => {
+        const stateWithArray = await FlowExecutorContext.empty().upsertStep('step_1', GenericStepOutput.create({
+            type: FlowActionType.PIECE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: ['a', 'b', 'c'],
+        }))
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: "{{step_1['output'][0]}}",
+            executionState: stateWithArray,
+        })
+        expect(resolvedInput).toEqual('a')
+    })
+
+    test('Test resolve empty text', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '', executionState })
+        expect(resolvedInput).toEqual('')
+    })
+
+
+    test('Test resolve empty variable operator', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{}}', executionState })
+        expect(resolvedInput).toEqual('')
+    })
+
+    test('Test resolve object', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput:
+            {
+                input: {
+                    foo: 'bar',
+                    nums: [1, 2, '{{trigger.output.items[0]}}'],
+                    var: '{{trigger.output.price}}',
+                },
+            },
+            executionState,
+        })
+        expect(
+            resolvedInput,
+        ).toEqual({ input: { foo: 'bar', nums: [1, 2, 5], var: 6.4 } })
+    })
+
+    test('Test resolve boolean from variables', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{step_1.output.success}}', executionState })
+        expect(resolvedInput).toEqual(
+            true,
+        )
+    })
+
+    test('Test resolve addition from variables', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{trigger.output.price + 2 - 3}}', executionState })
+        expect(resolvedInput).toEqual(
+            6.4 + 2 - 3,
+        )
+    })
+
+    test('Test resolve text with array variable', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: 'items are {{trigger.output.items}}', executionState })
+        expect(
+            resolvedInput,
+        ).toEqual('items are [5,"a"]')
+    })
+
+    test('Test resolve text with object variable', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput:
+                'values from trigger step: {{trigger.output}}',
+            executionState,
+        })
+        expect(
+            resolvedInput,
+        ).toEqual('values from trigger step: {"items":[5,"a"],"name":"John","price":6.4,"users":[{"name":"Alice"},{"name":"Bob"}],"lastNames":["Smith","Doe"]}')
+    })
+
+    test('Test use built-in Math Min function', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{Math.min(trigger.output.price + 2 - 3, 2)}}', executionState })
+        expect(resolvedInput).toEqual(
+            2,
+        )
+    })
+
+    test('Test use built-in Math Max function', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{Math.max(trigger.output.price + 2, 2)}}', executionState })
+        expect(resolvedInput).toEqual(
+            8.4,
+        )
+    })
+
+    test('AP formula: evaluates a wrapped pure formula expression', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: formulaEvaluator.wrap('uppercase({{trigger.output.name}})'),
+            executionState,
+        })
+        expect(resolvedInput).toEqual('JOHN')
+    })
+
+    test('AP formula: mixed-content field with wrapped formula evaluates and concatenates with text', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: `Dear ${formulaEvaluator.wrap('uppercase({{trigger.output.name}})')},`,
+            executionState,
+        })
+        expect(resolvedInput).toEqual('Dear JOHN,')
+    })
+
+    test('AP formula: function-shaped text without the wrapper passes through unchanged', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: 'sum(contributions) for Q1',
+            executionState,
+        })
+        expect(resolvedInput).toEqual('sum(contributions) for Q1')
+    })
+
+    test('AP formula: natural-language prose without the wrapper passes through unchanged', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: 'Please trim(spaces)',
+            executionState,
+        })
+        expect(resolvedInput).toEqual('Please trim(spaces)')
+    })
+
+    test('AP formula: variable substitution inside a wrapped pure formula', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: formulaEvaluator.wrap('combine({{trigger.output.name}};"!")'),
+            executionState,
+        })
+        expect(resolvedInput).toEqual('John!')
+    })
+
+    test('AP formula: wrapped formula failure throws FormulaEvaluationError', async () => {
+        await expect(
+            propsResolverService.resolve({
+                unresolvedInput: formulaEvaluator.wrap('divide({{trigger.output.price}}; 0)'),
+                executionState,
+            }),
+        ).rejects.toThrow(/Formula error/)
+    })
+
+    test('AP formula: wrapped formula failure inside mixed content also throws (no silent fallback)', async () => {
+        await expect(
+            propsResolverService.resolve({
+                unresolvedInput: `Score: ${formulaEvaluator.wrap('divide({{trigger.output.price}}; 0)')}`,
+                executionState,
+            }),
+        ).rejects.toThrow(/Formula error/)
+    })
+
+    test('AP formula: duplicate variables in a single formula resolve to the same value (one resolution per unique token)', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: formulaEvaluator.wrap('combine({{trigger.output.name}};{{trigger.output.name}};" + ")'),
+            executionState,
+        })
+        expect(resolvedInput).toEqual('John + John')
+    })
+
+    it('should not compress memory file in native value in non-logs mode', async () => {
+        const input = {
+            base64: 'memory://{"fileName":"hello.png","data":"iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z"}',
+        }
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: input,
+            executionState,
+        })
+        expect(resolvedInput).toEqual({
+            base64: 'memory://{"fileName":"hello.png","data":"iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z"}',
+        })
+    })
+
+    it('should not compress memory file in referenced value in non-logs mode', async () => {
+        const input = {
+            base64: '{{step_2.output}}',
+        }
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: input,
+            executionState,
+        })
+        expect(resolvedInput).toEqual({
+            base64: 'memory://{"fileName":"hello.png","data":"iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z"}',
+        })
+    })
+
+
+
+    it('should return base64 from base64 with mime only', async () => {
+        const input = {
+            base64WithMime: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z',
+            base64: 'iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z',
+        }
+        const props = {
+            base64WithMime: Property.File({
+                displayName: 'Base64',
+                required: true,
+            }),
+            base64: Property.File({
+                displayName: 'Base64',
+                required: true,
+            }),
+        }
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, {})
+        expect(processedInput).toEqual({
+            base64: null,
+            base64WithMime: new ApFile('unknown.png', Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z', 'base64'), 'png'),
+        })
+        expect(errors).toEqual({
+            'base64': [
+                'Expected file url or base64 with mimeType, received: iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z',
+            ],
+        })
+    })
+
+    it('should resolve files inside the array properties', async () => {
+        const input = {
+            documents: [
+                {
+                    file: 'https://cdn.activepieces.com/brand/logo.svg?token=123',
+                },
+            ],
+        }
+        const props = {
+            documents: Property.Array({
+                displayName: 'Documents',
+                required: true,
+                properties: {
+                    file: Property.File({
+                        displayName: 'File',
+                        required: true,
+                    }),
+                },
+            }),
+        }
+
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, {})
+        expect(processedInput.documents[0].file).toBeDefined()
+        expect(processedInput.documents[0].file.extension).toBe('svg')
+        expect(processedInput.documents[0].file.filename).toBe('logo.svg')
+        expect(errors).toEqual({})
+    })
+
+
+
+    it('should return error for invalid file inside the array properties', async () => {
+        const input = {
+            documents: [
+                {
+                    file: 'invalid-url',
+                },
+            ],
+        }
+        const props = {
+            documents: Property.Array({
+                displayName: 'Documents',
+                required: true,
+                properties: {
+                    file: Property.File({
+                        displayName: 'File',
+                        required: true,
+                    }),
+                },
+            }),
+        }
+
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, {})
+        expect(processedInput.documents[0].file).toBeNull()
+        expect(errors).toEqual({
+            'documents': {
+                properties: [{
+                    file: [
+                        'Expected file url or base64 with mimeType, received: invalid-url',
+                    ],
+                }],
+            },
+        })
+    })
+    it('should return images for image url', async () => {
+        const input = {
+            file: 'https://cdn.activepieces.com/brand/logo.svg?token=123',
+        }
+        const props = {
+            file: Property.File({
+                displayName: 'File',
+                required: true,
+            }),
+
+        }
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, {})
+        expect(processedInput.file).toBeDefined()
+        expect(processedInput.file.extension).toBe('svg')
+        expect(processedInput.file.filename).toBe('logo.svg')
+        expect(errors).toEqual({})
+    })
+
+    // Test with invalid url
+    it('should return error for invalid data', async () => {
+        const input = {
+            file: 'https://google.com',
+            nullFile: null,
+            nullOptionalFile: null,
+        }
+        const props = {
+            file: Property.File({
+                displayName: 'File',
+                required: true,
+            }),
+            nullFile: Property.File({
+                displayName: 'File',
+                required: true,
+            }),
+            nullOptionalFile: Property.File({
+                displayName: 'File',
+                required: false,
+            }),
+        }
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, {})
+
+        expect(processedInput.file).toBeDefined()
+        expect(processedInput.file.extension).toBe('html')
+        expect(processedInput.file.filename).toBe('unknown.html')
+        expect(processedInput.nullFile).toBeNull()
+        expect(processedInput.nullOptionalFile).toBeNull()
+
+        expect(errors).toEqual({
+            'nullFile': [
+                'Expected file url or base64 with mimeType, received: null',
+            ],
+        })
+    })
+
+
+    it('should return casted number for text', async () => {
+        const input = {
+            price: '0',
+            auth: {
+                age: '12',
+            },
+        }
+
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, {
+            price: Property.Number({
+                displayName: 'Price',
+                required: true,
+            }),
+        }, PieceAuth.CustomAuth({
+            required: true,
+            props: {
+                age: Property.Number({
+                    displayName: 'age',
+                    required: true,
+                }),
+            },
+        }), true, {})
+
+        expect(processedInput).toEqual({
+            auth: {
+                age: 12,
+            },
+            price: 0,
+        })
+        expect(errors).toEqual({})
+    })
+
+    it('should not error if auth configured, but no auth provided in input', async () => {
+        const input = {
+            price: '0',
+        }
+        const props = {
+            price: Property.Number({
+                displayName: 'Price',
+                required: true,
+            }),
+        }
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.CustomAuth({
+            required: true,
+            props: {},
+        }), false, {})
+
+        expect(processedInput).toEqual({
+            price: 0,
+        })
+        expect(errors).toEqual({})
+    })
+
+
+    it('should flatten arrays inside DYNAMIC properties', async () => {
+        const input = {
+            dynamicProp: {
+                items: {
+                    id: [1, 2],
+                    name: ['Item 1', 'Item 2'],
+                },
+            },
+        }
+        const propertySettings: Record<string, PropertySettings> = {
+            dynamicProp: {
+                type: PropertyExecutionType.MANUAL,
+                schema: {
+                    items: Property.Array({
+                        displayName: 'Items',
+                        required: true,
+                        properties: {
+                            id: Property.Number({
+                                displayName: 'ID',
+                                required: true,
+                            }),
+                            name: Property.LongText({
+                                displayName: 'Name',
+                                required: true,
+                            }),
+                        },
+                    }),
+                },
+            },
+        }
+        const props = {
+            dynamicProp: Property.DynamicProperties({
+                auth: undefined,
+                displayName: 'Dynamic Property',
+                required: true,
+                props: async () => {
+                    return {}
+                },
+                refreshers: [],
+            }),
+        }
+
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, propertySettings)
+
+        expect(processedInput.dynamicProp.items).toEqual([
+            { id: 1, name: 'Item 1' },
+            { id: 2, name: 'Item 2' },
+        ])
+        expect(errors).toEqual({})
+    })
+
+})
+
+describe('Array Flatter Processor', () => {
+    it('should flatten array of objects', async () => {
+        const input = {
+            items: {
+                id: [1, 2],
+                name: ['Item 1', 'Item 2'],
+            },
+        }
+        const props = {
+            items: Property.Array({
+                displayName: 'Items',
+                required: true,
+                properties: {
+                    id: Property.Number({
+                        displayName: 'ID',
+                        required: true,
+                    }),
+                    name: Property.LongText({
+                        displayName: 'Name',
+                        required: true,
+                    }),
+                },
+            }),
+        }
+
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, {})
+
+        expect(processedInput.items).toEqual([
+            { id: 1, name: 'Item 1' },
+            { id: 2, name: 'Item 2' },
+        ])
+        expect(errors).toEqual({})
+    })
+
+    it('should handle non-array properties gracefully', async () => {
+        const input = {
+            items: {
+                id: [1, 2],
+                name: 'Single Item', // Non-array property
+            },
+        }
+        const props = {
+            items: Property.Array({
+                displayName: 'Items',
+                required: true,
+                properties: {
+                    id: Property.Number({
+                        displayName: 'ID',
+                        required: true,
+                    }),
+                    name: Property.LongText({
+                        displayName: 'Name',
+                        required: true,
+                    }),
+                },
+            }),
+        }
+
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, {})
+
+        expect(processedInput.items).toEqual([
+            { id: 1, name: 'Single Item' },
+            { id: 2, name: 'Single Item' },
+        ])
+        expect(errors).toEqual({})
+    })
+
+    it('should handle arrays of unequal length', async () => {
+        const input = {
+            items: {
+                id: [1, 2, 3], // Longer array
+                name: ['Item 1', 'Item 2'], // Shorter array
+            },
+        }
+        const props = {
+            items: Property.Array({
+                displayName: 'Items',
+                required: true,
+                properties: {
+                    id: Property.Number({
+                        displayName: 'ID',
+                        required: true,
+                    }),
+                    name: Property.LongText({
+                        displayName: 'Name',
+                        required: false,
+                    }),
+                },
+            }),
+        }
+
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, {})
+
+        expect(processedInput.items).toEqual([
+            { id: 1, name: 'Item 1' },
+            { id: 2, name: 'Item 2' },
+            { id: 3, name: undefined }, // Handle missing name
+        ])
+        expect(errors).toEqual({})
+    })
+
+    it('should convert number to string for ShortText properties', async () => {
+        const input = {
+            items: {
+                id: 123,
+                name: 'Item Name',
+            },
+        }
+        const props = {
+            items: Property.Array({
+                displayName: 'Items',
+                required: true,
+                properties: {
+                    id: Property.ShortText({
+                        displayName: 'ID',
+                        required: true,
+                    }),
+                    name: Property.LongText({
+                        displayName: 'Name',
+                        required: true,
+                    }),
+                },
+            }),
+        }
+
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, {})
+
+        expect(processedInput.items).toEqual([
+            { id: '123', name: 'Item Name' },
+        ])
+        expect(errors).toEqual({})
+    })
+
+
+    it('should handle arrays with string values', async () => {
+        const input = {
+            items: {
+                id: '1',
+                name: 'item1',
+            },
+        }
+        const props = {
+            items: Property.Array({
+                displayName: 'Items',
+                required: true,
+                properties: {
+                    id: Property.ShortText({
+                        displayName: 'ID',
+                        required: true,
+                    }),
+                    name: Property.LongText({
+                        displayName: 'Name',
+                        required: true,
+                    }),
+                },
+            }),
+        }
+
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, {})
+
+        expect(processedInput.items).toEqual([
+            { id: '1', name: 'item1' },
+        ])
+        expect(errors).toEqual({})
+    })
+})

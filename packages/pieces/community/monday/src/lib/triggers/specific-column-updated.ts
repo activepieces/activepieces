@@ -3,7 +3,7 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { mondayAuth } from '../..';
+import { mondayAuth } from '../auth';
 import { makeClient, mondayCommon } from '../common';
 import {
   MondayNotWritableColumnType,
@@ -16,10 +16,14 @@ export const specificColumnValueUpdatedTrigger = createTrigger({
   name: 'monday_specific_column_updated',
   displayName: 'Specific Column Value Updated in Board',
   description: 'Triggers when a specific column value is updated in board.',
+  aiMetadata: {
+    description: 'Fires when the value of one chosen column changes on the selected monday.com board. Represents a single-column update event, carrying both the new and previous values for that column.',
+  },
   props: {
     workspace_id: mondayCommon.workspace_id(true),
     board_id: mondayCommon.board_id(true),
     column_id: Property.Dropdown({
+      auth: mondayAuth,
       displayName: 'Column ID',
       required: true,
       refreshers: ['board_id'],
@@ -32,7 +36,7 @@ export const specificColumnValueUpdatedTrigger = createTrigger({
             options: [],
           };
         }
-        const client = makeClient(auth as string);
+        const client = makeClient(auth);
         const res = await client.listBoardColumns({
           boardId: board_id as string,
         });
@@ -86,7 +90,7 @@ export const specificColumnValueUpdatedTrigger = createTrigger({
   async onEnable(context) {
     const { board_id, column_id } = context.propsValue;
 
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth);
     const res = await client.createWebhook({
       boardId: board_id,
       url: context.webhookUrl,
@@ -103,7 +107,7 @@ export const specificColumnValueUpdatedTrigger = createTrigger({
       'monday_specific_column_updated'
     );
     if (webhook != null) {
-      const client = makeClient(context.auth as string);
+      const client = makeClient(context.auth);
       await client.deleteWebhook({ webhookId: webhook.id });
     }
   },

@@ -3,7 +3,7 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
-import { zagomailAuth } from '../../index';
+import { zagomailAuth } from '../auth';
 import { zagoMailApiService, } from '../common/request';
 import { StoredWebhookId, WebhookResponse } from '../common/constants';
 
@@ -30,7 +30,7 @@ export const addedSubscriber = createTrigger({
   },
   async onEnable(context) {
     const response = (await zagoMailApiService.createWebhook(
-      context.auth,
+      context.auth.secret_text,
       context.webhookUrl,
       'subscriber-activate'
     )) as WebhookResponse;
@@ -42,7 +42,7 @@ export const addedSubscriber = createTrigger({
   async onDisable(context) {
     const webhook = await context.store.get<StoredWebhookId>(CACHE_KEY);
     if (!isNil(webhook) && !isNil(webhook.webhookId)) {
-      await zagoMailApiService.deleteWebhook(context.auth, webhook.webhookId);
+      await zagoMailApiService.deleteWebhook(context.auth.secret_text, webhook.webhookId);
     }
   },
   async run(context) {

@@ -1,11 +1,14 @@
 import { Property, DropdownOption } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient, AuthenticationType } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { mistralAuth } from './auth';
+import { mistralRequest } from './request';
 
 export const modelDropdown = Property.Dropdown({
 	displayName: 'Model',
 	description: 'Select a Mistral model. List is fetched live from your account.',
 	required: true,
 	refreshers: [],
+	auth: mistralAuth,
 	options: async ({ auth }) => {
 		if (!auth) {
 			return {
@@ -15,13 +18,11 @@ export const modelDropdown = Property.Dropdown({
 			};
 		}
 		try {
-			const response = await httpClient.sendRequest<{data:{id:string,name:string}[]}>({
+			const { baseUrl, headers } = mistralRequest.getConfig(auth);
+			const response = await httpClient.sendRequest<{ data: { id: string; name: string }[] }>({
 				method: HttpMethod.GET,
-				url: 'https://api.mistral.ai/v1/models',
-				authentication: {
-					type: AuthenticationType.BEARER_TOKEN,
-					token: auth as string,
-				},
+				url: `${baseUrl}/models`,
+				headers,
 			});
 			const models = response.body.data || [];
 			const options: DropdownOption<string>[] = models.map((model) => ({

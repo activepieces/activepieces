@@ -3,13 +3,10 @@ import { createSpace } from './lib/actions/create-space';
 import { listSpaces } from './lib/actions/list-spaces';
 import { addSpaceRecord } from './lib/actions/add-space-record';
 import { askSpace } from './lib/actions/ask-space';
+import { deleteSpace } from './lib/actions/delete-space';
+import { renameSpace } from './lib/actions/rename-space';
 import { PieceCategory } from '@activepieces/shared';
-
-export const medullarAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  required: true,
-  description: 'Please use your personal **API KEY**. You can generate one in your [Medullar account profile](https://my.medullar.com/my-account), under the **API Keys** section.',
-});
+import { medullarAuth } from './lib/auth';
 
 export const medullar = createPiece({
   displayName: 'Medullar',
@@ -17,10 +14,10 @@ export const medullar = createPiece({
     'AI-powered discovery & insight platform that acts as your extended digital mind',
   auth: medullarAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl:
+  logoUrl:  
     'https://cdn.activepieces.com/pieces/medullar.png',
   authors: ['mllopart'],
-  actions: [createSpace, listSpaces, addSpaceRecord, askSpace],
+  actions: [createSpace, listSpaces, addSpaceRecord, askSpace, deleteSpace, renameSpace],
   triggers: [],
   categories: [
     PieceCategory.ARTIFICIAL_INTELLIGENCE,

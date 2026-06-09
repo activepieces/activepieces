@@ -12,6 +12,7 @@ export const youtubeAuth = PieceAuth.OAuth2({
        - https://www.googleapis.com/auth/youtube
        - https://www.googleapis.com/auth/youtube.readonly
        - https://www.googleapis.com/auth/youtube.upload	
+       - https://www.googleapis.com/auth/youtube.force-ssl
     8. Click Save and Continue to finish the Scopes step.
     9. Click on the Add Users button and add a test email You can add your own email).Then finally click Save and Continue to finish the Test Users portion.
     10. Go to **Credentials**. Click on the **Create Credentials** button and select the **OAuth client ID** option.
@@ -26,5 +27,6 @@ export const youtubeAuth = PieceAuth.OAuth2({
     'https://www.googleapis.com/auth/youtube',
     'https://www.googleapis.com/auth/youtube.readonly',
     'https://www.googleapis.com/auth/youtube.upload',
+    'https://www.googleapis.com/auth/youtube.force-ssl'
   ],
 });

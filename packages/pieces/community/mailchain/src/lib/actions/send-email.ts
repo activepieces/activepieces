@@ -1,5 +1,4 @@
 import { createAction } from '@activepieces/pieces-framework';
-// eslint-disable-next-line @nx/enforce-module-boundaries
 import { Mailchain } from '@mailchain/sdk';
 import { mailchainCommon } from '../common/common';
 
@@ -20,7 +19,7 @@ export const sendEmail = createAction({
       const secretRecoveryPhrase = auth;
 
       const mailchain =
-        Mailchain.fromSecretRecoveryPhrase(secretRecoveryPhrase);
+        Mailchain.fromSecretRecoveryPhrase(secretRecoveryPhrase.secret_text);
 
       const user = await mailchain.user();
       console.log(`username: ${user.username}, address: ${user.address}`);

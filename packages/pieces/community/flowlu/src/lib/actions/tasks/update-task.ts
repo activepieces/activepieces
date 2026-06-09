@@ -3,7 +3,7 @@ import {
   createAction,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { flowluAuth } from '../../../';
+import { flowluAuth } from '../../auth';
 import { flowluCommon, makeClient } from '../../common';
 import { flowluProps } from '../../common/props';
 
@@ -12,6 +12,8 @@ export const updateTaskAction = createAction({
   name: 'flowlu_update_task',
   displayName: 'Update Task',
   description: 'Updates an existing task.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates fields on an existing task in Flowlu, identified by its task id. Use to change a task\'s name, priority, dates, assignee, type, or workflow stage. The task id is required and must reference an existing task.', idempotent: false },
   props: {
     task_id: flowluCommon.task_id(true),
     name: Property.ShortText({
@@ -22,7 +24,7 @@ export const updateTaskAction = createAction({
   },
   async run(context) {
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof flowluAuth>
+      context.auth
     );
     return await client.updateTask(context.propsValue.task_id!, {
       name: context.propsValue.name,

@@ -1,4 +1,4 @@
-import { straicoAuth } from '../../index';
+import { straicoAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
@@ -38,7 +38,7 @@ export const agentList = createAction({
       method: HttpMethod.GET,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth as string,
+        token: auth.secret_text,
       },
     });
 

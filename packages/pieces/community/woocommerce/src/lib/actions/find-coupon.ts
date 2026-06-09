@@ -6,7 +6,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 
-import { wooAuth } from '../..';
+import { wooAuth } from '../auth';
 
 export const wooFindCoupon = createAction({
   name: 'Find Coupon',
@@ -21,7 +21,7 @@ export const wooFindCoupon = createAction({
     }),
   },
   async run(configValue) {
-    const trimmedBaseUrl = configValue.auth.baseUrl.replace(/\/$/, '');
+    const trimmedBaseUrl = configValue.auth.props.baseUrl.replace(/\/$/, '');
     const couponId = configValue.propsValue['id'];
 
     const request: HttpRequest = {
@@ -29,8 +29,8 @@ export const wooFindCoupon = createAction({
       url: `${trimmedBaseUrl}/wp-json/wc/v3/coupons/${couponId}`,
       authentication: {
         type: AuthenticationType.BASIC,
-        username: configValue.auth.consumerKey,
-        password: configValue.auth.consumerSecret,
+        username: configValue.auth.props.consumerKey,
+        password: configValue.auth.props.consumerSecret,
       },
     };
 

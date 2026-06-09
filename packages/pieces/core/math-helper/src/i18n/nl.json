@@ -1,0 +1,17 @@
+{
+  "\nPerform mathematical operations.\n": "\nVoer wiskundige acties uit.\n",
+  "Addition": "Toevoeging",
+  "Subtraction": "Aftrekken",
+  "Multiplication": "Vermenigvuldigen",
+  "Division": "Divisie",
+  "Modulo": "Modulo",
+  "Generate Random Number": "Willekeurig Nummer genereren",
+  "Add the first number and the second number": "Voeg het eerste nummer en het tweede nummer toe",
+  "Subtract the first number from the second number": "Trek het eerste getal af van het tweede getal",
+  "Multiply first number by the second number": "Vermenigvuldig het eerste getal met het tweede getal",
+  "Divide first number by the second number": "Deel het eerste getal door het tweede getal",
+  "Get the remainder of the first number divided by second number": "Krijg de rest van het eerste getal gedeeld door het tweede getal",
+  "Generate random number between two numbers (inclusive)": "Genereer willekeurig getal tussen twee getallen (inclusief)",
+  "First Number": "Eerste nummer",
+  "Second Number": "Tweede getal"
+}

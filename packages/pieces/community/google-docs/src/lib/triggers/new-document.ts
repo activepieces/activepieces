@@ -1,23 +1,21 @@
-import { googleDocsAuth } from '../../index';
+import { googleDocsAuth, createGoogleClient } from '../auth';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import {
+	AppConnectionValueForAuthProperty,
 	createTrigger,
-	PiecePropValueSchema,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { folderIdProp } from '../common/props';
 import dayjs from 'dayjs';
 import { google, drive_v3 } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 
 type Props = {
 	folderId?: string;
 };
 
-const polling: Polling<PiecePropValueSchema<typeof googleDocsAuth>, Props> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof googleDocsAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const authValue = auth as PiecePropValueSchema<typeof googleDocsAuth>;
 		const folderId = propsValue.folderId;
 
 		const q = ["mimeType='application/vnd.google-apps.document'", 'trashed = false'];
@@ -28,8 +26,7 @@ const polling: Polling<PiecePropValueSchema<typeof googleDocsAuth>, Props> = {
 			q.push(`'${folderId}' in parents`);
 		}
 
-		const authClient = new OAuth2Client();
-		authClient.setCredentials(authValue);
+		const authClient = await createGoogleClient(auth);
 
 		const drive = google.drive({ version: 'v3', auth: authClient });
 
@@ -43,6 +40,7 @@ const polling: Polling<PiecePropValueSchema<typeof googleDocsAuth>, Props> = {
 				orderBy: 'createdTime desc',
 				supportsAllDrives: true,
 				includeItemsFromAllDrives: true,
+				corpora: 'allDrives',
 				pageToken: nextPageToken,
 			});
 
@@ -69,6 +67,10 @@ export const newDocumentTrigger = createTrigger({
 	name: 'new-document',
 	displayName: 'New Document',
 	description: 'Triggers when a new document is added to a specific folder(optional).',
+	aiMetadata: {
+		description:
+			'Fires when a new Google Docs document is created, optionally limited to a specific Drive folder. Use to react when a document first appears; it does not fire on edits to existing documents.',
+	},
 	type: TriggerStrategy.POLLING,
 	props: {
 		folderId: folderIdProp,

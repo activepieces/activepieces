@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { ticktickAuth } from '../../index';
+import { ticktickAuth } from '../auth';
 import { tickTickApiCall } from '../common/client';
 import { TICKTICK_TASK_STATUS_INCOMPLETE } from '../common/constants';
 import { projectId } from '../common/props';
@@ -12,6 +12,10 @@ export const newTaskCreatedTrigger = createTrigger({
 	name: 'new_task_created',
 	displayName: 'New Task Created',
 	description: 'Triggers when a new task is created in a selected project.',
+	aiMetadata: {
+		description:
+			'Fires for each new task that appears in a selected TickTick list (project) since the last poll. Represents a newly added task; use to start a flow whenever a task is created in that list.',
+	},
 	props: {
 		projectId: projectId({
 			displayName: 'Project',

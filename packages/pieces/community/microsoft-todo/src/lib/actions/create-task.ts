@@ -1,7 +1,6 @@
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { getTaskListsDropdown } from '../common';
-import { microsoftToDoAuth } from '../../index';
-import { Client } from '@microsoft/microsoft-graph-client';
+import { getTaskListsDropdown, createTodoClient } from '../common';
+import { microsoftToDoAuth } from '../auth';
 import { Importance, TaskStatus, TodoTask } from '@microsoft/microsoft-graph-types';
 
 export const createTask = createAction({
@@ -9,8 +8,11 @@ export const createTask = createAction({
 	name: 'create_task',
 	displayName: 'Create Task',
 	description: 'Creates a new task.',
+	audience: 'both',
+	aiMetadata: { description: 'Create a new to-do task inside a specific Microsoft To Do task list, optionally setting title, body/notes, importance, status, due/reminder/start dates, and categories. Use to add an item to a user\'s list; requires a target task list id (resolve via the list-tasks/find actions if you only have a name). Not idempotent — each call appends a new task even with identical input.', idempotent: false },
 	props: {
 		task_list_id: Property.Dropdown({
+			auth: microsoftToDoAuth,
 			displayName: 'Task List',
 			description: 'The task list to create the task in.',
 			required: true,
@@ -96,11 +98,7 @@ export const createTask = createAction({
 			categories,
 		} = propsValue;
 
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(auth.access_token),
-			},
-		});
+		const client = createTodoClient(auth);
 
 		const taskBody: TodoTask = {
 			title,

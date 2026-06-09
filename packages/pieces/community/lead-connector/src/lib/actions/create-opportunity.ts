@@ -20,8 +20,11 @@ export const createOpportunityAction = createAction({
   name: 'create_opportunity',
   displayName: 'Create Opportunity',
   description: 'Create a new opportunity.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new sales opportunity in a GoHighLevel/LeadConnector pipeline, tied to a contact and placed in a chosen pipeline stage with a status (open/won/lost/abandoned). Use to start tracking a deal. Requires pipeline, stage, title, contact, and status; not idempotent — each call creates a separate opportunity.', idempotent: false },
   props: {
     pipeline: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Pipeline',
       description: 'The ID of the pipeline to use.',
       required: true,
@@ -46,6 +49,7 @@ export const createOpportunityAction = createAction({
       },
     }),
     stage: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Stage',
       description: 'The stage of the pipeline to use.',
       required: true,
@@ -79,6 +83,7 @@ export const createOpportunityAction = createAction({
       required: true,
     }),
     contact: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Contact',
       description: 'The contact to use.',
       required: true,
@@ -102,6 +107,7 @@ export const createOpportunityAction = createAction({
       },
     }),
     status: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Status',
       required: true,
       refreshers: [],
@@ -119,6 +125,7 @@ export const createOpportunityAction = createAction({
       },
     }),
     assignedTo: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Assigned To',
       required: false,
       refreshers: [],

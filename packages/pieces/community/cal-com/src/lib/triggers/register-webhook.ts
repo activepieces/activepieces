@@ -21,7 +21,7 @@ export const registerWebhooks = ({
   description: string;
   displayName: string;
   sampleData: Record<string, unknown>;
-}): Trigger =>
+}) =>
   createTrigger({
     auth: calcomAuth,
     name,
@@ -40,7 +40,7 @@ export const registerWebhooks = ({
           active: true,
         },
         queryParams: {
-          apiKey: context.auth,
+          apiKey: context.auth.secret_text,
         },
       };
 
@@ -65,7 +65,7 @@ export const registerWebhooks = ({
           method: HttpMethod.DELETE,
           url: `https://api.cal.com/v1/webhooks/${data.id}`,
           queryParams: {
-            apiKey: context.auth,
+            apiKey: context.auth.secret_text,
           },
         };
 

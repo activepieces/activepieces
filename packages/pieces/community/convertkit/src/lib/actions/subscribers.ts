@@ -40,7 +40,7 @@ export const getSubscriberById = createAction({
   },
   run(context) {
     const { subscriberId } = context.propsValue;
-    return fetchSubscriperById(context.auth, subscriberId);
+    return fetchSubscriperById(context.auth.secret_text, subscriberId);
   },
 });
 
@@ -54,7 +54,7 @@ export const getSubscriberByEmail = createAction({
   },
   async run(context) {
     const { email_address } = context.propsValue;
-    return fetchSubscriberByEmail(context.auth, email_address);
+    return fetchSubscriberByEmail(context.auth.secret_text, email_address);
   },
 });
 
@@ -88,7 +88,7 @@ export const listSubscribers = createAction({
     const url = SUBSCRIBERS_API_ENDPOINT;
 
     const body = {
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
       page,
       from,
       to,
@@ -134,7 +134,7 @@ export const updateSubscriber = createAction({
 
     const url = `${SUBSCRIBERS_API_ENDPOINT}/${subscriberId}`;
     const body = {
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
       email_address: emailAddress,
       first_name: firstName,
       fields,
@@ -170,7 +170,7 @@ export const unsubscribeSubscriber = createAction({
     const { email } = context.propsValue;
     const url = `${CONVERTKIT_API_URL}/unsubscribe`;
 
-    const body = { email, api_secret: context.auth };
+    const body = { email, api_secret: context.auth.secret_text };
 
     const request: HttpRequest = {
       url,
@@ -200,7 +200,7 @@ export const listTagsBySubscriberId = createAction({
   },
   run(context) {
     const { subscriberId } = context.propsValue;
-    return fetchSubscribedTags(context.auth, subscriberId);
+    return fetchSubscribedTags(context.auth.secret_text, subscriberId);
   },
 });
 
@@ -215,9 +215,9 @@ export const listSubscriberTagsByEmail = createAction({
   async run(context) {
     const { email_address } = context.propsValue;
     const subscriberId = await fetchSubscriberByEmail(
-      context.auth,
+      context.auth.secret_text,
       email_address
     );
-    return fetchSubscribedTags(context.auth, subscriberId.id);
+    return fetchSubscribedTags(context.auth.secret_text, subscriberId.id);
   },
 });

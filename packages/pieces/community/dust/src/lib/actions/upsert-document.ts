@@ -5,7 +5,8 @@ import {
   HttpRequest,
 } from '@activepieces/pieces-common';
 import { DUST_BASE_URL } from '../common';
-import { dustAuth, DustAuthType } from '../..';
+import { dustAuth } from '../..';
+import { DustAuthType } from '../..';
 import mimeTypes from 'mime-types';
 
 export const upsertDocument = createAction({
@@ -46,7 +47,7 @@ export const upsertDocument = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const dustAuth = auth as DustAuthType;
+    const dustAuth = auth.props;
     const tags = propsValue.title
       ? [`title:${propsValue.title}`, ...(propsValue.tags as string[])]
       : (propsValue.tags as string[]);
@@ -59,7 +60,7 @@ export const upsertDocument = createAction({
       )}`,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${auth.apiKey}`,
+        Authorization: `Bearer ${auth.props.apiKey}`,
       },
       body: JSON.stringify(
         {

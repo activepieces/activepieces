@@ -7,9 +7,14 @@ import { getQuestion } from './lib/actions/get-question';
 import { getQuestionPngPreview } from './lib/actions/get-png-rendering';
 import { getDashboardQuestions } from './lib/actions/get-dashboard';
 import { queryMetabaseApi } from './lib/common';
-import { HttpMethod, is_chromium_installed } from '@activepieces/pieces-common';
+import {
+  createCustomApiCallAction,
+  HttpMethod,
+  is_chromium_installed,
+} from '@activepieces/pieces-common';
 import { getGraphQuestion } from './lib/actions/get-graph-question';
 import { embedQuestion } from './lib/actions/embed-question';
+import { AppConnectionType } from '@activepieces/shared';
 
 const baseProps = {
   baseUrl: Property.ShortText({
@@ -48,7 +53,10 @@ export const metabaseAuth = PieceAuth.CustomAuth({
           endpoint: 'login-history/current',
           method: HttpMethod.GET,
         },
-        auth
+        {
+          type: AppConnectionType.CUSTOM_AUTH,
+          props: auth,
+        }
       );
       return {
         valid: true,
@@ -76,6 +84,14 @@ export const metabase = createPiece({
     getDashboardQuestions,
     embedQuestion,
     ...(is_chromium_installed() ? [getGraphQuestion] : []),
+    createCustomApiCallAction({
+      auth: metabaseAuth,
+      baseUrl: (auth) =>
+        auth ? `${auth.props.baseUrl.replace(/\/$/, '')}/api` : '',
+      authMapping: async (auth) => ({
+        'X-API-KEY': auth.props.apiKey,
+      }),
+    }),
   ],
   triggers: [],
 });

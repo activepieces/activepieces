@@ -10,6 +10,8 @@ export const listPostsAction = createAction({
 	name: 'list_posts',
 	displayName: 'List Posts',
 	description: 'Retrieves all posts belonging to a specific publication.',
+	audience: 'both',
+	aiMetadata: { description: 'Lists posts for a beehiiv publication, filterable by audience (free/premium), platform (web/email), status (draft/confirmed/archived), and content tags, with optional expanded fields like stats or content. When neither page nor limit is set it auto-paginates and returns all matching posts; otherwise it returns the requested page. Use to find or enumerate newsletter posts. Read-only and idempotent.', idempotent: true },
 	props: {
 		publicationId: publicationId,
 		expand: Property.StaticMultiSelectDropdown({
@@ -100,7 +102,7 @@ export const listPostsAction = createAction({
 
 		if (isNil(page) && isNil(limit)) {
 			const response = await BeehiivPaginatedApiCall({
-				apiKey: context.auth,
+				apiKey: context.auth.secret_text,
 				method: HttpMethod.GET,
 				resourceUri: `/publications/${publicationId}/automations`,
 				query: queryParams,
@@ -110,7 +112,7 @@ export const listPostsAction = createAction({
 		}
 
 		const response = await beehiivApiCall<{ data: Record<string, any>[] }>({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: `/publications/${publicationId}/automations`,
 			query: {

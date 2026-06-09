@@ -15,6 +15,8 @@ export const sendNotification = createAction({
   name: 'send_notification',
   displayName: 'Send Notification',
   description: 'Send a notification to ntfy',
+  audience: 'both',
+  aiMetadata: { description: 'Publishes a push notification to a ntfy topic on the configured ntfy server, optionally with a title, priority (1-5), tags, icon, click-through URL, action buttons, or scheduled delay. Choose this to alert a user or channel via ntfy. Requires a topic and message; each call sends a new notification (not idempotent).', idempotent: false },
   props: {
     topic: Property.ShortText({
       displayName: 'Topic',
@@ -68,8 +70,8 @@ export const sendNotification = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const baseUrl = auth.base_url.replace(/\/$/, '');
-    const accessToken = auth.access_token;
+    const baseUrl = auth.props.base_url.replace(/\/$/, '');
+    const accessToken = auth.props.access_token;
 
     const topic = propsValue.topic;
     let title = propsValue.title;

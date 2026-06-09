@@ -3,18 +3,21 @@ import { makeClient, mondayCommon } from '../common';
 import { MondayColumnType } from '../common/constants';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import FormData from 'form-data';
-import { mondayAuth } from '../../';
+import { mondayAuth } from '../auth';
 
 export const uploadFileToColumnAction = createAction({
   auth: mondayAuth,
   name: 'monday_upload_file_to_column',
   displayName: 'Upload File to Column',
   description: 'Upload a file to a column in Monday.',
+  audience: 'both',
+  aiMetadata: { description: 'Uploads a file (from URL or base64) and attaches it to a file-type column on a monday.com item, identified by board, item, and file column id. Use to add an attachment to an item. Not idempotent: each call uploads and attaches another copy.', idempotent: false },
   props: {
     workspace_id: mondayCommon.workspace_id(true),
     board_id: mondayCommon.board_id(true),
     item_id: mondayCommon.item_id(true),
     file_column_id: Property.Dropdown({
+      auth: mondayAuth,
       displayName: 'File Column ID',
       required: true,
       refreshers: ['board_id'],
@@ -27,7 +30,7 @@ export const uploadFileToColumnAction = createAction({
             options: [],
           };
         }
-        const client = makeClient(auth as string);
+        const client = makeClient(auth);
         const res = await client.listBoardColumns({
           boardId: board_id as string,
         });
@@ -93,7 +96,7 @@ export const uploadFileToColumnAction = createAction({
       url: 'https://api.monday.com/v2/file',
       headers: {
         'API-Version': '2024-01',
-        Authorization: context.auth,
+        Authorization: context.auth.secret_text,
         ...formData.getHeaders(),
       },
       body: formData,

@@ -28,7 +28,7 @@ const sendyPostAPI = async (
   auth: SendyAuthType,
   body: KeyValuePair = {}
 ) => {
-  const { apiKey, domain, brandId } = auth;
+  const { apiKey, domain, brandId } = auth.props;
 
   body['api_key'] = apiKey;
   body['brand_id'] = brandId;

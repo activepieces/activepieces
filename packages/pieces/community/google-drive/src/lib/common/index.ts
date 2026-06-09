@@ -4,18 +4,27 @@ import {
   AuthenticationType,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { OAuth2Client } from 'googleapis-common';
 import { google } from 'googleapis';
+import { googleDriveAuth, GoogleDriveAuthValue, getAccessToken, createGoogleClient } from '../auth';
+
+const FOLDER_DROPDOWN_PAGE_SIZE = 1000;
+
+const escapeDriveQueryLiteral = (value: string): string =>
+  value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
 export const common = {
   properties: {
     parentFolder: Property.Dropdown({
       displayName: 'Parent Folder',
+      description:
+        "The Drive folder to target. Leave empty to use the root of My Drive. Type in the box to search your Drive by folder name. If the folder still isn't listed, switch this field to 'Dynamic value' (the toggle next to the field) and paste the folder ID — you can copy it from the folder's URL in Drive, after /folders/ (e.g. https://drive.google.com/drive/folders/<FOLDER_ID>).",
       required: false,
+      auth: googleDriveAuth,
       refreshers: ['include_team_drives'],
-      options: async ({ auth, include_team_drives }) => {
+      refreshOnSearch: true,
+      options: async ({ auth, include_team_drives }, ctx) => {
         if (!auth) {
           return {
             disabled: true,
@@ -23,42 +32,50 @@ export const common = {
             placeholder: 'Please authenticate first',
           };
         }
-        const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+        const authValue = auth as GoogleDriveAuthValue;
+        const accessToken = await getAccessToken(authValue);
+        const searchValue = ctx?.searchValue?.trim() ?? '';
+        const qParts = [
+          "mimeType='application/vnd.google-apps.folder'",
+          'trashed = false',
+        ];
+        if (searchValue.length > 0) {
+          qParts.push(`name contains '${escapeDriveQueryLiteral(searchValue)}'`);
+        }
+        const request: HttpRequest = {
+          method: HttpMethod.GET,
+          url: `https://www.googleapis.com/drive/v3/files`,
+          queryParams: {
+            q: qParts.join(' and '),
+            includeItemsFromAllDrives: include_team_drives ? 'true' : 'false',
+            supportsAllDrives: 'true',
+            corpora: include_team_drives ? 'allDrives' : 'user',
+            pageSize: String(FOLDER_DROPDOWN_PAGE_SIZE),
+            fields: 'nextPageToken, files(id, name)',
+          },
+          authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: accessToken,
+          },
+        };
         let folders: { id: string; name: string }[] = [];
-        let pageToken = null;
-        do {
-          const request: HttpRequest = {
-            method: HttpMethod.GET,
-            url: `https://www.googleapis.com/drive/v3/files`,
-            queryParams: {
-              q: "mimeType='application/vnd.google-apps.folder' and trashed = false",
-              includeItemsFromAllDrives: include_team_drives ? 'true' : 'false',
-              supportsAllDrives: 'true',
-            },
-            authentication: {
-              type: AuthenticationType.BEARER_TOKEN,
-              token: authProp!['access_token'],
-            },
-          };
-          if (pageToken) {
-            if (request.queryParams !== undefined) {
-              request.queryParams['pageToken'] = pageToken;
-            }
-          }
-          try {
-            const response = await httpClient.sendRequest<{
-              files: { id: string; name: string }[];
-              nextPageToken: string;
-            }>(request);
-            folders = folders.concat(response.body.files);
-            pageToken = response.body.nextPageToken;
-          } catch (e) {
-            throw new Error(`Failed to get folders\nError:${e}`);
-          }
-        } while (pageToken);
+        let truncated = false;
+        try {
+          const response = await httpClient.sendRequest<{
+            files: { id: string; name: string }[];
+            nextPageToken?: string;
+          }>(request);
+          folders = response.body.files ?? [];
+          truncated = Boolean(response.body.nextPageToken);
+        } catch (e) {
+          throw new Error(`Failed to get folders\nError:${e}`);
+        }
 
         return {
           disabled: false,
+          placeholder: truncated
+            ? `Showing first ${folders.length} matches — type to narrow the list, or switch to Dynamic value to paste an ID.`
+            : undefined,
           options: folders.map((folder: { id: string; name: string }) => {
             return {
               label: folder.name,
@@ -78,7 +95,7 @@ export const common = {
   },
 
   async getFiles(
-    auth: OAuth2PropertyValue,
+    auth: GoogleDriveAuthValue,
     search?: {
       parent?: string;
       createdTime?: string | number | Date;
@@ -87,8 +104,7 @@ export const common = {
     },
     order?: string
   ) {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(auth);
+    const authClient = await createGoogleClient(auth);
 
     const drive = google.drive({ version: 'v3', auth: authClient });
 
@@ -101,19 +117,28 @@ export const common = {
         ).format()}'`
       );
     q.push(`trashed = false`);
-    const response = await drive.files.list({
-      q: q.concat("mimeType!='application/vnd.google-apps.folder'").join(' and '),
-      fields: 'files(id, name, mimeType, webViewLink, kind)',
-      orderBy: order ?? 'createdTime desc',
-      supportsAllDrives: true,
-      includeItemsFromAllDrives: search?.includeTeamDrive,
-    });    
+    const allFiles: any[] = [];
+    let pageToken: string | undefined = undefined;
+    do {
+      const listParams: Record<string, any> = {
+        q: q.concat("mimeType!='application/vnd.google-apps.folder'").join(' and '),
+        fields: 'nextPageToken, files(id, name, mimeType, webViewLink, kind, createdTime)',
+        orderBy: order ?? 'createdTime desc',
+        supportsAllDrives: true,
+        includeItemsFromAllDrives: search?.includeTeamDrive,
+        corpora: search?.includeTeamDrive ? 'allDrives' : 'user',
+      };
+      if (pageToken) listParams.pageToken = pageToken;
+      const response = await drive.files.list(listParams);
+      allFiles.push(...(response.data.files ?? []));
+      pageToken = response.data.nextPageToken ?? undefined;
+    } while (pageToken);
 
-    return response.data.files;
+    return allFiles;
   },
 
   async getFolders(
-    auth: OAuth2PropertyValue,
+    auth: GoogleDriveAuthValue,
     search?: {
       parent?: string;
       createdTime?: string | number | Date;
@@ -122,6 +147,10 @@ export const common = {
     },
     order?: string
   ) {
+    const authClient = await createGoogleClient(auth);
+
+    const drive = google.drive({ version: 'v3', auth: authClient });
+
     const q: string[] = [`mimeType='application/vnd.google-apps.folder'`];
     if (search?.parent) q.push(`'${search.parent}' in parents`);
     if (search?.createdTime)
@@ -131,23 +160,23 @@ export const common = {
         ).format()}'`
       );
     q.push(`trashed = false`);
-    const response = await httpClient.sendRequest<{
-      files: { id: string; name: string }[];
-    }>({
-      method: HttpMethod.GET,
-      url: `https://www.googleapis.com/drive/v3/files`,
-      queryParams: {
+    const allFolders: any[] = [];
+    let pageToken: string | undefined = undefined;
+    do {
+      const listParams: Record<string, any> = {
         q: q.join(' and '),
+        fields: 'nextPageToken, files(id, name, createdTime)',
         orderBy: order ?? 'createdTime desc',
-        supportsAllDrives: 'true',
-        includeItemsFromAllDrives: search?.includeTeamDrive? 'true':'false',
-      },
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth.access_token,
-      },
-    });
+        supportsAllDrives: true,
+        includeItemsFromAllDrives: search?.includeTeamDrive,
+        corpora: search?.includeTeamDrive ? 'allDrives' : 'user',
+      };
+      if (pageToken) listParams.pageToken = pageToken;
+      const response = await drive.files.list(listParams);
+      allFolders.push(...(response.data.files ?? []));
+      pageToken = response.data.nextPageToken ?? undefined;
+    } while (pageToken);
 
-    return response.body.files;
+    return allFolders;
   },
 };

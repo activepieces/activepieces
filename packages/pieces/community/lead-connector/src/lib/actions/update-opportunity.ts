@@ -22,8 +22,11 @@ export const updateOpportunityAction = createAction({
   name: 'update_opportunity',
   displayName: 'Update Opportunity',
   description: 'Updates an existing opportunity.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing GoHighLevel/LeadConnector opportunity identified by pipeline and opportunity ID, changing stage, status, title, contact, assignee, or monetary value. Omitted stage/title/status are backfilled from the current opportunity. Use to advance or edit a known deal; idempotent — repeating with the same input leaves the opportunity in the same state.', idempotent: true },
   props: {
     pipeline: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Pipeline',
       description: 'The ID of the pipeline to use.',
       required: true,
@@ -48,6 +51,7 @@ export const updateOpportunityAction = createAction({
       },
     }),
     opportunity: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Opportunity',
       required: true,
       refreshers: ['pipeline'],
@@ -74,6 +78,7 @@ export const updateOpportunityAction = createAction({
       },
     }),
     stage: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Stage',
       description: 'The stage of the pipeline to use.',
       required: false,
@@ -107,6 +112,7 @@ export const updateOpportunityAction = createAction({
       required: false,
     }),
     contact: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Contact',
       description: 'The contact to use.',
       required: false,
@@ -130,6 +136,7 @@ export const updateOpportunityAction = createAction({
       },
     }),
     status: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Status',
       required: false,
       refreshers: [],
@@ -147,6 +154,7 @@ export const updateOpportunityAction = createAction({
       },
     }),
     assignedTo: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Assigned To',
       required: false,
       refreshers: [],

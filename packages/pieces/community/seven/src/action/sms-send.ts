@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { sevenAuth } from '../index';
+import { sevenAuth } from '../lib/auth';
 import { callSevenApi } from '../common';
 
 export const sendSmsAction = createAction({
@@ -45,7 +45,7 @@ export const sendSmsAction = createAction({
         to
       },
       method: HttpMethod.POST
-    }, 'sms', context.auth as string);
+    }, 'sms', context.auth.secret_text);
 
     return response.body;
 

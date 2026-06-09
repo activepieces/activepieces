@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { firefliesAiAuth } from '../../index';
+import { firefliesAiAuth } from '../auth';
 import { BASE_URL } from '../common';
 
 export const findMeetingByQueryAction = createAction({
@@ -8,6 +8,8 @@ export const findMeetingByQueryAction = createAction({
 	name: 'find_meeting_by_query',
 	displayName: 'Find Meeting by Call Deatils',
 	description: 'Searches meetings based on provided parameters.',
+	audience: 'both',
+	aiMetadata: { description: 'Searches Fireflies meeting transcripts, optionally filtered by title, host email, participant email, and/or date, paging through all matches. Use when locating meetings by attributes rather than a known ID; leaving all filters empty returns the full meeting history. Read-only and idempotent.', idempotent: true },
 	props: {
 		title: Property.ShortText({
 			displayName: 'Meeting Title',
@@ -146,7 +148,7 @@ export const findMeetingByQueryAction = createAction({
 				method: HttpMethod.POST,
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
-					token: auth,
+					token: auth.secret_text,
 				},
 				body: {
 					query: query,

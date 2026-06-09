@@ -53,7 +53,7 @@ export const flowisePredict = createAction({
     }),
   },
   async run(ctx) {
-    const { base_url, access_token } = ctx.auth;
+    const { base_url, access_token } = ctx.auth.props;
     const chatflow_id = ctx.propsValue['chatflow_id'];
     const input = ctx.propsValue['input'];
     const url = `${base_url}/api/v1/prediction/${chatflow_id}`;
@@ -88,11 +88,11 @@ export const flowise = createPiece({
   actions: [
     flowisePredict,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth as { base_url: string }).base_url,
+     baseUrl: (auth) => (auth?.props.base_url ?? ''),
       auth: flowiseAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${
-          (auth as { access_token: string }).access_token
+          auth.props.access_token
         }`,
       }),
     }),

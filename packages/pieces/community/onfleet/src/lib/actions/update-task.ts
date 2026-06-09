@@ -53,7 +53,7 @@ export const updateTask = createAction({
     }),
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth.secret_text);
 
     const completeAfter = context.propsValue.completeAfter
       ? dayjs(context.propsValue.completeAfter).valueOf()

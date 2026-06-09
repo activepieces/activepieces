@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
-import { airparserAuth } from '../../index';
+import { airparserAuth } from '../auth';
 import { airparserApiCall, GetDocumentResponse } from '../common';
 import { documentIdDropdown, inboxIdDropdown } from '../common/props';
 
@@ -17,7 +17,7 @@ export const extractDataFromDocumentAction = createAction({
 		const { documentId } = context.propsValue;
 
 		const response = await airparserApiCall<GetDocumentResponse>({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: `/docs/${documentId}/extended`,
 		});

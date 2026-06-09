@@ -18,7 +18,7 @@ export const bulkVerificationResult = createAction({
   async run(context) {
     const { task_id } = context.propsValue;
 
-    const response = await verifyEmailsResult(task_id, context.auth);
+    const response = await verifyEmailsResult(task_id, context.auth.secret_text);
 
     return response.body;
   },

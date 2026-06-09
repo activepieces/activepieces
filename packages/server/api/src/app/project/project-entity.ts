@@ -1,8 +1,9 @@
 import {
-    AIUsage,
     AppConnection,
     Cell,
+    ConcurrencyPool,
     Field,
+    File,
     Flow,
     Folder,
     Platform,
@@ -17,8 +18,6 @@ import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
-    JSONB_COLUMN_TYPE,
-    TIMESTAMP_COLUMN_TYPE,
 } from '../database/database-common'
 
 type ProjectSchema = Project & {
@@ -34,7 +33,7 @@ type ProjectSchema = Project & {
     records: Record[]
     cells: Cell[]
     tableWebhooks: TableWebhook[]
-    aiUsage: AIUsage[]
+    pool?: ConcurrencyPool | null
 }
 
 export const ProjectEntity = new EntitySchema<ProjectSchema>({
@@ -42,16 +41,17 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
     columns: {
         ...BaseColumnSchemaPart,
         deleted: {
-            type: TIMESTAMP_COLUMN_TYPE,
+            type: 'timestamp with time zone',
             deleteDate: true,
             nullable: true,
-        }, 
+        },
         ownerId: ApIdSchema,
         displayName: {
             type: String,
         },
-        notifyStatus: {
+        type: {
             type: String,
+            nullable: false,
         },
         platformId: {
             ...ApIdSchema,
@@ -60,13 +60,25 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             type: String,
             nullable: true,
         },
+        maxConcurrentJobs: {
+            type: Number,
+            nullable: true,
+        },
+        icon: {
+            type: 'jsonb',
+            nullable: false,
+        },
         releasesEnabled: {
             type: Boolean,
             nullable: false,
             default: false,
         },
         metadata: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
+            nullable: true,
+        },
+        poolId: {
+            ...ApIdSchema,
             nullable: true,
         },
     },
@@ -81,6 +93,16 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             columns: ['platformId', 'externalId'],
             where: 'deleted IS NULL',
             unique: true,
+        },
+        {
+            name: 'idx_project_platform_id',
+            columns: ['platformId'],
+            unique: false,
+        },
+        {
+            name: 'idx_project_pool_id',
+            columns: ['poolId'],
+            unique: false,
         },
     ],
     relations: {
@@ -153,10 +175,15 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             target: 'table_webhook',
             inverseSide: 'project',
         },
-        aiUsage: {
-            type: 'one-to-many',
-            target: 'ai_usage',
-            inverseSide: 'project',
+        pool: {
+            type: 'many-to-one',
+            target: 'concurrency_pool',
+            onDelete: 'SET NULL',
+            nullable: true,
+            joinColumn: {
+                name: 'poolId',
+                foreignKeyConstraintName: 'fk_project_pool_id',
+            },
         },
     },
 })

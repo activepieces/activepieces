@@ -1,0 +1,10 @@
+{
+  "Approval (Legacy)": "Одобрение (Legacy)",
+  "Build approval process in your workflows": "Постройте процесс утверждения в ваших рабочих процессах",
+  "Wait for Approval": "Дождитесь утверждения",
+  "Create Approval Links": "Создать ссылки на утверждение",
+  "Pauses the flow and wait for the approval from the user": "Приостанавливает поток и ждет одобрения пользователя",
+  "Create links only without pausing the flow, use wait for approval to pause": "Создавать ссылки только без паузы потока, ожидать разрешения на паузу",
+  "Markdown": "Markdown",
+  "Please use Manual Task feature instead from 0.48.0 and above": "Используйте Ручную задачу вместо 0.48.0 и выше"
+}

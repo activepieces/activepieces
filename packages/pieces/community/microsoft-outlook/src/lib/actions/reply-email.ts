@@ -1,17 +1,61 @@
-import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
+import { ApFile, createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftOutlookAuth } from '../common/auth';
 import { BodyType, Message } from '@microsoft/microsoft-graph-types';
-import { Client } from '@microsoft/microsoft-graph-client';
+import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 
 export const replyEmailAction = createAction({
   auth: microsoftOutlookAuth,
   name: 'reply-email',
   displayName: 'Reply to Email',
   description: 'Reply to an outlook email.',
+  audience: 'both',
+  aiMetadata: { description: 'Replies to an existing Outlook message (identified by message ID), supporting added CC/BCC recipients and attachments. Set the Create Draft flag to stage the reply without sending; otherwise it is sent immediately. Not idempotent when sending: each call creates and dispatches a new reply.', idempotent: false },
   props: {
-    messageId: Property.ShortText({
-      displayName: 'Message ID',
+    messageId: Property.Dropdown({
+      auth: microsoftOutlookAuth,
+      displayName: 'Email',
+      description: 'Select the email message to reply to.',
       required: true,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+          };
+        }
+
+        const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+        const client = Client.initWithMiddleware({
+          authProvider: {
+            getAccessToken: () => Promise.resolve((auth as OAuth2PropertyValue).access_token),
+          },
+          baseUrl: getGraphBaseUrl(cloud),
+        });
+
+        try {
+          const response: PageCollection = await client
+            .api('/me/messages?$top=50&$select=id,subject,from,receivedDateTime')
+            .orderby('receivedDateTime desc')
+            .get();
+
+          const messages = response.value as Message[];
+
+          return {
+            disabled: false,
+            options: messages.map((message) => ({
+              label: `${message.subject || 'No Subject'} - ${message.from?.emailAddress?.name || message.from?.emailAddress?.address || 'Unknown Sender'}`,
+              value: message.id || '',
+            })),
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            options: [],
+          };
+        }
+      },
     }),
     bodyFormat: Property.StaticDropdown({
       displayName: 'Body Format',
@@ -88,10 +132,12 @@ export const replyEmailAction = createAction({
         contentBytes: attachment.file.base64,
       })),
     };
+    const cloud = context.auth.props?.['cloud'] as string | undefined;
     const client = Client.initWithMiddleware({
       authProvider: {
         getAccessToken: () => Promise.resolve(context.auth.access_token),
       },
+      baseUrl: getGraphBaseUrl(cloud),
     });
     try {
       const response: Message = await client

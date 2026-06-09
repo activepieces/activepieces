@@ -8,15 +8,16 @@ import {
 } from '@activepieces/pieces-common';
 import { JiraAuth } from '../../auth';
 import { isNil } from '@activepieces/shared';
+import { JiraSearchResponse } from './types';
 
 export async function sendJiraRequest(request: HttpRequest & { auth: JiraAuth }) {
 	return httpClient.sendRequest({
 		...request,
-		url: `${request.auth.instanceUrl}/rest/api/3/${request.url}`,
+		url: `${request.auth.props.instanceUrl}/rest/api/3/${request.url}`,
 		authentication: {
 			type: AuthenticationType.BASIC,
-			username: request.auth.email,
-			password: request.auth.apiToken,
+			username: request.auth.props.email,
+			password: request.auth.props.apiToken,
 		},
 	});
 }
@@ -128,24 +129,44 @@ export async function searchIssuesByJql({
 	jql,
 	maxResults,
 	sanitizeJql,
+	nextPageToken,
+	fields,
+	expand,
 }: {
 	auth: JiraAuth;
 	jql: string;
 	maxResults: number;
 	sanitizeJql: boolean;
-}) {
-	return (
-		(await executeJql({
-			auth,
-			url: 'search',
-			method: HttpMethod.POST,
-			jql,
-			body: {
-				maxResults,
-			},
-			sanitizeJql,
-		})) as { issues: any[] }
-	).issues;
+	nextPageToken?: string;
+	fields?: string[];
+	expand?: string[];
+}): Promise<JiraSearchResponse> {
+	const bodyPayload: Record<string, any> = { maxResults };
+	if (nextPageToken) bodyPayload['nextPageToken'] = nextPageToken;
+	
+	// Clean the array by removing any empty, null, or whitespace-only items
+  	const cleanedFields = fields?.filter((f) => f && f.trim().length > 0) || [];
+
+	if (cleanedFields.length > 0) {
+		bodyPayload['fields'] = cleanedFields;
+	} else {
+		bodyPayload['fields'] = ['*navigable'];
+	}
+	
+	if (expand && expand.length > 0) {
+		bodyPayload['expand'] = expand.join(','); 
+	}
+
+	const searchResult = (await executeJql({
+		auth,
+		url: 'search/jql',
+		method: HttpMethod.POST,
+		jql,
+		body: bodyPayload,
+		sanitizeJql,
+	})) as JiraSearchResponse;
+
+	return searchResult;
 }
 
 export async function createJiraIssue(data: CreateIssueParams) {
@@ -289,7 +310,7 @@ export async function jiraApiCall<T extends HttpMessageBody>({
 	query,
 	body,
 }: JiraApiCallParams): Promise<T> {
-	const baseUrl = `${auth.instanceUrl}/rest/api/3`;
+	const baseUrl = `${auth.props.instanceUrl}/rest/api/3`;
 	const qs: QueryParams = {};
 	if (query) {
 		for (const [key, value] of Object.entries(query)) {
@@ -306,8 +327,8 @@ export async function jiraApiCall<T extends HttpMessageBody>({
 		body,
 		authentication: {
 			type: AuthenticationType.BASIC,
-			username:auth.email,
-			password:auth.apiToken,
+			username:auth.props.email,
+			password:auth.props.apiToken,
 		},
 	};
 
@@ -363,4 +384,23 @@ export async function jiraPaginatedApiCall<T extends HttpMessageBody, K extends 
 	} while (hasMore);
 
 	return resultData;
+}
+
+export function mapFieldNames(
+  fields: Record<string, any>,
+  fieldNames: Record<string, string>
+) {
+  const mappedFields = {} as Record<string, any>;
+
+  for (const [fieldId, fieldValue] of Object.entries(fields)) {
+    const fieldName = fieldNames?.[fieldId];
+    if (fieldName) {
+      mappedFields[fieldName] = fieldValue;
+    } else {
+      // fallback in case field cannot be mapped (but this should not happen)
+      mappedFields[fieldId] = fieldValue;
+    }
+  }
+
+  return mappedFields;
 }

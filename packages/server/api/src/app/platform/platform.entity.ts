@@ -2,10 +2,7 @@ import { FilteredPieceBehavior, Platform, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
-    ARRAY_COLUMN_TYPE,
     BaseColumnSchemaPart,
-    isPostgres,
-    JSONB_COLUMN_TYPE,
 } from '../database/database-common'
 
 type PlatformSchema = Platform & {
@@ -40,19 +37,19 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: String,
             nullable: false,
         },
-        smtp: {
-            type: JSONB_COLUMN_TYPE,    
-            nullable: true,
-        },
-
         cloudAuthEnabled: {
             type: Boolean,
             nullable: false,
             default: true,
         },
+        googleAuthEnabled: {
+            type: Boolean,
+            nullable: false,
+            default: true,
+        },
         filteredPieceNames: {
-            type: ARRAY_COLUMN_TYPE,
-            array: isPostgres(),
+            type: String,
+            array: true,
             nullable: false,
         },
         filteredPieceBehavior: {
@@ -61,8 +58,22 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             nullable: false,
         },
         allowedAuthDomains: {
-            type: ARRAY_COLUMN_TYPE,
-            array: isPostgres(),
+            type: String,
+            array: true,
+        },
+        allowedEmbedOrigins: {
+            type: String,
+            array: true,
+            nullable: false,
+            default: [],
+        },
+        ssoDomain: {
+            type: String,
+            nullable: true,
+        },
+        ssoDomainVerification: {
+            type: 'jsonb',
+            nullable: true,
         },
         enforceAllowedAuthDomains: {
             type: Boolean,
@@ -73,19 +84,23 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             nullable: false,
         },
         federatedAuthProviders: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
+            select: false,
         },
         pinnedPieces: {
-            type: ARRAY_COLUMN_TYPE,
-            array: isPostgres(),
+            type: String,
+            array: true,
             nullable: false,
         },
-        copilotSettings: {
-            type: JSONB_COLUMN_TYPE,
-            nullable: true,
-        },
     },
-    indices: [],
+    indices: [
+        {
+            name: 'idx_platform_sso_domain',
+            columns: ['ssoDomain'],
+            unique: true,
+            where: '"ssoDomain" IS NOT NULL',
+        },
+    ],
     relations: {
         owner: {
             type: 'one-to-one',

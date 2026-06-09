@@ -1,5 +1,5 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { firefliesAiAuth } from '../../index';
+import { firefliesAiAuth } from '../auth';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { getTranscript } from '../common/queries';
 import { BASE_URL } from '../common';
@@ -9,6 +9,9 @@ export const newTranscriptionCompletedTrigger = createTrigger({
 	name: 'new_transcription_completed',
 	displayName: 'New Transcription Completed',
 	description: 'Triggered when a new meeting is transcribed.',
+	aiMetadata: {
+		description: 'Fires when Fireflies finishes transcribing a meeting, emitting the completed transcript with its summary, speakers, attendees, and media URLs. Represents a freshly available, fully processed meeting record. Requires a manually configured Fireflies webhook.',
+	},
 	props: {
 		webhookInstructions: Property.MarkDown({
 			value: `
@@ -116,7 +119,7 @@ export const newTranscriptionCompletedTrigger = createTrigger({
 				method: HttpMethod.POST,
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
-					token: context.auth,
+					token: context.auth.secret_text,
 				},
 				body: {
 					query,
@@ -140,7 +143,7 @@ export const newTranscriptionCompletedTrigger = createTrigger({
 			method: HttpMethod.POST,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: context.auth,
+				token: context.auth.secret_text,
 			},
 			body: {
 				query: getTranscript,

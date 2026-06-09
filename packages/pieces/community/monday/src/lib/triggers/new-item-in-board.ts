@@ -2,7 +2,7 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { mondayAuth } from '../..';
+import { mondayAuth } from '../auth';
 import { makeClient, mondayCommon } from '../common';
 import { MondayWebhookEventType } from '../common/constants';
 import { parseMondayColumnValue } from '../common/helper';
@@ -13,6 +13,9 @@ export const newItemInBoardTrigger = createTrigger({
   name: 'monday_new_item_in_board',
   displayName: 'New Item in Board',
   description: 'Triggers when a new item is created in board.',
+  aiMetadata: {
+    description: 'Fires when a new item (row) is created on the selected monday.com board, enriching the payload with the new item\'s column values. Represents an item-creation event scoped to one board.',
+  },
   props: {
     workspace_id: mondayCommon.workspace_id(true),
     board_id: mondayCommon.board_id(true),
@@ -40,7 +43,7 @@ export const newItemInBoardTrigger = createTrigger({
   async onEnable(context) {
     const { board_id } = context.propsValue;
 
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth);
     const res = await client.createWebhook({
       boardId: board_id,
       url: context.webhookUrl,
@@ -56,7 +59,7 @@ export const newItemInBoardTrigger = createTrigger({
       'monday_new_item_trigger'
     );
     if (webhook != null) {
-      const client = makeClient(context.auth as string);
+      const client = makeClient(context.auth);
       await client.deleteWebhook({ webhookId: webhook.id });
     }
   },
@@ -64,7 +67,7 @@ export const newItemInBoardTrigger = createTrigger({
     const payload = context.payload.body as MondayWebhookPayload;
     const transformedValues: Record<string, any> = {};
     try {
-      const client = makeClient(context.auth as string);
+      const client = makeClient(context.auth);
       const res = await client.getItemColumnValues({
         boardId: payload.event.boardId,
         itemId: payload.event.pulseId,

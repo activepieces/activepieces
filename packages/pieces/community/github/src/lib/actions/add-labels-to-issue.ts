@@ -1,0 +1,38 @@
+import { githubAuth } from '../auth';
+import { createAction } from '@activepieces/pieces-framework';
+import { githubApiCall, githubCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common';
+
+export const githubAddLabelsToIssueAction = createAction({
+  auth: githubAuth,
+  name: 'add_labels_to_issue',
+  displayName: 'Add Labels to Issue',
+  description: 'Adds labels to an existing issue.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Adds one or more labels to an existing issue (by number) in a repository, leaving any labels already on the issue in place. Use to tag or categorize an issue. Idempotent in effect: re-adding a label the issue already has does not duplicate it.',
+    idempotent: true,
+  },
+  props: {
+    repository: githubCommon.repositoryDropdown,
+    issue_number: githubCommon.issueDropdown(true),
+    labels: githubCommon.labelDropDown(true),
+  },
+  async run({ auth, propsValue }) {
+    const { owner, repo } = propsValue.repository!;
+    const issue_number = propsValue.issue_number;
+    const labels = propsValue.labels;
+
+    const response = await githubApiCall({
+      auth,
+      method: HttpMethod.POST,
+      resourceUri: `/repos/${owner}/${repo}/issues/${issue_number}/labels`,
+      body: {
+        labels: labels,
+      },
+    });
+
+    return response;
+  },
+});

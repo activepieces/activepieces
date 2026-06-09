@@ -1,4 +1,4 @@
-import { activeCampaignAuth } from '../../../';
+import { activeCampaignAuth } from '../../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { activecampaignCommon, makeClient } from '../../common';
 import { CreateContactRequest } from '../../common/types';
@@ -8,6 +8,8 @@ export const createContactAction = createAction({
 	name: 'activecampaign_create_contact',
 	displayName: 'Create Contact',
 	description: 'Creates a new contact.',
+	audience: 'both',
+	aiMetadata: { description: 'Creates a new ActiveCampaign contact from an email (required) plus optional first name, last name, phone, and custom field values. Use when adding a new person to the CRM. Not idempotent: each call creates a contact and does not look up or merge by email, so repeated calls can create duplicates.', idempotent: false },
 	props: {
 		email: Property.ShortText({
 			displayName: 'Email',
@@ -42,7 +44,7 @@ export const createContactAction = createAction({
 			createContactParams.fieldValues.push({ field: key, value: value });
 		});
 
-		const client = makeClient(context.auth);
+		const client = makeClient(context.auth.props);
 		return await client.createContact(createContactParams);
 	},
 });

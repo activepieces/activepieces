@@ -1,7 +1,7 @@
 import {
+    ApEdition,
     ApId,
     assertNotNullOrUndefined,
-    EndpointScope,
     ListUsersRequestBody,
     PrincipalType,
     SeekPage,
@@ -9,20 +9,20 @@ import {
     UpdateUserRequestBody,
     UserWithMetaInformation,
 } from '@activepieces/shared'
-import {
-    FastifyPluginAsyncTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { system } from '../../helper/system/system'
 import { userService } from '../user-service'
 
-export const platformUserController: FastifyPluginAsyncTypebox = async (app) => {
+export const platformUserController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/', ListUsersRequest, async (req) => {
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
 
-        return userService.list({
+        return userService(req.log).list({
             platformId,
             externalId: req.query.externalId,
             cursorRequest: req.query.cursor ?? null,
@@ -34,13 +34,12 @@ export const platformUserController: FastifyPluginAsyncTypebox = async (app) => 
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
 
-        return userService.update({
+        return userService(req.log).update({
             id: req.params.id,
             platformId,
             platformRole: req.body.platformRole,
             status: req.body.status,
             externalId: req.body.externalId,
-            lastChangelogDismissed: req.body.lastChangelogDismissed,
         })
     })
 
@@ -48,10 +47,19 @@ export const platformUserController: FastifyPluginAsyncTypebox = async (app) => 
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
 
-        await userService.delete({
-            id: req.params.id,
-            platformId,
-        })
+        const edition = system.getEdition()
+        if (edition === ApEdition.CLOUD) {
+            await userService(req.log).removeFromPlatform({
+                id: req.params.id,
+                platformId,
+            })
+        }
+        else {
+            await userService(req.log).delete({
+                id: req.params.id,
+                platformId,
+            })
+        }
 
         return res.status(StatusCodes.NO_CONTENT).send()
     })
@@ -71,35 +79,41 @@ const ListUsersRequest = {
         [StatusCodes.OK]: SeekPage(UserWithMetaInformation),
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        scope: EndpointScope.PLATFORM,
+        security: securityAccess.nonEmbedUsersOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
 }
 
 const UpdateUserRequest = {
     schema: {
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         body: UpdateUserRequestBody,
         response: {
             [StatusCodes.OK]: UserWithMetaInformation,
         },
+        tags: ['users'],
+        description: 'Update user',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        scope: EndpointScope.PLATFORM,
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
 }
 
 const DeleteUserRequest = {
     schema: {
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
+        tags: ['users'],
+        description: 'Delete user',
+        response: {
+            [StatusCodes.NO_CONTENT]: z.never(),
+        },
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        scope: EndpointScope.PLATFORM,
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
 }

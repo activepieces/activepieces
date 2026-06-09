@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { gotifyAuth } from '../../';
+import { gotifyAuth } from '../auth';
 
 export const sendNotification = createAction({
   auth: gotifyAuth,
@@ -26,8 +26,8 @@ export const sendNotification = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const baseUrl = auth.base_url.replace(/\/$/, '');
-    const appToken = auth.app_token;
+    const baseUrl = auth.props.base_url.replace(/\/$/, '');
+    const appToken = auth.props.app_token;
 
     const title = propsValue.title;
     const message = propsValue.message;

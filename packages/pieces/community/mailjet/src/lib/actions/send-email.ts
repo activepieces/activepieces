@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
-import { mailjetAuth } from '../../';
+import { mailjetAuth } from '../auth';
 
 export const sendEmail = createAction({
   auth: mailjetAuth,

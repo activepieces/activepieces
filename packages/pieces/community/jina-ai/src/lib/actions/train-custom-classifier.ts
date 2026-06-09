@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { JinaAICommon } from '../common';
-import { jinaAiAuth } from '../../index';
+import { jinaAiAuth } from '../auth';
 
 export const trainCustomClassifierAction = createAction({
   auth:jinaAiAuth,
@@ -133,7 +133,7 @@ export const trainCustomClassifierAction = createAction({
     const response = await JinaAICommon.makeRequest({
       url: JinaAICommon.classifierTrainUrl,
       method: HttpMethod.POST,
-      auth: apiKey as string,
+      auth: apiKey.secret_text,
       body: requestBody,
     });
 

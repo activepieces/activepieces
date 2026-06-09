@@ -2,7 +2,7 @@ import {
   PiecePropValueSchema,
   createAction,
 } from '@activepieces/pieces-framework';
-import { dynamicsCRMAuth } from '../../';
+import { dynamicsCRMAuth } from '../auth';
 import { DynamicsCRMCommon, makeClient } from '../common';
 
 export const createRecordAction = createAction({
@@ -22,7 +22,7 @@ export const createRecordAction = createAction({
     const entityUrlPath = entityType as string;
 
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof dynamicsCRMAuth>
+      context.auth
     );
 
     return await client.createRecord(entityUrlPath, fields);

@@ -15,6 +15,7 @@ export const statusAction = createAction({
   description: 'Get the subscription status of a user',
   props: {
     list: Property.Dropdown({
+      auth: sendyAuth,
       displayName: 'List',
       description: 'Select the list to get the status from',
       required: true,

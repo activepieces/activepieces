@@ -1,12 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
-import { exaAuth } from '../../index';
+import { exaAuth } from '../auth';
 
 export const generateAnswerAction = createAction({
   name: 'generate_answer',
   displayName: 'Ask AI',
   description: 'Provides direct answers to queries by summarizing results.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Asks Exa a natural-language question and returns a synthesized answer grounded in live web search results. Use when an agent wants a direct factual answer rather than a list of links to triage itself; choose the exa or exa-pro model. Requires a query string. Read-only lookup; repeating the same query is safe though phrasing and live web data may vary the wording.',
+    idempotent: true,
+  },
   auth: exaAuth,
   props: {
     query: Property.ShortText({
@@ -34,7 +39,7 @@ export const generateAnswerAction = createAction({
     }),
   },
   async run(context) {
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     const {
       query,

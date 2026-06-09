@@ -2,7 +2,7 @@ import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-f
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/shared';
-import { copyAiAuth } from '../../index';
+import { copyAiAuth } from '../auth';
 
 
 export const workflowRunCompletedTrigger = createTrigger({
@@ -40,7 +40,7 @@ export const workflowRunCompletedTrigger = createTrigger({
       },
     async onEnable(context) {
         const response = await makeRequest(
-            context.auth as string,
+            context.auth.secret_text,
             HttpMethod.POST,
             '/webhook',
             {
@@ -59,7 +59,7 @@ export const workflowRunCompletedTrigger = createTrigger({
         if(!isNil(response) && !isNil(response.webhookId))
         {
              await makeRequest(
-                context.auth as string,
+                context.auth.secret_text,
                 HttpMethod.DELETE,
                 `/webhook/${response.webhookId}`,
                 {}

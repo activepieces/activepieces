@@ -1,9 +1,14 @@
+import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
 
 export class RemoveUnusedProjectBillingFields1736607721367 implements MigrationInterface {
     name = 'RemoveUnusedProjectBillingFields1736607721367'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "project_plan" DROP COLUMN "minimumPollingInterval"
         `)
@@ -24,6 +29,9 @@ export class RemoveUnusedProjectBillingFields1736607721367 implements MigrationI
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "project_plan"
             ALTER COLUMN "aiTokens"

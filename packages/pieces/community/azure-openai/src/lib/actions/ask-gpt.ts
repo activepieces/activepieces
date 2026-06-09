@@ -1,4 +1,4 @@
-import { AzureOpenAIAuth } from '../../';
+import { azureOpenaiAuth } from '../auth';
 import {
     Property,
     StoreScope,
@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const askGpt = createAction({
+    auth: azureOpenaiAuth,
     name: 'ask_gpt',
     displayName: 'Ask GPT',
     description: 'Ask ChatGPT anything you want!',
@@ -76,7 +77,7 @@ export const askGpt = createAction({
 
     async run(context) {
         const { propsValue, store } = context;
-        const auth: AzureOpenAIAuth = context.auth as AzureOpenAIAuth;
+        const auth = context.auth.props;
 
         await propsValidation.validateZod(propsValue, {
             temperature: z.number().min(0).max(1.0).optional(),
@@ -86,7 +87,10 @@ export const askGpt = createAction({
 
         const openai = new OpenAIClient(
             auth.endpoint,
-            new AzureKeyCredential(auth.apiKey)
+            new AzureKeyCredential(auth.apiKey),
+            {
+                apiVersion: '2024-12-01-preview',
+            }
         );
 
         let messageHistory: any[] | null = [];
@@ -117,13 +121,15 @@ export const askGpt = createAction({
             };
         });
 
-        const completion = await openai.getChatCompletions(propsValue.deploymentId, [...roles, ...messageHistory], {
-            maxTokens: propsValue.maxTokens,
+        const completionOptions = {
+            maxCompletionTokens: propsValue.maxTokens,
             temperature: propsValue.temperature,
             frequencyPenalty: propsValue.frequencyPenalty,
             presencePenalty: propsValue.presencePenalty,
             topP: propsValue.topP,
-        });
+        };
+
+        const completion = await openai.getChatCompletions(propsValue.deploymentId, [...roles, ...messageHistory], completionOptions);
 
         const responseText = completion.choices[0].message?.content;
 

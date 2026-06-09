@@ -33,7 +33,7 @@ export const listBroadcasts = createAction({
   },
   run(context) {
     const page = context.propsValue.page || 1;
-    return fetchBroadcasts(context.auth, page);
+    return fetchBroadcasts(context.auth.secret_text, page);
   },
 });
 
@@ -70,7 +70,7 @@ export const createBroadcast = createAction({
     const url = BROADCASTS_API_ENDPOINT;
 
     const body = {
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
       content,
       description,
       email_address: emailAddress,
@@ -114,7 +114,7 @@ export const getBroadcastById = createAction({
     const url = `${BROADCASTS_API_ENDPOINT}/${broadcastId}`;
 
     const body = {
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
     };
 
     const request: HttpRequest = {
@@ -169,7 +169,7 @@ export const updateBroadcast = createAction({
     const url = `${BROADCASTS_API_ENDPOINT}/${broadcastId}`;
 
     const body = {
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
       content,
       description,
       email_address: emailAddress,
@@ -213,7 +213,7 @@ export const broadcastStats = createAction({
     const url = `${BROADCASTS_API_ENDPOINT}/${broadcastId}/stats`;
 
     const body = {
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
     };
 
     const request: HttpRequest = {
@@ -244,7 +244,7 @@ export const deleteBroadcast = createAction({
     const url = `${BROADCASTS_API_ENDPOINT}/${broadcastId}`;
 
     const body = {
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
     };
 
     const request: HttpRequest = {

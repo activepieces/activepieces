@@ -1,7 +1,7 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { attioApiCall, verifyWebhookSignature } from '../common/client';
-import { attioAuth } from '../../index';
+import { attioAuth } from '../auth';
 import { listIdDropdown } from '../common/props';
 import { ListWebhookPayload, WebhookResponse } from '../common/types';
 import { isNil } from '@activepieces/shared';
@@ -12,6 +12,9 @@ export const listEntryCreatedTrigger = createTrigger({
 	name: 'list_entry_created',
 	displayName: 'List Entry Created',
 	description: 'Triggers when a new entry is added.',
+	aiMetadata: {
+		description: 'Fires when a new entry is added to the selected Attio list (i.e. a record is added to that list). Represents a record entering a list; scoped to one list chosen per trigger.',
+	},
 	auth: attioAuth,
 	props: {
 		listId: listIdDropdown({
@@ -23,7 +26,7 @@ export const listEntryCreatedTrigger = createTrigger({
 	sampleData: {},
 	async onEnable(context) {
 		const response = await attioApiCall<{ data: WebhookResponse }>({
-			accessToken: context.auth,
+			accessToken: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: '/webhooks',
 			body: {
@@ -58,7 +61,7 @@ export const listEntryCreatedTrigger = createTrigger({
 		);
 		if (!isNil(webhookData) && webhookData.webhookId) {
 			await attioApiCall({
-				accessToken: context.auth,
+				accessToken: context.auth.secret_text,
 				method: HttpMethod.DELETE,
 				resourceUri: `/webhooks/${webhookData.webhookId}`,
 			});
@@ -66,7 +69,7 @@ export const listEntryCreatedTrigger = createTrigger({
 	},
 	async test(context) {
 		const response = await attioApiCall<{ data: Array<Record<string, any>> }>({
-			accessToken: context.auth,
+			accessToken: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/lists/${context.propsValue.listId}/entries/query`,
 			body: {
@@ -94,7 +97,7 @@ export const listEntryCreatedTrigger = createTrigger({
 		const entryId = payload.events[0].id.entry_id;
 
 		const response = await attioApiCall<{ data: Record<string, any> }>({
-			accessToken: context.auth,
+			accessToken: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: `/lists/${context.propsValue.listId}/entries/${entryId}`,
 		});

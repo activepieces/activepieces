@@ -23,7 +23,7 @@ export const sendEvent = createAction({
       method: HttpMethod.POST,
       url: 'https://api.gameball.co/api/v3.0/integrations/event',
       headers: {
-        APIKey: context.auth, // Pass API key in headers
+        APIKey: context.auth.secret_text, // Pass API key in headers
       },
       // update the event body with eventmetadata if requested in the future.
       body: {

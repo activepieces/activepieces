@@ -1,4 +1,4 @@
-import { activeCampaignAuth } from '../..';
+import { activeCampaignAuth } from '../auth';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { makeClient } from '../common';
 import { CreateWebhookResponse } from '../common/types';
@@ -9,10 +9,13 @@ export const newContactTaskTrigger = createTrigger({
 	name: 'activecampaign_new_contact_task',
 	displayName: 'New Contact Task',
 	description: 'Triggers when a new contact task is added.',
+	aiMetadata: {
+		description: 'Fires when a task is created on a contact. The payload includes the task (type, title, due date) and the associated contact.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 	async onEnable(context) {
-		const client = makeClient(context.auth);
+		const client = makeClient(context.auth.props);
 		const res = await client.subscribeWebhook({
 			name: `Activepieces New Contact Task Hook`,
 			url: context.webhookUrl,
@@ -29,7 +32,7 @@ export const newContactTaskTrigger = createTrigger({
 			'activecampaign_new_contact_task',
 		);
 		if (webhook != null) {
-			const client = makeClient(context.auth);
+			const client = makeClient(context.auth.props);
 			await client.unsubscribeWebhook(webhook.webhook.id);
 		}
 	},

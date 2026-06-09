@@ -6,11 +6,11 @@ import {
 import {
   createTrigger,
   TriggerStrategy,
-  OAuth2PropertyValue,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { getPages } from '../common';
-import { notionAuth } from '../..';
+import { getPages, NotionAuthValue } from '../common';
+import { notionAuth } from '../auth';
 
 export const updatedPage = createTrigger({
   auth: notionAuth,
@@ -18,6 +18,10 @@ export const updatedPage = createTrigger({
   displayName: 'Updated Page',
   description:
     'Triggers whenever any page in your Notion workspace is modified or updated. Ideal for syncing content changes, backup processes, or notifying teams about documentation updates.',
+  aiMetadata: {
+    description:
+      'Fires whenever any page shared with the integration in the Notion workspace is modified, emitting the updated page. Use to track content changes workspace-wide rather than within a single database or page.',
+  },
   props: {},
   sampleData: {
     object: 'page',
@@ -104,7 +108,10 @@ export const updatedPage = createTrigger({
   },
 });
 
-const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
+const polling: Polling<
+  AppConnectionValueForAuthProperty<typeof notionAuth>,
+  Record<string, never>
+> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, lastItemId }) => {
     const lastItem = lastItemId as string;
@@ -127,7 +134,7 @@ const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
 };
 
 const getUpdatedPages = async (
-  authentication: OAuth2PropertyValue,
+  authentication: NotionAuthValue,
   startDate?: Date
 ) => {
   const searchOptions = startDate ? { editedAfter: startDate } : undefined;

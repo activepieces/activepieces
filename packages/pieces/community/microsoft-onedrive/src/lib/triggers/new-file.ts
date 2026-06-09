@@ -1,8 +1,9 @@
-import { PiecePropValueSchema, Property, createTrigger } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, PiecePropValueSchema, Property, createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import dayjs from 'dayjs';
-import { oneDriveAuth } from '../..';
+import { oneDriveAuth } from '../auth';
 import { oneDriveCommon } from '../common/common';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { DriveItem } from '@microsoft/microsoft-graph-types';
@@ -11,13 +12,15 @@ type Props = {
 	parentFolder?: string;
 };
 
-const polling: Polling<PiecePropValueSchema<typeof oneDriveAuth>, Props> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof oneDriveAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, propsValue, lastFetchEpochMS }) => {
+		const cloud = auth.props?.['cloud'] as string | undefined;
 		const client = Client.initWithMiddleware({
 			authProvider: {
 				getAccessToken: () => Promise.resolve(auth.access_token),
 			},
+			baseUrl: getGraphBaseUrl(cloud),
 		});
 
 		const files = [];

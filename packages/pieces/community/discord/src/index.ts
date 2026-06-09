@@ -18,6 +18,7 @@ import { discordDeleteGuildRole } from './lib/actions/delete-guild-role';
 import { discordBanGuildMember } from './lib/actions/ban-a-guild-member';
 import { newMember } from './lib/triggers/new-member';
 import { sendMessageWithBot } from './lib/actions/send-message-with-bot'
+import { discordAuth } from './lib/auth';
 
 const markdown = `
 To obtain a token, follow these steps:
@@ -27,16 +28,10 @@ To obtain a token, follow these steps:
 4. Copy the token
 `;
 
-export const discordAuth = PieceAuth.SecretText({
-  displayName: 'Bot Token',
-  description: markdown,
-  required: true,
-});
-
 export const discord = createPiece({
   displayName: 'Discord',
   description: 'Instant messaging and VoIP social platform',
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.82.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/discord.png',
   categories: [PieceCategory.COMMUNICATION],
   auth: discordAuth,
@@ -63,7 +58,7 @@ export const discord = createPiece({
       },
       authMapping: async (auth) => {
         return {
-          Authorization: `Bot ${auth}`,
+          Authorization: `Bot ${auth.secret_text}`,
         };
       },
     }),

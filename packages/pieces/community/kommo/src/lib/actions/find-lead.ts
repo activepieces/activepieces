@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
-import { kommoAuth } from '../../index';
+import { kommoAuth } from '../auth';
 
 export const findLeadAction = createAction({
   auth: kommoAuth,
@@ -16,7 +16,7 @@ export const findLeadAction = createAction({
     }),
   },
   async run(context) {
-    const { subdomain, apiToken } = context.auth
+    const { subdomain, apiToken } = context.auth.props
 
     const result = await makeRequest(
       { apiToken, subdomain },

@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { clockifyAuth } from '../../index';
+import { clockifyAuth } from '../auth';
 import { clockifyApiCall } from '../common/client';
 import { projectId, tagIds, taskId, workspaceId } from '../common/props';
 
@@ -40,7 +40,7 @@ export const startTimerAction = createAction({
 		const tagIds = context.propsValue.tagIds ?? [];
 
 		const response = await clockifyApiCall({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/workspaces/${workspaceId}/time-entries`,
 			body: {

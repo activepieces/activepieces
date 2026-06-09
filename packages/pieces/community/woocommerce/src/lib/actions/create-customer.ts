@@ -6,12 +6,18 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 
-import { wooAuth } from '../..';
+import { wooAuth } from '../auth';
 
 export const wooCreateCustomer = createAction({
   name: 'Create Customer',
   displayName: 'Create Customer',
   description: 'Create a Customer',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new customer account in a WooCommerce store with email, name, username, password, and a billing/shipping address (the same address is applied to both). Use when an agent needs to register a shopper. Not idempotent: each call creates a new customer, and email and username must be unique in the store.',
+    idempotent: false,
+  },
   auth: wooAuth,
   props: {
     email: Property.ShortText({
@@ -71,7 +77,7 @@ export const wooCreateCustomer = createAction({
     }),
   },
   async run(configValue) {
-    const trimmedBaseUrl = configValue.auth.baseUrl.replace(/\/$/, '');
+    const trimmedBaseUrl = configValue.auth.props.baseUrl.replace(/\/$/, '');
 
     const email = configValue.propsValue['email'];
     const first_name = configValue.propsValue['first_name'];
@@ -96,8 +102,8 @@ export const wooCreateCustomer = createAction({
       method: HttpMethod.POST,
       authentication: {
         type: AuthenticationType.BASIC,
-        username: configValue.auth.consumerKey,
-        password: configValue.auth.consumerSecret,
+        username: configValue.auth.props.consumerKey,
+        password: configValue.auth.props.consumerSecret,
       },
       body: {
         email,

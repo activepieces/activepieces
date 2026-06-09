@@ -1,9 +1,14 @@
+import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
 
 export class SetNotNullOnPlatform1709505632771 implements MigrationInterface {
     name = 'SetNotNullOnPlatform1709505632771'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.COMMUNITY])) {
+            return
+        }
         await queryRunner.query(`
             DROP INDEX "idx_project_platform_id_external_id"
         `)
@@ -18,6 +23,9 @@ export class SetNotNullOnPlatform1709505632771 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.COMMUNITY])) {
+            return
+        }
         await queryRunner.query(`
             DROP INDEX "idx_project_platform_id_external_id"
         `)

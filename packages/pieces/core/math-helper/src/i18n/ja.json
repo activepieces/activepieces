@@ -1,0 +1,17 @@
+{
+  "\nPerform mathematical operations.\n": "\n数学演算を実行します。\n",
+  "Addition": "追加",
+  "Subtraction": "減算",
+  "Multiplication": "かけ算",
+  "Division": "Division",
+  "Modulo": "Modulo",
+  "Generate Random Number": "乱数を生成する",
+  "Add the first number and the second number": "最初の数字と2番目の数字を追加",
+  "Subtract the first number from the second number": "2 番目の数から最初の数を引く。",
+  "Multiply first number by the second number": "最初の数に 2 番目の数をかけます",
+  "Divide first number by the second number": "最初の数を2番目の数で分割",
+  "Get the remainder of the first number divided by second number": "最初の数を2番目の数で割った残りの数を取得します",
+  "Generate random number between two numbers (inclusive)": "2 つの数字の間で乱数を生成します（含む）",
+  "First Number": "最初の数値",
+  "Second Number": "2番目の番号"
+}

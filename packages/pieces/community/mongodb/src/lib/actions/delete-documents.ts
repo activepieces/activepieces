@@ -7,6 +7,8 @@ export default createAction({
   name: 'delete_documents',
   displayName: 'Delete Documents',
   description: 'Delete documents from a collection',
+  audience: 'both',
+  aiMetadata: { description: 'Removes every document matching a filter from a MongoDB collection via deleteMany. Use to delete records in bulk; an empty filter would match and delete all documents in the collection, so scope the filter carefully. The filter is required. Mutating and destructive; repeating the call deletes whatever now matches, so it is not idempotent.', idempotent: false },
   props: {
     database: mongodbCommon.database,
     collection: mongodbCommon.collection(),
@@ -24,7 +26,7 @@ export default createAction({
         throw new Error('Collection is required');
       }
 
-      const databaseName = context.propsValue.database || context.auth.database;
+      const databaseName = context.propsValue.database || context.auth.props.database;
       if (!databaseName) {
         throw new Error('Database is required. Please specify it in the connection settings or in this action.');
       }

@@ -8,13 +8,7 @@ import { getProjectAction } from './lib/actions/get-project-by-id';
 import { getTaskAction } from './lib/actions/get-task';
 import { updateTaskAction } from './lib/actions/update-task';
 import { newTaskCreatedTrigger } from './lib/triggers/new-task-created';
-
-export const ticktickAuth = PieceAuth.OAuth2({
-	authUrl: 'https://ticktick.com/oauth/authorize',
-	tokenUrl: 'https://ticktick.com/oauth/token',
-	required: true,
-	scope: ['tasks:read', 'tasks:write'],
-});
+import { ticktickAuth } from './lib/auth';
 
 export const ticktick = createPiece({
 	displayName: 'TickTick',
@@ -34,7 +28,7 @@ export const ticktick = createPiece({
       baseUrl:()=>'https://api.ticktick.com/open/v1',
       authMapping:async (auth)=>{
         return {
-          Authorization:`Bearer ${(auth as OAuth2PropertyValue).access_token}`
+          Authorization:`Bearer ${(auth).access_token}`
         }
       }
     })

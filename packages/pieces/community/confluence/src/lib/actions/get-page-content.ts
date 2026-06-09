@@ -3,9 +3,10 @@ import {
 	Property,
 	DynamicPropsValue,
 	PiecePropValueSchema,
+	AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { confluenceAuth } from '../..';
+import { confluenceAuth } from '../auth';
 import { confluenceApiCall } from '../common';
 
 interface ConfluencePage {
@@ -16,14 +17,14 @@ interface ConfluencePage {
 }
 
 async function getPageWithContent(
-	auth: PiecePropValueSchema<typeof confluenceAuth>,
+	auth: AppConnectionValueForAuthProperty<typeof confluenceAuth>,
 	pageId: string,
 ): Promise<ConfluencePage> {
 	try {
 		const response = await confluenceApiCall<ConfluencePage>({
-			domain: auth.confluenceDomain,
-			username: auth.username,
-			password: auth.password,
+			domain: auth.props.confluenceDomain,
+			username: auth.props.username,
+			password: auth.props.password,
 			method: HttpMethod.GET,
 			version: 'v2',
 			resourceUri: `/pages/${pageId}`,
@@ -40,7 +41,7 @@ async function getPageWithContent(
 }
 
 async function getChildPages(
-	auth: PiecePropValueSchema<typeof confluenceAuth>,
+	auth: AppConnectionValueForAuthProperty<typeof confluenceAuth>,
 	parentId: string,
 	currentDepth: number,
 	maxDepth: number,
@@ -51,9 +52,9 @@ async function getChildPages(
 
 	try {
 		const childrenResponse = await confluenceApiCall<{ results: ConfluencePage[] }>({
-			domain: auth.confluenceDomain,
-			username: auth.username,
-			password: auth.password,
+			domain: auth.props.confluenceDomain,
+			username: auth.props.username,
+			password: auth.props.password,
 			method: HttpMethod.GET,
 			version: 'v2',
 			resourceUri: `/pages/${parentId}/children`,
@@ -84,6 +85,8 @@ export const getPageContent = createAction({
 	name: 'getPageContent',
 	displayName: 'Get Page Content',
 	description: 'Get page content and optionally all its descendants',
+	audience: 'both',
+	aiMetadata: { description: 'Fetches a single Confluence page (title and storage-format body) by its page ID; when "include descendants" is enabled it additionally walks the page tree and returns child pages recursively up to a configurable max depth. Use to read the full content of a known page, optionally including its sub-pages. Requires the numeric page ID (from the page URL); read-only and idempotent.', idempotent: true },
 	auth: confluenceAuth,
 	props: {
 		pageId: Property.ShortText({
@@ -98,6 +101,7 @@ export const getPageContent = createAction({
 			defaultValue: false,
 		}),
 		dynamic: Property.DynamicProperties({
+			auth: confluenceAuth,
 			displayName: 'Dynamic Properties',
 			refreshers: ['includeDescendants'],
 			required: true,

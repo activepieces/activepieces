@@ -1,4 +1,5 @@
 import {
+  AppConnectionValueForAuthProperty,
   PiecePropValueSchema,
   Property,
   createTrigger,
@@ -14,14 +15,14 @@ import { backBlazeS3Auth } from '../..';
 import { createBackBlazeS3 } from '../common';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof backBlazeS3Auth>,
+  AppConnectionValueForAuthProperty<typeof backBlazeS3Auth>,
   { folderPath?: string }
 > = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, lastItemId, propsValue }) => {
-    const s3 = createBackBlazeS3(auth);
+    const s3 = createBackBlazeS3(auth.props);
     const params: any = {
-      Bucket: auth.bucket,
+      Bucket: auth.props.bucket,
       MaxKeys: 100,
       StartAfter: lastItemId,
     };

@@ -3,7 +3,8 @@ import {
   DynamicPropsValue,
   Property,
 } from '@activepieces/pieces-framework';
-import { LEVER_BASE_URL, LeverAuth, leverAuth } from '../..';
+import { LeverAuth, leverAuth } from '../..';
+import { LEVER_BASE_URL } from '../..';
 import {
   AuthenticationType,
   httpClient,
@@ -18,6 +19,7 @@ export const addFeedbackToOpportunity = createAction({
   auth: leverAuth,
   props: {
     performAs: Property.Dropdown({
+      auth: leverAuth,
       displayName: 'Feedback author',
       required: true,
       refreshers: ['auth'],
@@ -46,7 +48,7 @@ export const addFeedbackToOpportunity = createAction({
             queryParams: queryParams,
             authentication: {
               type: AuthenticationType.BASIC,
-              username: (auth as LeverAuth).apiKey,
+              username: auth.props.apiKey,
               password: '',
             },
           });
@@ -72,6 +74,7 @@ export const addFeedbackToOpportunity = createAction({
       required: true,
     }),
     panelId: Property.Dropdown({
+      auth: leverAuth,
       displayName: 'Interview panel',
       description: 'If you select one, you must select an interview too',
       required: false,
@@ -96,7 +99,7 @@ export const addFeedbackToOpportunity = createAction({
           url: `${LEVER_BASE_URL}/opportunities/${opportunityId}/panels?expand=stage&include=id&include=stage&include=start`,
           authentication: {
             type: AuthenticationType.BASIC,
-            username: (auth as LeverAuth).apiKey,
+            username: auth.props.apiKey,
             password: '',
           },
         });
@@ -116,6 +119,7 @@ export const addFeedbackToOpportunity = createAction({
       },
     }),
     interviewId: Property.Dropdown({
+      auth: leverAuth,
       displayName: 'Interview',
       description: 'Mandatory is you select an interview panel',
       required: false,
@@ -147,7 +151,7 @@ export const addFeedbackToOpportunity = createAction({
           url: `${LEVER_BASE_URL}/opportunities/${opportunityId}/panels/${panelId}?include=interviews`,
           authentication: {
             type: AuthenticationType.BASIC,
-            username: (auth as LeverAuth).apiKey,
+            username: auth.props.apiKey,
             password: '',
           },
         });
@@ -161,6 +165,7 @@ export const addFeedbackToOpportunity = createAction({
       },
     }),
     feedbackTemplateId: Property.Dropdown({
+      auth: leverAuth,
       displayName: 'Feedback template',
       description: 'Ignored if you select an interview panel and an interview',
       required: false,
@@ -179,7 +184,7 @@ export const addFeedbackToOpportunity = createAction({
           url: `${LEVER_BASE_URL}/feedback_templates`,
           authentication: {
             type: AuthenticationType.BASIC,
-            username: (auth as LeverAuth).apiKey,
+            username: auth.props.apiKey,
             password: '',
           },
         });
@@ -196,6 +201,7 @@ export const addFeedbackToOpportunity = createAction({
       },
     }),
     feedbackFields: Property.DynamicProperties({
+      auth: leverAuth,
       displayName: 'Fields',
       required: true,
       refreshers: [
@@ -231,7 +237,7 @@ export const addFeedbackToOpportunity = createAction({
                 opportunityId,
                 panelId,
                 interviewId,
-                auth as LeverAuth
+                auth
               )
             : feedbackTemplateId;
 
@@ -241,7 +247,7 @@ export const addFeedbackToOpportunity = createAction({
             url: `${LEVER_BASE_URL}/feedback_templates/${templateId}`,
             authentication: {
               type: AuthenticationType.BASIC,
-              username: (auth as LeverAuth).apiKey,
+              username: auth.props.apiKey,
               password: '',
             },
           });
@@ -277,7 +283,7 @@ export const addFeedbackToOpportunity = createAction({
             propsValue.opportunityId,
             propsValue.panelId,
             propsValue.interviewId,
-            auth as LeverAuth
+            auth
           )
         : propsValue.feedbackTemplateId;
 
@@ -286,7 +292,7 @@ export const addFeedbackToOpportunity = createAction({
       url: `${LEVER_BASE_URL}/feedback_templates/${templateId}`,
       authentication: {
         type: AuthenticationType.BASIC,
-        username: (auth as LeverAuth).apiKey,
+        username: auth.props.apiKey,
         password: '',
       },
     });
@@ -322,7 +328,7 @@ export const addFeedbackToOpportunity = createAction({
       url: `${LEVER_BASE_URL}/opportunities/${propsValue.opportunityId}/feedback?perform_as=${propsValue.performAs}`,
       authentication: {
         type: AuthenticationType.BASIC,
-        username: auth.apiKey,
+        username: auth.props.apiKey,
         password: '',
       },
       body: payload,
@@ -343,7 +349,7 @@ async function getFeedbackTemplateForInterview(
     url: `${LEVER_BASE_URL}/opportunities/${opportunityId}/panels/${panelId}?include=interviews`,
     authentication: {
       type: AuthenticationType.BASIC,
-      username: auth.apiKey,
+      username: auth.props.apiKey,
       password: '',
     },
   });

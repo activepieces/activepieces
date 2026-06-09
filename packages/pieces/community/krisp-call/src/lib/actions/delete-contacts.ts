@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { krispcallAuth } from '../..';
+import { krispcallAuth } from '../auth';
 
 export const deleteContacts = createAction({
   name: 'deleteContacts',
@@ -17,9 +17,9 @@ export const deleteContacts = createAction({
   async run({ auth, propsValue }) {
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.DELETE,
-      url: 'https://automationapi.krispcall.com/api/v1/platform/activepiece/delete-contacts',
+      url: 'https://app.krispcall.com/api/v3/platform/activepiece/delete-contacts',
       headers: {
-        'X-API-KEY': auth.apiKey,
+        'X-API-KEY': auth.props.apiKey,
       },
       body: {
         contacts: propsValue.contacts,

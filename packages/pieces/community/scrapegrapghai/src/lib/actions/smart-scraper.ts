@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { scrapegraphaiAuth } from '../../index';
+import { scrapegraphaiAuth } from '../auth';
 
 export const smartScraper = createAction({
   name: 'smart_scraper',
@@ -30,7 +30,7 @@ export const smartScraper = createAction({
       url: 'https://api.scrapegraphai.com/v1/smartscraper',
       headers: {
         'Content-Type': 'application/json',
-        'SGAI-APIKEY': auth,
+        'SGAI-APIKEY': auth.secret_text,
       },
       body: {
         website_url: propsValue.website_url,

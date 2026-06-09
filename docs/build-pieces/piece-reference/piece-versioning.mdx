@@ -1,0 +1,40 @@
+---
+title: "Piece versioning"
+icon: "code-compare"
+description: "How to choose a version number when publishing a piece"
+---
+
+Pieces are npm packages and follow **semantic versioning**.
+
+<Note>
+This page is for *piece authors* deciding what version number to publish. For how flows adopt new piece versions, see [Piece syncing & versioning](/install/architecture/piece-syncing).
+</Note>
+
+## Semantic versioning
+
+The version number is `MAJOR.MINOR.PATCH`:
+
+- **MAJOR** — bump when you make a breaking change.
+- **MINOR** — bump when you add functionality without breaking existing flows.
+- **PATCH** — bump for bug fixes that don't change behavior.
+
+## Classifying changes
+
+Use this checklist when deciding which segment to bump.
+
+### Breaking changes (MAJOR)
+
+- Remove an existing action or trigger.
+- Add a required prop to an existing action or trigger.
+- Remove an existing prop, whether required or optional.
+- Remove an attribute from an action output.
+- Change the existing behavior of an action or trigger.
+
+### Non-breaking changes (MINOR or PATCH)
+
+- Add a new action or trigger.
+- Add an optional prop.
+- Add an attribute to an action output.
+- Fix a bug without changing the public surface (PATCH).
+
+The rule of thumb: **any removal is breaking, any required addition is breaking, everything else is not.**

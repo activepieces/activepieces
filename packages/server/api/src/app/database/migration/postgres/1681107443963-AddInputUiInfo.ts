@@ -45,7 +45,7 @@ export class AddInputUiInfo1681107443963 implements MigrationInterface {
                 )
             }
         }
-        log.info('AddInputUiInfo1681107443963, finished flows ' + count)
+        log.info({ count }, '[AddInputUiInfo1681107443963#up] finished flows')
     }
 
     public async down(): Promise<void> {
@@ -67,5 +67,5 @@ function traverseFlowInternal(step: Step | undefined): Step[] {
 }
 
 function getAllSteps(flowVersion: FlowVersion): Step[] {
-    return traverseFlowInternal(flowVersion.trigger)
+    return traverseFlowInternal(flowVersion.trigger as Step)
 }

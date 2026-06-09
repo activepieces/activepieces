@@ -3,9 +3,11 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { MEMPOOL_API_BASE_URL } from '../../common';
 
 export const getPrice = createAction({
+ auth:PieceAuth.None(),
     name: 'get_price',
     displayName: 'Get Price',
     description: 'Returns bitcoin latest price in main currencies',
+
     // category: 'General',
     props: {},
     async run() {

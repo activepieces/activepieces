@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { motionAuth } from '../../index';
+import { motionAuth } from '../auth';
 import { BASE_URL, taskId, workspaceId } from '../common/props';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
@@ -21,7 +21,7 @@ export const moveTask = createAction({
       url:`${BASE_URL}/tasks/${taskId}/move`,
       headers: {
         'Content-Type': 'application/json',
-        'X-API-Key': auth,
+        'X-API-Key': auth.secret_text,
       },
       body: {
         workspaceId:newWorkspaceId

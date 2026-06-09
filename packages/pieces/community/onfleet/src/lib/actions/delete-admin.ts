@@ -13,7 +13,7 @@ export const deleteAdmin = createAction({
     admin: common.admin,
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth.secret_text);
 
     return await onfleetApi.administrators.deleteOne(
       context.propsValue.admin as string

@@ -1,92 +1,55 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { EventBody, EventCaptureResponse } from '../common/models';
+import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { posthogAuth } from '../..';
 
 export const posthogCreateEvent = createAction({
   auth: posthogAuth,
   name: 'create_event',
-  displayName: 'Create Event',
-  description: 'Create an event inside a project',
+  displayName: 'Capture Event',
+  description: 'Capture a custom event in PostHog',
   props: {
     event: Property.ShortText({
-      displayName: 'Event name',
-      description: 'The event name',
+      displayName: 'Event Name',
+      description: 'The name of the event to capture',
       required: true,
-    }),
-    event_type: Property.StaticDropdown({
-      displayName: 'Event type',
-      required: true,
-      options: {
-        options: [
-          { label: 'Alias', value: 'alias' },
-          { label: 'Capture', value: 'capture' },
-          { label: 'Identify', value: 'screen' },
-          { label: 'Page', value: 'page' },
-          { label: 'Screen', value: 'screen' },
-        ],
-      },
     }),
     distinct_id: Property.ShortText({
-      displayName: 'Distinct Id',
-      description: "User's Distinct Id",
+      displayName: 'Distinct ID',
+      description:
+        'Unique identifier for the user performing the action (e.g. user ID or email address)',
       required: true,
     }),
     properties: Property.Object({
       displayName: 'Properties',
-      description: 'The event properties',
-      required: false,
-    }),
-    context: Property.Object({
-      displayName: 'Context',
-      description: 'The event context,',
-      required: false,
-    }),
-    message_id: Property.ShortText({
-      displayName: 'Message ID',
-      description: 'The message id,',
-      required: false,
-    }),
-    category: Property.ShortText({
-      displayName: 'Category',
-      description: 'The event category.',
+      description: 'Additional event properties as key/value pairs',
       required: false,
     }),
   },
   async run(context) {
-    const body: EventBody = {
-      event: context.propsValue.event,
-      type: context.propsValue.event_type!,
-      api_key: context.auth,
-      messageId: context.propsValue.message_id,
-      context: context.propsValue.context || {},
-      properties: context.propsValue.properties || {},
-      distinct_id: context.propsValue.distinct_id,
-      category: context.propsValue.category,
-    };
+    const { personal_api_key, project_id, api_host, ingestion_host } = context.auth.props;
+    const apiBase = api_host || 'https://us.posthog.com';
+    const ingestionBase = ingestion_host || 'https://us.i.posthog.com';
 
-    const request: HttpRequest<EventBody> = {
-      method: HttpMethod.POST,
-      url: `https://app.posthog.com/capture/`,
-      body,
+    const projectResult = await httpClient.sendRequest<{ api_token: string }>({
+      method: HttpMethod.GET,
+      url: `${apiBase}/api/projects/${project_id}/`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
+        token: personal_api_key,
       },
-    };
+    });
 
-    const result = await httpClient.sendRequest<EventCaptureResponse>(request);
-    console.debug('Event creation response', result);
+    const result = await httpClient.sendRequest<{ status: number }>({
+      method: HttpMethod.POST,
+      url: `${ingestionBase}/i/v0/e/`,
+      body: {
+        api_key: projectResult.body.api_token,
+        distinct_id: context.propsValue.distinct_id,
+        event: context.propsValue.event,
+        properties: context.propsValue.properties ?? {},
+      },
+    });
 
-    if (result.status === 200) {
-      return result.body;
-    }
-
-    return result;
+    return result.body;
   },
 });

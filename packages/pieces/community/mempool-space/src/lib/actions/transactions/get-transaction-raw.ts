@@ -1,8 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { MEMPOOL_API_BASE_URL } from '../../common';
 
 export const getTransactionRaw = createAction({
+ auth:PieceAuth.None(),
   name: 'get_transaction_raw',
   displayName: 'Get Raw Transaction',
   description: 'Get the raw transaction in hex format',

@@ -19,7 +19,7 @@ export const retableGetAllProjectsAction = createAction({
         method: HttpMethod.GET,
         url: `${retableCommon.baseUrl}/workspace/${workspace_id}/project`,
         headers: {
-          ApiKey: context.auth as string,
+          ApiKey: context.auth.secret_text,
         },
       })
     ).body;

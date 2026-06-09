@@ -1,81 +1,87 @@
 import { readFile } from 'node:fs/promises'
-import { AppSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, ErrorCode, isNil, Platform, SMTPInformation } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, ErrorCode, isNil, PlatformWithoutFederatedAuth } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import Mustache from 'mustache'
 import nodemailer, { Transporter } from 'nodemailer'
 import { defaultTheme } from '../../../../flags/theme'
 import { system } from '../../../../helper/system/system'
+import { AppSystemProp } from '../../../../helper/system/system-props'
 import { platformService } from '../../../../platform/platform.service'
 import { EmailSender, EmailTemplateData } from './email-sender'
 
-
-
-type SMTPEmailSender = EmailSender & {
-    isSmtpConfigured: (platform: Platform | null) => boolean
-    validateOrThrow: (smtp: SMTPInformation) => Promise<void>
+export type SMTPEmailSender = EmailSender & {
+    validateOrThrow(): Promise<void>
+    isSmtpConfigured(): boolean
 }
 
 export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
     return {
-        async validateOrThrow(smtp: SMTPInformation) {
-            const disableSmtpValidationInTesting = system.getOrThrow(AppSystemProp.ENVIRONMENT) === ApEnvironment.TESTING
-            if (disableSmtpValidationInTesting) {
+        async validateOrThrow() {
+            if (system.getOrThrow(AppSystemProp.ENVIRONMENT) !== ApEnvironment.PRODUCTION) {
                 return
             }
-            const smtpClient = initSmtpClient(smtp)
+            const smtpClient = initSmtpClient()
             try {
                 await smtpClient.verify()
             }
             catch (e) {
                 throw new ActivepiecesError({
                     code: ErrorCode.INVALID_SMTP_CREDENTIALS,
-                    params: {
-                        message: JSON.stringify(e),
-                    },
+                    params: { message: String(e) },
                 })
             }
         },
         async send({ emails, platformId, templateData }) {
-            const platform = await getPlatform(platformId)
-            const emailSubject = getEmailSubject(templateData.name, templateData.vars)
-            const senderName = platform?.smtp?.senderName ?? system.get(AppSystemProp.SMTP_SENDER_NAME)
-            const senderEmail = platform?.smtp?.senderEmail ?? system.get(AppSystemProp.SMTP_SENDER_EMAIL)
-
-            if (!smtpEmailSender(log).isSmtpConfigured(platform)) {
-                log.error(`SMTP isn't configured for sending the email ${emailSubject}`)
-                return
+            try {
+                const platform = await getPlatform(platformId, log)
+                const emailSubject = getEmailSubject(templateData.name, templateData.vars)
+                const senderName = system.get(AppSystemProp.SMTP_SENDER_NAME)
+                const senderEmail = system.get(AppSystemProp.SMTP_SENDER_EMAIL)
+    
+                if (!smtpEmailSender(log).isSmtpConfigured()) {
+                    log.error({ emailSubject }, '[smtpEmailSender#send] SMTP is not configured')
+                    return
+                }
+    
+                const emailBody = await renderEmailBody({
+                    platform,
+                    templateData,
+                })
+    
+                const smtpClient = initSmtpClient()
+                log.info({
+                    emails,
+                    platformId,
+                    templateData,
+                }, '[smtpEmailSender#send] sending email')
+                await smtpClient.sendMail({
+                    from: `${senderName} <${senderEmail}>`,
+                    to: emails.join(','),
+                    subject: emailSubject,
+                    html: emailBody,
+                })
             }
-
-            const emailBody = await renderEmailBody({
-                platform,
-                templateData,
-            })
-
-            const smtpClient = initSmtpClient(platform?.smtp)
-
-            await smtpClient.sendMail({
-                from: `${senderName} <${senderEmail}>`,
-                to: emails.join(','),
-                subject: emailSubject,
-                html: emailBody,
-            })
+            catch (e) {
+                log.error({
+                    error: e,
+                    emails,
+                    platformId,
+                    title: templateData.name,
+                }, '[smtpEmailSender#send] error sending email')
+                throw e
+            }
+          
         },
-        isSmtpConfigured(platform: Platform | null): boolean {
-            const isConfigured = (host: string | undefined, port: string | undefined, user: string | undefined, password: string | undefined): boolean => {
-                return !isNil(host) && !isNil(port) && !isNil(user) && !isNil(password)
-            }
 
-            const isPlatformSmtpConfigured = !isNil(platform) && !isNil(platform.smtp) && isConfigured(platform.smtp.host, platform?.smtp?.port?.toString(), platform.smtp.user, platform.smtp.password)
-            const isSmtpSystemConfigured = isConfigured(system.get(AppSystemProp.SMTP_HOST), system.get(AppSystemProp.SMTP_PORT), system.get(AppSystemProp.SMTP_USERNAME), system.get(AppSystemProp.SMTP_PASSWORD))
-
-            return isPlatformSmtpConfigured || isSmtpSystemConfigured
+        isSmtpConfigured(): boolean {
+            return [AppSystemProp.SMTP_HOST, AppSystemProp.SMTP_PORT, AppSystemProp.SMTP_USERNAME, AppSystemProp.SMTP_PASSWORD]
+                .every(prop => !isNil(system.get(prop)))
         },
     }
 }
 
-const getPlatform = async (platformId: string | undefined): Promise<Platform | null> => {
-    return platformId ? platformService.getOne(platformId) : null
+const getPlatform = async (platformId: string | undefined, log: FastifyBaseLogger): Promise<PlatformWithoutFederatedAuth | null> => {
+    return platformId ? platformService(log).getOne(platformId) : null
 }
 
 const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs): Promise<string> => {
@@ -85,26 +91,17 @@ const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs):
     const footer = await readFile(footerPath, 'utf-8')
     const edition = system.getEdition()
     const primaryColor = platform?.primaryColor ?? defaultTheme.colors.primary.default
+    const primaryColorLight = hexToLightTint({ hex: primaryColor, opacity: 0.08 })
     const fullLogoUrl = platform?.fullLogoUrl ?? defaultTheme.logos.fullLogoUrl
     const platformName = platform?.name ?? defaultTheme.websiteName
 
     return Mustache.render(template, {
         ...templateData.vars,
         primaryColor,
+        primaryColorLight,
         fullLogoUrl,
         platformName,
-        checkIssuesEnabled() {
-            return templateData.name === 'issue-created' && templateData.vars.isIssue === 'true'
-        },
-        renderIssues() {
-            if (templateData.name === 'issues-reminder') {
-                return JSON.parse(templateData.vars.issues)
-            }
-        },
-        footerContent() {
-            return edition === ApEdition.CLOUD ? `   Activepieces, Inc. 398 11th Street,
-                    2nd floor, San Francisco, CA 94103` : `${platform?.name} Team.`
-        },
+        footerContent: edition === ApEdition.CLOUD ? 'Activepieces, Inc. 398 11th Street, 2nd floor, San Francisco, CA 94103' : '',
     },
     {
         footer,
@@ -112,40 +109,48 @@ const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs):
     )
 }
 
-const initSmtpClient = (smtp: SMTPInformation | undefined | null): Transporter => {
-    const smtpPort = smtp?.port ?? Number.parseInt(system.getOrThrow(AppSystemProp.SMTP_PORT))
+const initSmtpClient = (): Transporter => {
+    const smtpPort = Number.parseInt(system.getOrThrow(AppSystemProp.SMTP_PORT))
     return nodemailer.createTransport({
-        host: smtp?.host ?? system.getOrThrow(AppSystemProp.SMTP_HOST),
+        host: system.getOrThrow(AppSystemProp.SMTP_HOST),
         port: smtpPort,
         secure: smtpPort === 465,
         auth: {
-            user: smtp?.user ?? system.getOrThrow(AppSystemProp.SMTP_USERNAME),
-            pass: smtp?.password ?? system.getOrThrow(AppSystemProp.SMTP_PASSWORD),
+            user: system.getOrThrow(AppSystemProp.SMTP_USERNAME),
+            pass: system.getOrThrow(AppSystemProp.SMTP_PASSWORD),
         },
     })
 }
 
 const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<string, string>): string => {
     const templateToSubject: Record<EmailTemplateData['name'], string> = {
-        'invitation-email': 'You have been invited to a team',
-        '3-days-left-on-trial': 'Unlock More with 10 Automation Templates',
-        '1-day-left-on-trial': 'Your Plus Trial Ends Today - Upgrade ',
-        '7-days-in-trial': '7 Days in – 15 Automation Ideas to Inspire You 🚀',
-        'welcome-to-trial': 'Welcome to Activepieces + 4 Resources to Get Started ',
-        'quota-50': '[ACTION REQUIRED] 50% of your Activepieces tasks are consumed',
-        'quota-90': '[URGENT] 90% of your Activepieces tasks are consumed',
-        'quota-100': '[URGENT] 100% of your Activepieces tasks are consumed',
-        'verify-email': 'Verify your email address',
-        'reset-password': 'Reset your password',
-        'issue-created': `[ACTION REQUIRED] New issue in ${vars.flowName}`,
-        'issues-reminder': `You have unresolved issues for ${vars.projectName}`,
-        'trigger-failure': `[ACTION REQUIRED] ${vars.flowName} trigger is failing`,
+        'invitation-email': `You have been invited to "${vars.projectName}" project ✉️`,
+        'project-member-added': `Welcome to ${vars.projectName} 🎉`,
+        'badge-awarded': 'Congratulations, you earned a new badge! 🎉',
+        'verify-email': 'Verify your email address ✅',
+        'reset-password': 'Reset your password 🔑',
+        'issue-created': `[${vars.projectName}] Flow has an issue "${vars.flowName}" ⚠️`,
+        'scim-user-welcome': 'Welcome! Your account has been created 🎉',
     }
 
     return templateToSubject[templateName]
 }
 
+const hexToLightTint = ({ hex, opacity }: { hex: string, opacity: number }): string => {
+    let raw = hex.replace('#', '')
+    if (raw.length === 3) {
+        raw = raw[0] + raw[0] + raw[1] + raw[1] + raw[2] + raw[2]
+    }
+    if (raw.length !== 6) {
+        return '#ffffff'
+    }
+    const r = Math.round(255 - (255 - parseInt(raw.substring(0, 2), 16)) * opacity)
+    const g = Math.round(255 - (255 - parseInt(raw.substring(2, 4), 16)) * opacity)
+    const b = Math.round(255 - (255 - parseInt(raw.substring(4, 6), 16)) * opacity)
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
+}
+
 type RenderEmailBodyArgs = {
-    platform: Platform | null
+    platform: PlatformWithoutFederatedAuth | null
     templateData: EmailTemplateData
 }

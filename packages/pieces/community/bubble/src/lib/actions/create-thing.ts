@@ -5,7 +5,7 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 
-import { bubbleAuth } from '../../index';
+import { bubbleAuth } from '../auth';
 import { bubbleCommon } from '../common';
 
 export const bubbleCreateThingAction = createAction({
@@ -18,7 +18,7 @@ export const bubbleCreateThingAction = createAction({
     fields: bubbleCommon.fields,
   },
   async run(context) {
-    const { appname, token } = context.auth;
+    const { appname, token } = context.auth.props;
     const { typename, fields } = context.propsValue;
 
     const server_url = `https://${appname}.bubbleapps.io/api/1.1/obj/${typename}`;

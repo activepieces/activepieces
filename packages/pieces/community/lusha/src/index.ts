@@ -25,7 +25,7 @@ export const lusha = createPiece({
       auth: lushaAuth,
       authMapping: async (auth) => ({
         'x-app': 'activepieces',
-        'api_key': auth as string,
+        'api_key': auth.secret_text,
       }),
     })
   ],

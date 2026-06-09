@@ -2,18 +2,30 @@ import { trelloAuth } from '../..';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { getCardDetail, getCardsInBoard, getCardsInList, trelloCommon } from '../common';
 import { TrelloNewCard } from '../common/props/card';
-import { isNil } from '@activepieces/shared';
+import { isNil, WebhookHandshakeStrategy } from '@activepieces/shared';
 
 export const newCardTrigger = createTrigger({
 	auth: trelloAuth,
 	name: 'new_card',
 	displayName: 'New Card',
 	description: 'Trigger when a new card is created',
+	aiMetadata: {
+		description: 'Fires when a new card is created on the selected board, or within a specific list if one is provided. Represents a newly added task or item; emits the created card with its full details.',
+	},
 	props: {
 		board_id: trelloCommon.board_id,
 		list_id_opt: trelloCommon.list_id_opt,
 	},
 	type: TriggerStrategy.WEBHOOK,
+		handshakeConfiguration:{
+			strategy:WebhookHandshakeStrategy.NONE
+		},
+		async onHandshake(context)
+		{
+			return{
+				status:200
+			}
+		},
 	async onEnable(context) {
 		const element_id = context.propsValue.list_id_opt || context.propsValue.board_id;
 		const webhooks = await trelloCommon.list_webhooks(context.auth);

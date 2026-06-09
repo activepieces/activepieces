@@ -4,6 +4,8 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+  AppConnectionValueForAuthProperty,
+  PieceAuth,
   PieceAuthProperty,
   PiecePropValueSchema,
   TriggerStrategy,
@@ -27,6 +29,7 @@ export const rssNewItemListTrigger = createTrigger({
   description: 'Runs when a new item is added in one of the RSS feed',
   type: TriggerStrategy.POLLING,
   sampleData: sampleData,
+  auth: PieceAuth.None(),
   props: {
     rss_feed_urls: rssFeedUrls,
   },
@@ -129,7 +132,7 @@ async function getRssItemsFromMultipleUrls(urls: string[]): Promise<any[]> {
   return allItems;
 }
 
-const polling: Polling<PiecePropValueSchema<PieceAuthProperty>, PollingProps> = {
+const polling: Polling<AppConnectionValueForAuthProperty<undefined>, PollingProps> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ store, propsValue }) => {
     const items = await getRssItemsFromMultipleUrls(propsValue.rss_feed_urls);

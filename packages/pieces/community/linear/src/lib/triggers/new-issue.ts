@@ -8,6 +8,9 @@ export const linearNewIssue = createTrigger({
   name: 'new_issue',
   displayName: 'New Issue',
   description: 'Triggers when Linear receives a new issue',
+  aiMetadata: {
+    description: 'Fires when a new issue is created in the selected Linear team. Represents the newly created issue with its details such as title, assignee, state, and labels.',
+  },
   props: {
     team_id: props.team_id(),
   },
@@ -63,7 +66,7 @@ export const linearNewIssue = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth);
     const webhook = await client.createWebhook({
       label: 'ActivePieces New Issue',
       url: context.webhookUrl,
@@ -79,7 +82,7 @@ export const linearNewIssue = createTrigger({
     }
   },
   async onDisable(context) {
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth);
     const response = await context.store?.get<WebhookInformation>(
       '_new_issue_trigger'
     );

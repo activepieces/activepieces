@@ -8,6 +8,7 @@ import {
     FolderDto,
     FolderId,
     isNil, ProjectId,
+    SeekPage,
     UpdateFolderRequest,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -71,7 +72,7 @@ export const flowFolderService = (log: FastifyBaseLogger) => ({
             numberOfFlows: 0,
         }
     },
-    async list(params: ListParams) {
+    async list(params: ListParams): Promise<SeekPage<FolderDto>> {
         const { projectId, cursorRequest, limit } = params
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
@@ -83,23 +84,16 @@ export const flowFolderService = (log: FastifyBaseLogger) => ({
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const paginationResponse = await paginator.paginate(
-            folderRepo().createQueryBuilder('folder').where({ projectId }),
-        )
-        const numberOfFlowForEachFolder: Promise<number>[] = []
-        const dtosList: FolderDto[] = []
-        paginationResponse.data.forEach((f) => {
-            numberOfFlowForEachFolder.push(
-                flowService(log).count({ projectId, folderId: f.id }),
-            )
-        });
-        (await Promise.all(numberOfFlowForEachFolder)).forEach((num, idx) => {
-            dtosList.push({ ...paginationResponse.data[idx], numberOfFlows: num })
-        })
-        return paginationHelper.createPage<FolderDto>(
-            dtosList,
-            paginationResponse.cursor,
-        )
+        
+        const queryBuilder = folderRepo()
+            .createQueryBuilder('folder')
+            .leftJoin('flow', 'flow', 'flow.folderId = folder.id')
+            .addSelect('COUNT(flow.id)::int', 'numberOfFlows')
+            .where('folder.projectId = :projectId', { projectId })
+            .groupBy('folder.id')
+
+        const paginationResponse = await paginator.paginate<FolderDto>(queryBuilder)
+        return paginationHelper.createPage(paginationResponse.data, paginationResponse.cursor)
     },
     async getOneByDisplayNameCaseInsensitive(params: GetOneByDisplayNameParams): Promise<Folder | null> {
         const { projectId, displayName } = params

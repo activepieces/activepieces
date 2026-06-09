@@ -1,5 +1,4 @@
-import { APPSUMO_PLAN, FREE_CLOUD_PLAN, PlatformPlanWithOnlyLimits } from '@activepieces/ee-shared'
-import { isNil, PlatformRole } from '@activepieces/shared'
+import { APPSUMO_PLAN, isNil, PlanName, PlatformPlanWithOnlyLimits, PlatformRole, STANDARD_CLOUD_PLAN } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -10,38 +9,13 @@ import { AppSumoEntity, AppSumoPlan } from './appsumo.entity'
 
 const appsumoRepo = repoFactory(AppSumoEntity)
 
-
 const appSumoPlans: Record<string, PlatformPlanWithOnlyLimits> = {
-    activepieces_tier1: APPSUMO_PLAN({
-        planName: 'appsumo_activepieces_tier1',
-        tasksLimit: 10000,
-        userSeatsLimit: 1,
-    }),
-    activepieces_tier2: APPSUMO_PLAN({
-        planName: 'appsumo_activepieces_tier2',
-        tasksLimit: 50000,
-        userSeatsLimit: 1,
-    }),
-    activepieces_tier3: APPSUMO_PLAN({
-        planName: 'appsumo_activepieces_tier3',
-        tasksLimit: 200000,
-        userSeatsLimit: 5,
-    }),
-    activepieces_tier4: APPSUMO_PLAN({
-        planName: 'appsumo_activepieces_tier4',
-        tasksLimit: 500000,
-        userSeatsLimit: 5,
-    }),
-    activepieces_tier5: APPSUMO_PLAN({
-        planName: 'appsumo_activepieces_tier5',
-        tasksLimit: 1000000,
-        userSeatsLimit: 5,
-    }),
-    activepieces_tier6: APPSUMO_PLAN({
-        planName: 'appsumo_activepieces_tier6',
-        tasksLimit: 10000000,
-        userSeatsLimit: 5,
-    }),
+    activepieces_tier1: APPSUMO_PLAN(PlanName.APPSUMO_ACTIVEPIECES_TIER1),
+    activepieces_tier2: APPSUMO_PLAN(PlanName.APPSUMO_ACTIVEPIECES_TIER2),
+    activepieces_tier3: APPSUMO_PLAN(PlanName.APPSUMO_ACTIVEPIECES_TIER3),
+    activepieces_tier4: APPSUMO_PLAN(PlanName.APPSUMO_ACTIVEPIECES_TIER4),
+    activepieces_tier5: APPSUMO_PLAN(PlanName.APPSUMO_ACTIVEPIECES_TIER5),
+    activepieces_tier6: APPSUMO_PLAN(PlanName.APPSUMO_ACTIVEPIECES_TIER6),
 }
 
 export const appsumoService = (log: FastifyBaseLogger) => ({
@@ -88,20 +62,19 @@ export const appsumoService = (log: FastifyBaseLogger) => ({
                 },
             })
             if (!isNil(user)) {
-                const project = await projectService.getUserProjectOrThrow(user.id)
+                const project = await projectService(log).getUserProjectOrThrow(user.id)
                 await platformPlanService(log).getOrCreateForPlatform(project.platformId)
 
                 if (action === 'refund') {
                     await platformPlanService(log).update({
                         platformId: project.platformId,
-                        ...FREE_CLOUD_PLAN,
+                        ...STANDARD_CLOUD_PLAN,
                     })
                 }
                 else {
                     await platformPlanService(log).update({
                         platformId: project.platformId,
                         ...appSumoPlan,
-                        eligibleForTrial: false,
                     })
 
                 }

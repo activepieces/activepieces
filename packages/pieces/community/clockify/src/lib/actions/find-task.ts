@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { clockifyAuth } from '../../index';
+import { clockifyAuth } from '../auth';
 import { clockifyApiCall } from '../common/client';
 import { projectId, workspaceId } from '../common/props';
 
@@ -31,14 +31,14 @@ export const findTaskAction = createAction({
 		const { workspaceId, projectId, name, exactMatch } = context.propsValue;
 
 		const response = await clockifyApiCall({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: `/workspaces/${workspaceId}/projects/${projectId}/tasks`,
 			query: {
 				name,
 				'strict-name-search': exactMatch ? 'true' : 'false',
 			},
-		});
+		});	
 
 		return response;
 	},

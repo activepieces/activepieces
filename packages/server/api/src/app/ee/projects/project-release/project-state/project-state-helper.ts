@@ -1,24 +1,8 @@
-import { FlowOperationType, FlowState, FlowStatus, flowStructureUtil, isNil, PopulatedFlow, ProjectSyncError } from '@activepieces/shared'
+import { FlowOperationType, FlowState, FlowStatus, flowStructureUtil, FlowSyncError, isNil, PopulatedFlow } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { flowRepo } from '../../../../flows/flow/flow.repo'
 import { flowService } from '../../../../flows/flow/flow.service'
 import { projectService } from '../../../../project/project-service'
 export const projectStateHelper = (log: FastifyBaseLogger) => ({
-    async getStateFromDB(projectId: string): Promise<FlowState[]> {
-        const flows = await flowRepo().find({
-            where: {
-                projectId,
-            },
-        })
-        const allPopulatedFlows = await Promise.all(flows.map(async (flow) => {
-            return flowService(log).getOnePopulatedOrThrow({
-                id: flow.id,
-                projectId,
-            })
-        }))
-        return allPopulatedFlows
-    },
-
     async createFlowInProject(flow: PopulatedFlow, projectId: string): Promise<PopulatedFlow> {
         const createdFlow = await flowService(log).create({
             projectId,
@@ -34,7 +18,7 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
     async updateFlowInProject(originalFlow: FlowState, newFlow: FlowState,
         projectId: string,
     ): Promise<PopulatedFlow> {
-        const project = await projectService.getOneOrThrow(projectId)
+        const project = await projectService(log).getOneOrThrow(projectId)
 
         const newFlowVersion = flowStructureUtil.transferFlow(newFlow.version, (step) => {
             const oldStep = flowStructureUtil.getStep(step.name, originalFlow.version.trigger)
@@ -48,30 +32,37 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
             id: originalFlow.id,
             projectId,
             platformId: project.platformId,
-            lock: true,
-            userId: project.ownerId,
+            userId: null,
             operation: {
                 type: FlowOperationType.IMPORT_FLOW,
                 request: {
                     displayName: newFlow.version.displayName,
                     trigger: newFlowVersion.trigger,
                     schemaVersion: newFlow.version.schemaVersion,
+                    notes: newFlow.version.notes,
                 },
             },
         })
 
         if (!isNil(updatedFlow.publishedVersionId)) {
-            await flowService(log).updateStatus({
+            await flowService(log).update({
                 id: updatedFlow.id,
                 projectId,
-                newStatus: newFlow.status,
+                platformId: project.platformId,
+                userId: null,
+                operation: {
+                    type: FlowOperationType.CHANGE_STATUS,
+                    request: {
+                        status: newFlow.status,
+                    },
+                },
             })
         }
 
         return updatedFlow
     },
 
-    async republishFlow({ flow, projectId }: RepublishFlowParams): Promise<ProjectSyncError | null> {
+    async republishFlow({ flow, projectId, status }: RepublishFlowParams): Promise<FlowSyncError | null> {
         if (!flow.version.valid) {
             return {
                 flowId: flow.id,
@@ -79,17 +70,16 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
             }
         }
         try {
-            const project = await projectService.getOneOrThrow(projectId)
+            const project = await projectService(log).getOneOrThrow(projectId)
             await flowService(log).update({
                 id: flow.id,
                 projectId,
                 platformId: project.platformId,
-                lock: true,
-                userId: project.ownerId,
+                userId: null,
                 operation: {
                     type: FlowOperationType.LOCK_AND_PUBLISH,
                     request: {
-                        status: FlowStatus.ENABLED,
+                        status: status ?? FlowStatus.ENABLED,
                     },
                 },
             })
@@ -115,4 +105,5 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
 type RepublishFlowParams = {
     flow: PopulatedFlow
     projectId: string
+    status?: FlowStatus
 }
