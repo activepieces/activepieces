@@ -114,6 +114,9 @@ autoscaling:
 persistence:
   enabled: true
   size: 2Gi
+  # Empty preserves the cluster default StorageClass for standalone PVCs.
+  # StatefulSet volume claim templates keep the existing local-path default when empty.
+  storageClassName: ""
   mountPath: "/usr/src/app/cache"
 
 volumes: []
