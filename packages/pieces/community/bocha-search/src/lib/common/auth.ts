@@ -26,12 +26,11 @@ export const bochaAuth = PieceAuth.SecretText({
         valid: true,
       };
     }
-    catch (e: unknown) {
+    catch (e) {
+      const response = isRecord(e) ? e['response'] : undefined;
       const status =
-        e instanceof Error &&
-        'response' in e &&
-        typeof (e as { response: { status: number } }).response?.status === 'number'
-          ? (e as { response: { status: number } }).response.status
+        isRecord(response) && typeof response['status'] === 'number'
+          ? response['status']
           : undefined;
       if (status === 401 || status === 403) {
         return { valid: false, error: 'Invalid API Key' };
@@ -40,3 +39,7 @@ export const bochaAuth = PieceAuth.SecretText({
     }
   },
 });
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}

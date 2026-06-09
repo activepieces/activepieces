@@ -52,11 +52,42 @@ export const webSearchAction = createAction({
       body['exclude'] = propsValue['exclude'];
     }
 
-    return makeRequest({
+    const response = await makeRequest<BochaWebSearchResponse>({
       token: auth.secret_text,
       method: HttpMethod.POST,
       path: '/web-search',
       body,
     });
+
+    return response.data ?? {};
   },
 });
+
+type BochaWebPage = {
+  id?: string;
+  name?: string;
+  url?: string;
+  displayUrl?: string;
+  snippet?: string;
+  summary?: string;
+  siteName?: string;
+  siteIcon?: string;
+  datePublished?: string;
+  dateLastCrawled?: string;
+  cachedPageUrl?: string;
+  language?: string;
+  isFamilyFriendly?: boolean;
+  isNavigational?: boolean;
+};
+
+type BochaWebSearchResponse = {
+  data?: {
+    _type?: string;
+    queryContext?: unknown;
+    webPages?: {
+      value?: BochaWebPage[];
+    };
+    images?: unknown;
+    videos?: unknown;
+  };
+};
