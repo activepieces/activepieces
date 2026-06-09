@@ -7,6 +7,8 @@ export const addAttendeesToEventAction = createAction({
   name: 'google-calendar-add-attendees',
   displayName: 'Add Attendees to Event',
   description: 'Add one or more person to existing event.',
+  audience: 'both',
+  aiMetadata: { description: 'Adds one or more guests (by email) to an existing Google Calendar event, identified by calendar and event ID, preserving the current attendee list. Use to invite people to an event that already exists rather than recreating it. Not idempotent: re-running appends the same emails again, producing duplicate attendee entries.', idempotent: false },
   props: {
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
     eventId: Property.ShortText({

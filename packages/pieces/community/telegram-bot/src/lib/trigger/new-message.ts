@@ -37,6 +37,7 @@ export const telegramNewMessage = createTrigger({
   displayName: 'New Update',
   description:
     'Triggers when the bot receives a Telegram update (message, callback query, poll answer, etc.). One trigger per bot token — Telegram does not support multiple webhooks on the same bot.',
+  aiMetadata: { description: 'Fires when the bot receives any selected Telegram update, including new or edited messages, channel posts, inline-button callback queries, poll answers, and chat-member changes. Represents a single inbound update event; since Telegram allows only one webhook per bot token, this one trigger covers all chosen update types for that bot.' },
   props: {
     update_types: Property.StaticMultiSelectDropdown({
       displayName: 'Update Types',

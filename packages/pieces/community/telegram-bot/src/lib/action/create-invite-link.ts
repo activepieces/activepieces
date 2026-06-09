@@ -7,6 +7,8 @@ export const telegramCreateInviteLinkAction = createAction({
   auth: telegramBotAuth,
   name: 'create_invite_link',
   description: 'Create an invite link for a chat',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new invite link for a chat by chat_id, optionally with a name, expiry, member limit, or join-request approval. Use to generate a shareable join link; the bot must be an administrator with invite rights. Not idempotent: each call mints a distinct new invite link.', idempotent: false },
   displayName: 'Create Invite Link',
   props: {
     instructions: telegramCommons.chatIdInstructions(),
