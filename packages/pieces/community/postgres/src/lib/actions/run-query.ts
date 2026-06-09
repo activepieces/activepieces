@@ -8,6 +8,11 @@ export const runQuery = createAction({
   name: 'run-query',
   displayName: 'Run Query',
   description: 'Run Query',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Executes an arbitrary SQL statement against the connected PostgreSQL database and returns the resulting rows. Use this to read, write, or otherwise operate on a Postgres database when no more specific tool fits. Always pass dynamic values via the args array with $1/$2 placeholders (never string-interpolate them) to avoid SQL injection. Not idempotent: the statement can be a mutation (INSERT/UPDATE/DELETE/DDL), so repeating the same call may change data or have side effects each time.',
+    idempotent: false,
+  },
   props: {
     markdown: Property.MarkDown({
       value: `
