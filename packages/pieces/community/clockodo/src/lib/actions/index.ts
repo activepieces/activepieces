@@ -6,7 +6,7 @@ import teamActions from './team';
 import userActions from './user';
 import absenceActions from './absence';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { clockodoAuth } from '../../index';
+import { clockodoAuth } from '../auth';
 
 export default [
   ...entryActions,

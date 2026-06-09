@@ -1,7 +1,5 @@
 # cli
 
-This library was generated with [Nx](https://nx.dev).
+## Building
 
-## Running unit tests
-
-Run `nx test cli` to execute the unit tests via [Jest](https://jestjs.io).
+Run `turbo run build --filter=@activepieces/cli` to build the library.

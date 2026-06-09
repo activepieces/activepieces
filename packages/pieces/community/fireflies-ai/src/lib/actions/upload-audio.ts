@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { firefliesAiAuth } from '../../index';
+import { firefliesAiAuth } from '../auth';
 import { BASE_URL } from '../common';
 
 export const uploadAudioAction = createAction({
@@ -9,6 +9,8 @@ export const uploadAudioAction = createAction({
 	displayName: 'Upload Audio',
 	description:
 		'Creates a new meeeting in Fireflies for transcription (requires a publicly accessible URL).',
+	audience: 'both',
+	aiMetadata: { description: 'Submits a publicly accessible audio/video URL (mp3, mp4, wav, m4a, ogg) to Fireflies to create a new meeting and transcribe it. Use when the agent has a recording it wants transcribed and analyzed. The API accepts only URLs, not direct file uploads. Not idempotent: each call queues a new transcription job.', idempotent: false },
 	props: {
 		audioUrl: Property.ShortText({
 			displayName: 'Audio URL',

@@ -10,6 +10,8 @@ export const findTag = createAction({
   name: 'find_tag',
   displayName: 'Find Tag',
   description: 'Search for tags on a list by name',
+  audience: 'both',
+  aiMetadata: { description: 'Searches the tags defined on an audience (list): an empty tag-name fetches all tags, while a provided name filters to matching tags. Use to discover available tags or confirm a tag exists before tagging contacts. Requires the target list; read-only and idempotent.', idempotent: true },
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
     name: Property.ShortText({

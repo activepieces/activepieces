@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { Client } from '@hubspot/api-client';

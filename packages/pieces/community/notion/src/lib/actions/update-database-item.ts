@@ -1,19 +1,24 @@
 import {
   createAction,
   DynamicPropsValue,
-  OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { NotionFieldMapping } from '../common/models';
 
-import { notionAuth } from '../..';
-import { notionCommon } from '../common';
+import { notionAuth } from '../auth';
+import { getNotionToken, notionCommon } from '../common';
 export const updateDatabaseItem = createAction({
   auth: notionAuth,
   name: 'update_database_item',
   displayName: 'Update Database Item',
   description:
     'Update specific fields in a Notion database item. Perfect for maintaining data, tracking changes, or syncing information across systems.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Overwrites property fields on an existing Notion database item identified by its page id. Use when an agent must change values on a known record (status, assignee, dates) rather than create one; requires the database_id and the target item id. Idempotent: re-applying the same field values leaves the item in the same final state.',
+    idempotent: true,
+  },
   props: {
     database_id: notionCommon.database_id,
     database_item_id: notionCommon.database_item_id,
@@ -28,7 +33,7 @@ export const updateDatabaseItem = createAction({
     const notionFields: DynamicPropsValue = {};
 
     const notion = new Client({
-      auth: (context.auth as OAuth2PropertyValue).access_token,
+      auth: getNotionToken(context.auth),
       notionVersion: '2022-02-22',
     });
     const { properties } = await notion.databases.retrieve({

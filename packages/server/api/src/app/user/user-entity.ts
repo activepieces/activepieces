@@ -1,10 +1,11 @@
-import { Project, User, UserIdentity } from '@activepieces/shared'
+import { Project, User, UserBadge, UserIdentity } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { BaseColumnSchemaPart } from '../database/database-common'
 
 export type UserSchema = User & {
     projects: Project[]
     identity: UserIdentity
+    badges: UserBadge[]
 }
 
 export const UserEntity = new EntitySchema<UserSchema>({
@@ -46,6 +47,10 @@ export const UserEntity = new EntitySchema<UserSchema>({
             columns: ['platformId', 'externalId'],
             unique: true,
         },
+        {
+            name: 'idx_user_identity_id',
+            columns: ['identityId'],
+        },
     ],
     relations: {
         projects: {
@@ -60,6 +65,11 @@ export const UserEntity = new EntitySchema<UserSchema>({
                 name: 'identityId',
                 referencedColumnName: 'id',
             },
+        },
+        badges: {
+            type: 'one-to-many',
+            target: 'user_badge',
+            inverseSide: 'user',
         },
     },
 })

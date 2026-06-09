@@ -1,4 +1,3 @@
-import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -14,16 +13,24 @@ import {
     AppConnectionWithoutSensitiveData,
     ConnectionState,
     Cursor,
+    EngineResponse,
     EngineResponseStatus,
     ErrorCode,
+    ExecuteValidateAuthResponse,
     isNil,
+    MAX_PLATFORM_APP_CONNECTION_OWNERS,
     Metadata,
     OAuth2GrantType,
+    PlatformAppConnectionOwner,
+    PlatformAppConnectionOwnersResponse,
+    PlatformAppConnectionProjectInfo,
+    PlatformAppConnectionsListItem,
     PlatformId,
     PlatformRole,
     ProjectId,
     SeekPage,
     spreadIfDefined,
+    unique,
     UpsertAppConnectionRequestBody,
     User,
     UserId,
@@ -33,15 +40,16 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
-import { EngineHelperResponse, EngineHelperValidateAuthResult } from 'server-worker'
 import { ArrayContains, Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { projectMemberService } from '../../ee/projects/project-members/project-member.service'
+import { containsSecretManagerReference, secretManagersService } from '../../ee/secret-managers/secret-managers.service'
 import { flowService } from '../../flows/flow/flow.service'
 import { encryptUtils } from '../../helper/encryption'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import {
     getPiecePackageWithoutArchive,
     pieceMetadataService,
@@ -60,16 +68,31 @@ export const appConnectionsRepo = repoFactory(AppConnectionEntity)
 
 export const appConnectionService = (log: FastifyBaseLogger) => ({
     async upsert(params: UpsertParams): Promise<AppConnectionWithoutSensitiveData> {
-        const { projectIds, externalId, value, displayName, pieceName, ownerId, platformId, scope, type, status, metadata } = params
+        const { projectIds, externalId, value, displayName, pieceName, ownerId, platformId, scope, type, status, metadata, preSelectForNewProjects } = params
         const pieceVersion = params.pieceVersion ?? ( await pieceMetadataService(log).getOrThrow({
             name: pieceName,
             platformId,
         })).version
         validatePieceVersion(pieceVersion)
         await assertProjectIds(projectIds, platformId)
+
+        if (status === AppConnectionStatus.MISSING) {
+            const existingForPlaceholder = await appConnectionsRepo().findOneBy({
+                externalId,
+                scope,
+                platformId,
+                ...(projectIds ? { projectIds: ArrayContains(projectIds) } : {}),
+            })
+            if (!isNil(existingForPlaceholder) && existingForPlaceholder.status !== AppConnectionStatus.MISSING) {
+                log.info({ connectionId: existingForPlaceholder.id, pieceName, platformId, existingStatus: existingForPlaceholder.status }, 'Placeholder upsert skipped — non-missing connection already exists')
+                return this.removeSensitiveData(existingForPlaceholder)
+            }
+        }
+
         const validatedConnectionValue = await validateConnectionValue({
-            value,
+            value: await secretManagersService(log).resolveObject({ value, platformId, projectIds }),
             pieceName,
+            pieceVersion,
             projectId: projectIds[0],
             platformId,
         }, log)
@@ -100,6 +123,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             projectIds,
             platformId,
             ...spreadIfDefined('metadata', metadata),
+            ...spreadIfDefined('preSelectForNewProjects', preSelectForNewProjects),
             pieceVersion,
         }
 
@@ -111,6 +135,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             ...(projectIds ? { projectIds: ArrayContains(projectIds) } : {}),
             scope,
         })
+        log.info({ connectionId: newId, pieceName, platformId, isNew: isNil(existingConnection) }, 'App connection upserted')
         return this.removeSensitiveData(updatedConnection)
     },
     async update(params: UpdateParams): Promise<AppConnectionWithoutSensitiveData> {
@@ -131,6 +156,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             displayName: request.displayName,
             ...spreadIfDefined('projectIds', request.projectIds),
             ...spreadIfDefined('metadata', request.metadata),
+            ...spreadIfDefined('preSelectForNewProjects', request.preSelectForNewProjects),
         })
 
         const updatedConnection = await appConnectionsRepo().findOneByOrFail(filter)
@@ -158,7 +184,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             return null
         }
 
-        const owner = isNil(connection.ownerId) ? null : await userService.getMetaInformation({
+        const owner = isNil(connection.ownerId) ? null : await userService(log).getMetaInformation({
             id: connection.ownerId,
         })
         return {
@@ -237,6 +263,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             userId,
         })
 
+        log.info({ oldConnectionId: sourceAppConnectionId, newConnectionId: targetAppConnectionId, affectedFlows: flows.data.length }, 'App connection replaced')
         await this.delete({
             id: sourceAppConnection.id,
             platformId,
@@ -252,10 +279,13 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             scope: params.scope,
             ...(params.projectId ? { projectIds: ArrayContains([params.projectId]) } : {}),
         })
+        log.info({ connectionId: params.id, platformId: params.platformId }, 'App connection deleted')
     },
 
     async list({
         projectId,
+        projectIds,
+        ownerIds,
         pieceName,
         cursorRequest,
         displayName,
@@ -293,11 +323,17 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         if (!isNil(externalIds)) {
             querySelector.externalId = In(externalIds)
         }
+        if (!isNil(ownerIds) && ownerIds.length > 0) {
+            querySelector.ownerId = In(ownerIds)
+        }
         const queryBuilder = appConnectionsRepo()
             .createQueryBuilder('app_connection')
             .leftJoinAndSelect('app_connection.owner', 'owner')
             .leftJoinAndSelect('owner.identity', 'owner_identity')
             .where(querySelector)
+        if (!isNil(projectIds) && projectIds.length > 0) {
+            queryBuilder.andWhere('app_connection."projectIds" && :projectIds::varchar[]', { projectIds })
+        }
         const { data, cursor } = await paginator.paginate(queryBuilder)
 
         const flowIdsByExternalId = await fetchFlowIdsForConnections(log, data)
@@ -323,8 +359,11 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
     removeSensitiveData: (
         appConnection: AppConnection | AppConnectionSchema,
     ): AppConnectionWithoutSensitiveData => {
-        const { value: _, ...appConnectionWithoutSensitiveData } = appConnection
-        return appConnectionWithoutSensitiveData as AppConnectionWithoutSensitiveData
+        const { value, ...appConnectionWithoutSensitiveData } = appConnection
+        return {
+            ...appConnectionWithoutSensitiveData,
+            usingSecretManager: containsSecretManagerReference(value),
+        }
     },
 
     async decryptAndRefreshConnection(
@@ -349,8 +388,9 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             projectIds: ArrayContains([projectId]),
         })
     },
+
     async getOwners({ projectId, platformId }: { projectId: ProjectId, platformId: PlatformId }): Promise<AppConnectionOwners[]> {
-        const platformAdmins = (await userService.getByPlatformRole(platformId, PlatformRole.ADMIN)).map(user => ({
+        const platformAdmins = (await userService(log).getByPlatformRole(platformId, PlatformRole.ADMIN)).map(user => ({
             firstName: user.identity.firstName,
             lastName: user.identity.lastName,
             email: user.identity.email,
@@ -373,7 +413,69 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         }))
         return [...platformAdmins, ...projectMembersDetails]
     },
+
+    async listForPlatform(params: ListForPlatformParams): Promise<SeekPage<PlatformAppConnectionsListItem>> {
+        const service = appConnectionService(log)
+        const page = await service.list({
+            pieceName: params.pieceName,
+            displayName: params.displayName,
+            status: params.status,
+            scope: params.scope,
+            platformId: params.platformId,
+            projectId: null,
+            projectIds: params.projectIds,
+            ownerIds: params.ownerIds,
+            cursorRequest: params.cursorRequest,
+            limit: params.limit,
+            externalIds: undefined,
+        })
+
+        const projectIdsToLookUp = unique(page.data.flatMap((connection) => connection.projectIds))
+        const projectsById = await fetchProjectsForPlatform(projectIdsToLookUp, params.platformId)
+
+        const data: PlatformAppConnectionsListItem[] = page.data.map((connection) => {
+            const sanitized = service.removeSensitiveData(connection)
+            const projects: PlatformAppConnectionProjectInfo[] = connection.projectIds
+                .map((id) => projectsById.get(id))
+                .filter((project): project is PlatformAppConnectionProjectInfo => project !== undefined)
+            return { ...sanitized, projects }
+        })
+
+        return { ...page, data }
+    },
+
+    async listOwnersForPlatform({ platformId }: { platformId: PlatformId }): Promise<PlatformAppConnectionOwnersResponse> {
+        const rows = await appConnectionsRepo()
+            .createQueryBuilder('app_connection')
+            .innerJoin('app_connection.owner', 'owner')
+            .innerJoin('owner.identity', 'identity')
+            .where('app_connection.platformId = :platformId', { platformId })
+            .select('owner.id', 'id')
+            .addSelect('identity.firstName', 'firstName')
+            .addSelect('identity.lastName', 'lastName')
+            .addSelect('identity.email', 'email')
+            .distinct(true)
+            .orderBy('identity.email', 'ASC')
+            .limit(MAX_PLATFORM_APP_CONNECTION_OWNERS + 1)
+            .getRawMany<PlatformAppConnectionOwner>()
+
+        const truncated = rows.length > MAX_PLATFORM_APP_CONNECTION_OWNERS
+        const data = truncated ? rows.slice(0, MAX_PLATFORM_APP_CONNECTION_OWNERS) : rows
+        return { data, truncated }
+    },
+
 })
+
+const fetchProjectsForPlatform = async (projectIds: string[], platformId: string): Promise<Map<string, PlatformAppConnectionProjectInfo>> => {
+    if (projectIds.length === 0) {
+        return new Map()
+    }
+    const projects = await projectRepo().find({
+        where: { id: In(projectIds), platformId },
+        select: ['id', 'displayName', 'type'],
+    })
+    return new Map(projects.map((project) => [project.id, { id: project.id, displayName: project.displayName, type: project.type }]))
+}
 
 async function assertProjectIds(projectIds: ProjectId[], platformId: string): Promise<void> {
     const filteredProjects = await projectRepo().countBy({
@@ -393,12 +495,13 @@ const validateConnectionValue = async (
     params: ValidateConnectionValueParams,
     log: FastifyBaseLogger,
 ): Promise<AppConnectionValue> => {
-    const { value, pieceName, projectId, platformId } = params
+    const { value, pieceName, pieceVersion, projectId, platformId } = params
 
     switch (value.type) {
         case AppConnectionType.PLATFORM_OAUTH2: {
             const tokenUrl = await oauth2Util(log).getOAuth2TokenUrl({
                 pieceName,
+                pieceVersion,
                 platformId,
                 props: value.props,
             })
@@ -421,6 +524,7 @@ const validateConnectionValue = async (
         case AppConnectionType.CLOUD_OAUTH2: {
             const tokenUrl = await oauth2Util(log).getOAuth2TokenUrl({
                 pieceName,
+                pieceVersion,
                 platformId,
                 props: value.props,
             })
@@ -442,6 +546,7 @@ const validateConnectionValue = async (
         case AppConnectionType.OAUTH2: {
             const tokenUrl = await oauth2Util(log).getOAuth2TokenUrl({
                 pieceName,
+                pieceVersion,
                 platformId,
                 props: value.props,
             })
@@ -503,7 +608,7 @@ const engineValidateAuth = async (
         platformId,
     })
 
-    const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperValidateAuthResult>>({
+    const engineResponse = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<ExecuteValidateAuthResponse>>({
         piece: await getPiecePackageWithoutArchive(log, platformId, {
             pieceName,
             pieceVersion: pieceMetadata.version,
@@ -512,12 +617,12 @@ const engineValidateAuth = async (
         platformId,
         connectionValue: auth,
         jobType: WorkerJobType.EXECUTE_VALIDATION,
-    })
+    }, log)
 
     if (engineResponse.status !== EngineResponseStatus.OK) {
         log.error(
-            engineResponse,
-            '[AppConnectionService#engineValidateAuth] engineResponse',
+            { engineResponse },
+            'Engine validate auth failed',
         )
         throw new ActivepiecesError({
             code: ErrorCode.ENGINE_OPERATION_FAILURE,
@@ -528,7 +633,7 @@ const engineValidateAuth = async (
         })
     }
 
-    const validateAuthResult = engineResponse.result
+    const validateAuthResult = engineResponse.response
 
     if (!validateAuthResult.valid) {
         throw new ActivepiecesError({
@@ -618,13 +723,14 @@ type UpsertParams = {
     platformId: string
     scope: AppConnectionScope
     externalId: string
-    value: UpsertAppConnectionRequestBody['value']
+    value: Extract<UpsertAppConnectionRequestBody, { value: unknown }>['value']
     displayName: string
     type: AppConnectionType
     status?: AppConnectionStatus
     pieceName: string
     metadata?: Metadata
     pieceVersion?: string
+    preSelectForNewProjects?: boolean
 }
 
 
@@ -652,14 +758,17 @@ type DeleteParams = {
 }
 
 type ValidateConnectionValueParams = {
-    value: UpsertAppConnectionRequestBody['value']
+    value: Extract<UpsertAppConnectionRequestBody, { value: unknown }>['value']
     pieceName: string
+    pieceVersion: string
     projectId: ProjectId | undefined
     platformId: string
 }
 
 type ListParams = {
     projectId: ProjectId | null
+    projectIds?: ProjectId[]
+    ownerIds?: string[]
     platformId: string
     pieceName: string | undefined
     cursorRequest: Cursor | null
@@ -668,6 +777,18 @@ type ListParams = {
     status: AppConnectionStatus[] | undefined
     limit: number
     externalIds: string[] | undefined
+}
+
+type ListForPlatformParams = {
+    platformId: string
+    pieceName: string | undefined
+    displayName: string | undefined
+    status: AppConnectionStatus[] | undefined
+    scope: AppConnectionScope | undefined
+    projectIds: ProjectId[] | undefined
+    ownerIds: string[] | undefined
+    cursorRequest: Cursor | null
+    limit: number
 }
 
 type UpdateParams = {
@@ -679,6 +800,7 @@ type UpdateParams = {
         displayName: string
         projectIds: ProjectId[] | null
         metadata?: Metadata
+        preSelectForNewProjects?: boolean
     }
 }
 
@@ -696,3 +818,4 @@ type ReplaceParams = {
     platformId: string
     userId: UserId
 }
+

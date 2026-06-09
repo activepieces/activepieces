@@ -32,8 +32,8 @@ async function globalSetup() {
       });
     }
 
-    // Wait for successful authentication (redirect to flows page or dashboard)
-    await page.waitForURL('**/flows', { timeout: 15000 });
+    // Wait for successful authentication (redirect to automations page)
+    await page.waitForURL('**/automations', { timeout: 15000 });
 
     console.log('✓ Global setup completed successfully');
   } catch (error) {

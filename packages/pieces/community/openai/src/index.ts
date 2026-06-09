@@ -1,54 +1,25 @@
 import {
-  AuthenticationType,
-  HttpMethod,
   createCustomApiCallAction,
-  httpClient,
 } from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory,  } from '@activepieces/shared';
+import { createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { askAssistant } from './lib/actions/ask-assistant';
-import { generateImage } from './lib/actions/generate-image';
 import { askOpenAI } from './lib/actions/send-prompt';
+import { classifyText } from './lib/actions/classify-text';
+import { createEmbedding } from './lib/actions/create-embedding';
+import { deleteFile } from './lib/actions/delete-file';
+import { editImage } from './lib/actions/edit-image';
+import { extractStructuredDataAction } from './lib/actions/extract-structure-data.action';
+import { generateImage } from './lib/actions/generate-image';
+import { listFiles } from './lib/actions/list-files';
+import { listModels } from './lib/actions/list-models';
 import { textToSpeech } from './lib/actions/text-to-speech';
 import { transcribeAction } from './lib/actions/transcriptions';
 import { translateAction } from './lib/actions/translation';
+import { uploadFile } from './lib/actions/upload-file';
 import { visionPrompt } from './lib/actions/vision-prompt';
+import { openaiAuth } from './lib/auth';
 import { baseUrl } from './lib/common/common';
-import { extractStructuredDataAction } from './lib/actions/extract-structure-data.action';
-
-export const openaiAuth = PieceAuth.SecretText({
-  description: `Follow these instructions to get your OpenAI API Key:
-
-1. Visit the following website: https://platform.openai.com/account/api-keys.
-2. Once on the website, locate and click on the option to obtain your OpenAI API Key.
-
-It is strongly recommended that you add your credit card information to your OpenAI account and upgrade to the paid plan **before** generating the API Key. This will help you prevent 429 errors.
-`,
-  displayName: 'API Key',
-  required: true,
-  validate: async (auth) => {
-    try {
-      await httpClient.sendRequest<{
-        data: { id: string }[];
-      }>({
-        url: `${baseUrl}/models`,
-        method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth.auth,
-        },
-      });
-      return {
-        valid: true,
-      };
-    } catch (e) {
-      return {
-        valid: false,
-        error: 'Invalid API key',
-      };
-    }
-  },
-});
 
 export const openai = createPiece({
   displayName: 'OpenAI',
@@ -60,12 +31,19 @@ export const openai = createPiece({
   actions: [
     askOpenAI,
     askAssistant,
-    generateImage,
     visionPrompt,
+    extractStructuredDataAction,
+    classifyText,
+    createEmbedding,
+    generateImage,
+    editImage,
     textToSpeech,
     transcribeAction,
     translateAction,
-    extractStructuredDataAction,
+    uploadFile,
+    listFiles,
+    deleteFile,
+    listModels,
     createCustomApiCallAction({
       auth: openaiAuth,
       baseUrl: () => baseUrl,
@@ -87,6 +65,7 @@ export const openai = createPiece({
     'khaledmashaly',
     'abuaboud',
     'amrdb',
+    'onyedikachi-david'
   ],
   triggers: [],
 });

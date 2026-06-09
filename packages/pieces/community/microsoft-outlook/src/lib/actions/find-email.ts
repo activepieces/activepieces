@@ -1,4 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { Message } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
@@ -10,6 +11,8 @@ export const findEmailAction = createAction({
 	name: 'findEmail',
 	displayName: 'Find Email',
 	description: 'Searches for emails using full-text search.',
+	audience: 'both',
+	aiMetadata: { description: 'Searches the Outlook mailbox for messages matching a full-text query (supports field syntax like from:, subject:, hasAttachments:), optionally scoped to one folder and capped by a max-results count. Use this to locate emails and obtain their message IDs for follow-up actions. Idempotent read-only lookup.', idempotent: true },
 	props: {
 		searchQuery: Property.ShortText({
 			displayName: 'Search Query',
@@ -32,10 +35,12 @@ export const findEmailAction = createAction({
 	async run(context) {
 		const { searchQuery, folderId, top } = context.propsValue;
 
+		const cloud = context.auth.props?.['cloud'] as string | undefined;
 		const client = Client.initWithMiddleware({
 			authProvider: {
 				getAccessToken: () => Promise.resolve(context.auth.access_token),
 			},
+			baseUrl: getGraphBaseUrl(cloud),
 		});
 
 		const baseUrl = folderId ? `/me/mailFolders/${folderId}/messages` : '/me/messages';

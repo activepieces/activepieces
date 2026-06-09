@@ -1,7 +1,5 @@
 # pieces-razorpay
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-razorpay` to build the library.
+Run `turbo run build --filter=@activepieces/piece-razorpay` to build the library.

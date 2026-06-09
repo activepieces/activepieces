@@ -1,7 +1,7 @@
 import { Property, DropdownOption } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from './index';
-import { kommoAuth } from '../..';
+import { kommoAuth } from '../auth';
 
 interface KommoAuth {
   subdomain: string;

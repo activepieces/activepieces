@@ -1,4 +1,4 @@
-import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { FilesService } from '@activepieces/pieces-framework';
 import {
   GmailLabel,
   GmailMessage,
@@ -12,7 +12,7 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 import { Attachment, ParsedMail, simpleParser } from 'mailparser';
-import { FilesService } from '@activepieces/pieces-framework';
+import { GmailAuthValue, getAccessToken } from '../auth';
 
 interface SearchMailProps {
   access_token: string;
@@ -106,13 +106,13 @@ export const GmailRequests = {
 
     return response.body;
   },
-  getLabels: async (authentication: OAuth2PropertyValue) => {
+  getLabels: async (authentication: GmailAuthValue) => {
     return await httpClient.sendRequest<{ labels: GmailLabel[] }>({
       method: HttpMethod.GET,
       url: `https://gmail.googleapis.com/gmail/v1/users/me/labels`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: (authentication as OAuth2PropertyValue).access_token,
+        token: await getAccessToken(authentication),
       },
     });
   },
@@ -180,6 +180,39 @@ export const GmailRequests = {
 
     return response.body;
   },
+  getRecentMessages: async (
+    authentication: GmailAuthValue,
+    maxResults = 20
+  ) => {
+    return await httpClient.sendRequest<GmailMessageList>({
+      method: HttpMethod.GET,
+      url: 'https://gmail.googleapis.com/gmail/v1/users/me/messages',
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: await getAccessToken(authentication),
+      },
+      queryParams: {
+        maxResults: maxResults.toString(),
+        q: 'in:inbox OR in:sent', // Get recent messages from inbox and sent
+      },
+    });
+  },
+  getRecentThreads: async (authentication: GmailAuthValue, maxResults = 15) => {
+    return await httpClient.sendRequest<{
+      threads: { id: string; snippet?: string }[];
+    }>({
+      method: HttpMethod.GET,
+      url: 'https://gmail.googleapis.com/gmail/v1/users/me/threads',
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: await getAccessToken(authentication),
+      },
+      queryParams: {
+        maxResults: maxResults.toString(),
+        q: 'in:inbox OR in:sent', // Get recent threads from inbox and sent
+      },
+    });
+  },
 };
 
 function decodeBase64(data: any) {
@@ -224,4 +257,12 @@ export async function convertAttachment(
   });
   const results = await Promise.all(promises);
   return results.filter((result) => result !== null);
+}
+
+export function getFirstFiveOrAll(array: unknown[]) {
+  if (array.length <= 5) {
+    return array;
+  } else {
+    return array.slice(0, 5);
+  }
 }

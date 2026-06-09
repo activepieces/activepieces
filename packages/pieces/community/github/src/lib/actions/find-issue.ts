@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { githubAuth } from '../../index';
+import { githubAuth } from '../auth';
 import { githubApiCall, githubCommon, RequestParams } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -8,6 +8,12 @@ export const githubFindIssueAction = createAction({
   name: 'find_issue',
   displayName: 'Find Issue',
   description: 'Finds an issue based title.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches a repository for an issue whose title matches the given text, filtered by state (open, closed, or all), and returns the top match plus whether any was found. Use to locate an issue by title when you do not have its number. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     repository: githubCommon.repositoryDropdown,
     title: Property.ShortText({
@@ -45,7 +51,7 @@ export const githubFindIssueAction = createAction({
       total_count: number;
       items: Array<{ id: number }>;
     }>({
-      accessToken: auth.access_token,
+      auth,
       method: HttpMethod.GET,
       resourceUri: `/search/issues`,
       query: { q, per_page: 1 },

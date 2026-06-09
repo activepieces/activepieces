@@ -42,10 +42,12 @@
   "Method": "Method",
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
+  "Body Type": "Body Type",
   "Body": "Body",
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Two-letter country code for location bias (e.g., \"US\" for United States).": "Two-letter country code for location bias (e.g., \"US\" for United States).",
   "Specific location to focus the search (e.g., \"New York, NY\").": "Specific location to focus the search (e.g., \"New York, NY\").",
   "Language code for the search results (e.g., \"en\" for English).": "Language code for the search results (e.g., \"en\" for English).",
@@ -74,7 +76,7 @@
   "The prompt describing what data to extract from the document.": "The prompt describing what data to extract from the document.",
   "Whether to return the result in JSON format.": "Whether to return the result in JSON format.",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
-  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
+  "Enable for files like PDFs, images, etc.": "Enable for files like PDFs, images, etc.",
   "Any Time": "Any Time",
   "Past Hour": "Past Hour",
   "Past Day": "Past Day",
@@ -109,5 +111,8 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "DELETE",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "None": "None",
+  "JSON": "JSON",
+  "Form Data": "Form Data"
 }

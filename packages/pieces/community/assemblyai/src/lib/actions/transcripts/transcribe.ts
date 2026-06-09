@@ -1,9 +1,10 @@
 import {
   ActionContext,
+  CreateWaitpointResult,
   createAction,
   Property,
 } from '@activepieces/pieces-framework';
-import { ExecutionType, PauseType } from '@activepieces/shared';
+import { ExecutionType } from '@activepieces/shared';
 import { TranscriptParams } from 'assemblyai';
 import { assemblyaiAuth } from '../../auth';
 import { getAssemblyAIClient } from '../../client';
@@ -39,17 +40,12 @@ export const transcribe = createAction({
     const client = getAssemblyAIClient(context);
     if (context.executionType === ExecutionType.BEGIN) {
       const transcriptParams = createTranscriptParams(context);
-      handleWebhookUrl(context, transcriptParams);
+      const waitpoint = await handleWebhookUrl(context, transcriptParams);
       handlePiiAudio(context);
       handleEmptyArrays(transcriptParams);
       const transcript = await client.transcripts.submit(transcriptParams) as any;
-      if (context.propsValue.wait_until_ready) {
-        context.run.pause({
-          pauseMetadata: {
-            type: PauseType.WEBHOOK,
-            response: transcript,
-          },
-        });
+      if (waitpoint) {
+        context.run.waitForWaitpoint(waitpoint.id);
       }
 
       return transcript;
@@ -78,10 +74,10 @@ function createTranscriptParams(context: TranscribeContext): TranscriptParams {
   if ('auth' in transcriptParams) delete transcriptParams['auth'];
   return transcriptParams as TranscriptParams;
 }
-function handleWebhookUrl(
+async function handleWebhookUrl(
   context: TranscribeContext,
-  transcriptParams: TranscriptParams
-) {
+  transcriptParams: TranscriptParams,
+): Promise<CreateWaitpointResult | undefined> {
   if (context.propsValue.wait_until_ready) {
     const isWebhookUrlConfigured = transcriptParams.webhook_url?.trim();
     if (isWebhookUrlConfigured) {
@@ -89,10 +85,15 @@ function handleWebhookUrl(
         `The "Wait until transcript is ready" and "Webhook URL" fields are mutually exclusive. Please remove the "Webhook URL" field to use the "Wait until transcript is ready" field.`
       );
     }
-    transcriptParams.webhook_url = context.generateResumeUrl({
+    const waitpoint = await context.run.createWaitpoint({
+      type: 'WEBHOOK',
+    });
+    transcriptParams.webhook_url = waitpoint.buildResumeUrl({
       queryParams: {},
     });
+    return waitpoint;
   }
+  return undefined;
 }
 
 function handlePiiAudio(context: TranscribeContext) {

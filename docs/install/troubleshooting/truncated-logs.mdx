@@ -6,30 +6,38 @@ icon: "file-lines"
 
 ## Overview
 
-If you see `(truncated)` in the flow run logs, it means the logs have exceeded the maximum allowed file size.
+Flow runs have a maximum log size (default **25 MB**). When a run gets close to this limit, Activepieces tries to keep it under the cap by truncating large step **inputs** — you'll see `(truncated)` in place of the original value.
 
-## How It Works
+## What Gets Truncated
 
-There is a current limitation where the log file of a run cannot grow past a certain size. When this limit is reached, the engine automatically removes the largest keys in the JSON output until it fits within the allowed size.
+Truncation applies to **step inputs only**. Step **outputs are never truncated**, because downstream steps, subflows, and paused/resumed runs need the original output to continue executing correctly. If outputs were dropped, the next step would receive missing data and fail unpredictably.
 
-<Note>
-**This does not affect flow execution.** Your flow will continue to run normally even when logs are truncated.
-</Note>
+The engine works like this:
 
-## Known Limitation
+1. If the total run data fits within the limit, nothing is truncated.
+2. Otherwise, step input values are replaced with `(truncated)`, starting from the largest, until the run fits.
+3. If the run **still** exceeds the limit after all inputs are truncated — meaning step outputs alone are over the cap — the run fails with `LOG_SIZE_EXCEEDED` and an error like:
 
-There is one known issue with truncated logs:
+   ```
+   Flow run data size exceeded the maximum allowed size of 25 MB
+   ```
 
-If you **pause** a flow, then **resume** it, and the resumed step references data from a truncated step, the flow will fail because the referenced data is no longer available in the logs.
+## Why Runs Can Still Fail
+
+If you see this error on a step that downloads or produces a large file (e.g. a multi-megabyte HTTP response, a base64-encoded binary, or a large API payload), the step's **output** is what's pushing the run over the limit. Since outputs cannot be truncated without breaking subsequent steps, the engine has no choice but to fail the run.
 
 ## Solution
 
-You can increase the `AP_MAX_FILE_SIZE_MB` environment variable to a higher value to allow larger log files:
+Increase the flow run log size limit by setting the `AP_MAX_FLOW_RUN_LOG_SIZE_MB` environment variable:
 
 ```bash
-AP_MAX_FILE_SIZE_MB=50
+AP_MAX_FLOW_RUN_LOG_SIZE_MB=50
 ```
 
+<Note>
+For large file handling, prefer passing files between steps using the built-in file storage (e.g. via `Files` / `File` properties) rather than embedding raw bytes in step outputs. This keeps the run log small and avoids the limit entirely.
+</Note>
+
 <Info>
-**Future Improvement:** There is a planned enhancement to change this limit from per-log-file to per-step, which will provide more granular control over log sizes. This feature is currently in the planning phase.
+**Future Improvement:** A planned enhancement will move this limit from per-run to per-step, giving more granular control over how much data each step can retain.
 </Info>

@@ -1,4 +1,4 @@
-import { activeCampaignAuth } from '../..';
+import { activeCampaignAuth } from '../auth';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { makeClient } from '../common';
 import { CreateWebhookResponse } from '../common/types';
@@ -9,6 +9,9 @@ export const newDealNoteTrigger = createTrigger({
 	name: 'activecampaign_new_deal_note',
 	displayName: 'New Deal Note',
 	description: 'Triggers when a new deal note is created.',
+	aiMetadata: {
+		description: 'Fires when a note is added to a deal. The payload includes the note text and the associated deal.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 	async onEnable(context) {

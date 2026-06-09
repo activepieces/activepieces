@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { airtableAuth } from '../../index';
+import { airtableAuth } from '../auth';
 import { airtableCommon } from '../common';
 
 export const airtableAddCommentToRecordAction = createAction({
@@ -7,6 +7,12 @@ export const airtableAddCommentToRecordAction = createAction({
   name: 'airtable_add_comment_to_record',
   displayName: 'Add Comment to Record',
   description: 'Adds a comment to an existing record.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Posts a text comment on an existing record, optionally as a threaded reply to a parent comment ID. Use to leave a note on a record; mention users with @[userId] or @[userEmail] in the text. Not idempotent — each call adds a new comment.',
+    idempotent: false,
+  },
   props: {
     base: airtableCommon.base,
     tableId: airtableCommon.tableId,

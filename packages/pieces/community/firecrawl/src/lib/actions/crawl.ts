@@ -1,6 +1,6 @@
 import { createAction, Property, DynamicPropsValue, InputPropertyMap } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { firecrawlAuth } from '../../index';
+import { firecrawlAuth } from '../auth';
 import { forScreenshotOutputFormat, forSimpleOutputFormat, forJsonOutputFormat, polling, downloadAndSaveCrawlScreenshots, FIRECRAWL_API_BASE_URL } from '../common/common';
 
 function webhookConfig(useWebhook: boolean, webhookProperties: any): any {
@@ -37,6 +37,8 @@ export const crawl = createAction({
   name: 'crawl',
   displayName: 'Crawl',
   description: 'Crawl multiple pages from a website based on specified rules and patterns.',
+  audience: 'both',
+  aiMetadata: { description: 'Starts from a base URL, discovers and follows links across the site, and returns the content of many pages in a chosen format (markdown, HTML, links, summary, screenshot, or AI-extracted JSON). Choose this to gather content from a whole site or section; use Scrape for a single page or Map to only list URLs without fetching content. Bounded by the page limit and timeout, and can deliver results to a webhook. Read-only against the site, so re-running the same call is safe.', idempotent: true },
   props: {
     url: Property.ShortText({
       displayName: 'URL',
@@ -298,7 +300,7 @@ export const crawl = createAction({
       url: `${FIRECRAWL_API_BASE_URL}/crawl`,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${auth}`,
+        'Authorization': `Bearer ${auth.secret_text}`,
       },
       body: body,
     });

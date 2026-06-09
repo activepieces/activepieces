@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient, AuthenticationType } from '@activepieces/pieces-common';
-import { quickbooksAuth } from '../index';
+import { quickbooksAuth } from '../lib/auth';
 import { quickbooksCommon, QuickbooksEntityResponse } from '../lib/common';
 
 interface QuickBooksRef {
@@ -110,6 +110,11 @@ export const findInvoiceAction = createAction({
 	name: 'find_invoice',
 	displayName: 'Find Invoice',
 	description: 'Search for an invoice by its number in QuickBooks.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Look up a single QuickBooks invoice by its document number (DocNumber), returning the first match. Use to resolve an invoice reference to its full record before reading or acting on it; the document number is required. Read-only and idempotent.',
+		idempotent: true,
+	},
 	props: {
 		invoice_number: Property.ShortText({
 			displayName: 'Invoice Number',

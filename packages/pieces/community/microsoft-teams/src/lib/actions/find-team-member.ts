@@ -1,13 +1,19 @@
-import { microsoftTeamsAuth } from '../../';
+import { microsoftTeamsAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
+import { PageCollection } from '@microsoft/microsoft-graph-client';
 import { microsoftTeamsCommon } from '../common';
+import { createGraphClient } from '../common/graph';
 
 export const findTeamMemberAction = createAction({
 	auth: microsoftTeamsAuth,
 	name: 'microsoft_teams_find_team_member',
 	displayName: 'Find Team Member',
 	description: 'Finds a team member by email or display name.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Searches the members of a Microsoft Teams team (by team ID) for those matching a given email or display name, depending on the selected search mode. Use to resolve a person to their member record/ID before mentioning or messaging them. Idempotent read-only lookup; match is exact on the chosen field.',
+		idempotent: true,
+	},
 	props: {
 		teamId: microsoftTeamsCommon.teamId,
 		searchBy: Property.StaticDropdown({
@@ -31,11 +37,8 @@ export const findTeamMemberAction = createAction({
 	async run(context) {
 		const { teamId, searchBy, searchValue } = context.propsValue 
 
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(context.auth.access_token),
-			},
-		})
+		const cloud = context.auth.props?.['cloud'] as string | undefined;
+		const client = createGraphClient(context.auth.access_token, cloud);
 
 		const filter = searchBy == 'email' ?`microsoft.graph.aadUserConversationMember/email eq '${searchValue}'`:`microsoft.graph.aadUserConversationMember/displayName eq  '${searchValue}'`;
 

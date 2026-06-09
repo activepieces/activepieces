@@ -2,7 +2,7 @@ import { ActionContext, createAction, CustomAuthProperty, Property } from "@acti
 import { AuthenticationType, httpClient } from "@activepieces/pieces-common";
 import { VEHICLE_EVENTS_OPERATIONS } from "./constant";
 import { VehicleEventsParams, VehicleEventsBodyType } from "./type";
-import { dimoAuth } from '../../../index';
+import { dimoAuth } from '../../auth';
 import { DimoClient, vehicleEventTriggerToText } from "../../common/helpers";
 import { operatorStaticDropdown, verificationTokenInput } from '../../common/props';
 import { TriggerField } from '../../common/constants';

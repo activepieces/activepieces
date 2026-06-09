@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../..';
+import { hubspotAuth } from '../auth';
 import {
 	createTrigger,
 	DynamicPropsValue,

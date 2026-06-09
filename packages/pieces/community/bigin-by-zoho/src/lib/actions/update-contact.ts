@@ -1,4 +1,4 @@
-import { biginAuth } from '../../index';
+import { biginAuth } from '../auth';
 import {
   createAction,
   Property,

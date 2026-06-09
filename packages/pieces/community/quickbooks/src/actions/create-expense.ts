@@ -1,6 +1,6 @@
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { quickbooksAuth } from '../index';
+import { quickbooksAuth } from '../lib/auth';
 import { quickbooksCommon, QuickbooksEntityResponse } from '../lib/common';
 import {
 	QuickbooksAccount,
@@ -14,6 +14,11 @@ export const createExpenseAction = createAction({
 	name: 'create_expense',
 	displayName: 'Create Expense',
 	description: 'Creates an expense transaction (purchase) in QuickBooks.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Record a new expense (purchase) paid from a chosen bank or credit-card account, with one or more account-based line items (each needs an amount and an expense account Id) and a payment type of cash, check, or credit card. Optionally attach a payee/vendor, payment date, and memo. Not idempotent: each call creates a new purchase, so guard against duplicates.',
+		idempotent: false,
+	},
 	props: {
 		accountRef: Property.Dropdown({
 			auth: quickbooksAuth,

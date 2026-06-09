@@ -9,7 +9,7 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { airtableAuth } from '../../';
+import { airtableAuth } from '../auth';
 import { airtableCommon } from '../common';
 
 const props = {
@@ -39,6 +39,10 @@ export const airtableNewRecordTrigger = createTrigger({
   name: 'new_record',
   displayName: 'New Record',
   description: 'Triggers when a new record is added to the selected table.',
+  aiMetadata: {
+    description:
+      'Fires when a new record is created in the selected base and table (optionally scoped to a view), polling on each record\'s creation time. Represents a newly added row.',
+  },
   props,
   sampleData: {},
   type: TriggerStrategy.POLLING,

@@ -1,7 +1,7 @@
 import { propsValidation } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { z } from 'zod';
-import { tarventAuth } from '../..';
+import { tarventAuth } from '../auth';
 import { makeClient } from '../common';
 
 export const createSuppressionFilter = createAction({

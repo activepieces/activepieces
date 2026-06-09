@@ -1,7 +1,6 @@
-import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpRequest, HttpMethod, AuthenticationType, httpClient } from '@activepieces/pieces-common';
-import { googleCalendarAuth } from '../../'; 
-import { googleCalendarCommon } from '../common';
+import { googleCalendarCommon, googleCalendarAuth, getAccessToken, GoogleCalendarAuthValue } from '../common';
 import { getCalendars } from '../common/helper';
 import dayjs from 'dayjs';
 
@@ -29,6 +28,8 @@ export const findFreeBusy = createAction({
   name: 'google_calendar_find_busy_free_periods',
   displayName: 'Find Busy/Free Periods in Calendar',
   description: 'Finds free/busy calendar details from Google Calendar.',
+  audience: 'both',
+  aiMetadata: { description: 'Queries one or more calendars for their busy time blocks within a given start/end window, without exposing event details. Use to check availability or find open slots before scheduling a meeting. Requires the calendars to check and a time range. Read-only and idempotent.', idempotent: true },
   props: {
     calendar_ids: Property.MultiSelectDropdown({
       auth: googleCalendarAuth,
@@ -44,7 +45,7 @@ export const findFreeBusy = createAction({
             options: [],
           };
         }
-        const authProp = auth as OAuth2PropertyValue;
+        const authProp = auth as GoogleCalendarAuthValue;
         const calendars = await getCalendars(authProp);
         return {
           disabled: false,
@@ -70,7 +71,7 @@ export const findFreeBusy = createAction({
   },
   async run(context) {
     const { calendar_ids, start_date, end_date } = context.propsValue;
-    const { access_token } = context.auth;
+    const access_token = await getAccessToken(context.auth);
 
     const requestBody = {
       

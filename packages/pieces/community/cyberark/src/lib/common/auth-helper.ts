@@ -1,5 +1,5 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { cyberarkAuth } from '../..';
+import { cyberarkAuth } from '../auth';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
   
 export interface CyberArkAuth {

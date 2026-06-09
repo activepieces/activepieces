@@ -1,78 +1,88 @@
-import { PieceAuth, Property } from "@activepieces/pieces-framework";
+import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { isNil, AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData } from '@activepieces/shared';
+import {
+  isNil,
+  AIProviderModel,
+  AIProviderName,
+  AIProviderWithoutSensitiveData,
+} from '@activepieces/shared';
 
-export const aiProps = <T extends 'text' | 'image'>({ modelType, allowedProviders }: AIPropsParams<T>) => ({
-    provider: Property.Dropdown<string, true>({
-        auth: PieceAuth.None(),
-        displayName: 'Provider',
-        required: true,
-        refreshers: [],
-        options: async (_, ctx) => {
-            const { body: supportedProviders } = await httpClient.sendRequest<AIProviderWithoutSensitiveData[]>({
-                method: HttpMethod.GET,
-                url: `${ctx.server.apiUrl}v1/ai-providers`,
-                headers: {
-                    Authorization: `Bearer ${ctx.server.token}`,
-                },
-            });
+type AIModelType = 'text' | 'image';
 
-            return {
-                placeholder: 'Select AI Provider',
-                disabled: false,
-                options: supportedProviders.map(supportedProvider => ({
-                    label: supportedProvider.name,
-                    value: supportedProvider.provider,
-                })).filter(provider => allowedProviders ? allowedProviders.includes(provider.value as AIProviderName) : true),
-            };
-        },
-    }),
-    model: Property.Dropdown({
-        auth: PieceAuth.None(),
-        displayName: 'Model',
-        required: true,
-        defaultValue: 'gpt-4o',
-        refreshers: ['provider'],
-        options: async (propsValue, ctx) => {
-            const provider = propsValue['provider'] as string;
-            if (isNil(provider)) {
-                return {
-                    disabled: true,
-                    options: [],
-                    placeholder: 'Select AI Provider',
-                };
-            }
+type AIPropsParams<T extends AIModelType> = {
+  modelType: T;
+  allowedProviders?: AIProviderName[];
+};
 
-            const { body: allModels } = await httpClient.sendRequest<AIProviderModel[]>({
-                method: HttpMethod.GET,
-                url: `${ctx.server.apiUrl}v1/ai-providers/${provider}/models`,
-                headers: {
-                    Authorization: `Bearer ${ctx.server.token}`,
-                },
-            });
+export const aiProps = <T extends AIModelType>({
+  modelType,
+  allowedProviders,
+}: AIPropsParams<T>) => ({
+  provider: Property.Dropdown<string, true>({
+    auth: PieceAuth.None(),
+    displayName: 'Provider',
+    required: true,
+    refreshers: [],
+    options: async (_, ctx) => {
+      const { body: supportedProviders } =
+        await httpClient.sendRequest<AIProviderWithoutSensitiveData[]>({
+          method: HttpMethod.GET,
+          url: `${ctx.server.apiUrl}v1/ai-providers`,
+          headers: {
+            Authorization: `Bearer ${ctx.server.token}`,
+          },
+        });
 
-            const models = allModels
-                .filter(model => model.type === modelType)
-                .filter(model => {
-                    if (provider !== AIProviderName.ACTIVEPIECES) {
-                        return true;
-                    }
-                    return Object.values([AIProviderName.OPENAI, AIProviderName.ANTHROPIC, AIProviderName.GOOGLE]).some(allowedProvider => model.id.toLowerCase().startsWith(allowedProvider.toLowerCase() + '/'));
-                }).sort((a, b) => a.name.localeCompare(b.name));
-            return {
-                placeholder: 'Select AI Model',
-                disabled: false,
-                options: models.map(model => ({
-                    label: model.name,
-                    value: model.id,
-                })),
-            };
-        },
-    }),
-})
+      return {
+        placeholder: 'Select AI Provider',
+        disabled: false,
+        options: supportedProviders
+          .map(provider => ({
+            label: provider.name,
+            value: provider.provider,
+          }))
+          .filter(option =>
+            allowedProviders
+              ? allowedProviders.includes(option.value as AIProviderName)
+              : true
+          ),
+      };
+    },
+  }),
 
-type AIPropsParams<T extends 'text' | 'image'> = {
-    modelType: T,
-    allowedProviders?: AIProviderName[]
-}
+  model: Property.Dropdown({
+    auth: PieceAuth.None(),
+    displayName: 'Model',
+    required: true,
+    refreshers: ['provider'],
+    options: async (propsValue, ctx) => {
+      const provider = propsValue['provider'] as string
 
+      if (isNil(provider)) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Select AI Provider',
+        };
+      }
+
+      const { body: allModels } =
+        await httpClient.sendRequest<AIProviderModel[]>({
+          method: HttpMethod.GET,
+          url: `${ctx.server.apiUrl}v1/ai-providers/${provider}/models`,
+          headers: {
+            Authorization: `Bearer ${ctx.server.token}`,
+          },
+        });
+
+      return {
+        placeholder: 'Select AI Model',
+        disabled: false,
+        options: allModels.filter(model => model.type === modelType).map(model => ({
+          label: model.name,
+          value: model.id,
+        })),
+      };
+    },
+  }),
+});

@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { socialkitAuth } from '../..';
+import { socialkitAuth } from '../auth';
 const socialkitApiUrl = 'https://api.socialkit.dev';
 
 export const getYoutubeTranscript = createAction({
@@ -9,6 +9,8 @@ export const getYoutubeTranscript = createAction({
   displayName: 'Get YouTube Transcript',
   description:
     'Extract the full transcript with timestamps from any YouTube video that has captions or subtitles available.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the full timestamped transcript of a YouTube video from its watch URL. Use when you need the spoken text/captions for downstream summarization, search, or analysis. Read-only and idempotent; only works for videos that have captions or subtitles available.', idempotent: true },
   props: {
     url: Property.ShortText({
       displayName: 'YouTube Video URL',

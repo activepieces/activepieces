@@ -1,8 +1,7 @@
 import { TlsOptions } from 'node:tls'
 import 'pg'
-import { AppSystemProp } from '@activepieces/server-shared'
 import { isNil, spreadIfDefined } from '@activepieces/shared'
-import { DataSource, MigrationInterface } from 'typeorm'
+import { DataSource } from 'typeorm'
 import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
 import { AddTemplates1685538145476 } from '../ee/database/migrations/postgres/1685538145476-addTemplates'
 import { ChangeToJsonToKeepKeysOrder1685991260335 } from '../ee/database/migrations/postgres/1685991260335-ChangeToJsonToPeserveKeys'
@@ -24,7 +23,9 @@ import { AddPlatform1697717995884 } from '../ee/database/migrations/postgres/169
 import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres/1698077078271-AddCustomDomain'
 import { AddMetadataFieldToFlowTemplates1744780800000 } from '../ee/database/migrations/postgres/1744780800000-AddMetadataFieldToFlowTemplates'
 import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { commonProperties } from './database-connection'
+import { Migration } from './migration'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { AddPieceTypeAndPackageTypeToFlowTemplate1696245170062 } from './migration/common/1696245170062-add-piece-type-and-package-type-to-flow-template'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
@@ -48,6 +49,8 @@ import { SplitUpPieceMetadataIntoTools1752004202722 } from './migration/common/1
 import { AddIndexToIssues1756775080449 } from './migration/common/1756775080449-AddIndexToIssues'
 import { AddFlowIndexToTriggerSource1757555419075 } from './migration/common/1757555283659-AddFlowIndexToTriggerSource'
 import { AddIndexForAppEvents1759392852559 } from './migration/common/1759392852559-AddIndexForAppEvents'
+import { AddUiMessagesToChatConversation1778983371000 } from './migration/common/1778983371000-AddUiMessagesToChatConversation'
+import { AddStatusToChatConversation1779500000000 } from './migration/common/1779500000000-AddStatusToChatConversation'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -319,6 +322,65 @@ import { RemoveOpenRounterKeysFromPlatformPlan1766094015801 } from './migration/
 import { AddPlatformAiCreditsPaymentTable1766186963979 } from './migration/postgres/1766186963979-addPlatformAiCreditsPaymentTable'
 import { AddAuthConfigInAiProviders1766328841463 } from './migration/postgres/1766328841463-addAuthConfigInAiProviders'
 import { PlatformIdAndProviderUnique1766375959255 } from './migration/postgres/1766375959255-PlatformIdAndProviderUnique'
+import { AddMaxAutoTopUpCreditsMonthlyToPlatformPlan1767016169819 } from './migration/postgres/1767016169819-AddMaxAutoTopUpCreditsMonthlyToPlatformPlan'
+import { AnalyticsAndOwnerToFlowId1767127482383 } from './migration/postgres/1767127482383-AnalyticsAndOwnerToFlowId'
+import { AddBadges1767141831647 } from './migration/postgres/1767141831647-AddBadges'
+import { AddFlowOwnerIndex1767610587266 } from './migration/postgres/1767610587266-AddFlowOwnerIndex'
+import { MigrateOldTemplateCategoriesToDynamicOne1767624311536 } from './migration/postgres/1767624311536-MigrateOldTemplateCategoriesToDynamicOne'
+import { AddTriggeredBy1767697998391 } from './migration/postgres/1767697998391-AddTriggeredBy'
+import { UpdateCacheStructure1767904545112 } from './migration/postgres/1767904545112-UpdateCacheStructure'
+import { AddOutdatedToReport1767994436597 } from './migration/postgres/1767994436597-AddOutdatedToReport'
+import { AddNotesToFlowVersion1768130030028 } from './migration/postgres/1768130030028-AddNotesToFlowVersion'
+import { AddTablesIntoTemplateEntity1768306510367 } from './migration/postgres/1768306510367-AddTablesIntoTemplateEntity'
+import { AddImageToUser1768502658760 } from './migration/postgres/1768502658760-ADDIMAGETOUSER'
+import { RemoveUsageCountFromTemplates1768738475196 } from './migration/postgres/1768738475196-RemoveUsageCountFromTemplates'
+import { AddTemplateIdToFlowEntity1768829135202 } from './migration/postgres/1768829135202-AddTemplateIdToFlowEntity'
+import { AddEventStreaming1769084311004 } from './migration/postgres/1769084311004-AddEventStreaming'
+import { RemoveOperatorRole1769613456917 } from './migration/postgres/1769613456917-RemoveOperatorRole'
+import { AddFolderColumnToTable1769638834372 } from './migration/postgres/1769638834372-add-folder-column-to-table'
+import { AddTableFolderForeignKey1769638834373 } from './migration/postgres/1769638834373-AddTableFolderForeignKey'
+import { AddScimEnabled1769720000000 } from './migration/postgres/1769720000000-AddScimEnabled'
+import { AddSecretManagersEntity1770717998442 } from './migration/postgres/1770717998442-AddSecretManagersEntity'
+import { AddSecretManagersFlag1771167183104 } from './migration/postgres/1771167183104-AddSecretManagersFlag'
+import { AddSecretManagerConnectionEntity1772000000000 } from './migration/postgres/1772000000000-AddSecretManagerConnectionEntity'
+import { AddPreSelectForNewProjectsToAppConnection1772027509095 } from './migration/postgres/1772027509095-AddPreSelectForNewProjectsToAppConnection'
+import { AddEnabledToolsToMcpServer1772027509096 } from './migration/postgres/1772027509096-AddEnabledToolsToMcpServer'
+import { AddFlowProjectIdStatusIndex1772027509097 } from './migration/postgres/1772027509097-AddFlowProjectIdStatusIndex'
+import { AddPgVectorExtension1773627989514 } from './migration/postgres/1773627989514-AddPgVectorExtension'
+import { AddKnowledgeBaseChunkTable1773627989515 } from './migration/postgres/1773627989515-AddKnowledgeBaseChunkTable'
+import { AddProjectPlatformIdIndex1773930744000 } from './migration/postgres/1773930744000-AddProjectPlatformIdIndex'
+import { ReAddAgentsEnabledToPlatformPlan1774000000000 } from './migration/postgres/1774000000000-ReAddAgentsEnabledToPlatformPlan'
+import { AddMissingCascadeDeleteIndices1774100000000 } from './migration/postgres/1774100000000-AddMissingCascadeDeleteIndices'
+import { AddUserIdentityIdIndex1774400000000 } from './migration/postgres/1774400000000-AddUserIdentityIdIndex'
+import { AddUserFkIndices1774449358000 } from './migration/postgres/1774449358000-AddUserFkIndices'
+import { AddMcpOAuthTables1774500000000 } from './migration/postgres/1774500000000-AddMcpOAuthTables'
+import { AddCanaryToPlatformPlan1774600000000 } from './migration/postgres/1774600000000-AddCanaryToPlatformPlan'
+import { MergeCanaryAndDedicatedWorkersIntoWorkerGroupId1775656136000 } from './migration/postgres/1775656136000-MergeCanaryAndDedicatedWorkersIntoWorkerGroupId'
+import { AddAiProvidersEnabledToPlatformPlan1775728983000 } from './migration/postgres/1775728983000-AddAiProvidersEnabledToPlatformPlan'
+import { AddWaitpointTable1775747638323 } from './migration/postgres/1775747638323-AddWaitpointTable'
+import { AddConcurrencyPoolTable1775800000000 } from './migration/postgres/1775800000000-AddConcurrencyPoolTable'
+import { AddDefaultToAiProvidersEnabled1776000000000 } from './migration/postgres/1776000000000-AddDefaultToAiProvidersEnabled'
+import { AddChatTables1776200000000 } from './migration/postgres/1776200000000-AddChatTables'
+import { DropWaitpointTimeoutSeconds1776342514732 } from './migration/postgres/1776342514732-DropWaitpointTimeoutSeconds'
+import { AddMcpServerTokenIndex1776400000000 } from './migration/postgres/1776400000000-AddMcpServerTokenIndex'
+import { AddRunStatusCoverIndex1777370308000 } from './migration/postgres/1777370308000-AddRunStatusCoverIndex'
+import { AddLastLoggedInPlatformIdToUserIdentity1777491000474 } from './migration/postgres/1777491000474-AddLastLoggedInPlatformIdToUserIdentity'
+import { DropChatTokenColumns1782000000000 } from './migration/postgres/1782000000000-DropChatTokenColumns'
+import { AddUserSandboxTable1784000000000 } from './migration/postgres/1784000000000-AddUserSandboxTable'
+import { ReplacesSandboxWithVercelAiSdk1785000000000 } from './migration/postgres/1785000000000-ReplacesSandboxWithVercelAiSdk'
+import { AddChatCompactionColumns1786000000000 } from './migration/postgres/1786000000000-AddChatCompactionColumns'
+import { AddEmbedSubdomainTable1787000000000 } from './migration/postgres/1787000000000-AddEmbedSubdomainTable'
+import { MakeChatConversationPlatformWide1787000000000 } from './migration/postgres/1787000000000-MakeChatConversationPlatformWide'
+import { AddSsoDomainVerification1787100000000 } from './migration/postgres/1787100000000-AddSsoDomainVerification'
+import { AddProjectIdsGinIndexToAppConnection1787200000000 } from './migration/postgres/1787200000000-AddProjectIdsGinIndexToAppConnection'
+import { AddPlatformMcpServer1788000000000 } from './migration/postgres/1788000000000-AddPlatformMcpServer'
+import { MakeMcpOAuthProjectIdNullable1789000000000 } from './migration/postgres/1789000000000-MakeMcpOAuthProjectIdNullable'
+import { RemoveMcpServerStatus1790000000000 } from './migration/postgres/1790000000000-RemoveMcpServerStatus'
+import { RenameEnabledToolsToDisabledTools1791000000000 } from './migration/postgres/1791000000000-RenameEnabledToolsToDisabledTools'
+import { AddTriggerSourceFlowVersionIdIndex1792000000000 } from './migration/postgres/1792000000000-AddTriggerSourceFlowVersionIdIndex'
+import { AddVariableTable1793000000000 } from './migration/postgres/1793000000000-AddVariableTable'
+import { AddCreatedByToFlow1794000000000 } from './migration/postgres/1794000000000-AddCreatedByToFlow'
+import { AddDataManipulationEnabledToPlatformPlan1794000000000 } from './migration/postgres/1794000000000-AddDataManipulationEnabledToPlatformPlan'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -330,7 +392,7 @@ const getSslConfig = (): boolean | TlsOptions => {
     return false
 }
 
-export const getMigrations = (): (new () => MigrationInterface)[] => {
+export const getMigrations = (): (new () => Migration)[] => {
     const migrations = [
         FlowAndFileProjectId1674788714498,
         initializeSchema1676238396411,
@@ -654,13 +716,74 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         DropLegacyTables1766015156683,
         RecreateMcpToolTable1766072572000,
         PlatformIdAndProviderUnique1766375959255,
+        AddMaxAutoTopUpCreditsMonthlyToPlatformPlan1767016169819,
+        AnalyticsAndOwnerToFlowId1767127482383,
+        AddBadges1767141831647,
+        AddFlowOwnerIndex1767610587266,
+        AddTriggeredBy1767697998391,
+        UpdateCacheStructure1767904545112,
+        AddOutdatedToReport1767994436597,
+        AddNotesToFlowVersion1768130030028,
+        MigrateOldTemplateCategoriesToDynamicOne1767624311536,
+        AddEventStreaming1769084311004,
+        AddImageToUser1768502658760,
+        RemoveUsageCountFromTemplates1768738475196,
+        AddTablesIntoTemplateEntity1768306510367,
+        AddTemplateIdToFlowEntity1768829135202,
+        RemoveOperatorRole1769613456917,
+        AddFolderColumnToTable1769638834372,
+        AddTableFolderForeignKey1769638834373,
+        AddScimEnabled1769720000000,
+        AddSecretManagersEntity1770717998442,
+        AddSecretManagersFlag1771167183104,
+        AddSecretManagerConnectionEntity1772000000000,
+        AddPreSelectForNewProjectsToAppConnection1772027509095,
+        AddEnabledToolsToMcpServer1772027509096,
+        AddFlowProjectIdStatusIndex1772027509097,
+        AddProjectPlatformIdIndex1773930744000,
+        ReAddAgentsEnabledToPlatformPlan1774000000000,
+        AddMissingCascadeDeleteIndices1774100000000,
+        AddUserIdentityIdIndex1774400000000,
+        AddUserFkIndices1774449358000,
+        AddPgVectorExtension1773627989514,
+        AddKnowledgeBaseChunkTable1773627989515,
+        AddMcpOAuthTables1774500000000,
+        AddCanaryToPlatformPlan1774600000000,
+        AddWaitpointTable1775747638323,
+        MergeCanaryAndDedicatedWorkersIntoWorkerGroupId1775656136000,
+        AddAiProvidersEnabledToPlatformPlan1775728983000,
+        AddConcurrencyPoolTable1775800000000,
+        AddDefaultToAiProvidersEnabled1776000000000,
+        DropWaitpointTimeoutSeconds1776342514732,
+        AddChatTables1776200000000,
+        AddMcpServerTokenIndex1776400000000,
+        AddRunStatusCoverIndex1777370308000,
+        AddLastLoggedInPlatformIdToUserIdentity1777491000474,
+        DropChatTokenColumns1782000000000,
+        AddUserSandboxTable1784000000000,
+        ReplacesSandboxWithVercelAiSdk1785000000000,
+        AddChatCompactionColumns1786000000000,
+        AddEmbedSubdomainTable1787000000000,
+        AddSsoDomainVerification1787100000000,
+        AddProjectIdsGinIndexToAppConnection1787200000000,
+        AddPlatformMcpServer1788000000000,
+        MakeMcpOAuthProjectIdNullable1789000000000,
+        MakeChatConversationPlatformWide1787000000000,
+        RemoveMcpServerStatus1790000000000,
+        RenameEnabledToolsToDisabledTools1791000000000,
+        AddTriggerSourceFlowVersionIdIndex1792000000000,
+        AddUiMessagesToChatConversation1778983371000,
+        AddVariableTable1793000000000,
+        AddCreatedByToFlow1794000000000,
+        AddStatusToChatConversation1779500000000,
+        AddDataManipulationEnabledToPlatformPlan1794000000000,
     ]
     return migrations
 }
 
 
 export const createPostgresDataSource = (): DataSource => {
-    const migrationConfig: MigrationConfig =  {
+    const migrationConfig: MigrationConfig = {
         migrationsRun: true,
         migrationsTransactionMode: 'each',
         migrations: getMigrations(),
@@ -708,6 +831,6 @@ export const createPostgresDataSource = (): DataSource => {
 type MigrationConfig = {
     migrationsRun?: boolean
     migrationsTransactionMode?: 'all' | 'none' | 'each'
-    migrations?: (new () => MigrationInterface)[]
+    migrations?: (new () => Migration)[]
     synchronize: false
 }

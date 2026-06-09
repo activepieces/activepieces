@@ -1,17 +1,22 @@
 import {
   createAction,
   DynamicPropsValue,
-  Property,
 } from '@activepieces/pieces-framework';
 
 import { airtableCommon } from '../common';
-import { airtableAuth } from '../../index';
+import { airtableAuth } from '../auth';
 
 export const airtableUpdateRecordAction = createAction({
   auth: airtableAuth,
   name: 'airtable_update_record',
   displayName: 'Update Airtable Record',
   description: 'Update a record in airtable',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing record identified by its record ID, writing only the supplied non-empty field values and leaving other fields untouched (PATCH semantics). Use when you already know the record ID and want to change specific fields. Idempotent: repeating with the same input yields the same final state.',
+    idempotent: true,
+  },
   props: {
     base: airtableCommon.base,
     tableId: airtableCommon.tableId,
@@ -22,19 +27,24 @@ export const airtableUpdateRecordAction = createAction({
     const personalToken = context.auth;
     const { base: baseId, tableId, recordId, fields } = context.propsValue;
 
-    const fieldsWithoutEmptyStrings: DynamicPropsValue = {};
+    const fieldsWithoutEmptyValues: DynamicPropsValue = {};
 
     Object.keys(fields).forEach((k) => {
-      if (fields[k] !== '') {
-        fieldsWithoutEmptyStrings[k] = fields[k];
+      const value = fields[k];
+      if (value === null || value === undefined || value === '') {
+        return;
       }
+      if (Array.isArray(value) && value.length === 0) {
+        return;
+      }
+      fieldsWithoutEmptyValues[k] = value;
     });
     const updatedFields: Record<string, unknown> =
       await airtableCommon.createNewFields(
         personalToken.secret_text,
         baseId,
         tableId as string,
-        fieldsWithoutEmptyStrings
+        fieldsWithoutEmptyValues
       );
 
     return await airtableCommon.updateRecord({

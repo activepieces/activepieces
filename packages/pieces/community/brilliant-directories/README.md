@@ -1,7 +1,5 @@
 # pieces-brilliant-directories
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-brilliant-directories` to build the library.
+Run `turbo run build --filter=@activepieces/piece-brilliant-directories` to build the library.

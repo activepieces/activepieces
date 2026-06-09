@@ -1,5 +1,5 @@
 import { AppConnectionValueForAuthProperty, DynamicPropsValue, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
-import { BikaAuth } from '../..';
+import { BikaAuth } from '../auth';
 import { BikaClient } from './client';
 import { BikaFieldType, BikaNumericFieldTypes } from './constants';
 

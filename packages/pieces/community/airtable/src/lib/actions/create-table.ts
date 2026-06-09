@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { airtableAuth } from '../../index';
+import { airtableAuth } from '../auth';
 import { airtableCommon } from '../common';
 import { AirtableFieldConfig } from '../common/models';
 
@@ -8,6 +8,12 @@ export const airtableCreateTableAction = createAction({
   name: 'airtable_create_table',
   displayName: 'Create Table',
   description: 'Create a new table in an existing base.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new table in an existing base from a JSON array of field definitions (the first field becomes the primary field), with an optional table description. Use to add a table to a base you already have. Not idempotent — each call creates a new table.',
+    idempotent: false,
+  },
   props: {
     base: airtableCommon.base,
     name: Property.ShortText({

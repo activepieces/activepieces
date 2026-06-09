@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { dustAuth, DustAuthType } from '../..';
+import { dustAuth } from '../..';
+import { DustAuthType } from '../..';
 import { DUST_BASE_URL } from '../common';
 import {
   httpClient,

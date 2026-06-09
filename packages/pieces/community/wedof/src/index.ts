@@ -75,31 +75,7 @@ import { addExecutionTag } from './lib/actions/add-execution-tag';
 import { listPartnerStats } from './lib/actions/certification/certification-partner-stats';
 import { createCertificationFolder } from './lib/actions/certification-folders/create-certification-folder';
 import { createRegistrationFolder } from './lib/actions/registration-folders/create-registration-folder';
-
-
-export const wedofAuth = PieceAuth.SecretText({
-    displayName: 'Clé API',
-    required: true,
-    description: 'Veuillez saisir votre clé API fournie par wedof',
-    validate: async ({auth}) => {
-        try {
-            await httpClient.sendRequest({
-                method: HttpMethod.GET,
-                url: wedofCommon.baseUrl + '/users/me',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Api-Key': auth,
-                },
-            });
-            return {valid: true};
-        } catch (error) {
-            return {
-                valid: false,
-                error: 'Clé Api invalide',
-            };
-        }
-    },
-});
+import { wedofAuth } from './lib/auth';
 
 export const wedof = createPiece({
   displayName: 'Wedof',

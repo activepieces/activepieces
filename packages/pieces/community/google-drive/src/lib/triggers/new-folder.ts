@@ -11,7 +11,7 @@ import {
 } from '@activepieces/pieces-common';
 
 import dayjs from 'dayjs';
-import { googleDriveAuth } from '../..';
+import { googleDriveAuth } from '../auth';
 import { common } from '../common';
 
 const polling: Polling<
@@ -39,6 +39,9 @@ export const newFolder = createTrigger({
   name: 'new_folder',
   displayName: 'New Folder',
   description: 'Trigger when a new folder is created or uploaded.',
+  aiMetadata: {
+    description: 'Fires when a new folder is created in Google Drive, optionally scoped to a specific parent folder. Each event represents one newly created folder and its metadata.',
+  },
   props: {
     parentFolder: common.properties.parentFolder,
     include_team_drives: common.properties.include_team_drives,

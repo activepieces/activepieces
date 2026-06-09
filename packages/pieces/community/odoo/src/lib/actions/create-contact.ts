@@ -1,12 +1,14 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import Odoo from "../../commom/index";
-import { odooAuth } from "../..";
+import { odooAuth } from '../auth';
 
 export default createAction({
     name: 'create_contact', // Must be a unique across the piece, this shouldn't be changed.
     auth: odooAuth,
     displayName: 'Create contact',
     description: 'Create/Update contact on Odoo',
+    audience: 'both',
+    aiMetadata: { description: 'Upserts an individual contact (res.partner) in Odoo by name: it searches for a non-company partner with the same name, updating it if found or creating one otherwise. Use to add or refresh a person contact with phone, email, company name, and job title. Not idempotent in effect — the first call may create a record and matching is by exact name.', idempotent: false },
     props: {
         // Properties to ask from the user, in this ask we will take number of
         name: Property.ShortText({

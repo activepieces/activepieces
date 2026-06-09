@@ -1,20 +1,24 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import { AIProviderModel, AIProviderModelType, AzureProviderAuthConfig, AzureProviderConfig } from '@activepieces/shared'
+import { AIProviderModel, AIProviderModelType, AzureProviderAuthConfig, AzureProviderConfig, DEFAULT_AZURE_API_VERSION } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { AIProviderStrategy } from './ai-provider'
 
 export const azureProvider: AIProviderStrategy<AzureProviderAuthConfig, AzureProviderConfig> = {
     name: 'Azure OpenAI',
+    async validateConnection(authConfig: AzureProviderAuthConfig, config: AzureProviderConfig, _log: FastifyBaseLogger): Promise<void> {
+        await azureProvider.listModels(authConfig, config)
+    },
     async listModels(authConfig: AzureProviderAuthConfig, config: AzureProviderConfig): Promise<AIProviderModel[]> {
         const endpoint = `https://${config.resourceName}.openai.azure.com`
         const apiKey = authConfig.apiKey
-        const apiVersion = '2024-10-21'
+        const apiVersion = config.apiVersion ?? DEFAULT_AZURE_API_VERSION
 
         if (!endpoint || !apiKey) {
             return []
         }
 
         const res = await httpClient.sendRequest<{ data: AzureModel[] }>({
-            url: `${endpoint}/openai/deployments?api-version=${apiVersion}`,
+            url: `${endpoint}/openai/deployments?api-version=${encodeURIComponent(apiVersion)}`,
             method: HttpMethod.GET,
             headers: {
                 'api-key': apiKey,

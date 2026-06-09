@@ -4,13 +4,15 @@ import {
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { discordAuth } from '../../index';
+import { discordAuth } from '../auth';
 import { discordCommon } from '../common';
 
 export const discordAddRoleToMember = createAction({
   auth: discordAuth,
   name: 'add_role_to_member',
   description: 'Add Guild Member Role',
+  audience: 'both',
+  aiMetadata: { description: 'Assigns a role to a guild member, identified by guild ID, user ID, and role ID. Use to grant permissions or tag a user. Requires the bot to have Manage Roles and a higher role than the target; idempotent, since re-adding an already-assigned role leaves the member unchanged.', idempotent: true },
   displayName: 'Add role to member',
   props: {
     guild_id: discordCommon.guilds,

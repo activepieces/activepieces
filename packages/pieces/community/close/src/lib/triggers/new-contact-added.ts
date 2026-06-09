@@ -1,6 +1,6 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { closeAuth } from '../../';
+import { closeAuth } from '../auth';
 import { CloseCRMContactWebhookPayload } from '../common/types';
 import { closeApiCall } from '../common/client';
 import { verifySignature } from './helpers';

@@ -78,10 +78,12 @@
   "Method": "Methode",
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
+  "Body Type": "Type lichaam",
   "Body": "Lichaam",
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Select scope": "Selecteer bereik",
   "Opt-in status true/false": "Opt-in status true/false",
   "Unsubscribe status true/false": "Uitschrijven van status waar/onwaar",
@@ -94,7 +96,7 @@
   "Example : friend@example.com": "Voorbeeld : vriend@voorbeeld.com",
   "Example : invite": "Voorbeeld : uitnodiging",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
-  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
+  "Enable for files like PDFs, images, etc.": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc.",
   "General information": "Algemene informatie",
   "Referrals as advocate": "Verwijzingen als voorstander",
   "Referrals as friend": "Verwijzingen als vriend",
@@ -110,5 +112,9 @@
   "PATCH": "BEKIJK",
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
-  "HEAD": "HOOFD"
+  "HEAD": "HOOFD",
+  "None": "geen",
+  "JSON": "JSON",
+  "Form Data": "Formulieren gegevens",
+  "Raw": "Onbewerkte"
 }

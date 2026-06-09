@@ -7,7 +7,7 @@ export const sendSms = createAction({
   auth: famulorAuth,
   name: 'sendSms',
   displayName: 'Send SMS',
-  description: 'Send an SMS message using your purchased phone numbers. Costs are automatically deducted from your account.',
+  description: 'Send an SMS message using one of your purchased phone numbers.',
   props: famulorCommon.sendSmsProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, famulorCommon.sendSmsSchema);

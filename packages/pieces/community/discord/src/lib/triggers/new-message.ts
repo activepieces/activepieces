@@ -13,7 +13,7 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { discordAuth } from '../..';
+import { discordAuth } from '../auth';
 import { discordCommon } from '../common';
 
 import { Message } from '../common/models';
@@ -51,6 +51,9 @@ export const newMessage = createTrigger({
   name: 'new_message',
   displayName: 'New message',
   description: 'Triggers when a message is sent in a channel',
+  aiMetadata: {
+    description: 'Fires when a new message is posted in the selected Discord channel, emitting one event per message. Polls the channel periodically, so detection is near-real-time rather than instant.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     limit: Property.Number({

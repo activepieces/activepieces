@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { attioAuth } from '../../index';
+import { attioAuth } from '../auth';
 import { attioApiCall } from '../common/client';
 import { formatInputFields, objectFields, objectTypeIdDropdown } from '../common/props';
 
@@ -8,6 +8,8 @@ export const createRecordAction = createAction({
 	name: 'create_record',
 	displayName: 'Create Record',
 	description: 'Creates a new record such as peron,company or deal.',
+	audience: 'both',
+	aiMetadata: { description: 'Creates a new record (person, company, deal, or any custom object type) in Attio with the given attribute values. Choose this to add a brand-new CRM entity; the object type must be selected and its attributes supplied. Not idempotent — each call creates a separate record even with identical input.', idempotent: false },
 	auth: attioAuth,
 	props: {
 		objectTypeId: objectTypeIdDropdown({

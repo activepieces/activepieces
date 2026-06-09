@@ -1,4 +1,4 @@
-import { apolloAuth } from '../../';
+import { apolloAuth } from '../auth';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import {
   Property,
@@ -12,6 +12,11 @@ export const peopleSearch = createAction({
   displayName: 'People Search',
   description:
     'Search for people in the Apollo database (does not return email/phone, use enrichment for that)',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Search the Apollo database for people using filters such as keywords, job titles, seniority, location, and their organization (domain, location, employee-count range). Use to find prospects matching criteria; note the results do not include email or phone, so use Match Person enrichment for contact details. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     q_keywords: Property.ShortText({
       displayName: 'Keywords',

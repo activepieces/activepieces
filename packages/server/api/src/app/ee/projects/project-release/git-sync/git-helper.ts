@@ -1,12 +1,13 @@
 import fs from 'fs/promises'
 import path from 'path'
-import { ConfigureRepoRequest, GitRepo } from '@activepieces/ee-shared'
-import { AppSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEnvironment, ErrorCode } from '@activepieces/shared'
+import { fileSystemUtils } from '@activepieces/server-utils'
+import { ActivepiecesError, ApEnvironment, ConfigureRepoRequest, ErrorCode, GitRepo } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import simpleGit, { SimpleGit } from 'simple-git'
 import { userIdentityService } from '../../../../authentication/user-identity/user-identity-service'
 import { system } from '../../../../helper/system/system'
+import { AppSystemProp } from '../../../../helper/system/system-props'
 import { userService } from '../../../../user/user-service'
 
 
@@ -27,9 +28,11 @@ async function commitAndPush(
 }
 
 async function createGitRepoAndReturnPaths(
+    log: FastifyBaseLogger,
     gitRepo: GitRepo,
     userId: string,
 ): Promise<{ flowFolderPath: string, git: SimpleGit, stateFolderPath: string, connectionsFolderPath: string, tablesFolderPath: string }> {
+    assertSafeSlug(gitRepo.slug)
     const tmpFolder = path.join('/', 'tmp', 'repo', gitRepo.projectId)
     try {
         await fs.rmdir(tmpFolder, { recursive: true })
@@ -37,43 +40,25 @@ async function createGitRepoAndReturnPaths(
     catch (e) {
         // ignore
     }
-    const flowFolderPath = path.join(
-        tmpFolder,
-        'projects',
-        gitRepo.slug,
-        'flows',
-    )
-    const connectionsFolderPath = path.join(
-        tmpFolder,
-        'projects',
-        gitRepo.slug,
-        'connections',
-    )
-    const tablesFolderPath = path.join(
-        tmpFolder,
-        'projects',
-        gitRepo.slug,
-        'tables',
-    )
+    await fs.mkdir(tmpFolder, { recursive: true })
+    const projectRoot = path.join(tmpFolder, 'projects', gitRepo.slug)
+    await fileSystemUtils.assertPathInside({ baseDir: tmpFolder, targetPath: projectRoot })
+    const flowFolderPath = path.join(projectRoot, 'flows')
+    const connectionsFolderPath = path.join(projectRoot, 'connections')
+    const tablesFolderPath = path.join(projectRoot, 'tables')
+    const stateFolderPath = path.join(projectRoot, 'state')
     await fs.mkdir(flowFolderPath, { recursive: true })
     await fs.mkdir(connectionsFolderPath, { recursive: true })
     await fs.mkdir(tablesFolderPath, { recursive: true })
-    const stateFolderPath = path.join(
-        tmpFolder,
-        'projects',
-        gitRepo.slug,
-        'state',
-    )
     await fs.mkdir(stateFolderPath, { recursive: true })
     const keyPath = path.resolve(path.join('tmp', 'keys', gitRepo.id))
-    await createOrGetSshKeyPath({ keyPath, sshPrivateKey: gitRepo.sshPrivateKey })
+    await createOrGetSshKeyPath({ keyPath, sshPrivateKey: gitRepo.sshPrivateKey ?? '' })
     const git = await initGitRepo(keyPath, gitRepo.remoteUrl, tmpFolder, gitRepo.branch)
-    await git.pull('origin', gitRepo.branch)
 
-    const user = await userService.getOneOrFail({
+    const user = await userService(log).getOneOrFail({
         id: userId,
     })
-    const identity = await userIdentityService(system.globalLogger()).getBasicInformation(user.identityId)
+    const identity = await userIdentityService(log).getBasicInformation(user.identityId)
     const { email, firstName, lastName } = identity
     await git.addConfig('user.email', email)
     await git.addConfig('user.name', `${firstName} ${lastName}`)
@@ -98,15 +83,47 @@ async function initGitRepo(
     baseDir: string,
     branch: string,
 ): Promise<SimpleGit> {
+    assertSafeKeyPath(keyPath)
     const git = simpleGit({
         baseDir,
         binary: 'git',
+        unsafe: {
+            allowUnsafeSshCommand: true,
+            allowUnsafeProtocolOverride: true,
+        },
     }).env('GIT_SSH_COMMAND', `ssh -i ${keyPath} -o StrictHostKeyChecking=no`)
     await git.init()
+    await git.addConfig('core.symlinks', 'false')
+    await git.addConfig('protocol.file.allow', 'never')
     await git.addRemote('origin', remoteUrl)
     await git.branch(['-M', branch])
     await git.pull('origin', branch)
     return git
+}
+
+const SAFE_SLUG_PATTERN = /^[A-Za-z0-9._-]{1,128}$/
+const SAFE_KEY_PATH_PATTERN = /^[A-Za-z0-9._/-]+$/
+
+function assertSafeSlug(slug: string): void {
+    if (!SAFE_SLUG_PATTERN.test(slug) || slug === '.' || slug === '..') {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: `invalid gitRepo.slug "${slug}": only alphanumeric, dot, dash and underscore are allowed (max 128 chars)`,
+            },
+        })
+    }
+}
+
+function assertSafeKeyPath(keyPath: string): void {
+    if (!SAFE_KEY_PATH_PATTERN.test(keyPath)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'invalid ssh key path: contains characters that are not safe to interpolate into GIT_SSH_COMMAND',
+            },
+        })
+    }
 }
 
 async function validateConnection(request: ConfigureRepoRequest): Promise<void> {

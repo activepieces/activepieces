@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { cyberarkAuth } from '../../index';
+import { cyberarkAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { userIdDropdown } from '../common/user-dropdown';
 import { getAuthToken, CyberArkAuth } from '../common/auth-helper';

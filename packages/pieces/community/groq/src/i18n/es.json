@@ -25,10 +25,12 @@
   "Method": "Método",
   "Headers": "Encabezados",
   "Query Parameters": "Parámetros de consulta",
+  "Body Type": "Tipo de cuerpo",
   "Body": "Cuerpo",
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "The model which will generate the completion.": "El modelo que generará la terminación.",
   "Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.": "Controles aleatorios: La reducción de resultados en terminaciones menos aleatorias. A medida que la temperatura se acerca a cero, el modelo se volverá determinista y repetitivo.",
   "The maximum number of tokens to generate. The total length of input tokens and generated tokens is limited by the model's context length.": "El número máximo de fichas a generar. La longitud total de las fichas de entrada y las fichas generadas está limitada por la longitud del contexto del modelo.",
@@ -48,7 +50,7 @@
   "An optional text in English to guide the model's style or continue a previous audio segment.": "Un texto opcional en inglés para guiar el estilo del modelo o continuar con un segmento de audio anterior.",
   "The format of the translation output.": "El formato de la salida de traducción.",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
-  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
+  "Enable for files like PDFs, images, etc.": "Activar para archivos como PDFs, imágenes, etc.",
   "JSON": "JSON",
   "Text": "Texto",
   "Verbose JSON": "Verbose JSON",
@@ -57,5 +59,8 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "BORRAR",
-  "HEAD": "LIMPIO"
+  "HEAD": "LIMPIO",
+  "None": "Ninguna",
+  "Form Data": "Datos de Formulario",
+  "Raw": "Rápido"
 }

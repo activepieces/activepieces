@@ -6,13 +6,12 @@ import {
 import {
   createTrigger,
   TriggerStrategy,
-  OAuth2PropertyValue,
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { notionCommon } from '../common';
+import { getNotionToken, NotionAuthValue, notionCommon } from '../common';
 import { Client } from '@notionhq/client';
-import { notionAuth } from '../..';
+import { notionAuth } from '../auth';
 import { isNil } from '@activepieces/shared';
 
 export const newDatabaseItem = createTrigger({
@@ -20,6 +19,10 @@ export const newDatabaseItem = createTrigger({
   name: 'new_database_item',
   displayName: 'New Database Item',
   description: 'Triggers when an item is added to a database.',
+  aiMetadata: {
+    description:
+      'Fires when a new item (row) is created in the selected Notion database, emitting the new page. Use to start a workflow whenever a record is added to a specific database.',
+  },
   props: {
     database_id: notionCommon.database_id,
   },
@@ -152,12 +155,12 @@ const polling: Polling<
 };
 
 const getResponse = async (
-  authentication: OAuth2PropertyValue,
+  authentication: NotionAuthValue,
   database_id: string,
   startDate: string | null
 ) => {
   const notion = new Client({
-    auth: authentication.access_token,
+    auth: getNotionToken(authentication),
     notionVersion: '2022-02-22',
   });
   let cursor;

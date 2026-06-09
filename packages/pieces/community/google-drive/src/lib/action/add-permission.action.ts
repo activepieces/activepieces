@@ -1,13 +1,14 @@
 import { Property, createAction } from "@activepieces/pieces-framework";
-import { googleDriveAuth } from "../../";
+import { googleDriveAuth, createGoogleClient } from '../auth';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 import { common } from "../common";
 
 export const addPermission = createAction({
     auth: googleDriveAuth,
     name: 'update_permissions',
     description: 'Update permissions for a file or folder',
+    audience: 'both',
+    aiMetadata: { description: 'Grants a specified role (reader, commenter, writer, fileOrganizer, or organizer) on a Drive file or folder to a user identified by email, optionally sending a notification email. Use to share a resource with a person. Requires the file/folder ID and target email. Not idempotent: each call creates a new permission grant.', idempotent: false },
     displayName: 'Update permissions',
     props: {
         fileId: Property.ShortText({
@@ -61,8 +62,7 @@ export const addPermission = createAction({
     async run(context) {
         const {fileId, user_email, permission_name, send_invitation_email,include_team_drives} = context.propsValue;
 
-        const authClient = new OAuth2Client();
-        authClient.setCredentials(context.auth)
+        const authClient = await createGoogleClient(context.auth);
 
         const drive = google.drive({ version: 'v3', auth: authClient });
 

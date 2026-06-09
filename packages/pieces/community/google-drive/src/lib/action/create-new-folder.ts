@@ -1,13 +1,14 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { googleDriveAuth } from '../../';
+import { googleDriveAuth, createGoogleClient } from '../auth';
 import { common } from '../common';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 
 export const googleDriveCreateNewFolder = createAction({
   auth: googleDriveAuth,
   name: 'create_new_gdrive_folder',
   description: 'Create a new empty folder in your Google Drive',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new empty folder in Google Drive, optionally nested under a parent folder. Use to set up a destination before uploading or moving files. Not idempotent: each call creates a distinct folder even with the same name (Drive permits duplicate folder names).', idempotent: false },
   displayName: 'Create new folder',
   props: {
     folderName: Property.ShortText({
@@ -19,8 +20,7 @@ export const googleDriveCreateNewFolder = createAction({
     include_team_drives: common.properties.include_team_drives,
   },
   async run(context) {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
 
     const drive = google.drive({ version: 'v3', auth: authClient });
 

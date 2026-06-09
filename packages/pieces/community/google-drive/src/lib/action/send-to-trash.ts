@@ -1,13 +1,14 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { googleDriveAuth } from '../../';
+import { googleDriveAuth, createGoogleClient } from '../auth';
 import { common } from '../common';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 
 export const googleDriveTrashFile = createAction({
   auth: googleDriveAuth,
   name: 'trash_gdrive_file',
   description: 'Move a file to the trash in your Google Drive',
+  audience: 'both',
+  aiMetadata: { description: 'Moves a Drive file to the trash by its ID, a reversible deletion that can be restored from Drive. Use for safe removal instead of permanent deletion. Requires the file ID. Idempotent: re-trashing an already-trashed file leaves it in the same state.', idempotent: true },
   displayName: 'Trash file',
   props: {
     fileId: Property.ShortText({
@@ -18,8 +19,7 @@ export const googleDriveTrashFile = createAction({
     include_team_drives: common.properties.include_team_drives,
   },
   async run(context) {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
 
     const drive = google.drive({ version: 'v3', auth: authClient });
     const body_value = {

@@ -6,12 +6,18 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 
-import { wooAuth } from '../..';
+import { wooAuth } from '../auth';
 
 export const wooFindCustomer = createAction({
   name: 'Find Customer',
   displayName: 'Find Customer',
   description: 'Find a Customer',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up customers in a WooCommerce store by exact email address. Use when an agent needs to resolve a shopper to their customer record or ID before referencing them. Read-only and idempotent. Requires the email; returns matching customers (empty if none match).',
+    idempotent: true,
+  },
   auth: wooAuth,
   props: {
     email: Property.ShortText({

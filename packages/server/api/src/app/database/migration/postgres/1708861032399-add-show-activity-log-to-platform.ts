@@ -27,7 +27,7 @@ export class AddShowActivityLogToPlatform1708861032399 implements MigrationInter
             ALTER COLUMN "showActivityLog" SET NOT NULL
         `)
 
-        log.info({ name: this.name }, 'up')
+        log.info('[addShowActivityLogToPlatform1708861032399#up]')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -38,7 +38,7 @@ export class AddShowActivityLogToPlatform1708861032399 implements MigrationInter
             ALTER TABLE "platform" DROP COLUMN "showActivityLog"
         `)
 
-        log.info({ name: this.name }, 'down')
+        log.info('[addShowActivityLogToPlatform1708861032399#down]')
     }
 
 }

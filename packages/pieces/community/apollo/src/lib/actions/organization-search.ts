@@ -1,4 +1,4 @@
-import { apolloAuth } from '../../';
+import { apolloAuth } from '../auth';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import {
   Property,
@@ -12,6 +12,11 @@ export const organizationSearch = createAction({
   displayName: 'Organization Search',
   description:
     'Search for companies in the Apollo database with various filters',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Search the Apollo database for companies using filters such as name, location, employee-count range, domain, and industry tags. Use to discover organizations or to resolve a company to its Apollo organization ID for downstream actions. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     q_organization_name: Property.ShortText({
       displayName: 'Organization Name',

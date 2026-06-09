@@ -1,10 +1,7 @@
-import {
-  createAction,
-  OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
-import { notionAuth } from '../..';
-import { notionCommon } from '../common';
+import { notionAuth } from '../auth';
+import { getNotionToken, notionCommon } from '../common';
 import {
   FormStructure,
   NotionDatabase,
@@ -17,6 +14,12 @@ export const retrieveDatabase = createAction({
   displayName: 'Retrieve Database Structure',
   description:
     'Get detailed information about a Notion database including all its properties, field types, and configuration. Perfect for building dynamic forms, validation rules, or understanding database schemas.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves a Notion database schema: its properties, field types, and select/status/relation options. Use when an agent needs to discover what fields exist and their valid values before creating, updating, or filtering items in that database; requires the database_id. Idempotent read-only lookup.',
+    idempotent: true,
+  },
   props: {
     database_id: notionCommon.database_id,
   },
@@ -28,7 +31,7 @@ export const retrieveDatabase = createAction({
     }
 
     const notion = new Client({
-      auth: (context.auth as OAuth2PropertyValue).access_token,
+      auth: getNotionToken(context.auth),
       notionVersion: '2022-02-22',
     });
 

@@ -1,7 +1,7 @@
-import { confluenceAuth } from "../../index";
+import { confluenceAuth } from '../auth';
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { folderIdProp, spaceIdProp, templateIdProp, templateVariablesProp } from "../common/props";
-import { confluenceApiCall } from "../common";
+import { confluenceApiCall, escapeStorageValue } from "../common";
 import { HttpMethod } from "@activepieces/pieces-common";
 
 export const createPageFromTemplateAction = createAction({
@@ -9,6 +9,8 @@ export const createPageFromTemplateAction = createAction({
     name:'create-page-from-template',
     displayName:'Create Page from Template',
     description:'Creates a new page from a template with the given title and variables.',
+    audience: 'both',
+    aiMetadata: { description: 'Creates a new Confluence page by fetching a template, substituting its declared variables with the provided values, and posting the rendered content as a page (published or draft) in the given space. Use when a page should follow a predefined template rather than free-form body. Requires the template ID and matching variable names. Not idempotent: each call creates another page.', idempotent: false },
     props:{
         spaceId:spaceIdProp,
         templateId:templateIdProp,
@@ -55,7 +57,8 @@ export const createPageFromTemplateAction = createAction({
         let content = body.replace(/<at:declarations>[\s\S]*?<\/at:declarations>/, "").trim();
         Object.entries(variables).forEach(([key, value]) => {
             const varRegex = new RegExp(`<at:var at:name=(['"])${key}\\1\\s*\\/?>`, "g");
-            content = content.replace(varRegex, value);
+            const safeValue = typeof value === 'string' ? escapeStorageValue(value) : '';
+            content = content.replace(varRegex, safeValue);
           });
 
         const response = await confluenceApiCall({

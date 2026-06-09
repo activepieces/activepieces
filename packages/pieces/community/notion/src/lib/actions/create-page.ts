@@ -1,12 +1,8 @@
-import {
-  createAction,
-  OAuth2PropertyValue,
-  Property,
-} from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 
-import { notionAuth } from '../..';
-import { notionCommon } from '../common';
+import { notionAuth } from '../auth';
+import { getNotionToken, notionCommon } from '../common';
 
 export const createPage = createAction({
   auth: notionAuth,
@@ -14,6 +10,12 @@ export const createPage = createAction({
   displayName: 'Create Page',
   description:
     'Create a new Notion page as a sub-page with custom title and content. Perfect for organizing documentation, notes, or creating structured page hierarchies.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new standalone page nested under an existing parent page, with a title and optional body content. Use when an agent must add free-form document pages (notes, docs) rather than database rows; requires the parent page id. Not idempotent: each call creates a new page even with identical title.',
+    idempotent: false,
+  },
   props: {
     pageId: notionCommon.page,
     title: Property.ShortText({
@@ -32,7 +34,7 @@ export const createPage = createAction({
     const { pageId, title, content } = context.propsValue;
 
     const notion = new Client({
-      auth: (context.auth as OAuth2PropertyValue).access_token,
+      auth: getNotionToken(context.auth),
       notionVersion: '2022-02-22',
     });
 

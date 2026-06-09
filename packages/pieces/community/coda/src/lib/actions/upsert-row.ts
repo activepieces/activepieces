@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { codaAuth } from '../..';
+import { codaAuth } from '../auth';
 import { codaClient } from '../common/types';
 import {
 	columnIdsDropdown,
@@ -13,6 +13,8 @@ export const upsertRowAction = createAction({
 	name: 'upsert-row',
 	displayName: 'Upsert Row',
 	description: 'Creates a new row or updates an existing one if it matches key columns.',
+	audience: 'both',
+	aiMetadata: { description: 'Insert a row into a Coda table, or update an existing row when its values match the chosen key columns. Use when you want create-or-update semantics keyed on stable columns rather than a known row ID. Idempotent when key columns uniquely identify a row — repeating the same input converges to one matching row; with no matching columns it behaves like an insert.', idempotent: true },
 	props: {
 		docId: docIdDropdown,
 		tableId: tableIdDropdown,

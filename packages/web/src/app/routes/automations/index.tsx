@@ -1,0 +1,430 @@
+import { Permission, UncategorizedFolderId } from '@activepieces/shared';
+import { t } from 'i18next';
+import { useCallback } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+
+import { recordAccess } from '@/app/components/global-search/access-history';
+import { useEmbedding } from '@/components/providers/embed-provider';
+import { AutomationsEmptyState } from '@/features/automations/components/automations-empty-state';
+import { AutomationsFilters as AutomationsFiltersComponent } from '@/features/automations/components/automations-filters';
+import { AutomationsNoResultsState } from '@/features/automations/components/automations-no-results-state';
+import { AutomationsPagination } from '@/features/automations/components/automations-pagination';
+import { AutomationsSelectionBar } from '@/features/automations/components/automations-selection-bar';
+import { AutomationsTable } from '@/features/automations/components/automations-table';
+import { CreateFolderDialog } from '@/features/automations/components/create-folder-dialog';
+import { CreateInFolderKind } from '@/features/automations/components/create-new-menu';
+import { MoveToFolderDialog } from '@/features/automations/components/move-to-folder-dialog';
+import { RenameDialog } from '@/features/automations/components/rename-dialog';
+import { useAutomationsData } from '@/features/automations/hooks/use-automations-data';
+import { useAutomationsDialogs } from '@/features/automations/hooks/use-automations-dialogs';
+import { useAutomationsFilters } from '@/features/automations/hooks/use-automations-filters';
+import { useAutomationsMutations } from '@/features/automations/hooks/use-automations-mutations';
+import {
+  useAutomationsSelection,
+  hasMovableOrExportableItems,
+} from '@/features/automations/hooks/use-automations-selection';
+import { usePinnedItems } from '@/features/automations/hooks/use-pinned-items';
+import { TreeItem } from '@/features/automations/lib/types';
+import { appConnectionsQueries } from '@/features/connections';
+import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
+import { projectMembersHooks } from '@/features/members';
+import { piecesHooks } from '@/features/pieces';
+import { projectCollectionUtils, getProjectName } from '@/features/projects';
+import { ImportTableDialog } from '@/features/tables/components/import-table-dialog';
+import { useAuthorization } from '@/hooks/authorization-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
+
+export const AutomationsPage = () => {
+  const { projectId: projectIdFromUrl } = useParams<{ projectId: string }>();
+  const projectId = projectIdFromUrl ?? authenticationSession.getProjectId()!;
+
+  return <AutomationsPageContent key={projectId} projectId={projectId} />;
+};
+
+const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
+  const [, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { embedState } = useEmbedding();
+
+  const { data: allProjects = [] } = projectCollectionUtils.useAll();
+  const currentProjectName = (() => {
+    const p = allProjects.find((proj) => proj.id === projectId);
+    return p ? getProjectName(p) : null;
+  })();
+
+  const { checkAccess } = useAuthorization();
+  const userHasPermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
+  const userHasPermissionToWriteTable = checkAccess(Permission.WRITE_TABLE);
+  const userHasPermissionToWriteFolder = checkAccess(Permission.WRITE_FOLDER);
+
+  const {
+    searchInput,
+    handleSearchChange,
+    typeFilter,
+    setTypeFilter,
+    statusFilter,
+    setStatusFilter,
+    connectionFilter,
+    setConnectionFilter,
+    ownerFilter,
+    setOwnerFilter,
+    folderFilter,
+    setFolderFilter,
+    filters,
+    filtersActive,
+    clearAllFilters,
+  } = useAutomationsFilters();
+
+  const { pinnedList, isPinned, togglePin, unpinItem } = usePinnedItems();
+
+  const {
+    treeItems,
+    folders,
+    rootFlows,
+    rootTables,
+    isLoading,
+    expandedFolders,
+    toggleFolder,
+    loadMoreInFolder,
+    rootPage,
+    pageSize,
+    changePageSize,
+    totalPages,
+    nextRootPage,
+    prevRootPage,
+    resetPagination,
+    invalidateAll,
+    invalidateRoot,
+    invalidateFolder,
+  } = useAutomationsData(filters, pinnedList);
+
+  const expandFolderIfCollapsed = useCallback(
+    (folderId: string) => {
+      if (!expandedFolders.has(folderId)) {
+        toggleFolder(folderId);
+      }
+    },
+    [expandedFolders, toggleFolder],
+  );
+
+  const {
+    selectedItems,
+    toggleItemSelection,
+    toggleAllSelection,
+    clearSelection,
+    isItemSelected,
+    selectableItems,
+  } = useAutomationsSelection(treeItems);
+
+  const mutations = useAutomationsMutations({
+    invalidateAll,
+    invalidateRoot,
+    invalidateFolder,
+    clearSelection,
+    treeItems,
+    unpinItem,
+  });
+
+  const dialogs = useAutomationsDialogs({ mutations, selectedItems });
+
+  const { data: connections } = appConnectionsQueries.useAppConnections({
+    request: { projectId, limit: 10000 },
+    extraKeys: [projectId],
+  });
+
+  const { projectMembers } = projectMembersHooks.useProjectMembers();
+  const { pieces } = piecesHooks.usePieces({});
+
+  // Bulk actions resolve selected items from the loaded treeItems, so the
+  // selection must never outlive the view that produced it. Clearing it on
+  // every view change (filtering, paging, collapsing a folder) keeps the
+  // selection a subset of what is currently loaded.
+  const handleFiltersChange = useCallback(() => {
+    clearSelection();
+    resetPagination();
+  }, [clearSelection, resetPagination]);
+
+  const handleNextPage = useCallback(() => {
+    clearSelection();
+    nextRootPage();
+  }, [clearSelection, nextRootPage]);
+
+  const handlePrevPage = useCallback(() => {
+    clearSelection();
+    prevRootPage();
+  }, [clearSelection, prevRootPage]);
+
+  const handlePageSizeChange = useCallback(
+    (size: number) => {
+      clearSelection();
+      changePageSize(size);
+    },
+    [clearSelection, changePageSize],
+  );
+
+  const handleRowClick = useCallback(
+    (item: TreeItem, ctrlKey?: boolean) => {
+      if (item.type === 'folder') {
+        if (expandedFolders.has(item.id)) {
+          clearSelection();
+        }
+        toggleFolder(item.id);
+      } else if (item.type === 'flow') {
+        const href = authenticationSession.appendProjectRoutePrefix(
+          `/flows/${item.id}`,
+        );
+        const flowData = item.data as {
+          status?: 'ENABLED' | 'DISABLED';
+        } | null;
+        const folderName = item.folderId
+          ? folders.find((f) => f.id === item.folderId)?.displayName ?? null
+          : null;
+        recordAccess({
+          id: `flow-${item.id}`,
+          type: 'flow',
+          label: item.name,
+          href,
+          status: flowData?.status ?? null,
+          folderName,
+          projectName: currentProjectName,
+        });
+        if (ctrlKey) {
+          window.open(href, '_blank');
+        } else {
+          navigate(href);
+        }
+      } else if (item.type === 'table') {
+        const href = authenticationSession.appendProjectRoutePrefix(
+          `/tables/${item.id}`,
+        );
+        const folderName = item.folderId
+          ? folders.find((f) => f.id === item.folderId)?.displayName ?? null
+          : null;
+        recordAccess({
+          id: `table-${item.id}`,
+          type: 'table',
+          label: item.name,
+          href,
+          folderName,
+          projectName: currentProjectName,
+        });
+        if (ctrlKey) {
+          window.open(href, '_blank');
+        } else {
+          navigate(href);
+        }
+      }
+    },
+    [
+      navigate,
+      toggleFolder,
+      folders,
+      currentProjectName,
+      clearSelection,
+      expandedFolders,
+    ],
+  );
+
+  const handleCreateInFolder = useCallback(
+    (folderId: string, kind: CreateInFolderKind) => {
+      switch (kind) {
+        case 'flow':
+          mutations.createFlow(folderId);
+          break;
+        case 'table':
+          mutations.createTable(t('New Table'), folderId);
+          break;
+        case 'import-flow':
+          expandFolderIfCollapsed(folderId);
+          dialogs.setImportTargetFolderId(folderId);
+          dialogs.setIsImportFlowDialogOpen(true);
+          break;
+        case 'import-table':
+          expandFolderIfCollapsed(folderId);
+          dialogs.setImportTargetFolderId(folderId);
+          dialogs.setIsImportTableDialogOpen(true);
+          break;
+      }
+    },
+    [expandFolderIfCollapsed, mutations, dialogs],
+  );
+
+  const updateSearchParams = (newFolderId: string | undefined) => {
+    setSearchParams(
+      (prev) => {
+        const newParams = new URLSearchParams(prev);
+        if (newFolderId) {
+          newParams.set('folderId', newFolderId);
+        } else {
+          newParams.delete('folderId');
+        }
+        return newParams;
+      },
+      { replace: true },
+    );
+  };
+
+  const hasAnyItems =
+    rootFlows.length > 0 || rootTables.length > 0 || folders.length > 0;
+  const isEmptyState = !hasAnyItems && !isLoading && !filtersActive;
+  const isNoResultsState =
+    treeItems.length === 0 && filtersActive && !isLoading;
+
+  if (isEmptyState) {
+    return <AutomationsEmptyState onRefresh={() => invalidateAll()} />;
+  }
+
+  return (
+    <div className="flex flex-col w-full">
+      <AutomationsFiltersComponent
+        searchTerm={searchInput}
+        onSearchChange={handleSearchChange}
+        typeFilter={typeFilter}
+        onTypeFilterChange={setTypeFilter}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
+        connectionFilter={connectionFilter}
+        onConnectionFilterChange={setConnectionFilter}
+        ownerFilter={ownerFilter}
+        onOwnerFilterChange={setOwnerFilter}
+        folderFilter={folderFilter}
+        onFolderFilterChange={setFolderFilter}
+        onFilterChange={handleFiltersChange}
+        folders={folders}
+        connections={connections?.data}
+        pieces={pieces}
+        userHasPermissionToWriteFlow={userHasPermissionToWriteFlow}
+        userHasPermissionToWriteTable={userHasPermissionToWriteTable}
+        userHasPermissionToWriteFolder={userHasPermissionToWriteFolder}
+        onCreateFlow={() => mutations.createFlow()}
+        onCreateTable={() => mutations.createTable(t('New Table'))}
+        onCreateFolder={() => dialogs.setIsFolderDialogOpen(true)}
+        onImportFlow={() => {
+          dialogs.setImportTargetFolderId(undefined);
+          dialogs.setIsImportFlowDialogOpen(true);
+        }}
+        onImportTable={() => {
+          dialogs.setImportTargetFolderId(undefined);
+          dialogs.setIsImportTableDialogOpen(true);
+        }}
+        onClearAllFilters={clearAllFilters}
+        hasActiveFilters={filtersActive}
+        isCreatingFlow={mutations.isCreateFlowPending}
+        isCreatingTable={mutations.isCreatingTable}
+      />
+
+      {isNoResultsState ? (
+        <AutomationsNoResultsState onClearFilters={clearAllFilters} />
+      ) : (
+        <>
+          <AutomationsTable
+            items={treeItems}
+            isLoading={isLoading}
+            selectedItems={selectedItems}
+            expandedFolders={expandedFolders}
+            projectMembers={projectMembers}
+            folders={folders}
+            selectableCount={selectableItems.length}
+            isPinned={isPinned}
+            onTogglePin={togglePin}
+            onToggleAllSelection={toggleAllSelection}
+            onToggleItemSelection={toggleItemSelection}
+            onRowClick={handleRowClick}
+            onRenameItem={dialogs.openRenameDialog}
+            onDeleteItem={mutations.handleDeleteItem}
+            onDuplicateFlow={mutations.handleDuplicateFlow}
+            onMoveItem={mutations.handleMoveItem}
+            onExportFlow={mutations.handleExportFlow}
+            onExportTable={mutations.handleExportTable}
+            onCreateInFolder={handleCreateInFolder}
+            userHasPermissionToWriteFlow={userHasPermissionToWriteFlow}
+            userHasPermissionToWriteTable={userHasPermissionToWriteTable}
+            isCreatingFlow={mutations.isCreateFlowPending}
+            isCreatingTable={mutations.isCreatingTable}
+            isMoving={mutations.isMoving}
+            isDuplicating={mutations.isDuplicating}
+            onLoadMoreInFolder={loadMoreInFolder}
+            isItemSelected={isItemSelected}
+          />
+
+          <AutomationsPagination
+            currentPage={rootPage}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            onPageSizeChange={handlePageSizeChange}
+            onPrevPage={handlePrevPage}
+            onNextPage={handleNextPage}
+          />
+        </>
+      )}
+
+      <AutomationsSelectionBar
+        selectedCount={selectedItems.size}
+        isDeleting={mutations.isDeleting}
+        isMoving={mutations.isMoving}
+        isExporting={mutations.isExporting}
+        hasMovableOrExportableItems={hasMovableOrExportableItems(selectedItems)}
+        onMoveClick={() => dialogs.setMoveToDialogOpen(true)}
+        onDeleteClick={() => mutations.handleBulkDelete(selectedItems)}
+        onExportClick={() => mutations.handleBulkExport(selectedItems)}
+        onClearSelection={clearSelection}
+      />
+
+      <MoveToFolderDialog
+        open={dialogs.moveToDialogOpen}
+        onOpenChange={dialogs.setMoveToDialogOpen}
+        folders={folders}
+        selectedFolderId={dialogs.moveToFolderId}
+        onFolderChange={dialogs.setMoveToFolderId}
+        onConfirm={dialogs.handleBulkMoveTo}
+        isMoving={mutations.isMoving}
+      />
+
+      <RenameDialog
+        open={dialogs.renameDialogOpen}
+        onOpenChange={dialogs.setRenameDialogOpen}
+        value={dialogs.newName}
+        onChange={dialogs.setNewName}
+        onConfirm={dialogs.handleRename}
+        isRenaming={mutations.isRenaming}
+      />
+
+      <CreateFolderDialog
+        updateSearchParams={updateSearchParams}
+        open={dialogs.isFolderDialogOpen}
+        refetchFolders={() => invalidateAll()}
+        onOpenChange={dialogs.setIsFolderDialogOpen}
+      />
+
+      <ImportFlowDialog
+        key={dialogs.importTargetFolderId ?? 'root-import-flow'}
+        insideBuilder={false}
+        folderId={dialogs.importTargetFolderId ?? UncategorizedFolderId}
+        onRefresh={() => invalidateAll()}
+      >
+        <button
+          className="hidden"
+          ref={(el) => {
+            if (el && dialogs.isImportFlowDialogOpen) {
+              el.click();
+              dialogs.setIsImportFlowDialogOpen(false);
+            }
+          }}
+        />
+      </ImportFlowDialog>
+
+      {!embedState.hideTables && (
+        <ImportTableDialog
+          open={dialogs.isImportTableDialogOpen}
+          setIsOpen={(open) => {
+            dialogs.setIsImportTableDialogOpen(open);
+            if (!open) dialogs.setImportTargetFolderId(undefined);
+          }}
+          showTrigger={false}
+          folderId={dialogs.importTargetFolderId}
+          onImportSuccess={() => invalidateAll()}
+        />
+      )}
+    </div>
+  );
+};

@@ -10,19 +10,16 @@ import {
   customRoleIdDropdown,
   agentBrandIdDropdown,
   groupIdDropdown,
+  userFieldsDynamicProp,
 } from '../common/props';
-
-type AuthProps = {
-  email: string;
-  token: string;
-  subdomain: string;
-};
 
 export const createUserAction = createAction({
   auth: zendeskAuth,
   name: 'create-user',
   displayName: 'Create User',
   description: 'Add a new user to the Zendesk instance.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new user (end-user, agent, or admin; defaults to end-user) in the Zendesk instance; only the name is required. Use to add a customer, agent, or admin account, optionally setting email, phone, role, organization (by ID or by new organization name), tags, custom user fields, and additional identities. A verification email is sent unless skipped. Not idempotent: each call creates a distinct user, and a duplicate email fails validation.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Name',
@@ -173,140 +170,7 @@ export const createUserAction = createAction({
       description: 'Array of tags to apply to the user',
       required: false,
     }),
-    user_fields: Property.DynamicProperties({
-      auth: zendeskAuth,
-      displayName: 'User Fields',
-      description: 'Custom user field values',
-      required: false,
-      refreshers: ['auth'],
-      props: async ({ auth }) => {
-        if (!auth) {
-          return {};
-        }
-
-        try {
-          const authentication = auth;
-          const response = await httpClient.sendRequest({
-            url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/user_fields.json`,
-            method: HttpMethod.GET,
-            authentication: {
-              type: AuthenticationType.BASIC,
-              username: authentication.props.email + '/token',
-              password: authentication.props.token,
-            },
-          });
-
-          const fields = (response.body as { user_fields: Array<{
-            id: number;
-            key: string;
-            title: string;
-            description?: string;
-            type: string;
-            active: boolean;
-            custom_field_options?: Array<{ name: string; value: string }>;
-            regexp_for_validation?: string;
-          }> }).user_fields;
-
-          const dynamicProps: Record<string, any> = {};
-          for (const field of fields) {
-            if (!field.active) continue;
-
-            const fieldKey = `field_${field.key}`;
-            const displayName = field.title;
-            const description = field.description || `Custom ${field.type} field`;
-
-            switch (field.type) {
-              case 'tagger':
-                if (field.custom_field_options && field.custom_field_options.length > 0) {
-                  dynamicProps[fieldKey] = Property.StaticDropdown({
-                    displayName,
-                    description,
-                    required: false,
-                    options: {
-                      disabled: false,
-                      placeholder: `Select ${displayName}`,
-                      options: field.custom_field_options.map(option => ({
-                        label: option.name,
-                        value: option.value,
-                      })),
-                    },
-                  });
-                }
-                break;
-              case 'multiselect':
-                if (field.custom_field_options && field.custom_field_options.length > 0) {
-                  dynamicProps[fieldKey] = Property.StaticMultiSelectDropdown({
-                    displayName,
-                    description,
-                    required: false,
-                    options: {
-                      options: field.custom_field_options.map(option => ({
-                        label: option.name,
-                        value: option.value,
-                      })),
-                    },
-                  });
-                }
-                break;
-              case 'text':
-                dynamicProps[fieldKey] = Property.ShortText({
-                  displayName,
-                  description,
-                  required: false,
-                });
-                break;
-              case 'textarea':
-                dynamicProps[fieldKey] = Property.LongText({
-                  displayName,
-                  description,
-                  required: false,
-                });
-                break;
-              case 'integer':
-              case 'decimal':
-                dynamicProps[fieldKey] = Property.Number({
-                  displayName,
-                  description,
-                  required: false,
-                });
-                break;
-              case 'date':
-                dynamicProps[fieldKey] = Property.DateTime({
-                  displayName,
-                  description,
-                  required: false,
-                });
-                break;
-              case 'checkbox':
-                dynamicProps[fieldKey] = Property.Checkbox({
-                  displayName,
-                  description,
-                  required: false,
-                });
-                break;
-              case 'regexp':
-                dynamicProps[fieldKey] = Property.ShortText({
-                  displayName,
-                  description: `${description}${field.regexp_for_validation ? ` (Pattern: ${field.regexp_for_validation})` : ''}`,
-                  required: false,
-                });
-                break;
-              default:
-                dynamicProps[fieldKey] = Property.ShortText({
-                  displayName,
-                  description: `${description} (${field.type})`,
-                  required: false,
-                });
-            }
-          }
-
-          return dynamicProps;
-        } catch (error) {
-          console.warn('Failed to load user fields:', error);
-          return {};
-        }
-      },
-    }),
+    user_fields: userFieldsDynamicProp,
     identities: Property.Json({
       displayName: 'Identities',
       description:
