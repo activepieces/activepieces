@@ -579,11 +579,12 @@ export function useAgentChat({
                               ? (gateInput.input as Record<string, unknown>)
                               : {},
                           isBatch:
-                            Array.isArray(gateInput.items) &&
-                            gateInput.items.length > 0,
-                          batchCount: Array.isArray(gateInput.items)
-                            ? gateInput.items.length
-                            : undefined,
+                            typeof gateInput.batchCount === 'number' &&
+                            gateInput.batchCount > 0,
+                          batchCount:
+                            typeof gateInput.batchCount === 'number'
+                              ? gateInput.batchCount
+                              : undefined,
                           batchSamples: Array.isArray(gateInput.items)
                             ? (
                                 gateInput.items as Record<string, unknown>[]
