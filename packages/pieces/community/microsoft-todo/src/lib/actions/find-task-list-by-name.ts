@@ -9,6 +9,8 @@ export const findTaskListByNameAction = createAction({
 	name: 'find_task_list_by_name',
 	displayName: 'Find Task List',
 	description: 'Finds a task list by its name.',
+	audience: 'both',
+	aiMetadata: { description: 'Search the authenticated user\'s Microsoft To Do task lists by display name and return all matches. The match mode is configurable — contains (default), starts-with, or exact — so you can do a loose lookup or pin down one list. Use to resolve a list id from a name before acting on it. Read-only and idempotent.', idempotent: true },
 	props: {
 		name: Property.ShortText({
 			displayName: 'Title',

@@ -23,7 +23,7 @@ Flows are the core automation primitive in Activepieces. Each flow is a versione
 - `packages/web/src/app/builder/index.tsx` — visual flow builder entry point
 - `packages/web/src/app/builder/flow-canvas/` — XYFlow canvas (nodes, edges, drag layer, context menu)
 - `packages/web/src/app/builder/state/` — Zustand-based builder state (flow, run, canvas, notes, step form, piece selector)
-- `packages/web/src/app/builder/step-settings/` — step configuration panel and split/drawer layout for the step data panel
+- `packages/web/src/app/builder/step-settings/` — step configuration panel and split/drawer layout for the step data panel; `piece-settings/connection-select.tsx` is the per-step connection picker — it renders an inline status indicator for every connection state (Connected / Error / Missing, via `getConnectionStatusDisplay`) alongside a single unified `Cable` reconnect icon button (replacing the old per-state mix of refresh icon + text button). The indicator overlay is `pointer-events-none` so clicking the status label opens the dropdown; only the reconnect button re-enables pointer events and opens the reconnect dialog.
 - `packages/web/src/app/builder/step-data/` — step data panel UI (`step-data-panel-host.tsx` / `StepDataPanelHost`, `step-data-panel-header.tsx`, `step-data-panel-view-toggle.tsx`)
 - `packages/web/src/app/builder/test-step/` — test execution UI (action/trigger sections, sample-data viewer, CTA buttons); `test-runner-context.tsx` hoists `useTestAction` + the webhook-return dialog so the bottom CTA can fire the test in-tree
 - `packages/web/src/app/builder/data-display/` — failed-step error UI: `friendly-error-view.tsx` (the friendly error card), `copy-ai-prompt.tsx` ("Copy Error for AI" button), `explanation-prompt.ts` (sanitized AI prompt builder), and `build-step-properties-snapshot.ts` (step-properties snapshot helper). Used by both the test panel and the run-details output view.
@@ -59,6 +59,10 @@ Flows are the core automation primitive in Activepieces. Each flow is a versione
 **FlowVersion**: id, flowId, displayName, schemaVersion (current latest: `'22'`), trigger (JSONB — full flow graph), connectionIds[], agentIds[], updatedBy, valid, state (DRAFT/LOCKED), backupFiles (JSONB), notes[] (JSONB). Relations: flow, updatedByUser.
 
 **Folder**: id, projectId, displayName. Used to organize flows and tables. Case-insensitive uniqueness.
+
+## List Filtering (`GET /v1/flows`)
+
+`flowService.list` filters by `folderId` (single folder; the `"NULL"` sentinel matches uncategorized flows) or `folderIds` (array — flows belonging to any of the listed folder IDs), plus `status`, `name`, `connectionExternalIds`, `agentExternalIds`, and `externalIds`. The automations page uses `folderIds` to load all foldered flows in a single request instead of one request per folder.
 
 ## Flow Operations (Single-Endpoint Dispatch)
 

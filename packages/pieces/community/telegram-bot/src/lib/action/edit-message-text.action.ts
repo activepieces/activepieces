@@ -8,6 +8,8 @@ export const telegramEditMessageTextAction = createAction({
   name: 'edit_message_text',
   displayName: 'Edit Message Text',
   description: 'Edit the text of a previously sent message or an inline message',
+  audience: 'both',
+  aiMetadata: { description: 'Replaces the text of a message the bot already sent, identified either by chat_id + message_id or by inline_message_id (the two targeting modes are mutually exclusive). Use to update a status or correct a message in place rather than sending a new one. Not idempotent: Telegram rejects an edit whose text matches the current content.', idempotent: false },
   props: {
     instructions: telegramCommons.chatIdInstructions(),
     chat_id: Property.ShortText({

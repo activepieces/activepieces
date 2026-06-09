@@ -7,6 +7,8 @@ export const addPermission = createAction({
     auth: googleDriveAuth,
     name: 'update_permissions',
     description: 'Update permissions for a file or folder',
+    audience: 'both',
+    aiMetadata: { description: 'Grants a specified role (reader, commenter, writer, fileOrganizer, or organizer) on a Drive file or folder to a user identified by email, optionally sending a notification email. Use to share a resource with a person. Requires the file/folder ID and target email. Not idempotent: each call creates a new permission grant.', idempotent: false },
     displayName: 'Update permissions',
     props: {
         fileId: Property.ShortText({

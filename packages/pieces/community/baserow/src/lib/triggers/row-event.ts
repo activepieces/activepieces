@@ -14,6 +14,10 @@ export const rowEventTrigger = createTrigger({
   displayName: 'Any Row Change',
   description:
     'Triggers when a row is created, updated, or deleted in a Baserow table. To react to only one event type, use the dedicated New Row, Updated Row, or Deleted Row triggers.',
+  aiMetadata: {
+    description:
+      'Fires on any row change — create, update, or delete — in the selected Baserow table, tagging each event with its event_type. Use when one flow should handle all row lifecycle events; for a single event type use the dedicated New Row, Updated Row, or Deleted Row triggers.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     table_id: baserowCommon.tableId(),

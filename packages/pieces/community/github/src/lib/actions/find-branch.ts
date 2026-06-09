@@ -9,6 +9,12 @@ export const githubFindBranchAction = createAction({
   name: 'find_branch',
   displayName: 'Find Branch',
   description: 'Finds a branch by name and returns its details.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up a branch in a repository by its exact name and reports whether it exists along with its details. Use to check for a branch or fetch its tip before acting on it; a missing branch is reported as not-found rather than raising an error. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     repository: githubCommon.repositoryDropdown,
     branch: Property.ShortText({

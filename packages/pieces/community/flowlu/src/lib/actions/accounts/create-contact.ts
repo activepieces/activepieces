@@ -12,6 +12,8 @@ export const createContactAction = createAction({
   name: 'flowlu_create_contact',
   displayName: 'Create CRM Account(Contact)',
   description: 'Creates a new contact in CRM.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new person-type CRM account (a contact) in Flowlu, requiring at least a first name. Use to add an individual to the CRM; for companies use Create CRM Account (Organization) instead. Not idempotent — each call creates a new contact record.', idempotent: false },
   props: {
     honorific_title_id: flowluCommon.honorific_title_id(false),
     first_name: Property.ShortText({

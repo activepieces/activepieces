@@ -8,6 +8,8 @@ export const createColumnAction = createAction({
   name: 'monday_create_column',
   displayName: 'Create Column',
   description: 'Creates a new column in board.',
+  audience: 'both',
+  aiMetadata: { description: 'Adds a new column of a chosen type (text, status, date, number, etc.) to a monday.com board. Use to extend a board\'s structure before writing data into it. Not idempotent: each call creates a separate column even with the same title.', idempotent: false },
   props: {
     workspace_id: mondayCommon.workspace_id(true),
     board_id: mondayCommon.board_id(true),

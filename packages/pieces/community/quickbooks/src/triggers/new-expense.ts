@@ -60,6 +60,9 @@ export const newExpense = createTrigger({
   name: 'new_expense',
   displayName: 'New Expense (Purchase)',
   description: 'Triggers when an Expense (Purchase) is created.',
+  aiMetadata: {
+    description: 'Fires when a new expense (purchase transaction) is created in the connected QuickBooks company, emitting the newly created purchase record. Use to react to money being spent or a bill being recorded.',
+  },
   props: {},
   type: TriggerStrategy.POLLING,
   async onEnable(context) {

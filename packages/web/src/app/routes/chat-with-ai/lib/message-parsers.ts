@@ -21,7 +21,7 @@ export type { MultiQuestion } from '@/features/chat/lib/chat-store-types';
 export type ConnectionPickerData = {
   piece: string;
   displayName: string;
-  connections: Array<{
+  connections?: Array<{
     label: string;
     project: string;
     externalId: string;
