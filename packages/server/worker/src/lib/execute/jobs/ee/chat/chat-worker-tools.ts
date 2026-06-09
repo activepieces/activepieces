@@ -11,26 +11,62 @@ import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
 
 const MAX_BATCH_SIZE = 100
+const TOOL_EXECUTION_TIMEOUT_MS = 5 * 60 * 1_000
 
-function createEventEmitter({ sendEvent, userId, conversationId }: {
+async function withToolTimeout<T>({ fn, timeoutMs, toolName }: {
+    fn: (signal: AbortSignal) => Promise<T>
+    timeoutMs: number
+    toolName: string
+}): Promise<T> {
+    const abortController = new AbortController()
+    let timeoutId: ReturnType<typeof setTimeout> | undefined
+    const timeoutPromise = new Promise<never>((_resolve, reject) => {
+        timeoutId = setTimeout(() => {
+            abortController.abort()
+            reject(new Error(`Tool "${toolName}" timed out after ${timeoutMs / 1_000} seconds. The operation took too long to complete. You may retry with different parameters or skip this step.`))
+        }, timeoutMs)
+    })
+    try {
+        return await Promise.race([fn(abortController.signal), timeoutPromise])
+    }
+    finally {
+        if (timeoutId !== undefined) {
+            clearTimeout(timeoutId)
+        }
+    }
+}
+
+function createEventEmitter({ sendEvent, userId, conversationId, log }: {
     sendEvent: (input: SendChatEventRequest) => Promise<void>
     userId: string
     conversationId: string
+    log?: { warn: (obj: Record<string, unknown>, msg: string) => void }
 }): ChatEventEmitter {
+    const sendWithRetry = async ({ event, maxAttempts }: { event: SendChatEventRequest['event'], maxAttempts: number }) => {
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            const { error } = await tryCatch(() => sendEvent({ userId, conversationId, event }))
+            if (!error) return
+            if (attempt === maxAttempts) {
+                log?.warn({ err: error, attempt, eventType: event.type }, 'Event delivery failed after retries')
+                return
+            }
+            const delayMs = attempt === 1 ? 200 : 1_000
+            await new Promise((resolve) => setTimeout(resolve, delayMs))
+        }
+    }
+
     return {
         emitToolProgress(data: ToolProgressEvent): void {
-            sendEvent({
-                userId,
-                conversationId,
+            void sendWithRetry({
                 event: { type: ChatAgentEventType.TOOL_PROGRESS, data },
-            }).catch(() => {})
+                maxAttempts: 2,
+            })
         },
         emitToolApprovalRequest(data: ToolApprovalRequestEvent): void {
-            sendEvent({
-                userId,
-                conversationId,
+            void sendWithRetry({
                 event: { type: ChatAgentEventType.TOOL_APPROVAL_REQUEST, data },
-            }).catch(() => {})
+                maxAttempts: 3,
+            })
         },
     }
 }
@@ -153,6 +189,13 @@ function createCrossProjectTools({ executeTool, eventEmitter }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     eventEmitter: ChatEventEmitter
 }): ToolSet {
+    const executeWithTimeout = (toolName: string, toolInput: Record<string, unknown>) =>
+        withToolTimeout({
+            fn: () => executeTool(toolName, toolInput),
+            timeoutMs: TOOL_EXECUTION_TIMEOUT_MS,
+            toolName,
+        })
+
     return {
         ap_discover_action_auth: tool({
             description: 'Check what authentication a piece needs and find available connections. Call this BEFORE ap_execute_action to determine if auth is needed.',
@@ -161,7 +204,7 @@ function createCrossProjectTools({ executeTool, eventEmitter }: {
                 pieceName: z.string().describe('Piece name, e.g. "@activepieces/piece-gmail"'),
             }),
             execute: async (input) => {
-                return executeTool('ap_discover_action_auth', input)
+                return executeWithTimeout('ap_discover_action_auth', input)
             },
         }),
 
@@ -180,7 +223,7 @@ function createCrossProjectTools({ executeTool, eventEmitter }: {
             execute: async (toolInput, options) => {
                 if (toolInput.items && toolInput.items.length > 0) {
                     return executeBatchAction({
-                        executeTool,
+                        executeWithTimeout,
                         eventEmitter,
                         toolCallId: options.toolCallId,
                         pieceName: toolInput.pieceName,
@@ -191,7 +234,7 @@ function createCrossProjectTools({ executeTool, eventEmitter }: {
                         projectId: toolInput.projectId,
                     })
                 }
-                return executeTool('ap_execute_action', toolInput)
+                return executeWithTimeout('ap_execute_action', toolInput)
             },
         }),
 
@@ -203,14 +246,14 @@ function createCrossProjectTools({ executeTool, eventEmitter }: {
                 status: z.string().optional().describe('Filter by status'),
             }),
             execute: async (input) => {
-                return executeTool('ap_list_across_projects', input)
+                return executeWithTimeout('ap_list_across_projects', input)
             },
         }),
     }
 }
 
-async function executeBatchAction({ executeTool, eventEmitter, toolCallId, pieceName, actionName, items, description, connectionExternalId, projectId }: {
-    executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
+async function executeBatchAction({ executeWithTimeout, eventEmitter, toolCallId, pieceName, actionName, items, description, connectionExternalId, projectId }: {
+    executeWithTimeout: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     eventEmitter: ChatEventEmitter
     toolCallId: string
     pieceName: string
@@ -247,7 +290,7 @@ async function executeBatchAction({ executeTool, eventEmitter, toolCallId, piece
     pushProgress({ done: false })
 
     for (let i = 0; i < items.length; i++) {
-        const { data: result, error } = await tryCatch(() => executeTool('ap_execute_action', {
+        const { data: result, error } = await tryCatch(() => executeWithTimeout('ap_execute_action', {
             pieceName,
             actionName,
             input: items[i],
@@ -397,4 +440,6 @@ export const chatWorkerTools = {
     createThinkingTools,
     isSuccessResult,
     extractResultText,
+    withToolTimeout,
+    TOOL_EXECUTION_TIMEOUT_MS,
 }

@@ -126,7 +126,7 @@ export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOper
     test: boolean
     flowVersion: FlowVersion
     webhookUrl: string
-    triggerPayload?: TriggerPayload
+    triggerPayload?: JobPayload
     appWebhookUrl?: string
     webhookSecret?: string | Record<string, string>
 }

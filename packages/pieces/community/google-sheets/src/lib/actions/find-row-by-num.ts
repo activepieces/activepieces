@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { areSheetIdsValid, googleSheetsCommon } from '../common/common';
+import { areSheetIdsValid, googleSheetsCommon, mapRowsToHeaderNames } from '../common/common';
 import { googleSheetsAuth } from '../common/common';
 import { commonProps } from '../common/props';
 
@@ -21,15 +21,21 @@ export const findRowByNumAction = createAction({
 			required: true,
 			defaultValue: 1,
 		}),
+		useHeaderNames: Property.Checkbox({
+			displayName: 'Use Column Names',
+			description: 'Use column names as keys instead of A, B, C.',
+			required: false,
+			defaultValue: true,
+		}),
 	},
 	async run(context) {
-		const { spreadsheetId, sheetId, rowNumber, headerRow } = context.propsValue;
+		const { spreadsheetId, sheetId, rowNumber, headerRow,useHeaderNames } = context.propsValue;
 
 		if (!areSheetIdsValid(spreadsheetId, sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
 
-		const row = await googleSheetsCommon.getGoogleSheetRows({
+		const rows = await googleSheetsCommon.getGoogleSheetRows({
 			auth: context.auth,
 			sheetId: sheetId as number,
 			spreadsheetId: spreadsheetId as string,
@@ -37,6 +43,16 @@ export const findRowByNumAction = createAction({
 			rowIndex_e: rowNumber,
 			headerRow: headerRow,
 		});
-		return row[0];
+		
+		const finalRows = await mapRowsToHeaderNames(
+					rows,
+					useHeaderNames ?? false,
+					spreadsheetId as string,
+					sheetId as number,
+					headerRow,
+					context.auth,
+				); 
+
+		return finalRows[0];
 	},
 });

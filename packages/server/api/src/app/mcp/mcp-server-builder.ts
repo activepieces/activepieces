@@ -24,7 +24,7 @@ const MCP_SERVER_INSTRUCTIONS = `## Activepieces MCP Server
 
 ### Key patterns
 - **Auth**: ap_list_connections → get \`externalId\` → pass as \`auth\` param on ap_update_step/ap_update_trigger.
-- **Step refs**: \`{{stepName.field}}\` — no \`.output.\` in the path (e.g. \`{{trigger.body.email}}\`, \`{{step_1.id}}\`).
+- **Step refs**: \`{{stepName['output'].field}}\` — a step's data is nested under \`['output']\` (e.g. \`{{trigger['output'].body.email}}\`, \`{{step_1['output'].id}}\`). The trigger follows the same rule: use \`{{trigger['output'].field}}\`, never \`{{trigger.field}}\`. For a continue-on-failure step's error, use \`{{stepName['error'].message}}\`.
 - **Step names**: \`trigger\`, \`step_1\`, \`step_2\`, etc. Use ap_flow_structure to see all names.
 - **Piece names**: full format (e.g. "@activepieces/piece-slack") for ap_add_step/ap_update_trigger. Short names work for lookup tools.
 - **Modifying steps**: use ap_update_step/ap_update_trigger. Never delete+recreate — loses sample data.

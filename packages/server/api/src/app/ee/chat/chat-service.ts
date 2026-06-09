@@ -1,6 +1,7 @@
 import {
     apId,
     ChatConversation,
+    ChatConversationStatus,
     ChatHistoryMessage,
     CreateChatConversationRequest,
     PersistedChatMessage,
@@ -13,6 +14,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
+import { chatApprovalGate } from './chat-approval-gate'
 import { ChatConversationEntity } from './chat-conversation-entity'
 import { chatHelpers } from './chat-helpers'
 import { chatHistory } from './history/chat-history'
@@ -85,6 +87,12 @@ export const chatService = (log: FastifyBaseLogger) => ({
 
     async deleteConversation({ id, platformId, userId }: ConversationIdentifier): Promise<void> {
         const conversation = await this.getConversationOrThrow({ id, platformId, userId })
+        if (conversation.status === ChatConversationStatus.STREAMING) {
+            await chatApprovalGate.requestCancel({ conversationId: id })
+            await chatHelpers.conversationRepo().update(id, {
+                status: ChatConversationStatus.IDLE,
+            })
+        }
         await chatHelpers.conversationRepo().delete(conversation.id)
         log.info({ conversationId: id, platformId, userId }, '[chatService] Conversation deleted')
     },

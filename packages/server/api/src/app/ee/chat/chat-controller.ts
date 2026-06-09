@@ -2,6 +2,7 @@ import {
     ActivepiecesError,
     AIProviderName,
     apId,
+    ChatConversationStatus,
     CreateChatConversationRequest,
     ErrorCode,
     LATEST_JOB_DATA_SCHEMA_VERSION,
@@ -20,6 +21,7 @@ import { securityAccess } from '../../core/security/authorization/fastify-securi
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-credits.service'
 import { chatApprovalGate } from './chat-approval-gate'
+import { chatHelpers } from './chat-helpers'
 import { chatService } from './chat-service'
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
@@ -127,6 +129,9 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         const userId = request.principal.id
         await chatService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
         await chatApprovalGate.requestCancel({ conversationId })
+        await chatHelpers.conversationRepo().update(conversationId, {
+            status: ChatConversationStatus.IDLE,
+        })
         return reply.status(StatusCodes.OK).send({ success: true })
     })
 

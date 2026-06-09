@@ -64,12 +64,6 @@ const response = await httpClient.sendRequest({
 });
 ```
 
-### Available HttpMethod values
-`GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS`
-
-### Available AuthenticationType values
-`BEARER_TOKEN`, `BASIC`
-
 ---
 
 ## Common API Helper Pattern
@@ -127,7 +121,7 @@ export const myAppCommon = {
         return { disabled: true, options: [], placeholder: 'Connect your account first' };
       }
       const response = await myAppApiCall<{ data: { id: string; name: string }[] }>({
-        token: (auth as { secret_text: string }).secret_text,
+        token: auth.secret_text,  // typed automatically because `auth: myAppAuth` is set above — no cast
         method: HttpMethod.GET,
         path: '/projects',
       });
@@ -227,21 +221,20 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 createCustomApiCallAction({
   baseUrl: () => 'https://api.example.com/v1',
   auth: myAppAuth,
+  // `auth` is the connection object — read auth.secret_text (SecretText), not bare `${auth}`.
   authMapping: async (auth) => ({
-    Authorization: `Bearer ${auth}`,
+    Authorization: `Bearer ${auth.secret_text}`,
   }),
 })
 ```
 
-For OAuth2 auth:
+For OAuth2 auth — `auth` is typed from `auth: myAppAuth`, so read `auth.access_token` directly:
 ```typescript
-import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
-
 createCustomApiCallAction({
   baseUrl: () => 'https://api.example.com',
   auth: myAppAuth,
   authMapping: async (auth) => ({
-    Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+    Authorization: `Bearer ${auth.access_token}`,
   }),
 })
 ```
