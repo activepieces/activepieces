@@ -1,5 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { flowService } from '../../../../../src/app/flows/flow/flow.service'
+import { tableService } from '../../../../../src/app/tables/table/table.service'
 import { db } from '../../../../helpers/db'
 import {
     createMockFlow,
@@ -105,6 +107,44 @@ describe('Folder N+1 fix', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const ids = response?.json().data.map((t: { id: string }) => t.id)
             expect(ids).toEqual([tableA])
+        })
+    })
+
+    describe('empty folderIds filter', () => {
+        it('flowService.list returns no flows for an empty folderIds without erroring', async () => {
+            const ctx = await createTestContext(app)
+            const folder = createMockFolder({ projectId: ctx.project.id })
+            await db.save('folder', folder)
+            await saveFlowInFolder(ctx, folder.id)
+            await saveFlowInFolder(ctx, null)
+
+            const page = await flowService(app.log).list({
+                projectIds: [ctx.project.id],
+                folderIds: [],
+                limit: 100,
+            })
+
+            expect(page.data).toEqual([])
+        })
+
+        it('tableService.list returns no tables for an empty folderIds without erroring', async () => {
+            const ctx = await createTestContext(app)
+            const folder = createMockFolder({ projectId: ctx.project.id })
+            await db.save('folder', folder)
+            await saveTableInFolder(ctx, folder.id)
+            await saveTableInFolder(ctx, null)
+
+            const page = await tableService.list({
+                projectId: ctx.project.id,
+                cursor: undefined,
+                limit: 100,
+                name: undefined,
+                externalIds: undefined,
+                folderId: undefined,
+                folderIds: [],
+            })
+
+            expect(page.data).toEqual([])
         })
     })
 })
