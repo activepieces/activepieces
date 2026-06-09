@@ -1,7 +1,6 @@
 {
   "name": "@activepieces/piece-microsoft-outlook",
   "version": "0.3.6",
-  "aiReady": true,
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
