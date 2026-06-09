@@ -17,6 +17,12 @@ export const upsertRowAction = createAction({
   displayName: 'Upsert Row',
   description:
     'Creates a new row or updates an existing one by matching a field value.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Inserts or updates a single Baserow row keyed on a match field value: if a row whose match field exactly equals the given value exists it is updated, otherwise a new row is created with that value. Use to sync records idempotently without creating duplicates. The match field must be a writable, filterable type (read-only, link, select, file, date, and auto-number fields are excluded). Idempotent on the match key — repeating the same call converges the row to the same state rather than adding rows.',
+    idempotent: true,
+  },
   auth: baserowAuth,
   props: {
     table_id: baserowCommon.tableId(),

@@ -110,9 +110,15 @@ export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.B
 
 export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.RESUME> & {
     resumePayload: JobPayload
+    resumeReason: ResumeReason
 }
 
 export type ExecuteFlowOperation = BeginExecuteFlowOperation | ResumeExecuteFlowOperation
+
+export enum ResumeReason {
+    WAITPOINT = 'WAITPOINT',
+    RETRY = 'RETRY',
+}
 
 
 export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOperation & {
@@ -120,7 +126,7 @@ export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOper
     test: boolean
     flowVersion: FlowVersion
     webhookUrl: string
-    triggerPayload?: TriggerPayload
+    triggerPayload?: JobPayload
     appWebhookUrl?: string
     webhookSecret?: string | Record<string, string>
 }

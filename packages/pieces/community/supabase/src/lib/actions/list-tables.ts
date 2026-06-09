@@ -6,6 +6,8 @@ export const listTables = createAction({
     name: 'list_tables',
     displayName: 'List Tables',
     description: 'Returns a list of all public tables and views in the database',
+    audience: 'both',
+    aiMetadata: { description: 'Lists the names of all public tables and views in the connected Supabase database. Use this first to discover which tables exist before reading or writing rows. Read-only and idempotent.', idempotent: true },
     auth: supabaseAuth,
     props: {},
     async run(context) {

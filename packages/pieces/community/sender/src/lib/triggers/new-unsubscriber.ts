@@ -8,6 +8,9 @@ export const newUnsubscriberTrigger = createTrigger({
   name: 'new_unsubscriber',
   displayName: 'New Unsubscriber',
   description: 'Fires when someone unsubscribes globally',
+  aiMetadata: {
+    description: 'Fires when a subscriber unsubscribes globally from the connected Sender account, representing the contact that opted out of all communications.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

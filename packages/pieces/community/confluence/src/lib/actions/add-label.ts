@@ -9,6 +9,8 @@ export const addLabelAction = createAction({
 	name: 'add-label',
 	displayName: 'Add Label to Page',
 	description: 'Adds one or more labels to a page.',
+	audience: 'both',
+	aiMetadata: { description: 'Adds one or more labels to a Confluence page, with a selectable prefix (global, personal/my, or team) applied to all labels in the call. Use to tag or categorize a page. Requires the page ID and at least one label name. Effectively idempotent — re-adding an existing label leaves the page\'s label set unchanged.', idempotent: true },
 	props: {
 		spaceId: spaceIdProp,
 		pageId: pageIdProp,

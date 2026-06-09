@@ -13,6 +13,9 @@ export const recordCreatedTrigger = createTrigger({
 	name: 'record_created',
 	displayName: 'Record Created',
 	description: 'Triggers when a new record such as person,company or deal is created.',
+	aiMetadata: {
+		description: 'Fires when a new record is created in the selected Attio object type (e.g. a new person, company, deal, or custom object). Represents the creation of a CRM entity; scoped to one object type chosen per trigger.',
+	},
 	props: {
 		objectTypeId: objectTypeIdDropdown({
 			displayName: 'Object',

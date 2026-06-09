@@ -72,6 +72,9 @@ export const newRow = createTrigger({
     auth: postgresAuth,
     displayName: 'New Row',
     description: 'triggered when a new row is added',
+    aiMetadata: {
+      description: 'Fires when a new row appears in a selected PostgreSQL table, detected by polling and ordering on a chosen column (such as a created timestamp or auto-incrementing ID). Each event represents one newly inserted row and carries that row\'s data.',
+    },
     props: {
         description: Property.MarkDown({
             value: `**NOTE:** The trigger fetches the latest rows using the provided order by column (newest first), and then will keep polling until the previous last row is reached.`,

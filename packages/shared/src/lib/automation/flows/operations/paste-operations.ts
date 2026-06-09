@@ -17,7 +17,9 @@ export type OutsideBranchPasteLocation = {
     stepLocationRelativeToParent:
     | StepLocationRelativeToParent.AFTER
     | StepLocationRelativeToParent.INSIDE_LOOP
-} 
+    | StepLocationRelativeToParent.INSIDE_ON_SUCCESS_BRANCH
+    | StepLocationRelativeToParent.INSIDE_ON_FAILURE_BRANCH
+}
 
 export type PasteLocation = InsideBranchPasteLocation | OutsideBranchPasteLocation
 

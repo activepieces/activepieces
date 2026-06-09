@@ -47,14 +47,16 @@ All routes accept GET, POST, PUT, DELETE, PATCH methods.
 ## Sync vs Async Execution
 
 **Async path**:
-1. Offload payload to S3 if > `AP_WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB` (default 512KB)
+1. Offload payload to S3/DB if > `AP_WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB` (default 512KB). The job carries a `JobPayload` discriminated union — `inline` (value embedded) or `ref` (`fileId` of a `WEBHOOK_PAYLOAD` file).
 2. Queue BullMQ job (`WorkerJobType.EXECUTE_WEBHOOK`)
 3. Return 200 with `x-webhook-id` header immediately
+
+The worker forwards the `JobPayload` straight into the `EXECUTE_TRIGGER_HOOK` engine operation; the **engine** resolves it at execution time (inline value, or a `ref` downloaded via the file-download path — direct bytes or an S3 signed-link redirect). Workers no longer fetch payloads themselves.
 
 **Sync path**:
 1. Create FlowRun with `ProgressUpdateType.WEBHOOK_RESPONSE`
 2. Register one-time listener via `engineResponseWatcher`
-3. Wait for engine to send response (timeout: `AP_WEBHOOK_TIMEOUT_SECONDS`, default 30)
+3. Wait for engine to send response (default timeout: `AP_WEBHOOK_TIMEOUT_SECONDS`, default 30; callers may pass `timeoutMs` to override per-invocation, e.g. MCP uses 5 minutes)
 4. Return flow's response (status, body, headers) or 204 on timeout
 
 ## Request Conversion

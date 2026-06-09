@@ -1,8 +1,8 @@
 name: Continuous Delivery — Cloud
 
 on:
-  schedule:
-    - cron: '0 9 * * 0' # Sunday 9 AM UTC — promote release candidate to prod
+  # schedule:
+    # - cron: '0 9 * * 0' # Sunday 9 AM UTC — promote release candidate to prod
   workflow_call:
   workflow_dispatch:
     inputs:
@@ -47,13 +47,13 @@ jobs:
     outputs:
       image_tag: ${{ steps.set-tag.outputs.image_tag }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set image tag
         id: set-tag
         run: |
           RELEASE=$(node --print "require('./package.json').version")
           echo "image_tag=${RELEASE}.${{ github.sha }}.beta" >> $GITHUB_OUTPUT
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -133,7 +133,7 @@ jobs:
         run: |
           ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/worker.yml --skip-push; exit"'
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}

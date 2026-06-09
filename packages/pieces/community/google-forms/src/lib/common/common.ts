@@ -144,6 +144,7 @@ export const googleFormsCommon = {
               q: "mimeType='application/vnd.google-apps.form'",
               includeItemsFromAllDrives: include_team_drives ? 'true' : 'false',
               supportsAllDrives: 'true',
+              corpora: include_team_drives ? 'allDrives' : 'user',
             },
             authentication: {
               type: AuthenticationType.BEARER_TOKEN,

@@ -11,6 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 interface EditableStepNameProps {
   selectedBranchIndex: number | null;
@@ -25,6 +26,7 @@ interface EditableStepNameProps {
   tooltipTitle?: string;
   tooltipDescription?: string;
   pieceVersion?: string;
+  stepIndex?: number;
 }
 
 const EditableStepName: React.FC<EditableStepNameProps> = ({
@@ -40,17 +42,18 @@ const EditableStepName: React.FC<EditableStepNameProps> = ({
   tooltipTitle,
   tooltipDescription,
   pieceVersion,
+  stepIndex,
 }) => {
   const inBranchView = !isNil(selectedBranchIndex);
   const showActionTooltip =
     !inBranchView &&
     !isEditingStepOrBranchName &&
     (!!tooltipTitle || !!tooltipDescription || !!pieceVersion);
-  const handleStartEditing = useCallback(() => {
+  const handleStartEditing = () => {
     if (!readonly) {
       setIsEditingStepOrBranchName(true);
     }
-  }, [readonly, setIsEditingStepOrBranchName]);
+  };
 
   return (
     <>
@@ -90,7 +93,35 @@ const EditableStepName: React.FC<EditableStepNameProps> = ({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="truncate text-foreground">{displayName}</span>
+              <div
+                role={readonly ? undefined : 'button'}
+                tabIndex={readonly ? undefined : 0}
+                onClick={readonly ? undefined : handleStartEditing}
+                onKeyDown={
+                  readonly
+                    ? undefined
+                    : (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleStartEditing();
+                        }
+                      }
+                }
+                aria-label={readonly ? undefined : t('Edit Step Name')}
+                className={cn(
+                  'flex items-center gap-1.5 min-w-0',
+                  !readonly &&
+                    'cursor-text rounded-sm hover:text-foreground/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+                )}
+              >
+                <span className="truncate text-foreground">
+                  {typeof stepIndex === 'number' && `${stepIndex}. `}
+                  {displayName}
+                </span>
+                {!readonly && (
+                  <Pencil className="size-3.5 shrink-0 text-muted-foreground" />
+                )}
+              </div>
             </TooltipTrigger>
             {showActionTooltip && (
               <TooltipContent side="bottom" className="max-w-xs">
@@ -123,7 +154,7 @@ const EditableStepName: React.FC<EditableStepNameProps> = ({
           </Tooltip>
         </TooltipProvider>
       )}
-      {!isEditingStepOrBranchName && !readonly && (
+      {inBranchView && !isEditingStepOrBranchName && !readonly && (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -132,15 +163,13 @@ const EditableStepName: React.FC<EditableStepNameProps> = ({
                 size="icon"
                 className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
                 onClick={handleStartEditing}
-                aria-label={
-                  inBranchView ? t('Edit Branch Name') : t('Edit Step Name')
-                }
+                aria-label={t('Edit Branch Name')}
               >
                 <Pencil className="size-3.5" />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">
-              {inBranchView ? t('Edit Branch Name') : t('Edit Step Name')}
+              {t('Edit Branch Name')}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

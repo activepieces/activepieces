@@ -21,6 +21,8 @@ export const createTicketAction = createAction({
   name: 'create-ticket',
   displayName: 'Create Ticket',
   description: 'Create a new ticket in Zendesk.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new support ticket in Zendesk, requiring either a plain-text or HTML comment body as the opening message. Use to open a new case, log a customer request, or file an issue; the subject defaults to the first comment if omitted. Requester, assignee, collaborator, and follower are passed as emails (resolved to user IDs, creating a new requester user if no match) rather than IDs, and tags, priority, status, and custom fields can be set on creation. Not idempotent: each call creates a distinct ticket.', idempotent: false },
   props: {
     subject: Property.ShortText({
       displayName: 'Subject',

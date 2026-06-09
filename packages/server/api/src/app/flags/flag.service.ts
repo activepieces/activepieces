@@ -1,13 +1,14 @@
+import { apVersionUtil } from '@activepieces/server-utils'
 import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
-import { domainHelper } from '../ee/custom-domains/domain-helper'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
+import { domainHelper } from '../helper/domain-helper'
 import { system } from '../helper/system/system'
-import { AppSystemProp, apVersionUtil } from '../helper/system/system-props'
+import { AppSystemProp } from '../helper/system/system-props'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
 import { webhookSecretsUtils } from './webhook-secrets-util'
@@ -61,7 +62,7 @@ export const flagService = (log: FastifyBaseLogger) => ({
         const now = dayjs().toISOString()
         const created = now
         const updated = now
-        const currentVersion = await apVersionUtil.getCurrentRelease()
+        const currentVersion = apVersionUtil.getCurrentRelease()
         const latestVersion = await apVersionUtil.getLatestRelease()
         flags.push(
             {
@@ -163,7 +164,7 @@ export const flagService = (log: FastifyBaseLogger) => ({
             },
             {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
-                value: await federatedAuthnService(log).getThirdPartyRedirectUrl(undefined),
+                value: await federatedAuthnService(log).getThirdPartyRedirectUrl(),
                 created,
                 updated,
             },

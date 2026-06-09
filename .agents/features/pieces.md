@@ -14,7 +14,9 @@ The pieces feature manages the metadata catalog of automation integrations (call
 - `packages/server/api/src/app/pieces/tags/` — tag entity, tag service, tag-module for organizing pieces into groups
 - `packages/web/src/features/pieces/api/pieces-api.ts` — frontend HTTP client
 - `packages/web/src/features/pieces/hooks/pieces-hooks.ts` — React Query hooks for piece listing, piece model, piece options
+- `packages/web/src/features/pieces/hooks/use-piece-output-schema.ts` — reads `outputSchema` for a given step (PIECE action or trigger) off the cached piece model; shares the existing `['piece', name, version]` React Query cache so no extra network call is made
 - `packages/web/src/features/pieces/components/` — `PieceIcon`, `PieceIconList`, `PieceSelectorSearch`, `InstallPieceDialog`
+- `packages/pieces/framework/src/lib/output-schema.ts` — `OutputSchema` / `OutputSchemaField` / `FieldFormat` plain TypeScript types (embedded into the piece metadata via `z.custom`)
 
 ## Edition Availability
 All editions. Piece filtering by allowed/blocked list and EE-specific filtering are gated in `enterpriseFilteringUtils` but the base listing and installation is Community-level.
@@ -26,6 +28,7 @@ All editions. Piece filtering by allowed/blocked list and EE-specific filtering 
 - **pieceCache** — an in-memory map of piece metadata keyed by name+version+platformId, rebuilt from DB
 - **PieceCategory** — enum grouping pieces (AI, CORE, COMMUNICATION, etc.)
 - **SuggestionType** — AGENT or ACTION; changes ordering in piece selector
+- **OutputSchema** — optional, per-action / per-trigger structured description of how the step's output should be rendered. Shape: `{ fields: OutputSchemaField[] }`. Each `OutputSchemaField` carries `key`, optional `label` / `value` (path override) / `description`, an optional `format` (`email` / `url` / `date` / `datetime` / `number` / `boolean` / `image` / `html` / `currency` / `filesize` / `duration`), optional `currency` ISO code, optional `dynamicKey: true` for map-shaped values, and optional recursive `children` / `listItems` for nested objects and array-of-record shapes. Set by the piece author as the `outputSchema` of `createAction` / `createTrigger`. Consumed by the builder's `SmartOutputViewer` and the data selector — see [flows.md](./flows.md). Opt-in and non-breaking: pieces without an output schema render exactly as before.
 
 ## Entity
 
@@ -40,8 +43,8 @@ All editions. Piece filtering by allowed/blocked list and EE-specific filtering 
 | logoUrl | string | |
 | description | string (nullable) | |
 | platformId | string (nullable) | null = official; set = custom piece for that platform |
-| actions | json | map of action definitions |
-| triggers | json | map of trigger definitions |
+| actions | json | map of action definitions (each may include an optional `outputSchema` blob) |
+| triggers | json | map of trigger definitions (each may include an optional `outputSchema` blob) |
 | auth | json (nullable) | auth property definition |
 | pieceType | string | `OFFICIAL` or `CUSTOM` |
 | packageType | string | `REGISTRY` or `ARCHIVE` |

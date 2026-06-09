@@ -174,6 +174,9 @@ export const flowHooks = {
           );
         }
       },
+      onError: () => {
+        toast.error(t('Failed to export flows'));
+      },
     });
   },
 
@@ -251,17 +254,29 @@ export const flowHooks = {
       },
     });
   },
-  useGetFlow: (flowId: string) => {
+  useGetFlow: ({
+    flowId,
+    versionId,
+    enabled = true,
+  }: {
+    flowId: string;
+    versionId?: string;
+    enabled?: boolean;
+  }) => {
     return useQuery({
-      queryKey: flowHooks.createFlowQueryKeys(flowId),
+      queryKey: flowHooks.createFlowQueryKeys({ flowId, versionId }),
       queryFn: async () => {
         try {
-          return await flowsApi.get(flowId);
+          return await flowsApi.get(
+            flowId,
+            versionId ? { versionId } : undefined,
+          );
         } catch (err) {
           console.error(err);
           return null;
         }
       },
+      enabled: enabled && !!flowId,
       staleTime: 0,
     });
   },
@@ -414,6 +429,7 @@ export const flowHooks = {
         displayName: flow.version.displayName,
         trigger: updatedTrigger,
         schemaVersion: templateFlow.schemaVersion,
+        notes: templateFlow.notes,
       },
     });
   },
@@ -515,7 +531,13 @@ export const flowHooks = {
       onError,
     });
   },
-  createFlowQueryKeys: (flowId: string) => ['flow', flowId],
+  createFlowQueryKeys: ({
+    flowId,
+    versionId,
+  }: {
+    flowId: string;
+    versionId: string | undefined;
+  }) => ['flow', flowId, versionId],
 };
 
 type UseChangeFlowStatusParams = {
