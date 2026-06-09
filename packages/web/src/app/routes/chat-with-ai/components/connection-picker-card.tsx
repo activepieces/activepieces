@@ -159,8 +159,7 @@ export function ConnectionPickerCard({
   }>();
   const conversationId =
     routerConversationId ??
-    window.location.pathname.match(/\/chat\/(.+)/)?.[1] ??
-    undefined;
+    window.location.pathname.match(/\/chat\/([^/]+)/)?.[1];
   const pieceName = normalizePieceName(picker.piece);
   const shouldFetch =
     !picker.connections?.length && !!conversationId && isInteractive;
