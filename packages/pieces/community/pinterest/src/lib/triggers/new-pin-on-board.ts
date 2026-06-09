@@ -116,6 +116,10 @@ export const newPinOnBoard = createTrigger({
   name: 'newPinOnBoard',
   displayName: 'New Pin on Board',
   description: 'Fires when a new Pin is added to a specific board.',
+  aiMetadata: {
+    description:
+      'Fires when a new Pin is added to a specific board (selected by board_id), emitting the Pin record. Polls that board for Pins created since the last check, optionally filtered by creative type (regular, video, shopping, carousel, idea).',
+  },
   props: {
     board_id: boardIdDropdown,
     ad_account_id: adAccountIdDropdown,

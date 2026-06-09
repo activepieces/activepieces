@@ -28,6 +28,10 @@ export const gmailNewAttachmentTrigger = createTrigger({
   name: 'new_attachment',
   displayName: 'New Attachment',
   description: 'Triggers when an email with an attachment arrives.',
+  aiMetadata: {
+    description:
+      'Fires when a new email carrying one or more attachments arrives, optionally narrowed by sender, recipient, subject, label, category, or file extension. Each event represents a single attachment (a multi-attachment email emits one event per attachment) along with its source message.',
+  },
   props: {
     from: {
       ...GmailProps.from,

@@ -9,6 +9,8 @@ export const getRecordAction = createAction({
 	name: 'get_record',
 	displayName: 'Get Record',
 	description: 'Retrieve a single record by ID and return its normalized attribute values.',
+	audience: 'both',
+	aiMetadata: { description: 'Fetches one record by its exact ID within a given Attio object type and returns its normalized attribute values. Choose this when you already have the record ID and want its current data; use Find Record instead when you need to search by attributes. Read-only and idempotent.', idempotent: true },
 	auth: attioAuth,
 	props: {
 		objectTypeId: objectTypeIdDropdown({

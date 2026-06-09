@@ -468,6 +468,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/exvillager"><img src="https://avatars.githubusercontent.com/u/114051448?v=4?s=100" width="100px;" alt="Pradeep kumar"/><br /><sub><b>Pradeep kumar</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=exvillager" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://khizar.tech"><img src="https://avatars.githubusercontent.com/u/109973520?v=4?s=100" width="100px;" alt="khizar"/><br /><sub><b>khizar</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=Khizarshah01" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Dan425953"><img src="https://avatars.githubusercontent.com/u/168941179?v=4?s=100" width="100px;" alt="Dan425953"/><br /><sub><b>Dan425953</b></sub></a><br /><a href="#plugin-Dan425953" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://filetopdf.dev"><img src="https://avatars.githubusercontent.com/u/268257624?v=4?s=100" width="100px;" alt="FileToPDF.dev"/><br /><sub><b>FileToPDF.dev</b></sub></a><br /><a href="#plugin-FileToPDF" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>

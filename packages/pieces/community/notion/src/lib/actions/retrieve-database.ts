@@ -14,6 +14,12 @@ export const retrieveDatabase = createAction({
   displayName: 'Retrieve Database Structure',
   description:
     'Get detailed information about a Notion database including all its properties, field types, and configuration. Perfect for building dynamic forms, validation rules, or understanding database schemas.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves a Notion database schema: its properties, field types, and select/status/relation options. Use when an agent needs to discover what fields exist and their valid values before creating, updating, or filtering items in that database; requires the database_id. Idempotent read-only lookup.',
+    idempotent: true,
+  },
   props: {
     database_id: notionCommon.database_id,
   },

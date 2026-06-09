@@ -56,6 +56,10 @@ export const newCommentTrigger = createTrigger({
   displayName: 'New Comment or Work Note',
   description:
     'Triggers when a new comment or work note is added to a record in the selected table',
+  aiMetadata: {
+    description:
+      'Fires when a new journal entry is added to a record in the selected table. The Entry Type option scopes it to customer-visible comments only, internal work notes only, or both, and an optional record sys_id limits firing to a single record. Each item represents one newly added comment or work note.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     table: tableDropdown,

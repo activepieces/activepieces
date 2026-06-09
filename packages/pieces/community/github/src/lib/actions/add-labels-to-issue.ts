@@ -8,6 +8,12 @@ export const githubAddLabelsToIssueAction = createAction({
   name: 'add_labels_to_issue',
   displayName: 'Add Labels to Issue',
   description: 'Adds labels to an existing issue.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Adds one or more labels to an existing issue (by number) in a repository, leaving any labels already on the issue in place. Use to tag or categorize an issue. Idempotent in effect: re-adding a label the issue already has does not duplicate it.',
+    idempotent: true,
+  },
   props: {
     repository: githubCommon.repositoryDropdown,
     issue_number: githubCommon.issueDropdown(true),

@@ -19,6 +19,9 @@ export const newTicketInView = createTrigger({
   name: 'new_ticket_in_view',
   displayName: 'New ticket in view',
   description: 'Triggers when a new ticket is created in a view',
+  aiMetadata: {
+    description: 'Fires when a new ticket appears in a selected Zendesk view (polled on a schedule). Represents a ticket newly matching that view\'s criteria; the view to monitor is required.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     view_id: Property.Dropdown({

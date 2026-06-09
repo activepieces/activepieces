@@ -2212,6 +2212,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "FileToPDF",
+      "name": "FileToPDF.dev",
+      "avatar_url": "https://avatars.githubusercontent.com/u/268257624?v=4",
+      "profile": "https://filetopdf.dev",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
