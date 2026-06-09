@@ -1,0 +1,11 @@
+{
+  "Access Chess.com player data": "Accéder aux données du joueur Chess.com",
+  "Get Player Profile": "Obtenir le profil du joueur",
+  "Get Player Stats": "Obtenir les statistiques des joueurs",
+  "Get Daily Puzzle": "Obtenir le puzzle quotidien",
+  "Retrieve a Chess.com player's public profile by username (avatar, country, join date, followers).": "Récupérez le profil public d'un joueur Chess.com par nom d'utilisateur (avatar, pays, date d'adhésion, abonnés).",
+  "Retrieve a Chess.com player's ratings and W/D/L for rapid, blitz, bullet, and chess960.": "Récupérez les classements d'un joueur Chess.com et de W/D/L pour les cartes rapides, blitz, balles et échecs960.",
+  "Retrieve today's Chess.com daily puzzle.": "Récupérez le puzzle quotidien Chess.com d'aujourd'hui.",
+  "Username": "Nom d'utilisateur",
+  "The Chess.com username to look up.": "Le nom d'utilisateur de Chess.com pour chercher."
+}

@@ -22,6 +22,10 @@ export const stripeNewRefund = createTrigger({
   name: 'new_refund',
   displayName: 'New Refund',
   description: 'Fires when a charge is refunded (full or partial).',
+  aiMetadata: {
+    description:
+      'Fires when a refund is created in Stripe (the refund.created event), for a full or partial refund, emitting the refund record. Optional filters narrow firing to a specific charge ID or payment intent ID. Use to react to money returned to a customer, such as updating accounting or notifying them.',
+  },
   props: {
     charge: Property.ShortText({
       displayName: 'Charge ID',

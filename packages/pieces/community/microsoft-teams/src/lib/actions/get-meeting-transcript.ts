@@ -10,6 +10,11 @@ export const getMeetingTranscriptAction = createAction({
 	displayName: 'Get Meeting Transcript',
 	description:
 		'Retrieves transcripts for a Teams meeting. Provide a Transcript to fetch its text content; omit it to list all available transcripts.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Retrieves transcripts for a Microsoft Teams online meeting belonging to the authenticated user, resolved from a meeting identifier (join URL or ID). Operates in two modes: with a transcript ID it fetches that transcript\'s text content (VTT); without one it lists all available transcripts for the meeting. Idempotent read-only operation.',
+		idempotent: true,
+	},
 	props: {
 		meetingIdentifierType: microsoftTeamsCommon.meetingIdentifierType,
 		meetingIdentifierValue: microsoftTeamsCommon.meetingIdentifierValue,

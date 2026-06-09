@@ -13,6 +13,8 @@ export const findUserAction = createAction({
 	name: 'find-user',
 	displayName: 'Find User',
 	description: 'Looks up Confluence users by name, email, or keyword.',
+	audience: 'both',
+	aiMetadata: { description: 'Searches Confluence users by a keyword matched against full name and username (via CQL), returning matching user records plus a found flag and count. Use to resolve a person\'s name or email to a Confluence user/account ID. Read-only and idempotent.', idempotent: true },
 	props: {
 		keyword: Property.ShortText({
 			displayName: 'Keyword',

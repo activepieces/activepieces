@@ -18,6 +18,12 @@ export const createPin = createAction({
   name: 'createPin',
   displayName: 'Create Pin',
   description: 'Upload an image or video to create a new Pin on a board.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a Pin on a Pinterest board by uploading media from a hosted image/video URL (or base64 image). Use to publish visual content to a board the user owns. Requires a valid board_id and a media source; each call creates a new Pin, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     ad_account_id: adAccountIdDropdown,
     board_id: boardIdDropdown,

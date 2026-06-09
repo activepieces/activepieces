@@ -8,7 +8,7 @@ import { openaiAuth } from '../auth';
 import {
   calculateMessagesTokenSize,
   exceedsHistoryLimit,
-  notLLMs,
+  isLLM,
   reduceContextSize,
 } from '../common/common';
 import { z } from 'zod';
@@ -41,10 +41,7 @@ export const askOpenAI = createAction({
             apiKey: auth.secret_text,
           });
           const response = await openai.models.list();
-          // We need to get only LLM models
-          const models = response.data.filter(
-            (model) => !notLLMs.includes(model.id)
-          );
+          const models = response.data.filter((model) => isLLM(model.id));
           return {
             disabled: false,
             options: models.map((model) => {
@@ -118,7 +115,7 @@ export const askOpenAI = createAction({
   },
   async run({ auth, propsValue, store }) {
     await propsValidation.validateZod(propsValue, {
-      temperature: z.number().min(0).max(1).optional(),
+      temperature: z.number().min(0).max(2).optional(),
       memoryKey: z.string().max(128).optional(),
     });
     const openai = new OpenAI({

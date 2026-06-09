@@ -2,6 +2,7 @@ import {
     ActivepiecesError,
     AIProviderName,
     apId,
+    ChatConversationStatus,
     CreateChatConversationRequest,
     ErrorCode,
     LATEST_JOB_DATA_SCHEMA_VERSION,
@@ -20,6 +21,7 @@ import { securityAccess } from '../../core/security/authorization/fastify-securi
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-credits.service'
 import { chatApprovalGate } from './chat-approval-gate'
+import { chatHelpers } from './chat-helpers'
 import { chatService } from './chat-service'
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
@@ -116,8 +118,42 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         await chatApprovalGate.resolveGate({
             gateId: request.params.gateId,
             approved: request.body.approved,
+            payload: request.body.payload,
         })
         return reply.status(StatusCodes.OK).send({ success: true })
+    })
+
+    app.post('/conversations/:id/cancel', CancelConversationRoute, async (request, reply) => {
+        const conversationId = request.params.id
+        const platformId = request.principal.platform.id
+        const userId = request.principal.id
+        await chatService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
+        await chatApprovalGate.requestCancel({ conversationId })
+        await chatHelpers.conversationRepo().update(conversationId, {
+            status: ChatConversationStatus.IDLE,
+        })
+        return reply.status(StatusCodes.OK).send({ success: true })
+    })
+
+    app.get('/conversations/:id/pending-gate', GetPendingGateRoute, async (request, reply) => {
+        const conversationId = request.params.id
+        const platformId = request.principal.platform.id
+        const userId = request.principal.id
+        await chatService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
+        const gate = await chatApprovalGate.getPendingGate({ conversationId })
+        return reply.status(StatusCodes.OK).send(gate)
+    })
+
+    app.get('/conversations/:id/connections', GetPickerConnectionsRoute, async (request, reply) => {
+        const conversationId = request.params.id
+        const platformId = request.principal.platform.id
+        const userId = request.principal.id
+        await chatService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
+        const connections = await chatApprovalGate.getAvailableConnections({
+            conversationId,
+            pieceName: request.query.pieceName,
+        })
+        return reply.status(StatusCodes.OK).send(connections)
     })
 
 }
@@ -231,7 +267,41 @@ const ToolApprovalRoute = {
         tags: ['chat'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: z.object({ gateId: z.string() }),
-        body: z.object({ approved: z.boolean() }),
+        body: z.object({ approved: z.boolean(), payload: z.record(z.string(), z.unknown()).optional() }),
+    },
+}
+
+const GetPendingGateRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: CONVERSATION_PARAMS,
+    },
+}
+
+const GetPickerConnectionsRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: CONVERSATION_PARAMS,
+        querystring: z.object({ pieceName: z.string() }),
+    },
+}
+
+const CancelConversationRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: CONVERSATION_PARAMS,
     },
 }
 

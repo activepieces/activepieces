@@ -11,6 +11,10 @@ export const gmailNewLabelTrigger = createTrigger({
   name: 'new_label',
   displayName: 'New Label',
   description: 'Triggers when a new label is created.',
+  aiMetadata: {
+    description:
+      'Fires when a new label is created in the connected Gmail account. Each event represents one newly added label not seen on a prior poll.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.POLLING,

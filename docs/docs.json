@@ -53,6 +53,8 @@
                   "pages": [
                      "flows/building-flows",
                      "flows/passing-data",
+                     "flows/using-formulas",
+                     "flows/formula-reference",
                      "flows/publishing-flows",
                      "flows/debugging-runs",
                      "flows/versioning",
@@ -90,7 +92,8 @@
                      "icon": "users",
                      "pages": [
                         "admin-guide/guides/scim/overview",
-                        "admin-guide/guides/scim/providers/okta"
+                        "admin-guide/guides/scim/providers/okta",
+                        "admin-guide/guides/scim/providers/microsoft-entra-id"
                      ]
                   },
                     "admin-guide/guides/manage-oauth2",

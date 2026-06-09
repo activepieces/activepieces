@@ -2,14 +2,16 @@ import {
   AppConnectionStatus,
   AppConnectionWithoutSensitiveData,
 } from '@activepieces/shared';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Check, Plus, RefreshCw } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useParams } from 'react-router-dom';
 
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
 import { Button } from '@/components/ui/button';
+import { chatApi } from '@/features/chat/lib/chat-api';
 import { appConnectionsApi } from '@/features/connections/api/app-connections';
 import { piecesHooks } from '@/features/pieces';
 import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
@@ -36,7 +38,7 @@ function SelectedState({
   displayName,
 }: {
   pieceName: string;
-  connection: ConnectionPickerData['connections'][number];
+  connection: NonNullable<ConnectionPickerData['connections']>[number];
   displayName: string;
 }) {
   return (
@@ -91,7 +93,10 @@ function useLiveConnections({
   >({});
 
   const projectIdsKey = useMemo(
-    () => [...new Set(connections.map((c) => c.projectId))].sort().join(','),
+    () =>
+      [...new Set((connections ?? []).map((c) => c.projectId))]
+        .sort()
+        .join(','),
     [connections],
   );
 
@@ -143,19 +148,41 @@ function useLiveConnections({
 
 export function ConnectionPickerCard({
   picker,
-  onSelect,
+  onResolve,
   isInteractive = true,
   selectedProjectId,
+  selectedConnectionLabel,
 }: ConnectionPickerCardProps) {
   const queryClient = useQueryClient();
+  const { conversationId } = useParams<{ conversationId: string }>();
   const pieceName = normalizePieceName(picker.piece);
+  const shouldFetch =
+    !picker.connections?.length && !!conversationId && isInteractive;
+  const { data: fetchedConnections, isLoading: isFetchingConnections } =
+    useQuery({
+      queryKey: ['chat-picker-connections', conversationId, pieceName],
+      queryFn: async () => {
+        const conns = await chatApi.getPickerConnections({
+          conversationId: conversationId!,
+          pieceName,
+        });
+        return conns.map((c) => ({
+          ...c,
+          status: c.status as AppConnectionStatus,
+        }));
+      },
+      enabled: shouldFetch,
+    });
+
+  const resolvedConnections = picker.connections ?? fetchedConnections ?? [];
   const filteredPicker = useMemo(() => {
-    if (!selectedProjectId) return picker;
-    const filtered = picker.connections.filter(
+    if (!selectedProjectId)
+      return { ...picker, connections: resolvedConnections };
+    const filtered = resolvedConnections.filter(
       (c) => c.projectId === selectedProjectId,
     );
     return { ...picker, connections: filtered };
-  }, [picker, selectedProjectId]);
+  }, [picker, resolvedConnections, selectedProjectId]);
   const { pieceModel, isLoading: isPieceLoading } = piecesHooks.usePiece({
     name: pieceName,
   });
@@ -163,7 +190,7 @@ export function ConnectionPickerCard({
   const [reconnectConnection, setReconnectConnection] =
     useState<AppConnectionWithoutSensitiveData | null>(null);
   const [selectedConnection, setSelectedConnection] = useState<
-    ConnectionPickerData['connections'][number] | null
+    NonNullable<ConnectionPickerData['connections']>[number] | null
   >(null);
 
   const {
@@ -198,38 +225,24 @@ export function ConnectionPickerCard({
     );
   }
 
+  if (shouldFetch && isFetchingConnections) {
+    return null;
+  }
+
   if (!isInteractive) {
+    const historyLabel = selectedConnectionLabel ?? filteredPicker.displayName;
     return (
-      <motion.div
-        className="rounded-xl border bg-background overflow-hidden my-2"
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.2 }}
-      >
-        <div className="p-4 flex items-center gap-3">
-          <div className="relative">
-            <PieceIconWithPieceName
-              pieceName={pieceName}
-              size="sm"
-              border={false}
-              showTooltip={false}
-            />
-            <div className="absolute -bottom-0.5 -right-0.5 bg-green-500 rounded-full p-0.5">
-              <Check className="h-2 w-2 text-white" />
-            </div>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-semibold">
-              {t('Which {name} account should I use?', {
-                name: filteredPicker.displayName,
-              })}
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {t('Connected')}
-            </div>
-          </div>
-        </div>
-      </motion.div>
+      <SelectedState
+        pieceName={pieceName}
+        connection={{
+          label: historyLabel,
+          project: '',
+          externalId: '',
+          projectId: '',
+          status: AppConnectionStatus.ACTIVE,
+        }}
+        displayName={filteredPicker.displayName}
+      />
     );
   }
 
@@ -286,9 +299,11 @@ export function ConnectionPickerCard({
                     className="shrink-0"
                     onClick={() => {
                       setSelectedConnection(conn);
-                      onSelect(
-                        `Use "${conn.label}" from ${conn.project} (${conn.externalId}).`,
-                      );
+                      onResolve({
+                        connectionExternalId: conn.externalId,
+                        projectId: conn.projectId,
+                        label: conn.label,
+                      });
                     }}
                   >
                     {t('Use')}
@@ -355,14 +370,20 @@ export function ConnectionPickerCard({
               void queryClient.invalidateQueries({
                 queryKey: ['app-connections'],
               });
+              const resolvedProjectId =
+                selectedProjectId ?? authenticationSession.getProjectId() ?? '';
               setSelectedConnection({
                 label: createdConnection.displayName,
                 project: '',
                 externalId: createdConnection.externalId,
-                projectId: '',
+                projectId: resolvedProjectId,
                 status: AppConnectionStatus.ACTIVE,
               });
-              onSelect(`Connected ${createdConnection.displayName}`);
+              onResolve({
+                connectionExternalId: createdConnection.externalId,
+                projectId: resolvedProjectId,
+                label: createdConnection.displayName,
+              });
             }
           }}
           reconnectConnection={reconnectConnection}
@@ -375,7 +396,8 @@ export function ConnectionPickerCard({
 
 type ConnectionPickerCardProps = {
   picker: ConnectionPickerData;
-  onSelect: (text: string) => void;
+  onResolve: (payload: Record<string, unknown>) => void;
   isInteractive?: boolean;
   selectedProjectId?: string | null;
+  selectedConnectionLabel?: string;
 };

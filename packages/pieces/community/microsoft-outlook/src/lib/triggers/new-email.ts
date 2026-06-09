@@ -92,6 +92,9 @@ export const newEmailTrigger = createTrigger({
 	name: 'newEmail',
 	displayName: 'New Email',
 	description: 'Triggers when a new email is received in the inbox.',
+	aiMetadata: {
+		description: 'Fires when a new message arrives in the mailbox Inbox, optionally narrowed to a specific sender and/or recipient address. Each fire represents one newly received email.',
+	},
 	props: {
 		sender: Property.ShortText({
 			displayName: 'From (Sender Email)',

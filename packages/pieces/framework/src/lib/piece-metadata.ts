@@ -5,6 +5,7 @@ import { PieceAuthProperty } from "./property/authentication";
 import { z } from "zod";
 import { LocalesEnum, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from "@activepieces/shared";
 import { ContextVersion } from "./context/versioning";
+import type { OutputSchema } from "./output-schema";
 
 const I18nForPiece = z.record(z.string(), z.record(z.string(), z.string())).optional();
 export type I18nForPiece = Partial<Record<LocalesEnum, Record<string, string>>> | undefined
@@ -45,31 +46,43 @@ export type PieceBase = {
 }
 
 
+export const Audience = z.enum(['human', 'ai', 'both'])
+export type Audience = z.infer<typeof Audience>
+
+export const AiMetadata = z.object({
+  description: z.string().optional(),
+  idempotent: z.boolean().optional(),
+})
+export type AiMetadata = z.infer<typeof AiMetadata>
+
 export const ActionBase = z.object({
   name: z.string(),
   displayName: z.string(),
   description: z.string(),
-  llmDescription: z.string().optional(),
   props: PiecePropertyMap,
   requireAuth: z.boolean(),
   errorHandlingOptions: ErrorHandlingOptionsParam.optional(),
+  outputSchema: z.custom<OutputSchema>().optional(),
+  audience: Audience.optional(),
+  aiMetadata: AiMetadata.optional(),
 })
 
 export type ActionBase = {
   name: string,
   displayName: string,
   description: string,
-  llmDescription?: string,
   props: PiecePropertyMap,
   requireAuth: boolean;
   errorHandlingOptions?: ErrorHandlingOptionsParam;
+  outputSchema?: OutputSchema;
+  audience?: Audience;
+  aiMetadata?: AiMetadata;
 }
 
 export const TriggerBase = z.object({
   name: z.string(),
   displayName: z.string(),
   description: z.string(),
-  llmDescription: z.string().optional(),
   props: PiecePropertyMap,
   errorHandlingOptions: ErrorHandlingOptionsParam.optional(),
   type: z.nativeEnum(TriggerStrategy),
@@ -77,8 +90,10 @@ export const TriggerBase = z.object({
   handshakeConfiguration: z.custom<WebhookHandshakeConfiguration>().optional(),
   renewConfiguration: WebhookRenewConfiguration.optional(),
   testStrategy: z.nativeEnum(TriggerTestStrategy),
+  outputSchema: z.custom<OutputSchema>().optional(),
+  aiMetadata: AiMetadata.optional(),
 })
-export type TriggerBase = ActionBase & {
+export type TriggerBase = Omit<ActionBase, 'audience'> & {
   type: TriggerStrategy;
   sampleData: unknown,
   handshakeConfiguration?: WebhookHandshakeConfiguration;

@@ -44,7 +44,6 @@ export function useAutomationsData(
   const [folderVisibleCounts, setFolderVisibleCounts] = useState<
     Map<string, number>
   >(new Map());
-  const [loadingFolders, setLoadingFolders] = useState<Set<string>>(new Set());
 
   const foldersQuery = useQuery({
     queryKey: ['folders', projectId],
@@ -56,65 +55,40 @@ export function useAutomationsData(
 
   const folderIds = foldersQuery.data?.map((f) => f.id).join(',') ?? '';
 
-  const folderCountsQuery = useQuery<Map<string, number>>({
-    queryKey: ['folder-counts', projectId, folderIds, hideTables],
-    queryFn: async () => {
-      const folders = foldersQuery.data!;
-      const [folderFlowCounts, folderTableCounts] = await Promise.all([
-        Promise.all(
-          folders.map(({ id }) => flowsApi.count({ projectId, folderId: id })),
-        ),
+  const folderCounts = useMemo(() => {
+    const folders = foldersQuery.data ?? [];
+    return new Map(
+      folders.map((folder) => [
+        folder.id,
         hideTables
-          ? Promise.resolve(folders.map(() => 0))
-          : Promise.all(
-              folders.map(({ id }) =>
-                tablesApi.count({ projectId, folderId: id }),
-              ),
-            ),
-      ]);
-      const folderTotalCounts = folderFlowCounts.map(
-        (count, index) => count + folderTableCounts[index],
-      );
-      return new Map(
-        folderTotalCounts.map((count, index) => [folders[index].id, count]),
-      );
-    },
-    enabled: !!foldersQuery.data && foldersQuery.data.length > 0,
-    staleTime: STALE_TIME,
-    refetchOnMount: 'always',
-  });
+          ? folder.numberOfFlows
+          : folder.numberOfFlows + folder.numberOfTables,
+      ]),
+    );
+  }, [foldersQuery.data, hideTables]);
 
   const folderContentsQuery = useQuery<FolderContentsMap>({
     queryKey: ['all-folder-contents', projectId, folderIds, hideTables],
     queryFn: async () => {
       const folders = foldersQuery.data!;
-      const [folderFlowPages, folderTablePages] = await Promise.all([
-        Promise.all(
-          folders.map(({ id }) =>
-            flowsApi.list({
+      const allFolderIds = folders.map((f) => f.id);
+      const [flowsPage, tablesPage] = await Promise.all([
+        flowsApi.list({
+          projectId,
+          folderIds: allFolderIds,
+          limit: FOLDER_CONTENTS_LIMIT,
+          cursor: undefined,
+        }),
+        hideTables
+          ? Promise.resolve(emptyTablePage())
+          : tablesApi.list({
               projectId,
-              folderId: id,
-              limit: FOLDER_PAGE_SIZE,
+              folderIds: allFolderIds,
+              limit: FOLDER_CONTENTS_LIMIT,
               cursor: undefined,
             }),
-          ),
-        ),
-        hideTables
-          ? Promise.resolve<SeekPage<Table>[]>(
-              folders.map(() => emptyTablePage()),
-            )
-          : Promise.all(
-              folders.map(({ id }) =>
-                tablesApi.list({
-                  projectId,
-                  folderId: id,
-                  limit: FOLDER_PAGE_SIZE,
-                  cursor: undefined,
-                }),
-              ),
-            ),
       ]);
-      return buildFolderContentsMap(folders, folderFlowPages, folderTablePages);
+      return buildFolderContentsMap(folders, flowsPage.data, tablesPage.data);
     },
     enabled: !!foldersQuery.data && foldersQuery.data.length > 0,
     staleTime: STALE_TIME,
@@ -179,92 +153,14 @@ export function useAutomationsData(
     });
   }, []);
 
-  const loadMoreInFolder = useCallback(
-    async (folderId: string) => {
-      const contents = folderContentsQuery.data?.get(folderId);
-
-      if (!contents) {
-        setFolderVisibleCounts((prev) => {
-          const next = new Map(prev);
-          const current = next.get(folderId) ?? FOLDER_PAGE_SIZE;
-          next.set(folderId, current + FOLDER_PAGE_SIZE);
-          return next;
-        });
-        return;
-      }
-
-      const hasMoreFlows = !!contents.flowsNextCursor;
-      const hasMoreTables = !hideTables && !!contents.tablesNextCursor;
-      if (!hasMoreFlows && !hasMoreTables) {
-        setFolderVisibleCounts((prev) => {
-          const next = new Map(prev);
-          const current = next.get(folderId) ?? FOLDER_PAGE_SIZE;
-          next.set(folderId, current + FOLDER_PAGE_SIZE);
-          return next;
-        });
-        return;
-      }
-
-      setLoadingFolders((prev) => new Set(prev).add(folderId));
-
-      const [newFlows, newTables] = await Promise.all([
-        hasMoreFlows
-          ? flowsApi.list({
-              projectId,
-              folderId,
-              limit: FOLDER_PAGE_SIZE,
-              cursor: contents.flowsNextCursor!,
-            })
-          : Promise.resolve({
-              data: [],
-              next: null,
-              previous: null,
-            } as SeekPage<PopulatedFlow>),
-        hasMoreTables
-          ? tablesApi.list({
-              projectId,
-              folderId,
-              limit: FOLDER_PAGE_SIZE,
-              cursor: contents.tablesNextCursor!,
-            })
-          : Promise.resolve({
-              data: [],
-              next: null,
-              previous: null,
-            } as SeekPage<Table>),
-      ]);
-
-      queryClient.setQueryData<FolderContentsMap>(
-        ['all-folder-contents', projectId, folderIds, hideTables],
-        (old) => {
-          if (!old) return old;
-          const next = new Map(old);
-          const existing = next.get(folderId)!;
-          next.set(folderId, {
-            flows: [...existing.flows, ...newFlows.data],
-            tables: [...existing.tables, ...newTables.data],
-            flowsNextCursor: newFlows.next,
-            tablesNextCursor: newTables.next,
-          });
-          return next;
-        },
-      );
-
-      setFolderVisibleCounts((prev) => {
-        const next = new Map(prev);
-        const current = next.get(folderId) ?? FOLDER_PAGE_SIZE;
-        next.set(folderId, current + FOLDER_PAGE_SIZE);
-        return next;
-      });
-
-      setLoadingFolders((prev) => {
-        const next = new Set(prev);
-        next.delete(folderId);
-        return next;
-      });
-    },
-    [folderContentsQuery.data, projectId, folderIds, queryClient, hideTables],
-  );
+  const loadMoreInFolder = useCallback((folderId: string) => {
+    setFolderVisibleCounts((prev) => {
+      const next = new Map(prev);
+      const current = next.get(folderId) ?? FOLDER_PAGE_SIZE;
+      next.set(folderId, current + FOLDER_PAGE_SIZE);
+      return next;
+    });
+  }, []);
 
   const nextRootPage = useCallback(() => {
     setRootPage((prev) => prev + 1);
@@ -289,7 +185,6 @@ export function useAutomationsData(
     let rootFlows = rootFlowsQuery.data?.data ?? [];
     let rootTables = rootTablesQuery.data?.data ?? [];
     const folderContents = folderContentsQuery.data ?? new Map();
-    const folderCounts = folderCountsQuery.data ?? new Map();
 
     const hasFolderFilter = filters.folderFilter.length > 0;
 
@@ -344,7 +239,7 @@ export function useAutomationsData(
     rootFlowsQuery.data,
     rootTablesQuery.data,
     folderContentsQuery.data,
-    folderCountsQuery.data,
+    folderCounts,
     folderVisibleCounts,
     rootPage,
     pageSize,
@@ -378,7 +273,6 @@ export function useAutomationsData(
     queryClient.invalidateQueries({ queryKey: ['root-flows'] });
     queryClient.invalidateQueries({ queryKey: ['root-tables'] });
     queryClient.invalidateQueries({ queryKey: ['all-folder-contents'] });
-    queryClient.invalidateQueries({ queryKey: ['folder-counts'] });
   }, [queryClient]);
 
   const invalidateRoot = useCallback(() => {
@@ -390,7 +284,6 @@ export function useAutomationsData(
     (_folderId: string) => {
       queryClient.invalidateQueries({ queryKey: ['all-folder-contents'] });
       queryClient.invalidateQueries({ queryKey: ['folders'] });
-      queryClient.invalidateQueries({ queryKey: ['folder-counts'] });
     },
     [queryClient],
   );
@@ -403,7 +296,6 @@ export function useAutomationsData(
     isLoading,
     isFiltered,
     expandedFolders: effectiveExpandedFolders,
-    loadingFolders,
     toggleFolder,
     loadMoreInFolder,
     rootPage,
@@ -423,20 +315,23 @@ type FolderContentsMap = Map<string, FolderContent>;
 
 function buildFolderContentsMap(
   folders: FolderDto[],
-  flowPages: SeekPage<PopulatedFlow>[],
-  tablePages: SeekPage<Table>[],
+  flows: PopulatedFlow[],
+  tables: Table[],
 ): FolderContentsMap {
-  return new Map(
-    folders.map((folder, i) => [
-      folder.id,
-      {
-        flows: flowPages[i].data,
-        tables: tablePages[i].data,
-        flowsNextCursor: flowPages[i].next,
-        tablesNextCursor: tablePages[i].next,
-      },
-    ]),
+  const map: FolderContentsMap = new Map(
+    folders.map((folder) => [folder.id, { flows: [], tables: [] }]),
   );
+  flows.forEach((flow) => {
+    if (flow.folderId) {
+      map.get(flow.folderId)?.flows.push(flow);
+    }
+  });
+  tables.forEach((table) => {
+    if (table.folderId) {
+      map.get(table.folderId)?.tables.push(table);
+    }
+  });
+  return map;
 }
 
 function emptyTablePage(): SeekPage<Table> {
@@ -444,3 +339,4 @@ function emptyTablePage(): SeekPage<Table> {
 }
 
 const STALE_TIME = 30_000;
+const FOLDER_CONTENTS_LIMIT = 1500;

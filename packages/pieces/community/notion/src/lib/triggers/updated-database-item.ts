@@ -19,6 +19,10 @@ export const updatedDatabaseItem = createTrigger({
   name: 'updated_database_item',
   displayName: 'Updated Database Item',
   description: 'Triggers when an item is updated in a database.',
+  aiMetadata: {
+    description:
+      'Fires when an existing item in the selected Notion database is edited (any property change), emitting the updated page. Use to react to record changes such as status or field updates in a specific database.',
+  },
   props: {
     database_id: notionCommon.database_id,
   },

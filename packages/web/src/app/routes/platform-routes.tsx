@@ -341,7 +341,7 @@ export const platformRoutes = [
     path: '/platform/infrastructure/health',
     element: (
       <PlatformLayout>
-        <PageTitle title="System Health">
+        <PageTitle title="Health">
           <SuspenseWrapper>
             <SettingsHealthPage />
           </SuspenseWrapper>

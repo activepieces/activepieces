@@ -174,6 +174,9 @@ export const flowHooks = {
           );
         }
       },
+      onError: () => {
+        toast.error(t('Failed to export flows'));
+      },
     });
   },
 

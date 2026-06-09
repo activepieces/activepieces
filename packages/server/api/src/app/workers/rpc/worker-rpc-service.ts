@@ -1,13 +1,20 @@
+import { apVersionUtil } from '@activepieces/server-utils'
 import {
+    ApEdition,
     ExecutionType,
+    ExecutioOutputFile,
+    FileCompression,
     FileType,
     FlowOperationType,
     FlowStatus,
     isFlowRunStateTerminal,
     isNil,
+    logSerializer,
     PiecePackage,
+    RunInternalError,
     StreamStepProgress,
     truncateFailedStepMessage,
+    tryCatch,
     WebsocketClientEvent,
     WorkerToApiContract,
 } from '@activepieces/shared'
@@ -15,6 +22,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { distributedStore } from '../../database/redis-connections'
 import { chatRpcHandlers } from '../../ee/chat/chat-rpc-handlers'
+import { fileCompressor } from '../../file/file-compressor'
 import { fileService } from '../../file/file.service'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
@@ -22,6 +30,7 @@ import { runsMetadataQueue } from '../../flows/flow-run/flow-runs-queue'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { pubsub } from '../../helper/pubsub'
+import { system } from '../../helper/system/system'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
@@ -40,6 +49,12 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
         async poll(input) {
             log.info({ workerId: input.workerId, workerGroupId }, '[workerRpc#poll] Poll request received')
             await machineService(log).onConnection(input, workerGroupId)
+            const workerVersion = input.workerProps.version
+            const appVersion = apVersionUtil.getCurrentRelease()
+            if (workerVersion !== appVersion) {
+                log.warn({ workerId: input.workerId, workerVersion, appVersion }, '[workerRpc#poll] Withholding job — worker version does not match app; worker will idle until upgraded')
+                return null
+            }
             const pollQueueName = getPollQueueName(workerGroupId)
             const job = await jobBroker(log).poll(pollQueueName)
             if (job) {
@@ -61,6 +76,15 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
         },
 
         async uploadRunLog(input) {
+            const internalErrorEnabled = system.getEdition() !== ApEdition.CLOUD
+            if (internalErrorEnabled && !isNil(input.internalError) && !isNil(input.logsFileId)) {
+                await persistInternalErrorToLogs({
+                    log,
+                    projectId: input.projectId,
+                    logsFileId: input.logsFileId,
+                    internalError: input.internalError,
+                })
+            }
             const logData: RunsMetadataUpsertData = {
                 id: input.runId,
                 projectId: input.projectId,
@@ -80,7 +104,7 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
                 const isTerminalStatus = isFlowRunStateTerminal({
                     status: input.status,
                     ignoreInternalError: false,
-                })   
+                })
                 if (!isTerminalStatus) {
                     websocketService.to(input.projectId).emit(WebsocketClientEvent.TEST_STEP_PROGRESS, stepData)
                 }
@@ -179,14 +203,6 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
             await jobBroker(log).extendLock(input)
         },
 
-        async getPayloadFile(input) {
-            const { data } = await fileService(log).getDataOrThrow({
-                fileId: input.fileId,
-                projectId: input.projectId,
-            })
-            return data
-        },
-
         async getPieceArchive(input) {
             const { data } = await fileService(log).getDataOrThrow({
                 fileId: input.archiveId,
@@ -261,3 +277,42 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
     }
 }
 
+async function persistInternalErrorToLogs({ log, projectId, logsFileId, internalError }: PersistInternalErrorParams): Promise<void> {
+    const { error } = await tryCatch(async () => {
+        const existing = await fileService(log).getDataOrUndefined({
+            projectId,
+            fileId: logsFileId,
+            type: FileType.FLOW_RUN_LOG,
+        })
+        const outputFile: ExecutioOutputFile = !isNil(existing)
+            ? JSON.parse(existing.data.toString('utf-8'))
+            : { executionState: { steps: {}, tags: [] } }
+
+        const data = await fileCompressor.compress({
+            data: await logSerializer.serialize({ ...outputFile, internalError }),
+            compression: FileCompression.ZSTD,
+        })
+
+        const platformId = await projectService(log).getPlatformId(projectId)
+        await fileService(log).save({
+            fileId: logsFileId,
+            projectId,
+            platformId,
+            type: FileType.FLOW_RUN_LOG,
+            data,
+            size: data.length,
+            compression: FileCompression.ZSTD,
+        })
+    })
+
+    if (error) {
+        log.error({ error, logsFileId, projectId }, '[workerRpc#uploadRunLog] Failed to persist internal error to logs file')
+    }
+}
+
+type PersistInternalErrorParams = {
+    log: FastifyBaseLogger
+    projectId: string
+    logsFileId: string
+    internalError: RunInternalError
+}

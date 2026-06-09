@@ -1,15 +1,30 @@
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { applyFunctionToValues, isNil, isString } from '@activepieces/shared'
+import { applyFunctionToValues, extractMustacheTokens, FormulaEvaluationError, formulaEvaluator, isNil, isString } from '@activepieces/shared'
+
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createConnectionResolver } from '../piece-context/connection-resolver'
 import { createVariableResolver } from '../piece-context/variable-resolver'
 import { utils } from '../utils'
 
-const VARIABLE_PATTERN = /\{\{(.*?)\}\}/g
 const CONNECTIONS = 'connections'
 const VARIABLES = 'variables'
 const FLATTEN_NESTED_KEYS_PATTERN = /\{\{\s*flattenNestedKeys(.*?)\}\}/g
+async function replaceTokensAsync(
+    str: string,
+    replacer: (token: string, inner: string) => Promise<string>,
+): Promise<string> {
+    const tokens = extractMustacheTokens(str)
+    let result = ''
+    let lastIndex = 0
+    for (const { token, inner, index } of tokens) {
+        result += str.slice(lastIndex, index)
+        result += await replacer(token, inner)
+        lastIndex = index + token.length
+    }
+    result += str.slice(lastIndex)
+    return result
+}
 
 
 export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVersion, stepNames }: PropsResolverParams) => {
@@ -100,8 +115,18 @@ function extractReferencedStepNames(input: unknown, stepNames: string[]): Set<st
  */
 async function resolveInputAsync(params: ResolveInputInternalParams): Promise<unknown> {
     const { input, currentState, engineToken, projectId, apiUrl, censoredInput } = params
-    const tokensThatNeedResolving = input.match(VARIABLE_PATTERN)
-    const inputContainsOnlyOneTokenToResolve = tokensThatNeedResolving !== null && tokensThatNeedResolving.length === 1 && tokensThatNeedResolving[0] === input
+
+    if (formulaEvaluator.containsWrapper(input)) {
+        const formulaOptions = { engineToken, projectId, apiUrl, currentState, censoredInput, contextVersion: params.contextVersion }
+        const { expression: preResolvedExpr, vars: preResolvedVars } = await preResolveFormulaVars({ expression: input, resolveOptions: formulaOptions })
+        const { result, error } = formulaEvaluator.evaluate({ expression: preResolvedExpr, sampleData: preResolvedVars })
+        if (error) {
+            throw new FormulaEvaluationError({ expression: input, message: error })
+        }
+        return result ?? ''
+    }
+
+    const tokensThatNeedResolving = extractMustacheTokens(input)
     const resolveOptions = {
         engineToken,
         projectId,
@@ -109,10 +134,12 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
         currentState,
         censoredInput,
     }
+    const inputContainsOnlyOneTokenToResolve =
+        tokensThatNeedResolving.length === 1 &&
+        tokensThatNeedResolving[0].token === input
 
     if (inputContainsOnlyOneTokenToResolve) {
-        const trimmedInput = input.trim()
-        const variableName = trimmedInput.substring(2, trimmedInput.length - 2)
+        const variableName = tokensThatNeedResolving[0].inner.trim()
         return resolveSingleToken({
             ...resolveOptions,
             variableName,
@@ -120,14 +147,14 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
         })
     }
     const inputIncludesFlattenNestedKeysTokens = input.match(FLATTEN_NESTED_KEYS_PATTERN)
-    if (!isNil(inputIncludesFlattenNestedKeysTokens) && !isNil(tokensThatNeedResolving)) {
-        return mergeFlattenedKeysArraysIntoOneArray(input, tokensThatNeedResolving, resolveOptions, params.contextVersion)
+    if (!isNil(inputIncludesFlattenNestedKeysTokens) && tokensThatNeedResolving.length > 0) {
+        return mergeFlattenedKeysArraysIntoOneArray(input, tokensThatNeedResolving.map(t => t.token), resolveOptions, params.contextVersion)
     }
 
-    return stringReplaceAsync(input, VARIABLE_PATTERN, async (_fullMatch, variableName) => {
+    return replaceTokensAsync(input, async (_fullMatch, variableName) => {
         const result = await resolveSingleToken({
             ...resolveOptions,
-            variableName,
+            variableName: variableName.trim(),
             contextVersion: params.contextVersion,
         })
         return isString(result) ? result : JSON.stringify(result)
@@ -255,6 +282,37 @@ function flattenNestedKeys(data: unknown, pathToMatch: string[]): unknown[] {
     return []
 }
 
+type PreResolveOptions = Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput' | 'contextVersion'>
+
+async function preResolveFormulaVars({ expression, resolveOptions }: {
+    expression: string
+    resolveOptions: PreResolveOptions
+}): Promise<{ expression: string, vars: Record<string, unknown> }> {
+    // Single-pass regex substitution with dedup: identical tokens map to the
+    // same key and resolve once. The previous split/join loop created one key
+    // per occurrence then replaced ALL occurrences with the first key,
+    // leaving later keys orphaned in `vars`.
+    const variableNameToKey = new Map<string, string>()
+    const rewritten = expression.replace(/\{\{([^}]+)\}\}/g, (_, raw: string) => {
+        const variableName = raw.trim()
+        let key = variableNameToKey.get(variableName)
+        if (key === undefined) {
+            key = `__ap_pv${variableNameToKey.size}__`
+            variableNameToKey.set(variableName, key)
+        }
+        return `{{${key}}}`
+    })
+
+    const vars: Record<string, unknown> = {}
+    await Promise.all(
+        Array.from(variableNameToKey.entries()).map(async ([variableName, key]) => {
+            vars[key] = await resolveSingleToken({ variableName, ...resolveOptions })
+        }),
+    )
+
+    return { expression: rewritten, vars }
+}
+
 type ResolveSingleTokenParams = {
     variableName: string
     currentState: Record<string, unknown>
@@ -285,24 +343,6 @@ type ResolveResult<T = unknown> = {
     censoredInput: unknown
 }
 
-async function stringReplaceAsync(str: string, regex: RegExp, replacer: (...args: string[]) => Promise<string>): Promise<string> {
-    const matches: { match: string, groups: string[], index: number }[] = []
-    str.replace(regex, (match, ...args) => {
-        const groups = args.slice(0, -2) as string[]
-        const index = args[args.length - 2] as unknown as number
-        matches.push({ match, groups, index })
-        return match
-    })
-    let result = ''
-    let lastIndex = 0
-    for (const { match, groups, index } of matches) {
-        result += str.slice(lastIndex, index)
-        result += await replacer(match, ...groups)
-        lastIndex = index + match.length
-    }
-    result += str.slice(lastIndex)
-    return result
-}
 
 type PropsResolverParams = {
     engineToken: string

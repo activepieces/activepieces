@@ -10,6 +10,12 @@ export const gmailCreateDraftReplyAction = createAction({
   auth: gmailAuth,
   name: 'create_draft_reply',
   description: 'Creates a draft reply to an existing email.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Builds a draft reply to an existing email and saves it (unsent) in the thread, addressing the original sender (reply) or all participants (reply all) and optionally quoting the original message. Use this when a human should review and send the response rather than sending it automatically; requires the Gmail message ID of the email being replied to. Not idempotent: each call creates a new draft.',
+    idempotent: false,
+  },
   displayName: 'Create Draft Reply',
   props: {
     message_id: GmailProps.message,
