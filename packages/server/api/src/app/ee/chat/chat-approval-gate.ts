@@ -23,6 +23,11 @@ async function resolveGate({ gateId, approved, payload }: { gateId: string, appr
     const wasSet = await distributedStore.putIfAbsent(decisionKey(gateId), { approved, payload }, GATE_TTL_SECONDS)
     if (wasSet) {
         await pubsub.publish(channelName(gateId), JSON.stringify({ approved, payload }))
+        const conversationId = await distributedStore.get<string>(`${PENDING_GATE_PREFIX}gate:${gateId}`)
+        if (conversationId) {
+            await distributedStore.delete(`${PENDING_GATE_PREFIX}${conversationId}`)
+            await distributedStore.delete(`${PENDING_GATE_PREFIX}gate:${gateId}`)
+        }
     }
 }
 
@@ -120,7 +125,10 @@ async function storePendingGate({ conversationId, gate }: {
     conversationId: string
     gate: PendingGate
 }): Promise<void> {
-    await distributedStore.put(`${PENDING_GATE_PREFIX}${conversationId}`, gate, GATE_TTL_SECONDS)
+    await Promise.all([
+        distributedStore.put(`${PENDING_GATE_PREFIX}${conversationId}`, gate, GATE_TTL_SECONDS),
+        distributedStore.put(`${PENDING_GATE_PREFIX}gate:${gate.gateId}`, conversationId, GATE_TTL_SECONDS),
+    ])
 }
 
 async function getPendingGate({ conversationId }: { conversationId: string }): Promise<PendingGate | null> {
