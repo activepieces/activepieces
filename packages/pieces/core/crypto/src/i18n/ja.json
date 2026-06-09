@@ -39,5 +39,15 @@
   "Hex": "Hex",
   "Base64": "Base64",
   "Alphanumeric": "Alphanumeric",
-  "Alphanumeric + Symbols": "Alphanumeric + Symbols"
+  "Alphanumeric + Symbols": "Alphanumeric + Symbols",
+  "Generate RSA Signature": "Generate RSA Signature",
+  "Signs text with an RSA private key using SHA-256, SHA-384, or SHA-512 (RSA-SHA256 by default)": "Signs text with an RSA private key using SHA-256, SHA-384, or SHA-512 (RSA-SHA256 by default)",
+  "Private Key": "Private Key",
+  "The RSA private key in PEM format (PKCS#1 or PKCS#8)": "The RSA private key in PEM format (PKCS#1 or PKCS#8)",
+  "Passphrase": "Passphrase",
+  "The passphrase protecting the private key, leave empty if it is not encrypted": "The passphrase protecting the private key, leave empty if it is not encrypted",
+  "SHA384": "SHA384",
+  "The text to be signed": "The text to be signed",
+  "Output Encoding": "Output Encoding",
+  "The encoding of the output signature": "The encoding of the output signature"
 }
