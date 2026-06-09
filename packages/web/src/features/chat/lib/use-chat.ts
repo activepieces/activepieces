@@ -553,16 +553,51 @@ export function useAgentChat({
             chatApi.getPendingGate(conversationId),
           );
           if (gate && conversationIdRef.current === conversationId) {
+            const gateInput = gate.toolInput ?? {};
+            const isActionPreview = gate.toolName === 'ap_execute_action';
             store.setState((prev) => ({
               toolCallMeta: {
                 ...prev.toolCallMeta,
                 [gate.gateId]: {
                   ...prev.toolCallMeta[gate.gateId],
-                  approvalRequest: {
-                    toolCallId: gate.gateId,
-                    toolName: gate.toolName,
-                    displayName: gate.displayName,
-                  },
+                  ...(isActionPreview
+                    ? {
+                        actionPreview: {
+                          toolCallId: gate.gateId,
+                          pieceName:
+                            typeof gateInput.pieceName === 'string'
+                              ? gateInput.pieceName
+                              : '',
+                          actionName:
+                            typeof gateInput.actionName === 'string'
+                              ? gateInput.actionName
+                              : '',
+                          actionDisplayName: gate.displayName,
+                          input:
+                            typeof gateInput.input === 'object' &&
+                            gateInput.input !== null
+                              ? (gateInput.input as Record<string, unknown>)
+                              : {},
+                          isBatch:
+                            Array.isArray(gateInput.items) &&
+                            gateInput.items.length > 0,
+                          batchCount: Array.isArray(gateInput.items)
+                            ? gateInput.items.length
+                            : undefined,
+                          batchSamples: Array.isArray(gateInput.items)
+                            ? (
+                                gateInput.items as Record<string, unknown>[]
+                              ).slice(0, 3)
+                            : undefined,
+                        },
+                      }
+                    : {
+                        approvalRequest: {
+                          toolCallId: gate.gateId,
+                          toolName: gate.toolName,
+                          displayName: gate.displayName,
+                        },
+                      }),
                 },
               },
             }));
