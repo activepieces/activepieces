@@ -14,8 +14,8 @@ const READ_ACTION_PATTERNS = ['list', 'get', 'search', 'find', 'fetch', 'read', 
 const WRITE_ACTION_PATTERNS = ['delete', 'remove', 'send', 'post', 'publish', 'create', 'update', 'write', 'insert', 'reply', 'forward']
 
 function actionNameMatchesPatterns({ actionName, patterns }: { actionName: string, patterns: string[] }): boolean {
-    const lower = actionName.toLowerCase()
-    return patterns.some((pattern) => lower.includes(pattern))
+    const words = actionName.toLowerCase().split(/[_\-.]/)
+    return patterns.some((pattern) => words.includes(pattern))
 }
 
 function requiresApproval(toolName: string): boolean {
