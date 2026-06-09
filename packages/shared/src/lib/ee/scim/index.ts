@@ -22,7 +22,7 @@ export const ScimName = z.object({
 export const ScimEmail = z.object({
     value: z.string(),
     type: z.string().optional(),
-    primary: z.boolean().optional(),
+    primary: z.union([z.boolean(), z.enum(['true', 'false']).transform((value) => value === 'true')]).optional(),
 })
 
 export const ScimMeta = z.object({
@@ -46,6 +46,7 @@ export const ScimUserResource = z.object({
     name: ScimName.optional(),
     emails: z.array(ScimEmail).optional(),
     active: z.boolean(),
+    ...ScimCustomAttributesSchema,
     meta: ScimMeta,
 })
 
