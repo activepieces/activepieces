@@ -16,6 +16,7 @@ export const getAsset = createAction({
       displayName: 'Asset',
       description: 'Select the asset to retrieve metadata for',
       required: true,
+      auth:canvaAuth,
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) {

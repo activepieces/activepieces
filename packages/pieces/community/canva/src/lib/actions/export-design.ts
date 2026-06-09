@@ -28,6 +28,7 @@ export const exportDesign = createAction({
       displayName: 'Design',
       description: 'Select the design to export',
       required: true,
+      auth:canvaAuth,
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) {

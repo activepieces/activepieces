@@ -16,6 +16,7 @@ export const getFolder = createAction({
       displayName: 'Folder',
       description: 'Select the folder to retrieve metadata for',
       required: true,
+      auth:canvaAuth,
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) {

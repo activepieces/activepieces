@@ -17,6 +17,7 @@ export const moveFolderItem = createAction({
       description: 'Select the folder to move the item to',
       required: true,
       refreshers: [],
+      auth:canvaAuth,
       options: async ({ auth }) => {
         if (!auth) {
           return {
@@ -58,6 +59,7 @@ export const moveFolderItem = createAction({
       displayName: 'Item to Move',
       description: 'Select the item you want to move',
       required: true,
+      auth:canvaAuth,
       refreshers: ['item_type'],
       options: async ({ auth, item_type }) => {
         if (!auth) {

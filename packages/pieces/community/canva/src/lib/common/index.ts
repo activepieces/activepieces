@@ -1,6 +1,11 @@
+import { AppConnectionValueForAuthProperty } from "@activepieces/pieces-framework";
+import { canvaAuth } from "src";
+
 export const canvaCommon = {
   baseUrl: 'https://api.canva.com/rest/v1',
 };
+
+export type canvaAuthType = AppConnectionValueForAuthProperty<typeof canvaAuth>
 
 export interface DesignTypeInput {
   type: 'preset' | 'custom';
@@ -286,7 +291,7 @@ export const MIN_EXPORT_DIMENSION = 40;
 export const MAX_EXPORT_DIMENSION = 25000;
 
 // Dynamic field helpers
-export async function fetchUserDesigns(auth: any, query?: string): Promise<Array<{ label: string; value: string }>> {
+export async function fetchUserDesigns(auth: canvaAuthType, query?: string): Promise<Array<{ label: string; value: string }>> {
   try {
     const params = new URLSearchParams();
     if (query && query.trim()) {
@@ -313,7 +318,7 @@ export async function fetchUserDesigns(auth: any, query?: string): Promise<Array
   }
 }
 
-export async function fetchUserAssets(auth: any, assetType?: 'image' | 'video'): Promise<Array<{ label: string; value: string }>> {
+export async function fetchUserAssets(auth: canvaAuthType, assetType?: 'image' | 'video'): Promise<Array<{ label: string; value: string }>> {
   try {
     const response = await fetch(`${canvaCommon.baseUrl}/folders/root/items?item_types=image`, {
       headers: {
@@ -337,7 +342,7 @@ export async function fetchUserAssets(auth: any, assetType?: 'image' | 'video'):
   }
 }
 
-export async function fetchUserFolders(auth: any): Promise<Array<{ label: string; value: string }>> {
+export async function fetchUserFolders(auth: canvaAuthType): Promise<Array<{ label: string; value: string }>> {
   try {
     const folders = [{ label: 'Root (Top Level)', value: 'root' }];
     

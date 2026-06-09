@@ -18,6 +18,7 @@ export const getDesign = createAction({
       description: 'Select the design to retrieve metadata for',
       required: true,
       refreshers: [],
+      auth:canvaAuth,
       options: async ({ auth }) => {
         if (!auth) {
           return {

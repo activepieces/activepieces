@@ -57,6 +57,7 @@ export const createDesign = createAction({
       description: 'Optional: Select an existing image asset to add to the design',
       required: false,
       refreshers: [],
+      auth:canvaAuth,
       options: async ({ auth }) => {
         if (!auth) {
           return {
