@@ -135,6 +135,27 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         return reply.status(StatusCodes.OK).send({ success: true })
     })
 
+    app.get('/conversations/:id/pending-gate', GetPendingGateRoute, async (request, reply) => {
+        const conversationId = request.params.id
+        const platformId = request.principal.platform.id
+        const userId = request.principal.id
+        await chatService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
+        const gate = await chatApprovalGate.getPendingGate({ conversationId })
+        return reply.status(StatusCodes.OK).send(gate)
+    })
+
+    app.get('/conversations/:id/connections', GetPickerConnectionsRoute, async (request, reply) => {
+        const conversationId = request.params.id
+        const platformId = request.principal.platform.id
+        const userId = request.principal.id
+        await chatService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
+        const connections = await chatApprovalGate.getAvailableConnections({
+            conversationId,
+            pieceName: request.query.pieceName,
+        })
+        return reply.status(StatusCodes.OK).send(connections)
+    })
+
 }
 
 async function assertAiCreditsNotExhausted({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
@@ -247,6 +268,29 @@ const ToolApprovalRoute = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: z.object({ gateId: z.string() }),
         body: z.object({ approved: z.boolean(), payload: z.record(z.string(), z.unknown()).optional() }),
+    },
+}
+
+const GetPendingGateRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: CONVERSATION_PARAMS,
+    },
+}
+
+const GetPickerConnectionsRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: CONVERSATION_PARAMS,
+        querystring: z.object({ pieceName: z.string() }),
     },
 }
 

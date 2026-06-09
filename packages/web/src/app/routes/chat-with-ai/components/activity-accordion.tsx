@@ -186,6 +186,16 @@ function ToolStepRow({
     () => (detailsOpen && output ? tryParseJson(output) : undefined),
     [detailsOpen, output],
   );
+  const connectionLabel = useMemo(() => {
+    if (part.state !== 'output-available' || !part.output) return undefined;
+    const raw =
+      typeof part.output === 'string' ? tryParseJson(part.output) : part.output;
+    if (!raw || typeof raw !== 'object') return undefined;
+    const meta = (raw as Record<string, unknown>)['_meta'];
+    if (!meta || typeof meta !== 'object') return undefined;
+    const label = (meta as Record<string, unknown>)['connectionLabel'];
+    return typeof label === 'string' ? label : undefined;
+  }, [part.state, part.output]);
   const pieceNames = useMemo(
     () => chatPartUtils.extractPieceNames(rawInput),
     [rawInput],
@@ -233,34 +243,41 @@ function ToolStepRow({
             ))}
           </TextShimmer>
         ) : (
-          <div
-            className={cn(
-              'inline-flex items-center gap-2 rounded-lg border px-4 py-1.5 text-sm',
-              status === 'failed' ? 'border-destructive/30' : 'border-border',
-              hasDetails && 'cursor-pointer',
-            )}
-            onClick={() => hasDetails && setDetailsOpen(!detailsOpen)}
-          >
-            <span
+          <div>
+            <div
               className={cn(
-                'text-sm',
-                status === 'failed'
-                  ? 'text-destructive'
-                  : 'text-muted-foreground',
+                'inline-flex items-center gap-2 rounded-lg border px-4 py-1.5 text-sm',
+                status === 'failed' ? 'border-destructive/30' : 'border-border',
+                hasDetails && 'cursor-pointer',
               )}
+              onClick={() => hasDetails && setDetailsOpen(!detailsOpen)}
             >
-              {label}
-            </span>
-            {matchedPieces.map((piece) => (
-              <PieceIcon
-                key={piece.name}
-                displayName={piece.displayName}
-                logoUrl={piece.logoUrl!}
-                size="xxs"
-                border={false}
-                showTooltip={false}
-              />
-            ))}
+              <span
+                className={cn(
+                  'text-sm',
+                  status === 'failed'
+                    ? 'text-destructive'
+                    : 'text-muted-foreground',
+                )}
+              >
+                {label}
+              </span>
+              {matchedPieces.map((piece) => (
+                <PieceIcon
+                  key={piece.name}
+                  displayName={piece.displayName}
+                  logoUrl={piece.logoUrl!}
+                  size="xxs"
+                  border={false}
+                  showTooltip={false}
+                />
+              ))}
+            </div>
+            {connectionLabel && (
+              <p className="text-xs text-muted-foreground mt-0.5 ml-1">
+                {t('via {connectionLabel}', { connectionLabel })}
+              </p>
+            )}
           </div>
         )}
         {hasDetails && (

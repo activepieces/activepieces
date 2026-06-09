@@ -8,6 +8,7 @@ import { executeAdhocAction, formatRunSummary } from '../../../mcp/tools/flow-ru
 import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { tableService } from '../../../tables/table/table.service'
+import { chatApprovalGate } from '../chat-approval-gate'
 import { chatHelpers } from '../chat-helpers'
 import { chatPrompt } from '../prompt/chat-prompt'
 
@@ -183,11 +184,12 @@ async function listResourceForProject({ resource, projectId, status, log }: {
     }
 }
 
-async function executeCrossProjectTool({ toolName, toolInput, platformId, userId, log }: {
+async function executeCrossProjectTool({ toolName, toolInput, platformId, userId, conversationId, log }: {
     toolName: string
     toolInput: Record<string, unknown>
     platformId: string
     userId: string
+    conversationId?: string
     log: FastifyBaseLogger
 }): Promise<unknown> {
     const projects = await chatHelpers.getUserProjects({ platformId, userId, log })
@@ -195,21 +197,49 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
 
     switch (toolName) {
         case 'ap_discover_action_auth': {
-            return findConnectionsForPiece({ pieceName: toolInput.pieceName as string, projects, platformId, log })
+            const discoveryResult = await findConnectionsForPiece({ pieceName: toolInput.pieceName as string, projects, platformId, log })
+
+            if (conversationId && 'pickConnection' in discoveryResult && discoveryResult.pickConnection) {
+                const normalizedPiece = mcpUtils.normalizePieceName(toolInput.pieceName as string) ?? (toolInput.pieceName as string)
+                await chatApprovalGate.storeAvailableConnections({
+                    conversationId,
+                    pieceName: normalizedPiece,
+                    connections: discoveryResult.connections,
+                })
+                return {
+                    pickConnection: true,
+                    piece: discoveryResult.piece,
+                    displayName: discoveryResult.displayName,
+                    connectionCount: discoveryResult.connections.length,
+                }
+            }
+            return discoveryResult
         }
         case 'ap_execute_action': {
             const pieceName = toolInput.pieceName as string
             const actionName = toolInput.actionName as string
-            const connectionExternalId = toolInput.connectionExternalId as string | undefined
-            const projectId = toolInput.projectId as string | undefined
 
-            const resolvedProjectId = projectId ?? projects[0]?.id
+            const normalizedPiece = mcpUtils.normalizePieceName(pieceName) ?? pieceName
+            let connectionExternalId: string | undefined
+            let connectionLabel: string | undefined
+            let connectionProjectId: string | undefined
+            if (conversationId) {
+                const selected = await chatApprovalGate.getSelectedConnection({ conversationId, pieceName: normalizedPiece })
+                if (selected) {
+                    connectionExternalId = selected.externalId
+                    connectionLabel = selected.label
+                    connectionProjectId = selected.projectId
+                }
+            }
+
+            const resolvedProjectId = connectionProjectId ?? projects[0]?.id
             if (!resolvedProjectId) {
                 return { success: false, error: 'No projects available. Create a project first.' }
             }
-            if (projectId && !availableProjectIds.includes(projectId)) {
-                return { success: false, error: `Project ${projectId} is not accessible.` }
+            if (connectionProjectId && !availableProjectIds.includes(connectionProjectId)) {
+                return { success: false, error: `Project ${connectionProjectId} is not accessible.` }
             }
+
             let parsedInput = toolInput.input
             if (typeof parsedInput === 'string') {
                 const parsed = parseToJsonIfPossible(parsedInput)
@@ -217,7 +247,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
                     parsedInput = parsed as Record<string, unknown>
                 }
             }
-            return executeAdhocAction({
+            const result = await executeAdhocAction({
                 projectId: resolvedProjectId,
                 pieceName,
                 actionName,
@@ -225,6 +255,11 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
                 connectionExternalId,
                 log,
             })
+
+            if (connectionLabel && typeof result === 'object' && result !== null) {
+                return { ...(result as Record<string, unknown>), _meta: { connectionLabel, pieceName: normalizedPiece } }
+            }
+            return result
         }
         case 'ap_list_across_projects': {
             const resource = toolInput.resource as string

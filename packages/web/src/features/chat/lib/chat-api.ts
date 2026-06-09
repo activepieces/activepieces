@@ -85,6 +85,35 @@ async function cancelConversation(conversationId: string): Promise<void> {
   return api.post<void>(`/v1/chat/conversations/${conversationId}/cancel`);
 }
 
+async function getPickerConnections({
+  conversationId,
+  pieceName,
+}: {
+  conversationId: string;
+  pieceName: string;
+}): Promise<
+  Array<{
+    externalId: string;
+    label: string;
+    projectId: string;
+    project: string;
+    status: string;
+  }>
+> {
+  return api.get(`/v1/chat/conversations/${conversationId}/connections`, {
+    pieceName,
+  });
+}
+
+async function getPendingGate(conversationId: string): Promise<{
+  gateId: string;
+  toolName: string;
+  displayName: string;
+  toolInput: Record<string, unknown>;
+} | null> {
+  return api.get(`/v1/chat/conversations/${conversationId}/pending-gate`);
+}
+
 export const chatApi = {
   createConversation,
   listConversations,
@@ -95,4 +124,6 @@ export const chatApi = {
   sendMessage,
   approveToolCall,
   cancelConversation,
+  getPickerConnections,
+  getPendingGate,
 };

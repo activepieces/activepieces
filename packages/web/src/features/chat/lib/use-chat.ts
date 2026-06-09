@@ -1,10 +1,14 @@
 import {
+  ActionPreviewEvent,
+  ActionReceiptEvent,
   ChatAllowedMimeType,
   ChatConversationStatus,
+  ChatHistoryMessage,
   CHAT_ALLOWED_MIME_TYPES,
   DEFAULT_CHAT_TIER_ID,
   ErrorCode,
   isNil,
+  PersistedChatMessage,
   ToolApprovalRequestEvent,
   ToolProgressEvent,
   tryCatch,
@@ -15,11 +19,29 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 
 import { chatApi } from './chat-api';
-import { chatStoreSelectors } from './chat-store';
+import { chatStoreSelectors, SetChatStore, ToolCallMeta } from './chat-store';
 import { useChatStoreApi } from './chat-store-context';
 import { ChatUIMessage, chatPartUtils } from './chat-types';
 import { chatUtils } from './chat-utils';
 import { useStreamingReducer } from './use-streaming-reducer';
+
+function restoreReceiptsIntoStore({
+  data,
+  setState,
+}: {
+  data: PersistedChatMessage[] | ChatHistoryMessage[];
+  setState: SetChatStore;
+}): void {
+  const receipts = chatUtils.extractReceiptsFromHistory(data);
+  if (Object.keys(receipts).length === 0) return;
+  setState((prev) => {
+    const merged = { ...prev.toolCallMeta };
+    for (const [toolCallId, receipt] of Object.entries(receipts)) {
+      merged[toolCallId] = { ...merged[toolCallId], actionReceipt: receipt };
+    }
+    return { toolCallMeta: merged };
+  });
+}
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const AGENT_POLL_INTERVAL_MS = 5_000;
@@ -163,19 +185,43 @@ export function useAgentChat({
     [store],
   );
 
-  const handleToolApprovalRequest = useCallback(
-    (event: ToolApprovalRequestEvent) => {
+  const updateToolCallMeta = useCallback(
+    <K extends keyof ToolCallMeta>(
+      key: K,
+      event: ToolCallMeta[K] & { toolCallId: string },
+    ) => {
       store.setState((prev) => ({
         toolCallMeta: {
           ...prev.toolCallMeta,
           [event.toolCallId]: {
             ...prev.toolCallMeta[event.toolCallId],
-            approvalRequest: event,
+            [key]: event,
           },
         },
       }));
     },
     [store],
+  );
+
+  const handleToolApprovalRequest = useCallback(
+    (event: ToolApprovalRequestEvent) => {
+      updateToolCallMeta('approvalRequest', event);
+    },
+    [updateToolCallMeta],
+  );
+
+  const handleActionPreview = useCallback(
+    (event: ActionPreviewEvent) => {
+      updateToolCallMeta('actionPreview', event);
+    },
+    [updateToolCallMeta],
+  );
+
+  const handleActionReceipt = useCallback(
+    (event: ActionReceiptEvent) => {
+      updateToolCallMeta('actionReceipt', event);
+    },
+    [updateToolCallMeta],
   );
 
   const updateSendStatus = useCallback((next: SendStatus) => {
@@ -198,6 +244,10 @@ export function useAgentChat({
         if (restoredReplies.length > 0) {
           store.setState({ quickReplies: restoredReplies });
         }
+        restoreReceiptsIntoStore({
+          data: result.data,
+          setState: store.setState,
+        });
       }
       setOptimisticUserMessage(null);
     },
@@ -215,6 +265,8 @@ export function useAgentChat({
     onTitleUpdate: handleTitleUpdate,
     onToolProgress: handleToolProgress,
     onToolApprovalRequest: handleToolApprovalRequest,
+    onActionPreview: handleActionPreview,
+    onActionReceipt: handleActionReceipt,
     onStreamFinished: (convId) => {
       void reconcile(convId).then(() => clearStreamingState());
     },
@@ -452,14 +504,18 @@ export function useAgentChat({
       if (restoredReplies.length > 0) {
         store.setState({ quickReplies: restoredReplies });
       }
+      restoreReceiptsIntoStore({
+        data: historyResult.data.data,
+        setState: store.setState,
+      });
       modelNameRef.current = convResult.data.modelName ?? null;
       setModelNameState(convResult.data.modelName ?? null);
       if (convResult.data.status === ChatConversationStatus.STREAMING) {
-        setIsPollingForAgentReply(true);
+        startStream(id);
       }
       setIsLoadingHistory(false);
     },
-    [stopStream, updateSendStatus, store],
+    [stopStream, startStream, updateSendStatus, store],
   );
 
   useQuery({
@@ -487,6 +543,67 @@ export function useAgentChat({
       }
       if (convResult.status !== ChatConversationStatus.STREAMING) {
         setIsPollingForAgentReply(false);
+      } else {
+        const hasBlockingCard = chatStoreSelectors.hasBlockingCard({
+          state: store.getState(),
+          lastAssistantMessage: mapped[mapped.length - 1],
+        });
+        if (!hasBlockingCard) {
+          const { data: gate } = await tryCatch(() =>
+            chatApi.getPendingGate(conversationId),
+          );
+          if (gate && conversationIdRef.current === conversationId) {
+            const gateInput = gate.toolInput ?? {};
+            const isActionPreview = gate.toolName === 'ap_execute_action';
+            store.setState((prev) => ({
+              toolCallMeta: {
+                ...prev.toolCallMeta,
+                [gate.gateId]: {
+                  ...prev.toolCallMeta[gate.gateId],
+                  ...(isActionPreview
+                    ? {
+                        actionPreview: {
+                          toolCallId: gate.gateId,
+                          pieceName:
+                            typeof gateInput.pieceName === 'string'
+                              ? gateInput.pieceName
+                              : '',
+                          actionName:
+                            typeof gateInput.actionName === 'string'
+                              ? gateInput.actionName
+                              : '',
+                          actionDisplayName: gate.displayName,
+                          input:
+                            typeof gateInput.input === 'object' &&
+                            gateInput.input !== null
+                              ? (gateInput.input as Record<string, unknown>)
+                              : {},
+                          isBatch:
+                            typeof gateInput.batchCount === 'number' &&
+                            gateInput.batchCount > 0,
+                          batchCount:
+                            typeof gateInput.batchCount === 'number'
+                              ? gateInput.batchCount
+                              : undefined,
+                          batchSamples: Array.isArray(gateInput.items)
+                            ? (
+                                gateInput.items as Record<string, unknown>[]
+                              ).slice(0, 3)
+                            : undefined,
+                        },
+                      }
+                    : {
+                        approvalRequest: {
+                          toolCallId: gate.gateId,
+                          toolName: gate.toolName,
+                          displayName: gate.displayName,
+                        },
+                      }),
+                },
+              },
+            }));
+          }
+        }
       }
       return mapped;
     },
