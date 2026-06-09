@@ -1,4 +1,4 @@
-import { FlowRunStatus, FlowStatus, isNil, parseToJsonIfPossible, Project, RunEnvironment } from '@activepieces/shared'
+import { AppConnectionStatus, AppConnectionType, FlowRunStatus, FlowStatus, isNil, isObject, parseToJsonIfPossible, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { flowService } from '../../../flows/flow/flow.service'
@@ -13,6 +13,12 @@ import { chatHelpers } from '../chat-helpers'
 import { chatPrompt } from '../prompt/chat-prompt'
 
 const CROSS_PROJECT_CONNECTION_LIMIT = 100
+const OAUTH_TYPES: ReadonlySet<AppConnectionType> = new Set([
+    AppConnectionType.OAUTH2,
+    AppConnectionType.CLOUD_OAUTH2,
+    AppConnectionType.PLATFORM_OAUTH2,
+])
+const CLOCK_SKEW_BUFFER_S = 5 * 60
 const CROSS_PROJECT_FLOW_LIMIT = 200
 const FLOW_STATUS_VALUES: ReadonlySet<string> = new Set(Object.values(FlowStatus))
 const FLOW_RUN_STATUS_VALUES: ReadonlySet<string> = new Set(Object.values(FlowRunStatus))
@@ -42,6 +48,7 @@ async function findConnectionsForPiece({ pieceName, projects, platformId, log }:
     const normalizedPiece = mcpUtils.normalizePieceName(pieceName) ?? pieceName
 
     const projectId = projects[0]?.id
+    let requiredScopes: string[] = []
     if (projectId) {
         const project = projects[0]
         const piece = await pieceMetadataService(log).get({
@@ -51,6 +58,12 @@ async function findConnectionsForPiece({ pieceName, projects, platformId, log }:
         })
         if (piece && isNil(piece.auth)) {
             return { noAuthRequired: true, piece: normalizedPiece }
+        }
+        if (piece?.auth && !Array.isArray(piece.auth)) {
+            const authScope = (piece.auth as Record<string, unknown>)['scope']
+            if (Array.isArray(authScope)) {
+                requiredScopes = authScope.filter((s): s is string => typeof s === 'string')
+            }
         }
     }
 
@@ -67,13 +80,17 @@ async function findConnectionsForPiece({ pieceName, projects, platformId, log }:
                 scope: undefined,
                 externalIds: undefined,
             })
-            return result.data.map((c) => ({
-                label: c.displayName,
-                externalId: c.externalId,
-                project: chatPrompt.projectDisplayName(project),
-                projectId: project.id,
-                status: c.status,
-            }))
+            return result.data.map((c) => {
+                const info = resolveConnectionInfo({ status: c.status, type: c.type, value: c.value })
+                return {
+                    label: c.displayName,
+                    externalId: c.externalId,
+                    project: chatPrompt.projectDisplayName(project),
+                    projectId: project.id,
+                    status: info.status,
+                    grantedScopes: info.grantedScopes,
+                }
+            })
         }),
     )
 
@@ -82,10 +99,10 @@ async function findConnectionsForPiece({ pieceName, projects, platformId, log }:
     const displayName = pieceDisplayLabel(shortName)
 
     if (flat.length === 0) {
-        return { needsConnection: true, piece: shortName, displayName }
+        return { needsConnection: true, piece: shortName, displayName, requiredScopes }
     }
 
-    return { pickConnection: true, piece: shortName, displayName, connections: flat }
+    return { pickConnection: true, piece: shortName, displayName, connections: flat, requiredScopes }
 }
 
 async function listFlowsAcrossProjects({ projects, status, log }: {
@@ -211,6 +228,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
                     piece: discoveryResult.piece,
                     displayName: discoveryResult.displayName,
                     connectionCount: discoveryResult.connections.length,
+                    requiredScopes: discoveryResult.requiredScopes,
                 }
             }
             return discoveryResult
@@ -291,9 +309,37 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
     }
 }
 
+function resolveConnectionInfo({ status, type, value }: { status: AppConnectionStatus, type: AppConnectionType, value: unknown }): { status: AppConnectionStatus, grantedScopes: string[] } {
+    if (!OAUTH_TYPES.has(type) || !isObject(value)) {
+        return { status, grantedScopes: [] }
+    }
+    const grantedScopes = typeof value['scope'] === 'string' ? value['scope'].split(/\s+/).filter(Boolean) : []
+    if (status !== AppConnectionStatus.ACTIVE) {
+        return { status, grantedScopes }
+    }
+    const claimedAtS = typeof value['claimed_at'] === 'number' ? value['claimed_at'] : 0
+    const expiresInS = typeof value['expires_in'] === 'number' ? value['expires_in'] : 0
+    if (claimedAtS > 0 && expiresInS > 0) {
+        const expiryMs = (claimedAtS + expiresInS - CLOCK_SKEW_BUFFER_S) * 1000
+        if (Date.now() > expiryMs) {
+            return { status: AppConnectionStatus.ERROR, grantedScopes }
+        }
+    }
+    return { status, grantedScopes }
+}
+
+type ConnectionWithScopes = {
+    label: string
+    project: string
+    externalId: string
+    projectId: string
+    status: AppConnectionStatus
+    grantedScopes: string[]
+}
+
 type FindConnectionsResult =
     | { noAuthRequired: true, piece: string }
-    | { needsConnection: true, piece: string, displayName: string }
-    | { pickConnection: true, piece: string, displayName: string, connections: Array<{ label: string, project: string, externalId: string, projectId: string, status: string }> }
+    | { needsConnection: true, piece: string, displayName: string, requiredScopes: string[] }
+    | { pickConnection: true, piece: string, displayName: string, connections: ConnectionWithScopes[], requiredScopes: string[] }
 
 export { executeCrossProjectTool }

@@ -24,6 +24,7 @@ const BATCH_FLUSH_MS = 50
 const APPROVAL_TIMEOUT_MS = 5 * 60 * 1_000
 const APPROVAL_BLOCK_MS = 50_000
 const DISPLAY_TOOL_TIMEOUT_MS = 15 * 60 * 1_000
+const HEARTBEAT_INTERVAL_MS = 15_000
 const RETRY_MAX_ATTEMPTS = 3
 const RETRY_BASE_DELAY_MS = 1_000
 
@@ -264,8 +265,16 @@ function buildToolSet({ ctx, eventEmitter, log, planApproved, mcpToolSet, projec
         return response.result
     }
 
+    const sendHeartbeat = () => {
+        void tryCatch(() => ctx.apiClient.sendChatEvent({
+            userId, conversationId,
+            event: { type: ChatAgentEventType.CHUNK, data: [] },
+        }))
+    }
+
     const waitForApproval = async ({ gateId, timeoutMs }: { gateId: string, timeoutMs?: number }): Promise<GateDecision> => {
         const deadline = Date.now() + (timeoutMs ?? APPROVAL_TIMEOUT_MS)
+        let lastHeartbeat = Date.now()
         while (Date.now() < deadline) {
             const remainingMs = deadline - Date.now()
             if (remainingMs <= 0) break
@@ -281,6 +290,10 @@ function buildToolSet({ ctx, eventEmitter, log, planApproved, mcpToolSet, projec
             if (response.result !== 'pending') {
                 const decision = response.result as GateDecision
                 return { approved: decision.approved, payload: decision.payload }
+            }
+            if (Date.now() - lastHeartbeat >= HEARTBEAT_INTERVAL_MS) {
+                lastHeartbeat = Date.now()
+                sendHeartbeat()
             }
         }
         return { approved: false }

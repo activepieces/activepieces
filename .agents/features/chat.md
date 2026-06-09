@@ -46,19 +46,19 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - **ChatConversation** — a persisted conversation between a user and the AI assistant, scoped to a platform and user; optionally scoped to a project for tool access
 - **Message compaction** — when a conversation exceeds a token threshold, older messages are summarized by the LLM and replaced with a summary to keep context within the model's window
 - **Tool approval gate** — a Redis pub/sub mechanism that pauses destructive tool executions (delete, test, publish) until the user explicitly approves or denies in the UI; times out after 5 minutes
-- **Plan approval** — a multi-step approval mechanism where the agent presents a plan via `ap_request_plan_approval`, the user approves or rejects, and approved plans execute with progress tracking
+- **Plan approval** — a multi-step approval mechanism where the agent presents a plan via `ap_request_plan_approval` (includes a required `mode` field: `one_time` or `recurring`), the user approves or rejects, and approved plans execute with progress tracking
 - **Local tools** — chat-specific tools not part of MCP: `ap_set_session_title`, `ap_select_project`, `ap_execute_action`, `ap_list_across_projects`, `ap_request_plan_approval`
 - **Display tools** — tools that render interactive UI cards: `ap_show_connection_required`, `ap_show_connection_picker`, `ap_show_project_picker`, `ap_show_questions`, `ap_show_quick_replies`
 - **MCP tools** — project-scoped tools loaded from the Activepieces MCP server when a project is selected; destructive ones are wrapped with the approval gate
 - **Tool call UX metadata** — optional `title` (2-4 word chip label) and `description` (first-person conversational sentence) stored on `PersistedToolCallPart`; description is sourced from the preceding `ap_update_thinking_status` text with `input.description` as fallback, rendered above the tool card chip
-- **Server-managed connections** — connection externalIds are never exposed to the LLM; `ap_discover_action_auth` stores available connections in Redis, `ap_show_connection_picker` stores the user's selection, and `ap_execute_action` auto-fills the connection from the store
+- **Server-managed connections** — connection externalIds are never exposed to the LLM; `ap_discover_action_auth` stores available connections in Redis (with `grantedScopes` and `requiredScopes` for scope-aware selection), `ap_show_connection_picker` stores the user's selection, and `ap_execute_action` auto-fills the connection from the store
 - **Action preview gate** — write/destructive actions show a preview card (parameters, connection) before execution; classification uses a hybrid AI-driven (`needsConfirmation` flag) + server hard-floor (name pattern matching) approach; persisted as pending gate in Redis for refresh resilience
 - **Action receipt** — server-rendered card showing action result (status, output, connection badge, timestamp); emitted as `ACTION_RECEIPT` event and persisted as `PersistedChatPartType.ACTION_RECEIPT` in conversation history
 - **Pending gate persistence** — when a display tool or action preview blocks on approval, gate metadata is stored in Redis so the frontend can re-show the card after page refresh; cleared automatically when the gate resolves
-- **Stream reconnection** — when loading a STREAMING conversation (e.g. after refresh), the frontend calls `startStream` to reconnect to the WebSocket channel instead of just polling, receiving live chunks from the still-running worker
+- **Stream reconnection** — when loading a STREAMING conversation (e.g. after refresh), the frontend calls `getPendingGate` to re-populate any blocking display-tool card, then calls `startStream`; a socket `connect` handler re-registers the chunk listener and resets the stale-check timer on reconnect
 - **AI provider** — a platform-configured LLM provider with an `enabledForChat` flag; the chat resolves the first enabled provider and its default model
 - **Streaming cancel** — a Redis key (10-min TTL) signals the worker to abort via AbortController; a 3-second periodic timer checks the Redis key so cancellation fires within 3 seconds regardless of step boundaries; partial messages (from completed steps via `onAbort` callback) are saved to preserve context for resume
-- **Stale recovery** — when `getConversationOrThrow` fetches a conversation stuck in STREAMING for more than 20 minutes, it automatically resets the status to IDLE before returning
+- **Stale recovery** — when `getConversationOrThrow` fetches a conversation stuck in STREAMING for more than 2 minutes, it automatically resets the status to IDLE before returning
 - **Project context** — the currently selected project for a conversation; determines which MCP tools are available and scopes resource access
 - **Chat tiers** — model configurations (fast/smart/premium) with different thinking budgets; displayed as Fast/Expert/Heavy in the UI with per-tier descriptions
 - **Credits warning banner** — a dismissible amber banner shown when Activepieces AI credits usage reaches 70%; a non-dismissible red banner is shown when credits are fully exhausted
@@ -72,7 +72,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 ## Key Service Methods
 - `createConversation()` — creates a new conversation for a user on a platform
 - `listConversations()` — cursor-paginated list of user's conversations, ordered by creation date descending; excludes messages, uiMessages, and summary columns for performance
-- `getConversationOrThrow()` — fetches a conversation, enforcing ownership (platformId + userId); auto-recovers stale STREAMING conversations to IDLE after a 20-minute timeout
+- `getConversationOrThrow()` — fetches a conversation, enforcing ownership (platformId + userId); auto-recovers stale STREAMING conversations to IDLE after a 2-minute timeout
 - `updateConversation()` — updates title and/or modelName
 - `deleteConversation()` — deletes a conversation after ownership check; blocked while status is STREAMING
 - `getMessages()` — reconstructs `ChatHistoryMessage[]` from stored `ModelMessage[]`

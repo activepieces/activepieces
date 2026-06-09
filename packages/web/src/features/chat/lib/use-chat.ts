@@ -46,6 +46,51 @@ function restoreReceiptsIntoStore({
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const AGENT_POLL_INTERVAL_MS = 5_000;
 
+function buildToolCallMetaFromGate(gate: {
+  gateId: string;
+  toolName: string;
+  displayName: string;
+  toolInput: Record<string, unknown>;
+}): Record<string, ToolCallMeta> {
+  const gateInput = gate.toolInput ?? {};
+  const isActionPreview = gate.toolName === 'ap_execute_action';
+  const meta: ToolCallMeta = isActionPreview
+    ? {
+        actionPreview: {
+          toolCallId: gate.gateId,
+          pieceName:
+            typeof gateInput.pieceName === 'string' ? gateInput.pieceName : '',
+          actionName:
+            typeof gateInput.actionName === 'string'
+              ? gateInput.actionName
+              : '',
+          actionDisplayName: gate.displayName,
+          input:
+            typeof gateInput.input === 'object' && gateInput.input !== null
+              ? (gateInput.input as Record<string, unknown>)
+              : {},
+          isBatch:
+            typeof gateInput.batchCount === 'number' &&
+            gateInput.batchCount > 0,
+          batchCount:
+            typeof gateInput.batchCount === 'number'
+              ? gateInput.batchCount
+              : undefined,
+          batchSamples: Array.isArray(gateInput.items)
+            ? (gateInput.items as Record<string, unknown>[]).slice(0, 3)
+            : undefined,
+        },
+      }
+    : {
+        approvalRequest: {
+          toolCallId: gate.gateId,
+          toolName: gate.toolName,
+          displayName: gate.displayName,
+        },
+      };
+  return { [gate.gateId]: meta };
+}
+
 const ALLOWED_MIME_SET: ReadonlySet<string> = new Set(CHAT_ALLOWED_MIME_TYPES);
 
 function isAllowedMimeType(value: string): value is ChatAllowedMimeType {
@@ -511,7 +556,17 @@ export function useAgentChat({
       modelNameRef.current = convResult.data.modelName ?? null;
       setModelNameState(convResult.data.modelName ?? null);
       if (convResult.data.status === ChatConversationStatus.STREAMING) {
+        const { data: gate } = await tryCatch(() => chatApi.getPendingGate(id));
+        if (conversationIdRef.current !== id) return;
         startStream(id);
+        if (gate) {
+          store.setState((prev) => ({
+            toolCallMeta: {
+              ...prev.toolCallMeta,
+              ...buildToolCallMetaFromGate(gate),
+            },
+          }));
+        }
       }
       setIsLoadingHistory(false);
     },
@@ -553,53 +608,10 @@ export function useAgentChat({
             chatApi.getPendingGate(conversationId),
           );
           if (gate && conversationIdRef.current === conversationId) {
-            const gateInput = gate.toolInput ?? {};
-            const isActionPreview = gate.toolName === 'ap_execute_action';
             store.setState((prev) => ({
               toolCallMeta: {
                 ...prev.toolCallMeta,
-                [gate.gateId]: {
-                  ...prev.toolCallMeta[gate.gateId],
-                  ...(isActionPreview
-                    ? {
-                        actionPreview: {
-                          toolCallId: gate.gateId,
-                          pieceName:
-                            typeof gateInput.pieceName === 'string'
-                              ? gateInput.pieceName
-                              : '',
-                          actionName:
-                            typeof gateInput.actionName === 'string'
-                              ? gateInput.actionName
-                              : '',
-                          actionDisplayName: gate.displayName,
-                          input:
-                            typeof gateInput.input === 'object' &&
-                            gateInput.input !== null
-                              ? (gateInput.input as Record<string, unknown>)
-                              : {},
-                          isBatch:
-                            typeof gateInput.batchCount === 'number' &&
-                            gateInput.batchCount > 0,
-                          batchCount:
-                            typeof gateInput.batchCount === 'number'
-                              ? gateInput.batchCount
-                              : undefined,
-                          batchSamples: Array.isArray(gateInput.items)
-                            ? (
-                                gateInput.items as Record<string, unknown>[]
-                              ).slice(0, 3)
-                            : undefined,
-                        },
-                      }
-                    : {
-                        approvalRequest: {
-                          toolCallId: gate.gateId,
-                          toolName: gate.toolName,
-                          displayName: gate.displayName,
-                        },
-                      }),
-                },
+                ...buildToolCallMetaFromGate(gate),
               },
             }));
           }

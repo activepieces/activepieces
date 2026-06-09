@@ -4,6 +4,7 @@ import {
     BatchItemResult,
     ChatAgentEventType,
     chatToolClassification,
+    chunk,
     isObject,
     SendChatEventRequest,
     ToolApprovalRequestEvent,
@@ -15,6 +16,7 @@ import { z } from 'zod'
 
 const MAX_BATCH_SIZE = 100
 const TOOL_EXECUTION_TIMEOUT_MS = 5 * 60 * 1_000
+const MAX_RESULT_SIZE_BYTES = 100 * 1024
 
 async function withToolTimeout<T>({ fn, timeoutMs, toolName }: {
     fn: (signal: AbortSignal) => Promise<T>
@@ -37,6 +39,44 @@ async function withToolTimeout<T>({ fn, timeoutMs, toolName }: {
             clearTimeout(timeoutId)
         }
     }
+}
+
+function truncateLargeResult(result: unknown): unknown {
+    const serialized = JSON.stringify(result)
+    if (serialized.length <= MAX_RESULT_SIZE_BYTES) return result
+
+    const topLevelArray = findTopLevelArray(result)
+    if (topLevelArray) {
+        const { array, path, totalCount } = topLevelArray
+        const preview = array.slice(0, 3)
+        return {
+            content: [{
+                type: 'text',
+                text: `[LARGE RESPONSE] The result contains ${totalCount} items (at ${path}) but the full response is ${Math.round(serialized.length / 1024)}KB which is too large to process. Only the first 3 items are shown as a preview.\n\nTo handle this data, either:\n1. Use a more specific filter to reduce the number of results\n2. Fetch only IDs or metadata fields instead of full content\n3. Process items in smaller batches\n\nPreview (3 of ${totalCount} items):\n${JSON.stringify(preview, null, 2)}`,
+            }],
+        }
+    }
+
+    return {
+        content: [{
+            type: 'text',
+            text: `[LARGE RESPONSE] The response is ${Math.round(serialized.length / 1024)}KB which is too large to process. Retry with a more specific filter, request fewer items, or fetch only IDs/metadata fields instead of full content.`,
+        }],
+    }
+}
+
+function findTopLevelArray(obj: unknown): { array: unknown[], path: string, totalCount: number } | null {
+    if (Array.isArray(obj) && obj.length > 0) {
+        return { array: obj, path: 'root', totalCount: obj.length }
+    }
+    if (!isObject(obj)) return null
+    for (const key of Object.keys(obj)) {
+        const val = obj[key]
+        if (Array.isArray(val) && val.length > 0) {
+            return { array: val, path: key, totalCount: val.length }
+        }
+    }
+    return null
 }
 
 function createEventEmitter({ sendEvent, userId, conversationId, log }: {
@@ -318,17 +358,19 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                         description: toolInput.description,
                     })
                 }
-                const result = await executeWithTimeout('ap_execute_action', toolInput)
-                const resultObj = isObject(result) ? result as Record<string, unknown> : {}
+                const rawResult = await executeWithTimeout('ap_execute_action', toolInput)
+                const rawSuccess = isSuccessResult(rawResult)
+                const result = truncateLargeResult(rawResult)
+                const resultObj = isObject(rawResult) ? rawResult as Record<string, unknown> : {}
                 const meta = isObject(resultObj['_meta']) ? resultObj['_meta'] as Record<string, unknown> : undefined
                 eventEmitter.emitActionReceipt({
                     toolCallId: options.toolCallId,
                     actionDisplayName: toolInput.title ?? toolInput.actionName,
                     pieceName: toolInput.pieceName,
                     connectionLabel: typeof meta?.['connectionLabel'] === 'string' ? meta['connectionLabel'] : undefined,
-                    status: isSuccessResult(result) ? 'success' : 'failed',
+                    status: rawSuccess ? 'success' : 'failed',
                     output: result,
-                    errorMessage: !isSuccessResult(result) ? extractResultText(result) : undefined,
+                    errorMessage: !rawSuccess ? extractResultText(rawResult) : undefined,
                     timestamp: new Date().toISOString(),
                 })
                 return result
@@ -380,37 +422,42 @@ async function executeBatchAction({ executeWithTimeout, eventEmitter, toolCallId
     }
 
     const CONSECUTIVE_FAILURE_LIMIT = 3
+    const CONCURRENCY_LIMIT = 5
     let consecutiveFailures = 0
+    let stoppedEarly = false
 
     pushProgress({ done: false })
 
-    for (let i = 0; i < items.length; i++) {
-        const { data: result, error } = await tryCatch(() => executeWithTimeout('ap_execute_action', {
-            pieceName,
-            actionName,
-            input: items[i],
-        }))
-        if (error) {
-            failed++
-            consecutiveFailures++
-            results.push({ index: i, success: false, error: error.message })
-        }
-        else if (isSuccessResult(result)) {
-            succeeded++
-            consecutiveFailures = 0
-            results.push({ index: i, success: true, output: result })
-        }
-        else {
-            failed++
-            consecutiveFailures++
-            results.push({ index: i, success: false, error: extractResultText(result) })
-        }
-
-        const stoppedEarly = consecutiveFailures >= CONSECUTIVE_FAILURE_LIMIT
-        const isLast = i === items.length - 1
-        pushProgress({ done: isLast || stoppedEarly })
-
+    const chunks = chunk(items, CONCURRENCY_LIMIT)
+    let itemOffset = 0
+    for (const batch of chunks) {
         if (stoppedEarly) break
+        const batchResults = await Promise.all(
+            batch.map(async (item, offset) => {
+                const idx = itemOffset + offset
+                const { data: result, error } = await tryCatch(() => executeWithTimeout('ap_execute_action', {
+                    pieceName, actionName, input: item,
+                }))
+                if (error) return { index: idx, success: false as const, error: error.message }
+                if (isSuccessResult(result)) return { index: idx, success: true as const, output: result }
+                return { index: idx, success: false as const, error: extractResultText(result) }
+            }),
+        )
+        for (const r of batchResults) {
+            if (r.success) {
+                succeeded++
+                consecutiveFailures = 0
+                results.push({ index: r.index, success: true, output: r.output })
+            }
+            else {
+                failed++
+                consecutiveFailures++
+                results.push({ index: r.index, success: false, error: r.error })
+            }
+        }
+        itemOffset += batch.length
+        stoppedEarly = consecutiveFailures >= CONSECUTIVE_FAILURE_LIMIT
+        pushProgress({ done: stoppedEarly || itemOffset >= items.length })
     }
 
     const failureSummary = failed > 0
@@ -479,6 +526,7 @@ function createPlanTools({ onPlanApproved, waitForApproval }: {
                 title: z.string().optional().describe('Short human-friendly label for the tool card, e.g. "Review Automation Plan", "Approve Setup"'),
                 planSummary: z.string().describe('A brief 1-3 sentence summary of what you will do'),
                 steps: z.array(z.string()).describe('List of concrete actions'),
+                mode: z.enum(['one_time', 'recurring']).describe('Whether this is a one-time task or a recurring automation. If ambiguous, default to one_time and ask the user.'),
             }),
             execute: async (_input, options) => {
                 const decision = await waitForApproval({ gateId: options.toolCallId })
