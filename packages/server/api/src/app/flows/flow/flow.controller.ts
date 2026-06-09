@@ -146,6 +146,7 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
         return flowService(request.log).list({
             projectIds: [request.projectId],
             folderId: request.query.folderId,
+            folderIds: request.query.folderIds,
             cursorRequest: request.query.cursor ?? null,
             limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
             status: request.query.status,
