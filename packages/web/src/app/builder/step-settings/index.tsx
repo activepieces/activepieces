@@ -29,8 +29,11 @@ import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 import { ActionErrorHandlingForm } from '../piece-properties/action-error-handling';
 import { DynamicPropertiesProvider } from '../piece-properties/dynamic-properties-context';
 import { SidebarHeader } from '../sidebar-header';
-import { TestPanelHost } from '../test-step/test-panel-host';
-import { ActionTestRunnerProvider } from '../test-step/test-runner-context';
+import { StepDataPanelHost } from '../step-data/step-data-panel-host';
+import {
+  ActionTestRunnerProvider,
+  TriggerTestRunnerProvider,
+} from '../test-step/test-runner-context';
 import { TestStepCTAButton } from '../test-step/test-step-cta-button';
 
 import { AgentSettings } from './agent-settings';
@@ -55,8 +58,8 @@ const StepSettingsContainer = () => {
     selectedBranchIndex,
     setSelectedBranchIndex,
     run,
-    testPanelView,
-    isTestPanelOpen,
+    stepDataPanelView,
+    isStepDataPanelOpen,
   ] = useBuilderStateContext((state) => [
     state.readonly,
     state.exitStepSettings,
@@ -66,8 +69,8 @@ const StepSettingsContainer = () => {
     state.selectedBranchIndex,
     state.setSelectedBranchIndex,
     state.run,
-    state.testPanelView,
-    state.isTestPanelOpen,
+    state.stepDataPanelView,
+    state.isStepDataPanelOpen,
   ]);
 
   const { stepMetadata } = stepsHooks.useStepMetadata({
@@ -327,18 +330,20 @@ const StepSettingsContainer = () => {
         <DynamicPropertiesProvider
           key={`${selectedStep.name}-${selectedStep.type}`}
         >
-          <ActionTestRunnerProviderIfAction step={modifiedStep}>
+          <StepTestRunnerProvider step={selectedStep}>
             <StepSettingsLayout
               isSplit={
-                showTestPanel && isTestPanelOpen && testPanelView === 'split'
+                showTestPanel &&
+                isStepDataPanelOpen &&
+                stepDataPanelView === 'split'
               }
               showTestPanel={showTestPanel}
-              isTestPanelOpen={isTestPanelOpen}
+              isStepDataPanelOpen={isStepDataPanelOpen}
               settingsForm={settingsForm}
               testPanelHost={
                 showTestPanel ? (
-                  <TestPanelHost
-                    mode={testPanelView === 'split' ? 'split' : 'drawer'}
+                  <StepDataPanelHost
+                    mode={stepDataPanelView === 'split' ? 'split' : 'drawer'}
                     flowId={flowVersion.flowId}
                     flowVersionId={flowVersion.id}
                     projectId={project?.id}
@@ -350,7 +355,7 @@ const StepSettingsContainer = () => {
                 ) : null
               }
             />
-          </ActionTestRunnerProviderIfAction>
+          </StepTestRunnerProvider>
         </DynamicPropertiesProvider>
       </form>
     </Form>
@@ -362,7 +367,7 @@ export { StepSettingsContainer };
 type StepSettingsLayoutProps = {
   isSplit: boolean;
   showTestPanel: boolean;
-  isTestPanelOpen: boolean;
+  isStepDataPanelOpen: boolean;
   settingsForm: React.ReactNode;
   testPanelHost: React.ReactNode;
 };
@@ -370,7 +375,7 @@ type StepSettingsLayoutProps = {
 const StepSettingsLayout = ({
   isSplit,
   showTestPanel,
-  isTestPanelOpen,
+  isStepDataPanelOpen,
   settingsForm,
   testPanelHost,
 }: StepSettingsLayoutProps) => {
@@ -390,13 +395,20 @@ const StepSettingsLayout = ({
   return (
     <div className="relative flex-1 min-h-0 flex flex-col w-full">
       <div className="flex-1 min-h-0">{settingsForm}</div>
-      {showTestPanel && !isTestPanelOpen && (
+      {showTestPanel && !isStepDataPanelOpen && (
         <div className="shrink-0">
           <TestStepCTAButton />
         </div>
       )}
-      {testPanelHost && isTestPanelOpen && (
-        <div className="absolute bottom-0 left-0 right-0 h-[60%] z-50">
+      {testPanelHost && (
+        <div
+          className={cn(
+            'absolute bottom-0 left-0 right-0 h-0 transition-all z-50',
+            {
+              'h-[60%]': isStepDataPanelOpen,
+            },
+          )}
+        >
           {testPanelHost}
         </div>
       )}
@@ -432,7 +444,7 @@ const PieceVersionInHeader = ({
 const isFlowActionStep = (step: FlowAction | FlowTrigger): step is FlowAction =>
   flowStructureUtil.isAction(step.type);
 
-const ActionTestRunnerProviderIfAction = ({
+const StepTestRunnerProvider = ({
   step,
   children,
 }: {
@@ -446,7 +458,11 @@ const ActionTestRunnerProviderIfAction = ({
       </ActionTestRunnerProvider>
     );
   }
-  return <>{children}</>;
+  return (
+    <TriggerTestRunnerProvider step={step} key={step.name}>
+      {children}
+    </TriggerTestRunnerProvider>
+  );
 };
 
 const stripSampleData = (step: FlowAction | FlowTrigger) => {

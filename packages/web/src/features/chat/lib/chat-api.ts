@@ -69,11 +69,20 @@ async function sendMessage({
 async function approveToolCall({
   gateId,
   approved,
+  payload,
 }: {
   gateId: string;
   approved: boolean;
+  payload?: Record<string, unknown>;
 }): Promise<void> {
-  return api.post<void>(`/v1/chat/tool-approvals/${gateId}`, { approved });
+  return api.post<void>(`/v1/chat/tool-approvals/${gateId}`, {
+    approved,
+    payload,
+  });
+}
+
+async function cancelConversation(conversationId: string): Promise<void> {
+  return api.post<void>(`/v1/chat/conversations/${conversationId}/cancel`);
 }
 
 export const chatApi = {
@@ -85,4 +94,5 @@ export const chatApi = {
   deleteConversation,
   sendMessage,
   approveToolCall,
+  cancelConversation,
 };

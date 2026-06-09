@@ -7,6 +7,12 @@ export const uploadFileAction = createAction({
   displayName: 'Upload File',
   description:
     'Uploads a file to Baserow from a URL. Returns the uploaded file object that can be used in file fields. Requires Email & Password (JWT) authentication — Database Tokens do not have access to the user-files endpoint.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Downloads a file from a public URL and uploads it into Baserow user files, producing a file reference you can then assign to a file field via Create/Update Row. Use as the first step before attaching files to rows. Requires Email & Password (JWT) authentication — Database Token connections cannot reach the user-files endpoint. Not idempotent — each call uploads a new file copy.',
+    idempotent: false,
+  },
   auth: baserowAuth,
   props: {
     url: Property.ShortText({

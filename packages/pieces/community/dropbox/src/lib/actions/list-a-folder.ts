@@ -10,6 +10,8 @@ export const dropboxListAFolder = createAction({
   auth: dropboxAuth,
   name: 'list_dropbox_folder',
   description: 'List the contents of a folder',
+  audience: 'both',
+  aiMetadata: { description: 'Lists the files and subfolders within the given Dropbox folder path (use an empty string for the root), optionally recursing into all subfolders. Use to enumerate folder contents and discover item paths/IDs. Read-only; safe to repeat and returns the same listing for unchanged folders.', idempotent: true },
   displayName: 'List a folder',
   props: {
     path: Property.ShortText({

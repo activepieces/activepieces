@@ -11,6 +11,12 @@ export const gmailReplyToEmailAction = createAction({
   name: 'reply_to_email',
   displayName: 'Reply to Email',
   description: 'Reply to an existing email.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends a reply to an existing email, preserving the thread and subject and addressing the original sender (reply) or all participants (reply all). Use this to respond within a known conversation; requires the Gmail message ID of the email being answered. Not idempotent: each call sends a new reply message into the thread.',
+    idempotent: false,
+  },
   props: {
     message_id: GmailProps.message,
     reply_type: Property.StaticDropdown({

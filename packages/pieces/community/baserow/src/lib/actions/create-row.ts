@@ -11,6 +11,12 @@ export const createRowAction = createAction({
   name: 'baserow_create_row',
   displayName: 'Create Row',
   description: 'Creates a new row in a table.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates one new row in a chosen Baserow table, setting field values by field name. Use to add a single record; for many rows at once use Batch Create Rows, and to avoid duplicates by a key field use Upsert Row. Not idempotent — each call inserts another row. Optionally auto-creates missing single/multi-select options referenced in the payload.',
+    idempotent: false,
+  },
   auth: baserowAuth,
   props: {
     table_id: baserowCommon.tableId(),

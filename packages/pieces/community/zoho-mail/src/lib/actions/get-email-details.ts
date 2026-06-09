@@ -9,6 +9,12 @@ export const getEmailDetailsAction = createAction({
 	name: 'get_email_details',
 	displayName: 'Get Email Details',
 	description: 'Retrieves full content and metadata of a specific email.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Fetches the full parsed body, headers, and attachments of one Zoho Mail message, identified by account ID and message ID. Use when you need the actual content of a known email rather than just listing or searching messages. Read-only and idempotent.',
+		idempotent: true,
+	},
 	props: {
 		accountId: accountId({ displayName: 'Account', required: true }),
 		folderId: folderId({ displayName: 'Folder', required: true }),

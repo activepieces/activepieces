@@ -12,6 +12,12 @@ export const exportSheetAction = createAction({
   name: 'export_sheet',
   displayName: 'Export Worksheet',
   description: 'Download a worksheet as a CSV or TSV file.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Exports a worksheet as a CSV or TSV file, returned either as a file reference or as raw text. Use when an agent needs the sheet contents in a flat delimited format for downstream processing or attachment. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: googleSheetsAuth,
   props: {
     ...commonProps,

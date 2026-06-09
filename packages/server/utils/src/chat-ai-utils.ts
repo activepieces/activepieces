@@ -11,6 +11,7 @@ import {
     PersistedChatPartType,
     PersistedToolCallStatus,
     splitCloudflareGatewayModelId,
+    spreadIfDefined,
 } from '@activepieces/shared'
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock'
 import { createAnthropic } from '@ai-sdk/anthropic'
@@ -73,6 +74,7 @@ function createChatModel({ provider, auth, config, modelId }: {
                 },
             }).chatModel(modelId)
         }
+        case AIProviderName.MISTRAL:
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
@@ -116,8 +118,6 @@ function stripThinkingBlocks(messages: ModelMessage[], provider: AIProviderName)
         .filter((msg): msg is ModelMessage => msg !== null)
 }
 
-const OPENROUTER_EFFORT_BY_TIER: Record<string, string> = { fast: 'low', smart: 'medium', premium: 'high' }
-
 function buildProviderOptions({ provider, tier }: { provider: AIProviderName, tier: { id: string, thinkingBudget: number } }): SharedV3ProviderOptions {
     switch (provider) {
         case AIProviderName.ANTHROPIC:
@@ -125,7 +125,7 @@ function buildProviderOptions({ provider, tier }: { provider: AIProviderName, ti
             return { anthropic: { thinking: { type: 'enabled', budgetTokens: tier.thinkingBudget } } }
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER:
-            return { openrouter: { cache_control: { type: 'ephemeral' }, reasoning: { effort: OPENROUTER_EFFORT_BY_TIER[tier.id] ?? 'medium' } } }
+            return { openrouter: { cache_control: { type: 'ephemeral' }, reasoning: { max_tokens: tier.thinkingBudget } } }
         default:
             return {}
     }
@@ -175,17 +175,35 @@ function buildStepParts({ content }: {
                 if (part.text) parts.push({ type: PersistedChatPartType.TEXT, text: part.text })
                 break
             case 'tool-call': {
-                const result = part.toolCallId ? resultMap.get(part.toolCallId) : undefined
+                const toolName = part.toolName ?? ''
                 const input = toRecord(part.args ?? part.input)
+                if (toolName === 'ap_update_thinking_status') {
+                    const statusText = typeof input['status'] === 'string' ? input['status'] : ''
+                    if (statusText) {
+                        parts.push({ type: PersistedChatPartType.THINKING_STATUS, text: statusText })
+                    }
+                    break
+                }
+                const result = part.toolCallId ? resultMap.get(part.toolCallId) : undefined
                 const rawOutput = result?.output ? chatPersistenceUtils.unwrapToolOutput(result.output) : undefined
+                const title = typeof input['title'] === 'string' ? input['title'] : undefined
+                const description = typeof input['description'] === 'string' ? input['description'] : undefined
                 parts.push({
                     type: PersistedChatPartType.TOOL_CALL,
                     toolCallId: part.toolCallId ?? '',
-                    toolName: part.toolName ?? '',
+                    toolName,
+                    ...spreadIfDefined('title', title),
+                    ...spreadIfDefined('description', description),
                     input,
                     output: rawOutput,
                     status: result ? PersistedToolCallStatus.COMPLETED : PersistedToolCallStatus.ERROR,
                 })
+                if (toolName === 'ap_execute_action' && typeof rawOutput === 'object' && rawOutput !== null && 'batchProgress' in rawOutput) {
+                    parts.push({
+                        type: PersistedChatPartType.BATCH_PROGRESS,
+                        data: (rawOutput as Record<string, unknown>)['batchProgress'] as Record<string, unknown>,
+                    })
+                }
                 break
             }
         }

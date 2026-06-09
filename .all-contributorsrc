@@ -1768,7 +1768,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/187646079?v=4",
       "profile": "https://github.com/rimjhimyadav",
       "contributions": [
-        "plugin"
+        "plugin",
+        "code"
       ]
     },
     {
@@ -2156,6 +2157,69 @@
       "profile": "https://github.com/Angelebeats",
       "contributions": [
         "code"
+      ]
+    },
+    {
+      "login": "kriptoburak",
+      "name": "Burak Bayır",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8755484?v=4",
+      "profile": "https://xquik.com",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "fran-mora",
+      "name": "Francesco",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8603380?v=4",
+      "profile": "https://github.com/fran-mora",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "majewskibartosz",
+      "name": "Bartosz Majewski",
+      "avatar_url": "https://avatars.githubusercontent.com/u/30874844?v=4",
+      "profile": "https://github.com/majewskibartosz",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "exvillager",
+      "name": "Pradeep kumar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/114051448?v=4",
+      "profile": "https://github.com/exvillager",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Khizarshah01",
+      "name": "khizar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/109973520?v=4",
+      "profile": "http://khizar.tech",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Dan425953",
+      "name": "Dan425953",
+      "avatar_url": "https://avatars.githubusercontent.com/u/168941179?v=4",
+      "profile": "https://github.com/Dan425953",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "FileToPDF",
+      "name": "FileToPDF.dev",
+      "avatar_url": "https://avatars.githubusercontent.com/u/268257624?v=4",
+      "profile": "https://filetopdf.dev",
+      "contributions": [
+        "plugin"
       ]
     }
   ],

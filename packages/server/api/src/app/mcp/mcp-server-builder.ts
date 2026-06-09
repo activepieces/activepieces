@@ -11,6 +11,7 @@ import { activepiecesTools, ALL_CONTROLLABLE_TOOL_NAMES, LOCKED_TOOL_NAMES, PLAT
 import { apSetProjectContextTool } from './tools/ap-set-project-context'
 
 const PLATFORM_LEVEL_TOOL_SET = new Set(PLATFORM_LEVEL_TOOL_NAMES)
+const MCP_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
 
 const MCP_SERVER_INSTRUCTIONS = `## Activepieces MCP Server
 
@@ -23,7 +24,7 @@ const MCP_SERVER_INSTRUCTIONS = `## Activepieces MCP Server
 
 ### Key patterns
 - **Auth**: ap_list_connections → get \`externalId\` → pass as \`auth\` param on ap_update_step/ap_update_trigger.
-- **Step refs**: \`{{stepName.field}}\` — no \`.output.\` in the path (e.g. \`{{trigger.body.email}}\`, \`{{step_1.id}}\`).
+- **Step refs**: \`{{stepName['output'].field}}\` — a step's data is nested under \`['output']\` (e.g. \`{{trigger['output'].body.email}}\`, \`{{step_1['output'].id}}\`). The trigger follows the same rule: use \`{{trigger['output'].field}}\`, never \`{{trigger.field}}\`. For a continue-on-failure step's error, use \`{{stepName['error'].message}}\`.
 - **Step names**: \`trigger\`, \`step_1\`, \`step_2\`, etc. Use ap_flow_structure to see all names.
 - **Piece names**: full format (e.g. "@activepieces/piece-slack") for ap_add_step/ap_update_trigger. Short names work for lookup tools.
 - **Modifying steps**: use ap_update_step/ap_update_trigger. Never delete+recreate — loses sample data.
@@ -32,7 +33,7 @@ const MCP_SERVER_INSTRUCTIONS = `## Activepieces MCP Server
 
 export async function buildMcpServer({ mcp, userId, selectionScope, log, resolveProjectMcp }: {
     mcp: PopulatedMcpServer
-    userId: string | null
+    userId?: string
     selectionScope: ProjectSelectionScope | null
     log: FastifyBaseLogger
     resolveProjectMcp?: (projectId: string) => Promise<PopulatedMcpServer>
@@ -65,7 +66,7 @@ export async function buildMcpServer({ mcp, userId, selectionScope, log, resolve
             ? await resolvePermissionChecker({ userId, projectId, log })
             : ALLOW_ALL
         registerFlowTools({ server, mcp, projectId, permissionChecker, log })
-        registerStaticTools({ server, mcp, projectId, permissionChecker, log })
+        registerStaticTools({ server, mcp, projectId, userId, permissionChecker, log })
     }
     else if (!isNil(mcp.platformId) && !isNil(userId) && !isNil(resolveProjectMcp)) {
         registerPlatformTools({ server, mcp, userId, selectionScope: selectionScope ?? { platformId: mcp.platformId, userId }, resolveProjectMcp, log })
@@ -91,7 +92,7 @@ function registerPlatformTools({ server, mcp, userId, selectionScope, resolvePro
     server.registerTool(contextTool.title, buildToolConfig(contextTool), (args: Record<string, unknown>) => contextTool.execute(args))
 
     const templateMcp: ProjectScopedMcpServer = { ...mcp, projectId: platformId }
-    const allTools = activepiecesTools(templateMcp, log)
+    const allTools = activepiecesTools(templateMcp, userId, log)
     const disabledToolSet = new Set(mcp.disabledTools ?? [])
     const tools = allTools.filter(t => LOCKED_TOOL_NAMES.includes(t.title) || !disabledToolSet.has(t.title))
 
@@ -114,7 +115,7 @@ function registerPlatformTools({ server, mcp, userId, selectionScope, resolvePro
             const projectMcp = await resolveProjectMcp(selectedProjectId)
             const projectScopedMcp: ProjectScopedMcpServer = { ...projectMcp, projectId: selectedProjectId }
             const permissionChecker = await resolvePermissionChecker({ userId, projectId: selectedProjectId, log })
-            const realTools = activepiecesTools(projectScopedMcp, log)
+            const realTools = activepiecesTools(projectScopedMcp, userId, log)
             const realTool = realTools.find(t => t.title === tool.title)
             if (isNil(realTool)) {
                 return {
@@ -160,6 +161,7 @@ function registerFlowTools({ server, mcp, projectId, permissionChecker, log }: R
                 payload: args,
                 execute: true,
                 failParentOnFailure: false,
+                timeoutMs: MCP_TIMEOUT_MS,
             })
             const isOkay = Math.floor(response.status / 100) === 2
 
@@ -177,8 +179,8 @@ function registerFlowTools({ server, mcp, projectId, permissionChecker, log }: R
     }
 }
 
-function registerStaticTools({ server, mcp, projectId, permissionChecker, log }: RegisterToolsParams): void {
-    const allTools = activepiecesTools({ ...mcp, projectId }, log)
+function registerStaticTools({ server, mcp, projectId, userId, permissionChecker, log }: RegisterToolsParams): void {
+    const allTools = activepiecesTools({ ...mcp, projectId }, userId, log)
     const disabledToolSet = new Set(mcp.disabledTools ?? [])
     const tools = allTools.filter(t => LOCKED_TOOL_NAMES.includes(t.title) || !disabledToolSet.has(t.title))
 
@@ -247,6 +249,7 @@ type RegisterToolsParams = {
     server: McpServer
     mcp: PopulatedMcpServer
     projectId: string
+    userId?: string
     permissionChecker: PermissionChecker
     log: FastifyBaseLogger
 }

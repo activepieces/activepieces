@@ -7,6 +7,8 @@ export const getTableSchema = createAction({
     name: 'get_table_schema',
     displayName: 'Get Table Schema',
     description: 'Returns the column definitions for a specific table',
+    audience: 'both',
+    aiMetadata: { description: 'Returns the column definitions (name, data type, format, description) for a named Supabase table. Use to learn a table\'s structure before constructing inserts, updates, or filters. Read-only and idempotent.', idempotent: true },
     auth: supabaseAuth,
     props: {
         table_name: supabaseCommon.table_name,

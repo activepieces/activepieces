@@ -1,5 +1,5 @@
 import path from 'path'
-import { ApEnvironment, apId, ApMultipartFile, spreadIfDefined } from '@activepieces/shared'
+import { ApEnvironment, apId, ApMultipartFile, maxSocketHttpBufferSizeBytes, spreadIfDefined } from '@activepieces/shared'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
 import fastifyMultipart, { MultipartFile } from '@fastify/multipart'
@@ -16,6 +16,7 @@ import { healthModule } from './health/health.module'
 import { embedSecurity } from './helper/embed-security'
 import { errorHandler } from './helper/error-handler'
 import { exceptionHandler } from './helper/exception-handler'
+import { networkUtils } from './helper/network-utils'
 import { rejectedPromiseHandler } from './helper/promise-handler'
 import { system } from './helper/system/system'
 import { AppSystemProp } from './helper/system/system-props'
@@ -45,7 +46,7 @@ export const setupServer = async (): Promise<FastifyInstance> => {
     if (system.isApp()) {
         await app.register(fastifySocketIO, {
             cors: { origin: '*' },
-            maxHttpBufferSize: 1e8,
+            maxHttpBufferSize: maxSocketHttpBufferSizeBytes(system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB)),
             path: '/api/socket.io',
             ...spreadIfDefined('adapter', await getAdapter()),
             transports: ['websocket'],
@@ -98,7 +99,7 @@ export const setupServer = async (): Promise<FastifyInstance> => {
         void reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
         if (!reply.hasHeader('Content-Security-Policy')) {
             const frameAncestors = await embedSecurity(request.log).getFrameAncestorsHeader({
-                hostname: request.hostname,
+                hostname: networkUtils.getRequestHost(request),
             })
             void reply.header('Content-Security-Policy', frameAncestors)
         }

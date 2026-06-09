@@ -32,10 +32,11 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
 - **LogsFile**: Zstd-compressed File entity (type FLOW_RUN_LOG) storing the full `FlowExecutorContext` after execution.
 - **Waitpoint**: Row in the `waitpoint` table representing one paused step on a run. Fields: `type` (DELAY|WEBHOOK), `version` (V0|V1 — V1 is the current API), `status` (PENDING|COMPLETED), `stepName`, `resumeDateTime`, `responseToSend`, `resumePayload`, `workerHandlerId`, `httpRequestId`. Unique on `(flow_run_id, step_name)`.
 - **PauseMetadata** *(legacy/V0)*: JSONB column on `flow_run` distinguishing DELAY vs WEBHOOK pauses. Deprecated 2026-04-13 (0.82.0); still read for in-flight V0 runs, scheduled for removal. V1 runs store this information on the `waitpoint` row instead.
-- **Retry Strategy**: FROM_FAILED_STEP (resume from exact failure point, keeping prior outputs) or ON_LATEST_VERSION (fresh run on current published version).
+- **Retry Strategy**: FROM_FAILED_STEP (resume from exact failure point, keeping prior outputs — but if the trigger itself failed, restart with BEGIN + `executeTrigger: true` since there is nothing to resume from) or ON_LATEST_VERSION (fresh run on current published version, re-runs the trigger when the previous attempt's trigger failed).
 - **ResumeReason**: `WAITPOINT` | `RETRY`. Set on every `ExecutionType.RESUME` engine operation and threaded through `ExecuteFlowJobData`. Determines whether the engine restores FAILED steps from the journal — waitpoint resumes preserve them, retry resumes drop them so the failed step re-executes. The two resume paths share the same `ExecutionType`, so this field is the only discriminator.
 - **Subflow**: A child run linked via `parentRunId`, created when a flow calls another flow as a step.
 - **failedStep**: JSONB snapshot of `{ name, displayName, message? }` for the step that caused failure. Enables filtered retries, the runs-table error-message search, the failure email's "Reason" line, and the builder's jump-to-failed-step affordance. `message` is truncated via `truncateString` from `@activepieces/shared` before being persisted, and the engine populates `failedStep` for every status in `FAILED_STATES` (FAILED, TIMEOUT, INTERNAL_ERROR, QUOTA_EXCEEDED, MEMORY_LIMIT_EXCEEDED) — not just `FAILED`.
+- **FriendlyPieceError**: Structured error shape (`__apErrorVersion`, `message`, optional `status`, `errorName`, `requestBody`, `responseBody`, `apiMessage`, `raw`) produced by `formatPieceError` in the engine when a piece step throws (replacing the old `util.inspect` dump). The builder parses it with `tryParseFriendlyPieceError` and renders a `FriendlyErrorView` card — plain-language headline, the service's message, a "Copy Error for AI" button, and a "Technical Details" disclosure holding the `raw` dump — in both the test panel and the run-details output view.
 
 ## Entity
 
@@ -48,7 +49,7 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
 
 ## Endpoints
 
-- `GET /` — List runs (cursor pagination, filters: projectId, flowId, status, tags, createdAfter/Before, failedStepName, failedStepMessage). `failedStepMessage` is a case-insensitive `ILIKE '%…%'` against `failedStep->>'message'`. The status and failedStepMessage filters are independent — combining a non-failure status with a failedStepMessage simply returns empty (no implicit narrowing).
+- `GET /` — List runs (cursor pagination, filters: projectId, flowId, status, tags, createdAfter/Before, failedStepName, failedStepMessage). Paginates by a composite `(created DESC, id DESC)` cursor — `id` is the unique tiebreaker that keeps page boundaries stable when runs share a `created` timestamp (e.g. same-transaction inserts). `failedStepMessage` is a case-insensitive `ILIKE '%…%'` against `failedStep->>'message'`. The status and failedStepMessage filters are independent — combining a non-failure status with a failedStepMessage simply returns empty (no implicit narrowing).
 - `GET /:id` — Get single run with populated data
 - `POST /:id/retry` — Retry single run (strategy: FROM_FAILED_STEP or ON_LATEST_VERSION)
 - `POST /retry` — Bulk retry with filters
@@ -62,8 +63,9 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
 
 ## Retry Strategies
 
-- **FROM_FAILED_STEP**: Fetches execution state from zstd-compressed logs file, rebuilds FlowExecutorContext, re-runs from failed step. Previous step outputs preserved. Enqueued with `resumeReason: RETRY` so the engine drops the FAILED step from the restored journal — without this, the failed step would be treated as already-complete and the retry would be a no-op.
-- **ON_LATEST_VERSION**: Starts fresh from trigger on latest published version.
+- **FROM_FAILED_STEP**: Default path fetches execution state from zstd-compressed logs file, rebuilds FlowExecutorContext, re-runs from failed step. Previous step outputs preserved. Enqueued with `executionType: RESUME` and `resumeReason: RETRY` so the engine drops the FAILED step from the restored journal — without this, the failed step would be treated as already-complete and the retry would be a no-op. **Special case — failed trigger:** when `oldFlowRun.steps[trigger.name].status === FAILED`, there is nothing to RESUME from (the trigger never produced a real output). The retry instead enqueues `executionType: BEGIN` + `executeTrigger: true` and feeds the raw event preserved on the trigger step's `output` field back as `triggerPayload` so `pieceTrigger.run()` re-executes against the (now-fixed) connection. Same `flowVersionId` as the original run.
+- **ON_LATEST_VERSION**: Starts fresh from trigger on latest published version. Reads the payload from `triggerStep.output` for both cases — `executeTrigger` is the discriminator. Normally `executeTrigger: false` (the previous trigger's `run()` result is replayed as-is). When the previous run's trigger step is FAILED, switches to `executeTrigger: true` so `pieceTrigger.run()` reprocesses the raw event (stored in the same `output` field) and produces correctly-shaped output for downstream actions.
+- **Failed-trigger payload preservation**: `flow.operation.ts#buildFailedTriggerContext` writes `input.triggerPayload ?? {}` into the failed trigger step's `output` field via `.setOutput(...)` — the same slot a successful trigger uses for its `run()` result, so retry reads `triggerStep.output` uniformly and the existing output-slicing machinery covers large payloads. This is the only place the raw event survives past the BullMQ job's completion — the job is removed on `removeOnComplete: true`, so without this both retry strategies would have no event to re-trigger from. The `executeTrigger` flag (set from `status === FAILED` at retry time) is what distinguishes replaying a processed result from reprocessing a raw payload; no separate payload field is needed.
 - Constraint: only terminal states, within retention window (EXECUTION_DATA_RETENTION_DAYS).
 
 ## Logs Storage
@@ -92,7 +94,7 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
 
 ## Frontend Integration
 
-`flowRunsApi.subscribeToTestFlowOrManualRun()` uses Socket.IO to start a test run and stream progress updates via `WebsocketClientEvent.UPDATE_RUN_PROGRESS`. The builder's run-list sidebar polls for recent runs and the run-details panel renders step-by-step input/output from the populated run's execution logs. `flowRunMutations.useRetryRun` handles the `FLOW_RUN_RETRY_OUTSIDE_RETENTION` error code with a user-facing toast showing the retention window.
+`flowRunsApi.subscribeToTestFlowOrManualRun()` uses Socket.IO to start a test run and stream progress updates via `WebsocketClientEvent.UPDATE_RUN_PROGRESS`. The builder's run-list sidebar polls for recent runs (infinite query, auto-refetching every 15s while runs are still executing) and deduplicates entries by `id` when flattening pages — a safeguard against page overlap during live refetch. The run-details panel renders step-by-step input/output from the populated run's execution logs. `flowRunMutations.useRetryRun` handles the `FLOW_RUN_RETRY_OUTSIDE_RETENTION` error code with a user-facing toast showing the retention window.
 
 ### Runs Table Filters
 

@@ -7,6 +7,8 @@ export const addContactToCampaignAction = createAction({
   name: 'add_contact_to_campaign',
   displayName: 'Add Contact to Campaign',
   description: 'Add an existing contact to a campaign.',
+  audience: 'both',
+  aiMetadata: { description: 'Enrolls an existing GoHighLevel/LeadConnector contact into a marketing campaign by contact ID and campaign ID. Use to start a campaign sequence for a known contact. Not idempotent — each call re-enrolls the contact.', idempotent: false },
   props: {
     contact: Property.Dropdown({
   auth: leadConnectorAuth,

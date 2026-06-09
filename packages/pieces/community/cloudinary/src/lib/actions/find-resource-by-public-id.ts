@@ -9,6 +9,8 @@ export const findResourceByPublicId = createAction({
   name: 'findResourceByPublicId',
   displayName: 'Find Resource by Public ID',
   description: 'Retrieve details of an asset using its unique public ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up a single Cloudinary asset by its public ID, resource type, and delivery type, returning its metadata. Use to confirm an asset exists or fetch its details before transforming or deleting it; a missing asset returns a not-found result rather than erroring. Read-only and idempotent.', idempotent: true },
   props: {
     resource_type: resourceTypeDropdown,
     public_id_dropdown: publicIdDropdown,

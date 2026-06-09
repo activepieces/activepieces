@@ -10,12 +10,15 @@ import { FlaskConical, Play } from 'lucide-react';
 import React, { useContext } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { piecesHooks } from '@/features/pieces';
 
 import { useBuilderStateContext } from '../builder-hooks';
+import { stepPropertiesSnapshotUtils } from '../data-display/build-step-properties-snapshot';
+import { ErrorExplanationContext } from '../data-display/explanation-prompt';
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
+import { StepDataPanelHeader } from '../step-data/step-data-panel-header';
+import { StepDataPanelViewToggle } from '../step-data/step-data-panel-view-toggle';
 
-import { TestPanelHeader } from './test-panel-header';
-import { TestPanelViewToggle } from './test-panel-view-toggle';
 import { useActionTestRunner } from './test-runner-context';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
 import { TestButtonTooltip } from './test-step-tooltip';
@@ -60,13 +63,56 @@ const TestStepSectionImplementation = React.memo(
     const isTesting = runner?.isTesting ?? false;
     const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
 
+    const pieceName =
+      currentStep.type === FlowActionType.PIECE
+        ? currentStep.settings.pieceName
+        : undefined;
+    const pieceVersion =
+      currentStep.type === FlowActionType.PIECE
+        ? currentStep.settings.pieceVersion
+        : undefined;
+    const { pieceModel } = piecesHooks.usePiece({
+      name: pieceName ?? '',
+      version: pieceVersion,
+      enabled: !isNil(pieceName),
+    });
+    const stepKind = 'action';
+    const stepName =
+      currentStep.type === FlowActionType.PIECE
+        ? currentStep.settings.actionName
+        : currentStep.type;
+    const stepInput =
+      currentStep.type === FlowActionType.PIECE
+        ? (currentStep.settings.input as Record<string, unknown> | undefined)
+        : undefined;
+    const explanationContext: ErrorExplanationContext = {
+      pieceName,
+      pieceVersion,
+      pieceDisplayName: pieceModel?.displayName,
+      pieceAuthType: stepPropertiesSnapshotUtils.findAuthType(pieceModel),
+      stepKind,
+      stepName,
+      stepDisplayName: currentStep.displayName,
+      stepDescription: stepPropertiesSnapshotUtils.findDescription({
+        pieceModel,
+        stepKind,
+        stepName,
+      }),
+      stepProperties: stepPropertiesSnapshotUtils.build({
+        pieceModel,
+        stepKind,
+        stepName,
+        input: stepInput,
+      }),
+    };
+
     return (
       <>
         {!sampleDataExists && !isTesting && (
           <div className="flex flex-col h-full">
-            <TestPanelHeader status="idle" />
+            <StepDataPanelHeader status="idle" />
             <div className="flex justify-end px-3 py-2 shrink-0">
-              <TestPanelViewToggle />
+              <StepDataPanelViewToggle />
             </div>
             <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
               <div className="flex items-center justify-center size-12 rounded-full bg-primary/10 text-primary">
@@ -109,6 +155,11 @@ const TestStepSectionImplementation = React.memo(
             onRetest={onTestButtonClick}
             errorMessage={errorMessage}
             consoleLogs={consoleLogs}
+            explanationContext={explanationContext}
+            pieceDisplayName={pieceModel?.displayName}
+            pieceSchema={
+              pieceModel?.actions[stepName ?? '']?.outputSchema ?? null
+            }
             onCancelTesting={() => {
               removeStepTestListener(currentStep.name);
               revertSampleDataLocally?.();

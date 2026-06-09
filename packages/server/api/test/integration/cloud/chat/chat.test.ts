@@ -84,6 +84,28 @@ describe('Chat Conversations API', () => {
         })
     })
 
+    describe('List conversations performance', () => {
+        it('does not return messages or uiMessages in list response', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+
+            await ctx.post(CONVERSATIONS_URL, { title: 'Lightweight List Test' })
+
+            const response = await ctx.get(CONVERSATIONS_URL)
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            const body = response.json()
+            expect(body.data).toHaveLength(1)
+
+            const conv = body.data[0]
+            expect(conv.id).toBeDefined()
+            expect(conv.title).toBe('Lightweight List Test')
+            expect(conv.status).toBeDefined()
+            expect(conv.created).toBeDefined()
+            expect(conv.messages).toBeUndefined()
+            expect(conv.uiMessages).toBeUndefined()
+            expect(conv.summary).toBeUndefined()
+        })
+    })
+
     describe('Cross-user isolation', () => {
         it('user B cannot GET a conversation created by user A on the same platform', async () => {
             const ctx = await createTestContext(app, { plan: { chatEnabled: true } })

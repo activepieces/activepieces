@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { OnStartContext, TestOrRunHookContext, TriggerHookContext } from '../context';
-import { TriggerBase } from '../piece-metadata';
+import type { OutputSchema } from '../output-schema';
+import { AiMetadata, TriggerBase } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { ExtractPieceAuthPropertyTypeForMethods, PieceAuthProperty } from '../property/authentication';
 import { isNil, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration, WebhookHandshakeStrategy } from '@activepieces/shared';
@@ -44,13 +45,6 @@ type BaseTriggerParams<
   name: string
   displayName: string
   description: string
-  /**
-   * Optional alternate description shown to LLMs (chat / MCP).
-   * Use this for tool-selection guidance, anti-patterns, disambiguation,
-   * and parameter pitfalls that would be noise in the human UI description.
-   * Falls back to {@code description} when omitted.
-   */
-  llmDescription?: string
   requireAuth?: boolean
   auth?: PieceAuth
   props: TriggerProps
@@ -61,6 +55,8 @@ type BaseTriggerParams<
   test?: (context: TestOrRunHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<unknown[]>,
   onStart?: OnStartRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps>,
   sampleData: unknown
+  outputSchema?: OutputSchema
+  aiMetadata?: AiMetadata
 }
 
 type WebhookTriggerParams<
@@ -105,7 +101,8 @@ export class ITrigger<
     public readonly test: (ctx: TestOrRunHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<unknown[]>,
     public readonly sampleData: unknown,
     public readonly testStrategy: TriggerTestStrategy,
-    public readonly llmDescription?: string,
+    public readonly outputSchema?: OutputSchema,
+    public readonly aiMetadata?: AiMetadata,
   ) { }
 }
 
@@ -142,7 +139,8 @@ export const createTrigger = <
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
         params.test ? TriggerTestStrategy.TEST_FUNCTION : TriggerTestStrategy.SIMULATION,
-        params.llmDescription,
+        params.outputSchema,
+        params.aiMetadata,
       )
     case TriggerStrategy.POLLING:
       return new ITrigger(
@@ -163,7 +161,8 @@ export const createTrigger = <
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
         TriggerTestStrategy.TEST_FUNCTION,
-        params.llmDescription,
+        params.outputSchema,
+        params.aiMetadata,
       )
     case TriggerStrategy.MANUAL:
       return new ITrigger(
@@ -184,7 +183,8 @@ export const createTrigger = <
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
         TriggerTestStrategy.TEST_FUNCTION,
-        params.llmDescription,
+        params.outputSchema,
+        params.aiMetadata,
       )
     case TriggerStrategy.APP_WEBHOOK:
       return new ITrigger(
@@ -205,7 +205,8 @@ export const createTrigger = <
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
         (isNil(params.sampleData) && isNil(params.test)) ? TriggerTestStrategy.SIMULATION : TriggerTestStrategy.TEST_FUNCTION,
-        params.llmDescription,
+        params.outputSchema,
+        params.aiMetadata,
       )
   }
 }
