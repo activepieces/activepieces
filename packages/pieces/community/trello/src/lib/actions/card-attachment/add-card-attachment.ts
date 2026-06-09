@@ -14,6 +14,8 @@ export const addCardAttachment = createAction({
   name: 'add_card_attachment',
   displayName: 'Add Card Attachment',
   description: 'Adds an attachment to a card.',
+  audience: 'both',
+  aiMetadata: { description: 'Uploads a file as an attachment to a Trello card identified by card_id, optionally naming it, setting its MIME type, and using it as the card cover. Use to attach documents or images to a card. Requires card_id and the file; each call adds a new attachment, so it is not idempotent.', idempotent: false },
   props: {
     card_id: Property.ShortText({
       description: 'The ID of the card to add attachment to',

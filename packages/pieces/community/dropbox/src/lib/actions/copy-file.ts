@@ -10,6 +10,8 @@ export const dropboxCopyFile = createAction({
   auth: dropboxAuth,
   name: 'copy_dropbox_file',
   description: 'Copy a file',
+  audience: 'both',
+  aiMetadata: { description: 'Copies the file at the source path to a new destination path within Dropbox, leaving the original in place; optionally autorenames on conflict. Use to duplicate a single file. Not idempotent: each call creates a copy, so repeating it errors on conflict or, with autorename, produces additional duplicates.', idempotent: false },
   displayName: 'Copy file',
   props: {
     from_path: Property.ShortText({

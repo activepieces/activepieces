@@ -16,6 +16,12 @@ export const createColumnAction = createAction({
 	name: 'create-column',
 	displayName: 'Create Spreadsheet Column',
 	description: 'Creates a new column in a specific spreadsheet.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Inserts a new column into a worksheet and writes a header name into its first row, either at a given column index or after the last existing column. Use when an agent needs to add a field to a sheet. Not idempotent — each call inserts another column.',
+		idempotent: false,
+	},
 	props: {
 		...commonProps,
 		columnName: Property.ShortText({

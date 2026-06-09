@@ -8,6 +8,8 @@ export const listContacts = createAction({
   auth: resendAuth,
   displayName: 'List Contacts',
   description: 'Retrieve all contacts in an audience',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves all contacts in a specific Resend audience, including each contact\'s ID, email, name, and subscription status. Use this to discover contact IDs (e.g. to feed Update Contact or Delete Contact) or to inspect a mailing list; requires the audience ID. Read-only and idempotent.', idempotent: true },
   props: {
     audience_id: resendProps.audienceId,
   },

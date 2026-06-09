@@ -13,6 +13,10 @@ export const rowUpdatedTrigger = createTrigger({
   auth: baserowAuth,
   displayName: 'Updated Row',
   description: 'Triggers when an existing row is updated in a Baserow table.',
+  aiMetadata: {
+    description:
+      'Fires when an existing row in the selected Baserow table changes, emitting one event per updated row with both its new and previous field values. Use to react to individual edits; for the batch form use Updated Rows (Batch).',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     table_id: baserowCommon.tableId(),

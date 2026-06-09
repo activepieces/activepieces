@@ -10,6 +10,8 @@ export const getYoutubeComments = createAction({
   displayName: 'Get YouTube Comments',
   description:
     'Fetch comments from  YouTube video with options to sort and limit results.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches comments for a YouTube video given its watch URL, optionally capped by a limit (default 10, max 100) and ordered newest-first or by top engagement. Use to read audience reactions or feed comment text into analysis. Read-only and idempotent, though results may shift as new comments are posted.', idempotent: true },
   props: {
     url: Property.ShortText({
       displayName: 'YouTube Video URL',

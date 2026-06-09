@@ -528,6 +528,7 @@ export const createMockFlowVersion = (
         valid: flowVersion?.valid ?? faker.datatype.boolean(),
         notes: flowVersion?.notes ?? [],
         schemaVersion: flowVersion?.schemaVersion ?? LATEST_FLOW_SCHEMA_VERSION,
+        backupFiles: flowVersion?.backupFiles ?? null,
     }
 }
 
