@@ -26,6 +26,23 @@ function rewriteToken(code: string, stepNames: Set<string>, idempotent: boolean)
     if (code.trim().length === 0) {
         return null
     }
+    const rewrites = collectOutputRewrites(code, stepNames, idempotent)
+    if (rewrites !== null) {
+        return applyRewrites(code, rewrites)
+    }
+    // The token did not parse — most commonly a user typo left an unterminated
+    // string literal (e.g. `step_15['body']['url]`). Quote characters are the
+    // only thing breaking the parse, so blank them out (length-preserving, so
+    // AST offsets still map back) to recover the structure, re-run the same
+    // analyzer, then apply the insertions to the ORIGINAL string.
+    const recovered = collectOutputRewrites(blankOutQuotes(code), stepNames, idempotent)
+    if (recovered === null) {
+        return null
+    }
+    return applyRewrites(code, recovered)
+}
+
+function collectOutputRewrites(code: string, stepNames: Set<string>, idempotent: boolean): Rewrite[] | null {
     let ast: AnyNode
     try {
         ast = parse(`(${code})`, { ecmaVersion: ECMA_VERSION, sourceType: 'script', ranges: true })
@@ -43,9 +60,9 @@ function rewriteToken(code: string, stepNames: Set<string>, idempotent: boolean)
 
     const globalScope = scopeManager.scopes[0]
 
-    const unresolvedIdentifiers  = new Set<unknown>()
+    const unresolvedIdentifiers = new Set<unknown>()
     for (const ref of globalScope.through) {
-        unresolvedIdentifiers .add(ref.identifier)
+        unresolvedIdentifiers.add(ref.identifier)
     }
 
     const rewrites: Rewrite[] = []
@@ -84,7 +101,11 @@ function rewriteToken(code: string, stepNames: Set<string>, idempotent: boolean)
         },
     })
 
-    return applyRewrites(code, rewrites)
+    return rewrites
+}
+
+function blankOutQuotes(code: string): string {
+    return code.replace(QUOTE_CHAR_PATTERN, ' ')
 }
 
 function applyRewrites(source: string, rewrites: Rewrite[]): string {
@@ -205,6 +226,7 @@ export const expressionRewriter = {
 }
 
 const STEP_NAME_PATTERN = /^step_\d+$/
+const QUOTE_CHAR_PATTERN = /['"`]/g
 const TRIGGER_NAME = 'trigger'
 const OUTPUT_INSERT = '[\'output\']'
 const ECMA_VERSION = 2024
