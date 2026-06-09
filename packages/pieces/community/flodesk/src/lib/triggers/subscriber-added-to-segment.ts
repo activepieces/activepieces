@@ -35,7 +35,8 @@ export const subscriberAddedToSegmentTrigger = createTrigger({
       method: HttpMethod.POST,
       endpoint: '/webhooks',
       body: {
-        url: context.webhookUrl,
+        name: 'Activepieces - Subscriber Added to Segment',
+        post_url: context.webhookUrl,
         events: ['subscriber.added_to_segment'],
       },
     });
@@ -50,6 +51,7 @@ export const subscriberAddedToSegmentTrigger = createTrigger({
         method: HttpMethod.DELETE,
         endpoint: `/webhooks/${storedWebhookId}`,
       });
+      await context.store.delete('subscriber_added_to_segment_webhook');
     }
   },
   async run(context) {

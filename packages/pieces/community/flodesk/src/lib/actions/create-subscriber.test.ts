@@ -2,9 +2,13 @@
 import { httpClient } from '@activepieces/pieces-common';
 import { createMockActionContext } from '@activepieces/pieces-framework';
 import { createSubscriberAction } from './create-subscriber';
-import { vi, describe, it, expect } from 'vitest';
+import { vi, describe, it, expect, afterEach } from 'vitest';
 
 describe('createSubscriberAction', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('should send a POST request with the correct payload', async () => {
     const sendRequestSpy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue({
       body: {

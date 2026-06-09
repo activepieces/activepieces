@@ -26,7 +26,8 @@ export const subscriberCreatedTrigger = createTrigger({
       method: HttpMethod.POST,
       endpoint: '/webhooks',
       body: {
-        url: context.webhookUrl,
+        name: 'Activepieces - Subscriber Created',
+        post_url: context.webhookUrl,
         events: ['subscriber.created'],
       },
     });
@@ -41,6 +42,7 @@ export const subscriberCreatedTrigger = createTrigger({
         method: HttpMethod.DELETE,
         endpoint: `/webhooks/${storedWebhookId}`,
       });
+      await context.store.delete('subscriber_created_webhook');
     }
   },
   async run(context) {

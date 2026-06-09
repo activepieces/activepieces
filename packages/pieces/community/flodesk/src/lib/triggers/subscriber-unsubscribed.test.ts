@@ -1,9 +1,9 @@
 /// <reference types="vitest/globals" />
 import { httpClient } from '@activepieces/pieces-common';
-import { subscriberCreatedTrigger } from './subscriber-created';
+import { subscriberUnsubscribedTrigger } from './subscriber-unsubscribed';
 import { vi, describe, it, expect, afterEach } from 'vitest';
 
-describe('subscriberCreatedTrigger', () => {
+describe('subscriberUnsubscribedTrigger', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -11,7 +11,7 @@ describe('subscriberCreatedTrigger', () => {
   it('should register webhook on enable', async () => {
     const sendRequestSpy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue({
       body: {
-        id: 'webhook_abc123',
+        id: 'webhook_xyz789',
       },
     } as any);
 
@@ -29,21 +29,21 @@ describe('subscriberCreatedTrigger', () => {
       },
     } as any;
 
-    await subscriberCreatedTrigger.onEnable(context);
+    await subscriberUnsubscribedTrigger.onEnable(context);
 
     expect(sendRequestSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         method: 'POST',
         url: 'https://api.flodesk.com/v1/webhooks',
         body: {
-          name: 'Activepieces - Subscriber Created',
+          name: 'Activepieces - Subscriber Unsubscribed',
           post_url: 'https://example.com/webhook',
-          events: ['subscriber.created'],
+          events: ['subscriber.unsubscribed'],
         },
       })
     );
 
-    expect(storePutSpy).toHaveBeenCalledWith('subscriber_created_webhook', 'webhook_abc123');
+    expect(storePutSpy).toHaveBeenCalledWith('subscriber_unsubscribed_webhook', 'webhook_xyz789');
   });
 
   it('should delete webhook and clear store on disable', async () => {
@@ -51,7 +51,7 @@ describe('subscriberCreatedTrigger', () => {
       body: {},
     } as any);
 
-    const storeGetSpy = vi.fn().mockResolvedValue('webhook_abc123');
+    const storeGetSpy = vi.fn().mockResolvedValue('webhook_xyz789');
     const storeDeleteSpy = vi.fn().mockResolvedValue(undefined);
 
     const context = {
@@ -65,23 +65,23 @@ describe('subscriberCreatedTrigger', () => {
       },
     } as any;
 
-    await subscriberCreatedTrigger.onDisable(context);
+    await subscriberUnsubscribedTrigger.onDisable(context);
 
-    expect(storeGetSpy).toHaveBeenCalledWith('subscriber_created_webhook');
+    expect(storeGetSpy).toHaveBeenCalledWith('subscriber_unsubscribed_webhook');
     expect(sendRequestSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         method: 'DELETE',
-        url: 'https://api.flodesk.com/v1/webhooks/webhook_abc123',
+        url: 'https://api.flodesk.com/v1/webhooks/webhook_xyz789',
       })
     );
-    expect(storeDeleteSpy).toHaveBeenCalledWith('subscriber_created_webhook');
+    expect(storeDeleteSpy).toHaveBeenCalledWith('subscriber_unsubscribed_webhook');
   });
 
   it('should return payload body in run', async () => {
     const payloadBody = {
       id: 'sub_123',
       email: 'john@example.com',
-      first_name: 'John',
+      status: 'unsubscribed',
     };
 
     const context = {
@@ -90,7 +90,7 @@ describe('subscriberCreatedTrigger', () => {
       },
     } as any;
 
-    const result = await subscriberCreatedTrigger.run(context);
+    const result = await subscriberUnsubscribedTrigger.run(context);
 
     expect(result).toEqual([payloadBody]);
   });

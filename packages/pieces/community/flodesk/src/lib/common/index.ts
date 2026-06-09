@@ -37,81 +37,52 @@ export async function flodeskApiCall<T>({
   return response.body;
 }
 
+async function loadSegmentOptions(auth: unknown) {
+  if (!auth) {
+    return {
+      disabled: true,
+      options: [],
+      placeholder: 'Please connect your Flodesk account first',
+    };
+  }
+  try {
+    const response = await flodeskApiCall<{
+      data: { id: string; name: string }[];
+    }>({
+      apiKey: (auth as SecretTextConnectionValue).secret_text,
+      method: HttpMethod.GET,
+      endpoint: '/segments',
+    });
+    const options = response.data.map((segment) => ({
+      label: segment.name,
+      value: segment.id,
+    }));
+    return {
+      disabled: false,
+      options,
+    };
+  } catch (e) {
+    return {
+      disabled: true,
+      options: [],
+      placeholder: 'Error loading segments',
+    };
+  }
+}
+
 export const flodeskCommon = {
   segment_id: (required = true) => Property.Dropdown({
     auth: flodeskAuth,
     displayName: 'Segment',
     required,
     refreshers: [],
-    options: async ({ auth }) => {
-      if (!auth) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Please connect your Flodesk account first',
-        };
-      }
-      try {
-        const response = await flodeskApiCall<{
-          data: { id: string; name: string }[];
-        }>({
-          apiKey: (auth as SecretTextConnectionValue).secret_text,
-          method: HttpMethod.GET,
-          endpoint: '/segments',
-        });
-        const options = response.data.map((segment) => ({
-          label: segment.name,
-          value: segment.id,
-        }));
-        return {
-          disabled: false,
-          options,
-        };
-      } catch (e) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Error loading segments',
-        };
-      }
-    },
+    options: async ({ auth }) => loadSegmentOptions(auth),
   }),
   segments_multi: (required = false) => Property.MultiSelectDropdown({
     auth: flodeskAuth,
     displayName: 'Segments',
     required,
     refreshers: [],
-    options: async ({ auth }) => {
-      if (!auth) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Please connect your Flodesk account first',
-        };
-      }
-      try {
-        const response = await flodeskApiCall<{
-          data: { id: string; name: string }[];
-        }>({
-          apiKey: (auth as SecretTextConnectionValue).secret_text,
-          method: HttpMethod.GET,
-          endpoint: '/segments',
-        });
-        const options = response.data.map((segment) => ({
-          label: segment.name,
-          value: segment.id,
-        }));
-        return {
-          disabled: false,
-          options,
-        };
-      } catch (e) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Error loading segments',
-        };
-      }
-    },
+    options: async ({ auth }) => loadSegmentOptions(auth),
   }),
 };

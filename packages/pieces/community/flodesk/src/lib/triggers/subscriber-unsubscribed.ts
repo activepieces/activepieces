@@ -26,7 +26,8 @@ export const subscriberUnsubscribedTrigger = createTrigger({
       method: HttpMethod.POST,
       endpoint: '/webhooks',
       body: {
-        url: context.webhookUrl,
+        name: 'Activepieces - Subscriber Unsubscribed',
+        post_url: context.webhookUrl,
         events: ['subscriber.unsubscribed'],
       },
     });
@@ -41,6 +42,7 @@ export const subscriberUnsubscribedTrigger = createTrigger({
         method: HttpMethod.DELETE,
         endpoint: `/webhooks/${storedWebhookId}`,
       });
+      await context.store.delete('subscriber_unsubscribed_webhook');
     }
   },
   async run(context) {
