@@ -9,8 +9,8 @@ import { AppSystemProp } from '../../helper/system/system-props'
 export const canaryRoutingMiddleware = async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
     if (request.headers.upgrade === 'websocket') return
 
-    const canaryAppUrl = system.get(AppSystemProp.CANARY_APP_URL)
-    if (isNil(canaryAppUrl)) return
+    const isCanaryApp = system.getBoolean(AppSystemProp.IS_CANARY_APP) ?? false
+    if (isCanaryApp) return
 
     const { data: platformId, error: resolveError } = await tryCatch(() => resolvePlatformId(request, request.log))
     if (resolveError || isNil(platformId)) return
