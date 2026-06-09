@@ -60,6 +60,10 @@ Flows are the core automation primitive in Activepieces. Each flow is a versione
 
 **Folder**: id, projectId, displayName. Used to organize flows and tables. Case-insensitive uniqueness.
 
+## List Filtering (`GET /v1/flows`)
+
+`flowService.list` filters by `folderId` (single folder; the `"NULL"` sentinel matches uncategorized flows) or `folderIds` (array — flows belonging to any of the listed folder IDs), plus `status`, `name`, `connectionExternalIds`, `agentExternalIds`, and `externalIds`. The automations page uses `folderIds` to load all foldered flows in a single request instead of one request per folder.
+
 ## Flow Operations (Single-Endpoint Dispatch)
 
 All flow modifications go through `POST /v1/flows/:id` with a `FlowOperationRequest` discriminated union. **26 operation types**:
