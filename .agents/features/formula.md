@@ -107,7 +107,7 @@ The pre-pass:
 ## Editor Composition
 
 `tiptap-editor.tsx`:
-- Reads `platform.plan.dataManipulationEnabled` via `platformHooks.useCurrentPlatform()` and `embedState.isEmbedded` via `useEmbedding()`; `formulaEnabled` is the AND of (flag true) and (not embedded).
+- Reads `platform.plan.dataManipulationEnabled` via `platformHooks.useCurrentPlatform()`; `formulaEnabled` is that flag, nothing else. Embed status is read separately via `useEmbedding()` only to pass `hideDocsLink={embedState.isEmbedded}` to the search popover — embed does not gate the feature itself.
 - `getExtensions({ formulaEnabled })` always includes `FunctionStartNode`, `FunctionEndNode`, `FunctionArgSeparatorNode` (so existing formulas render as badges no matter the flag); conditionally includes `FunctionSlashExtension` only when `formulaEnabled` is true.
 - Holds slash-state, active-function-info, focus, type-errors, preview-result in component state. `typeCheckTiptapDoc(doc)` runs on doc updates; errors map to badge highlights and the preview panel.
 - Variables integration: fetches the project's variables via `variablesQueries.useVariables(...)` and threads the `name → name` map into `createMentionNodeFromText` and `convertTextToTipTapJsonContent` so variable mentions render with their display name.
@@ -123,7 +123,7 @@ Documented in `.claude/plans/glimmering-percolating-unicorn.md`. Summary:
 
 ## Frontend Hooks
 - `platformHooks.useCurrentPlatform()` — provides `platform.plan.dataManipulationEnabled` for the editor gate.
-- `useEmbedding()` (`@/components/providers/embed-provider`) — provides `embedState.isEmbedded`; the editor gate ANDs `!isEmbedded` with the plan flag, so the formula UI never shows in an embedded builder.
+- `useEmbedding()` (`@/components/providers/embed-provider`) — provides `embedState.isEmbedded`. Not part of the editor gate; only used to hide the "See All" docs link in the search popover (the docs site is `activepieces.com` and shouldn't be surfaced from a white-labeled embed).
 - `variablesQueries.useVariables(...)` — fetches the project's variables (see `variables.md`); used by the editor to render variable mention labels inside formula args.
 
 ## What's NOT in this feature
