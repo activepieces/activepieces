@@ -8,6 +8,8 @@ export const deleteDomain = createAction({
   auth: resendAuth,
   displayName: 'Delete Domain',
   description: 'Remove a domain from your Resend account',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently removes a sending domain from the Resend account, identified by its domain ID. Use this to decommission a domain you no longer send from. Effectively idempotent — once deleted, repeating the call has no further effect.', idempotent: true },
   props: {
     domain_id: resendProps.domainId,
   },

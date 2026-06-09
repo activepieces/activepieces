@@ -12,6 +12,12 @@ export const stripeUpdateCustomer = createAction({
   auth: stripeAuth,
   displayName: 'Update Customer',
   description: 'Modify an existing customer’s details.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates fields on an existing Stripe customer (email, name, description, phone, address); only the fields you provide are changed. Use to correct or enrich a customer record identified by its customer ID. Idempotent in effect: repeating the same update yields the same final state.',
+    idempotent: true,
+  },
   props: {
     customer: stripeCommon.customer, 
 

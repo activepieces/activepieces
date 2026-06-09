@@ -16,6 +16,8 @@ export const listDomains = createAction({
   auth: resendAuth,
   displayName: 'List Domains',
   description: 'Retrieve all domains added to your Resend account',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves all sending domains configured on the connected Resend account, including each domain\'s ID, name, verification status, and region. Use this to find a domain ID (e.g. for Verify Domain or Delete Domain) or to check which domains are verified before sending. Read-only and idempotent.', idempotent: true },
   props: {},
   async run({ auth }) {
     const response = await httpClient.sendRequest<{ data: DomainRecord[] }>({

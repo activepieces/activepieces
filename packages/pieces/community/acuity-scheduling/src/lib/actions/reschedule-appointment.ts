@@ -9,6 +9,12 @@ export const rescheduleAppointmentAction = createAction({
 	name: 'reschedule_appointment',
 	displayName: 'Reschedule Appointment',
 	description: 'Reschedules an existing appointment to a new date/time.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Moves an existing Acuity appointment (by numeric appointment ID) to a new datetime and timezone, optionally onto a different calendar. Admin reschedule bypasses availability checks. Use to change the time of an already-booked appointment rather than creating a new one. Treated as non-idempotent — repeating may resend rescheduling notifications and revalidate availability.',
+		idempotent: false,
+	},
 	props: {
 		id: Property.Number({
 			displayName: 'Appointment ID',

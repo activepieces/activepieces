@@ -860,6 +860,9 @@
       "@activepieces/piece-moxie-crm": [
         "packages/pieces/community/moxie-crm/src/index.ts"
       ],
+      "@activepieces/piece-muna-ai": [
+        "packages/pieces/community/muna-ai/src/index.ts"
+      ],
       "@activepieces/piece-murf-api": [
         "packages/pieces/community/murf-api/src/index.ts"
       ],
@@ -1352,6 +1355,9 @@
       "@activepieces/piece-truelayer": [
         "packages/pieces/community/truelayer/src/index.ts"
       ],
+      "@activepieces/piece-trust": [
+        "packages/pieces/community/trust/src/index.ts"
+      ],
       "@activepieces/piece-twilio": [
         "packages/pieces/community/twilio/src/index.ts"
       ],
@@ -1565,8 +1571,8 @@
       "@activepieces/piece-videoask": [
         "packages/pieces/community/videoask/src/index.ts"
       ],
-      "@activepieces/piece-presenton": [
-        "packages/pieces/community/presenton/src/index.ts"
+      "@activepieces/piece-presentation": [
+        "packages/pieces/community/presentation/src/index.ts"
       ],
       "@activepieces/piece-formspark": [
         "packages/pieces/community/formspark/src/index.ts"

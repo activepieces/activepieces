@@ -7,6 +7,8 @@ export const rescheduleEmail = createAction({
   auth: resendAuth,
   displayName: 'Reschedule Email',
   description: 'Update the send time of a scheduled email',
+  audience: 'both',
+  aiMetadata: { description: 'Changes the future send time of an already scheduled email, identified by its Resend email ID. Use this to move a pending send to a new time without cancelling and recreating it. Idempotent when called with the same target time; requires an ISO 8601 date-time and only works while the email is still scheduled.', idempotent: true },
   props: {
     email_id: Property.ShortText({
       displayName: 'Email ID',

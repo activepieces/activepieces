@@ -8,6 +8,12 @@ export const updateANewsletter = createAction({
   name: 'updateANewsletter',
   displayName: 'Update a Newsletter',
   description: 'Update an existing automated newsletter',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing AskNews newsletter identified by its UUID, applying only the fields you supply (query, schedule, model, sender, active/public flags, etc.) and leaving the rest unchanged. Choose this to edit or activate/deactivate a newsletter you already created. Requires the newsletter UUID. Repeating the same update yields the same end state.',
+    idempotent: true,
+  },
   props: {
     newsletterId: Property.ShortText({
       displayName: 'Newsletter ID',

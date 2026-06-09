@@ -8,6 +8,8 @@ export const createAccountAction = createAction({
 	name: 'activecampaign_create_account',
 	displayName: 'Create Account',
 	description: 'Creates a new account.',
+	audience: 'both',
+	aiMetadata: { description: 'Creates a new ActiveCampaign account (CRM organization/company record) with a name and optional URL and custom field values. Use when you need to register a company in the CRM before associating contacts or deals with it. Not idempotent: each call creates a separate account even with identical input, so it can produce duplicates.', idempotent: false },
 	props: {
 		name: Property.ShortText({
 			displayName: 'Account Name',

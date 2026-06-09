@@ -11,6 +11,11 @@ export const createChatAndSendMessageAction = createAction({
 	name: 'microsoft_teams_create_chat_and_send_message',
 	displayName: 'Create Chat & Send Message',
 	description: 'Start a new chat and send an initial message.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Creates a new Microsoft Teams chat with one or more other members (one-on-one when a single member is given, otherwise a group chat) and posts an initial message into it; the current user is automatically added. Use to open a brand-new conversation; to message an existing chat use Send Chat Message instead. Not idempotent — each call may create another chat and posts another message.',
+		idempotent: false,
+	},
 	props: {
 		teamId: microsoftTeamsCommon.teamId,
 		members:microsoftTeamsCommon.memberIds(true),

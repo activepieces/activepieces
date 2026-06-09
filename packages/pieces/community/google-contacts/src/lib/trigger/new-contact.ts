@@ -87,6 +87,9 @@ export const googleContactNewOrUpdatedContact = createTrigger({
   name: 'new_or_updated_contact',
   displayName: 'New Or Updated Contact',
   description: 'Triggers when there is a new or updated contact',
+  aiMetadata: {
+    description: 'Fires when a contact in the authenticated Google Contacts account is newly created or has been modified since the last poll. Each event represents one person record with its current fields; deleted contacts are excluded.',
+  },
   props: {},
   sampleData: {
     resourceName: 'people/c4278485694217203807',

@@ -8,6 +8,8 @@ export const updateEventAction = createAction({
   auth: googleCalendarAuth,
   name: 'update_event',
   description: 'Updates an event in Google Calendar.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates the fields of an existing Google Calendar event identified by calendar and event ID (title, times, location, description, color, attendees, guest permissions); unset fields retain their current values. Use to modify or reschedule an event that already exists rather than creating a new one. Requires the event ID. Idempotent: applying the same field values repeatedly leaves the event in the same state.', idempotent: true },
   props: {
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
     eventId: Property.ShortText({

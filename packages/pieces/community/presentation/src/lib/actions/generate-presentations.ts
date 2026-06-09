@@ -9,6 +9,12 @@ export const generatePresentations = createAction({
   displayName: 'Generate Presentations (async)',
   description:
     'Create an asynchronous presentation generation task at Presenton and return the created task.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Generate an AI-powered slide presentation in Presenton from a content prompt (or per-slide markdown), then poll until generation completes (up to 120 seconds) and return the finished presentation. Use when an agent needs to produce a deck from a topic or outline, optionally controlling tone, slide count, theme/template, image style (stock vs. AI-generated), web search, and export format (PPTX or PDF). Each call starts a new generation task, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     content: Property.LongText({
       displayName: 'Content',
