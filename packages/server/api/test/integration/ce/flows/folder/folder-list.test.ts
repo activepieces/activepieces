@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import qs from 'qs'
 import { flowService } from '../../../../../src/app/flows/flow/flow.service'
 import { tableService } from '../../../../../src/app/tables/table/table.service'
 import { db } from '../../../../helpers/db'
@@ -83,6 +84,26 @@ describe('Folder N+1 fix', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const ids = response?.json().data.map((f: { id: string }) => f.id).sort()
             expect(ids).toEqual([flowA, flowB].sort())
+        })
+
+        it('parses more than 20 folderIds as an array (qs arrayLimit)', async () => {
+            const ctx = await createTestContext(app)
+            const folders = await Promise.all(
+                Array.from({ length: 25 }, async () => {
+                    const folder = createMockFolder({ projectId: ctx.project.id })
+                    await db.save('folder', folder)
+                    return folder
+                }),
+            )
+            const targetFlow = await saveFlowInFolder(ctx, folders[0].id)
+            const folderIds = folders.map((f) => f.id)
+
+            const query = qs.stringify({ projectId: ctx.project.id, folderIds, limit: 100 }, { arrayFormat: 'repeat' })
+            const response = await ctx.get(`/v1/flows?${query}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const ids = response?.json().data.map((f: { id: string }) => f.id)
+            expect(ids).toEqual([targetFlow])
         })
     })
 
