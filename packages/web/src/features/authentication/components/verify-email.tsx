@@ -1,17 +1,17 @@
+import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { MailCheck, MailX } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 
+import { authenticationApi } from '@/api/authentication-api';
 import { FullLogo } from '@/components/custom/full-logo';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Card } from '@/components/ui/card';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { usePartnerStack } from '@/hooks/use-partner-stack';
 import { api } from '@/lib/api';
-
-import { authMutations } from '../hooks/auth-hooks';
 
 const VerifyEmail = () => {
   const [isExpired, setIsExpired] = useState(false);
@@ -22,7 +22,8 @@ const VerifyEmail = () => {
   const hasMutated = useRef(false);
   const { reportSignup } = usePartnerStack();
 
-  const { mutate, isPending } = authMutations.useVerifyEmail({
+  const { mutate, isPending } = useMutation({
+    mutationFn: authenticationApi.verifyEmail,
     onSuccess: ({ email, firstName }) => {
       reportSignup(email, firstName);
       setTimeout(() => navigate('/sign-in'), 5000);

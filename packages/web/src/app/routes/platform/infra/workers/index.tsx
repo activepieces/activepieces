@@ -216,5 +216,5 @@ type StatBarProps = { label: React.ReactNode; value: number; detail?: string };
 type WorkerCardProps = {
   worker: WorkerMachineWithStatus;
   index: number;
-  isCloud: boolean;
+  isCloud?: boolean;
 };

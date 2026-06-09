@@ -57,7 +57,7 @@ export default function UsersPage() {
       })) ?? [];
 
     const pendingInvitations: UserRowData[] =
-      invitationsData?.map((invitation) => ({
+      (invitationsData as UserInvitation[] | undefined)?.map((invitation) => ({
         id: invitation.id,
         type: 'invitation' as const,
         data: invitation,

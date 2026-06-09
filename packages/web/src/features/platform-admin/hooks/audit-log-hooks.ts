@@ -32,8 +32,8 @@ export const auditLogQueries = {
         return auditEventsApi.list({
           cursor: cursor ?? undefined,
           limit: limit ? parseInt(limit) : undefined,
-          action: action ?? undefined,
-          projectId: projectId ?? undefined,
+          action: (action as import('@activepieces/shared').ApplicationEventName[]) ?? undefined,
+          projectId: (projectId[0] ?? undefined),
           userId: userId ?? undefined,
           createdBefore: searchParams.get('createdBefore') ?? undefined,
           createdAfter: searchParams.get('createdAfter') ?? undefined,

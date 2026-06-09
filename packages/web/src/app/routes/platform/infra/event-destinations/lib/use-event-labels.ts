@@ -39,20 +39,11 @@ export const useEventLabels = (): EventLabelsMap => {
     [ApplicationEventName.USER_EMAIL_VERIFIED]: {
       label: t('User email verified'),
     },
-    [ApplicationEventName.SIGNING_KEY_CREATED]: {
-      label: t('Signing key created'),
+    [ApplicationEventName.USER_INVITATION_CREATED]: {
+      label: t('User invitation created'),
     },
-    [ApplicationEventName.PROJECT_ROLE_CREATED]: {
-      label: t('Project role created'),
-    },
-    [ApplicationEventName.PROJECT_ROLE_UPDATED]: {
-      label: t('Project role updated'),
-    },
-    [ApplicationEventName.PROJECT_ROLE_DELETED]: {
-      label: t('Project role deleted'),
-    },
-    [ApplicationEventName.PROJECT_RELEASE_CREATED]: {
-      label: t('Project release created'),
+    [ApplicationEventName.USER_INVITATION_ACCEPTED]: {
+      label: t('User invitation accepted'),
     },
     [ApplicationEventName.FLOW_PUBLISHED]: {
       label: t('Flow published'),

@@ -211,7 +211,8 @@ const EventDestinationForm = ({
     isTesting ||
     !watchedUrl ||
     !isNil(form.formState.errors.url) ||
-    watchedEvents.length === 0;
+    watchedEvents.length === 0 ||
+    isNil(destination);
 
   return (
     <>
@@ -341,9 +342,9 @@ const EventDestinationForm = ({
                   <DropdownMenuItem
                     key={event}
                     onSelect={() =>
+                      destination &&
                       testDestination({
-                        url: watchedUrl,
-                        event,
+                        id: destination.id,
                       })
                     }
                   >

@@ -38,7 +38,7 @@ export const ProjectDashboardPageHeader = ({
   const { platform } = platformHooks.useCurrentPlatform();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState<
-    'general' | 'members' | 'alerts' | 'pieces' | 'environment'
+    'general' | 'pieces' | 'mcp'
   >('general');
   const location = useLocation();
   const { checkAccess } = useAuthorization();
@@ -59,19 +59,8 @@ export const ProjectDashboardPageHeader = ({
     (platform.plan.embeddingEnabled &&
       user?.platformRole === PlatformRole.ADMIN);
 
-  const getFirstAvailableTab = ():
-    | 'general'
-    | 'members'
-    | 'alerts'
-    | 'pieces'
-    | 'environment' => {
+  const getFirstAvailableTab = (): 'general' | 'pieces' | 'mcp' => {
     if (hasGeneralSettings) return 'general';
-    if (
-      project.type === ProjectType.TEAM &&
-      showProjectMembersFlag &&
-      userHasPermissionToReadProjectMembers
-    )
-      return 'members';
     return 'pieces';
   };
 

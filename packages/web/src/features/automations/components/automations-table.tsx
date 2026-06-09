@@ -1,7 +1,6 @@
 import {
   FolderDto,
   PopulatedFlow,
-  ProjectMemberWithUser,
   Table,
 } from '@activepieces/shared';
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
@@ -25,7 +24,7 @@ type AutomationsTableProps = {
   selectedItems: SelectedItemsMap;
   expandedFolders: Set<string>;
   loadingFolders: Set<string>;
-  projectMembers: ProjectMemberWithUser[] | undefined;
+  
   folders: FolderDto[];
   selectableCount: number;
   isPinned: (itemId: string) => boolean;
@@ -59,7 +58,6 @@ export const AutomationsTable = ({
   selectedItems,
   expandedFolders,
   loadingFolders,
-  projectMembers,
   folders,
   selectableCount,
   isPinned,
@@ -161,7 +159,7 @@ export const AutomationsTable = ({
                         isExpanded={expandedFolders.has(group.item.id)}
                         isPinned={isPinned(group.item.id)}
                         isFolderLoading={loadingFolders.has(group.item.id)}
-                        projectMembers={projectMembers}
+
                         folders={folders}
                         onRowClick={() => onRowClick(group.item)}
                         onToggleSelection={() =>
@@ -202,7 +200,7 @@ export const AutomationsTable = ({
                             isSelected={isItemSelected(child)}
                             isExpanded={false}
                             isPinned={isPinned(child.id)}
-                            projectMembers={projectMembers}
+    
                             folders={folders}
                             onRowClick={() => onRowClick(child)}
                             onToggleSelection={() =>
@@ -243,7 +241,6 @@ export const AutomationsTable = ({
                     isSelected={isItemSelected(group.item)}
                     isExpanded={false}
                     isPinned={isPinned(group.item.id)}
-                    projectMembers={projectMembers}
                     folders={folders}
                     onRowClick={() => onRowClick(group.item)}
                     onToggleSelection={() => onToggleItemSelection(group.item)}

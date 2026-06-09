@@ -1,5 +1,4 @@
 import {
-  OtpType,
   ApFlagId,
   AuthenticationResponse,
   ErrorCode,
@@ -26,7 +25,6 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 
-import { CheckEmailNote } from './check-email-note';
 
 const SignInSchema = z.object({
   email: z.string().regex(formatUtils.emailRegex, t('Email is invalid')),
@@ -36,7 +34,6 @@ const SignInSchema = z.object({
 type SignInSchema = z.infer<typeof SignInSchema>;
 
 const SignInForm: React.FC = () => {
-  const [showCheckYourEmailNote, setShowCheckYourEmailNote] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const form = useForm<SignInSchema>({
     resolver: zodResolver(SignInSchema),
@@ -91,7 +88,9 @@ const SignInForm: React.FC = () => {
             break;
           }
           case ErrorCode.EMAIL_IS_NOT_VERIFIED: {
-            setShowCheckYourEmailNote(true);
+            form.setError('root.serverError', {
+              message: t('Email is not verified'),
+            });
             break;
           }
           case ErrorCode.DOMAIN_NOT_ALLOWED: {
@@ -148,7 +147,6 @@ const SignInForm: React.FC = () => {
                   data-testid="sign-in-email"
                   onChange={(e) => {
                     field.onChange(e);
-                    setShowCheckYourEmailNote(false);
                   }}
                 />
                 <FormMessage />
@@ -216,14 +214,6 @@ const SignInForm: React.FC = () => {
         </form>
       </Form>
 
-      {showCheckYourEmailNote && (
-        <div className="mt-4">
-          <CheckEmailNote
-            email={form.getValues().email}
-            type={OtpType.EMAIL_VERIFICATION}
-          />
-        </div>
-      )}
     </>
   );
 };

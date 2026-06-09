@@ -1,13 +1,7 @@
-import { FullLogo } from '@/components/custom/full-logo';
-import { ResetPasswordForm } from '@/features/authentication';
+import { Navigate } from 'react-router-dom';
 
 const ResetPasswordPage = () => {
-  return (
-    <div className="mx-auto flex h-screen flex-col items-center justify-center gap-2">
-      <FullLogo />
-      <ResetPasswordForm />
-    </div>
-  );
+  return <Navigate to="/sign-in" replace />;
 };
 
 export { ResetPasswordPage };

@@ -1,30 +1,11 @@
 export { aiProviderApi } from './api/ai-provider-api';
 export { analyticsApi } from './api/analytics-api';
-export { apiKeyApi } from './api/api-key-api';
 export { auditEventsApi } from './api/audit-events-api';
-export { embedSubdomainApi } from './api/embed-subdomain-api';
 export { piecesTagsApi } from './api/pieces-tags';
 export { projectRoleApi } from './api/project-role-api';
 export { samlSsoApi } from './api/saml-sso-api';
-export { signingKeyApi } from './api/signing-key-api';
 export { workersApi } from './api/workers-api';
-export {
-  embedSubdomainQueries,
-  embedSubdomainMutations,
-  embedSubdomainKeys,
-} from './hooks/embed-subdomain-hooks';
-export { NewSigningKeyDialog } from './components/new-signing-key-dialog';
 export { platformAnalyticsHooks } from './hooks/analytics-hooks';
-export {
-  apiKeyQueries,
-  apiKeyMutations,
-  apiKeyKeys,
-} from './hooks/api-key-hooks';
-export {
-  signingKeyQueries,
-  signingKeyMutations,
-  signingKeyKeys,
-} from './hooks/signing-key-hooks';
 export { auditLogQueries, auditLogKeys } from './hooks/audit-log-hooks';
 export { ssoMutations } from './hooks/sso-hooks';
 export {

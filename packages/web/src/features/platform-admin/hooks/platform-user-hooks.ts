@@ -4,6 +4,7 @@ import {
   SeekPage,
   UpdateUserRequestBody,
   User,
+  UserInvitation,
   UserStatus,
   UserWithMetaInformation,
 } from '@activepieces/shared';
@@ -39,8 +40,8 @@ export const platformUserHooks = {
     });
   },
   usePlatformInvitations: () => {
-    return useQuery({
-      queryFn: async () => [] as never[],
+    return useQuery<UserInvitation[], Error>({
+      queryFn: async () => [] as UserInvitation[],
       queryKey: platformUserKeys.invitations,
       staleTime: 0,
     });

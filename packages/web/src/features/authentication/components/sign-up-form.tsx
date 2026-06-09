@@ -1,5 +1,4 @@
 import {
-  OtpType,
   ErrorCode,
   isNil,
 } from '@activepieces/shared';
@@ -27,7 +26,6 @@ import {
   PopoverHeader,
   PopoverTitle,
 } from '@/components/ui/popover';
-import { CheckEmailNote } from '@/features/authentication/components/check-email-note';
 import {
   PasswordRequirementsList,
   PasswordStrengthBolt,
@@ -41,10 +39,9 @@ import { authMutations } from '../hooks/auth-hooks';
 import { passwordValidation } from '../utils/password-validation-utils';
 
 const SignUpForm = ({
-  showCheckYourEmailNote,
   setShowCheckYourEmailNote,
 }: {
-  showCheckYourEmailNote: boolean;
+  showCheckYourEmailNote?: boolean;
   setShowCheckYourEmailNote: (value: boolean) => void;
 }) => {
   const [searchParams] = useSearchParams();
@@ -141,14 +138,7 @@ const SignUpForm = ({
     });
   };
 
-  return showCheckYourEmailNote ? (
-    <div className="pt-6">
-      <CheckEmailNote
-        email={form.getValues().email.trim().toLowerCase()}
-        type={OtpType.EMAIL_VERIFICATION}
-      />
-    </div>
-  ) : (
+  return (
     <>
       <Form {...form}>
         <form className="flex flex-col space-y-4">

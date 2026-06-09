@@ -13,9 +13,6 @@ import { EmbeddedConnectionDialog } from './embed/embedded-connection-dialog';
 import { McpAuthorizePage } from './mcp-authorize';
 import { RedirectPage } from './redirect';
 
-const ChatPage = React.lazy(() =>
-  import('./chat').then((m) => ({ default: m.ChatPage })),
-);
 const FormPage = React.lazy(() =>
   import('./forms').then((m) => ({ default: m.FormPage })),
 );
@@ -62,16 +59,6 @@ export const publicRoutes = [
       <PageTitle title="Forms">
         <SuspenseWrapper>
           <FormPage />
-        </SuspenseWrapper>
-      </PageTitle>
-    ),
-  },
-  {
-    path: '/chats/:flowId',
-    element: (
-      <PageTitle title="Chats">
-        <SuspenseWrapper>
-          <ChatPage />
         </SuspenseWrapper>
       </PageTitle>
     ),

@@ -1,11 +1,7 @@
 import {
   AuthenticationResponse,
-  CreateOtpRequestBody,
-  ResetPasswordRequestBody,
   SignInRequest,
   SignUpRequest,
-  UserIdentity,
-  VerifyEmailRequestBody,
 } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 
@@ -35,39 +31,6 @@ export const authMutations = {
   }) => {
     return useMutation<AuthenticationResponse, HttpError, SignUpRequest>({
       mutationFn: authenticationApi.signUp,
-      onSuccess,
-      onError,
-    });
-  },
-  useSendOtpEmail: ({ onSuccess }: { onSuccess?: () => void }) => {
-    return useMutation<void, HttpError, CreateOtpRequestBody>({
-      mutationFn: authenticationApi.sendOtpEmail,
-      onSuccess,
-    });
-  },
-  useResetPassword: ({
-    onSuccess,
-    onError,
-  }: {
-    onSuccess: () => void;
-    onError: (error: HttpError) => void;
-  }) => {
-    return useMutation<void, HttpError, ResetPasswordRequestBody>({
-      mutationFn: authenticationApi.resetPassword,
-      onSuccess,
-      onError,
-    });
-  },
-  useVerifyEmail: ({
-    onSuccess,
-    onError,
-  }: {
-    onSuccess: (data: UserIdentity) => void;
-    onError: (error: unknown) => void;
-  }) => {
-    return useMutation({
-      mutationFn: (request: VerifyEmailRequestBody) =>
-        authenticationApi.verifyEmail(request),
       onSuccess,
       onError,
     });

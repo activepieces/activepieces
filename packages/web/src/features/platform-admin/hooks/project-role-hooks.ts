@@ -16,15 +16,11 @@ export const projectRoleQueries = {
       queryFn: () => projectRoleApi.list(),
       enabled,
     }),
-  useProjectRoleMembers: (roleId: string | undefined, enabled: boolean) =>
+  useProjectRoleMembers: (_roleId: string | undefined, _enabled: boolean) =>
     useQuery({
-      queryKey: projectRoleKeys.members(roleId ?? ''),
-      queryFn: () =>
-        projectRoleApi.listProjectMembers(roleId!, {
-          cursor: undefined,
-          limit: 10,
-        }),
-      enabled: enabled && !!roleId,
+      queryKey: ['project-role-members-stub'],
+      queryFn: async () => ({ data: [], next: null, previous: null }),
+      enabled: false,
     }),
 };
 

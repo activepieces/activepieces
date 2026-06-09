@@ -1,5 +1,6 @@
 import { isNil } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Lock, Unlock } from 'lucide-react';
 import { useState, forwardRef } from 'react';
@@ -22,7 +23,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { oauthAppsMutations, oauthAppsQueries } from '@/features/connections';
+import { oauthAppsQueries } from '@/features/connections';
 
 type ConfigurePieceOAuth2DialogProps = {
   pieceName: string;
@@ -47,10 +48,29 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
 
   const { oauth2App, refetch } =
     oauthAppsQueries.useOAuthAppConfigured(pieceName);
-  const { mutate: deleteOAuth2App, isPending: isDeleting } =
-    oauthAppsMutations.useDeleteOAuthApp(refetch, setOpen);
-  const { mutate: upsert, isPending: isUpserting } =
-    oauthAppsMutations.useUpsertOAuthApp(refetch, setOpen, onConfigurationDone);
+  const { mutate: deleteOAuth2App, isPending: isDeleting } = useMutation({
+    mutationFn: async (_id: string) => {
+      // OAuth app management is EE-only
+    },
+    onSuccess: () => {
+      refetch();
+      setOpen(false);
+    },
+  });
+  const { mutate: upsert, isPending: isUpserting } = useMutation({
+    mutationFn: async (_data: {
+      clientId: string;
+      clientSecret: string;
+      pieceName: string;
+    }) => {
+      // OAuth app management is EE-only
+    },
+    onSuccess: () => {
+      refetch();
+      setOpen(false);
+      onConfigurationDone();
+    },
+  });
 
   return (
     <Dialog
@@ -79,7 +99,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
                 if (isNil(oauth2App)) {
                   setOpen(true);
                 } else {
-                  deleteOAuth2App(oauth2App.id);
+                  deleteOAuth2App((oauth2App as { id: string }).id);
                   onConfigurationDone();
                 }
                 e.preventDefault();

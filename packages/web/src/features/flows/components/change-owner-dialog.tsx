@@ -117,13 +117,14 @@ const ChangeOwnerDialog = ({
                       <SelectGroup>
                         {projectMembers &&
                           projectMembers.length > 0 &&
-                          projectMembers.map((member) => (
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          (projectMembers as any[]).map((member) => (
                             <SelectItem
                               key={member.userId}
                               value={member.userId}
                             >
-                              {member.user.firstName} {member.user.lastName} (
-                              {member.user.email})
+                              {member.user?.firstName} {member.user?.lastName} (
+                              {member.user?.email})
                             </SelectItem>
                           ))}
                       </SelectGroup>

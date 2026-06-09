@@ -51,7 +51,7 @@ export type FlowUpdatedEvent = Omit<ApplicationEvent, 'data'> & {
 }
 
 export type ListAuditEventsRequest = {
-    platformId: string
+    platformId?: string
     cursor?: string
     limit?: number
     userId?: string

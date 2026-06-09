@@ -18,7 +18,6 @@ import { memoryRouter } from '@/app/guards';
 import { LoadingScreen } from '@/components/custom/loading-screen';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { useTheme } from '@/components/providers/theme-provider';
-import { managedAuthApi } from '@/features/authentication';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { combinePaths, parentWindow } from '@/lib/dom-utils';
@@ -95,9 +94,11 @@ const EmbedPage = React.memo(() => {
       externalAccessToken: string;
       locale: string;
     }) => {
-      const data = await managedAuthApi.generateApToken({
-        externalAccessToken,
-      });
+      const { api } = await import('@/lib/api');
+      const data = await api.post<import('@activepieces/shared').AuthenticationResponse>(
+        '/v1/managed-authn/external-token',
+        { externalAccessToken },
+      );
       await i18n.changeLanguage(locale);
       return data;
     },
@@ -130,7 +131,7 @@ const EmbedPage = React.memo(() => {
               //must use it to ensure that the correct router in RouterProvider is used before navigation
               flushSync(() => {
                 setEmbedState({
-                  hideSideNav: event.data.data.hideSidebar,
+                  hideSideNav: event.data.data.hideSidebar ?? false,
                   isEmbedded: true,
                   hideFlowNameInBuilder:
                     event.data.data.hideFlowNameInBuilder ?? false,
@@ -149,10 +150,10 @@ const EmbedPage = React.memo(() => {
                     event.data.data.disableNavigationInBuilder ===
                     'keep_home_button_only'
                       ? false
-                      : event.data.data.disableNavigationInBuilder,
+                      : event.data.data.disableNavigationInBuilder ?? false,
                   emitHomeButtonClickedEvent:
                     event.data.data.emitHomeButtonClickedEvent ?? false,
-                  homeButtonIcon: event.data.data.homeButtonIcon ?? 'logo',
+                  homeButtonIcon: (event.data.data.homeButtonIcon ?? 'logo') as 'back' | 'logo',
                   hideDuplicateFlow: event.data.data.hideDuplicateFlow ?? false,
                   hideFlowsPageNavbar:
                     event.data.data.hideFlowsPageNavbar ?? false,

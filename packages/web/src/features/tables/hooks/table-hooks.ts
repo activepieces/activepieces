@@ -196,7 +196,7 @@ export const tableHooks = {
           projectId,
           name: tableTemplate.name,
           externalId: tableTemplate.externalId,
-          fields: tableTemplate.fields,
+          fields: tableTemplate.fields as import('@activepieces/shared').FieldState[] | undefined,
           folderId: targetFolderId,
         });
 

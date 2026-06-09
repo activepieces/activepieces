@@ -132,7 +132,6 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
     extraKeys: [projectId],
   });
 
-  const projectMembers = undefined;
   const { pieces } = piecesHooks.usePieces({});
 
   const handleRowClick = useCallback(
@@ -286,7 +285,6 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
             selectedItems={selectedItems}
             expandedFolders={expandedFolders}
             loadingFolders={loadingFolders}
-            projectMembers={projectMembers}
             folders={folders}
             selectableCount={selectableItems.length}
             isPinned={isPinned}
