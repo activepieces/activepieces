@@ -204,6 +204,23 @@ function buildStepParts({ content }: {
                         data: (rawOutput as Record<string, unknown>)['batchProgress'] as Record<string, unknown>,
                     })
                 }
+                if (toolName === 'ap_execute_action' && result) {
+                    const outputRecord = typeof rawOutput === 'object' && rawOutput !== null ? rawOutput as Record<string, unknown> : {}
+                    const meta = typeof outputRecord['_meta'] === 'object' && outputRecord['_meta'] !== null ? outputRecord['_meta'] as Record<string, unknown> : undefined
+                    const connectionLabel = typeof meta?.['connectionLabel'] === 'string' ? meta['connectionLabel'] : undefined
+                    const isSuccess = result.type === 'tool-result'
+                    parts.push({
+                        type: PersistedChatPartType.ACTION_RECEIPT,
+                        toolCallId: part.toolCallId ?? '',
+                        actionDisplayName: title ?? toolName,
+                        pieceName: typeof input['pieceName'] === 'string' ? input['pieceName'] : '',
+                        ...spreadIfDefined('connectionLabel', connectionLabel),
+                        status: isSuccess ? 'success' : 'failed',
+                        output: rawOutput,
+                        ...spreadIfDefined('errorMessage', result.type === 'tool-error' && typeof result.output === 'string' ? result.output : undefined),
+                        timestamp: new Date().toISOString(),
+                    })
+                }
                 break
             }
         }

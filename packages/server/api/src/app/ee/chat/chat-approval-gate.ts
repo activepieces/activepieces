@@ -1,11 +1,15 @@
-import { distributedStore } from '../../database/redis-connections'
+import { distributedStore, redisConnections } from '../../database/redis-connections'
 import { pubsub } from '../../helper/pubsub'
 
 const GATE_TTL_SECONDS = 15 * 60
 const CANCEL_TTL_SECONDS = 10 * 60
+const CONNECTION_STORE_TTL_SECONDS = 24 * 60 * 60
 const KEY_PREFIX = 'tool-approval-decision:'
 const CHANNEL_PREFIX = 'tool-approval:'
 const CANCEL_KEY_PREFIX = 'chat-cancel:'
+const AVAILABLE_CONNECTIONS_PREFIX = 'chat-conn-avail:'
+const SELECTED_CONNECTION_PREFIX = 'chat-conn-sel:'
+const PENDING_GATE_PREFIX = 'chat-pending-gate:'
 
 function decisionKey(gateId: string): string {
     return `${KEY_PREFIX}${gateId}`
@@ -28,6 +32,45 @@ async function checkDecision({ gateId }: { gateId: string }): Promise<GateDecisi
     return { approved: raw.approved === true, payload: raw.payload }
 }
 
+async function waitForDecision({ gateId, timeoutMs }: { gateId: string, timeoutMs: number }): Promise<GateDecision | 'pending'> {
+    const channel = channelName(gateId)
+    const subscriber = await redisConnections.create()
+
+    return new Promise<GateDecision | 'pending'>((resolve) => {
+        let settled = false
+
+        const settle = (result: GateDecision | 'pending') => {
+            if (settled) return
+            settled = true
+            clearTimeout(timeout)
+            subscriber.unsubscribe(channel).then(() => subscriber.quit()).catch(() => undefined)
+            resolve(result)
+        }
+
+        const timeout = setTimeout(() => settle('pending'), timeoutMs)
+
+        subscriber.on('message', (_ch, message) => {
+            if (_ch !== channel) return
+            try {
+                const parsed = JSON.parse(message)
+                settle({ approved: parsed.approved === true, payload: parsed.payload })
+            }
+            catch {
+                settle('pending')
+            }
+        })
+
+        // Subscribe first, then check — eliminates the race where resolveGate
+        // publishes between a check and a subscribe
+        void subscriber.subscribe(channel).then(async () => {
+            const existing = await checkDecision({ gateId })
+            if (existing !== 'pending') {
+                settle(existing)
+            }
+        })
+    })
+}
+
 async function requestCancel({ conversationId }: { conversationId: string }): Promise<void> {
     await distributedStore.put(`${CANCEL_KEY_PREFIX}${conversationId}`, { cancelled: true }, CANCEL_TTL_SECONDS)
 }
@@ -41,15 +84,86 @@ async function clearCancel({ conversationId }: { conversationId: string }): Prom
     await distributedStore.delete(`${CANCEL_KEY_PREFIX}${conversationId}`)
 }
 
+async function storeAvailableConnections({ conversationId, pieceName, connections }: {
+    conversationId: string
+    pieceName: string
+    connections: StoredConnection[]
+}): Promise<void> {
+    await distributedStore.put(`${AVAILABLE_CONNECTIONS_PREFIX}${conversationId}:${pieceName}`, connections, CONNECTION_STORE_TTL_SECONDS)
+}
+
+async function getAvailableConnections({ conversationId, pieceName }: {
+    conversationId: string
+    pieceName: string
+}): Promise<StoredConnection[]> {
+    return await distributedStore.get<StoredConnection[]>(`${AVAILABLE_CONNECTIONS_PREFIX}${conversationId}:${pieceName}`) ?? []
+}
+
+async function storeSelectedConnection({ conversationId, pieceName, externalId, label, projectId }: {
+    conversationId: string
+    pieceName: string
+    externalId: string
+    label: string
+    projectId: string
+}): Promise<void> {
+    await distributedStore.put(`${SELECTED_CONNECTION_PREFIX}${conversationId}:${pieceName}`, { externalId, label, projectId }, CONNECTION_STORE_TTL_SECONDS)
+}
+
+async function getSelectedConnection({ conversationId, pieceName }: {
+    conversationId: string
+    pieceName: string
+}): Promise<SelectedConnection | null> {
+    return distributedStore.get<SelectedConnection>(`${SELECTED_CONNECTION_PREFIX}${conversationId}:${pieceName}`)
+}
+
+async function storePendingGate({ conversationId, gate }: {
+    conversationId: string
+    gate: PendingGate
+}): Promise<void> {
+    await distributedStore.put(`${PENDING_GATE_PREFIX}${conversationId}`, gate, GATE_TTL_SECONDS)
+}
+
+async function getPendingGate({ conversationId }: { conversationId: string }): Promise<PendingGate | null> {
+    return distributedStore.get<PendingGate>(`${PENDING_GATE_PREFIX}${conversationId}`)
+}
+
+async function clearPendingGate({ conversationId }: { conversationId: string }): Promise<void> {
+    await distributedStore.delete(`${PENDING_GATE_PREFIX}${conversationId}`)
+}
+
 export const chatApprovalGate = {
     resolveGate,
-    checkDecision,
+    waitForDecision,
     requestCancel,
     isCancelled,
     clearCancel,
+    storeAvailableConnections,
+    getAvailableConnections,
+    storeSelectedConnection,
+    getSelectedConnection,
+    storePendingGate,
+    getPendingGate,
+    clearPendingGate,
 }
 
 type GateDecision = {
     approved: boolean
     payload?: Record<string, unknown>
+}
+
+type StoredConnection = {
+    externalId: string
+    label: string
+    projectId: string
+    project: string
+    status: string
+}
+
+type SelectedConnection = Pick<StoredConnection, 'externalId' | 'label' | 'projectId'>
+
+type PendingGate = {
+    gateId: string
+    toolName: string
+    displayName: string
+    toolInput: Record<string, unknown>
 }
