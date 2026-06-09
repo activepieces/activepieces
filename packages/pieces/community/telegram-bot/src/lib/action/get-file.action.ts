@@ -19,6 +19,8 @@ export const telegramGetFileAction = createAction({
   auth: telegramBotAuth,
   name: 'get_file',
   description: 'Get file information and optionally download a file from Telegram',
+  audience: 'both',
+  aiMetadata: { description: 'Resolves a Telegram file_id to its file metadata and download URL, and optionally downloads the file content as base64 when download is enabled. Use to retrieve files attached to messages the bot received. Idempotent: read/download with no side effects, though Telegram download URLs are time-limited.', idempotent: true },
   displayName: 'Get File',
   props: {
     file_id: Property.ShortText({

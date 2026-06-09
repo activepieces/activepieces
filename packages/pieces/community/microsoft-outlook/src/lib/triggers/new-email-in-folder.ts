@@ -66,6 +66,9 @@ export const newEmailInFolderTrigger = createTrigger({
 	name: 'newEmailInFolder',
 	displayName: 'New Email in Folder',
 	description: 'Triggers when a new email is delivered into the specified folder.',
+	aiMetadata: {
+		description: 'Fires when a new message appears in the chosen Outlook mail folder. Each fire represents one new email added to that folder.',
+	},
 	props: {
 		folderId: mailFolderIdDropdown({
 			displayName: 'Folder',

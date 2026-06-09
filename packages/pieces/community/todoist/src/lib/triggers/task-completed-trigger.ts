@@ -45,6 +45,9 @@ export const todoistTaskCompletedTrigger = createTrigger({
 	name: 'task_completed',
 	displayName: 'Task Completed',
 	description: 'Triggers when a new task is completed',
+	aiMetadata: {
+		description: 'Fires when a Todoist task is marked completed, emitting the completed task record. Polls for tasks closed since the last check, optionally limited to a single project (all projects if left blank).',
+	},
 	type: TriggerStrategy.POLLING,
 
 	props: {

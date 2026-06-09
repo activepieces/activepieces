@@ -10,6 +10,12 @@ export const updateRowAction = createAction({
   auth: googleSheetsAuth,
   name: 'update_row',
   description: 'Update the data in an existing row.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Overwrites the cell values of one existing row, identified by its row number, in a selected worksheet. Use when an agent already knows the target row (e.g. from a Find or Get action) and wants to change its contents. Idempotent — re-running with the same row number and values leaves the sheet in the same state; empty values skip (do not clear) those cells.',
+    idempotent: true,
+  },
   displayName: 'Update Row',
   props: {
     ...commonProps,
