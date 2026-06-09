@@ -233,7 +233,7 @@ export function MultiQuestionForm({
           <div>
             {q.type === 'choice' && q.options && (
               <div>
-                <div role="listbox" aria-label={q.question} className="gap-0">
+                <div role="menu" aria-label={q.question} className="gap-0">
                   {q.options.map((option, i) => {
                     const selected = answers[currentStep] === option;
                     const isFirst = i === 0;
@@ -251,13 +251,13 @@ export function MultiQuestionForm({
                           </div>
                         )}
                         <div
-                          role="option"
+                          role="menuitemradio"
                           tabIndex={
                             focusedRow === i || (focusedRow === null && isFirst)
                               ? 0
                               : -1
                           }
-                          aria-selected={selected}
+                          aria-checked={selected}
                           ref={(el) => {
                             optionRefs.current[i] = el;
                             if (isFirst) setFirstOptionEl(el);

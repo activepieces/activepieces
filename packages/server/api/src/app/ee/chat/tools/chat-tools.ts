@@ -317,10 +317,10 @@ function resolveConnectionInfo({ status, type, value }: { status: AppConnectionS
     if (status !== AppConnectionStatus.ACTIVE) {
         return { status, grantedScopes }
     }
-    const claimedAtMs = typeof value['claimed_at'] === 'number' ? value['claimed_at'] : 0
+    const claimedAtS = typeof value['claimed_at'] === 'number' ? value['claimed_at'] : 0
     const expiresInS = typeof value['expires_in'] === 'number' ? value['expires_in'] : 0
-    if (claimedAtMs > 0 && expiresInS > 0) {
-        const expiryMs = claimedAtMs + (expiresInS - CLOCK_SKEW_BUFFER_S) * 1000
+    if (claimedAtS > 0 && expiresInS > 0) {
+        const expiryMs = (claimedAtS + expiresInS - CLOCK_SKEW_BUFFER_S) * 1000
         if (Date.now() > expiryMs) {
             return { status: AppConnectionStatus.ERROR, grantedScopes }
         }
