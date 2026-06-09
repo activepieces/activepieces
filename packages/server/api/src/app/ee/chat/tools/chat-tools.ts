@@ -218,25 +218,26 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
         case 'ap_execute_action': {
             const pieceName = toolInput.pieceName as string
             const actionName = toolInput.actionName as string
-            const projectId = toolInput.projectId as string | undefined
-
-            const resolvedProjectId = projectId ?? projects[0]?.id
-            if (!resolvedProjectId) {
-                return { success: false, error: 'No projects available. Create a project first.' }
-            }
-            if (projectId && !availableProjectIds.includes(projectId)) {
-                return { success: false, error: `Project ${projectId} is not accessible.` }
-            }
 
             const normalizedPiece = mcpUtils.normalizePieceName(pieceName) ?? pieceName
             let connectionExternalId: string | undefined
             let connectionLabel: string | undefined
+            let connectionProjectId: string | undefined
             if (conversationId) {
                 const selected = await chatApprovalGate.getSelectedConnection({ conversationId, pieceName: normalizedPiece })
                 if (selected) {
                     connectionExternalId = selected.externalId
                     connectionLabel = selected.label
+                    connectionProjectId = selected.projectId
                 }
+            }
+
+            const resolvedProjectId = connectionProjectId ?? projects[0]?.id
+            if (!resolvedProjectId) {
+                return { success: false, error: 'No projects available. Create a project first.' }
+            }
+            if (connectionProjectId && !availableProjectIds.includes(connectionProjectId)) {
+                return { success: false, error: `Project ${connectionProjectId} is not accessible.` }
             }
 
             let parsedInput = toolInput.input
