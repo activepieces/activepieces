@@ -186,16 +186,6 @@ function ToolStepRow({
     () => (detailsOpen && output ? tryParseJson(output) : undefined),
     [detailsOpen, output],
   );
-  const connectionLabel = useMemo(() => {
-    if (part.state !== 'output-available' || !part.output) return undefined;
-    const raw =
-      typeof part.output === 'string' ? tryParseJson(part.output) : part.output;
-    if (!raw || typeof raw !== 'object') return undefined;
-    const meta = (raw as Record<string, unknown>)['_meta'];
-    if (!meta || typeof meta !== 'object') return undefined;
-    const label = (meta as Record<string, unknown>)['connectionLabel'];
-    return typeof label === 'string' ? label : undefined;
-  }, [part.state, part.output]);
   const pieceNames = useMemo(
     () => chatPartUtils.extractPieceNames(rawInput),
     [rawInput],

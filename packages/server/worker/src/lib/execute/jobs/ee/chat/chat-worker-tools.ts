@@ -359,17 +359,18 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                     })
                 }
                 const rawResult = await executeWithTimeout('ap_execute_action', toolInput)
+                const rawSuccess = isSuccessResult(rawResult)
                 const result = truncateLargeResult(rawResult)
-                const resultObj = isObject(result) ? result as Record<string, unknown> : {}
+                const resultObj = isObject(rawResult) ? rawResult as Record<string, unknown> : {}
                 const meta = isObject(resultObj['_meta']) ? resultObj['_meta'] as Record<string, unknown> : undefined
                 eventEmitter.emitActionReceipt({
                     toolCallId: options.toolCallId,
                     actionDisplayName: toolInput.title ?? toolInput.actionName,
                     pieceName: toolInput.pieceName,
                     connectionLabel: typeof meta?.['connectionLabel'] === 'string' ? meta['connectionLabel'] : undefined,
-                    status: isSuccessResult(result) ? 'success' : 'failed',
+                    status: rawSuccess ? 'success' : 'failed',
                     output: result,
-                    errorMessage: !isSuccessResult(result) ? extractResultText(result) : undefined,
+                    errorMessage: !rawSuccess ? extractResultText(rawResult) : undefined,
                     timestamp: new Date().toISOString(),
                 })
                 return result
