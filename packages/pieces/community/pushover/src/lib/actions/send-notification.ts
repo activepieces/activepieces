@@ -7,6 +7,11 @@ export const sendNotification = createAction({
   name: 'send_notification',
   displayName: 'Send Notification',
   description: 'Send a notification to Pushover',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Sends a push notification through Pushover to the device(s) tied to the configured user/group key. Use to alert a person or group on their phone/desktop. The message body is required; optional priority (-2 to 2) controls urgency, and emergency priority (2) additionally requires retry and expire values. Not idempotent: each call delivers a new notification.',
+    idempotent: false,
+  },
   props: {
     title: Property.ShortText({
       displayName: 'Title',

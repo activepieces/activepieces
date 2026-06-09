@@ -9,6 +9,8 @@ export const deleteResource = createAction({
   name: 'deleteResource',
   displayName: 'Delete Resource',
   description: 'Permanently delete images, videos, or files from Cloudinary.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes Cloudinary assets, selected either by a list of public IDs, by a tag, or by a public-ID prefix. Use to remove media from the account; this is a destructive bulk operation, so confirm the selection before calling. Not idempotent: it mutates account state and can also strip derived assets or invalidate the CDN cache.', idempotent: false },
   props: {
     deletion_mode: Property.StaticDropdown({
       displayName: 'Deletion Mode',

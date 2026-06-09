@@ -11,6 +11,12 @@ export const appendToPage = createAction({
   name: 'append_to_page',
   displayName: 'Append to Page',
   description: 'Appends content to the end of a page.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Appends new block content (parsed from markdown) to the end of an existing Notion page or block. Use when an agent must add to a page without altering existing content; requires the target page/block id. Not idempotent: each call appends again, duplicating the content on repeat.',
+    idempotent: false,
+  },
   props: {
     pageId: notionCommon.page,
     content: Property.LongText({

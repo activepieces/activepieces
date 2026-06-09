@@ -25,6 +25,12 @@ export const stripeSearchSubscriptions = createAction({
   auth: stripeAuth,
   displayName: 'Search Subscriptions',
   description: 'Search for subscriptions by price ID, status, customer ID and other filters, including customer details',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists and filters Stripe subscriptions by price ID, status, customer ID, and creation date range, optionally expanding full customer details for each. Use to find subscriptions matching criteria or to audit a customer\'s subscriptions; supports paging through all results. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     price_ids: Property.LongText({
       displayName: 'Price IDs',

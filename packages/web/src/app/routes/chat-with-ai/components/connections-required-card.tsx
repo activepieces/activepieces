@@ -4,7 +4,7 @@ import {
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Check } from 'lucide-react';
+import { Check, RefreshCw } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -21,10 +21,12 @@ export function ConnectionsRequiredCard({
   connections,
   onResolve,
   projectId: selectedProjectId,
+  isInteractive = true,
 }: {
   connections: ConnectionRequiredData[];
   onResolve?: (payload: Record<string, unknown>) => void;
   projectId?: string | null;
+  isInteractive?: boolean;
 }) {
   const queryClient = useQueryClient();
   const [connectedSet, setConnectedSet] = useState<Set<string>>(new Set());
@@ -33,6 +35,7 @@ export function ConnectionsRequiredCard({
   >({});
   const [activeConnection, setActiveConnection] =
     useState<ConnectionRequiredData | null>(null);
+  const [isNewConnection, setIsNewConnection] = useState(false);
   const [continued, setContinued] = useState(false);
 
   const activePieceName = activeConnection
@@ -49,6 +52,7 @@ export function ConnectionsRequiredCard({
   );
 
   useEffect(() => {
+    if (!isInteractive) return;
     const projectId = selectedProjectId ?? authenticationSession.getProjectId();
     if (!projectId) return;
     let cancelled = false;
@@ -79,19 +83,57 @@ export function ConnectionsRequiredCard({
       if (alreadyActive.size > 0) {
         setConnectedSet(alreadyActive);
       }
-      if (alreadyActive.size === connections.length) {
-        setContinued(true);
-      }
     });
 
     return () => {
       cancelled = true;
     };
-  }, [connectionsKey, selectedProjectId]);
+  }, [connectionsKey, selectedProjectId, isInteractive]);
 
   const allConnected = connections.every((c) => connectedSet.has(c.piece));
 
-  function handleConnect(connection: ConnectionRequiredData) {
+  if (!isInteractive) {
+    return (
+      <div className="rounded-xl border bg-background overflow-hidden my-2">
+        {connections.map((conn) => {
+          const pieceName = normalizePieceName(conn.piece);
+          return (
+            <div
+              key={conn.piece}
+              className="flex items-center gap-3 px-4 py-3 border-t first:border-t-0"
+            >
+              <div className="relative">
+                <PieceIconWithPieceName
+                  pieceName={pieceName}
+                  size="sm"
+                  border={false}
+                  showTooltip={false}
+                />
+                <div className="absolute -bottom-0.5 -right-0.5 bg-green-500 rounded-full p-0.5">
+                  <Check className="h-2 w-2 text-white" />
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium">{conn.displayName}</div>
+                <div className="text-xs text-muted-foreground">
+                  {t('Connected')}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  function openConnectionDialog({
+    connection,
+    isNew,
+  }: {
+    connection: ConnectionRequiredData;
+    isNew: boolean;
+  }) {
+    setIsNewConnection(isNew);
     setActiveConnection(connection);
   }
 
@@ -114,7 +156,13 @@ export function ConnectionsRequiredCard({
             connection={conn}
             isConnected={connectedSet.has(conn.piece)}
             existingConn={existingConns[conn.piece] ?? null}
-            onConnect={() => handleConnect(conn)}
+            onConnect={() =>
+              openConnectionDialog({ connection: conn, isNew: false })
+            }
+            onSwitch={() =>
+              openConnectionDialog({ connection: conn, isNew: true })
+            }
+            continued={continued}
           />
         ))}
 
@@ -132,8 +180,22 @@ export function ConnectionsRequiredCard({
                   className="gap-1.5"
                   onClick={() => {
                     setContinued(true);
+                    const resolvedProjectId =
+                      selectedProjectId ??
+                      authenticationSession.getProjectId() ??
+                      '';
+                    const confirmedConnections = connections.map((conn) => {
+                      const existing = existingConns[conn.piece];
+                      return {
+                        piece: conn.piece,
+                        displayName: conn.displayName,
+                        connectionExternalId: existing?.externalId ?? null,
+                        projectId: resolvedProjectId,
+                      };
+                    });
                     onResolve({
                       message: 'All connections are ready, continue building.',
+                      connections: confirmedConnections,
                     });
                   }}
                 >
@@ -155,6 +217,10 @@ export function ConnectionsRequiredCard({
           setOpen={(open, createdConnection) => {
             if (!open) {
               if (createdConnection) {
+                setExistingConns((prev) => ({
+                  ...prev,
+                  [activeConnection.piece]: createdConnection,
+                }));
                 setConnectedSet((prev) => {
                   const next = new Set(prev);
                   next.add(activeConnection.piece);
@@ -167,7 +233,11 @@ export function ConnectionsRequiredCard({
               setActiveConnection(null);
             }
           }}
-          reconnectConnection={existingConns[activeConnection.piece] ?? null}
+          reconnectConnection={
+            isNewConnection
+              ? null
+              : existingConns[activeConnection.piece] ?? null
+          }
           isGlobalConnection={false}
         />
       )}
@@ -180,11 +250,15 @@ function ConnectionRow({
   isConnected,
   existingConn,
   onConnect,
+  onSwitch,
+  continued,
 }: {
   connection: ConnectionRequiredData;
   isConnected: boolean;
   existingConn: AppConnectionWithoutSensitiveData | null;
   onConnect: () => void;
+  onSwitch: () => void;
+  continued: boolean;
 }) {
   const pieceName = normalizePieceName(connection.piece);
   const { isLoading } = piecesHooks.usePiece({ name: pieceName });
@@ -200,7 +274,11 @@ function ConnectionRow({
         showTooltip={false}
       />
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium">{connection.displayName}</div>
+        <div className="text-sm font-medium">
+          {isConnected && existingConn
+            ? existingConn.displayName
+            : connection.displayName}
+        </div>
         <div className="text-xs text-muted-foreground">
           {isConnected
             ? t('Ready to use')
@@ -212,14 +290,26 @@ function ConnectionRow({
         </div>
       </div>
       {isConnected ? (
-        <motion.span
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-          className="shrink-0 flex items-center justify-center"
-        >
-          <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
-        </motion.span>
+        continued ? (
+          <motion.span
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+            className="shrink-0 flex items-center justify-center"
+          >
+            <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+          </motion.span>
+        ) : (
+          <Button
+            size="sm"
+            variant="outline"
+            className="shrink-0 gap-1.5"
+            onClick={onSwitch}
+          >
+            <RefreshCw className="h-3 w-3" />
+            {t('Switch')}
+          </Button>
+        )
       ) : (
         <Button
           size="sm"

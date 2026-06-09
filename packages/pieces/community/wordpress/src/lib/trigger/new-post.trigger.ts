@@ -118,6 +118,9 @@ export const wordpressNewPost = createTrigger({
     },
   },
   description: 'Triggers when a new post is published',
+  aiMetadata: {
+    description: 'Fires when a new post is published on the WordPress site, optionally filtered to specific authors. Each event represents one newly published post and emits that post record. Polls periodically, so there may be a short delay after publishing.',
+  },
   props: {
     authors: wordpressCommon.authors,
   },

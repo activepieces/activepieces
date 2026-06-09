@@ -66,6 +66,9 @@ export const newFollowerOnAccount = createTrigger({
   name: 'newFollowerOnAccount',
   displayName: 'New Follower on Account',
   description: 'Triggers when someone new follows your Bluesky account',
+  aiMetadata: {
+    description: 'Fires when a new account follows the authenticated Bluesky account; each event represents one new follower and carries that follower\'s profile details.',
+  },
   props: {},
   sampleData: {
     did: 'did:plc:example123',

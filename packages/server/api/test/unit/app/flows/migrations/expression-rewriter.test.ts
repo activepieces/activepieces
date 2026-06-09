@@ -319,6 +319,47 @@ describe('expressionRewriter.rewriteStepReferences', () => {
         })
     })
 
+    // Regression: a user typo can leave a token acorn cannot parse — here an
+    // unterminated string literal `'url]` (the closing quote is missing). Quote
+    // characters are the only thing breaking the parse, so the rewriter blanks
+    // them out (length-preserving) to recover the structure, re-runs the same
+    // analyzer, and applies the insertions to the ORIGINAL string. Before this,
+    // the head `step_15` reference was left bare and the v22 output-nesting
+    // repair silently skipped it.
+    describe('P. Unparseable token — quote-blanking recovery', () => {
+        it('P1. unterminated string in bracket key (the Cardis flow case)', () => {
+            expect(rewrite('{{step_15[\'body\'][\'url]}}', ['step_15']))
+                .toBe('{{step_15[\'output\'][\'body\'][\'url]}}')
+        })
+        it('P2. canonical step ref recovered without a flow step list', () => {
+            expect(rewrite('{{step_3[\'body\'][\'url]}}'))
+                .toBe('{{step_3[\'output\'][\'body\'][\'url]}}')
+        })
+        it('P3. custom step name recovered from the flow step list', () => {
+            expect(rewrite('{{my_step[\'body\'][\'url]}}', ['my_step']))
+                .toBe('{{my_step[\'output\'][\'body\'][\'url]}}')
+        })
+        it('P4. trigger ref recovered', () => {
+            expect(rewrite('{{trigger[\'body\'][\'url]}}'))
+                .toBe('{{trigger[\'output\'][\'body\'][\'url]}}')
+        })
+        it('P5. dangling quote after a dot-access step ref still recovers the ref', () => {
+            expect(rewrite('{{step_1.foo + \'oops}}', ['step_1']))
+                .toBe('{{step_1[\'output\'].foo + \'oops}}')
+        })
+        it('P6. step name embedded in a broken string is not rewritten', () => {
+            expect(rewrite('{{\'step_15 body url]}}', ['step_15']))
+                .toBe('{{\'step_15 body url]}}')
+        })
+        it('P7. non-step identifier in unparseable token is left alone', () => {
+            expect(rewrite('{{foo[\'body\'][\'url]}}', ['step_15']))
+                .toBe('{{foo[\'body\'][\'url]}}')
+        })
+        it('P8. truncated non-quote expression is still left alone', () => {
+            expect(rewrite('{{step_1.}}', ['step_1'])).toBe('{{step_1.}}')
+        })
+    })
+
     describe('N. Tokens/expressions to leave alone', () => {
         it('N1. connections namespace', () => {
             expect(rewrite('{{connections[\'my-conn\']}}')).toBe('{{connections[\'my-conn\']}}')

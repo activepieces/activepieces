@@ -11,6 +11,10 @@ export const clicksendNewIncomingSms = createTrigger({
   name: 'new_incoming_sms',
   displayName: 'New Incoming SMS',
   description: 'Triggers when a new SMS message is received.',
+  aiMetadata: {
+    description:
+      'Fires when ClickSend receives an inbound SMS to any of the account dedicated numbers, delivering the incoming message and its sender, recipient, and content details. Represents a new reply or inbound text arriving at the account.',
+  },
   props: {},
 
   type: TriggerStrategy.WEBHOOK,

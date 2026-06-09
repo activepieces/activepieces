@@ -13,6 +13,12 @@ export const findSpreadsheets = createAction({
 	name: 'find_spreadsheets',
 	displayName: 'Find Spreadsheet(s)',
 	description: 'Find spreadsheet(s) by name.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Searches Google Drive for spreadsheets whose name matches a query (exact or contains) and returns the matches. Use to resolve a spreadsheet id from a human-readable name before acting on it. Read-only and idempotent.',
+		idempotent: true,
+	},
 	auth: googleSheetsAuth,
 	props: {
 		includeTeamDrives: includeTeamDrivesProp(),

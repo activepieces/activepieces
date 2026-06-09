@@ -19,6 +19,10 @@ export const githubRegisterTrigger = ({
     name: `trigger_${name}`,
     displayName,
     description,
+    aiMetadata: {
+      description:
+        'Fires on activity for a configured GitHub event type on a chosen repository (one of: pull request, star, issue, push, discussion, or discussion comment, depending on which trigger variant is used). Represents a repository webhook event delivering the raw GitHub event payload.',
+    },
     props: {
       repository: githubCommon.repositoryDropdown,
     },
