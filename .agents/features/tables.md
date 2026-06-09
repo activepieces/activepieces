@@ -72,7 +72,7 @@ A built-in relational database feature that lets users store structured data dir
 ## Key Service Methods
 
 - `table.create()` — creates table + optional fields
-- `table.list()` — paginated with optional row count, name filter, folder filter, externalIds filter
+- `table.list()` — paginated with optional row count, name filter, single-folder filter (`folderId`), multi-folder filter (`folderIds`), externalIds filter
 - `table.update()` — rename, move to folder, change trigger/status
 - `table.delete()` — cascades to fields, records, cells, webhooks
 - `table.exportTable()` — returns fields + rows as JSON
