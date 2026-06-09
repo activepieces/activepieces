@@ -57,6 +57,7 @@ export type WorkerToApiContract = {
 export type SendChatEventRequest = {
     userId: string
     conversationId: string
+    runId?: string
     event: ChatAgentEvent
 }
 

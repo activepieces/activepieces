@@ -59,8 +59,8 @@ async function sendMessage({
   conversationId: string;
   content: string;
   files?: Array<{ name: string; mimeType: string; data: string }>;
-}): Promise<{ conversationId: string }> {
-  return api.post<{ conversationId: string }>(
+}): Promise<{ conversationId: string; runId?: string }> {
+  return api.post<{ conversationId: string; runId?: string }>(
     `/v1/chat/conversations/${conversationId}/messages`,
     { content, files },
   );

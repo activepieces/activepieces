@@ -52,10 +52,13 @@ function buildToolCallMetaFromGate(gate: {
   displayName: string;
   toolInput: Record<string, unknown>;
 }): Record<string, ToolCallMeta> {
+  if (chatPartUtils.isDisplayTool(gate.toolName)) {
+    return {};
+  }
   const gateInput = gate.toolInput ?? {};
-  const isActionPreview = gate.toolName === 'ap_execute_action';
-  const meta: ToolCallMeta = isActionPreview
-    ? {
+  if (gate.toolName === 'ap_execute_action') {
+    return {
+      [gate.gateId]: {
         actionPreview: {
           toolCallId: gate.gateId,
           pieceName:
@@ -80,15 +83,18 @@ function buildToolCallMetaFromGate(gate: {
             ? (gateInput.items as Record<string, unknown>[]).slice(0, 3)
             : undefined,
         },
-      }
-    : {
-        approvalRequest: {
-          toolCallId: gate.gateId,
-          toolName: gate.toolName,
-          displayName: gate.displayName,
-        },
-      };
-  return { [gate.gateId]: meta };
+      },
+    };
+  }
+  return {
+    [gate.gateId]: {
+      approvalRequest: {
+        toolCallId: gate.gateId,
+        toolName: gate.toolName,
+        displayName: gate.displayName,
+      },
+    },
+  };
 }
 
 const ALLOWED_MIME_SET: ReadonlySet<string> = new Set(CHAT_ALLOWED_MIME_TYPES);
@@ -299,11 +305,15 @@ export function useAgentChat({
     [store],
   );
 
+  const reconcileAndClearRef = useRef<(convId: string) => void>(() => {});
+
   const {
     streamingMessage,
     streamPhase,
     streamError,
+    streamGeneration,
     startStream,
+    setActiveRunId,
     stopStream,
     clearStreamingState,
   } = useStreamingReducer({
@@ -313,13 +323,13 @@ export function useAgentChat({
     onActionPreview: handleActionPreview,
     onActionReceipt: handleActionReceipt,
     onStreamFinished: (convId) => {
-      void reconcile(convId).then(() => clearStreamingState());
+      reconcileAndClearRef.current(convId);
     },
     onStreamError: ({ conversationId: convId, errorCode }) => {
       if (errorCode === ErrorCode.AI_CREDIT_LIMIT_EXCEEDED) {
         onCreditsExhaustedRef.current?.();
       }
-      void reconcile(convId).then(() => clearStreamingState());
+      reconcileAndClearRef.current(convId);
     },
     onStaleCheck: (convId) => {
       void tryCatch(async () => {
@@ -327,7 +337,7 @@ export function useAgentChat({
         if (isNil(conv) || conversationIdRef.current !== convId) return;
 
         if (conv.status !== ChatConversationStatus.STREAMING) {
-          void reconcile(convId).then(() => clearStreamingState());
+          reconcileAndClearRef.current(convId);
           return;
         }
 
@@ -346,6 +356,11 @@ export function useAgentChat({
       });
     },
   });
+
+  reconcileAndClearRef.current = (convId: string) => {
+    const gen = streamGeneration.current;
+    void reconcile(convId).then(() => clearStreamingState(gen));
+  };
 
   const streamingQuickReplies = useMemo(
     () => chatPartUtils.extractQuickRepliesFromParts(streamingMessage),
@@ -383,8 +398,15 @@ export function useAgentChat({
 
   const wasCancelled = sendStatus.type === 'cancelled';
 
+  const streamingMessageRef = useRef(streamingMessage);
+  streamingMessageRef.current = streamingMessage;
+
   const cancelStream = useCallback(() => {
+    const currentStreaming = streamingMessageRef.current;
     stopStream();
+    if (currentStreaming && currentStreaming.parts.length > 0) {
+      setPersistedMessages((prev) => [...prev, currentStreaming]);
+    }
     setIsPollingForAgentReply(false);
     updateSendStatus({ type: 'cancelled' });
     setOptimisticUserMessage(null);
@@ -490,7 +512,7 @@ export function useAgentChat({
       startStream(convId);
       updateSendStatus({ type: 'idle' });
 
-      const { error: sendError } = await tryCatch(async () =>
+      const { data: sendResult, error: sendError } = await tryCatch(async () =>
         chatApi.sendMessage({
           conversationId: convId,
           content,
@@ -509,9 +531,20 @@ export function useAgentChat({
             message: sendError.message ?? 'Failed to send message',
           });
         }
+        return;
+      }
+      if (sendResult.runId) {
+        setActiveRunId(sendResult.runId);
       }
     },
-    [createConversation, startStream, stopStream, updateSendStatus, store],
+    [
+      createConversation,
+      startStream,
+      setActiveRunId,
+      stopStream,
+      updateSendStatus,
+      store,
+    ],
   );
 
   const setConversationId = useCallback(
@@ -544,7 +577,6 @@ export function useAgentChat({
         return;
       }
       const mapped = chatUtils.mapHistoryToUIMessages(historyResult.data.data);
-      setPersistedMessages(mapped);
       const restoredReplies = chatUtils.extractQuickRepliesFromHistory(mapped);
       if (restoredReplies.length > 0) {
         store.setState({ quickReplies: restoredReplies });
@@ -556,9 +588,34 @@ export function useAgentChat({
       modelNameRef.current = convResult.data.modelName ?? null;
       setModelNameState(convResult.data.modelName ?? null);
       if (convResult.data.status === ChatConversationStatus.STREAMING) {
+        const lastAssistantIdx = mapped.findLastIndex(
+          (m) => m.role === 'assistant',
+        );
+        if (lastAssistantIdx >= 0) {
+          setPersistedMessages(mapped.slice(0, lastAssistantIdx));
+        } else {
+          setPersistedMessages(mapped);
+        }
         const { data: gate } = await tryCatch(() => chatApi.getPendingGate(id));
         if (conversationIdRef.current !== id) return;
-        startStream(id);
+        const baseParts =
+          lastAssistantIdx >= 0 ? mapped[lastAssistantIdx].parts : undefined;
+        const displayGatePart =
+          gate && chatPartUtils.isDisplayTool(gate.toolName)
+            ? {
+                type: 'dynamic-tool' as const,
+                toolCallId: gate.gateId,
+                toolName: gate.toolName,
+                title: gate.displayName,
+                state: 'input-available' as const,
+                input: gate.toolInput,
+              }
+            : undefined;
+        startStream(id, {
+          initialParts: displayGatePart
+            ? [...(baseParts ?? []), displayGatePart]
+            : baseParts,
+        });
         if (gate) {
           store.setState((prev) => ({
             toolCallMeta: {
@@ -567,6 +624,8 @@ export function useAgentChat({
             },
           }));
         }
+      } else {
+        setPersistedMessages(mapped);
       }
       setIsLoadingHistory(false);
     },

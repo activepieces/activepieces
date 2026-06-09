@@ -31,7 +31,7 @@ const RETRY_BASE_DELAY_MS = 1_000
 export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_CHAT_AGENT,
     async execute(ctx: JobContext, data: ExecuteChatAgentJobData): Promise<FireAndForgetJobResult> {
-        const { conversationId, platformId, userId, userMessage, modelName, files } = data
+        const { conversationId, runId, platformId, userId, userMessage, modelName, files } = data
         const log = ctx.log.child({ conversationId })
 
         const config = await ctx.apiClient.getChatConfig({
@@ -44,7 +44,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
         })
 
         const eventEmitter = chatWorkerTools.createEventEmitter({
-            sendEvent: (input) => ctx.apiClient.sendChatEvent(input),
+            sendEvent: (input) => ctx.apiClient.sendChatEvent({ ...input, runId }),
             userId,
             conversationId,
             log,
@@ -56,7 +56,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
 
         const sendEventWithRetry = ({ event }: { event: ChatAgentEvent }) =>
             retryWithBackoff({
-                fn: () => ctx.apiClient.sendChatEvent({ userId, conversationId, event }),
+                fn: () => ctx.apiClient.sendChatEvent({ userId, conversationId, runId, event }),
                 log,
             })
 
@@ -80,7 +80,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
 
             const allTools = buildToolSet({
                 ctx, eventEmitter, log, planApproved, mcpToolSet,
-                projects: config.projects, conversationId, platformId, userId,
+                projects: config.projects, conversationId, runId, platformId, userId,
             })
 
             const uiParts: PersistedChatPart[] = []
@@ -144,7 +144,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 },
             })
 
-            await streamChunksToClient({ result, ctx, userId, conversationId, log })
+            await streamChunksToClient({ result, ctx, userId, conversationId, runId, log })
 
             if (abortController.signal.aborted) {
                 log.info({ conversationId, completedSteps: abortedStepMessages.length }, 'Chat agent cancelled by user')
@@ -249,7 +249,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
     },
 }
 
-function buildToolSet({ ctx, eventEmitter, log, planApproved, mcpToolSet, projects, conversationId, platformId, userId }: {
+function buildToolSet({ ctx, eventEmitter, log, planApproved, mcpToolSet, projects, conversationId, runId, platformId, userId }: {
     ctx: JobContext
     eventEmitter: ReturnType<typeof chatWorkerTools.createEventEmitter>
     log: JobContext['log']
@@ -257,6 +257,7 @@ function buildToolSet({ ctx, eventEmitter, log, planApproved, mcpToolSet, projec
     mcpToolSet: Record<string, unknown>
     projects: Array<{ id: string, displayName: string, type: string }>
     conversationId: string
+    runId?: string
     platformId: string
     userId: string
 }) {
@@ -267,7 +268,7 @@ function buildToolSet({ ctx, eventEmitter, log, planApproved, mcpToolSet, projec
 
     const sendHeartbeat = () => {
         void tryCatch(() => ctx.apiClient.sendChatEvent({
-            userId, conversationId,
+            userId, conversationId, runId,
             event: { type: ChatAgentEventType.CHUNK, data: [] },
         }))
     }
@@ -345,11 +346,12 @@ function buildToolSet({ ctx, eventEmitter, log, planApproved, mcpToolSet, projec
     return { ...localTools, ...displayTools, ...crossProjectTools, ...planTools, ...thinkingTools, ...(gatedMcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
 }
 
-async function streamChunksToClient({ result, ctx, userId, conversationId, log }: {
+async function streamChunksToClient({ result, ctx, userId, conversationId, runId, log }: {
     result: ReturnType<typeof streamText>
     ctx: JobContext
     userId: string
     conversationId: string
+    runId?: string
     log: JobContext['log']
 }): Promise<void> {
     let chunkBuffer: unknown[] = []
@@ -361,7 +363,7 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, log }
         chunkBuffer = []
         await retryWithBackoff({
             fn: () => ctx.apiClient.sendChatEvent({
-                userId, conversationId,
+                userId, conversationId, runId,
                 event: { type: ChatAgentEventType.CHUNK, data: batch },
             }),
             maxAttempts: 2,
