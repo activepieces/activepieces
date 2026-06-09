@@ -126,8 +126,7 @@ export const TiptapEditor = ({
 }: TiptapEditorProps) => {
   const { platform } = platformHooks.useCurrentPlatform();
   const { embedState } = useEmbedding();
-  const formulaEnabled =
-    platform.plan.dataManipulationEnabled && !embedState.isEmbedded;
+  const formulaEnabled = platform.plan.dataManipulationEnabled;
   const steps = useBuilderStateContext((state) =>
     flowStructureUtil.getAllSteps(state.flowVersion.trigger),
   );
@@ -529,6 +528,7 @@ export const TiptapEditor = ({
           editorRef={editorWrapperRef}
           onSelect={handleFunctionSelect}
           onClose={closeSlash}
+          hideDocsLink={embedState.isEmbedded}
         />
       )}
     </div>
