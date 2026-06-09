@@ -15,6 +15,8 @@ export const scrape = createAction({
   name: 'scrape',
   displayName: 'Scrape Website',
   description: 'Scrape a website by performing a series of actions like clicking, typing, taking screenshots, and extracting data.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches the content of a single web page and returns it in a chosen format (markdown, HTML, links, summary, screenshot, or AI-extracted JSON). Choose this to read one specific URL; for many pages use Crawl, and for a structured data pull across several known URLs use Extract Structured Data. Optionally runs browser actions (click, type, wait, screenshot) before scraping. Read-only against the target, so repeating the same call is safe.', idempotent: true },
   props: {
     url: Property.ShortText({
       displayName: 'Website URL',

@@ -190,6 +190,18 @@ export async function createAIModel({
             }
             return provider.chatModel(modelId)
         }
+        case AIProviderName.MISTRAL: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            if (isImage) {
+                throw new Error(`Provider ${AIProviderName.MISTRAL} does not support image models`)
+            }
+            const provider = createOpenAICompatible({
+                name: 'mistral',
+                baseURL: 'https://api.mistral.ai/v1',
+                apiKey,
+            })
+            return provider.chatModel(modelId)
+        }
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER: {
             const { apiKey } = auth as BaseAIProviderAuthConfig

@@ -88,13 +88,13 @@ function CodeBlockCode({
   }, [code, language, theme]);
 
   const classNames = cn(
-    'w-full overflow-x-auto text-[13px] [&>pre]:px-4 [&>pre]:py-4',
+    'w-full overflow-x-auto text-[13px] [&>pre]:px-4 [&>pre]:py-4 transition-opacity duration-300',
     className,
   );
 
   if (!tokenResult) {
     return (
-      <div className={classNames} {...props}>
+      <div className={cn(classNames, 'opacity-60')} {...props}>
         <pre>
           <code>{code}</code>
         </pre>

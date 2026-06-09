@@ -8,6 +8,8 @@ export const findRowAction = createAction({
 	name: 'find-row',
 	displayName: 'Find Row(s)',
 	description: 'Find specific rows in the selected table using a column match search.',
+	audience: 'both',
+	aiMetadata: { description: 'Search a Coda table for rows where a chosen column equals a given value, paging through all matches. Use to look up rows by a field value before reading or updating them; pair with Update Row using a returned row ID. Read-only and idempotent.', idempotent: true },
 	props: {
 		docId: docIdDropdown,
 		tableId: tableIdDropdown,

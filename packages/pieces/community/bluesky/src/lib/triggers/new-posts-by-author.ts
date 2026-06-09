@@ -113,6 +113,9 @@ export const newPostsByAuthor = createTrigger({
   name: 'newPostsByAuthor',
   displayName: 'New Posts by Author',
   description: 'Triggers when a selected author creates a new post',
+  aiMetadata: {
+    description: 'Fires when a chosen Bluesky author (picked from your following list or by handle) publishes a new post; each event represents one new post by that author, optionally including their replies and reposts.',
+  },
   props: {
     authorSelection: Property.StaticDropdown({
       displayName: 'How to select author?',

@@ -12,6 +12,12 @@ export const findRecordAction = createAction({
   name: 'apitable_find_record',
   displayName: 'Find Records',
   description: 'Finds records in datasheet.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Reads records from an AITable datasheet, optionally narrowing by record IDs, a formula filter, or a field-name projection, with pagination controls; leaving the filters empty returns all records (paged). Use to look up or list datasheet rows before acting on them. Idempotent: it only reads data.',
+    idempotent: true,
+  },
   props: {
     space_id: APITableCommon.space_id,
     datasheet_id: APITableCommon.datasheet_id,

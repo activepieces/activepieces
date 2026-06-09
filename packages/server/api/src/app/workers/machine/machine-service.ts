@@ -1,3 +1,4 @@
+import { apVersionUtil } from '@activepieces/server-utils'
 import {
     ExecutionMode,
     isNil,
@@ -62,6 +63,7 @@ async function buildSettingsResponse(_log: FastifyBaseLogger): Promise<WorkerSet
         SSRF_ALLOW_LIST: system.get(AppSystemProp.SSRF_ALLOW_LIST)?.split(',').map(f => f.trim()) ?? [],
         NETWORK_MODE: system.getOrThrow<NetworkMode>(AppSystemProp.NETWORK_MODE),
         PAGE_ONCALL_WEBHOOK: system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK),
+        APP_VERSION: apVersionUtil.getCurrentRelease(),
     }
     settingsCache.set(cacheKey, settings)
     return settings

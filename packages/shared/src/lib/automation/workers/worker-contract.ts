@@ -43,7 +43,6 @@ export type WorkerToApiContract = {
     getPiece(input: GetPieceRequest): Promise<unknown>
     getPieceArchive(input: { archiveId: string }): Promise<Buffer>
     extendLock(input: { jobId: string, token: string, queueName: string }): Promise<void>
-    getPayloadFile(input: { fileId: string, projectId: string }): Promise<Buffer>
     getUsedPieces(input: Record<string, never>): Promise<PiecePackage[]>
     markPieceAsUsed(input: { pieces: PiecePackage[] }): Promise<void>
     disableFlow(input: DisableFlowRequest): Promise<void>
@@ -65,12 +64,37 @@ export enum ChatAgentEventType {
     CHUNK = 'CHUNK',
     FINISHED = 'FINISHED',
     ERROR = 'ERROR',
+    TITLE_UPDATE = 'TITLE_UPDATE',
+    TOOL_PROGRESS = 'TOOL_PROGRESS',
+    TOOL_APPROVAL_REQUEST = 'TOOL_APPROVAL_REQUEST',
+}
+
+export type ToolProgressEvent = {
+    toolCallId: string
+    data: {
+        label: string
+        total: number
+        completed: number
+        succeeded: number
+        failed: number
+        done: boolean
+        results: { index: number, success: boolean, output?: unknown, error?: string }[]
+    }
+}
+
+export type ToolApprovalRequestEvent = {
+    toolCallId: string
+    toolName: string
+    displayName: string
 }
 
 export type ChatAgentEvent =
     | { type: ChatAgentEventType.CHUNK, data: unknown }
     | { type: ChatAgentEventType.FINISHED, data: { conversationId: string } }
     | { type: ChatAgentEventType.ERROR, data: { message: string, code?: string } }
+    | { type: ChatAgentEventType.TITLE_UPDATE, data: { title: string } }
+    | { type: ChatAgentEventType.TOOL_PROGRESS, data: ToolProgressEvent }
+    | { type: ChatAgentEventType.TOOL_APPROVAL_REQUEST, data: ToolApprovalRequestEvent }
 
 export type GetChatConfigRequest = {
     conversationId: string

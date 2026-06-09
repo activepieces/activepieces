@@ -10,6 +10,8 @@ export const uploadAttachmentAction = createAction({
 	name: 'upload-attachment',
 	displayName: 'Upload Attachment',
 	description: 'Uploads a file as an attachment to a page.',
+	audience: 'both',
+	aiMetadata: { description: 'Uploads a file as an attachment on a Confluence page via multipart form upload, with an optional version comment and a minor-edit flag to suppress watcher notifications. Use to attach a document or image to a page. Requires the page ID and the file. Uploading the same filename again creates a new version rather than a duplicate, but each call still mutates state, so treat as not idempotent.', idempotent: false },
 	props: {
 		spaceId: spaceIdProp,
 		pageId: pageIdProp,

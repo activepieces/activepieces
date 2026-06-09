@@ -40,7 +40,13 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             chatMcp.getCredentials({ platformId, userId, log }),
         ])
 
-        if (conversation.status === ChatConversationStatus.STREAMING) {
+        const lockResult = await chatHelpers.conversationRepo()
+            .createQueryBuilder()
+            .update()
+            .set({ status: ChatConversationStatus.STREAMING })
+            .where('id = :id AND status != :streaming', { id: conversationId, streaming: ChatConversationStatus.STREAMING })
+            .execute()
+        if (lockResult.affected === 0) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: { message: 'An agent is already running for this conversation' },
@@ -74,8 +80,10 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         await chatHelpers.conversationRepo().update(conversationId, {
             messages: allMessages,
             uiMessages: JSON.parse(JSON.stringify(uiMessagesWithUser)),
-            status: ChatConversationStatus.STREAMING,
         })
+        setTimeout(() => {
+            chatApprovalGate.clearCancel({ conversationId }).catch(() => {})
+        }, 5_000)
 
         const estimatedTokens = chatCompaction.estimateTokenCount({ messages: allMessages, systemPromptLength: systemPromptText.length })
         let compactionState = { summary: conversation.summary ?? null, summarizedUpToIndex: conversation.summarizedUpToIndex ?? null }
@@ -138,7 +146,10 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             if (input.modelName) updates.modelName = input.modelName
         }
 
-        await chatHelpers.conversationRepo().update(input.conversationId, updates)
+        const saveResult = await chatHelpers.conversationRepo().update(input.conversationId, updates)
+        if (saveResult.affected === 0) {
+            log.warn({ conversationId: input.conversationId }, 'saveChatMessages: conversation not found, may have been deleted')
+        }
 
         if (input.messages.length > 0) {
             const conversation = await chatHelpers.conversationRepo().findOneBy({ id: input.conversationId })
@@ -159,6 +170,14 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
     },
 
     async executeChatTool(input: ExecuteChatToolRequest): Promise<ExecuteChatToolResponse> {
+        if (input.toolName === '__cancel_check') {
+            const conversationId = input.toolInput.conversationId
+            if (typeof conversationId !== 'string') {
+                return { result: false }
+            }
+            const cancelled = await chatApprovalGate.isCancelled({ conversationId })
+            return { result: cancelled }
+        }
         if (input.toolName === '__approval_check') {
             const gateId = input.toolInput.gateId
             if (typeof gateId !== 'string') {

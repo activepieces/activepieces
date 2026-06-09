@@ -1,12 +1,12 @@
 import {
-  PlanApprovalRequest,
-  PlanStepUpdate,
-  ToolApprovalRequest,
+  BatchProgressData,
+  omit,
+  ToolApprovalRequestEvent,
 } from '@activepieces/shared';
 import { StoreApi, create } from 'zustand';
 
 import { chatApi } from './chat-api';
-import { MultiQuestion, PlanProgressData } from './chat-store-types';
+import { MultiQuestion } from './chat-store-types';
 import { AnyToolPart, ChatUIMessage, chatPartUtils } from './chat-types';
 
 function sendApprovalDecision({
@@ -21,176 +21,137 @@ function sendApprovalDecision({
   void chatApi.approveToolCall({ gateId, approved, payload });
 }
 
-function extractQuestionsFromToolParts(
-  message: ChatUIMessage | undefined,
-): MultiQuestion[] {
-  if (!message || message.role !== 'assistant') return [];
-  const questionPart = message.parts.find(
-    (p) =>
-      chatPartUtils.isAnyToolPart(p) &&
-      chatPartUtils.getToolPartName(p) === 'ap_show_questions' &&
-      p.state !== 'output-available',
-  );
-  if (!questionPart || !chatPartUtils.isAnyToolPart(questionPart)) return [];
-  const input = questionPart.input as
-    | { questions?: MultiQuestion[] }
-    | undefined;
+function extractQuestionsFromInput(part: AnyToolPart | null): MultiQuestion[] {
+  if (!part) return [];
+  const input = part.input as { questions?: MultiQuestion[] } | undefined;
   return input?.questions ?? [];
 }
 
-function extractPlanFromToolParts(
-  message: ChatUIMessage | undefined,
-): PlanProgressData | null {
-  if (!message || message.role !== 'assistant') return null;
-  const planPart = message.parts.find(
-    (p): p is AnyToolPart =>
-      chatPartUtils.isAnyToolPart(p) &&
-      chatPartUtils.getToolPartName(p) === 'ap_request_plan_approval',
-  );
-  if (!planPart) return null;
-  const toolOutput = chatPartUtils.parseTypedToolOutput(
-    planPart,
-    'ap_request_plan_approval',
-  );
-  if (toolOutput.state === 'error') return null;
-  if (toolOutput.state === 'success' && !toolOutput.data.success) return null;
-  const input = planPart.input as
-    | { planSummary?: string; steps?: string[] }
-    | undefined;
-  const steps = input?.steps ?? [];
-  if (steps.length === 0) return null;
-  return { title: input?.planSummary ?? '', steps };
+function isNotDismissed(
+  part: AnyToolPart | null,
+  state: ChatStoreState,
+): part is AnyToolPart {
+  if (!part) return false;
+  return !state.dismissedGateIds[chatPartUtils.getToolCallId(part)];
 }
 
+export type ToolCallMeta = {
+  batchProgress?: BatchProgressData;
+  approvalRequest?: ToolApprovalRequestEvent;
+};
+
 export type ChatStoreState = {
-  pendingApprovalRequest: ToolApprovalRequest | null;
-  pendingPlanApproval: PlanApprovalRequest | null;
-  planProgressUpdates: PlanStepUpdate[];
-  planRejected: boolean;
-  displayCard: {
-    type: string;
-    data: Record<string, unknown>;
-    gateId: string;
-    resolved: boolean;
-  } | null;
   quickReplies: string[];
-
-  dismissedApprovalGateId: string | null;
-  dismissedPlanGateId: string | null;
-
+  toolCallMeta: Record<string, ToolCallMeta>;
+  dismissedGateIds: Record<string, true>;
   lastDismissedFormId: string | null;
 
-  approveToolCall: () => void;
-  rejectToolCall: () => void;
-  dismissApproval: () => void;
-
-  approvePlan: () => void;
-  rejectPlan: () => void;
-  dismissPlan: () => void;
-
+  approveGate: (gateId: string, payload?: Record<string, unknown>) => void;
+  rejectGate: (gateId: string) => void;
+  dismissGate: (gateId: string) => void;
   dismissForm: (messageId: string) => void;
-
-  resolveDisplayCard: (payload: Record<string, unknown>) => void;
-  dismissDisplayCard: () => void;
-
   resetInteractions: () => void;
 };
 
 export type ChatStore = ReturnType<typeof createChatStore>;
 
+function dismissAndCleanup(
+  prev: ChatStoreState,
+  gateId: string,
+): Partial<ChatStoreState> {
+  return {
+    dismissedGateIds: { ...prev.dismissedGateIds, [gateId]: true },
+    toolCallMeta: omit(prev.toolCallMeta, [gateId]),
+  };
+}
+
 export const createChatStore = () =>
-  create<ChatStoreState>((set, get) => ({
-    pendingApprovalRequest: null,
-    pendingPlanApproval: null,
-    planProgressUpdates: [],
-    planRejected: false,
-    displayCard: null,
+  create<ChatStoreState>((set) => ({
     quickReplies: [],
-
-    dismissedApprovalGateId: null,
-    dismissedPlanGateId: null,
-
+    toolCallMeta: {},
+    dismissedGateIds: {},
     lastDismissedFormId: null,
 
-    approveToolCall: () => {
-      const req = get().pendingApprovalRequest;
-      if (!req) return;
-      set({ dismissedApprovalGateId: req.gateId });
-      sendApprovalDecision({ gateId: req.gateId, approved: true });
+    approveGate: (gateId: string, payload?: Record<string, unknown>) => {
+      set((prev) => dismissAndCleanup(prev, gateId));
+      sendApprovalDecision({ gateId, approved: true, payload });
     },
-    rejectToolCall: () => {
-      const req = get().pendingApprovalRequest;
-      if (!req) return;
-      set({ dismissedApprovalGateId: req.gateId });
-      sendApprovalDecision({ gateId: req.gateId, approved: false });
+    rejectGate: (gateId: string) => {
+      set((prev) => dismissAndCleanup(prev, gateId));
+      sendApprovalDecision({ gateId, approved: false });
     },
-    dismissApproval: () => {
-      const req = get().pendingApprovalRequest;
-      if (req) set({ dismissedApprovalGateId: req.gateId });
+    dismissGate: (gateId: string) => {
+      set((prev) => dismissAndCleanup(prev, gateId));
     },
-
-    approvePlan: () => {
-      const plan = get().pendingPlanApproval;
-      if (!plan) return;
-      set({ dismissedPlanGateId: plan.gateId });
-      sendApprovalDecision({ gateId: plan.gateId, approved: true });
-    },
-    rejectPlan: () => {
-      const plan = get().pendingPlanApproval;
-      if (!plan) return;
-      set({ dismissedPlanGateId: plan.gateId, planRejected: true });
-      sendApprovalDecision({ gateId: plan.gateId, approved: false });
-    },
-    dismissPlan: () => {
-      const plan = get().pendingPlanApproval;
-      if (plan) set({ dismissedPlanGateId: plan.gateId });
-    },
-
     dismissForm: (messageId: string) => {
       set({ lastDismissedFormId: messageId });
     },
-
-    resolveDisplayCard: (payload: Record<string, unknown>) => {
-      const card = get().displayCard;
-      if (!card || card.resolved) return;
-      set({ displayCard: { ...card, resolved: true } });
-      sendApprovalDecision({ gateId: card.gateId, approved: true, payload });
-    },
-    dismissDisplayCard: () => {
-      const card = get().displayCard;
-      if (!card) return;
-      set({ displayCard: null });
-      sendApprovalDecision({ gateId: card.gateId, approved: false });
-    },
-
     resetInteractions: () => {
       set({
-        pendingApprovalRequest: null,
-        pendingPlanApproval: null,
-        planProgressUpdates: [],
         quickReplies: [],
-        displayCard: null,
-        planRejected: false,
+        toolCallMeta: {},
+        dismissedGateIds: {},
+        lastDismissedFormId: null,
       });
     },
   }));
 
-function selectHasActiveApproval(s: ChatStoreState): boolean {
-  return (
-    s.pendingApprovalRequest !== null &&
-    s.pendingApprovalRequest.gateId !== s.dismissedApprovalGateId
-  );
+function selectActiveDisplayTool({
+  state,
+  lastAssistantMessage,
+}: {
+  state: ChatStoreState;
+  lastAssistantMessage: ChatUIMessage | undefined;
+}): AnyToolPart | null {
+  const part = chatPartUtils.findLastToolPart({
+    message: lastAssistantMessage,
+    predicate: (name, p) =>
+      chatPartUtils.isDisplayTool(name) &&
+      name !== 'ap_show_quick_replies' &&
+      p.state === 'input-available',
+  });
+  return isNotDismissed(part, state) ? part : null;
 }
 
-function selectApprovalDisplayName(s: ChatStoreState): string | null {
-  return s.pendingApprovalRequest?.displayName ?? null;
+function selectPendingPlanApproval({
+  state,
+  lastAssistantMessage,
+}: {
+  state: ChatStoreState;
+  lastAssistantMessage: ChatUIMessage | undefined;
+}): AnyToolPart | null {
+  const part = chatPartUtils.findLastToolPart({
+    message: lastAssistantMessage,
+    predicate: (name, p) =>
+      name === 'ap_request_plan_approval' && p.state === 'input-available',
+  });
+  return isNotDismissed(part, state) ? part : null;
 }
 
-function selectHasPlanApproval(s: ChatStoreState): boolean {
-  return (
-    s.pendingPlanApproval !== null &&
-    s.pendingPlanApproval.gateId !== s.dismissedPlanGateId
-  );
+function selectPendingMcpApproval({
+  state,
+  lastAssistantMessage,
+}: {
+  state: ChatStoreState;
+  lastAssistantMessage: ChatUIMessage | undefined;
+}): { toolCallId: string; toolName: string; displayName: string } | null {
+  const part = chatPartUtils.findLastToolPart({
+    message: lastAssistantMessage,
+    predicate: (_name, p) => {
+      if (p.state !== 'input-available') return false;
+      const id = chatPartUtils.getToolCallId(p);
+      return !!id && !!state.toolCallMeta[id]?.approvalRequest;
+    },
+  });
+  if (!isNotDismissed(part, state)) return null;
+  const toolCallId = chatPartUtils.getToolCallId(part);
+  const meta = state.toolCallMeta[toolCallId]?.approvalRequest;
+  if (!meta) return null;
+  return {
+    toolCallId,
+    toolName: meta.toolName,
+    displayName: meta.displayName,
+  };
 }
 
 function selectActiveQuestions({
@@ -200,14 +161,19 @@ function selectActiveQuestions({
   state: ChatStoreState;
   lastAssistantMessage: ChatUIMessage | undefined;
 }): MultiQuestion[] {
+  const activeTool = selectActiveDisplayTool({ state, lastAssistantMessage });
   if (
-    state.displayCard?.type === 'data-questions' &&
-    !state.displayCard.resolved
+    activeTool &&
+    chatPartUtils.getToolPartName(activeTool) === 'ap_show_questions'
   ) {
-    const input = state.displayCard.data as { questions?: MultiQuestion[] };
-    return input.questions ?? [];
+    return extractQuestionsFromInput(activeTool);
   }
-  return extractQuestionsFromToolParts(lastAssistantMessage);
+  const historyPart = chatPartUtils.findLastToolPart({
+    message: lastAssistantMessage,
+    predicate: (name, p) =>
+      name === 'ap_show_questions' && p.state !== 'output-available',
+  });
+  return extractQuestionsFromInput(historyPart);
 }
 
 function selectHasActiveForm({
@@ -218,83 +184,60 @@ function selectHasActiveForm({
   lastAssistantMessage: ChatUIMessage | undefined;
 }): boolean {
   const questions = selectActiveQuestions({ state, lastAssistantMessage });
+  if (questions.length === 0) return false;
+  const activeTool = selectActiveDisplayTool({ state, lastAssistantMessage });
+  if (
+    activeTool &&
+    chatPartUtils.getToolPartName(activeTool) === 'ap_show_questions'
+  ) {
+    return true;
+  }
   return (
-    questions.length > 0 &&
-    ((state.displayCard?.type === 'data-questions' &&
-      !state.displayCard.resolved) ||
-      (!!lastAssistantMessage &&
-        lastAssistantMessage.id !== state.lastDismissedFormId))
+    !!lastAssistantMessage &&
+    lastAssistantMessage.id !== state.lastDismissedFormId
   );
 }
 
-function selectPlanProgress({
+function selectHasBlockingCard({
   state,
   lastAssistantMessage,
 }: {
   state: ChatStoreState;
-  lastAssistantMessage: ChatUIMessage | undefined;
-}): PlanProgressData | null {
-  if (state.pendingPlanApproval && state.pendingPlanApproval.steps.length > 0) {
-    return {
-      title: state.pendingPlanApproval.planSummary,
-      steps: state.pendingPlanApproval.steps,
-    };
-  }
-  return extractPlanFromToolParts(lastAssistantMessage);
-}
-
-function selectEffectivePlanUpdates({
-  state,
-}: {
-  state: ChatStoreState;
-}): PlanStepUpdate[] {
-  return state.planProgressUpdates;
-}
-
-function selectShouldShowPlan({
-  state,
-  isStreaming,
-  isLastAssistant,
-  lastAssistantMessage,
-}: {
-  state: ChatStoreState;
-  isStreaming: boolean;
-  isLastAssistant: boolean;
   lastAssistantMessage: ChatUIMessage | undefined;
 }): boolean {
-  const progress = selectPlanProgress({ state, lastAssistantMessage });
-  if (progress === null) return false;
+  const part = chatPartUtils.findLastToolPart({
+    message: lastAssistantMessage,
+    predicate: (name, p) => {
+      if (p.state !== 'input-available') return false;
+      const id = chatPartUtils.getToolCallId(p);
+      if (state.dismissedGateIds[id]) return false;
+      if (chatPartUtils.isDisplayTool(name) && name !== 'ap_show_quick_replies')
+        return true;
+      if (name === 'ap_request_plan_approval') return true;
+      return !!state.toolCallMeta[id]?.approvalRequest;
+    },
+  });
+  return part !== null;
+}
 
-  const hasLiveUpdates = selectEffectivePlanUpdates({ state }).length > 0;
-  const planToolWasCompleted =
-    lastAssistantMessage?.parts.some(
-      (p) =>
-        chatPartUtils.isAnyToolPart(p) &&
-        chatPartUtils.getToolPartName(p) === 'ap_request_plan_approval' &&
-        p.state === 'output-available',
-    ) ?? false;
-  const planWasExecuted = hasLiveUpdates || planToolWasCompleted;
-
-  if (!isLastAssistant) {
-    return !isStreaming && planWasExecuted;
-  }
-
-  return (
-    !selectHasPlanApproval(state) &&
-    !state.planRejected &&
-    (!isStreaming || planWasExecuted)
-  );
+function selectBatchProgress({
+  state,
+  toolCallId,
+}: {
+  state: ChatStoreState;
+  toolCallId: string;
+}): BatchProgressData | undefined {
+  return state.toolCallMeta[toolCallId]?.batchProgress;
 }
 
 export const chatStoreSelectors = {
-  hasActiveApproval: selectHasActiveApproval,
-  approvalDisplayName: selectApprovalDisplayName,
-  hasPlanApproval: selectHasPlanApproval,
+  activeDisplayTool: selectActiveDisplayTool,
+  pendingPlanApproval: selectPendingPlanApproval,
+  pendingMcpApproval: selectPendingMcpApproval,
   activeQuestions: selectActiveQuestions,
   hasActiveForm: selectHasActiveForm,
-  planProgress: selectPlanProgress,
-  effectivePlanUpdates: selectEffectivePlanUpdates,
-  shouldShowPlan: selectShouldShowPlan,
+  hasBlockingCard: selectHasBlockingCard,
+  batchProgress: selectBatchProgress,
 };
 
 export type SetChatStore = StoreApi<ChatStoreState>['setState'];

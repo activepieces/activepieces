@@ -55,6 +55,10 @@ export const newSpreadsheetTrigger = createTrigger({
 	name: 'new-spreadsheet',
 	displayName: 'New Spreadsheet',
 	description: 'Triggers when a new spreadsheet is created.',
+	aiMetadata: {
+		description:
+			'Fires when a new Google Sheets spreadsheet is created in the connected Drive (optionally including shared drives), emitting one event per new spreadsheet with its Drive file metadata. Polls periodically rather than in real time.',
+	},
 	type: TriggerStrategy.POLLING,
 	props: {
 		includeTeamDrives: includeTeamDrivesProp(),

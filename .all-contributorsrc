@@ -1768,7 +1768,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/187646079?v=4",
       "profile": "https://github.com/rimjhimyadav",
       "contributions": [
-        "plugin"
+        "plugin",
+        "code"
       ]
     },
     {
@@ -2192,6 +2193,42 @@
       "profile": "https://github.com/exvillager",
       "contributions": [
         "code"
+      ]
+    },
+    {
+      "login": "Khizarshah01",
+      "name": "khizar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/109973520?v=4",
+      "profile": "http://khizar.tech",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Dan425953",
+      "name": "Dan425953",
+      "avatar_url": "https://avatars.githubusercontent.com/u/168941179?v=4",
+      "profile": "https://github.com/Dan425953",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "FileToPDF",
+      "name": "FileToPDF.dev",
+      "avatar_url": "https://avatars.githubusercontent.com/u/268257624?v=4",
+      "profile": "https://filetopdf.dev",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "GAAZ",
+      "name": "DW",
+      "avatar_url": "https://avatars.githubusercontent.com/u/52105840?v=4",
+      "profile": "https://github.com/GAAZ",
+      "contributions": [
+        "plugin"
       ]
     }
   ],

@@ -9,6 +9,8 @@ import { t } from 'i18next';
 import { Loader2, Play } from 'lucide-react';
 import React, { useState } from 'react';
 
+import { SmartOutputViewer } from '@/components/custom/smart-output-viewer';
+import type { OutputSchema } from '@/components/custom/smart-output-viewer/types';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -16,10 +18,10 @@ import { cn } from '@/lib/utils';
 import { DataDisplayTabs } from '../data-display/data-display-tabs';
 import { ErrorExplanationContext } from '../data-display/explanation-prompt';
 import { FriendlyErrorView } from '../data-display/friendly-error-view';
+import { StepDataPanelHeader } from '../step-data/step-data-panel-header';
+import { StepDataPanelViewToggle } from '../step-data/step-data-panel-view-toggle';
 
 import { AgentTestStep, isRunAgent } from './agent-test-step';
-import { TestPanelHeader } from './test-panel-header';
-import { TestPanelViewToggle } from './test-panel-view-toggle';
 import { TestButtonTooltip } from './test-step-tooltip';
 
 type TestSampleDataViewerProps = {
@@ -35,6 +37,7 @@ type TestSampleDataViewerProps = {
   consoleLogs: string | null;
   explanationContext?: ErrorExplanationContext;
   pieceDisplayName?: string;
+  pieceSchema?: OutputSchema | null;
 } & (
   | {
       hideCancel: true;
@@ -79,6 +82,7 @@ export const TestSampleDataViewer = React.memo(
       consoleLogs,
       explanationContext,
       pieceDisplayName,
+      pieceSchema,
     } = props;
     const [requestedTab, setActiveTab] = useState<ActiveTab>('Output');
     const hasInput = !isNil(sampleDataInput);
@@ -117,7 +121,7 @@ export const TestSampleDataViewer = React.memo(
 
     return (
       <div className="flex flex-col h-full w-full min-h-0">
-        <TestPanelHeader status={status} lastTestDate={lastTestDate} />
+        <StepDataPanelHeader status={status} lastTestDate={lastTestDate} />
         {!isTesting && children}
         <div className="flex-1 flex flex-col w-full text-start min-h-0">
           {errorMessage && !isTesting && (
@@ -147,6 +151,12 @@ export const TestSampleDataViewer = React.memo(
                 error={friendlyError}
                 explanationContext={explanationContext}
                 pieceDisplayName={pieceDisplayName}
+              />
+            ) : activeTab === 'Output' && !errorMessage ? (
+              <SmartOutputViewer
+                json={outputData}
+                title={t('Output')}
+                pieceSchema={pieceSchema ?? null}
               />
             ) : (
               <DataDisplayTabs
@@ -200,7 +210,7 @@ const TestPanelToolbar = ({
       hasLogs={hasLogs}
       disabled={disabled}
     />
-    <TestPanelViewToggle disabled={disabled} />
+    <StepDataPanelViewToggle disabled={disabled} />
   </div>
 );
 

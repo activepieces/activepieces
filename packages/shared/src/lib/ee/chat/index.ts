@@ -28,6 +28,7 @@ export enum PersistedChatPartType {
     REASONING = 'reasoning',
     TOOL_CALL = 'tool-call',
     THINKING_STATUS = 'thinking-status',
+    BATCH_PROGRESS = 'batch-progress',
 }
 
 export enum PersistedToolCallStatus {
@@ -54,6 +55,8 @@ const PersistedToolCallPartSchema = z.object({
     type: z.literal(PersistedChatPartType.TOOL_CALL),
     toolCallId: z.string(),
     toolName: z.string(),
+    title: z.string().optional(),
+    description: z.string().optional(),
     input: z.record(z.string(), z.unknown()),
     output: z.unknown().optional(),
     status: z.enum([PersistedToolCallStatus.COMPLETED, PersistedToolCallStatus.ERROR]),
@@ -65,11 +68,17 @@ const PersistedThinkingStatusPartSchema = z.object({
     text: z.string(),
 })
 
+const PersistedBatchProgressPartSchema = z.object({
+    type: z.literal(PersistedChatPartType.BATCH_PROGRESS),
+    data: z.record(z.string(), z.unknown()),
+})
+
 const PersistedChatPartSchema = z.discriminatedUnion('type', [
     PersistedTextPartSchema,
     PersistedReasoningPartSchema,
     PersistedToolCallPartSchema,
     PersistedThinkingStatusPartSchema,
+    PersistedBatchProgressPartSchema,
 ])
 
 export const PersistedChatMessageSchema = z.object({
@@ -142,18 +151,6 @@ export type ChatHistoryMessage = {
     thoughts?: string
 }
 
-export type ToolApprovalRequest = {
-    gateId: string
-    toolName: string
-    displayName: string
-}
-
-export type PlanApprovalRequest = {
-    gateId: string
-    planSummary: string
-    steps: string[]
-}
-
 export type PlanStepStatus = 'pending' | 'executing' | 'done' | 'error'
 
 export type PlanStepUpdate = {
@@ -161,16 +158,12 @@ export type PlanStepUpdate = {
     status: PlanStepStatus
 }
 
-export type ChatStreamWriter = {
-    write(part: Record<string, unknown>): void
-}
-
 export type ChatToolOutputs = {
     ap_set_session_title: { success: boolean }
     ap_select_project: { success: boolean, message?: string, error?: string }
     ap_request_plan_approval: { success: boolean, message: string }
     ap_list_across_projects: { content: { type: string, text: string }[] }
-    ap_run_one_time_action:
+    ap_execute_action:
     | { noAuthRequired: true, piece: string }
     | { needsConnection: true, piece: string, displayName: string }
     | { pickConnection: true, piece: string, displayName: string, connections: ConnectionOption[] }
@@ -205,6 +198,23 @@ function unwrapToolOutput(output: unknown): unknown {
 
 export const chatPersistenceUtils = {
     unwrapToolOutput,
+}
+
+export type BatchItemResult = {
+    index: number
+    success: boolean
+    output?: unknown
+    error?: string
+}
+
+export type BatchProgressData = {
+    label: string
+    total: number
+    completed: number
+    succeeded: number
+    failed: number
+    done: boolean
+    results: BatchItemResult[]
 }
 
 export type ChatAllowedMimeType = typeof CHAT_ALLOWED_MIME_TYPES[number]
