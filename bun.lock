@@ -3249,7 +3249,7 @@
     },
     "packages/pieces/community/google-sheets": {
       "name": "@activepieces/piece-google-sheets",
-      "version": "0.14.8",
+      "version": "0.15.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -4971,6 +4971,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/muna-ai": {
+      "name": "@activepieces/piece-muna-ai",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/murf-api": {
       "name": "@activepieces/piece-murf-api",
       "version": "0.1.4",
@@ -6636,7 +6646,7 @@
     },
     "packages/pieces/community/slashed": {
       "name": "@activepieces/piece-slashed",
-      "version": "0.0.1",
+      "version": "0.0.2",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -8725,7 +8735,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.83.0",
+      "version": "0.86.0",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
@@ -9753,6 +9763,8 @@
     "@activepieces/piece-moveo-ai": ["@activepieces/piece-moveo-ai@workspace:packages/pieces/community/moveo-ai"],
 
     "@activepieces/piece-moxie-crm": ["@activepieces/piece-moxie-crm@workspace:packages/pieces/community/moxie-crm"],
+
+    "@activepieces/piece-muna-ai": ["@activepieces/piece-muna-ai@workspace:packages/pieces/community/muna-ai"],
 
     "@activepieces/piece-murf-api": ["@activepieces/piece-murf-api@workspace:packages/pieces/community/murf-api"],
 
