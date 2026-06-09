@@ -32,7 +32,7 @@ export const updateObject = createAction({
       propsValue.module,
       propsValue.customResource
     );
-    const objectId = (propsValue.record as { objectId: string | number }).objectId;
+    const objectId = propsValue.record['objectId'];
     const body = parseJsonBody(propsValue.body);
     const result = await client.request<Record<string, unknown>>({
       method: HttpMethod.PUT,

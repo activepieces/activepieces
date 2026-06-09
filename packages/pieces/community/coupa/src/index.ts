@@ -18,8 +18,6 @@ import { CoupaClient } from './lib/common/client';
 import { normalizeInstanceUrl } from './lib/common/utils';
 import { newOrUpdatedObject } from './lib/triggers/new-or-updated-object';
 
-export { coupaAuth };
-
 export const coupa = createPiece({
   displayName: 'Coupa',
   description:

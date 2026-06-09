@@ -7,7 +7,7 @@ import {
   remitToParentTypeProperty,
   supplierDropdown,
 } from '../common/props';
-import { formatCoupaOutputs } from '../common/utils';
+import { flattenRecords, isRecord } from '../common/utils';
 
 export const getRemitToAddresses = createAction({
   auth: coupaAuth,
@@ -41,7 +41,7 @@ export const getRemitToAddresses = createAction({
   },
   async run({ auth, propsValue }) {
     const client = new CoupaClient(auth.props);
-    const recordId = (propsValue.parentRecord as { recordId: string }).recordId;
+    const recordId = propsValue.parentRecord['recordId'];
     let path: string;
 
     if (propsValue.parentModule === 'suppliers') {
@@ -52,8 +52,9 @@ export const getRemitToAddresses = createAction({
         resourceUri: `/purchase_orders/${recordId}`,
         query: { fields: '["id","supplier"]' },
       });
+      const supplier = po['supplier'];
       const supplierId =
-        (po['supplier'] as { id?: number })?.id ?? po['supplier-id'];
+        (isRecord(supplier) ? supplier['id'] : undefined) ?? po['supplier-id'];
       if (!supplierId) {
         throw new Error('Purchase order has no linked supplier.');
       }
@@ -65,7 +66,7 @@ export const getRemitToAddresses = createAction({
       resourceUri: path,
     });
     const list = Array.isArray(result) ? result : [result];
-    const formatted = formatCoupaOutputs(list, 'suppliers');
+    const formatted = flattenRecords(list);
     return {
       total_count: formatted.length,
       addresses: formatted,

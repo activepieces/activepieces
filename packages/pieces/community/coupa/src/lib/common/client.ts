@@ -164,7 +164,7 @@ export class CoupaClient {
         break;
       }
 
-      yield page as Record<string, unknown>[];
+      yield page;
 
       if (page.length < COUPA_PAGE_LIMIT) {
         break;

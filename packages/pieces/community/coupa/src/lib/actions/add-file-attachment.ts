@@ -11,8 +11,9 @@ import {
   contractDropdown,
   purchaseOrderDropdown,
   supplierDropdown,
+  toCoupaModule,
 } from '../common/props';
-import { CoupaModule, formatCoupaOutput, getMimeType } from '../common/utils';
+import { formatCoupaOutput, getMimeType, getString } from '../common/utils';
 
 export const addFileAttachment = createAction({
   auth: coupaAuth,
@@ -95,20 +96,17 @@ export const addFileAttachment = createAction({
   },
   async run({ auth, propsValue }) {
     const client = new CoupaClient(auth.props);
-    const module = propsValue.module as CoupaModule;
-    const parentId = (propsValue.parentRecord as { recordId: string }).recordId;
-    const source = propsValue.attachmentSource as string;
-    const attachment = propsValue.attachment as {
-      file?: { data: Buffer; filename: string; extension?: string };
-      url?: string;
-    };
+    const module = toCoupaModule(propsValue.module);
+    const parentId = propsValue.parentRecord['recordId'];
+    const source = propsValue.attachmentSource;
+    const attachment = propsValue.attachment;
 
     const formData = new FormData();
     if (source === 'url') {
-      formData.append('attachment[url]', attachment.url ?? '');
+      formData.append('attachment[url]', getString(attachment['url']) ?? '');
       formData.append('attachment[type]', 'url');
     } else {
-      const file = attachment.file;
+      const file = attachment['file'];
       if (!file) {
         throw new Error('A file is required when the attachment type is "Upload a file".');
       }

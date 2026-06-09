@@ -20,7 +20,7 @@ import {
   resolveModuleResource,
   toCoupaModule,
 } from '../common/props';
-import { formatCoupaOutput } from '../common/utils';
+import { formatCoupaOutput, getString } from '../common/utils';
 
 const STANDARD_FIELDS =
   '["id","po-number","number","status","total","supplier","contract","name","updated-at"]';
@@ -66,14 +66,15 @@ const polling: Polling<
       : await client.fetchAllRecords(resource, query);
 
     const list = Array.isArray(records) ? records : [];
+    const moduleValue = propsValue.module;
     const coupaModule =
-      propsValue.module !== '__custom__' ? toCoupaModule(propsValue.module!) : null;
+      moduleValue && moduleValue !== '__custom__' ? toCoupaModule(moduleValue) : null;
 
     return list.map((record) => {
       const updatedAt =
-        (record['updated-at'] as string) ??
-        (record['updated_at'] as string) ??
-        (record['created-at'] as string) ??
+        getString(record['updated-at']) ??
+        getString(record['updated_at']) ??
+        getString(record['created-at']) ??
         new Date().toISOString();
       const data =
         coupaModule !== null

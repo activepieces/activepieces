@@ -7,6 +7,14 @@ export function normalizeInstanceUrl(instanceUrl: string): string {
     .replace(/\/+$/, '');
 }
 
+export function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+export function getString(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
+}
+
 export function flattenRecord(
   value: unknown,
   prefix = '',
@@ -23,7 +31,7 @@ export function flattenRecord(
     return { items: JSON.stringify(value) };
   }
 
-  if (typeof value !== 'object') {
+  if (!isRecord(value)) {
     return prefix ? { [prefix]: value } : { value };
   }
 
@@ -32,7 +40,7 @@ export function flattenRecord(
   }
 
   const result: Record<string, unknown> = {};
-  for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
+  for (const [key, nested] of Object.entries(value)) {
     const nextKey = prefix ? `${prefix}_${key.replace(/-/g, '_')}` : key.replace(/-/g, '_');
     Object.assign(result, flattenRecord(nested, nextKey, depth + 1));
   }
@@ -41,27 +49,6 @@ export function flattenRecord(
 
 export function flattenRecords(records: unknown[]): Record<string, unknown>[] {
   return records.map((record) => flattenRecord(record));
-}
-
-function readNestedId(value: unknown): number | string | null {
-  if (value === null || value === undefined) {
-    return null;
-  }
-  if (typeof value === 'object' && value !== null && 'id' in value) {
-    return (value as { id: number | string }).id;
-  }
-  return null;
-}
-
-function readNestedName(value: unknown): string | null {
-  if (value === null || value === undefined) {
-    return null;
-  }
-  if (typeof value === 'object' && value !== null && 'name' in value) {
-    const name = (value as { name: unknown }).name;
-    return name === null || name === undefined ? null : String(name);
-  }
-  return null;
 }
 
 export function toStandardCoupaFields(
@@ -140,25 +127,65 @@ export function parseJsonBody(body: unknown): unknown {
     return body;
   }
   if (typeof body === 'string') {
-    return JSON.parse(body);
+    try {
+      return JSON.parse(body);
+    } catch {
+      throw new Error('Request Body must be valid JSON.');
+    }
   }
   return body;
 }
 
 export function formatCoupaError(error: unknown): string {
-  const err = error as {
-    message?: string;
-    response?: { status?: number; body?: unknown };
-  };
-  const status = err.response?.status;
-  const body = err.response?.body;
+  const response = isRecord(error) ? error['response'] : undefined;
+  let status: number | undefined;
+  let body: unknown;
+  if (isRecord(response)) {
+    const statusValue = response['status'];
+    status = typeof statusValue === 'number' ? statusValue : undefined;
+    body = response['body'];
+  }
+  const suffix = status ? ` (${status})` : '';
   if (typeof body === 'string') {
-    return `Coupa API error${status ? ` (${status})` : ''}: ${body}`;
+    return `Coupa API error${suffix}: ${body}`;
   }
-  if (body && typeof body === 'object') {
-    return `Coupa API error${status ? ` (${status})` : ''}: ${JSON.stringify(body)}`;
+  if (body !== null && typeof body === 'object') {
+    return `Coupa API error${suffix}: ${JSON.stringify(body)}`;
   }
-  return `Coupa API error${status ? ` (${status})` : ''}: ${err.message ?? 'Unknown error'}`;
+  const message =
+    isRecord(error) && typeof error['message'] === 'string'
+      ? error['message']
+      : 'Unknown error';
+  return `Coupa API error${suffix}: ${message}`;
+}
+
+export function getMimeType(filename: string, extension?: string): string {
+  const ext = (extension ?? filename.split('.').pop() ?? '')
+    .toLowerCase()
+    .replace(/^\./, '');
+  return MIME_TYPES_BY_EXTENSION[ext] ?? 'application/octet-stream';
+}
+
+function readNestedId(value: unknown): number | string | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+  const id = value['id'];
+  if (typeof id === 'number' || typeof id === 'string') {
+    return id;
+  }
+  return null;
+}
+
+function readNestedName(value: unknown): string | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+  const name = value['name'];
+  if (name === null || name === undefined) {
+    return null;
+  }
+  return String(name);
 }
 
 const MIME_TYPES_BY_EXTENSION: Record<string, string> = {
@@ -184,13 +211,6 @@ const MIME_TYPES_BY_EXTENSION: Record<string, string> = {
   pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
   zip: 'application/zip',
 };
-
-export function getMimeType(filename: string, extension?: string): string {
-  const ext = (extension ?? filename.split('.').pop() ?? '')
-    .toLowerCase()
-    .replace(/^\./, '');
-  return MIME_TYPES_BY_EXTENSION[ext] ?? 'application/octet-stream';
-}
 
 export type CoupaModule = 'purchase_orders' | 'suppliers' | 'contracts';
 

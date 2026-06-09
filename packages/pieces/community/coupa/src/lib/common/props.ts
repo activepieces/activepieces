@@ -2,7 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { CoupaClient } from './client';
 import { coupaAuth } from '../auth';
-import { CoupaModule } from './utils';
+import { CoupaModule, isRecord } from './utils';
 
 export const COUPA_MODULE_OPTIONS = [
   { label: 'Purchase Orders', value: 'purchase_orders' },
@@ -350,13 +350,26 @@ export function parseOptionalQuery(
   if (!queryJson) {
     return {};
   }
-  const parsed =
-    typeof queryJson === 'string' ? JSON.parse(queryJson) : (queryJson as Record<string, unknown>);
+  let parsed: unknown = queryJson;
+  if (typeof queryJson === 'string') {
+    try {
+      parsed = JSON.parse(queryJson);
+    } catch {
+      throw new Error('Query Parameters must be valid JSON.');
+    }
+  }
+  if (!isRecord(parsed)) {
+    return {};
+  }
   const result: Record<string, string | number | boolean | undefined> = {};
   for (const [key, value] of Object.entries(parsed)) {
-    if (value !== undefined && value !== null) {
-      result[key] = value as string | number | boolean;
+    if (value === undefined || value === null) {
+      continue;
     }
+    result[key] =
+      typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+        ? value
+        : String(value);
   }
   return result;
 }
