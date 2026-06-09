@@ -10,6 +10,7 @@ import { listArtifacts } from './lib/actions/list-artifacts';
 import { listJobs } from './lib/actions/list-jobs';
 import { submitJob } from './lib/actions/submit-job';
 import { jungleGridAuth } from './lib/auth';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const jungleGrid = createPiece({
   displayName: 'Jungle Grid',
@@ -22,7 +23,7 @@ export const jungleGrid = createPiece({
     PieceCategory.ARTIFICIAL_INTELLIGENCE,
     PieceCategory.DEVELOPER_TOOLS,
   ],
-  authors: ['junglegrid'],
+  authors: ['junglegrid','dejaguarkyng'],
   actions: [
     estimateJob,
     submitJob,
@@ -33,6 +34,13 @@ export const jungleGrid = createPiece({
     listArtifacts,
     getArtifactDownloadUrl,
     cancelJob,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.junglegrid.dev',
+      auth: jungleGridAuth,
+      authMapping: async (auth) => ({
+        Authorization: `Bearer ${auth.props.api_key}`,
+      }),
+    })
   ],
   triggers: [],
 });
