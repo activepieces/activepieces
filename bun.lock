@@ -2120,7 +2120,7 @@
     },
     "packages/pieces/community/deepgram": {
       "name": "@activepieces/piece-deepgram",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -2712,6 +2712,19 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/flodesk": {
+      "name": "@activepieces/piece-flodesk",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+      "devDependencies": {
+        "vitest": "3.0.8",
+      },
+    },
     "packages/pieces/community/flow-helper": {
       "name": "@activepieces/piece-flow-helper",
       "version": "0.1.3",
@@ -3196,7 +3209,7 @@
     },
     "packages/pieces/community/google-gemini": {
       "name": "@activepieces/piece-google-gemini",
-      "version": "0.1.8",
+      "version": "0.1.9",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -9354,6 +9367,8 @@
     "@activepieces/piece-flipando": ["@activepieces/piece-flipando@workspace:packages/pieces/community/flipando"],
 
     "@activepieces/piece-fliqr-ai": ["@activepieces/piece-fliqr-ai@workspace:packages/pieces/community/fliqr-ai"],
+
+    "@activepieces/piece-flodesk": ["@activepieces/piece-flodesk@workspace:packages/pieces/community/flodesk"],
 
     "@activepieces/piece-flow-helper": ["@activepieces/piece-flow-helper@workspace:packages/pieces/community/flow-helper"],
 

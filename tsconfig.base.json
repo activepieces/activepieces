@@ -472,6 +472,9 @@
       "@activepieces/piece-fliqr-ai": [
         "packages/pieces/community/fliqr-ai/src/index.ts"
       ],
+      "@activepieces/piece-flodesk": [
+        "packages/pieces/community/flodesk/src/index.ts"
+      ],
       "@activepieces/piece-frill": [
         "packages/pieces/community/frill/src/index.ts"
       ],
