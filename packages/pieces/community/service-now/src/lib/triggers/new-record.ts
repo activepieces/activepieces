@@ -43,6 +43,10 @@ export const newRecordTrigger = createTrigger({
   name: 'new_record',
   displayName: 'New Record',
   description: 'Triggers when a new record is created in a table',
+  aiMetadata: {
+    description:
+      'Fires when a new record is created in the selected ServiceNow table, optionally narrowed by an encoded filter query. Polls by sys_created_on, so each emitted item represents a freshly inserted record.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     table: tableDropdown,

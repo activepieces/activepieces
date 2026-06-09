@@ -120,10 +120,14 @@ Property.StaticMultiSelectDropdown({
 
 ## Dynamic Dropdown (fetches from API)
 
+> **Always pass `auth`.** Every `Property.Dropdown`, `Property.MultiSelectDropdown`, and `Property.DynamicProperties` whose `options`/`props` callback reads `auth` MUST set `auth: <pieceAuth>` (e.g. `auth: myAppAuth`). Without it, `auth` is `undefined` in the callback and the dropdown can never load. Import the auth object from the piece's `auth.ts` (or `../..`). See `packages/pieces/community/github/src/lib/common/index.ts` for the real pattern.
+
+> **No cast needed — `auth` is already typed.** Setting `auth: myAppAuth` does double duty: it makes `auth` available in the callback *and* tells TypeScript the connection type. The framework uses that `auth` field purely to infer the type, so inside the callback `auth.secret_text` (SecretText), `auth.access_token` (OAuth2), and `auth.props.<field>` (CustomAuth) are all correctly typed — read them directly. Never write `auth as { secret_text: string }` or any cast; it's redundant and the repo bans casts. (Real no-cast examples: `airtable`, `baremetrics`, `todoist` common files.)
+
 ```typescript
 Property.Dropdown({
   displayName: 'Project',
-  auth:myAppAuth,
+  auth: myAppAuth,
   refreshers: [],  // Array of prop names this depends on
   required: true,
   options: async ({ auth }) => {
@@ -133,7 +137,7 @@ Property.Dropdown({
     const response = await httpClient.sendRequest<{ data: { id: string; name: string }[] }>({
       method: HttpMethod.GET,
       url: 'https://api.example.com/v1/projects',
-      authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth as string },
+      authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth.secret_text },
     });
     return {
       disabled: false,
@@ -153,7 +157,7 @@ Property.Dropdown({
   displayName: 'Task',
   refreshers: ['project'],  // Re-fetches when 'project' prop changes
   required: true,
-  auth:myAppAuth,
+  auth: myAppAuth,
   options: async ({ auth, project }) => {
     if (!auth || !project) {
       return { disabled: true, options: [], placeholder: 'Please select a project first' };
@@ -161,7 +165,7 @@ Property.Dropdown({
     const response = await httpClient.sendRequest<{ data: { id: string; name: string }[] }>({
       method: HttpMethod.GET,
       url: `https://api.example.com/v1/projects/${project}/tasks`,
-      authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth as string },
+      authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth.secret_text },
     });
     return {
       disabled: false,
@@ -285,8 +289,4 @@ Use for setup instructions, warnings, or webhook URL display. See `ux-guidelines
 
 ---
 
-## PieceCategory Values
-
-Use in `createPiece({ categories: [...] })`:
-
-`ARTIFICIAL_INTELLIGENCE`, `BUSINESS_INTELLIGENCE`, `COMMUNICATION`, `COMMERCE`, `ACCOUNTING`, `CONTENT_AND_FILES`, `CUSTOMER_SUPPORT`, `DEVELOPER_TOOLS`, `FORMS_AND_SURVEYS`, `HUMAN_RESOURCES`, `MARKETING`, `PAYMENT_PROCESSING`, `PRODUCTIVITY`, `SALES_AND_CRM`, `CORE`, `FLOW_CONTROL`, `UNIVERSAL_AI`
+For the `PieceCategory` values used in `createPiece({ categories: [...] })`, see `piece-types.md` — it lists every category with guidance on which to pick. (Categories aren't a prop type, so they live there rather than here.)

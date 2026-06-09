@@ -1,3 +1,4 @@
+import { apVersionUtil } from '@activepieces/server-utils'
 import {
     ExecutionMode,
     isNil,
@@ -13,8 +14,8 @@ import {
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { FastifyBaseLogger } from 'fastify'
-import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { workerGroupService } from '../../ee/platform/platform-plan/worker-group.service'
+import { domainHelper } from '../../helper/domain-helper'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { workerMachineCache } from './machine-cache'
@@ -62,6 +63,7 @@ async function buildSettingsResponse(_log: FastifyBaseLogger): Promise<WorkerSet
         SSRF_ALLOW_LIST: system.get(AppSystemProp.SSRF_ALLOW_LIST)?.split(',').map(f => f.trim()) ?? [],
         NETWORK_MODE: system.getOrThrow<NetworkMode>(AppSystemProp.NETWORK_MODE),
         PAGE_ONCALL_WEBHOOK: system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK),
+        APP_VERSION: apVersionUtil.getCurrentRelease(),
     }
     settingsCache.set(cacheKey, settings)
     return settings

@@ -16,82 +16,68 @@ export const generateImage = createAction({
       displayName: 'Model',
       required: true,
       description: 'The model which will generate the image.',
-      defaultValue: 'dall-e-3',
+      defaultValue: 'gpt-image-2',
       refreshers: [],
-      options: async () => {
-        return {
-          options: [
-            { label: 'GPT Image 2', value: 'gpt-image-2' },
-            { label: 'DALL-E 3', value: 'dall-e-3' },
-            { label: 'DALL-E 2', value: 'dall-e-2' },
-          ],
-        };
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Enter your API key first',
+            options: [],
+          };
+        }
+        try {
+          const openai = new OpenAI({ apiKey: auth.secret_text });
+          const response = await openai.models.list();
+          const imageModels = response.data
+            .filter(
+              (m) =>
+                m.id.startsWith('gpt-image') || m.id.startsWith('dall-e')
+            )
+            .sort((a, b) => b.created - a.created);
+          return {
+            disabled: false,
+            options: imageModels.map((m) => ({ label: m.id, value: m.id })),
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: "Couldn't load models. Check your API key or try again.",
+          };
+        }
       },
     }),
     prompt: Property.LongText({
       displayName: 'Prompt',
       required: true,
     }),
-    resolution: Property.Dropdown({
-      auth: openaiAuth,
+    resolution: Property.StaticDropdown({
       displayName: 'Resolution',
       description: 'The resolution to generate the image in.',
       required: false,
-      refreshers: ['model'],
-      defaultValue: '1024x1024',
-      options: async ({ model }) => {
-        if (model === 'gpt-image-2') {
-          return {
-            options: [
-              { label: 'Auto', value: 'auto' },
-              { label: '1024x1024', value: '1024x1024' },
-              { label: '1536x1024 (landscape)', value: '1536x1024' },
-              { label: '1024x1536 (portrait)', value: '1024x1536' },
-            ],
-          };
-        }
-        if (model === 'dall-e-3') {
-          return {
-            options: [
-              { label: '1024x1024', value: '1024x1024' },
-              { label: '1024x1792', value: '1024x1792' },
-              { label: '1792x1024', value: '1792x1024' },
-            ],
-          };
-        }
-        return {
-          options: [
-            { label: '1024x1024', value: '1024x1024' },
-            { label: '512x512', value: '512x512' },
-            { label: '256x256', value: '256x256' },
-          ],
-        };
+      defaultValue: 'auto',
+      options: {
+        options: [
+          { label: 'Auto', value: 'auto' },
+          { label: '1024x1024', value: '1024x1024' },
+          { label: '1536x1024 (landscape)', value: '1536x1024' },
+          { label: '1024x1536 (portrait)', value: '1024x1536' },
+        ],
       },
     }),
-    quality: Property.Dropdown({
-      auth: openaiAuth,
+    quality: Property.StaticDropdown({
       displayName: 'Quality',
       required: false,
       description: 'Image quality level.',
       defaultValue: 'auto',
-      refreshers: ['model'],
-      options: async ({ model }) => {
-        if (model === 'gpt-image-2') {
-          return {
-            options: [
-              { label: 'Auto', value: 'auto' },
-              { label: 'Low', value: 'low' },
-              { label: 'Medium', value: 'medium' },
-              { label: 'High', value: 'high' },
-            ],
-          };
-        }
-        return {
-          options: [
-            { label: 'Standard', value: 'standard' },
-            { label: 'HD', value: 'hd' },
-          ],
-        };
+      options: {
+        options: [
+          { label: 'Auto', value: 'auto' },
+          { label: 'Low', value: 'low' },
+          { label: 'Medium', value: 'medium' },
+          { label: 'High', value: 'high' },
+        ],
       },
     }),
   },
@@ -99,25 +85,12 @@ export const generateImage = createAction({
     const openai = new OpenAI({ apiKey: context.auth.secret_text });
     const { quality, resolution, model, prompt } = context.propsValue;
 
-    const dalleQualities = new Set(['standard', 'hd']);
-    const gptImageQualities = new Set(['auto', 'low', 'medium', 'high']);
-    const effectiveQuality =
-      (model === 'gpt-image-2' && !gptImageQualities.has(quality ?? '')) ||
-      (model !== 'gpt-image-2' && !dalleQualities.has(quality ?? ''))
-        ? undefined
-        : quality;
-
-    const dalleResolutions = new Set(['256x256', '512x512', '1024x1024', '1024x1792', '1792x1024']);
-    const gptImageResolutions = new Set(['auto', '1024x1024', '1536x1024', '1024x1536']);
-    const validResolutions = model === 'gpt-image-2' ? gptImageResolutions : dalleResolutions;
-    const effectiveSize = resolution && validResolutions.has(resolution) ? resolution : undefined;
-
-    // quality and size include gpt-image-2 values not yet in SDK types
+    // quality and size include gpt-image values not yet in SDK types
     const response = await openai.images.generate({
       model,
       prompt,
-      quality: effectiveQuality,
-      size: effectiveSize,
+      quality,
+      size: resolution,
     } as Parameters<typeof openai.images.generate>[0]);
 
     const images = response.data ?? [];

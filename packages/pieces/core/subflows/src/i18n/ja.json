@@ -8,7 +8,7 @@
   "Mode": "モード",
   "Wait for Response": "応答待ち",
   "Response": "回答",
-  "The flow to execute": "実行するフロー",
+  "The flow to execute. Only published flows with a \"Callable Flow\" trigger appear here — unpublished or disabled subflows are hidden.": "実行するフロー。\"Callable Flow\" トリガーを持つ公開されたフローのみがここに表示されます — 非公開または無効化されたサブフローは非表示になります。",
   "Choose Simple for key-value or Advanced for JSON.": "JSONの場合は「単純」、または「高度」を選択します。",
   "Simple": "単純な",
   "Advanced": "高度な設定",

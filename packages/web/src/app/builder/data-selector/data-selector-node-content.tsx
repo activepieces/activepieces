@@ -6,6 +6,7 @@ import {
 import { t } from 'i18next';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 
+import { FieldTypeIcon } from '@/components/custom/smart-output-viewer/field-type-icon';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { useApRipple } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
@@ -60,7 +61,7 @@ const DataSelectorNodeContent = ({
     !isExpandable && node.data.type === 'value' && !isStepRoot;
   const isInsertable =
     node.data.type === 'value' && node.data.insertable && !node.isLoopStepNode;
-  const showInsertButton = isInsertable && (!isStepRoot || isPrimitiveStepRoot);
+  const showInsertButton = isInsertable;
 
   const arrayValue =
     node.data.type === 'value' && Array.isArray(node.data.value)
@@ -120,13 +121,18 @@ const DataSelectorNodeContent = ({
         {isStepRoot && stepForRoot && <StepRootIcon step={stepForRoot} />}
 
         <div className="flex items-center gap-1.5 min-w-0 flex-1">
+          {!isStepRoot && node.data.type === 'value' && (
+            <FieldTypeIcon value={node.data.value} format={node.data.format} />
+          )}
+
           {node.data.type !== 'test' && (
             <span
               className={cn(
-                'truncate min-w-0 shrink-0 max-w-[40%]',
+                'truncate min-w-0 shrink-0 max-w-[30ch]',
                 isStepRoot
                   ? 'font-medium text-foreground text-sm'
                   : 'text-foreground text-sm',
+                node.data.displayNameClassName,
               )}
             >
               {node.data.displayName}
@@ -206,12 +212,22 @@ const formatValuePreview = (value: unknown): string => {
   if (value === null || value === undefined) return '—';
   if (typeof value === 'string') {
     const trimmed = value.replace(/\s+/g, ' ').trim();
+    if (trimmed === '') return '—';
     return trimmed.length > VALUE_PREVIEW_MAX_LENGTH
       ? `${trimmed.slice(0, VALUE_PREVIEW_MAX_LENGTH)}…`
       : trimmed;
   }
   if (typeof value === 'number' || typeof value === 'boolean') {
     return String(value);
+  }
+  if (Array.isArray(value) && value.length === 0) return t('Empty List');
+  if (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.keys(value).length === 0
+  ) {
+    return t('Empty Object');
   }
   const json = JSON.stringify(value);
   return json.length > VALUE_PREVIEW_MAX_LENGTH

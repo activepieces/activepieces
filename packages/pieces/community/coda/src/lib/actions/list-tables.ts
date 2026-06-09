@@ -8,6 +8,8 @@ export const listTablesAction = createAction({
 	name: 'list-tables',
 	displayName: 'List Table(s)',
 	description: 'List tables in a selected document.',
+	audience: 'both',
+	aiMetadata: { description: 'List the tables in a Coda doc, up to a caller-specified maximum, returning each table reference. Use to discover available tables and their IDs before reading or writing rows. Read-only and idempotent.', idempotent: true },
 	props: {
 		docId: docIdDropdown,
 		max: Property.Number({

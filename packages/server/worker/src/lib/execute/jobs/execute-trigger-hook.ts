@@ -2,6 +2,7 @@ import {
     EngineOperationType,
     EngineResponseStatus,
     ExecuteTriggerHookJobData,
+    isNil,
     tryCatch,
     WorkerJobType,
 } from '@activepieces/shared'
@@ -43,7 +44,7 @@ export const executeTriggerHookJob: JobHandler<ExecuteTriggerHookJobData, Synchr
                     hookType: data.hookType,
                     flowVersion,
                     webhookUrl: getWebhookUrl(ctx.publicApiUrl, data.flowId, data.test),
-                    triggerPayload: data.triggerPayload,
+                    triggerPayload: isNil(data.triggerPayload) ? undefined : { type: 'inline', value: data.triggerPayload },
                     test: data.test,
                     projectId: data.projectId,
                     platformId: data.platformId,

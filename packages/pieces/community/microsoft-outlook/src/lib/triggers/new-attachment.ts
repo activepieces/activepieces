@@ -58,6 +58,9 @@ export const newAttachmentTrigger = createTrigger({
 	name: 'newAttachment',
 	displayName: 'New Attachment',
 	description: 'Triggers when a new email containing one or more attachments arrives.',
+	aiMetadata: {
+		description: 'Fires once per attachment when a new email carrying one or more file attachments arrives, optionally scoped to a folder, sender, or attachment-name filter. Each fire represents a single attachment from a newly received message.',
+	},
 	props: {
 		folderId: mailFolderIdDropdown({
 			displayName: 'Folder',

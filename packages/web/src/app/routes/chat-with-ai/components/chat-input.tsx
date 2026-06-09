@@ -1,6 +1,7 @@
 import { t } from 'i18next';
 import { ArrowUp, Mic, Paperclip, Square, X } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -22,6 +23,7 @@ export function ChatInput({
   isStreaming,
   onSend,
   onStop,
+  onInputChange,
   placeholder,
   leftActions,
   rightActions,
@@ -29,6 +31,7 @@ export function ChatInput({
   isStreaming: boolean;
   onSend: (text: string, files?: File[]) => void;
   onStop?: () => void;
+  onInputChange?: (hasInput: boolean) => void;
   placeholder?: string;
   leftActions?: React.ReactNode;
   rightActions?: React.ReactNode;
@@ -36,6 +39,19 @@ export function ChatInput({
   const [value, setValue] = useState('');
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [interimText, setInterimText] = useState('');
+  const lastHasInputRef = useRef(false);
+
+  const handleValueChange = useCallback(
+    (v: string) => {
+      setValue(v);
+      const hasInput = v.trim().length > 0;
+      if (hasInput !== lastHasInputRef.current) {
+        lastHasInputRef.current = hasInput;
+        onInputChange?.(hasInput);
+      }
+    },
+    [onInputChange],
+  );
 
   const handleTranscript = useCallback((text: string) => {
     setValue((prev) => {
@@ -99,37 +115,50 @@ export function ChatInput({
       <PromptInput
         isLoading={isStreaming}
         value={value}
-        onValueChange={setValue}
+        onValueChange={handleValueChange}
         onSubmit={handleSubmit}
-        className="relative z-10 rounded-2xl border shadow-none transition-colors border-foreground/20 hover:border-foreground/40 focus-within:border-foreground/40"
+        className="border-0 rounded-none shadow-none"
       >
-        {attachedFiles.length > 0 && (
-          <div className="flex flex-wrap gap-2 px-3 pt-2">
-            {attachedFiles.map((file) => (
-              <div
-                key={file.name}
-                className="flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-1.5 text-sm"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Paperclip className="size-3.5 shrink-0 text-muted-foreground" />
-                <span className="max-w-[150px] truncate text-foreground/80">
-                  {file.name}
-                </span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setAttachedFiles((prev) =>
-                      prev.filter((f) => f.name !== file.name),
-                    )
-                  }
-                  className="text-muted-foreground hover:text-foreground rounded-full p-0.5 transition-colors"
-                >
-                  <X className="size-3.5" />
-                </button>
+        <AnimatePresence>
+          {attachedFiles.length > 0 && (
+            <motion.div
+              className="flex flex-wrap gap-2 px-3 overflow-hidden"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+            >
+              <div className="flex flex-wrap gap-2 pt-2 pb-0.5">
+                {attachedFiles.map((file) => (
+                  <motion.div
+                    key={file.name}
+                    className="flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-1.5 text-sm"
+                    onClick={(e) => e.stopPropagation()}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.15 }}
+                  >
+                    <Paperclip className="size-3.5 shrink-0 text-muted-foreground" />
+                    <span className="max-w-[150px] truncate text-foreground/80">
+                      {file.name}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setAttachedFiles((prev) =>
+                          prev.filter((f) => f.name !== file.name),
+                        )
+                      }
+                      className="text-muted-foreground hover:text-foreground rounded-full p-0.5 transition-colors"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </motion.div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
         {isRecording ? (
           <div className="min-h-[44px] px-3 py-2 text-sm text-foreground whitespace-pre-wrap break-words">
             {interimText || (
@@ -138,6 +167,7 @@ export function ChatInput({
           </div>
         ) : (
           <PromptInputTextarea
+            autoFocus
             placeholder={placeholder ?? t('Tell me what you need...')}
             className="min-h-[44px] text-sm"
           />

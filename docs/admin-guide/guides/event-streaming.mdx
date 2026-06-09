@@ -18,7 +18,9 @@ The fastest way to get going is the **Generate handler flow** button in the New 
 
 1. Open **Platform Admin → Event Streaming**.
 2. Click **New Destination**, pick the events you want to handle, and click **Generate handler flow**.
-3. The flow lands in your personal project with a webhook trigger and a router branch per selected event. Sample data is pre-baked so you can hit Test right away.
+![Create event destination](/resources/screenshots/event-destination.png)
+3. The flow lands in your personal project with a webhook trigger and a router branch per selected event. Sample data is pre-baked so you can hit Test right away, you can add a router step under any event branch to check for specific projects/flows ids.
+![Event destination handler flow](/resources/screenshots/event-destination-flow.png)
 4. Customize the branches with whatever pieces you like — Slack, Gmail, Microsoft Teams, custom HTTP, and so on.
 5. Publish the flow, then go back to the New destination dialog and click **Create** to save the destination.
 6. Use the **Test webhook** dropdown in the dialog to fire a sample of any selected event and confirm the round-trip.

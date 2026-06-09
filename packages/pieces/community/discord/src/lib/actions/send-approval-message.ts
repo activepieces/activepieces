@@ -13,6 +13,8 @@ export const discordSendApprovalMessage = createAction({
   name: 'request_approval_message',
   description:
     'send a message to a channel asking for approval and wait for a response',
+  audience: 'both',
+  aiMetadata: { description: 'Posts a message with Approve and Disapprove buttons to a Discord channel and pauses the flow until a human clicks one, then resumes with the decision. Use as a human-in-the-loop approval gate before an agent proceeds with a consequential step. Blocks until a response arrives; each call posts a new approval message, so it is not idempotent.', idempotent: false },
   displayName: 'Request Approval in a Channel',
   props: {
     content: Property.LongText({

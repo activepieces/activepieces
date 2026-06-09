@@ -4,6 +4,7 @@ import {
     apId,
     Cursor,
     ErrorCode,
+    ExecuteFlowJobData,
     ExecutionType,
     ExecutioOutputFile,
     FileType,
@@ -21,9 +22,12 @@ import {
     LATEST_JOB_DATA_SCHEMA_VERSION,
     PlatformId,
     ProjectId,
+    ResumeReason,
     RunEnvironment,
+    RunInternalError,
     SampleDataFileType,
     SeekPage,
+    StepOutputStatus,
     StreamStepProgress,
     WorkerJobType,
 } from '@activepieces/shared'
@@ -69,8 +73,10 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             entity: FlowRunEntity,
             query: {
                 limit: params.limit,
-                order: Order.DESC,
-                orderBy: 'created',
+                orderBy: [
+                    { field: 'created', order: Order.DESC },
+                    { field: 'id', order: Order.DESC },
+                ],
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
@@ -120,6 +126,11 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 failedStepName: params.failedStepName,
             })
         }
+        if (!isNil(params.failedStepMessage)) {
+            query = query.andWhere('flow_run."failedStep"->>\'message\' ILIKE :failedStepMessage', {
+                failedStepMessage: `%${params.failedStepMessage}%`,
+            })
+        }
         if (params.flowRunIds) {
             query = query.andWhere({
                 id: In(params.flowRunIds),
@@ -152,6 +163,10 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
         switch (strategy) {
             case FlowRetryStrategy.FROM_FAILED_STEP: {
+                const flowVersion = await flowVersionService(log).getOneOrThrow(oldFlowRun.flowVersionId)
+                const triggerStep = oldFlowRun.steps?.[flowVersion.trigger.name]
+                const triggerFailed = triggerStep?.status === StepOutputStatus.FAILED
+
                 await flowRunRepo().update({
                     id: oldFlowRun.id,
                     projectId: oldFlowRun.projectId,
@@ -163,12 +178,24 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 const updatedFlowRun = await findFlowRunOrThrow(oldFlowRun.id)
                 const platformId = await projectService(log).getPlatformId(updatedFlowRun.projectId)
                 await flowRunSideEffects(log).onRetry(updatedFlowRun)
+                if (triggerFailed) {
+                    return addToQueue({
+                        flowRun: updatedFlowRun,
+                        platformId,
+                        payload: triggerStep.output,
+                        streamStepProgress: StreamStepProgress.NONE,
+                        executeTrigger: true,
+                        executionType: ExecutionType.BEGIN,
+                        workerHandlerId: undefined,
+                        httpRequestId: undefined,
+                    }, log)
+                }
                 return addToQueue({
                     flowRun: updatedFlowRun,
                     platformId,
                     streamStepProgress: StreamStepProgress.NONE,
-                    executeTrigger: false,
                     executionType: ExecutionType.RESUME,
+                    resumeReason: ResumeReason.RETRY,
                     workerHandlerId: undefined,
                     httpRequestId: undefined,
                 }, log)
@@ -177,7 +204,9 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 const latestFlowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(
                     oldFlowRun.flowId,
                 )
-                const payload = oldFlowRun.steps ? oldFlowRun.steps[latestFlowVersion.trigger.name]?.output : undefined
+                const triggerStep = oldFlowRun.steps?.[latestFlowVersion.trigger.name]
+                const triggerFailed = triggerStep?.status === StepOutputStatus.FAILED
+                const payload = triggerStep?.output
                 return this.start({
                     flowId: oldFlowRun.flowId,
                     payload,
@@ -186,7 +215,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     streamStepProgress: StreamStepProgress.NONE,
                     workerHandlerId: undefined,
                     httpRequestId: undefined,
-                    executeTrigger: false,
+                    executeTrigger: triggerFailed,
                     environment: oldFlowRun.environment,
                     flowVersionId: latestFlowVersion.id,
                     projectId: oldFlowRun.projectId,
@@ -425,15 +454,18 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
     async getOnePopulatedOrThrow(params: GetOneParams): Promise<FlowRun> {
         const flowRun = await this.getOneOrThrow(params)
         let steps = {}
+        let internalError: RunInternalError | undefined = undefined
         if (!isNil(flowRun.logsFileId)) {
             const stateFile = await readLogsFile(log, flowRun.logsFileId, flowRun.projectId)
             if (!isNil(stateFile)) {
                 steps = stateFile.executionState.steps
+                internalError = stateFile.internalError
             }
         }
         return {
             ...flowRun,
             steps,
+            internalError,
         }
     },
 })
@@ -538,6 +570,11 @@ async function filterFlowRunsAndApplyFilters(
             failedStepName: params.failedStepName,
         })
     }
+    if (params.failedStepMessage) {
+        query = query.andWhere('flow_run."failedStep"->>\'message\' ILIKE :failedStepMessage', {
+            failedStepMessage: `%${params.failedStepMessage}%`,
+        })
+    }
 
     const flowRuns = await query.getMany()
     return flowRuns
@@ -558,29 +595,39 @@ export async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogge
         jobPayload = await payloadOffloader.maybeOffloadPayload(log, params.payload, params.flowRun.projectId, params.platformId)
     }
 
+    const commonJobData = {
+        schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+        workerHandlerId: params.workerHandlerId ?? null,
+        projectId: params.flowRun.projectId,
+        platformId: params.platformId,
+        environment: params.flowRun.environment,
+        flowId: params.flowRun.flowId,
+        runId: params.flowRun.id,
+        jobType: WorkerJobType.EXECUTE_FLOW as const,
+        flowVersionId: params.flowRun.flowVersionId,
+        payload: jobPayload,
+        httpRequestId: params.httpRequestId,
+        streamStepProgress: params.streamStepProgress,
+        stepNameToTest: params.flowRun.stepNameToTest ?? undefined,
+        sampleData: params.sampleData,
+        logsFileId,
+        traceContext,
+    }
+    const data: ExecuteFlowJobData = params.executionType === ExecutionType.RESUME
+        ? {
+            ...commonJobData,
+            executionType: ExecutionType.RESUME,
+            resumeReason: params.resumeReason,
+        }
+        : {
+            ...commonJobData,
+            executionType: ExecutionType.BEGIN,
+            executeTrigger: params.executeTrigger,
+        }
     await jobQueue(log).add({
         id: params.flowRun.id,
         type: JobType.ONE_TIME,
-        data: {
-            schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-            workerHandlerId: params.workerHandlerId ?? null,
-            projectId: params.flowRun.projectId,
-            platformId: params.platformId,
-            environment: params.flowRun.environment,
-            flowId: params.flowRun.flowId,
-            runId: params.flowRun.id,
-            jobType: WorkerJobType.EXECUTE_FLOW,
-            flowVersionId: params.flowRun.flowVersionId,
-            payload: jobPayload,
-            executeTrigger: params.executeTrigger,
-            httpRequestId: params.httpRequestId,
-            executionType: params.executionType,
-            streamStepProgress: params.streamStepProgress,
-            stepNameToTest: params.flowRun.stepNameToTest ?? undefined,
-            sampleData: params.sampleData,
-            logsFileId,
-            traceContext,
-        },
+        data,
     })
     return params.flowRun
 }
@@ -671,6 +718,7 @@ type ListParams = {
     createdAfter?: string
     createdBefore?: string
     failedStepName?: string
+    failedStepMessage?: string
     flowRunIds?: FlowRunId[]
     includeArchived?: boolean
     environment?: RunEnvironment
@@ -681,17 +729,20 @@ type GetOneParams = {
     projectId: ProjectId | undefined
 }
 
-export type AddToQueueParams = {
+type AddToQueueParamsCommon = {
     flowRun: FlowRun
     platformId: PlatformId
     payload?: unknown
-    executeTrigger: boolean
-    executionType: ExecutionType
     workerHandlerId: string | undefined
     httpRequestId: string | undefined
     streamStepProgress: StreamStepProgress
     sampleData?: Record<string, unknown>
 }
+
+export type AddToQueueParams = AddToQueueParamsCommon & (
+    | { executionType: ExecutionType.BEGIN, executeTrigger: boolean }
+    | { executionType: ExecutionType.RESUME, resumeReason: ResumeReason }
+)
 
 
 type StartParams = {
@@ -705,7 +756,7 @@ type StartParams = {
     failParentOnFailure: boolean | undefined
     stepNameToTest?: string
     executeTrigger: boolean
-    executionType: ExecutionType
+    executionType: ExecutionType.BEGIN
     workerHandlerId: string | undefined
     httpRequestId: string | undefined
     streamStepProgress: StreamStepProgress
@@ -755,6 +806,7 @@ type BulkRetryParams = {
     createdBefore?: string
     excludeFlowRunIds?: FlowRunId[]
     failedStepName?: string
+    failedStepMessage?: string
 }
 
 type BulkArchiveActionParams = {
@@ -767,6 +819,7 @@ type BulkArchiveActionParams = {
     createdBefore?: string
     excludeFlowRunIds?: FlowRunId[]
     failedStepName?: string
+    failedStepMessage?: string
 }
 
 type CountByStatusParams = {
@@ -785,4 +838,5 @@ type FilterFlowRunsAndApplyFiltersParams = {
     createdBefore?: string
     excludeFlowRunIds?: FlowRunId[]
     failedStepName?: string
+    failedStepMessage?: string
 }

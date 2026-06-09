@@ -7,6 +7,12 @@ export const deleteRowAction = createAction({
   auth: googleSheetsAuth,
   name: 'delete_row',
   description: 'Delete a specific row from the selected sheet.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Removes one row, identified by its row number, from a worksheet and shifts all rows below it up. Use when an agent needs to delete a known row. Not idempotent — because remaining rows renumber after deletion, repeating the same row number deletes a different row each time, so re-target the row before any retry.',
+    idempotent: false,
+  },
   displayName: 'Delete Row',
   props: {
     ...commonProps,

@@ -32,6 +32,8 @@ export const postStatus = createAction({
   name: 'post_status',
   displayName: 'Post Status',
   description: 'Post a status to Mastodon',
+  audience: 'both',
+  aiMetadata: { description: 'Publishes a new status (toot) to a Mastodon instance from the authenticated account, optionally attaching a single media file uploaded alongside the post. Use to broadcast a message or share content on Mastodon. Requires status text; not idempotent — each call creates a separate post.', idempotent: false },
   props: {
     status: Property.LongText({
       displayName: 'Status',
