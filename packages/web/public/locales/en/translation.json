@@ -1457,7 +1457,7 @@
   "No SAML provider found for this domain": "No SAML provider found for this domain",
   "Sign-in failed": "Sign-in failed",
   "Sign in with SAML": "Sign in with SAML",
-  "Enter your organization's domain to be redirected to your SAML provider.": "Enter your organization's domain to be redirected to your SAML provider.",
+  "Enter your email to be redirected to your SAML provider.": "Enter your email to be redirected to your SAML provider.",
   "Email is invalid": "Email is invalid",
   "Invalid email or password": "Invalid email or password",
   "User has been deactivated": "User has been deactivated",
