@@ -124,7 +124,7 @@ export interface ActivepiecesVendorInit {
     hideTables?: boolean;
     sdkVersion?: string;
     jwtToken: string;
-    initialRoute?: string 
+    initialRoute?: string
     fontUrl?: string;
     fontFamily?: string;
     hideExportAndImportFlow?: boolean;
@@ -135,6 +135,7 @@ export interface ActivepiecesVendorInit {
     mode?: 'light' | 'dark';
     hideFlowsPageNavbar?: boolean;
     hidePageHeader?: boolean;
+    hideActiveUsers?: boolean;
   };
 }
 
@@ -157,6 +158,7 @@ type EmbeddingParam = {
   builder?: {
     disableNavigation?: boolean;
     hideFlowName?: boolean;
+    hideActiveUsers?: boolean;
     homeButtonIcon: 'back' | 'logo';
     homeButtonClickedHandler?: (data: {
       route: string;
@@ -306,6 +308,7 @@ class ActivepiecesEmbedded {
                 hideDuplicateFlow: this._embeddingState?.hideDuplicateFlow ?? false,
                 mode: this._embeddingState?.styling?.mode,
                 hidePageHeader: this._embeddingState?.dashboard?.hidePageHeader ?? false,
+                hideActiveUsers: this._embeddingState?.builder?.hideActiveUsers ?? false,
               },
             };
             targetWindow.postMessage(apEvent, '*');
