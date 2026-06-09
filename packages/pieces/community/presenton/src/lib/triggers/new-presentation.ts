@@ -42,6 +42,10 @@ export const newPresentation = createTrigger({
   name: 'newPresentation',
   displayName: 'New Presentation',
   description: 'Triggers when a new presentation is created in Presenton.',
+  aiMetadata: {
+    description:
+      'Fires when a new presentation is created in the connected Presenton account, emitting the newly created presentation. Polls the presentation list and deduplicates by creation time, so each presentation is delivered once.',
+  },
   props: {},
   sampleData: {
     id: '93d4092b-2a20-4637-bbe7-2addb6273761',

@@ -68,6 +68,9 @@ export const newCommentTrigger = createTrigger({
   displayName: 'New Comment on Page',
   description:
     'Triggers when a new footer comment is added to the selected page.',
+  aiMetadata: {
+    description: 'Fires when a new footer comment is added to the selected Confluence page. Each event represents one newly created top-level comment (first version); edits to existing comments and inline comments do not fire this.',
+  },
   auth: confluenceAuth,
   type: TriggerStrategy.POLLING,
   props,

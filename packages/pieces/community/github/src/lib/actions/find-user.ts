@@ -9,6 +9,12 @@ export const githubFindUserAction = createAction({
   name: 'find_user',
   displayName: 'Find User',
   description: 'Finds a user by their login name.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up a GitHub user by their login (username) and reports whether they exist along with their public profile. Use to verify a username or fetch a user profile; an unknown username is reported as not-found rather than raising an error. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     username: Property.ShortText({
       displayName: 'Username',

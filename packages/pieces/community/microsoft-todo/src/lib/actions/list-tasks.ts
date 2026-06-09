@@ -10,6 +10,8 @@ export const listTasksAction = createAction({
 	name: 'list_tasks',
 	displayName: 'List Tasks',
 	description: 'Returns a list of all tasks in a specific list.',
+	audience: 'both',
+	aiMetadata: { description: 'List the tasks in a given Microsoft To Do task list, paging through all results. Optionally narrow by a title substring and/or a status filter (not started, in progress, completed, waiting on others, deferred); with no filters it returns every task in the list. Use to enumerate or browse a list\'s contents. Read-only and idempotent. Requires a task list id.', idempotent: true },
 	props: {
 		task_list_id: Property.Dropdown({
 			auth: microsoftToDoAuth,

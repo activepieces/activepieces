@@ -8,6 +8,9 @@ export const linearRemovedIssue = createTrigger({
   name: 'removed_issue',
   displayName: 'Removed Issue',
   description: 'Triggers when an existing Linear issue is removed',
+  aiMetadata: {
+    description: 'Fires when an existing issue is deleted from the selected Linear team. Represents the issue as it was at the time of removal.',
+  },
   props: {
     team_id: props.team_id()
   },

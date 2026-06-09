@@ -9,6 +9,9 @@ export const newOrUpdatedAccountTrigger = createTrigger({
 	name: 'activecampaign_new_or_updated_account',
 	displayName: 'New or Updated Account',
 	description: 'Triggers when a new account is added or an existing account’s details are updated',
+	aiMetadata: {
+		description: 'Fires when an account (CRM organization/company) is created or when an existing account is updated, covering both add and update events. The payload identifies the event and, for updates, the changed fields.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 	async onEnable(context) {

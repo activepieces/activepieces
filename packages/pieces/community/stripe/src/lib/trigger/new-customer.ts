@@ -10,6 +10,10 @@ export const stripeNewCustomer = createTrigger({
   name: 'new_customer',
   displayName: 'New Customer',
   description: 'Triggers when a new customer is created',
+  aiMetadata: {
+    description:
+      'Fires when a new customer is created in Stripe (the customer.created event), emitting the new customer record. Use to react to customer onboarding, such as syncing them to a CRM or sending a welcome flow.',
+  },
   props: {},
   sampleData: {
     id: 'cus_NGtyEf4hNGTj3p',

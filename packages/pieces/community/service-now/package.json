@@ -1,7 +1,8 @@
 {
   "name": "@activepieces/piece-service-now",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "type": "commonjs",
+  "aiReady": true,
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {

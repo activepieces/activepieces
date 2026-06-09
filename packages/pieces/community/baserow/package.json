@@ -1,6 +1,7 @@
 {
   "name": "@activepieces/piece-baserow",
-  "version": "0.9.3",
+  "version": "0.9.4",
+  "aiReady": true,
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {

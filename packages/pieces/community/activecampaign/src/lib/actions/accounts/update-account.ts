@@ -8,6 +8,8 @@ export const updateAccountAction = createAction({
 	name: 'activecampaign_update_account',
 	displayName: 'Update Account',
 	description: 'Updates an account.',
+	audience: 'both',
+	aiMetadata: { description: 'Updates an existing ActiveCampaign account identified by account ID, changing its name, URL, and/or custom field values. Use when you already have the target account ID and want to modify its details. Idempotent: re-running with the same input leaves the account in the same state.', idempotent: true },
 	props: {
 		accountId: activecampaignCommon.accountId,
 		name: Property.ShortText({

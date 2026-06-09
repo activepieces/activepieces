@@ -13,6 +13,12 @@ export const getCatalogItemAction = createAction({
   displayName: 'Get Catalog Item',
   description:
     'Retrieve full details of a catalog item including its variable definitions. Use this before "Submit Catalog Request" to discover the variables expected by the item.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches the full definition of a service catalog item, including its variable schema, identified by its sys_id (select from the catalog dropdown or pass a raw sys_id). Use this before Submit Catalog Request to discover which variables that item expects. Read-only and idempotent. Requires the catalog item sys_id.',
+    idempotent: true,
+  },
   props: {
     item_sys_id: catalogItemDropdown,
     manual_item_sys_id: Property.ShortText({

@@ -1,6 +1,7 @@
 {
   "name": "@activepieces/piece-github",
-  "version": "0.8.2",
+  "version": "0.8.3",
+  "aiReady": true,
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
