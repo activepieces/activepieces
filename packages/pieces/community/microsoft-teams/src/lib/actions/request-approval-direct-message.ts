@@ -13,6 +13,11 @@ export const requestApprovalDirectMessage = createAction({
   displayName: 'Request Approval from a User',
   description:
     'Send approval message to a user and then wait until the message is approved or disapproved',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Posts an Approve/Disapprove adaptive card into a Microsoft Teams chat (by chat ID) and pauses the flow until the recipient clicks one of the buttons, then resumes reporting whether it was approved. Use as a human-in-the-loop gate targeting a specific person via direct chat; for a channel-wide gate use Request Approval in Channel instead. Not idempotent — each call posts another approval message and creates a new wait.',
+    idempotent: false,
+  },
   props: {
     chatId: microsoftTeamsCommon.chatId,
     message: Property.LongText({

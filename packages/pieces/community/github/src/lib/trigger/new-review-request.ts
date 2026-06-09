@@ -14,6 +14,10 @@ export const newReviewRequestTrigger = createTrigger({
   name: 'new_review_request',
   displayName: 'New Review Request',
   description: 'Triggers when you are requested to review a pull request.',
+  aiMetadata: {
+    description:
+      'Fires when a review is requested on a pull request in the chosen repository (pull_request event with action review_requested). Represents a reviewer being asked to review a PR.',
+  },
 
   props: {
     repository: githubCommon.repositoryDropdown,

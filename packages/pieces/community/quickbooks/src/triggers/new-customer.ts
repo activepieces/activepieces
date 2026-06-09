@@ -60,6 +60,9 @@ export const newCustomer = createTrigger({
   name: 'new_customer',
   displayName: 'New Customer',
   description: 'Triggers when a new customer is created.',
+  aiMetadata: {
+    description: 'Fires when a new customer is created in the connected QuickBooks company, emitting the newly created customer record. Use to react to a new customer being added to the books.',
+  },
   props: {},
   type: TriggerStrategy.POLLING,
   async onEnable(context) {

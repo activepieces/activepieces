@@ -6,6 +6,8 @@ export const findWhatsappAccount = createAction({
   name: 'findWhatsappAccount',
   displayName: 'Find WhatsApp Account',
   description: 'Search for a WhatsApp account (by phone or ID).',
+  audience: 'both',
+  aiMetadata: { description: 'Lists the WhatsApp accounts connected to TimelinesAI, optionally narrowed by account ID and/or phone number; with neither supplied it returns all accounts. Use to resolve a whatsapp_account_id before sending a message from a specific number. Read-only and idempotent.', idempotent: true },
   props: {
     id: Property.ShortText({
       displayName: 'WhatsApp Account ID',

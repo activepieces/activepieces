@@ -1568,8 +1568,8 @@
       "@activepieces/piece-videoask": [
         "packages/pieces/community/videoask/src/index.ts"
       ],
-      "@activepieces/piece-presenton": [
-        "packages/pieces/community/presenton/src/index.ts"
+      "@activepieces/piece-presentation": [
+        "packages/pieces/community/presentation/src/index.ts"
       ],
       "@activepieces/piece-formspark": [
         "packages/pieces/community/formspark/src/index.ts"
