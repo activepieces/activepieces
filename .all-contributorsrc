@@ -2221,6 +2221,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "GAAZ",
+      "name": "DW",
+      "avatar_url": "https://avatars.githubusercontent.com/u/52105840?v=4",
+      "profile": "https://github.com/GAAZ",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
