@@ -208,12 +208,15 @@ function buildStepParts({ content }: {
                     const outputRecord = typeof rawOutput === 'object' && rawOutput !== null ? rawOutput as Record<string, unknown> : {}
                     const meta = typeof outputRecord['_meta'] === 'object' && outputRecord['_meta'] !== null ? outputRecord['_meta'] as Record<string, unknown> : undefined
                     const connectionLabel = typeof meta?.['connectionLabel'] === 'string' ? meta['connectionLabel'] : undefined
+                    const firstContentText = Array.isArray(outputRecord['content']) && typeof outputRecord['content'][0]?.['text'] === 'string' ? outputRecord['content'][0]['text'] as string : ''
                     const isAppSuccess = result.type === 'tool-result'
                         && outputRecord['success'] !== false
                         && outputRecord['isError'] !== true
-                        && !(Array.isArray(outputRecord['content']) && typeof outputRecord['content'][0]?.['text'] === 'string' && (outputRecord['content'][0]['text'].startsWith('❌') || outputRecord['content'][0]['text'].startsWith('⏳')))
-                    const errorText = !isAppSuccess && Array.isArray(outputRecord['content']) && typeof outputRecord['content'][0]?.['text'] === 'string'
-                        ? outputRecord['content'][0]['text'] as string
+                        && !firstContentText.startsWith('❌')
+                        && !firstContentText.startsWith('⏳')
+                        && !firstContentText.includes('cancelled by user')
+                    const errorText = !isAppSuccess && firstContentText
+                        ? firstContentText
                         : (result.type === 'tool-error' && typeof result.output === 'string' ? result.output : undefined)
                     parts.push({
                         type: PersistedChatPartType.ACTION_RECEIPT,

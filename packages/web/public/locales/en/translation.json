@@ -591,6 +591,7 @@
   "via {connectionLabel}": "via {connectionLabel}",
   "Action completed": "Action completed",
   "Action failed": "Action failed",
+  "and {count} more": "and {count} more",
   "Error": "Error",
   "Skip these questions": "Skip these questions",
   "Reply...": "Reply...",

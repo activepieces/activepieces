@@ -19,17 +19,14 @@ export function ActionPreviewCard({
   onRun: () => void;
   onCancel: () => void;
 }) {
-  const [showAllBatchItems, setShowAllBatchItems] = useState(false);
   const [showRawJson, setShowRawJson] = useState(false);
 
   const pieceName = normalizePieceName(preview.pieceName);
   const inputParams = buildInputParams(preview.input);
 
   const batchSamples = preview.batchSamples ?? [];
-  const visibleSamples = showAllBatchItems
-    ? batchSamples
-    : batchSamples.slice(0, 3);
-  const hiddenCount = batchSamples.length - visibleSamples.length;
+  const totalBatchCount = preview.batchCount ?? batchSamples.length;
+  const hasMoreThanSamples = totalBatchCount > batchSamples.length;
 
   return (
     <motion.div
@@ -71,11 +68,9 @@ export function ActionPreviewCard({
 
       {preview.isBatch ? (
         <BatchParamsSection
-          samples={visibleSamples}
-          totalCount={preview.batchCount ?? batchSamples.length}
-          hiddenCount={hiddenCount}
-          showAll={showAllBatchItems}
-          onToggleShowAll={() => setShowAllBatchItems((prev) => !prev)}
+          samples={batchSamples}
+          totalCount={totalBatchCount}
+          hasMore={hasMoreThanSamples}
         />
       ) : (
         inputParams.length > 0 && <SingleParamsSection params={inputParams} />
@@ -126,15 +121,11 @@ function SingleParamsSection({
 function BatchParamsSection({
   samples,
   totalCount,
-  hiddenCount,
-  showAll,
-  onToggleShowAll,
+  hasMore,
 }: {
   samples: Record<string, unknown>[];
   totalCount: number;
-  hiddenCount: number;
-  showAll: boolean;
-  onToggleShowAll: () => void;
+  hasMore: boolean;
 }) {
   if (samples.length === 0) return null;
 
@@ -161,34 +152,13 @@ function BatchParamsSection({
           </div>
         ))}
       </div>
-      <AnimatePresence>
-        {hiddenCount > 0 && (
-          <motion.button
-            type="button"
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-            onClick={onToggleShowAll}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <ChevronDown className="h-3 w-3" />
-            {t('View all {count} items', { count: totalCount })}
-          </motion.button>
-        )}
-        {showAll && samples.length > 3 && (
-          <motion.button
-            type="button"
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-            onClick={onToggleShowAll}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <ChevronUp className="h-3 w-3" />
-            {t('Show less')}
-          </motion.button>
-        )}
-      </AnimatePresence>
+      {hasMore && (
+        <p className="text-xs text-muted-foreground">
+          {t('and {count} more', {
+            count: totalCount - samples.length,
+          })}
+        </p>
+      )}
     </div>
   );
 }
