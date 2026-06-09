@@ -91,6 +91,8 @@ Before you actually start provisioning, you need to map the attributes between E
 
 Groups are mapped to Activepieces projects. Members of the groups in entra ID will be added as members of the project in Activepieces. The name of the group will also be the display name of the project.
 
+By default, all group memebers will have `Editor` role for the project. for now this can't be mapped like platform role. for self hosted customers they can change the env var `SCIM_DEFAULT_PROJECT_ROLE` to `Admin` or `Viewer`.
+
 ## Users and groups assignments
 
 Assignments will allow you to select which users and groups that will be provisioned to Activepieces.
