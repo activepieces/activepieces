@@ -148,7 +148,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         }
 
         if (folderIds !== undefined) {
-            queryBuilder.andWhere('ff."folderId" IN (:...folderIds)', { folderIds })
+            queryBuilder.andWhere({ folderId: In(folderIds) })
         }
 
         if (status !== undefined) {
