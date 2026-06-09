@@ -208,16 +208,22 @@ function buildStepParts({ content }: {
                     const outputRecord = typeof rawOutput === 'object' && rawOutput !== null ? rawOutput as Record<string, unknown> : {}
                     const meta = typeof outputRecord['_meta'] === 'object' && outputRecord['_meta'] !== null ? outputRecord['_meta'] as Record<string, unknown> : undefined
                     const connectionLabel = typeof meta?.['connectionLabel'] === 'string' ? meta['connectionLabel'] : undefined
-                    const isSuccess = result.type === 'tool-result'
+                    const isAppSuccess = result.type === 'tool-result'
+                        && outputRecord['success'] !== false
+                        && outputRecord['isError'] !== true
+                        && !(Array.isArray(outputRecord['content']) && typeof outputRecord['content'][0]?.['text'] === 'string' && (outputRecord['content'][0]['text'].startsWith('❌') || outputRecord['content'][0]['text'].startsWith('⏳')))
+                    const errorText = !isAppSuccess && Array.isArray(outputRecord['content']) && typeof outputRecord['content'][0]?.['text'] === 'string'
+                        ? outputRecord['content'][0]['text'] as string
+                        : (result.type === 'tool-error' && typeof result.output === 'string' ? result.output : undefined)
                     parts.push({
                         type: PersistedChatPartType.ACTION_RECEIPT,
                         toolCallId: part.toolCallId ?? '',
                         actionDisplayName: title ?? toolName,
                         pieceName: typeof input['pieceName'] === 'string' ? input['pieceName'] : '',
                         ...spreadIfDefined('connectionLabel', connectionLabel),
-                        status: isSuccess ? 'success' : 'failed',
+                        status: isAppSuccess ? 'success' : 'failed',
                         output: rawOutput,
-                        ...spreadIfDefined('errorMessage', result.type === 'tool-error' && typeof result.output === 'string' ? result.output : undefined),
+                        ...spreadIfDefined('errorMessage', errorText),
                         timestamp: new Date().toISOString(),
                     })
                 }
