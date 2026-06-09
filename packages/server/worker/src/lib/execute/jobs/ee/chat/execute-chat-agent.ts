@@ -292,6 +292,19 @@ function buildToolSet({ ctx, eventEmitter, log, planApproved, mcpToolSet, projec
         },
         projects,
     })
+    const storePendingGate = async ({ gateId, toolName: gateTool, displayName, toolInput: gateInput }: {
+        gateId: string
+        toolName: string
+        displayName: string
+        toolInput: Record<string, unknown>
+    }) => {
+        await tryCatch(() => ctx.apiClient.executeChatTool({
+            toolName: '__store_pending_gate',
+            toolInput: { conversationId, gateId, toolName: gateTool, displayName, toolInput: gateInput },
+            platformId, userId, conversationId,
+        }))
+    }
+
     const displayTools = chatWorkerTools.createDisplayTools({
         waitForApproval,
         displayToolTimeoutMs: DISPLAY_TOOL_TIMEOUT_MS,
@@ -302,13 +315,7 @@ function buildToolSet({ ctx, eventEmitter, log, planApproved, mcpToolSet, projec
                 platformId, userId, conversationId,
             }))
         },
-        onGateOpened: async ({ gateId, toolName: gateTool, displayName, toolInput: gateInput }) => {
-            await tryCatch(() => ctx.apiClient.executeChatTool({
-                toolName: '__store_pending_gate',
-                toolInput: { conversationId, gateId, toolName: gateTool, displayName, toolInput: gateInput },
-                platformId, userId, conversationId,
-            }))
-        },
+        onGateOpened: storePendingGate,
     })
     const planTools = chatWorkerTools.createPlanTools({
         onPlanApproved: () => {
@@ -316,7 +323,7 @@ function buildToolSet({ ctx, eventEmitter, log, planApproved, mcpToolSet, projec
         },
         waitForApproval,
     })
-    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval })
+    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate })
     const thinkingTools = chatWorkerTools.createThinkingTools()
     const gatedMcpTools = chatMcpClient.withApprovalGates({
         mcpToolSet, eventEmitter, log, isApproved: () => planApproved.approved, waitForApproval,

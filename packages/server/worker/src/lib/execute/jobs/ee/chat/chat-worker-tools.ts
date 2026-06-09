@@ -232,10 +232,11 @@ function createLocalTools({ onSetProjectContext, projects }: {
     }
 }
 
-function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval }: {
+function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     eventEmitter: ChatEventEmitter
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean }>
+    onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
 }): ToolSet {
     const executeWithTimeout = (toolName: string, toolInput: Record<string, unknown>) =>
         withToolTimeout({
@@ -286,6 +287,14 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval }:
                         batchSamples: isBatch ? toolInput.items!.slice(0, 3) : undefined,
                     }
                     eventEmitter.emitActionPreview(previewData)
+                    if (onGateOpened) {
+                        await tryCatch(() => onGateOpened({
+                            gateId: options.toolCallId,
+                            toolName: 'ap_execute_action',
+                            displayName: toolInput.title ?? toolInput.actionName,
+                            toolInput: toolInput as unknown as Record<string, unknown>,
+                        }))
+                    }
                     const decision = await waitForApproval({ gateId: options.toolCallId })
                     if (!decision.approved) {
                         return { content: [{ type: 'text', text: 'Action cancelled by user.' }] }
