@@ -7,6 +7,8 @@ export default createAction({
   name: 'find_rows',
   displayName: 'Find Rows',
   description: 'Reads rows from a table',
+  audience: 'both',
+  aiMetadata: { description: 'Reads rows from a MySQL table that match a SQL WHERE condition, optionally limited to specific columns. Use to look up or filter records by arbitrary criteria. The condition is required and is interpolated raw into the query, so pass dynamic values through the args array (referenced as ? placeholders) to avoid SQL injection. Read-only and idempotent.', idempotent: true },
   props: {
     markdown: warningMarkdown,
     timezone: mysqlCommon.timezone,

@@ -8,6 +8,11 @@ export const linearUpdateProject = createAction({
   name: 'linear_update_project',
   displayName: 'Update Project',
   description: 'Update a existing project in Linear workspace',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Updates an existing Linear project identified by its project ID, changing fields such as name, description, icon, color, start/target dates, or status. Use to modify a project already created. Repeating the same update is idempotent.',
+    idempotent: true,
+  },
   props: {
     team_id: props.team_id(),
     project_id: props.project_id(),

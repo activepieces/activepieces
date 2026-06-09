@@ -9,6 +9,12 @@ export const moveEmailAction = createAction({
 	name: 'move_email',
 	displayName: 'Move Email to Folder',
 	description: 'Moves an email to a different folder.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Moves one Zoho Mail message from its current folder to a destination folder, identified by account ID, message ID, source folder, and destination folder. Use to reorganize or file a message. Idempotent: once the message is in the destination folder, repeating the move has no further effect.',
+		idempotent: true,
+	},
 	props: {
 		accountId: accountId({ displayName: 'Account', required: true }),
 		folderId: folderId({ displayName: 'Current Folder', required: true }),
