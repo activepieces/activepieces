@@ -16,16 +16,17 @@ import { findDesign } from './lib/actions/find-design';
 import { getFolder } from './lib/actions/get-folder';
 import { getAsset } from './lib/actions/get-asset';
 
+const canvaAuthDescription = `
+To connect Canva, follow these steps:
+1. Go to https://www.canva.com/developers/integrations and sign in.
+2. Click **Create an integration** and fill in the app name and description.
+3. Under **Configure** → **Authentication**, set the redirect URL to the one shown above.
+4. Under **Configure** → **Scopes**, enable: \`design:content:read\`, \`design:content:write\`, \`design:meta:read\`, \`asset:read\`, \`asset:write\`, \`folder:read\`, \`folder:write\`.
+5. Copy the **Client ID** and **Client secret** and paste them above.
+`;
+
 export const canvaAuth = PieceAuth.OAuth2({
-  description: `Authentication for Canva API
-
-📋 **Required Scopes** (enable these in your Canva integration settings):
-✅ **design:content** - Read & Write (for creating, editing, importing, and exporting designs)
-✅ **design:meta** - Read (for finding and listing designs)  
-✅ **asset** - Read & Write (for uploading and managing assets)
-✅ **folder** - Read & Write (for organizing designs and moving items)
-
-🔗 Configure scopes at: https://canva.com/developers/integrations → Your Integration → Configuration → Scopes`,
+  description: canvaAuthDescription,
   authUrl: 'https://www.canva.com/api/oauth/authorize',
   tokenUrl: 'https://api.canva.com/rest/v1/oauth/token',
   required: true,
