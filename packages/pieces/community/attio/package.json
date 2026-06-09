@@ -1,7 +1,6 @@
 {
   "name": "@activepieces/piece-attio",
   "version": "0.1.19",
-  "aiReady": true,
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
