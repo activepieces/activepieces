@@ -1,6 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpError } from '@activepieces/pieces-common';
-import { areSheetIdsValid, googleSheetsCommon } from '../common/common';
+import { areSheetIdsValid, googleSheetsCommon, mapRowsToHeaderNames } from '../common/common';
 import { googleSheetsAuth } from '../common/common';
 import { commonProps } from '../common/props';
 
@@ -9,6 +9,12 @@ export const findRowByNumAction = createAction({
 	name: 'find_row_by_num',
 	displayName: 'Get Single Row by ID',
 	description: 'Retrieve a specific row using its unique ID.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Reads a single row from a worksheet by its row number, optionally keyed by header names instead of column letters. Use when an agent already knows the exact row to fetch. Read-only and idempotent.',
+		idempotent: true,
+	},
 	props: {
 		...commonProps,
 		rowNumber: Property.Number({
@@ -22,17 +28,23 @@ export const findRowByNumAction = createAction({
 			required: true,
 			defaultValue: 1,
 		}),
+		useHeaderNames: Property.Checkbox({
+			displayName: 'Use Column Names',
+			description: 'Use column names as keys instead of A, B, C.',
+			required: false,
+			defaultValue: true,
+		}),
 	},
 	async run(context) {
-		const { spreadsheetId, sheetId, rowNumber, headerRow } = context.propsValue;
+		const { spreadsheetId, sheetId, rowNumber, headerRow, useHeaderNames } = context.propsValue;
 
 		if (!areSheetIdsValid(spreadsheetId, sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
 
-		let row: Awaited<ReturnType<typeof googleSheetsCommon.getGoogleSheetRows>>;
+		let rows: Awaited<ReturnType<typeof googleSheetsCommon.getGoogleSheetRows>>;
 		try {
-			row = await googleSheetsCommon.getGoogleSheetRows({
+			rows = await googleSheetsCommon.getGoogleSheetRows({
 				auth: context.auth,
 				sheetId: sheetId as number,
 				spreadsheetId: spreadsheetId as string,
@@ -50,17 +62,26 @@ export const findRowByNumAction = createAction({
 			throw error;
 		}
 
-		if (row.length === 0) {
+		if (rows.length === 0) {
 			return {
 				found: false,
 				row: null,
 			};
 		}
 
+		const finalRows = await mapRowsToHeaderNames(
+			rows,
+			useHeaderNames ?? false,
+			spreadsheetId as string,
+			sheetId as number,
+			headerRow,
+			context.auth,
+		);
+
 		return {
 			found: true,
-			row: row[0].row,
-			values: row[0].values,
+			row: finalRows[0].row,
+			values: finalRows[0].values,
 		};
 	},
 });

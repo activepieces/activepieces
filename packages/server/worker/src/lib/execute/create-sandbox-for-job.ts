@@ -1,4 +1,4 @@
-import { ExecutionMode, NetworkMode, WorkerContract, WorkerToApiContract } from '@activepieces/shared'
+import { ExecutionMode, maxSocketHttpBufferSizeBytes, NetworkMode, WorkerContract, WorkerToApiContract } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { Logger } from 'pino'
 import { getEnginePath, getGlobalCacheCommonPath, getGlobalCodeCachePath } from '../cache/cache-paths'
@@ -45,6 +45,7 @@ export function createSandboxForJob(params: {
             cpuMsPerSec: 1000,
             timeLimitSeconds: settings.FLOW_TIMEOUT_SECONDS,
             reusable,
+            maxHttpBufferSizeBytes: maxSocketHttpBufferSizeBytes(settings.MAX_FILE_SIZE_MB),
             baseMounts,
             wsRpcPort: isIsolateMode(executionMode) ? sandboxCapacity.wsRpcPortForBox(boxId) : undefined,
         },
@@ -79,22 +80,32 @@ function buildSandboxEnv({ settings, proxyPort }: {
     settings: WorkerSettings
     proxyPort: number | null
 }): Record<string, string> {
+    // `proxyPort` reflects what the egress stack actually started at worker boot:
+    // non-null means the proxy is listening AND the iptables UID-owner REJECT chain is
+    // armed. `settings.NETWORK_MODE` is refreshed on every socket reconnect, so reading
+    // it here can drift away from the firewall the worker already armed. If the
+    // platform flips STRICT → UNRESTRICTED at reconnect, reading the live setting would
+    // drop AP_EGRESS_PROXY_URL from the sandbox env while iptables stays in place —
+    // user fetches then fall back to direct connect, hit the REJECT chain, and surface
+    // EHOSTUNREACH / "fetch failed". Keying the entire network env off proxyPort keeps
+    // the env var, the engine's ssrfGuard, and the kernel firewall on the same axis.
+    const networkMode = proxyPort === null ? NetworkMode.UNRESTRICTED : NetworkMode.STRICT
     return {
-        ...baseEnv(settings),
+        ...baseEnv({ settings, networkMode }),
         ...ssrfEnv(settings),
-        ...propagatedEnv(settings),
-        ...proxyEnv({ settings, proxyPort }),
+        ...propagatedEnv({ settings, networkMode }),
+        ...proxyEnv({ proxyPort }),
     }
 }
 
-function baseEnv(settings: WorkerSettings): Record<string, string> {
+function baseEnv({ settings, networkMode }: { settings: WorkerSettings, networkMode: NetworkMode }): Record<string, string> {
     return {
         HOME: '/tmp/',
         AP_EXECUTION_MODE: settings.EXECUTION_MODE,
         AP_MAX_FLOW_RUN_LOG_SIZE_MB: String(settings.MAX_FLOW_RUN_LOG_SIZE_MB),
         AP_MAX_FILE_SIZE_MB: String(settings.MAX_FILE_SIZE_MB),
         NODE_PATH: '/usr/src/node_modules',
-        AP_NETWORK_MODE: settings.NETWORK_MODE,
+        AP_NETWORK_MODE: networkMode,
     }
 }
 
@@ -109,11 +120,8 @@ function ssrfEnv(settings: WorkerSettings): Record<string, string> {
     return env
 }
 
-function proxyEnv({ settings, proxyPort }: {
-    settings: WorkerSettings
-    proxyPort: number | null
-}): Record<string, string> {
-    if (settings.NETWORK_MODE !== NetworkMode.STRICT || proxyPort === null) {
+function proxyEnv({ proxyPort }: { proxyPort: number | null }): Record<string, string> {
+    if (proxyPort === null) {
         return {}
     }
     // Never export standard HTTP_PROXY / HTTPS_PROXY env vars: axios's built-in
@@ -126,10 +134,10 @@ function proxyEnv({ settings, proxyPort }: {
     }
 }
 
-function propagatedEnv(settings: WorkerSettings): Record<string, string> {
+function propagatedEnv({ settings, networkMode }: { settings: WorkerSettings, networkMode: NetworkMode }): Record<string, string> {
     const env: Record<string, string> = {}
     for (const key of settings.SANDBOX_PROPAGATED_ENV_VARS) {
-        if (STRICT_MODE_BLOCKED_PROPAGATED_KEYS.has(key) && settings.NETWORK_MODE === NetworkMode.STRICT) {
+        if (STRICT_MODE_BLOCKED_PROPAGATED_KEYS.has(key) && networkMode === NetworkMode.STRICT) {
             continue
         }
         if (process.env[key]) {

@@ -9,6 +9,8 @@ export const updateRowAction = createAction({
 	name: 'update-row',
 	displayName: 'Update Row',
 	description: 'Updates an existing row in the selected table.',
+	audience: 'both',
+	aiMetadata: { description: 'Overwrite cell values on an existing Coda table row, identified by its row ID or a unique row name. Use when you already know which row to change; use Upsert Row instead when the row may not yet exist. Idempotent — repeating with the same values leaves the row in the same state.', idempotent: true },
 	props: {
 		docId: docIdDropdown,
 		tableId: tableIdDropdown,

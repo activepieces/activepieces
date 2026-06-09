@@ -8,6 +8,8 @@ export const getTaskAction = createAction({
     name: 'get_task',
     displayName: 'Get Task',
     description: 'Gets the details of a specific task.',
+    audience: 'both',
+    aiMetadata: { description: 'Retrieve the full details of a single Microsoft To Do task by its task list id and task id. Use when you already know the exact task and need its current fields (title, status, dates, etc.). Read-only and idempotent.', idempotent: true },
     props: {
         task_list_id: Property.Dropdown({
    auth: microsoftToDoAuth,

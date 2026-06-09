@@ -22,6 +22,15 @@ export const useEventLabels = (): EventLabelsMap => {
     [ApplicationEventName.CONNECTION_DELETED]: {
       label: t('Connection deleted'),
     },
+    [ApplicationEventName.VARIABLE_UPSERTED]: {
+      label: t('Variable saved'),
+    },
+    [ApplicationEventName.VARIABLE_DELETED]: {
+      label: t('Variable deleted'),
+    },
+    [ApplicationEventName.VARIABLE_VALUE_REVEALED]: {
+      label: t('Variable value revealed'),
+    },
     [ApplicationEventName.USER_SIGNED_UP]: { label: t('User signed up') },
     [ApplicationEventName.USER_SIGNED_IN]: { label: t('User signed in') },
     [ApplicationEventName.USER_PASSWORD_RESET]: {

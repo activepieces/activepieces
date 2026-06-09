@@ -8,6 +8,8 @@ export const createNoteAction = createAction({
 	name: 'create_note',
 	displayName: 'Create Note',
 	description: 'Creates a new note on a record.',
+	audience: 'both',
+	aiMetadata: { description: 'Creates a note attached to a specific record, with a title and body content interpreted as either plaintext or markdown. Requires the parent object type, the parent record ID, and the note text. Not idempotent — each call appends another note to the record.', idempotent: false },
 	auth: attioAuth,
 	props: {
 		parentObject: objectTypeIdDropdown({

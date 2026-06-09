@@ -9,6 +9,9 @@ export const newContactNoteTrigger = createTrigger({
 	name: 'activecampaign_new_contact_note',
 	displayName: 'New Contact Note',
 	description: 'Triggers when a new contact note is added.',
+	aiMetadata: {
+		description: 'Fires when a note is added to a contact. The payload includes the note text and the associated contact.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 	async onEnable(context) {

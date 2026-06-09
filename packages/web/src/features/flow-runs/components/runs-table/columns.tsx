@@ -47,6 +47,9 @@ type RunsTableColumnsProps = {
   setSelectedAll: Dispatch<SetStateAction<boolean>>;
   excludedRows: Set<string>;
   setExcludedRows: Dispatch<SetStateAction<Set<string>>>;
+  onViewError: (run: FlowRun) => void;
+  onViewRun: (run: FlowRun) => void;
+  canViewInternalError: boolean;
 };
 export const runsTableColumns = ({
   setSelectedRows,
@@ -56,6 +59,9 @@ export const runsTableColumns = ({
   excludedRows,
   setExcludedRows,
   data,
+  onViewError,
+  onViewRun,
+  canViewInternalError,
 }: RunsTableColumnsProps): ColumnDef<RowDataWithActions<FlowRun>>[] => [
   {
     id: 'select',
@@ -305,14 +311,63 @@ export const runsTableColumns = ({
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
-        title={t('Failed Step')}
+        title={t('Failure')}
         icon={AlertTriangle}
       />
     ),
     cell: ({ row }) => {
+      const { failedStep, status } = row.original;
+      if (isNil(failedStep)) {
+        if (status === FlowRunStatus.INTERNAL_ERROR && canViewInternalError) {
+          return (
+            <div className="text-left">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onViewError(row.original);
+                    }}
+                  >
+                    {t('View error')}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {t('Internal error')}
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          );
+        }
+        return <div className="text-left">-</div>;
+      }
       return (
         <div className="text-left">
-          {row.original.failedStep?.displayName ?? '-'}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (failedStep.message) {
+                    onViewError(row.original);
+                  } else {
+                    onViewRun(row.original);
+                  }
+                }}
+              >
+                {t('View error')}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {t('Failed on ({stepName})', {
+                stepName: failedStep.displayName,
+              })}
+            </TooltipContent>
+          </Tooltip>
         </div>
       );
     },

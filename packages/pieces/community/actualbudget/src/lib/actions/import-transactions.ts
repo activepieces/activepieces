@@ -22,8 +22,11 @@ export const importTransactions = createAction({
     })    
   },
 
-  async run({ auth, propsValue: { account_id, transactions } }) {  
-    await initializeAndDownloadBudget(api, auth.props)   
+  async run({ auth, propsValue: { account_id, transactions } }) {
+    if (!Array.isArray(transactions)) {
+      throw new Error('Transactions must be a JSON array');
+    }
+    await initializeAndDownloadBudget(api, auth.props)
     const res = await api.importTransactions(account_id, transactions);
     await api.shutdown();
     return res;

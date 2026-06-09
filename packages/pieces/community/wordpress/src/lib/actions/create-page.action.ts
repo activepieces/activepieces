@@ -12,6 +12,8 @@ export const createWordPressPage = createAction({
   auth: wordpressAuth,
   name: 'create_page',
   description: 'Create new page on WordPress',
+  audience: 'both',
+  aiMetadata: { description: 'Publishes a new static page (not a blog post) on a WordPress site via the REST API, with optional status, slug, excerpt, and comment settings. Choose this for standalone pages like About or Contact rather than dated posts. Requires a title and HTML content; not idempotent — each call creates a separate page.', idempotent: false },
   displayName: 'Create Page',
   props: {
     title: Property.ShortText({

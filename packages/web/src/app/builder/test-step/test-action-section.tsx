@@ -7,45 +7,27 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { FlaskConical, Play } from 'lucide-react';
-import React, { useContext, useState } from 'react';
+import React, { useContext } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { piecesHooks } from '@/features/pieces';
 
 import { useBuilderStateContext } from '../builder-hooks';
+import { stepPropertiesSnapshotUtils } from '../data-display/build-step-properties-snapshot';
+import { ErrorExplanationContext } from '../data-display/explanation-prompt';
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
+import { StepDataPanelHeader } from '../step-data/step-data-panel-header';
+import { StepDataPanelViewToggle } from '../step-data/step-data-panel-view-toggle';
 
-import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
-import { TestPanelHeader } from './test-panel-header';
+import { useActionTestRunner } from './test-runner-context';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
 import { TestButtonTooltip } from './test-step-tooltip';
-import { testStepHooks } from './utils/test-step-hooks';
-type TestActionComponentProps = {
-  isSaving: boolean;
-  flowVersionId: string;
-  projectId: string;
-};
-
-enum DialogType {
-  NONE = 'NONE',
-  WEBHOOK = 'WEBHOOK',
-}
-
-const isReturnResponseAndWaitForWebhook = (step: FlowAction) => {
-  return (
-    step.type === FlowActionType.PIECE &&
-    step.settings.pieceName === '@activepieces/piece-webhook' &&
-    step.settings.actionName === 'return_response_and_wait_for_next_webhook'
-  );
-};
 
 const TestStepSectionImplementation = React.memo(
   ({
     isSaving,
     currentStep,
   }: TestActionComponentProps & { currentStep: FlowAction }) => {
-    const [activeDialog, setActiveDialog] = useState<DialogType>(
-      DialogType.NONE,
-    );
     const [
       sampleData,
       sampleDataInput,
@@ -68,10 +50,8 @@ const TestStepSectionImplementation = React.memo(
       ];
     });
 
-    const { mutate: testAction, isPending: isWatingTestResult } =
-      testStepHooks.useTestAction({
-        currentStep,
-      });
+    const runner = useActionTestRunner();
+    const onTestButtonClick = () => runner?.fireTest();
 
     const lastTestDate = currentStep.settings.sampleData?.lastTestDate;
 
@@ -79,29 +59,61 @@ const TestStepSectionImplementation = React.memo(
       !isNil(lastTestDate) ||
       !isNil(errorMessage) ||
       isStepBeingTested(currentStep.name);
-    const onTestButtonClick = async () => {
-      if (isReturnResponseAndWaitForWebhook(currentStep)) {
-        setActiveDialog(DialogType.WEBHOOK);
-      } else {
-        testAction(undefined);
-      }
-    };
 
-    const handleCloseDialog = () => {
-      setActiveDialog(DialogType.NONE);
-    };
-
-    const isTesting =
-      activeDialog !== DialogType.NONE ||
-      isWatingTestResult ||
-      isStepBeingTested(currentStep.name);
+    const isTesting = runner?.isTesting ?? false;
     const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
+
+    const pieceName =
+      currentStep.type === FlowActionType.PIECE
+        ? currentStep.settings.pieceName
+        : undefined;
+    const pieceVersion =
+      currentStep.type === FlowActionType.PIECE
+        ? currentStep.settings.pieceVersion
+        : undefined;
+    const { pieceModel } = piecesHooks.usePiece({
+      name: pieceName ?? '',
+      version: pieceVersion,
+      enabled: !isNil(pieceName),
+    });
+    const stepKind = 'action';
+    const stepName =
+      currentStep.type === FlowActionType.PIECE
+        ? currentStep.settings.actionName
+        : currentStep.type;
+    const stepInput =
+      currentStep.type === FlowActionType.PIECE
+        ? (currentStep.settings.input as Record<string, unknown> | undefined)
+        : undefined;
+    const explanationContext: ErrorExplanationContext = {
+      pieceName,
+      pieceVersion,
+      pieceDisplayName: pieceModel?.displayName,
+      pieceAuthType: stepPropertiesSnapshotUtils.findAuthType(pieceModel),
+      stepKind,
+      stepName,
+      stepDisplayName: currentStep.displayName,
+      stepDescription: stepPropertiesSnapshotUtils.findDescription({
+        pieceModel,
+        stepKind,
+        stepName,
+      }),
+      stepProperties: stepPropertiesSnapshotUtils.build({
+        pieceModel,
+        stepKind,
+        stepName,
+        input: stepInput,
+      }),
+    };
 
     return (
       <>
         {!sampleDataExists && !isTesting && (
           <div className="flex flex-col h-full">
-            <TestPanelHeader status="idle" hideRetest />
+            <StepDataPanelHeader status="idle" />
+            <div className="flex justify-end px-3 py-2 shrink-0">
+              <StepDataPanelViewToggle />
+            </div>
             <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
               <div className="flex items-center justify-center size-12 rounded-full bg-primary/10 text-primary">
                 <FlaskConical className="size-6" />
@@ -143,19 +155,16 @@ const TestStepSectionImplementation = React.memo(
             onRetest={onTestButtonClick}
             errorMessage={errorMessage}
             consoleLogs={consoleLogs}
+            explanationContext={explanationContext}
+            pieceDisplayName={pieceModel?.displayName}
+            pieceSchema={
+              pieceModel?.actions[stepName ?? '']?.outputSchema ?? null
+            }
             onCancelTesting={() => {
               removeStepTestListener(currentStep.name);
               revertSampleDataLocally?.();
             }}
           ></TestSampleDataViewer>
-        )}
-        {activeDialog === DialogType.WEBHOOK && (
-          <TestWebhookDialog
-            testingMode="returnResponseAndWaitForNextWebhook"
-            open={true}
-            onOpenChange={(open) => !open && handleCloseDialog()}
-            currentStep={currentStep}
-          />
         )}
       </>
     );
@@ -180,5 +189,11 @@ const TestActionSection = React.memo((props: TestActionComponentProps) => {
 
 TestStepSectionImplementation.displayName = 'TestStepSectionImplementation';
 TestActionSection.displayName = 'TestActionSection';
+
+type TestActionComponentProps = {
+  isSaving: boolean;
+  flowVersionId: string;
+  projectId: string;
+};
 
 export { TestActionSection };

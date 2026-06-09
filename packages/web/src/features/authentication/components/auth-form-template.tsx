@@ -100,9 +100,12 @@ const AuthSeparator = ({
     flagsHooks.useFlag<ThirdPartyAuthnProvidersToShowMap>(
       ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
     );
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const isCloud = edition === ApEdition.CLOUD;
+  const hasThirdPartyLogin =
+    thirdPartyAuthProviders?.google || thirdPartyAuthProviders?.saml || isCloud;
 
-  return (thirdPartyAuthProviders?.google || thirdPartyAuthProviders?.saml) &&
-    isEmailAuthEnabled ? (
+  return hasThirdPartyLogin && isEmailAuthEnabled ? (
     <HorizontalSeparatorWithText className="my-5 text-muted-foreground">
       {t('or')}
     </HorizontalSeparatorWithText>
@@ -201,10 +204,7 @@ const AuthFormTemplate = React.memo(
       <AuthLayout isSignUp={isSignUp}>
         {!showCheckYourEmailNote && (
           <div className="mb-6 text-center">
-            <h1
-              className="text-2xl font-bold tracking-tight"
-              style={{ fontFamily: "'Sentient', serif" }}
-            >
+            <h1 className="text-2xl font-bold tracking-tight font-sentient">
               {data.title}
             </h1>
           </div>

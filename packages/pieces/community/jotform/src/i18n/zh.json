@@ -30,6 +30,6 @@
   "Form Data": "表单数据",
   "Raw": "原始文件",
   "New Submission": "New Submission",
-  "Triggers when a new submission is submitted": "Triggers when a new submission is submitted",
+  "Triggers when someone submits a response to your form. Each form field is returned as a separate field using the question label as the key.": "Triggers when someone submits a response to your form. Each form field is returned as a separate field using the question label as the key.",
   "Form": "Form"
 }

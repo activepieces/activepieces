@@ -28,6 +28,9 @@ export const newFormSubmission = createTrigger({
   name: 'new_form_submission',
   displayName: 'New Form Submission',
   description: 'Trigger when a form is submitted.',
+  aiMetadata: {
+    description: 'Fires when a new submission is received for a specific GoHighLevel/LeadConnector form (selected by form ID). Represents the submitted form entry with its field values.',
+  },
   props: {
     form: Property.Dropdown({
   auth: leadConnectorAuth,

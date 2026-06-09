@@ -44,6 +44,7 @@ async function getFilesRecursively(
     fields: 'nextPageToken,files(id,kind,mimeType,name,trashed,parents)',
     supportsAllDrives: 'true',
     includeItemsFromAllDrives: includeTeamDrives ? 'true' : 'false',
+    corpora: includeTeamDrives ? 'allDrives' : 'user',
     pageSize: '1000',
   };
 
@@ -109,6 +110,8 @@ export const googleDriveListFiles = createAction({
   name: 'list-files',
   displayName: 'List files',
   description: 'List files from a Google Drive folder',
+  audience: 'both',
+  aiMetadata: { description: 'Lists files and subfolders inside a given Drive folder, with optional recursion to a chosen depth and optional download of each file\'s content. Use to enumerate the contents of a known folder ID. Read-only and idempotent. Requires the folder ID, not a name.', idempotent: true },
   props: {
     folderId: Property.ShortText({
       displayName: 'Folder ID',

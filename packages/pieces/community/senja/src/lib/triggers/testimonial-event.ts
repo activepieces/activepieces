@@ -6,7 +6,7 @@ import {
 import { MarkdownVariant } from '@activepieces/shared';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { senjaAuth } from '../../';
-import { senjaApiCall } from '../common';
+import { senjaApiCall, mapTestimonial } from '../common';
 
 export const testimonialEventTrigger = createTrigger({
   auth: senjaAuth,
@@ -66,6 +66,16 @@ export const testimonialEventTrigger = createTrigger({
     customer_url: null,
     customer_avatar: 'https://cdn.senja.io/optimized/avatar1.jpg',
     customer_company_logo: 'https://cdn.senja.io/optimized/company-logo1.png',
+    customer_custom_data: null,
+    media: [],
+    video_duration: null,
+    video_aspect_ratio: null,
+    video_hls_url: null,
+    video_mp4_low: null,
+    video_mp4_medium: null,
+    video_mp4_high: null,
+    video_transcript: null,
+    translations: [],
     created_at: '2024-01-15T10:30:00Z',
     updated_at: '2024-01-15T10:30:00Z',
   },
@@ -103,36 +113,7 @@ export const testimonialEventTrigger = createTrigger({
       data ??
       payload;
 
-    return [
-      {
-        event_type: eventType ?? null,
-        id: t['id'] ?? null,
-        type: t['type'] ?? null,
-        title: t['title'] ?? null,
-        text: t['text'] ?? null,
-        rating: t['rating'] ?? null,
-        url: t['url'] ?? null,
-        date: t['date'] ?? null,
-        approved: t['approved'] ?? null,
-        integration: t['integration'] ?? null,
-        tags: (t['tags'] as string[]) ?? [],
-        lang: t['lang'] ?? null,
-        video_url: t['video_url'] ?? null,
-        thumbnail_url: t['thumbnail_url'] ?? null,
-        form_id: t['form_id'] ?? null,
-        project_id: t['project_id'] ?? null,
-        customer_name: t['customer_name'] ?? null,
-        customer_email: t['customer_email'] ?? null,
-        customer_company: t['customer_company'] ?? null,
-        customer_tagline: t['customer_tagline'] ?? null,
-        customer_username: t['customer_username'] ?? null,
-        customer_url: t['customer_url'] ?? null,
-        customer_avatar: t['customer_avatar'] ?? null,
-        customer_company_logo: t['customer_company_logo'] ?? null,
-        created_at: t['created_at'] ?? null,
-        updated_at: t['updated_at'] ?? null,
-      },
-    ];
+    return [mapTestimonial({ testimonial: t, eventType: eventType ?? null })];
   },
 
   async test(context) {
@@ -144,34 +125,6 @@ export const testimonialEventTrigger = createTrigger({
     });
 
     const items = (response.body as { testimonials?: Record<string, unknown>[] }).testimonials ?? [];
-
-    return items.map((t) => ({
-      event_type: 'testimonial_created',
-      id: t['id'] ?? null,
-      type: t['type'] ?? null,
-      title: t['title'] ?? null,
-      text: t['text'] ?? null,
-      rating: t['rating'] ?? null,
-      url: t['url'] ?? null,
-      date: t['date'] ?? null,
-      approved: t['approved'] ?? null,
-      integration: t['integration'] ?? null,
-      tags: (t['tags'] as string[]) ?? [],
-      lang: t['lang'] ?? null,
-      video_url: t['video_url'] ?? null,
-      thumbnail_url: t['thumbnail_url'] ?? null,
-      form_id: t['form_id'] ?? null,
-      project_id: t['project_id'] ?? null,
-      customer_name: t['customer_name'] ?? null,
-      customer_email: t['customer_email'] ?? null,
-      customer_company: t['customer_company'] ?? null,
-      customer_tagline: t['customer_tagline'] ?? null,
-      customer_username: t['customer_username'] ?? null,
-      customer_url: t['customer_url'] ?? null,
-      customer_avatar: t['customer_avatar'] ?? null,
-      customer_company_logo: t['customer_company_logo'] ?? null,
-      created_at: t['created_at'] ?? null,
-      updated_at: t['updated_at'] ?? null,
-    }));
+    return items.map((t) => mapTestimonial({ testimonial: t, eventType: 'testimonial_created' }));
   },
 });

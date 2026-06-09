@@ -35,6 +35,9 @@ const FlowRunPage = React.lazy(() =>
 const AppConnectionsPage = React.lazy(() =>
   import('./connections').then((m) => ({ default: m.AppConnectionsPage })),
 );
+const VariablesPage = React.lazy(() =>
+  import('./variables').then((m) => ({ default: m.VariablesPage })),
+);
 const ApTableEditorPage = React.lazy(() =>
   import('./tables/id').then((m) => ({ default: m.ApTableEditorPage })),
 );
@@ -176,6 +179,20 @@ export const projectRoutes = [
           <PageTitle title="Connections">
             <SuspenseWrapper>
               <AppConnectionsPage />
+            </SuspenseWrapper>
+          </PageTitle>
+        </RoutePermissionGuard>
+      </ProjectDashboardLayout>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: routesThatRequireProjectId.variables,
+    element: (
+      <ProjectDashboardLayout>
+        <RoutePermissionGuard requiredPermissions={Permission.READ_VARIABLE}>
+          <PageTitle title="Variables">
+            <SuspenseWrapper>
+              <VariablesPage />
             </SuspenseWrapper>
           </PageTitle>
         </RoutePermissionGuard>

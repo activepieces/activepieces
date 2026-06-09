@@ -279,6 +279,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         request: {
             displayName: string
             notes: Note[]
+            schemaVersion: string | undefined | null
         },
     ): Promise<FlowVersion> {
         const flowVersion: NewFlowVersion = {
@@ -293,7 +294,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                 displayName: 'Select Trigger',
                 lastUpdatedDate: dayjs().toISOString(),
             },
-            schemaVersion: LATEST_FLOW_SCHEMA_VERSION,
+            schemaVersion: request.schemaVersion ?? LATEST_FLOW_SCHEMA_VERSION,
             connectionIds: [],
             agentIds: [],
             valid: false,

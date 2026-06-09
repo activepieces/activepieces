@@ -10,6 +10,8 @@ export const findTaskByTitleAction = createAction({
 	name: 'find_task_by_title',
 	displayName: 'Find Task',
 	description: 'Finds tasks by title.',
+	audience: 'both',
+	aiMetadata: { description: 'Search a specific Microsoft To Do task list for tasks whose title matches the given text and return all matches. The match mode is configurable — contains (default), starts-with, or exact. Use to resolve a task id from its title before reading, updating, completing, or deleting it. Requires a task list id; read-only and idempotent.', idempotent: true },
 	props: {
 		task_list_id: Property.Dropdown({
    auth: microsoftToDoAuth,
