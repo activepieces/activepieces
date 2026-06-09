@@ -167,7 +167,7 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                       !field.disabled &&
                       canShowConnectionStatus &&
                       statusDisplay && (
-                        <div className="z-50 absolute right-8 top-1.5 flex items-center gap-1.5">
+                        <div className="z-50 absolute right-8 top-1.5 flex items-center gap-1.5 pointer-events-none">
                           <span className="flex items-center gap-1 text-xs text-muted-foreground select-none pointer-events-none">
                             <statusDisplay.Icon
                               className={cn(
@@ -179,7 +179,7 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                           </span>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <span className="inline-flex">
+                              <span className="inline-flex pointer-events-auto">
                                 <Button
                                   variant="ghost"
                                   size="icon-xs"
