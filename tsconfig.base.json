@@ -1568,7 +1568,7 @@
       "@activepieces/piece-videoask": [
         "packages/pieces/community/videoask/src/index.ts"
       ],
-      "@activepieces/piece-presenton": [
+      "@activepieces/piece-presentation": [
         "packages/pieces/community/presenton/src/index.ts"
       ],
       "@activepieces/piece-formspark": [
