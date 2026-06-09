@@ -292,7 +292,13 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                             gateId: options.toolCallId,
                             toolName: 'ap_execute_action',
                             displayName: toolInput.title ?? toolInput.actionName,
-                            toolInput: toolInput as unknown as Record<string, unknown>,
+                            toolInput: {
+                                pieceName: toolInput.pieceName,
+                                actionName: toolInput.actionName,
+                                input: toolInput.input ?? {},
+                                items: isBatch ? toolInput.items!.slice(0, 3) : undefined,
+                                batchCount: isBatch ? toolInput.items!.length : undefined,
+                            },
                         }))
                     }
                     const decision = await waitForApproval({ gateId: options.toolCallId })
