@@ -2650,6 +2650,17 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/filetopdf": {
+      "name": "@activepieces/piece-filetopdf",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "form-data": "4.0.4",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/fillout-forms": {
       "name": "@activepieces/piece-fillout-forms",
       "version": "0.1.4",
@@ -6055,6 +6066,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/rendex": {
+      "name": "@activepieces/piece-rendex",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/reoon-verifier": {
       "name": "@activepieces/piece-reoon-verifier",
       "version": "0.1.3",
@@ -9311,6 +9332,8 @@
 
     "@activepieces/piece-file-helper": ["@activepieces/piece-file-helper@workspace:packages/pieces/core/file-helper"],
 
+    "@activepieces/piece-filetopdf": ["@activepieces/piece-filetopdf@workspace:packages/pieces/community/filetopdf"],
+
     "@activepieces/piece-fillout-forms": ["@activepieces/piece-fillout-forms@workspace:packages/pieces/community/fillout-forms"],
 
     "@activepieces/piece-fireberry": ["@activepieces/piece-fireberry@workspace:packages/pieces/community/fireberry"],
@@ -9948,6 +9971,8 @@
     "@activepieces/piece-recurly": ["@activepieces/piece-recurly@workspace:packages/pieces/community/recurly"],
 
     "@activepieces/piece-reddit": ["@activepieces/piece-reddit@workspace:packages/pieces/community/reddit"],
+
+    "@activepieces/piece-rendex": ["@activepieces/piece-rendex@workspace:packages/pieces/community/rendex"],
 
     "@activepieces/piece-reoon-verifier": ["@activepieces/piece-reoon-verifier@workspace:packages/pieces/community/reoon-verifier"],
 
