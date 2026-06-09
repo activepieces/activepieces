@@ -15,7 +15,7 @@ import { ChatUIMessage } from './chat-types';
 import { chunkReducer, StreamingState } from './chunk-reducer';
 
 const THROTTLE_MS = 100;
-const STREAM_TIMEOUT_MS = 10 * 60 * 1000;
+const STREAM_TIMEOUT_MS = 2 * 60 * 1000;
 const STALE_CHECK_INTERVAL_MS = 15_000;
 
 export function useStreamingReducer({
@@ -212,6 +212,13 @@ export function useStreamingReducer({
 
       socket.on(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
 
+      const reconnectHandler = () => {
+        socket.off(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
+        socket.on(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
+        lastChunkTimeRef.current = Date.now();
+      };
+      socket.on('connect', reconnectHandler);
+
       streamTimeoutRef.current = setTimeout(() => {
         handleError({ errorMessage: 'Stream timed out' });
       }, STREAM_TIMEOUT_MS);
@@ -224,6 +231,7 @@ export function useStreamingReducer({
 
       cleanupRef.current = () => {
         socket.off(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
+        socket.off('connect', reconnectHandler);
       };
     },
     [socket, teardown, flush, scheduleFlush, updatePhase],

@@ -114,6 +114,10 @@ export const AssistantMessage = memo(function AssistantMessage({
     for (let i = 0; i < message.parts.length; i++) {
       const p = message.parts[i];
 
+      if (p.type === 'step-start') {
+        flushThinking();
+        continue;
+      }
       if (p.type === 'text' && p.text.length > 0) {
         flushThinking();
         hasText = true;

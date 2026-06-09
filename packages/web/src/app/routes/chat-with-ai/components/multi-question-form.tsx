@@ -13,7 +13,6 @@ import { Fragment, useEffect, useId, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 
@@ -34,8 +33,9 @@ export function MultiQuestionForm({
   const [focusedRow, setFocusedRow] = useState<number | 'custom' | null>(null);
   const [hoveredRow, setHoveredRow] = useState<number | 'custom' | null>(null);
   const fieldId = useId();
-  const firstOptionRef = useRef<HTMLButtonElement | null>(null);
-  const lastOptionRef = useRef<HTMLButtonElement | null>(null);
+  const firstOptionRef = useRef<HTMLDivElement | null>(null);
+  const lastOptionRef = useRef<HTMLDivElement | null>(null);
+  const optionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const customAnswerInputRef = useRef<HTMLInputElement>(null);
   const textInputRef = useRef<HTMLInputElement>(null);
   const lastFocusedElRef = useRef<HTMLElement | null>(null);
@@ -55,7 +55,7 @@ export function MultiQuestionForm({
     setAnswers((prev) => ({ ...prev, [currentStep]: value }));
   }
 
-  function setFirstOptionEl(el: HTMLButtonElement | null) {
+  function setFirstOptionEl(el: HTMLDivElement | null) {
     firstOptionRef.current = el;
     if (el && lastFocusedElRef.current !== el) {
       el.focus({ preventScroll: true });
@@ -233,17 +233,8 @@ export function MultiQuestionForm({
           <div>
             {q.type === 'choice' && q.options && (
               <div>
-                <RadioGroup
-                  value={
-                    q.options.includes(answers[currentStep] ?? '')
-                      ? answers[currentStep]
-                      : ''
-                  }
-                  onValueChange={setAnswer}
-                  className="gap-0"
-                >
+                <div role="listbox" aria-label={q.question} className="gap-0">
                   {q.options.map((option, i) => {
-                    const id = `${fieldId}-opt-${i}`;
                     const selected = answers[currentStep] === option;
                     const isFirst = i === 0;
                     const isLast = i === q.options!.length - 1;
@@ -260,9 +251,19 @@ export function MultiQuestionForm({
                           </div>
                         )}
                         <div
-                          onClick={() => {
-                            handleNext(option);
+                          role="option"
+                          tabIndex={
+                            focusedRow === i || (focusedRow === null && isFirst)
+                              ? 0
+                              : -1
+                          }
+                          aria-selected={selected}
+                          ref={(el) => {
+                            optionRefs.current[i] = el;
+                            if (isFirst) setFirstOptionEl(el);
+                            if (isLast) lastOptionRef.current = el;
                           }}
+                          onClick={() => handleNext(option)}
                           onMouseEnter={() => setHoveredRow(i)}
                           onMouseLeave={() =>
                             setHoveredRow((prev) => (prev === i ? null : prev))
@@ -271,49 +272,52 @@ export function MultiQuestionForm({
                           onBlur={() =>
                             setFocusedRow((prev) => (prev === i ? null : prev))
                           }
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleNext(option);
+                              return;
+                            }
+                            if (
+                              e.key === 'ArrowLeft' ||
+                              e.key === 'ArrowRight'
+                            ) {
+                              e.preventDefault();
+                              return;
+                            }
+                            if (e.key === 'ArrowDown') {
+                              e.preventDefault();
+                              if (isLast) {
+                                customAnswerInputRef.current?.focus();
+                              } else {
+                                setFocusedRow(i + 1);
+                                optionRefs.current[i + 1]?.focus();
+                              }
+                              return;
+                            }
+                            if (e.key === 'ArrowUp') {
+                              e.preventDefault();
+                              if (isFirst) {
+                                customAnswerInputRef.current?.focus();
+                              } else {
+                                setFocusedRow(i - 1);
+                                optionRefs.current[i - 1]?.focus();
+                              }
+                              return;
+                            }
+                          }}
                           className={cn(
-                            'group flex items-center gap-3 rounded-xl px-2 py-2 text-sm font-normal cursor-pointer transition-colors hover:bg-muted',
+                            'group flex items-center gap-3 rounded-xl px-2 py-2 text-sm font-normal cursor-pointer transition-colors hover:bg-muted outline-none',
                             focusedRow === i && !selected && 'bg-muted',
                             selected && 'bg-muted-foreground/15',
                           )}
                         >
-                          <RadioGroupItem
-                            ref={(el) => {
-                              if (isFirst) setFirstOptionEl(el);
-                              if (isLast) lastOptionRef.current = el;
-                            }}
-                            id={id}
-                            value={option}
-                            className="peer sr-only"
-                            onKeyDownCapture={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleNext(option);
-                                return;
-                              }
-                              if (
-                                e.key === 'ArrowLeft' ||
-                                e.key === 'ArrowRight'
-                              ) {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                return;
-                              }
-                              const wrapDown = e.key === 'ArrowDown' && isLast;
-                              const wrapUp = e.key === 'ArrowUp' && isFirst;
-                              if (wrapDown || wrapUp) {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setAnswer('');
-                                customAnswerInputRef.current?.focus();
-                              }
-                            }}
-                          />
                           <span
                             aria-hidden
                             className={cn(
-                              'flex size-8 shrink-0 items-center justify-center rounded-md bg-muted-foreground/10 text-xs font-medium text-muted-foreground transition-colors peer-focus:bg-foreground peer-focus:text-background',
+                              'flex size-8 shrink-0 items-center justify-center rounded-md bg-muted-foreground/10 text-xs font-medium text-muted-foreground transition-colors',
+                              focusedRow === i &&
+                                'bg-foreground text-background',
                               selected && 'bg-foreground text-background',
                             )}
                           >
@@ -324,7 +328,7 @@ export function MultiQuestionForm({
                       </Fragment>
                     );
                   })}
-                </RadioGroup>
+                </div>
 
                 <div className="px-3">
                   <Separator
@@ -374,15 +378,11 @@ export function MultiQuestionForm({
                     onKeyDown={(e) => {
                       if (e.key === 'ArrowUp') {
                         e.preventDefault();
-                        const last = q.options![q.options!.length - 1];
-                        setAnswer(last);
                         lastOptionRef.current?.focus();
                         return;
                       }
                       if (e.key === 'ArrowDown') {
                         e.preventDefault();
-                        const first = q.options![0];
-                        setAnswer(first);
                         firstOptionRef.current?.focus();
                         return;
                       }

@@ -154,7 +154,13 @@ export function ConnectionPickerCard({
   selectedConnectionLabel,
 }: ConnectionPickerCardProps) {
   const queryClient = useQueryClient();
-  const { conversationId } = useParams<{ conversationId: string }>();
+  const { conversationId: routerConversationId } = useParams<{
+    conversationId: string;
+  }>();
+  const conversationId =
+    routerConversationId ??
+    window.location.pathname.match(/\/chat\/(.+)/)?.[1] ??
+    undefined;
   const pieceName = normalizePieceName(picker.piece);
   const shouldFetch =
     !picker.connections?.length && !!conversationId && isInteractive;

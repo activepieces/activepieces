@@ -31,6 +31,12 @@ const stepSpec = z.object({
     loopItems: z.string().optional(),
     continueOnFailure: z.boolean().optional(),
     retryOnFailure: z.boolean().optional(),
+    parentStepName: z.string().optional().describe('Name of the parent step to nest this step inside (e.g. the loop step name). If omitted, step is added after the previous step.'),
+    stepLocationRelativeToParent: z.enum([
+        StepLocationRelativeToParent.AFTER,
+        StepLocationRelativeToParent.INSIDE_LOOP,
+        StepLocationRelativeToParent.INSIDE_BRANCH,
+    ]).optional().default(StepLocationRelativeToParent.AFTER).describe('Where to place the step relative to parentStepName. Use INSIDE_LOOP for steps inside a loop.'),
 })
 
 const buildFlowInput = z.object({
@@ -48,7 +54,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
     return {
         title: 'ap_build_flow',
         permission: Permission.WRITE_FLOW,
-        description: 'Create a complete flow in one call: trigger + steps. Steps are added sequentially (trigger → step_1 → step_2 → ...). Use granular tools (ap_add_step, ap_update_step) to modify flows or add nested structures (loop contents, router branches).',
+        description: 'Create a complete flow in one call: trigger + steps. Steps are added sequentially by default (trigger → step_1 → step_2 → ...). To nest steps inside a loop, set parentStepName to the loop step name and stepLocationRelativeToParent to INSIDE_LOOP.',
         inputSchema: {
             flowName: z.string().describe('Name for the new flow'),
             trigger: z.object({
@@ -57,7 +63,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                 input: z.record(z.string(), z.unknown()).optional().describe('Trigger input config'),
                 auth: z.string().optional().describe('Connection externalId for trigger auth'),
             }).describe('Trigger configuration'),
-            steps: z.array(stepSpec).describe('Array of steps added sequentially after trigger. Each step supports: PIECE (pieceName+actionName+input), CODE (sourceCode+input), LOOP_ON_ITEMS (loopItems), ROUTER.'),
+            steps: z.array(stepSpec).describe('Array of steps. By default added sequentially after trigger. Use parentStepName + stepLocationRelativeToParent to nest steps inside loops. Each step supports: PIECE (pieceName+actionName+input), CODE (sourceCode+input), LOOP_ON_ITEMS (loopItems), ROUTER.'),
         },
         annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
@@ -151,13 +157,22 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                         continue
                     }
 
+                    const location = step.stepLocationRelativeToParent ?? StepLocationRelativeToParent.AFTER
+                    let parentStepName = lastStep.name
+                    if (step.parentStepName) {
+                        const found = allSteps.find((s) => s.name === step.parentStepName)
+                        if (found) {
+                            parentStepName = found.name
+                        }
+                    }
+
                     currentFlow = await flowService(log).update({
                         id: flowId, projectId, userId: null, platformId,
                         operation: {
                             type: FlowOperationType.ADD_ACTION,
                             request: {
-                                parentStep: lastStep.name,
-                                stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+                                parentStep: parentStepName,
+                                stepLocationRelativeToParent: location,
                                 action: parseResult.data,
                             },
                         },

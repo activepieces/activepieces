@@ -46,6 +46,51 @@ function restoreReceiptsIntoStore({
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const AGENT_POLL_INTERVAL_MS = 5_000;
 
+function buildToolCallMetaFromGate(gate: {
+  gateId: string;
+  toolName: string;
+  displayName: string;
+  toolInput: Record<string, unknown>;
+}): Record<string, ToolCallMeta> {
+  const gateInput = gate.toolInput ?? {};
+  const isActionPreview = gate.toolName === 'ap_execute_action';
+  const meta: ToolCallMeta = isActionPreview
+    ? {
+        actionPreview: {
+          toolCallId: gate.gateId,
+          pieceName:
+            typeof gateInput.pieceName === 'string' ? gateInput.pieceName : '',
+          actionName:
+            typeof gateInput.actionName === 'string'
+              ? gateInput.actionName
+              : '',
+          actionDisplayName: gate.displayName,
+          input:
+            typeof gateInput.input === 'object' && gateInput.input !== null
+              ? (gateInput.input as Record<string, unknown>)
+              : {},
+          isBatch:
+            typeof gateInput.batchCount === 'number' &&
+            gateInput.batchCount > 0,
+          batchCount:
+            typeof gateInput.batchCount === 'number'
+              ? gateInput.batchCount
+              : undefined,
+          batchSamples: Array.isArray(gateInput.items)
+            ? (gateInput.items as Record<string, unknown>[]).slice(0, 3)
+            : undefined,
+        },
+      }
+    : {
+        approvalRequest: {
+          toolCallId: gate.gateId,
+          toolName: gate.toolName,
+          displayName: gate.displayName,
+        },
+      };
+  return { [gate.gateId]: meta };
+}
+
 const ALLOWED_MIME_SET: ReadonlySet<string> = new Set(CHAT_ALLOWED_MIME_TYPES);
 
 function isAllowedMimeType(value: string): value is ChatAllowedMimeType {
@@ -53,7 +98,7 @@ function isAllowedMimeType(value: string): value is ChatAllowedMimeType {
 }
 
 function fileToBase64(
-  file: File,
+  file: File
 ): Promise<{ name: string; mimeType: ChatAllowedMimeType; data: string }> {
   return new Promise((resolve, reject) => {
     const mimeType = file.type || 'application/octet-stream';
@@ -125,10 +170,10 @@ export function useAgentChat({
   const store = useChatStoreApi();
 
   const [conversationId, setConversationIdState] = useState<string | null>(
-    null,
+    null
   );
   const [modelName, setModelNameState] = useState<string | null>(
-    DEFAULT_CHAT_TIER_ID,
+    DEFAULT_CHAT_TIER_ID
   );
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isPollingForAgentReply, setIsPollingForAgentReply] = useState(false);
@@ -138,7 +183,7 @@ export function useAgentChat({
   onCreditsExhaustedRef.current = onCreditsExhausted;
 
   const [persistedMessages, setPersistedMessages] = useState<ChatUIMessage[]>(
-    [],
+    []
   );
   const persistedMessagesRef = useRef(persistedMessages);
   persistedMessagesRef.current = persistedMessages;
@@ -182,13 +227,13 @@ export function useAgentChat({
         };
       });
     },
-    [store],
+    [store]
   );
 
   const updateToolCallMeta = useCallback(
     <K extends keyof ToolCallMeta>(
       key: K,
-      event: ToolCallMeta[K] & { toolCallId: string },
+      event: ToolCallMeta[K] & { toolCallId: string }
     ) => {
       store.setState((prev) => ({
         toolCallMeta: {
@@ -200,28 +245,28 @@ export function useAgentChat({
         },
       }));
     },
-    [store],
+    [store]
   );
 
   const handleToolApprovalRequest = useCallback(
     (event: ToolApprovalRequestEvent) => {
       updateToolCallMeta('approvalRequest', event);
     },
-    [updateToolCallMeta],
+    [updateToolCallMeta]
   );
 
   const handleActionPreview = useCallback(
     (event: ActionPreviewEvent) => {
       updateToolCallMeta('actionPreview', event);
     },
-    [updateToolCallMeta],
+    [updateToolCallMeta]
   );
 
   const handleActionReceipt = useCallback(
     (event: ActionReceiptEvent) => {
       updateToolCallMeta('actionReceipt', event);
     },
-    [updateToolCallMeta],
+    [updateToolCallMeta]
   );
 
   const updateSendStatus = useCallback((next: SendStatus) => {
@@ -233,7 +278,7 @@ export function useAgentChat({
     async (convId: string) => {
       if (conversationIdRef.current !== convId) return;
       const { data: result } = await tryCatch(() =>
-        chatApi.getMessages(convId),
+        chatApi.getMessages(convId)
       );
       if (conversationIdRef.current !== convId) return;
       if (result) {
@@ -251,7 +296,7 @@ export function useAgentChat({
       }
       setOptimisticUserMessage(null);
     },
-    [store],
+    [store]
   );
 
   const {
@@ -304,7 +349,7 @@ export function useAgentChat({
 
   const streamingQuickReplies = useMemo(
     () => chatPartUtils.extractQuickRepliesFromParts(streamingMessage),
-    [streamingMessage],
+    [streamingMessage]
   );
 
   useEffect(() => {
@@ -362,7 +407,7 @@ export function useAgentChat({
       setConversationIdState(conv.id);
       return conv;
     },
-    [],
+    []
   );
 
   const sendMessage = useCallback(
@@ -395,7 +440,7 @@ export function useAgentChat({
           return;
         }
         const { data: encodedFiles, error: fileError } = await tryCatch(
-          async () => Promise.all(files.map(fileToBase64)),
+          async () => Promise.all(files.map(fileToBase64))
         );
         if (fileError) {
           setOptimisticUserMessage(null);
@@ -450,7 +495,7 @@ export function useAgentChat({
           conversationId: convId,
           content,
           files: pendingFilesRef.current,
-        }),
+        })
       );
       if (sendError) {
         stopStream();
@@ -466,7 +511,7 @@ export function useAgentChat({
         }
       }
     },
-    [createConversation, startStream, stopStream, updateSendStatus, store],
+    [createConversation, startStream, stopStream, updateSendStatus, store]
   );
 
   const setConversationId = useCallback(
@@ -511,11 +556,21 @@ export function useAgentChat({
       modelNameRef.current = convResult.data.modelName ?? null;
       setModelNameState(convResult.data.modelName ?? null);
       if (convResult.data.status === ChatConversationStatus.STREAMING) {
+        const { data: gate } = await tryCatch(() => chatApi.getPendingGate(id));
+        if (conversationIdRef.current !== id) return;
         startStream(id);
+        if (gate) {
+          store.setState((prev) => ({
+            toolCallMeta: {
+              ...prev.toolCallMeta,
+              ...buildToolCallMetaFromGate(gate),
+            },
+          }));
+        }
       }
       setIsLoadingHistory(false);
     },
-    [stopStream, startStream, updateSendStatus, store],
+    [stopStream, startStream, updateSendStatus, store]
   );
 
   useQuery({
@@ -550,56 +605,13 @@ export function useAgentChat({
         });
         if (!hasBlockingCard) {
           const { data: gate } = await tryCatch(() =>
-            chatApi.getPendingGate(conversationId),
+            chatApi.getPendingGate(conversationId)
           );
           if (gate && conversationIdRef.current === conversationId) {
-            const gateInput = gate.toolInput ?? {};
-            const isActionPreview = gate.toolName === 'ap_execute_action';
             store.setState((prev) => ({
               toolCallMeta: {
                 ...prev.toolCallMeta,
-                [gate.gateId]: {
-                  ...prev.toolCallMeta[gate.gateId],
-                  ...(isActionPreview
-                    ? {
-                        actionPreview: {
-                          toolCallId: gate.gateId,
-                          pieceName:
-                            typeof gateInput.pieceName === 'string'
-                              ? gateInput.pieceName
-                              : '',
-                          actionName:
-                            typeof gateInput.actionName === 'string'
-                              ? gateInput.actionName
-                              : '',
-                          actionDisplayName: gate.displayName,
-                          input:
-                            typeof gateInput.input === 'object' &&
-                            gateInput.input !== null
-                              ? (gateInput.input as Record<string, unknown>)
-                              : {},
-                          isBatch:
-                            typeof gateInput.batchCount === 'number' &&
-                            gateInput.batchCount > 0,
-                          batchCount:
-                            typeof gateInput.batchCount === 'number'
-                              ? gateInput.batchCount
-                              : undefined,
-                          batchSamples: Array.isArray(gateInput.items)
-                            ? (
-                                gateInput.items as Record<string, unknown>[]
-                              ).slice(0, 3)
-                            : undefined,
-                        },
-                      }
-                    : {
-                        approvalRequest: {
-                          toolCallId: gate.gateId,
-                          toolName: gate.toolName,
-                          displayName: gate.displayName,
-                        },
-                      }),
-                },
+                ...buildToolCallMetaFromGate(gate),
               },
             }));
           }

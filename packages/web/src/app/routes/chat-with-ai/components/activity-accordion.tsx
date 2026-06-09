@@ -273,11 +273,6 @@ function ToolStepRow({
                 />
               ))}
             </div>
-            {connectionLabel && (
-              <p className="text-xs text-muted-foreground mt-0.5 ml-1">
-                {t('via {connectionLabel}', { connectionLabel })}
-              </p>
-            )}
           </div>
         )}
         {hasDetails && (
