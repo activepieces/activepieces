@@ -1,7 +1,6 @@
 {
   "name": "@activepieces/piece-sendinblue",
   "version": "0.2.5",
-  "aiReady": true,
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
