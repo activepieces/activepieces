@@ -8,6 +8,7 @@ import { ResizableTextareaProps, Textarea } from '@/components/ui/textarea';
 import { useElementSize } from '@/hooks/use-element-size';
 import { cn } from '@/lib/utils';
 
+import { chatInputUtils } from './chat-input-utils';
 import { FileInputPreview } from './file-input-preview';
 
 export interface ChatMessage {
@@ -54,9 +55,14 @@ const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(
       setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
     };
 
+    const canSubmit = chatInputUtils.canSubmitMessage({
+      disabled,
+      textContent: input,
+    });
+
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
-      if ((!input && files.length === 0) || disabled) return;
+      if (!canSubmit) return;
 
       onSendMessage({
         textContent: input,
@@ -71,7 +77,7 @@ const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        if (!disabled && (input || files.length > 0)) {
+        if (canSubmit) {
           handleSubmit(e as unknown as React.FormEvent);
         }
       }
@@ -153,7 +159,7 @@ const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(
                 className="hidden"
               />
               <Button
-                disabled={(!input && files.length === 0) || disabled}
+                disabled={!canSubmit}
                 type="submit"
                 size="icon"
                 variant="default"
