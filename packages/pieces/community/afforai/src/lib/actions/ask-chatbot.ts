@@ -10,12 +10,25 @@ export const askChatbotAction = createAction({
   auth: afforaiAuth,
   name: 'afforai_ask_chatbot',
   displayName: 'Ask Chatbot',
-  description: 'Gets AI-generated completions for a given chatbot.',
+  description: 'Gets AI-generated completions using the Afforai chat completion API.',
   props: {
-    sessionID: Property.ShortText({
-      displayName: 'Chatbot ID',
+    foundation_model: Property.StaticDropdown({
+      displayName: 'Foundation Model',
       required: true,
-      description: `You can find Chatbot ID by clicking settings button under **Actions** for given chatbot.`,
+      description: 'The AI model to use for completion.',
+      options: {
+        disabled: false,
+        options: [
+          { label: 'GPT-4o', value: 'gpt-4o' },
+          { label: 'GPT-4o Mini', value: 'gpt-4o-mini' },
+          { label: 'Claude 3.5 Sonnet', value: 'claude-3-5-sonnet' },
+        ],
+      },
+    }),
+    system: Property.LongText({
+      displayName: 'System Prompt',
+      required: false,
+      description: 'Optional system-level instruction for the AI.',
     }),
     history: Property.Array({
       displayName: 'Chat History',
@@ -28,14 +41,8 @@ export const askChatbotAction = createAction({
           options: {
             disabled: false,
             options: [
-              {
-                label: 'user',
-                value: 'user',
-              },
-              {
-                label: 'assistant',
-                value: 'assistant',
-              },
+              { label: 'user', value: 'user' },
+              { label: 'assistant', value: 'assistant' },
             ],
           },
         }),
@@ -46,29 +53,53 @@ export const askChatbotAction = createAction({
         }),
       },
     }),
-    powerful: Property.Checkbox({
-      displayName:
-        'AI should search more deeply for information in the given files ?',
+    tool: Property.StaticDropdown({
+      displayName: 'Tool',
       required: true,
+      description: 'The retrieval tool to use.',
+      options: {
+        disabled: false,
+        options: [
+          { label: 'None', value: 'none' },
+          { label: 'Document Retrieval', value: 'doc_retrieval' },
+          { label: 'Google Search', value: 'google' },
+          { label: 'Semantic Scholar', value: 'semantic_scholar' },
+        ],
+      },
     }),
-    google: Property.Checkbox({
-      displayName: 'AI to search for information on Google?',
-      required: true,
+    file_ids: Property.Array({
+      displayName: 'File IDs (doc_retrieval only)',
+      required: false,
+      description:
+        'List of file IDs to retrieve from. Leave empty to search across all uploaded files. Only used when Tool is set to Document Retrieval.',
     }),
   },
   async run(context) {
-    const { sessionID, powerful, google } = context.propsValue;
-    const history = context.propsValue.history as ChatHistory[];
+    const { foundation_model, system, history, tool, file_ids } =
+      context.propsValue;
+
+    const tool_config: Record<string, unknown> = {};
+    if (
+      tool === 'doc_retrieval' &&
+      file_ids &&
+      (file_ids as string[]).length > 0
+    ) {
+      tool_config['file_ids'] = file_ids;
+    }
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: 'https://api.afforai.com/api/api_completion',
+      url: 'https://api.afforai.com/completion',
+      headers: {
+        'x-access-token': context.auth as string,
+        'Content-Type': 'application/json',
+      },
       body: {
-        apiKey: context.auth,
-        sessionID: sessionID,
-        history: history,
-        powerful: powerful,
-        google: google,
+        foundation_model,
+        ...(system ? { system } : {}),
+        history: history as ChatHistory[],
+        tool,
+        ...(Object.keys(tool_config).length > 0 ? { tool_config } : {}),
       },
     };
 
