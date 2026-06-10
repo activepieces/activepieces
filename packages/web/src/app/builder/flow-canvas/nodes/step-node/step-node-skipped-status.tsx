@@ -12,6 +12,8 @@ import { flowRunUtils } from '@/features/flow-runs';
 import { useBuilderStateContext } from '../../../builder-hooks';
 import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
 
+import { StepNodeBadgeContainer } from './step-node-badge-container';
+
 const ApStepNodeSkippedStatus = ({ stepName }: { stepName: string }) => {
   const [run, stepType, isInDraft, isSkipped] = useBuilderStateContext(
     (state) => [
@@ -31,14 +33,14 @@ const ApStepNodeSkippedStatus = ({ stepName }: { stepName: string }) => {
   }
 
   return (
-    <div className="absolute right-[1px] h-[20px] -top-[28px] whitespace-nowrap">
+    <StepNodeBadgeContainer>
       <div
         className={flowRunUtils.getStatusContainerClassName('default', true)}
       >
         <RouteOff className="size-3" />
         <div>{t('Skipped')}</div>
       </div>
-    </div>
+    </StepNodeBadgeContainer>
   );
 };
 

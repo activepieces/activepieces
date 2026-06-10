@@ -14,6 +14,9 @@ import { ApRouterStartEdge } from '../utils/types';
 import { ApAddButton } from './add-button';
 import { BranchLabel } from './branch-label';
 
+// distance between the branch node and the right edge of the entry-line add button
+const HORIZONTAL_BUTTON_END_MARGIN = 17;
+
 export const ApRouterStartCanvasEdge = ({
   sourceX,
   sourceY,
@@ -39,7 +42,7 @@ export const ApRouterStartCanvasEdge = ({
   const verticalLineLength =
     layout.spaceAlongBetweenSteps -
     flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE +
-    (isHorizontal ? 0 : flowCanvasConsts.LABEL_HEIGHT);
+    (layout.routerOffsetAlong - layout.loopOffsetAlong);
 
   // handles render a couple of pixels outside the node bounds, so compare with a tolerance
   const isAlignedWithAutoLayout =
@@ -106,29 +109,22 @@ export const ApRouterStartCanvasEdge = ({
 
   const buildAlignedEdge = () => {
     const layoutPath = generateAlignedLayoutPath();
-    const segmentCenterX =
-      targetX -
-      flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE -
-      verticalLineLength / 2;
     return {
       path: isHorizontal ? svgPathUtils.transposePath(layoutPath) : layoutPath,
       buttonPosition: isHorizontal
         ? {
+            // sits on the entry line, right before the arrow head
             x:
-              segmentCenterX -
-              flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width / 2,
+              targetX -
+              HORIZONTAL_BUTTON_END_MARGIN -
+              flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width,
             y: targetY - flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height / 2,
           }
         : {
             x: targetX - flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width / 2,
             y: targetY - verticalLineLength / 2,
           },
-      labelAnchor: isHorizontal
-        ? {
-            x: segmentCenterX,
-            y: targetY - flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height / 2,
-          }
-        : null,
+      labelAnchor: null,
     };
   };
 
@@ -162,32 +158,37 @@ export const ApRouterStartCanvasEdge = ({
   const labelBoxWidth = flowCanvasConsts.AP_NODE_SIZE.STEP.width - 10;
   const labelBoxHeight =
     flowCanvasConsts.LABEL_HEIGHT + flowCanvasConsts.LABEL_VERTICAL_PADDING;
-  // empty branches show a big add button centered inside the step slot, so the
-  // label can end right before that button instead of before the slot itself
-  const horizontalLabelEndX = data.isBranchEmpty
-    ? targetX +
-      (flowCanvasConsts.STEP_NODE_SIZE.horizontal.width -
-        flowCanvasConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width) /
-        2 -
-      6
-    : targetX - 2 * flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE;
-  const labelBoxPosition = labelAnchor
-    ? {
-        // keep the label clear of the step node by ending it right before the arrow head
-        x:
-          isHorizontal && isAlignedWithAutoLayout
-            ? horizontalLabelEndX - labelBoxWidth
-            : labelAnchor.x - labelBoxWidth / 2,
+  const getLabelBoxPosition = () => {
+    if (labelAnchor) {
+      return {
+        x: labelAnchor.x - labelBoxWidth / 2,
         y: labelAnchor.y - labelBoxHeight - 4,
-      }
-    : {
-        x: targetX - labelBoxWidth / 2,
-        y:
-          targetY -
-          verticalLineLength / 2 -
-          flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height -
-          30,
       };
+    }
+    if (isHorizontal) {
+      // the pill sits on the entry line itself (its background masks the line),
+      // ending right before the add button / branch slot
+      const labelEndX = data.isBranchEmpty
+        ? targetX - HORIZONTAL_BUTTON_END_MARGIN + 4
+        : targetX -
+          HORIZONTAL_BUTTON_END_MARGIN -
+          flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width -
+          6;
+      return {
+        x: labelEndX - labelBoxWidth,
+        y: targetY - labelBoxHeight / 2,
+      };
+    }
+    return {
+      x: targetX - labelBoxWidth / 2,
+      y:
+        targetY -
+        verticalLineLength / 2 -
+        flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height -
+        30,
+    };
+  };
+  const labelBoxPosition = getLabelBoxPosition();
   const labelAlign =
     isHorizontal && isAlignedWithAutoLayout
       ? ('end' as const)
