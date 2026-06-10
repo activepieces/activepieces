@@ -98,6 +98,9 @@ describe('Folder N+1 fix', () => {
             const targetFlow = await saveFlowInFolder(ctx, folders[0].id)
             const folderIds = folders.map((f) => f.id)
 
+            // Mirror the frontend's serialization (api.ts uses arrayFormat: 'repeat'). In qs 6.x
+            // arrayLimit governs repeated-key notation too, so >20 ids collapse into an object
+            // (then fail string validation) unless arrayLimit is raised — which is what this guards.
             const query = qs.stringify({ projectId: ctx.project.id, folderIds, limit: 100 }, { arrayFormat: 'repeat' })
             const response = await ctx.get(`/v1/flows?${query}`)
 
