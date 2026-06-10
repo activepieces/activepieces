@@ -1,7 +1,7 @@
 # Folder Organization
 
 ## Summary
-Folders provide a lightweight organizational layer for flows within a project. Each folder has a display name (unique case-insensitively per project) and a display order. Flows can be assigned to a folder via their `folderId` field. The folder list endpoint returns a `numberOfFlows` count alongside each folder, computed via a LEFT JOIN. A special sentinel value `NULL` (string `"NULL"`) represents uncategorized flows that have no folder. Creating or renaming a folder fires audit events. Folder names are enforced as unique per project (case-insensitive).
+Folders provide a lightweight organizational layer for flows within a project. Each folder has a display name (unique case-insensitively per project) and a display order. Flows can be assigned to a folder via their `folderId` field. The folder list endpoint returns `numberOfFlows` and `numberOfTables` counts alongside each folder, computed via correlated subqueries. A special sentinel value `NULL` (string `"NULL"`) represents uncategorized flows that have no folder. Creating or renaming a folder fires audit events. Folder names are enforced as unique per project (case-insensitive).
 
 ## Key Files
 - `packages/server/api/src/app/flows/folder/folder.module.ts` — Fastify plugin (module + controller combined)
@@ -20,7 +20,7 @@ Folders provide a lightweight organizational layer for flows within a project. E
 
 ## Domain Terms
 - **Folder**: Named group that flows belong to within a project. Display name is unique per project (case-insensitive).
-- **FolderDto**: Folder plus `numberOfFlows: number` computed at query time.
+- **FolderDto**: Folder plus `numberOfFlows: number` and `numberOfTables: number` computed at query time.
 - **displayOrder**: Numeric field for client-side ordering (default 0). Not managed by the backend directly; clients may send the value.
 - **UncategorizedFolderId**: The string literal `"NULL"` used as a sentinel in the flow list query to filter flows with no folder assignment.
 - **upsert**: The create operation is exposed as an upsert — if a folder with the same display name (case-insensitive) already exists, it is updated instead of duplicated.
@@ -55,10 +55,10 @@ All routes are prefixed `/v1/folders`. All require `projectId` to be resolvable 
 ## Service Methods
 
 **flowFolderService**
-- `upsert({ projectId, request })` — case-insensitive lookup by name; updates if exists, inserts if not. Returns `FolderDto` with `numberOfFlows: 0` for new folders.
+- `upsert({ projectId, request })` — case-insensitive lookup by name; updates if exists, inserts if not. Returns `FolderDto` with `numberOfFlows: 0` and `numberOfTables: 0` for new folders.
 - `update({ projectId, folderId, request })` — renames a folder. Validates uniqueness of new name (allowing the same folder to keep its name).
-- `list({ projectId, cursorRequest, limit })` — paginated list ordered ASC, with LEFT JOIN on `flow` to count `numberOfFlows`.
-- `getOneOrThrow({ projectId, folderId })` — throws ENTITY_NOT_FOUND if not found. Counts flows separately via `flowService.count`.
+- `list({ projectId, cursorRequest, limit })` — paginated list ordered ASC, with correlated subqueries to count `numberOfFlows` and `numberOfTables`.
+- `getOneOrThrow({ projectId, folderId })` — throws ENTITY_NOT_FOUND if not found. Counts flows and tables separately via `flowService.count` and `tableService.count`.
 - `getOneByDisplayNameCaseInsensitive({ projectId, displayName })` — used for uniqueness checks.
 - `delete({ projectId, folderId })` — hard delete. Flows in the folder become uncategorized (their `folderId` is not nulled automatically — this is a DB-level concern via the flow entity's nullable FK).
 

@@ -16,6 +16,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
+import { domainHelper } from '../../helper/domain-helper'
 import { projectService } from '../../project/project-service'
 import { mcpUtils } from './mcp-utils'
 
@@ -31,6 +32,12 @@ const stepSpec = z.object({
     loopItems: z.string().optional(),
     continueOnFailure: z.boolean().optional(),
     retryOnFailure: z.boolean().optional(),
+    parentStepName: z.string().optional().describe('Name of the parent step to nest this step inside (e.g. the loop step name). If omitted, step is added after the previous step.'),
+    stepLocationRelativeToParent: z.enum([
+        StepLocationRelativeToParent.AFTER,
+        StepLocationRelativeToParent.INSIDE_LOOP,
+        StepLocationRelativeToParent.INSIDE_BRANCH,
+    ]).optional().default(StepLocationRelativeToParent.AFTER).describe('Where to place the step relative to parentStepName. Use INSIDE_LOOP for steps inside a loop.'),
 })
 
 const buildFlowInput = z.object({
@@ -48,7 +55,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
     return {
         title: 'ap_build_flow',
         permission: Permission.WRITE_FLOW,
-        description: 'Create a complete flow in one call: trigger + steps. Steps are added sequentially (trigger → step_1 → step_2 → ...). Use granular tools (ap_add_step, ap_update_step) to modify flows or add nested structures (loop contents, router branches).',
+        description: 'Create a complete flow in one call: trigger + steps. Steps are added sequentially by default (trigger → step_1 → step_2 → ...). To nest steps inside a loop, set parentStepName to the loop step name and stepLocationRelativeToParent to INSIDE_LOOP.',
         inputSchema: {
             flowName: z.string().describe('Name for the new flow'),
             trigger: z.object({
@@ -57,7 +64,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                 input: z.record(z.string(), z.unknown()).optional().describe('Trigger input config'),
                 auth: z.string().optional().describe('Connection externalId for trigger auth'),
             }).describe('Trigger configuration'),
-            steps: z.array(stepSpec).describe('Array of steps added sequentially after trigger. Each step supports: PIECE (pieceName+actionName+input), CODE (sourceCode+input), LOOP_ON_ITEMS (loopItems), ROUTER.'),
+            steps: z.array(stepSpec).describe('Array of steps. By default added sequentially after trigger. Use parentStepName + stepLocationRelativeToParent to nest steps inside loops. Each step supports: PIECE (pieceName+actionName+input), CODE (sourceCode+input), LOOP_ON_ITEMS (loopItems), ROUTER.'),
         },
         annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
@@ -119,12 +126,12 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     operation: { type: FlowOperationType.UPDATE_TRIGGER, request: triggerPayload },
                 })
                 const skippedSteps: string[] = []
+                let lastTopLevelStepName: string | null = null
 
                 for (const step of steps) {
                     const latestTrigger = currentFlow!.version.trigger
                     const stepName = flowStructureUtil.findUnusedName(latestTrigger)
                     const allSteps = flowStructureUtil.getAllSteps(latestTrigger)
-                    const lastStep = allSteps[allSteps.length - 1]
 
                     let resolvedPieceVersion: string | undefined
                     let resolvedPieceName: string | undefined
@@ -151,17 +158,31 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                         continue
                     }
 
+                    const location = step.stepLocationRelativeToParent ?? StepLocationRelativeToParent.AFTER
+                    let parentStepName: string
+                    if (step.parentStepName) {
+                        const found = allSteps.find((s) => s.name === step.parentStepName)
+                        parentStepName = found ? found.name : (lastTopLevelStepName ?? allSteps[allSteps.length - 1].name)
+                    }
+                    else {
+                        parentStepName = lastTopLevelStepName ?? allSteps[allSteps.length - 1].name
+                    }
+
                     currentFlow = await flowService(log).update({
                         id: flowId, projectId, userId: null, platformId,
                         operation: {
                             type: FlowOperationType.ADD_ACTION,
                             request: {
-                                parentStep: lastStep.name,
-                                stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+                                parentStep: parentStepName,
+                                stepLocationRelativeToParent: location,
                                 action: parseResult.data,
                             },
                         },
                     })
+
+                    if (location === StepLocationRelativeToParent.AFTER) {
+                        lastTopLevelStepName = stepName
+                    }
                 }
 
                 const allSteps = flowStructureUtil.getAllSteps(currentFlow.version.trigger)
@@ -170,8 +191,10 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                 const stepWord = allSteps.length === 1 ? 'step' : 'steps'
 
                 const skippedHint = skippedSteps.length > 0 ? ` Skipped: ${skippedSteps.join(', ')}.` : ''
+                const flowUrl = await domainHelper.getPublicUrl({ path: `/projects/${projectId}/flows/${flowId}` })
                 const structured = {
                     flowId: flowId!,
+                    flowUrl,
                     displayName: flowName,
                     stepCount: allSteps.length,
                     validCount,
@@ -179,9 +202,9 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     skippedSteps,
                 }
                 if (invalidSteps.length === 0 && skippedSteps.length === 0) {
-                    return { content: [{ type: 'text', text: `✅ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} ${stepWord}, all valid.` }], structuredContent: structured }
+                    return { content: [{ type: 'text', text: `✅ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} ${stepWord}, all valid. Open: ${flowUrl}` }], structuredContent: structured }
                 }
-                return { content: [{ type: 'text', text: `⚠️ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} ${stepWord} (${validCount} valid, ${invalidSteps.length} invalid: ${invalidSteps.join(', ')}).${skippedHint} Use ap_update_step or ap_update_trigger to fix.` }], structuredContent: structured }
+                return { content: [{ type: 'text', text: `⚠️ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} ${stepWord} (${validCount} valid, ${invalidSteps.length} invalid: ${invalidSteps.join(', ')}).${skippedHint} Use ap_update_step or ap_update_trigger to fix. Open: ${flowUrl}` }], structuredContent: structured }
             }
             catch (err) {
                 if (flowId) {

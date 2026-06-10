@@ -14,5 +14,5 @@ export const Folder = z.object({
 export const UncategorizedFolderId = 'NULL'
 export type Folder = z.infer<typeof Folder>
 
-export type FolderDto = Folder & { numberOfFlows: number }
+export type FolderDto = Folder & { numberOfFlows: number, numberOfTables: number }
 

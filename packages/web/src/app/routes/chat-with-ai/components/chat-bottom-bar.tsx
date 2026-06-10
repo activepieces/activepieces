@@ -15,6 +15,7 @@ import {
   ProjectPickerData,
 } from '../lib/message-parsers';
 
+import { ActionPreviewCard } from './action-preview-card';
 import { ChatInput } from './chat-input';
 import { ChatModelSelector } from './chat-model-selector';
 import { ConnectionPickerCard } from './connection-picker-card';
@@ -46,6 +47,12 @@ export function ChatBottomBar({
   );
   const pendingMcpApproval = useChatStoreContext((s) =>
     chatStoreSelectors.pendingMcpApproval({
+      state: s,
+      lastAssistantMessage,
+    }),
+  );
+  const pendingActionPreview = useChatStoreContext((s) =>
+    chatStoreSelectors.pendingActionPreview({
       state: s,
       lastAssistantMessage,
     }),
@@ -95,6 +102,17 @@ export function ChatBottomBar({
         onApprove={() => approveGate(pendingMcpApproval.toolCallId)}
         onReject={() => rejectGate(pendingMcpApproval.toolCallId)}
         onDismiss={() => dismissGate(pendingMcpApproval.toolCallId)}
+      />
+    );
+  }
+
+  if (pendingActionPreview) {
+    return (
+      <ActionPreviewCard
+        key={pendingActionPreview.toolCallId}
+        preview={pendingActionPreview}
+        onRun={() => approveGate(pendingActionPreview.toolCallId)}
+        onCancel={() => rejectGate(pendingActionPreview.toolCallId)}
       />
     );
   }

@@ -1,26 +1,10 @@
-import { tryCatch } from '@activepieces/shared'
+import { chatToolClassification, tryCatch } from '@activepieces/shared'
 import { createMCPClient } from '@ai-sdk/mcp'
 import { ToolExecutionOptions } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { ChatEventEmitter, chatWorkerTools } from './chat-worker-tools'
 
 const CONVERSATION_ID_HEADER = 'x-ap-conversation-id'
-
-const APPROVAL_REQUIRED_TOOL_NAMES = new Set([
-    'ap_delete_flow',
-    'ap_delete_table',
-    'ap_delete_step',
-    'ap_delete_branch',
-    'ap_delete_records',
-    'ap_run_action',
-    'ap_test_step',
-    'ap_test_flow',
-    'ap_change_flow_status',
-])
-
-function requiresApproval(name: string): boolean {
-    return APPROVAL_REQUIRED_TOOL_NAMES.has(name) || !name.startsWith('ap_')
-}
 
 async function connectMcpClient({ mcpCredentials, conversationId, log }: {
     mcpCredentials: { mcpServerUrl: string, mcpToken: string } | null
@@ -80,7 +64,7 @@ function withApprovalGates({ mcpToolSet, eventEmitter, log, isApproved, waitForA
         }
 
         const originalExecute = tool.execute.bind(tool)
-        const needsApproval = requiresApproval(name)
+        const needsApproval = chatToolClassification.requiresApproval(name)
         const executeWithTimeout = (args: unknown, options?: ToolExecutionOptions) =>
             chatWorkerTools.withToolTimeout({
                 fn: (timeoutSignal) => originalExecute(args, options ? { ...options, abortSignal: timeoutSignal } : undefined),

@@ -21,20 +21,21 @@ import { chatWorkerTools } from './chat-worker-tools'
 
 const BATCH_SIZE = 10
 const BATCH_FLUSH_MS = 50
-const APPROVAL_POLL_INTERVAL_MS = 500
 const APPROVAL_TIMEOUT_MS = 5 * 60 * 1_000
+const APPROVAL_BLOCK_MS = 50_000
 const DISPLAY_TOOL_TIMEOUT_MS = 15 * 60 * 1_000
+const HEARTBEAT_INTERVAL_MS = 15_000
 const RETRY_MAX_ATTEMPTS = 3
 const RETRY_BASE_DELAY_MS = 1_000
 
 export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_CHAT_AGENT,
     async execute(ctx: JobContext, data: ExecuteChatAgentJobData): Promise<FireAndForgetJobResult> {
-        const { conversationId, platformId, userId, userMessage, modelName, files } = data
+        const { conversationId, runId, platformId, userId, userMessage, modelName, files } = data
         const log = ctx.log.child({ conversationId })
 
         const config = await ctx.apiClient.getChatConfig({
-            conversationId, platformId, userId, userMessage, modelName, files,
+            conversationId, runId, platformId, userId, userMessage, modelName, files,
         })
 
         const provider = config.provider as AIProviderName
@@ -43,7 +44,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
         })
 
         const eventEmitter = chatWorkerTools.createEventEmitter({
-            sendEvent: (input) => ctx.apiClient.sendChatEvent(input),
+            sendEvent: (input) => ctx.apiClient.sendChatEvent({ ...input, runId }),
             userId,
             conversationId,
             log,
@@ -55,7 +56,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
 
         const sendEventWithRetry = ({ event }: { event: ChatAgentEvent }) =>
             retryWithBackoff({
-                fn: () => ctx.apiClient.sendChatEvent({ userId, conversationId, event }),
+                fn: () => ctx.apiClient.sendChatEvent({ userId, conversationId, runId, event }),
                 log,
             })
 
@@ -63,7 +64,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
 
         const checkCancelled = async () => {
             const { data: response } = await tryCatch(() => ctx.apiClient.executeChatTool({
-                toolName: '__cancel_check', toolInput: { conversationId }, platformId, userId,
+                toolName: '__cancel_check', toolInput: { conversationId, runId }, platformId, userId,
             }))
             if (response?.result === true) {
                 abortController.abort()
@@ -79,7 +80,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
 
             const allTools = buildToolSet({
                 ctx, eventEmitter, log, planApproved, mcpToolSet,
-                projects: config.projects, conversationId, platformId, userId,
+                projects: config.projects, conversationId, runId, platformId, userId,
             })
 
             const uiParts: PersistedChatPart[] = []
@@ -143,7 +144,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 },
             })
 
-            await streamChunksToClient({ result, ctx, userId, conversationId, log })
+            await streamChunksToClient({ result, ctx, userId, conversationId, runId, log })
 
             if (abortController.signal.aborted) {
                 log.info({ conversationId, completedSteps: abortedStepMessages.length }, 'Chat agent cancelled by user')
@@ -248,7 +249,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
     },
 }
 
-function buildToolSet({ ctx, eventEmitter, log, planApproved, mcpToolSet, projects, conversationId, platformId, userId }: {
+function buildToolSet({ ctx, eventEmitter, log, planApproved, mcpToolSet, projects, conversationId, runId, platformId, userId }: {
     ctx: JobContext
     eventEmitter: ReturnType<typeof chatWorkerTools.createEventEmitter>
     log: JobContext['log']
@@ -256,28 +257,45 @@ function buildToolSet({ ctx, eventEmitter, log, planApproved, mcpToolSet, projec
     mcpToolSet: Record<string, unknown>
     projects: Array<{ id: string, displayName: string, type: string }>
     conversationId: string
+    runId?: string
     platformId: string
     userId: string
 }) {
     const executeCrossProjectTool = async (toolName: string, toolInput: Record<string, unknown>) => {
-        const response = await ctx.apiClient.executeChatTool({ toolName, toolInput, platformId, userId })
+        const response = await ctx.apiClient.executeChatTool({ toolName, toolInput, platformId, userId, conversationId })
         return response.result
+    }
+
+    const sendHeartbeat = () => {
+        void tryCatch(() => ctx.apiClient.sendChatEvent({
+            userId, conversationId, runId,
+            event: { type: ChatAgentEventType.CHUNK, data: [] },
+        }))
     }
 
     const waitForApproval = async ({ gateId, timeoutMs }: { gateId: string, timeoutMs?: number }): Promise<GateDecision> => {
         const deadline = Date.now() + (timeoutMs ?? APPROVAL_TIMEOUT_MS)
+        let lastHeartbeat = Date.now()
         while (Date.now() < deadline) {
+            const remainingMs = deadline - Date.now()
+            if (remainingMs <= 0) break
+            const blockMs = Math.min(remainingMs, APPROVAL_BLOCK_MS)
             const { data: response, error } = await tryCatch(() => ctx.apiClient.executeChatTool({
-                toolName: '__approval_check', toolInput: { gateId }, platformId, userId,
+                toolName: '__approval_wait', toolInput: { gateId, timeoutMs: blockMs }, platformId, userId,
             }))
             if (error) {
-                log.warn({ err: error, gateId }, 'Approval poll RPC failed, retrying next interval')
+                log.warn({ err: error, gateId }, 'Approval wait RPC failed, retrying')
+                await new Promise((resolve) => setTimeout(resolve, 1_000))
+                continue
             }
-            else if (response.result !== 'pending') {
+            if (response.result !== 'pending') {
                 const decision = response.result as GateDecision
                 return { approved: decision.approved, payload: decision.payload }
             }
-            await new Promise((resolve) => setTimeout(resolve, APPROVAL_POLL_INTERVAL_MS))
+            if (Date.now() - lastHeartbeat >= HEARTBEAT_INTERVAL_MS) {
+                lastHeartbeat = Date.now()
+                sendHeartbeat()
+            }
         }
         return { approved: false }
     }
@@ -288,14 +306,38 @@ function buildToolSet({ ctx, eventEmitter, log, planApproved, mcpToolSet, projec
         },
         projects,
     })
-    const displayTools = chatWorkerTools.createDisplayTools({ waitForApproval, displayToolTimeoutMs: DISPLAY_TOOL_TIMEOUT_MS })
+    const storePendingGate = async ({ gateId, toolName: gateTool, displayName, toolInput: gateInput }: {
+        gateId: string
+        toolName: string
+        displayName: string
+        toolInput: Record<string, unknown>
+    }) => {
+        await tryCatch(() => ctx.apiClient.executeChatTool({
+            toolName: '__store_pending_gate',
+            toolInput: { conversationId, gateId, toolName: gateTool, displayName, toolInput: gateInput },
+            platformId, userId, conversationId,
+        }))
+    }
+
+    const displayTools = chatWorkerTools.createDisplayTools({
+        waitForApproval,
+        displayToolTimeoutMs: DISPLAY_TOOL_TIMEOUT_MS,
+        onConnectionSelected: async ({ pieceName, connectionExternalId, label, projectId: connProjectId }) => {
+            await tryCatch(() => ctx.apiClient.executeChatTool({
+                toolName: '__store_selected_connection',
+                toolInput: { pieceName, connectionExternalId, label, projectId: connProjectId },
+                platformId, userId, conversationId,
+            }))
+        },
+        onGateOpened: storePendingGate,
+    })
     const planTools = chatWorkerTools.createPlanTools({
         onPlanApproved: () => {
             planApproved.approved = true
         },
         waitForApproval,
     })
-    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter })
+    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate })
     const thinkingTools = chatWorkerTools.createThinkingTools()
     const gatedMcpTools = chatMcpClient.withApprovalGates({
         mcpToolSet, eventEmitter, log, isApproved: () => planApproved.approved, waitForApproval,
@@ -304,11 +346,12 @@ function buildToolSet({ ctx, eventEmitter, log, planApproved, mcpToolSet, projec
     return { ...localTools, ...displayTools, ...crossProjectTools, ...planTools, ...thinkingTools, ...(gatedMcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
 }
 
-async function streamChunksToClient({ result, ctx, userId, conversationId, log }: {
+async function streamChunksToClient({ result, ctx, userId, conversationId, runId, log }: {
     result: ReturnType<typeof streamText>
     ctx: JobContext
     userId: string
     conversationId: string
+    runId?: string
     log: JobContext['log']
 }): Promise<void> {
     let chunkBuffer: unknown[] = []
@@ -320,7 +363,7 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, log }
         chunkBuffer = []
         await retryWithBackoff({
             fn: () => ctx.apiClient.sendChatEvent({
-                userId, conversationId,
+                userId, conversationId, runId,
                 event: { type: ChatAgentEventType.CHUNK, data: batch },
             }),
             maxAttempts: 2,
