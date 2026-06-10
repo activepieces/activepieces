@@ -1,4 +1,3 @@
-import { HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { CoupaClient } from './common/client';
 
@@ -37,17 +36,13 @@ export const coupaAuth = PieceAuth.CustomAuth({
         clientSecret: auth.clientSecret,
         scope: auth.scope,
       });
-      await client.request({
-        method: HttpMethod.GET,
-        resourceUri: '/users',
-        query: { limit: 1 },
-      });
+      await client.getAccessToken();
       return { valid: true };
     } catch {
       return {
         valid: false,
         error:
-          'Could not connect to Coupa. Check the instance URL, client credentials, and scopes.',
+          'Could not authenticate with Coupa. Check the instance URL, Client ID/Secret, and that the OIDC client uses the Client Credentials grant.',
       };
     }
   },
