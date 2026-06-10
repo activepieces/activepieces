@@ -145,7 +145,14 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         const platformId = request.principal.platform.id
         const userId = request.principal.id
         await chatService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
-        await chatApprovalGate.requestCancel({ conversationId })
+        const activeRunId = await chatApprovalGate.getActiveRunId({ conversationId })
+        const cancelPromises = [
+            chatApprovalGate.requestCancel({ conversationId }),
+        ]
+        if (activeRunId) {
+            cancelPromises.push(chatApprovalGate.requestCancel({ conversationId, runId: activeRunId }))
+        }
+        await Promise.all(cancelPromises)
         await chatHelpers.conversationRepo().update(conversationId, {
             status: ChatConversationStatus.IDLE,
         })
