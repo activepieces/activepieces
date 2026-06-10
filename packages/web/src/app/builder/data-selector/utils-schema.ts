@@ -266,8 +266,9 @@ function buildTreeFromSchema({
       type: 'value',
       value: '',
       displayName,
-      propertyPath: stepName,
-      insertable: false,
+      propertyPath: pathHelpers.propertyPathStarter(stepName),
+      insertable: true,
+      stepName,
     },
     children,
   };
@@ -284,7 +285,7 @@ function buildTreeFromArray({
 }): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
   const children: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[] =
     items.map((item, idx) => {
-      const itemPath = `${stepName}[${idx}]`;
+      const itemPath = `${pathHelpers.propertyPathStarter(stepName)}[${idx}]`;
 
       if (!isObject(item)) {
         return {
@@ -362,8 +363,9 @@ function buildTreeFromArray({
       type: 'value',
       value: t('itemCount', { count: items.length }),
       displayName,
-      propertyPath: stepName,
-      insertable: false,
+      propertyPath: pathHelpers.propertyPathStarter(stepName),
+      insertable: true,
+      stepName,
     },
     children,
   };
