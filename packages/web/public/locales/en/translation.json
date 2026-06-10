@@ -587,6 +587,7 @@
   "Stop reading": "Stop reading",
   "Read aloud": "Read aloud",
   "Regenerate": "Regenerate",
+  "The agent completed its work but didn't provide a summary.": "The agent completed its work but didn't provide a summary.",
   "Your answers": "Your answers",
   "succeeded": "succeeded",
   "failed": "failed",
