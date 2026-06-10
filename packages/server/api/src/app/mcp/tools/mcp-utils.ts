@@ -383,6 +383,21 @@ function rewriteAllReferences<C = unknown>({ input, loopItems, conditions, trigg
     }
 }
 
+function extractOptionsArray(options: unknown): Array<{ label: string, value: unknown }> | null {
+    if (Array.isArray(options)) return options
+
+    if (isObject(options)) {
+        const obj = options as Record<string, unknown>
+        if (Array.isArray(obj.options)) {
+            return obj.options as Array<{ label: string, value: unknown }>
+        }
+    }
+
+    return null
+}
+
+const RESOLVE_TIMEOUT_MS = 30_000
+
 export const mcpUtils = {
     mcpToolError,
     truncate,
@@ -402,6 +417,8 @@ export const mcpUtils = {
     isProjectScoped,
     withTimeout,
     rewriteAllReferences,
+    extractOptionsArray,
+    RESOLVE_TIMEOUT_MS,
     STEP_REFERENCE_HINT,
     BRANCH_CONDITIONS_INPUT_SCHEMA,
 }
