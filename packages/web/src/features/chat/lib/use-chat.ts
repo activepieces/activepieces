@@ -591,15 +591,19 @@ export function useAgentChat({
         const lastAssistantIdx = mapped.findLastIndex(
           (m) => m.role === 'assistant',
         );
-        if (lastAssistantIdx >= 0) {
+        const lastUserIdx = mapped.findLastIndex((m) => m.role === 'user');
+        const isCurrentStreamingResponse =
+          lastAssistantIdx >= 0 && lastAssistantIdx > lastUserIdx;
+        if (isCurrentStreamingResponse) {
           setPersistedMessages(mapped.slice(0, lastAssistantIdx));
         } else {
           setPersistedMessages(mapped);
         }
         const { data: gate } = await tryCatch(() => chatApi.getPendingGate(id));
         if (conversationIdRef.current !== id) return;
-        const baseParts =
-          lastAssistantIdx >= 0 ? mapped[lastAssistantIdx].parts : undefined;
+        const baseParts = isCurrentStreamingResponse
+          ? mapped[lastAssistantIdx].parts
+          : undefined;
         const displayGatePart =
           gate && chatPartUtils.isDisplayTool(gate.toolName)
             ? {
