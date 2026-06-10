@@ -9,6 +9,11 @@ export const verifyCredentialsBulk = createAction({
   displayName: 'Verify Credentials in Bulk',
   description:
     'Marks multiple accounts for verification by the CPM',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Flags a list of CyberArk accounts (by account ID) for credential verification by the CPM, which checks that the stored credential still matches the target device. Use to trigger a verification sweep across many accounts at once. Effectively idempotent: it only marks the accounts for verification rather than mutating any credential.',
+    idempotent: true,
+  },
   props: {
     accountIds: Property.Array({
       displayName: 'Account IDs',

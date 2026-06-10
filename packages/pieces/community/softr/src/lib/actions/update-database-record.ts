@@ -11,6 +11,8 @@ export const updateDatabaseRecord = createAction({
 	name: 'updateDatabaseRecord',
 	displayName: 'Update Database Record',
 	description: 'Updates an existing database record.',
+	audience: 'both',
+	aiMetadata: { description: 'Updates an existing record in a chosen table of a Softr database, identified by its record ID, applying the supplied field values (empty values are dropped, so it is a partial patch — omitted fields are left unchanged). Use when you already hold the target record ID. Idempotent when called with the same field values.', idempotent: true },
 	props: {
 		databaseId: databaseIdDropdown,
 		tableId: tableIdDropdown,

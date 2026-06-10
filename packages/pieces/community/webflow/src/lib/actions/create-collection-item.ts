@@ -9,6 +9,8 @@ export const webflowCreateCollectionItemAction = createAction({
 	name: 'create_collection_item',
 	displayName: 'Create Collection Item',
 	description: 'Creates new collection item.',
+	audience: 'both',
+	aiMetadata: { description: 'Creates a new item in a Webflow CMS collection. Provide the collection ID and the field values (keyed by field slug); optionally mark the item as archived or draft. Use to add CMS content like blog posts or products. Each call creates a distinct item, so it is not idempotent.', idempotent: false },
 	props: {
 		site_id: webflowProps.site_id,
 		collection_id: webflowProps.collection_id,

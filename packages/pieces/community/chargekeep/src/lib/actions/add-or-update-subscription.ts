@@ -6,6 +6,8 @@ export const addOrUpdateSubscription = createAction({
   name: 'addOrUpdateSubscription',
   displayName: 'Add or Update Subscription',
   description: 'Creates a new subscription.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates or updates a product subscription for a contact in the ChargeKeep/Sperse CRM. Identifies the contact by Contact ID or External Contact ID (Contact XREF) and requires a Product Code and Payment Period Type (Monthly, Annual, or LifeTime) that already exist on the product. Use to enroll or change a contact in a subscription plan; repeating the same input updates the same subscription rather than creating a duplicate.', idempotent: true },
   auth: chargekeepAuth,
   props: {
     contactId: Property.Number({

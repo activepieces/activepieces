@@ -12,6 +12,8 @@ export const ContentfulSearchRecordsAction = createAction({
   auth: ContentfulAuth,
   displayName: 'Search Records',
   description: 'Searches for records of a given Content Model',
+  audience: 'both',
+  aiMetadata: { description: 'Lists entries of a given Contentful content type within a space, optionally filtered by a raw Content Delivery API query formula and paginated via limit/skip. Use to find or retrieve multiple records by criteria; pass an empty query to fetch all entries of the content type. Read-only and idempotent. Requires the content model (content type) ID; the query formula uses Contentful search-parameter syntax.', idempotent: true },
   props: {
     [PropertyKeys.CONTENT_MODEL]: ContentfulProperty.ContentModel,
     [PropertyKeys.LOCALE]: ContentfulProperty.Locale,

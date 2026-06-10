@@ -44,6 +44,12 @@ export const addTextToPdf = createAction({
 	name: 'add_text_to_pdf',
 	displayName: 'Add Text to PDF',
 	description: 'Adds text to PDF.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Stamps a text annotation onto a source PDF (referenced by URL) at the given x/y coordinates, with optional font, size, color, and styling. Use when an agent needs to write text onto an existing document. Each call produces a new output PDF file and consumes credits, so it is not idempotent.',
+		idempotent: false,
+	},
 	auth: pdfCoAuth,
 	props: {
 		url: Property.ShortText({

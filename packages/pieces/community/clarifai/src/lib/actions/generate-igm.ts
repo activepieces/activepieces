@@ -11,6 +11,12 @@ export const clarifaiGenerateIGM = createAction({
   displayName: 'Ask IGM',
   description:
     'Generate an image using the Image generating models supported by clarifai.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Generates an image from a text prompt using a Clarifai text-to-image model (e.g. DALL-E mini) and returns it as a written file. Use when an agent needs to create a picture from a description; supply the Clarifai model id (looked up by name) and the prompt. Generative, so each call produces a new image.',
+    idempotent: false,
+  },
   auth: clarifaiAuth,
   props: {
     models: Property.Dropdown({

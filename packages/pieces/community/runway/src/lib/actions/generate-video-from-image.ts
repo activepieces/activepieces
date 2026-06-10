@@ -9,6 +9,8 @@ export const generateVideoFromImage = createAction({
 	name: 'generate_video_from_image',
 	displayName: 'Generate Video From Image',
 	description: 'Generates a video based on image(s) and text prompt using Runway\'s AI models',
+	audience: 'both',
+	aiMetadata: { description: 'Submits an image-to-video generation job to Runway from a starting frame and optional prompt, returning the created task ID; the video is produced asynchronously, so poll Get Task Details with that ID for the result. Provide the starting frame as exactly one of an uploaded file or an HTTPS image URL (not both). Choose when an agent needs to animate an image into a clip. Each call starts a new billable generation, so it is not idempotent.', idempotent: false },
 	props: {
 		model: Property.StaticDropdown({
 			displayName: 'Model',
