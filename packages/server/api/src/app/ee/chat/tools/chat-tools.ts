@@ -342,4 +342,4 @@ type FindConnectionsResult =
     | { needsConnection: true, piece: string, displayName: string, requiredScopes: string[] }
     | { pickConnection: true, piece: string, displayName: string, connections: ConnectionWithScopes[], requiredScopes: string[] }
 
-export { executeCrossProjectTool }
+export { executeCrossProjectTool, findConnectionsForPiece }

@@ -2,11 +2,13 @@ import { distributedStore, redisConnections } from '../../database/redis-connect
 import { pubsub } from '../../helper/pubsub'
 
 const GATE_TTL_SECONDS = 15 * 60
-const CANCEL_TTL_SECONDS = 10 * 60
+const CANCEL_TTL_SECONDS = 2 * 60 * 60
+
 const CONNECTION_STORE_TTL_SECONDS = 24 * 60 * 60
 const KEY_PREFIX = 'tool-approval-decision:'
 const CHANNEL_PREFIX = 'tool-approval:'
 const CANCEL_KEY_PREFIX = 'chat-cancel:'
+const ACTIVE_RUN_PREFIX = 'chat-active-run:'
 const AVAILABLE_CONNECTIONS_PREFIX = 'chat-conn-avail:'
 const SELECTED_CONNECTION_PREFIX = 'chat-conn-sel:'
 const PENDING_GATE_PREFIX = 'chat-pending-gate:'
@@ -76,17 +78,29 @@ async function waitForDecision({ gateId, timeoutMs }: { gateId: string, timeoutM
     })
 }
 
-async function requestCancel({ conversationId }: { conversationId: string }): Promise<void> {
-    await distributedStore.put(`${CANCEL_KEY_PREFIX}${conversationId}`, { cancelled: true }, CANCEL_TTL_SECONDS)
+async function requestCancel({ conversationId, runId }: { conversationId: string, runId?: string }): Promise<void> {
+    const key = runId ? `${CANCEL_KEY_PREFIX}${conversationId}:${runId}` : `${CANCEL_KEY_PREFIX}${conversationId}`
+    await distributedStore.put(key, { cancelled: true }, CANCEL_TTL_SECONDS)
 }
 
-async function isCancelled({ conversationId }: { conversationId: string }): Promise<boolean> {
-    const raw = await distributedStore.get<{ cancelled: boolean }>(`${CANCEL_KEY_PREFIX}${conversationId}`)
+async function isCancelled({ conversationId, runId }: { conversationId: string, runId?: string }): Promise<boolean> {
+    const key = runId
+        ? `${CANCEL_KEY_PREFIX}${conversationId}:${runId}`
+        : `${CANCEL_KEY_PREFIX}${conversationId}`
+    const raw = await distributedStore.get<{ cancelled: boolean }>(key)
     return raw?.cancelled === true
 }
 
 async function clearCancel({ conversationId }: { conversationId: string }): Promise<void> {
     await distributedStore.delete(`${CANCEL_KEY_PREFIX}${conversationId}`)
+}
+
+async function storeActiveRunId({ conversationId, runId }: { conversationId: string, runId: string }): Promise<void> {
+    await distributedStore.put(`${ACTIVE_RUN_PREFIX}${conversationId}`, runId, CANCEL_TTL_SECONDS)
+}
+
+async function getActiveRunId({ conversationId }: { conversationId: string }): Promise<string | null> {
+    return distributedStore.get<string>(`${ACTIVE_RUN_PREFIX}${conversationId}`)
 }
 
 async function storeAvailableConnections({ conversationId, pieceName, connections }: {
@@ -145,6 +159,8 @@ export const chatApprovalGate = {
     requestCancel,
     isCancelled,
     clearCancel,
+    storeActiveRunId,
+    getActiveRunId,
     storeAvailableConnections,
     getAvailableConnections,
     storeSelectedConnection,

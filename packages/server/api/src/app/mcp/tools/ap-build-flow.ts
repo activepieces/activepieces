@@ -16,6 +16,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
+import { domainHelper } from '../../helper/domain-helper'
 import { projectService } from '../../project/project-service'
 import { mcpUtils } from './mcp-utils'
 
@@ -190,8 +191,10 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                 const stepWord = allSteps.length === 1 ? 'step' : 'steps'
 
                 const skippedHint = skippedSteps.length > 0 ? ` Skipped: ${skippedSteps.join(', ')}.` : ''
+                const flowUrl = await domainHelper.getPublicUrl({ path: `/projects/${projectId}/flows/${flowId}` })
                 const structured = {
                     flowId: flowId!,
+                    flowUrl,
                     displayName: flowName,
                     stepCount: allSteps.length,
                     validCount,
@@ -199,9 +202,9 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     skippedSteps,
                 }
                 if (invalidSteps.length === 0 && skippedSteps.length === 0) {
-                    return { content: [{ type: 'text', text: `✅ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} ${stepWord}, all valid.` }], structuredContent: structured }
+                    return { content: [{ type: 'text', text: `✅ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} ${stepWord}, all valid. Open: ${flowUrl}` }], structuredContent: structured }
                 }
-                return { content: [{ type: 'text', text: `⚠️ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} ${stepWord} (${validCount} valid, ${invalidSteps.length} invalid: ${invalidSteps.join(', ')}).${skippedHint} Use ap_update_step or ap_update_trigger to fix.` }], structuredContent: structured }
+                return { content: [{ type: 'text', text: `⚠️ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} ${stepWord} (${validCount} valid, ${invalidSteps.length} invalid: ${invalidSteps.join(', ')}).${skippedHint} Use ap_update_step or ap_update_trigger to fix. Open: ${flowUrl}` }], structuredContent: structured }
             }
             catch (err) {
                 if (flowId) {

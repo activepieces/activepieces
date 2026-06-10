@@ -248,9 +248,10 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
         },
 
         async sendChatEvent(input) {
-            const { userId, conversationId, event } = input
+            const { userId, conversationId, runId, event } = input
             websocketService.to(userId).emit(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, {
                 conversationId,
+                runId,
                 ...event,
             })
         },
