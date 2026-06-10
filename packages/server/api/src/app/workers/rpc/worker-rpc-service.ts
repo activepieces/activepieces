@@ -12,6 +12,7 @@ import {
     logSerializer,
     PiecePackage,
     RunInternalError,
+    RunInternalErrorSource,
     StreamStepProgress,
     truncateFailedStepMessage,
     tryCatch,
@@ -76,7 +77,7 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
         },
 
         async uploadRunLog(input) {
-            const internalErrorEnabled = system.getEdition() !== ApEdition.CLOUD
+            const internalErrorEnabled = input.internalError?.source === RunInternalErrorSource.ENGINE || system.getEdition() !== ApEdition.CLOUD
             if (internalErrorEnabled && !isNil(input.internalError) && !isNil(input.logsFileId)) {
                 await persistInternalErrorToLogs({
                     log,
@@ -248,9 +249,10 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
         },
 
         async sendChatEvent(input) {
-            const { userId, conversationId, event } = input
+            const { userId, conversationId, runId, event } = input
             websocketService.to(userId).emit(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, {
                 conversationId,
+                runId,
                 ...event,
             })
         },

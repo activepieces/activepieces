@@ -8,6 +8,8 @@ export const telegramPinMessageAction = createAction({
   name: 'pin_message',
   displayName: 'Pin Message',
   description: 'Pin a message in a chat. The bot must be an administrator in the chat for this to work.',
+  audience: 'both',
+  aiMetadata: { description: 'Pins an existing message in a chat, identified by chat_id and message_id; the bot must be an administrator with pin rights. Use to highlight an announcement or important message. Idempotent: pinning an already-pinned message leaves it pinned with the same result.', idempotent: true },
   props: {
     instructions: telegramCommons.chatIdInstructions(),
     chat_id: telegramCommons.chatIdProp(),

@@ -8,6 +8,12 @@ export const airtableFindTableAction = createAction({
   name: 'airtable_find_table',
   displayName: 'Find Table',
   description: 'Find a table in a given base by its name.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up a single table in a base by an exact (case-insensitive) name match and returns it, or null if no table matches. Use to resolve a table ID from its name. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     base: airtableCommon.base,
     tableName: Property.ShortText({

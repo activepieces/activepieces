@@ -47,15 +47,13 @@ const DataSelectorNodeContent = ({
 
   const [ripple, rippleEvent] = useApRipple();
 
-  const stepForRoot =
-    depth === 0 && node.data.type === 'value'
-      ? flowStructureUtil.getStep(
-          node.data.stepName ?? node.data.propertyPath,
-          flowVersion.trigger,
-        )
-      : depth === 0 && node.data.type === 'test'
-      ? flowStructureUtil.getStep(node.data.stepName, flowVersion.trigger)
+  const rootStepName =
+    depth === 0 && (node.data.type === 'value' || node.data.type === 'test')
+      ? node.data.stepName
       : undefined;
+  const stepForRoot = rootStepName
+    ? flowStructureUtil.getStep(rootStepName, flowVersion.trigger)
+    : undefined;
 
   const isExpandable = !!node.children && node.children.length > 0;
   const isStepRoot = depth === 0;

@@ -11,6 +11,8 @@ export const createQuickCalendarEvent = createAction({
   auth: googleCalendarAuth,
   name: 'create_quick_event',
   description: 'Add Quick Calendar Event',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a calendar event from a single natural-language phrase (e.g. "Lunch with Sam tomorrow at 1pm") via Google\'s quickAdd parsing, letting Google infer the time, title, and date. Use when you have free-form text rather than structured fields; prefer Create Event when you have explicit start/end times or attendees. Not idempotent: each call creates a new event.', idempotent: false },
   displayName: 'Create Quick Event',
   props: {
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),

@@ -9,6 +9,9 @@ export const newCardTrigger = createTrigger({
 	name: 'new_card',
 	displayName: 'New Card',
 	description: 'Trigger when a new card is created',
+	aiMetadata: {
+		description: 'Fires when a new card is created on the selected board, or within a specific list if one is provided. Represents a newly added task or item; emits the created card with its full details.',
+	},
 	props: {
 		board_id: trelloCommon.board_id,
 		list_id_opt: trelloCommon.list_id_opt,

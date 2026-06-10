@@ -21,6 +21,8 @@ export const listBroadcasts = createAction({
   auth: resendAuth,
   displayName: 'List Broadcasts',
   description: 'Retrieve all broadcasts in your Resend account',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves all broadcast campaigns in the connected Resend account, including each broadcast\'s ID, name, audience, subject, and status (draft, scheduled, sent). Use this to find a broadcast ID (e.g. for Send Broadcast or Delete Broadcast) or to check campaign status. Read-only and idempotent.', idempotent: true },
   props: {},
   async run({ auth }) {
     const response = await httpClient.sendRequest<{ data: BroadcastRecord[] }>({

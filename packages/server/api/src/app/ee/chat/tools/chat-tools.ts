@@ -1,4 +1,4 @@
-import { FlowRunStatus, FlowStatus, isNil, parseToJsonIfPossible, Project, RunEnvironment } from '@activepieces/shared'
+import { AppConnectionStatus, AppConnectionType, FlowRunStatus, FlowStatus, isNil, isObject, parseToJsonIfPossible, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { flowService } from '../../../flows/flow/flow.service'
@@ -8,10 +8,17 @@ import { executeAdhocAction, formatRunSummary } from '../../../mcp/tools/flow-ru
 import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { tableService } from '../../../tables/table/table.service'
+import { chatApprovalGate } from '../chat-approval-gate'
 import { chatHelpers } from '../chat-helpers'
 import { chatPrompt } from '../prompt/chat-prompt'
 
 const CROSS_PROJECT_CONNECTION_LIMIT = 100
+const OAUTH_TYPES: ReadonlySet<AppConnectionType> = new Set([
+    AppConnectionType.OAUTH2,
+    AppConnectionType.CLOUD_OAUTH2,
+    AppConnectionType.PLATFORM_OAUTH2,
+])
+const CLOCK_SKEW_BUFFER_S = 5 * 60
 const CROSS_PROJECT_FLOW_LIMIT = 200
 const FLOW_STATUS_VALUES: ReadonlySet<string> = new Set(Object.values(FlowStatus))
 const FLOW_RUN_STATUS_VALUES: ReadonlySet<string> = new Set(Object.values(FlowRunStatus))
@@ -41,6 +48,7 @@ async function findConnectionsForPiece({ pieceName, projects, platformId, log }:
     const normalizedPiece = mcpUtils.normalizePieceName(pieceName) ?? pieceName
 
     const projectId = projects[0]?.id
+    let requiredScopes: string[] = []
     if (projectId) {
         const project = projects[0]
         const piece = await pieceMetadataService(log).get({
@@ -50,6 +58,12 @@ async function findConnectionsForPiece({ pieceName, projects, platformId, log }:
         })
         if (piece && isNil(piece.auth)) {
             return { noAuthRequired: true, piece: normalizedPiece }
+        }
+        if (piece?.auth && !Array.isArray(piece.auth)) {
+            const authScope = (piece.auth as Record<string, unknown>)['scope']
+            if (Array.isArray(authScope)) {
+                requiredScopes = authScope.filter((s): s is string => typeof s === 'string')
+            }
         }
     }
 
@@ -66,13 +80,17 @@ async function findConnectionsForPiece({ pieceName, projects, platformId, log }:
                 scope: undefined,
                 externalIds: undefined,
             })
-            return result.data.map((c) => ({
-                label: c.displayName,
-                externalId: c.externalId,
-                project: chatPrompt.projectDisplayName(project),
-                projectId: project.id,
-                status: c.status,
-            }))
+            return result.data.map((c) => {
+                const info = resolveConnectionInfo({ status: c.status, type: c.type, value: c.value })
+                return {
+                    label: c.displayName,
+                    externalId: c.externalId,
+                    project: chatPrompt.projectDisplayName(project),
+                    projectId: project.id,
+                    status: info.status,
+                    grantedScopes: info.grantedScopes,
+                }
+            })
         }),
     )
 
@@ -81,10 +99,10 @@ async function findConnectionsForPiece({ pieceName, projects, platformId, log }:
     const displayName = pieceDisplayLabel(shortName)
 
     if (flat.length === 0) {
-        return { needsConnection: true, piece: shortName, displayName }
+        return { needsConnection: true, piece: shortName, displayName, requiredScopes }
     }
 
-    return { pickConnection: true, piece: shortName, displayName, connections: flat }
+    return { pickConnection: true, piece: shortName, displayName, connections: flat, requiredScopes }
 }
 
 async function listFlowsAcrossProjects({ projects, status, log }: {
@@ -183,11 +201,12 @@ async function listResourceForProject({ resource, projectId, status, log }: {
     }
 }
 
-async function executeCrossProjectTool({ toolName, toolInput, platformId, userId, log }: {
+async function executeCrossProjectTool({ toolName, toolInput, platformId, userId, conversationId, log }: {
     toolName: string
     toolInput: Record<string, unknown>
     platformId: string
     userId: string
+    conversationId?: string
     log: FastifyBaseLogger
 }): Promise<unknown> {
     const projects = await chatHelpers.getUserProjects({ platformId, userId, log })
@@ -195,21 +214,50 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
 
     switch (toolName) {
         case 'ap_discover_action_auth': {
-            return findConnectionsForPiece({ pieceName: toolInput.pieceName as string, projects, platformId, log })
+            const discoveryResult = await findConnectionsForPiece({ pieceName: toolInput.pieceName as string, projects, platformId, log })
+
+            if (conversationId && 'pickConnection' in discoveryResult && discoveryResult.pickConnection) {
+                const normalizedPiece = mcpUtils.normalizePieceName(toolInput.pieceName as string) ?? (toolInput.pieceName as string)
+                await chatApprovalGate.storeAvailableConnections({
+                    conversationId,
+                    pieceName: normalizedPiece,
+                    connections: discoveryResult.connections,
+                })
+                return {
+                    pickConnection: true,
+                    piece: discoveryResult.piece,
+                    displayName: discoveryResult.displayName,
+                    connectionCount: discoveryResult.connections.length,
+                    requiredScopes: discoveryResult.requiredScopes,
+                }
+            }
+            return discoveryResult
         }
         case 'ap_execute_action': {
             const pieceName = toolInput.pieceName as string
             const actionName = toolInput.actionName as string
-            const connectionExternalId = toolInput.connectionExternalId as string | undefined
-            const projectId = toolInput.projectId as string | undefined
 
-            const resolvedProjectId = projectId ?? projects[0]?.id
+            const normalizedPiece = mcpUtils.normalizePieceName(pieceName) ?? pieceName
+            let connectionExternalId: string | undefined
+            let connectionLabel: string | undefined
+            let connectionProjectId: string | undefined
+            if (conversationId) {
+                const selected = await chatApprovalGate.getSelectedConnection({ conversationId, pieceName: normalizedPiece })
+                if (selected) {
+                    connectionExternalId = selected.externalId
+                    connectionLabel = selected.label
+                    connectionProjectId = selected.projectId
+                }
+            }
+
+            const resolvedProjectId = connectionProjectId ?? projects[0]?.id
             if (!resolvedProjectId) {
                 return { success: false, error: 'No projects available. Create a project first.' }
             }
-            if (projectId && !availableProjectIds.includes(projectId)) {
-                return { success: false, error: `Project ${projectId} is not accessible.` }
+            if (connectionProjectId && !availableProjectIds.includes(connectionProjectId)) {
+                return { success: false, error: `Project ${connectionProjectId} is not accessible.` }
             }
+
             let parsedInput = toolInput.input
             if (typeof parsedInput === 'string') {
                 const parsed = parseToJsonIfPossible(parsedInput)
@@ -217,7 +265,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
                     parsedInput = parsed as Record<string, unknown>
                 }
             }
-            return executeAdhocAction({
+            const result = await executeAdhocAction({
                 projectId: resolvedProjectId,
                 pieceName,
                 actionName,
@@ -225,6 +273,11 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
                 connectionExternalId,
                 log,
             })
+
+            if (connectionLabel && typeof result === 'object' && result !== null) {
+                return { ...(result as Record<string, unknown>), _meta: { connectionLabel, pieceName: normalizedPiece } }
+            }
+            return result
         }
         case 'ap_list_across_projects': {
             const resource = toolInput.resource as string
@@ -256,9 +309,37 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
     }
 }
 
+function resolveConnectionInfo({ status, type, value }: { status: AppConnectionStatus, type: AppConnectionType, value: unknown }): { status: AppConnectionStatus, grantedScopes: string[] } {
+    if (!OAUTH_TYPES.has(type) || !isObject(value)) {
+        return { status, grantedScopes: [] }
+    }
+    const grantedScopes = typeof value['scope'] === 'string' ? value['scope'].split(/\s+/).filter(Boolean) : []
+    if (status !== AppConnectionStatus.ACTIVE) {
+        return { status, grantedScopes }
+    }
+    const claimedAtS = typeof value['claimed_at'] === 'number' ? value['claimed_at'] : 0
+    const expiresInS = typeof value['expires_in'] === 'number' ? value['expires_in'] : 0
+    if (claimedAtS > 0 && expiresInS > 0) {
+        const expiryMs = (claimedAtS + expiresInS - CLOCK_SKEW_BUFFER_S) * 1000
+        if (Date.now() > expiryMs) {
+            return { status: AppConnectionStatus.ERROR, grantedScopes }
+        }
+    }
+    return { status, grantedScopes }
+}
+
+type ConnectionWithScopes = {
+    label: string
+    project: string
+    externalId: string
+    projectId: string
+    status: AppConnectionStatus
+    grantedScopes: string[]
+}
+
 type FindConnectionsResult =
     | { noAuthRequired: true, piece: string }
-    | { needsConnection: true, piece: string, displayName: string }
-    | { pickConnection: true, piece: string, displayName: string, connections: Array<{ label: string, project: string, externalId: string, projectId: string, status: string }> }
+    | { needsConnection: true, piece: string, displayName: string, requiredScopes: string[] }
+    | { pickConnection: true, piece: string, displayName: string, connections: ConnectionWithScopes[], requiredScopes: string[] }
 
-export { executeCrossProjectTool }
+export { executeCrossProjectTool, findConnectionsForPiece }

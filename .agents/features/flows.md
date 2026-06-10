@@ -23,7 +23,7 @@ Flows are the core automation primitive in Activepieces. Each flow is a versione
 - `packages/web/src/app/builder/index.tsx` — visual flow builder entry point
 - `packages/web/src/app/builder/flow-canvas/` — XYFlow canvas (nodes, edges, drag layer, context menu)
 - `packages/web/src/app/builder/state/` — Zustand-based builder state (flow, run, canvas, notes, step form, piece selector)
-- `packages/web/src/app/builder/step-settings/` — step configuration panel and split/drawer layout for the step data panel
+- `packages/web/src/app/builder/step-settings/` — step configuration panel and split/drawer layout for the step data panel; `piece-settings/connection-select.tsx` is the per-step connection picker — it renders an inline status indicator for every connection state (Connected / Error / Missing, via `getConnectionStatusDisplay`) alongside a single unified `Cable` reconnect icon button (replacing the old per-state mix of refresh icon + text button). The indicator overlay is `pointer-events-none` so clicking the status label opens the dropdown; only the reconnect button re-enables pointer events and opens the reconnect dialog.
 - `packages/web/src/app/builder/step-data/` — step data panel UI (`step-data-panel-host.tsx` / `StepDataPanelHost`, `step-data-panel-header.tsx`, `step-data-panel-view-toggle.tsx`)
 - `packages/web/src/app/builder/test-step/` — test execution UI (action/trigger sections, sample-data viewer, CTA buttons); `test-runner-context.tsx` hoists `useTestAction` + the webhook-return dialog so the bottom CTA can fire the test in-tree
 - `packages/web/src/app/builder/data-display/` — failed-step error UI: `friendly-error-view.tsx` (the friendly error card), `copy-ai-prompt.tsx` ("Copy Error for AI" button), `explanation-prompt.ts` (sanitized AI prompt builder), and `build-step-properties-snapshot.ts` (step-properties snapshot helper). Used by both the test panel and the run-details output view.
@@ -59,6 +59,10 @@ Flows are the core automation primitive in Activepieces. Each flow is a versione
 **FlowVersion**: id, flowId, displayName, schemaVersion (current latest: `'22'`), trigger (JSONB — full flow graph), connectionIds[], agentIds[], updatedBy, valid, state (DRAFT/LOCKED), backupFiles (JSONB), notes[] (JSONB). Relations: flow, updatedByUser.
 
 **Folder**: id, projectId, displayName. Used to organize flows and tables. Case-insensitive uniqueness.
+
+## List Filtering (`GET /v1/flows`)
+
+`flowService.list` filters by `folderId` (single folder; the `"NULL"` sentinel matches uncategorized flows) or `folderIds` (array — flows belonging to any of the listed folder IDs), plus `status`, `name`, `connectionExternalIds`, `agentExternalIds`, and `externalIds`. The automations page uses `folderIds` to load all foldered flows in a single request instead of one request per folder.
 
 ## Flow Operations (Single-Endpoint Dispatch)
 
@@ -131,6 +135,6 @@ The step-settings sidebar hosts a step data panel with two layouts, switched via
 Two builder surfaces consume an action/trigger's optional `outputSchema` (defined on the piece — see [pieces.md](./pieces.md)):
 
 - **Smart Output Viewer** (`components/custom/smart-output-viewer/`) — used by the step data panel's output pane and run details. With hints, renders a labelled friendly view driven by the hints' `fields` array (type icons, copy-to-clipboard, expandable nested values via `children` / `listItems`, automatic table view for arrays of records, formatted images / emails / dates / file sizes / durations / currencies). Without hints, falls back to a generic field list for arbitrary JSON. A Raw JSON tab is always available.
-- **Data Selector** (`app/builder/data-selector/`) — variable picker. With hints, the Friendly tab shows labelled rows with value previews (purple values, same formatting as the viewer); inserting a row produces a fully-qualified mention path (e.g. `step_1["thread"]["data"]["messages"][0]["subject"]`). Without hints, falls back to a generic per-step field list. The Advanced tab is the existing raw tree.
+- **Data Selector** (`app/builder/data-selector/`) — variable picker. With hints, the Friendly tab shows labelled rows with value previews (purple values, same formatting as the viewer); inserting a row produces a fully-qualified mention path wrapped in the step's `['output']` accessor (e.g. `step_1['output']['thread']['data']['messages'][0]['subject']`). Every friendly-view path is built through the single `pathHelpers.propertyPathStarter(stepName)` helper (`path-helpers.ts`), which prepends `['output']` — so array items, primitive outputs, and schema fields all resolve at runtime (the Advanced tab does the same via `buildJsonPath`). Each step root (array / primitive / schema object) is itself insertable as `step['output']`. The root piece icon is resolved from the node's `stepName` field, **not** its `propertyPath` (which contains `['output']` and would fail `getStep`'s exact name match). Without hints, falls back to a generic per-step field list. The Advanced tab is the existing raw tree.
 
 Both surfaces fetch hints via `usePieceOutputSchema({ pieceName, pieceVersion, stepName })`, which reads from the cached `['piece', name, version]` React Query entry — no extra network calls. Hint path lookups use `pathUtils.getValueByDotPath` (`packages/web/src/lib/path-utils.ts`), which supports dot/bracket notation and a wrapper-key fallback (`data.*`, `body.*`, `payload.*`, …) so common API envelopes resolve transparently.

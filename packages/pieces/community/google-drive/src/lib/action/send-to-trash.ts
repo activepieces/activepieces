@@ -7,6 +7,8 @@ export const googleDriveTrashFile = createAction({
   auth: googleDriveAuth,
   name: 'trash_gdrive_file',
   description: 'Move a file to the trash in your Google Drive',
+  audience: 'both',
+  aiMetadata: { description: 'Moves a Drive file to the trash by its ID, a reversible deletion that can be restored from Drive. Use for safe removal instead of permanent deletion. Requires the file ID. Idempotent: re-trashing an already-trashed file leaves it in the same state.', idempotent: true },
   displayName: 'Trash file',
   props: {
     fileId: Property.ShortText({

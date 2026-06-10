@@ -15,6 +15,8 @@ const NON_INPUT_PROP_TYPES = new Set<PropertyType>([
     PropertyType.MARKDOWN,
 ])
 
+const INTERNAL_INPUT_KEYS = new Set(['auth'])
+
 const RESOLVABLE_PROP_TYPES = new Set<PropertyType>([
     PropertyType.DROPDOWN,
     PropertyType.MULTI_SELECT_DROPDOWN,
@@ -71,10 +73,12 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
     const missing: string[] = []
     const uiRequired: string[] = []
     const allProps: string[] = []
+    const validPropKeys = new Set<string>()
     for (const [propName, prop] of Object.entries(props)) {
         if (NON_INPUT_PROP_TYPES.has(prop.type)) {
             continue
         }
+        validPropKeys.add(propName)
         allProps.push(`${propName} (${prop.type}${prop.required ? ', required' : ''})`)
         if (prop.required) {
             const value = input[propName]
@@ -91,24 +95,34 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
             }
         }
     }
+
+    const unknownKeys = Object.keys(input).filter((key) => !validPropKeys.has(key) && !INTERNAL_INPUT_KEYS.has(key))
+
     const hasAuth = pieceAuth !== undefined && pieceAuth !== null && requireAuth
     if (hasAuth && !input.auth) {
         missing.push('auth (connection required — use ap_list_connections)')
     }
     const parts: string[] = []
+    if (unknownKeys.length > 0) {
+        const validPropDescriptions = Object.entries(props)
+            .filter(([, prop]) => !NON_INPUT_PROP_TYPES.has(prop.type))
+            .map(([name, prop]) => `- ${name} (${prop.type}): ${prop.description ?? prop.displayName}`)
+            .join('\n')
+        parts.push(`Unknown properties: ${unknownKeys.map((k) => `'${k}'`).join(', ')}. Valid properties for this action are:\n${validPropDescriptions}\nPlease retry with correct property names.`)
+    }
     if (missing.length > 0) {
         parts.push(`Missing required inputs: ${missing.join(', ')}.`)
     }
     if (uiRequired.length > 0) {
         parts.push(`These inputs require selection from your account and must be configured in the Activepieces UI: ${uiRequired.join(', ')}.`)
     }
-    if (allProps.length > 0) {
+    if (allProps.length > 0 && unknownKeys.length === 0) {
         parts.push(`Expected inputs: ${allProps.join(', ')}.`)
     }
     if (hasAuth && !input.auth) {
         parts.push(`This ${componentType} requires authentication.`)
     }
-    return { parts, missing, uiRequired, hasAuth }
+    return { parts, missing, unknownKeys, uiRequired, hasAuth }
 }
 
 const MAX_PROP_DEPTH = 3
@@ -369,6 +383,21 @@ function rewriteAllReferences<C = unknown>({ input, loopItems, conditions, trigg
     }
 }
 
+function extractOptionsArray(options: unknown): Array<{ label: string, value: unknown }> | null {
+    if (Array.isArray(options)) return options
+
+    if (isObject(options)) {
+        const obj = options as Record<string, unknown>
+        if (Array.isArray(obj.options)) {
+            return obj.options as Array<{ label: string, value: unknown }>
+        }
+    }
+
+    return null
+}
+
+const RESOLVE_TIMEOUT_MS = 30_000
+
 export const mcpUtils = {
     mcpToolError,
     truncate,
@@ -388,6 +417,8 @@ export const mcpUtils = {
     isProjectScoped,
     withTimeout,
     rewriteAllReferences,
+    extractOptionsArray,
+    RESOLVE_TIMEOUT_MS,
     STEP_REFERENCE_HINT,
     BRANCH_CONDITIONS_INPUT_SCHEMA,
 }
@@ -412,6 +443,7 @@ type DiagnosePiecePropsParams = {
 type DiagnosisResult = {
     parts: string[]
     missing: string[]
+    unknownKeys: string[]
     uiRequired: string[]
     hasAuth: boolean
 }

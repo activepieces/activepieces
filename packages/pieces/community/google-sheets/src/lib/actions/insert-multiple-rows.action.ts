@@ -29,6 +29,12 @@ export const insertMultipleRowsAction = createAction({
 	name: 'google-sheets-insert-multiple-rows',
 	displayName: 'Add Multiple Rows',
 	description: 'Add multiple rows of data at once to a specific spreadsheet.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Bulk-appends many rows to a worksheet in one call, accepting input as CSV, JSON, or per-column values. Use for batch inserts instead of calling Add Row repeatedly. Optional flags can overwrite existing data or skip duplicates keyed on a chosen column; in default append mode it is not idempotent — repeating it adds the rows again.',
+		idempotent: false,
+	},
 	props: {
 		...commonProps,
 		input_type: Property.StaticDropdown({

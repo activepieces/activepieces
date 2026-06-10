@@ -8,6 +8,12 @@ export const githubUnlockIssueAction = createAction({
   name: 'unlockIssue',
   displayName: 'Unlock issue',
   description: 'Unlocks the specified issue',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Removes the conversation lock from an issue (by number) so anyone can comment again. Use to re-open discussion on a previously locked issue or pull request. Idempotent: unlocking an already-unlocked issue leaves it unlocked.',
+    idempotent: true,
+  },
   props: {
     repository: githubCommon.repositoryDropdown,
     issue_number: Property.Number({

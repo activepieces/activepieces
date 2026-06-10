@@ -2,14 +2,16 @@ import {
   AppConnectionStatus,
   AppConnectionWithoutSensitiveData,
 } from '@activepieces/shared';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Check, Plus, RefreshCw } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useParams } from 'react-router-dom';
 
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
 import { Button } from '@/components/ui/button';
+import { chatApi } from '@/features/chat/lib/chat-api';
 import { appConnectionsApi } from '@/features/connections/api/app-connections';
 import { piecesHooks } from '@/features/pieces';
 import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
@@ -36,7 +38,7 @@ function SelectedState({
   displayName,
 }: {
   pieceName: string;
-  connection: ConnectionPickerData['connections'][number];
+  connection: NonNullable<ConnectionPickerData['connections']>[number];
   displayName: string;
 }) {
   return (
@@ -91,7 +93,10 @@ function useLiveConnections({
   >({});
 
   const projectIdsKey = useMemo(
-    () => [...new Set(connections.map((c) => c.projectId))].sort().join(','),
+    () =>
+      [...new Set((connections ?? []).map((c) => c.projectId))]
+        .sort()
+        .join(','),
     [connections],
   );
 
@@ -149,14 +154,40 @@ export function ConnectionPickerCard({
   selectedConnectionLabel,
 }: ConnectionPickerCardProps) {
   const queryClient = useQueryClient();
+  const { conversationId: routerConversationId } = useParams<{
+    conversationId: string;
+  }>();
+  const conversationId =
+    routerConversationId ??
+    window.location.pathname.match(/\/chat\/([^/]+)/)?.[1];
   const pieceName = normalizePieceName(picker.piece);
+  const shouldFetch =
+    !picker.connections?.length && !!conversationId && isInteractive;
+  const { data: fetchedConnections, isLoading: isFetchingConnections } =
+    useQuery({
+      queryKey: ['chat-picker-connections', conversationId, pieceName],
+      queryFn: async () => {
+        const conns = await chatApi.getPickerConnections({
+          conversationId: conversationId!,
+          pieceName,
+        });
+        return conns.map((c) => ({
+          ...c,
+          status: c.status as AppConnectionStatus,
+        }));
+      },
+      enabled: shouldFetch,
+    });
+
+  const resolvedConnections = picker.connections ?? fetchedConnections ?? [];
   const filteredPicker = useMemo(() => {
-    if (!selectedProjectId) return picker;
-    const filtered = picker.connections.filter(
+    if (!selectedProjectId)
+      return { ...picker, connections: resolvedConnections };
+    const filtered = resolvedConnections.filter(
       (c) => c.projectId === selectedProjectId,
     );
     return { ...picker, connections: filtered };
-  }, [picker, selectedProjectId]);
+  }, [picker, resolvedConnections, selectedProjectId]);
   const { pieceModel, isLoading: isPieceLoading } = piecesHooks.usePiece({
     name: pieceName,
   });
@@ -164,7 +195,7 @@ export function ConnectionPickerCard({
   const [reconnectConnection, setReconnectConnection] =
     useState<AppConnectionWithoutSensitiveData | null>(null);
   const [selectedConnection, setSelectedConnection] = useState<
-    ConnectionPickerData['connections'][number] | null
+    NonNullable<ConnectionPickerData['connections']>[number] | null
   >(null);
 
   const {
@@ -197,6 +228,10 @@ export function ConnectionPickerCard({
         displayName={filteredPicker.displayName}
       />
     );
+  }
+
+  if (shouldFetch && isFetchingConnections) {
+    return null;
   }
 
   if (!isInteractive) {

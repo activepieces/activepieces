@@ -1,6 +1,4 @@
 import {
-  ApEdition,
-  ApFlagId,
   FlowRetryStrategy,
   FlowRun,
   FlowRunStatus,
@@ -53,7 +51,6 @@ import {
   useAuthorization,
   useIsPlatformAdmin,
 } from '@/hooks/authorization-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
 import { useNewWindow } from '@/lib/navigation-utils';
@@ -155,8 +152,7 @@ export const RunsTable = () => {
   });
   const navigate = useNavigate();
   const isPlatformAdmin = useIsPlatformAdmin();
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const canViewInternalError = isPlatformAdmin && edition !== ApEdition.CLOUD;
+  const canViewInternalError = isPlatformAdmin;
   const columns = runsTableColumns({
     data,
     selectedRows,

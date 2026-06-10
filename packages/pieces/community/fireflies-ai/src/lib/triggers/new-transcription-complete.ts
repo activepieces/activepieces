@@ -9,6 +9,9 @@ export const newTranscriptionCompletedTrigger = createTrigger({
 	name: 'new_transcription_completed',
 	displayName: 'New Transcription Completed',
 	description: 'Triggered when a new meeting is transcribed.',
+	aiMetadata: {
+		description: 'Fires when Fireflies finishes transcribing a meeting, emitting the completed transcript with its summary, speakers, attendees, and media URLs. Represents a freshly available, fully processed meeting record. Requires a manually configured Fireflies webhook.',
+	},
 	props: {
 		webhookInstructions: Property.MarkDown({
 			value: `

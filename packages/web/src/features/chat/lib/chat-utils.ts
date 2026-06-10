@@ -1,4 +1,5 @@
 import {
+  ActionReceiptEvent,
   ChatHistoryMessage,
   isObject,
   PersistedChatMessage,
@@ -65,6 +66,10 @@ const TOOL_LABELS: Record<string, { active: string; done: string }> = {
   ap_resolve_property_options: {
     active: 'Loading options',
     done: 'Loaded options',
+  },
+  ap_resolve_property_chain: {
+    active: 'Loading field options',
+    done: 'Loaded field options',
   },
 };
 
@@ -229,6 +234,7 @@ function persistedPartToUIPart(
       };
     }
     case PersistedChatPartType.BATCH_PROGRESS:
+    case PersistedChatPartType.ACTION_RECEIPT:
       return { type: 'text', text: '' } as ChatUIMessage['parts'][number];
     default: {
       const _exhaustive: never = part;
@@ -309,6 +315,22 @@ function formatToolDoneTitle({ part }: { part: AnyToolPart }): string {
   );
 }
 
+function extractReceiptsFromHistory(
+  data: PersistedChatMessage[] | ChatHistoryMessage[],
+): Record<string, ActionReceiptEvent> {
+  const receipts: Record<string, ActionReceiptEvent> = {};
+  if (data.length === 0 || !isPersistedFormat(data)) return receipts;
+  for (const msg of data) {
+    for (const part of msg.parts) {
+      if (part.type === PersistedChatPartType.ACTION_RECEIPT) {
+        const { type: _, output, ...rest } = part;
+        receipts[part.toolCallId] = { ...rest, output: output ?? null };
+      }
+    }
+  }
+  return receipts;
+}
+
 export const chatUtils = {
   formatToolLabel: ({ part }: { part: AnyToolPart }) =>
     formatToolName({ part }),
@@ -317,4 +339,5 @@ export const chatUtils = {
   formatToolDoneTitle,
   mapHistoryToUIMessages,
   extractQuickRepliesFromHistory,
+  extractReceiptsFromHistory,
 };

@@ -8,6 +8,8 @@ export const sendBroadcast = createAction({
   auth: resendAuth,
   displayName: 'Send Broadcast',
   description: 'Send or schedule a broadcast email to its audience',
+  audience: 'both',
+  aiMetadata: { description: 'Sends an existing draft broadcast to its entire audience immediately, or schedules it for a future time, identified by broadcast ID. Use this after Create Broadcast to deliver the campaign. Not idempotent — repeating the call can dispatch the broadcast again; optionally pass an ISO 8601 time to schedule rather than send now.', idempotent: false },
   props: {
     broadcast_id: resendProps.broadcastId,
     scheduled_at: Property.ShortText({

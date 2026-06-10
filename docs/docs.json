@@ -92,7 +92,8 @@
                      "icon": "users",
                      "pages": [
                         "admin-guide/guides/scim/overview",
-                        "admin-guide/guides/scim/providers/okta"
+                        "admin-guide/guides/scim/providers/okta",
+                        "admin-guide/guides/scim/providers/microsoft-entra-id"
                      ]
                   },
                     "admin-guide/guides/manage-oauth2",
