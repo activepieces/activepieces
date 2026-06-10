@@ -3,12 +3,15 @@ import {
   httpClient,
   HttpMethod,
   AuthenticationType,
+  HttpRequest,
 } from '@activepieces/pieces-common';
 import { AppConnectionType } from '@activepieces/shared';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 
 export const googleFormsScopes = [
+  'https://www.googleapis.com/auth/forms.body',
+  'https://www.googleapis.com/auth/forms.body.readonly',
   'https://www.googleapis.com/auth/forms.responses.readonly',
   'https://www.googleapis.com/auth/drive.readonly',
 ];
@@ -56,7 +59,7 @@ export type GoogleFormsAuthValue = AppConnectionValueForAuthProperty<typeof goog
 
 export async function createGoogleClient(auth: GoogleFormsAuthValue): Promise<OAuth2Client> {
   if (auth.type === AppConnectionType.CUSTOM_AUTH) {
-    const serviceAccount = JSON.parse(auth.props.serviceAccount);
+    const serviceAccount = parseServiceAccount(auth.props.serviceAccount);
     return new google.auth.JWT({
       email: serviceAccount.client_email,
       key: serviceAccount.private_key,
@@ -81,6 +84,33 @@ export const getAccessToken = async (auth: GoogleFormsAuthValue): Promise<string
   }
   return auth.access_token;
 };
+
+export async function callFormsApi<T>({
+  auth,
+  method,
+  path,
+  body,
+  queryParams,
+}: {
+  auth: GoogleFormsAuthValue;
+  method: HttpMethod;
+  path: string;
+  body?: unknown;
+  queryParams?: Record<string, string>;
+}): Promise<T> {
+  const accessToken = await getAccessToken(auth);
+  const request: HttpRequest = {
+    url: `https://forms.googleapis.com/v1${path}`,
+    method,
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    ...(queryParams ? { queryParams } : {}),
+    ...(body === undefined ? {} : { body }),
+  };
+  const response = await httpClient.sendRequest<T>(request);
+  return response.body;
+}
 
 export const googleFormsCommon = {
   include_team_drives: Property.Checkbox({
@@ -135,3 +165,18 @@ export const googleFormsCommon = {
     },
   }),
 };
+
+function parseServiceAccount(raw: string): { client_email: string; private_key: string } {
+  try {
+    const parsed = JSON.parse(raw);
+    if (typeof parsed?.client_email !== 'string' || typeof parsed?.private_key !== 'string') {
+      throw new Error('Service Account JSON is missing required fields (client_email, private_key)');
+    }
+    return parsed;
+  } catch (e) {
+    if (e instanceof SyntaxError) {
+      throw new Error('Service Account JSON Key is not valid JSON');
+    }
+    throw e;
+  }
+}
