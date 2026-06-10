@@ -9,20 +9,33 @@ const StepNodeDisplayName = ({
   isSkipped,
   pieceDisplayName,
   stepName,
+  align = 'start',
 }: {
   stepDisplayName: string;
   stepIndex: number;
   isSkipped: boolean;
   pieceDisplayName: string;
   stepName: string;
+  align?: 'start' | 'center';
 }) => {
   return (
-    <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
-      <div className=" flex items-center justify-between min-w-0 w-full">
+    <div
+      className={cn('grow flex flex-col justify-center min-w-0 w-full', {
+        'items-start': align === 'start',
+        'items-center': align === 'center',
+      })}
+    >
+      <div
+        className={cn('flex items-center min-w-0 w-full', {
+          'justify-between': align === 'start',
+          'justify-center': align === 'center',
+        })}
+      >
         <TextWithTooltip tooltipMessage={stepDisplayName} key={stepDisplayName}>
           <div
             className={cn('text-sm truncate grow shrink ', {
               'text-accent-foreground/70': isSkipped,
+              'text-center': align === 'center',
             })}
           >
             {stepIndex}. {stepDisplayName}
@@ -32,6 +45,7 @@ const StepNodeDisplayName = ({
       <StepNodeRunDurationAndPieceName
         stepName={stepName}
         pieceDisplayName={pieceDisplayName}
+        align={align}
       />
     </div>
   );

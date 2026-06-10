@@ -19,7 +19,7 @@ import { t } from 'i18next';
 import { flowRunUtils } from '@/features/flow-runs';
 import { NEW_FLOW_QUERY_PARAM } from '@/lib/route-utils';
 
-import { flowCanvasConsts } from './consts';
+import { flowCanvasLayoutConsts } from './layout-consts';
 import {
   ApBigAddButtonNode,
   ApButtonData,
@@ -31,12 +31,18 @@ import {
   ApNodeType,
   ApStepNode,
   ApStraightLineEdge,
+  CanvasOrientation,
 } from './types';
 
-const createBigAddButtonGraph: (
-  parentStep: FlowAction,
-  nodeData: ApBigAddButtonNode['data'],
-) => ApGraph = (parentStep, nodeData) => {
+const getLayout = (orientation: CanvasOrientation) =>
+  flowCanvasLayoutConsts.ORIENTATION_LAYOUT[orientation];
+
+const createBigAddButtonGraph: (params: {
+  parentStep: FlowAction;
+  nodeData: ApBigAddButtonNode['data'];
+  orientation: CanvasOrientation;
+}) => ApGraph = ({ parentStep, nodeData, orientation }) => {
+  const layout = getLayout(orientation);
   const bigAddButtonNode: ApBigAddButtonNode = {
     id: `${parentStep.name}-big-add-button-${nodeData.edgeId}`,
     type: ApNodeType.BIG_ADD_BUTTON,
@@ -51,10 +57,8 @@ const createBigAddButtonGraph: (
     id: `${parentStep.name}-subgraph-end-${nodeData.edgeId}`,
     type: ApNodeType.GRAPH_END_WIDGET as const,
     position: {
-      x: flowCanvasConsts.AP_NODE_SIZE.STEP.width / 2,
-      y:
-        flowCanvasConsts.AP_NODE_SIZE.STEP.height +
-        flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEPS,
+      x: layout.stepCrossSize / 2,
+      y: layout.stepAlongSize + layout.spaceAlongBetweenSteps,
     },
     data: {},
     selectable: false,
@@ -77,10 +81,12 @@ const createBigAddButtonGraph: (
   };
 };
 
-const createStepGraph: (
-  step: FlowAction | FlowTrigger,
-  graphHeight: number,
-) => ApGraph = (step, graphHeight) => {
+const createStepGraph: (params: {
+  step: FlowAction | FlowTrigger;
+  graphAlongSize: number;
+  orientation: CanvasOrientation;
+}) => ApGraph = ({ step, graphAlongSize, orientation }) => {
+  const layout = getLayout(orientation);
   const stepNode: ApStepNode = {
     id: step.name,
     type: ApNodeType.STEP as const,
@@ -99,8 +105,8 @@ const createStepGraph: (
     id: `${step.name}-subgraph-end`,
     type: ApNodeType.GRAPH_END_WIDGET as const,
     position: {
-      x: flowCanvasConsts.AP_NODE_SIZE.STEP.width / 2,
-      y: graphHeight,
+      x: layout.stepCrossSize / 2,
+      y: graphAlongSize,
     },
     data: {},
     selectable: false,
@@ -109,7 +115,7 @@ const createStepGraph: (
   const straightLineEdge: ApStraightLineEdge = {
     id: `${step.name}-${step.nextAction?.name ?? 'graph-end'}-edge`,
     source: step.name,
-    target: `${step.name}-subgraph-end`,
+    target: step.nextAction?.name ?? `${step.name}-subgraph-end`,
     type: ApEdgeType.STRAIGHT_LINE as const,
     data: {
       drawArrowHead: !isNil(step.nextAction),
@@ -127,40 +133,95 @@ const createStepGraph: (
   };
 };
 
-const buildFlowGraph: (
-  step: FlowAction | FlowTrigger | undefined,
-) => ApGraph = (step) => {
+const buildFlowGraph: (params: {
+  step: FlowAction | FlowTrigger | undefined;
+  orientation: CanvasOrientation;
+  overriddenSteps: ReadonlySet<string>;
+}) => ApGraph = ({ step, orientation, overriddenSteps }) => {
   if (isNil(step)) {
     return {
       nodes: [],
       edges: [],
     };
   }
-
-  const graph: ApGraph = createStepGraph(
+  const layout = getLayout(orientation);
+  const graph: ApGraph = createStepGraph({
     step,
-    flowCanvasConsts.AP_NODE_SIZE.STEP.height +
-      flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEPS,
-  );
+    graphAlongSize: layout.stepAlongSize + layout.spaceAlongBetweenSteps,
+    orientation,
+  });
   const childGraph =
     step.type === FlowActionType.LOOP_ON_ITEMS
-      ? buildLoopChildGraph(step)
+      ? buildLoopChildGraph({ step, orientation, overriddenSteps })
       : step.type === FlowActionType.ROUTER
-      ? buildRouterChildGraph(step)
+      ? buildRouterChildGraph({ step, orientation, overriddenSteps })
       : sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
-      ? buildContinueOnFailureBranchesGraph(step)
+      ? buildContinueOnFailureBranchesGraph({
+          step,
+          orientation,
+          overriddenSteps,
+        })
       : null;
 
   const graphWithChild = childGraph ? mergeGraph(graph, childGraph) : graph;
-  const nextStepGraph = buildFlowGraph(step.nextAction);
-  return mergeGraph(
+  const nextStepGraph = buildFlowGraph({
+    step: step.nextAction,
+    orientation,
+    overriddenSteps,
+  });
+  const mergedGraph = mergeGraph(
     graphWithChild,
     offsetGraph(nextStepGraph, {
       x: 0,
-      y: calculateGraphBoundingBox(graphWithChild).height,
+      y: calculateGraphBoundingBox({ graph: graphWithChild, orientation })
+        .height,
     }),
   );
+  const reconnectEdge = createStructureReconnectEdge({
+    step,
+    childGraph,
+    overriddenSteps,
+  });
+  return reconnectEdge
+    ? { nodes: mergedGraph.nodes, edges: [...mergedGraph.edges, reconnectEdge] }
+    : mergedGraph;
 };
+
+/**
+ * When the step right after a loop/router is dragged away from its default
+ * spot, the composite end edge keeps pointing at the old merge point. This
+ * edge re-establishes the visual connection to the moved step.
+ */
+function createStructureReconnectEdge({
+  step,
+  childGraph,
+  overriddenSteps,
+}: {
+  step: FlowAction | FlowTrigger;
+  childGraph: ApGraph | null;
+  overriddenSteps: ReadonlySet<string>;
+}): ApStraightLineEdge | null {
+  const mergeNodeId = childGraph?.nodes.at(-1)?.id;
+  if (
+    isNil(childGraph) ||
+    isNil(mergeNodeId) ||
+    isNil(step.nextAction) ||
+    !overriddenSteps.has(step.nextAction.name)
+  ) {
+    return null;
+  }
+  return {
+    id: `${step.name}-reconnect-${step.nextAction.name}`,
+    source: mergeNodeId,
+    target: step.nextAction.name,
+    type: ApEdgeType.STRAIGHT_LINE as const,
+    data: {
+      drawArrowHead: true,
+      hideAddButton: true,
+      parentStepName: step.name,
+    },
+  };
+}
 
 function offsetGraph(
   graph: ApGraph,
@@ -182,6 +243,38 @@ function offsetGraph(
   };
 }
 
+function transposeGraphPositions(graph: ApGraph): ApGraph {
+  return {
+    nodes: graph.nodes.map((node) => ({
+      ...node,
+      position: {
+        x: node.position.y,
+        y: node.position.x,
+      },
+    })),
+    edges: graph.edges,
+  };
+}
+
+function applyStepPositionOverrides({
+  graph,
+  stepPositionOverrides,
+}: {
+  graph: ApGraph;
+  stepPositionOverrides: Record<string, { x: number; y: number }>;
+}): ApGraph {
+  return {
+    nodes: graph.nodes.map((node) => {
+      const override =
+        node.type === ApNodeType.STEP
+          ? stepPositionOverrides[node.id]
+          : undefined;
+      return override ? { ...node, position: override } : node;
+    }),
+    edges: graph.edges,
+  };
+}
+
 function mergeGraph(graph1: ApGraph, graph2: ApGraph): ApGraph {
   return {
     nodes: [...graph1.nodes, ...graph2.nodes],
@@ -198,19 +291,28 @@ function createFocusStepInGraphParams(stepName: string) {
   };
 }
 
-const calculateGraphBoundingBox = (graph: ApGraph) => {
+const calculateGraphBoundingBox = ({
+  graph,
+  orientation,
+}: {
+  graph: ApGraph;
+  orientation: CanvasOrientation;
+}) => {
+  const layout = getLayout(orientation);
   const minX = Math.min(
     ...graph.nodes
-      .filter((node) => flowCanvasConsts.doesNodeAffectBoundingBox(node.type))
+      .filter((node) =>
+        flowCanvasLayoutConsts.doesNodeAffectBoundingBox(node.type),
+      )
       .map((node) => node.position.x),
   );
   const minY = Math.min(...graph.nodes.map((node) => node.position.y));
   const maxX = Math.max(
     ...graph.nodes
-      .filter((node) => flowCanvasConsts.doesNodeAffectBoundingBox(node.type))
-      .map(
-        (node) => node.position.x + flowCanvasConsts.AP_NODE_SIZE.STEP.width,
-      ),
+      .filter((node) =>
+        flowCanvasLayoutConsts.doesNodeAffectBoundingBox(node.type),
+      )
+      .map((node) => node.position.x + layout.stepCrossSize),
   );
   const maxY = Math.max(...graph.nodes.map((node) => node.position.y));
   const width = maxX - minX;
@@ -219,42 +321,59 @@ const calculateGraphBoundingBox = (graph: ApGraph) => {
   return {
     width,
     height,
-    left: -minX + flowCanvasConsts.AP_NODE_SIZE.STEP.width / 2,
-    right: maxX - flowCanvasConsts.AP_NODE_SIZE.STEP.width / 2,
+    left: -minX + layout.stepCrossSize / 2,
+    right: maxX - layout.stepCrossSize / 2,
     top: minY,
     bottom: maxY,
   };
 };
 
-const buildLoopChildGraph: (step: LoopOnItemsAction) => ApGraph = (step) => {
+const buildLoopChildGraph: (params: {
+  step: LoopOnItemsAction;
+  orientation: CanvasOrientation;
+  overriddenSteps: ReadonlySet<string>;
+}) => ApGraph = ({ step, orientation, overriddenSteps }) => {
+  const layout = getLayout(orientation);
   const childGraph = step.firstLoopAction
-    ? buildFlowGraph(step.firstLoopAction)
-    : createBigAddButtonGraph(step, {
-        parentStepName: step.name,
-        stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP,
-        edgeId: `${step.name}-loop-start-edge`,
+    ? buildFlowGraph({
+        step: step.firstLoopAction,
+        orientation,
+        overriddenSteps,
+      })
+    : createBigAddButtonGraph({
+        parentStep: step,
+        nodeData: {
+          parentStepName: step.name,
+          stepLocationRelativeToParent:
+            StepLocationRelativeToParent.INSIDE_LOOP,
+          edgeId: `${step.name}-loop-start-edge`,
+        },
+        orientation,
       });
 
-  const childGraphBoundingBox = calculateGraphBoundingBox(childGraph);
+  const childGraphBoundingBox = calculateGraphBoundingBox({
+    graph: childGraph,
+    orientation,
+  });
   const deltaLeftX =
     -(
       childGraphBoundingBox.width +
-      flowCanvasConsts.AP_NODE_SIZE.STEP.width +
-      flowCanvasConsts.HORIZONTAL_SPACE_BETWEEN_NODES -
-      flowCanvasConsts.AP_NODE_SIZE.STEP.width / 2 -
+      layout.stepCrossSize +
+      layout.crossGapBetweenBranches -
+      layout.stepCrossSize / 2 -
       childGraphBoundingBox.right
     ) /
       2 -
-    flowCanvasConsts.AP_NODE_SIZE.STEP.width / 2;
+    layout.stepCrossSize / 2;
 
   const loopReturnNode: ApLoopReturnNode = {
     id: `${step.name}-loop-return-node`,
     type: ApNodeType.LOOP_RETURN_NODE,
     position: {
-      x: deltaLeftX + flowCanvasConsts.AP_NODE_SIZE.STEP.width / 2,
+      x: deltaLeftX + layout.stepCrossSize / 2,
       y:
-        flowCanvasConsts.AP_NODE_SIZE.STEP.height +
-        flowCanvasConsts.VERTICAL_OFFSET_BETWEEN_LOOP_AND_CHILD +
+        layout.stepAlongSize +
+        layout.loopOffsetAlong +
         childGraphBoundingBox.height / 2,
     },
     data: {},
@@ -263,12 +382,10 @@ const buildLoopChildGraph: (step: LoopOnItemsAction) => ApGraph = (step) => {
   const childGraphAfterOffset = offsetGraph(childGraph, {
     x:
       deltaLeftX +
-      flowCanvasConsts.AP_NODE_SIZE.STEP.width +
-      flowCanvasConsts.HORIZONTAL_SPACE_BETWEEN_NODES +
+      layout.stepCrossSize +
+      layout.crossGapBetweenBranches +
       childGraphBoundingBox.left,
-    y:
-      flowCanvasConsts.VERTICAL_OFFSET_BETWEEN_LOOP_AND_CHILD +
-      flowCanvasConsts.AP_NODE_SIZE.STEP.height,
+    y: layout.loopOffsetAlong + layout.stepAlongSize,
   });
   const edges: ApEdge[] = [
     {
@@ -288,10 +405,10 @@ const buildLoopChildGraph: (step: LoopOnItemsAction) => ApGraph = (step) => {
       data: {
         parentStepName: step.name,
         isLoopEmpty: isNil(step.firstLoopAction),
-        drawArrowHeadAfterEnd: !isNil(step.nextAction),
+        drawArrowHeadAfterEnd:
+          !isNil(step.nextAction) && !overriddenSteps.has(step.nextAction.name),
         verticalSpaceBetweenReturnNodeStartAndEnd:
-          childGraphBoundingBox.height +
-          flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEPS,
+          childGraphBoundingBox.height + layout.spaceAlongBetweenSteps,
       },
     },
   ];
@@ -300,13 +417,13 @@ const buildLoopChildGraph: (step: LoopOnItemsAction) => ApGraph = (step) => {
     id: `${step.name}-loop-subgraph-end`,
     type: ApNodeType.GRAPH_END_WIDGET,
     position: {
-      x: flowCanvasConsts.AP_NODE_SIZE.STEP.width / 2,
+      x: layout.stepCrossSize / 2,
       y:
-        flowCanvasConsts.AP_NODE_SIZE.STEP.height +
-        flowCanvasConsts.VERTICAL_OFFSET_BETWEEN_LOOP_AND_CHILD +
+        layout.stepAlongSize +
+        layout.loopOffsetAlong +
         childGraphBoundingBox.height +
-        flowCanvasConsts.ARC_LENGTH +
-        flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEPS,
+        flowCanvasLayoutConsts.ARC_LENGTH +
+        layout.spaceAlongBetweenSteps,
     },
     data: {},
     selectable: false,
@@ -318,36 +435,54 @@ const buildLoopChildGraph: (step: LoopOnItemsAction) => ApGraph = (step) => {
   };
 };
 
-const buildRouterChildGraph = (step: RouterAction) => {
+const buildRouterChildGraph = ({
+  step,
+  orientation,
+  overriddenSteps,
+}: {
+  step: RouterAction;
+  orientation: CanvasOrientation;
+  overriddenSteps: ReadonlySet<string>;
+}) => {
+  const layout = getLayout(orientation);
   const childGraphs = step.children.map((branch, index) => {
     return branch
-      ? buildFlowGraph(branch)
-      : createBigAddButtonGraph(step, {
-          parentStepName: step.name,
-          stepLocationRelativeToParent:
-            StepLocationRelativeToParent.INSIDE_BRANCH,
-          branchIndex: index,
-          edgeId: `${step.name}-branch-${index}-start-edge`,
+      ? buildFlowGraph({ step: branch, orientation, overriddenSteps })
+      : createBigAddButtonGraph({
+          parentStep: step,
+          nodeData: {
+            parentStepName: step.name,
+            stepLocationRelativeToParent:
+              StepLocationRelativeToParent.INSIDE_BRANCH,
+            branchIndex: index,
+            edgeId: `${step.name}-branch-${index}-start-edge`,
+          },
+          orientation,
         });
   });
 
-  const childGraphsAfterOffset = offsetRouterChildSteps(childGraphs);
+  const childGraphsAfterOffset = offsetRouterChildSteps({
+    childGraphs,
+    orientation,
+  });
 
   const maxHeight = Math.max(
-    ...childGraphsAfterOffset.map((cg) => calculateGraphBoundingBox(cg).height),
+    ...childGraphsAfterOffset.map(
+      (cg) => calculateGraphBoundingBox({ graph: cg, orientation }).height,
+    ),
   );
 
   const subgraphEndSubNode: ApGraphEndNode = {
     id: `${step.name}-branch-subgraph-end`,
     type: ApNodeType.GRAPH_END_WIDGET,
     position: {
-      x: flowCanvasConsts.AP_NODE_SIZE.STEP.width / 2,
+      x: layout.stepCrossSize / 2,
       y:
-        flowCanvasConsts.AP_NODE_SIZE.STEP.height +
-        flowCanvasConsts.VERTICAL_OFFSET_BETWEEN_ROUTER_AND_CHILD +
+        layout.stepAlongSize +
+        layout.routerOffsetAlong +
         maxHeight +
-        flowCanvasConsts.ARC_LENGTH +
-        flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEPS,
+        flowCanvasLayoutConsts.ARC_LENGTH +
+        layout.spaceAlongBetweenSteps,
     },
     data: {},
     selectable: false,
@@ -384,13 +519,15 @@ const buildRouterChildGraph = (step: RouterAction) => {
             verticalSpaceBetweenLastNodeInBranchAndEndLine:
               subgraphEndSubNode.position.y -
               childGraph.nodes.at(-1)!.position.y -
-              flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEPS -
-              flowCanvasConsts.ARC_LENGTH,
+              layout.spaceAlongBetweenSteps -
+              flowCanvasLayoutConsts.ARC_LENGTH,
             drawHorizontalLine:
               branchIndex === 0 ||
               branchIndex === childGraphsAfterOffset.length - 1,
             routerOrBranchStepName: step.name,
-            isNextStepEmpty: isNil(step.nextAction),
+            isNextStepEmpty:
+              isNil(step.nextAction) ||
+              overriddenSteps.has(step.nextAction.name),
           },
         },
       ];
@@ -406,7 +543,16 @@ const buildRouterChildGraph = (step: RouterAction) => {
   };
 };
 
-const buildContinueOnFailureBranchesGraph = (step: FlowAction): ApGraph => {
+const buildContinueOnFailureBranchesGraph = ({
+  step,
+  orientation,
+  overriddenSteps,
+}: {
+  step: FlowAction;
+  orientation: CanvasOrientation;
+  overriddenSteps: ReadonlySet<string>;
+}): ApGraph => {
+  const layout = getLayout(orientation);
   const branches =
     step.type === FlowActionType.CODE || step.type === FlowActionType.PIECE
       ? step.continueOnFailureBranches
@@ -426,31 +572,40 @@ const buildContinueOnFailureBranchesGraph = (step: FlowAction): ApGraph => {
 
   const childGraphs = branchOrder.map(({ branch, location }, index) =>
     branch
-      ? buildFlowGraph(branch)
-      : createBigAddButtonGraph(step, {
-          parentStepName: step.name,
-          stepLocationRelativeToParent: location,
-          edgeId: `${step.name}-cof-branch-${index}-start-edge`,
+      ? buildFlowGraph({ step: branch, orientation, overriddenSteps })
+      : createBigAddButtonGraph({
+          parentStep: step,
+          nodeData: {
+            parentStepName: step.name,
+            stepLocationRelativeToParent: location,
+            edgeId: `${step.name}-cof-branch-${index}-start-edge`,
+          },
+          orientation,
         }),
   );
 
-  const childGraphsAfterOffset = offsetRouterChildSteps(childGraphs);
+  const childGraphsAfterOffset = offsetRouterChildSteps({
+    childGraphs,
+    orientation,
+  });
 
   const maxHeight = Math.max(
-    ...childGraphsAfterOffset.map((cg) => calculateGraphBoundingBox(cg).height),
+    ...childGraphsAfterOffset.map(
+      (cg) => calculateGraphBoundingBox({ graph: cg, orientation }).height,
+    ),
   );
 
   const subgraphEndSubNode: ApGraphEndNode = {
     id: `${step.name}-cof-subgraph-end`,
     type: ApNodeType.GRAPH_END_WIDGET,
     position: {
-      x: flowCanvasConsts.AP_NODE_SIZE.STEP.width / 2,
+      x: layout.stepCrossSize / 2,
       y:
-        flowCanvasConsts.AP_NODE_SIZE.STEP.height +
-        flowCanvasConsts.VERTICAL_OFFSET_BETWEEN_ROUTER_AND_CHILD +
+        layout.stepAlongSize +
+        layout.routerOffsetAlong +
         maxHeight +
-        flowCanvasConsts.ARC_LENGTH +
-        flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEPS,
+        flowCanvasLayoutConsts.ARC_LENGTH +
+        layout.spaceAlongBetweenSteps,
     },
     data: {},
     selectable: false,
@@ -483,11 +638,13 @@ const buildContinueOnFailureBranchesGraph = (step: FlowAction): ApGraph => {
             verticalSpaceBetweenLastNodeInBranchAndEndLine:
               subgraphEndSubNode.position.y -
               childGraph.nodes.at(-1)!.position.y -
-              flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEPS -
-              flowCanvasConsts.ARC_LENGTH,
+              layout.spaceAlongBetweenSteps -
+              flowCanvasLayoutConsts.ARC_LENGTH,
             drawHorizontalLine: true,
             routerOrBranchStepName: step.name,
-            isNextStepEmpty: isNil(step.nextAction),
+            isNextStepEmpty:
+              isNil(step.nextAction) ||
+              overriddenSteps.has(step.nextAction.name),
           },
         },
       ];
@@ -503,16 +660,23 @@ const buildContinueOnFailureBranchesGraph = (step: FlowAction): ApGraph => {
   };
 };
 
-const offsetRouterChildSteps = (childGraphs: ApGraph[]) => {
-  const boundingBoxes = childGraphs.map((g) => calculateGraphBoundingBox(g));
+const offsetRouterChildSteps = ({
+  childGraphs,
+  orientation,
+}: {
+  childGraphs: ApGraph[];
+  orientation: CanvasOrientation;
+}) => {
+  const layout = getLayout(orientation);
+  const boundingBoxes = childGraphs.map((g) =>
+    calculateGraphBoundingBox({ graph: g, orientation }),
+  );
   const offsets =
     sharedFlowCanvasUtils.computeRouterChildOffsets(boundingBoxes);
   return childGraphs.map((g, i) =>
     offsetGraph(g, {
       x: offsets[i],
-      y:
-        flowCanvasConsts.AP_NODE_SIZE.STEP.height +
-        flowCanvasConsts.VERTICAL_OFFSET_BETWEEN_ROUTER_AND_CHILD,
+      y: layout.stepAlongSize + layout.routerOffsetAlong,
     }),
   );
 };
@@ -617,13 +781,28 @@ function determineInitiallySelectedStep(
 const doesSelectionRectangleExist = () => {
   return (
     document.querySelector(
-      `.${flowCanvasConsts.NODE_SELECTION_RECT_CLASS_NAME}`,
+      `.${flowCanvasLayoutConsts.NODE_SELECTION_RECT_CLASS_NAME}`,
     ) !== null
   );
 };
 export const flowCanvasUtils = {
-  createFlowGraph(version: FlowVersion, notes: Note[]): ApGraph {
-    const stepsGraph = buildFlowGraph(version.trigger);
+  createFlowGraph({
+    version,
+    notes,
+    orientation,
+    stepPositionOverrides,
+  }: {
+    version: FlowVersion;
+    notes: Note[];
+    orientation: CanvasOrientation;
+    stepPositionOverrides: Record<string, { x: number; y: number }>;
+  }): ApGraph {
+    const overriddenSteps = new Set(Object.keys(stepPositionOverrides));
+    const stepsGraph = buildFlowGraph({
+      step: version.trigger,
+      orientation,
+      overriddenSteps,
+    });
     const notesGraph = buildNotesGraph(notes);
     const graphEndWidget = stepsGraph.nodes.findLast(
       (node) => node.type === ApNodeType.GRAPH_END_WIDGET,
@@ -633,7 +812,15 @@ export const flowCanvasUtils = {
     } else {
       console.warn('Flow end widget not found');
     }
-    return mergeGraph(stepsGraph, notesGraph);
+    const orientedGraph =
+      orientation === 'horizontal'
+        ? transposeGraphPositions(stepsGraph)
+        : stepsGraph;
+    const graphWithOverrides = applyStepPositionOverrides({
+      graph: orientedGraph,
+      stepPositionOverrides,
+    });
+    return mergeGraph(graphWithOverrides, notesGraph);
   },
   createFocusStepInGraphParams,
   calculateGraphBoundingBox,

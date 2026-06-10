@@ -40,6 +40,7 @@ const ApStepCanvasNode = React.memo(
       isPieceSelectorOpened,
       setOpenedPieceSelectorStepNameOrAddButtonId,
       isRightSidebarOpen,
+      canvasOrientation,
     ] = useBuilderStateContext((state) => [
       state.selectStepByName,
       state.selectedStep === step.name,
@@ -50,7 +51,9 @@ const ApStepCanvasNode = React.memo(
       state.openedPieceSelectorStepNameOrAddButtonId === step.name,
       state.setOpenedPieceSelectorStepNameOrAddButtonId,
       state.rightSidebar !== RightSideBarType.NONE,
+      state.canvasOrientation,
     ]);
+    const isHorizontal = canvasOrientation === 'horizontal';
     const { stepMetadata } = stepsHooks.useStepMetadata({
       step,
     });
@@ -124,9 +127,9 @@ const ApStepCanvasNode = React.memo(
           [`data-${flowCanvasConsts.STEP_CONTEXT_MENU_ATTRIBUTE}`]: step.name,
         }}
         style={{
-          height: `${flowCanvasConsts.AP_NODE_SIZE.STEP.height}px`,
-          width: `${flowCanvasConsts.AP_NODE_SIZE.STEP.width}px`,
-          maxWidth: `${flowCanvasConsts.AP_NODE_SIZE.STEP.width}px`,
+          height: `${flowCanvasConsts.STEP_NODE_SIZE[canvasOrientation].height}px`,
+          width: `${flowCanvasConsts.STEP_NODE_SIZE[canvasOrientation].width}px`,
+          maxWidth: `${flowCanvasConsts.STEP_NODE_SIZE[canvasOrientation].width}px`,
         }}
         onContextMenu={(e) => handleContextMenu(e)}
         className={cn(
@@ -152,8 +155,12 @@ const ApStepCanvasNode = React.memo(
         <ApStepNodeStatusInRun stepName={step.name} />
         <ApStepNodeSkippedStatus stepName={step.name} />
         <ApStepNodeStatusInDraft stepName={step.name} />
-        <StepNodeName stepName={step.name} />
-        <div className="px-3 h-full w-full overflow-hidden">
+        {!isHorizontal && <StepNodeName stepName={step.name} />}
+        <div
+          className={cn('h-full w-full', {
+            'px-3 overflow-hidden': !isHorizontal,
+          })}
+        >
           {!isDragging && (
             <PieceSelector
               operation={{
@@ -164,40 +171,78 @@ const ApStepCanvasNode = React.memo(
               openSelectorOnClick={false}
               stepToReplacePieceDisplayName={stepMetadata?.displayName}
             >
-              <div
-                className="flex items-center justify-center h-full w-full gap-[10px]"
-                onClick={(e) => {
-                  if (!isPieceSelectorOpened) {
-                    handleStepClick(e);
-                  }
-                }}
-              >
-                <StepNodeLogo
-                  isSkipped={isSkipped}
-                  logoUrl={stepMetadata?.logoUrl ?? ''}
-                  displayName={stepMetadata?.displayName ?? ''}
-                />
+              {isHorizontal ? (
+                <div
+                  className="flex items-center justify-center h-full w-full"
+                  onClick={(e) => {
+                    if (!isPieceSelectorOpened) {
+                      handleStepClick(e);
+                    }
+                  }}
+                >
+                  <StepNodeLogo
+                    isSkipped={isSkipped}
+                    logoUrl={stepMetadata?.logoUrl ?? ''}
+                    displayName={stepMetadata?.displayName ?? ''}
+                    size="lg"
+                  />
+                </div>
+              ) : (
+                <div
+                  className="flex items-center justify-center h-full w-full gap-[10px]"
+                  onClick={(e) => {
+                    if (!isPieceSelectorOpened) {
+                      handleStepClick(e);
+                    }
+                  }}
+                >
+                  <StepNodeLogo
+                    isSkipped={isSkipped}
+                    logoUrl={stepMetadata?.logoUrl ?? ''}
+                    displayName={stepMetadata?.displayName ?? ''}
+                  />
+                  <StepNodeDisplayName
+                    stepDisplayName={step.displayName}
+                    stepIndex={stepIndex}
+                    isSkipped={isSkipped}
+                    pieceDisplayName={stepMetadata?.displayName ?? ''}
+                    stepName={step.name}
+                  />
+                  {!readonly && <StepNodeChevron />}
+                </div>
+              )}
+            </PieceSelector>
+          )}
+          {isHorizontal && (
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 w-[180px] flex justify-center pointer-events-none">
+              <div className="flex flex-col items-center min-w-0">
                 <StepNodeDisplayName
                   stepDisplayName={step.displayName}
                   stepIndex={stepIndex}
                   isSkipped={isSkipped}
                   pieceDisplayName={stepMetadata?.displayName ?? ''}
                   stepName={step.name}
+                  align="center"
                 />
-                {!readonly && <StepNodeChevron />}
+                <StepNodeName stepName={step.name} />
               </div>
-            </PieceSelector>
+            </div>
+          )}
+          {isHorizontal && !readonly && !isDragging && (
+            <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+              <StepNodeChevron />
+            </div>
           )}
 
           <Handle
             type="source"
             style={flowCanvasConsts.HANDLE_STYLING}
-            position={Position.Bottom}
+            position={isHorizontal ? Position.Right : Position.Bottom}
           />
           <Handle
             type="target"
             style={flowCanvasConsts.HANDLE_STYLING}
-            position={Position.Top}
+            position={isHorizontal ? Position.Left : Position.Top}
           />
         </div>
       </div>

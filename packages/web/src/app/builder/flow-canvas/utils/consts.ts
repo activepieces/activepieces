@@ -1,5 +1,4 @@
 import {
-  FLOW_CANVAS_ARC,
   FLOW_CANVAS_HSPACE,
   FLOW_CANVAS_LOOP_VOFFSET,
   FLOW_CANVAS_ROUTER_VOFFSET,
@@ -20,9 +19,12 @@ import ApLoopReturnCanvasNode from '../nodes/loop-return-node';
 import { ApNoteCanvasNode } from '../nodes/note-node';
 import { ApStepCanvasNode } from '../nodes/step-node';
 
+import { flowCanvasLayoutConsts } from './layout-consts';
 import { ApEdgeType, ApNodeType } from './types';
 
-const ARC_LENGTH = FLOW_CANVAS_ARC;
+const ARC_LENGTH = flowCanvasLayoutConsts.ARC_LENGTH;
+const ORIENTATION_LAYOUT = flowCanvasLayoutConsts.ORIENTATION_LAYOUT;
+const STEP_NODE_SIZE = flowCanvasLayoutConsts.STEP_NODE_SIZE;
 const ARC_LEFT = `a${ARC_LENGTH},${ARC_LENGTH} 0 0,0 -${ARC_LENGTH},${ARC_LENGTH}`;
 const ARC_RIGHT = `a${ARC_LENGTH},${ARC_LENGTH} 0 0,1 ${ARC_LENGTH},${ARC_LENGTH}`;
 const ARC_LEFT_DOWN = `a${ARC_LENGTH},${ARC_LENGTH} 0 0,1 -${ARC_LENGTH},${ARC_LENGTH}`;
@@ -30,6 +32,7 @@ const ARC_RIGHT_DOWN = `a${ARC_LENGTH},${ARC_LENGTH} 0 0,0 ${ARC_LENGTH},${ARC_L
 const ARC_RIGHT_UP = `a${ARC_LENGTH},${ARC_LENGTH} 0 0,1 -${ARC_LENGTH},-${ARC_LENGTH}`;
 const ARC_LEFT_UP = `a-${ARC_LENGTH},-${ARC_LENGTH} 0 0,0 ${ARC_LENGTH},-${ARC_LENGTH}`;
 const ARROW_DOWN = 'm6 -6 l-6 6 m-6 -6 l6 6';
+const ARROW_RIGHT_HEAD = 'm-6 6 l6 -6 m-6 -6 l6 6';
 const VERTICAL_SPACE_BETWEEN_STEP_AND_LINE = 7;
 const VERTICAL_SPACE_BETWEEN_STEPS = FLOW_CANVAS_VSPACE;
 const VERTICAL_OFFSET_BETWEEN_LOOP_AND_CHILD = FLOW_CANVAS_LOOP_VOFFSET;
@@ -70,17 +73,10 @@ const AP_NODE_SIZE: Record<
   },
 };
 
-const doesNodeAffectBoundingBoxWidth: (
-  type: ApNodeType,
-) => type is
-  | ApNodeType.BIG_ADD_BUTTON
-  | ApNodeType.STEP
-  | ApNodeType.LOOP_RETURN_NODE = (type) =>
-  type === ApNodeType.BIG_ADD_BUTTON ||
-  type === ApNodeType.STEP ||
-  type === ApNodeType.LOOP_RETURN_NODE;
 export const flowCanvasConsts = {
   ARC_LENGTH,
+  ORIENTATION_LAYOUT,
+  STEP_NODE_SIZE,
   ARC_LEFT,
   ARC_RIGHT,
   ARC_LEFT_DOWN,
@@ -89,6 +85,7 @@ export const flowCanvasConsts = {
   AP_NODE_SIZE,
   VERTICAL_SPACE_BETWEEN_STEP_AND_LINE,
   ARROW_DOWN,
+  ARROW_RIGHT_HEAD,
   VERTICAL_SPACE_BETWEEN_STEPS,
   ARC_RIGHT_UP,
   LINE_WIDTH,
@@ -96,7 +93,7 @@ export const flowCanvasConsts = {
   ARC_LEFT_UP,
   VERTICAL_OFFSET_BETWEEN_ROUTER_AND_CHILD,
 
-  doesNodeAffectBoundingBox: doesNodeAffectBoundingBoxWidth,
+  doesNodeAffectBoundingBox: flowCanvasLayoutConsts.doesNodeAffectBoundingBox,
   edgeTypes: {
     [ApEdgeType.STRAIGHT_LINE]: ApStraightLineCanvasEdge,
     [ApEdgeType.LOOP_START_EDGE]: ApLoopStartCanvasEdge,
@@ -122,7 +119,8 @@ export const flowCanvasConsts = {
   NOTE_CREATION_OVERLAY_HEIGHT,
   STEP_CONTEXT_MENU_ATTRIBUTE: 'step-context-menu',
   SELECTION_RECT_CHEVRON_ATTRIBUTE: 'selection-rect-chevron',
-  NODE_SELECTION_RECT_CLASS_NAME: 'react-flow__nodesselection-rect',
+  NODE_SELECTION_RECT_CLASS_NAME:
+    flowCanvasLayoutConsts.NODE_SELECTION_RECT_CLASS_NAME,
   SIDEBAR_ANIMATION_DURATION: 200,
   DEFAULT_NOTE_CONTENT: '<br>',
   DEFAULT_NOTE_COLOR: NoteColorVariant.BLUE,

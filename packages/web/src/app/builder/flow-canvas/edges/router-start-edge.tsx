@@ -1,7 +1,14 @@
 import { StepLocationRelativeToParent } from '@activepieces/shared';
-import { BaseEdge, EdgeProps } from '@xyflow/react';
+import {
+  BaseEdge,
+  EdgeProps,
+  getSmoothStepPath,
+  Position,
+} from '@xyflow/react';
 
+import { useBuilderStateContext } from '../../builder-hooks';
 import { flowCanvasConsts } from '../utils/consts';
+import { svgPathUtils } from '../utils/svg-path-utils';
 import { ApRouterStartEdge } from '../utils/types';
 
 import { ApAddButton } from './add-button';
@@ -9,6 +16,7 @@ import { BranchLabel } from './branch-label';
 
 export const ApRouterStartCanvasEdge = ({
   sourceX,
+  sourceY,
   targetX,
   targetY,
   data,
@@ -16,16 +24,34 @@ export const ApRouterStartCanvasEdge = ({
   target,
   id,
 }: EdgeProps & Omit<ApRouterStartEdge, 'position'>) => {
-  const verticalLineLength =
-    flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEPS -
-    flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE +
-    flowCanvasConsts.LABEL_HEIGHT;
+  const canvasOrientation = useBuilderStateContext(
+    (state) => state.canvasOrientation,
+  );
+  const isHorizontal = canvasOrientation === 'horizontal';
+  const layout = flowCanvasConsts.ORIENTATION_LAYOUT[canvasOrientation];
+  const layoutSource = isHorizontal
+    ? { x: sourceY, y: sourceX }
+    : { x: sourceX, y: sourceY };
+  const layoutTarget = isHorizontal
+    ? { x: targetY, y: targetX }
+    : { x: targetX, y: targetY };
 
-  const distanceBetweenSourceAndTarget = Math.abs(targetX - sourceX);
-  const generatePath = () => {
+  const verticalLineLength =
+    layout.spaceAlongBetweenSteps -
+    flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE +
+    (isHorizontal ? 0 : flowCanvasConsts.LABEL_HEIGHT);
+
+  // handles render a couple of pixels outside the node bounds, so compare with a tolerance
+  const isAlignedWithAutoLayout =
+    Math.abs(layoutTarget.y - layoutSource.y - layout.routerOffsetAlong) < 10;
+
+  const distanceBetweenSourceAndTarget = Math.abs(
+    layoutTarget.x - layoutSource.x,
+  );
+  const generateAlignedLayoutPath = () => {
     // Start point and initial vertical line
-    let path = `M ${targetX} ${
-      targetY - flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE
+    let path = `M ${layoutTarget.x} ${
+      layoutTarget.y - flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE
     }`;
 
     // Add arrow if branch is not empty
@@ -40,18 +66,22 @@ export const ApRouterStartCanvasEdge = ({
     if (distanceBetweenSourceAndTarget >= flowCanvasConsts.ARC_LENGTH) {
       // Add appropriate arc based on source position
       path +=
-        sourceX > targetX ? ' a12,12 0 0,1 12,-12' : ' a-12,-12 0 0,0 -12,-12';
+        layoutSource.x > layoutTarget.x
+          ? ' a12,12 0 0,1 12,-12'
+          : ' a-12,-12 0 0,0 -12,-12';
 
       if (data.drawHorizontalLine) {
         // Calculate horizontal line length
         const horizontalLength =
-          (Math.abs(targetX - sourceX) + 3 - 2 * flowCanvasConsts.ARC_LENGTH) *
-          (sourceX > targetX ? 1 : -1);
+          (Math.abs(layoutTarget.x - layoutSource.x) +
+            3 -
+            2 * flowCanvasConsts.ARC_LENGTH) *
+          (layoutSource.x > layoutTarget.x ? 1 : -1);
 
         // Add horizontal line and arc
         path += `h ${horizontalLength}`;
         path +=
-          sourceX > targetX
+          layoutSource.x > layoutTarget.x
             ? flowCanvasConsts.ARC_LEFT_UP
             : flowCanvasConsts.ARC_RIGHT_UP;
       }
@@ -59,7 +89,7 @@ export const ApRouterStartCanvasEdge = ({
       if (data.drawStartingVerticalLine) {
         // Add final vertical line
         const finalVerticalLength =
-          flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEPS / 2 -
+          layout.spaceAlongBetweenSteps / 2 -
           2 * flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE;
         path += `v -${finalVerticalLength}`;
       }
@@ -74,7 +104,94 @@ export const ApRouterStartCanvasEdge = ({
     return path;
   };
 
-  const path = generatePath();
+  const buildAlignedEdge = () => {
+    const layoutPath = generateAlignedLayoutPath();
+    const segmentCenterX =
+      targetX -
+      flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE -
+      verticalLineLength / 2;
+    return {
+      path: isHorizontal ? svgPathUtils.transposePath(layoutPath) : layoutPath,
+      buttonPosition: isHorizontal
+        ? {
+            x:
+              segmentCenterX -
+              flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width / 2,
+            y: targetY - flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height / 2,
+          }
+        : {
+            x: targetX - flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width / 2,
+            y: targetY - verticalLineLength / 2,
+          },
+      labelAnchor: isHorizontal
+        ? {
+            x: segmentCenterX,
+            y: targetY - flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height / 2,
+          }
+        : null,
+    };
+  };
+
+  const buildAdaptiveEdge = () => {
+    const [smoothPath, labelX, labelY] = getSmoothStepPath({
+      sourceX,
+      sourceY,
+      targetX,
+      targetY,
+      sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
+      targetPosition: isHorizontal ? Position.Left : Position.Top,
+      borderRadius: flowCanvasConsts.ARC_LENGTH,
+    });
+    const arrowHead = isHorizontal
+      ? flowCanvasConsts.ARROW_RIGHT_HEAD
+      : flowCanvasConsts.ARROW_DOWN;
+    return {
+      path: `${smoothPath} ${!data.isBranchEmpty ? arrowHead : ''}`,
+      buttonPosition: {
+        x: labelX - flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width / 2,
+        y: labelY - flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height / 2,
+      },
+      labelAnchor: { x: labelX, y: labelY },
+    };
+  };
+
+  const { path, buttonPosition, labelAnchor } = isAlignedWithAutoLayout
+    ? buildAlignedEdge()
+    : buildAdaptiveEdge();
+
+  const labelBoxWidth = flowCanvasConsts.AP_NODE_SIZE.STEP.width - 10;
+  const labelBoxHeight =
+    flowCanvasConsts.LABEL_HEIGHT + flowCanvasConsts.LABEL_VERTICAL_PADDING;
+  // empty branches show a big add button centered inside the step slot, so the
+  // label can end right before that button instead of before the slot itself
+  const horizontalLabelEndX = data.isBranchEmpty
+    ? targetX +
+      (flowCanvasConsts.STEP_NODE_SIZE.horizontal.width -
+        flowCanvasConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width) /
+        2 -
+      6
+    : targetX - 2 * flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE;
+  const labelBoxPosition = labelAnchor
+    ? {
+        // keep the label clear of the step node by ending it right before the arrow head
+        x:
+          isHorizontal && isAlignedWithAutoLayout
+            ? horizontalLabelEndX - labelBoxWidth
+            : labelAnchor.x - labelBoxWidth / 2,
+        y: labelAnchor.y - labelBoxHeight - 4,
+      }
+    : {
+        x: targetX - labelBoxWidth / 2,
+        y:
+          targetY -
+          verticalLineLength / 2 -
+          flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height -
+          30,
+      };
+  const labelAlign =
+    isHorizontal && isAlignedWithAutoLayout
+      ? ('end' as const)
+      : ('center' as const);
 
   const branchLabelProps =
     data.stepLocationRelativeToParent ===
@@ -101,8 +218,8 @@ export const ApRouterStartCanvasEdge = ({
       ></BaseEdge>
       {!data.isBranchEmpty && (
         <foreignObject
-          x={targetX - flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width / 2}
-          y={targetY - verticalLineLength / 2}
+          x={buttonPosition.x}
+          y={buttonPosition.y}
           width={flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width}
           height={flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height}
           className="overflow-visible"
@@ -129,23 +246,15 @@ export const ApRouterStartCanvasEdge = ({
       )}
 
       <foreignObject
-        width={flowCanvasConsts.AP_NODE_SIZE.STEP.width - 10 + 'px'}
-        height={
-          flowCanvasConsts.LABEL_HEIGHT +
-          flowCanvasConsts.LABEL_VERTICAL_PADDING +
-          'px'
-        }
-        x={targetX - (flowCanvasConsts.AP_NODE_SIZE.STEP.width - 10) / 2}
-        y={
-          targetY -
-          verticalLineLength / 2 -
-          flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height -
-          30
-        }
-        className="flex items-center "
+        width={labelBoxWidth + 'px'}
+        height={labelBoxHeight + 'px'}
+        x={labelBoxPosition.x}
+        y={labelBoxPosition.y}
+        className="flex items-center pointer-events-none"
       >
         <BranchLabel
           key={branchLabelProps.label + branchLabelProps.targetNodeName}
+          align={labelAlign}
           {...branchLabelProps}
         />
       </foreignObject>

@@ -27,6 +27,7 @@ type BaseBranchLabel = {
   label: string;
   targetNodeName: string;
   sourceNodeName: string;
+  align?: 'center' | 'end';
 } & (
   | {
       stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH;
@@ -94,7 +95,10 @@ const BranchLabel = (props: BaseBranchLabel) => {
 
   return (
     <div
-      className="h-full flex items-center justify-center "
+      className={cn('h-full flex items-center', {
+        'justify-center': props.align !== 'end',
+        'justify-end': props.align === 'end',
+      })}
       onContextMenu={(e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -102,7 +106,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
       }}
     >
       <div
-        className="bg-builder-background"
+        className="bg-builder-background pointer-events-auto"
         style={{
           paddingTop: flowCanvasConsts.LABEL_VERTICAL_PADDING / 2 + 'px',
           paddingBottom: flowCanvasConsts.LABEL_VERTICAL_PADDING / 2 + 'px',

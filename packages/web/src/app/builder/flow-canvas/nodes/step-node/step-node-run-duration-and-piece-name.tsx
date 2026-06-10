@@ -5,6 +5,7 @@ import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { flowRunUtils } from '@/features/flow-runs';
 import { formatUtils } from '@/lib/format-utils';
+import { cn } from '@/lib/utils';
 
 const StepNodeRunDuration = ({ duration }: { duration: number }) => {
   return (
@@ -18,9 +19,11 @@ const StepNodeRunDuration = ({ duration }: { duration: number }) => {
 const StepNodeRunDurationAndPieceName = ({
   stepName,
   pieceDisplayName,
+  align = 'start',
 }: {
   stepName: string;
   pieceDisplayName: string;
+  align?: 'start' | 'center';
 }) => {
   const [run, loopIndexes, flowVersion] = useBuilderStateContext((state) => [
     state.run,
@@ -34,12 +37,22 @@ const StepNodeRunDurationAndPieceName = ({
   }, [run, stepName, loopIndexes, flowVersion.trigger]);
 
   return (
-    <div className="flex justify-between mt-0.5 w-full items-center">
+    <div
+      className={cn('flex mt-0.5 w-full items-center', {
+        'justify-between': align === 'start',
+        'justify-center': align === 'center',
+      })}
+    >
       <TextWithTooltip
         tooltipMessage={pieceDisplayName}
         key={pieceDisplayName + selectedStepOutput?.duration}
       >
-        <div className="text-xs text-muted-foreground truncate  grow shrink w-full">
+        <div
+          className={cn('text-xs text-muted-foreground truncate grow shrink', {
+            'w-full': align === 'start',
+            'text-center': align === 'center',
+          })}
+        >
           {pieceDisplayName}
         </div>
       </TextWithTooltip>

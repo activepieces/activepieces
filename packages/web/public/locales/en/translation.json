@@ -1963,5 +1963,8 @@
   "1 min ago": "1 min ago",
   "{count} mins ago": "{count} mins ago",
   "1 hour ago": "1 hour ago",
-  "{count} hours ago": "{count} hours ago"
+  "{count} hours ago": "{count} hours ago",
+  "Horizontal layout": "Horizontal layout",
+  "Vertical layout": "Vertical layout",
+  "Reset layout": "Reset layout"
 }

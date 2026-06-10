@@ -1,7 +1,14 @@
 import { StepLocationRelativeToParent } from '@activepieces/shared';
-import { BaseEdge, EdgeProps } from '@xyflow/react';
+import {
+  BaseEdge,
+  EdgeProps,
+  getSmoothStepPath,
+  Position,
+} from '@xyflow/react';
 
+import { useBuilderStateContext } from '../../builder-hooks';
 import { flowCanvasConsts } from '../utils/consts';
+import { svgPathUtils } from '../utils/svg-path-utils';
 import { ApStraightLineEdge } from '../utils/types';
 
 import { ApAddButton } from './add-button';
@@ -9,17 +16,60 @@ import { ApAddButton } from './add-button';
 export const ApStraightLineCanvasEdge = ({
   sourceX,
   sourceY,
+  targetX,
   targetY,
   data,
   id,
-  source,
 }: EdgeProps & ApStraightLineEdge) => {
-  const lineStartX = sourceX;
-  const lineStartY = sourceY;
-  const lineLength = targetY - sourceY;
-  const path = `M ${lineStartX} ${lineStartY} v${lineLength}
+  const canvasOrientation = useBuilderStateContext(
+    (state) => state.canvasOrientation,
+  );
+  const isHorizontal = canvasOrientation === 'horizontal';
+  const layoutSource = isHorizontal
+    ? { x: sourceY, y: sourceX }
+    : { x: sourceX, y: sourceY };
+  const layoutTarget = isHorizontal
+    ? { x: targetY, y: targetX }
+    : { x: targetX, y: targetY };
+  const isAlignedWithAutoLayout =
+    Math.abs(layoutTarget.x - layoutSource.x) < 1 &&
+    layoutTarget.y > layoutSource.y;
+  const arrowHead = isHorizontal
+    ? flowCanvasConsts.ARROW_RIGHT_HEAD
+    : flowCanvasConsts.ARROW_DOWN;
+
+  const buildAlignedEdge = () => {
+    const lineLength = layoutTarget.y - layoutSource.y;
+    const layoutPath = `M ${layoutSource.x} ${layoutSource.y} v${lineLength}
    ${data.drawArrowHead ? flowCanvasConsts.ARROW_DOWN : ''}`;
-  const showDebugForLineEndPoint = false;
+    return {
+      path: isHorizontal ? svgPathUtils.transposePath(layoutPath) : layoutPath,
+      buttonCenter: {
+        x: (sourceX + targetX) / 2,
+        y: (sourceY + targetY) / 2,
+      },
+    };
+  };
+
+  const buildAdaptiveEdge = () => {
+    const [smoothPath, labelX, labelY] = getSmoothStepPath({
+      sourceX,
+      sourceY,
+      targetX,
+      targetY,
+      sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
+      targetPosition: isHorizontal ? Position.Left : Position.Top,
+      borderRadius: flowCanvasConsts.ARC_LENGTH,
+    });
+    return {
+      path: `${smoothPath} ${data.drawArrowHead ? arrowHead : ''}`,
+      buttonCenter: { x: labelX, y: labelY },
+    };
+  };
+
+  const { path, buttonCenter } = isAlignedWithAutoLayout
+    ? buildAlignedEdge()
+    : buildAdaptiveEdge();
 
   return (
     <>
@@ -29,11 +79,11 @@ export const ApStraightLineCanvasEdge = ({
       />
       {!data.hideAddButton && (
         <foreignObject
-          x={lineStartX - flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width / 2}
+          x={
+            buttonCenter.x - flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width / 2
+          }
           y={
-            lineStartY +
-            (targetY - sourceY) / 2 -
-            flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height / 2
+            buttonCenter.y - flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height / 2
           }
           width={flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width}
           height={flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height}
@@ -41,19 +91,9 @@ export const ApStraightLineCanvasEdge = ({
         >
           <ApAddButton
             edgeId={id}
-            parentStepName={source}
+            parentStepName={data.parentStepName}
             stepLocationRelativeToParent={StepLocationRelativeToParent.AFTER}
           ></ApAddButton>
-        </foreignObject>
-      )}
-
-      {showDebugForLineEndPoint && (
-        <foreignObject
-          x={lineStartX}
-          y={lineStartY + targetY - sourceY}
-          className="w-[20px] h-[20px] rounded-full bg-[red] flex items-center justify-center absolute"
-        >
-          <div className=" w-[20px] h-[20px] rounded-full bg-[red] flex items-center justify-center"></div>
         </foreignObject>
       )}
     </>

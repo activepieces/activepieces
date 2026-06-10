@@ -5,10 +5,12 @@ const StepNodeLogo = ({
   isSkipped,
   logoUrl,
   displayName,
+  size = 'default',
 }: {
   isSkipped: boolean;
   logoUrl: string;
   displayName: string;
+  size?: 'default' | 'lg';
 }) => {
   return (
     <div
@@ -21,7 +23,10 @@ const StepNodeLogo = ({
         alt={displayName}
         key={logoUrl + displayName}
         border={true}
-        className="w-9 h-9 p-2"
+        className={cn({
+          'w-9 h-9 p-2': size === 'default',
+          'w-12 h-12 p-2.5': size === 'lg',
+        })}
         roundedCorner={true}
       />
     </div>

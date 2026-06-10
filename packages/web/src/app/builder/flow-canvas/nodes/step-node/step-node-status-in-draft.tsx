@@ -153,7 +153,7 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
   );
 
   return (
-    <div className="absolute right-[1px] h-[20px] -top-[28px]">
+    <div className="absolute right-[1px] h-[20px] -top-[28px] whitespace-nowrap">
       <Tooltip>
         <TooltipTrigger asChild>
           <div className={badgeClassName}>

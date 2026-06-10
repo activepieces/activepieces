@@ -31,7 +31,7 @@ const ApStepNodeSkippedStatus = ({ stepName }: { stepName: string }) => {
   }
 
   return (
-    <div className="absolute right-[1px] h-[20px] -top-[28px]">
+    <div className="absolute right-[1px] h-[20px] -top-[28px] whitespace-nowrap">
       <div
         className={flowRunUtils.getStatusContainerClassName('default', true)}
       >

@@ -6,10 +6,14 @@ import {
   Map,
   Minus,
   MousePointer,
+  MoveHorizontal,
+  MoveVertical,
   Plus,
   StickyNote,
+  Wand2,
 } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
+import { usePrevious } from 'react-use';
 
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -97,13 +101,43 @@ const CanvasControls = ({
     });
   }, [zoomOut]);
 
+  const canvasOrientation = useBuilderStateContext(
+    (state) => state.canvasOrientation,
+  );
   const handleFitToView = useCallback(
     (isInitialRenderCall: boolean) => {
       const nodes = getNodes();
       if (nodes.length === 0) return;
+      if (canvasOrientation === 'horizontal') {
+        const stepNodeSize = flowCanvasConsts.STEP_NODE_SIZE.horizontal;
+        const minX = Math.min(...nodes.map((node) => node.position.x));
+        const maxX = Math.max(...nodes.map((node) => node.position.x));
+        const graphWidth = Math.max(maxX - minX, stepNodeSize.width);
+        const zoomRatio = Math.min(
+          Math.max(canvasWidth / graphWidth, 0.9),
+          1.25,
+        );
+        setViewport(
+          {
+            x:
+              -minX * zoomRatio +
+              verticalPaddingOnFitView * zoomRatio +
+              stepNodeSize.width,
+            y: canvasHeight / 2 - (stepNodeSize.height * zoomRatio) / 2,
+            zoom: zoomRatio,
+          },
+          {
+            duration: isInitialRenderCall ? 0 : 500,
+          },
+        );
+        return;
+      }
       const graphHeight = flowCanvasUtils.calculateGraphBoundingBox({
-        nodes: nodes as ApNode[],
-        edges: [],
+        graph: {
+          nodes: nodes as ApNode[],
+          edges: [],
+        },
+        orientation: canvasOrientation,
       }).height;
       const zoomRatio = Math.min(
         Math.max(canvasHeight / graphHeight, 0.9),
@@ -126,8 +160,22 @@ const CanvasControls = ({
         },
       );
     },
-    [getNodes, canvasHeight, setViewport, canvasWidth],
+    [getNodes, canvasHeight, setViewport, canvasWidth, canvasOrientation],
   );
+
+  const previousOrientation = usePrevious(canvasOrientation);
+  useEffect(() => {
+    if (
+      !hasCanvasBeenInitialised ||
+      previousOrientation === undefined ||
+      previousOrientation === canvasOrientation
+    ) {
+      return;
+    }
+    // the canvas remounts when the orientation changes, give it a frame to sync nodes before fitting
+    const timeoutId = setTimeout(() => handleFitToView(false), 100);
+    return () => clearTimeout(timeoutId);
+  }, [canvasOrientation]);
 
   useEffect(() => {
     if (!hasCanvasBeenInitialised) return;
@@ -173,16 +221,27 @@ const CanvasControls = ({
   const [noteDragOverlayMode, setDraggedNote] = useBuilderStateContext(
     (state) => [state.noteDragOverlayMode, state.setDraggedNote],
   );
-  const [setPanningMode, panningMode, showMinimap, setShowMinimap, readonly] =
-    useBuilderStateContext((state) => {
-      return [
-        state.setPanningMode,
-        state.panningMode,
-        state.showMinimap,
-        state.setShowMinimap,
-        state.readonly,
-      ];
-    });
+  const [
+    setPanningMode,
+    panningMode,
+    showMinimap,
+    setShowMinimap,
+    readonly,
+    setCanvasOrientation,
+    hasStepPositionOverrides,
+    resetStepPositionOverrides,
+  ] = useBuilderStateContext((state) => {
+    return [
+      state.setPanningMode,
+      state.panningMode,
+      state.showMinimap,
+      state.setShowMinimap,
+      state.readonly,
+      state.setCanvasOrientation,
+      Object.keys(state.stepPositionOverrides).length > 0,
+      state.resetStepPositionOverrides,
+    ];
+  });
   const spacePressed = useKeyPress('Space');
   const shiftPressed = useKeyPress('Shift');
   const isInGrabMode =
@@ -229,6 +288,40 @@ const CanvasControls = ({
             <Fullscreen className="size-4" />
           </Button>
         </CanvasButtonWrapper>
+        <CanvasButtonWrapper
+          tooltip={
+            canvasOrientation === 'horizontal'
+              ? t('Vertical layout')
+              : t('Horizontal layout')
+          }
+        >
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() =>
+              setCanvasOrientation(
+                canvasOrientation === 'horizontal' ? 'vertical' : 'horizontal',
+              )
+            }
+          >
+            {canvasOrientation === 'horizontal' ? (
+              <MoveVertical className="size-4" />
+            ) : (
+              <MoveHorizontal className="size-4" />
+            )}
+          </Button>
+        </CanvasButtonWrapper>
+        {hasStepPositionOverrides && (
+          <CanvasButtonWrapper tooltip={t('Reset layout')}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => resetStepPositionOverrides()}
+            >
+              <Wand2 className="size-4" />
+            </Button>
+          </CanvasButtonWrapper>
+        )}
         <div>
           <Separator orientation="vertical" className="h-5"></Separator>
         </div>

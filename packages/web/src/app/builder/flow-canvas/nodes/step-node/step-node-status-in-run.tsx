@@ -21,7 +21,7 @@ const ApStepNodeStatusInRun = ({ stepName }: { stepName: string }) => {
     ? flowRunUtils.getStatusIconForStep(stepStatusInRun)
     : ({ variant: 'default', text: t('Testing...') } as const);
   return (
-    <div className="absolute right-[1px]  h-[20px] -top-[28px]">
+    <div className="absolute right-[1px] h-[20px] -top-[28px] whitespace-nowrap">
       <div className={flowRunUtils.getStatusContainerClassName(variant, true)}>
         <StepStatusIcon
           status={stepStatusInRun}
