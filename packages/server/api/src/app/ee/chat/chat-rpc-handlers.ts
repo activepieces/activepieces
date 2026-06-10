@@ -83,7 +83,6 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             messages: allMessages,
             uiMessages: JSON.parse(JSON.stringify(uiMessagesWithUser)),
         })
-        await chatApprovalGate.clearCancel({ conversationId })
         if (input.runId) {
             await chatApprovalGate.storeActiveRunId({ conversationId, runId: input.runId })
         }
