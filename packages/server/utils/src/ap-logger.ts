@@ -62,12 +62,9 @@ function buildLogger(bindings: Record<string, unknown>): ApLogger {
                 const { message, fields, err } = normalizePinoArgsWithError(args)
                 const wide = wideEvent.current()
                 if (wide) {
-                    if (err) {
-                        wide.error(err, { ...bindings, ...fields })
-                    }
-                    else {
-                        wide.warn(message ?? 'error', { ...bindings, ...fields })
-                    }
+                    // RequestLogger.error accepts Error | string — message-only calls
+                    // must still land at error level (alerting keys on it).
+                    wide.error(err ?? message ?? 'error', { ...bindings, ...fields })
                 }
                 else {
                     if (err) {
@@ -87,12 +84,7 @@ function buildLogger(bindings: Record<string, unknown>): ApLogger {
                 const { message, fields, err } = normalizePinoArgsWithError(args)
                 const wide = wideEvent.current()
                 if (wide) {
-                    if (err) {
-                        wide.error(err, { ...bindings, ...fields })
-                    }
-                    else {
-                        wide.warn(message ?? 'fatal', { ...bindings, ...fields })
-                    }
+                    wide.error(err ?? message ?? 'fatal', { ...bindings, ...fields })
                 }
                 else {
                     if (err) {
@@ -132,16 +124,19 @@ function buildLogger(bindings: Record<string, unknown>): ApLogger {
     }
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
 function normalizePinoArgs(args: unknown[]): { message: string | undefined, fields: Record<string, unknown> } {
     const first = args[0]
     if (typeof first === 'string') {
         return { message: first, fields: {} }
     }
-    if (first !== null && typeof first === 'object' && !Array.isArray(first)) {
-        const obj = first as Record<string, unknown>
+    if (isRecord(first)) {
         const second = args[1]
         const message = typeof second === 'string' ? second : undefined
-        return { message, fields: obj }
+        return { message, fields: first }
     }
     return { message: String(first ?? ''), fields: {} }
 }
@@ -156,20 +151,19 @@ function normalizePinoArgsWithError(args: unknown[]): { message: string | undefi
         return { message, fields: {}, err: first }
     }
 
-    if (first !== null && typeof first === 'object' && !Array.isArray(first)) {
-        const obj = first as Record<string, unknown>
+    if (isRecord(first)) {
         const second = args[1]
         const message = typeof second === 'string' ? second : undefined
 
         // pino convention: obj.err or obj.error as Error
-        const errField = obj['err'] ?? obj['error']
+        const errField = first['err'] ?? first['error']
         if (errField instanceof Error) {
-            const { err: _err, error: _error, ...rest } = obj
+            const { err: _err, error: _error, ...rest } = first
             void _err
             void _error
             return { message, fields: rest, err: errField }
         }
-        return { message, fields: obj, err: undefined }
+        return { message, fields: first, err: undefined }
     }
     if (typeof first === 'string') {
         return { message: first, fields: {}, err: undefined }

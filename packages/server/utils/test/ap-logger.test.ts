@@ -157,6 +157,23 @@ describe('apLogger', () => {
             expect(spies.wideErrorSpy.mock.calls[0][0]).toBe(err)
         })
 
+        it('error(string) without an Error still lands at error level on the wide event', () => {
+            const logger = apLogger.create({})
+            logger.error('connection refused')
+            expect(spies.wideErrorSpy).toHaveBeenCalledOnce()
+            expect(spies.wideErrorSpy.mock.calls[0][0]).toBe('connection refused')
+            expect(spies.wideWarnSpy).not.toHaveBeenCalled()
+        })
+
+        it('error(obj, msg) without an Error still lands at error level on the wide event', () => {
+            const logger = apLogger.create({})
+            logger.error({ quota: true }, 'quota exceeded')
+            expect(spies.wideErrorSpy).toHaveBeenCalledOnce()
+            expect(spies.wideErrorSpy.mock.calls[0][0]).toBe('quota exceeded')
+            expect(spies.wideErrorSpy.mock.calls[0][1]).toMatchObject({ quota: true })
+            expect(spies.wideWarnSpy).not.toHaveBeenCalled()
+        })
+
         it('info() merges bindings into fields', () => {
             const logger = apLogger.create({ bindings: { service: 'api' } })
             logger.info({ userId: '1' }, 'request')

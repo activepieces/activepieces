@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { wideEvent } from '../src/wide-event'
+import { createLogger, initLogger } from 'evlog'
 import type { RequestLogger } from 'evlog'
 
 function makeMockLogger(): RequestLogger & {
@@ -128,5 +129,29 @@ describe('wideEvent', () => {
     it('timed() is a no-op outside a run() (no ambient logger)', async () => {
         const result = await wideEvent.timed({ name: 'test', fn: async () => 'val' })
         expect(result).toBe('val')
+    })
+
+    it('multiple timed() calls accumulate under the shared timings key on a real evlog logger', async () => {
+        // Uses the real evlog RequestLogger (not a mock) to verify that
+        // sequential timed() calls deep-merge instead of overwriting each
+        // other — e.g. provisioner.ts writes four timings in one job event.
+        initLogger({ env: { service: 'wide-event-test' }, silent: true })
+        const logger = createLogger({ event: 'job.test' })
+        await wideEvent.run({
+            logger,
+            fn: async () => {
+                await wideEvent.timed({ name: 'installCode', fn: async () => 'a' })
+                await wideEvent.timed({ name: 'installEngine', fn: async () => 'b' })
+                await wideEvent.timed({ name: 'provision', fn: async () => 'c' })
+            },
+        })
+        const emitted = logger.emit()
+        expect(emitted).toMatchObject({
+            timings: {
+                installCodeMs: expect.any(Number),
+                installEngineMs: expect.any(Number),
+                provisionMs: expect.any(Number),
+            },
+        })
     })
 })
