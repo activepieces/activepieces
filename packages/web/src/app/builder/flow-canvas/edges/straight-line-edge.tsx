@@ -6,12 +6,11 @@ import {
   Position,
 } from '@xyflow/react';
 
-import { useBuilderStateContext } from '../../builder-hooks';
 import { flowCanvasConsts } from '../utils/consts';
-import { svgPathUtils } from '../utils/svg-path-utils';
 import { ApStraightLineEdge } from '../utils/types';
 
 import { ApAddButton } from './add-button';
+import { useEdgeLayoutSpace } from './use-edge-layout-space';
 
 export const ApStraightLineCanvasEdge = ({
   sourceX,
@@ -21,29 +20,23 @@ export const ApStraightLineCanvasEdge = ({
   data,
   id,
 }: EdgeProps & ApStraightLineEdge) => {
-  const canvasOrientation = useBuilderStateContext(
-    (state) => state.canvasOrientation,
-  );
-  const isHorizontal = canvasOrientation === 'horizontal';
-  const layoutSource = isHorizontal
-    ? { x: sourceY, y: sourceX }
-    : { x: sourceX, y: sourceY };
-  const layoutTarget = isHorizontal
-    ? { x: targetY, y: targetX }
-    : { x: targetX, y: targetY };
+  const {
+    isHorizontal,
+    layoutSource,
+    layoutTarget,
+    toCanvasPath,
+    adaptiveArrowHead,
+  } = useEdgeLayoutSpace({ sourceX, sourceY, targetX, targetY });
   const isAlignedWithAutoLayout =
     Math.abs(layoutTarget.x - layoutSource.x) < 1 &&
     layoutTarget.y > layoutSource.y;
-  const arrowHead = isHorizontal
-    ? flowCanvasConsts.ARROW_RIGHT_HEAD
-    : flowCanvasConsts.ARROW_DOWN;
 
   const buildAlignedEdge = () => {
     const lineLength = layoutTarget.y - layoutSource.y;
     const layoutPath = `M ${layoutSource.x} ${layoutSource.y} v${lineLength}
    ${data.drawArrowHead ? flowCanvasConsts.ARROW_DOWN : ''}`;
     return {
-      path: isHorizontal ? svgPathUtils.transposePath(layoutPath) : layoutPath,
+      path: toCanvasPath(layoutPath),
       buttonCenter: {
         x: (sourceX + targetX) / 2,
         y: (sourceY + targetY) / 2,
@@ -62,7 +55,7 @@ export const ApStraightLineCanvasEdge = ({
       borderRadius: flowCanvasConsts.ARC_LENGTH,
     });
     return {
-      path: `${smoothPath} ${data.drawArrowHead ? arrowHead : ''}`,
+      path: `${smoothPath} ${data.drawArrowHead ? adaptiveArrowHead : ''}`,
       buttonCenter: { x: labelX, y: labelY },
     };
   };

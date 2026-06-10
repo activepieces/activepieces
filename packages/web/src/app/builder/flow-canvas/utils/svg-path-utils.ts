@@ -1,13 +1,7 @@
+import { chunk } from '@activepieces/shared';
+
 const COMMAND_REGEX = /([MmLlHhVvAa])([^MmLlHhVvAa]*)/g;
 const NUMBER_REGEX = /-?\d*\.?\d+(?:e[+-]?\d+)?/gi;
-
-function chunk<T>(items: T[], size: number): T[][] {
-  const result: T[][] = [];
-  for (let i = 0; i < items.length; i += size) {
-    result.push(items.slice(i, i + size));
-  }
-  return result;
-}
 
 function transposeCommand({
   command,

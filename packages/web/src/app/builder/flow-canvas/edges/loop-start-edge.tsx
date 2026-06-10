@@ -6,12 +6,11 @@ import {
   Position,
 } from '@xyflow/react';
 
-import { useBuilderStateContext } from '../../builder-hooks';
 import { flowCanvasConsts } from '../utils/consts';
-import { svgPathUtils } from '../utils/svg-path-utils';
 import { ApLoopStartEdge } from '../utils/types';
 
 import { ApAddButton } from './add-button';
+import { useEdgeLayoutSpace } from './use-edge-layout-space';
 
 export const ApLoopStartLineCanvasEdge = ({
   sourceX,
@@ -22,17 +21,14 @@ export const ApLoopStartLineCanvasEdge = ({
   source,
   id,
 }: EdgeProps & ApLoopStartEdge) => {
-  const canvasOrientation = useBuilderStateContext(
-    (state) => state.canvasOrientation,
-  );
-  const isHorizontal = canvasOrientation === 'horizontal';
-  const layout = flowCanvasConsts.ORIENTATION_LAYOUT[canvasOrientation];
-  const layoutSource = isHorizontal
-    ? { x: sourceY, y: sourceX }
-    : { x: sourceX, y: sourceY };
-  const layoutTarget = isHorizontal
-    ? { x: targetY, y: targetX }
-    : { x: targetX, y: targetY };
+  const {
+    isHorizontal,
+    layout,
+    layoutSource,
+    layoutTarget,
+    toCanvasPath,
+    adaptiveArrowHead,
+  } = useEdgeLayoutSpace({ sourceX, sourceY, targetX, targetY });
 
   const verticalLineLength =
     layout.spaceAlongBetweenSteps -
@@ -63,7 +59,7 @@ export const ApLoopStartLineCanvasEdge = ({
       y: layoutStartY + verticalLineLength + flowCanvasConsts.ARC_LENGTH,
     };
     return {
-      path: isHorizontal ? svgPathUtils.transposePath(layoutPath) : layoutPath,
+      path: toCanvasPath(layoutPath),
       buttonPosition: isHorizontal
         ? { x: layoutButtonPosition.y, y: layoutButtonPosition.x }
         : layoutButtonPosition,
@@ -80,11 +76,8 @@ export const ApLoopStartLineCanvasEdge = ({
       targetPosition: isHorizontal ? Position.Left : Position.Top,
       borderRadius: flowCanvasConsts.ARC_LENGTH,
     });
-    const arrowHead = isHorizontal
-      ? flowCanvasConsts.ARROW_RIGHT_HEAD
-      : flowCanvasConsts.ARROW_DOWN;
     return {
-      path: `${smoothPath} ${!data.isLoopEmpty ? arrowHead : ''}`,
+      path: `${smoothPath} ${!data.isLoopEmpty ? adaptiveArrowHead : ''}`,
       buttonPosition: {
         x: labelX - flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width / 2,
         y: labelY - flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height / 2,

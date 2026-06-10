@@ -1,12 +1,11 @@
 import { StepLocationRelativeToParent } from '@activepieces/shared';
 import { BaseEdge, EdgeProps } from '@xyflow/react';
 
-import { useBuilderStateContext } from '../../builder-hooks';
 import { flowCanvasConsts } from '../utils/consts';
-import { svgPathUtils } from '../utils/svg-path-utils';
 import { ApRouterEndEdge } from '../utils/types';
 
 import { ApAddButton } from './add-button';
+import { useEdgeLayoutSpace } from './use-edge-layout-space';
 
 export const ApRouterEndCanvasEdge = ({
   sourceX,
@@ -16,17 +15,8 @@ export const ApRouterEndCanvasEdge = ({
   data,
   id,
 }: EdgeProps & Omit<ApRouterEndEdge, 'position'>) => {
-  const canvasOrientation = useBuilderStateContext(
-    (state) => state.canvasOrientation,
-  );
-  const isHorizontal = canvasOrientation === 'horizontal';
-  const layout = flowCanvasConsts.ORIENTATION_LAYOUT[canvasOrientation];
-  const layoutSource = isHorizontal
-    ? { x: sourceY, y: sourceX }
-    : { x: sourceX, y: sourceY };
-  const layoutTarget = isHorizontal
-    ? { x: targetY, y: targetX }
-    : { x: targetX, y: targetY };
+  const { isHorizontal, layout, layoutSource, layoutTarget, toCanvasPath } =
+    useEdgeLayoutSpace({ sourceX, sourceY, targetX, targetY });
 
   const verticalLineLength =
     layout.spaceAlongBetweenSteps -
@@ -85,9 +75,7 @@ export const ApRouterEndCanvasEdge = ({
   };
 
   const layoutPath = generateLayoutPath();
-  const path = isHorizontal
-    ? svgPathUtils.transposePath(layoutPath)
-    : layoutPath;
+  const path = toCanvasPath(layoutPath);
 
   const buttonPosition = isHorizontal
     ? {

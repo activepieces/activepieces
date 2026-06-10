@@ -34,6 +34,18 @@ import {
   CanvasOrientation,
 } from './types';
 
+/**
+ * How the horizontal canvas works: the graph is always built in "layout
+ * space", the coordinate system of the vertical canvas, where y advances along
+ * the flow and x spreads branches side by side. The only orientation-specific
+ * inputs are the node sizes and gaps from ORIENTATION_LAYOUT (horizontal steps
+ * are compact squares). For the horizontal canvas the finished graph is then
+ * reflected across the y = x axis — node positions by transposeGraphPositions
+ * below, edge SVG paths by svgPathUtils.transposePath inside the edge
+ * components — turning the top-to-bottom layout into a left-to-right one.
+ * Dragged steps get their persisted position applied last; edges notice the
+ * deviation from the auto layout and fall back to a smooth-step path.
+ */
 const getLayout = (orientation: CanvasOrientation) =>
   flowCanvasLayoutConsts.ORIENTATION_LAYOUT[orientation];
 

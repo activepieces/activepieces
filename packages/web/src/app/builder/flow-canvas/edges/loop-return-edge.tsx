@@ -1,12 +1,11 @@
 import { StepLocationRelativeToParent } from '@activepieces/shared';
 import { BaseEdge, EdgeProps } from '@xyflow/react';
 
-import { useBuilderStateContext } from '../../builder-hooks';
 import { flowCanvasConsts } from '../utils/consts';
-import { svgPathUtils } from '../utils/svg-path-utils';
 import { ApLoopReturnEdge } from '../utils/types';
 
 import { ApAddButton } from './add-button';
+import { useEdgeLayoutSpace } from './use-edge-layout-space';
 
 export const ApLoopReturnLineCanvasEdge = ({
   sourceX,
@@ -16,17 +15,8 @@ export const ApLoopReturnLineCanvasEdge = ({
   data,
   id,
 }: EdgeProps & ApLoopReturnEdge) => {
-  const canvasOrientation = useBuilderStateContext(
-    (state) => state.canvasOrientation,
-  );
-  const isHorizontal = canvasOrientation === 'horizontal';
-  const layout = flowCanvasConsts.ORIENTATION_LAYOUT[canvasOrientation];
-  const layoutSource = isHorizontal
-    ? { x: sourceY, y: sourceX }
-    : { x: sourceX, y: sourceY };
-  const layoutTarget = isHorizontal
-    ? { x: targetY, y: targetX }
-    : { x: targetX, y: targetY };
+  const { isHorizontal, layout, layoutSource, layoutTarget, toCanvasPath } =
+    useEdgeLayoutSpace({ sourceX, sourceY, targetX, targetY });
 
   const horizontalLineLength =
     Math.abs(layoutSource.x - layoutTarget.x) - 2 * flowCanvasConsts.ARC_LENGTH;
@@ -60,9 +50,7 @@ export const ApLoopReturnLineCanvasEdge = ({
     data.drawArrowHeadAfterEnd ? flowCanvasConsts.ARROW_DOWN : ''
   }
    `;
-  const path = isHorizontal
-    ? svgPathUtils.transposePath(layoutPath)
-    : layoutPath;
+  const path = toCanvasPath(layoutPath);
   const layoutButtonPosition = {
     x:
       layoutSource.x -
