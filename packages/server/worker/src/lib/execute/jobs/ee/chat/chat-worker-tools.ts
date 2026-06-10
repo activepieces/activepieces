@@ -132,11 +132,12 @@ function createEventEmitter({ sendEvent, userId, conversationId, log }: {
     }
 }
 
-function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onGateOpened }: {
+function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onGateOpened, log }: {
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean, payload?: Record<string, unknown> }>
     displayToolTimeoutMs: number
     onConnectionSelected?: (params: { pieceName: string, connectionExternalId: string, label: string, projectId: string }) => Promise<void>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
+    log?: { warn: (obj: Record<string, unknown>, msg: string) => void }
 }): ToolSet {
     function blockingExecute({ dismissMessage, successKey, toolName }: {
         dismissMessage: string
@@ -193,6 +194,9 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
                                 label: typeof conn['displayName'] === 'string' ? conn['displayName'] as string : input.displayName,
                                 projectId: typeof conn['projectId'] === 'string' ? conn['projectId'] as string : '',
                             })))
+                    }
+                    else {
+                        log?.warn({ piece: input.piece, payload: decision.payload }, 'ap_show_connection_required approved but payload missing connections array')
                     }
                 }
                 return { connected: true, ...decision.payload }
