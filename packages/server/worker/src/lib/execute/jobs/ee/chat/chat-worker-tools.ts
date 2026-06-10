@@ -199,7 +199,7 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
                         log?.warn({ piece: input.piece, payload: decision.payload }, 'ap_show_connection_required approved but payload missing connections array')
                     }
                 }
-                return { connected: true, ...decision.payload }
+                return { connected: true }
             },
         }),
 
