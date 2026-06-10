@@ -83,12 +83,16 @@ async function requestCancel({ conversationId, runId }: { conversationId: string
 }
 
 async function isCancelled({ conversationId, runId }: { conversationId: string, runId?: string }): Promise<boolean> {
-    if (runId) {
-        const raw = await distributedStore.get<{ cancelled: boolean }>(`${CANCEL_KEY_PREFIX}${conversationId}:${runId}`)
+    const conversationKey = `${CANCEL_KEY_PREFIX}${conversationId}`
+    if (!runId) {
+        const raw = await distributedStore.get<{ cancelled: boolean }>(conversationKey)
         return raw?.cancelled === true
     }
-    const raw = await distributedStore.get<{ cancelled: boolean }>(`${CANCEL_KEY_PREFIX}${conversationId}`)
-    return raw?.cancelled === true
+    const [runScoped, conversationScoped] = await Promise.all([
+        distributedStore.get<{ cancelled: boolean }>(`${CANCEL_KEY_PREFIX}${conversationId}:${runId}`),
+        distributedStore.get<{ cancelled: boolean }>(conversationKey),
+    ])
+    return runScoped?.cancelled === true || conversationScoped?.cancelled === true
 }
 
 async function clearCancel({ conversationId }: { conversationId: string }): Promise<void> {
