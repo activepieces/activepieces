@@ -54,15 +54,17 @@ async function deleteConversation(id: string): Promise<void> {
 async function sendMessage({
   conversationId,
   content,
+  runId,
   files,
 }: {
   conversationId: string;
   content: string;
+  runId?: string;
   files?: Array<{ name: string; mimeType: string; data: string }>;
-}): Promise<{ conversationId: string }> {
-  return api.post<{ conversationId: string }>(
+}): Promise<{ conversationId: string; runId?: string }> {
+  return api.post<{ conversationId: string; runId?: string }>(
     `/v1/chat/conversations/${conversationId}/messages`,
-    { content, files },
+    { content, runId, files },
   );
 }
 

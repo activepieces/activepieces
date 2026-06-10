@@ -15,7 +15,7 @@ import { ChatUIMessage } from './chat-types';
 import { chunkReducer, StreamingState } from './chunk-reducer';
 
 const THROTTLE_MS = 100;
-const STREAM_TIMEOUT_MS = 10 * 60 * 1000;
+const STREAM_TIMEOUT_MS = 2 * 60 * 1000;
 const STALE_CHECK_INTERVAL_MS = 15_000;
 
 export function useStreamingReducer({
@@ -49,6 +49,7 @@ export function useStreamingReducer({
   const [streamError, setStreamError] = useState<string | null>(null);
 
   const streamPhaseRef = useRef<StreamPhase>('idle');
+  const streamGenerationRef = useRef(0);
   const reducerStateRef = useRef<StreamingState | null>(null);
   const chunkBufferRef = useRef<UIMessageChunk[]>([]);
   const throttleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -127,16 +128,32 @@ export function useStreamingReducer({
     };
   }, [teardown]);
 
+  const activeRunIdRef = useRef<string | undefined>(undefined);
+
+  const setActiveRunId = useCallback((runId: string) => {
+    activeRunIdRef.current = runId;
+  }, []);
+
   const startStream = useCallback(
-    (conversationId: string) => {
+    (
+      conversationId: string,
+      options?: {
+        initialParts?: ChatUIMessage['parts'];
+      },
+    ) => {
       teardown();
+      streamGenerationRef.current++;
+      activeRunIdRef.current = undefined;
 
       lastChunkTimeRef.current = Date.now();
-      reducerStateRef.current = chunkReducer.createStreamingState();
+      reducerStateRef.current = chunkReducer.createStreamingState({
+        initialParts: options?.initialParts,
+      });
+      const { message } = reducerStateRef.current;
       setStreamingMessage({
-        id: reducerStateRef.current.message.id,
+        id: message.id,
         role: 'assistant',
-        parts: [],
+        parts: [...message.parts],
       });
       updatePhase('awaiting-stream');
       setStreamError(null);
@@ -162,8 +179,13 @@ export function useStreamingReducer({
         onStreamErrorRef.current({ conversationId, errorMessage, errorCode });
       };
 
+      const expectedGeneration = streamGenerationRef.current;
+
       const handler = (event: SocketEvent) => {
         if (event.conversationId !== conversationId) return;
+        if (streamGenerationRef.current !== expectedGeneration) return;
+        const runId = activeRunIdRef.current;
+        if (runId && event.runId && event.runId !== runId) return;
 
         if (event.type === ChatAgentEventType.CHUNK) {
           updatePhase('streaming');
@@ -212,6 +234,13 @@ export function useStreamingReducer({
 
       socket.on(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
 
+      const reconnectHandler = () => {
+        socket.off(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
+        socket.on(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
+        lastChunkTimeRef.current = Date.now();
+      };
+      socket.on('connect', reconnectHandler);
+
       streamTimeoutRef.current = setTimeout(() => {
         handleError({ errorMessage: 'Stream timed out' });
       }, STREAM_TIMEOUT_MS);
@@ -224,6 +253,7 @@ export function useStreamingReducer({
 
       cleanupRef.current = () => {
         socket.off(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
+        socket.off('connect', reconnectHandler);
       };
     },
     [socket, teardown, flush, scheduleFlush, updatePhase],
@@ -236,17 +266,28 @@ export function useStreamingReducer({
     updatePhase('idle');
   }, [teardown, updatePhase]);
 
-  const clearStreamingState = useCallback(() => {
-    setStreamingMessage(null);
-    setStreamError(null);
-    updatePhase('idle');
-  }, [updatePhase]);
+  const clearStreamingState = useCallback(
+    (generation?: number) => {
+      if (
+        generation !== undefined &&
+        generation !== streamGenerationRef.current
+      ) {
+        return;
+      }
+      setStreamingMessage(null);
+      setStreamError(null);
+      updatePhase('idle');
+    },
+    [updatePhase],
+  );
 
   return {
     streamingMessage,
     streamPhase,
+    streamGeneration: streamGenerationRef,
     streamError,
     startStream,
+    setActiveRunId,
     stopStream,
     clearStreamingState,
   };
@@ -254,6 +295,7 @@ export function useStreamingReducer({
 
 type SocketEvent = {
   conversationId: string;
+  runId?: string;
   type: string;
   data: unknown;
 };

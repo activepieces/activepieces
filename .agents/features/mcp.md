@@ -50,7 +50,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `ap_list_connections` — list app connections
 
 **Controllable tools** (can be toggled per-project):
-- `ap_create_flow`, `ap_rename_flow` — flow management
+- `ap_create_flow`, `ap_rename_flow`, `ap_build_flow`, `ap_delete_flow`, `ap_duplicate_flow` — flow management; `ap_build_flow` returns `flowUrl` (via `domainHelper.getPublicUrl`) in both text and structured output
 - `ap_update_trigger` — change flow trigger
 - `ap_add_step`, `ap_update_step`, `ap_delete_step` — step management
 - `ap_add_branch`, `ap_delete_branch` — conditional branching
@@ -59,7 +59,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `ap_manage_notes` — add/update flow annotations
 - `ap_create_table`, `ap_delete_table`, `ap_list_tables` — table management
 - `ap_manage_fields`, `ap_insert_records`, `ap_find_records`, `ap_update_record`, `ap_delete_records` — record operations
-- `ap_test_flow`, `ap_test_step`, `ap_validate_flow`, `ap_validate_step_config`, `ap_get_piece_props` — build/test helpers
+- `ap_test_flow`, `ap_test_step`, `ap_validate_flow`, `ap_validate_step_config`, `ap_get_piece_props`, `ap_resolve_property_options` — build/test helpers
 - `ap_list_runs`, `ap_get_run`, `ap_retry_run` — run management
 - `ap_list_ai_models`, `ap_setup_guide` — discovery
 
