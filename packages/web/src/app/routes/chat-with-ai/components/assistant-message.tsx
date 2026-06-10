@@ -198,6 +198,8 @@ export const AssistantMessage = memo(function AssistantMessage({
       }
 
       let currentSteps: ThinkingStep[] = [];
+      // Reasoning is one flat string from the AI SDK — no way to slice per tool call,
+      // so only the first sub-block after a split shows the reasoning accordion text.
       let currentReasoning = block.reasoningText;
 
       for (const step of block.steps) {
