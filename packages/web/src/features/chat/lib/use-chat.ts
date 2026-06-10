@@ -511,8 +511,8 @@ export function useAgentChat({
       }
 
       const runId = apId();
-      setActiveRunId(runId);
       startStream(convId);
+      setActiveRunId(runId);
       updateSendStatus({ type: 'idle' });
 
       const { error: sendError } = await tryCatch(async () =>
