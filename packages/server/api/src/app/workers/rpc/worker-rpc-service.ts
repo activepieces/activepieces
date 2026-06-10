@@ -33,9 +33,18 @@ import { getWorkerGroupQueueName, QueueName, RunsMetadataUpsertData } from '../j
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
 
-function getPollQueueNames(workerGroupId: string | undefined, workerQueues: string[] | undefined): string[] {
+function getPollQueueNames(log: FastifyBaseLogger, workerGroupId: string | undefined, workerQueues: string[] | undefined): string[] {
     if (!isNil(workerQueues) && workerQueues.length > 0) {
-        return workerQueues
+        const validWorkerQueueNames = Object.values(QueueName) as string[]
+        const workerGroupQueueName = workerGroupId ? getWorkerGroupQueueName(workerGroupId) : undefined
+        const invalidQueues = workerQueues.filter(q => !validWorkerQueueNames.includes(q) && q !== workerGroupQueueName)
+        if (invalidQueues.length > 0) {
+            log.warn({ invalidQueues, workerQueues }, '[workerRpc#getPollQueueNames] Ignoring invalid queue names from worker — check AP_WORKER_QUEUES for typos')
+        }
+        const validQueues = workerQueues.filter(q => validWorkerQueueNames.includes(q) || q === workerGroupQueueName)
+        if (validQueues.length > 0) {
+            return validQueues
+        }
     }
     if (workerGroupId) {
         return [getWorkerGroupQueueName(workerGroupId)]
@@ -52,7 +61,7 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string, w
         async poll(input) {
             log.info({ workerId: input.workerId, workerGroupId, workerQueues }, '[workerRpc#poll] Poll request received')
             await machineService(log).onConnection(input, workerGroupId)
-            const pollQueueNames = getPollQueueNames(workerGroupId, workerQueues)
+            const pollQueueNames = getPollQueueNames(log, workerGroupId, workerQueues)
             const job = pollQueueNames.length === 1
                 ? await jobBroker(log).poll(pollQueueNames[0])
                 : await jobBroker(log).pollMultiple(pollQueueNames)

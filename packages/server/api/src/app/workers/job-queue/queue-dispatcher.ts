@@ -4,6 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 
 const WAITER_TIMEOUT_MS = 50_000
 const ERROR_RETRY_DELAY_MS = 5_000
+const MAX_MULTI_QUEUE_COUNT = 3
 
 function createQueueDispatcher(params: {
     queueName: string
@@ -85,7 +86,14 @@ function createMultiQueueDispatcher(params: {
     onOrphanedJob: (jobId: string, token: string, queueName: string, log: FastifyBaseLogger) => Promise<void>
     log: FastifyBaseLogger
 }): QueueDispatcher {
-    const { queueConfigs, dequeue, onOrphanedJob, log } = params
+    const { queueConfigs: rawQueueConfigs, dequeue, onOrphanedJob, log } = params
+    if (rawQueueConfigs.length > MAX_MULTI_QUEUE_COUNT) {
+        log.warn(
+            { queueCount: rawQueueConfigs.length, maxQueueCount: MAX_MULTI_QUEUE_COUNT },
+            `[QueueDispatcher] Multi-queue dispatcher supports at most ${MAX_MULTI_QUEUE_COUNT} queues, but ${rawQueueConfigs.length} were provided. Only the first ${MAX_MULTI_QUEUE_COUNT} will be polled.`,
+        )
+    }
+    const queueConfigs = rawQueueConfigs.slice(0, MAX_MULTI_QUEUE_COUNT)
     const waiters: Waiter[] = []
     let loopRunning = false
     let roundRobinIndex = 0
