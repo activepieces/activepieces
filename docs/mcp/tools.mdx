@@ -171,6 +171,14 @@ Get step-by-step instructions for setting up connections or AI providers. Return
 | `topic` | string | Yes | `connection` or `ai_provider` |
 | `pieceName` | string | No | For connections: which piece needs auth |
 
+### ap_set_project_context
+
+Set or clear the active project context. All tools require a project context to operate. Call with a `projectId` to select a project, or without to clear the selection. Always returns the list of available projects.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `projectId` | string | No | The project ID to select. Omit to clear the current selection and list available projects. |
+
 ---
 
 ## Flow Management
@@ -322,6 +330,7 @@ Delete a step from a flow.
 |-------|------|----------|-------------|
 | `flowId` | string | Yes | The flow ID |
 | `stepName` | string | Yes | Step to delete |
+| `displayName` | string | No | Short approval prompt shown to the user |
 
 ---
 
@@ -371,6 +380,7 @@ Delete a branch from a router step. Cannot delete the fallback (last) branch.
 | `flowId` | string | Yes | The flow ID |
 | `routerStepName` | string | Yes | The router step name |
 | `branchIndex` | number | Yes | Branch index to delete (0-based) |
+| `displayName` | string | No | Short approval prompt shown to the user |
 
 ---
 
@@ -414,6 +424,7 @@ Permanently delete a table and all its data.
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
 | `tableId` | string | Yes | The table ID |
+| `displayName` | string | No | Short approval prompt shown to the user |
 
 ### ap_manage_fields
 
@@ -454,6 +465,7 @@ Permanently delete one or more records.
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
 | `recordIds` | array | Yes | Record IDs to delete |
+| `displayName` | string | No | Short approval prompt shown to the user |
 
 ---
 
@@ -468,6 +480,7 @@ Test a flow end-to-end in the test environment. Pass `triggerTestData` to provid
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
 | `flowId` | string | Yes | The flow ID |
+| `displayName` | string | No | Short approval prompt shown to the user |
 | `triggerTestData` | object | No | Mock trigger output data. Saved as sample data before running the test. |
 
 <Warning>
@@ -482,6 +495,7 @@ Test a single step within a flow. Runs all steps up to and including the target 
 |-------|------|----------|-------------|
 | `flowId` | string | Yes | The flow ID |
 | `stepName` | string | Yes | Step to test |
+| `displayName` | string | No | Short approval prompt shown to the user |
 | `triggerTestData` | object | No | Mock trigger output data. |
 
 ### ap_retry_run
