@@ -2,7 +2,8 @@ import { distributedStore, redisConnections } from '../../database/redis-connect
 import { pubsub } from '../../helper/pubsub'
 
 const GATE_TTL_SECONDS = 15 * 60
-const CANCEL_TTL_SECONDS = 10 * 60
+const CANCEL_TTL_SECONDS = 2 * 60 * 60
+
 const CONNECTION_STORE_TTL_SECONDS = 24 * 60 * 60
 const KEY_PREFIX = 'tool-approval-decision:'
 const CHANNEL_PREFIX = 'tool-approval:'
@@ -83,11 +84,15 @@ async function requestCancel({ conversationId, runId }: { conversationId: string
 }
 
 async function isCancelled({ conversationId, runId }: { conversationId: string, runId?: string }): Promise<boolean> {
-    const key = runId
-        ? `${CANCEL_KEY_PREFIX}${conversationId}:${runId}`
-        : `${CANCEL_KEY_PREFIX}${conversationId}`
-    const raw = await distributedStore.get<{ cancelled: boolean }>(key)
-    return raw?.cancelled === true
+    if (!runId) {
+        const raw = await distributedStore.get<{ cancelled: boolean }>(`${CANCEL_KEY_PREFIX}${conversationId}`)
+        return raw?.cancelled === true
+    }
+    const [scoped, fallback] = await Promise.all([
+        distributedStore.get<{ cancelled: boolean }>(`${CANCEL_KEY_PREFIX}${conversationId}:${runId}`),
+        distributedStore.get<{ cancelled: boolean }>(`${CANCEL_KEY_PREFIX}${conversationId}`),
+    ])
+    return scoped?.cancelled === true || fallback?.cancelled === true
 }
 
 async function clearCancel({ conversationId }: { conversationId: string }): Promise<void> {
