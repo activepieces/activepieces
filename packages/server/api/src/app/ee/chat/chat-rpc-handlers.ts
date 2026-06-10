@@ -28,6 +28,8 @@ import { chatMcp } from './mcp/chat-mcp'
 import { chatPrompt } from './prompt/chat-prompt'
 import { executeCrossProjectTool } from './tools/chat-tools'
 
+const MAX_APPROVAL_BLOCK_MS = 50_000
+
 export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
     async getChatConfig(input: GetChatConfigRequest): Promise<ChatConfigResponse> {
         const { conversationId, platformId, userId, userMessage, modelName, files } = input
@@ -81,9 +83,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             messages: allMessages,
             uiMessages: JSON.parse(JSON.stringify(uiMessagesWithUser)),
         })
-        setTimeout(() => {
-            chatApprovalGate.clearCancel({ conversationId }).catch(() => {})
-        }, 5_000)
+        await chatApprovalGate.clearCancel({ conversationId })
 
         const estimatedTokens = chatCompaction.estimateTokenCount({ messages: allMessages, systemPromptLength: systemPromptText.length })
         let compactionState = { summary: conversation.summary ?? null, summarizedUpToIndex: conversation.summarizedUpToIndex ?? null }
@@ -175,16 +175,61 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             if (typeof conversationId !== 'string') {
                 return { result: false }
             }
-            const cancelled = await chatApprovalGate.isCancelled({ conversationId })
+            const runId = typeof input.toolInput.runId === 'string' ? input.toolInput.runId : undefined
+            if (runId) {
+                const currentRunId = await chatApprovalGate.getActiveRunId({ conversationId })
+                if (currentRunId === runId) {
+                    await chatApprovalGate.storeActiveRunId({ conversationId, runId })
+                }
+            }
+            const cancelled = await chatApprovalGate.isCancelled({ conversationId, runId })
             return { result: cancelled }
         }
-        if (input.toolName === '__approval_check') {
+        if (input.toolName === '__approval_wait') {
             const gateId = input.toolInput.gateId
             if (typeof gateId !== 'string') {
-                return { result: false }
+                return { result: 'pending' }
             }
-            const decision = await chatApprovalGate.checkDecision({ gateId })
+            const rawTimeout = input.toolInput.timeoutMs
+            const timeoutMs = Math.min(typeof rawTimeout === 'number' ? rawTimeout : MAX_APPROVAL_BLOCK_MS, MAX_APPROVAL_BLOCK_MS)
+            const decision = await chatApprovalGate.waitForDecision({ gateId, timeoutMs })
             return { result: decision }
+        }
+        if (input.toolName === '__store_pending_gate') {
+            const { conversationId: convId, gateId, toolName: gateTool, displayName, toolInput: gateInput } = input.toolInput
+            if (typeof convId === 'string' && typeof gateId === 'string' && typeof gateTool === 'string') {
+                await chatApprovalGate.storePendingGate({
+                    conversationId: convId,
+                    gate: {
+                        gateId,
+                        toolName: gateTool,
+                        displayName: typeof displayName === 'string' ? displayName : gateTool,
+                        toolInput: typeof gateInput === 'object' && gateInput !== null ? gateInput as Record<string, unknown> : {},
+                    },
+                })
+            }
+            return { result: { success: true } }
+        }
+        if (input.toolName === '__store_selected_connection') {
+            const { pieceName, connectionExternalId, label, projectId } = input.toolInput
+            if (typeof input.conversationId === 'string' && typeof pieceName === 'string' && typeof connectionExternalId === 'string') {
+                await chatApprovalGate.storeSelectedConnection({
+                    conversationId: input.conversationId,
+                    pieceName,
+                    externalId: connectionExternalId,
+                    label: typeof label === 'string' ? label : connectionExternalId,
+                    projectId: typeof projectId === 'string' ? projectId : '',
+                })
+            }
+            return { result: { success: true } }
+        }
+        if (input.toolName === '__get_available_connections') {
+            const { pieceName } = input.toolInput
+            if (typeof input.conversationId === 'string' && typeof pieceName === 'string') {
+                const connections = await chatApprovalGate.getAvailableConnections({ conversationId: input.conversationId, pieceName })
+                return { result: connections }
+            }
+            return { result: [] }
         }
 
         const result = await executeCrossProjectTool({
@@ -192,6 +237,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             toolInput: input.toolInput,
             platformId: input.platformId,
             userId: input.userId,
+            conversationId: input.conversationId,
             log,
         })
         return { result }

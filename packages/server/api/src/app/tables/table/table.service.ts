@@ -60,7 +60,7 @@ export const tableService = {
         }
         return table
     },
-    async list({ projectId, cursor, limit, name, externalIds, folderId, includeRowCount }: ListParams): Promise<SeekPage<Table & { rowCount?: number }>> {
+    async list({ projectId, cursor, limit, name, externalIds, folderId, folderIds, includeRowCount }: ListParams): Promise<SeekPage<Table & { rowCount?: number }>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
 
         const paginator = buildPaginator({
@@ -82,6 +82,10 @@ export const tableService = {
 
         if (!isNil(folderId)) {
             queryWhere.folderId = folderId === UncategorizedFolderId ? IsNull() : folderId
+        }
+
+        if (!isNil(folderIds)) {
+            queryWhere.folderId = In(folderIds)
         }
 
         const queryBuilder = tableRepo().createQueryBuilder('table').where(queryWhere)
@@ -315,6 +319,7 @@ type ListParams = {
     name: string | undefined
     externalIds: string[] | undefined
     folderId: string | undefined
+    folderIds?: string[] | undefined
     includeRowCount?: boolean
 }
 

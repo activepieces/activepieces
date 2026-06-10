@@ -17,8 +17,6 @@ import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { cn } from '@/lib/utils';
 
-import { StreamingText } from './streaming-text';
-
 export function ThinkingBlock({
   thinkingSteps,
   reasoningText,
@@ -94,7 +92,6 @@ export function ThinkingBlock({
                     : `${step.kind}-${idx}`
                 }
                 step={step}
-                isStreaming={isStreaming}
               />
             ))}
           </div>
@@ -104,42 +101,20 @@ export function ThinkingBlock({
   );
 }
 
-function StepRenderer({
-  step,
-  isStreaming,
-}: {
-  step: ThinkingStep;
-  isStreaming: boolean;
-}) {
+function StepRenderer({ step }: { step: ThinkingStep }) {
   switch (step.kind) {
     case 'reasoning':
       return (
         <div className="py-0.5">
-          {isStreaming ? (
-            <StreamingText
-              text={step.text}
-              isStreaming={true}
-              className="whitespace-pre-wrap break-words text-sm text-muted-foreground leading-relaxed"
-            />
-          ) : (
-            <p className="whitespace-pre-wrap break-words text-sm text-muted-foreground leading-relaxed">
-              {step.text}
-            </p>
-          )}
+          <p className="whitespace-pre-wrap break-words text-sm text-muted-foreground leading-relaxed">
+            {step.text}
+          </p>
         </div>
       );
     case 'thinking-status':
       return (
         <div className="py-0.5">
-          {isStreaming ? (
-            <StreamingText
-              text={step.text}
-              isStreaming={true}
-              className="text-sm text-muted-foreground"
-            />
-          ) : (
-            <p className="text-sm text-muted-foreground">{step.text}</p>
-          )}
+          <p className="text-sm text-muted-foreground">{step.text}</p>
         </div>
       );
     case 'tool':
@@ -233,34 +208,36 @@ function ToolStepRow({
             ))}
           </TextShimmer>
         ) : (
-          <div
-            className={cn(
-              'inline-flex items-center gap-2 rounded-lg border px-4 py-1.5 text-sm',
-              status === 'failed' ? 'border-destructive/30' : 'border-border',
-              hasDetails && 'cursor-pointer',
-            )}
-            onClick={() => hasDetails && setDetailsOpen(!detailsOpen)}
-          >
-            <span
+          <div>
+            <div
               className={cn(
-                'text-sm',
-                status === 'failed'
-                  ? 'text-destructive'
-                  : 'text-muted-foreground',
+                'inline-flex items-center gap-2 rounded-lg border px-4 py-1.5 text-sm',
+                status === 'failed' ? 'border-destructive/30' : 'border-border',
+                hasDetails && 'cursor-pointer',
               )}
+              onClick={() => hasDetails && setDetailsOpen(!detailsOpen)}
             >
-              {label}
-            </span>
-            {matchedPieces.map((piece) => (
-              <PieceIcon
-                key={piece.name}
-                displayName={piece.displayName}
-                logoUrl={piece.logoUrl!}
-                size="xxs"
-                border={false}
-                showTooltip={false}
-              />
-            ))}
+              <span
+                className={cn(
+                  'text-sm',
+                  status === 'failed'
+                    ? 'text-destructive'
+                    : 'text-muted-foreground',
+                )}
+              >
+                {label}
+              </span>
+              {matchedPieces.map((piece) => (
+                <PieceIcon
+                  key={piece.name}
+                  displayName={piece.displayName}
+                  logoUrl={piece.logoUrl!}
+                  size="xxs"
+                  border={false}
+                  showTooltip={false}
+                />
+              ))}
+            </div>
           </div>
         )}
         {hasDetails && (

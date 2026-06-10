@@ -26,6 +26,7 @@ import {
   ProjectPickerData,
 } from '../lib/message-parsers';
 
+import { ActionReceiptCard } from './action-receipt-card';
 import { ThinkingBlock } from './activity-accordion';
 import { BatchProgressCard } from './batch-progress-card';
 import { ConnectionPickerCard } from './connection-picker-card';
@@ -57,6 +58,7 @@ export const AssistantMessage = memo(function AssistantMessage({
   onRetry: () => void;
 }) {
   const approveGate = useChatStoreContext((s) => s.approveGate);
+  const toolCallMeta = useChatStoreContext((s) => s.toolCallMeta);
 
   const {
     blocks,
@@ -112,6 +114,9 @@ export const AssistantMessage = memo(function AssistantMessage({
     for (let i = 0; i < message.parts.length; i++) {
       const p = message.parts[i];
 
+      if (p.type === 'step-start') {
+        continue;
+      }
       if (p.type === 'text' && p.text.length > 0) {
         flushThinking();
         hasText = true;
@@ -185,8 +190,24 @@ export const AssistantMessage = memo(function AssistantMessage({
 
     const lastTextIdx = result.findLastIndex((b) => b.kind === 'text');
 
+    const withReceipts: MessageBlock[] = [];
+    for (const block of result) {
+      withReceipts.push(block);
+      if (block.kind === 'thinking') {
+        for (const step of block.steps) {
+          if (step.kind !== 'tool') continue;
+          const toolName = chatPartUtils.getToolPartName(step.part);
+          if (toolName !== 'ap_execute_action') continue;
+          const toolCallId = chatPartUtils.getToolCallId(step.part);
+          if (toolCallId) {
+            withReceipts.push({ kind: 'action-receipt', toolCallId });
+          }
+        }
+      }
+    }
+
     return {
-      blocks: result,
+      blocks: withReceipts,
       hasContent: hasText,
       lastDisplayIdx,
       lastTextIdx,
@@ -344,6 +365,15 @@ export const AssistantMessage = memo(function AssistantMessage({
                     <BatchProgressCard progress={block.data} />
                   </div>
                 );
+              case 'action-receipt': {
+                const receipt = toolCallMeta[block.toolCallId]?.actionReceipt;
+                if (!receipt) return null;
+                return (
+                  <div key={`receipt-${block.toolCallId}`} className="py-2">
+                    <ActionReceiptCard receipt={receipt} />
+                  </div>
+                );
+              }
               default:
                 return null;
             }
@@ -595,4 +625,5 @@ type MessageBlock =
   | { kind: 'text'; text: string }
   | { kind: 'display-tool'; part: AnyToolPart }
   | { kind: 'plan-marker'; part: AnyToolPart }
-  | { kind: 'batch-progress'; data: BatchProgressData };
+  | { kind: 'batch-progress'; data: BatchProgressData }
+  | { kind: 'action-receipt'; toolCallId: string };
