@@ -86,6 +86,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             const uiParts: PersistedChatPart[] = []
             const thinkingStartTime = Date.now()
             let abortedStepMessages: ModelMessage[] = []
+            let streamError: Error | null = null
 
             const postApprovalTools = Object.keys(allTools).filter((name) => name !== 'ap_request_plan_approval')
 
@@ -141,12 +142,16 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 },
                 onError: ({ error }) => {
                     log.error({ err: error, conversationId }, 'Chat streamText error')
+                    streamError = error instanceof Error ? error : new Error(String(error))
                 },
             })
 
             await streamChunksToClient({ result, ctx, userId, conversationId, runId, log })
 
             if (abortController.signal.aborted) {
+                if (streamError) {
+                    log.warn({ err: streamError, conversationId }, 'Stream error occurred during abort')
+                }
                 log.info({ conversationId, completedSteps: abortedStepMessages.length }, 'Chat agent cancelled by user')
                 const thinkingDurationMs = Date.now() - thinkingStartTime
                 const cancelSavePayload = {
@@ -170,6 +175,10 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                     event: { type: ChatAgentEventType.FINISHED, data: { conversationId } },
                 })
                 return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
+            }
+
+            if (streamError) {
+                throw streamError
             }
 
             const [response, usage, autoTitle] = await Promise.all([
