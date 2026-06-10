@@ -74,8 +74,83 @@ function createQueueDispatcher(params: {
             waiter.resolve(null)
         }
         waiters.length = 0
-        // Do not reset loopRunning here — the in-flight runLoop will exit
-        // naturally when it sees waiters.length === 0 after dequeue returns.
+    }
+
+    return { poll, close, waiterCount }
+}
+
+function createMultiQueueDispatcher(params: {
+    queueConfigs: Array<{ queueName: string, worker: BullMQWorker }>
+    dequeue: (worker: BullMQWorker, queueName: string, log: FastifyBaseLogger) => Promise<ConsumeJobRequest | null>
+    onOrphanedJob: (jobId: string, token: string, queueName: string, log: FastifyBaseLogger) => Promise<void>
+    log: FastifyBaseLogger
+}): QueueDispatcher {
+    const { queueConfigs, dequeue, onOrphanedJob, log } = params
+    const waiters: Waiter[] = []
+    let loopRunning = false
+    let roundRobinIndex = 0
+
+    async function poll(): Promise<ConsumeJobRequest | null> {
+        return new Promise<ConsumeJobRequest | null>((resolve) => {
+            const timer = setTimeout(() => {
+                const idx = waiters.findIndex(w => w.resolve === resolve)
+                if (idx !== -1) {
+                    waiters.splice(idx, 1)
+                }
+                resolve(null)
+            }, WAITER_TIMEOUT_MS)
+
+            waiters.push({ resolve, timer })
+            startLoop()
+        })
+    }
+
+    function startLoop(): void {
+        if (loopRunning) return
+        loopRunning = true
+        void runLoop()
+    }
+
+    async function runLoop(): Promise<void> {
+        while (waiters.length > 0) {
+            const config = queueConfigs[roundRobinIndex % queueConfigs.length]
+            roundRobinIndex++
+
+            const { error, data: job } = await tryCatch(() => dequeue(config.worker, config.queueName, log))
+
+            if (error) {
+                log.error({ queueName: config.queueName, error: String(error) }, '[QueueDispatcher] dequeue error, retrying')
+                await sleep(ERROR_RETRY_DELAY_MS)
+                continue
+            }
+
+            if (isNil(job)) {
+                if (waiters.length === 0) break
+                continue
+            }
+
+            const waiter = waiters.shift()
+            if (isNil(waiter)) {
+                log.warn({ queueName: config.queueName, jobId: job.jobId }, '[QueueDispatcher] job dequeued but no waiter available, returning to queue')
+                const { error: orphanError } = await tryCatch(() => onOrphanedJob(job.jobId, job.token, job.queueName, log))
+                if (orphanError) {
+                    log.error({ queueName: config.queueName, jobId: job.jobId, error: String(orphanError) }, '[QueueDispatcher] failed to return orphaned job to queue')
+                }
+                continue
+            }
+
+            clearTimeout(waiter.timer)
+            waiter.resolve(job)
+        }
+        loopRunning = false
+    }
+
+    function close(): void {
+        for (const waiter of waiters) {
+            clearTimeout(waiter.timer)
+            waiter.resolve(null)
+        }
+        waiters.length = 0
     }
 
     function waiterCount(): number {
@@ -100,4 +175,4 @@ export type QueueDispatcher = {
     waiterCount(): number
 }
 
-export { createQueueDispatcher, WAITER_TIMEOUT_MS, ERROR_RETRY_DELAY_MS }
+export { createQueueDispatcher, createMultiQueueDispatcher, WAITER_TIMEOUT_MS, ERROR_RETRY_DELAY_MS }

@@ -13,9 +13,13 @@ export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
         return async (request: WorkerMachineHealthcheckRequest, _principal, _projectId, callback?: (data: unknown) => void) => {
             const rawWorkerGroupId = socket.handshake.auth?.workerGroupId
             const workerGroupId = typeof rawWorkerGroupId === 'string' ? rawWorkerGroupId : undefined
+            const rawWorkerQueues = socket.handshake.auth?.workerQueues
+            const workerQueues = typeof rawWorkerQueues === 'string' && rawWorkerQueues.length > 0
+                ? rawWorkerQueues.split(',').map((q: string) => q.trim()).filter(Boolean)
+                : undefined
             const response = await machineService(app.log).onConnection(request, workerGroupId)
             callback?.(response)
-            createRpcServer<WorkerToApiContract>(socket, createHandlers(app.log, workerGroupId))
+            createRpcServer<WorkerToApiContract>(socket, createHandlers(app.log, workerGroupId, workerQueues))
         }
     })
 

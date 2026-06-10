@@ -22,6 +22,8 @@ import { runsMetadataQueue } from '../../flows/flow-run/flow-runs-queue'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { pubsub } from '../../helper/pubsub'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
@@ -31,17 +33,29 @@ import { getWorkerGroupQueueName, QueueName, RunsMetadataUpsertData } from '../j
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
 
-const getPollQueueName = (workerGroupId?: string): string => {
-    return workerGroupId ? getWorkerGroupQueueName(workerGroupId) : QueueName.WORKER_JOBS
+function getPollQueueNames(workerGroupId: string | undefined, workerQueues: string[] | undefined): string[] {
+    if (!isNil(workerQueues) && workerQueues.length > 0) {
+        return workerQueues
+    }
+    if (workerGroupId) {
+        return [getWorkerGroupQueueName(workerGroupId)]
+    }
+    const isSeparationEnabled = system.getBoolean(AppSystemProp.QUEUE_SEPARATION_ENABLED) ?? false
+    if (isSeparationEnabled) {
+        return [QueueName.SYNC_WEBHOOK_JOBS, QueueName.WORKER_JOBS, QueueName.SCHEDULED_JOBS]
+    }
+    return [QueueName.WORKER_JOBS]
 }
 
-export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): WorkerToApiContract {
+export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string, workerQueues?: string[]): WorkerToApiContract {
     return {
         async poll(input) {
-            log.info({ workerId: input.workerId, workerGroupId }, '[workerRpc#poll] Poll request received')
+            log.info({ workerId: input.workerId, workerGroupId, workerQueues }, '[workerRpc#poll] Poll request received')
             await machineService(log).onConnection(input, workerGroupId)
-            const pollQueueName = getPollQueueName(workerGroupId)
-            const job = await jobBroker(log).poll(pollQueueName)
+            const pollQueueNames = getPollQueueNames(workerGroupId, workerQueues)
+            const job = pollQueueNames.length === 1
+                ? await jobBroker(log).poll(pollQueueNames[0])
+                : await jobBroker(log).pollMultiple(pollQueueNames)
             if (job) {
                 log.info({ workerId: input.workerId, jobId: job.jobId, jobType: job.jobData.jobType }, '[workerRpc#poll] Returning job to worker')
             }

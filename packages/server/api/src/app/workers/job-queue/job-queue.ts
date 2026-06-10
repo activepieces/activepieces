@@ -9,6 +9,22 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { getWorkerGroupQueueName, QueueName } from '../job'
 
+type JobCategory = 'sync' | 'scheduled' | undefined
+
+function getJobCategory(data: JobData): JobCategory {
+    if (data.jobType === WorkerJobType.EXECUTE_FLOW && typeof (data as ExecuteFlowJobData).workerHandlerId === 'string') {
+        return 'sync'
+    }
+    switch (data.jobType) {
+        case WorkerJobType.EXECUTE_POLLING:
+        case WorkerJobType.RENEW_WEBHOOK:
+        case WorkerJobType.EVENT_DESTINATION:
+            return 'scheduled'
+        default:
+            return undefined
+    }
+}
+
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
 const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds()
 const REDIS_FAILED_JOB_RETRY_COUNT = system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT)
@@ -18,13 +34,19 @@ const dedicatedWorkersQueues = new Map<string, Queue>()
 export const jobQueue = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
         await ensureQueueExists({ log, queueName: QueueName.WORKER_JOBS })
+        const isSeparationEnabled = system.getBoolean(AppSystemProp.QUEUE_SEPARATION_ENABLED) ?? false
+        if (isSeparationEnabled) {
+            await ensureQueueExists({ log, queueName: QueueName.SYNC_WEBHOOK_JOBS })
+            await ensureQueueExists({ log, queueName: QueueName.SCHEDULED_JOBS })
+        }
         log.info('[jobQueue#init] Dynamic queue system initialized')
     },
     async add(params: AddJobParams<JobType>): Promise<Job | null> {
         const { type, data } = params
 
         const platformId = data.platformId
-        const queueName = await getQueueName(platformId, log)
+        const category = type === JobType.ONE_TIME ? getJobCategory(data) : getJobCategoryForRepeating(data)
+        const queueName = await getQueueNameForCategory(platformId, category, log)
         const queue = await ensureQueueExists({ log, queueName })
 
         switch (type) {
@@ -69,21 +91,23 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
     },
 
     async removeOneTimeJob({ jobId, platformId }: { jobId: ApId, platformId: string | null }): Promise<void> {
-        const queueName = await getQueueName(platformId, log)
-        const queue = await ensureQueueExists({ log, queueName })
-        const job = await queue.getJob(jobId)
-        if (!isNil(job)) {
-            await job.remove()
-            log.info({
-                jobId,
-                queueName,
-            }, '[jobQueue#removeOneTimeJob] removed job from queue')
-            return
+        const queueNamesToCheck = await getQueuesForJobRemoval(platformId, log)
+        for (const queueName of queueNamesToCheck) {
+            const queue = await ensureQueueExists({ log, queueName })
+            const job = await queue.getJob(jobId)
+            if (!isNil(job)) {
+                await job.remove()
+                log.info({
+                    jobId,
+                    queueName,
+                }, '[jobQueue#removeOneTimeJob] removed job from queue')
+                return
+            }
         }
         log.info({
             jobId,
-            queueName,
-        }, '[jobQueue#removeOneTimeJob] job not found in queue')
+            queueNames: queueNamesToCheck,
+        }, '[jobQueue#removeOneTimeJob] job not found in any queue')
     },
 
     async getOrCreateQueue({ queueName }: { queueName: string }): Promise<Queue> {
@@ -110,6 +134,16 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
         )
     },
 })
+
+function getJobCategoryForRepeating(data: JobData): JobCategory {
+    switch (data.jobType) {
+        case WorkerJobType.EXECUTE_POLLING:
+        case WorkerJobType.RENEW_WEBHOOK:
+            return 'scheduled'
+        default:
+            return undefined
+    }
+}
 
 async function ensureQueueExists({ log, queueName }: { log: FastifyBaseLogger, queueName: string }): Promise<Queue> {
     const existingQueue = dedicatedWorkersQueues.get(queueName)
@@ -170,15 +204,47 @@ export function isUserInteractionJobData(jobData: JobData): jobData is UserInter
     return USER_INTERACTION_JOB_TYPES.has(jobData.jobType)
 }
 
-async function getQueueName(platformId: string | null, log: FastifyBaseLogger): Promise<string> {
-    if (!platformId) {
+async function getQueueNameForCategory(platformId: string | null, category: JobCategory, log: FastifyBaseLogger): Promise<string> {
+    const isSeparationEnabled = system.getBoolean(AppSystemProp.QUEUE_SEPARATION_ENABLED) ?? false
+
+    if (!isNil(platformId)) {
+        const groupId = await workerGroupService(log).getWorkerGroupId({ platformId })
+        if (!isNil(groupId)) {
+            return getWorkerGroupQueueName(groupId)
+        }
+    }
+
+    if (!isSeparationEnabled || isNil(category)) {
         return QueueName.WORKER_JOBS
     }
-    const groupId = await workerGroupService(log).getWorkerGroupId({ platformId })
-    if (isNil(groupId)) {
-        return QueueName.WORKER_JOBS
+
+    switch (category) {
+        case 'sync':
+            return QueueName.SYNC_WEBHOOK_JOBS
+        case 'scheduled':
+            return QueueName.SCHEDULED_JOBS
     }
-    return getWorkerGroupQueueName(groupId)
+}
+
+async function getQueuesForJobRemoval(platformId: string | null, log: FastifyBaseLogger): Promise<string[]> {
+    const isSeparationEnabled = system.getBoolean(AppSystemProp.QUEUE_SEPARATION_ENABLED) ?? false
+
+    if (!isNil(platformId)) {
+        const groupId = await workerGroupService(log).getWorkerGroupId({ platformId })
+        if (!isNil(groupId)) {
+            return [getWorkerGroupQueueName(groupId)]
+        }
+    }
+
+    if (!isSeparationEnabled) {
+        return [QueueName.WORKER_JOBS]
+    }
+
+    return [
+        QueueName.SYNC_WEBHOOK_JOBS,
+        QueueName.WORKER_JOBS,
+        QueueName.SCHEDULED_JOBS,
+    ]
 }
 
 

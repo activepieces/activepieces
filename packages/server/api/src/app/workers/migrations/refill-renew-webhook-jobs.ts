@@ -2,9 +2,12 @@ import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import { isNil, LATEST_JOB_DATA_SCHEMA_VERSION, TriggerSourceScheduleType, TriggerStrategy, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull } from 'typeorm'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { triggerSourceRepo } from '../../trigger/trigger-source/trigger-source-service'
+import { QueueName } from '../job'
 import { jobQueue, JobType } from '../job-queue/job-queue'
 
 export const refillRenewWebhookJobs = (log: FastifyBaseLogger) => ({
@@ -49,6 +52,10 @@ export const refillRenewWebhookJobs = (log: FastifyBaseLogger) => ({
                     },
                 })
                 migratedRenewWebhookJobs++
+                if (system.getBoolean(AppSystemProp.QUEUE_SEPARATION_ENABLED) ?? false) {
+                    const legacyQueue = await jobQueue(log).getOrCreateQueue({ queueName: QueueName.WORKER_JOBS })
+                    await legacyQueue.removeJobScheduler(triggerSource.flowVersionId)
+                }
             }))
         }
 

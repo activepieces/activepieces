@@ -15,6 +15,8 @@ export enum JobStatus {
 
 export enum QueueName {
     WORKER_JOBS = 'workerJobs',
+    SYNC_WEBHOOK_JOBS = 'sync-webhook-jobs',
+    SCHEDULED_JOBS = 'scheduled-jobs',
     RUNS_METADATA = 'runsMetadata',
 }
 

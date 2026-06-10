@@ -47,8 +47,9 @@ let sandboxManagers: SandboxManager[] = []
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
         const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
+        const workerQueuesStr = system.get(WorkerSystemProp.WORKER_QUEUES)
         socket = io(socketUrl.url, {
-            auth: { token: workerToken, workerId, workerGroupId },
+            auth: { token: workerToken, workerId, workerGroupId, workerQueues: workerQueuesStr },
             path: socketUrl.path,
             transports: ['websocket'],
             reconnection: true,

@@ -13,7 +13,7 @@ import { rateLimiterInterceptor } from './interceptors/rate-limiter-interceptor'
 import { zombiePollingInterceptor } from './interceptors/zombie-polling-interceptor'
 import { InterceptorVerdict, JobInterceptor } from './job-interceptor'
 import { isUserInteractionJobData } from './job-queue'
-import { createQueueDispatcher, QueueDispatcher } from './queue-dispatcher'
+import { createMultiQueueDispatcher, createQueueDispatcher, QueueDispatcher } from './queue-dispatcher'
 
 const DRAIN_DELAY_SECONDS = 15
 const LOCK_DURATION_MS = 120_000
@@ -21,6 +21,7 @@ const LOCK_DURATION_MS = 120_000
 const interceptors: JobInterceptor[] = [rateLimiterInterceptor, zombiePollingInterceptor]
 const workerPromises = new Map<string, Promise<BullMQWorker>>()
 const dispatchers = new Map<string, QueueDispatcher>()
+const multiQueueDispatchers = new Map<string, QueueDispatcher>()
 
 function ensureBullMQWorker(queueName: string, log: FastifyBaseLogger): Promise<BullMQWorker> {
     const existing = workerPromises.get(queueName)
@@ -207,17 +208,59 @@ function buildFailedReason(errorMessage: string, logs?: string): string {
     return `${errorMessage}\n${logs}`
 }
 
+function multiQueueDispatcherKey(queueNames: string[]): string {
+    return [...queueNames].sort().join(',')
+}
+
+async function ensureMultiQueueDispatcher(queueNames: string[], log: FastifyBaseLogger): Promise<QueueDispatcher> {
+    const key = multiQueueDispatcherKey(queueNames)
+    const existing = multiQueueDispatchers.get(key)
+    if (existing) return existing
+
+    const workers = await Promise.all(queueNames.map(qn => ensureBullMQWorker(qn, log)))
+    const queueConfigs = queueNames.map((qn, i) => ({
+        queueName: qn,
+        worker: workers[i],
+    }))
+
+    const dispatcher = createMultiQueueDispatcher({
+        queueConfigs,
+        dequeue: tryDequeue,
+        onOrphanedJob: returnJobToQueue,
+        log,
+    })
+    multiQueueDispatchers.set(key, dispatcher)
+    return dispatcher
+}
+
 export { tryDequeue }
 
 export const jobBroker = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
         await ensureBullMQWorker(QueueName.WORKER_JOBS, log)
+        const isSeparationEnabled = system.getBoolean(AppSystemProp.QUEUE_SEPARATION_ENABLED) ?? false
+        if (isSeparationEnabled) {
+            await ensureBullMQWorker(QueueName.SYNC_WEBHOOK_JOBS, log)
+            await ensureBullMQWorker(QueueName.SCHEDULED_JOBS, log)
+        }
         log.info('[jobBroker] Job broker initialized')
     },
 
     async poll(queueName: string = QueueName.WORKER_JOBS): Promise<ConsumeJobRequest | null> {
         const worker = await ensureBullMQWorker(queueName, log)
         const dispatcher = ensureDispatcher(queueName, worker, log)
+        return dispatcher.poll()
+    },
+
+    async pollMultiple(queueNames: string[]): Promise<ConsumeJobRequest | null> {
+        if (queueNames.length === 0) {
+            return null
+        }
+        if (queueNames.length === 1) {
+            return this.poll(queueNames[0])
+        }
+
+        const dispatcher = await ensureMultiQueueDispatcher(queueNames, log)
         return dispatcher.poll()
     },
 
@@ -288,6 +331,10 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
             dispatcher.close()
         }
         dispatchers.clear()
+        for (const dispatcher of multiQueueDispatchers.values()) {
+            dispatcher.close()
+        }
+        multiQueueDispatchers.clear()
 
         const workers = await Promise.allSettled([...workerPromises.values()])
         await Promise.allSettled(
