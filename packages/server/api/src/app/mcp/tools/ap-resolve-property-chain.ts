@@ -64,24 +64,37 @@ export const apResolvePropertyChainTool = (mcp: ProjectScopedMcpServer, log: Fas
                         }
                     }
 
-                    const result = await withTimeout({
-                        promise: userInteractionWatcher.submitAndWaitForResponse<EngineResponse<{
-                            options: Array<{ label: string, value: unknown }> | PiecePropertyMap
-                            disabled?: boolean
-                        }>>({
-                            jobType: WorkerJobType.EXECUTE_PROPERTY,
-                            platformId,
-                            projectId: mcp.projectId,
-                            flowVersion: undefined,
+                    let result: EngineResponse<{ options: Array<{ label: string, value: unknown }> | PiecePropertyMap, disabled?: boolean }>
+                    try {
+                        result = await withTimeout({
+                            promise: userInteractionWatcher.submitAndWaitForResponse<EngineResponse<{
+                                options: Array<{ label: string, value: unknown }> | PiecePropertyMap
+                                disabled?: boolean
+                            }>>({
+                                jobType: WorkerJobType.EXECUTE_PROPERTY,
+                                platformId,
+                                projectId: mcp.projectId,
+                                flowVersion: undefined,
+                                propertyName: chainItem.propertyName,
+                                actionOrTriggerName,
+                                input: accumulatedInput,
+                                sampleData: {},
+                                searchValue: undefined,
+                                piece: piecePackage,
+                            }, log),
+                            ms: RESOLVE_TIMEOUT_MS,
+                        })
+                    }
+                    catch (err) {
+                        const message = err instanceof Error ? err.message : String(err)
+                        resolvedProperties.push({
                             propertyName: chainItem.propertyName,
-                            actionOrTriggerName,
-                            input: accumulatedInput,
-                            sampleData: {},
-                            searchValue: undefined,
-                            piece: piecePackage,
-                        }, log),
-                        ms: RESOLVE_TIMEOUT_MS,
-                    })
+                            options: [],
+                            resolved: false,
+                            error: `Timed out resolving "${chainItem.propertyName}": ${message}`,
+                        })
+                        break
+                    }
 
                     if (result.status !== EngineResponseStatus.OK || isNil(result.response?.options)) {
                         resolvedProperties.push({
