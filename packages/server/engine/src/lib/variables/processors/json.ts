@@ -11,8 +11,8 @@ export const jsonProcessor: ProcessorFn = (_property, value) => {
         }
         return JSON.parse(value)
     }
-    catch (error) {
-        console.error(error)
-        return undefined
+    catch {
+        // non-JSON text (e.g. an XML or plain-text HTTP body) is passed through as-is
+        return value
     }
 }

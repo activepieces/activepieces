@@ -108,16 +108,9 @@ export const propsProcessor = {
 
 const validateProperty = (property: PieceProperty, value: unknown, originalValue: unknown): string[] => {
     if (property.type === PropertyType.JSON) {
-        if (!property.required && originalValue === '') {
-            return []
-        }
-        if (!isNil(originalValue) && isNil(value)) {
-            return [`Expected JSON, received: ${originalValue}`]
-        }
-        if (!property.required && isNil(value)) {
-            return []
-        }
-        if (!isObject(value) && !Array.isArray(value)) {
+        // non-JSON strings are passed through as-is (e.g. XML or plain-text HTTP bodies), so only reject missing required values
+        const isMissing = isNil(value) || value === ''
+        if (property.required && isMissing) {
             return [`Expected JSON, received: ${originalValue}`]
         }
         return []

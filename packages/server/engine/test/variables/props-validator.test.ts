@@ -1,4 +1,5 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework'
+import { PropertyExecutionType } from '@activepieces/shared'
 import { propsProcessor } from '../../src/lib/variables/props-processor'
 describe('Property Validation', () => {
     describe('required properties', () => {
@@ -184,16 +185,25 @@ describe('Property Validation', () => {
             )
             expect(validArrayStringErrors).toEqual({})
 
-            const { errors: invalidJsonErrors } = await propsProcessor.applyProcessorsAndValidators(
+            const { errors: rawTextErrors, processedInput: rawTextProcessedInput } = await propsProcessor.applyProcessorsAndValidators(
                 { json: 'not a json object' },
                 props,
                 PieceAuth.None(),
                 false,
                 {},
             )
-            expect(invalidJsonErrors).toEqual({
-                json: ['Expected JSON, received: not a json object'],
-            })
+            expect(rawTextErrors).toEqual({})
+            expect(rawTextProcessedInput).toEqual({ json: 'not a json object' })
+
+            const { errors: xmlErrors, processedInput: xmlProcessedInput } = await propsProcessor.applyProcessorsAndValidators(
+                { json: '<?xml version="1.0" encoding="UTF-8"?>' },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+            expect(xmlErrors).toEqual({})
+            expect(xmlProcessedInput).toEqual({ json: '<?xml version="1.0" encoding="UTF-8"?>' })
 
             const { errors: nullErrors } = await propsProcessor.applyProcessorsAndValidators(
                 { json: null },
@@ -216,20 +226,9 @@ describe('Property Validation', () => {
             expect(emptyStringErrors).toEqual({
                 json: ['Expected JSON, received: '],
             })
-
-            const { errors: invalidTextErrors } = await propsProcessor.applyProcessorsAndValidators(
-                { json: 'asd' },
-                props,
-                PieceAuth.None(),
-                false,
-                {},
-            )
-            expect(invalidTextErrors).toEqual({
-                json: ['Expected JSON, received: asd'],
-            })
         })
 
-        it('should validate optional json property with invalid value', async () => {
+        it('should pass through non-JSON text for optional json property', async () => {
             const props = {
                 json: Property.Json({
                     displayName: 'JSON',
@@ -264,27 +263,47 @@ describe('Property Validation', () => {
             )
             expect(emptyStringErrors).toEqual({})
 
-            const { errors: invalidJsonErrors } = await propsProcessor.applyProcessorsAndValidators(
+            const { errors: rawTextErrors, processedInput: rawTextProcessedInput } = await propsProcessor.applyProcessorsAndValidators(
                 { json: 'not a json object' },
                 props,
                 PieceAuth.None(),
                 false,
                 {},
             )
-            expect(invalidJsonErrors).toEqual({
-                json: ['Expected JSON, received: not a json object'],
-            })
+            expect(rawTextErrors).toEqual({})
+            expect(rawTextProcessedInput).toEqual({ json: 'not a json object' })
+        })
+        it('should pass through non-JSON text for a json property inside dynamic properties', async () => {
+            const xmlBody = '<?xml version="1.0" encoding="UTF-8"?>'
+            const props = {
+                body: Property.DynamicProperties({
+                    displayName: 'Body',
+                    required: false,
+                    refreshers: [],
+                    props: async () => ({}),
+                }),
+            }
+            const propertySettings = {
+                body: {
+                    type: PropertyExecutionType.MANUAL,
+                    schema: {
+                        data: Property.Json({
+                            displayName: 'JSON Body',
+                            required: true,
+                        }),
+                    },
+                },
+            }
 
-            const { errors: invalidTextErrors } = await propsProcessor.applyProcessorsAndValidators(
-                { json: 'asd' },
+            const { errors, processedInput } = await propsProcessor.applyProcessorsAndValidators(
+                { body: { data: xmlBody } },
                 props,
                 PieceAuth.None(),
                 false,
-                {},
+                propertySettings,
             )
-            expect(invalidTextErrors).toEqual({
-                json: ['Expected JSON, received: asd'],
-            })
+            expect(errors).toEqual({})
+            expect(processedInput).toEqual({ body: { data: xmlBody } })
         })
         it('should validate required object property', async () => {
             const props = {
