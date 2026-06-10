@@ -84,8 +84,10 @@ export const workday = createPiece({
 		listCustomObjectDefinitionsBatch,
 		createUpdateCustomObject,
 		createCustomApiCallAction({
-			baseUrl: (auth) =>
-				`https://wd2-impl-services1.workday.com/ccx/api/v1/${(auth as OAuth2PropertyValue).props?.['tenant']}`,
+			baseUrl: (auth) => {
+				const value = auth as OAuth2PropertyValue;
+				return `https://${value.props?.['apiHost']}/ccx/api/v1/${value.props?.['tenant']}`;
+			},
 			auth: workdayAuth,
 			authMapping: async (auth) => ({
 				Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
