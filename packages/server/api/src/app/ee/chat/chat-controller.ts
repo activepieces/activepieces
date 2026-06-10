@@ -82,7 +82,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/conversations/:id/messages', SendMessageRoute, async (request, reply) => {
-        const { content, files } = request.body
+        const { content, runId: clientRunId, files } = request.body
         const log = request.log
         const conversationId = request.params.id
         const userId = request.principal.id
@@ -110,7 +110,8 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 
         await assertAiCreditsNotExhausted({ platformId, log })
 
-        const runId = apId()
+        const runId = typeof clientRunId === 'string' ? clientRunId : apId()
+        await chatApprovalGate.storeActiveRunId({ conversationId, runId })
         await jobQueue(log).add({
             id: apId(),
             type: JobType.ONE_TIME,

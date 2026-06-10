@@ -1,6 +1,7 @@
 import {
   ActionPreviewEvent,
   ActionReceiptEvent,
+  apId,
   ChatAllowedMimeType,
   ChatConversationStatus,
   ChatHistoryMessage,
@@ -509,13 +510,16 @@ export function useAgentChat({
         return;
       }
 
+      const runId = apId();
+      setActiveRunId(runId);
       startStream(convId);
       updateSendStatus({ type: 'idle' });
 
-      const { data: sendResult, error: sendError } = await tryCatch(async () =>
+      const { error: sendError } = await tryCatch(async () =>
         chatApi.sendMessage({
           conversationId: convId,
           content,
+          runId,
           files: pendingFilesRef.current,
         }),
       );
@@ -531,10 +535,6 @@ export function useAgentChat({
             message: sendError.message ?? 'Failed to send message',
           });
         }
-        return;
-      }
-      if (sendResult.runId) {
-        setActiveRunId(sendResult.runId);
       }
     },
     [

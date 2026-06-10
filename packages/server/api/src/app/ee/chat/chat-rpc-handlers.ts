@@ -83,9 +83,6 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             messages: allMessages,
             uiMessages: JSON.parse(JSON.stringify(uiMessagesWithUser)),
         })
-        if (input.runId) {
-            await chatApprovalGate.storeActiveRunId({ conversationId, runId: input.runId })
-        }
 
         const estimatedTokens = chatCompaction.estimateTokenCount({ messages: allMessages, systemPromptLength: systemPromptText.length })
         let compactionState = { summary: conversation.summary ?? null, summarizedUpToIndex: conversation.summarizedUpToIndex ?? null }
