@@ -25,7 +25,7 @@ const getGuideInput = z.object({
         '- state: choosing Store vs Tables vs Sheets, scopes, idempotency gates, and dedup.',
         '- tables: the built-in Tables database — tools, field types, filters, gotchas.',
         '- ai: native AI actions (ask, classify, extract, summarize, agent) and their output shapes.',
-        '- error-handling: failure modes, retries, the HTTP shape-change trap, dead-letter, decomposition.',
+        '- error-handling: failure modes, retries, on-success/on-failure branches, the HTTP shape-change trap, dead-letter, decomposition.',
     ].join('\n')),
 })
 

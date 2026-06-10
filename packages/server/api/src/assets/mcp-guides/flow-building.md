@@ -15,22 +15,25 @@ A **flow** is a `trigger` (what starts it) followed by ordered **steps** (action
 5. **Test.** `ap_test_step` on each step as you go — this both catches schema mistakes early **and populates that step's sample data, which the next step's `{{...}}` references resolve against.** Use `ap_test_flow` for an end-to-end run. **Loops only execute under `ap_test_flow`** — `ap_test_step` does not re-run loop bodies.
 6. **Publish (only when asked).** `ap_lock_and_publish` then `ap_change_flow_status` to enable. Otherwise leave the flow in draft and share the link.
 
-## Step references — flat, no `.output.`
+## Step references — everything lives under `['output']`
 
-Reference a previous step's data with `{{stepName.field}}`:
+Reference a previous step's data with `{{stepName['output'].field}}` — a step's result is nested under the bracket-form `['output']` key:
 
 ```
-{{trigger.body.email}}                  ✓
-{{step_1.id}}                           ✓
-{{step_2.choices[0].message.content}}   ✓  (array indexing + deep paths are fine)
-{{step_4}}                              ✓  (a step that returns a raw scalar)
+{{trigger['output'].body.email}}                  ✓
+{{step_1['output'].id}}                           ✓
+{{step_2['output'].choices[0].message.content}}   ✓  (array indexing + deep paths are fine)
+{{step_4['output']}}                              ✓  (a step that returns a raw scalar)
+{{step_3['error'].message}}                       ✓  (only inside a continue-on-failure step's On-failure branch — see ap_get_guide(error-handling))
 
-{{step_1.output.id}}                    ✗  no ".output."
-{{steps.step_1.id}}                     ✗  no "steps."
-{{$step_1.id}}                          ✗  no "$"
+{{step_1.output.id}}     ✗  dot-form "output" — gets double-wrapped into ['output'].output
+{{steps.step_1.id}}      ✗  no "steps."
+{{$step_1.id}}           ✗  no "$"
 ```
 
-**Verify the real output shape with `ap_test_step` before referencing it — never assume field names.** Some steps return a raw value, not an object: `store/get` and `ai`'s *Ask AI* / *Classify Text* return a bare string, so reference `{{step_1}}`, not `{{step_1.value}}` or `{{step_1.text}}`. (See `ap_get_guide(ai)`.)
+Always write the bracket form yourself. (Bare refs like `{{step_1.id}}` are auto-normalized to `['output']` on ingest, but dot-form `.output.` is **not** recognized and breaks.)
+
+**Verify the real output shape with `ap_test_step` before referencing it — never assume field names.** Some steps return a raw value, not an object: `store/get` and `ai`'s *Ask AI* / *Classify Text* return a bare string, so reference `{{step_1['output']}}` — there is no `.value` or `.text` under it. (See `ap_get_guide(ai)`.)
 
 ## Step naming
 

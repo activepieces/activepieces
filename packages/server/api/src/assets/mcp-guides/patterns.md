@@ -7,7 +7,7 @@ Name the pattern back to the user when you recognize it; combine names when an i
 ## 1. Passthrough — trigger → action
 Trigger fires, one action consumes the payload directly. No transform, no decision.
 ```
-trigger:appA/new_x → step_1: appB/create_y  (inputs from {{trigger.*}})
+trigger:appA/new_x → step_1: appB/create_y  (inputs from {{trigger['output'].*}})
 ```
 The single biggest category. If this is the whole ask, just confirm trigger + action and build — no analysis needed.
 

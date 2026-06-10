@@ -42,7 +42,7 @@ Always start with `ap_list_tables` to discover existing tables, their field name
 
 The agent tools above are for setup and inspection. To read/write a Table from inside a running flow, add the built-in **Tables** piece as a step (create record, find records, update record) and map step/trigger outputs into the fields:
 
-> New email (trigger) → **Tables: Create Record** → map `{{trigger.subject}}` to the `Subject` field, `{{trigger.from}}` to `Sender`, etc.
+> New email (trigger) → **Tables: Create Record** → map `{{trigger['output'].subject}}` to the `Subject` field, `{{trigger['output'].from}}` to `Sender`, etc.
 
 ## Gotchas
 

@@ -1,6 +1,6 @@
 # State: Store vs Tables vs Sheets, and idempotency
 
-Steps already pass data forward via `{{stepN.field}}` — that's per-run scratch and needs no storage. Reach for real storage only when data must survive **between runs**, or be **queried/inspected**.
+Steps already pass data forward via `{{stepN['output'].field}}` — that's per-run scratch and needs no storage. Reach for real storage only when data must survive **between runs**, or be **queried/inspected**.
 
 ## Where should the state live?
 
@@ -18,7 +18,7 @@ Rule of thumb: **Store** = "one value per key"; **Tables** = "many rows of the s
 
 Actions (`name` slugs): `get`, `put`, `append`, `add_to_list`, `remove_from_list`, `remove_value`.
 
-- **`get` returns the raw stored value** (or the default you supply) — reference as `{{step_N}}`, not `{{step_N.value}}`.
+- **`get` returns the raw stored value** (or the default you supply) — reference as `{{step_N['output']}}`, not `{{step_N['output'].value}}`.
 - **Scope** (the value you pass → UI label): `COLLECTION` → "Project" (shared across all flows in the project; this is the default), `FLOW` → "Flow" (shared across runs of one flow), `RUN` → "Run" (one run only).
 - Limits: **512 KB per value, 128-char key**. Hash long natural keys; move bigger/structured data to Tables.
 
@@ -28,9 +28,9 @@ Webhook providers (Stripe, Shopify, GitHub, Slack) deliver **at-least-once** and
 
 ```
 trigger: webhook
-step_1: store/get   key = "evt_{{trigger.body.<providerEventId>}}", scope = COLLECTION
+step_1: store/get   key = "evt_{{trigger['output'].body.<providerEventId>}}", scope = COLLECTION
 step_2: ROUTER
-   Branch:    DOES_NOT_EXIST {{step_1}}   → first time → proceed
+   Branch:    DOES_NOT_EXIST {{step_1['output']}}   → first time → proceed
    Otherwise:                             → duplicate → exit, do nothing
    (inside the proceed branch, FIRST store/put the key to mark it seen, THEN do the work)
 ```

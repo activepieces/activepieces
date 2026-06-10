@@ -4,9 +4,13 @@ Activepieces' error surface is deliberately small — you design around it.
 
 ## Built-in per-step toggles
 
-Every action exposes two:
-- **`continueOnFailure`** — don't halt the flow if this step fails.
-- **`retryOnFailure`** — auto-retry the step a few times (no configurable backoff).
+CODE and PIECE steps expose two:
+- **`continueOnFailure`** — don't halt the flow if this step fails. The step also gains two child branches, **On success** and **On failure**. To react to the outcome, add handler steps into them: `ap_add_step` with `parentStepName` = the failing step and `stepLocationRelativeToParent` = `INSIDE_ON_SUCCESS_BRANCH` / `INSIDE_ON_FAILURE_BRANCH` (chain further steps with `AFTER` inside the branch). In the failure branch, read the error via `{{stepName['error'].message}}`; the step's `['output']` is only meaningful on the success path. This replaces wiring a separate router just to handle failure.
+- **`retryOnFailure`** — auto-retry the step a few times (no configurable backoff) before it counts as failed.
+
+Set the flag on **the step that can fail**, not on the recovery step. For "just don't stop the flow", `continueOnFailure: true` alone is enough — only add branch steps when behavior actually diverges on failure.
+
+**Branch placement discipline.** Decide placement before adding: the success branch gets steps that consume the step's output (process, forward, update); the failure branch gets logging, fallbacks, alerts. After building, call `ap_flow_structure` and verify every step landed in the right branch — to move a misplaced step, delete and re-add it in the correct location (there is no move operation).
 
 Default is neither: **a failing step halts the run**, preserving prior step outputs so it can be resumed. That default is usually right. **Don't reflexively set `continueOnFailure` everywhere** — only when the failure is genuinely tolerable (e.g. one fan-out channel failing shouldn't kill the whole run).
 
@@ -23,10 +27,10 @@ continue_4xx   continue on client errors only
 continue_none  stop the flow on error   (DEFAULT)
 ```
 
-**The shape-change trap:** with a `continue_*` mode, a *failed* request returns a **different output shape** than a success — so `{{step_N.body}}` can silently resolve to empty after a failure. Always gate on a success indicator after a continue-on-fail HTTP step, and confirm both shapes with `ap_test_step`:
+**The shape-change trap:** with a `continue_*` mode, a *failed* request returns a **different output shape** than a success — so `{{step_N['output'].body}}` can silently resolve to empty after a failure. (This is the piece swallowing the error itself, so the failure still lands in `['output']` — unlike the platform's `continueOnFailure`, which puts it under `['error']`.) Always gate on a success indicator after a continue-on-fail HTTP step, and confirm both shapes with `ap_test_step`:
 
 ```
-ROUTER: EXISTS {{step_N.body}} → success branch | Otherwise → failure branch
+ROUTER: EXISTS {{step_N['output'].body}} → success branch | Otherwise → failure branch
 ```
 
 ## Categorize failures — don't blanket-catch

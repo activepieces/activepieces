@@ -1,6 +1,6 @@
 # Control flow: routers & loops
 
-Routers (branching) and loops need the **granular** build path (`ap_create_flow` → `ap_add_step`), not `ap_build_flow`. Place steps inside them with `ap_add_step`'s `stepLocationRelativeToParent`: `INSIDE_BRANCH` (router) or `INSIDE_LOOP` (loop); `AFTER` puts a step after the parent. The step types are `ROUTER` and `LOOP_ON_ITEMS`.
+Routers (branching) and loops need the **granular** build path (`ap_create_flow` → `ap_add_step`), not `ap_build_flow`. Place steps inside them with `ap_add_step`'s `stepLocationRelativeToParent`: `INSIDE_BRANCH` (router), `INSIDE_LOOP` (loop), or `INSIDE_ON_SUCCESS_BRANCH` / `INSIDE_ON_FAILURE_BRANCH` (a continue-on-failure step's error branches — see `ap_get_guide(error-handling)`); `AFTER` puts a step after the parent. The step types are `ROUTER` and `LOOP_ON_ITEMS`.
 
 ## Routers
 
@@ -41,14 +41,14 @@ Watch the exact spelling: it's `TEXT_START_WITH` (not `..._STARTS_WITH`), and th
 Configure it with the array to iterate; put the body steps inside with `INSIDE_LOOP`.
 
 **Inside the loop body:**
-- Current item: `{{loopStep.item}}` (dot into it: `{{loopStep.item.email}}`).
-- Current index: `{{loopStep.index}}`.
+- Current item: `{{loopStep['output'].item}}` (dot into it: `{{loopStep['output'].item.email}}`).
+- Current index: `{{loopStep['output'].index}}`.
 
 **Loop output after it finishes** is `{ item, index, iterations }`:
 - `item` is the **last** iteration's item only — **not** an array of everything.
 - `iterations` is an array, one entry per iteration, each a record of that iteration's step outputs.
 
-So to use **all** results after the loop, read `{{loopStep.iterations}}`, or have each iteration write to a Table/Store and read after the loop (the common "loop accumulator": `store/add_to_list` inside, `store/get` after — see `ap_get_guide(state)`). Don't expect `{{loopStep.item}}` to hold the whole list.
+So to use **all** results after the loop, read `{{loopStep['output'].iterations}}`, or have each iteration write to a Table/Store and read after the loop (the common "loop accumulator": `store/add_to_list` inside, `store/get` after — see `ap_get_guide(state)`). Don't expect `{{loopStep['output'].item}}` to hold the whole list.
 
 **Gotchas:**
 - Iterations run **sequentially**, not in parallel — N items × per-item latency counts against the 600 s runtime budget. Big lists → chunk into sub-flows (`ap_get_guide(error-handling)`).
