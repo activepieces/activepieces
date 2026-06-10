@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-jungle-grid",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -12,10 +12,6 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
-    "lint": "eslint 'src/**/*.ts'",
-    "test": "vitest run"
-  },
-  "devDependencies": {
-    "vitest": "3.0.8"
+    "lint": "eslint 'src/**/*.ts'"
   }
 }
