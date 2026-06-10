@@ -124,6 +124,8 @@ export enum AppSystemProp {
     FRONTEND_URL = 'FRONTEND_URL',
     PORT = 'PORT',
     CONSOLE_API_SECRET_KEY = 'CONSOLE_API_SECRET_KEY',
+    LOG_SAMPLE_RATE_INFO = 'LOG_SAMPLE_RATE_INFO',
+    LOG_KEEP_SLOW_MS = 'LOG_KEEP_SLOW_MS',
 }
 
 export enum ContainerType {

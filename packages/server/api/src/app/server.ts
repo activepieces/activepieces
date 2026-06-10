@@ -1,9 +1,11 @@
 import path from 'path'
+import { apLogger, wideEvent } from '@activepieces/server-utils'
 import { ApEnvironment, apId, ApMultipartFile, maxSocketHttpBufferSizeBytes, spreadIfDefined } from '@activepieces/shared'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
 import fastifyMultipart, { MultipartFile } from '@fastify/multipart'
 import fastifyStatic from '@fastify/static'
+import { evlog as evlogFastify, useLogger as useWideEventLogger } from 'evlog/fastify'
 import fastify, { FastifyInstance } from 'fastify'
 import { fastifyRawBody } from 'fastify-raw-body'
 import fastifySocketIO from 'fastify-socket'
@@ -14,7 +16,7 @@ import { getAdapter, setupApp } from './app'
 import { websocketService } from './core/websockets.service'
 import { healthModule } from './health/health.module'
 import { embedSecurity } from './helper/embed-security'
-import { errorHandler } from './helper/error-handler'
+import { enrichWideEventWithError, errorHandler } from './helper/error-handler'
 import { exceptionHandler } from './helper/exception-handler'
 import { networkUtils } from './helper/network-utils'
 import { rejectedPromiseHandler } from './helper/promise-handler'
@@ -175,6 +177,45 @@ async function setupBaseApp(): Promise<FastifyInstance> {
         { parseAs: 'string' },
         app.getDefaultJsonParser('ignore', 'ignore'),
     )
+
+    // Forward the generated request id (req_<apId>) into the header the evlog plugin reads.
+    // This hook runs before the evlog plugin's own onRequest hook so the id is available.
+    app.addHook('onRequest', (request, _reply, done) => {
+        request.headers['x-request-id'] = request.id
+        done()
+    })
+
+    // Fastify runs onError hooks before the custom error handler, and the evlog
+    // plugin emits (seals) the wide event from its own onError hook — so error
+    // enrichment must happen here, before the plugin's hook, not in errorHandler.
+    app.addHook('onError', (_request, _reply, error, done) => {
+        enrichWideEventWithError(error)
+        done()
+    })
+
+    await app.register(evlogFastify, {
+        exclude: [
+            '/api/v1/health',
+            '/api/v1/health/',
+        ],
+    })
+
+    // After evlog has set up its AsyncLocalStorage context, attach a structured
+    // FastifyBaseLogger to request.log so downstream code sees pino-compatible fields,
+    // and expose the wide-event logger for tenant-context enrichment in app.ts.
+    app.addHook('onRequest', (request, _reply, done) => {
+        try {
+            const wide = useWideEventLogger()
+            const structuredLog = apLogger.create({ bindings: {} })
+            Object.assign(request, { log: structuredLog })
+            wideEvent.run({ logger: wide, fn: () => done() })
+        }
+        catch {
+            // useWideEventLogger throws when the route is excluded from evlog (e.g. health check)
+            done()
+        }
+    })
+
     return app
 }
 

@@ -52,7 +52,6 @@ async function buildSettingsResponse(_log: FastifyBaseLogger): Promise<WorkerSet
         LOKI_USERNAME: system.get(AppSystemProp.LOKI_USERNAME),
         BETTERSTACK_HOST: system.get(AppSystemProp.BETTERSTACK_HOST),
         BETTERSTACK_TOKEN: system.get(AppSystemProp.BETTERSTACK_TOKEN),
-        OTEL_ENABLED: system.get(AppSystemProp.OTEL_ENABLED) === 'true',
         PUBLIC_URL: await domainHelper.getPublicUrl({
             path: '',
         }),

@@ -195,6 +195,13 @@ const systemPropValidators: {
 
     // Console
     [AppSystemProp.CONSOLE_API_SECRET_KEY]: stringValidator,
+
+    // evlog sampling / slow-event threshold
+    [AppSystemProp.LOG_SAMPLE_RATE_INFO]: (value: string) => {
+        const n = parseInt(value, 10)
+        return !isNaN(n) && n >= 0 && n <= 100 ? true : 'Value must be a number between 0 and 100'
+    },
+    [AppSystemProp.LOG_KEEP_SLOW_MS]: numberValidator,
 }
 
 

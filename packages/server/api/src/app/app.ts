@@ -1,5 +1,6 @@
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { AddAllowedEmbedOriginsRequestBody, ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, ConnectionDeletedEvent, ConnectionUpsertedEvent, Flow, FlowActivatedEvent, FlowCreatedEvent, FlowDeactivatedEvent, FlowDeletedEvent, FlowPublishedEvent, FlowRun, FlowRunFinishedEvent, FlowRunRetriedEvent, FlowRunStartedEvent, FlowUpdatedEvent, Folder, FolderCreatedEvent, FolderDeletedEvent, FolderUpdatedEvent, GitRepoWithoutSensitiveData, isNil, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserEmailVerifiedEvent, UserInvitation, UserPasswordResetEvent, UserSignedInEvent, UserWithMetaInformation } from '@activepieces/shared'
+import { wideEvent } from '@activepieces/server-utils'
+import { AddAllowedEmbedOriginsRequestBody, ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, ConnectionDeletedEvent, ConnectionUpsertedEvent, Flow, FlowActivatedEvent, FlowCreatedEvent, FlowDeactivatedEvent, FlowDeletedEvent, FlowPublishedEvent, FlowRun, FlowRunFinishedEvent, FlowRunRetriedEvent, FlowRunStartedEvent, FlowUpdatedEvent, Folder, FolderCreatedEvent, FolderDeletedEvent, FolderUpdatedEvent, GitRepoWithoutSensitiveData, isNil, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, spreadIfDefined, Template, UserEmailVerifiedEvent, UserInvitation, UserPasswordResetEvent, UserSignedInEvent, UserWithMetaInformation } from '@activepieces/shared'
 import replyFrom from '@fastify/reply-from'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
@@ -73,6 +74,7 @@ import { AppSystemProp } from './helper/system/system-props'
 import { SystemJobName } from './helper/system-jobs/common'
 import { systemJobHandlers } from './helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from './helper/system-jobs/system-job'
+import { systemSnapshot } from './helper/system-snapshot'
 import { validateEnvPropsOnStartup } from './helper/system-validator'
 import { knowledgeBaseModule } from './knowledge-base/knowledge-base.module'
 import { mcpServerModule } from './mcp/mcp-module'
@@ -165,6 +167,25 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     })
 
     app.addHook('preHandler', authenticationMiddleware)
+
+    // Enrich the current wide-event with tenant identifiers resolved by the auth middleware.
+    // request.principal is set by authenticationMiddleware; for public routes it may be
+    // undefined (the middleware returns early), so we guard with a try/catch.
+    app.addHook('preHandler', (request, _reply, done) => {
+        try {
+            const principal = request.principal
+            wideEvent.set({
+                ...spreadIfDefined('projectId', extractProjectId(principal)),
+                ...spreadIfDefined('platformId', extractPlatformId(principal)),
+                ...spreadIfDefined('principalType', principal?.type),
+            })
+        }
+        catch {
+            // principal getter may throw before auth completes — safe to ignore
+        }
+        done()
+    })
+
     app.addHook('preHandler', authorizationMiddleware)
     app.addHook('preHandler', rbacMiddleware)
 
@@ -355,6 +376,7 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
     const environment = system.get(AppSystemProp.ENVIRONMENT)
     const pieces = process.env.AP_DEV_PIECES
 
+    systemSnapshot.start({ log: app.log })
     await migrateQueuesAndRunConsumers(app)
     app.log.info('Queues migrated and consumers run')
     if (environment === ApEnvironment.DEVELOPMENT) {
@@ -366,6 +388,14 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
         )
     }
     void startDevPieceWatcher(app)
+}
+
+function extractPlatformId(principal: { platform?: { id?: string } } | null | undefined): string | undefined {
+    return principal?.platform?.id
+}
+
+function extractProjectId(principal: { projectId?: string } | null | undefined): string | undefined {
+    return principal?.projectId
 }
 
 function registerOpenApiSchemas() {
