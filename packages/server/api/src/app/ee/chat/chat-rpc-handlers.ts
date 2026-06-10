@@ -177,7 +177,10 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             }
             const runId = typeof input.toolInput.runId === 'string' ? input.toolInput.runId : undefined
             if (runId) {
-                await chatApprovalGate.storeActiveRunId({ conversationId, runId })
+                const currentRunId = await chatApprovalGate.getActiveRunId({ conversationId })
+                if (currentRunId === runId) {
+                    await chatApprovalGate.storeActiveRunId({ conversationId, runId })
+                }
             }
             const cancelled = await chatApprovalGate.isCancelled({ conversationId, runId })
             return { result: cancelled }
