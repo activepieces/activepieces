@@ -187,7 +187,7 @@ describe('schemaTreeUtils.buildTreeFromArrayWithSchema', () => {
 
     const firstItem = tree.children?.[0];
     expect(firstItem?.data.type === 'value' && firstItem.data.propertyPath).toBe(
-      'step_1[0]',
+      "step_1['output'][0]",
     );
 
     const summaryNode = firstItem?.children?.[1];
@@ -197,7 +197,7 @@ describe('schemaTreeUtils.buildTreeFromArrayWithSchema', () => {
     });
     expect(
       summaryNode?.data.type === 'value' && summaryNode.data.propertyPath,
-    ).toBe("step_1[0]['fields']['summary']");
+    ).toBe("step_1['output'][0]['fields']['summary']");
   });
 
   it('falls back to Item N when no itemLabel is set', () => {
@@ -209,6 +209,97 @@ describe('schemaTreeUtils.buildTreeFromArrayWithSchema', () => {
     });
 
     expect(childDisplayNames(tree)).toEqual(['Item 1', 'Item 2']);
+  });
+});
+
+describe('schemaTreeUtils.buildTreeFromArray', () => {
+  it('recurses into nested objects at any depth', () => {
+    const tree = schemaTreeUtils.buildTreeFromArray({
+      stepName: 'step_1',
+      displayName: 'Step',
+      items: [
+        {
+          payload: {
+            customer: {
+              address: {
+                city: 'Amman',
+              },
+            },
+          },
+        },
+      ],
+    });
+
+    const payloadNode = tree.children?.[0]?.children?.[0];
+    expect(payloadNode?.data).toMatchObject({
+      displayName: 'Payload',
+      value: '',
+    });
+
+    const customerNode = payloadNode?.children?.[0];
+    expect(customerNode?.data).toMatchObject({
+      displayName: 'Customer',
+      value: '',
+    });
+
+    const addressNode = customerNode?.children?.[0];
+    expect(addressNode?.children).toHaveLength(1);
+
+    const cityNode = addressNode?.children?.[0];
+    expect(cityNode?.children).toBeUndefined();
+    expect(cityNode?.data).toMatchObject({
+      displayName: 'City',
+      value: 'Amman',
+      insertable: true,
+    });
+    expect(cityNode?.data.type === 'value' && cityNode.data.propertyPath).toBe(
+      "step_1['output'][0]['payload']['customer']['address']['city']",
+    );
+  });
+
+  it('expands arrays nested inside items instead of showing them raw', () => {
+    const tree = schemaTreeUtils.buildTreeFromArray({
+      stepName: 'step_1',
+      displayName: 'Step',
+      items: [{ tags: ['red', 'blue'] }],
+    });
+
+    const tagsNode = tree.children?.[0]?.children?.[0];
+    expect(tagsNode?.data).toMatchObject({
+      displayName: 'Tags',
+      value: ['red', 'blue'],
+    });
+    expect(tagsNode?.children).toHaveLength(2);
+    expect(tagsNode?.children?.[0]?.data).toMatchObject({
+      displayName: 'Tags 1',
+      value: 'red',
+      insertable: true,
+    });
+    expect(
+      tagsNode?.children?.[1]?.data.type === 'value' &&
+        tagsNode.children[1].data.propertyPath,
+    ).toBe("step_1['output'][0]['tags'][1]");
+  });
+
+  it('keeps primitive items as insertable leaves with a preview on object items', () => {
+    const tree = schemaTreeUtils.buildTreeFromArray({
+      stepName: 'step_1',
+      displayName: 'Step',
+      items: ['plain', { id: 7, name: 'Alpha' }],
+    });
+
+    expect(tree.children?.[0]?.data).toMatchObject({
+      displayName: 'Item 1',
+      value: 'plain',
+      insertable: true,
+    });
+    expect(tree.children?.[0]?.children).toBeUndefined();
+
+    expect(tree.children?.[1]?.data).toMatchObject({
+      displayName: 'Item 2',
+      value: '7 · Alpha',
+    });
+    expect(tree.children?.[1]?.children).toHaveLength(2);
   });
 });
 

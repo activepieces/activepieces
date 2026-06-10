@@ -10,15 +10,19 @@ import { pathUtils } from '@/lib/path-utils';
 import { stringUtils } from '@/lib/string-utils';
 
 import { pathHelpers } from './path-helpers';
-import { DataSelectorTreeNode, DataSelectorTreeNodeDataUnion } from './type';
+import {
+  DataSelectorTreeNode,
+  DataSelectorTreeNodeData,
+  DataSelectorTreeNodeDataUnion,
+} from './type';
 
 function buildFieldChildNode({
-  stepName,
+  basePath,
   child,
   sampleData,
   parentPath,
 }: {
-  stepName: string;
+  basePath: string;
   child: OutputSchemaField;
   sampleData: unknown;
   parentPath: string;
@@ -28,8 +32,8 @@ function buildFieldChildNode({
     sampleData,
     rawPath,
   );
-  const propertyPath = pathHelpers.convertValuePathToPropertyPath(
-    stepName,
+  const propertyPath = pathHelpers.appendValuePathToPropertyPath(
+    basePath,
     resolvedPath,
   );
 
@@ -47,13 +51,13 @@ function buildFieldChildNode({
 }
 
 function buildItemChildNode({
-  stepName,
+  basePath,
   child,
   parentArrayPath,
   itemIndex,
   sampleData,
 }: {
-  stepName: string;
+  basePath: string;
   child: OutputSchemaField;
   parentArrayPath: string;
   itemIndex: number;
@@ -65,8 +69,8 @@ function buildItemChildNode({
     sampleData,
     fullPath,
   );
-  const propertyPath = pathHelpers.convertValuePathToPropertyPath(
-    stepName,
+  const propertyPath = pathHelpers.appendValuePathToPropertyPath(
+    basePath,
     resolvedPath,
   );
 
@@ -84,19 +88,19 @@ function buildItemChildNode({
 }
 
 function buildFieldNode({
-  stepName,
+  basePath,
   field,
   sampleData,
 }: {
-  stepName: string;
+  basePath: string;
   field: OutputSchemaField;
   sampleData: unknown;
 }): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
   const rawValuePath = field.value ?? field.key;
   const { value, resolvedPath: valuePath } =
     pathUtils.resolvePathWithWrapperFallback(sampleData, rawValuePath);
-  const propertyPath = pathHelpers.convertValuePathToPropertyPath(
-    stepName,
+  const propertyPath = pathHelpers.appendValuePathToPropertyPath(
+    basePath,
     valuePath,
   );
   const label = schemaUtils.resolveFieldLabel(field);
@@ -111,7 +115,7 @@ function buildFieldNode({
       });
       const itemChildren = listItems.map((child) =>
         buildItemChildNode({
-          stepName,
+          basePath,
           child,
           parentArrayPath: valuePath,
           itemIndex: idx,
@@ -124,8 +128,8 @@ function buildFieldNode({
           type: 'value' as const,
           value: '',
           displayName: itemLabel,
-          propertyPath: pathHelpers.convertValuePathToPropertyPath(
-            stepName,
+          propertyPath: pathHelpers.appendValuePathToPropertyPath(
+            basePath,
             `${valuePath}[${idx}]`,
           ),
           insertable: false,
@@ -152,8 +156,8 @@ function buildFieldNode({
     schemaUtils.isPrimitiveArray(value)
   ) {
     const itemChildren = value.map((itemValue, idx) => {
-      const itemPath = pathHelpers.convertValuePathToPropertyPath(
-        stepName,
+      const itemPath = pathHelpers.appendValuePathToPropertyPath(
+        basePath,
         `${valuePath}[${idx}]`,
       );
       return {
@@ -219,7 +223,7 @@ function buildFieldNode({
   if (field.children && field.children.length > 0) {
     const childNodes = field.children.map((child) =>
       buildFieldChildNode({
-        stepName,
+        basePath,
         child,
         sampleData,
         parentPath: valuePath,
@@ -264,8 +268,9 @@ function buildTreeFromSchema({
   sampleData: unknown;
 }): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
   const fields = schema.fields ?? [];
+  const basePath = pathHelpers.propertyPathStarter(stepName);
   const children = fields.map((field) =>
-    buildFieldNode({ stepName, field, sampleData }),
+    buildFieldNode({ basePath, field, sampleData }),
   );
 
   return {
@@ -274,11 +279,74 @@ function buildTreeFromSchema({
       type: 'value',
       value: '',
       displayName,
-      propertyPath: pathHelpers.propertyPathStarter(stepName),
+      propertyPath: basePath,
       insertable: true,
       stepName,
     },
     children,
+  };
+}
+
+function buildSampleValueNode({
+  value,
+  displayName,
+  path,
+}: {
+  value: unknown;
+  displayName: string;
+  path: string;
+}): DataSelectorTreeNode<DataSelectorTreeNodeData> {
+  if (Array.isArray(value) && value.length > 0) {
+    const children = value.map((itemValue, idx) =>
+      buildSampleValueNode({
+        value: itemValue,
+        displayName: `${displayName} ${idx + 1}`,
+        path: `${path}[${idx}]`,
+      }),
+    );
+    return {
+      key: path,
+      data: {
+        type: 'value',
+        value,
+        displayName,
+        propertyPath: path,
+        insertable: true,
+      },
+      children,
+    };
+  }
+
+  if (isObject(value) && Object.keys(value).length > 0) {
+    const children = Object.entries(value).map(([key, childValue]) =>
+      buildSampleValueNode({
+        value: childValue,
+        displayName: stringUtils.titleCase(key),
+        path: `${path}['${pathHelpers.escapeMentionKey(key)}']`,
+      }),
+    );
+    return {
+      key: path,
+      data: {
+        type: 'value',
+        value: '',
+        displayName,
+        propertyPath: path,
+        insertable: true,
+      },
+      children,
+    };
+  }
+
+  return {
+    key: path,
+    data: {
+      type: 'value',
+      value,
+      displayName,
+      propertyPath: path,
+      insertable: true,
+    },
   };
 }
 
@@ -294,54 +362,15 @@ function buildTreeFromArray({
   const children: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[] =
     items.map((item, idx) => {
       const itemPath = `${pathHelpers.propertyPathStarter(stepName)}[${idx}]`;
+      const itemNode = buildSampleValueNode({
+        value: item,
+        displayName: `${t('Item')} ${idx + 1}`,
+        path: itemPath,
+      });
 
       if (!isObject(item)) {
-        return {
-          key: itemPath,
-          data: {
-            type: 'value' as const,
-            value: item,
-            displayName: `${t('Item')} ${idx + 1}`,
-            propertyPath: itemPath,
-            insertable: true,
-          },
-        };
+        return itemNode;
       }
-
-      const itemChildren: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[] =
-        Object.entries(item).map(([key, value]) => {
-          const childPath = `${itemPath}['${pathHelpers.escapeMentionKey(
-            key,
-          )}']`;
-          const nestedChildren = isObject(value)
-            ? Object.entries(value).map(([nestedKey, nestedValue]) => {
-                const nestedPath = `${childPath}['${pathHelpers.escapeMentionKey(
-                  nestedKey,
-                )}']`;
-                return {
-                  key: nestedPath,
-                  data: {
-                    type: 'value' as const,
-                    value: nestedValue,
-                    displayName: stringUtils.titleCase(nestedKey),
-                    propertyPath: nestedPath,
-                    insertable: true,
-                  },
-                };
-              })
-            : undefined;
-          return {
-            key: childPath,
-            data: {
-              type: 'value' as const,
-              value: nestedChildren ? '' : value,
-              displayName: stringUtils.titleCase(key),
-              propertyPath: childPath,
-              insertable: true,
-            },
-            children: nestedChildren,
-          };
-        });
 
       const preview = Object.values(item)
         .filter((v) => !isNil(v) && v !== '' && typeof v !== 'object')
@@ -353,15 +382,8 @@ function buildTreeFromArray({
         .join(' · ');
 
       return {
-        key: itemPath,
-        data: {
-          type: 'value' as const,
-          value: preview,
-          displayName: `${t('Item')} ${idx + 1}`,
-          propertyPath: itemPath,
-          insertable: true,
-        },
-        children: itemChildren,
+        ...itemNode,
+        data: { ...itemNode.data, value: preview },
       };
     });
 
@@ -392,7 +414,7 @@ function buildTreeFromArrayWithSchema({
 }): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
   const fields = schema.fields ?? [];
   const children = items.map((item, idx) => {
-    const itemBase = `${stepName}[${idx}]`;
+    const itemBase = `${pathHelpers.propertyPathStarter(stepName)}[${idx}]`;
     const itemLabel = schema.itemLabel
       ? schemaUtils.resolveTemplateLabel({
           value: item,
@@ -411,7 +433,7 @@ function buildTreeFromArrayWithSchema({
         insertable: true,
       },
       children: fields.map((field) =>
-        buildFieldNode({ stepName: itemBase, field, sampleData: item }),
+        buildFieldNode({ basePath: itemBase, field, sampleData: item }),
       ),
     };
   });
@@ -422,8 +444,9 @@ function buildTreeFromArrayWithSchema({
       type: 'value',
       value: t('itemCount', { count: items.length }),
       displayName,
-      propertyPath: stepName,
-      insertable: false,
+      propertyPath: pathHelpers.propertyPathStarter(stepName),
+      insertable: true,
+      stepName,
     },
     children,
   };
