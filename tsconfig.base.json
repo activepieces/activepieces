@@ -636,6 +636,9 @@
       "@activepieces/piece-heygen": [
         "packages/pieces/community/heygen/src/index.ts"
       ],
+      "@activepieces/piece-heifconverter": [
+        "packages/pieces/community/heifconverter/src/index.ts"
+      ],
       "@activepieces/piece-hootsuite": [
         "packages/pieces/community/hootsuite/src/index.ts"
       ],
