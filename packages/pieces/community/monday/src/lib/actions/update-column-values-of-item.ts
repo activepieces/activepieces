@@ -2,7 +2,7 @@ import {
   DynamicPropsValue,
   createAction,
 } from '@activepieces/pieces-framework';
-import { mondayAuth } from '../..';
+import { mondayAuth } from '../auth';
 import { makeClient, mondayCommon } from '../common';
 import {
   convertPropValueToMondayColumnValue,
@@ -14,6 +14,8 @@ export const updateColumnValuesOfItemAction = createAction({
   name: 'monday_update_column_values_of_item',
   displayName: 'Update Column Values of Specific Item',
   description: 'Updates multiple columns values of specific item.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates one or more column values on an existing monday.com item identified by board and item id; provided values are auto-coerced to each column\'s type. Use to edit an item\'s fields. Idempotent: re-applying the same values leaves the item in the same state.', idempotent: true },
   props: {
     workspace_id: mondayCommon.workspace_id(true),
     board_id: mondayCommon.board_id(true),

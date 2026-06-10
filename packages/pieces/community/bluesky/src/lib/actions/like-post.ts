@@ -9,6 +9,11 @@ export const likePost = createAction({
   name: 'likePost',
   displayName: 'Like Post',
   description: 'Like a post on Bluesky',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Adds a like from the authenticated account to a specific Bluesky post, identified either by an AT-URI / bsky.app post URL or by selecting from the recent timeline. Use to register approval of a post. Not idempotent — each call creates a separate like record.',
+    idempotent: false,
+  },
   props: {
     selectionMethod: Property.StaticDropdown({
       displayName: 'Select Method',

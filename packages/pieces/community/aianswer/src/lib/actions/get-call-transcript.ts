@@ -1,6 +1,6 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { aiAnswerAuth } from '../..';
+import { aiAnswerAuth } from '../auth';
 import { aiAnswerConfig } from '../common/models';
 
 export const getCallTranscript = createAction({

@@ -42,10 +42,12 @@
   "Method": "Methode",
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
+  "Body Type": "Type lichaam",
   "Body": "Lichaam",
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Two-letter country code for location bias (e.g., \"US\" for United States).": "Tweeletterige landcode voor locatievooroordelen (bijv. \"US\" voor Verenigde Staten).",
   "Specific location to focus the search (e.g., \"New York, NY\").": "Specifieke locatie om de zoekopdracht te focussen (bijv. \"New York, NY\").",
   "Language code for the search results (e.g., \"en\" for English).": "Taalcode voor de zoekresultaten (bijv. \"en\" voor Engels).",
@@ -74,7 +76,7 @@
   "The prompt describing what data to extract from the document.": "De snelle beschrijving van de te extraheren gegevens uit het document.",
   "Whether to return the result in JSON format.": "Geef het resultaat in JSON formaat.",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
-  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
+  "Enable for files like PDFs, images, etc.": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc.",
   "Any Time": "Elk moment",
   "Past Hour": "Afgelopen Uur",
   "Past Day": "Afgelopen dag",
@@ -109,5 +111,8 @@
   "PATCH": "BEKIJK",
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
-  "HEAD": "HOOFD"
+  "HEAD": "HOOFD",
+  "None": "geen",
+  "JSON": "JSON",
+  "Form Data": "Formulieren gegevens"
 }

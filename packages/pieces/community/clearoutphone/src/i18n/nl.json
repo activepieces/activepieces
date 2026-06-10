@@ -1,0 +1,12 @@
+{
+  "ClearoutPhone is a phone number validation and verification service that helps businesses ensure the accuracy and validity of their phone number data.": "ClearoutPhone is een dienst voor validatie en verificatie van telefoonnummers, die bedrijven helpt de nauwkeurigheid en geldigheid van hun telefoongegevens te waarborgen.",
+  "ClearoutPhone API Key\n\n## Generating an API Token\n\nOnce signed up and logged in, click on **Dashboard -> API** tab available on left sidebar and then click on **\"Generate API Token\"**. \n.": "ClearoutPhone API-sleutel\n\n## Genereren van een API Token\n\nEenmaal aangemeld en ingelogd Klik op het **Dashboard -> API** tabblad beschikbaar op de linker sidebar en klik vervolgens op **\"Generate API Token\"**. \n.",
+  "Find Phone Number Carrier": "Telefoonnummer zoeken",
+  "Find Phone Number Is Mobile": "Zoek Telefoonnummer Is Mobiel",
+  "Validate Phone Number": "Valideer telefoonnummer",
+  "Find the carrier of a phone number using ClearoutPhone API": "Zoek de vervoerder van een telefoonnummer met behulp van ClearoutPhone API",
+  "Determine if a phone number is a mobile number using ClearoutPhone API": "Bepaal of een telefoonnummer een mobiel nummer is met ClearoutPhone API",
+  "Validate a phone number and retrieve comprehensive information using ClearoutPhone API": "Valideer een telefoonnummer en haal uitgebreide informatie op via ClearoutPhone API",
+  "Phone Number": "Telefoon nummer",
+  "The phone number to validate (e.g., +447766733573 )": "Het te valideren telefoonnummer (bijv. +447766733573)"
+}

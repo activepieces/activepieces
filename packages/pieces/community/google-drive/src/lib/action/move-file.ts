@@ -1,14 +1,15 @@
-import { googleDriveAuth } from '../../';
+import { googleDriveAuth, createGoogleClient } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { common } from '../common';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 
 export const moveFileAction = createAction({
   auth: googleDriveAuth,
   name: 'google-drive-move-file',
   displayName: 'Move File',
   description: 'Moves a file from one folder to another.',
+  audience: 'both',
+  aiMetadata: { description: 'Relocates a Drive file to a target folder, detaching it from its current parents and attaching it to the new one. Use to reorganize a file once you know its ID and the destination folder ID. Idempotent: repeating with the same destination leaves the file in the same folder.', idempotent: true },
   props: {
     fileId: Property.ShortText({
       displayName: 'File ID',
@@ -22,8 +23,7 @@ export const moveFileAction = createAction({
     const fileId = context.propsValue.fileId;
     const folderId = context.propsValue.folderId;
 
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
 
     const drive = google.drive({ version: 'v3', auth: authClient });
 

@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { getRecordingSummary } from './lib/actions/get-recording-summary';
 import { getRecordingTranscript } from './lib/actions/get-recording-transcript';
@@ -6,12 +6,9 @@ import { listMeetings } from './lib/actions/list-meetings';
 import { findTeam } from './lib/actions/find-team';
 import { findTeamMember } from './lib/actions/find-team-member';
 import { newRecording } from './lib/triggers/new-recording';
+import { fathomAuth } from './lib/common/auth';
 
-export const fathomAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: 'Enter your Fathom API key',
-  required: true
-});
+export { fathomAuth };
 
 export const fathom = createPiece({
   displayName: 'Fathom',

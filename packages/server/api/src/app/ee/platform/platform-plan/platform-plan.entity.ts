@@ -29,6 +29,10 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: 'timestamp with time zone',
             nullable: true,
         },
+        maxAutoTopUpCreditsMonthly: {
+            type: Number,
+            nullable: true,
+        },
         aiCreditsAutoTopUpThreshold: {
             type: Number,
             nullable: true,
@@ -63,6 +67,19 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         embeddingEnabled: {
             type: Boolean,
         },
+        agentsEnabled: {
+            type: Boolean,
+        },
+        aiProvidersEnabled: {
+            type: Boolean,
+            default: false,
+        },
+        chatEnabled: {
+            type: Boolean,
+        },
+        dataManipulationEnabled: {
+            type: Boolean,
+        },
         managePiecesEnabled: {
             type: Boolean,
         },
@@ -78,9 +95,6 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         projectRolesEnabled: {
             type: Boolean,
         },
-        customDomainsEnabled: {
-            type: Boolean,
-        },
         globalConnectionsEnabled: {
             type: Boolean,
         },
@@ -91,6 +105,9 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: Boolean,
         },
         ssoEnabled: {
+            type: Boolean,
+        },
+        scimEnabled: {
             type: Boolean,
         },
         licenseKey: {
@@ -109,28 +126,40 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: String,
             nullable: true,
         },
-        tablesEnabled: {
-            type: Boolean,
-        },
-        todosEnabled: {
-            type: Boolean,
-        },
         projectsLimit: {
             type: Number,
             nullable: true,
         },
-        agentsEnabled: {
+        tablesEnabled: {
             type: Boolean,
         },
         activeFlowsLimit: {
             type: Number,
             nullable: true,
         },
-        mcpsEnabled: {
+        eventStreamingEnabled: {
             type: Boolean,
         },
+        secretManagersEnabled: {
+            type: Boolean,
+        },
+        /** @deprecated use workerGroupId instead — will be removed in 0.83.0 */
         dedicatedWorkers: {
             type: 'jsonb',
+            nullable: true,
+        },
+        /** @deprecated use workerGroupId instead — will be removed in 0.83.0 */
+        canary: {
+            type: Boolean,
+            default: false,
+        },
+        /** @deprecated custom domains have been removed; column kept for backwards compatibility with existing DBs */
+        customDomainsEnabled: {
+            type: Boolean,
+            nullable: false,
+        },
+        workerGroupId: {
+            type: String,
             nullable: true,
         },
     },
@@ -139,6 +168,10 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             name: 'idx_platform_plan_platform_id',
             columns: ['platformId'],
             unique: true,
+        },
+        {
+            name: 'idx_platform_plan_worker_group_id',
+            columns: ['workerGroupId'],
         },
     ],
     relations: {

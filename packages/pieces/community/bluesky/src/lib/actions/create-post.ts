@@ -159,6 +159,11 @@ export const createPost = createAction({
   name: 'createPost',
   displayName: 'Create Post',
   description: 'Create a new post on Bluesky',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Publishes a new post to the authenticated Bluesky account, with optional images, video, an external link card, content-warning labels, and chained thread replies. Use to broadcast content on Bluesky; provide the post text (max 300 characters after hashtags/links are expanded). Not idempotent — each call creates a brand-new post.',
+    idempotent: false,
+  },
   props: {
     postType: postTypeDropdown,
     text: postTextProperty,

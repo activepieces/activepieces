@@ -1,7 +1,6 @@
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { getTaskListsDropdown, getIncompleteTasksInListDropdown } from '../common';
-import { microsoftToDoAuth } from '../../index';
-import { Client } from '@microsoft/microsoft-graph-client';
+import { getTaskListsDropdown, getIncompleteTasksInListDropdown, createTodoClient } from '../common';
+import { microsoftToDoAuth } from '../auth';
 import { TodoTask } from '@microsoft/microsoft-graph-types';
 
 export const completeTaskAction = createAction({
@@ -9,6 +8,8 @@ export const completeTaskAction = createAction({
     name: 'complete_task',
     displayName: 'Complete Task',
     description: 'Marks a task as completed.',
+    audience: 'both',
+    aiMetadata: { description: 'Mark a specific Microsoft To Do task as completed, setting its status to completed and stamping a completion time. Use when a task should be closed out; identify it by task list id and task id (resolve via list/find actions). Idempotent in effect — completing an already-completed task leaves it completed, though it refreshes the completion timestamp.', idempotent: true },
     props: {
         task_list_id: Property.Dropdown({
    auth: microsoftToDoAuth,
@@ -56,11 +57,7 @@ export const completeTaskAction = createAction({
             throw new Error('Task List ID and Task ID are required');
         }
 
-        const client = Client.initWithMiddleware({
-            authProvider: {
-                getAccessToken: () => Promise.resolve(auth.access_token),
-            },
-        });
+        const client = createTodoClient(auth);
 
         try {
             const taskUpdate: Partial<TodoTask> = {

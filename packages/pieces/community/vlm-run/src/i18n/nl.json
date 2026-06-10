@@ -22,10 +22,12 @@
   "Method": "Methode",
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
+  "Body Type": "Type lichaam",
   "Body": "Lichaam",
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The audio file to get the transcription from. Only MP3 supported.": "Het audio-bestand waar je de transcriptie van ophaalt. Alleen MP3 ondersteund.",
   "The image file to be analyzed.": "Het te analyseren afbeeldingsbestand",
   "The specific analysis domain for the image.": "Het specifieke analysedomein voor de afbeelding.",
@@ -35,7 +37,7 @@
   "The specific analysis domain for the video.": "Het specifieke analysedomein voor de video.",
   "Select a file to retrieve its details.": "Selecteer een bestand om de details op te halen.",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
-  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
+  "Enable for files like PDFs, images, etc.": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc.",
   "Image Classification": "Classificatie afbeelding",
   "Image Caption": "Afbeelding bijschrift",
   "Image TV News": "Afbeelding TV nieuws",
@@ -61,5 +63,9 @@
   "PATCH": "BEKIJK",
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
-  "HEAD": "HOOFD"
+  "HEAD": "HOOFD",
+  "None": "geen",
+  "JSON": "JSON",
+  "Form Data": "Formulieren gegevens",
+  "Raw": "Onbewerkte"
 }

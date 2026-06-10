@@ -12,6 +12,12 @@ export const stripeFindInvoice = createAction({
   auth: stripeAuth,
   displayName: 'Find Invoice',
   description: 'Finds an invoice by its unique ID.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches a single Stripe invoice by its unique invoice ID (e.g., in_...). Use when you already have the exact invoice ID and need its current details. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     invoice_id: stripeCommon.invoice,
   },

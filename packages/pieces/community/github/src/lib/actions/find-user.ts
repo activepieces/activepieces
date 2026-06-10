@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { githubAuth } from '../../index';
+import { githubAuth } from '../auth';
 import { githubApiCall } from '../common';
 import { HttpError, HttpMethod } from '@activepieces/pieces-common';
 import { HttpStatusCode } from 'axios';
@@ -9,6 +9,12 @@ export const githubFindUserAction = createAction({
   name: 'find_user',
   displayName: 'Find User',
   description: 'Finds a user by their login name.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up a GitHub user by their login (username) and reports whether they exist along with their public profile. Use to verify a username or fetch a user profile; an unknown username is reported as not-found rather than raising an error. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     username: Property.ShortText({
       displayName: 'Username',
@@ -21,7 +27,7 @@ export const githubFindUserAction = createAction({
 
     try {
       const response = await githubApiCall({
-        accessToken: auth.access_token,
+        auth,
         method: HttpMethod.GET,
         resourceUri: `/users/${username}`,
       });

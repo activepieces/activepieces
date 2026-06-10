@@ -6,12 +6,18 @@ import {
   HttpRequest,
 } from '@activepieces/pieces-common';
 
-import { wooAuth } from '../..';
+import { wooAuth } from '../auth';
 
 export const wooFindProduct = createAction({
   name: 'Find Product',
   displayName: 'Find Product',
   description: 'Find a Product',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves a single product from a WooCommerce store by its numeric product ID. Use when an agent already has a product ID and needs the full product record (price, stock, status, etc.). Read-only and idempotent. Requires the exact product ID.',
+    idempotent: true,
+  },
   auth: wooAuth,
   props: {
     id: Property.ShortText({

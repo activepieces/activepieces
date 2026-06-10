@@ -9,6 +9,11 @@ export const linearCreateIssue = createAction({
   name: 'linear_create_issue',
   displayName: 'Create Issue',
   description: 'Create a new issue in Linear workspace',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a new issue in a Linear team, with optional assignee, status, labels, priority, and template. Use to file a task, bug, or work item. Requires a team ID and title; not idempotent, each call creates a distinct issue.',
+    idempotent: false,
+  },
   props: {
     team_id: props.team_id(),
     title: Property.ShortText({
@@ -33,7 +38,7 @@ export const linearCreateIssue = createAction({
       assigneeId: propsValue.assignee_id,
       stateId: propsValue.state_id,
       priority: propsValue.priority_id,
-      labelIds: propsValue.labels,
+      labelIds: propsValue.labels?.length ? propsValue.labels : undefined,
       templateId: propsValue.template_id
     };
     const client = makeClient(auth);

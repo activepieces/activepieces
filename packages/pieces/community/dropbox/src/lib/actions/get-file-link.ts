@@ -4,12 +4,14 @@ import {
   HttpMethod,
   AuthenticationType,
 } from '@activepieces/pieces-common';
-import { dropboxAuth } from '../..';
+import { dropboxAuth } from '../auth';
 
 export const dropboxGetFileLink = createAction({
   auth: dropboxAuth,
   name: 'get_dropbox_file_link',
   description: 'Get a temporary file link',
+  audience: 'both',
+  aiMetadata: { description: 'Returns a temporary, directly downloadable URL for the file at the given Dropbox path. Use when an agent needs a shareable or fetchable link to file contents rather than downloading the bytes into the flow. Read-only lookup; safe to repeat, though the returned URL is short-lived.', idempotent: true },
   displayName: 'Get temporary file link',
   props: {
     path: Property.ShortText({

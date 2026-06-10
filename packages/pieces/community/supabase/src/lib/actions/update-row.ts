@@ -1,5 +1,5 @@
 import { createAction, Property, DynamicPropsValue } from "@activepieces/pieces-framework";
-import { supabaseAuth } from "../../index";
+import { supabaseAuth } from '../auth';
 import { createClient } from "@supabase/supabase-js";
 import { supabaseCommon } from "../common/props";
 
@@ -7,6 +7,8 @@ export const updateRow = createAction({
     name: 'update_row',
     displayName: 'Update Row',
     description: 'Update rows in a table based on filter criteria',
+    audience: 'both',
+    aiMetadata: { description: 'Updates existing rows in a Supabase table by applying the same field values to every row matching a filter (equals, in-list, or greater-than on a chosen column). Use to modify records you can identify by a filter; it does not create rows that do not exist. Idempotent: re-running with the same filter and values leaves the matched rows in the same state.', idempotent: true },
     auth: supabaseAuth,
     props: {
         table_name: supabaseCommon.table_name,

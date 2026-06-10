@@ -14,6 +14,12 @@ export const clicksendUpdateContactAction = createAction({
   auth: clicksendAuth,
   name: 'update_contact',
   description: 'Updates an existing contact in a contact list.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates the details of an existing ClickSend contact, identified by its contact id within a given contact list, applying only the fields you supply (phone, email, name, company, address). Choose this to edit a known contact rather than create one. Idempotent: re-sending the same values leaves the contact in the same state.',
+    idempotent: true,
+  },
   displayName: 'Update Contact',
   props: {
     contact_list_id: clicksendCommon.contact_list_id,

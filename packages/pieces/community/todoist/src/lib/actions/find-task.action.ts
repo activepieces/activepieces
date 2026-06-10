@@ -9,6 +9,8 @@ export const todoistFindTaskAction = createAction({
 	name: 'find_task',
 	displayName: 'Find Task',
 	description: 'Finds a task by name.',
+	audience: 'both',
+	aiMetadata: { description: 'Looks up an active Todoist task by exact content match, optionally scoped to one project (all projects if left blank). Use to resolve a task name to its full record (including its ID) before updating or completing it. Read-only and idempotent; errors if no task matches the name exactly.', idempotent: true },
 	props: {
 		name: Property.ShortText({
 			displayName: 'Name',

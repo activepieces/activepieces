@@ -7,6 +7,8 @@ export const findContactByEmail = createAction({
   name: 'findContactByEmail',
   displayName: 'Find Contact by Email',
   description: 'Locate an existing contact by email address',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up a single Systeme.io contact by exact email address by paging through all contacts and matching case-insensitively. Use to resolve an email to a contact record (e.g. to get its id before tagging or updating). Read-only and idempotent; returns a not-found result if no contact matches.', idempotent: true },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

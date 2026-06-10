@@ -1,5 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { googleSearchConsoleAuth, createAuthClient } from '../../';
+import { googleSearchConsoleAuth } from '../auth';
+import { createAuthClient } from '../../';
 import { commonProps } from '../common';
 
 export const deleteSite = createAction({

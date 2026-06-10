@@ -7,7 +7,6 @@ import {
 import {
   Property,
   DropdownState,
-  PiecePropValueSchema
 } from '@activepieces/pieces-framework';
 import { Stripe } from 'stripe';
 import { stripeAuth } from '../..';

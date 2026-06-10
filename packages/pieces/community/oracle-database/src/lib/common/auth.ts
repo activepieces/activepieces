@@ -3,13 +3,8 @@ import {
   Property,
   StaticPropsValue,
 } from '@activepieces/pieces-framework';
-import oracledb from 'oracledb';
-
-try {
-  oracledb.initOracleClient();
-} catch (e) {
-  console.log('Oracle client already initialized or failed to initialize.');
-}
+import { OracleRunnerError, runnerPool } from './runner-pool';
+import type { RunnerAuth } from './runner-protocol';
 
 export const oracleDbAuth = PieceAuth.CustomAuth({
   description: `Connect to Oracle Database using either Service Name (host/port/service) or a full connection string.`,
@@ -56,53 +51,81 @@ export const oracleDbAuth = PieceAuth.CustomAuth({
       displayName: 'Password',
       required: true,
     }),
+    thickMode: Property.Checkbox({
+      displayName: 'Thick Mode',
+      description:
+        'Enable to support older Oracle Database versions (11g, 10g password verifiers). ' +
+        'Oracle Instant Client will be downloaded and installed automatically if not already present.',
+      required: false,
+      defaultValue: false,
+    }),
   },
 
   validate: async ({ auth }) => {
-    let connection: oracledb.Connection | undefined;
     const typedAuth = auth as StaticPropsValue<(typeof oracleDbAuth)['props']>;
+    const logs: string[] = [];
+
+    if (typedAuth.connectionType === 'serviceName') {
+      if (!typedAuth.host || !typedAuth.port || !typedAuth.serviceName) {
+        return {
+          valid: false,
+          error:
+            'Host, Port, and Service Name are required for this connection type.',
+        };
+      }
+      logs.push(
+        `[oracle] Connection type: serviceName → ${typedAuth.host}:${typedAuth.port}/${typedAuth.serviceName}`
+      );
+    } else {
+      if (!typedAuth.connectionString) {
+        return {
+          valid: false,
+          error: 'Connection String is required for this connection type.',
+        };
+      }
+      logs.push(
+        `[oracle] Connection type: connectionString → ${typedAuth.connectionString.replace(
+          /\/\/[^:]+:[^@]+@/,
+          '//***:***@'
+        )}`
+      );
+    }
+
+    const runnerAuth: RunnerAuth = {
+      connectionType: typedAuth.connectionType,
+      host: typedAuth.host,
+      port: typedAuth.port,
+      serviceName: typedAuth.serviceName,
+      connectionString: typedAuth.connectionString,
+      user: typedAuth.user,
+      password: typedAuth.password,
+      thickMode: typedAuth.thickMode === true,
+    };
+
+    logs.push(`[oracle] Thick mode: ${runnerAuth.thickMode}`);
 
     try {
-      let connectString: string | undefined;
-
-      if (typedAuth.connectionType === 'serviceName') {
-        if (!typedAuth.host || !typedAuth.port || !typedAuth.serviceName) {
-          return {
-            valid: false,
-            error: 'Host, Port, and Service Name are required for this connection type.',
-          };
-        }
-        connectString = `${typedAuth.host}:${typedAuth.port}/${typedAuth.serviceName}`;
-      } else {
-        if (!typedAuth.connectionString) {
-          return {
-            valid: false,
-            error: 'Connection String is required for this connection type.',
-          };
-        }
-        connectString = typedAuth.connectionString;
-      }
-
-      connection = await oracledb.getConnection({
-        user: typedAuth.user,
-        password: typedAuth.password,
-        connectString: connectString,
+      const { runner, initLogs } = await runnerPool.acquire(
+        runnerAuth.thickMode ? 'thick' : 'thin'
+      );
+      logs.push(...initLogs);
+      const { logs: invokeLogs } = await runner.invoke<{ valid: boolean }>({
+        cmd: 'validate',
+        auth: runnerAuth,
       });
-
+      if (invokeLogs) logs.push(...invokeLogs);
+      logs.push('[oracle] Connection established successfully.');
+      console.log(logs.join('\n'));
       return { valid: true };
     } catch (e) {
+      if (e instanceof OracleRunnerError && e.logs) logs.push(...e.logs);
+      logs.push(
+        `[oracle] Error: ${(e as Error)?.message ?? 'Unknown error'}`
+      );
       return {
         valid: false,
-        error: (e as Error)?.message || 'Unknown connection error.',
+        error: `Connection failed. Debug log:\n${logs.join('\n')}`,
       };
-    } finally {
-      if (connection) {
-        try {
-          await connection.close();
-        } catch (e) {
-          console.error('Failed to close Oracle DB connection:', e);
-        }
-      }
     }
   },
 });

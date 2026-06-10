@@ -5,12 +5,14 @@ import {
   AuthenticationType,
   httpClient,
 } from '@activepieces/pieces-common';
-import { dropboxAuth } from '../../';
+import { dropboxAuth } from '../auth';
 
 export const dropboxCreateNewTextFile = createAction({
   auth: dropboxAuth,
   name: 'create_new_dropbox_text_file',
   description: 'Create a new text file from text input',
+  audience: 'both',
+  aiMetadata: { description: 'Writes the provided text content to a new file at the given Dropbox path (upload in add mode). Use when an agent needs to persist generated or supplied text directly as a file without first producing a file object. Not idempotent: each call uploads, so repeating it can create autorenamed duplicates rather than overwriting.', idempotent: false },
   displayName: 'Create New Text File',
   props: {
     path: Property.ShortText({

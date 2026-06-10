@@ -67,10 +67,12 @@
   "Method": "Método",
   "Headers": "Encabezados",
   "Query Parameters": "Parámetros de consulta",
+  "Body Type": "Tipo de cuerpo",
   "Body": "Cuerpo",
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "A unique task or ticket number that has not been used before in Invoice Ninja": "Una tarea o número de ticket único que no se ha utilizado antes en Ninja de factura",
   "Client ID from Invoice Ninja (optional)": "ID de cliente de factura Ninja (opcional)",
   "Project ID from Invoice Ninja (optional)": "ID del proyecto de factura Ninja (opcional)",
@@ -109,7 +111,7 @@
   "Enter a number. 1-12 - corresponds to dropdown above [Daily being 1, Weekly 2 etc..]!": "Introduzca un número. 1-12 - corresponde a la lista desplegable de arriba [Ser 1, Semanal 2, etc..]!",
   "Recurring Invoice ID from Invoice Ninja": "ID de factura recurrente de Ninja de factura",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
-  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
+  "Enable for files like PDFs, images, etc.": "Activar para archivos como PDFs, imágenes, etc.",
   "Unpaid Invoices": "Facturas pendientes",
   "Paid Invoices": "Facturas pagadas",
   "Overdue Invoices": "Facturas atrasadas",
@@ -141,5 +143,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "BORRAR",
-  "HEAD": "LIMPIO"
+  "HEAD": "LIMPIO",
+  "None": "Ninguna",
+  "JSON": "JSON",
+  "Form Data": "Datos de Formulario",
+  "Raw": "Rápido"
 }

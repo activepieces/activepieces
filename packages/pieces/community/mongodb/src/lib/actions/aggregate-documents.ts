@@ -7,6 +7,8 @@ export default createAction({
   name: 'aggregate_documents',
   displayName: 'Aggregate Documents',
   description: 'Perform aggregation operations on documents in a collection',
+  audience: 'both',
+  aiMetadata: { description: 'Runs a MongoDB aggregation pipeline over a collection and returns the resulting documents. Use for grouping, joining, computed fields, faceting, or any read that goes beyond a simple find filter. The pipeline must be an array of stage objects (e.g. $match, $group, $sort). Read-only and idempotent for read-only pipelines (avoid write stages like $out/$merge).', idempotent: true },
   props: {
     database: mongodbCommon.database,
     collection: mongodbCommon.collection(),

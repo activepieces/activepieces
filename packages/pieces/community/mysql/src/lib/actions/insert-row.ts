@@ -8,6 +8,8 @@ export default createAction({
   name: 'insert_row',
   displayName: 'Insert Row',
   description: 'Inserts a new row into a table',
+  audience: 'both',
+  aiMetadata: { description: 'Inserts a new row into a MySQL table from a map of column names to values. Use to add a record. Not idempotent: each call performs a fresh INSERT, so repeating it adds duplicate rows (or errors on a unique-key collision).', idempotent: false },
   props: {
     timezone: mysqlCommon.timezone,
     table: mysqlCommon.table(),

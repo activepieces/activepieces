@@ -10,6 +10,7 @@ import { createAgentAction } from './lib/actions/create-agent';
 import { inviteUsersAction } from './lib/actions/invite-users';
 import { createDatastoreAction } from './lib/actions/create-datastore';
 import { newAgentTrigger } from './lib/triggers/new-agent';
+import { contextualAiAuth } from './lib/auth';
 
 const markdown = `
 ## Contextual AI Connection Setup
@@ -31,44 +32,6 @@ const markdown = `
 - Leave blank to use the default: \`https://api.contextual.ai/v1\`
 - Only change if you have a custom deployment
 `;
-
-export const contextualAiAuth = PieceAuth.CustomAuth({
-  required: true,
-  description: markdown,
-  props: {
-    apiKey: PieceAuth.SecretText({
-      displayName: 'API Key',
-      description: 'Your Contextual AI API key',
-      required: true,
-    }),
-    baseUrl: Property.ShortText({
-      displayName: 'Base URL',
-      description: 'API base URL (leave blank for default)',
-      required: false,
-    }),
-  },
-  validate: async ({ auth }) => {
-    try {
-      const { apiKey, baseUrl } = auth;
-
-      const client = new ContextualAI({
-        apiKey: apiKey,
-        baseURL: baseUrl || 'https://api.contextual.ai/v1',
-      });
-
-      await client.datastores.list();
-
-      return {
-        valid: true,
-      };
-    } catch (error) {
-      return {
-        valid: false,
-        error: `Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}. Please verify your API key and base URL.`,
-      };
-    }
-  },
-});
 
 export const contextualAi = createPiece({
   displayName: "Contextual AI",

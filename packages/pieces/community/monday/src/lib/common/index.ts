@@ -2,7 +2,7 @@ import { AppConnectionValueForAuthProperty, DynamicPropsValue, Property } from '
 import { mondayClient } from './client';
 import { MondayColumnType, MondayNotWritableColumnType } from './constants';
 import { convertMondayColumnToActivepiecesProp } from './helper';
-import { mondayAuth } from '../..';
+import { mondayAuth } from '../auth';
 
 export function makeClient(auth: AppConnectionValueForAuthProperty<typeof mondayAuth>): mondayClient {
   return new mondayClient(auth.secret_text);

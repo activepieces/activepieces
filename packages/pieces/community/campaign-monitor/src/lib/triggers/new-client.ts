@@ -1,7 +1,7 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
-import { campaignMonitorAuth } from '../../index';
+import { campaignMonitorAuth } from '../auth';
 
 export const newClientTrigger = createTrigger({
   auth: campaignMonitorAuth,

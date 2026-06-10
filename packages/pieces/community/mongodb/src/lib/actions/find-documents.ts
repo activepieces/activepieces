@@ -7,6 +7,8 @@ export default createAction({
   name: 'find_documents',
   displayName: 'Find Documents',
   description: 'Find documents in a collection',
+  audience: 'both',
+  aiMetadata: { description: 'Reads documents from a MongoDB collection, optionally filtered by a query, with projection, sort, limit, and skip. An empty query returns all documents in the collection; pass a query object to filter to matching documents. Use to look up or list records when you need raw documents rather than aggregated results. Requires a collection (and a database, from the action or the connection). Read-only and idempotent.', idempotent: true },
   props: {
     database: mongodbCommon.database,
     collection: mongodbCommon.collection(),

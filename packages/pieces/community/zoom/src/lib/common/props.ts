@@ -1,4 +1,74 @@
-import { Property } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import {
+  AuthenticationType,
+  HttpMethod,
+  httpClient,
+} from '@activepieces/pieces-common';
+import { zoomAuth } from '../..';
+
+export const zoomMeetingDropdown = Property.Dropdown({
+  displayName: 'Meeting',
+  description: 'Select a meeting from your Zoom account.',
+  required: true,
+  auth: zoomAuth,
+  refreshers: ['auth'],
+  options: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        placeholder: 'Connect your Zoom account first.',
+        options: [],
+      };
+    }
+
+    const accessToken = (auth as OAuth2PropertyValue).access_token;
+    const options: { label: string; value: string }[] = [];
+    let nextPageToken = '';
+
+    try {
+      do {
+        const queryParams: Record<string, string> = {
+          type: 'scheduled',
+          page_size: '300',
+        };
+        if (nextPageToken) {
+          queryParams['next_page_token'] = nextPageToken;
+        }
+
+        const res = await httpClient.sendRequest<{
+          meetings: { id: number; topic: string }[];
+          next_page_token: string;
+        }>({
+          method: HttpMethod.GET,
+          url: 'https://api.zoom.us/v2/users/me/meetings',
+          authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: accessToken,
+          },
+          queryParams,
+        });
+
+        options.push(
+          ...res.body.meetings.map((m) => ({
+            label: m.topic || `Meeting ${m.id}`,
+            value: String(m.id),
+          })),
+        );
+
+        nextPageToken = res.body.next_page_token;
+      } while (nextPageToken);
+    } catch {
+      return {
+        disabled: true,
+        placeholder:
+          'Could not load meetings. Ensure your Zoom app has the meeting:read:list_meetings scope.',
+        options: [],
+      };
+    }
+
+    return { options };
+  },
+});
 
 export const getRegistarantProps = () => ({
   meeting_id: Property.ShortText({

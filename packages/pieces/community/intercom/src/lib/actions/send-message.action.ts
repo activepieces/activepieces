@@ -1,6 +1,6 @@
 import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { commonProps, intercomClient } from '../common';
-import { intercomAuth } from '../..';
+import { intercomAuth } from '../auth';
 
 export const sendMessageAction = createAction({
 	auth: intercomAuth,

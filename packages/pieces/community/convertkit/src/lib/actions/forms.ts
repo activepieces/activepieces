@@ -28,10 +28,9 @@ export const listForms = createAction({
 const allFieldsRequiredRefreshers = {
   ...allFields,
   required: false,
-  refreshers: ['auth, formId'],
+  refreshers: ['auth', 'formId'],
 };
 
-// TODO: fields do not show up. Why?
 export const addSubscriberToForm = createAction({
   auth: convertkitAuth,
   name: 'forms_add_subscriber_to_form',
@@ -50,7 +49,7 @@ export const addSubscriberToForm = createAction({
     const url = `${FORMS_API_ENDPOINT}/${formId}/subscribe`;
 
     const body = {
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
       email,
       first_name: firstName,
       tags,
@@ -86,7 +85,7 @@ export const listFormSubscriptions = createAction({
     const url = `${FORMS_API_ENDPOINT}/${context.propsValue.formId}/subscriptions`;
 
     const body = {
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
     };
 
     const request: HttpRequest = {

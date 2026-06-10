@@ -73,6 +73,9 @@ export const newEmail = createTrigger({
   name: 'new_email',
   displayName: 'New Email',
   description: 'Trigger when a new email is received',
+  aiMetadata: {
+    description: 'Fires when a new email arrives in the selected IMAP mailbox folder. Polls the folder on an interval and emits one event per newly received message, including its parsed content and any attachments. Represents an inbound email landing in that mailbox.',
+  },
   props,
   type: TriggerStrategy.POLLING,
 

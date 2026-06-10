@@ -15,6 +15,7 @@ import { newPlanCreated } from './lib/triggers/new-plan-created';
 import { newTaskAssignedToUser } from './lib/triggers/new-task-assigned-to-user';
 import { newTaskCreated } from './lib/triggers/new-task-created';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { getGraphBaseUrl, getMicrosoftCloudFromAuth } from './lib/common/microsoft-cloud';
 
 export const microsoft365Planner = createPiece({
   displayName: 'Microsoft 365 Planner',
@@ -40,7 +41,10 @@ export const microsoft365Planner = createPiece({
     findTask,
     createCustomApiCallAction({
 			auth: microsoft365PlannerAuth,
-			baseUrl: () => 'https://graph.microsoft.com/v1.0/',
+			baseUrl: (auth) => {
+				const cloud = getMicrosoftCloudFromAuth(auth as OAuth2PropertyValue);
+				return getGraphBaseUrl(cloud) + '/v1.0/';
+			},
 			authMapping: async (auth) => ({
 				Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
 			}),

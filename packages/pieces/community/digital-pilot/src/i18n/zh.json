@@ -1,0 +1,17 @@
+{
+  "Enter your DigitalPilot API key": "Enter your DigitalPilot API key",
+  "Add Target Account": "Add Target Account",
+  "Remove Target Account": "Remove Target Account",
+  "Add a target account to a list": "Add a target account to a list",
+  "Remove a target account from a list": "Remove a target account from a list",
+  "Tag ID": "Tag ID",
+  "List ID": "List ID",
+  "Domain": "Domain",
+  "The ID of the tag": "The ID of the tag",
+  "The ID of the list": "The ID of the list",
+  "Account domain name (e.g., example.com)": "Account domain name (e.g., example.com)",
+  "New High Intent Visit": "New High Intent Visit",
+  "New Target Account Visit": "New Target Account Visit",
+  "Triggers when a business exhibits high intent behavior on your website": "Triggers when a business exhibits high intent behavior on your website",
+  "Triggers when a business you've identified as a high-priority target account browses your site": "Triggers when a business you've identified as a high-priority target account browses your site"
+}

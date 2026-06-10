@@ -4,7 +4,7 @@
  */
 
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { serpApiAuth } from '../../index';
+import { serpApiAuth } from '../auth';
 import { COUNTRY_OPTIONS } from '../constants/countries';
 import { LANGUAGE_OPTIONS } from '../constants/languages';
 import { SerpApiClient } from '../services/serp-api-client';
@@ -15,6 +15,8 @@ export const youtubeSearch = createAction({
   name: 'youtube_search',
   displayName: 'YouTube Search',
   description: 'Retrieve top video content results from YouTube for specific keywords or topics with advanced filtering.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches YouTube via SerpApi for videos matching a query. Use to find video content on a topic, discover channels, or research what is being published, scoped by language and country. Read-only and idempotent; requires the search query and a SerpApi API key.', idempotent: true },
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

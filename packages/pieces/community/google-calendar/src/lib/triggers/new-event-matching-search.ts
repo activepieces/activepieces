@@ -4,9 +4,8 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
-import { googleCalendarCommon } from '../common';
+import { googleCalendarCommon, googleCalendarAuth, getAccessToken } from '../common';
 import { GoogleCalendarEvent } from '../common/types';
-import { googleCalendarAuth } from '../../';
 import {
   DedupeStrategy,
   Polling,
@@ -70,7 +69,7 @@ const polling: Polling<
       url: `${googleCalendarCommon.baseUrl}/calendars/${calendar_id}/events`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth.access_token,
+        token: await getAccessToken(auth),
       },
       queryParams: queryParams,
     };
@@ -139,6 +138,9 @@ export const newEventMatchingSearch = createTrigger({
   displayName: 'New Event Matching Search',
   description:
     'Fires when a new event is created that matches a specified search term.',
+  aiMetadata: {
+    description: 'Fires when a newly created event in the selected calendar matches a required search term (matched across title, description, location, and attendees by default, or restricted to chosen fields). Each fired item is the matching new event; can also be filtered by event type.',
+  },
   props: {
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
     search_term: Property.ShortText({

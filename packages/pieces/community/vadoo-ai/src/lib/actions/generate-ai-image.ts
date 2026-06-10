@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { vadooAiAuth } from '../../index';
+import { vadooAiAuth } from '../auth';
 import {
   httpClient,
   HttpMethod,

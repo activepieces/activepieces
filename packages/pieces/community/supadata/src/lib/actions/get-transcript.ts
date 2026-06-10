@@ -7,6 +7,8 @@ export const getTranscriptAction = createAction({
   name: 'get_transcript',
   displayName: 'Get Transcript',
   description: 'Fetches transcript of a YouTube video.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the transcript text of a single YouTube video via the Supadata API, given the video URL. Use to read the spoken content of a video for summarization, search, or analysis; optionally request a preferred language and choose between one merged text block or timestamped chunks. Read-only and idempotent.', idempotent: true },
   auth: supadataAuth,
   props: {
     url: Property.ShortText({

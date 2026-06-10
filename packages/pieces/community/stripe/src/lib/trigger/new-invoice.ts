@@ -23,6 +23,10 @@ export const stripeNewInvoice = createTrigger({
   displayName: 'New Invoice',
   description:
     'Fires when an invoice is created. Supports filters like status, customer, subscription.',
+  aiMetadata: {
+    description:
+      'Fires when an invoice is created in Stripe (the invoice.created event), emitting the new invoice. Optional filters narrow firing to a specific status, customer ID, or subscription ID. Use to react to newly issued invoices, for example to record or forward them.',
+  },
   props: {
     status: Property.StaticDropdown({
       displayName: 'Status',

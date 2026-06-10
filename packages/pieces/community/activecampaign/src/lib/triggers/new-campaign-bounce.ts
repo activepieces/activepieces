@@ -1,4 +1,4 @@
-import { activeCampaignAuth } from '../..';
+import { activeCampaignAuth } from '../auth';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { makeClient } from '../common';
 import { CreateWebhookResponse } from '../common/types';
@@ -9,6 +9,9 @@ export const newCampaignBounceTrigger = createTrigger({
 	name: 'activecampaign_new_campaign_bounce',
 	displayName: 'New Campaign Bounce',
 	description: 'Triggers when a contact email address bounces from a sent campaign.',
+	aiMetadata: {
+		description: 'Fires when a contact email address bounces from a sent campaign. Represents the bounce event with the affected contact and the campaign that triggered it.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 	async onEnable(context) {

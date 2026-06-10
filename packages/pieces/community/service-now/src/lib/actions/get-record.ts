@@ -18,6 +18,12 @@ export const getRecordAction = createAction({
   name: 'get_record',
   displayName: 'Get Record',
   description: 'Retrieve a specific record by its ID',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches a single record from any ServiceNow table by its sys_id (select from the record dropdown or supply a raw sys_id). Use when you already have the record identifier and need its current field values; for searching by criteria instead use Find Records. Read-only and idempotent. Requires the table and the record sys_id.',
+    idempotent: true,
+  },
   props: {
     table: tableDropdown,
     record: recordDropdown,

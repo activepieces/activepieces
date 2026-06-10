@@ -6,13 +6,12 @@ import {
 import {
   createTrigger,
   TriggerStrategy,
-  OAuth2PropertyValue,
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { notionCommon } from '../common';
+import { getNotionToken, NotionAuthValue, notionCommon } from '../common';
 import { Client } from '@notionhq/client';
-import { notionAuth } from '../..';
+import { notionAuth } from '../auth';
 
 export const newComment = createTrigger({
   auth: notionAuth,
@@ -20,6 +19,10 @@ export const newComment = createTrigger({
   displayName: 'New Comment',
   description:
     'Triggers whenever someone adds a new comment to a specific Notion page. Perfect for notifications, review workflows, or automated responses to team feedback.',
+  aiMetadata: {
+    description:
+      'Fires when a new comment is posted on the selected Notion page, emitting the comment. Use to react to feedback or discussion activity on a specific page; requires read-comments capability on the integration.',
+  },
   props: {
     page_id: notionCommon.page,
   },
@@ -126,12 +129,12 @@ const polling: Polling<
 };
 
 const getComments = async (
-  authentication: OAuth2PropertyValue,
+  authentication: NotionAuthValue,
   page_id: string,
   startDate: string | null
 ) => {
   const notion = new Client({
-    auth: authentication.access_token,
+    auth: getNotionToken(authentication),
     notionVersion: '2022-02-22',
   });
 

@@ -10,6 +10,10 @@ export const stripeNewSubscription = createTrigger({
   name: 'new_subscription',
   displayName: 'New Subscription',
   description: 'Triggers when a new subscription is made',
+  aiMetadata: {
+    description:
+      'Fires when a new subscription is created in Stripe (the customer.subscription.created event), emitting the new subscription. Use to react to a customer starting recurring billing, such as provisioning access or sending an onboarding flow.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {

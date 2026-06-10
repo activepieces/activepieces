@@ -3,7 +3,7 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { wooAuth } from '../../';
+import { wooAuth } from '../auth';
 import { WebhookInformation, wooCommon } from '../common';
 import { isEmpty, WebhookHandshakeStrategy } from '@activepieces/shared';
 import {
@@ -17,6 +17,7 @@ export const woocommerceRegisterTrigger = ({
   topic,
   displayName,
   description,
+  aiMetadata,
   sampleData,
   testDataEndpoint,
 }: {
@@ -24,6 +25,7 @@ export const woocommerceRegisterTrigger = ({
   topic: string;
   displayName: string;
   description: string;
+  aiMetadata: { description: string };
   sampleData: unknown;
   testDataEndpoint: string;
 }) =>
@@ -32,6 +34,7 @@ export const woocommerceRegisterTrigger = ({
     name: `$woocommerce_trigger_${name}`,
     displayName,
     description,
+    aiMetadata,
     props: {},
     sampleData,
     type: TriggerStrategy.WEBHOOK,

@@ -1,4 +1,4 @@
-import { activeCampaignAuth } from '../..';
+import { activeCampaignAuth } from '../auth';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { makeClient } from '../common';
 import { CreateWebhookResponse } from '../common/types';
@@ -9,6 +9,9 @@ export const updatedContactTrigger = createTrigger({
 	name: 'activecampaign_updated_contact',
 	displayName: 'Updated Contact',
 	description: 'Triggers when an existing contact details are updated.',
+	aiMetadata: {
+		description: 'Fires when an existing contact\'s details are updated. The payload contains the updated contact record including its current field values and tags.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 	async onEnable(context) {

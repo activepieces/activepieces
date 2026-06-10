@@ -16,10 +16,12 @@
   "Method": "Method",
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
+  "Body Type": "Body Type",
   "Body": "Body",
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The URL of the YouTube video you want to get details from. (e.g., https://www.youtube.com/watch?v=VIDEO_ID)": "The URL of the YouTube video you want to get details from. (e.g., https://www.youtube.com/watch?v=VIDEO_ID)",
   "The URL of the YouTube video to get the transcript from. (e.g., https://www.youtube.com/watch?v=VIDEO_ID)": "The URL of the YouTube video to get the transcript from. (e.g., https://www.youtube.com/watch?v=VIDEO_ID)",
   "The URL of the YouTube video to summarize. (e.g., https://www.youtube.com/watch?v=VIDEO_ID)": "The URL of the YouTube video to summarize. (e.g., https://www.youtube.com/watch?v=VIDEO_ID)",
@@ -27,7 +29,7 @@
   "The number of comments to retrieve (default is 10, maximum is 100).": "The number of comments to retrieve (default is 10, maximum is 100).",
   "The sorting order for the comments.": "The sorting order for the comments.",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
-  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
+  "Enable for files like PDFs, images, etc.": "Enable for files like PDFs, images, etc.",
   "Newest": "Newest",
   "Top": "Top",
   "GET": "GET",
@@ -35,5 +37,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "DELETE",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "None": "None",
+  "JSON": "JSON",
+  "Form Data": "Form Data",
+  "Raw": "Raw"
 }

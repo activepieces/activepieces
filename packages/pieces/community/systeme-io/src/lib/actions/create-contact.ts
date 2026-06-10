@@ -18,6 +18,8 @@ export const createContact = createAction({
   name: 'createContact',
   displayName: 'Create Contact',
   description: 'Create a new contact with email and contact fields from your Systeme.io account, with optional tags',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new contact in Systeme.io from an email plus optional locale and contact/custom fields, and can optionally tag it. Tags are controlled by a tag-source mode: none, assign existing tags by id, or create-and-assign new tags by name. Use to add someone to the CRM; each call creates a new contact and is not idempotent (repeating may produce duplicates or re-create tags). Requires an email.', idempotent: false },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

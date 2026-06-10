@@ -3,7 +3,7 @@ import {
   createTrigger,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { instantlyAiAuth } from '../../index';
+import { instantlyAiAuth } from '../auth';
 import {
   DedupeStrategy,
   HttpMethod,

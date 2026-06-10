@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { googleGeminiAuth } from '../..';
+import { googleGeminiAuth } from '../auth';
+import { getGeminiTtsModelOptions } from '../common/common';
 import { GoogleGenAI } from '@google/genai';
 import wav from 'wav';
 import { Writable } from 'stream';
@@ -10,22 +11,12 @@ export const textToSpeechAction = createAction({
   displayName: 'Text to Speech',
   description: 'Converts text to audio file.',
   props: {
-    model: Property.StaticDropdown({
+    model: Property.Dropdown({
       displayName: 'Model',
       required: true,
-      options: {
-        disabled: false,
-        options: [
-          {
-            label: 'Gemini 2.5 Pro Preview TTS ',
-            value: 'gemini-2.5-pro-preview-tts',
-          },
-          {
-            label: 'Gemini 2.5 Flash Preview TTS',
-            value: 'gemini-2.5-flash-preview-tts',
-          },
-        ],
-      },
+      auth: googleGeminiAuth,
+      refreshers: [],
+      options: async ({ auth }) => getGeminiTtsModelOptions({ auth }),
     }),
     text: Property.LongText({
       displayName: 'Input Text',

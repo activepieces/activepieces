@@ -1,20 +1,26 @@
 
+import { execFileSync } from 'node:child_process'
+import { existsSync } from 'node:fs'
 import { readdir, stat } from 'node:fs/promises'
-import { resolve, join } from 'node:path'
+import { resolve, join, relative } from 'node:path'
 import { cwd } from 'node:process'
-import { extractPieceFromModule } from '@activepieces/shared'
 import * as semver from 'semver'
 import { readPackageJson } from './files'
 import { StatusCodes } from 'http-status-codes'
-import { execSync } from 'child_process'
-import { pieceTranslation,PieceMetadata } from '@activepieces/pieces-framework'
-type SubPiece = {
-    name: string;
-    displayName: string;
-    version: string;
-    minimumSupportedRelease?: string;
-    maximumSupportedRelease?: string;
-    metadata(): Omit<PieceMetadata, 'name' | 'version'>;
+import { pieceTranslation, PieceMetadata } from '@activepieces/pieces-framework'
+
+const LOAD_PIECE_METADATA_CHILD = resolve(
+    __dirname,
+    '..',
+    'pieces',
+    'load-piece-metadata-child.mjs',
+)
+
+type LoadedPieceChildPayload = {
+    metadata: Omit<PieceMetadata, 'name' | 'version'>;
+    minimumSupportedRelease: string | null;
+    maximumSupportedRelease: string | null;
+    authors: string[];
 };
 
 export const AP_CLOUD_API_BASE = 'https://cloud.activepieces.com/api/v1';
@@ -59,7 +65,7 @@ export function getCommunityPieceFolder(pieceName: string): string {
 export async function findAllPiecesDirectoryInSource(): Promise<string[]> {
     const piecesPath = resolve(cwd(), 'packages', 'pieces')
     const paths = await traverseFolder(piecesPath)
-    return paths
+    return paths.map(p => relative(cwd(), p))
 }
 
 export const pieceMetadataExists = async (
@@ -86,9 +92,13 @@ export const pieceMetadataExists = async (
 };
 
 export async function findNewPieces(): Promise<PieceMetadata[]> {
-    const paths = await findAllDistPaths()
+    const changedDistPaths = getChangedPiecesDistPaths()
+    const paths = changedDistPaths ?? await findAllDistPaths()
+
+    console.info(`[findNewPieces] scanning ${paths.length} dist paths${changedDistPaths ? ' (scoped to changed)' : ' (all)'}`)
+
     const changedPieces: PieceMetadata[] = []
-    
+
     // Adding batches because of memory limit when we have a lot of pieces
     const batchSize = 75
     for (let i = 0; i < paths.length; i += batchSize) {
@@ -108,12 +118,28 @@ export async function findNewPieces(): Promise<PieceMetadata[]> {
             }
             return null;
         }))
-        
+
         const validResults = batchResults.filter((piece): piece is PieceMetadata => piece !== null)
         changedPieces.push(...validResults)
     }
-    
+
     return changedPieces;
+}
+
+function getChangedPiecesDistPaths(): string[] | null {
+    const changedPieces = process.env['CHANGED_PIECES']
+    if (!changedPieces || changedPieces.trim() === '') {
+        return null
+    }
+    return changedPieces.split('\n').filter(Boolean).map(p => {
+        return resolve(cwd(), p, 'dist')
+    }).filter(p => {
+        const exists = existsSync(join(p, 'package.json'))
+        if (!exists) {
+            console.info(`[getChangedPiecesDistPaths] skipping, no build output at ${p}`)
+        }
+        return exists
+    })
 }
 
 export async function findAllPieces(): Promise<PieceMetadata[]> {
@@ -123,9 +149,17 @@ export async function findAllPieces(): Promise<PieceMetadata[]> {
 }
 
 async function findAllDistPaths(): Promise<string[]> {
-    const baseDir = resolve(cwd(), 'dist', 'packages')
-    const piecesBuildOutputPath = resolve(baseDir, 'pieces')
-    return await traverseFolder(piecesBuildOutputPath)
+    const sourcePiecesPath = resolve(cwd(), 'packages', 'pieces')
+    const sourceFolders = await traverseFolder(sourcePiecesPath)
+    const distPaths: string[] = []
+    for (const folder of sourceFolders) {
+        const distPath = join(folder, 'dist')
+        const distPackageJson = join(distPath, 'package.json')
+        if (existsSync(distPackageJson)) {
+            distPaths.push(distPath)
+        }
+    }
+    return distPaths
 }
 
 async function traverseFolder(folderPath: string): Promise<string[]> {
@@ -152,39 +186,18 @@ async function traverseFolder(folderPath: string): Promise<string[]> {
 async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | null> {
     try {
         const packageJson = await readPackageJson(folderPath);
-        
-        const packageLockPath = join(folderPath, 'package.json');
-        const packageExists = await stat(packageLockPath).catch(() => null);
-        if (packageExists) {
-            console.info(`[loadPieceFromFolder] package.json exists, running bun install`)
-            execSync('bun install', { cwd: folderPath, stdio: 'inherit' });
-        }
-
-        const module = await import(
-            join(folderPath, 'src', 'index')
-        )
-
-        const { name: pieceName, version: pieceVersion } = packageJson
-        const piece = extractPieceFromModule<SubPiece>({
-            module,
-            pieceName,
-            pieceVersion
-        });
-        const originalMetadata = piece.metadata()
+        const payload = loadPieceViaChildProcess(folderPath);
         const i18n = await pieceTranslation.initializeI18n(folderPath)
-        const metadata = {
-            ...originalMetadata,
+        const metadata: PieceMetadata = {
+            ...payload.metadata,
             name: packageJson.name,
             version: packageJson.version,
-            i18n
+            i18n,
+            authors: payload.authors,
+            directoryPath: folderPath,
+            minimumSupportedRelease: payload.minimumSupportedRelease ?? '0.0.0',
+            maximumSupportedRelease: payload.maximumSupportedRelease ?? '99999.99999.9999',
         };
-        metadata.directoryPath = folderPath;
-        metadata.name = packageJson.name;
-        metadata.version = packageJson.version;
-        metadata.minimumSupportedRelease = piece.minimumSupportedRelease ?? '0.0.0';
-        metadata.maximumSupportedRelease =
-            piece.maximumSupportedRelease ?? '99999.99999.9999';
-
 
         validateMetadata(metadata);
         return metadata;
@@ -193,5 +206,14 @@ async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | 
         console.error(ex)
     }
     return null
+}
+
+function loadPieceViaChildProcess(folderPath: string): LoadedPieceChildPayload {
+    const stdout = execFileSync('node', [LOAD_PIECE_METADATA_CHILD, folderPath], {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'inherit'],
+        maxBuffer: 64 * 1024 * 1024,
+    })
+    return JSON.parse(stdout) as LoadedPieceChildPayload
 }
 

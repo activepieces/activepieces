@@ -1,13 +1,16 @@
-import { AppSystemProp, apVersionUtil, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { groupBy, PieceSyncMode } from '@activepieces/shared'
+import { apVersionUtil } from '@activepieces/server-utils'
+import { groupBy, PieceSyncMode, PieceType, tryCatch } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
+import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
-import { pieceMetadataService, pieceRepos } from './metadata/piece-metadata-service'
+import { pieceCache } from './metadata/piece-cache'
 import { PieceMetadataSchema } from './metadata/piece-metadata-entity'
+import { pieceMetadataService, pieceRepos } from './metadata/piece-metadata-service'
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 const syncMode = system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE)
@@ -15,13 +18,14 @@ const syncMode = system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE)
 export const pieceSyncService = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
         systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, async function syncPiecesJobHandler(): Promise<void> {
-            await pieceSyncService(log).sync()
+            await pieceSyncService(log).sync({ publishCacheRefresh: true })
         })
-        rejectedPromiseHandler(pieceSyncService(log).sync(), log)
+        rejectedPromiseHandler(pieceSyncService(log).sync({ publishCacheRefresh: false }), log)
         await systemJobsSchedule(log).upsertJob({
             job: {
                 name: SystemJobName.PIECES_SYNC,
                 data: {},
+                jobId: SystemJobName.PIECES_SYNC,
             },
             schedule: {
                 type: 'repeated',
@@ -29,7 +33,7 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
             },
         })
     },
-    async sync(): Promise<void> {
+    async sync({ publishCacheRefresh }: { publishCacheRefresh: boolean }): Promise<void> {
         if (syncMode !== PieceSyncMode.OFFICIAL_AUTO) {
             log.info('Piece sync service is disabled')
             return
@@ -42,9 +46,10 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
                     name: true,
                     version: true,
                     pieceType: true,
-                }
+                },
             }), listCloudPieces()])
-            const added = await installNewPieces(cloudPieces, dbPieces, log)
+            log.info({ dbCount: dbPieces.length, cloudCount: cloudPieces.length }, 'Fetched pieces from DB and Cloud')
+            const added = await installNewPieces(cloudPieces, dbPieces, log, publishCacheRefresh)
             const deleted = await deletePiecesIfNotOnCloud(dbPieces, cloudPieces, log)
 
             log.info({
@@ -61,32 +66,38 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
 
 async function deletePiecesIfNotOnCloud(dbPieces: PieceMetadataOnly[], cloudPieces: PieceRegistryResponse[], log: FastifyBaseLogger): Promise<number> {
     const cloudMap = new Map<string, true>(cloudPieces.map(cloudPiece => [`${cloudPiece.name}:${cloudPiece.version}`, true]))
-    const piecesToDelete = dbPieces.filter(piece => !cloudMap.has(`${piece.name}:${piece.version}`))
+    const piecesToDelete = dbPieces.filter(piece => piece.pieceType === PieceType.OFFICIAL && !cloudMap.has(`${piece.name}:${piece.version}`))
     await pieceMetadataService(log).bulkDelete(piecesToDelete.map(piece => ({ name: piece.name, version: piece.version })))
     return piecesToDelete.length
 }
 
-async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: PieceMetadataOnly[], log: FastifyBaseLogger): Promise<number> {
+async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: PieceMetadataOnly[], log: FastifyBaseLogger, _publishCacheRefresh: boolean): Promise<number> {
     const dbMap = new Map<string, true>(dbPieces.map(dbPiece => [`${dbPiece.name}:${dbPiece.version}`, true]))
     const newPiecesToFetch = cloudPieces.filter(piece => !dbMap.has(`${piece.name}:${piece.version}`))
-    const batchSize = 5;
-    for (let i = 0; i < newPiecesToFetch.length; i += batchSize) {
-        const currentBatch = newPiecesToFetch.slice(i, i + batchSize)
+    const batchSize = 5
+    for (let done = 0; done < newPiecesToFetch.length; done += batchSize) {
+        const currentBatch = newPiecesToFetch.slice(done, done + batchSize)
         await Promise.all(currentBatch.map(async (piece) => {
             const url = `${CLOUD_API_URL}/${piece.name}${piece.version ? '?version=' + piece.version : ''}`
             const response = await fetch(url)
             if (!response.ok) {
-                log.warn({ name: piece.name, version: piece.version, status: response.status }, 'Error reading piece metadata')
+                log.warn({ pieceName: piece.name, version: piece.version, status: response.status }, '[pieceSyncService#installNewPieces] Error reading piece metadata')
                 return
             }
             const pieceMetadata = await response.json()
-            await pieceMetadataService(log).create({
+            const { error } = await tryCatch(() => pieceMetadataService(log).create({
                 pieceMetadata,
                 packageType: pieceMetadata.packageType,
                 pieceType: pieceMetadata.pieceType,
-            })
-
+                publishCacheRefresh: false,
+            }))
+            if (error) {
+                log.debug({ pieceName: piece.name, version: piece.version }, '[pieceSyncService#installNewPieces] Piece already exists, skipping')
+            }
         }))
+    }
+    if (newPiecesToFetch.length > 0) {
+        await pieceCache(log).invalidate()
     }
     return newPiecesToFetch.length
 }
@@ -95,7 +106,7 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
 async function listCloudPieces(): Promise<PieceRegistryResponse[]> {
     const queryParams = new URLSearchParams()
     queryParams.append('edition', system.getEdition())
-    queryParams.append('release', await apVersionUtil.getCurrentRelease())
+    queryParams.append('release', apVersionUtil.getCurrentRelease())
     const response = await fetch(`${CLOUD_API_URL}/registry?${queryParams.toString()}`)
     if (!response.ok) {
         throw new Error(`Failed to fetch cloud pieces: ${response.status}`)
@@ -116,7 +127,7 @@ async function listCloudPieces(): Promise<PieceRegistryResponse[]> {
 
 function sortByVersionDesc(items: PieceRegistryResponse[]) {
     return [...items].sort((a, b) =>
-        semver.rcompare(a.version, b.version)
+        semver.rcompare(a.version, b.version),
     )
 }
 

@@ -37,3 +37,7 @@ If you discover a vulnerability, we would like to know about it so we can take s
 - We will keep you informed of the progress towards resolving the problem,
 - In the public information concerning the problem reported, we will give your name as the discoverer of the problem (unless you desire otherwise), and
 - We strive to resolve all problems as quickly as possible, and we would like to play an active role in the ultimate publication on the problem after it is resolved.
+
+## Disclosure Policy
+
+We follow coordinated disclosure. Every report follows the [Security Advisory Response playbook](https://www.activepieces.com/docs/handbook/engineering/playbooks/security-advisory-response).

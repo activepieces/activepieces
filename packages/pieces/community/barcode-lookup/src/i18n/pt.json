@@ -1,0 +1,10 @@
+{
+  "Lookup product information by barcode number": "Procurar informações do produto por número de código de barras",
+  "API Key for Barcode Lookup": "Chave da API para procura de código de barras",
+  "Search By Barcode": "Busca por código de barras",
+  "Search for product information by barcode": "Pesquisar informações do produto por código de barras",
+  "Barcode": "Barcode",
+  "Formatted Output": "Saída Formatada",
+  "The barcode/UPC/EAN number to search for": "O número do código/UPC/EAN para pesquisar",
+  "Return results in a clean, easy to read format": "O retorno resulta em um limpo, formato de leitura fácil"
+}

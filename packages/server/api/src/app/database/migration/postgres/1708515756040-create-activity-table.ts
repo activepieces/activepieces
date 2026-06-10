@@ -32,7 +32,7 @@ export class CreateActivityTable1708515756040 implements MigrationInterface {
             ADD CONSTRAINT "fk_activity_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE RESTRICT ON UPDATE RESTRICT
         `)
 
-        log.info({ name: this.name }, 'up')
+        log.info('[createActivityTable1708515756040#up]')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -49,6 +49,6 @@ export class CreateActivityTable1708515756040 implements MigrationInterface {
             DROP TABLE "activity"
         `)
 
-        log.info({ name: this.name }, 'down')
+        log.info('[createActivityTable1708515756040#down]')
     }
 }

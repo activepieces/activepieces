@@ -4,7 +4,7 @@ import {
   PiecePropValueSchema,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { motionAuth } from '../../index';
+import { motionAuth } from '../auth';
 import {
   DedupeStrategy,
   httpClient,

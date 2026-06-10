@@ -1,8 +1,9 @@
-import { AppSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, UserIdentityProvider } from '@activepieces/shared'
 import { authenticationService } from '../../authentication/authentication.service'
 import { FlagEntity } from '../../flags/flag.entity'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
+import { platformService } from '../../platform/platform.service'
 import { databaseConnection } from '../database-connection'
 import { DataSeed } from './data-seed'
 
@@ -35,7 +36,7 @@ const seedDevUser = async (): Promise<void> => {
     const DEV_PASSWORD = '12345678'
 
 
-    await authenticationService(log).signUp({
+    const response = await authenticationService(log).signUp({
         email: DEV_EMAIL,
         password: DEV_PASSWORD,
         firstName: 'Dev',
@@ -46,16 +47,22 @@ const seedDevUser = async (): Promise<void> => {
         provider: UserIdentityProvider.EMAIL,
     })
 
-    log.info({ name: 'seedDevUser' }, `email=${DEV_EMAIL} pass=${DEV_PASSWORD}`)
+    await platformService(log).createPlatformWithProject({
+        identityId: response.id,
+        name: 'dev\'s Platform',
+        invalidatePreviousTokens: true,
+    })
+
+    log.info({ email: DEV_EMAIL, password: DEV_PASSWORD }, '[devSeeds#seedDevUser] Dev user and platform created')
 }
 const seedDevData = async (): Promise<void> => {
     if (currentEnvIsNotDev()) {
-        log.info({ name: 'seedDevData' }, 'skip: not in development environment')
+        log.info('[devSeeds#seedDevData] Skipping, not in development environment')
         return
     }
 
     if (await devDataAlreadySeeded()) {
-        log.info({ name: 'seedDevData' }, 'skip: already seeded')
+        log.info('[devSeeds#seedDevData] Skipping, already seeded')
         return
     }
 

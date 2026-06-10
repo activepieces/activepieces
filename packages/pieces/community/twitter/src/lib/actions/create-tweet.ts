@@ -15,6 +15,8 @@ export const createTweet = createAction({
   name: 'create-tweet',
   displayName: 'Create Tweet',
   description: 'Create a tweet',
+  audience: 'both',
+  aiMetadata: { description: 'Posts a new tweet to the authenticated X/Twitter account, optionally attaching up to three images. Use this to publish a standalone post (not a reply). Tweet text is required and must be non-empty; this is not idempotent, so each call publishes a separate new tweet.', idempotent: false },
   props: {
     text: twitterCommon.text,
     image_1: twitterCommon.image_1,

@@ -1,4 +1,4 @@
-import { apolloAuth } from '../../';
+import { apolloAuth } from '../auth';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import {
   Property,
@@ -12,6 +12,11 @@ export const newsArticlesSearch = createAction({
   displayName: 'News Articles Search',
   description:
     'Search for news articles related to companies in the Apollo database',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Search the Apollo database for news articles about specific companies, filterable by news category and a published-date range. Use to surface recent events (hires, funding, contracts) for given organizations. Requires Apollo organization IDs (obtained from Organization Search). Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     organization_ids: Property.Array({
       displayName: 'Organization IDs',

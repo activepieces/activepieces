@@ -1,10 +1,13 @@
+import { Redis } from 'ioredis'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { apId, DefaultProjectRole, PiecesFilterType, PieceType, ProjectRole } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { setupServer } from '../../../../src/app/server'
+import { getProjectConcurrencyPoolKey } from '../../../../src/app/database/redis/keys'
+import { distributedStore, redisConnections } from '../../../../src/app/database/redis-connections'
 import { generateMockExternalToken } from '../../../helpers/auth'
+import { db } from '../../../helpers/db'
 import {
     createMockPieceMetadata,
     createMockPieceTag,
@@ -15,20 +18,28 @@ import {
     mockBasicUser,
 } from '../../../helpers/mocks'
 
+async function deleteKeysByPattern(redis: Redis, pattern: string): Promise<void> {
+    const stream = redis.scanStream({ match: pattern, count: 100 })
+    for await (const keys of stream) {
+        if (keys.length > 0) await redis.del(...keys)
+    }
+}
+
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
+    app = await setupTestEnvironment()
 })
-
 
 afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
+    await teardownTestEnvironment()
 })
 
-
+beforeEach(async () => {
+    const redis = await redisConnections.useExisting()
+    await deleteKeysByPattern(redis, 'concurrency-pool:limit:*')
+    await deleteKeysByPattern(redis, 'project:concurrency-pool:*')
+})
 describe('Managed Authentication API', () => {
     describe('External token endpoint', () => {
         it('Signs up new users', async () => {
@@ -38,9 +49,7 @@ describe('Managed Authentication API', () => {
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
             })
-            await databaseConnection()
-                .getRepository('signing_key')
-                .save(mockSigningKey)
+            await db.save('signing_key', mockSigningKey)
 
             const { mockExternalToken, mockExternalTokenPayload } = generateMockExternalToken({
                 platformId: mockPlatform.id,
@@ -50,7 +59,7 @@ describe('Managed Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/managed-authn/external-token',
+                url: '/api/v1/managed-authn/external-token',
                 body: {
                     externalAccessToken: mockExternalToken,
                 },
@@ -83,9 +92,7 @@ describe('Managed Authentication API', () => {
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
             })
-            await databaseConnection()
-                .getRepository('signing_key')
-                .save(mockSigningKey)
+            await db.save('signing_key', mockSigningKey)
 
             const { mockExternalToken, mockExternalTokenPayload } =
                 generateMockExternalToken({
@@ -96,7 +103,7 @@ describe('Managed Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/managed-authn/external-token',
+                url: '/api/v1/managed-authn/external-token',
                 body: {
                     externalAccessToken: mockExternalToken,
                 },
@@ -107,9 +114,7 @@ describe('Managed Authentication API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            const generatedProject = await databaseConnection()
-                .getRepository('project')
-                .findOneBy({
+            const generatedProject = await db.findOneBy('project', {
                     id: responseBody?.projectId,
                 })
 
@@ -132,9 +137,7 @@ describe('Managed Authentication API', () => {
                 version: '0.0.1',
                 pieceType: PieceType.OFFICIAL,
             })
-            await databaseConnection()
-                .getRepository('piece_metadata')
-                .save(mockPieceMetadata1)
+            await db.save('piece_metadata', mockPieceMetadata1)
 
             const mockTag = createMockTag({
                 id: apId(),
@@ -142,9 +145,7 @@ describe('Managed Authentication API', () => {
                 name: 'free',
             })
 
-            await databaseConnection()
-                .getRepository('tag')
-                .save(mockTag)
+            await db.save('tag', mockTag)
 
 
             const mockPieceTag = createMockPieceTag({
@@ -153,19 +154,13 @@ describe('Managed Authentication API', () => {
                 pieceName: '@ap/a',
             })
 
-            await databaseConnection()
-                .getRepository('piece_tag')
-                .save(mockPieceTag)
+            await db.save('piece_tag', mockPieceTag)
 
 
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
             })
-            await databaseConnection()
-                .getRepository('signing_key')
-                .save(mockSigningKey)
-
-
+            await db.save('signing_key', mockSigningKey)
 
             const { mockExternalToken } = generateMockExternalToken({
                 platformId: mockPlatform.id,
@@ -179,7 +174,7 @@ describe('Managed Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/managed-authn/external-token',
+                url: '/api/v1/managed-authn/external-token',
                 body: {
                     externalAccessToken: mockExternalToken,
                 },
@@ -190,9 +185,7 @@ describe('Managed Authentication API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            const generatedProject = await databaseConnection()
-                .getRepository('project_plan')
-                .findOneBy({ projectId: responseBody?.projectId })
+            const generatedProject = await db.findOneBy('project_plan', { projectId: responseBody?.projectId })
 
             expect(generatedProject?.piecesFilterType).toBe('ALLOWED')
             expect(generatedProject?.pieces).toStrictEqual(['@ap/a'])
@@ -205,12 +198,10 @@ describe('Managed Authentication API', () => {
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
             })
-            await databaseConnection()
-                .getRepository('signing_key')
-                .save(mockSigningKey)
+            await db.save('signing_key', mockSigningKey)
 
 
-            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: DefaultProjectRole.VIEWER }) as ProjectRole
+            const projectRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: DefaultProjectRole.VIEWER })
 
             const { mockExternalToken } = generateMockExternalToken({
                 platformId: mockPlatform.id,
@@ -221,7 +212,7 @@ describe('Managed Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/managed-authn/external-token',
+                url: '/api/v1/managed-authn/external-token',
                 body: {
                     externalAccessToken: mockExternalToken,
                 },
@@ -232,9 +223,7 @@ describe('Managed Authentication API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            const generatedProjectMember = await databaseConnection()
-                .getRepository('project_member')
-                .findOneBy({
+            const generatedProjectMember = await db.findOneBy('project_member', {
                     projectId: responseBody?.projectId,
                     userId: responseBody?.id,
                 })
@@ -252,9 +241,7 @@ describe('Managed Authentication API', () => {
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
             })
-            await databaseConnection()
-                .getRepository('signing_key')
-                .save(mockSigningKey)
+            await db.save('signing_key', mockSigningKey)
 
             const mockExternalProjectId = apId()
 
@@ -263,7 +250,7 @@ describe('Managed Authentication API', () => {
                 platformId: mockPlatform.id,
                 externalId: mockExternalProjectId,
             })
-            await databaseConnection().getRepository('project').save(mockProject)
+            await db.save('project', mockProject)
 
             const { mockExternalToken } = generateMockExternalToken({
                 platformId: mockPlatform.id,
@@ -274,7 +261,7 @@ describe('Managed Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/managed-authn/external-token',
+                url: '/api/v1/managed-authn/external-token',
                 body: {
                     externalAccessToken: mockExternalToken,
                 },
@@ -294,9 +281,7 @@ describe('Managed Authentication API', () => {
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
             })
-            await databaseConnection()
-                .getRepository('signing_key')
-                .save(mockSigningKey)
+            await db.save('signing_key', mockSigningKey)
 
             const { mockExternalToken, mockExternalTokenPayload } = generateMockExternalToken({
                 platformId: mockPlatform.id,
@@ -315,12 +300,12 @@ describe('Managed Authentication API', () => {
                 platformId: mockPlatform.id,
                 externalId: mockExternalTokenPayload.externalProjectId,
             })
-            await databaseConnection().getRepository('project').save(mockProject)
+            await db.save('project', mockProject)
 
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/managed-authn/external-token',
+                url: '/api/v1/managed-authn/external-token',
                 body: {
                     externalAccessToken: mockExternalToken,
                 },
@@ -347,7 +332,7 @@ describe('Managed Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/managed-authn/external-token',
+                url: '/api/v1/managed-authn/external-token',
                 body: {
                     externalAccessToken: mockExternalToken,
                 },
@@ -360,6 +345,164 @@ describe('Managed Authentication API', () => {
             expect(responseBody?.params?.message).toBe(
                 `signing key not found signingKeyId=${nonExistentSigningKeyId}`,
             )
+        })
+    })
+
+    describe('Concurrency pool', () => {
+        it('Creates pool and assigns to project when token has concurrencyPoolKey and limit', async () => {
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+
+            const mockSigningKey = createMockSigningKey({
+                platformId: mockPlatform.id,
+            })
+            await db.save('signing_key', mockSigningKey)
+
+            const { mockExternalToken } = generateMockExternalToken({
+                platformId: mockPlatform.id,
+                signingKeyId: mockSigningKey.id,
+                concurrencyPoolKey: 'my-pool',
+                concurrencyPoolLimit: 10,
+            })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/managed-authn/external-token',
+                body: {
+                    externalAccessToken: mockExternalToken,
+                },
+            })
+
+            const responseBody = response?.json()
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+
+            const pool = await databaseConnection()
+                .getRepository('concurrency_pool')
+                .findOneBy({ platformId: mockPlatform.id, key: 'my-pool' }) as { id: string, maxConcurrentJobs: number } | null
+
+            expect(pool).not.toBeNull()
+            expect(pool!.maxConcurrentJobs).toBe(10)
+
+            const project = await db.findOneByOrFail<{ poolId: string | null }>('project', { id: responseBody?.projectId })
+            expect(project.poolId).toBe(pool!.id)
+
+            const cachedPoolId = await distributedStore.get<string>(getProjectConcurrencyPoolKey(responseBody?.projectId))
+            expect(cachedPoolId).toBe(pool!.id)
+        })
+
+        it('Does not create pool when token has concurrencyPoolKey but no concurrencyPoolLimit', async () => {
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+
+            const mockSigningKey = createMockSigningKey({
+                platformId: mockPlatform.id,
+            })
+            await db.save('signing_key', mockSigningKey)
+
+            const { mockExternalToken } = generateMockExternalToken({
+                platformId: mockPlatform.id,
+                signingKeyId: mockSigningKey.id,
+                concurrencyPoolKey: 'no-limit-pool',
+            })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/managed-authn/external-token',
+                body: {
+                    externalAccessToken: mockExternalToken,
+                },
+            })
+
+            const responseBody = response?.json()
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+
+            const pool = await databaseConnection()
+                .getRepository('concurrency_pool')
+                .findOneBy({ platformId: mockPlatform.id, key: 'no-limit-pool' }) as { id: string, maxConcurrentJobs: number } | null
+
+            expect(pool).toBeNull()
+
+            const project = await db.findOneByOrFail<{ poolId: string | null }>('project', { id: responseBody?.projectId })
+            expect(project.poolId).toBeNull()
+        })
+
+        it('Reuses same pool for same concurrencyPoolKey across multiple tokens', async () => {
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+
+            const mockSigningKey = createMockSigningKey({
+                platformId: mockPlatform.id,
+            })
+            await db.save('signing_key', mockSigningKey)
+
+            const { mockExternalToken: token1 } = generateMockExternalToken({
+                platformId: mockPlatform.id,
+                signingKeyId: mockSigningKey.id,
+                externalProjectId: apId(),
+                concurrencyPoolKey: 'shared-pool',
+                concurrencyPoolLimit: 5,
+            })
+
+            const { mockExternalToken: token2 } = generateMockExternalToken({
+                platformId: mockPlatform.id,
+                signingKeyId: mockSigningKey.id,
+                externalProjectId: apId(),
+                concurrencyPoolKey: 'shared-pool',
+                concurrencyPoolLimit: 5,
+            })
+
+            const response1 = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/managed-authn/external-token',
+                body: { externalAccessToken: token1 },
+            })
+
+            const response2 = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/managed-authn/external-token',
+                body: { externalAccessToken: token2 },
+            })
+
+            const body1 = response1?.json()
+            const body2 = response2?.json()
+            expect(response1?.statusCode).toBe(StatusCodes.OK)
+            expect(response2?.statusCode).toBe(StatusCodes.OK)
+
+            const project1 = await db.findOneByOrFail<{ poolId: string | null }>('project', { id: body1?.projectId })
+            const project2 = await db.findOneByOrFail<{ poolId: string | null }>('project', { id: body2?.projectId })
+
+            expect(project1.poolId).toBe(project2.poolId)
+
+            const poolCount = await databaseConnection()
+                .getRepository('concurrency_pool')
+                .countBy({ platformId: mockPlatform.id, key: 'shared-pool' })
+
+            expect(poolCount).toBe(1)
+        })
+
+        it('Does not create pool when token has no concurrencyPoolKey', async () => {
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+
+            const mockSigningKey = createMockSigningKey({
+                platformId: mockPlatform.id,
+            })
+            await db.save('signing_key', mockSigningKey)
+
+            const { mockExternalToken } = generateMockExternalToken({
+                platformId: mockPlatform.id,
+                signingKeyId: mockSigningKey.id,
+            })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/managed-authn/external-token',
+                body: {
+                    externalAccessToken: mockExternalToken,
+                },
+            })
+
+            const responseBody = response?.json()
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+
+            const project = await db.findOneByOrFail<{ poolId: string | null }>('project', { id: responseBody?.projectId })
+            expect(project.poolId).toBeNull()
         })
     })
 })

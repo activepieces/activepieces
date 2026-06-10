@@ -1,11 +1,14 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { supabaseAuth } from '../../index';
+import { supabaseAuth } from '../auth';
 import { supabaseCommon } from '../common/props';
 
 export const newRow = createTrigger({
     name: 'new_row',
     displayName: 'New Row',
     description: 'Fires when a new row is created in a table',
+    aiMetadata: {
+        description: 'Fires when a new row is inserted into the configured Supabase table, delivering the inserted record. Relies on a Supabase Database Webhook (configured manually in the dashboard) pointed at this trigger and listening for INSERT events on the chosen table and schema.',
+    },
     auth: supabaseAuth,
     type: TriggerStrategy.WEBHOOK,
     sampleData: {

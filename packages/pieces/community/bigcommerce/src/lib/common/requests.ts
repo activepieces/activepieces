@@ -6,13 +6,20 @@ async function fireHttpRequest({
   path,
   body,
   auth,
+  filter = false,
 }: {
   method: HttpMethod;
   path: string;
   auth: bigCommerceAuth;
   body?: unknown;
+  filter?: boolean;
 }) {
   const BASE_URL = GET_BASE_URL(auth.storeHash);
+
+  const cleanBody = filter && body ? (Array.isArray(body) 
+    ? body.map(item => filterNulls(item)) 
+    : filterNulls(body)) : body;
+
 
   return await httpClient
     .sendRequest({
@@ -23,7 +30,7 @@ async function fireHttpRequest({
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },
-      body,
+      body: cleanBody,
     })
     .then((res) => res.body)
     .catch((err) => {
@@ -57,7 +64,7 @@ export const bigCommerceApiService = {
     payload,
   }: {
     auth: bigCommerceAuth;
-    payload: any;
+    payload: unknown;
   }) {
     return await fireHttpRequest({
       auth,
@@ -110,13 +117,83 @@ export const bigCommerceApiService = {
     payload,
   }: {
     auth: bigCommerceAuth;
-    payload: any;
+    payload: unknown;
   }) {
     return await fireHttpRequest({
       auth,
       path: '/v3/catalog/products',
       method: HttpMethod.POST,
       body: payload,
+      filter: true,
+    });
+  },
+  async updateProduct({
+    auth,
+    productId,
+    payload,
+  }: {
+    auth: bigCommerceAuth;
+    productId: string | number;
+    payload: unknown;
+  }) {
+    return await fireHttpRequest({
+      auth,
+      path: `/v3/catalog/products/${productId}`,
+      method: HttpMethod.PUT,
+      body: payload,
+      filter: true,
+    });
+  },
+  async deleteProduct({
+    auth,
+    productId,
+  }: {
+    auth: bigCommerceAuth;
+    productId: string | number;
+  }) {
+    return await fireHttpRequest({
+      auth,
+      path: `/v3/catalog/products/${productId}`,
+      method: HttpMethod.DELETE,
+    });
+  },
+  async fetchOrders({
+    auth,
+    queryString,
+  }: {
+    auth: bigCommerceAuth;
+    queryString?: string;
+  }) {
+    return await fireHttpRequest({
+      auth,
+      path: `/v2/orders${queryString ? `?${queryString}` : ''}`,
+      method: HttpMethod.GET,
+    });
+  },
+  async fetchOrder({
+    auth,
+    orderId,
+  }: {
+    auth: bigCommerceAuth;
+    orderId: string | number;
+  }) {
+    return await fireHttpRequest({
+      auth,
+      path: `/v2/orders/${orderId}`,
+      method: HttpMethod.GET,
+    });
+  },
+  async fetchCategories({
+    auth,
+    queryString,
+  }: {
+    auth: bigCommerceAuth;
+    queryString?: string;
+  }) {
+    return await fireHttpRequest({
+      auth,
+      path: `/v3/catalog/categories${queryString ? `?${queryString}` : ''}`,
+      method: HttpMethod.GET,
     });
   },
   async createBlogPost({
@@ -124,7 +201,7 @@ export const bigCommerceApiService = {
     payload,
   }: {
     auth: bigCommerceAuth;
-    payload: any;
+    payload: unknown;
   }) {
     return await fireHttpRequest({
       auth,
@@ -138,7 +215,7 @@ export const bigCommerceApiService = {
     payload,
   }: {
     auth: bigCommerceAuth;
-    payload: any;
+    payload: unknown;
   }) {
     return await fireHttpRequest({
       auth,
@@ -161,3 +238,15 @@ export const bigCommerceApiService = {
     });
   },
 };
+
+function filterNulls(obj: unknown): unknown {
+  if (obj === null || obj === undefined) return undefined;
+  if (typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(filterNulls);
+
+  return Object.fromEntries(
+    Object.entries(obj as Record<string, unknown>)
+      .filter(([_, v]) => v !== null && v !== undefined)
+      .map(([k, v]) => [k, filterNulls(v)])
+  );
+}

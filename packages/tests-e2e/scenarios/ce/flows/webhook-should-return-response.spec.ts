@@ -1,12 +1,12 @@
 import { test, expect } from '../../../fixtures';
 
 test.describe('Webhooks', () => {
-  test('should handle webhook with return response', async ({ page, flowsPage, builderPage }) => {
+  test('should handle webhook with return response', async ({ page, automationsPage, builderPage }) => {
     test.setTimeout(120000);
 
-    await flowsPage.waitFor();
+    await automationsPage.waitFor();
 
-    await flowsPage.newFlowFromScratch();
+    await automationsPage.newFlowFromScratch();
 
     await builderPage.selectInitialTrigger({
       piece: 'Webhook',

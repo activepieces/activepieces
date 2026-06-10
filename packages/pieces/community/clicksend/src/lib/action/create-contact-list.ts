@@ -7,6 +7,12 @@ export const clicksendCreateContactListAction = createAction({
   auth: clicksendAuth,
   name: 'create_contact_list',
   description: 'Creates a new contact list.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new ClickSend contact list with the given name, returning a list id that other contact actions reference. Choose this to set up a list before adding contacts. Requires a non-empty name; not idempotent, as repeating the call attempts to create another list and the API rejects a duplicate name.',
+    idempotent: false,
+  },
   displayName: 'Create Contact List',
   props: {
     list_name: Property.ShortText({

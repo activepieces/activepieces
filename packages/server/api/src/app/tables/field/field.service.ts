@@ -1,7 +1,8 @@
-import { AppSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, apId, CreateFieldRequest, ErrorCode, Field, isNil, UpdateFieldRequest } from '@activepieces/shared'
+import { ActivepiecesError, apId, assertNotNullOrUndefined, CreateFieldRequest, ErrorCode, Field, FieldState, FieldType, isNil, UpdateFieldRequest } from '@activepieces/shared'
+import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { FieldEntity } from './field.entity'
 
 const fieldRepo = repoFactory<Field>(FieldEntity)
@@ -18,6 +19,45 @@ export const fieldService = {
         return field
     },
 
+    async createFromState({ projectId, field, tableId }: CreateFromStateParams): Promise<Field> {
+        switch (field.type) {
+            case FieldType.STATIC_DROPDOWN: {
+                assertNotNullOrUndefined(field.data, 'Data is required for static dropdown field')
+                return this.create({
+                    projectId,
+                    request: {
+                        name: field.name,
+                        type: field.type,
+                        tableId,
+                        data: field.data,
+                        externalId: field.externalId,
+                    },
+                })
+            }
+            case FieldType.DATE:
+            case FieldType.NUMBER:
+            case FieldType.TEXT: {
+                return this.create({
+                    projectId,
+                    request: {
+                        name: field.name,
+                        type: field.type,
+                        tableId,
+                        externalId: field.externalId,
+                    },
+                })
+            }
+            default: {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: `Unsupported field type: ${field.type}`,
+                    },
+                })
+            }
+        }
+    },
+
     async getAll({ projectId, tableId }: GetAllParams): Promise<Field[]> {
         return fieldRepo().find({
             where: { projectId, tableId },
@@ -25,6 +65,23 @@ export const fieldService = {
                 created: 'ASC',
             },
         })
+    },
+
+    async getAllByTableIds({ projectId, tableIds }: GetAllByTableIdsParams): Promise<Map<string, Field[]>> {
+        const fields = await fieldRepo().find({
+            where: { projectId, tableId: In(tableIds) },
+            order: {
+                created: 'ASC',
+            },
+        })
+        const result = new Map<string, Field[]>()
+        for (const tableId of tableIds) {
+            result.set(tableId, [])
+        }
+        for (const field of fields) {
+            result.get(field.tableId)?.push(field)
+        }
+        return result
     },
 
     async getById({ id, projectId }: GetByIdParams): Promise<Field> {
@@ -84,9 +141,20 @@ type CreateParams = {
     request: CreateFieldRequest
 }
 
+type CreateFromStateParams = {
+    projectId: string
+    field: FieldState
+    tableId: string
+}
+
 type GetAllParams = {
     projectId: string
     tableId: string
+}
+
+type GetAllByTableIdsParams = {
+    projectId: string
+    tableIds: string[]
 }
 
 type GetByIdParams = {

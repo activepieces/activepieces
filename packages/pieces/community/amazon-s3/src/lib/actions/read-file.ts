@@ -1,6 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { S3 } from '@aws-sdk/client-s3';
-import { amazonS3Auth } from '../..';
+import { amazonS3Auth } from '../auth';
 import { createS3 } from '../common';
 
 export const readFile = createAction({
@@ -10,8 +10,8 @@ export const readFile = createAction({
   description: 'Read a file from S3 to use it in other steps',
   props: {
     key: Property.ShortText({
-      displayName: 'Key',
-      description: 'The key of the file to read',
+      displayName: 'File Path',
+      description: 'The full path to the file within your S3 bucket (e.g. "documents/report.csv" or "myfile.txt"). This is also called the S3 "key".',
       required: true,
     }),
   },

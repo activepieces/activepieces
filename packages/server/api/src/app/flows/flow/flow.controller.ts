@@ -1,18 +1,14 @@
-import { ApplicationEventName, GetFlowTemplateRequestQuery, GitPushOperationType } from '@activepieces/ee-shared'
-import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
-import {
-    ActivepiecesError,
-    ApId,
+import { ApId, ApplicationEventName,
     CountFlowsRequest,
     CreateFlowRequest,
-    ErrorCode,
     FlowOperationRequest,
     FlowOperationType,
     FlowStatus,
     flowStructureUtil,
     FlowTrigger,
     GetFlowQueryParamsRequest,
-    isNil,
+    GetFlowTemplateRequestQuery,
+    GitPushOperationType,
     ListFlowsRequest,
     Permission,
     PlatformUsageMetric,
@@ -22,33 +18,35 @@ import {
     SERVICE_KEY_SECURITY_OPENAPI,
     SharedTemplate,
 } from '@activepieces/shared'
-import {
-    FastifyPluginAsyncTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
-import dayjs from 'dayjs'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { authenticationUtils } from '../../authentication/authentication-utils'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
+import { ProjectResourceType } from '../../core/security/authorization/common'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-role/rbac-middleware'
 import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
-import { eventsHooks } from '../../helper/application-events'
+import { applicationEvents } from '../../helper/application-events'
+import { userService } from '../../user/user-service'
 import { migrateFlowVersionTemplate } from '../flow-version/migrations'
 import { FlowEntity } from './flow.entity'
 import { flowService } from './flow.service'
 
 const DEFAULT_PAGE_SIZE = 10
 
-export const flowController: FastifyPluginAsyncTypebox = async (app) => {
+export const flowController: FastifyPluginAsyncZod = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
     app.post('/', CreateFlowRequestOptions, async (request, reply) => {
         const newFlow = await flowService(request.log).create({
             projectId: request.projectId,
             request: request.body,
+            ownerId: request.principal.type === PrincipalType.SERVICE ? undefined : request.principal.id,
+            templateId: request.body.templateId,
         })
 
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
+        applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.FLOW_CREATED,
             data: {
                 flow: newFlow,
@@ -72,22 +70,31 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             description: 'Apply an operation to a flow',
             security: [SERVICE_KEY_SECURITY_OPENAPI],
             body: FlowOperationRequest,
-            params: Type.Object({
+            params: z.object({
                 id: ApId,
             }),
         },
         preValidation: async (request) => {
             if (request.body?.type === FlowOperationType.IMPORT_FLOW) {
-                const migratedFlowTemplate = await migrateFlowVersionTemplate(request.body.request.trigger, request.body.request.schemaVersion)
+                const migratedFlowTemplate = await migrateFlowVersionTemplate({
+                    displayName: request.body.request.displayName,
+                    trigger: request.body.request.trigger,
+                    //because the target for the first migraiton is undefined not null
+                    schemaVersion: request.body.request.schemaVersion ?? undefined,
+                    notes: request.body.request.notes ?? [],
+                    valid: false,
+                })
                 request.body.request = {
                     ...request.body.request,
+                    displayName: migratedFlowTemplate.displayName,
                     trigger: migratedFlowTemplate.trigger,
                     schemaVersion: migratedFlowTemplate.schemaVersion,
+                    notes: migratedFlowTemplate.notes,
                 }
             }
         },
     }, async (request) => {
-        const userId = await authenticationUtils.extractUserIdFromPrincipal(request.principal)
+        const userId = await authenticationUtils(request.log).extractUserIdFromRequest(request)
         await assertUserHasPermissionToFlow(request.principal, request.projectId, request.body.type, request.log)
 
         const flow = await flowService(request.log).getOnePopulatedOrThrow({
@@ -103,7 +110,6 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
                 PlatformUsageMetric.ACTIVE_FLOWS,
             )
         }
-        await assertThatFlowIsNotBeingUsed(flow, userId)
         const updatedFlow = await flowService(request.log).update({
             id: request.params.id,
             userId: request.principal.type === PrincipalType.SERVICE ? null : userId,
@@ -111,13 +117,28 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             projectId: request.projectId,
             operation: cleanOperation(request.body),
         })
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
+        applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.FLOW_UPDATED,
             data: {
+                flow: {
+                    id: updatedFlow.id,
+                    externalId: updatedFlow.externalId,
+                    created: updatedFlow.created,
+                    updated: updatedFlow.updated,
+                },
                 request: request.body,
                 flowVersion: flow.version,
             },
         })
+        for (const action of pickLifecycleActions({ operation: request.body, previousStatus: flow.status })) {
+            applicationEvents(request.log).sendUserEvent(request, {
+                action,
+                data: {
+                    flow: updatedFlow,
+                    flowVersion: updatedFlow.version,
+                },
+            })
+        }
         return updatedFlow
     })
 
@@ -125,6 +146,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         return flowService(request.log).list({
             projectIds: [request.projectId],
             folderId: request.query.folderId,
+            folderIds: request.query.folderIds,
             cursorRequest: request.query.cursor ?? null,
             limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
             status: request.query.status,
@@ -144,8 +166,10 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/:id/template', GetFlowTemplateRequestOptions, async (request) => {
+        const userMetadata = request.principal.type === PrincipalType.USER ? await userService(request.log).getMetaInformation({ id: request.principal.id }) : null
         return flowService(request.log).getTemplate({
             flowId: request.params.id,
+            userMetadata,
             projectId: request.projectId,
             versionId: undefined,
         })
@@ -176,7 +200,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             id: request.params.id,
             projectId: request.projectId,
         })
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
+        applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.FLOW_DELETED,
             data: {
                 flow,
@@ -187,6 +211,32 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     })
 }
 
+function pickLifecycleActions({ operation, previousStatus }: PickLifecycleActionsParams): ApplicationEventName[] {
+    if (operation.type === FlowOperationType.LOCK_AND_PUBLISH) {
+        const actions: ApplicationEventName[] = [ApplicationEventName.FLOW_PUBLISHED]
+        const newStatus = operation.request.status ?? FlowStatus.ENABLED
+        const transitionAction = pickTransitionAction({ previousStatus, newStatus })
+        if (transitionAction) {
+            actions.push(transitionAction)
+        }
+        return actions
+    }
+    if (operation.type === FlowOperationType.CHANGE_STATUS) {
+        const transitionAction = pickTransitionAction({ previousStatus, newStatus: operation.request.status })
+        return transitionAction ? [transitionAction] : []
+    }
+    return []
+}
+
+function pickTransitionAction({ previousStatus, newStatus }: PickTransitionActionParams): ApplicationEventName | undefined {
+    if (newStatus === previousStatus) {
+        return undefined
+    }
+    return newStatus === FlowStatus.ENABLED
+        ? ApplicationEventName.FLOW_ACTIVATED
+        : ApplicationEventName.FLOW_DEACTIVATED
+}
+
 function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
     if (operation.type === FlowOperationType.IMPORT_FLOW) {
         const clearSampleData = {
@@ -194,57 +244,25 @@ function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
             sampleDataInputFileId: undefined,
             lastTestDate: undefined,
         }
-        const trigger = flowStructureUtil.transferStep(operation.request.trigger, (step) => {
-            return {
-                ...step,
-                settings: {
-                    ...step.settings,
-                    sampleData: {
-                        ...step.settings.sampleData,
-                        ...clearSampleData,
-                    },
+        const trigger = flowStructureUtil.transferStep(operation.request.trigger, (step) => ({
+            ...step,
+            settings: {
+                ...step.settings,
+                sampleData: {
+                    ...step.settings.sampleData,
+                    ...clearSampleData,
                 },
-            }
-        }) as FlowTrigger
+            },
+        })) as FlowTrigger
         return {
             ...operation,
             request: {
                 ...operation.request,
-                trigger: {
-                    ...trigger,
-                    settings: {
-                        ...trigger.settings,
-                        sampleData: {
-                            ...trigger.settings.sampleData,
-                            ...clearSampleData,
-                        },
-                    },
-                },
+                trigger,
             },
         }
     }
     return operation
-}
-
-async function assertThatFlowIsNotBeingUsed(
-    flow: PopulatedFlow,
-    userId: string,
-): Promise<void> {
-    const currentTime = dayjs()
-    if (
-        !isNil(flow.version.updatedBy) &&
-        flow.version.updatedBy !== userId &&
-        currentTime.diff(dayjs(flow.version.updated), 'minute') <= 1
-    ) {
-        throw new ActivepiecesError({
-            code: ErrorCode.FLOW_IN_USE,
-            params: {
-                flowVersionId: flow.version.id,
-                message:
-                    'Flow is being used by another user in the last minute. Please try again later.',
-            },
-        })
-    }
 }
 
 const CreateFlowRequestOptions = {
@@ -312,7 +330,7 @@ const GetFlowTemplateRequestOptions = {
         tags: ['flows'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Export flow as template',
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         querystring: GetFlowTemplateRequestQuery,
@@ -335,7 +353,7 @@ const GetFlowRequestOptions = {
         tags: ['flows'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Get a flow by id',
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         querystring: GetFlowQueryParamsRequest,
@@ -358,13 +376,21 @@ const DeleteFlowRequestOptions = {
         tags: ['flows'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Delete a flow',
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         response: {
-            [StatusCodes.NO_CONTENT]: Type.Never(),
+            [StatusCodes.NO_CONTENT]: z.never(),
         },
     },
 }
 
+type PickLifecycleActionsParams = {
+    operation: FlowOperationRequest
+    previousStatus: FlowStatus
+}
 
+type PickTransitionActionParams = {
+    previousStatus: FlowStatus
+    newStatus: FlowStatus
+}

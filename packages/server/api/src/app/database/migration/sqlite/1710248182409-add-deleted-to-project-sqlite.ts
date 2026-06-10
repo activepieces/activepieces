@@ -7,9 +7,7 @@ export class AddDeletedToProjectSqlite1710248182409 implements MigrationInterfac
     name = 'AddDeletedToProjectSqlite1710248182409'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        log.info({
-            name: this.name,
-        }, 'up')
+        log.info('[AddDeletedToProjectSqlite1710248182409#up]')
         await queryRunner.query(`
             DROP INDEX "idx_project_platform_id_external_id"
         `)
@@ -66,7 +64,7 @@ export class AddDeletedToProjectSqlite1710248182409 implements MigrationInterfac
             CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId")
         `)
 
-        log.info({ name: this.name }, 'up')
+        log.info('[AddDeletedToProjectSqlite1710248182409#up]')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -125,7 +123,7 @@ export class AddDeletedToProjectSqlite1710248182409 implements MigrationInterfac
             CREATE UNIQUE INDEX "idx_project_platform_id_external_id" ON "project" ("platformId", "externalId")
         `)
 
-        log.info({ name: this.name }, 'down')
+        log.info('[AddDeletedToProjectSqlite1710248182409#down]')
     }
 
 }

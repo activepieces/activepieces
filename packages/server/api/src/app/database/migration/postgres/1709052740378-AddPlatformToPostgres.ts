@@ -79,7 +79,7 @@ async function migrateProjects(queryRunner: QueryRunner) {
     const log = system.globalLogger()
     log.info('CreateDefaultPlatform1705967115116 up')
     const standaloneProjects = await queryRunner.query('select * from project where "platformId" is null;')
-    log.info(`Found ${standaloneProjects.length} standalone projects`)
+    log.info({ count: standaloneProjects.length }, '[migrateProjects] Found standalone projects')
     for (const project of standaloneProjects) {
         const ownerId = project.ownerId
         const platformId = apId()

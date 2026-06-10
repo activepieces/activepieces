@@ -1,4 +1,4 @@
-import { activeCampaignAuth } from '../../../';
+import { activeCampaignAuth } from '../../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { activecampaignCommon, makeClient } from '../../common';
 import { CreateContactRequest } from '../../common/types';
@@ -8,6 +8,8 @@ export const updateContactAction = createAction({
 	name: 'activecampaign_update_contact',
 	displayName: 'Update Contact',
 	description: 'Updates an existing contact.',
+	audience: 'both',
+	aiMetadata: { description: 'Updates an existing ActiveCampaign contact identified by contact ID, changing its email, name, phone, and/or custom field values. Use when you already have the contact ID and want to modify its details. Idempotent: re-running with the same input leaves the contact in the same state.', idempotent: true },
 	props: {
 		contactId: activecampaignCommon.contactId,
 		email: Property.ShortText({

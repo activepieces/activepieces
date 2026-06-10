@@ -1,12 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
-import { exaAuth } from '../../index';
+import { exaAuth } from '../auth';
 
 export const getContentsAction = createAction({
   name: 'get_contents',
   displayName: 'Get Contents',
   description: 'Retrieve clean HTML content from specified URLs.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Crawls and extracts clean page content (and optionally full text) from a given list of URLs via Exa. Use when an agent already has specific URLs and needs their on-page content rather than running a web search; optionally fetch matching subpages by keyword. Requires an array of URLs as input. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: exaAuth,
   props: {
     urls: Property.Array({

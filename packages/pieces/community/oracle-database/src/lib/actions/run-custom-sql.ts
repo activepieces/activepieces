@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { oracleDbAuth } from '../common/auth';
 import { OracleDbClient } from '../common/client';
-import oracledb from 'oracledb';
 
 export const runCustomSqlAction = createAction({
   auth: oracleDbAuth,
@@ -30,7 +29,7 @@ export const runCustomSqlAction = createAction({
     
     try {
       const client = new OracleDbClient(context.auth.props);
-      const bindParams = (binds as oracledb.BindParameters) || {};
+      const bindParams = (binds as Record<string, unknown>) ?? {};
       return await client.execute(sql, bindParams);
     } catch (error) {
       throw new Error(

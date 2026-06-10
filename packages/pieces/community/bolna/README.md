@@ -1,7 +1,5 @@
 # pieces-bolna
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-bolna` to build the library.
+Run `turbo run build --filter=@activepieces/piece-bolna` to build the library.

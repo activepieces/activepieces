@@ -1,0 +1,16 @@
+{
+  "Automate any workflow with AI. Build custom AI automations to scale your marketing, sales, and operations.": "AIを使ってワークフローを自動化する マーケティング、営業、オペレーションを拡張するためのカスタムAIオートメーションを構築します。",
+  "Provide your Leap AI API key. \n\n**How to get your API key:**\n1. Go to [app.tryleap.ai](https://app.tryleap.ai)\n2. Click on **Settings** in the left sidebar (bottom)\n3. Navigate to the **API** section\n4. Click **Create API Key** to generate a new key\n5. Copy and paste the key here": "Provide your Leap AI API key. \n\n**How to get your API key:**\n1. Go to [app.tryleap.ai](https://app.tryleap.ai)\n2. Click on **Settings** in the left sidebar (bottom)\n3. Navigate to the **API** section\n4. Click **Create API Key** to generate a new key\n5. Copy and paste the key here",
+  "Get a Workflow Run": "ワークフローの実行",
+  "Run a Workflow": "ワークフローの実行",
+  "Retrieve the status and results of a workflow run": "ワークフロー実行の状態と結果を取得します",
+  "Execute a Leap AI workflow and return the run ID": "Leap AIワークフローを実行し、実行IDを返します",
+  "Workflow Run ID": "ワークフロー実行ID",
+  "Workflow ID": "ワークフロー ID",
+  "Webhook URL": "Webhook URL",
+  "Input Variables": "Input Variables",
+  "The ID of the workflow run to retrieve": "取得するワークフロー実行の ID",
+  "The ID of the workflow to run": "実行するワークフローの ID",
+  "The URL to which workflow results should be sent on completion (optional)": "完了時にワークフローの結果を送信するURL (オプション)",
+  "Variables that the workflow can use globally and their values (optional)": "ワークフローがグローバルに使用できる変数とその値（オプション）"
+}

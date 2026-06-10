@@ -8,6 +8,12 @@ export const stripeDeactivatePaymentLink = createAction({
   displayName: 'Deactivate Payment Link',
   description:
     'Disable or deactivate a Payment Link so it can no longer be used.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Deactivates an existing Stripe payment link by its ID so it can no longer accept payments. Use to retire a shared checkout URL. Idempotent in effect: re-running on an already-inactive link leaves it inactive.',
+    idempotent: true,
+  },
   props: {
     payment_link_id: stripeCommon.paymentLink,
   },

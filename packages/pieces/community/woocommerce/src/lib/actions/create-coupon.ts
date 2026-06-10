@@ -11,12 +11,18 @@ import {
 } from '@activepieces/pieces-common';
 import { z } from 'zod';
 
-import { wooAuth } from '../..';
+import { wooAuth } from '../auth';
 
 export const wooCreateCoupon = createAction({
   name: 'Create Coupon',
   displayName: 'Create Coupon',
   description: 'Create a coupon',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new discount coupon in a WooCommerce store with a code, discount type (fixed_cart, fixed_product, percent, or percent_product), amount, and minimum order amount. Use when an agent needs to issue a promotional or discount code. Not idempotent: each call posts a new coupon, and the code must be unique in the store.',
+    idempotent: false,
+  },
   auth: wooAuth,
   props: {
     code: Property.ShortText({

@@ -19,7 +19,7 @@ export class AddLengthLimitsToActivity1708529586342 implements MigrationInterfac
                 ALTER COLUMN "status" TYPE character varying(100) USING "status"::character varying(100)
         `)
 
-        log.info({ name: this.name }, 'up')
+        log.info('[addLengthLimitsToActivity1708529586342#up]')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -33,6 +33,6 @@ export class AddLengthLimitsToActivity1708529586342 implements MigrationInterfac
                 ALTER COLUMN "status" TYPE character varying USING "status"::character varying
         `)
 
-        log.info({ name: this.name }, 'down')
+        log.info('[addLengthLimitsToActivity1708529586342#down]')
     }
 }

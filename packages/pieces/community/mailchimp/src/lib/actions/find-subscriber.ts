@@ -8,6 +8,8 @@ export const findSubscriber = createAction({
   name: 'find_subscriber',
   displayName: 'Find Subscriber',
   description: 'Search for subscribers across all lists or within a specific list. This action provides comprehensive subscriber information including merge fields, interests, and activity data.',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up a subscriber by exact email, returning merge fields, interests, and activity data: when an audience (list) is specified it checks that one list, and when left empty it searches every list in the account. Use to find a contact and inspect their profile or status. Requires the email; read-only and idempotent.', idempotent: true },
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
     email: Property.ShortText({

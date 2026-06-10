@@ -16,6 +16,8 @@ export const createWordPressPost = createAction({
   auth: wordpressAuth,
   name: 'create_post',
   description: 'Create new post on WordPress',
+  audience: 'both',
+  aiMetadata: { description: 'Publishes a new blog post on a WordPress site via the REST API, with optional status (draft/publish/etc.), categories, tags, excerpt, featured image, and custom ACF fields. Choose this to add fresh content; for editing an existing post use Update Post. Requires a title and HTML content; not idempotent — each call creates a separate post.', idempotent: false },
   displayName: 'Create Post',
   props: {
     title: Property.ShortText({

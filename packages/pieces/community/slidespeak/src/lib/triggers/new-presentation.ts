@@ -1,4 +1,4 @@
-import { slidespeakAuth } from '../../index';
+import { slidespeakAuth } from '../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/shared';

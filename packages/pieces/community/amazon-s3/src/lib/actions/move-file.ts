@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { amazonS3Auth } from '../..';
+import { amazonS3Auth } from '../auth';
 import { createS3 } from '../common';
 
 export const moveFile = createAction({
@@ -9,13 +9,13 @@ export const moveFile = createAction({
   description: 'Move a File to Another Folder',
   props: {
     fileKey: Property.ShortText({
-      displayName: 'File Key',
-      description: 'The key of the file to move',
+      displayName: 'File Path',
+      description: 'The full path to the file you want to move (e.g. "old-folder/report.csv").',
       required: true,
     }),
     folderKey: Property.ShortText({
-      displayName: 'Folder Key',
-      description: 'The key of the folder to move the file to',
+      displayName: 'Destination Folder',
+      description: 'The folder path to move the file into (e.g. "archive/" or "new-folder"). The file name is kept the same.',
       required: true,
     }),
   },

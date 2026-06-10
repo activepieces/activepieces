@@ -15,6 +15,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { tableService } from '../../tables/table/table.service'
 import { flowService } from '../flow/flow.service'
 import { FolderEntity } from './folder.entity'
 
@@ -70,6 +71,7 @@ export const flowFolderService = (log: FastifyBaseLogger) => ({
         return {
             ...folder,
             numberOfFlows: 0,
+            numberOfTables: 0,
         }
     },
     async list(params: ListParams): Promise<SeekPage<FolderDto>> {
@@ -87,10 +89,15 @@ export const flowFolderService = (log: FastifyBaseLogger) => ({
         
         const queryBuilder = folderRepo()
             .createQueryBuilder('folder')
-            .leftJoin('flow', 'flow', 'flow.folderId = folder.id')
-            .addSelect('COUNT(flow.id)::int', 'numberOfFlows')
             .where('folder.projectId = :projectId', { projectId })
-            .groupBy('folder.id')
+            .addSelect((subQuery) => subQuery
+                .select('COUNT(*)::int')
+                .from('flow', 'flow')
+                .where('flow."folderId" = folder.id'), 'numberOfFlows')
+            .addSelect((subQuery) => subQuery
+                .select('COUNT(*)::int')
+                .from('table', 'tbl')
+                .where('tbl."folderId" = folder.id'), 'numberOfTables')
 
         const paginationResponse = await paginator.paginate<FolderDto>(queryBuilder)
         return paginationHelper.createPage(paginationResponse.data, paginationResponse.cursor)
@@ -113,10 +120,14 @@ export const flowFolderService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        const numberOfFlows = await flowService(log).count({ projectId, folderId })
+        const [numberOfFlows, numberOfTables] = await Promise.all([
+            flowService(log).count({ projectId, folderId }),
+            tableService.count({ projectId, folderId }),
+        ])
         return {
             ...folder,
             numberOfFlows,
+            numberOfTables,
         }
     },
 })

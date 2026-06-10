@@ -1,9 +1,10 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { hedyAuth } from '../../auth';
-import { HedyApiClient, unwrapResource } from '../../common/client';
+import { createClient, unwrapResource } from '../../common/client';
 import { commonProps } from '../../common/props';
 import { Topic } from '../../common/types';
+import { assertIdPrefix } from '../../common/validation';
 
 export const getTopic = createAction({
   auth: hedyAuth,
@@ -14,8 +15,8 @@ export const getTopic = createAction({
     topicId: commonProps.topicId,
   },
   async run(context) {
-    const topicId = context.propsValue.topicId as string;
-    const client = new HedyApiClient(context.auth.secret_text);
+    const topicId = assertIdPrefix(context.propsValue.topicId as string, 'topic_', 'Topic ID');
+    const client = createClient(context.auth);
     const response = await client.request<Topic>({
       method: HttpMethod.GET,
       path: `/topics/${topicId}`,

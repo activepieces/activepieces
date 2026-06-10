@@ -16,7 +16,7 @@ export const youtube = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/youtube.png',
   categories: [PieceCategory.CONTENT_AND_FILES],
   auth: youtubeAuth,
-  authors: ['abaza738', 'kishanprmr', 'khaledmashaly', 'abuaboud'],
+  authors: ['abaza738', 'kishanprmr', 'khaledmashaly', 'abuaboud', 'hugh-codes'],
   actions: [
     createCustomApiCallAction({
       baseUrl: () => 'https://www.googleapis.com/youtube/v3',

@@ -1,4 +1,4 @@
-import { zohoCrmAuth } from '../../index';
+import { zohoCrmAuth } from '../auth';
 import { Property, createAction } from "@activepieces/pieces-framework";
 
 

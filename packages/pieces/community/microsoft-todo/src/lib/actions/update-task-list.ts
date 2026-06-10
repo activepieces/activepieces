@@ -1,7 +1,6 @@
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { getTaskListsDropdown } from '../common';
-import { microsoftToDoAuth } from '../../index';
-import { Client } from '@microsoft/microsoft-graph-client';
+import { getTaskListsDropdown, createTodoClient } from '../common';
+import { microsoftToDoAuth } from '../auth';
 import { TodoTaskList } from '@microsoft/microsoft-graph-types';
 
 export const updateTaskListAction = createAction({
@@ -9,6 +8,8 @@ export const updateTaskListAction = createAction({
     name: 'update_task_list',
     displayName: 'Update Task List',
     description: 'Updates an existing task list.',
+    audience: 'both',
+    aiMetadata: { description: 'Rename an existing Microsoft To Do task list, identified by its task list id, to a new display name. Use to change a list\'s title. Idempotent: re-sending the same name leaves the list in the same state. The new name is required and cannot be empty.', idempotent: true },
     props: {
         task_list_id: Property.Dropdown({
    auth: microsoftToDoAuth,
@@ -46,11 +47,7 @@ export const updateTaskListAction = createAction({
             throw new Error('New Name cannot be empty. Please provide a valid name for the task list.');
         }
 
-        const client = Client.initWithMiddleware({
-            authProvider: {
-                getAccessToken: () => Promise.resolve(auth.access_token),
-            },
-        });
+        const client = createTodoClient(auth);
 
         try {
             const taskListBody: Partial<TodoTaskList> = {

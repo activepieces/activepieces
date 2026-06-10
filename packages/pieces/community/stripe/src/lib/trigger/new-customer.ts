@@ -10,6 +10,10 @@ export const stripeNewCustomer = createTrigger({
   name: 'new_customer',
   displayName: 'New Customer',
   description: 'Triggers when a new customer is created',
+  aiMetadata: {
+    description:
+      'Fires when a new customer is created in Stripe (the customer.created event), emitting the new customer record. Use to react to customer onboarding, such as syncing them to a CRM or sending a welcome flow.',
+  },
   props: {},
   sampleData: {
     id: 'cus_NGtyEf4hNGTj3p',
@@ -63,10 +67,11 @@ export const stripeNewCustomer = createTrigger({
   async test(context) {
     const response = await httpClient.sendRequest<{ data: { id: string }[] }>({
       method: HttpMethod.GET,
-      url: 'https://api.stripe.com/v1/checkout/customers',
+      url: 'https://api.stripe.com/v1/customers',
       headers: {
         Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
+        'Stripe-Version': "2026-02-25.clover",
       },
       queryParams: {
         limit: '5',

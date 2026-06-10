@@ -7,6 +7,12 @@ export const clicksendDeleteContactAction = createAction({
   auth: clicksendAuth,
   name: 'delete_contact',
   description: 'Deletes a contact from a contact list.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Removes a contact, identified by its contact id, from a specific ClickSend contact list. Choose this to permanently delete a known contact from a list. Effectively idempotent: once removed, repeating the call has no further effect (a missing contact returns a not-found error rather than altering state).',
+    idempotent: true,
+  },
   displayName: 'Delete Contact',
   props: {
     contact_list_id: clicksendCommon.contact_list_id,

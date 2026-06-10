@@ -1,0 +1,138 @@
+---
+title: "Data Manipulation Functions"
+icon: 'book'
+description: "Every data manipulation function, grouped by category"
+---
+
+This is the complete catalog of data manipulation functions. Most users will reach for them through the `/` slash trigger inside any text input — see [Data Manipulation](./using-formulas) for an introduction.
+
+## Syntax
+
+```
+function_name(arg1; arg2; arg3)
+```
+
+- Arguments are separated by **semicolons (`;`)**, not commas.
+- Argument types are checked while you edit; type mismatches show up in the preview panel under the input.
+- Functions can be nested freely — any argument can be another function.
+- **Quotes around text arguments are optional** (`combine(John; Smith)` and `combine("John"; "Smith")` both work), **except** for empty or whitespace-only values — use `""` for an empty string and `" "` for a single-space separator.
+
+## Text
+
+Functions that work with strings of text.
+
+| Function | Signature | Description | Example |
+|---|---|---|---|
+| `combine` | `combine(text1; text2; separator)` | Joins two or more values into one piece of text. | `combine(John; Smith; " ")` → `John Smith` |
+| `uppercase` | `uppercase(text)` | Changes all characters to uppercase. | `uppercase(acme inc)` → `ACME INC` |
+| `lowercase` | `lowercase(text)` | Changes all characters to lowercase. | `lowercase(John@ACME.com)` → `john@acme.com` |
+| `titlecase` | `titlecase(text)` | Capitalizes the first letter of every word. | `titlecase(john smith)` → `John Smith` |
+| `trim` | `trim(text)` | Removes space characters at the start and end. | `trim(  Hello World  )` → `Hello World` |
+| `prefix` | `prefix(text; value)` | Adds text before a value. | `prefix(10042; ORD-)` → `ORD-10042` |
+| `suffix` | `suffix(text; value)` | Adds text after a value. | `suffix(Acme; " Ltd.")` → `Acme Ltd.` |
+| `replace` | `replace(text; find; with)` | Finds a word or character and swaps it for another. | `replace(first_name; "_"; " ")` → `first name` |
+| `remove` | `remove(text; value)` | Deletes every occurrence of a character or word. | `remove(004-420-712; "-")` → `004420712` |
+| `first_n` | `first_n(text; n)` | Returns only the first N characters. | `first_n(Jonathan; 3)` → `Jon` |
+| `last_n` | `last_n(text; n)` | Returns only the last N characters. | `last_n(ACC-7890; 4)` → `7890` |
+| `truncate` | `truncate(text; n)` | Cuts text to N characters and adds `...` at the end. | `truncate(Annual Revenue Report; 14)` → `Annual Revenue...` |
+| `split` | `split(text; separator; index)` | Breaks text into parts and returns one of them. | `split(John Smith; " "; 0)` → `John` |
+| `extract_between` | `extract_between(text; start; end)` | Returns the text sitting between two markers. | `extract_between(Status [urgent]; "["; "]")` → `urgent` |
+| `extract_email` | `extract_email(text)` | Finds and returns the first email address in a text. | `extract_email(Contact john@acme.com for help)` → `john@acme.com` |
+| `extract_url` | `extract_url(text)` | Finds and returns the first URL in a text. | `extract_url(Visit https://acme.com today)` → `https://acme.com` |
+| `length` | `length(text)` | Counts how many characters are in the text. | `length(Hello World)` → `11` |
+| `contains` | `contains(text; value)` | Checks if the text has a specific word or character in it. | `contains(bug, urgent, backend; urgent)` → `TRUE` |
+| `starts_with` | `starts_with(text; value)` | Checks if the text begins with a specific value. | `starts_with(support@acme.com; info@)` → `FALSE` |
+| `ends_with` | `ends_with(text; value)` | Checks if the text ends with a specific value. | `ends_with(report.pdf; .pdf)` → `TRUE` |
+| `remove_spaces` | `remove_spaces(text)` | Removes all extra spaces and line breaks inside the text. | `remove_spaces(hello   world)` → `hello world` |
+| `word_count` | `word_count(text)` | Counts how many words are in the text. | `word_count(The quick brown fox)` → `4` |
+
+## Number
+
+Functions for arithmetic and formatting numeric values.
+
+| Function | Signature | Description | Example |
+|---|---|---|---|
+| `add` | `add(num1; num2)` | Adds two numbers together. | `add(49.99; 5.00)` → `54.99` |
+| `subtract` | `subtract(num1; num2)` | Takes the second number away from the first. | `subtract(100.00; 10.50)` → `89.5` |
+| `multiply` | `multiply(num1; num2)` | Multiplies two numbers together. | `multiply(3; 49.99)` → `149.97` |
+| `divide` | `divide(num1; num2)` | Divides the first number by the second. | `divide(4999; 100)` → `49.99` |
+| `round` | `round(number; decimals)` | Rounds a number to a set number of decimal places. | `round(49.9871; 2)` → `49.99` |
+| `round_up` | `round_up(number)` | Always rounds up to the next whole number. | `round_up(7.1)` → `8` |
+| `round_down` | `round_down(number)` | Always rounds down to the previous whole number. | `round_down(7.9)` → `7` |
+| `absolute` | `absolute(number)` | Returns the positive version of a number, removing any minus sign. | `absolute(-42.00)` → `42` |
+| `percentage` | `percentage(value; total)` | Calculates what percentage the value is of the total. | `percentage(75; 100)` → `75%` |
+| `format_number` | `format_number(number; decimals)` | Adds thousand separators so large numbers are easier to read. | `format_number(1250000; 2)` → `1,250,000.00` |
+| `format_currency` | `format_currency(number; symbol)` | Adds a currency symbol and formats the number. | `format_currency(49.99; "$")` → `$49.99` |
+| `cents_to_dollars` | `cents_to_dollars(number)` | Converts a value stored in cents into dollars. | `cents_to_dollars(4999)` → `$49.99` |
+| `min` | `min(num1; num2)` | Returns the smaller of two numbers. | `min(87; 100)` → `87` |
+| `max` | `max(num1; num2)` | Returns the larger of two numbers. | `max(-5; 0)` → `0` |
+| `to_number` | `to_number(text)` | Converts a text value into a number you can calculate with. | `to_number(1990)` → `1990` |
+
+## Date
+
+Functions for working with dates and times.
+
+| Function | Signature | Description | Example |
+|---|---|---|---|
+| `format_date` | `format_date(date; format)` | Changes how a date looks using a format you pick. | `format_date(2025-01-15; MMM DD, YYYY)` → `Jan 15, 2025` |
+| `format_date_long` | `format_date_long(date)` | Shows the full date written out in plain language. | `format_date_long(2025-01-15)` → `Friday, January 15, 2025` |
+| `format_time` | `format_time(date; format)` | Pulls the time out of a date and formats it. | `format_time(2025-01-15T14:30:00Z; h:mm A)` → `2:30 PM` |
+| `relative_time` | `relative_time(date)` | Shows how long ago or how far away a date is. | `relative_time(2025-01-12)` → `3 days ago` |
+| `add_days` | `add_days(date; n)` | Adds a number of days to a date. | `add_days(2025-01-15; 30)` → `Feb 14, 2025` |
+| `subtract_days` | `subtract_days(date; n)` | Goes back a number of days from a date. | `subtract_days(2025-01-15; 7)` → `Jan 08, 2025` |
+| `add_hours` | `add_hours(date; n)` | Adds a number of hours to a date and time. | `add_hours(2025-01-15T14:30:00Z; 2)` → `2025-01-15T16:30:00Z` |
+| `days_between` | `days_between(date1; date2)` | Counts how many days are between two dates. | `days_between(2025-01-01; 2025-01-15)` → `14` |
+| `get_day` | `get_day(date)` | Returns the day number from a date (1–31). | `get_day(2025-01-15)` → `15` |
+| `get_month` | `get_month(date)` | Returns the month from a date. | `get_month(2025-01-15)` → `January` |
+| `get_year` | `get_year(date)` | Returns the year from a date. | `get_year(2025-01-15)` → `2025` |
+| `get_day_of_week` | `get_day_of_week(date)` | Returns the name of the day of the week. | `get_day_of_week(2025-01-15)` → `Wednesday` |
+| `start_of_month` | `start_of_month(date)` | Returns the first day of the same month. | `start_of_month(2025-01-15)` → `Jan 01, 2025` |
+| `end_of_month` | `end_of_month(date)` | Returns the last day of the same month. | `end_of_month(2025-01-15)` → `Jan 31, 2025` |
+| `convert_timezone` | `convert_timezone(date; timezone)` | Converts a date and time from one timezone to another. | `convert_timezone(2025-01-15T14:30:00Z; America/New_York)` → `Jan 15, 9:30 AM EST` |
+| `now` | `now()` | Returns the current date and time at the moment the flow runs. | `now()` → `2025-01-15T14:30:00Z` |
+| `today` | `today()` | Returns today's date with no time attached. | `today()` → `2025-01-15` |
+| `to_date` | `to_date(text)` | Turns a text value into a proper date the flow can work with. | `to_date(January 15, 2025)` → `2025-01-15T00:00:00Z` |
+
+## List
+
+Functions for working with collections (arrays of items).
+
+| Function | Signature | Description | Example |
+|---|---|---|---|
+| `filter_list` | `filter_list(list; field; value)` | Keeps only the items where a field matches a value. | `filter_list(tickets; status; open)` → `[3 of 10 items]` |
+| `sort_list` | `sort_list(list; field; order)` | Sorts a list from highest to lowest, or A to Z, by a field. | `sort_list(orders; amount; desc)` → `[sorted: 500, 200, 50]` |
+| `pluck` | `pluck(list; field)` | Picks one field out of every item in a list. | `pluck(users; email)` → `[ana@x.com, bob@x.com]` |
+| `join_list` | `join_list(list; separator)` | Turns a list into a single piece of text with a separator. | `join_list([bug;urgent;backend]; ", ")` → `bug, urgent, backend` |
+| `first_item` | `first_item(list)` | Returns the first item in a list. | `first_item([apple;banana;cherry])` → `apple` |
+| `last_item` | `last_item(list)` | Returns the last item in a list. | `last_item([apple;banana;cherry])` → `cherry` |
+| `item_at` | `item_at(list; index)` | Returns the item at a specific position in a list. | `item_at([apple;banana;cherry]; 1)` → `banana` |
+| `count` | `count(list)` | Counts how many items are in a list. | `count([bug;urgent;backend])` → `3` |
+| `sum` | `sum(list; field)` | Adds up a number field across all items in a list. | `sum(orders; amount)` → `4820.5` |
+| `average` | `average(list; field)` | Calculates the average of a number field across all items. | `average(scores; value)` → `82.4` |
+| `max_in_list` | `max_in_list(list; field)` | Finds the highest value of a field across all items. | `max_in_list(orders; amount)` → `1200` |
+| `min_in_list` | `min_in_list(list; field)` | Finds the lowest value of a field across all items. | `min_in_list(orders; amount)` → `9.99` |
+| `deduplicate` | `deduplicate(list; field)` | Removes items that have the same value in a field. | `deduplicate(leads; email)` → `[7 of 10 items]` |
+| `flatten` | `flatten(list)` | Turns a list of lists into one flat list. | `flatten([[a;b];[c;d]])` → `[a,b,c,d]` |
+| `split_text_to_list` | `split_text_to_list(text; separator)` | Turns a comma-separated text into a list of items. | `split_text_to_list(bug,urgent,backend; ",")` → `[bug,urgent,backend]` |
+
+## Logic
+
+Functions for conditionals, comparisons, and fallbacks.
+
+| Function | Signature | Description | Example |
+|---|---|---|---|
+| `if` | `if(condition; true_value; false_value)` | Returns one value if something is true, and another if it's not. | `if(1500 > 1000; High value; Standard)` → `High value` |
+| `if_empty` | `if_empty(value; fallback)` | Uses a fallback value if the field is empty. | `if_empty(""; No name)` → `No name` |
+| `if_null` | `if_null(value; fallback)` | Uses a fallback value if the field has no value at all. | `if_null(null; N/A)` → `N/A` |
+| `switch` | `switch(value; key1; result1; key2; result2; ...)` | Maps a value to another — like a lookup table written inline. | `switch(US; US; North America; DE; Europe)` → `North America` |
+| `is_empty` | `is_empty(value)` | Checks if a field has no value. | `is_empty("")` → `TRUE` |
+| `is_not_empty` | `is_not_empty(value)` | Checks if a field has any value in it. | `is_not_empty(john@acme.com)` → `TRUE` |
+| `is_equal` | `is_equal(value1; value2)` | Checks if two values are exactly the same. | `is_equal(active; active)` → `TRUE` |
+| `and` | `and(condition1; condition2)` | Returns true only if both conditions are true at the same time. | `and(25 >= 18; US = US)` → `TRUE` |
+| `or` | `or(condition1; condition2)` | Returns true if at least one of the conditions is true. | `or(standard = vip; 600 > 500)` → `TRUE` |
+| `not` | `not(condition)` | Flips a true to false, or a false to true. | `not(is_empty(john@acme.com))` → `TRUE` |
+| `coalesce` | `coalesce(value1; value2; value3; ...)` | Returns the first field that has a value, skipping any empty ones. | `coalesce(""; John; User)` → `John` |
+
+## Deprecated functions
+
+No functions are currently deprecated. When a function gets replaced or scheduled for removal, it will appear here with the recommended replacement and the version it will be removed in. Saved flows that use a deprecated function keep running — the editor just shows a strikethrough badge to flag the issue.

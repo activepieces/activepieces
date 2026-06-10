@@ -27,9 +27,10 @@ export const listEventsAction = createAction({
 
     if (propsValue.filter) queryParams['$filter'] = propsValue.filter;
 
+    const cloud = (auth as unknown as { props?: Record<string, unknown> }).props?.['cloud'] as string | undefined;
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: `${outlookCalendarCommon.baseUrl}/calendars/${propsValue.calendarId}/events`,
+      url: `${outlookCalendarCommon.getBaseUrl(cloud)}/calendars/${propsValue.calendarId}/events`,
       queryParams,
       body: {},
       authentication: {

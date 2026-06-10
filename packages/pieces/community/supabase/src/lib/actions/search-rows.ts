@@ -1,5 +1,5 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { supabaseAuth } from "../../index";
+import { supabaseAuth } from '../auth';
 import { createClient } from "@supabase/supabase-js";
 import { supabaseCommon } from "../common/props";
 
@@ -15,6 +15,8 @@ export const searchRows = createAction({
     name: 'search_rows',
     displayName: 'Search Rows',
     description: 'Search for rows in a table with filters and pagination',
+    audience: 'both',
+    aiMetadata: { description: 'Queries rows from a Supabase table, applying an optional list of column filters (equality, comparison, LIKE, in-list, JSON containment) with column selection and page-based pagination. Use to look up or list records before acting on them, or to fetch a specific subset. Read-only and idempotent.', idempotent: true },
     auth: supabaseAuth,
     props: {
         table_name: supabaseCommon.table_name,

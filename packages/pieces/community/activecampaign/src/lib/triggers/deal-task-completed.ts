@@ -1,4 +1,4 @@
-import { activeCampaignAuth } from '../..';
+import { activeCampaignAuth } from '../auth';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { makeClient } from '../common';
 import { CreateWebhookResponse } from '../common/types';
@@ -9,6 +9,9 @@ export const dealTaskCompletedTrigger = createTrigger({
 	name: 'activecampaign_deal_task_completed',
 	displayName: 'Deal Task Completed',
 	description: 'Triggers when a deal task has been completed.',
+	aiMetadata: {
+		description: 'Fires when a task attached to a deal is marked complete. Use to react to finished sales activities; the payload includes the related deal and contact.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 	async onEnable(context) {

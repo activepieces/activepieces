@@ -14,6 +14,8 @@ export const updateContact = createAction({
   name: 'updateContact',
   displayName: 'Update Contact',
   description: 'Update fields (name, phone, custom fields) of an existing contact using fields from your Systeme.io account',
+  audience: 'both',
+  aiMetadata: { description: 'Updates fields of an existing Systeme.io contact, identified by contact id, via a partial merge-patch of standard, account-defined, and manually-keyed custom fields (an empty value clears a field). Use to change a known contact\'s data such as name, phone, or custom attributes. Idempotent: applying the same field values yields the same result; only the provided fields are touched, and a call with no fields makes no change.', idempotent: true },
   props: {
     contactId: systemeIoProps.contactIdDropdown,
     dynamicContactFields: Property.DynamicProperties({

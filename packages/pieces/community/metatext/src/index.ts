@@ -3,12 +3,7 @@ import { PieceCategory } from '@activepieces/shared';
 import { extractText } from './lib/actions/extract-text';
 import { classifyText } from './lib/actions/classify-text';
 import { finetuneModel } from './lib/actions/finetune-model';
-
-export const metatextAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: 'Contact support@metatext.io to get your API key.',
-  required: true,
-});
+import { metatextAuth } from './lib/auth';
 
 export const metatext = createPiece({
   displayName: 'Metatext',

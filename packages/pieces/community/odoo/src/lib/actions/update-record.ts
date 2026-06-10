@@ -1,12 +1,14 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import Odoo from "../../commom/index";
-import { odooAuth } from "../..";
+import { odooAuth } from '../auth';
 
 export default createAction({
     name: 'update_record',
     auth: odooAuth,
     displayName: 'Custom Update Record',
     description: 'Update an existing record in the specified model',
+    audience: 'both',
+    aiMetadata: { description: 'Overwrites fields on an existing Odoo record via the XML-RPC write call, given a model name, the target record id, and a JSON object of field names to new values. Requires a known record id (look it up first if needed). Idempotent — writing the same fields to the same id repeatedly leaves the record in the same state.', idempotent: true },
     props: {
         model: Property.ShortText({
             displayName: 'Model',

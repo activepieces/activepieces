@@ -8,6 +8,9 @@ export const newTagAddedToContact = createTrigger({
     name: 'newTagAddedToContact',
     displayName: 'New Tag Added to Contact',
     description: 'Fires when a specific tag is assigned to a contact',
+    aiMetadata: {
+      description: 'Fires when a tag is added to a contact in Systeme.io, delivering the affected contact, the tag that was added, and when it was added. Use to react to a contact being labeled or entering a tag-based segment.',
+    },
     props: {},
     sampleData: {
         contact: {

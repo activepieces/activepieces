@@ -1,12 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
-import { exaAuth } from '../../index';
+import { exaAuth } from '../auth';
 
 export const performSearchAction = createAction({
   name: 'perform_search',
   displayName: 'Perform Search',
   description: "Search the web using semantic or keyword-based search.",
+  audience: 'both',
+  aiMetadata: {
+    description: 'Runs a web search through Exa and returns matching results with page text. Use when an agent needs to discover relevant URLs/content for a query; the search type can be auto, neural (semantic), or keyword, and results can be narrowed by category, domain include/exclude lists, crawl/publish date ranges, and required/forbidden text. Requires a query string. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: exaAuth,
   props: {
     query: Property.ShortText({

@@ -1,4 +1,5 @@
 import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { BodyType, Message } from '@microsoft/microsoft-graph-types';
 import { microsoftOutlookAuth } from '../common/auth';
@@ -8,6 +9,8 @@ export const createDraftEmailAction = createAction({
 	name: 'createDraftEmail',
 	displayName: 'Create Draft Email',
 	description: 'Creates a draft email message.',
+	audience: 'both',
+	aiMetadata: { description: 'Creates a new unsent draft email in the Outlook mailbox with recipients, subject, body, and optional attachments. Use this to stage a message for later review or sending (pair with Send Draft Email). Not idempotent: each call creates a separate draft.', idempotent: false },
 	props: {
 		recipients: Property.Array({
 			displayName: 'To Email(s)',
@@ -95,10 +98,12 @@ export const createDraftEmailAction = createAction({
 			})),
 		};
 
+		const cloud = context.auth.props?.['cloud'] as string | undefined;
 		const client = Client.initWithMiddleware({
 			authProvider: {
 				getAccessToken: () => Promise.resolve(context.auth.access_token),
 			},
+			baseUrl: getGraphBaseUrl(cloud),
 		});
 
 		const response = await client.api('/me/messages').post(mailPayload);

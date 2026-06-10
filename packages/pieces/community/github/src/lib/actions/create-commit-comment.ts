@@ -1,4 +1,4 @@
-import { githubAuth } from '../../index';
+import { githubAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { githubApiCall, githubCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
@@ -8,6 +8,12 @@ export const githubCreateCommitCommentAction = createAction({
   name: 'github_create_commit_comment',
   displayName: 'Create Commit Comment',
   description: 'Creates a comment on a commit in a GitHub repository',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Posts a comment on a specific commit identified by its SHA, optionally anchored to a file path and diff position. Use to leave feedback on a committed change directly on the commit. Not idempotent: each call adds a new comment.',
+    idempotent: false,
+  },
   props: {
     repository: githubCommon.repositoryDropdown,
     sha: Property.ShortText({
@@ -48,7 +54,7 @@ export const githubCreateCommitCommentAction = createAction({
     }
 
     const response = await githubApiCall({
-      accessToken: auth.access_token,
+      auth,
       method: HttpMethod.POST,
       resourceUri: `/repos/${owner}/${repo}/commits/${sha}/comments`,
       body: commentData,

@@ -24,6 +24,7 @@ export const rbacService = (log: FastifyBaseLogger) => ({
         switch (principal.type) {
             case PrincipalType.UNKNOWN:
             case PrincipalType.WORKER:
+            case PrincipalType.ONBOARDING:
                 throw new ActivepiecesError({
                     code: ErrorCode.AUTHORIZATION,
                     params: {
@@ -58,7 +59,7 @@ export const rbacService = (log: FastifyBaseLogger) => ({
                 break
             }
             case PrincipalType.SERVICE: {
-                const project = await projectService.getOneOrThrow(projectId)
+                const project = await projectService(log).getOneOrThrow(projectId)
                 if (project.platformId !== principal.platform.id) {
                     throw new ActivepiecesError({
                         code: ErrorCode.AUTHORIZATION,
@@ -102,8 +103,13 @@ export const rbacService = (log: FastifyBaseLogger) => ({
             case FlowOperationType.DELETE_BRANCH:
             case FlowOperationType.DUPLICATE_BRANCH:
             case FlowOperationType.UPDATE_METADATA:
+            case FlowOperationType.UPDATE_OWNER:
             case FlowOperationType.SET_SKIP_ACTION:
-            case FlowOperationType.MOVE_BRANCH: {
+            case FlowOperationType.MOVE_BRANCH: 
+            case FlowOperationType.ADD_NOTE:
+            case FlowOperationType.UPDATE_NOTE:
+            case FlowOperationType.DELETE_NOTE:
+            case FlowOperationType.UPDATE_SAMPLE_DATA_INFO: {
                 await this.assertPrinicpalAccessToProject({ principal, permission: Permission.WRITE_FLOW, projectId })
                 break
             }

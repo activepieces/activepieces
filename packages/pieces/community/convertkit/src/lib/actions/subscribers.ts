@@ -88,7 +88,7 @@ export const listSubscribers = createAction({
     const url = SUBSCRIBERS_API_ENDPOINT;
 
     const body = {
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
       page,
       from,
       to,
@@ -134,7 +134,7 @@ export const updateSubscriber = createAction({
 
     const url = `${SUBSCRIBERS_API_ENDPOINT}/${subscriberId}`;
     const body = {
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
       email_address: emailAddress,
       first_name: firstName,
       fields,
@@ -170,7 +170,7 @@ export const unsubscribeSubscriber = createAction({
     const { email } = context.propsValue;
     const url = `${CONVERTKIT_API_URL}/unsubscribe`;
 
-    const body = { email, api_secret: context.auth };
+    const body = { email, api_secret: context.auth.secret_text };
 
     const request: HttpRequest = {
       url,

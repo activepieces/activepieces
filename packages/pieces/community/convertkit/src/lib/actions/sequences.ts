@@ -41,7 +41,7 @@ export const addSubscriberToSequence = createAction({
     const url = `${SEQUENCES_API_ENDPOINT}/${sequenceId}/subscribe`;
 
     const body = {
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
       email,
       first_name: firstName,
       tags,
@@ -79,7 +79,7 @@ export const listSubscriptionsToSequence = createAction({
     const url = `${SEQUENCES_API_ENDPOINT}/${context.propsValue.sequenceId}/subscriptions`;
 
     const body = {
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
     };
 
     const request: HttpRequest = {

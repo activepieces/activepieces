@@ -1,7 +1,8 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { attioAuth } from '../../index';
-import { attioPaginatedApiCall } from '../common/client';
+import { attioAuth } from '../auth';
+import { attioPaginatedApiCall, buildMembersMap, normalizeRecord } from '../common/client';
+import { AttioRecordResponse } from '../common/types';
 import { formatInputFields, listFields, listIdDropdown } from '../common/props';
 
 export const findListEntryAction = createAction({
@@ -9,6 +10,8 @@ export const findListEntryAction = createAction({
 	displayName: 'Find List Entry',
 	description:
 		'Search for entries in a specific list in Attio using filters and return matching results.',
+	audience: 'both',
+	aiMetadata: { description: 'Queries the entries of a specific Attio list, returning entries that match the supplied attribute filters (leaving filters empty returns all entries in the list). Use this to find list entries before updating or referencing them. Read-only and idempotent.', idempotent: true },
 	auth: attioAuth,
 	props: {
 		listId: listIdDropdown({
@@ -26,10 +29,10 @@ export const findListEntryAction = createAction({
 			throw new Error('Provided list type is invalid.');
 		}
 
-		const formattedFields = await formatInputFields(accessToken, 'lists', listId, inputFields);
+		const formattedFields = await formatInputFields(accessToken, 'lists', listId, inputFields, true);
 
-		// https://docs.attio.com/rest-api/endpoint-reference/entries/create-an-entry-add-record-to-list
-		const response = await attioPaginatedApiCall({
+		// https://docs.attio.com/rest-api/endpoint-reference/entries/list-entries
+		const records = await attioPaginatedApiCall<AttioRecordResponse>({
 			method: HttpMethod.POST,
 			accessToken,
 			resourceUri: `/lists/${listId}/entries/query`,
@@ -38,9 +41,10 @@ export const findListEntryAction = createAction({
 			},
 		});
 
+		const membersMap = await buildMembersMap(accessToken, records);
 		return {
-			found: response.length > 0,
-			result: response,
+			found: records.length > 0,
+			result: records.map((r) => normalizeRecord(r, membersMap)),
 		};
 	},
 });

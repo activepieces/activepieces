@@ -1,0 +1,63 @@
+import { AppConnectionScope, assertNotNullOrUndefined } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { ArrayContains } from 'typeorm'
+import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
+import { repoFactory } from '../../core/db/repo-factory'
+import { transaction } from '../../core/db/transaction'
+import { flowExecutionCache } from '../../flows/flow/flow-execution-cache'
+import { flowSideEffects } from '../../flows/flow/flow-service-side-effects'
+import { batchDeleteByFlowId } from '../../flows/flow/flow.jobs'
+import { flowRepo } from '../../flows/flow/flow.repo'
+import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
+import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
+import { ProjectEntity } from '../../project/project-entity'
+
+const projectRepo = repoFactory(ProjectEntity)
+
+export const platformProjectBackgroundJobs = (log: FastifyBaseLogger) => ({
+    hardDeleteProjectHandler: async (data: SystemJobData<SystemJobName.HARD_DELETE_PROJECT>) => {
+        const { projectId, platformId, preDeletedFlowIds } = data
+        const job = await systemJobsSchedule(log).getJob(`hard-delete-project-${projectId}`)
+        assertNotNullOrUndefined(job, 'job is required')
+
+        const allFlows = await flowRepo().find({
+            where: { projectId },
+        })
+
+        for (const flow of allFlows) {
+            if (preDeletedFlowIds.includes(flow.id)) {
+                continue
+            }
+            const flowExists = await flowRepo().existsBy({ id: flow.id })
+            if (!flowExists) {
+                log.info({ flowId: flow.id }, '[hardDeleteProjectHandler] Flow already deleted, skipping preDelete')
+                continue
+            }
+            await flowSideEffects(log).preDelete({ flowToDelete: flow })
+            await job.updateData({
+                ...data,
+                preDeletedFlowIds: [...preDeletedFlowIds, flow.id],
+            })
+        }
+
+        const flowIds = allFlows.map(flow => flow.id)
+
+        for (const flowId of flowIds) {
+            await batchDeleteByFlowId(flowId)
+            await flowRepo().delete({ id: flowId })
+        }
+
+        await transaction(async (entityManager) => {
+            await appConnectionsRepo(entityManager).delete({
+                scope: AppConnectionScope.PROJECT,
+                projectIds: ArrayContains([projectId]),
+            })
+            await projectRepo(entityManager).delete({
+                id: projectId,
+                platformId,
+            })
+        })
+
+        await flowExecutionCache(log).invalidate(...flowIds)
+    },
+})

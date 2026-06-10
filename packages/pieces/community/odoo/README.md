@@ -1,7 +1,5 @@
 # pieces-odoo
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-odoo` to build the library.
+Run `turbo run build --filter=@activepieces/piece-odoo` to build the library.

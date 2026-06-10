@@ -12,6 +12,9 @@ export const userUnsubscribesTrigger = createTrigger({
 	name: 'beehiiv_user_unsubscribes',
 	displayName: 'User Unsubscribes',
 	description: 'Triggers when a user unsubscribes.',
+	aiMetadata: {
+		description: 'Fires when a subscriber is removed/unsubscribed from the selected beehiiv publication (subscription.deleted event), emitting the affected subscription record.',
+	},
 	props: {
 		publicationId: publicationId,
 	},

@@ -1,12 +1,13 @@
-import { apDayjs, AppSystemProp, WorkerSystemProp } from '@activepieces/server-shared'
+import { apDayjs } from '@activepieces/server-utils'
 import { ApEdition, assertNotNullOrUndefined, isNil, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-props'
 import { ACTIVE_FLOW_PRICE_ID, platformPlanService } from './platform-plan.service'
 
 export const stripeWebhookSecret = system.get(AppSystemProp.STRIPE_WEBHOOK_SECRET)!
-const frontendUrl = system.get(WorkerSystemProp.FRONTEND_URL)
+const frontendUrl = system.get(AppSystemProp.FRONTEND_URL)
 
 export const stripeHelper = (log: FastifyBaseLogger) => ({
     getStripe: (): Stripe | undefined => {
@@ -280,6 +281,39 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             await stripe.customers.del(subscription.customer.id)
         }
     },
+    async getAutoTopUpInvoicesTotalThisMonth(
+        customerId: string,
+        platformId: string,
+    ): Promise<number> {
+        const stripe = this.getStripe()
+        assertNotNullOrUndefined(stripe, 'Stripe is not configured')
+
+        const startOfMonth = apDayjs().startOf('month').unix()
+
+        let totalCents = 0
+        
+        const invoices = stripe.invoices.list({
+            customer: customerId,
+            created: {
+                gte: startOfMonth,
+            },
+            status: 'paid',
+            collection_method: 'charge_automatically',
+            limit: 100,
+        })
+
+        for await (const invoice of invoices) {
+            if (
+                invoice.metadata?.platformId === platformId &&
+                invoice.metadata?.type === StripeCheckoutType.AI_CREDIT_AUTO_TOP_UP
+            ) {
+                totalCents += invoice.amount_paid ?? 0
+            }
+        }
+
+        return totalCents / 100
+    },
+
 })
 
 async function updateSubscription(params: UpdateSubscriptionParams): Promise<void> {

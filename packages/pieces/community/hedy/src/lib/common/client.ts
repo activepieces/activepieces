@@ -13,7 +13,10 @@ import {
   PaginationInfo,
 } from './types';
 
-const BASE_URL = 'https://api.hedy.bot';
+const BASE_URLS: Record<string, string> = {
+  us: 'https://api.hedy.bot',
+  eu: 'https://eu-api.hedy.bot',
+};
 const DEFAULT_LIMIT = 50;
 const MAX_RESULTS = 1000;
 const MAX_RETRIES = 3;
@@ -36,7 +39,11 @@ interface RequestOptions {
 }
 
 export class HedyApiClient {
-  constructor(private readonly apiKey: string) {}
+  private readonly baseUrl: string;
+
+  constructor(private readonly apiKey: string, region: string = 'us') {
+    this.baseUrl = BASE_URLS[region] ?? BASE_URLS['us'];
+  }
 
   async request<T>(options: RequestOptions): Promise<HedyResponse<T>> {
     return this.withRetry(() => this.performRequest<T>(options));
@@ -98,7 +105,7 @@ export class HedyApiClient {
 
     const request: HttpRequest = {
       method,
-      url: `${BASE_URL}${path}`,
+      url: `${this.baseUrl}${path}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: this.apiKey,
@@ -189,6 +196,14 @@ function normalizeListResult<T>(result: HedyResponse<T>): {
   return {
     data: result ? [result as T] : [],
   };
+}
+
+export function createClient(auth: unknown): HedyApiClient {
+  if (typeof auth === 'string') {
+    return new HedyApiClient(auth);
+  }
+  const { apiKey, region } = auth as { apiKey: string; region?: string };
+  return new HedyApiClient(apiKey, region ?? 'us');
 }
 
 export function unwrapResource<T>(result: HedyResponse<T>): T {

@@ -8,6 +8,11 @@ export const findPost = createAction({
   name: 'findPost',
   displayName: 'Find Post',
   description: 'Get detailed information about a specific post',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Retrieves a single Bluesky post with its content, author, and engagement counts (likes, reposts, replies, quotes), given a bsky.app post URL or AT-URI. Use to look up the current state or metadata of a known post. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     postUrl: postUrlProperty,
   },

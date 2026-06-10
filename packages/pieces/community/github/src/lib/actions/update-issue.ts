@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { githubAuth } from '../../index';
+import { githubAuth } from '../auth';
 import { githubApiCall, githubCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -8,6 +8,12 @@ export const githubUpdateIssueAction = createAction({
   name: 'update_issue',
   displayName: 'Update Issue',
   description: 'Updates an existing issue.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Edits an existing issue (by number) in a repository, setting only the fields you provide — title, body, state (open/closed) and state reason, milestone, labels, or assignees. Use to modify, close, or reopen an issue. Idempotent: applying the same field values again leaves the issue in the same state. Note that labels and assignees here replace the existing set rather than append.',
+    idempotent: true,
+  },
   props: {
     repository: githubCommon.repositoryDropdown,
     issue_number: githubCommon.issueDropdown(),
@@ -64,7 +70,7 @@ export const githubUpdateIssueAction = createAction({
       body.milestone = propsValue.milestone;
 
     const response = await githubApiCall({
-      accessToken: auth.access_token,
+      auth,
       method: HttpMethod.PATCH,
       resourceUri: `/repos/${owner}/${repo}/issues/${propsValue.issue_number}`,
       body: body,

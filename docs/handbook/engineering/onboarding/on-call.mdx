@@ -4,7 +4,7 @@ icon: 'phone'
 ---
 
 ## Prerequisites:
-- [Setup Incident IO](../playbooks/setup-incident-io)
+- [Setup BetterStack](../playbooks/setup-betterstack)
 
 ## Why On-Call?
 
@@ -20,18 +20,17 @@ We need to ensure there is **exactly one person** at the same time who is the ma
 
 ## On-Call Schedule
 
-The on-call rotation is managed through Incident.io, with each engineer taking a one-week shift. You can:
-- View the current schedule and upcoming rotations on [Incident.io On-Call Schedule](https://app.incident.io/activepieces/on-call/schedules)
-- Add the schedule to your Google Calendar using [this link](https://calendar.google.com/calendar/r?cid=webcal://app.incident.io/api/schedule_feeds/cc024d13704b618cbec9e2c4b2415666dfc8b1efdc190659ebc5886dfe2a1e4b)
+The on-call rotation is managed through BetterStack, with each engineer taking a one-week shift. You can:
+- View the current schedule and upcoming rotations on [BetterStack On-Call Schedule](https://uptime.betterstack.com)
+- Add the schedule to your Google Calendar using the calendar feed link from BetterStack
 
 <Warning>
-Make sure to update the on-call schedule in Incident.io if you cannot be available during your assigned rotation. This ensures alerts are routed to the correct person and maintains our incident response coverage.
+Make sure to update the on-call schedule in BetterStack if you cannot be available during your assigned rotation. This ensures alerts are routed to the correct person and maintains our incident response coverage.
 
 To modify the schedule:
-1. Go to [Incident.io On-Call Schedule](https://app.incident.io/activepieces/on-call/schedules)
-2. Find your rotation slot
-3. Click "Override schedule" to mark your unavailability
-4. Coordinate with the team to find coverage for your slot
+1. Go to [BetterStack On-Call Schedule](https://uptime.betterstack.com)
+2. Find your rotation slot and create an override for your unavailable period
+3. Coordinate with the team to find coverage for your slot
 </Warning>
 
 
@@ -45,7 +44,7 @@ You are responsible for the following:
 
 * Check [community.activepieces.com](https://community.activepieces.com) for any new issues or to learn about existing issues.
 
-* Monitor your Incident.io notifications and respond promptly when paged.
+* Monitor your BetterStack notifications and respond promptly when paged.
 
 <Tip>
   **Friendly Tip #1**: always escalate to the team if you are unsure what to do.
@@ -56,9 +55,10 @@ You are responsible for the following:
 Monitor and respond to incidents that come through these channels:
 
 #### Slack Fire Emoji (🔥)
-When a customer reports an issue in Slack and someone reacts with 🔥, you'll be automatically paged and a dedicated incident channel will be created.
+When a customer reports an issue in Slack and someone reacts with 🔥, you'll be automatically paged via BetterStack.
   
 #### Automated Alerts
 Watch for notifications from:
   - Digital Ocean about CPU, Memory, or Disk outages 
-  - Checkly about e2e test failures or website downtime
+  - BetterStack Monitors about website downtime or uptime failures
+  - Playwright CI about e2e test failures

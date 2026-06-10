@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { chargekeepAuth } from '../..';
+import { chargekeepAuth } from '../auth';
 import { chargekeepCommon } from '../common/common';
 
 export const newLead = createTrigger({

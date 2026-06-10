@@ -7,12 +7,14 @@ import {
   QueryParams,
 } from '@activepieces/pieces-common';
 import { googleContactsCommon } from '../common';
-import { googleContactsAuth } from '../../';
+import { googleContactsAuth } from '../auth';
 
 export const googleContactsSearchContactsAction = createAction({
   auth: googleContactsAuth,
   name: 'search_contact',
   description: 'Search contacts in Google Contacts account.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches the authenticated Google Contacts account for people matching a plain-text query, which prefix-matches against contact fields. Use when an agent needs to find a contact or its resourceName before updating it; the query is required and a read mask selects which fields come back (max 30 results). Read-only and idempotent.', idempotent: true },
   displayName: 'Search Contacts',
   props: {
     query: Property.ShortText({

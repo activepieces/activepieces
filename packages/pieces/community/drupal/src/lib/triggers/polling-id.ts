@@ -1,7 +1,6 @@
 import {
   createTrigger,
   TriggerStrategy,
-  PiecePropValueSchema,
   Property,
 } from '@activepieces/pieces-framework';
 import {
@@ -11,7 +10,7 @@ import {
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { drupalAuth } from '../../';
+import { drupalAuth } from '../auth';
 import { DrupalAuthType } from '../common/jsonapi';
 
 const polling: Polling<DrupalAuthType, { name: string }> = {

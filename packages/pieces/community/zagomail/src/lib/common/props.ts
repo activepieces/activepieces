@@ -1,6 +1,6 @@
 import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { zagoMailApiService } from './request';
-import { zagomailAuth } from '../..';
+import { zagomailAuth } from '../auth';
 
 export const listUId = Property.Dropdown({
 	auth: zagomailAuth,

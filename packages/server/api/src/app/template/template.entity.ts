@@ -35,7 +35,11 @@ export const TemplateEntity = new EntitySchema<TemplateSchema>({
         },
         flows: {
             type: 'jsonb',
-            nullable: false,
+            nullable: true,
+        },
+        tables: {
+            type: 'jsonb',
+            nullable: true,
         },
         tags: {
             type: 'jsonb',
@@ -48,10 +52,6 @@ export const TemplateEntity = new EntitySchema<TemplateSchema>({
         metadata: {
             type: 'jsonb',
             nullable: true,
-        },
-        usageCount: {
-            type: Number,
-            nullable: false,
         },
         author: {
             type: String,
@@ -76,6 +76,11 @@ export const TemplateEntity = new EntitySchema<TemplateSchema>({
         {
             name: 'idx_template_categories',
             columns: ['categories'],
+            unique: false,
+        },
+        {
+            name: 'idx_template_platform_id',
+            columns: ['platformId'],
             unique: false,
         },
     ],

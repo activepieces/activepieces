@@ -1,15 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { googleCalendarCommon } from '../common';
+import { googleCalendarCommon, googleCalendarAuth, createGoogleClient } from '../common';
 import dayjs from 'dayjs';
-import { googleCalendarAuth } from '../../';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 import { randomUUID } from 'crypto';
 
 export const createEvent = createAction({
   auth: googleCalendarAuth,
   name: 'create_google_calendar_event',
   description: 'Add Event',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a Google Calendar event with structured fields (title, start/end times, location, description, attendees, color, guest permissions) and can optionally attach a Google Meet link. Use this when you have explicit event details; choose Create Quick Event instead when working from a single natural-language phrase. Requires a title and start time (end defaults to 30 minutes after start). Not idempotent: each call creates a new event.', idempotent: false },
   displayName: 'Create Event',
   props: {
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
@@ -124,8 +124,7 @@ export const createEvent = createAction({
       }
     }
 
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(configValue.auth);
+    const authClient = await createGoogleClient(configValue.auth);
 
     const calendar = google.calendar({ version: 'v3', auth: authClient });
 

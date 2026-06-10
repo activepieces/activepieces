@@ -1,4 +1,4 @@
-import { scrapelessApiAuth } from '../../index';
+import { scrapelessApiAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { createScrapelessClient } from '../services/scrapeless-api-client';
 

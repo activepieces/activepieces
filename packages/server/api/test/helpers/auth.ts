@@ -1,5 +1,4 @@
-import { SigningKeyId } from '@activepieces/ee-shared'
-import { apId, DefaultProjectRole, Principal } from '@activepieces/shared'
+import { apId, DefaultProjectRole, Principal, SigningKeyId } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import jwt, { Algorithm, JwtPayload, SignOptions } from 'jsonwebtoken'
 import {
@@ -97,6 +96,8 @@ export const generateMockExternalToken = (
         firstName: params?.externalFirstName ?? faker.person.firstName(),
         pieces: params?.pieces ?? undefined,
         lastName: params?.externalLastName ?? faker.person.lastName(),
+        concurrencyPoolKey: params?.concurrencyPoolKey,
+        concurrencyPoolLimit: params?.concurrencyPoolLimit,
     }
 
     const algorithm = 'RS256'

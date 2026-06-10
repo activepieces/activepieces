@@ -7,6 +7,9 @@ export const updatedSubscriberTrigger = createTrigger({
   name: 'updated_subscriber',
   displayName: 'Updated Subscriber',
   description: "Fires when a subscriber's data (fields) is updated",
+  aiMetadata: {
+    description: "Fires when an existing subscriber's data or custom fields are updated in the connected Sender account, representing the changed contact.",
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

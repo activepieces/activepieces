@@ -4,12 +4,7 @@ import { PieceCategory } from '@activepieces/shared';
 import { createMemAction } from './lib/actions/create-mem';
 import { createNoteAction } from './lib/actions/create-note';
 import { deleteNoteAction } from './lib/actions/delete-note';
-
-export const memAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  required: true,
-  description: `You can obtain your API key by navigating to **Integrations→ API**.`,
-});
+import { memAuth } from './lib/auth';
 
 export const mem = createPiece({
   displayName: 'Mem',

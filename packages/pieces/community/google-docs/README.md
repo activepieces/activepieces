@@ -1,7 +1,5 @@
 # pieces-google-docs
 
-This library was generated with [Nx](https://nx.dev).
+## Building
 
-## Running lint
-
-Run `nx lint pieces-google-docs` to execute the lint via [ESLint](https://eslint.org/).
+Run `turbo run build --filter=@activepieces/piece-google-docs` to build the library.

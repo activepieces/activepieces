@@ -1,8 +1,22 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import {
+  DedupeStrategy,
+  Polling,
+  pollingHelper,
+  httpClient,
+  HttpMethod,
+} from '@activepieces/pieces-common';
+import {
+  AppConnectionValueForAuthProperty,
+  createTrigger,
+  DEDUPE_KEY_PROPERTY,
+  PieceAuth,
+  Store,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
 import { channelIdentifier } from '../common/props';
+import { isNil } from '@activepieces/shared';
 import dayjs from 'dayjs';
-import cheerio from 'cheerio';
+import { load as cheerioLoad } from 'cheerio';
 import FeedParser from 'feedparser';
 import axios from 'axios';
 
@@ -10,8 +24,9 @@ export const youtubeNewVideoTrigger = createTrigger({
   name: 'new-video',
   displayName: 'New Video In Channel',
   description: 'Runs when a new video is added to a YouTube channel',
-  type: TriggerStrategy.POLLING,
+  auth: PieceAuth.None(),
   requireAuth: false,
+  type: TriggerStrategy.POLLING,
   props: {
     channel_identifier: channelIdentifier,
   },
@@ -210,82 +225,114 @@ export const youtubeNewVideoTrigger = createTrigger({
       },
     },
   },
-  async test({ propsValue }): Promise<unknown[]> {
-    const channelId = await getChannelId(propsValue.channel_identifier);
-    if (!channelId) {
-      return [];
-    }
-    return (await getRssItems(channelId)) || [];
+  async test({ auth, propsValue, store, files }): Promise<unknown[]> {
+    return pollingHelper.test(polling, {
+      auth,
+      store,
+      propsValue,
+      files,
+    });
   },
   async onEnable({ propsValue, store }): Promise<void> {
-    const channelId = await getChannelId(propsValue.channel_identifier);
-
-    if (!channelId) {
-      throw new Error('Unable to get channel ID.');
+    let channelId = await store.get<string>('channelId');
+    if (isNil(channelId)) {
+      channelId = await getChannelId(propsValue.channel_identifier);
+      await store.put('channelId', channelId);
     }
-
-    await store.put('channelId', channelId);
-    const items = (await getRssItems(channelId)) || [];
-    await store.put('lastFetchedYoutubeVideo', items?.[0]?.guid);
-    await store.put('lastUpdatedYoutubeVideo', getUpdateDate(items?.[0]));
-    return;
+    const items = await getRssItems(channelId);
+    if (items.length > 0) {
+      await store.put('_seenVideoIds', items.map((item) => getId(item)));
+    }
   },
-
-  async onDisable(): Promise<void> {
-    return;
+  async onDisable({ store }): Promise<void> {
+    await store.delete('_seenVideoIds');
+    await store.delete('channelId');
   },
-  async run({ store }): Promise<unknown[]> {
-    const channelId = await store.get<string>('channelId');
-
-    if (!channelId) return [];
-
-    const items = (await getRssItems(channelId)) || [];
-    if (items.length === 0) {
-      return [];
+  async run({ propsValue, store }): Promise<unknown[]> {
+    let channelId = await store.get<string>('channelId');
+    if (isNil(channelId)) {
+      channelId = await getChannelId(propsValue.channel_identifier);
+      await store.put('channelId', channelId);
     }
-    const lastItemId = await store.get('lastFetchedYoutubeVideo');
-    const storedLastUpdated = await store.get<string>(
-      'lastUpdatedYoutubeVideo'
-    );
+    const rawItems = await getRssItems(channelId);
 
-    /**
-     * If the new latest item's date is before the last saved date
-     * it means something got deleted, nothing else to do
-     * this happens when a live stream ends, the live stream entry is deleted and later
-     * is replaced by the stream's video.
-     */
-    if (
-      storedLastUpdated &&
-      dayjs(getUpdateDate(items?.[0])).isBefore(dayjs(storedLastUpdated))
-    ) {
-      return [];
+    const seenIds = new Set<string>(await store.get<string[]>('_seenVideoIds') ?? []);
+    const newItems = rawItems.filter((item) => !seenIds.has(getId(item)));
+
+    // Advance the seen-IDs set to the current feed so that if the anchor item
+    // (e.g. a live stream) is later deleted and pollingHelper would otherwise
+    // return all items, the previously-seen IDs are still excluded.
+    // Skip the update on an empty feed response to avoid wiping the set and
+    // causing false positives on the next successful poll.
+    if (rawItems.length > 0) {
+      await store.put('_seenVideoIds', rawItems.map((item) => getId(item)));
     }
 
-    const newItems = [];
-    for (const item of items) {
-      if (item.guid === lastItemId) break;
-      if (
-        storedLastUpdated &&
-        dayjs(getUpdateDate(item)).isBefore(dayjs(storedLastUpdated))
-      ) {
-        continue;
-      }
-      newItems.push(item);
-    }
+    return newItems
+      .sort((a, b) => {
+        const aDate =
+          (a as { pubdate?: string; pubDate?: string }).pubdate ??
+          (a as { pubdate?: string; pubDate?: string }).pubDate;
+        const bDate =
+          (b as { pubdate?: string; pubDate?: string }).pubdate ??
+          (b as { pubdate?: string; pubDate?: string }).pubDate;
 
-    await store.put('lastFetchedYoutubeVideo', items?.[0]?.guid);
-    await store.put('lastUpdatedYoutubeVideo', getUpdateDate(items?.[0]));
+        if (aDate && bDate) {
+          const aUnix = dayjs(aDate).unix();
+          const bUnix = dayjs(bDate).unix();
+          if (aUnix === bUnix) {
+            return newItems.indexOf(a) - newItems.indexOf(b);
+          }
+          return bUnix - aUnix;
+        }
 
-    return newItems;
+        return newItems.indexOf(a) - newItems.indexOf(b);
+      })
+      .map((item) => withDedupeKey(item as Record<string, unknown>));
   },
 });
 
-function getUpdateDate(item: any) {
-  const updated = item['atom:updated'];
-  if (updated == undefined) {
-    return undefined;
+const polling: Polling<
+  AppConnectionValueForAuthProperty<undefined>,
+  { channel_identifier: string }
+> = {
+  strategy: DedupeStrategy.LAST_ITEM,
+  items: async ({
+    propsValue,
+    store,
+  }: {
+    store: Store;
+    propsValue: { channel_identifier: string };
+  }) => {
+    let channelId = await store.get<string>('channelId');
+    if (isNil(channelId)) {
+      channelId = await getChannelId(propsValue.channel_identifier);
+      await store.put('channelId', channelId);
+    }
+    const items = await getRssItems(channelId);
+    return items.map((item) => ({
+      id: getId(item),
+      data: item,
+    }));
+  },
+};
+
+function withDedupeKey(item: Record<string, unknown>) {
+  const dedupeKey = typeof item.guid === 'string' ? item.guid : JSON.stringify(item);
+  return {
+    ...item,
+    [DEDUPE_KEY_PROPERTY]: dedupeKey,
+  };
+}
+
+function getId(item: { id?: string; guid?: string }) {
+  if (item.guid) {
+    return item.guid;
   }
-  return updated['#'];
+  if (item.id) {
+    return item.id;
+  }
+  return JSON.stringify(item);
 }
 
 async function getChannelId(urlOrId: string) {
@@ -299,7 +346,7 @@ async function getChannelId(urlOrId: string) {
     method: HttpMethod.GET,
     url: urlOrId,
   });
-  const $ = cheerio.load(response.body);
+  const $ = cheerioLoad(response.body);
 
   // Check if the URL is a channel ID itself
   const channelUrl = $('link[rel="canonical"]').attr('href');
@@ -333,7 +380,7 @@ function getRssItems(channelId: string): Promise<any[]> {
         });
 
         feedparser.on('end', () => {
-          resolve(items.reverse());
+          resolve(items);
         });
 
         feedparser.on('error', (error: any) => {

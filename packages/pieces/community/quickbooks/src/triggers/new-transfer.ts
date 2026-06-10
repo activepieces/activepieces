@@ -4,7 +4,7 @@ import {
   PiecePropValueSchema,
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
-import { quickbooksAuth } from '../index';
+import { quickbooksAuth } from '../lib/auth';
 import dayjs from 'dayjs';
 import {
   DedupeStrategy,
@@ -61,6 +61,9 @@ export const newTransfer = createTrigger({
   displayName: 'New Transfer',
   description:
     'Triggers when a Transfer is created.',
+  aiMetadata: {
+    description: 'Fires when a new transfer is created in the connected QuickBooks company, emitting the newly created transfer record. Use to react to funds being moved between two accounts.',
+  },
   props: {},
   type: TriggerStrategy.POLLING,
   async onEnable(context) {

@@ -1,5 +1,5 @@
 import { MarkdownVariant, isNil } from '@activepieces/shared';
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 import {
 	createTrigger,
 	PiecePropValueSchema,

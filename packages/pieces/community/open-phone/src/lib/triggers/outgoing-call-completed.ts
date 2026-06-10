@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { openPhoneAuth } from '../../index';
+import { openPhoneAuth } from '../auth';
 import {
   openPhoneCommon,
   OpenPhoneWebhookResponse,

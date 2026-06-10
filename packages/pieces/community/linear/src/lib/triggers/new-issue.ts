@@ -8,6 +8,9 @@ export const linearNewIssue = createTrigger({
   name: 'new_issue',
   displayName: 'New Issue',
   description: 'Triggers when Linear receives a new issue',
+  aiMetadata: {
+    description: 'Fires when a new issue is created in the selected Linear team. Represents the newly created issue with its details such as title, assignee, state, and labels.',
+  },
   props: {
     team_id: props.team_id(),
   },

@@ -1,4 +1,4 @@
-import { activeCampaignAuth } from '../..';
+import { activeCampaignAuth } from '../auth';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { makeClient } from '../common';
 import { CreateWebhookResponse } from '../common/types';
@@ -9,6 +9,9 @@ export const newDealAddedOrUpdatedTrigger = createTrigger({
 	name: 'activecampaign_new_deal_added_or_updated',
 	displayName: 'New Deal Added or Updated',
 	description: 'Triggers when a new deal is created or existing deal is updated.',
+	aiMetadata: {
+		description: 'Fires when a deal (CRM sales opportunity) is created or when an existing deal is updated, covering both add and update events. The payload identifies which event occurred and lists the changed fields for updates.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 	async onEnable(context) {

@@ -1,25 +1,20 @@
-import { OtpState, OtpType } from '@activepieces/ee-shared'
-import { UserStatus } from '@activepieces/shared'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+import { OtpState, OtpType, UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { initializeDatabase } from '../../../../src/app/database'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { setupServer } from '../../../../src/app/server'
+import { db } from '../../../helpers/db'
 import { createMockOtp, mockBasicUser } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
+    app = await setupTestEnvironment()
 })
 
 afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
+    await teardownTestEnvironment()
 })
-
 describe('Enterprise Local Authn API', () => {
     describe('Verify Email Endpoint', () => {
         it('Verifies user', async () => {
@@ -36,7 +31,7 @@ describe('Enterprise Local Authn API', () => {
                 type: OtpType.EMAIL_VERIFICATION,
                 state: OtpState.PENDING,
             })
-            await databaseConnection().getRepository('otp').save(mockOtp)
+            await db.save('otp', mockOtp)
 
             const mockVerifyEmailRequest = {
                 identityId: mockUserIdentity.id,
@@ -46,7 +41,7 @@ describe('Enterprise Local Authn API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authn/local/verify-email',
+                url: '/api/v1/authn/local/verify-email',
                 body: mockVerifyEmailRequest,
             })
 
@@ -54,13 +49,9 @@ describe('Enterprise Local Authn API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(response?.body).toBe('')
 
-            const userIdentity = await databaseConnection()
-                .getRepository('user_identity')
-                .findOneBy({ id: mockUserIdentity.id })
+            const userIdentity = await db.findOneBy('user_identity', { id: mockUserIdentity.id })
             expect(userIdentity?.verified).toBe(true)
-            const otp = await databaseConnection()
-                .getRepository('otp')
-                .findOneBy({ id: mockOtp.id })
+            const otp = await db.findOneBy('otp', { id: mockOtp.id })
             expect(otp?.state).toBe(OtpState.CONFIRMED)
         })
 
@@ -80,7 +71,7 @@ describe('Enterprise Local Authn API', () => {
                 value: correctOtp,
                 state: OtpState.PENDING,
             })
-            await databaseConnection().getRepository('otp').save(mockOtp)
+            await db.save('otp', mockOtp)
 
             const incorrectOtp = '654321'
             const mockVerifyEmailRequest = {
@@ -91,7 +82,7 @@ describe('Enterprise Local Authn API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authn/local/verify-email',
+                url: '/api/v1/authn/local/verify-email',
                 body: mockVerifyEmailRequest,
             })
 
@@ -100,9 +91,7 @@ describe('Enterprise Local Authn API', () => {
             const responseBody = response?.json()
             expect(responseBody?.code).toBe('INVALID_OTP')
 
-            const userIdentity = await databaseConnection()
-                .getRepository('user_identity')
-                .findOneBy({ id: mockUserIdentity.id })
+            const userIdentity = await db.findOneBy('user_identity', { id: mockUserIdentity.id })
             expect(userIdentity?.verified).toBe(false)
         })
 
@@ -122,7 +111,7 @@ describe('Enterprise Local Authn API', () => {
                 updated: dayjs().subtract(31, 'minutes').toISOString(),
                 state: OtpState.PENDING,
             })
-            await databaseConnection().getRepository('otp').save(mockOtp)
+            await db.save('otp', mockOtp)
 
             const mockVerifyEmailRequest = {
                 identityId: mockUserIdentity.id,
@@ -132,7 +121,7 @@ describe('Enterprise Local Authn API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authn/local/verify-email',
+                url: '/api/v1/authn/local/verify-email',
                 body: mockVerifyEmailRequest,
             })
 
@@ -141,9 +130,7 @@ describe('Enterprise Local Authn API', () => {
             const responseBody = response?.json()
             expect(responseBody?.code).toBe('INVALID_OTP')
 
-            const userIdentity = await databaseConnection()
-                .getRepository('user_identity')
-                .findOneBy({ id: mockUserIdentity.id })
+            const userIdentity = await db.findOneBy('user_identity', { id: mockUserIdentity.id })
             expect(userIdentity?.verified).toBe(false)
         })
 
@@ -162,7 +149,7 @@ describe('Enterprise Local Authn API', () => {
                 type: OtpType.EMAIL_VERIFICATION,
                 state: OtpState.CONFIRMED,
             })
-            await databaseConnection().getRepository('otp').save(mockOtp)
+            await db.save('otp', mockOtp)
 
             const mockVerifyEmailRequest = {
                 identityId: mockUserIdentity.id,
@@ -172,7 +159,7 @@ describe('Enterprise Local Authn API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authn/local/verify-email',
+                url: '/api/v1/authn/local/verify-email',
                 body: mockVerifyEmailRequest,
             })
 
@@ -181,9 +168,7 @@ describe('Enterprise Local Authn API', () => {
             const responseBody = response?.json()
             expect(responseBody?.code).toBe('INVALID_OTP')
 
-            const userIdentity = await databaseConnection()
-                .getRepository('user_identity')
-                .findOneBy({ id: mockUserIdentity.id })
+            const userIdentity = await db.findOneBy('user_identity', { id: mockUserIdentity.id })
             expect(userIdentity?.verified).toBe(false)
         })
     })
@@ -199,7 +184,7 @@ describe('Enterprise Local Authn API', () => {
                 type: OtpType.PASSWORD_RESET,
                 state: OtpState.PENDING,
             })
-            await databaseConnection().getRepository('otp').save(mockOtp)
+            await db.save('otp', mockOtp)
 
             const mockResetPasswordRequest = {
                 identityId: mockUserIdentity.id,
@@ -210,7 +195,7 @@ describe('Enterprise Local Authn API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authn/local/reset-password',
+                url: '/api/v1/authn/local/reset-password',
                 body: mockResetPasswordRequest,
             })
 
@@ -218,9 +203,7 @@ describe('Enterprise Local Authn API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(response?.body).toBe('')
 
-            const userIdentity = await databaseConnection()
-                .getRepository('user_identity')
-                .findOneBy({ id: mockUserIdentity.id })
+            const userIdentity = await db.findOneBy('user_identity', { id: mockUserIdentity.id })
             expect(userIdentity?.password).not.toBe(mockUserIdentity.password)
         })
 
@@ -235,7 +218,7 @@ describe('Enterprise Local Authn API', () => {
                 type: OtpType.PASSWORD_RESET,
                 value: correctOtp,
             })
-            await databaseConnection().getRepository('otp').save(mockOtp)
+            await db.save('otp', mockOtp)
 
             const incorrectOtp = '654321'
             const mockResetPasswordRequest = {
@@ -247,7 +230,7 @@ describe('Enterprise Local Authn API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authn/local/reset-password',
+                url: '/api/v1/authn/local/reset-password',
                 body: mockResetPasswordRequest,
             })
 
@@ -256,9 +239,7 @@ describe('Enterprise Local Authn API', () => {
             const responseBody = response?.json()
             expect(responseBody?.code).toBe('INVALID_OTP')
 
-            const userIdentity = await databaseConnection()
-                .getRepository('user_identity')
-                .findOneBy({ id: mockUserIdentity.id })
+            const userIdentity = await db.findOneBy('user_identity', { id: mockUserIdentity.id })
             expect(userIdentity?.password).toBe(mockUserIdentity.password)
         })
     })

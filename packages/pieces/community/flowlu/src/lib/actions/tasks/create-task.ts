@@ -3,7 +3,7 @@ import {
   createAction,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { flowluAuth } from '../../../';
+import { flowluAuth } from '../../auth';
 import { makeClient } from '../../common';
 import { flowluProps } from '../../common/props';
 
@@ -12,6 +12,8 @@ export const createTaskAction = createAction({
   name: 'flowlu_create_task',
   displayName: 'Create Task',
   description: 'Creates a new task.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new task in Flowlu, requiring a name and optionally setting priority, start/deadline dates, assignee (responsible/owner), type, and task workflow stage. Use to add a to-do or assignment. Not idempotent — each call creates a new task.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

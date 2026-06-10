@@ -22,6 +22,8 @@ export const updateOpportunityAction = createAction({
   name: 'update_opportunity',
   displayName: 'Update Opportunity',
   description: 'Updates an existing opportunity.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing GoHighLevel/LeadConnector opportunity identified by pipeline and opportunity ID, changing stage, status, title, contact, assignee, or monetary value. Omitted stage/title/status are backfilled from the current opportunity. Use to advance or edit a known deal; idempotent — repeating with the same input leaves the opportunity in the same state.', idempotent: true },
   props: {
     pipeline: Property.Dropdown({
   auth: leadConnectorAuth,

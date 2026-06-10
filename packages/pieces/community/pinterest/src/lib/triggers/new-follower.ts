@@ -74,6 +74,10 @@ export const newFollower = createTrigger({
   name: 'newFollower',
   displayName: 'New Follower',
   description: 'Triggers when a user gains a new follower.',
+  aiMetadata: {
+    description:
+      "Fires when the authenticated Pinterest account gains a new follower, emitting the follower's account info. Polls the account's followers list and emits entries not seen before.",
+  },
   props: {},
   sampleData: {
     username: 'sample_username',

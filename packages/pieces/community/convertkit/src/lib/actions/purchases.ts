@@ -57,7 +57,7 @@ export const getPurchaseById = createAction({
     const url = `${PURCHASES_API_ENDPOINT}/${purchaseId}`;
 
     const body = {
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
     };
 
     const request: HttpRequest = {
@@ -122,7 +122,7 @@ export const createSinglePurchase = createAction({
     const url = PURCHASES_API_ENDPOINT;
 
     const body = {
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
       purchase: {
         transaction_id: transactionId,
         status,
@@ -194,7 +194,7 @@ export const createPurchases = createAction({
     const url = PURCHASES_API_ENDPOINT;
 
     const body = {
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
       purchase: {
         transaction_id: transactionId,
         status,
@@ -245,7 +245,7 @@ export const listPurchasesForSubscriber = createAction({
     const url = PURCHASES_API_ENDPOINT;
 
     const body = {
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
       subscriber_id: subscriberId,
     };
 
@@ -279,7 +279,7 @@ export const listPurchasesForProduct = createAction({
   },
   async run(context) {
     const { productId } = context.propsValue;
-    const url = `${PURCHASES_API_ENDPOINT}?api_secret=${context.auth}&product_id=${productId}`;
+    const url = `${PURCHASES_API_ENDPOINT}?api_secret=${context.auth.secret_text}&product_id=${productId}`;
 
     const response = await fetch(url);
 
@@ -305,7 +305,7 @@ export const listPurchasesForForm = createAction({
   },
   async run(context) {
     const { formId } = context.propsValue;
-    const url = `${PURCHASES_API_ENDPOINT}?api_secret=${context.auth}&form_id=${formId}`;
+    const url = `${PURCHASES_API_ENDPOINT}?api_secret=${context.auth.secret_text}&form_id=${formId}`;
 
     const response = await fetch(url);
 
@@ -331,7 +331,7 @@ export const listPurchasesForSequence = createAction({
   },
   async run(context) {
     const { sequenceId } = context.propsValue;
-    const url = `${PURCHASES_API_ENDPOINT}?api_secret=${context.auth}&sequence_id=${sequenceId}`;
+    const url = `${PURCHASES_API_ENDPOINT}?api_secret=${context.auth.secret_text}&sequence_id=${sequenceId}`;
 
     const response = await fetch(url);
 

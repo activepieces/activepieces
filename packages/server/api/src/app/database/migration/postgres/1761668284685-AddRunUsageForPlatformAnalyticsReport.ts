@@ -1,61 +1,61 @@
-import { ApEdition } from '@activepieces/shared'
-import { Static, Type } from '@sinclair/typebox'
+import { ApEdition, DateOrString } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { z } from 'zod'
 import { system } from '../../../helper/system/system'
 import { isNotOneOfTheseEditions } from '../../database-common'
 const log = system.globalLogger()
 
-const AnalyticsPieceReportItem = Type.Object({
-    name: Type.String(),        
-    displayName: Type.String(),
-    logoUrl: Type.String(),
-    usageCount: Type.Number(),
+const AnalyticsPieceReportItem = z.object({
+    name: z.string(),
+    displayName: z.string(),
+    logoUrl: z.string(),
+    usageCount: z.number(),
 })
-type AnalyticsPieceReportItem = Static<typeof AnalyticsPieceReportItem>
+type AnalyticsPieceReportItem = z.infer<typeof AnalyticsPieceReportItem>
 
-const AnalyticsPieceReport = Type.Array(AnalyticsPieceReportItem)
-type AnalyticsPieceReport = Static<typeof AnalyticsPieceReport>
+const AnalyticsPieceReport = z.array(AnalyticsPieceReportItem)
+type AnalyticsPieceReport = z.infer<typeof AnalyticsPieceReport>
 
-const AnalyticsProjectReportItem = Type.Object({
-    id: Type.String(),
-    displayName: Type.String(),
-    activeFlows: Type.Number(),
-    totalFlows: Type.Number(),
+const AnalyticsProjectReportItem = z.object({
+    id: z.string(),
+    displayName: z.string(),
+    activeFlows: z.number(),
+    totalFlows: z.number(),
 })
-type AnalyticsProjectReportItem = Static<typeof AnalyticsProjectReportItem>
+type AnalyticsProjectReportItem = z.infer<typeof AnalyticsProjectReportItem>
 
-const AnalyticsProjectReport = Type.Array(AnalyticsProjectReportItem)
-type AnalyticsProjectReport = Static<typeof AnalyticsProjectReport>
+const AnalyticsProjectReport = z.array(AnalyticsProjectReportItem)
+type AnalyticsProjectReport = z.infer<typeof AnalyticsProjectReport>
 
-const AnalyticsRunsUsageItem = Type.Object({
-    day: Type.String(),
-    totalRuns: Type.Number(),
+const AnalyticsRunsUsageItem = z.object({
+    day: z.string(),
+    totalRuns: z.number(),
 })
-type AnalyticsRunsUsageItem = Static<typeof AnalyticsRunsUsageItem>
+type AnalyticsRunsUsageItem = z.infer<typeof AnalyticsRunsUsageItem>
 
-const AnalyticsRunsUsage = Type.Array(AnalyticsRunsUsageItem)
-type AnalyticsRunsUsage = Static<typeof AnalyticsRunsUsage>
+const AnalyticsRunsUsage = z.array(AnalyticsRunsUsageItem)
+type AnalyticsRunsUsage = z.infer<typeof AnalyticsRunsUsage>
 
 
-const PlatformAnalyticsReport = Type.Object({
-    id: Type.String(),
-    created: Type.String(),
-    updated: Type.String(),
-    totalFlows: Type.Number(),
-    activeFlows: Type.Number(),
-    totalUsers: Type.Number(),
-    activeUsers: Type.Number(),
-    totalProjects: Type.Number(),
-    activeProjects: Type.Number(),
-    uniquePiecesUsed: Type.Number(),
-    activeFlowsWithAI: Type.Number(),
+const PlatformAnalyticsReport = z.object({
+    id: z.string(),
+    created: DateOrString,
+    updated: DateOrString,
+    totalFlows: z.number(),
+    activeFlows: z.number(),
+    totalUsers: z.number(),
+    activeUsers: z.number(),
+    totalProjects: z.number(),
+    activeProjects: z.number(),
+    uniquePiecesUsed: z.number(),
+    activeFlowsWithAI: z.number(),
     topPieces: AnalyticsPieceReport,
     topProjects: AnalyticsProjectReport,
     runsUsage: AnalyticsRunsUsage,
-    platformId: Type.String(),
+    platformId: z.string(),
 })
-type PlatformAnalyticsReport = Static<typeof PlatformAnalyticsReport>
+type PlatformAnalyticsReport = z.infer<typeof PlatformAnalyticsReport>
 
 export enum RunEnvironment {
     PRODUCTION = 'PRODUCTION',

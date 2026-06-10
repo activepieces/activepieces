@@ -48,7 +48,7 @@ export const createTag = createAction({
     const url = TAGS_API_ENDPOINT;
 
     const body = {
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
       tag: { name: context.propsValue.name },
     };
 
@@ -97,7 +97,7 @@ export const tagSubscriber = createAction({
       first_name: firstName,
       tags,
       fields,
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
     };
 
     const request: HttpRequest = {
@@ -133,7 +133,7 @@ export const removeTagFromSubscriberByEmail = createAction({
 
     const body = {
       email,
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
     };
 
     const request: HttpRequest = {
@@ -167,7 +167,7 @@ export const removeTagFromSubscriberById = createAction({
 
     const body = {
       id: subscriberId,
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
     };
 
     const request: HttpRequest = {
@@ -202,7 +202,7 @@ export const listSubscriptionsToATag = createAction({
     const url = `${TAGS_API_ENDPOINT}/${tagId}/subscriptions?`;
 
     const body = {
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
       page,
       sort_order: sortOrder,
       subscriber_state: subscriberState,

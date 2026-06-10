@@ -7,6 +7,12 @@ export const clicksendSendSmsAction = createAction({
   auth: clicksendAuth,
   name: 'send_sms',
   description: 'Send one or more SMS messages.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends one or more SMS text messages via ClickSend, each with its own recipient phone number (in international format) and body. Choose this to deliver text notifications, alerts, or one-off messages to phone numbers. Not idempotent: each call dispatches the messages again, so repeating it sends duplicates.',
+    idempotent: false,
+  },
   displayName: 'Send SMS',
   props: {
     messages: Property.Array({

@@ -7,12 +7,7 @@ import { submitWorkflowRunAction } from './lib/actions/submit-workflow-run';
 import { newWorkflowCreatedTrigger } from './lib/triggers/new-workflow-created';
 import { runCompletedTrigger } from './lib/triggers/run-completed';
 import { runFailedTrigger } from './lib/triggers/run-failed';
-
-export const comfyIcuAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  required: true,
-  description: `You can obtain API key from [Account Settings](https://comfy.icu/account).`,
-});
+import { comfyIcuAuth } from './lib/auth';
 
 export const comfyicu = createPiece({
   displayName: 'Comfy.ICU',

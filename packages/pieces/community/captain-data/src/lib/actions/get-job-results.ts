@@ -1,11 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
-import {
-  CAPTAIN_DATA_BASE_URL,
-  captainDataAuth,
-  CaptainDataAuthType,
-} from '../..';
+import { captainDataAuth } from '../..';
+import { CAPTAIN_DATA_BASE_URL, CaptainDataAuthType } from '../..';
 import { workflowProp } from '../common';
 
 export const getJobResults = createAction({

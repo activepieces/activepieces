@@ -9,6 +9,8 @@ export const removeTagFromContact = createAction({
   name: 'removeTagFromContact',
   displayName: 'Remove Tag from Contact',
   description: 'Remove a tag that is currently assigned to an existing contact',
+  audience: 'both',
+  aiMetadata: { description: 'Removes a tag from an existing Systeme.io contact, given the contact id and the tag id to unassign. Use to unlabel or de-segment a contact. Idempotent: once the tag is removed, repeating the call leaves the contact in the same state.', idempotent: true },
   props: {
     contactId: systemeIoProps.contactIdDropdown,
     tagId: Property.Dropdown({

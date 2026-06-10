@@ -13,6 +13,12 @@ export const updateBoard = createAction({
   name: 'updateBoard',
   displayName: 'Update Board',
   description: "Update a board's name, description, or privacy settings.",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Updates an existing board's name, description, and/or privacy setting, identified by board_id. Use to rename or reconfigure a board the user owns; at least one field must be supplied. Mutates the board on each call, so it is not idempotent.",
+    idempotent: false,
+  },
   props: {
     board_id: boardIdDropdown,
     ad_account_id: adAccountIdDropdown,

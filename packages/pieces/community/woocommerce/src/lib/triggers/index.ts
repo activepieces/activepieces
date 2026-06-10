@@ -326,6 +326,10 @@ export const triggers = [
     topic: 'product.created',
     displayName: 'Product Created',
     description: 'Triggers when new product is created.',
+    aiMetadata: {
+      description:
+        'Fires when a new product is created in the WooCommerce store, emitting the new product record.',
+    },
     sampleData: sampleData.product,
     testDataEndpoint: '/wp-json/wc/v3/products',
   },
@@ -334,6 +338,10 @@ export const triggers = [
     topic: 'product.updated',
     displayName: 'Product Updated',
     description: 'Triggers when an existing product is updated.',
+    aiMetadata: {
+      description:
+        'Fires when an existing product is updated in the WooCommerce store, emitting the changed product record.',
+    },
     sampleData: sampleData.product,
     testDataEndpoint: '/wp-json/wc/v3/products',
   },
@@ -342,6 +350,10 @@ export const triggers = [
     topic: 'product.deleted',
     displayName: 'Product Deleted',
     description: 'Triggers when an existing product is deleted.',
+    aiMetadata: {
+      description:
+        'Fires when a product is deleted from the WooCommerce store, emitting the deleted product record.',
+    },
     sampleData: sampleData.product,
     testDataEndpoint: '/wp-json/wc/v3/products',
   },
@@ -350,6 +362,10 @@ export const triggers = [
     topic: 'order.created',
     displayName: 'Order Created',
     description: 'Triggers when new order is created.',
+    aiMetadata: {
+      description:
+        'Fires when a new order is placed in the WooCommerce store, emitting the new order record including line items, totals, and customer details.',
+    },
     sampleData: sampleData.order,
     testDataEndpoint: '/wp-json/wc/v3/orders',
   },
@@ -358,6 +374,10 @@ export const triggers = [
     topic: 'order.updated',
     displayName: 'Order Updated',
     description: 'Triggers when an existing order is updated.',
+    aiMetadata: {
+      description:
+        'Fires when an existing order is updated in the WooCommerce store, such as a status or detail change, emitting the changed order record.',
+    },
     sampleData: sampleData.order,
     testDataEndpoint: '/wp-json/wc/v3/orders',
   },
@@ -366,6 +386,10 @@ export const triggers = [
     topic: 'order.deleted',
     displayName: 'Order Deleted',
     description: 'Triggers when an existing order is deleted.',
+    aiMetadata: {
+      description:
+        'Fires when an order is deleted from the WooCommerce store, emitting the deleted order record.',
+    },
     sampleData: sampleData.order,
     testDataEndpoint: '/wp-json/wc/v3/orders',
   },
@@ -374,6 +398,10 @@ export const triggers = [
     topic: 'coupon.created',
     displayName: 'Coupon Created',
     description: 'Triggers when new coupon is created.',
+    aiMetadata: {
+      description:
+        'Fires when a new discount coupon is created in the WooCommerce store, emitting the new coupon record.',
+    },
     sampleData: sampleData.coupon,
     testDataEndpoint: '/wp-json/wc/v3/coupons',
   },
@@ -382,6 +410,10 @@ export const triggers = [
     topic: 'coupon.updated',
     displayName: 'Coupon Updated',
     description: 'Triggers when an existing coupon is updated.',
+    aiMetadata: {
+      description:
+        'Fires when an existing coupon is updated in the WooCommerce store, emitting the changed coupon record.',
+    },
     sampleData: sampleData.coupon,
     testDataEndpoint: '/wp-json/wc/v3/coupons',
   },
@@ -390,6 +422,10 @@ export const triggers = [
     topic: 'coupon.deleted',
     displayName: 'Coupon Deleted',
     description: 'Triggers when an existing coupon is deleted.',
+    aiMetadata: {
+      description:
+        'Fires when a coupon is deleted from the WooCommerce store, emitting the deleted coupon record.',
+    },
     sampleData: sampleData.coupon,
     testDataEndpoint: '/wp-json/wc/v3/coupons',
   },
@@ -398,6 +434,10 @@ export const triggers = [
     topic: 'customer.created',
     displayName: 'Customer Created',
     description: 'Triggers when new customer is created.',
+    aiMetadata: {
+      description:
+        'Fires when a new customer account is created in the WooCommerce store, emitting the new customer record.',
+    },
     sampleData: sampleData.customer,
     testDataEndpoint: '/wp-json/wc/v3/customers',
   },
@@ -406,6 +446,10 @@ export const triggers = [
     topic: 'customer.updated',
     displayName: 'Customer Updated',
     description: 'Triggers when an existing customer is updated.',
+    aiMetadata: {
+      description:
+        'Fires when an existing customer is updated in the WooCommerce store, emitting the changed customer record.',
+    },
     sampleData: sampleData.customer,
     testDataEndpoint: '/wp-json/wc/v3/customers',
   },
@@ -414,6 +458,10 @@ export const triggers = [
     topic: 'customer.deleted',
     displayName: 'Customer Deleted',
     description: 'Triggers when an existing customer is deleted.',
+    aiMetadata: {
+      description:
+        'Fires when a customer account is deleted from the WooCommerce store, emitting the deleted customer record.',
+    },
     sampleData: sampleData.customer,
     testDataEndpoint: '/wp-json/wc/v3/customers',
   },

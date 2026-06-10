@@ -1,7 +1,7 @@
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { GitlabApi } from './client';
-import { gitlabAuth } from '../..';
+import { gitlabAuth } from '../auth';
 
 export const gitlabCommon = {
   projectId: (required = true) =>

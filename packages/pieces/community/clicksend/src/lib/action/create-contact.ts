@@ -14,6 +14,12 @@ export const clicksendCreateContactAction = createAction({
   auth: clicksendAuth,
   name: 'create_contact',
   description: 'Creates a new contact in a contact list.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Adds a new contact (phone number plus optional email, name, company, and address fields) to a specific ClickSend contact list identified by its list id. Choose this to populate a list before messaging. Requires a valid phone number; not idempotent, as repeating the call attempts to create another contact and the API rejects duplicates.',
+    idempotent: false,
+  },
   displayName: 'Create Contact',
   props: {
     contact_list_id: clicksendCommon.contact_list_id,

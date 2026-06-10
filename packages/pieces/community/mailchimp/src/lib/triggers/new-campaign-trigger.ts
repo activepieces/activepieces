@@ -53,6 +53,9 @@ export const mailChimpNewCampaignTrigger = createTrigger({
   name: 'new_campaign',
   displayName: 'New Campaign',
   description: 'Fires when a new campaign is created or sent',
+  aiMetadata: {
+    description: 'Fires on a campaign event tied to the selected audience (list) — when a campaign is created or sent. The event carries the campaign id, title, subject, send time, and status.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,

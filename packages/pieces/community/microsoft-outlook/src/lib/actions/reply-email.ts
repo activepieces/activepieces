@@ -1,4 +1,5 @@
 import { ApFile, createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftOutlookAuth } from '../common/auth';
 import { BodyType, Message } from '@microsoft/microsoft-graph-types';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
@@ -8,6 +9,8 @@ export const replyEmailAction = createAction({
   name: 'reply-email',
   displayName: 'Reply to Email',
   description: 'Reply to an outlook email.',
+  audience: 'both',
+  aiMetadata: { description: 'Replies to an existing Outlook message (identified by message ID), supporting added CC/BCC recipients and attachments. Set the Create Draft flag to stage the reply without sending; otherwise it is sent immediately. Not idempotent when sending: each call creates and dispatches a new reply.', idempotent: false },
   props: {
     messageId: Property.Dropdown({
       auth: microsoftOutlookAuth,
@@ -23,10 +26,12 @@ export const replyEmailAction = createAction({
           };
         }
 
+        const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
         const client = Client.initWithMiddleware({
           authProvider: {
             getAccessToken: () => Promise.resolve((auth as OAuth2PropertyValue).access_token),
           },
+          baseUrl: getGraphBaseUrl(cloud),
         });
 
         try {
@@ -127,10 +132,12 @@ export const replyEmailAction = createAction({
         contentBytes: attachment.file.base64,
       })),
     };
+    const cloud = context.auth.props?.['cloud'] as string | undefined;
     const client = Client.initWithMiddleware({
       authProvider: {
         getAccessToken: () => Promise.resolve(context.auth.access_token),
       },
+      baseUrl: getGraphBaseUrl(cloud),
     });
     try {
       const response: Message = await client

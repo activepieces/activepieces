@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { airtableAuth } from '../../index';
+import { airtableAuth } from '../auth';
 import { airtableCommon } from '../common';
 
 export const airtableFindTableByIdAction = createAction({
@@ -7,6 +7,12 @@ export const airtableFindTableByIdAction = createAction({
   name: 'airtable_find_table_by_id',
   displayName: 'Find Table by ID',
   description: "Get a table's details and schema using its ID.",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Fetches a single table's details and field schema by its base and table ID. Use when you already have the table ID and need its structure (field names, types) before reading or writing records. Read-only and idempotent.",
+    idempotent: true,
+  },
   props: {
     base: airtableCommon.base,
     tableId: airtableCommon.tableId,

@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-common';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { dripCommon } from '../common';
-import { dripAuth } from '../../';
+import { dripAuth } from '../auth';
 
 const triggerNameInStore = 'drip_new_subscriber_trigger';
 export const dripNewSubscriberEvent = createTrigger({

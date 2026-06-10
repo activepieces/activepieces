@@ -26,6 +26,12 @@ export const attachFileToRecordAction = createAction({
   name: 'attach_file_to_record',
   displayName: 'Attach File to Record',
   description: 'Upload and attach a file to a record',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Uploads a file and attaches it to a record on any table, identified by its sys_id. The file content comes from either a base64 string or a local file path (provide exactly one). Not idempotent — each call adds a new attachment, so re-running creates duplicates. Requires the table, the record sys_id, a file name, the content type, and the file source.',
+    idempotent: false,
+  },
   auth: servicenowAuth,
   props: {
     table: tableDropdown,

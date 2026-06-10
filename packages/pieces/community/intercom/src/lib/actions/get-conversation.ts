@@ -1,4 +1,4 @@
-import { intercomAuth } from '../../index';
+import { intercomAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
 import { conversationIdProp } from '../common/props';
 import { intercomClient } from '../common';

@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { hedyAuth } from '../../auth';
-import { HedyApiClient } from '../../common/client';
+import { createClient } from '../../common/client';
 import { commonProps } from '../../common/props';
 import { topicDropdown } from '../../common/load-options';
 import { Highlight } from '../../common/types';
@@ -20,7 +20,7 @@ export const listHighlights = createAction({
     before: commonProps.beforeCursor,
   },
   async run(context) {
-    const client = new HedyApiClient(context.auth.secret_text);
+    const client = createClient(context.auth);
     const { returnAll, limit, format, topicId, after, before } = context.propsValue as {
       returnAll?: boolean;
       limit?: number;

@@ -2,7 +2,7 @@
   "Website URL": "Website-URL",
   "Username": "Benutzername",
   "Password": "Kennwort",
-  "URL of your Drupal site": "URL Ihrer Drupal-Seite",
+  "URL of your Drupal site without a trailing \"/\" character": "URL Ihrer Drupal Site ohne \"/\" Zeichen am Ende",
   "\n**Using Drupal's JSON:API**\n\nYour Drupal site comes with JSON:API built-in. Authentication to access relevant parts requires the HTTP Basic Authentication module, which is also part of your Drupal site. Just ensure both are enabled and configure user authentication:\n\n1. Enable the JSON:API and the HTTP Basic Authentication modules\n2. Create a user account and give it the permissions you want Activepieces to have\n3. Use that account's credentials for authentication\n\nProvide the website URL in the format htt": "\n**Benutze Drupals JSON:API**\n\nDeine Drupal-Seite wird mit JSON:API eingebaut. Die Authentifizierung für den Zugriff auf relevante Teile erfordert das HTTP Basic Authentication Modul, das auch Teil Ihrer Drupal Site ist. Stellen Sie sicher, dass beide aktiviert sind und konfigurieren Sie Benutzerauthentifizierung:\n\n1. Aktivieren Sie JSON:API und die HTTP-Basic Authentifizierungsmodule\n2. Erstellen Sie ein Benutzerkonto und geben Sie ihm die Berechtigungen, die Activepieces\nhaben sollen. Benutzen Sie die Zugangsdaten für die Authentifizierung\n\nGeben Sie die URL der Webseite im Format https://www an. xample.com.\n\nFür zusätzliche Funktionalität kannst du das [Drupal Orchestration](https://www.drupal.org/project/orchestration) Modul verwenden.\n",
   "Call Service": "Anruf-Service",
   "Create Entity": "Entität erstellen",

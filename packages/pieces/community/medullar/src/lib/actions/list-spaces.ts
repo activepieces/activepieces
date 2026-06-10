@@ -1,4 +1,4 @@
-import { medullarAuth } from '../../index';
+import { medullarAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
 import { getUserSpaces } from '../common';
 

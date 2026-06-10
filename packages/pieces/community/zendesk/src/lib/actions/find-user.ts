@@ -17,6 +17,8 @@ export const findUserAction = createAction({
   name: 'find-user',
   displayName: 'Find User(s)',
   description: 'Search users by email, name, role, or other criteria.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches Zendesk users and returns matching records. A required search-type selector chooses the mode: match by email, name, role, organization, tag, or external ID, or pass a raw Zendesk search-syntax string via the Custom Query mode. Use to look up a user or resolve their ID before assigning tickets or adding comments; no matches returns an empty result set rather than an error. Read-only and idempotent.', idempotent: true },
   props: {
     search_type: Property.StaticDropdown({
       displayName: 'Search Type',

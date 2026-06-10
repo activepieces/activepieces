@@ -1,7 +1,5 @@
 # pieces-twin-labs
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-twin-labs` to build the library.
+Run `turbo run build --filter=@activepieces/piece-twin-labs` to build the library.

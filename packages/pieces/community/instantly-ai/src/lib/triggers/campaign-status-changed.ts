@@ -1,5 +1,5 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { instantlyAiAuth } from '../../index';
+import { instantlyAiAuth } from '../auth';
 
 export const campaignStatusChangedTrigger = createTrigger({
   auth: instantlyAiAuth,

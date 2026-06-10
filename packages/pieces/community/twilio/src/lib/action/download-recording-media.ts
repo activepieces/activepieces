@@ -7,6 +7,8 @@ export const twilioDownloadRecordingMedia = createAction({
   name: 'download_recording_media',
   displayName: 'Download Recording Media',
   description: 'Download the media file for a specific recording.',
+  audience: 'both',
+  aiMetadata: { description: 'Downloads the audio file for a specific Twilio call recording by its SID, returning it as a file (MP3 or WAV). Use to retrieve recorded call audio for storage or further processing; requires the recording SID (starting with "RE"). Read-only and idempotent.', idempotent: true },
   props: {
     recording_sid: Property.ShortText({
       displayName: 'Recording SID',

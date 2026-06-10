@@ -4,7 +4,7 @@ import {
   PiecePropValueSchema,
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
-import { quickbooksAuth } from '../index';
+import { quickbooksAuth } from '../lib/auth';
 import {
   DedupeStrategy,
   httpClient,
@@ -60,6 +60,9 @@ export const newInvoice = createTrigger({
   name: 'new_invoice',
   displayName: 'New Invoice',
   description: 'Triggers when an invoice is created .',
+  aiMetadata: {
+    description: 'Fires when a new invoice is created in the connected QuickBooks company, emitting the newly created invoice record. Use to react to billing being issued to a customer.',
+  },
   props: {},
   type: TriggerStrategy.POLLING,
   async onEnable(context) {

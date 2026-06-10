@@ -6,12 +6,18 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 
-import { wooAuth } from '../..';
+import { wooAuth } from '../auth';
 
 export const wooCreateCustomer = createAction({
   name: 'Create Customer',
   displayName: 'Create Customer',
   description: 'Create a Customer',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new customer account in a WooCommerce store with email, name, username, password, and a billing/shipping address (the same address is applied to both). Use when an agent needs to register a shopper. Not idempotent: each call creates a new customer, and email and username must be unique in the store.',
+    idempotent: false,
+  },
   auth: wooAuth,
   props: {
     email: Property.ShortText({

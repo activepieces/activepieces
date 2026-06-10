@@ -1,6 +1,6 @@
 import { HttpMethod, httpClient, HttpRequest, AuthenticationType } from "@activepieces/pieces-common";
 import { AppConnectionValueForAuthProperty } from "@activepieces/pieces-framework";
-import { codaAuth } from "../..";
+import { codaAuth } from '../auth';
 
 export const CODA_BASE_URL = "https://coda.io/apis/v1";
 

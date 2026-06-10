@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import FormData from 'form-data';
-import { acumbamailAuth } from '../../';
+import { acumbamailAuth } from '../auth';
 import { acumbamailCommon } from '../common';
 
 export const createSubscriberListAction = createAction({

@@ -1,6 +1,6 @@
 import { HttpMethod, httpClient, HttpRequest, AuthenticationType } from '@activepieces/pieces-common';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-import { fireberryAuth } from '../..';
+import { fireberryAuth } from '../auth';
 
 const FIREBERRY_API_BASE_URL = 'https://api.fireberry.com';
 const MAX_RETRIES = 3;

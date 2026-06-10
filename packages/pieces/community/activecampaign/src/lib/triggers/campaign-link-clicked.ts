@@ -1,4 +1,4 @@
-import { activeCampaignAuth } from '../..';
+import { activeCampaignAuth } from '../auth';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { makeClient } from '../common';
 import { CreateWebhookResponse } from '../common/types';
@@ -10,6 +10,9 @@ export const campaignLinkClickedTrigger = createTrigger({
 	displayName: 'New Campaign Link Click',
 	description:
 		'Triggers when a contact clicks a link in a campaign message (will only run once for each unique link).',
+	aiMetadata: {
+		description: 'Fires when a contact clicks a tracked link inside a sent campaign email, firing only once per unique link per contact. Represents the click event with the contact and the campaign that contained the link.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 	async onEnable(context) {

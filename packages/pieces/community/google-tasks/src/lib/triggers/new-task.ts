@@ -6,7 +6,7 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { googleTasksAuth } from '../..';
+import { googleTasksAuth } from '../auth';
 import {
   DedupeStrategy,
   Polling,
@@ -43,6 +43,9 @@ export const newTaskTrigger = createTrigger({
   name: 'new_task',
   displayName: 'New Task',
   description: 'Triggers when a task is created',
+  aiMetadata: {
+    description: 'Fires when a task in the selected Google Tasks list is newly created or updated since the last poll, emitting the task that changed. Use to react to additions or edits in a specific task list.',
+  },
   type: TriggerStrategy.POLLING,
   props,
   sampleData: {},

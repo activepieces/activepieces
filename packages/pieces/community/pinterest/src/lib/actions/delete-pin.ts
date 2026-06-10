@@ -13,6 +13,12 @@ export const deletePin = createAction({
   name: 'deletePin',
   displayName: 'Delete Pin',
   description: 'Permanently delete a specific Pin.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently deletes a single Pin identified by its pin_id. Use to remove published content from Pinterest; this is destructive and cannot be undone. Repeating the call after the Pin is gone returns an error rather than re-deleting, so treat it as not idempotent.',
+    idempotent: false,
+  },
   props: {
     pin_id: pinIdDropdown,
     ad_account_id: adAccountIdDropdown,

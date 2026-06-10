@@ -5,7 +5,7 @@ import {
   HttpRequest,
 } from '@activepieces/pieces-common';
 import { mauticCommon } from '../common';
-import { mauticAuth } from '../..';
+import { mauticAuth } from '../auth';
 
 export const updateContact = createAction({
   auth: mauticAuth,

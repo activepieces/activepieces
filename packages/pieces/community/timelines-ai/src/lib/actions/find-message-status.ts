@@ -6,6 +6,8 @@ export const findMessageStatus = createAction({
   name: 'findMessageStatus',
   displayName: 'Find Message Status',
   description: 'Lookup a message’s delivery status by message ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Returns the delivery status of a TimelinesAI WhatsApp message identified by its message UID. Use to check whether a previously sent message was delivered or read. Requires the exact message_uid. Read-only and idempotent.', idempotent: true },
   props: {
     message_uid: Property.ShortText({
       displayName: 'Message UID',

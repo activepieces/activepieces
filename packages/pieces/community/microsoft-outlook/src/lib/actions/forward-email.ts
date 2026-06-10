@@ -1,4 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { BodyType, Message } from '@microsoft/microsoft-graph-types';
 import { microsoftOutlookAuth } from '../common/auth';
@@ -9,6 +10,8 @@ export const forwardEmailAction = createAction({
 	name: 'forwardEmail',
 	displayName: 'Forward Email',
 	description: 'Forwards an email message.',
+	audience: 'both',
+	aiMetadata: { description: 'Forwards an existing Outlook message (by message ID) to new recipients, preserving the original body and attachments and prepending an optional comment. Use this to pass an existing email along rather than composing a new one. Not idempotent: each call sends a new forwarded email.', idempotent: false },
 	props: {
 		messageId: messageIdDropdown({
 			displayName: 'Email',
@@ -29,10 +32,12 @@ export const forwardEmailAction = createAction({
 		const { messageId, comment } = context.propsValue;
 		const recipients = context.propsValue.recipients as string[];
 
+		const cloud = context.auth.props?.['cloud'] as string | undefined;
 		const client = Client.initWithMiddleware({
 			authProvider: {
 				getAccessToken: () => Promise.resolve(context.auth.access_token),
 			},
+			baseUrl: getGraphBaseUrl(cloud),
 		});
 
 		const message = await client.api(`/me/messages/${messageId}`).get();

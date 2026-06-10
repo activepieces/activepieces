@@ -1,7 +1,5 @@
 # pieces-softr
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-softr` to build the library.
+Run `turbo run build --filter=@activepieces/piece-softr` to build the library.

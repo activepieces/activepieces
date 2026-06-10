@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="format-detection" content="date=no" />
+  <meta name="format-detection" content="address=no" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="x-apple-disable-message-reformatting" />
+  <title>You earned a new badge!</title>
+  <!--[if mso]>
+  <style type="text/css">
+    body, table, td, p, a { font-family: Arial, sans-serif !important; }
+  </style>
+  <![endif]-->
+</head>
+<body style="margin: 0; padding: 0; background: {{primaryColorLight}}; font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; -webkit-text-size-adjust: none;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background: {{primaryColorLight}};">
+    <tbody>
+      <tr>
+        <td align="center" style="padding: 48px 20px;">
+
+          <table role="presentation" width="560" border="0" cellspacing="0" cellpadding="0" style="background: #ffffff; border-radius: 12px; overflow: hidden;">
+            <tbody>
+
+              <tr>
+                <td align="left" style="padding: 40px 40px 0 40px;">
+                  <img src="{{fullLogoUrl}}" width="210" alt="{{platformName}}" style="display: block; max-width: 100%;" />
+                </td>
+              </tr>
+
+              <tr>
+                <td align="left" style="padding: 36px 40px 0 40px; font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 32px; line-height: 40px; font-weight: 500; color: #0a0a0a;">
+                  Congratulations{{#firstName}}, {{firstName}}{{/firstName}} 🎉
+                </td>
+              </tr>
+
+              <tr>
+                <td align="left" style="padding: 16px 40px 0 40px; font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 16px; line-height: 24px; color: #2f2e2e;">
+                  You earned the <strong>{{badgeTitle}}</strong> badge — {{badgeDescription}} Keep building and unlocking more badges on {{platformName}}!
+                </td>
+              </tr>
+
+              <tr>
+                <td align="left" style="padding: 28px 40px 0 40px;">
+                  <img src="{{badgeImageUrl}}" width="120" alt="{{badgeTitle}}" style="display: block; border-radius: 10px; max-width: 100%;" />
+                </td>
+              </tr>
+
+              <tr>
+                <td style="padding: 24px 40px 32px 40px;">
+                  {{> footer}}
+                </td>
+              </tr>
+
+            </tbody>
+          </table>
+
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+</html>

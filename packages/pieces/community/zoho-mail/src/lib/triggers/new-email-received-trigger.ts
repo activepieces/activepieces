@@ -84,6 +84,10 @@ export const newEmailReceivedTrigger = createTrigger({
 	name: 'new_email_received',
 	displayName: 'New Email Received',
 	description: 'Triggers when a new email is received in a specified folder (or inbox).',
+	aiMetadata: {
+		description:
+			'Fires when a new email arrives in the chosen Zoho Mail account. Scoped to a specific folder if one is selected, otherwise watches the account default (inbox/all messages). Each event represents one newly received message and its metadata.',
+	},
 	props: {
 		accountId: accountId({ displayName: 'Account', required: true }),
 		folderId: folderId({

@@ -19,10 +19,12 @@
   "Method": "Método",
   "Headers": "Cabeçalhos",
   "Query Parameters": "Parâmetros da consulta",
+  "Body Type": "Tipo de Corpo",
   "Body": "Conteúdo",
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "The search query to find keywords for": "A consulta de pesquisa para encontrar palavras-chave para",
   "Search engine to use for keyword analysis": "Mecanismo de pesquisa para análise por palavra-chave",
   "List of keywords to exclude from the search": "Lista de palavras-chave a excluir da busca",
@@ -38,7 +40,7 @@
   "Page number in response.": "Número da página na resposta.",
   "Number of results per page in response.": "Número de resultados por página em resposta.",
   "Authorization headers are injected automatically from your connection.": "Os cabeçalhos de autorização são inseridos automaticamente a partir da sua conexão.",
-  "Enable for files like PDFs, images, etc..": "Habilitar para arquivos como PDFs, imagens, etc..",
+  "Enable for files like PDFs, images, etc.": "Habilitar para arquivos como PDFs, imagens, etc.",
   "United States": "Estados Unidos",
   "Singapore": "Cingapura",
   "Indonesia": "Indonésia",
@@ -57,5 +59,9 @@
   "PATCH": "COMPRAR",
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
-  "HEAD": "CABEÇA"
+  "HEAD": "CABEÇA",
+  "None": "Nenhuma",
+  "JSON": "JSON",
+  "Form Data": "Dados de Formulário",
+  "Raw": "RAW"
 }

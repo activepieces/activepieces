@@ -1,8 +1,8 @@
 {
-  "Email marketing, marketing automation, and CRM tools you need to create incredible customer experiences.": "Herramientas de marketing por correo electrónico, automatización de marketing y CRM que necesita para crear increíbles experiencias de clientes.",
+  "Email marketing, marketing automation, and CRM tools you need to create incredible customer experiences.": "Herramientas de marketing por correo electrónico, automatización de marketing y CRM que necesitas para crear increíbles experiencias de clientes.",
   "API URL": "API URL",
   "API Key": "Clave API",
-  "\nTo obtain your ActiveCampaign API URL and Key, follow these steps:\n\n1. Log in to your ActiveCampaign account.\n2. Navigate to **Settings->Developer** section.\n3. Under **API Access** ,you'll find your API URL and Key.\n": "\nPara obtener la llave de API URL de Campaña Activa, debes seguir estos pasos:\n\n1. Iniciar sesión en tu cuenta Campaña Activa.\n2. Navegar a la sección **Ajustes -> Desarrollador**.\n3. Debajo de ** Acceso API**, puedes encontrar tu API URL y la llave.\n",
+  "\nTo obtain your ActiveCampaign API URL and Key, follow these steps:\n\n1. Log in to your ActiveCampaign account.\n2. Navigate to **Settings->Developer** section.\n3. Under **API Access** ,you'll find your API URL and Key.\n": "\nPara obtener tu llave de API URL de ActiveCampaign, debes seguir estos pasos:\n\n1. Iniciar sesión en tu cuenta de ActiveCampaign.\n2. Navegar a la sección **Ajustes -> Desarrollador**.\n3. Debajo de ** Acceso API**, puedes encontrar tu API URL y la llave.\n",
   "Add Contact to Account": "Añadir contacto a cuenta",
   "Add Tag to Contact": "Añadir etiqueta al contacto",
   "Create Account": "Crear cuenta",

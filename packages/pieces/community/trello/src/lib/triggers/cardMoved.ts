@@ -9,6 +9,9 @@ export const cardMovedTrigger = createTrigger({
 	name: 'card_moved_to_list',
 	displayName: 'Card Moved to list',
 	description: 'Trigger when a card is moved to the list specified',
+	aiMetadata: {
+		description: 'Fires when a card is moved into the specified list on a board (from a different list). Represents a card transitioning to a new stage; emits the moved card with its full details.',
+	},
 	props: {
 		board_id: trelloCommon.board_id,
 		list_id: trelloCommon.list_id,

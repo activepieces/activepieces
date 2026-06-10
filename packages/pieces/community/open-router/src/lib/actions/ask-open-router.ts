@@ -1,4 +1,4 @@
-import { openRouterAuth } from '../../index';
+import { openRouterAuth } from '../auth';
 import {
   Property,
   createAction,

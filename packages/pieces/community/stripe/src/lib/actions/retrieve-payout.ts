@@ -12,6 +12,12 @@ export const stripeRetrievePayout = createAction({
   auth: stripeAuth,
   displayName: 'Retrieve a Payout',
   description: 'Retrieves the details of an existing payout by its ID.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches the full details of a single Stripe payout (funds sent to your bank account) by its payout ID (e.g., po_...). Use to check a payout\'s status, amount, or arrival date. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     payout_id: stripeCommon.payout, 
   },

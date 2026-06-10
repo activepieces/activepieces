@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { wufooAuth } from '../../index';
+import { wufooAuth } from '../auth';
 import { wufooApiCall } from '../common/client';
 
 const LAST_FORM_IDS_KEY = 'wufoo-last-form-ids';

@@ -1,5 +1,5 @@
 import { httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
-import { beamerAuth } from '../../index';
+import { beamerAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { beamerCommon } from '../common';
 

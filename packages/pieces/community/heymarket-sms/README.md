@@ -1,7 +1,5 @@
 # pieces-heymarket-sms
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-heymarket-sms` to build the library.
+Run `turbo run build --filter=@activepieces/piece-heymarket-sms` to build the library.

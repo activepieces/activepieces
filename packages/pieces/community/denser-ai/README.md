@@ -1,7 +1,5 @@
 # pieces-denser-ai
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-denser-ai` to build the library.
+Run `turbo run build --filter=@activepieces/piece-denser-ai` to build the library.

@@ -1,0 +1,48 @@
+import { createCannyTrigger } from './register-trigger';
+
+export const newPostTrigger = createCannyTrigger({
+  name: 'new_post',
+  displayName: 'New Post',
+  description: 'Triggers when a new post is created on a Canny board.',
+  eventType: 'post.created',
+  sampleData: {
+    created: '2026-04-06T10:35:59.055Z',
+    objectType: 'post',
+    type: 'post.created',
+    object: {
+      id: 'post123',
+      title: 'Sample feature request',
+      details: 'It would be great if the app had dark mode.',
+      status: 'open',
+      score: 1,
+      commentCount: 0,
+      created: '2026-04-06T10:35:58.342Z',
+      statusChangedAt: '2026-04-06T10:35:58.342Z',
+      url: 'https://yourcompany.canny.io/admin/board/feature-requests/p/sample-feature-request',
+      eta: null,
+      by: null,
+      category: null,
+      owner: null,
+      tags: [],
+      imageURLs: [],
+      customFields: [],
+      board: {
+        id: 'board123',
+        name: 'Feature Requests',
+        postCount: 1,
+        created: '2026-04-06T10:35:08.905Z',
+        url: 'https://yourcompany.canny.io/admin/board/feature-requests',
+      },
+      author: {
+        id: 'author123',
+        name: 'Jane Doe',
+        email: 'jane@example.com',
+        isAdmin: false,
+        avatarURL: null,
+        created: '2026-01-08T07:26:38.452Z',
+        url: 'https://yourcompany.canny.io/admin/users/jane-doe',
+        userID: null,
+      },
+    },
+  },
+});

@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { createTask } from './lib/actions/create-task';
+import { niftyAuth } from './lib/auth';
 
 const mddescription = `
 # How to add a new connection
@@ -18,14 +19,6 @@ const mddescription = `
 7. check out Milestones , Subtasks , Projects , Statuses , Tasks and Portfolios
 8. copy the client id and client secret and paste them in the piece
 `;
-
-export const niftyAuth = PieceAuth.OAuth2({
-  authUrl: 'https://nifty.pm/authorize',
-  tokenUrl: 'https://openapi.niftypm.com/oauth/token',
-  required: true,
-  description: mddescription,
-  scope: ['task', 'project', 'subtask', 'milestone', 'subteam'],
-});
 
 export const nifty = createPiece({
   displayName: 'Nifty',

@@ -1,9 +1,9 @@
 import { AppConnectionValueForAuthProperty, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { getTaskListsDropdown } from '../common';
-import { microsoftToDoAuth } from '../../index';
-import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
+import { getTaskListsDropdown, createTodoClient } from '../common';
+import { microsoftToDoAuth } from '../auth';
+import { PageCollection } from '@microsoft/microsoft-graph-client';
 import dayjs from 'dayjs';
 import { TodoTask } from '@microsoft/microsoft-graph-types';
 
@@ -11,11 +11,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftToDoAut
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, store, lastFetchEpochMS }) {
 		const taskListId = propsValue.task_list_id;
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(auth.access_token),
-			},
-		});
+		const client = createTodoClient(auth);
 
 		const tasks = [];
 
@@ -57,6 +53,9 @@ export const newOrUpdatedTaskTrigger = createTrigger({
 	name: 'new_or_updated_task',
 	displayName: 'New or Updated Task',
 	description: 'Triggers when a new task is created or an existing task is updated.',
+	aiMetadata: {
+		description: 'Fires when a task in the selected Microsoft To Do task list is created or modified in any way. Each event represents the current state of one task that was added or changed; polls on the task last-modified time, so the same task can fire again whenever it is edited.',
+	},
 	auth: microsoftToDoAuth,
 	props: {
 		task_list_id: Property.Dropdown({

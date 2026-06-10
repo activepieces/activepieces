@@ -10,6 +10,11 @@ export const repostPost = createAction({
   name: 'repostPost',
   displayName: 'Repost Post',
   description: 'Share someone else\'s post to your timeline',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Reposts an existing Bluesky post to the authenticated account\'s timeline, identified by an AT-URI / bsky.app post URL or selected from the recent timeline. Use to amplify another user\'s post. Not idempotent — each call creates a separate repost record.',
+    idempotent: false,
+  },
   props: {
     selectionMethod: Property.StaticDropdown({
       displayName: 'Select Method',

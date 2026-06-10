@@ -12,7 +12,7 @@ export class AddDeletedToProjectPostgres1710243591721 implements MigrationInterf
             ADD "deleted" TIMESTAMP WITH TIME ZONE
         `)
 
-        log.info({ name: this.name }, 'up')
+        log.info('[addDeletedToProjectPostgres1710243591721#up]')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -20,7 +20,7 @@ export class AddDeletedToProjectPostgres1710243591721 implements MigrationInterf
             ALTER TABLE "project" DROP COLUMN "deleted"
         `)
 
-        log.info({ name: this.name }, 'down')
+        log.info('[addDeletedToProjectPostgres1710243591721#down]')
     }
 
 }

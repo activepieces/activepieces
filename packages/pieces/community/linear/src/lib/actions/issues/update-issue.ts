@@ -9,6 +9,11 @@ export const linearUpdateIssue = createAction({
   name: 'linear_update_issue',
   displayName: 'Update Issue',
   description: 'Update a issue in Linear Workspace',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Updates an existing Linear issue identified by its issue ID, changing fields such as title, description, assignee, status, labels, or priority. Use to modify an issue already created. Only the provided fields are changed; repeating the same update is idempotent.',
+    idempotent: true,
+  },
   props: {
     team_id: props.team_id(),
     issue_id: props.issue_id(),
@@ -33,7 +38,7 @@ export const linearUpdateIssue = createAction({
       assigneeId: propsValue.assignee_id,
       stateId: propsValue.state_id,
       priority: propsValue.priority_id,
-      labelIds: propsValue.labels,
+      labelIds: propsValue.labels?.length ? propsValue.labels : undefined,
     };
     const client = makeClient(auth);
     const result = await client.updateIssue(issueId, issue);

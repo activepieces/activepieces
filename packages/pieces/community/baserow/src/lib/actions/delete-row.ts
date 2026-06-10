@@ -1,33 +1,26 @@
-import {
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { baserowAuth } from '../..';
-import { makeClient } from '../common';
+import { createAction } from '@activepieces/pieces-framework';
+import { baserowAuth } from '../auth';
+import { baserowCommon, makeClient } from '../common';
 
 export const deleteRowAction = createAction({
   name: 'baserow_delete_row',
   displayName: 'Delete Row',
   description: 'Deletes an existing row.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently deletes one row from a Baserow table by its numeric row ID. Use to remove a single known record; for multiple rows use Batch Delete Rows. Destructive — confirm the row ID first (resolve via Find Row or List Rows if unknown). Not idempotent against changing data: once the row is gone a repeat call targets a no-longer-existing ID.',
+    idempotent: false,
+  },
   auth: baserowAuth,
   props: {
-    table_id: Property.Number({
-      displayName: 'Table ID',
-      required: true,
-      description:
-        "Please enter the table ID where the row must be deleted in.You can find the ID by clicking on the three dots next to the table. It's the number between brackets.",
-    }),
-    row_id: Property.Number({
-      displayName: 'Row ID',
-      required: true,
-      description: 'Please enter the row ID that needs to be deleted.',
-    }),
+    table_id: baserowCommon.tableId(),
+    row_id: baserowCommon.rowId(),
   },
   async run(context) {
-    const { table_id, row_id } = context.propsValue;
-    const client = makeClient(
-      context.auth.props
-    );
-    return await client.deleteRow(table_id, row_id);
+    const { table_id, row_id } = context.propsValue as { table_id: number; row_id: number };
+    const client = await makeClient(context.auth);
+    await client.deleteRow(table_id, row_id);
+    return { success: true };
   },
 });

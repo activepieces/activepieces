@@ -9,6 +9,8 @@ export const updateSubscriptionAction = createAction({
 	name: 'update_subscription',
 	displayName: 'Update Subscription',
 	description: 'Update an existing subscription.',
+	audience: 'both',
+	aiMetadata: { description: 'Updates an existing beehiiv subscription identified by publication ID and subscription ID — change its tier, Stripe customer ID, custom fields, or unsubscribe it from the publication. Use to modify or unsubscribe a known subscriber. Idempotent: repeating with the same fields yields the same end state.', idempotent: true },
 	props: {
 		publicationId: publicationId,
 		subscriptionId: subscriptionId(true),

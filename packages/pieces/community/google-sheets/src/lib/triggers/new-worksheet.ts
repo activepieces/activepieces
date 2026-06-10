@@ -1,7 +1,6 @@
 import { googleSheetsAuth } from '../common/common';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 import { isNil } from '@activepieces/shared';
 import { includeTeamDrivesProp, spreadsheetIdProp } from '../common/props';
 import { createGoogleClient } from '../common/common';
@@ -11,6 +10,10 @@ export const newWorksheetTrigger = createTrigger({
 	name: 'new-worksheet',
 	displayName: 'New Worksheet',
 	description: 'Triggers when a worksheet is created in a spreadsheet.',
+	aiMetadata: {
+		description:
+			'Fires when a new worksheet (tab) is added to the selected spreadsheet, emitting one event per new worksheet with its sheet properties. Use to react to tabs being created within a specific spreadsheet. Polls periodically rather than in real time.',
+	},
 	type: TriggerStrategy.POLLING,
 	props: {
 		includeTeamDrives: includeTeamDrivesProp(),

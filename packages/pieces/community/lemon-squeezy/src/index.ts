@@ -1,5 +1,7 @@
-import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
+import { createPiece } from "@activepieces/pieces-framework";
+import { createCustomApiCallAction } from "@activepieces/pieces-common";
 import { lemonSqueezyAuth } from "./lib/common/auth";
+import { LEMON_SQUEEZY_API_BASE } from "./lib/common/api";
 import { orderCreatedTrigger } from "./lib/triggers/order-created";
 import { orderRefundedTrigger } from "./lib/triggers/order-refunded";
 import { subscriptionCreatedTrigger } from "./lib/triggers/subscription-created";
@@ -16,6 +18,12 @@ import { subscriptionPaymentRefundedTrigger } from "./lib/triggers/subscription-
 import { licenseKeyCreatedTrigger } from "./lib/triggers/license-key-created";
 import { licenseKeyUpdatedTrigger } from "./lib/triggers/license-key-updated";
 import { affiliateActivatedTrigger } from "./lib/triggers/affiliate-activated";
+import { listProducts } from "./lib/actions/list-products";
+import { listOrders } from "./lib/actions/list-orders";
+import { getOrder } from "./lib/actions/get-order";
+import { listSubscriptions } from "./lib/actions/list-subscriptions";
+import { createCheckout } from "./lib/actions/create-checkout";
+import { listCustomers } from "./lib/actions/list-customers";
 
 export const lemonSqueezy = createPiece({
   displayName: "Lemon Squeezy",
@@ -23,8 +31,24 @@ export const lemonSqueezy = createPiece({
   description: "Lemon Squeezy is a payment gateway for e-commerce and subscription-based businesses.",
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/lemon-squeezy.png",
-  authors: ["onyedikachi-david"],
-  actions: [],
+  authors: ["onyedikachi-david", "Harmatta"],
+  actions: [
+    listProducts,
+    listOrders,
+    getOrder,
+    listSubscriptions,
+    createCheckout,
+    listCustomers,
+    createCustomApiCallAction({
+      auth: lemonSqueezyAuth,
+      baseUrl: () => LEMON_SQUEEZY_API_BASE,
+      authMapping: async (auth) => ({
+        Authorization: `Bearer ${auth.secret_text}`,
+        Accept: 'application/vnd.api+json',
+        'Content-Type': 'application/vnd.api+json',
+      }),
+    }),
+  ],
   triggers: [
     orderCreatedTrigger,
     orderRefundedTrigger,
@@ -41,6 +65,6 @@ export const lemonSqueezy = createPiece({
     subscriptionPaymentRefundedTrigger,
     licenseKeyCreatedTrigger,
     licenseKeyUpdatedTrigger,
-    affiliateActivatedTrigger
+    affiliateActivatedTrigger,
   ],
 });

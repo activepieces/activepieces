@@ -8,6 +8,9 @@ export const newSale = createTrigger({
     name: 'newSale',
     displayName: 'New Sale',
     description: 'Fires when a new purchase is made within a funnel',
+    aiMetadata: {
+      description: 'Fires when a new sale (purchase) is completed within a Systeme.io funnel, delivering the sale record including amount, product, funnel, contact, and payment details. Use to react to new orders or revenue events.',
+    },
     props: {},
     sampleData: {
         sale: {

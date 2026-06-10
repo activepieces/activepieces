@@ -4,13 +4,15 @@ import {
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { discordAuth } from '../../index';
+import { discordAuth } from '../auth';
 import { discordCommon } from '../common';
 
 export const discordRenameChannel = createAction({
   auth: discordAuth,
   name: 'rename_channel',
   description: 'rename a channel',
+  audience: 'both',
+  aiMetadata: { description: 'Renames an existing channel, identified by channel ID, to a new name. Use to update a channel title. Requires the bot to have Manage Channels permission; idempotent, since setting the same name repeatedly yields the same result.', idempotent: true },
   displayName: 'Rename channel',
   props: {
     channel_id: discordCommon.channel,

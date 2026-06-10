@@ -1,17 +1,13 @@
 import { TriggerStrategy, createTrigger, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { microsoftToDoAuth } from '../../index';
-import { Client } from '@microsoft/microsoft-graph-client';
+import { microsoftToDoAuth } from '../auth';
 import { TodoTaskList } from '@microsoft/microsoft-graph-types';
+import { createTodoClient } from '../common';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftToDoAuth>, Record<string, never>> = {
     strategy: DedupeStrategy.LAST_ITEM,
     items: async ({ auth }) => {
-        const client = Client.initWithMiddleware({
-            authProvider: {
-                getAccessToken: () => Promise.resolve(auth.access_token),
-            },
-        });
+        const client = createTodoClient(auth);
 
         const response = await client.api('/me/todo/lists').get();
         const lists = response.value as TodoTaskList[];
@@ -28,6 +24,9 @@ export const newListCreatedTrigger = createTrigger({
     name: 'new_list_created',
     displayName: 'New List',
     description: 'Triggers when a new task list is created.',
+    aiMetadata: {
+        description: 'Fires when a new task list is created in the authenticated user\'s Microsoft To Do account. Each event represents one newly added task list; watches all of the user\'s lists rather than a single one.',
+    },
     props: {},
     type: TriggerStrategy.POLLING,
     sampleData: {
@@ -53,11 +52,7 @@ export const newListCreatedTrigger = createTrigger({
 
     async test(context) {
         try {
-            const client = Client.initWithMiddleware({
-                authProvider: {
-                    getAccessToken: () => Promise.resolve(context.auth.access_token),
-                },
-            });
+            const client = createTodoClient(context.auth);
 
             const response = await client.api('/me/todo/lists').get();
             const lists = (response.value as TodoTaskList[]).slice(0, 5);

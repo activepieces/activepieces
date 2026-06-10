@@ -1,8 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { google, calendar_v3 } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
-import { googleCalendarAuth } from '../../index';
-import { googleCalendarCommon } from '../common';
+import { googleCalendarCommon, googleCalendarAuth, createGoogleClient } from '../common';
 import dayjs from 'dayjs';
 
 export const updateEventAction = createAction({
@@ -10,6 +8,8 @@ export const updateEventAction = createAction({
   auth: googleCalendarAuth,
   name: 'update_event',
   description: 'Updates an event in Google Calendar.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates the fields of an existing Google Calendar event identified by calendar and event ID (title, times, location, description, color, attendees, guest permissions); unset fields retain their current values. Use to modify or reschedule an event that already exists rather than creating a new one. Requires the event ID. Idempotent: applying the same field values repeatedly leaves the event in the same state.', idempotent: true },
   props: {
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
     eventId: Property.ShortText({
@@ -76,8 +76,7 @@ export const updateEventAction = createAction({
 
     const attendees = context.propsValue.attendees as string[];
 
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
     const calendar = google.calendar({ version: 'v3', auth: authClient });
 
     // Note that each patch request consumes three quota units;

@@ -1,6 +1,8 @@
-import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework';
 import { getCalendars, getColors, getEventsForDropdown } from './helper';
-import { googleCalendarAuth } from '../..';
+import { googleCalendarAuth, GoogleCalendarAuthValue, getAccessToken } from '../auth';
+
+export { googleCalendarAuth, GoogleCalendarAuthValue, getAccessToken, createGoogleClient, googleCalendarScopes } from '../auth';
 
 export const googleCalendarCommon = {
   baseUrl: 'https://www.googleapis.com/calendar/v3',
@@ -18,8 +20,8 @@ export const googleCalendarCommon = {
             options: [],
           };
         }
-        const authProp = auth as OAuth2PropertyValue;
-        const calendars = await getCalendars(authProp, minAccessRole);
+        const authValue = auth as GoogleCalendarAuthValue;
+        const calendars = await getCalendars(authValue, minAccessRole);
         return {
           disabled: false,
           options: calendars.map((calendar) => {
@@ -53,9 +55,9 @@ export const googleCalendarCommon = {
             options: [],
           };
         }
-        const authProp = auth as OAuth2PropertyValue;
+        const authValue = auth as GoogleCalendarAuthValue;
         const events = await getEventsForDropdown(
-          authProp,
+          authValue,
           calendar_id as string
         );
         return {
@@ -78,7 +80,7 @@ export const googleCalendarCommon = {
           options: [],
         };
       }
-      const response = await getColors(auth);
+      const response = await getColors(auth as GoogleCalendarAuthValue);
       return {
         disabled: false,
         options: Object.entries(response.event).map(([key, value]) => {

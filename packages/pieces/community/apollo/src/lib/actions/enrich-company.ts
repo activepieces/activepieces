@@ -1,4 +1,4 @@
-import { apolloAuth } from '../../';
+import { apolloAuth } from '../auth';
 import {
   Property,
   StoreScope,
@@ -9,6 +9,11 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 export const enrichCompany = createAction({
   name: 'enrichCompany',
   description: '',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Look up and enrich a single company in the Apollo database by its web domain, returning the organization profile. Use when you have a company domain and need firmographic details. Read-only and idempotent; an optional project-store cache may return a previously fetched result for the same domain.',
+    idempotent: true,
+  },
   displayName: 'Enrich Company',
   props: {
     domain: Property.ShortText({

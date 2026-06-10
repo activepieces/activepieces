@@ -6,7 +6,7 @@ import {
   HttpRequest,
 } from '@activepieces/pieces-common';
 import { calendlyCommon, CalendlyWebhookInformation } from '../common';
-import { calendlyAuth } from '../../';
+import { calendlyAuth } from '../auth';
 
 const triggerNameInStore = 'calendly_invitee_canceled_trigger';
 

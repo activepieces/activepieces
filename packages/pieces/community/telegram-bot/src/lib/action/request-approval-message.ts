@@ -1,0 +1,105 @@
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { telegramCommons } from '../common';
+import { telegramBotAuth } from '../..';
+import {
+  assertNotNullOrUndefined,
+  ExecutionType,
+} from '@activepieces/shared';
+
+export const telegramRequestApprovalMessageAction = createAction({
+  auth: telegramBotAuth,
+  name: 'request_approval_message',
+  displayName: 'Request Approval Message',
+  description:
+    'Send an approval message to a chat and wait until the message is approved or disapproved',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a message with Approve and Disapprove buttons to a chat and pauses the flow until a recipient clicks one, then resumes with the decision. Use as a human approval gate before a sensitive downstream step. Not idempotent: each call sends a new message and opens a new pause/wait.', idempotent: false },
+  props: {
+    instructions: telegramCommons.chatIdInstructions(),
+    chat_id: telegramCommons.chatIdProp(),
+    message: Property.LongText({
+      displayName: 'Message',
+      description: 'The approval message to be sent',
+      required: true,
+    }),
+    parse_mode: telegramCommons.parseModeProp(),
+    approve_button_text: Property.ShortText({
+      displayName: 'Approve Button Text',
+      description: 'Text for the approve button',
+      required: false,
+      defaultValue: 'Approve',
+    }),
+    disapprove_button_text: Property.ShortText({
+      displayName: 'Disapprove Button Text',
+      description: 'Text for the disapprove button',
+      required: false,
+      defaultValue: 'Disapprove',
+    }),
+  },
+  async run(context) {
+    if (context.executionType === ExecutionType.BEGIN) {
+      const token = context.auth.secret_text;
+      const { chat_id, message, parse_mode, approve_button_text, disapprove_button_text } =
+        context.propsValue;
+
+      assertNotNullOrUndefined(token, 'token');
+      assertNotNullOrUndefined(message, 'message');
+      assertNotNullOrUndefined(chat_id, 'chat_id');
+
+      // Generate approval and disapproval links
+      const waitpoint = await context.run.createWaitpoint({
+        type: 'WEBHOOK',
+      });
+      const approvalLink = waitpoint.buildResumeUrl({
+        queryParams: { action: 'approve', chat_id },
+      });
+      const disapprovalLink = waitpoint.buildResumeUrl({
+        queryParams: { action: 'disapprove', chat_id },
+      });
+
+      // Send message with inline keyboard buttons
+      const response = await httpClient.sendRequest<{
+        ok: boolean;
+        result: { message_id: number };
+      }>({
+        method: HttpMethod.POST,
+        url: telegramCommons.getApiUrl(context.auth, 'sendMessage'),
+        body: {
+          chat_id,
+          text: message,
+          parse_mode: telegramCommons.resolveParseMode(parse_mode),
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: approve_button_text || 'Approve',
+                  url: approvalLink,
+                },
+                {
+                  text: disapprove_button_text || 'Disapprove',
+                  url: disapprovalLink,
+                },
+              ],
+            ],
+          },
+        },
+      });
+
+      const messageId = response.body.result.message_id;
+
+      context.run.waitForWaitpoint(waitpoint.id);
+
+      return {
+        approved: false, // default approval is false
+        messageId,
+        chatId: chat_id,
+      };
+    } else {
+      return {
+        approved: context.resumePayload.queryParams['action'] === 'approve',
+        chatId: context.resumePayload.queryParams['chat_id'],
+      };
+    }
+  },
+});

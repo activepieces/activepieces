@@ -11,6 +11,12 @@ export const clicksendFindContactByPhoneAction = createAction({
   auth: clicksendAuth,
   name: 'find_contact_by_phone',
   description: 'Finds contact by phone number.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches a specific ClickSend contact list for a contact whose phone number exactly matches the given value, paging through the whole list until a match is found. Choose this to look up or verify a contact by phone before updating or messaging them. Requires a valid phone number and the target list id; read-only and idempotent.',
+    idempotent: true,
+  },
   displayName: 'Find Contact by Phone',
   props: {
     contact_list_id: clicksendCommon.contact_list_id,

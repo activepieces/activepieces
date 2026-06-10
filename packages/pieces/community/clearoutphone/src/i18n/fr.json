@@ -1,0 +1,12 @@
+{
+  "ClearoutPhone is a phone number validation and verification service that helps businesses ensure the accuracy and validity of their phone number data.": "ClearoutPhone est un service de validation et de vérification de numéros de téléphone qui aide les entreprises à assurer l'exactitude et la validité des données de leurs numéros de téléphone.",
+  "ClearoutPhone API Key\n\n## Generating an API Token\n\nOnce signed up and logged in, click on **Dashboard -> API** tab available on left sidebar and then click on **\"Generate API Token\"**. \n.": "ClearoutPhone API Key\n\n## Generating an API Token\n\nOnce signed up and logged in, click on **Dashboard -> API** tab available on left sidebar and then click on **\"Generate API Token\"**. \n.",
+  "Find Phone Number Carrier": "Trouver l'opérateur de numéro de téléphone",
+  "Find Phone Number Is Mobile": "Trouver le numéro de téléphone est mobile",
+  "Validate Phone Number": "Valider le numéro de téléphone",
+  "Find the carrier of a phone number using ClearoutPhone API": "Trouver l'opérateur d'un numéro de téléphone en utilisant l'API ClearoutPhone",
+  "Determine if a phone number is a mobile number using ClearoutPhone API": "Détermine si un numéro de téléphone est un numéro de téléphone mobile en utilisant l'API ClearoutPhone",
+  "Validate a phone number and retrieve comprehensive information using ClearoutPhone API": "Valider un numéro de téléphone et récupérer des informations complètes à l'aide de l'API ClearoutPhone",
+  "Phone Number": "Numéro de téléphone",
+  "The phone number to validate (e.g., +447766733573 )": "Le numéro de téléphone à valider (par exemple, +447766733573 )"
+}

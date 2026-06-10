@@ -12,6 +12,8 @@ export const deleteCardAttachment = createAction({
   name: 'delete_card_attachment',
   displayName: 'Delete Card Attachment',
   description: 'Deletes an attachment from a card.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently removes a specific attachment from a Trello card, identified by both card_id and attachment_id. Use to delete a file or link from a card. Requires both ids; deleting the same attachment again returns an error once it no longer exists.', idempotent: false },
   props: {
     card_id: Property.ShortText({
       description: 'The ID of the card',

@@ -1,5 +1,4 @@
-import { createTrigger } from '@activepieces/pieces-framework';
-import { TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { stripeCommon } from '../common';
 import { stripeAuth } from '../..';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
@@ -10,6 +9,10 @@ export const stripePaymentFailed = createTrigger({
   name: 'payment_failed',
   displayName: 'Payment Failed',
   description: 'Triggers when a payment fails',
+  aiMetadata: {
+    description:
+      'Fires when a charge fails in Stripe (the charge.failed event), emitting the failed charge including its failure code and message. Use to react to declined payments, such as alerting the customer or triggering a retry/dunning flow.',
+  },
   props: {},
   sampleData: {
     id: 'ch_3MWMPQKZ0dZRqLEK063rxD7q',
@@ -176,13 +179,15 @@ export const stripePaymentFailed = createTrigger({
   async test(context) {
     const response = await httpClient.sendRequest<{ data: { id: string }[] }>({
       method: HttpMethod.GET,
-      url: 'https://api.stripe.com/v1/charges',
+      url: 'https://api.stripe.com/v1/charges/search',
+
       headers: {
         Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
+         'Stripe-Version': "2026-02-25.clover",
       },
       queryParams: {
-        status: 'failed',
+        query: 'status:"failed"',
         limit: '5',
       },
     });

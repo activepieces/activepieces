@@ -1,0 +1,10 @@
+{
+  "Automate content creation, SEO optimization, email outreach, and influencer partnerships with BurstyAI's no-code AI workflows.": "コンテンツの作成、SEOの最適化、Eメールのアウトリーチ、インフルエンサーとのパートナーシップを、BurstyAIのno-code AIワークフローと自動化します。",
+  "API Key for Bursty-ai": "Bursty-aiのためのAPIキー",
+  "Run Workflow": "ワークフローを実行",
+  "Run a Bursty AI workflow and optionally wait for and return the results": "Bursty AIワークフローを実行し、必要に応じて結果を待って返します",
+  "Workflow ID": "ワークフロー ID",
+  "Wait for Result": "結果を待つ",
+  "The ID of the Bursty AI workflow to run": "実行するバースティAIワークフローのID",
+  "Wait for the workflow to complete and return the results (default: false)": "ワークフローが完了するのを待ち、結果を返します (デフォルト: false)"
+}

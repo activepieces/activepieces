@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy, Property, PiecePropValueSchema, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { tableauAuth } from '../../index';
+import { tableauAuth } from '../auth';
 import { getAuthToken, buildTableauUrl, getTableauHeaders } from '../common';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 

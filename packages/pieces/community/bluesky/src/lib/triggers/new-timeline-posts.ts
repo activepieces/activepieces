@@ -71,6 +71,9 @@ export const newTimelinePosts = createTrigger({
   name: 'newTimelinePosts',
   displayName: 'New Timeline Posts',
   description: 'Triggers when new posts appear in your timeline',
+  aiMetadata: {
+    description: 'Fires when a new post appears in the authenticated account\'s home timeline (posts and reposts from accounts it follows); each event represents one such timeline item.',
+  },
   props: {},
   sampleData: {
     uri: 'at://did:plc:example123/app.bsky.feed.post/example456',

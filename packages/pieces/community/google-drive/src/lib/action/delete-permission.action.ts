@@ -1,12 +1,13 @@
 import { Property, createAction } from "@activepieces/pieces-framework";
-import { googleDriveAuth } from "../../";
+import { googleDriveAuth, createGoogleClient } from '../auth';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 
 export const deletePermission = createAction({
     auth: googleDriveAuth,
     name: 'delete_permissions',
     description: 'Removes a role from an user for a file or folder',
+    audience: 'both',
+    aiMetadata: { description: 'Revokes a specific role from a user (matched by email and role) on a Drive file or folder. Use to unshare or downgrade access for someone. Requires the file/folder ID, the user email, and the role to remove. Idempotent: if no matching permission exists, the call is a no-op.', idempotent: true },
     displayName: 'Delete permissions',
     props: {
         fileId: Property.ShortText({
@@ -52,8 +53,7 @@ export const deletePermission = createAction({
     },
     async run (context) {
         const [fileId, user_email] = [context.propsValue.fileId, context.propsValue.user_email];
-        const authClient = new OAuth2Client();
-        authClient.setCredentials(context.auth)
+        const authClient = await createGoogleClient(context.auth);
 
         const drive = google.drive({ version: 'v3', auth: authClient });
         

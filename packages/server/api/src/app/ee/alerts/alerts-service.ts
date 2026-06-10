@@ -1,18 +1,19 @@
-import { Alert, AlertChannel, ListAlertsParams } from '@activepieces/ee-shared'
-import { apDayjsDuration } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, apId, ApId, ErrorCode, SeekPage } from '@activepieces/shared'
+import { apDayjsDuration } from '@activepieces/server-utils'
+import { ActivepiecesError, Alert, AlertChannel, ApEdition, ApId, apId, ErrorCode, FailedStep, flowStructureUtil, ListAlertsParams, ProjectType, SeekPage } from '@activepieces/shared'
 
 import dayjs from 'dayjs'
 import timezone from 'dayjs/plugin/timezone'
 import { FastifyBaseLogger } from 'fastify'
+import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { redisConnections } from '../../database/redis-connections'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
+import { domainHelper } from '../../helper/domain-helper'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
-import { domainHelper } from '../custom-domains/domain-helper'
+import { userService } from '../../user/user-service'
 import { emailService } from '../helper/email/email-service'
 import { AlertEntity } from './alerts-entity'
 
@@ -27,9 +28,11 @@ export const alertsService = (log: FastifyBaseLogger) => ({
     async sendAlertOnRunFinish({
         issueToAlert,
         flowRunId,
+        failedStep,
     }: {
         issueToAlert: IssueToAlert
         flowRunId: string
+        failedStep: FailedStep
     }): Promise<void> {
         if (!paidEditions) {
             return
@@ -44,10 +47,11 @@ export const alertsService = (log: FastifyBaseLogger) => ({
             return
         }
 
-        const project = await projectService.getOneOrThrow(issueToAlert.projectId)
-        const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(issueToAlert.flowId)
+        const project = await projectService(log).getOneOrThrow(issueToAlert.projectId)
+        const flowVersion = await flowVersionService(log).getOneOrThrow(issueToAlert.flowVersionId)
 
-        const alertsInfo = {
+        const failedStepNumber = flowStructureUtil.getStepNumber(flowVersion.trigger, failedStep.name)
+        const alertsInfo: IssueParams = {
             flowVersionId: flowVersion.id,
             flowRunId,
             projectId: issueToAlert.projectId,
@@ -58,22 +62,40 @@ export const alertsService = (log: FastifyBaseLogger) => ({
             createdAt: dayjs(issueToAlert.created)
                 .tz('America/Los_Angeles')
                 .format('DD MMM YYYY, HH:mm [PT]'),
+            failedStepDisplayName: failedStep.displayName,
+            failedStepNumber: failedStepNumber > 0 ? failedStepNumber : undefined,
+            failedStepMessage: failedStep.message,
         }
 
         await sendAlertOnFlowFailure(log, alertsInfo)
     },
     async add({ projectId, channel, receiver }: AddPrams): Promise<void> {
+        const normalizedReceiver = receiver.toLowerCase()
+        const project = await projectService(log).getOneOrThrow(projectId)
+        if (project.type === ProjectType.PERSONAL) {
+            const owner = await userService(log).getOneOrFail({ id: project.ownerId })
+            const identity = await userIdentityService(log).getOneOrFail({ id: owner.identityId })
+            if (identity.email.toLowerCase() !== normalizedReceiver) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: 'Personal projects only allow the project owner as alert receiver',
+                    },
+                })
+            }
+        }
         const alertId = apId()
-        const existingAlert = await repo().findOneBy({
-            projectId,
-            receiver,
-        })
+        const existingAlert = await repo()
+            .createQueryBuilder('alert')
+            .where('alert."projectId" = :projectId', { projectId })
+            .andWhere('LOWER(alert.receiver) = :receiver', { receiver: normalizedReceiver })
+            .getOne()
 
         if (existingAlert) {
             throw new ActivepiecesError({
                 code: ErrorCode.EXISTING_ALERT_CHANNEL,
                 params: {
-                    email: receiver,
+                    email: normalizedReceiver,
                 },
             })
         }
@@ -85,7 +107,7 @@ export const alertsService = (log: FastifyBaseLogger) => ({
                 id: alertId,
                 channel,
                 projectId,
-                receiver,
+                receiver: normalizedReceiver,
                 created: dayjs().toISOString(),
             })
             .execute()
@@ -117,17 +139,15 @@ export const alertsService = (log: FastifyBaseLogger) => ({
 })
 
 async function sendAlertOnFlowFailure(log: FastifyBaseLogger, params: IssueParams): Promise<void> {
-    const { platformId, flowRunId, projectId } = params
+    const { flowRunId, projectId } = params
 
-    const issueUrl = await domainHelper.getPublicUrl({
-        platformId,
+    const runUrl = await domainHelper.getInternalUrl({
         path: `projects/${projectId}/runs/${flowRunId}`,
     })
 
     await emailService(log).sendIssueCreatedNotification({
         ...params,
-        issueOrRunsPath: issueUrl,
-        isIssue: true,
+        runUrl,
     })
 }
 
@@ -146,6 +166,9 @@ type IssueParams = {
     flowRunId: string
     flowName: string
     createdAt: string
+    failedStepDisplayName: string
+    failedStepNumber?: number
+    failedStepMessage?: string
 }
 
 type IssueToAlert = {

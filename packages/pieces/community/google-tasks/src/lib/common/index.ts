@@ -5,7 +5,7 @@ import {
   AuthenticationType,
   httpClient,
 } from '@activepieces/pieces-common';
-import { googleTasksAuth } from '../..';
+import { googleTasksAuth } from '../auth';
 
 export enum TaskStatus {
   NEEDS_ACTION = 'needsAction',

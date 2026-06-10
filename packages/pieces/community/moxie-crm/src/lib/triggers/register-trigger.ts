@@ -4,7 +4,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { MoxieCRMEventType } from '.';
-import { moxieCRMAuth } from '../../';
+import { moxieCRMAuth } from '../auth';
 export const moxieCRMRegisterTrigger = ({
   name,
   displayName,

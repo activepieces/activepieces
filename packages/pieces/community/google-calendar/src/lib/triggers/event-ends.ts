@@ -4,9 +4,8 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
-import { googleCalendarCommon } from '../common';
+import { googleCalendarCommon, googleCalendarAuth, getAccessToken } from '../common';
 import { GoogleCalendarEvent } from '../common/types';
-import { googleCalendarAuth } from '../../';
 import {
   DedupeStrategy,
   Polling,
@@ -55,7 +54,7 @@ const polling: Polling<
         url: `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events/${event_id}`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth.access_token,
+          token: await getAccessToken(auth),
         },
       };
 
@@ -82,7 +81,7 @@ const polling: Polling<
         url: `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth.access_token,
+          token: await getAccessToken(auth),
         },
         queryParams: {
           singleEvents: 'true',
@@ -125,6 +124,9 @@ export const eventEnds = createTrigger({
   name: 'event_ends',
   displayName: 'Event Ends',
   description: 'Fires when an event ends.',
+  aiMetadata: {
+    description: 'Fires once an event in the selected calendar reaches its end time, detected by polling. Each fired item is the event that just ended. Can watch all events in the calendar or be scoped to a single specific event.',
+  },
   props: {
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
     specific_event: Property.Checkbox({

@@ -4,7 +4,7 @@ import {
   createAction,
 } from '@activepieces/pieces-framework';
 import { limitField, makeClient, pageField } from '../common';
-import { PredictLeadsAuth } from '../../index';
+import { PredictLeadsAuth } from '../auth';
 import { prepareQuery } from '../common/client';
 
 const categories = [

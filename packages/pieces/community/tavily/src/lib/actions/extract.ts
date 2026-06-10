@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { tavilyAuth } from '../../index';
+import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { tavilyAuth } from '../auth';
 
 export const extractAction = createAction({
   name: 'extract',
@@ -24,11 +24,14 @@ export const extractAction = createAction({
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: 'https://api.tavily.com/extract',
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: auth.secret_text
+      },
       headers: {
         'Content-Type': 'application/json',
       },
       body: {
-        api_key: auth,
         urls: propsValue.urls,
         include_images: propsValue.include_images,
       },

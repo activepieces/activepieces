@@ -11,41 +11,7 @@ import { getEntryDetailsAction } from './lib/actions/get-entry-details';
 import { newFormEntryTrigger } from './lib/triggers/new-form-entry';
 import { newFormTrigger } from './lib/triggers/new-form';
 import { AppConnectionType } from '@activepieces/shared';
-
-export const wufooAuth = PieceAuth.CustomAuth({
-  description: 'Enter your Wufoo API Key and Subdomain.',
-  props: {
-    apiKey: PieceAuth.SecretText({
-      displayName: 'API Key',
-      required: true,
-    }),
-    subdomain: PieceAuth.SecretText({
-      displayName: 'Subdomain',
-      description:
-        'Your Wufoo account subdomain (e.g., for fishbowl.wufoo.com, use "fishbowl")',
-      required: true,
-    }),
-  },
-  validate: async ({ auth }) => {
-    try {
-      await wufooApiCall({
-        method: HttpMethod.GET,
-        auth: {
-          props: auth,
-          type: AppConnectionType.CUSTOM_AUTH,
-        },
-        resourceUri: '/forms.json',
-      });
-      return { valid: true };
-    } catch (e) {
-      return {
-        valid: false,
-        error: 'Invalid API Key or Subdomain',
-      };
-    }
-  },
-  required: true,
-});
+import { wufooAuth } from './lib/auth';
 
 export const wufoo = createPiece({
   displayName: 'Wufoo',

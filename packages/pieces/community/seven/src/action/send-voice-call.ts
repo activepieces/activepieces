@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { sevenAuth } from '../index';
+import { sevenAuth } from '../lib/auth';
 import { callSevenApi } from '../common';
 
 export const sendVoiceCallAction = createAction({

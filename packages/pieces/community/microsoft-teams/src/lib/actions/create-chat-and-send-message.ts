@@ -1,7 +1,8 @@
-import { microsoftTeamsAuth } from '../../';
+import { microsoftTeamsAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { Client } from '@microsoft/microsoft-graph-client';
 import { microsoftTeamsCommon } from '../common';
+import { createGraphClient } from '../common/graph';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { isNil } from '@activepieces/shared';
 import { Chat } from '@microsoft/microsoft-graph-types';
 
@@ -10,6 +11,11 @@ export const createChatAndSendMessageAction = createAction({
 	name: 'microsoft_teams_create_chat_and_send_message',
 	displayName: 'Create Chat & Send Message',
 	description: 'Start a new chat and send an initial message.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Creates a new Microsoft Teams chat with one or more other members (one-on-one when a single member is given, otherwise a group chat) and posts an initial message into it; the current user is automatically added. Use to open a brand-new conversation; to message an existing chat use Send Chat Message instead. Not idempotent — each call may create another chat and posts another message.',
+		idempotent: false,
+	},
 	props: {
 		teamId: microsoftTeamsCommon.teamId,
 		members:microsoftTeamsCommon.memberIds(true),
@@ -33,23 +39,20 @@ export const createChatAndSendMessageAction = createAction({
 	async run(context) {
 		const { members, contentType, content } = context.propsValue;
 
-		
 		if (isNil(members)) {
 			throw new Error('For one-on-one chats, provide exactly one other member.');
 		}
 
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(context.auth.access_token),
-			},
-		});
+		const cloud = context.auth.props?.['cloud'] as string | undefined;
+		const client = createGraphClient(context.auth.access_token, cloud);
+		const graphBaseUrl = getGraphBaseUrl(cloud);
 
 		// Resolve current user to include as a member
 		const me = await client.api('/me').select('id,userPrincipalName').get();
-		const currentUserBind = `https://graph.microsoft.com/v1.0/users('${me.id}')`;
+		const currentUserBind = `${graphBaseUrl}/v1.0/users('${me.id}')`;
 
 		// Parse provided members
-		const otherMembersRaw: string[] = members.map((member)=>`https://graph.microsoft.com/v1.0/users('${member}')`)
+		const otherMembersRaw: string[] = members.map((member) => `${graphBaseUrl}/v1.0/users('${member}')`)
 
 
 		const membersPayload = [

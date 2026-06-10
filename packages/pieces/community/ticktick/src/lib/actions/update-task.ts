@@ -1,7 +1,7 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { ticktickAuth } from '../../index';
+import { ticktickAuth } from '../auth';
 import { tickTickApiCall } from '../common/client';
 import {
 	TICKTICK_PRIORITY_HIGH,
@@ -17,6 +17,12 @@ export const updateTaskAction = createAction({
 	name: 'update_task',
 	displayName: 'Update Task',
 	description: 'Update an existing task.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Updates fields (title, content, checklist description, start/due dates, priority) on an existing TickTick task identified by its list and task ID. Only the fields you supply are changed. Use to edit a known task. Idempotent: repeating with the same values leaves the task in the same state.',
+		idempotent: true,
+	},
 	props: {
 		projectId: projectId({
 			displayName: 'List',
