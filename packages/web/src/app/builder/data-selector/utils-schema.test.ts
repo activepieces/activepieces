@@ -66,6 +66,8 @@ describe('schemaTreeUtils.buildTreeFromSchema', () => {
 
     expect(tree.data.type).toBe('value');
     if (tree.data.type === 'value') {
+      expect(tree.data.propertyPath).toBe("step_1['output']");
+      expect(tree.data.insertable).toBe(true);
       expect(tree.data.stepName).toBe('step_1');
     }
     expect((tree.children ?? []).map(propertyPathOf)).toEqual([
