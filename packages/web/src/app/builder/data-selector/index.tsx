@@ -29,6 +29,7 @@ import {
   DataSelectorSizeState,
   DataSelectorSizeTogglers,
 } from './data-selector-size-togglers';
+import { pathHelpers } from './path-helpers';
 import { DataSelectorTreeNode } from './type';
 import { dataSelectorUtils } from './utils';
 import { schemaTreeUtils } from './utils-schema';
@@ -217,8 +218,9 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
               type: 'value' as const,
               value: '',
               displayName,
-              propertyPath: step.name,
-              insertable: false,
+              propertyPath: pathHelpers.propertyPathStarter(step.name),
+              insertable: true,
+              stepName: step.name,
             },
             children: [
               {
@@ -227,7 +229,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
                   type: 'value' as const,
                   value: stepData,
                   displayName: t('Result'),
-                  propertyPath: step.name,
+                  propertyPath: pathHelpers.propertyPathStarter(step.name),
                   insertable: true,
                 },
               },
