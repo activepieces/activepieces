@@ -15,7 +15,9 @@ import { ApAddButton } from './add-button';
 import { BranchLabel } from './branch-label';
 
 // distance between the branch node and the right edge of the entry-line add button
-const HORIZONTAL_BUTTON_END_MARGIN = 17;
+const HORIZONTAL_BUTTON_END_MARGIN = 26;
+// gap between the branch label pill and the entry-line add button
+const HORIZONTAL_LABEL_BUTTON_GAP = 14;
 
 export const ApRouterStartCanvasEdge = ({
   sourceX,
@@ -173,7 +175,7 @@ export const ApRouterStartCanvasEdge = ({
         : targetX -
           HORIZONTAL_BUTTON_END_MARGIN -
           flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width -
-          6;
+          HORIZONTAL_LABEL_BUTTON_GAP;
       return {
         x: labelEndX - labelBoxWidth,
         y: targetY - labelBoxHeight / 2,

@@ -14,7 +14,7 @@ const ARC_LENGTH = FLOW_CANVAS_ARC;
 const HORIZONTAL_LAYOUT_SPACE_BETWEEN_STEPS = 80;
 const HORIZONTAL_STEP_SIZE = 80;
 // extra room on branch entry lines so the label can sit on the line next to the add button
-const HORIZONTAL_BRANCH_LABEL_SPACE = 50;
+const HORIZONTAL_BRANCH_LABEL_SPACE = 70;
 const STEP_NODE_SIZE: Record<
   CanvasOrientation,
   { width: number; height: number }
