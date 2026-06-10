@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { RunInternalError } from '../flow-run/execution/execution-output'
 import { FlowRunStatus } from '../flow-run/execution/flow-execution'
 import { StepOutput } from '../flow-run/execution/step-output'
 import { FailedStep, FlowRun } from '../flow-run/flow-run'
@@ -20,6 +21,7 @@ export const UploadRunLogsRequest = z.object({
     finishTime: z.string().optional(),
     stepResponse: StepRunResponse.optional(),
     stepsCount: z.number().optional(),
+    internalError: RunInternalError.optional(),
 })
 
 export type UploadRunLogsRequest = z.infer<typeof UploadRunLogsRequest>

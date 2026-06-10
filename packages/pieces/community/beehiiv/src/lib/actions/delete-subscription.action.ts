@@ -9,6 +9,8 @@ export const deleteSubscriptionAction = createAction({
 	name: 'delete_subscription',
 	displayName: 'Delete Subscription',
 	description: 'Permanently deletes a subscription from a Beehiiv publication.',
+	audience: 'both',
+	aiMetadata: { description: 'Permanently deletes a subscription from a beehiiv publication, identified by publication ID and subscription ID. Use to remove a subscriber entirely (distinct from unsubscribing, which Update Subscription handles). Idempotent in effect — once deleted, repeating the call leaves the subscriber absent, though a subsequent call may error on the missing ID.', idempotent: true },
 	props: {
 		publicationId: publicationId,
 		subscriptionId: subscriptionId(true),

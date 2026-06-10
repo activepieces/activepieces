@@ -11,13 +11,16 @@ import {
   ApFlagId,
   LogSliceRef,
   StepOutputType,
+  RunInternalError,
   tryParseFriendlyPieceError,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Download, Info } from 'lucide-react';
+import { Download, Info, ShieldAlert } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { StepOutputSkeleton } from '@/app/components/step-output-skeleton';
+import { SmartOutputViewer } from '@/components/custom/smart-output-viewer';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -32,9 +35,9 @@ import { stepPropertiesSnapshotUtils } from '../data-display/build-step-properti
 import { DataDisplayTabs } from '../data-display/data-display-tabs';
 import { ErrorExplanationContext } from '../data-display/explanation-prompt';
 import { FriendlyErrorView } from '../data-display/friendly-error-view';
+import { StepDataPanelHeader } from '../step-data/step-data-panel-header';
+import { StepDataPanelViewToggle } from '../step-data/step-data-panel-view-toggle';
 import { isRunAgent } from '../test-step/agent-test-step';
-import { TestPanelHeader } from '../test-step/test-panel-header';
-import { TestPanelViewToggle } from '../test-step/test-panel-view-toggle';
 
 type RunActiveTab = 'input' | 'output' | 'timeline';
 
@@ -53,11 +56,16 @@ export const FlowStepInputOutput = () => {
     ],
   );
   const isAgent = isRunAgent(selectedStep);
+  const isTrigger =
+    !isNil(selectedStep) && flowStructureUtil.isTrigger(selectedStep.type);
   const [requestedTab, setActiveTab] = useState<RunActiveTab>(
     isAgent ? 'timeline' : 'output',
   );
   const activeTab: RunActiveTab =
-    requestedTab === 'timeline' && !isAgent ? 'output' : requestedTab;
+    (requestedTab === 'timeline' && !isAgent) ||
+    (requestedTab === 'input' && isTrigger)
+      ? 'output'
+      : requestedTab;
   const selectedStepOutput = useMemo(() => {
     return run && selectedStep && run.steps
       ? flowRunUtils.extractStepOutput(
@@ -109,6 +117,13 @@ export const FlowStepInputOutput = () => {
   );
 
   if (
+    run.status === FlowRunStatus.INTERNAL_ERROR &&
+    !isNil(run.internalError)
+  ) {
+    return <InternalErrorPanel internalError={run.internalError} />;
+  }
+
+  if (
     !isRunDone &&
     run.status !== FlowRunStatus.PAUSED &&
     isNil(selectedStepOutput)
@@ -132,7 +147,7 @@ export const FlowStepInputOutput = () => {
     return (
       <div className="flex flex-col h-full w-full">
         <div className="flex justify-end px-3 py-2 shrink-0">
-          <TestPanelViewToggle />
+          <StepDataPanelViewToggle />
         </div>
         <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
           <div className="flex items-center justify-center size-12 rounded-full bg-muted text-muted-foreground">
@@ -172,6 +187,10 @@ export const FlowStepInputOutput = () => {
     selectedStep.type === FlowTriggerType.PIECE
       ? (selectedStep.settings.input as Record<string, unknown> | undefined)
       : undefined;
+  const pieceSchema =
+    pieceModel?.actions[stepName ?? '']?.outputSchema ??
+    pieceModel?.triggers[stepName ?? '']?.outputSchema ??
+    null;
   const explanationContext: ErrorExplanationContext = {
     pieceName: stepPieceName,
     pieceVersion: stepPieceVersion,
@@ -195,7 +214,7 @@ export const FlowStepInputOutput = () => {
 
   return (
     <div className="h-full flex flex-col">
-      <TestPanelHeader
+      <StepDataPanelHeader
         status={status}
         lastTestDate={run.created}
         viewMode="run"
@@ -208,23 +227,27 @@ export const FlowStepInputOutput = () => {
         >
           <div className="flex items-center justify-between gap-2 shrink-0 mb-2">
             <TabsList className="h-9">
-              <TabsTrigger value="input">{t('Input')}</TabsTrigger>
+              {!isTrigger && (
+                <TabsTrigger value="input">{t('Input')}</TabsTrigger>
+              )}
               {isAgent && (
                 <TabsTrigger value="timeline">{t('Timeline')}</TabsTrigger>
               )}
               <TabsTrigger value="output">{t('Output')}</TabsTrigger>
             </TabsList>
-            <TestPanelViewToggle />
+            <StepDataPanelViewToggle />
           </div>
 
-          <TabsContent value="input">
-            <DataDisplayTabs
-              data={selectedStepOutput.input}
-              title={t('Input')}
-              copyableData={selectedStepOutput.input}
-              downloadFileName={`${selectedStep.name}-input`}
-            />
-          </TabsContent>
+          {!isTrigger && (
+            <TabsContent value="input">
+              <DataDisplayTabs
+                data={selectedStepOutput.input}
+                title={t('Input')}
+                copyableData={selectedStepOutput.input}
+                downloadFileName={`${selectedStep.name}-input`}
+              />
+            </TabsContent>
+          )}
 
           {isAgent && (
             <TabsContent value="timeline">
@@ -244,6 +267,12 @@ export const FlowStepInputOutput = () => {
                 explanationContext={explanationContext}
                 pieceDisplayName={pieceModel?.displayName}
               />
+            ) : status === 'success' ? (
+              <SmartOutputViewer
+                json={parsedOutput}
+                title={t('Output')}
+                pieceSchema={pieceSchema}
+              />
             ) : (
               <DataDisplayTabs
                 data={parsedOutput}
@@ -258,6 +287,42 @@ export const FlowStepInputOutput = () => {
     </div>
   );
 };
+
+const InternalErrorPanel = ({
+  internalError,
+}: {
+  internalError: RunInternalError;
+}) => (
+  <ScrollArea className="h-full">
+    <div className="flex flex-col gap-3 p-4">
+      <div className="flex items-center gap-2 flex-wrap">
+        <ShieldAlert className="w-4 h-4 text-destructive shrink-0" />
+        <span className="text-sm font-medium">{t('Internal error')}</span>
+        <Badge variant="outline" className="gap-1">
+          <ShieldAlert className="w-3 h-3" />
+          {t('Platform Admin Only')}
+        </Badge>
+      </div>
+      <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+        <span>
+          {t('Source')}: {internalError.source}
+        </span>
+        {internalError.code && (
+          <span>
+            {t('Code')}: {internalError.code}
+          </span>
+        )}
+        <span>
+          {t('Occurred at')}:{' '}
+          {formatUtils.formatDate(new Date(internalError.occurredAt))}
+        </span>
+      </div>
+      <pre className="text-xs bg-muted rounded-md p-3 whitespace-pre-wrap break-words font-mono">
+        {internalError.message}
+      </pre>
+    </div>
+  </ScrollArea>
+);
 
 const SlicedOutputDownload = ({
   slicedOutputRef,

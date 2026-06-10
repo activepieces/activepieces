@@ -9,7 +9,6 @@ import {
   Download,
   Folder,
   Link,
-  Loader2,
   MoreHorizontal,
   Pencil,
   Plus,
@@ -58,7 +57,6 @@ type AutomationsTableRowProps = {
   isSelected: boolean;
   isExpanded: boolean;
   isPinned: boolean;
-  isFolderLoading?: boolean;
   projectMembers: any;
   folders: FolderDto[];
   onRowClick: () => void;
@@ -85,7 +83,6 @@ export const AutomationsTableRow = ({
   isSelected,
   isExpanded,
   isPinned,
-  isFolderLoading,
   folders,
   onToggleSelection,
   onTogglePin,
@@ -173,9 +170,7 @@ export const AutomationsTableRow = ({
         >
           {item.type === 'folder' && (
             <span className="absolute -left-5 flex items-center justify-center w-5">
-              {isFolderLoading ? (
-                <Loader2 className="h-4 w-4 shrink-0 text-muted-foreground animate-spin" />
-              ) : isExpanded ? (
+              {isExpanded ? (
                 <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
               ) : (
                 <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />

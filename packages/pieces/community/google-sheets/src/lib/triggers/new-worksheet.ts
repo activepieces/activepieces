@@ -10,6 +10,10 @@ export const newWorksheetTrigger = createTrigger({
 	name: 'new-worksheet',
 	displayName: 'New Worksheet',
 	description: 'Triggers when a worksheet is created in a spreadsheet.',
+	aiMetadata: {
+		description:
+			'Fires when a new worksheet (tab) is added to the selected spreadsheet, emitting one event per new worksheet with its sheet properties. Use to react to tabs being created within a specific spreadsheet. Polls periodically rather than in real time.',
+	},
 	type: TriggerStrategy.POLLING,
 	props: {
 		includeTeamDrives: includeTeamDrivesProp(),

@@ -8,6 +8,8 @@ export const createContact = createAction({
   auth: resendAuth,
   displayName: 'Create Contact',
   description: 'Add a contact to a Resend audience',
+  audience: 'both',
+  aiMetadata: { description: 'Adds a new contact (email plus optional name and subscription status) to a specific Resend audience. Use this to grow a mailing list; requires the target audience ID (use List Audiences to find it). Not idempotent — each call creates a new contact, so guard against re-adding the same email.', idempotent: false },
   props: {
     audience_id: resendProps.audienceId,
     email: Property.ShortText({ displayName: 'Email', required: true }),

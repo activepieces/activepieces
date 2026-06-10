@@ -72,6 +72,9 @@ export const newEvent = createTrigger({
   name: 'new_event',
   displayName: 'New Event',
   description: 'Fires when a new event is created in a calendar.',
+  aiMetadata: {
+    description: 'Fires when a brand-new event is created in the selected calendar (not on edits or cancellations), via Google push notifications. Each fired item is the new event; can be narrowed by event type, a text search across title/description/location, and an option to skip all-day events.',
+  },
   props: {
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
     event_types: Property.StaticMultiSelectDropdown({

@@ -84,7 +84,6 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
     rootTables,
     isLoading,
     expandedFolders,
-    loadingFolders,
     toggleFolder,
     loadMoreInFolder,
     rootPage,
@@ -122,7 +121,7 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
     invalidateRoot,
     invalidateFolder,
     clearSelection,
-    flows: rootFlows,
+    treeItems,
     unpinItem,
   });
 
@@ -136,9 +135,39 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
   const { projectMembers } = projectMembersHooks.useProjectMembers();
   const { pieces } = piecesHooks.usePieces({});
 
+  // Bulk actions resolve selected items from the loaded treeItems, so the
+  // selection must never outlive the view that produced it. Clearing it on
+  // every view change (filtering, paging, collapsing a folder) keeps the
+  // selection a subset of what is currently loaded.
+  const handleFiltersChange = useCallback(() => {
+    clearSelection();
+    resetPagination();
+  }, [clearSelection, resetPagination]);
+
+  const handleNextPage = useCallback(() => {
+    clearSelection();
+    nextRootPage();
+  }, [clearSelection, nextRootPage]);
+
+  const handlePrevPage = useCallback(() => {
+    clearSelection();
+    prevRootPage();
+  }, [clearSelection, prevRootPage]);
+
+  const handlePageSizeChange = useCallback(
+    (size: number) => {
+      clearSelection();
+      changePageSize(size);
+    },
+    [clearSelection, changePageSize],
+  );
+
   const handleRowClick = useCallback(
     (item: TreeItem, ctrlKey?: boolean) => {
       if (item.type === 'folder') {
+        if (expandedFolders.has(item.id)) {
+          clearSelection();
+        }
         toggleFolder(item.id);
       } else if (item.type === 'flow') {
         const href = authenticationSession.appendProjectRoutePrefix(
@@ -186,7 +215,14 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
         }
       }
     },
-    [navigate, toggleFolder, folders, currentProjectName],
+    [
+      navigate,
+      toggleFolder,
+      folders,
+      currentProjectName,
+      clearSelection,
+      expandedFolders,
+    ],
   );
 
   const handleCreateInFolder = useCallback(
@@ -253,7 +289,7 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
         onOwnerFilterChange={setOwnerFilter}
         folderFilter={folderFilter}
         onFolderFilterChange={setFolderFilter}
-        onFilterChange={resetPagination}
+        onFilterChange={handleFiltersChange}
         folders={folders}
         connections={connections?.data}
         pieces={pieces}
@@ -286,7 +322,6 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
             isLoading={isLoading}
             selectedItems={selectedItems}
             expandedFolders={expandedFolders}
-            loadingFolders={loadingFolders}
             projectMembers={projectMembers}
             folders={folders}
             selectableCount={selectableItems.length}
@@ -316,9 +351,9 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
             currentPage={rootPage}
             totalPages={totalPages}
             pageSize={pageSize}
-            onPageSizeChange={changePageSize}
-            onPrevPage={prevRootPage}
-            onNextPage={nextRootPage}
+            onPageSizeChange={handlePageSizeChange}
+            onPrevPage={handlePrevPage}
+            onNextPage={handleNextPage}
           />
         </>
       )}

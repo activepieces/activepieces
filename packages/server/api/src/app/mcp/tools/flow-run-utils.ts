@@ -151,6 +151,9 @@ export async function executeAdhocAction({
         requireAuth: action.requireAuth,
         componentType: 'action',
     })
+    if (diagnosis.unknownKeys.length > 0) {
+        return { content: [{ type: 'text', text: `❌ ${diagnosis.parts.join(' ')}` }] }
+    }
     if (diagnosis.missing.length > 0) {
         return { content: [{ type: 'text', text: `❌ Cannot run action: ${diagnosis.parts.join(' ')}` }] }
     }

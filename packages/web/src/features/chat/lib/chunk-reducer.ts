@@ -4,12 +4,16 @@ import { ChatUIMessage } from './chat-types';
 
 function createStreamingState({
   messageId,
-}: { messageId?: string } = {}): StreamingState {
+  initialParts,
+}: {
+  messageId?: string;
+  initialParts?: ChatUIMessage['parts'];
+} = {}): StreamingState {
   return {
     message: {
       id: messageId ?? `stream-${Date.now()}`,
       role: 'assistant',
-      parts: [],
+      parts: initialParts ? [...initialParts] : [],
     },
     activeTextParts: {},
     activeReasoningParts: {},
@@ -265,35 +269,9 @@ function applyChunk({
     case 'tool-approval-request':
       break;
 
-    default: {
-      handleDataChunk({ state, chunk: chunk as DataChunk });
+    default:
       break;
-    }
   }
-}
-
-function handleDataChunk({
-  state,
-  chunk,
-}: {
-  state: StreamingState;
-  chunk: DataChunk;
-}): void {
-  if (!chunk.type?.startsWith('data-')) return;
-  if (chunk.transient) return;
-
-  if (chunk.id) {
-    const existing = state.message.parts.findIndex(
-      (p) => 'id' in p && p.id === chunk.id && p.type === chunk.type,
-    );
-    if (existing >= 0) {
-      (state.message.parts[existing] as Record<string, unknown>).data =
-        chunk.data;
-      return;
-    }
-  }
-
-  state.message.parts.push(chunk as ChatUIMessage['parts'][number]);
 }
 
 function applyChunks({
@@ -308,27 +286,6 @@ function applyChunks({
   }
 }
 
-function extractDataParts({
-  chunks,
-}: {
-  chunks: UIMessageChunk[];
-}): DataPart[] {
-  const result: DataPart[] = [];
-  for (const chunk of chunks) {
-    if (
-      typeof chunk.type === 'string' &&
-      chunk.type.startsWith('data-') &&
-      'data' in chunk
-    ) {
-      result.push({
-        type: chunk.type,
-        data: (chunk as DataChunk).data,
-      });
-    }
-  }
-  return result;
-}
-
 function snapshotMessage({ state }: { state: StreamingState }): ChatUIMessage {
   return {
     ...state.message,
@@ -340,16 +297,9 @@ export const chunkReducer = {
   createStreamingState,
   applyChunk,
   applyChunks,
-  extractDataParts,
   snapshotMessage,
 };
 
-/**
- * Writable view of DynamicToolUIPart fields. The AI SDK types use a discriminated
- * union keyed on `state`, which prevents mutating the discriminant in-place.
- * This type is used only inside updateToolPartFields where we deliberately
- * mutate the runtime object to avoid re-creating it on every chunk.
- */
 type MutableToolPart = Pick<
   DynamicToolUIPart,
   'type' | 'toolCallId' | 'toolName' | 'title'
@@ -368,16 +318,4 @@ type StreamingState = {
   seenToolCallIds: Set<string>;
 };
 
-type DataChunk = {
-  type: string;
-  id?: string;
-  data: unknown;
-  transient?: boolean;
-};
-
-type DataPart = {
-  type: string;
-  data: unknown;
-};
-
-export type { StreamingState, DataPart };
+export type { StreamingState };

@@ -25,6 +25,7 @@ type FunctionSearchPopoverProps = {
   editorRef: RefObject<HTMLDivElement | null>;
   onSelect: (fn: ApFunction) => void;
   onClose: () => void;
+  hideDocsLink?: boolean;
 };
 
 export function FunctionSearchPopover({
@@ -33,6 +34,7 @@ export function FunctionSearchPopover({
   editorRef,
   onSelect,
   onClose,
+  hideDocsLink,
 }: FunctionSearchPopoverProps) {
   const { t } = useTranslation();
   const [activeIdx, setActiveIdx] = useState(0);
@@ -105,16 +107,18 @@ export function FunctionSearchPopover({
         </kbd>
         {t('to apply')}
       </div>
-      <a
-        href="https://www.activepieces.com/docs/workflows/data-manipulation"
-        target="_blank"
-        rel="noopener noreferrer"
-        className={cn(buttonVariants({ variant: 'link', size: 'xs' }))}
-        onMouseDown={(e) => e.preventDefault()}
-      >
-        {t('See All')}
-        <ExternalLink className="w-3 h-3" />
-      </a>
+      {!hideDocsLink && (
+        <a
+          href="https://www.activepieces.com/docs/flows/using-formulas"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(buttonVariants({ variant: 'link', size: 'xs' }))}
+          onMouseDown={(e) => e.preventDefault()}
+        >
+          {t('See All')}
+          <ExternalLink className="w-3 h-3" />
+        </a>
+      )}
     </div>
   );
 

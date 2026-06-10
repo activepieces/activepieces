@@ -3,6 +3,7 @@ import { BranchOperator, FlowActionType, flowStructureUtil, isNil, isObject, Mcp
 import type { RouterAction, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
+import { expressionRewriter } from '../../flows/flow-version/migrations/expression-rewriter'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 
@@ -14,13 +15,15 @@ const NON_INPUT_PROP_TYPES = new Set<PropertyType>([
     PropertyType.MARKDOWN,
 ])
 
+const INTERNAL_INPUT_KEYS = new Set(['auth'])
+
 const RESOLVABLE_PROP_TYPES = new Set<PropertyType>([
     PropertyType.DROPDOWN,
     PropertyType.MULTI_SELECT_DROPDOWN,
     PropertyType.DYNAMIC,
 ])
 
-const STEP_REFERENCE_HINT = 'Use {{stepName.field}} to reference prior steps (no .output. in path).'
+const STEP_REFERENCE_HINT = 'Reference a prior step\'s output with {{stepName[\'output\'].field}} (output is nested under [\'output\'], e.g. {{trigger[\'output\'].body.email}}, {{send_email[\'output\'].id}}). For a continue-on-failure step\'s error, use {{stepName[\'error\'].message}}.'
 
 function mcpToolError(prefix: string, err: unknown): McpToolResult {
     const entityDetail = extractEntityNotFoundDetail(err)
@@ -70,10 +73,12 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
     const missing: string[] = []
     const uiRequired: string[] = []
     const allProps: string[] = []
+    const validPropKeys = new Set<string>()
     for (const [propName, prop] of Object.entries(props)) {
         if (NON_INPUT_PROP_TYPES.has(prop.type)) {
             continue
         }
+        validPropKeys.add(propName)
         allProps.push(`${propName} (${prop.type}${prop.required ? ', required' : ''})`)
         if (prop.required) {
             const value = input[propName]
@@ -90,24 +95,34 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
             }
         }
     }
+
+    const unknownKeys = Object.keys(input).filter((key) => !validPropKeys.has(key) && !INTERNAL_INPUT_KEYS.has(key))
+
     const hasAuth = pieceAuth !== undefined && pieceAuth !== null && requireAuth
     if (hasAuth && !input.auth) {
         missing.push('auth (connection required — use ap_list_connections)')
     }
     const parts: string[] = []
+    if (unknownKeys.length > 0) {
+        const validPropDescriptions = Object.entries(props)
+            .filter(([, prop]) => !NON_INPUT_PROP_TYPES.has(prop.type))
+            .map(([name, prop]) => `- ${name} (${prop.type}): ${prop.description ?? prop.displayName}`)
+            .join('\n')
+        parts.push(`Unknown properties: ${unknownKeys.map((k) => `'${k}'`).join(', ')}. Valid properties for this action are:\n${validPropDescriptions}\nPlease retry with correct property names.`)
+    }
     if (missing.length > 0) {
         parts.push(`Missing required inputs: ${missing.join(', ')}.`)
     }
     if (uiRequired.length > 0) {
         parts.push(`These inputs require selection from your account and must be configured in the Activepieces UI: ${uiRequired.join(', ')}.`)
     }
-    if (allProps.length > 0) {
+    if (allProps.length > 0 && unknownKeys.length === 0) {
         parts.push(`Expected inputs: ${allProps.join(', ')}.`)
     }
     if (hasAuth && !input.auth) {
         parts.push(`This ${componentType} requires authentication.`)
     }
-    return { parts, missing, uiRequired, hasAuth }
+    return { parts, missing, unknownKeys, uiRequired, hasAuth }
 }
 
 const MAX_PROP_DEPTH = 3
@@ -204,9 +219,9 @@ const SINGLE_VALUE_OPERATORS_HINT = singleValueConditions.join(', ')
 const BRANCH_CONDITIONS_INPUT_SCHEMA = z.array(
     z.array(
         z.object({
-            firstValue: z.string().min(1, 'firstValue must be a non-empty string or template expression (e.g. {{trigger.field}})').describe('Left-hand value (template expressions like {{step_1.field}} are allowed). Must be non-empty.'),
+            firstValue: z.string().min(1, 'firstValue must be a non-empty string or template expression (e.g. {{trigger[\'output\'].field}})').describe('Left-hand value (template expressions like {{step_1[\'output\'].field}} are allowed). Must be non-empty.'),
             operator: z.enum(Object.values(BranchOperator) as [BranchOperator, ...BranchOperator[]]).optional().describe(`Comparison operator. Single-value operators (no secondValue needed): ${SINGLE_VALUE_OPERATORS_HINT}.`),
-            secondValue: z.string().min(1, 'secondValue must be a non-empty string when provided').optional().describe('Right-hand value — required (and non-empty) for all operators except single-value ones.'),
+            secondValue: z.string().min(1, 'secondValue must be a non-empty string when provided').optional().describe('Right-hand value (template expressions like {{step_1[\'output\'].field}} are allowed) — required (and non-empty) for all operators except single-value ones.'),
             caseSensitive: z.boolean().optional().describe('For text operators: whether to match case sensitively'),
         }).superRefine((cond, ctx) => {
             if (cond.operator !== undefined
@@ -354,6 +369,20 @@ function isProjectScoped(mcp: ProjectScopedMcpServer): boolean {
     return mcp.type === McpServerType.PROJECT
 }
 
+function rewriteAllReferences<C = unknown>({ input, loopItems, conditions, trigger }: {
+    input?: Record<string, unknown>
+    loopItems?: string
+    conditions?: C
+    trigger: Step
+}): { input?: Record<string, unknown>, loopItems?: string, conditions?: C } {
+    const stepNames = flowStructureUtil.getAllSteps(trigger).map(s => s.name)
+    return {
+        input: input ? expressionRewriter.rewriteDeep(input, stepNames, true) : undefined,
+        loopItems: loopItems != null ? expressionRewriter.rewriteStepReferences({ input: loopItems, stepNames, idempotent: true }) : loopItems,
+        conditions: conditions ? expressionRewriter.rewriteDeep(conditions, stepNames, true) : conditions,
+    }
+}
+
 export const mcpUtils = {
     mcpToolError,
     truncate,
@@ -372,6 +401,7 @@ export const mcpUtils = {
     resolvePlatformId,
     isProjectScoped,
     withTimeout,
+    rewriteAllReferences,
     STEP_REFERENCE_HINT,
     BRANCH_CONDITIONS_INPUT_SCHEMA,
 }
@@ -396,6 +426,7 @@ type DiagnosePiecePropsParams = {
 type DiagnosisResult = {
     parts: string[]
     missing: string[]
+    unknownKeys: string[]
     uiRequired: string[]
     hasAuth: boolean
 }

@@ -11,6 +11,7 @@ import {
     PersistedChatPartType,
     PersistedToolCallStatus,
     splitCloudflareGatewayModelId,
+    spreadIfDefined,
 } from '@activepieces/shared'
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock'
 import { createAnthropic } from '@ai-sdk/anthropic'
@@ -73,6 +74,7 @@ function createChatModel({ provider, auth, config, modelId }: {
                 },
             }).chatModel(modelId)
         }
+        case AIProviderName.MISTRAL:
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
@@ -116,8 +118,6 @@ function stripThinkingBlocks(messages: ModelMessage[], provider: AIProviderName)
         .filter((msg): msg is ModelMessage => msg !== null)
 }
 
-const OPENROUTER_EFFORT_BY_TIER: Record<string, string> = { fast: 'low', smart: 'medium', premium: 'high' }
-
 function buildProviderOptions({ provider, tier }: { provider: AIProviderName, tier: { id: string, thinkingBudget: number } }): SharedV3ProviderOptions {
     switch (provider) {
         case AIProviderName.ANTHROPIC:
@@ -125,7 +125,7 @@ function buildProviderOptions({ provider, tier }: { provider: AIProviderName, ti
             return { anthropic: { thinking: { type: 'enabled', budgetTokens: tier.thinkingBudget } } }
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER:
-            return { openrouter: { cache_control: { type: 'ephemeral' }, reasoning: { effort: OPENROUTER_EFFORT_BY_TIER[tier.id] ?? 'medium' } } }
+            return { openrouter: { cache_control: { type: 'ephemeral' }, reasoning: { max_tokens: tier.thinkingBudget } } }
         default:
             return {}
     }
@@ -186,14 +186,50 @@ function buildStepParts({ content }: {
                 }
                 const result = part.toolCallId ? resultMap.get(part.toolCallId) : undefined
                 const rawOutput = result?.output ? chatPersistenceUtils.unwrapToolOutput(result.output) : undefined
+                const title = typeof input['title'] === 'string' ? input['title'] : undefined
+                const description = typeof input['description'] === 'string' ? input['description'] : undefined
                 parts.push({
                     type: PersistedChatPartType.TOOL_CALL,
                     toolCallId: part.toolCallId ?? '',
                     toolName,
+                    ...spreadIfDefined('title', title),
+                    ...spreadIfDefined('description', description),
                     input,
                     output: rawOutput,
                     status: result ? PersistedToolCallStatus.COMPLETED : PersistedToolCallStatus.ERROR,
                 })
+                if (toolName === 'ap_execute_action' && typeof rawOutput === 'object' && rawOutput !== null && 'batchProgress' in rawOutput) {
+                    parts.push({
+                        type: PersistedChatPartType.BATCH_PROGRESS,
+                        data: (rawOutput as Record<string, unknown>)['batchProgress'] as Record<string, unknown>,
+                    })
+                }
+                if (toolName === 'ap_execute_action' && result) {
+                    const outputRecord = typeof rawOutput === 'object' && rawOutput !== null ? rawOutput as Record<string, unknown> : {}
+                    const meta = typeof outputRecord['_meta'] === 'object' && outputRecord['_meta'] !== null ? outputRecord['_meta'] as Record<string, unknown> : undefined
+                    const connectionLabel = typeof meta?.['connectionLabel'] === 'string' ? meta['connectionLabel'] : undefined
+                    const firstContentText = Array.isArray(outputRecord['content']) && typeof outputRecord['content'][0]?.['text'] === 'string' ? outputRecord['content'][0]['text'] as string : ''
+                    const isAppSuccess = result.type === 'tool-result'
+                        && outputRecord['success'] !== false
+                        && outputRecord['isError'] !== true
+                        && !firstContentText.startsWith('❌')
+                        && !firstContentText.startsWith('⏳')
+                        && !firstContentText.includes('cancelled by user')
+                    const errorText = !isAppSuccess && firstContentText
+                        ? firstContentText
+                        : (result.type === 'tool-error' && typeof result.output === 'string' ? result.output : undefined)
+                    parts.push({
+                        type: PersistedChatPartType.ACTION_RECEIPT,
+                        toolCallId: part.toolCallId ?? '',
+                        actionDisplayName: title ?? toolName,
+                        pieceName: typeof input['pieceName'] === 'string' ? input['pieceName'] : '',
+                        ...spreadIfDefined('connectionLabel', connectionLabel),
+                        status: isAppSuccess ? 'success' : 'failed',
+                        output: rawOutput,
+                        ...spreadIfDefined('errorMessage', errorText),
+                        timestamp: new Date().toISOString(),
+                    })
+                }
                 break
             }
         }

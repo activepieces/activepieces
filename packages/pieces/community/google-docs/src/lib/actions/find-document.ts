@@ -12,6 +12,12 @@ export const findDocumentAction = createAction({
 	name: 'google-docs-find-document',
 	displayName: 'Find Document',
 	description: 'Search for document by name.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Searches Google Drive for a Google Docs document whose name contains the given text, optionally scoped to a folder, and returns the first match. Use when an agent has a document name but not its ID and needs to resolve it. Idempotent only when used purely for lookup; enabling "Create a new document if not found" makes it create (and optionally move) a new document on each miss, which is a mutating side effect.',
+		idempotent: false,
+	},
 	props: {
 		name: Property.ShortText({
 			displayName: 'Document Name',

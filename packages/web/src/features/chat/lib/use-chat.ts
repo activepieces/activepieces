@@ -1,28 +1,102 @@
 import {
+  ActionPreviewEvent,
+  ActionReceiptEvent,
+  apId,
   ChatAllowedMimeType,
   ChatConversationStatus,
+  ChatHistoryMessage,
   CHAT_ALLOWED_MIME_TYPES,
   DEFAULT_CHAT_TIER_ID,
   ErrorCode,
   isNil,
-  isObject,
-  PlanStepUpdate,
+  PersistedChatMessage,
+  ToolApprovalRequestEvent,
+  ToolProgressEvent,
   tryCatch,
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { api } from '@/lib/api';
 
 import { chatApi } from './chat-api';
+import { chatStoreSelectors, SetChatStore, ToolCallMeta } from './chat-store';
 import { useChatStoreApi } from './chat-store-context';
-import { ChatUIMessage } from './chat-types';
+import { ChatUIMessage, chatPartUtils } from './chat-types';
 import { chatUtils } from './chat-utils';
-import { DataPart } from './chunk-reducer';
 import { useStreamingReducer } from './use-streaming-reducer';
+
+function restoreReceiptsIntoStore({
+  data,
+  setState,
+}: {
+  data: PersistedChatMessage[] | ChatHistoryMessage[];
+  setState: SetChatStore;
+}): void {
+  const receipts = chatUtils.extractReceiptsFromHistory(data);
+  if (Object.keys(receipts).length === 0) return;
+  setState((prev) => {
+    const merged = { ...prev.toolCallMeta };
+    for (const [toolCallId, receipt] of Object.entries(receipts)) {
+      merged[toolCallId] = { ...merged[toolCallId], actionReceipt: receipt };
+    }
+    return { toolCallMeta: merged };
+  });
+}
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const AGENT_POLL_INTERVAL_MS = 5_000;
+
+function buildToolCallMetaFromGate(gate: {
+  gateId: string;
+  toolName: string;
+  displayName: string;
+  toolInput: Record<string, unknown>;
+}): Record<string, ToolCallMeta> {
+  if (chatPartUtils.isDisplayTool(gate.toolName)) {
+    return {};
+  }
+  const gateInput = gate.toolInput ?? {};
+  if (gate.toolName === 'ap_execute_action') {
+    return {
+      [gate.gateId]: {
+        actionPreview: {
+          toolCallId: gate.gateId,
+          pieceName:
+            typeof gateInput.pieceName === 'string' ? gateInput.pieceName : '',
+          actionName:
+            typeof gateInput.actionName === 'string'
+              ? gateInput.actionName
+              : '',
+          actionDisplayName: gate.displayName,
+          input:
+            typeof gateInput.input === 'object' && gateInput.input !== null
+              ? (gateInput.input as Record<string, unknown>)
+              : {},
+          isBatch:
+            typeof gateInput.batchCount === 'number' &&
+            gateInput.batchCount > 0,
+          batchCount:
+            typeof gateInput.batchCount === 'number'
+              ? gateInput.batchCount
+              : undefined,
+          batchSamples: Array.isArray(gateInput.items)
+            ? (gateInput.items as Record<string, unknown>[]).slice(0, 3)
+            : undefined,
+        },
+      },
+    };
+  }
+  return {
+    [gate.gateId]: {
+      approvalRequest: {
+        toolCallId: gate.gateId,
+        toolName: gate.toolName,
+        displayName: gate.displayName,
+      },
+    },
+  };
+}
 
 const ALLOWED_MIME_SET: ReadonlySet<string> = new Set(CHAT_ALLOWED_MIME_TYPES);
 
@@ -85,13 +159,6 @@ function injectFilePartsIntoLastUserMessage({
   return result;
 }
 
-const DISPLAY_CARD_DATA_TYPES = new Set([
-  'data-connection-required',
-  'data-connection-picker',
-  'data-project-picker',
-  'data-questions',
-]);
-
 type SendStatus =
   | { type: 'idle' }
   | { type: 'submitting' }
@@ -141,92 +208,72 @@ export function useAgentChat({
   const onConversationCreatedRef = useRef(onConversationCreated);
   onConversationCreatedRef.current = onConversationCreated;
 
-  const handleDataPart = useCallback(
-    (dataPart: DataPart) => {
-      if (!isObject(dataPart.data)) return;
-      const d = dataPart.data as Record<string, unknown>;
+  const handleTitleUpdate = useCallback((title: string) => {
+    onTitleUpdateRef.current?.(title);
+  }, []);
 
-      if (
-        dataPart.type === 'data-session-title' &&
-        typeof d['title'] === 'string'
-      ) {
-        onTitleUpdateRef.current?.(d['title']);
-      }
-
-      switch (dataPart.type) {
-        case 'data-approval-request':
-          if (typeof d.gateId === 'string' && typeof d.toolName === 'string') {
-            store.setState({
-              pendingApprovalRequest: {
-                gateId: d.gateId,
-                toolName: d.toolName,
-                displayName:
-                  typeof d.displayName === 'string'
-                    ? d.displayName
-                    : d.toolName,
-              },
-            });
-          }
-          break;
-
-        case 'data-plan-approval-request':
-          if (typeof d.gateId === 'string') {
-            store.setState({
-              pendingPlanApproval: {
-                gateId: d.gateId,
-                planSummary:
-                  typeof d.planSummary === 'string' ? d.planSummary : '',
-                steps: Array.isArray(d.steps) ? (d.steps as string[]) : [],
-              },
-            });
-          }
-          break;
-
-        case 'data-plan-progress':
-          if (typeof d.stepIndex === 'number' && typeof d.status === 'string') {
-            store.setState((prev) => {
-              const stepIndex = d.stepIndex as number;
-              const status = d.status as PlanStepUpdate['status'];
-              const existing = prev.planProgressUpdates.findIndex(
-                (u) => u.stepIndex === stepIndex,
-              );
-              if (existing >= 0) {
-                const updated = [...prev.planProgressUpdates];
-                updated[existing] = { stepIndex, status };
-                return { planProgressUpdates: updated };
-              }
-              return {
-                planProgressUpdates: [
-                  ...prev.planProgressUpdates,
-                  { stepIndex, status },
-                ],
-              };
-            });
-          }
-          break;
-
-        case 'data-quick-replies':
-          if (Array.isArray(d.replies)) {
-            store.setState({ quickReplies: d.replies as string[] });
-          }
-          break;
-
-        default:
-          if (DISPLAY_CARD_DATA_TYPES.has(dataPart.type)) {
-            const gateId = typeof d['gateId'] === 'string' ? d['gateId'] : '';
-            store.setState({
-              displayCard: {
-                type: dataPart.type,
-                data: d,
-                gateId,
-                resolved: false,
-              },
-            });
-          }
-          break;
-      }
+  const handleToolProgress = useCallback(
+    (event: ToolProgressEvent) => {
+      store.setState((prev) => {
+        const existing = prev.toolCallMeta[event.toolCallId]?.batchProgress;
+        if (
+          existing &&
+          existing.completed === event.data.completed &&
+          existing.done === event.data.done
+        ) {
+          return prev;
+        }
+        return {
+          toolCallMeta: {
+            ...prev.toolCallMeta,
+            [event.toolCallId]: {
+              ...prev.toolCallMeta[event.toolCallId],
+              batchProgress: event.data,
+            },
+          },
+        };
+      });
     },
     [store],
+  );
+
+  const updateToolCallMeta = useCallback(
+    <K extends keyof ToolCallMeta>(
+      key: K,
+      event: ToolCallMeta[K] & { toolCallId: string },
+    ) => {
+      store.setState((prev) => ({
+        toolCallMeta: {
+          ...prev.toolCallMeta,
+          [event.toolCallId]: {
+            ...prev.toolCallMeta[event.toolCallId],
+            [key]: event,
+          },
+        },
+      }));
+    },
+    [store],
+  );
+
+  const handleToolApprovalRequest = useCallback(
+    (event: ToolApprovalRequestEvent) => {
+      updateToolCallMeta('approvalRequest', event);
+    },
+    [updateToolCallMeta],
+  );
+
+  const handleActionPreview = useCallback(
+    (event: ActionPreviewEvent) => {
+      updateToolCallMeta('actionPreview', event);
+    },
+    [updateToolCallMeta],
+  );
+
+  const handleActionReceipt = useCallback(
+    (event: ActionReceiptEvent) => {
+      updateToolCallMeta('actionReceipt', event);
+    },
+    [updateToolCallMeta],
   );
 
   const updateSendStatus = useCallback((next: SendStatus) => {
@@ -240,7 +287,8 @@ export function useAgentChat({
       const { data: result } = await tryCatch(() =>
         chatApi.getMessages(convId),
       );
-      if (result && conversationIdRef.current === convId) {
+      if (conversationIdRef.current !== convId) return;
+      if (result) {
         const mapped = chatUtils.mapHistoryToUIMessages(result.data);
         setPersistedMessages(mapped);
         const restoredReplies =
@@ -248,43 +296,83 @@ export function useAgentChat({
         if (restoredReplies.length > 0) {
           store.setState({ quickReplies: restoredReplies });
         }
+        restoreReceiptsIntoStore({
+          data: result.data,
+          setState: store.setState,
+        });
       }
       setOptimisticUserMessage(null);
     },
     [store],
   );
 
+  const reconcileAndClearRef = useRef<(convId: string) => void>(() => {});
+
   const {
     streamingMessage,
     streamPhase,
     streamError,
+    streamGeneration,
     startStream,
+    setActiveRunId,
     stopStream,
     clearStreamingState,
   } = useStreamingReducer({
-    onDataPart: handleDataPart,
+    onTitleUpdate: handleTitleUpdate,
+    onToolProgress: handleToolProgress,
+    onToolApprovalRequest: handleToolApprovalRequest,
+    onActionPreview: handleActionPreview,
+    onActionReceipt: handleActionReceipt,
     onStreamFinished: (convId) => {
-      void reconcile(convId).then(() => clearStreamingState());
+      reconcileAndClearRef.current(convId);
     },
     onStreamError: ({ conversationId: convId, errorCode }) => {
       if (errorCode === ErrorCode.AI_CREDIT_LIMIT_EXCEEDED) {
         onCreditsExhaustedRef.current?.();
       }
-      void reconcile(convId).then(() => clearStreamingState());
+      reconcileAndClearRef.current(convId);
     },
     onStaleCheck: (convId) => {
       void tryCatch(async () => {
         const conv = await chatApi.getConversation(convId);
-        if (
-          !isNil(conv) &&
-          conv.status !== ChatConversationStatus.STREAMING &&
-          conversationIdRef.current === convId
-        ) {
-          void reconcile(convId).then(() => clearStreamingState());
+        if (isNil(conv) || conversationIdRef.current !== convId) return;
+
+        if (conv.status !== ChatConversationStatus.STREAMING) {
+          reconcileAndClearRef.current(convId);
+          return;
         }
+
+        const latestAssistant =
+          streamingMessage ??
+          persistedMessagesRef.current.findLast((m) => m.role === 'assistant');
+        const hasBlockingCard = chatStoreSelectors.hasBlockingCard({
+          state: store.getState(),
+          lastAssistantMessage: latestAssistant,
+        });
+        if (hasBlockingCard) return;
+
+        stopStream();
+        setIsPollingForAgentReply(true);
+        void reconcile(convId);
       });
     },
   });
+
+  reconcileAndClearRef.current = (convId: string) => {
+    const gen = streamGeneration.current;
+    void reconcile(convId).then(() => clearStreamingState(gen));
+  };
+
+  const streamingQuickReplies = useMemo(
+    () => chatPartUtils.extractQuickRepliesFromParts(streamingMessage),
+    [streamingMessage],
+  );
+
+  useEffect(() => {
+    if (streamingQuickReplies.length > 0) {
+      store.setState({ quickReplies: streamingQuickReplies });
+    }
+  }, [streamingQuickReplies, store]);
 
   const isStreamActive = streamPhase !== 'idle';
   const isStreaming =
@@ -311,10 +399,22 @@ export function useAgentChat({
 
   const wasCancelled = sendStatus.type === 'cancelled';
 
+  const streamingMessageRef = useRef(streamingMessage);
+  streamingMessageRef.current = streamingMessage;
+
   const cancelStream = useCallback(() => {
+    const currentStreaming = streamingMessageRef.current;
     stopStream();
+    if (currentStreaming && currentStreaming.parts.length > 0) {
+      setPersistedMessages((prev) => [...prev, currentStreaming]);
+    }
+    setIsPollingForAgentReply(false);
     updateSendStatus({ type: 'cancelled' });
     setOptimisticUserMessage(null);
+    const convId = conversationIdRef.current;
+    if (convId) {
+      void chatApi.cancelConversation(convId);
+    }
   }, [stopStream, updateSendStatus]);
 
   const createConversation = useCallback(
@@ -410,13 +510,16 @@ export function useAgentChat({
         return;
       }
 
+      const runId = apId();
       startStream(convId);
+      setActiveRunId(runId);
       updateSendStatus({ type: 'idle' });
 
       const { error: sendError } = await tryCatch(async () =>
         chatApi.sendMessage({
           conversationId: convId,
           content,
+          runId,
           files: pendingFilesRef.current,
         }),
       );
@@ -434,7 +537,14 @@ export function useAgentChat({
         }
       }
     },
-    [createConversation, startStream, stopStream, updateSendStatus, store],
+    [
+      createConversation,
+      startStream,
+      setActiveRunId,
+      stopStream,
+      updateSendStatus,
+      store,
+    ],
   );
 
   const setConversationId = useCallback(
@@ -456,32 +566,74 @@ export function useAgentChat({
         tryCatch(async () => chatApi.getConversation(id)),
       ]);
       if (conversationIdRef.current !== id) return;
-      if (historyResult.error) {
+      if (historyResult.error || convResult.error) {
+        conversationIdRef.current = null;
+        setConversationIdState(null);
+        setIsLoadingHistory(false);
         updateSendStatus({
           type: 'error',
-          message: 'Failed to load conversation history',
+          message: 'Conversation not found',
         });
-      } else {
-        const mapped = chatUtils.mapHistoryToUIMessages(
-          historyResult.data.data,
-        );
-        setPersistedMessages(mapped);
-        const restoredReplies =
-          chatUtils.extractQuickRepliesFromHistory(mapped);
-        if (restoredReplies.length > 0) {
-          store.setState({ quickReplies: restoredReplies });
-        }
+        return;
       }
-      if (convResult.data) {
-        modelNameRef.current = convResult.data.modelName ?? null;
-        setModelNameState(convResult.data.modelName ?? null);
-        if (convResult.data.status === ChatConversationStatus.STREAMING) {
-          setIsPollingForAgentReply(true);
+      const mapped = chatUtils.mapHistoryToUIMessages(historyResult.data.data);
+      const restoredReplies = chatUtils.extractQuickRepliesFromHistory(mapped);
+      if (restoredReplies.length > 0) {
+        store.setState({ quickReplies: restoredReplies });
+      }
+      restoreReceiptsIntoStore({
+        data: historyResult.data.data,
+        setState: store.setState,
+      });
+      modelNameRef.current = convResult.data.modelName ?? null;
+      setModelNameState(convResult.data.modelName ?? null);
+      if (convResult.data.status === ChatConversationStatus.STREAMING) {
+        const lastAssistantIdx = mapped.findLastIndex(
+          (m) => m.role === 'assistant',
+        );
+        const lastUserIdx = mapped.findLastIndex((m) => m.role === 'user');
+        const isCurrentStreamingResponse =
+          lastAssistantIdx >= 0 && lastAssistantIdx > lastUserIdx;
+        if (isCurrentStreamingResponse) {
+          setPersistedMessages(mapped.slice(0, lastAssistantIdx));
+        } else {
+          setPersistedMessages(mapped);
         }
+        const { data: gate } = await tryCatch(() => chatApi.getPendingGate(id));
+        if (conversationIdRef.current !== id) return;
+        const baseParts = isCurrentStreamingResponse
+          ? mapped[lastAssistantIdx].parts
+          : undefined;
+        const displayGatePart =
+          gate && chatPartUtils.isDisplayTool(gate.toolName)
+            ? {
+                type: 'dynamic-tool' as const,
+                toolCallId: gate.gateId,
+                toolName: gate.toolName,
+                title: gate.displayName,
+                state: 'input-available' as const,
+                input: gate.toolInput,
+              }
+            : undefined;
+        startStream(id, {
+          initialParts: displayGatePart
+            ? [...(baseParts ?? []), displayGatePart]
+            : baseParts,
+        });
+        if (gate) {
+          store.setState((prev) => ({
+            toolCallMeta: {
+              ...prev.toolCallMeta,
+              ...buildToolCallMetaFromGate(gate),
+            },
+          }));
+        }
+      } else {
+        setPersistedMessages(mapped);
       }
       setIsLoadingHistory(false);
     },
-    [stopStream, updateSendStatus, store],
+    [stopStream, startStream, updateSendStatus, store],
   );
 
   useQuery({
@@ -509,6 +661,24 @@ export function useAgentChat({
       }
       if (convResult.status !== ChatConversationStatus.STREAMING) {
         setIsPollingForAgentReply(false);
+      } else {
+        const hasBlockingCard = chatStoreSelectors.hasBlockingCard({
+          state: store.getState(),
+          lastAssistantMessage: mapped[mapped.length - 1],
+        });
+        if (!hasBlockingCard) {
+          const { data: gate } = await tryCatch(() =>
+            chatApi.getPendingGate(conversationId),
+          );
+          if (gate && conversationIdRef.current === conversationId) {
+            store.setState((prev) => ({
+              toolCallMeta: {
+                ...prev.toolCallMeta,
+                ...buildToolCallMetaFromGate(gate),
+              },
+            }));
+          }
+        }
       }
       return mapped;
     },

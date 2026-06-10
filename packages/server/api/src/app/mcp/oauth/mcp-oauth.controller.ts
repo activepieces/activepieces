@@ -1,11 +1,12 @@
 import { isNil, McpServerType, PopulatedMcpServer, TelemetryEventName, tryCatch } from '@activepieces/shared'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
-import { FastifyBaseLogger } from 'fastify'
+import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { repoFactory } from '../../core/db/repo-factory'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { ChatConversationEntity } from '../../ee/chat/chat-conversation-entity'
 import { CONVERSATION_ID_HEADER } from '../../ee/chat/mcp/chat-mcp'
+import { domainHelper } from '../../helper/domain-helper'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { telemetry } from '../../helper/telemetry.utils'
 import { mcpServerService } from '../mcp-service'
@@ -50,26 +51,17 @@ function registerMcpEndpoint(app: Parameters<FastifyPluginAsyncZod>[0], scope: M
         const [type, token] = authHeader?.split(' ') ?? []
 
         if (type !== 'Bearer' || isNil(token)) {
-            return reply.status(401).send({
-                error: 'unauthorized',
-                message: 'Authorization: Bearer <token> required',
-            })
+            return unauthorized({ req, reply, scope, message: 'Authorization: Bearer <token> required' })
         }
 
         const identity = await resolveIdentity({ token, scope, log: req.log })
         if (isNil(identity)) {
-            return reply.status(401).send({
-                error: 'unauthorized',
-                message: 'Invalid or expired access token',
-            })
+            return unauthorized({ req, reply, scope, message: 'Invalid or expired access token', invalidToken: true })
         }
 
         const { mcp, userId } = await resolveMcpAndUser({ identity, log: req.log })
         if (isNil(mcp)) {
-            return reply.status(401).send({
-                error: 'unauthorized',
-                message: 'Invalid project or token.',
-            })
+            return unauthorized({ req, reply, scope, message: 'Invalid project or token.', invalidToken: true })
         }
 
         const conversationId = req.headers[CONVERSATION_ID_HEADER] as string | undefined
@@ -92,6 +84,27 @@ function registerMcpEndpoint(app: Parameters<FastifyPluginAsyncZod>[0], scope: M
 
         await server.connect(transport)
         await transport.handleRequest(req.raw, reply.raw, req.body)
+    })
+}
+
+function unauthorized({ req, reply, scope, message, invalidToken }: {
+    req: FastifyRequest
+    reply: FastifyReply
+    scope: McpServerType
+    message: string
+    invalidToken?: boolean
+}): FastifyReply {
+    const resourcePath = scope === McpServerType.PLATFORM ? 'mcp/platform' : 'mcp'
+    const resourceMetadataUrl = domainHelper.getPublicUrlFromRequest({
+        req,
+        path: `/.well-known/oauth-protected-resource/${resourcePath}`,
+    })
+    const challenge = invalidToken
+        ? `Bearer error="invalid_token", resource_metadata="${resourceMetadataUrl}"`
+        : `Bearer resource_metadata="${resourceMetadataUrl}"`
+    return reply.status(401).header('WWW-Authenticate', challenge).send({
+        error: 'unauthorized',
+        message,
     })
 }
 

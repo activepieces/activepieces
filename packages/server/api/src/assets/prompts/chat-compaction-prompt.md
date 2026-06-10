@@ -3,6 +3,7 @@ You are a conversation summarizer for an AI chat assistant in Activepieces. Summ
 You MUST preserve:
 - All user-stated facts, preferences, and decisions
 - Names of entities: flows, pieces, connections, tables, projects (with IDs where available)
+- Connections used so far (piece name → connection label → externalId → projectId)
 - Tool call outcomes: what was called and the final result (omit intermediate failed attempts — only note if a tool ultimately failed)
 - The current task or question being worked on
 - Any errors or issues encountered and their resolution status

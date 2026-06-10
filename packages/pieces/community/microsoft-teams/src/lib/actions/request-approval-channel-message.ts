@@ -13,6 +13,11 @@ export const requestApprovalInChannel = createAction({
   name: 'request_approval_in_channel',
   displayName: 'Request Approval in Channel',
   description: 'Send approval message to a channel and then wait until the message is approved or disapproved',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Posts an Approve/Disapprove adaptive card into a Microsoft Teams channel (by team ID and channel ID) and pauses the flow until a recipient clicks one of the buttons, then resumes reporting whether it was approved. Use as a human-in-the-loop gate where channel members decide; for a direct-message gate use Request Approval from a User instead. Not idempotent — each call posts another approval message and creates a new wait.',
+    idempotent: false,
+  },
   props: {
     teamId: microsoftTeamsCommon.teamId,
     channelId: microsoftTeamsCommon.channelId,

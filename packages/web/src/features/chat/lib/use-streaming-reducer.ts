@@ -1,23 +1,38 @@
-import { ChatAgentEventType, WebsocketClientEvent } from '@activepieces/shared';
+import {
+  ActionPreviewEvent,
+  ActionReceiptEvent,
+  ChatAgentEventType,
+  ToolApprovalRequestEvent,
+  ToolProgressEvent,
+  WebsocketClientEvent,
+} from '@activepieces/shared';
 import { UIMessageChunk } from 'ai';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useSocket } from '@/components/providers/socket-provider';
 
 import { ChatUIMessage } from './chat-types';
-import { chunkReducer, DataPart, StreamingState } from './chunk-reducer';
+import { chunkReducer, StreamingState } from './chunk-reducer';
 
 const THROTTLE_MS = 100;
-const STREAM_TIMEOUT_MS = 10 * 60 * 1000;
+const STREAM_TIMEOUT_MS = 2 * 60 * 1000;
 const STALE_CHECK_INTERVAL_MS = 15_000;
 
 export function useStreamingReducer({
-  onDataPart,
+  onTitleUpdate,
+  onToolProgress,
+  onToolApprovalRequest,
+  onActionPreview,
+  onActionReceipt,
   onStreamFinished,
   onStreamError,
   onStaleCheck,
 }: {
-  onDataPart: (part: DataPart) => void;
+  onTitleUpdate: (title: string) => void;
+  onToolProgress: (event: ToolProgressEvent) => void;
+  onToolApprovalRequest: (event: ToolApprovalRequestEvent) => void;
+  onActionPreview: (event: ActionPreviewEvent) => void;
+  onActionReceipt: (event: ActionReceiptEvent) => void;
   onStreamFinished: (conversationId: string) => void;
   onStreamError: (params: {
     conversationId: string;
@@ -34,14 +49,23 @@ export function useStreamingReducer({
   const [streamError, setStreamError] = useState<string | null>(null);
 
   const streamPhaseRef = useRef<StreamPhase>('idle');
+  const streamGenerationRef = useRef(0);
   const reducerStateRef = useRef<StreamingState | null>(null);
   const chunkBufferRef = useRef<UIMessageChunk[]>([]);
   const throttleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const streamTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
 
-  const onDataPartRef = useRef(onDataPart);
-  onDataPartRef.current = onDataPart;
+  const onTitleUpdateRef = useRef(onTitleUpdate);
+  onTitleUpdateRef.current = onTitleUpdate;
+  const onToolProgressRef = useRef(onToolProgress);
+  onToolProgressRef.current = onToolProgress;
+  const onToolApprovalRequestRef = useRef(onToolApprovalRequest);
+  onToolApprovalRequestRef.current = onToolApprovalRequest;
+  const onActionPreviewRef = useRef(onActionPreview);
+  onActionPreviewRef.current = onActionPreview;
+  const onActionReceiptRef = useRef(onActionReceipt);
+  onActionReceiptRef.current = onActionReceipt;
   const onStreamFinishedRef = useRef(onStreamFinished);
   onStreamFinishedRef.current = onStreamFinished;
   const onStreamErrorRef = useRef(onStreamError);
@@ -64,11 +88,6 @@ export function useStreamingReducer({
     const chunks = chunkBufferRef.current;
     if (chunks.length === 0) return;
     chunkBufferRef.current = [];
-
-    const dataParts = chunkReducer.extractDataParts({ chunks });
-    for (const dp of dataParts) {
-      onDataPartRef.current(dp);
-    }
 
     const state = reducerStateRef.current;
     if (!state) return;
@@ -109,16 +128,32 @@ export function useStreamingReducer({
     };
   }, [teardown]);
 
+  const activeRunIdRef = useRef<string | undefined>(undefined);
+
+  const setActiveRunId = useCallback((runId: string) => {
+    activeRunIdRef.current = runId;
+  }, []);
+
   const startStream = useCallback(
-    (conversationId: string) => {
+    (
+      conversationId: string,
+      options?: {
+        initialParts?: ChatUIMessage['parts'];
+      },
+    ) => {
       teardown();
+      streamGenerationRef.current++;
+      activeRunIdRef.current = undefined;
 
       lastChunkTimeRef.current = Date.now();
-      reducerStateRef.current = chunkReducer.createStreamingState();
+      reducerStateRef.current = chunkReducer.createStreamingState({
+        initialParts: options?.initialParts,
+      });
+      const { message } = reducerStateRef.current;
       setStreamingMessage({
-        id: reducerStateRef.current.message.id,
+        id: message.id,
         role: 'assistant',
-        parts: [],
+        parts: [...message.parts],
       });
       updatePhase('awaiting-stream');
       setStreamError(null);
@@ -144,8 +179,13 @@ export function useStreamingReducer({
         onStreamErrorRef.current({ conversationId, errorMessage, errorCode });
       };
 
+      const expectedGeneration = streamGenerationRef.current;
+
       const handler = (event: SocketEvent) => {
         if (event.conversationId !== conversationId) return;
+        if (streamGenerationRef.current !== expectedGeneration) return;
+        const runId = activeRunIdRef.current;
+        if (runId && event.runId && event.runId !== runId) return;
 
         if (event.type === ChatAgentEventType.CHUNK) {
           updatePhase('streaming');
@@ -170,10 +210,36 @@ export function useStreamingReducer({
           });
         } else if (event.type === ChatAgentEventType.FINISHED) {
           handleFinish();
+        } else if (event.type === ChatAgentEventType.TITLE_UPDATE) {
+          const titleData = event.data as { title?: string };
+          if (titleData?.title) {
+            onTitleUpdateRef.current(titleData.title);
+          }
+        } else if (event.type === ChatAgentEventType.TOOL_PROGRESS) {
+          lastChunkTimeRef.current = Date.now();
+          onToolProgressRef.current(event.data as ToolProgressEvent);
+        } else if (event.type === ChatAgentEventType.TOOL_APPROVAL_REQUEST) {
+          lastChunkTimeRef.current = Date.now();
+          onToolApprovalRequestRef.current(
+            event.data as ToolApprovalRequestEvent,
+          );
+        } else if (event.type === ChatAgentEventType.ACTION_PREVIEW) {
+          lastChunkTimeRef.current = Date.now();
+          onActionPreviewRef.current(event.data as ActionPreviewEvent);
+        } else if (event.type === ChatAgentEventType.ACTION_RECEIPT) {
+          lastChunkTimeRef.current = Date.now();
+          onActionReceiptRef.current(event.data as ActionReceiptEvent);
         }
       };
 
       socket.on(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
+
+      const reconnectHandler = () => {
+        socket.off(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
+        socket.on(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
+        lastChunkTimeRef.current = Date.now();
+      };
+      socket.on('connect', reconnectHandler);
 
       streamTimeoutRef.current = setTimeout(() => {
         handleError({ errorMessage: 'Stream timed out' });
@@ -187,6 +253,7 @@ export function useStreamingReducer({
 
       cleanupRef.current = () => {
         socket.off(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
+        socket.off('connect', reconnectHandler);
       };
     },
     [socket, teardown, flush, scheduleFlush, updatePhase],
@@ -199,17 +266,28 @@ export function useStreamingReducer({
     updatePhase('idle');
   }, [teardown, updatePhase]);
 
-  const clearStreamingState = useCallback(() => {
-    setStreamingMessage(null);
-    setStreamError(null);
-    updatePhase('idle');
-  }, [updatePhase]);
+  const clearStreamingState = useCallback(
+    (generation?: number) => {
+      if (
+        generation !== undefined &&
+        generation !== streamGenerationRef.current
+      ) {
+        return;
+      }
+      setStreamingMessage(null);
+      setStreamError(null);
+      updatePhase('idle');
+    },
+    [updatePhase],
+  );
 
   return {
     streamingMessage,
     streamPhase,
+    streamGeneration: streamGenerationRef,
     streamError,
     startStream,
+    setActiveRunId,
     stopStream,
     clearStreamingState,
   };
@@ -217,6 +295,7 @@ export function useStreamingReducer({
 
 type SocketEvent = {
   conversationId: string;
+  runId?: string;
   type: string;
   data: unknown;
 };

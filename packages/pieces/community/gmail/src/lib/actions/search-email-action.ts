@@ -11,6 +11,12 @@ export const gmailSearchMailAction = createAction({
   displayName: 'Find Email',
   description:
     'Find emails using advanced search criteria. If no filters are provided, the latest emails are returned.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches the mailbox for emails matching combinable filters (sender, recipient, subject, body text, label, category, date range, attachment presence/name) and returns the matched messages with parsed contents. Use this to locate messages or discover their IDs before reading or replying; with no filters it returns the most recent emails. Bound results with Max Results (1-500, default 10). Idempotent: a read-only search that does not modify the mailbox.',
+    idempotent: true,
+  },
   props: {
     from: GmailProps.from,
     to: GmailProps.to,

@@ -81,6 +81,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             {
                 displayName: request.displayName,
                 notes: [],
+                schemaVersion: null,
             },
         )
 
@@ -107,6 +108,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         cursorRequest,
         limit = Paginator.NO_LIMIT,
         folderId,
+        folderIds,
         status,
         name,
         connectionExternalIds,
@@ -143,6 +145,10 @@ export const flowService = (log: FastifyBaseLogger) => ({
 
         if (folderId !== undefined) {
             queryBuilder.andWhere({ folderId: folderId === UncategorizedFolderId ? IsNull() : folderId })
+        }
+
+        if (folderIds !== undefined) {
+            queryBuilder.andWhere({ folderId: In(folderIds) })
         }
 
         if (status !== undefined) {
@@ -762,6 +768,7 @@ type ListParamsBase = {
     cursorRequest?: Cursor
     limit?: number
     folderId?: string
+    folderIds?: string[]
     status?: FlowStatus[]
     name?: string
     versionState?: FlowVersionState
@@ -868,6 +875,7 @@ async function createNewDraftIfVersionIsPublished({
         lastVersion = await flowVersionService(log).createEmptyVersion(flowId, {
             displayName: lockedVersion.displayName,
             notes: lockedVersion.notes,
+            schemaVersion: lockedVersion.schemaVersion,
         })
         const operations: FlowOperationRequest[] = [{
             type: FlowOperationType.IMPORT_FLOW,

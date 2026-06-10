@@ -88,6 +88,9 @@ export const twilioNewCall = createTrigger({
     name: 'new_call',
     displayName: 'New Call',
     description: 'Triggers when a call completes (incoming or outgoing).',
+    aiMetadata: {
+      description: 'Fires when a voice call reaches completed status on the Twilio account, for both inbound and outbound calls. Each event represents one finished call with its direction, participants, duration, and status.',
+    },
     props: {},
     sampleData:{
       "account_sid": "ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
