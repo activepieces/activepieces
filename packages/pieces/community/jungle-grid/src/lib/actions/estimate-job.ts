@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
-import { jungleGridAuth } from '../..';
+import { jungleGridAuth } from '../auth';
 import { jungleGridCommon } from '../common';
 
 export const estimateJob = createAction({
@@ -10,16 +10,14 @@ export const estimateJob = createAction({
   description: 'Estimate the cost, duration, and resources for a Jungle Grid job.',
   props: {
     instructions: jungleGridCommon.asyncInstructions,
-    ...jungleGridCommon.jobPayloadProps,
+    ...jungleGridCommon.estimateJobProps,
   },
   async run(context) {
-    const response = await jungleGridCommon.apiCall<Record<string, unknown>>({
+    return await jungleGridCommon.apiCall({
       auth: context.auth,
       method: HttpMethod.POST,
       path: jungleGridCommon.endpoints.estimateJob,
-      body: jungleGridCommon.buildJobPayload(context.propsValue),
+      body: jungleGridCommon.buildEstimateJobPayload(context.propsValue),
     });
-
-    return jungleGridCommon.toFlatRecord(response.body);
   },
 });

@@ -144,6 +144,7 @@ export type UpdateChatConversationRequest = z.infer<typeof UpdateChatConversatio
 
 export const SendChatMessageRequest = z.object({
     content: z.string().max(51200),
+    runId: z.string().optional(),
     files: z.array(ChatMessageFile).max(10).optional(),
 }).refine(
     (val) => val.content.length > 0 || (val.files && val.files.length > 0),

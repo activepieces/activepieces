@@ -46,19 +46,20 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - **ChatConversation** — a persisted conversation between a user and the AI assistant, scoped to a platform and user; optionally scoped to a project for tool access
 - **Message compaction** — when a conversation exceeds a token threshold, older messages are summarized by the LLM and replaced with a summary to keep context within the model's window
 - **Tool approval gate** — a Redis pub/sub mechanism that pauses destructive tool executions (delete, test, publish) until the user explicitly approves or denies in the UI; times out after 5 minutes
-- **Plan approval** — a multi-step approval mechanism where the agent presents a plan via `ap_request_plan_approval`, the user approves or rejects, and approved plans execute with progress tracking
+- **Plan approval** — a multi-step approval mechanism where the agent presents a plan via `ap_request_plan_approval` (includes a required `mode` field: `one_time` or `recurring`), the user approves or rejects, and approved plans execute with progress tracking
 - **Local tools** — chat-specific tools not part of MCP: `ap_set_session_title`, `ap_select_project`, `ap_execute_action`, `ap_list_across_projects`, `ap_request_plan_approval`
 - **Display tools** — tools that render interactive UI cards: `ap_show_connection_required`, `ap_show_connection_picker`, `ap_show_project_picker`, `ap_show_questions`, `ap_show_quick_replies`
 - **MCP tools** — project-scoped tools loaded from the Activepieces MCP server when a project is selected; destructive ones are wrapped with the approval gate
 - **Tool call UX metadata** — optional `title` (2-4 word chip label) and `description` (first-person conversational sentence) stored on `PersistedToolCallPart`; description is sourced from the preceding `ap_update_thinking_status` text with `input.description` as fallback, rendered above the tool card chip
-- **Server-managed connections** — connection externalIds are never exposed to the LLM; `ap_discover_action_auth` stores available connections in Redis, `ap_show_connection_picker` stores the user's selection, and `ap_execute_action` auto-fills the connection from the store
+- **Server-managed connections** — connection externalIds are never exposed to the LLM; `ap_discover_action_auth` stores available connections in Redis (with `grantedScopes` and `requiredScopes` for scope-aware selection), `ap_show_connection_picker` stores the user's selection, and `ap_execute_action` auto-fills the connection from the store
 - **Action preview gate** — write/destructive actions show a preview card (parameters, connection) before execution; classification uses a hybrid AI-driven (`needsConfirmation` flag) + server hard-floor (name pattern matching) approach; persisted as pending gate in Redis for refresh resilience
 - **Action receipt** — server-rendered card showing action result (status, output, connection badge, timestamp); emitted as `ACTION_RECEIPT` event and persisted as `PersistedChatPartType.ACTION_RECEIPT` in conversation history
 - **Pending gate persistence** — when a display tool or action preview blocks on approval, gate metadata is stored in Redis so the frontend can re-show the card after page refresh; cleared automatically when the gate resolves
-- **Stream reconnection** — when loading a STREAMING conversation (e.g. after refresh), the frontend calls `startStream` to reconnect to the WebSocket channel instead of just polling, receiving live chunks from the still-running worker
+- **Stream reconnection** — when loading a STREAMING conversation (e.g. after refresh), the frontend extracts the last assistant message from history as the streaming message's initial content, calls `getPendingGate` to inject synthetic display-tool parts for pending gates, then calls `startStream`; a socket `connect` handler re-registers the chunk listener and resets the stale-check timer on reconnect
+- **Run ID event filtering** — each agent run gets a unique `runId` (generated in the controller, included in job data, threaded through all websocket events); the frontend's event handler filters by `runId` to prevent stale FINISHED/ERROR events from old runs from killing new streams; combined with a generation counter that guards against stale async reconcile callbacks
 - **AI provider** — a platform-configured LLM provider with an `enabledForChat` flag; the chat resolves the first enabled provider and its default model
-- **Streaming cancel** — a Redis key (10-min TTL) signals the worker to abort via AbortController; a 3-second periodic timer checks the Redis key so cancellation fires within 3 seconds regardless of step boundaries; partial messages (from completed steps via `onAbort` callback) are saved to preserve context for resume
-- **Stale recovery** — when `getConversationOrThrow` fetches a conversation stuck in STREAMING for more than 20 minutes, it automatically resets the status to IDLE before returning
+- **Streaming cancel** — cancel keys are run-scoped (`chat-cancel:{conversationId}:{runId}`) so each worker only checks its own key; a 3-second periodic timer polls the Redis key so cancellation fires within 3 seconds regardless of step boundaries; partial messages (from completed steps via `onAbort` callback) are saved to preserve context for resume; when a new message arrives while STREAMING, the controller reads the active runId, cancels that specific run, and resets status to IDLE before queuing the new job
+- **Stale recovery** — when `getConversationOrThrow` fetches a conversation stuck in STREAMING for more than 2 minutes, it automatically resets the status to IDLE before returning
 - **Project context** — the currently selected project for a conversation; determines which MCP tools are available and scopes resource access
 - **Chat tiers** — model configurations (fast/smart/premium) with different thinking budgets; displayed as Fast/Expert/Heavy in the UI with per-tier descriptions
 - **Credits warning banner** — a dismissible amber banner shown when Activepieces AI credits usage reaches 70%; a non-dismissible red banner is shown when credits are fully exhausted
@@ -72,7 +73,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 ## Key Service Methods
 - `createConversation()` — creates a new conversation for a user on a platform
 - `listConversations()` — cursor-paginated list of user's conversations, ordered by creation date descending; excludes messages, uiMessages, and summary columns for performance
-- `getConversationOrThrow()` — fetches a conversation, enforcing ownership (platformId + userId); auto-recovers stale STREAMING conversations to IDLE after a 20-minute timeout
+- `getConversationOrThrow()` — fetches a conversation, enforcing ownership (platformId + userId); auto-recovers stale STREAMING conversations to IDLE after a 2-minute timeout
 - `updateConversation()` — updates title and/or modelName
 - `deleteConversation()` — deletes a conversation after ownership check; blocked while status is STREAMING
 - `getMessages()` — reconstructs `ChatHistoryMessage[]` from stored `ModelMessage[]`
@@ -99,10 +100,10 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `POST /v1/chat/conversations/:id` — update conversation (title, modelName)
 - `DELETE /v1/chat/conversations/:id` — delete conversation
 - `GET /v1/chat/conversations/:id/messages` — get conversation messages
-- `POST /v1/chat/conversations/:id/messages` — send message (streaming response)
+- `POST /v1/chat/conversations/:id/messages` — send message; if the conversation is STREAMING the old run is cancelled; response body is `{ conversationId, runId }` — clients use runId to filter stale events
 - `POST /v1/chat/tool-approvals/:gateId` — approve or deny a tool execution
 - `POST /v1/chat/conversations/:id/cancel` — cancel an in-progress streaming response
-- `GET /v1/chat/conversations/:id/connections?pieceName=` — get server-stored available connections for connection picker (used on refresh when tool input is lost)
+- `GET /v1/chat/conversations/:id/connections?pieceName=` — get available connections for connection picker; falls back to `findConnectionsForPiece` when the Redis cache is empty and stores the result for future calls
 - `GET /v1/chat/conversations/:id/pending-gate` — get pending approval gate for refresh resilience (returns gate info so the frontend can re-show display tool cards)
 
 - `POST /v1/admin/chat/sync-all` — bulk historical sync of all conversations to console analytics (admin API key required)
@@ -111,7 +112,9 @@ All chat endpoints require `PrincipalType.USER` authentication at the platform l
 
 ## Message Flow
 1. User sends message via `POST /conversations/:id/messages`
-1a. If the platform's chat provider is ACTIVEPIECES and `usageRemaining <= 0`, the endpoint returns a 402 `AI_CREDIT_LIMIT_EXCEEDED` error before queuing the job; the frontend surfaces a non-dismissible error banner
+1a. If the conversation is STREAMING, the controller reads the active runId, cancels that run, and resets status to IDLE
+1b. If the platform's chat provider is ACTIVEPIECES and `usageRemaining <= 0`, the endpoint returns a 402 `AI_CREDIT_LIMIT_EXCEEDED` error before queuing the job; the frontend surfaces a non-dismissible error banner
+1c. Controller generates a `runId`, includes it in the job data, and returns it to the frontend
 2. Service resolves AI provider, connects MCP client, builds system prompt with project list
 3. If conversation is long, compaction summarizes older messages
 4. `streamText()` streams the LLM response with local tools + display tools + MCP tools available
