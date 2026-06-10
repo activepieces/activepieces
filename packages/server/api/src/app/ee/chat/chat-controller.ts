@@ -95,7 +95,8 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         })
 
         if (conversation.status === ChatConversationStatus.STREAMING) {
-            await chatApprovalGate.requestCancel({ conversationId })
+            const activeRunId = await chatApprovalGate.getActiveRunId({ conversationId })
+            await chatApprovalGate.requestCancel({ conversationId, runId: activeRunId ?? undefined })
             await chatHelpers.conversationRepo().update(conversationId, {
                 status: ChatConversationStatus.IDLE,
             })

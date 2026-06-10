@@ -35,7 +35,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
         const log = ctx.log.child({ conversationId })
 
         const config = await ctx.apiClient.getChatConfig({
-            conversationId, platformId, userId, userMessage, modelName, files,
+            conversationId, runId, platformId, userId, userMessage, modelName, files,
         })
 
         const provider = config.provider as AIProviderName
@@ -64,7 +64,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
 
         const checkCancelled = async () => {
             const { data: response } = await tryCatch(() => ctx.apiClient.executeChatTool({
-                toolName: '__cancel_check', toolInput: { conversationId }, platformId, userId,
+                toolName: '__cancel_check', toolInput: { conversationId, runId }, platformId, userId,
             }))
             if (response?.result === true) {
                 abortController.abort()

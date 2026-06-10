@@ -126,6 +126,7 @@ export type ChatAgentEvent =
 
 export type GetChatConfigRequest = {
     conversationId: string
+    runId?: string
     platformId: string
     userId: string
     userMessage: string
