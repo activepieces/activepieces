@@ -183,7 +183,7 @@ async function reportFlowStatus(
             code: ErrorCode.ENGINE_OPERATION_FAILURE,
             message: `Flow run ${data.runId} ended with INTERNAL_ERROR`,
             params: { runId: data.runId, flowId: data.flowId, projectId: data.projectId },
-        }).catch((e) => ctx.log.error({ runId: data.runId, error: inspect(e) }, 'Failed to send on-call page for INTERNAL_ERROR'))
+        }).catch((e) => ctx.log.error({ runId: data.runId, err: e }, 'Failed to send on-call page for INTERNAL_ERROR'))
     }
 }
 

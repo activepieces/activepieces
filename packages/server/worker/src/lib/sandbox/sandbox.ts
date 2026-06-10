@@ -236,7 +236,7 @@ export function createSandbox(
                 }, executeOptions.timeoutInSeconds * 1000)
 
                 executeProcess.on('error', (error) => {
-                    log.error({ sandboxId, error: String(error) }, 'Sandbox process error')
+                    log.error({ sandboxId, err: error }, 'Sandbox process error')
                 })
 
                 executeProcess.on('exit', (code, signal) => {
@@ -259,7 +259,7 @@ export function createSandbox(
                 client.executeOperation({ operationType, operation }).then((engineResponse: EngineResponse<unknown>) => {
                     resolve({ ...engineResponse, logs: buildLogs(stdOut, stdError) })
                 }).catch((error: unknown) => {
-                    log.error({ sandboxId, error: String(error) }, '[Sandbox] RPC call failed')
+                    log.error({ sandboxId, err: error }, '[Sandbox] RPC call failed')
                     reject(error)
                 })
             })
@@ -357,7 +357,7 @@ function killProcess(child: ChildProcess, log: SandboxLogger): Promise<void> {
     return new Promise<void>((resolve) => {
         treeKill(pid, 'SIGKILL', (err) => {
             if (err) {
-                log.error({ pid: String(pid), error: String(err) }, 'Failed to kill child process tree')
+                log.error({ pid: String(pid), err }, 'Failed to kill child process tree')
             }
             else {
                 log.debug({ pid: String(pid) }, 'Killed child process tree')

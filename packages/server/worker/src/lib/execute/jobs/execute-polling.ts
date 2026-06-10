@@ -69,7 +69,7 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: result.logs }
         }
         catch (e) {
-            ctx.log.error({ error: String(e) }, 'Polling trigger failed, will retry on next scheduled cycle')
+            ctx.log.error({ err: e }, 'Polling trigger failed, will retry on next scheduled cycle')
             await ctx.sandboxManager.invalidate(ctx.log)
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }

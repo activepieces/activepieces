@@ -112,7 +112,7 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
                     span.recordException(batchError instanceof Error ? batchError : new Error(String(batchError)))
 
                     if (piecesToInstall.length === 1) {
-                        log.error({ rootWorkspace, error: batchError }, '[pieceInstaller] Piece installation failed, rolling back')
+                        log.error({ rootWorkspace, err: batchError }, '[pieceInstaller] Piece installation failed, rolling back')
                         await rollbackInstallation(rootWorkspace, piecesToInstall)
                         throw batchError
                     }
@@ -120,7 +120,7 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
                     log.warn({
                         rootWorkspace,
                         pieces: piecesToInstall.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
-                        error: batchError,
+                        err: batchError,
                     }, '[pieceInstaller] Batch install failed, retrying pieces individually')
 
                     const failedPieces = await tryInstallPiecesIndividually(rootWorkspace, piecesToInstall, log)
@@ -166,7 +166,7 @@ async function tryInstallPiecesIndividually(
         if (error) {
             log.error({
                 piece: `${piece.pieceName}@${piece.pieceVersion}`,
-                error,
+                err: error,
             }, '[pieceInstaller] Individual piece installation failed, rolling back')
             await rollbackInstallation(rootWorkspace, [piece])
             failures.push(piece)

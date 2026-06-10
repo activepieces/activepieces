@@ -78,7 +78,7 @@ export const worker = {
             }
             void warmupPiecesOnStartup(apiClient)
             void startPollingWorkers(apiClient).catch((err) => {
-                logger.error({ error: err }, 'Polling workers crashed unexpectedly')
+                logger.error({ err }, 'Polling workers crashed unexpectedly')
             })
         })
 
@@ -89,7 +89,7 @@ export const worker = {
         })
 
         socket.on('connect_error', (error) => {
-            logger.error({ error: error.message }, 'Socket.IO connection error')
+            logger.error({ err: error }, 'Socket.IO connection error')
         })
 
         if (withHealthServer) {
@@ -156,14 +156,14 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
 
         const { data: machineInfo, error: machineError } = await tryCatch(buildMachineInfo)
         if (machineError) {
-            workerLog.error({ error: machineError }, 'Failed to build machine info')
+            workerLog.error({ err: machineError }, 'Failed to build machine info')
             await sleep(20000)
             continue
         }
 
         const { data: job, error: pollError } = await tryCatch(() => apiClient.poll(machineInfo))
         if (pollError) {
-            workerLog.error({ error: pollError }, 'Poll failed')
+            workerLog.error({ err: pollError }, 'Poll failed')
             await sleep(25000)
             continue
         }
@@ -178,7 +178,7 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
         const lockExtensionInterval = setInterval(() => {
             void tryCatch(() => apiClient.extendLock({ jobId: job.jobId, token: job.token, queueName: job.queueName })).then(({ error }) => {
                 if (error) {
-                    workerLog.warn({ error, jobId: job.jobId }, 'Failed to extend lock')
+                    workerLog.warn({ err: error, jobId: job.jobId }, 'Failed to extend lock')
                 }
             })
         }, 30_000)
@@ -205,7 +205,7 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
         clearInterval(lockExtensionInterval)
 
         if (completeError) {
-            workerLog.error({ error: completeError, jobId: job.jobId }, 'Failed to complete job')
+            workerLog.error({ err: completeError, jobId: job.jobId }, 'Failed to complete job')
         }
     }
 }
@@ -260,7 +260,7 @@ export function ensurePublicApiUrl(publicUrl: string): string {
 async function fetchAndStoreSettings(sock: Socket): Promise<void> {
     const { data: request, error } = await tryCatch(buildMachineInfo)
     if (error) {
-        logger.error({ error }, 'Failed to build machine info for settings fetch')
+        logger.error({ err: error }, 'Failed to build machine info for settings fetch')
         return
     }
     return new Promise<void>((resolve) => {
@@ -336,7 +336,7 @@ async function buildSandboxInfo(): Promise<SandboxInformation[]> {
 async function warmupPiecesOnStartup(apiClient: WorkerToApiContract): Promise<void> {
     const { data: pieces, error } = await tryCatch(() => apiClient.getUsedPieces({}))
     if (error) {
-        logger.error({ error }, 'Failed to fetch used pieces for warmup')
+        logger.error({ err: error }, 'Failed to fetch used pieces for warmup')
         return
     }
     if (!pieces || pieces.length === 0) {
@@ -348,7 +348,7 @@ async function warmupPiecesOnStartup(apiClient: WorkerToApiContract): Promise<vo
         pieceInstaller(logger, apiClient).install({ pieces, includeFilters: false }),
     )
     if (installError) {
-        logger.error({ error: installError }, 'Failed to install pieces during startup warmup')
+        logger.error({ err: installError }, 'Failed to install pieces during startup warmup')
     }
     else {
         void tryCatch(() => apiClient.markPieceAsUsed({ pieces }))

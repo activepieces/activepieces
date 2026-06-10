@@ -22,12 +22,12 @@ export async function provisionFlowPieces(params: {
         if (!(error instanceof PieceNotFoundError)) {
             throw error
         }
-        log.warn({ error: String(error), flowId }, 'Flow disabled due to missing piece')
+        log.warn({ err: error, flowId }, 'Flow disabled due to missing piece')
         const { error: disableError } = await tryCatch(
             () => apiClient.disableFlow({ flowId, projectId }),
         )
         if (disableError) {
-            log.error({ error: String(disableError), flowId }, 'Failed to disable flow after missing piece')
+            log.error({ err: disableError, flowId }, 'Failed to disable flow after missing piece')
         }
         return false
     }

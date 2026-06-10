@@ -22,7 +22,7 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-    logger.error({ error: err }, 'Worker crashed')
+    logger.error({ err }, 'Worker crashed')
     process.exit(1)
 })
 

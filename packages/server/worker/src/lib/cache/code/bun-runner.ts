@@ -25,7 +25,7 @@ export const bunRunner = (log: Logger) => ({
             timeoutMs: apDayjsDuration(10, 'minutes').asMilliseconds(),
         }))
         if (error) {
-            log.error({ error }, '[bunRunner#install] Failed to install dependencies')
+            log.error({ err: error }, '[bunRunner#install] Failed to install dependencies')
             throw error
         }
         return data
