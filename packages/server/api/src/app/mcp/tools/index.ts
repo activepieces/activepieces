@@ -67,6 +67,7 @@ export const PLATFORM_LEVEL_TOOL_NAMES: string[] = [
     'ap_research_pieces',
     'ap_list_ai_models',
     'ap_get_piece_props',
+    'ap_get_guide',
 ]
 
 // NOTE: Keep this list in sync with TOOL_CATEGORIES in
