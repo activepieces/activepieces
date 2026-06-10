@@ -13,7 +13,6 @@ import {
   Wand2,
 } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
-import { usePrevious } from 'react-use';
 
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -29,7 +28,7 @@ import { NoteDragOverlayMode } from '../state/notes-state';
 
 import { flowCanvasConsts } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
-import { ApNode } from './utils/types';
+import { ApNode, CanvasOrientation } from './utils/types';
 const verticalPaddingOnFitView = 100;
 const calculateNodePositionInCanvas = (
   canvasWidth: number,
@@ -105,10 +104,17 @@ const CanvasControls = ({
     (state) => state.canvasOrientation,
   );
   const handleFitToView = useCallback(
-    (isInitialRenderCall: boolean) => {
+    ({
+      isInitialRenderCall,
+      orientation,
+    }: {
+      isInitialRenderCall: boolean;
+      orientation?: CanvasOrientation;
+    }) => {
+      const effectiveOrientation = orientation ?? canvasOrientation;
       const nodes = getNodes();
       if (nodes.length === 0) return;
-      if (canvasOrientation === 'horizontal') {
+      if (effectiveOrientation === 'horizontal') {
         const stepNodeSize = flowCanvasConsts.STEP_NODE_SIZE.horizontal;
         const minX = Math.min(...nodes.map((node) => node.position.x));
         const maxX = Math.max(...nodes.map((node) => node.position.x));
@@ -137,7 +143,7 @@ const CanvasControls = ({
           nodes: nodes as ApNode[],
           edges: [],
         },
-        orientation: canvasOrientation,
+        orientation: effectiveOrientation,
       }).height;
       const zoomRatio = Math.min(
         Math.max(canvasHeight / graphHeight, 0.9),
@@ -163,24 +169,10 @@ const CanvasControls = ({
     [getNodes, canvasHeight, setViewport, canvasWidth, canvasOrientation],
   );
 
-  const previousOrientation = usePrevious(canvasOrientation);
-  useEffect(() => {
-    if (
-      !hasCanvasBeenInitialised ||
-      previousOrientation === undefined ||
-      previousOrientation === canvasOrientation
-    ) {
-      return;
-    }
-    // the canvas remounts when the orientation changes, give it a frame to sync nodes before fitting
-    const timeoutId = setTimeout(() => handleFitToView(false), 100);
-    return () => clearTimeout(timeoutId);
-  }, [canvasOrientation]);
-
   useEffect(() => {
     if (!hasCanvasBeenInitialised) return;
 
-    handleFitToView(true);
+    handleFitToView({ isInitialRenderCall: true });
 
     if (selectedStep) {
       adjustViewportForSelectedStep(selectedStep);
@@ -283,7 +275,7 @@ const CanvasControls = ({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => handleFitToView(false)}
+            onClick={() => handleFitToView({ isInitialRenderCall: false })}
           >
             <Fullscreen className="size-4" />
           </Button>
@@ -298,11 +290,20 @@ const CanvasControls = ({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() =>
-              setCanvasOrientation(
-                canvasOrientation === 'horizontal' ? 'vertical' : 'horizontal',
-              )
-            }
+            onClick={() => {
+              const newOrientation =
+                canvasOrientation === 'horizontal' ? 'vertical' : 'horizontal';
+              setCanvasOrientation(newOrientation);
+              // the canvas remounts when the orientation changes, give it a frame to sync nodes before fitting
+              setTimeout(
+                () =>
+                  handleFitToView({
+                    isInitialRenderCall: false,
+                    orientation: newOrientation,
+                  }),
+                100,
+              );
+            }}
           >
             {canvasOrientation === 'horizontal' ? (
               <MoveVertical className="size-4" />
