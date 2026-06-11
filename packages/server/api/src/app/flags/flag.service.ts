@@ -4,13 +4,12 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
-import { conditionalMigrations } from '../database/conditional-migrations'
-import { enableKnowledgeBaseVector } from '../database/conditional-migrations/enable-knowledge-base-vector'
 import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
 import { domainHelper } from '../helper/domain-helper'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
+import { knowledgeBaseSchema } from '../knowledge-base/knowledge-base-schema'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
 import { webhookSecretsUtils } from './webhook-secrets-util'
@@ -312,7 +311,7 @@ export const flagService = (log: FastifyBaseLogger) => ({
             },
             {
                 id: ApFlagId.PGVECTOR_AVAILABLE,
-                value: await conditionalMigrations.isApplied(enableKnowledgeBaseVector.name),
+                value: await knowledgeBaseSchema.isVectorExtensionInstalled(),
                 created,
                 updated,
             },
