@@ -23,7 +23,8 @@ App Connections store encrypted authentication credentials (OAuth2 tokens, API k
 - `packages/web/src/features/connections/components/rename-connection-dialog.tsx` — rename connection dialog
 - `packages/web/src/app/connections/oidc-connection-settings.tsx` — OIDC connection form component
 - `packages/server/api/src/app/core/security/oidc/oidc-key-manager.ts` — RSA key lifecycle: mutex-protected caching, auto-generation (CE), RFC 7638 kid fingerprint
-- `packages/server/api/src/app/core/security/oidc/oidc-token.controller.ts` — engine-only endpoint that issues RS256 JWTs (`POST /api/v1/oidc-token`)
+- `packages/server/api/src/app/core/security/oidc/oidc.module.ts` — module wrapper that registers the OIDC token controller under `/v1/worker`
+- `packages/server/api/src/app/core/security/oidc/oidc-token.controller.ts` — engine-only endpoint that issues RS256 JWTs (`POST /api/v1/worker/oidc-token`)
 - `packages/server/api/src/app/core/security/oidc/oidc-discovery.controller.ts` — public OIDC discovery endpoints (`GET /.well-known/openid-configuration`, `GET /.well-known/jwks.json`)
 
 ## Edition Availability
@@ -35,7 +36,7 @@ App Connections store encrypted authentication credentials (OAuth2 tokens, API k
 - **AppConnection**: An encrypted credential record bound to a platform and optionally scoped to one or more projects.
 - **AppConnectionScope**: `PROJECT` (restricted to projects in `projectIds[]`) or `PLATFORM` (available to all projects).
 - **AppConnectionType**: One of `OAUTH2`, `CLOUD_OAUTH2`, `PLATFORM_OAUTH2`, `SECRET_TEXT`, `BASIC_AUTH`, `CUSTOM_AUTH`, `NO_AUTH`, `OIDC`.
-- **OIDCConnectionValue**: `{ type: OIDC, props: T }` — piece-defined OIDC props (role ARN, audience, etc.) stored encrypted; the actual token is fetched at runtime from the engine's `/api/v1/oidc-token` endpoint.
+- **OIDCConnectionValue**: `{ type: OIDC, props: T }` — piece-defined OIDC props (role ARN, audience, etc.) stored encrypted; the actual token is fetched at runtime from the `POST /api/v1/worker/oidc-token` endpoint.
 - **OIDC provider**: The Activepieces server acts as an OpenID Connect identity provider, exposing `/.well-known/openid-configuration` and `/.well-known/jwks.json` so cloud providers (e.g. AWS STS) can verify issued tokens.
 - **OIDC kid**: Derived via RFC 7638 SHA-256 thumbprint of the RSA public key — rotates automatically when the key material changes, preventing JWKS cache poisoning.
 - **externalId**: The stable identifier for a connection within a project; referenced in flow step settings (survives rename).
@@ -65,9 +66,24 @@ App Connections store encrypted authentication credentials (OAuth2 tokens, API k
 Activepieces acts as an OIDC identity provider to enable pieces to assume cloud roles without long-lived credentials (e.g. AWS IRSA / Web Identity Federation).
 
 **Runtime flow:**
-1. Engine calls `GET /api/v1/oidc-token` (engine-only endpoint, guarded by `securityAccess.engine()`)
-2. Server issues a signed RS256 JWT with `sub: platform:{platformId}:project:{projectId}`, `aud: sts.amazonaws.com`, TTL 1 hour
+1. Engine calls `POST /api/v1/worker/oidc-token` with `{ audience, expiresInSeconds? }` (engine-only endpoint, guarded by `securityAccess.engine()`)
+2. Server issues a signed RS256 JWT with `sub: platform:{platformId}:project:{projectId}`, `aud` set to the requested audience (e.g. `sts.amazonaws.com`), TTL defaults to 1 hour (capped at 1 hour)
 3. Piece exchanges the JWT with the cloud provider (e.g. AWS STS `AssumeRoleWithWebIdentity`) to get temporary credentials
+
+**Caller contract** (pieces calling from `run()` via `context.server`):
+- The JSON body is required: `audience` (non-empty after trim) is mandatory; `expiresInSeconds` is optional (integer, 60–3600, default 3600). Requests without a body get `400`.
+
+```ts
+const response = await fetch(`${server.apiUrl}v1/worker/oidc-token`, {
+    method: 'POST',
+    headers: {
+        Authorization: `Bearer ${server.token}`,
+        'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ audience: 'sts.amazonaws.com' }),
+})
+const { token } = await response.json()
+```
 
 **Discovery endpoints** (public, CORS-open, available when `system.isApp()` is true):
 - `GET /.well-known/openid-configuration` — issuer metadata pointing to the JWKS URI

@@ -12,6 +12,8 @@ let engineToken: string
 let platformId: string
 let projectId: string
 
+const DEFAULT_BODY = { audience: 'sts.amazonaws.com' }
+
 beforeAll(async () => {
     app = await setupTestEnvironment()
 })
@@ -39,6 +41,7 @@ describe('OIDC Token Endpoint', () => {
                 method: 'POST',
                 url: '/api/v1/worker/oidc-token',
                 headers: { authorization: `Bearer ${engineToken}` },
+                body: DEFAULT_BODY,
             })
 
             expect(response.statusCode).toBe(StatusCodes.OK)
@@ -51,6 +54,7 @@ describe('OIDC Token Endpoint', () => {
             const response = await app!.inject({
                 method: 'POST',
                 url: '/api/v1/worker/oidc-token',
+                body: DEFAULT_BODY,
             })
 
             expect(response.statusCode).toBe(StatusCodes.FORBIDDEN)
@@ -68,22 +72,46 @@ describe('OIDC Token Endpoint', () => {
                 method: 'POST',
                 url: '/api/v1/worker/oidc-token',
                 headers: { authorization: `Bearer ${userToken}` },
+                body: DEFAULT_BODY,
             })
 
             expect(response.statusCode).toBe(StatusCodes.UNAUTHORIZED)
         })
 
-        it('should issue a JWT with the correct audience for AWS STS', async () => {
+        it('should reject requests without an audience', async () => {
             const response = await app!.inject({
                 method: 'POST',
                 url: '/api/v1/worker/oidc-token',
                 headers: { authorization: `Bearer ${engineToken}` },
+                body: {},
+            })
+
+            expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
+
+        it('should reject a whitespace-only audience', async () => {
+            const response = await app!.inject({
+                method: 'POST',
+                url: '/api/v1/worker/oidc-token',
+                headers: { authorization: `Bearer ${engineToken}` },
+                body: { audience: '   ' },
+            })
+
+            expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
+
+        it('should issue a JWT with the audience provided in the request', async () => {
+            const response = await app!.inject({
+                method: 'POST',
+                url: '/api/v1/worker/oidc-token',
+                headers: { authorization: `Bearer ${engineToken}` },
+                body: { audience: 'vault.example.com' },
             })
 
             const { token } = response.json()
             const decoded = jwtUtils.decode<{ aud: string, sub: string, iss: string }>({ jwt: token })
 
-            expect(decoded.payload.aud).toBe('sts.amazonaws.com')
+            expect(decoded.payload.aud).toBe('vault.example.com')
         })
 
         it('should include platform and project in the sub claim', async () => {
@@ -91,6 +119,7 @@ describe('OIDC Token Endpoint', () => {
                 method: 'POST',
                 url: '/api/v1/worker/oidc-token',
                 headers: { authorization: `Bearer ${engineToken}` },
+                body: DEFAULT_BODY,
             })
 
             const { token } = response.json()
@@ -106,6 +135,7 @@ describe('OIDC Token Endpoint', () => {
                 method: 'POST',
                 url: '/api/v1/worker/oidc-token',
                 headers: { authorization: `Bearer ${engineToken}` },
+                body: DEFAULT_BODY,
             })
 
             const { token } = response.json()
@@ -114,13 +144,14 @@ describe('OIDC Token Endpoint', () => {
             expect(decoded.header.alg).toBe('RS256')
         })
 
-        it('should set a 1-hour expiration on the token', async () => {
+        it('should default to a 1-hour expiration when no TTL is provided', async () => {
             const before = Math.floor(Date.now() / 1000)
 
             const response = await app!.inject({
                 method: 'POST',
                 url: '/api/v1/worker/oidc-token',
                 headers: { authorization: `Bearer ${engineToken}` },
+                body: DEFAULT_BODY,
             })
 
             const after = Math.floor(Date.now() / 1000)
@@ -132,12 +163,38 @@ describe('OIDC Token Endpoint', () => {
             expect(decoded.payload.exp - decoded.payload.iat).toBe(3600)
         })
 
+        it('should honor the expiresInSeconds provided in the request', async () => {
+            const response = await app!.inject({
+                method: 'POST',
+                url: '/api/v1/worker/oidc-token',
+                headers: { authorization: `Bearer ${engineToken}` },
+                body: { ...DEFAULT_BODY, expiresInSeconds: 300 },
+            })
+
+            const { token } = response.json()
+            const decoded = jwtUtils.decode<{ iat: number, exp: number }>({ jwt: token })
+
+            expect(decoded.payload.exp - decoded.payload.iat).toBe(300)
+        })
+
+        it('should reject a TTL above the allowed maximum', async () => {
+            const response = await app!.inject({
+                method: 'POST',
+                url: '/api/v1/worker/oidc-token',
+                headers: { authorization: `Bearer ${engineToken}` },
+                body: { ...DEFAULT_BODY, expiresInSeconds: 7200 },
+            })
+
+            expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
+
         it('should include a kid header matching the JWKS endpoint', async () => {
             const [tokenResponse, jwksResponse] = await Promise.all([
                 app!.inject({
                     method: 'POST',
                     url: '/api/v1/worker/oidc-token',
                     headers: { authorization: `Bearer ${engineToken}` },
+                    body: DEFAULT_BODY,
                 }),
                 app!.inject({ method: 'GET', url: '/.well-known/jwks.json' }),
             ])
