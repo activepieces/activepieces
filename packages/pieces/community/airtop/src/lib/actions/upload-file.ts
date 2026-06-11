@@ -11,6 +11,11 @@ export const uploadFileToSessionAction = createAction({
 	name: 'upload-file-to-session',
 	displayName: 'Upload File to Sessions',
 	description: 'Push an existing file to one or more sessions, making it available for use in file inputs or downloads.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Pushes an already-uploaded Airtop file (by file id) to specific sessions, or to all active sessions when no session ids are given, making it available for file inputs or downloads in those sessions. Use this after a file exists in Airtop and you need it accessible inside a browsing session. Requires the file id; not idempotent since it performs a push to session state on each call.',
+		idempotent: false,
+	},
 	props: {
 		fileId: fileId,
 		sessionIds: Property.MultiSelectDropdown({

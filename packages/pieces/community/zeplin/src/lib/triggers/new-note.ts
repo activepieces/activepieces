@@ -9,6 +9,9 @@ export const newNote = createTrigger({
   name: 'newNote',
   displayName: 'New Note',
   description: 'Triggered when a new note is created on a screen',
+  aiMetadata: {
+    description: 'Fires when a new note (comment/annotation) is added to a screen in a Zeplin project, delivering the note plus its project and screen context. Requires the corresponding webhook to be configured in the Zeplin dashboard.',
+  },
   props: {
     
   },

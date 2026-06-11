@@ -7,6 +7,8 @@ export const searchStickersAction = createAction({
   name: 'search_stickers',
   displayName: 'Search Stickers',
   description: 'Search and retrieve stickers from KLIPY\'s database by keyword or phrase.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches KLIPY\'s sticker library and returns a paginated set of matching stickers. Use when an agent needs to find stickers for a topic; leave the search keyword empty to browse trending stickers instead of filtering to a query. Read-only and idempotent (same input returns the same page). Tune results with paging, locale, content-safety filter, and format filter.', idempotent: true },
   props: {
     q: Property.ShortText({
       displayName: 'Search Keyword',

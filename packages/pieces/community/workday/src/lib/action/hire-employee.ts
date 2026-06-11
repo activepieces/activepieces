@@ -11,6 +11,12 @@ export const hireEmployee = createAction({
 	name: 'hire_employee',
 	displayName: 'Hire Employee',
 	description: 'Creates a new worker (hire) in Workday.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Initiates and auto-completes a Hire Employee business process, converting an existing applicant/pre-hire (by WID) into a worker effective on a hire date, optionally filling a specific position. Use after a pre-hire record exists to formally hire the candidate. Not idempotent: each call submits a new hire event.',
+		idempotent: false,
+	},
 	props: {
 		applicantId: Property.ShortText({
 			displayName: 'Applicant / Pre-Hire ID',

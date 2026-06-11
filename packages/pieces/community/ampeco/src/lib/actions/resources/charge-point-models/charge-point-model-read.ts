@@ -15,6 +15,8 @@ export const chargePointModelReadAction = createAction({
   name: 'chargePointModelRead',
   displayName: 'Resources - Charge Point Models - Read',
   description: 'Get a Charge Point Model.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single charge point model by its numeric model ID. Read-only and idempotent. Use when you already know the model ID; otherwise use Listing to find it first.', idempotent: true },
   props: {
         
   modelId: Property.Number({

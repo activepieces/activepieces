@@ -10,6 +10,11 @@ export const deleteRecordsAction = createAction({
   name: 'delete-records',
   displayName: 'Delete Records',
   description: 'Deletes records from an Algolia index by objectID.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Deletes records from an Algolia index by their objectIDs. Provide an array of the exact objectIDs to remove from the selected index. Idempotent: deleting the same IDs again leaves the index in the same state (already-absent IDs are simply no-ops).',
+    idempotent: true,
+  },
   props: {
     indexName: algoliaProps.index(),
     recordIds: Property.Array({

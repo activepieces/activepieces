@@ -6,6 +6,8 @@ export const findShippingLabel = createAction({
   name: 'find_shipping_label',
   displayName: 'Find Shipping Label',
   description: 'Search for a shipping label by its ID',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves a single Shippo shipping label (transaction) by its object ID, including tracking number and label/document URLs. Use to look up a known label. Requires the exact label ID; it does not search by tracking number or other fields. Read-only and idempotent.', idempotent: true },
   auth: shippoAuth,
   props: {
     label_id: Property.ShortText({

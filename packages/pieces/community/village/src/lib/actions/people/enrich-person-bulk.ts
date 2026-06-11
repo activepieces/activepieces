@@ -17,6 +17,12 @@ export const enrichPersonBulk = createAction({
   displayName: 'Enrich Person (Bulk)',
   description:
     'Get detailed profile information for up to 10 people in a single request. Partial results are returned if some lookups fail — check each result for success or error status.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieve detailed profiles for up to 10 people in one call, each identified by a LinkedIn URL or generic URL. Read-only and idempotent; partial results are returned with per-person success or error status when some lookups fail. Use for full profile enrichment; use Enrich Person Email when only an email address is needed.',
+    idempotent: true,
+  },
   props: {
     identifiers: Property.Array({
       displayName: 'Identifiers',

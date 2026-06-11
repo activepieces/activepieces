@@ -10,6 +10,10 @@ export const workerCreated = createTrigger({
   name: 'worker_created',
   displayName: 'Worker Created',
   description: 'Triggers when a worker is created',
+  aiMetadata: {
+    description:
+      'Fires when a new worker (driver) is added to the Onfleet organization. Represents onboarding of a delivery worker, useful for syncing staff records or sending welcome workflows. The payload includes the worker object with details such as name, phone, vehicle, and team assignments.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   //Create the webhook and save the webhook ID in store for disable behavior

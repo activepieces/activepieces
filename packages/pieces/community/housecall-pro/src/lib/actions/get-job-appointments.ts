@@ -7,6 +7,8 @@ export const getJobAppointments = createAction({
   name: "get_job_appointments",
   displayName: "Get Appointments",
   description: "Get all of the appointments for a job",
+  audience: 'both',
+  aiMetadata: { description: "List all appointments scheduled on a Housecall Pro job identified by job ID. Read-only and idempotent. Use create-appointment or update-appointment to modify scheduling.", idempotent: true },
   props: {
     job_id: Property.ShortText({
       displayName: "Job ID",

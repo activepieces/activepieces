@@ -14,6 +14,8 @@ export const deleteParkingSpaceAction = createAction({
   name: 'deleteParkingSpace',
   displayName: 'Resources - Parking Spaces - Delete',
   description: 'Delete Parking Space.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete a parking space by its numeric id. Destructive and not reversible; deleting an already-removed id will error. Naturally idempotent in effect (the space ends up gone) but treat as unsafe to retry blindly.', idempotent: false },
   props: {
         
   parkingSpace: Property.Number({

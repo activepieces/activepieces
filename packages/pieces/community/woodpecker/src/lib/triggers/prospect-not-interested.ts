@@ -7,6 +7,9 @@ export const prospectNotInterested = createTrigger({
   name: 'prospect_not_interested',
   displayName: 'Prospect Not Interested',
   description: 'Triggers when a prospect is marked as not interested',
+  aiMetadata: {
+    description: 'Fires when a prospect is categorized as NOT_INTERESTED in Woodpecker. Represents a negative-intent signal for a single prospect, useful for disqualifying or suppressing leads.',
+  },
   props: {},
   sampleData: {
     method: 'prospect_not_interested',

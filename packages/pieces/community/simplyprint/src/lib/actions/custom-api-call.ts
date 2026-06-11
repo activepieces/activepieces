@@ -18,6 +18,12 @@ export const customApiCallAction = createAction({
   displayName: 'Custom API Call',
   description:
     'Call any SimplyPrint REST endpoint the piece does not wrap directly. Useful for admin / partner / school-dashboard endpoints and anything else behind OAuth scopes.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Makes an arbitrary authenticated HTTP request to any SimplyPrint REST endpoint, choosing the method, path, query params, and JSON body. Use as an escape hatch for endpoints this piece does not wrap with a dedicated action. Not idempotent — the effect depends on the method and endpoint called.',
+    idempotent: false,
+  },
   props: {
     method: Property.StaticDropdown({
       displayName: 'Method',

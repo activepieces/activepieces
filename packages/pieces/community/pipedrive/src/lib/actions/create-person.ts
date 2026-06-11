@@ -16,6 +16,12 @@ export const createPersonAction = createAction({
 	name: 'create-person',
 	displayName: 'Create Person',
 	description: 'Creates a new person.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Creates a new person (contact) with a name, optional emails/phones, owner, organization, and custom fields. Provide either a single Name or First/Last Name, not both. Use to add a contact (use Update Person to edit an existing one, or Find Person to check for one first). Not idempotent: each call creates a separate person, so guard against duplicates.',
+		idempotent: false,
+	},
 	props: {
 		name: Property.ShortText({
 			displayName: 'Name',

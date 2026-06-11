@@ -8,6 +8,9 @@ export const contactClickedTrigger = createTrigger({
   name: 'tarvent_contact_clicked',
   displayName: 'Campaign Or Transactional Link Clicked',
   description: 'Triggers when a link within a campaign or transactional email is clicked by a recipient.',
+  aiMetadata: {
+    description: 'Fires when a recipient clicks a link in a campaign or transactional email. Can be scoped by entity (campaign vs. transactional), by which campaign(s) qualify (any/all of the last 5, any within a recent window, or a specific campaign), by a specific link, and optionally by audience, group, or tag. Represents a click engagement event.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     include: tarventCommon.include,

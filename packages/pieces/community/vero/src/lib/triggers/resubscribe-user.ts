@@ -9,6 +9,10 @@ export const resubscribeUserTrigger = createTrigger({
   name: 'resubscribeUser',
   displayName: 'Resubscribe User',
   description: '',
+  aiMetadata: {
+    description:
+      'Fires when a user resubscribes to communications in Vero, representing restored consent for a specific user after a prior unsubscribe.',
+  },
   props: {
     instruction: Property.MarkDown({
       value: `## Vero Webhook Setup

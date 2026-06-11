@@ -7,6 +7,12 @@ export const deleteBrand = createAction({
   name: 'delete-brand',
   displayName: 'Delete Brand',
   description: "Delete a Brand in your catalog by it's id",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Delete a brand from a VTEX store catalog by its numeric brand ID. Destructive and irreversible. Idempotent in effect: once the brand is gone, repeating leaves it absent.',
+    idempotent: true,
+  },
   props: {
     brandId: Property.Number({
       displayName: 'Brand ID',

@@ -11,6 +11,12 @@ export const getContact = createAction({
   name: 'get_contact',
   displayName: 'Get Contact',
   description: 'Retrieve a single contact by ID.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up a single Plunk contact by its contact ID. Use it when you already have the exact contact ID; to discover IDs first, list contacts with Get All Contacts. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     contactId: Property.ShortText({
       displayName: 'Contact ID',

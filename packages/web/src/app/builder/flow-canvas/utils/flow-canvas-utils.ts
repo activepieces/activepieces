@@ -601,8 +601,10 @@ const offsetRouterChildSteps = ({
   const boundingBoxes = childGraphs.map((g) =>
     calculateGraphBoundingBox({ graph: g, orientation }),
   );
-  const offsets =
-    sharedFlowCanvasUtils.computeRouterChildOffsets(boundingBoxes);
+  const offsets = sharedFlowCanvasUtils.computeRouterChildOffsets(
+    boundingBoxes,
+    layout.routerBranchGap,
+  );
   return childGraphs.map((g, i) =>
     offsetGraph(g, {
       x: offsets[i],

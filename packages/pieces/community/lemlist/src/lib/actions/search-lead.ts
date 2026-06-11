@@ -8,6 +8,8 @@ export const searchLead = createAction({
   name: 'searchLead',
   displayName: 'Search Lead',
   description: 'Look up a lead by email and campaign.',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up a lead by email across the account and returns matching lead records. Operates in two modes: supply a campaign to filter results to that campaign, or leave it empty to return all campaigns the lead belongs to; returns a not-found result when no match exists. Idempotent read-only lookup.', idempotent: true },
   props: {
     campaignId: campaignsDropdown({ refreshers: ['auth'], required: false }),
     email: Property.ShortText({

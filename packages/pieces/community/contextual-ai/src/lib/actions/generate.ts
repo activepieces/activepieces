@@ -7,6 +7,8 @@ export const generateAction = createAction({
   name: 'generate',
   displayName: 'Generate Text',
   description: 'Generate text using Contextual AI\'s Grounded Language Model',
+  audience: 'both',
+  aiMetadata: { description: 'Generates text from a prompt using Contextual AI\'s Grounded Language Model, optionally grounding the output in supplied knowledge sources (omit them for general generation). Use for one-off completions or grounded answers when you are not querying a configured agent. Requires a prompt and model version; sampling and length are tunable. Not idempotent — each call produces a fresh generation.', idempotent: false },
   props: {
     prompt: Property.LongText({
       displayName: 'Prompt',

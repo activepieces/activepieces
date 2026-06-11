@@ -9,6 +9,12 @@ export const createContact = createAction({
   displayName: 'Create Contact',
   description:
     'Create a new contact in Oncehub. Either email or mobile_phone is required.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new contact record in OnceHub with name, contact details, company, and status fields. First name and last name are required, plus at least one of email or mobile phone. Not idempotent: each call creates another contact, so look up the contact first if you need to avoid duplicates.',
+    idempotent: false,
+  },
   props: {
     first_name: Property.ShortText({
       displayName: 'First Name',

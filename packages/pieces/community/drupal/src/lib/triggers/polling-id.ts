@@ -48,6 +48,9 @@ export const drupalPollingId = createTrigger({
   name: 'drupalPollingId',
   displayName: 'Polling by ID',
   description: 'A trigger that polls the Drupal site by ID.',
+  aiMetadata: {
+    description: 'Fires for each new item pushed to a named Drupal orchestration poll, tracked by an incrementing item ID so only items newer than the last seen ID are emitted. Fires once per new item; the poll name must match the name configured on the Drupal side (e.g. an ECA poll event).',
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

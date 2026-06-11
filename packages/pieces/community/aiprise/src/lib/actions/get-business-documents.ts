@@ -9,6 +9,12 @@ export const getBusinessDocumentsAction = createAction({
   displayName: 'Get Business Documents',
   description:
     'Lists all documents attached to a business profile — including file UUIDs, names, S3 URLs, timestamps, document sources, and associated verification sessions.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists every document attached to a given business profile, including each file\'s UUID, name, download URL, and the verification session it belongs to. Use this to discover a document\'s file UUID before running a document check, or to inventory what files a business has on file. Requires the business_profile_id. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     business_profile_id: Property.ShortText({
       displayName: 'Business Profile ID',

@@ -7,6 +7,8 @@ export const createLead = createAction({
   name: 'create_lead',
   displayName: 'Create Lead',
   description: 'Creates a new lead in your PollyBot chatbot.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new lead record (name and email required) under the configured PollyBot chatbot, optionally tagging phone, source, status, and custom metadata. Use when capturing a fresh contact. Not idempotent: each call creates a separate lead even with identical input.', idempotent: false },
   auth: pollybotAuth,
   props: {
     name: Property.ShortText({

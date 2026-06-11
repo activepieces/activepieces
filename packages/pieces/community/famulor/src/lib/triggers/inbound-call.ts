@@ -55,6 +55,9 @@ export const inboundCall = createTrigger({
     name: 'inboundCall',
     displayName: 'Inbound Call Received',
     description: 'Triggers when an inbound call is received by your AI assistant.',
+    aiMetadata: {
+        description: 'Fires at the moment an inbound phone call reaches the selected Famulor inbound assistant, delivering an early webhook notification before the call completes. The payload includes the assistant ID, the customer (caller) and assistant phone numbers, a call ID, a timestamp, the call status (e.g. incoming), and any known caller variables. Use to react to an incoming call as it starts, such as looking up the caller or logging the contact.',
+    },
     props: {
         assistant_id: inboundAssistantDropdown(),
     },

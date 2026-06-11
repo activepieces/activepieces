@@ -8,6 +8,8 @@ export const listPostsAction = createAction({
   name: 'list_posts',
   displayName: 'List Posts',
   description: 'Returns a list of posts, optionally filtered by status or labels.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists FeedHive posts, optionally narrowed by status (draft, scheduled, publishing, published, failed) and/or labels; leaving both filters empty returns all posts up to the result limit (max 100). Use to discover post IDs or survey the content queue. Read-only and idempotent.', idempotent: true },
   props: {
     status: Property.StaticDropdown({
       displayName: 'Filter by Status',

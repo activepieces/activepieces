@@ -7,6 +7,8 @@ export const posthogListPersons = createAction({
   name: 'list_persons',
   displayName: 'List Persons',
   description: 'Get a list of identified users in your PostHog project',
+  audience: 'both',
+  aiMetadata: { description: 'Lists identified users (persons) in the connected PostHog project; with an empty search it returns all persons up to the limit, or pass a search string to filter by email or name. Use to look up users or find a specific person before acting on them. Idempotent: a read-only lookup with no side effects.', idempotent: true },
   props: {
     limit: Property.Number({
       displayName: 'Limit',

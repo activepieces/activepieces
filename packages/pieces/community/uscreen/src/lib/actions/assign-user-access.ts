@@ -9,6 +9,8 @@ export const assignUserAccess = createAction({
     name: 'assign_user_access',
     displayName: 'Assign User Access',
     description: "Assigns a bundle or subscription to a customer. Creates a new customer if one doesn't exist.",
+    audience: 'both',
+    aiMetadata: { description: 'Grants a customer access to a product on Uscreen, where the product type is either a program (bundle) or an offer (subscription); creating the customer if they do not already exist. Use to provision or comp content access. Access can be scheduled for a future ISO 8601 time instead of granted immediately. Not idempotent: each call grants another access entry.', idempotent: false },
 
     props: {
         customer_id: uscreenProps.customerId(),

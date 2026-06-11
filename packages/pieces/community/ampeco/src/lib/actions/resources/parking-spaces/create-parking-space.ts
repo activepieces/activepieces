@@ -15,6 +15,8 @@ export const createParkingSpaceAction = createAction({
   name: 'createParkingSpace',
   displayName: 'Resources - Parking Spaces - Create',
   description: 'Create new Parking Space.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new parking space in AMPECO, tied to a location and optionally linked to EVSEs in the same charging zone. Not idempotent: calling it repeatedly produces duplicate spaces, so pass a stable externalId and check via the list action first if you need dedup.', idempotent: false },
   props: {
         
   label: Property.ShortText({

@@ -15,6 +15,8 @@ export const chargePointStatusReadAction = createAction({
   name: 'chargePointStatusRead',
   displayName: 'Resources - Charge Points - Charge Point Status Read',
   description: 'Get a charge point\'s status.',
+  audience: 'both',
+  aiMetadata: { description: 'Read the live operational status of one AMPECO charge point by its numeric ID. Read-only and safe to repeat; use this to check availability/connectivity rather than charge-point-read, which returns full configuration instead of status.', idempotent: true },
   props: {
         
   chargePoint: Property.Number({

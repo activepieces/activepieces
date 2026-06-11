@@ -9,6 +9,12 @@ export const getCustomerAction = createAction({
   name: 'get-customer',
   displayName: 'Get Customer',
   description: 'Gets a customer by ID from Kustomer.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches a single Kustomer customer record by its Kustomer customer ID. Use to look up a customer\'s details when you already have their ID. Read-only and idempotent. The customer ID is required.',
+    idempotent: true,
+  },
   props: {
     customerId: Property.ShortText({
       displayName: 'Customer ID',

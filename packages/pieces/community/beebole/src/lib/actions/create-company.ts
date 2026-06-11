@@ -18,6 +18,11 @@ export const createCompanyAction = createAction({
   name: 'create_company',
   displayName: 'Create Company',
   description: 'Creates a new company (customer) in Beebole.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a company in Beebole, either an external customer or, when marked internal/corporate, your own organization. Use as the top-level container before creating projects under it. Not idempotent: each call creates a new company even if one with the same name already exists.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Company Name',

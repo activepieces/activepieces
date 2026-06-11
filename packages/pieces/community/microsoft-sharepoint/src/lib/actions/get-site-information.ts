@@ -9,6 +9,11 @@ export const getSiteInformationAction = createAction({
   name: 'microsoft_sharepoint_get_site_information',
   displayName: 'Get Site Information',
   description: 'Fetch metadata of a SharePoint site (site ID, title, URL, description, etc.).',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Fetches metadata for a single SharePoint site by its site ID (title, URL, description, and similar properties), with optional field selection. Use to inspect or confirm site details once you have its ID. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     siteId: microsoftSharePointCommon.siteId,
     select: Property.ShortText({

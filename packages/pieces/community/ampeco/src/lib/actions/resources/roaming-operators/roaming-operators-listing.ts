@@ -15,6 +15,8 @@ export const roamingOperatorsListingAction = createAction({
   name: 'roamingOperatorsListing',
   displayName: 'Resources - Roaming Operators - Roaming Operators Listing',
   description: 'Get all Roaming Operators.',
+  audience: 'both',
+  aiMetadata: { description: 'List all roaming operators in AMPECO. Read-only and idempotent; enable Paginate Results to fetch every page, or leave it off for a single page (up to per_page, max 100). Use to discover a roaming operator ID before reading, updating, or managing its custom tariff filters.', idempotent: true },
   props: {
         
     per_page: Property.Number({

@@ -8,6 +8,8 @@ export const runAgentTaskAction = createAction({
 	name: 'run-agent-task',
 	displayName: 'Run Agent Task',
 	description: 'Runs task with specified prompt.',
+	audience: 'both',
+	aiMetadata: { description: 'Launches a Skyvern browser-automation agent task from a natural-language prompt to navigate and act on a website, optionally starting at a given URL and extracting structured data via a schema. Use to have an AI agent perform a web task (browse, fill forms, click) rather than running a predefined workflow. Each call starts a new asynchronous run, so it is not idempotent; the response returns a run identifier you poll separately with Get Workflow/Task Run.', idempotent: false },
 	props: {
 		prompt: Property.ShortText({
 			displayName: 'Prompt',

@@ -51,6 +51,9 @@ export const newScheduledPostTrigger = createTrigger({
   name: 'new_scheduled_post',
   displayName: 'New Scheduled Post',
   description: 'Triggers when a new post is scheduled in Hootsuite.',
+  aiMetadata: {
+    description: 'Fires when a new post enters the SCHEDULED state in Hootsuite, representing content queued for future publishing. Fires at scheduling time, not when the post actually sends.',
+  },
   props: {},
   sampleData: {
     id: 'msg_abc123',

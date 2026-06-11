@@ -10,6 +10,12 @@ export const sliteSearchDocsAction = createAction({
   name: 'search_docs',
   displayName: 'Search Docs',
   description: 'Performs a keyword search across the docs you have access to.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Runs a keyword search across the Slite docs the connected account can access, with optional scoping to a parent doc id, inclusion of archived docs, and pagination. Use this for term/title matching to locate docs and their ids; for natural-language question answering use Ask Question instead. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     query: Property.ShortText({
       displayName: 'Search Term',

@@ -9,6 +9,12 @@ export const getFileAction = createAction({
 	name: 'get-file',
 	displayName: 'Get File',
 	description: 'Return information about a given file ID.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Look up metadata for a single Slack file by its file ID and download its contents. Pick this when you have a file ID (e.g. from a message trigger payload) and need the file details or bytes. Read-only and idempotent; fails if the file has no accessible download URL.',
+		idempotent: true,
+	},
 	props: {
 		fileId: Property.ShortText({
 			displayName: 'File ID',

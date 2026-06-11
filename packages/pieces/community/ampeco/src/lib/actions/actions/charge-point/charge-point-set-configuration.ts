@@ -14,6 +14,8 @@ export const chargePointSetConfigurationAction = createAction({
   name: 'chargePointSetConfiguration',
   displayName: 'Actions - Charge Point - Set Configuration',
   description: 'Set Configuration for the Charge Point.',
+  audience: 'both',
+  aiMetadata: { description: 'Send an OCPP ChangeConfiguration/SetVariables command writing a single configuration key (name) to a value on a charge point; OCPP 2.0.1 stations also accept component name, instance, and EVSE id. Use to change a station setting; use sync-configuration to read keys instead. Writing the same value yields the same end state, so it is effectively idempotent.', idempotent: true },
   props: {
         
   chargePoint: Property.Number({

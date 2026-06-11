@@ -23,6 +23,12 @@ export const convertHtmlToPdf = createAction({
     name: 'convert_html_to_pdf',
     displayName: 'Convert HTML to PDF',
     description: 'Convert HTML code into a downloadable PDF document.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Renders a block of HTML into a new PDF document, with optional paper size, orientation, margins, header/footer, and media-type controls. Use when an agent needs to turn HTML markup into a downloadable PDF. Each call generates a new output file and consumes credits, so it is not idempotent.',
+        idempotent: false,
+    },
     auth: pdfCoAuth,
     props: {
         html: Property.LongText({

@@ -15,6 +15,8 @@ export const topUpPackageUpdateAction = createAction({
   name: 'topUpPackageUpdate',
   displayName: 'Resources - Top Up Packages - Update',
   description: 'Top-Up Packages.',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing top-up package, identified by its numeric id, changing only the fields you supply (price, bonus, enabled flag). Not idempotent: each call mutates live state. Use Create to add a new package and Listing to find the package id.', idempotent: false },
   props: {
         
   topUpPackage: Property.Number({

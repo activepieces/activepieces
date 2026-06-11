@@ -14,6 +14,9 @@ export const incomingCallCompleted = createTrigger({
   displayName: 'Incoming Call Completed',
   description:
     'Fires when an incoming call is completed. Includes voicemail data if available.',
+  aiMetadata: {
+    description: 'Fires when an inbound call to the OpenPhone number ends, delivering the completed call details including voicemail data when present. Outbound calls are filtered out, so this only represents received calls. Use for inbound-call logging, voicemail handling, or follow-up. Can be scoped to a specific OpenPhone number or all numbers.',
+  },
   props: {
     phoneNumbers: phoneNumberDropdown,
   },

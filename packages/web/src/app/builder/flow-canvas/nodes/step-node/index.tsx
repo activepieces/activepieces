@@ -22,7 +22,6 @@ import { ApStepNode } from '../../utils/types';
 import { StepNodeChevron } from './step-node-chevron';
 import { StepNodeDisplayName } from './step-node-display-name';
 import { StepNodeLogo } from './step-node-logo';
-import { StepNodeName } from './step-node-name';
 import { ApStepNodeSkippedStatus } from './step-node-skipped-status';
 import { ApStepNodeStatusInDraft } from './step-node-status-in-draft';
 import { ApStepNodeStatusInRun } from './step-node-status-in-run';
@@ -140,7 +139,7 @@ const ApStepCanvasNode = React.memo(
             'border-none': isDragging,
             'shadow-none': isDragging,
             'bg-accent': isSkipped,
-            'rounded-tl-none': isTrigger,
+            'rounded-tl-none': isTrigger && !isHorizontal,
             'hover:border-ring': !isSelected,
           },
         )}
@@ -155,7 +154,6 @@ const ApStepCanvasNode = React.memo(
         <ApStepNodeStatusInRun stepName={step.name} />
         <ApStepNodeSkippedStatus stepName={step.name} />
         <ApStepNodeStatusInDraft stepName={step.name} />
-        {!isHorizontal && <StepNodeName stepName={step.name} />}
         <div
           className={cn('h-full w-full', {
             'px-3 overflow-hidden': !isHorizontal,
@@ -222,12 +220,11 @@ const ApStepCanvasNode = React.memo(
                   pieceDisplayName={stepMetadata?.displayName ?? ''}
                   stepName={step.name}
                 />
-                <StepNodeName stepName={step.name} />
               </div>
             </div>
           )}
           {isHorizontal && !readonly && !isDragging && (
-            <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute top-0 right-0  translate-x-[30px] z-10">
               <StepNodeChevron />
             </div>
           )}

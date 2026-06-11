@@ -8,6 +8,8 @@ export const sendContentToUserAction = createAction({
 	name: 'sendContentToUser',
 	displayName: 'Send Content to User',
 	description: 'Sends a content to a user.',
+	audience: 'both',
+	aiMetadata: { description: 'Sends a message to a Manychat subscriber, identified by subscriber ID, where the content type selects the mode: a text message, or a media message (image, video, audio, or file) referenced by URL. Use to deliver an outbound message to a known contact, optionally targeting a specific platform and applying a message tag. Text content is required for text mode and a media URL for media modes. Not idempotent: each call sends another message.', idempotent: false },
 	props: {
 		subscriber_id: subscriberId,
 		platform: Property.StaticDropdown({

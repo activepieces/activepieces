@@ -7,6 +7,8 @@ export const createEvent = createAction({
   name: 'create_event',
   displayName: 'Create Event',
   description: 'Creates a new event in MyCase',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new calendar event in MyCase with a name, start/end times, and at least one assigned staff member, optionally flagging required attendees, marking all-day or private, and linking a location and case. Use to schedule meetings, hearings, or appointments; not idempotent, so repeated calls create duplicate events.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Event Name',

@@ -13,6 +13,8 @@ export const createCampaignAction = createAction({
   auth: sendyAuth,
   displayName: 'Create Campaign',
   description: 'Create a new campaign',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new email campaign in Sendy from the supplied from/reply-to addresses, subject, and HTML (plus optional plain text), targeting selected lists/segments. By default it is saved as a draft, but it can instead be sent immediately or scheduled for a future date/time via the auto-send and schedule options. Use to author or dispatch a campaign; HTML body and sender fields are required. Not idempotent — each call creates (and may send) a separate campaign.', idempotent: false },
   props: {
     fromEmail: Property.ShortText({
       displayName: 'From Email',

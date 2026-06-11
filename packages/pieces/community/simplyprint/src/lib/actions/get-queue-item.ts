@@ -10,6 +10,8 @@ export const getQueueItemAction = createAction({
   name: 'get_queue_item',
   displayName: 'Get Queue Item',
   description: 'Fetch a single queue item by numeric ID — returns the formatted record (file metadata, assignments, custom fields, …).',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single print-queue item by its numeric ID. Read-only; pick it to inspect one known item (file, assignments, custom fields) rather than to browse or schedule the queue. Idempotent.', idempotent: true },
   props: {
     queueItemId: Property.Number({
       displayName: 'Queue item ID',

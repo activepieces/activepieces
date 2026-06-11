@@ -10,6 +10,12 @@ export const generateQuery = createAction({
   displayName: 'Generate query',
   description:
     'Transforms a natural language description into a structured Omni query',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Generates a structured Omni query object from a natural-language prompt against a given model, optionally guided by a topic, model branch, or a context query, and can emit a more strictly structured format. Use to translate a plain-English analytics request into a runnable query (then pass the result to Run query). Not idempotent: AI generation may return different output across calls for the same prompt.',
+    idempotent: false,
+  },
   props: {
     modelId: modelIdDropdown,
     prompt: Property.LongText({

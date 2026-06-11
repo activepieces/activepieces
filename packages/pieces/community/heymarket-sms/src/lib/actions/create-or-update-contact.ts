@@ -17,6 +17,12 @@ export const createOrUpdateContact = createAction({
   displayName: 'Create or Update Contact',
   description:
     'Create a new contact or update an existing contact by phone number',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Upserts a Heymarket contact, keyed on phone number (E.164 without the leading plus, e.g. 14155553434). Supplying a Contact ID updates that existing record; omitting it creates a new contact. Use this to sync contact details (name, email, tags, opt-out) before messaging. Idempotent: re-running with the same phone/Contact ID converges on the same contact rather than duplicating; the Overwrite flag controls whether custom fields are replaced or merged.',
+    idempotent: true,
+  },
   props: {
     phone: Property.ShortText({
       displayName: 'Phone Number',

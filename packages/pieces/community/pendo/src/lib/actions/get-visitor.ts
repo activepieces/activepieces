@@ -7,6 +7,8 @@ export const getVisitor = createAction({
   name: 'get_visitor',
   displayName: 'Get Visitor Details',
   description: 'Retrieve details of a visitor by their ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up a single Pendo visitor by their unique visitor ID and returns that visitor record. Use when you have a specific visitor identifier and need their metadata/attributes. Read-only and idempotent.', idempotent: true },
   props: {
     visitorId: Property.ShortText({
       displayName: 'Visitor ID',

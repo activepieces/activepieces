@@ -7,6 +7,8 @@ export const extractDocument = createAction({
 	auth: dumplingAuth,
 	displayName: 'Extract Document Data',
 	description: 'Extract structured data from documents using vision-capable AI.',
+	audience: 'both',
+	aiMetadata: { description: 'Extracts data from an uploaded document (file or base64) using vision-capable AI on Dumpling AI, guided by a free-text extraction prompt, optionally returning the result as JSON. Use to pull fields or content out of PDFs, images, or scanned files. Not idempotent: each call is a fresh billed AI extraction whose output may vary.', idempotent: false },
 	props: {
 		file: Property.File({
 			displayName: 'File',

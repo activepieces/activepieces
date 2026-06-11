@@ -5,6 +5,8 @@ export const getTransactionSummary = createAction({
   name: 'get_transaction_summary',
   displayName: 'Get Transaction Summary',
   description: 'Get a human-readable summary of a transaction',
+  audience: 'both',
+  aiMetadata: { description: "Get Blockscout's interpreted, human-readable summary of one Ethereum transaction by hash (e.g. a plain-language description of what the transaction did, such as a swap or transfer). Read-only. Use this for a quick natural-language explanation; for the structured raw fields use Get Transaction by Hash instead.", idempotent: true },
   // category: 'Transactions',
   props: {
     transactionHash: Property.ShortText({

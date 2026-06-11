@@ -11,6 +11,11 @@ export const listHighlights = createAction({
   name: 'list-highlights',
   displayName: 'List Highlights',
   description: 'Retrieve highlights with optional topic filtering and pagination.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'List highlights across Hedy sessions, optionally filtered to a single topic; leave the topic filter empty to fetch across all topics. Use to browse highlights when you do not have a specific session in mind (use List Session Highlights to scope to one session). Set Return All to page through everything, otherwise results are capped by the limit. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     returnAll: commonProps.returnAll,
     limit: commonProps.limit,

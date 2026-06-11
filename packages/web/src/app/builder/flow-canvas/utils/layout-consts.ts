@@ -15,6 +15,8 @@ const HORIZONTAL_LAYOUT_SPACE_BETWEEN_STEPS = 80;
 const HORIZONTAL_STEP_SIZE = 80;
 // extra room on branch entry lines so the label can sit on the line next to the add button
 const HORIZONTAL_BRANCH_LABEL_SPACE = 70;
+// horizontal view spaces router branches 20px wider apart than vertical
+const HORIZONTAL_ROUTER_BRANCH_GAP = FLOW_CANVAS_HSPACE + 20;
 const STEP_NODE_SIZE: Record<
   CanvasOrientation,
   { width: number; height: number }
@@ -36,6 +38,7 @@ const ORIENTATION_LAYOUT: Record<CanvasOrientation, OrientationLayout> = {
     loopOffsetAlong: FLOW_CANVAS_LOOP_VOFFSET,
     routerOffsetAlong: FLOW_CANVAS_ROUTER_VOFFSET,
     crossGapBetweenBranches: FLOW_CANVAS_HSPACE,
+    routerBranchGap: FLOW_CANVAS_HSPACE,
   },
   horizontal: {
     stepAlongSize: HORIZONTAL_STEP_SIZE,
@@ -48,6 +51,7 @@ const ORIENTATION_LAYOUT: Record<CanvasOrientation, OrientationLayout> = {
       2 * FLOW_CANVAS_ARC +
       HORIZONTAL_BRANCH_LABEL_SPACE,
     crossGapBetweenBranches: 90,
+    routerBranchGap: HORIZONTAL_ROUTER_BRANCH_GAP,
   },
 };
 
@@ -78,4 +82,5 @@ type OrientationLayout = {
   loopOffsetAlong: number;
   routerOffsetAlong: number;
   crossGapBetweenBranches: number;
+  routerBranchGap: number;
 };

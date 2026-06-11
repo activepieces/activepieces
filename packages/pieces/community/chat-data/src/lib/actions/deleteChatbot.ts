@@ -8,6 +8,12 @@ export const deleteChatbot = createAction({
   displayName: 'Delete Chatbot',
   description:
     'Delete a chatbot and all its associated data (training data, conversations, leads, etc.). This action is irreversible.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently deletes a Chat Data chatbot identified by chatbotId, along with all of its training data, conversations, and leads. Use only when the bot should be fully removed; the deletion is irreversible. Not idempotent — a repeat call for an already-deleted chatbot will fail.',
+    idempotent: false,
+  },
   props: {
     chatbotId: Property.Dropdown({
       auth: chatDataAuth,

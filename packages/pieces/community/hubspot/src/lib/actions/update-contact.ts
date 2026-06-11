@@ -15,6 +15,8 @@ export const updateContactAction = createAction({
     name: 'update-contact',
     displayName: 'Update Contact',
     description: 'Updates a contact in Hubspot.',
+    audience: 'both',
+    aiMetadata: { description: 'Update properties on an existing HubSpot contact identified by Contact ID; only the supplied fields are changed. Applying the same values repeatedly is idempotent. Use a find action to resolve the contact ID first, or a create action to add a new contact.', idempotent: true },
     props: {
         contactId: Property.ShortText({
             displayName: 'Contact ID',

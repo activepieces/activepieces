@@ -15,6 +15,8 @@ export const listConfigurationTemplatesAction = createAction({
   name: 'listConfigurationTemplates',
   displayName: 'Resources - Configuration Templates - List Configuration Templates',
   description: 'Get all Configuration Templates.',
+  audience: 'both',
+  aiMetadata: { description: 'List OCPP configuration templates, optionally filtered by OCPP version (ocpp1.6 or ocpp2.0.1). Read-only and idempotent; use this to discover templates or find one by version, then use Get for a single known template id. Enable pagination to fetch all results.', idempotent: true },
   props: {
         
   filter__ocppVersion: Property.StaticDropdown({

@@ -7,6 +7,8 @@ export const updateRecord = createAction({
   name: 'updateRecord',
   displayName: 'Update Record',
   description: 'Updates a single record in a collection',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing record in a PocketBase collection, identified by its record ID, applying a JSON object of field values as a partial patch (only supplied fields change). Use when the record already exists and you know its ID; to insert a new record use Create Record instead. Idempotent — re-applying the same field values to the same ID yields the same result.', idempotent: true },
   auth: pocketbaseAuth,
   props: {
     collection: Property.ShortText({

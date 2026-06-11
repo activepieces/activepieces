@@ -7,6 +7,8 @@ export const posthogCreateEvent = createAction({
   name: 'create_event',
   displayName: 'Capture Event',
   description: 'Capture a custom event in PostHog',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a custom analytics event to PostHog attributed to a user via their distinct ID (e.g. user ID or email), with optional event properties. Use to record a product action or behavior in PostHog. Not idempotent: each call appends a new event, so repeating it records duplicate events.', idempotent: false },
   props: {
     event: Property.ShortText({
       displayName: 'Event Name',

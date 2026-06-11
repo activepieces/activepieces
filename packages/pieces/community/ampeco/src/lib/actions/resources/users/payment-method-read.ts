@@ -15,6 +15,8 @@ export const paymentMethodReadAction = createAction({
   name: 'paymentMethodRead',
   displayName: 'Resources - Users - Payment Method Read',
   description: 'Get information for a payment method by ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single payment method for an AMPECO user, identified by user id and payment method id. Read-only and idempotent. Use Payment Methods Listing to discover the ids first.', idempotent: true },
   props: {
         
   user: Property.Number({

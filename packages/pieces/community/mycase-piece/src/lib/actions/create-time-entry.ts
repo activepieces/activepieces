@@ -7,6 +7,8 @@ export const createTimeEntry = createAction({
   name: 'create_time_entry',
   displayName: 'Create Time Entry',
   description: 'Creates a new time entry in MyCase',
+  audience: 'both',
+  aiMetadata: { description: 'Create a billable or non-billable time entry in MyCase against a specific case and staff member, recording an activity name, entry date, rate, and hours. Use to log work time for billing; not idempotent, so repeated calls create duplicate entries.', idempotent: false },
   props: {
     activity_name: Property.ShortText({
       displayName: 'Activity Name',

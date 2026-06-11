@@ -14,6 +14,12 @@ export const updateRowAction = createAction({
   displayName: 'Update Row',
   description:
     'Update one or more rows in a Snowflake table that match a WHERE condition.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Runs an UPDATE on a Snowflake table, setting the provided column values on every row matching the given WHERE condition; leaving the condition empty updates ALL rows. Use to modify existing records in place. Repeating the same call generally yields the same final state (it sets values rather than incrementing), but it is a mutating write and the WHERE clause is embedded directly into SQL, so supply only trusted values there.',
+    idempotent: false,
+  },
   auth: snowflakeAuth,
   props: {
     database: snowflakeCommonProps.database,

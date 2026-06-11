@@ -13,6 +13,8 @@ export const chargePointDeleteAction = createAction({
   name: 'chargePointDelete',
   displayName: 'Resources - Charge Points - Charge Point Delete',
   description: 'Delete a charge point.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete a charge point by its numeric ID. Destructive and irreversible; once removed a repeat call will fail because the charge point no longer exists. Confirm the correct ID first, e.g. via charge-point-read.', idempotent: false },
   props: {
         
   chargePoint: Property.Number({

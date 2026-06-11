@@ -9,6 +9,9 @@ export const spamPhoneDetectedTrigger = createTrigger({
   name: 'spam_phone_detected',
   displayName: 'Spam Phone Number Detected',
   description: 'Triggers when a new phone number is marked as SPAM by Greip',
+  aiMetadata: {
+    description: 'Fires when Greip marks a phone number as spam/invalid, carrying the country code, carrier, and the reason it failed. Delivered via a Greip webhook (spam_phone event) that must be configured manually in the Greip dashboard.',
+  },
   auth: greipAuth,
   props: {
     webhookInstructions: Property.MarkDown({

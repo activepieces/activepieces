@@ -7,6 +7,8 @@ export const addHouseholdMember = createAction({
   name: 'add_household_member',
   displayName: 'Add Member to Household',
   description: 'Adds a member to an existing household. Link multiple contacts under one family unit.',
+  audience: 'both',
+  aiMetadata: { description: 'Adds an existing contact as a member of an existing Wealthbox household, assigning a household role/title (Head, Spouse, Child, etc.). Use to attach a person to a household after both records exist; requires the household id, the contact id, and a title. Not idempotent: it appends the membership on each call.', idempotent: false },
   auth: wealthboxAuth,
   props: {
     household_id: Property.Dropdown({

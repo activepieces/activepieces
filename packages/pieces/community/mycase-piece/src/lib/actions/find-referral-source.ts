@@ -7,6 +7,8 @@ export const findReferralSource = createAction({
   name: 'find_referral_source',
   displayName: 'Find Referral Source',
   description: 'Searches for referral sources with optional filters',
+  audience: 'both',
+  aiMetadata: { description: 'Read-only list of MyCase referral sources, optionally filtered by an updated-after timestamp and page size. Use to find an existing referral source ID before attaching it to a lead. Pure lookup with no side effects, safe to call repeatedly.', idempotent: true },
   props: {
     updated_after: Property.DateTime({
       displayName: 'Updated After',

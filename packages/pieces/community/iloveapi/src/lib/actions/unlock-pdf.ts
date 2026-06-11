@@ -8,6 +8,12 @@ export const unlockPdfAction = createAction({
   name: 'unlock_pdf',
   displayName: 'Unlock PDF',
   description: 'Remove the password from a PDF (you must know the current password).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Strip password protection from a PDF, producing an unencrypted copy. You must supply the current password that protects the file. Use the Protect PDF action for the reverse operation of adding a password. Each run produces a new output file.',
+    idempotent: false,
+  },
   props: {
     file: Property.File({
       displayName: 'PDF File',

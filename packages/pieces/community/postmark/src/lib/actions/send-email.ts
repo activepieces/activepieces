@@ -28,6 +28,12 @@ export const sendEmail = createAction({
   name: 'send_email',
   displayName: 'Send Email',
   description: 'Send a single transactional email using Postmark.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends one transactional email through Postmark with an inline subject and body (text, HTML, or both). Use to deliver a one-off ad-hoc message; for content driven by a saved Postmark template use Send Email With Template instead. Requires a From address verified on the Postmark server and at least one of text or HTML body. Not idempotent: each call dispatches a new email.',
+    idempotent: false,
+  },
   auth: postmarkAuth,
   props: {
     from: Property.ShortText({

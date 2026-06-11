@@ -9,6 +9,8 @@ export const moveQueueItemAction = createAction({
   name: 'move_queue_item',
   displayName: 'Move Queue Item',
   description: 'Move a queue item to a different queue group.',
+  audience: 'both',
+  aiMetadata: { description: 'Reassign one existing print-queue item to a different queue group by its numeric ID. Pick it to reorganize the queue across groups rather than to add or remove items. Idempotent: moving an item already in the target group leaves it there.', idempotent: true },
   props: {
     queueItemId: Property.Number({
       displayName: 'Queue item ID',

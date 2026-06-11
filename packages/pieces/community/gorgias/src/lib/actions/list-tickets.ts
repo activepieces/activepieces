@@ -8,6 +8,8 @@ export const listTicketsAction = createAction({
   name: 'list_gorgias_tickets',
   displayName: 'List Tickets',
   description: 'List Gorgias tickets with cursor-based pagination support.',
+  audience: 'both',
+  aiMetadata: { description: 'List Gorgias support tickets, one page at a time, with optional filtering by customer ID and custom ordering. Use to discover or enumerate tickets when you do not have a specific ID; pass the cursor from a prior response to page through results. Idempotent read-only query.', idempotent: true },
   props: {
     customerId: Property.Number({
       displayName: 'Customer ID',

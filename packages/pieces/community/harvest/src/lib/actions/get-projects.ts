@@ -13,6 +13,8 @@ export const getProjects = createAction({
   auth: harvestAuth,
   displayName: 'Get Projects',
   description: 'Fetches projects',
+  audience: 'both',
+  aiMetadata: { description: 'Lists projects from a Harvest account; with no filters it returns every project, or narrow by active/inactive state, client ID, or updated-since timestamp. Use to discover project IDs or enumerate a client\'s projects. Read-only and idempotent.', idempotent: true },
   props: {
       is_active: Property.ShortText({
       description: 'Pass `true` to only return active projects and `false` to return inactive projects.',

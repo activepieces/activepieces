@@ -62,6 +62,9 @@ export const newSubmissionTrigger = createTrigger({
   name: 'new_submission',
   displayName: 'New Form Submission',
   description: 'Triggers when a user submits data through your form.',
+  aiMetadata: {
+    description: 'Fires when a new submission is received for the selected Feathery form, including partial/incomplete submissions. Each event represents one submission record with its field values and user ID. Polls the form for submissions updated since the last check.',
+  },
   props: {
     form_id: Property.Dropdown({
       displayName: 'Form',

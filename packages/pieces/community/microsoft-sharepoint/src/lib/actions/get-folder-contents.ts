@@ -16,6 +16,11 @@ export const getFolderContentsAction = createAction({
   name: 'microsoft_sharepoint_get_folder_contents',
   displayName: 'Get Folder Contents',
   description: 'List all files and subfolders in a specified folder, optionally with detailed metadata.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Lists the immediate files and subfolders of a folder in a SharePoint document library (drive) on a given site, with optional paging, field selection, sorting, and inclusion of custom SharePoint column metadata. Use to enumerate or browse a folder one level deep. Read-only and idempotent; returns one page (default 200 items) with an @odata.nextLink for further pages.',
+    idempotent: true,
+  },
   props: {
     siteId: microsoftSharePointCommon.siteId,
     driveId: microsoftSharePointCommon.driveId,

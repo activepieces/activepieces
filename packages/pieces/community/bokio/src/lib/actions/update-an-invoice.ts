@@ -9,6 +9,8 @@ export const updateAnInvoice = createAction({
   name: 'updateAnInvoice',
   displayName: 'Update an invoice',
   description: 'Updates an existing draft invoice in Bokio',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing draft invoice in Bokio, identified by invoice ID, replacing fields such as type, customer, dates, currency, and the full line-items list (passed as a JSON array). Use to modify an invoice that already exists rather than create one. Idempotent — repeating the same update yields the same invoice state.', idempotent: true },
   props: {
     invoiceId: invoiceIdDropdown,
     invoiceType: Property.StaticDropdown({

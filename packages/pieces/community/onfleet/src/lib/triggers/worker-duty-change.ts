@@ -10,6 +10,10 @@ export const workerDutyChange = createTrigger({
   name: 'worker_duty_change',
   displayName: 'Worker Duty Change',
   description: 'Triggers when a worker status changes',
+  aiMetadata: {
+    description:
+      'Fires when an Onfleet worker changes duty status, going on-duty or off-duty. Represents a shift in a driver availability for dispatch, useful for capacity tracking, shift logging, or staffing alerts. The payload includes the worker and the new duty state.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   //Create the webhook and save the webhook ID in store for disable behavior

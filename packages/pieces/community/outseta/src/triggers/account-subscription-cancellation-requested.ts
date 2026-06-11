@@ -4,6 +4,10 @@ export const accountSubscriptionCancellationRequestedTrigger = createManualWebho
   name: 'account_subscription_cancellation_requested',
   displayName: 'Account Subscription Cancellation Requested',
   description: 'Triggers when a subscription cancellation is requested for an account in Outseta.',
+  aiMetadata: {
+    description:
+      "Fires when a cancellation is requested for an account's subscription in Outseta (scheduled to end at the term end), delivering the account with its subscription end date. Use to trigger retention/winback flows before the subscription actually expires.",
+  },
   sampleData: {
     Name: 'Acme Corp',
     IsDemo: false,

@@ -3,14 +3,14 @@ import { Node, useKeyPress, useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import {
   Fullscreen,
+  GalleryHorizontalEnd,
+  GalleryVerticalEnd,
   Hand,
   ImageDown,
   LoaderCircle,
   Map,
   Minus,
   MousePointer,
-  MoveHorizontal,
-  MoveVertical,
   Plus,
   StickyNote,
 } from 'lucide-react';
@@ -345,9 +345,9 @@ const CanvasControls = ({
             }}
           >
             {canvasOrientation === 'horizontal' ? (
-              <MoveVertical className="size-4" />
+              <GalleryVerticalEnd className="size-4" />
             ) : (
-              <MoveHorizontal className="size-4" />
+              <GalleryHorizontalEnd className="size-4" />
             )}
           </Button>
         </CanvasButtonWrapper>

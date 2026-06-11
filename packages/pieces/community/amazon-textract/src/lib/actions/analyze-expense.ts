@@ -14,6 +14,8 @@ export const analyzeExpense = createAction({
   displayName: 'Analyze Expense',
   description:
     'Extract structured data from receipts and invoices: vendor name, totals, tax, line items, and more. Works best with clearly formatted receipts and invoices.',
+  audience: 'both',
+  aiMetadata: { description: 'Synchronously analyze a receipt or invoice with AWS Textract to extract structured financial fields such as vendor name, totals, tax, dates, and line items. Choose it specifically for expense documents rather than the general Analyze Document action. The source can be an uploaded file (JPEG/PNG only) or an S3 object (also PDF/TIFF, single-page only). Idempotent: it is a stateless read-only inference that returns the same result for the same input.', idempotent: true },
   props: {
     source: Property.StaticDropdown({
       displayName: 'Document Source',

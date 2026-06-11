@@ -9,6 +9,8 @@ export const createPipelineRecord = createAction({
   name: 'createPipeline',
   displayName: 'Create Pipeline',
   description: 'Creates a new pipeline record in Bigin',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new pipeline record (deal) in Bigin CRM with a deal name, pipeline, sub-pipeline, stage, and closing date, plus optional amount, owner, company, contact, secondary contacts, associated products, tags, and module-defined fields. Use to open a new sales opportunity. Not idempotent: each call creates a new deal.', idempotent: false },
   props: {
     dealName: Property.ShortText({
       displayName: 'Deal Name',

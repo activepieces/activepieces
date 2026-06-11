@@ -12,6 +12,12 @@ export const trustProfile = createAction({
   displayName: 'Trust Profile',
   description:
     'Returns the trust profile for a capability: SQS quality score (0-100), Quality grade (A-F), Reliability grade (A-F), and execution guidance. Use this before relying on a capability for high-stakes decisions. No API key required.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetch the trust profile for a Strale slug — quality score (0-100), quality and reliability grades (A-F), and execution guidance. Set the type to look up either an individual capability or a bundled solution. Use this to gauge reliability before depending on a capability for high-stakes decisions. Read-only and idempotent; requires the target slug.',
+    idempotent: true,
+  },
   props: {
     slug: Property.ShortText({
       displayName: 'Capability Slug',

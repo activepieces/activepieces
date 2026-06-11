@@ -9,6 +9,12 @@ export const createTeam = createAction({
   displayName: 'Create Team',
   description:
     'Create a new Webex team. The authenticated user is automatically added as a member.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new Webex team with the given name and an optional description. Use it to set up a team that can group multiple rooms. Each call creates a distinct team, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Team Name',

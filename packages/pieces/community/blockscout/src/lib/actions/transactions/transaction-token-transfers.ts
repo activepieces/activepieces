@@ -5,6 +5,8 @@ export const getTransactionTokenTransfers = createAction({
   name: 'get_transaction_token_transfers',
   displayName: 'Get Transaction Token Transfers',
   description: 'Get list of token transfers in a transaction',
+  audience: 'both',
+  aiMetadata: { description: 'List the ERC-20/721/1155 token transfers that occurred within one Ethereum transaction, identified by its hash. Read-only. Use this when you have a transaction hash and want the tokens it moved; for token transfers across a token contract over time use the Tokens Get Token Transfers action instead.', idempotent: true },
   // category: 'Transactions',
   props: {
     transactionHash: Property.ShortText({

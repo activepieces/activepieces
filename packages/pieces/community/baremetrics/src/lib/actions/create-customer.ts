@@ -10,6 +10,8 @@ export const createCustomer = createAction({
   name: 'create_customer',
   displayName: 'Create Customer',
   description: 'Creates a new customer record',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a customer under a Baremetrics data source, keyed on your own unique customer ID (oid); pick the source from the connected providers. Use to register a customer before attaching subscriptions. Idempotent: the source treats oid as the unique key, so re-running with the same oid updates that customer rather than creating a duplicate.', idempotent: true },
   auth: baremetricsAuth,
   props: {
     source_id: Property.Dropdown({

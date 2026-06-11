@@ -7,6 +7,8 @@ export const createExpense = createAction({
   name: 'create_expense',
   displayName: 'Create Expense',
   description: 'Creates a new expense in MyCase',
+  audience: 'both',
+  aiMetadata: { description: 'Always inserts a new expense entry tied to a specific case, with activity name, entry date, cost, units, billable flag, and an optional staff member. The activity name is created automatically if it does not already exist. Not idempotent: each call records another expense, so guard against re-runs when retrying.', idempotent: false },
   props: {
     activity_name: Property.ShortText({
       displayName: 'Activity Name',

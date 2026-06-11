@@ -8,6 +8,8 @@ export const appendTableRowsAction = createAction({
   auth: excelAuth,
   name: 'append_table_rows',
   description: 'Append rows to a table',
+  audience: 'both',
+  aiMetadata: { description: 'Append a row of values to a defined Excel table (by table id), mapped to the table columns. Use for structured tables that auto-expand; for a plain worksheet without a table use Append Multiple Rows. Not idempotent — re-running adds duplicate rows.', idempotent: false },
   displayName: 'Append Rows to a Table',
   props: {
     storageSource: commonProps.storageSource,

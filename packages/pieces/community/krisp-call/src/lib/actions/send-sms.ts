@@ -14,6 +14,12 @@ export const sendSms = createAction({
   displayName: 'Send SMS',
   auth: krispcallAuth,
   description: 'Send sms in Krispcall.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Send a text-only SMS message from one of the connected KrispCall account numbers to a destination phone number. Use when an agent needs to send a plain SMS; the from number must be one provisioned on the account and the message content is required. Not idempotent — each call dispatches a new message.',
+    idempotent: false,
+  },
   props: {
     from_number: Property.Dropdown({
       displayName: 'From Number',

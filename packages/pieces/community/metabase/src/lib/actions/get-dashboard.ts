@@ -38,6 +38,12 @@ export const getDashboardQuestions = createAction({
   displayName: 'Get Dashboard Questions',
   description:
     'Execute all questions across all tabs in a Metabase dashboard and return their consolidated results in a single response',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Runs every question (card) on a Metabase dashboard, identified by dashboard ID, and returns all of their results plus the dashboard's available parameters in one consolidated response. Use to retrieve data from an entire dashboard at once rather than fetching cards individually. Optionally pass a parameters object (keyed by parameter slug) applied across all cards. Read-only and idempotent.",
+    idempotent: true,
+  },
   props: {
     dashboardId: Property.ShortText({
       displayName: 'Metabase Dashboard ID',

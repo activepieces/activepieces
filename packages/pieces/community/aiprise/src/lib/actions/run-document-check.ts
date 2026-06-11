@@ -9,6 +9,12 @@ export const runDocumentCheckAction = createAction({
   displayName: 'Run Business Document Check',
   description:
     'Runs a verification check on a document belonging to an existing business profile. AiPrise will process the uploaded file against the checks defined in the chosen template.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Runs a verification check on a single previously-uploaded document attached to a business profile, processing the file against a chosen template. Use when you need to validate a specific business document (rather than running a full business verification). Requires the business_profile_id, a template ID, and the file UUID of the already-uploaded document. Not idempotent — each call launches a new document check.',
+    idempotent: false,
+  },
   props: {
     business_profile_id: Property.ShortText({
       displayName: 'Business Profile ID',

@@ -7,6 +7,8 @@ export const getOrder = createAction({
     name: 'getOrder',
     displayName: 'Get an order',
     description: 'Get an order according to the ID',
+    audience: 'both',
+    aiMetadata: { description: 'Fetches a single Saleor order by its order ID, returning core fields such as number, status, total, customer, and line items. Use it to look up the current details of a known order. Requires the order ID and is read-only and idempotent.', idempotent: true },
     auth: saleorAuth,
     props: {
       orderId: Property.ShortText({ 

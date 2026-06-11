@@ -16,6 +16,11 @@ export const createOrUpdateContact = createAction({
   name: 'createOrUpdateContact',
   displayName: 'Create or Update Contact',
   description: 'Creates a new or update an existing contact.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Create a new PandaDoc contact or update an existing one, depending on whether a contact ID is supplied: with an ID it patches that contact, without one it creates a new contact. Use to maintain recipient/contact records. Not idempotent in create mode — omitting the contact ID creates a duplicate on each call.',
+    idempotent: false,
+  },
   auth: pandadocAuth,
   props: {
     contact_id: Property.Dropdown({

@@ -8,6 +8,8 @@ export const createInvoice = createAction({
   name: 'create_invoice',
   displayName: 'Create Invoice',
   description: 'Creates a new invoice in JustInvoice',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new invoice in JustInvoice for a customer, with at least one line item, optionally setting it to Draft or Final status on creation. Use to bill a customer or generate an invoice record. Not idempotent: each call mints a new invoice even with identical input.', idempotent: false },
   props: {
     customerEmail: Property.ShortText({
       displayName: 'Customer Email',
