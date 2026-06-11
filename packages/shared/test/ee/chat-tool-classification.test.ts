@@ -33,3 +33,15 @@ describe('chatToolClassification.isReadActionName', () => {
         expect(chatToolClassification.isReadActionName('do_thing')).toBe(false)
     })
 })
+
+describe('chatToolClassification.hasFailureTextPrefix', () => {
+    it('flags text starting with a failure glyph', () => {
+        expect(chatToolClassification.hasFailureTextPrefix('❌ Something went wrong')).toBe(true)
+        expect(chatToolClassification.hasFailureTextPrefix('⏳ Waiting for approval')).toBe(true)
+    })
+
+    it('does not flag normal output', () => {
+        expect(chatToolClassification.hasFailureTextPrefix('Created row 42')).toBe(false)
+        expect(chatToolClassification.hasFailureTextPrefix('')).toBe(false)
+    })
+})

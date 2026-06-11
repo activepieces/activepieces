@@ -132,7 +132,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
                 ? { mcpServerUrl: mcpCredentials.mcpServerUrl, mcpToken: mcpCredentials.mcpToken }
                 : null,
             projects: userProjects.map((p) => ({ id: p.id, displayName: p.displayName, type: p.type })),
-            guides: chatPrompt.loadGuides(),
+            guides: chatPrompt.guides,
         }
     },
 

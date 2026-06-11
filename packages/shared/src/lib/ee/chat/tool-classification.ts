@@ -1,6 +1,13 @@
 const READ_ACTION_PATTERNS = ['list', 'get', 'search', 'find', 'fetch', 'read', 'count', 'check', 'verify', 'lookup']
 const WRITE_ACTION_PATTERNS = ['delete', 'remove', 'send', 'post', 'publish', 'create', 'update', 'write', 'insert', 'reply', 'forward']
 
+// Pieces without a structured success flag signal failure with a leading status glyph.
+const FAILURE_TEXT_PREFIXES = ['❌', '⏳']
+
+function hasFailureTextPrefix(text: string): boolean {
+    return FAILURE_TEXT_PREFIXES.some((prefix) => text.startsWith(prefix))
+}
+
 function actionNameMatchesPatterns({ actionName, patterns }: { actionName: string, patterns: string[] }): boolean {
     const words = actionName.toLowerCase().split(/[_\-.]/)
     return patterns.some((pattern) => words.includes(pattern))
@@ -34,4 +41,5 @@ export const chatToolClassification = {
     requiresActionPreview,
     isReadActionName,
     readOnlyRejection,
+    hasFailureTextPrefix,
 }

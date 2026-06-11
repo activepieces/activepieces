@@ -5,6 +5,7 @@ import {
     BedrockProviderAuthConfig,
     BedrockProviderConfig,
     chatPersistenceUtils,
+    chatToolClassification,
     CloudflareGatewayProviderConfig,
     OpenAICompatibleProviderConfig,
     PersistedChatPart,
@@ -253,8 +254,7 @@ function buildStepParts({ content }: {
                     const isAppSuccess = result.type === 'tool-result'
                         && outputRecord['success'] !== false
                         && outputRecord['isError'] !== true
-                        && !firstContentText.startsWith('❌')
-                        && !firstContentText.startsWith('⏳')
+                        && !chatToolClassification.hasFailureTextPrefix(firstContentText)
                         && !firstContentText.includes('cancelled by user')
                     const errorText = !isAppSuccess && firstContentText
                         ? firstContentText

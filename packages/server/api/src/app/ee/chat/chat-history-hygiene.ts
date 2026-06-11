@@ -4,15 +4,10 @@ const KEEP_RECENT_TOOL_RESULTS = 6
 const COLLAPSE_OUTPUT_OVER_CHARS = 600
 
 /**
- * Collapses stale large tool-result outputs in the LLM-facing history.
- *
  * A tool result's full payload is only needed on the turn it is produced; on
- * later turns it dilutes the context and buries the user's intent under walls
- * of machine JSON (research/props/explore/test outputs). This keeps the most
- * recent results intact and replaces older oversized ones with a short marker.
- *
- * Never removes a message (tool_use/tool_result pairing stays valid) and never
- * mutates the input — callers persist the full history separately.
+ * later turns it just dilutes the context. Keeps the most recent results intact
+ * and replaces older oversized ones with a short marker. Never removes a message
+ * (keeps tool_use/tool_result pairing valid) and never mutates the input.
  */
 function collapseStaleToolOutputs({ messages }: { messages: ModelMessage[] }): ModelMessage[] {
     const totalToolResults = messages.reduce((count, message) => {

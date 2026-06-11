@@ -65,12 +65,8 @@ function buildAgentSystemPrompt({ projects, currentProjectId, frontendUrl }: {
         .replaceAll('{{FRONTEND_URL}}', frontendUrl)
 }
 
-function loadGuides(): Record<string, string> {
-    return GUIDES
-}
-
 export const chatPrompt = {
     buildSystemPrompt: buildAgentSystemPrompt,
-    loadGuides,
+    guides: GUIDES,
     projectDisplayName,
 }

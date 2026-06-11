@@ -1,13 +1,8 @@
 /**
- * The chat agent works in two phases. During DISCOVERY it only needs read/
- * understand tools; the heavy flow-construction/editing/publishing/table-write
- * tools are noise that bloats context and invites premature building. Once the
- * agent starts building (it loads the build_flow/one_time_task guide and sets
- * the phase), the full toolset opens up.
- *
- * Implemented as a denylist (not an allowlist) on purpose: if a tool is ever
- * added and not classified here, it stays visible — a missing entry degrades
- * to "slightly noisier discovery", never to "a needed tool vanished".
+ * Two-phase tool visibility: in DISCOVERY the agent sees only read/understand
+ * tools; the flow-construction/editing/publishing/table-write tools stay hidden
+ * until it starts building. Denylist (not allowlist) on purpose — an unclassified
+ * new tool degrades to "noisier discovery", never to "a needed tool vanished".
  */
 
 const BUILD_ONLY_TOOL_NAMES = new Set<string>([

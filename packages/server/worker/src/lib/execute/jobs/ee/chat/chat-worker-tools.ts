@@ -547,7 +547,7 @@ function isSuccessResult(result: unknown): boolean {
     if (Array.isArray(result['content'])) {
         const first = result['content'][0]
         const text = isObject(first) && typeof first['text'] === 'string' ? first['text'] : ''
-        return !text.startsWith('❌') && !text.startsWith('⏳')
+        return !chatToolClassification.hasFailureTextPrefix(text)
     }
     return false
 }
