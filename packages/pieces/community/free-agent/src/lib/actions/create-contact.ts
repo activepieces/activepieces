@@ -9,6 +9,8 @@ import { freeAgentAuth } from '../auth';
 export const freeAgentCreateContact = createAction({
   displayName: 'Create Contact',
   description: 'Create a new contact in FreeAgent',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new contact (client or supplier) in FreeAgent. Use when adding a person or organization to bill or work with. Requires either a first and last name or an organization name; all other fields (email, address, tax, payment terms, locale) are optional. Not idempotent — each call creates another contact even with identical details.', idempotent: false },
   auth: freeAgentAuth,
   name: 'create_contact',
   props: {

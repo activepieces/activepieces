@@ -9,6 +9,8 @@ export const uploadFileAction = createAction({
     name: 'upload_file',
     displayName: 'Upload File to Knowledge Base',
     description: 'Add a file directly into a specific folder in the knowledge base.',
+    audience: 'both',
+    aiMetadata: { description: 'Uploads a binary file (e.g. txt, md, rtf, pdf, ppt, docx) into a Cody knowledge base folder via a signed URL, then registers it as a document. Use when ingesting an existing file rather than inline text. Requires a target folder ID and the file; creates a new document each call, so it is not idempotent.', idempotent: false },
     props: {
         folder_id: folderIdDropdown,
         file: Property.File({

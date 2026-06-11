@@ -9,6 +9,8 @@ export const deleteBucketAcl = createAction({
   name: 'delete_bucket_acl',
   displayName: 'Delete Bucket ACL',
   description: 'Remove an ACL entry from a bucket. Perfect for revoking access for a user or group.',
+  audience: 'both',
+  aiMetadata: { description: 'Removes an entity\'s entry from a bucket\'s own access-control list. Use to revoke a user or group\'s access to the bucket. Not idempotent: the first call removes the entry and a repeat fails because it no longer exists. Only works on buckets using fine-grained ACLs, not uniform bucket-level access; requires bucket and entity.', idempotent: false },
   props: {
     projectId: projectIdProperty,
     bucket: bucketDropdown,

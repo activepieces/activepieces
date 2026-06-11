@@ -8,6 +8,8 @@ export const getPostAction = createAction({
   name: 'get_post',
   displayName: 'Get Post',
   description: 'Retrieves the details of a specific post.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches the full details of a single FeedHive post by its post ID. Use to read a post\'s current content, status, schedule, accounts, and labels before acting on it. Read-only and idempotent.', idempotent: true },
   props: {
     post_id: feedhiveCommon.postDropdown,
   },

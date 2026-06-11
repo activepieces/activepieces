@@ -7,6 +7,12 @@ export const getGenderByFullName = createAction({
   name: 'getGenderByFullName',
   displayName: 'Get Gender by Full Name',
   description: 'Predict the gender of a person based on their full name',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Predicts the likely gender of a person from a full name (first and last) via the Gender API, which extracts the first name internally. Use when you have the complete name rather than only a given name; optionally pass a country code and/or locale to improve accuracy for region-specific names. Read-only lookup that is safe to repeat.',
+    idempotent: true,
+  },
   props: {
     full_name: Property.ShortText({
       displayName: 'Full Name',

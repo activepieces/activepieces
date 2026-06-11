@@ -34,6 +34,12 @@ export const findOrCreateRowAction = createAction({
   displayName: 'Find or Create Record',
   description:
     'Searches for a row matching a WHERE clause. If found, returns it. If not found, inserts the provided row data and returns that.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Finds the first row matching a SQL WHERE condition in a BigQuery table and returns it; if none matches, streams the supplied JSON row in and returns that instead, flagging whether it was found or created. Use it as a get-or-insert to avoid duplicates when ensuring a record exists. Conditionally idempotent: it only inserts when nothing matches, but because the WHERE condition and the inserted data are independent, a poorly aligned condition can let repeated calls insert duplicate rows.',
+    idempotent: false,
+  },
   props: {
     project_id: projectIdProp,
     dataset_id: datasetIdProp,

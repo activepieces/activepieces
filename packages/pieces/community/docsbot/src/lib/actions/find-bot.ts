@@ -7,6 +7,8 @@ export const findBot = createAction({
   name: 'findBot',
   displayName: 'Find Bot',
   description: 'Finds bot by name.',
+  audience: 'both',
+  aiMetadata: { description: 'Look up bots in a team by name, matching case-insensitively on any bot whose name contains the given string (returns all matches). Use this to resolve a bot name to its id before calling actions that require a botId. Read-only lookup, so it is idempotent; throws if no bot matches.', idempotent: true },
   props: docsbotCommon.findBotProperties(),
   async run({ auth: apiKey, propsValue }) {
     await propsValidation.validateZod(propsValue, docsbotCommon.findBotSchema);
