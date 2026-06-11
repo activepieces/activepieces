@@ -9,6 +9,11 @@ export const activateUser = createAction({
   name: 'activate_user',
   displayName: 'Activate User',
   description: 'Activates an existing user who was suspended after entering incorrect credentials multiple times',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Reactivates a Vault user identified by user ID who was suspended after too many failed login attempts. Use to lift an automatic lockout. Idempotent: activating an already-active user leaves it active.',
+    idempotent: true,
+  },
   props: {
     userId: userIdDropdown,
   },

@@ -13,6 +13,12 @@ export const addImageToPdf = createAction({
 	name: 'add_image_to_pdf',
 	displayName: 'Add Image to PDF',
 	description: 'Add image to a PDF document.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Overlays an image (referenced by URL) onto a source PDF (referenced by URL) at the given x/y coordinates, optionally on specific pages. Use when an agent needs to stamp a logo, signature, or other graphic onto an existing document. Each call produces a new output PDF file and consumes credits, so it is not idempotent.',
+		idempotent: false,
+	},
 	auth: pdfCoAuth,
 	props: {
 		url: Property.ShortText({

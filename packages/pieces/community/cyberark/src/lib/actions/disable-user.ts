@@ -9,6 +9,11 @@ export const disableUser = createAction({
   name: 'disable_user',
   displayName: 'Disable User',
   description: 'Disables a specific user in the Vault',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Disables a Vault user identified by user ID so they can no longer authenticate, without deleting the account. Use to temporarily revoke access. Idempotent: disabling an already-disabled user leaves it disabled.',
+    idempotent: true,
+  },
   props: {
     userId: userIdDropdown
   },

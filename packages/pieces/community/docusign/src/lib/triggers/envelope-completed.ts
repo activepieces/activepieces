@@ -5,6 +5,10 @@ export const envelopeCompleted = createEnvelopeEventTrigger({
   displayName: 'Document Fully Signed',
   description:
     'Triggers when everyone has completed their signature and the document is fully signed.',
+  aiMetadata: {
+    description:
+      'Fires when all recipients on a DocuSign envelope have completed their signatures and the envelope is fully signed. Represents successful end-to-end completion of a signing request.',
+  },
   docusignEvent: 'envelope-completed',
   sampleData: {
     event: 'envelope-completed',

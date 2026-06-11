@@ -9,6 +9,12 @@ export const getSentences = createAction({
   requireAuth: true,
   displayName: 'Get Transcript Sentences',
   description: 'Retrieve the sentences of the transcript by its ID.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Returns the sentence-level segmentation of an existing transcript, identified by its ID, with per-sentence text and timestamps. Use this when you need the transcript broken into sentences rather than the raw text. Requires a valid transcript ID; read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     id: transcriptIdProp,
   },

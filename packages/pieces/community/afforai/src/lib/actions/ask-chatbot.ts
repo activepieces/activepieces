@@ -11,6 +11,8 @@ export const askChatbotAction = createAction({
   name: 'afforai_ask_chatbot',
   displayName: 'Ask Chatbot',
   description: 'Gets AI-generated completions for a given chatbot.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a conversation history to a specific Afforai chatbot (identified by its Chatbot/session ID) and returns an AI-generated reply grounded in that chatbot\'s documents. Choose this to query an existing knowledge base rather than to manage documents. Optionally enable deeper document search and/or live Google search to broaden sources. Not idempotent: each call produces a fresh, potentially different completion.', idempotent: false },
   props: {
     sessionID: Property.ShortText({
       displayName: 'Chatbot ID',

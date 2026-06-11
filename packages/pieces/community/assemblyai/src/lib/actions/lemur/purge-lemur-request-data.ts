@@ -10,6 +10,12 @@ export const purgeLemurRequestData = createAction({
   displayName: 'Purge LeMUR request data',
   description: `Delete the data for a previously submitted LeMUR request.
 The LLM response data, as well as any context provided in the original request will be removed.`,
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently deletes the data of a previously submitted LeMUR request, identified by its request ID, including the LLM response and any context from the original request. Use this to purge LeMUR data for privacy or compliance; this is a destructive mutation. Requires a valid LeMUR request ID and is not idempotent.',
+    idempotent: false,
+  },
   props: {
     request_id: lemurRequestIdProp,
   },

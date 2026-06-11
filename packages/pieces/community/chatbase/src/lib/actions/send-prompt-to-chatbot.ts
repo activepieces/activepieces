@@ -9,6 +9,8 @@ export const sendPromptToChatbotAction = createAction({
 	name: 'message_chatbot',
 	displayName: 'Send Prompt to Chatbot',
 	description: 'Sends a prompt to the chatbot to generate a response.',
+	audience: 'both',
+	aiMetadata: { description: 'Sends a user prompt to a specific Chatbase chatbot (selected by its ID) and returns the generated reply, optionally overriding the model and temperature. Use when an agent needs an answer from a trained chatbot; pass a stable conversationId to keep messages threaded in one logged conversation. Not idempotent: each call appends a turn and produces a fresh, possibly different completion.', idempotent: false },
 	props: {
 		chatbotId: chatbotIdDropdown,
 		message: Property.LongText({

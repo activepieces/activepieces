@@ -14,6 +14,8 @@ export const analyzeId = createAction({
   displayName: 'Analyze ID Document',
   description:
     'Extract structured data from identity documents such as driver\'s licenses and passports. Returns fields like name, date of birth, ID number, and expiry date.',
+  audience: 'both',
+  aiMetadata: { description: 'Synchronously analyze a US identity document (driver\'s license or passport) with AWS Textract to extract fields like name, date of birth, ID number, and expiry date. Choose it specifically for ID documents rather than the general Analyze Document action. The source can be an uploaded file or an S3 object, but only JPEG and PNG are accepted here — PDF and TIFF are not supported. Idempotent: it is a stateless read-only inference that returns the same result for the same input.', idempotent: true },
   props: {
     source: Property.StaticDropdown({
       displayName: 'Document Source',

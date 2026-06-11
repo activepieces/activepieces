@@ -7,6 +7,10 @@ export const buttondownSubscriberConfirmed = createButtondownWebhookTrigger({
   name: 'buttondown_subscriber_confirmed',
   displayName: 'Subscriber Confirmed',
   description: 'Triggers when a subscriber confirms their email.',
+  aiMetadata: {
+    description:
+      'Fires when a subscriber completes double opt-in and confirms their email address in Buttondown. Represents a subscriber transitioning to confirmed status; the payload is enriched with the full subscriber details.',
+  },
   eventType: 'subscriber.confirmed',
   sampleData: {
     event_type: 'subscriber.confirmed',

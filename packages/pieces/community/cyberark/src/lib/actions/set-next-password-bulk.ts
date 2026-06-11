@@ -15,6 +15,11 @@ export const setNextPasswordBulk = createAction({
   displayName: 'Set Next Password in Bulk',
   description:
     'Sets multiple accounts\' credentials to use for the next CPM change',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Sets the specific credential value the CPM will apply on the next change for a list of CyberArk accounts (each item carries an account ID, an optional changeImmediately flag, and the new credentials). Use to pre-stage a known password for accounts rather than letting the CPM pick a random one. Not idempotent: each call writes a new pending/applied credential and, when changeImmediately is set, triggers a change.',
+    idempotent: false,
+  },
   props: {
     bulkItems: Property.Array({
       displayName: 'Bulk Items',

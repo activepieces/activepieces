@@ -8,6 +8,11 @@ export const generateSignedUrl = createAction({
   name: 'generate-signed-url',
   displayName: 'Generate signed URL',
   description: 'Generate a signed URL for a file in a s3 bucket',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Generates a time-limited pre-signed download (GET) URL for an existing object in the configured S3 bucket, letting anyone with the link fetch the file without AWS credentials until it expires. Use when you need to share read access to a stored file. Read-only and idempotent (no object is modified), though each call returns a freshly signed URL.',
+    idempotent: true,
+  },
   props: {
     key: Property.ShortText({
       displayName: 'File Path',

@@ -7,6 +7,12 @@ export const findContactAction = createAction({
   name: 'find_contact',
   displayName: 'Find Contact',
   description: 'Find a Person by search criteria.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches Capsule CRM contacts by a free-text term (such as a name or email) and returns only matches of type person, filtering out organisations. Use to look up an existing person before creating or referencing one. Idempotent: it is a read-only search that does not modify any data.',
+    idempotent: true,
+  },
   props: {
     term: Property.ShortText({
       displayName: 'Search Term',

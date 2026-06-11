@@ -9,6 +9,8 @@ export const getVoice = createAction({
   name: 'get_voice',
   displayName: 'Get Voice',
   description: 'Retrieve details for a specific voice model or configuration by ID in Retell AI.',
+  audience: 'both',
+  aiMetadata: { description: 'Look up the details of a single Retell voice by its Voice ID, such as provider, accent, gender, and preview. Use to inspect a voice before assigning it to an agent. Read-only and idempotent.', idempotent: true },
   props: {
     voiceId: voiceIdDropdown,
   },
