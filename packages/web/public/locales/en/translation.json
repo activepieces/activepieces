@@ -1963,5 +1963,20 @@
   "1 min ago": "1 min ago",
   "{count} mins ago": "{count} mins ago",
   "1 hour ago": "1 hour ago",
-  "{count} hours ago": "{count} hours ago"
+  "{count} hours ago": "{count} hours ago",
+  "Setup submitted": "Setup submitted",
+  "Set up your automation": "Set up your automation",
+  "Setup complete": "Setup complete",
+  "Account": "Account",
+  "Connect {name}": "Connect {name}",
+  "Loading accounts...": "Loading accounts...",
+  "Select an account": "Select an account",
+  "Connect a new account": "Connect a new account",
+  "Optional": "Optional",
+  "Select options": "Select options",
+  "fieldsConfiguredCount": "{count, plural, =1 {1 field configured} other {# fields configured}}",
+  "Needs account": "Needs account",
+  "No {name} connections in this project yet": "No {name} connections in this project yet",
+  "Step {current} of {total}": "Step {current} of {total}",
+  "Build automation": "Build automation"
 }

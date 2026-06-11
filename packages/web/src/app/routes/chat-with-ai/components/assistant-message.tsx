@@ -1,4 +1,4 @@
-import { BatchProgressData, PlanStepUpdate } from '@activepieces/shared';
+import { BatchProgressData, SetupFormInput } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, RefreshCw, Volume2, VolumeOff } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -35,8 +35,8 @@ import {
   ConnectionsRequiredCard,
 } from './connections-required-card';
 import { CopyIconButton } from './copy-icon-button';
-import { PlanProgressCard } from './plan-progress-card';
 import { ProjectPickerCard } from './project-picker-card';
+import { SetupFormSummary } from './setup-form';
 import { StreamingText } from './streaming-text';
 import { ToolShimmerPills } from './tool-shimmer-pills';
 
@@ -146,9 +146,6 @@ export const AssistantMessage = memo(function AssistantMessage({
         if (chatPartUtils.isDisplayTool(toolName)) {
           flushThinking();
           result.push({ kind: 'display-tool', part: p });
-        } else if (toolName === 'ap_request_plan_approval') {
-          flushThinking();
-          result.push({ kind: 'plan-marker', part: p });
         } else if (toolName === 'ap_execute_action') {
           const batchPart = chatPartUtils.extractBatchProgressFromOutput(p);
           if (batchPart) {
@@ -262,17 +259,13 @@ export const AssistantMessage = memo(function AssistantMessage({
   const { isSpeaking, isSupported: isTtsSupported, speak, stop } = useTts();
   const [isAccordionOpen, setIsAccordionOpen] = useState(false);
 
-  const hasPlanMarker = blocks.some((b) => b.kind === 'plan-marker');
-  const hasRenderedContent = blocks.some(
-    (b) => b.kind !== 'plan-marker' && b.kind !== 'thinking',
-  );
+  const hasRenderedContent = blocks.some((b) => b.kind !== 'thinking');
   const hasThinkingContent = blocks.some((b) => b.kind === 'thinking');
 
   if (
     !hasContent &&
     !hasRenderedContent &&
     !isStreaming &&
-    !hasPlanMarker &&
     !hasThinkingContent
   ) {
     return null;
@@ -389,16 +382,6 @@ export const AssistantMessage = memo(function AssistantMessage({
                 }
                 return null;
               }
-              case 'plan-marker':
-                return (
-                  <div key={`plan-${i}`} className="py-2">
-                    <InlinePlanCard
-                      planPart={block.part}
-                      message={message}
-                      isStreaming={isStreaming}
-                    />
-                  </div>
-                );
               case 'batch-progress':
                 return (
                   <div key={`batch-${i}`} className="py-2">
@@ -492,69 +475,6 @@ export const AssistantMessage = memo(function AssistantMessage({
   );
 });
 
-function InlinePlanCard({
-  planPart,
-  message,
-  isStreaming,
-}: {
-  planPart: AnyToolPart;
-  message: ChatUIMessage;
-  isStreaming: boolean;
-}) {
-  const localPlan = useMemo(() => {
-    const toolOutput = chatPartUtils.parseTypedToolOutput(
-      planPart,
-      'ap_request_plan_approval',
-    );
-    if (toolOutput.state === 'success' && !toolOutput.data.success) return null;
-    const input = planPart.input as
-      | { planSummary?: string; steps?: string[] }
-      | undefined;
-    const steps = input?.steps ?? [];
-    if (steps.length === 0) return null;
-    return { title: input?.planSummary ?? '', steps };
-  }, [planPart]);
-
-  const planCompleted = useMemo(
-    () =>
-      !isStreaming &&
-      (() => {
-        const output = chatPartUtils.parseTypedToolOutput(
-          planPart,
-          'ap_request_plan_approval',
-        );
-        return output.state === 'success' && output.data.success;
-      })(),
-    [isStreaming, planPart],
-  );
-
-  const messageUpdates = useMemo(
-    () => chatPartUtils.extractPlanUpdatesFromMessage(message),
-    [message],
-  );
-
-  const updates = useMemo(() => {
-    if (!localPlan) return [];
-    if (messageUpdates.length > 0) return messageUpdates;
-    if (planCompleted) {
-      return localPlan.steps.map(
-        (_stepText, i): PlanStepUpdate => ({ stepIndex: i, status: 'done' }),
-      );
-    }
-    return messageUpdates;
-  }, [messageUpdates, localPlan, planCompleted]);
-
-  if (!localPlan) return null;
-
-  return (
-    <PlanProgressCard
-      progress={localPlan}
-      updates={updates}
-      isStreaming={isStreaming}
-    />
-  );
-}
-
 function DisplayToolCard({
   part,
   onResolve,
@@ -621,6 +541,11 @@ function DisplayToolCard({
       if (!answersText) return null;
       return <AnsweredQuestionsCard answersText={answersText} />;
     }
+    case 'ap_show_setup_form': {
+      const parsed = SetupFormInput.safeParse(data);
+      if (!parsed.success) return null;
+      return <SetupFormSummary input={parsed.data} output={toolOutput} />;
+    }
     default:
       return null;
   }
@@ -686,6 +611,5 @@ type MessageBlock =
     }
   | { kind: 'text'; text: string }
   | { kind: 'display-tool'; part: AnyToolPart }
-  | { kind: 'plan-marker'; part: AnyToolPart }
   | { kind: 'batch-progress'; data: BatchProgressData }
   | { kind: 'action-receipt'; toolCallId: string };

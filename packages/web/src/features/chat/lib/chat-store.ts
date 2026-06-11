@@ -117,21 +117,6 @@ function selectActiveDisplayTool({
   return isNotDismissed(part, state) ? part : null;
 }
 
-function selectPendingPlanApproval({
-  state,
-  lastAssistantMessage,
-}: {
-  state: ChatStoreState;
-  lastAssistantMessage: ChatUIMessage | undefined;
-}): AnyToolPart | null {
-  const part = chatPartUtils.findLastToolPart({
-    message: lastAssistantMessage,
-    predicate: (name, p) =>
-      name === 'ap_request_plan_approval' && p.state === 'input-available',
-  });
-  return isNotDismissed(part, state) ? part : null;
-}
-
 function selectPendingActionPreview({
   state,
   lastAssistantMessage,
@@ -237,7 +222,6 @@ function selectHasBlockingCard({
       if (state.dismissedGateIds[id]) return false;
       if (chatPartUtils.isDisplayTool(name) && name !== 'ap_show_quick_replies')
         return true;
-      if (name === 'ap_request_plan_approval') return true;
       return (
         !!state.toolCallMeta[id]?.approvalRequest ||
         !!state.toolCallMeta[id]?.actionPreview
@@ -259,7 +243,6 @@ function selectBatchProgress({
 
 export const chatStoreSelectors = {
   activeDisplayTool: selectActiveDisplayTool,
-  pendingPlanApproval: selectPendingPlanApproval,
   pendingMcpApproval: selectPendingMcpApproval,
   pendingActionPreview: selectPendingActionPreview,
   activeQuestions: selectActiveQuestions,

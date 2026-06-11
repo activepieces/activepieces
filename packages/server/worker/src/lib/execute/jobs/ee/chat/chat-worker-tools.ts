@@ -3,10 +3,14 @@ import {
     ActionReceiptEvent,
     BatchItemResult,
     ChatAgentEventType,
+    ChatPhase,
     chatToolClassification,
     chunk,
+    DiscoveryBrief,
     isObject,
     SendChatEventRequest,
+    SetupFormInput,
+    SetupFormOutput,
     ToolApprovalRequestEvent,
     ToolProgressEvent,
     tryCatch,
@@ -132,32 +136,39 @@ function createEventEmitter({ sendEvent, userId, conversationId, log }: {
     }
 }
 
-function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onGateOpened, log }: {
+function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onGateOpened, onSetupFormSubmitted, log }: {
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean, payload?: Record<string, unknown> }>
     displayToolTimeoutMs: number
     onConnectionSelected?: (params: { pieceName: string, connectionExternalId: string, label: string, projectId: string }) => Promise<void>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
+    onSetupFormSubmitted?: () => void
     log?: { warn: (obj: Record<string, unknown>, msg: string) => void }
 }): ToolSet {
-    function blockingExecute({ dismissMessage, successKey, toolName }: {
-        dismissMessage: string
-        successKey: string
+    function blockingExecute({ dismissMessage, successKey, toolName, getDisplayName, onApproved }: {
+        dismissMessage: string | ((input: Record<string, unknown>) => string)
+        successKey?: string
         toolName: string
+        getDisplayName?: (input: Record<string, unknown>) => string
+        onApproved?: (params: { input: Record<string, unknown>, payload?: Record<string, unknown> }) => Promise<Record<string, unknown>>
     }) {
         return async (input: Record<string, unknown>, options: ToolExecutionOptions) => {
             if (onGateOpened) {
+                const fallbackName = typeof input['displayName'] === 'string' ? input['displayName'] : toolName
                 await tryCatch(() => onGateOpened({
                     gateId: options.toolCallId,
                     toolName,
-                    displayName: typeof input['displayName'] === 'string' ? input['displayName'] : toolName,
+                    displayName: getDisplayName?.(input) ?? fallbackName,
                     toolInput: input,
                 }))
             }
             const decision = await waitForApproval({ gateId: options.toolCallId, timeoutMs: displayToolTimeoutMs })
             if (!decision.approved) {
-                return { dismissed: true, message: dismissMessage }
+                return { dismissed: true, message: typeof dismissMessage === 'function' ? dismissMessage(input) : dismissMessage }
             }
-            return { [successKey]: true, ...decision.payload }
+            if (onApproved) {
+                return onApproved({ input, payload: decision.payload })
+            }
+            return { [successKey ?? 'approved']: true, ...decision.payload }
         }
     }
 
@@ -169,38 +180,32 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
                 displayName: z.string().describe('Human-readable name (e.g. "Gmail", "Slack")'),
                 status: z.enum(['missing', 'error']).optional().describe('Set to "error" when connection exists but needs reconnecting'),
             }),
-            execute: async (input, options) => {
-                if (onGateOpened) {
-                    await tryCatch(() => onGateOpened({
-                        gateId: options.toolCallId,
-                        toolName: 'ap_show_connection_required',
-                        displayName: input.displayName,
-                        toolInput: input as unknown as Record<string, unknown>,
-                    }))
-                }
-                const decision = await waitForApproval({ gateId: options.toolCallId, timeoutMs: displayToolTimeoutMs })
-                if (!decision.approved) {
-                    return { dismissed: true, message: 'The user chose not to connect this service. Stop and ask: "Would you like me to continue building with a placeholder you can connect later, or would you prefer to stop here?"' }
-                }
-                if (onConnectionSelected && decision.payload) {
-                    const connections = decision.payload['connections']
-                    if (Array.isArray(connections)) {
-                        await Promise.all(connections
-                            .filter((conn): conn is Record<string, unknown> =>
-                                isObject(conn) && typeof conn['connectionExternalId'] === 'string' && !!conn['connectionExternalId'])
-                            .map((conn) => onConnectionSelected({
-                                pieceName: normalizePieceName(typeof conn['piece'] === 'string' ? conn['piece'] : input.piece),
-                                connectionExternalId: conn['connectionExternalId'] as string,
-                                label: typeof conn['displayName'] === 'string' ? conn['displayName'] as string : input.displayName,
-                                projectId: typeof conn['projectId'] === 'string' ? conn['projectId'] as string : '',
-                            })))
+            execute: blockingExecute({
+                toolName: 'ap_show_connection_required',
+                dismissMessage: 'The user chose not to connect this service. Stop and ask: "Would you like me to continue building with a placeholder you can connect later, or would you prefer to stop here?"',
+                onApproved: async ({ input, payload }) => {
+                    const piece = typeof input['piece'] === 'string' ? input['piece'] : ''
+                    const displayName = typeof input['displayName'] === 'string' ? input['displayName'] : piece
+                    if (onConnectionSelected && payload) {
+                        const connections = payload['connections']
+                        if (Array.isArray(connections)) {
+                            await Promise.all(connections
+                                .filter((conn): conn is Record<string, unknown> =>
+                                    isObject(conn) && typeof conn['connectionExternalId'] === 'string' && !!conn['connectionExternalId'])
+                                .map((conn) => onConnectionSelected({
+                                    pieceName: normalizePieceName(typeof conn['piece'] === 'string' ? conn['piece'] : piece),
+                                    connectionExternalId: conn['connectionExternalId'] as string,
+                                    label: typeof conn['displayName'] === 'string' ? conn['displayName'] as string : displayName,
+                                    projectId: typeof conn['projectId'] === 'string' ? conn['projectId'] as string : '',
+                                })))
+                        }
+                        else {
+                            log?.warn({ piece, payload }, 'ap_show_connection_required approved but payload missing connections array')
+                        }
                     }
-                    else {
-                        log?.warn({ piece: input.piece, payload: decision.payload }, 'ap_show_connection_required approved but payload missing connections array')
-                    }
-                }
-                return { connected: true }
-            },
+                    return { connected: true }
+                },
+            }),
         }),
 
         ap_show_connection_picker: tool({
@@ -209,33 +214,24 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
                 piece: z.string().describe('Piece short name'),
                 displayName: z.string().describe('Human-readable piece name'),
             }),
-            execute: async (input, options) => {
-                if (onGateOpened) {
-                    await tryCatch(() => onGateOpened({
-                        gateId: options.toolCallId,
-                        toolName: 'ap_show_connection_picker',
-                        displayName: input.displayName,
-                        toolInput: input as unknown as Record<string, unknown>,
-                    }))
-                }
-                const decision = await waitForApproval({ gateId: options.toolCallId, timeoutMs: displayToolTimeoutMs })
-                if (!decision.approved) {
-                    return { dismissed: true, message: `The user chose not to select a ${input.displayName} account. Do not pick one on their behalf. Ask: "Would you like me to continue building with a placeholder you can connect later, or would you prefer to stop here?"` }
-                }
-                const payload = decision.payload ?? {}
-                const connectionExternalId = payload['connectionExternalId']
-                const label = payload['label']
-                const projectId = payload['projectId']
-                if (typeof connectionExternalId === 'string' && onConnectionSelected) {
-                    await onConnectionSelected({
-                        pieceName: normalizePieceName(input.piece),
-                        connectionExternalId,
-                        label: typeof label === 'string' ? label : connectionExternalId,
-                        projectId: typeof projectId === 'string' ? projectId : '',
-                    })
-                }
-                return { selected: true, label: typeof label === 'string' ? label : 'Connected' }
-            },
+            execute: blockingExecute({
+                toolName: 'ap_show_connection_picker',
+                dismissMessage: (input) => `The user chose not to select a ${typeof input['displayName'] === 'string' ? input['displayName'] : 'service'} account. Do not pick one on their behalf. Ask: "Would you like me to continue building with a placeholder you can connect later, or would you prefer to stop here?"`,
+                onApproved: async ({ input, payload = {} }) => {
+                    const connectionExternalId = payload['connectionExternalId']
+                    const label = payload['label']
+                    const projectId = payload['projectId']
+                    if (typeof connectionExternalId === 'string' && onConnectionSelected) {
+                        await onConnectionSelected({
+                            pieceName: normalizePieceName(typeof input['piece'] === 'string' ? input['piece'] : ''),
+                            connectionExternalId,
+                            label: typeof label === 'string' ? label : connectionExternalId,
+                            projectId: typeof projectId === 'string' ? projectId : '',
+                        })
+                    }
+                    return { selected: true, label: typeof label === 'string' ? label : 'Connected' }
+                },
+            }),
         }),
 
         ap_show_project_picker: tool({
@@ -271,6 +267,38 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
             execute: async () => {
                 return { displayed: true }
             },
+        }),
+
+        ap_show_setup_form: tool({
+            description: 'Display ONE unified setup form gathering everything needed to build an automation: project selection, a connection per piece, and all config fields with recommended defaults pre-filled. Show it FAST — call it right after ap_get_piece_props, with no other tools in between. The UI fetches available connections per piece and preselects the best one; only pass recommendedConnectionExternalId when the user already named an account. Do NOT pre-resolve account-dependent dropdowns — set `dynamic: true` with no `options` and the UI loads them live (list parent property names in `refreshers`). Pass `options` only for STATIC_DROPDOWN fields, straight from piece metadata (value IDs, never labels). Every field should have a sensible default so the user can submit without changes. The submission IS the user\'s approval: start building immediately after it, with no plan-approval or confirmation step. Use the returned values as-is — do not re-ask for anything the form already covered.',
+            inputSchema: SetupFormInput,
+            execute: blockingExecute({
+                toolName: 'ap_show_setup_form',
+                dismissMessage: 'The user dismissed the setup form. Stop and ask what they would like to change, or whether they prefer answering step by step instead.',
+                getDisplayName: (input) => (typeof input['title'] === 'string' ? input['title'] : 'Automation setup'),
+                onApproved: async ({ payload }) => {
+                    const parsed = SetupFormOutput.safeParse(payload)
+                    if (!parsed.success) {
+                        log?.warn({ payload, error: parsed.error.message }, 'ap_show_setup_form approved but payload failed validation')
+                        return { dismissed: true, message: 'The setup form submission could not be read. Fall back to gathering the missing information with individual display tools.' }
+                    }
+                    const { projectId, sections } = parsed.data
+                    onSetupFormSubmitted?.()
+                    if (onConnectionSelected) {
+                        await Promise.all(sections.map((section) => {
+                            const { connectionExternalId } = section
+                            if (!connectionExternalId) return Promise.resolve()
+                            return onConnectionSelected({
+                                pieceName: normalizePieceName(section.piece),
+                                connectionExternalId,
+                                label: section.connectionLabel ?? connectionExternalId,
+                                projectId: section.connectionProjectId ?? '',
+                            })
+                        }))
+                    }
+                    return { submitted: true, projectId, sections }
+                },
+            }),
         }),
     }
 }
@@ -308,11 +336,12 @@ function createLocalTools({ onSetProjectContext, projects }: {
     }
 }
 
-function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened }: {
+function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, guides }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     eventEmitter: ChatEventEmitter
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean }>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
+    guides: Record<string, string>
 }): ToolSet {
     const executeWithTimeout = (toolName: string, toolInput: Record<string, unknown>) =>
         withToolTimeout({
@@ -422,6 +451,54 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
             }),
             execute: async (input) => {
                 return executeWithTimeout('ap_list_across_projects', input)
+            },
+        }),
+
+        ap_explore_data: tool({
+            description: 'Read-only look at the user\'s real data during discovery — list/get/search/read a sheet\'s rows and columns, channels, records, etc. — to understand what they have and build something that fits. Only runs read actions (never writes). Needs a connection like ap_execute_action; ensure one is selected first. Keep samples small (~20 rows). This is for understanding, NOT for performing the task — use ap_execute_action to actually do things.',
+            inputSchema: z.object({
+                title: z.string().optional().describe('Short human-friendly label, e.g. "Look at sheet", "List channels"'),
+                pieceName: z.string().describe('Piece name, e.g. "@activepieces/piece-google-sheets"'),
+                actionName: z.string().describe('A read action, e.g. "get_rows", "list_channels"'),
+                input: z.record(z.string(), z.unknown()).optional().describe('Input for the read action (keep limits small)'),
+            }),
+            execute: async (toolInput) => {
+                if (!chatToolClassification.isReadActionName(toolInput.actionName)) {
+                    return chatToolClassification.readOnlyRejection(toolInput.actionName)
+                }
+                const rawResult = await executeWithTimeout('ap_explore_data', toolInput)
+                return truncateLargeResult(rawResult)
+            },
+        }),
+
+        ap_update_brief: tool({
+            description: 'Record or update your structured understanding of the user\'s goal (silent, internal — the user does not see this). Send the FULL brief each time; it replaces the previous one. Update it as you learn: after the user clarifies scope, after ap_explore_data reveals real data, when open questions resolve. This is your durable memory and the source you build the setup form from.',
+            inputSchema: z.object({
+                brief: DiscoveryBrief.describe('The complete current understanding'),
+            }),
+            execute: async (toolInput) => {
+                return executeTool('ap_update_brief', toolInput)
+            },
+        }),
+
+        ap_remember: tool({
+            description: 'Save a durable fact or preference about THIS user that should carry across all future conversations (silent, internal). Use ONLY for lasting truths — how they like to work, defaults they\'ve stated, corrections they\'ve made (e.g. "prefers I find things myself rather than asking", "default notify channel is #ops", "always wants EU-based candidates"). One short statement per call. Do NOT use for one-off task details (those go in the brief).',
+            inputSchema: z.object({
+                memory: z.string().describe('One concise durable preference/fact about the user'),
+            }),
+            execute: async (toolInput) => {
+                return executeTool('ap_remember', toolInput)
+            },
+        }),
+
+        ap_load_guide: tool({
+            description: 'Load a detailed playbook into context before that kind of work (silent, internal). Topics: build_flow (constructing/validating/testing an automation), one_time_task (one-shot do-it-now action), error_handling (success/failure branches), http_fallback (calling an API directly when no connection exists).',
+            inputSchema: z.object({
+                topic: z.enum(['build_flow', 'one_time_task', 'error_handling', 'http_fallback']).describe('Which guide to load'),
+            }),
+            execute: async (toolInput) => {
+                const guide = guides[toolInput.topic]
+                return guide ?? `No guide found for "${toolInput.topic}".`
             },
         }),
     }
@@ -551,44 +628,6 @@ function extractResultText(result: unknown): string {
     return JSON.stringify(result)
 }
 
-function createPlanTools({ onPlanApproved, waitForApproval }: {
-    onPlanApproved: () => void
-    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean }>
-}): ToolSet {
-    return {
-        ap_request_plan_approval: tool({
-            description: 'Request user approval for a multi-step plan before executing destructive operations.',
-            inputSchema: z.object({
-                title: z.string().optional().describe('Short human-friendly label for the tool card, e.g. "Review Automation Plan", "Approve Setup"'),
-                planSummary: z.string().describe('A brief 1-3 sentence summary of what you will do'),
-                steps: z.array(z.string()).describe('List of concrete actions'),
-                mode: z.enum(['one_time', 'recurring']).describe('Whether this is a one-time task or a recurring automation. If ambiguous, default to one_time and ask the user.'),
-            }),
-            execute: async (_input, options) => {
-                const decision = await waitForApproval({ gateId: options.toolCallId })
-                if (decision.approved) {
-                    onPlanApproved()
-                    return { success: true, message: 'Plan approved by the user. Execute each step in order now. Call ap_update_plan to update step statuses as you work.' }
-                }
-                return { success: false, message: 'The user rejected this plan. Stop immediately — do not execute any steps. Ask the user what they would like to change or if they want a different approach.' }
-            },
-        }),
-
-        ap_update_plan: tool({
-            description: 'Update the status of plan steps. Call this before starting each step (status: executing) and after completing it (status: done or error).',
-            inputSchema: z.object({
-                updates: z.array(z.object({
-                    stepIndex: z.number().describe('Zero-based index of the step in the plan'),
-                    status: z.enum(['pending', 'executing', 'done', 'error']).describe('New status for this step'),
-                })).min(1),
-            }),
-            execute: async () => {
-                return { success: true }
-            },
-        }),
-    }
-}
-
 function createThinkingTools(): ToolSet {
     return {
         ap_update_thinking_status: tool({
@@ -598,6 +637,23 @@ function createThinkingTools(): ToolSet {
             }),
             execute: async () => {
                 return { success: true }
+            },
+        }),
+    }
+}
+
+function createPhaseTools({ onPhaseChange }: {
+    onPhaseChange: (phase: ChatPhase) => void
+}): ToolSet {
+    return {
+        ap_set_phase: tool({
+            description: 'Switch your working phase (silent, internal — no thinking status). Start in "discovery" (understanding the goal, reading data). Call this with "build" the moment you begin constructing, editing, testing, or running an automation — e.g. right after you load the build_flow or one_time_task guide. This unlocks the build/execution tools.',
+            inputSchema: z.object({
+                phase: z.enum(['discovery', 'build']).describe('"discovery" while scoping/reading; "build" once you start building or executing'),
+            }),
+            execute: async (input) => {
+                onPhaseChange(input.phase)
+                return { phase: input.phase }
             },
         }),
     }
@@ -615,8 +671,8 @@ export const chatWorkerTools = {
     createDisplayTools,
     createLocalTools,
     createCrossProjectTools,
-    createPlanTools,
     createThinkingTools,
+    createPhaseTools,
     isSuccessResult,
     extractResultText,
     withToolTimeout,

@@ -3,6 +3,8 @@ import {
     AIProviderName,
     ChatAgentEvent,
     ChatAgentEventType,
+    ChatPhase,
+    chatToolPhases,
     EngineResponseStatus,
     ErrorCode,
     ExecuteChatAgentJobData,
@@ -14,7 +16,7 @@ import {
     tryCatch,
     WorkerJobType,
 } from '@activepieces/shared'
-import { createUIMessageStream, generateText, isLoopFinished, ModelMessage, streamText } from 'ai'
+import { createUIMessageStream, generateText, isLoopFinished, LanguageModelUsage, ModelMessage, streamText } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { chatMcpClient } from './chat-mcp-client'
 import { chatWorkerTools } from './chat-worker-tools'
@@ -27,6 +29,9 @@ const DISPLAY_TOOL_TIMEOUT_MS = 15 * 60 * 1_000
 const HEARTBEAT_INTERVAL_MS = 15_000
 const RETRY_MAX_ATTEMPTS = 3
 const RETRY_BASE_DELAY_MS = 1_000
+const MAX_RESPONSE_OUTPUT_TOKENS = 32_000
+const MAX_AUTO_CONTINUATIONS = 3
+const CONTINUE_NUDGE = '[system note — not from the user] Your previous response was cut off by the output token limit before it finished. Continue exactly where you stopped. If a tool call was cut off, re-issue it in FULL. Do not repeat content you already produced.'
 
 export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_CHAT_AGENT,
@@ -76,11 +81,13 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
         }, 3_000)
 
         try {
-            const planApproved = { approved: false }
+            const executionApproved = { approved: false }
+            const phaseState: { phase: ChatPhase } = { phase: 'discovery' }
 
             const allTools = buildToolSet({
-                ctx, eventEmitter, log, planApproved, mcpToolSet,
+                ctx, eventEmitter, log, executionApproved, phaseState, mcpToolSet,
                 projects: config.projects, conversationId, runId, platformId, userId,
+                guides: config.guides,
             })
 
             const uiParts: PersistedChatPart[] = []
@@ -88,20 +95,37 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             let abortedStepMessages: ModelMessage[] = []
             let streamError: Error | null = null
 
-            const postApprovalTools = Object.keys(allTools).filter((name) => name !== 'ap_request_plan_approval')
+            const allToolNames = Object.keys(allTools)
 
-            const result = streamText({
+            let llmMessages = config.messages as ModelMessage[]
+            const accumulatedResponseMessages: ModelMessage[] = []
+            let continuations = 0
+            let truncatedAfterRetries = false
+            let usage: LanguageModelUsage | undefined
+            let totalInputTokens = 0
+            let totalOutputTokens = 0
+
+            const autoTitlePromise = generateTitleIfFirstTurn({
+                model, userMessage, previousUiMessages: config.previousUiMessages as unknown[], log, conversationId, abortSignal: abortController.signal,
+            })
+
+            const runStreamAttempt = (messages: ModelMessage[]): ReturnType<typeof streamText> => streamText({
                 model,
                 maxRetries: 3,
+                maxOutputTokens: config.tier.thinkingBudget + MAX_RESPONSE_OUTPUT_TOKENS,
                 abortSignal: abortController.signal,
                 system: chatAiUtils.buildSystemPromptWithCaching({ systemPrompt: config.systemPrompt, provider }),
-                messages: chatAiUtils.stripThinkingBlocks(config.messages as ModelMessage[], provider),
+                messages: chatAiUtils.stripThinkingBlocks(messages, provider),
                 tools: allTools,
                 providerOptions: chatAiUtils.buildProviderOptions({ provider, tier: config.tier }),
                 stopWhen: isLoopFinished(),
-                prepareStep: ({ stepNumber }) => {
-                    if (stepNumber === 0 || !planApproved.approved) return undefined
-                    return { activeTools: postApprovalTools }
+                prepareStep: ({ steps }) => {
+                    const lastStep = steps[steps.length - 1]
+                    const widened = lastStep?.toolCalls?.some((c) => chatToolPhases.isBuildOnlyTool(c.toolName))
+                    if (widened) {
+                        phaseState.phase = 'build'
+                    }
+                    return { activeTools: chatToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames }) }
                 },
                 experimental_repairToolCall: async ({ toolCall, error }) => {
                     log.warn({ toolName: toolCall.toolName, err: error, conversationId }, 'Repairing malformed tool call')
@@ -146,7 +170,38 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 },
             })
 
-            await streamChunksToClient({ result, ctx, userId, conversationId, runId, log })
+            for (;;) {
+                const result = runStreamAttempt(llmMessages)
+                await streamChunksToClient({ result, ctx, userId, conversationId, runId, log })
+                if (abortController.signal.aborted || streamError) break
+
+                const [response, attemptUsage, finishReason] = await Promise.all([
+                    result.response,
+                    result.usage,
+                    result.finishReason,
+                ])
+                usage = attemptUsage
+                totalInputTokens += attemptUsage.inputTokens ?? 0
+                totalOutputTokens += attemptUsage.outputTokens ?? 0
+
+                if (finishReason !== 'length') {
+                    accumulatedResponseMessages.push(...response.messages)
+                    break
+                }
+                if (continuations >= MAX_AUTO_CONTINUATIONS) {
+                    accumulatedResponseMessages.push(...response.messages)
+                    truncatedAfterRetries = true
+                    log.error({ conversationId, continuations }, 'Chat response still truncated after max auto-continuations')
+                    break
+                }
+
+                continuations++
+                log.warn({ conversationId, continuations, outputTokens: attemptUsage.outputTokens }, 'Chat response truncated by output limit — auto-continuing')
+                const sanitizedTail = chatAiUtils.sanitizeTruncatedAssistantTail(response.messages)
+                const nudge: ModelMessage = { role: 'user', content: CONTINUE_NUDGE }
+                accumulatedResponseMessages.push(...sanitizedTail, nudge)
+                llmMessages = [...llmMessages, ...sanitizedTail, nudge]
+            }
 
             if (abortController.signal.aborted) {
                 if (streamError) {
@@ -156,7 +211,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 const thinkingDurationMs = Date.now() - thinkingStartTime
                 const cancelSavePayload = {
                     conversationId,
-                    messages: [...(config.allMessages as ModelMessage[]), ...abortedStepMessages],
+                    messages: [...(config.allMessages as ModelMessage[]), ...accumulatedResponseMessages, ...abortedStepMessages],
                     uiMessages: [
                         ...(config.previousUiMessages as PersistedChatMessage[]),
                         ...(uiParts.length > 0 ? [{ role: PersistedChatRole.ASSISTANT, parts: uiParts, thinkingDurationMs }] : []),
@@ -181,27 +236,22 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 throw streamError
             }
 
-            const [response, usage, autoTitle] = await Promise.all([
-                result.response,
-                result.usage,
-                generateTitleIfFirstTurn({
-                    model, userMessage, previousUiMessages: config.previousUiMessages as unknown[], log, conversationId,
-                }),
-            ])
+            const autoTitle = await autoTitlePromise
 
             log.info({
                 conversationId,
-                inputTokens: usage.inputTokens,
-                outputTokens: usage.outputTokens,
-                ...spreadIfDefined('cacheReadTokens', usage.inputTokenDetails?.cacheReadTokens),
-                ...spreadIfDefined('cacheWriteTokens', usage.inputTokenDetails?.cacheWriteTokens),
+                continuations,
+                inputTokens: totalInputTokens,
+                outputTokens: totalOutputTokens,
+                ...spreadIfDefined('cacheReadTokens', usage?.inputTokenDetails?.cacheReadTokens),
+                ...spreadIfDefined('cacheWriteTokens', usage?.inputTokenDetails?.cacheWriteTokens),
                 provider: config.provider,
             }, 'Chat message completed')
 
             const thinkingDurationMs = Date.now() - thinkingStartTime
             const savePayload = {
                 conversationId,
-                messages: [...(config.allMessages as ModelMessage[]), ...response.messages],
+                messages: [...(config.allMessages as ModelMessage[]), ...accumulatedResponseMessages],
                 uiMessages: [
                     ...(config.previousUiMessages as PersistedChatMessage[]),
                     { role: PersistedChatRole.ASSISTANT, parts: uiParts, thinkingDurationMs },
@@ -223,6 +273,12 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             if (autoTitle) {
                 await sendEventWithRetry({
                     event: { type: ChatAgentEventType.TITLE_UPDATE, data: { title: autoTitle } },
+                })
+            }
+
+            if (truncatedAfterRetries) {
+                await sendEventWithRetry({
+                    event: { type: ChatAgentEventType.ERROR, data: { message: 'The response was cut off because it reached the output limit. Send "continue" to pick up where it left off.' } },
                 })
             }
 
@@ -258,17 +314,19 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
     },
 }
 
-function buildToolSet({ ctx, eventEmitter, log, planApproved, mcpToolSet, projects, conversationId, runId, platformId, userId }: {
+function buildToolSet({ ctx, eventEmitter, log, executionApproved, phaseState, mcpToolSet, projects, conversationId, runId, platformId, userId, guides }: {
     ctx: JobContext
     eventEmitter: ReturnType<typeof chatWorkerTools.createEventEmitter>
     log: JobContext['log']
-    planApproved: { approved: boolean }
+    executionApproved: { approved: boolean }
+    phaseState: { phase: ChatPhase }
     mcpToolSet: Record<string, unknown>
     projects: Array<{ id: string, displayName: string, type: string }>
     conversationId: string
     runId?: string
     platformId: string
     userId: string
+    guides: Record<string, string>
 }) {
     const executeCrossProjectTool = async (toolName: string, toolInput: Record<string, unknown>) => {
         const response = await ctx.apiClient.executeChatTool({ toolName, toolInput, platformId, userId, conversationId })
@@ -340,20 +398,20 @@ function buildToolSet({ ctx, eventEmitter, log, planApproved, mcpToolSet, projec
             }))
         },
         onGateOpened: storePendingGate,
-    })
-    const planTools = chatWorkerTools.createPlanTools({
-        onPlanApproved: () => {
-            planApproved.approved = true
+        onSetupFormSubmitted: () => {
+            executionApproved.approved = true
         },
-        waitForApproval,
     })
-    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate })
+    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, guides })
     const thinkingTools = chatWorkerTools.createThinkingTools()
+    const phaseTools = chatWorkerTools.createPhaseTools({ onPhaseChange: (phase) => {
+        phaseState.phase = phase 
+    } })
     const gatedMcpTools = chatMcpClient.withApprovalGates({
-        mcpToolSet, eventEmitter, log, isApproved: () => planApproved.approved, waitForApproval,
+        mcpToolSet, eventEmitter, log, isApproved: () => executionApproved.approved, waitForApproval,
     })
 
-    return { ...localTools, ...displayTools, ...crossProjectTools, ...planTools, ...thinkingTools, ...(gatedMcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
+    return { ...localTools, ...displayTools, ...crossProjectTools, ...thinkingTools, ...phaseTools, ...(gatedMcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
 }
 
 async function streamChunksToClient({ result, ctx, userId, conversationId, runId, log }: {
@@ -417,12 +475,13 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, runId
     await flushChunks()
 }
 
-async function generateTitleIfFirstTurn({ model, userMessage, previousUiMessages, log, conversationId }: {
+async function generateTitleIfFirstTurn({ model, userMessage, previousUiMessages, log, conversationId, abortSignal }: {
     model: ReturnType<typeof chatAiUtils.createChatModel>
     userMessage: string
     previousUiMessages: unknown[]
     log: JobContext['log']
     conversationId: string
+    abortSignal?: AbortSignal
 }): Promise<string | undefined> {
     // getChatConfig includes the just-saved user message, so length 1 = first turn
     const isFirstTurn = previousUiMessages.length === 1
@@ -431,6 +490,7 @@ async function generateTitleIfFirstTurn({ model, userMessage, previousUiMessages
     const { data: generatedTitle } = await tryCatch(async () => {
         const { text } = await generateText({
             model,
+            abortSignal,
             prompt: `Generate a concise 3-6 word title for this conversation. Return ONLY the title, nothing else.\n\nUser: ${userMessage}`,
         })
         return text.replace(/^["']|["']$/g, '').slice(0, 100)

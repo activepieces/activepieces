@@ -146,6 +146,7 @@ export type ChatConfigResponse = {
     tier: { id: string, thinkingBudget: number, modelId: string }
     mcpCredentials: { mcpServerUrl: string, mcpToken: string } | null
     projects: Array<{ id: string, displayName: string, type: string }>
+    guides: Record<string, string>
 }
 
 export type SaveChatMessagesRequest = {

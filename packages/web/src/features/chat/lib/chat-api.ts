@@ -2,7 +2,10 @@ import {
   type ChatHistoryMessage,
   type PersistedChatMessage,
   ChatConversation,
+  ConnectionOption,
   CreateChatConversationRequest,
+  ResolveSetupFormOptionsRequest,
+  ResolveSetupFormOptionsResponse,
   SeekPage,
   UpdateChatConversationRequest,
 } from '@activepieces/shared';
@@ -93,18 +96,23 @@ async function getPickerConnections({
 }: {
   conversationId: string;
   pieceName: string;
-}): Promise<
-  Array<{
-    externalId: string;
-    label: string;
-    projectId: string;
-    project: string;
-    status: string;
-  }>
-> {
+}): Promise<ConnectionOption[]> {
   return api.get(`/v1/chat/conversations/${conversationId}/connections`, {
     pieceName,
   });
+}
+
+async function resolveSetupFormOptions({
+  conversationId,
+  request,
+}: {
+  conversationId: string;
+  request: ResolveSetupFormOptionsRequest;
+}): Promise<ResolveSetupFormOptionsResponse> {
+  return api.post<ResolveSetupFormOptionsResponse>(
+    `/v1/chat/conversations/${conversationId}/resolve-options`,
+    request,
+  );
 }
 
 async function getPendingGate(conversationId: string): Promise<{
@@ -128,4 +136,5 @@ export const chatApi = {
   cancelConversation,
   getPickerConnections,
   getPendingGate,
+  resolveSetupFormOptions,
 };

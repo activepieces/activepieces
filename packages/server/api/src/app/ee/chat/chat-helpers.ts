@@ -2,6 +2,7 @@ import {
     ACTIVEPIECES_CHAT_TIERS,
     ActivepiecesError,
     AIProviderName,
+    apId,
     ChatConversationStatus,
     DEFAULT_CHAT_TIER_ID,
     ErrorCode,
@@ -16,10 +17,29 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { ChatConversationEntity } from './chat-conversation-entity'
+import { UserChatMemoryEntity } from './user-chat-memory-entity'
 
 const STREAMING_STALENESS_TIMEOUT_MS = 2 * 60 * 1_000
+const MAX_MEMORIES = 50
+const MAX_MEMORY_LENGTH = 280
 
 const conversationRepo = repoFactory(ChatConversationEntity)
+const userChatMemoryRepo = repoFactory(UserChatMemoryEntity)
+
+async function getUserMemories({ platformId, userId }: { platformId: string, userId: string }): Promise<string[]> {
+    const row = await userChatMemoryRepo().findOneBy({ platformId, userId })
+    return row?.memories ?? []
+}
+
+async function rememberForUser({ platformId, userId, memory }: { platformId: string, userId: string, memory: string }): Promise<void> {
+    const entry = memory.slice(0, MAX_MEMORY_LENGTH)
+    const row = await userChatMemoryRepo().findOneBy({ platformId, userId })
+    const memories = [...(row?.memories ?? []).filter((m) => m !== entry), entry].slice(-MAX_MEMORIES)
+    await userChatMemoryRepo().upsert(
+        { id: row?.id ?? apId(), platformId, userId, memories },
+        ['platformId', 'userId'],
+    )
+}
 
 async function getConversationOrThrow({ id, platformId, userId }: { id: string, platformId: string, userId: string }) {
     const conversation = await conversationRepo().findOneBy({ id, platformId, userId })
@@ -85,4 +105,6 @@ export const chatHelpers = {
     resolveTier,
     resolveModelIdForProvider,
     conversationRepo,
+    getUserMemories,
+    rememberForUser,
 }

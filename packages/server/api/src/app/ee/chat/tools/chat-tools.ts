@@ -1,4 +1,4 @@
-import { AppConnectionStatus, AppConnectionType, FlowRunStatus, FlowStatus, isNil, isObject, parseToJsonIfPossible, Project, RunEnvironment } from '@activepieces/shared'
+import { AppConnectionStatus, AppConnectionType, chatToolClassification, DiscoveryBrief, FlowRunStatus, FlowStatus, isNil, isObject, parseToJsonIfPossible, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { flowService } from '../../../flows/flow/flow.service'
@@ -234,50 +234,33 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             return discoveryResult
         }
         case 'ap_execute_action': {
-            const pieceName = toolInput.pieceName as string
+            return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, log })
+        }
+        case 'ap_explore_data': {
             const actionName = toolInput.actionName as string
-
-            const normalizedPiece = mcpUtils.normalizePieceName(pieceName) ?? pieceName
-            let connectionExternalId: string | undefined
-            let connectionLabel: string | undefined
-            let connectionProjectId: string | undefined
-            if (conversationId) {
-                const selected = await chatApprovalGate.getSelectedConnection({ conversationId, pieceName: normalizedPiece })
-                if (selected) {
-                    connectionExternalId = selected.externalId
-                    connectionLabel = selected.label
-                    connectionProjectId = selected.projectId
-                }
+            if (!chatToolClassification.isReadActionName(actionName)) {
+                return chatToolClassification.readOnlyRejection(actionName)
             }
-
-            const resolvedProjectId = connectionProjectId ?? projects[0]?.id
-            if (!resolvedProjectId) {
-                return { success: false, error: 'No projects available. Create a project first.' }
+            return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, log })
+        }
+        case 'ap_update_brief': {
+            if (!conversationId) {
+                return { success: false, error: 'No conversation context.' }
             }
-            if (connectionProjectId && !availableProjectIds.includes(connectionProjectId)) {
-                return { success: false, error: `Project ${connectionProjectId} is not accessible.` }
+            const parsed = DiscoveryBrief.safeParse(toolInput.brief)
+            if (!parsed.success) {
+                return { success: false, error: 'Invalid brief shape.' }
             }
-
-            let parsedInput = toolInput.input
-            if (typeof parsedInput === 'string') {
-                const parsed = parseToJsonIfPossible(parsedInput)
-                if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-                    parsedInput = parsed as Record<string, unknown>
-                }
+            await chatHelpers.conversationRepo().update(conversationId, { discoveryBrief: parsed.data })
+            return { updated: true }
+        }
+        case 'ap_remember': {
+            const memory = typeof toolInput.memory === 'string' ? toolInput.memory.trim() : ''
+            if (!memory) {
+                return { success: false, error: 'Empty memory.' }
             }
-            const result = await executeAdhocAction({
-                projectId: resolvedProjectId,
-                pieceName,
-                actionName,
-                input: parsedInput as Record<string, unknown> | undefined,
-                connectionExternalId,
-                log,
-            })
-
-            if (connectionLabel && typeof result === 'object' && result !== null) {
-                return { ...(result as Record<string, unknown>), _meta: { connectionLabel, pieceName: normalizedPiece } }
-            }
-            return result
+            await chatHelpers.rememberForUser({ platformId, userId, memory })
+            return { remembered: true }
         }
         case 'ap_list_across_projects': {
             const resource = toolInput.resource as string
@@ -307,6 +290,59 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
         default:
             return { error: `Unknown cross-project tool: ${toolName}` }
     }
+}
+
+async function runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, log }: {
+    toolInput: Record<string, unknown>
+    projects: Project[]
+    availableProjectIds: string[]
+    conversationId?: string
+    log: FastifyBaseLogger
+}): Promise<unknown> {
+    const pieceName = toolInput.pieceName as string
+    const actionName = toolInput.actionName as string
+
+    const normalizedPiece = mcpUtils.normalizePieceName(pieceName) ?? pieceName
+    let connectionExternalId: string | undefined
+    let connectionLabel: string | undefined
+    let connectionProjectId: string | undefined
+    if (conversationId) {
+        const selected = await chatApprovalGate.getSelectedConnection({ conversationId, pieceName: normalizedPiece })
+        if (selected) {
+            connectionExternalId = selected.externalId
+            connectionLabel = selected.label
+            connectionProjectId = selected.projectId
+        }
+    }
+
+    const resolvedProjectId = connectionProjectId ?? projects[0]?.id
+    if (!resolvedProjectId) {
+        return { success: false, error: 'No projects available. Create a project first.' }
+    }
+    if (connectionProjectId && !availableProjectIds.includes(connectionProjectId)) {
+        return { success: false, error: `Project ${connectionProjectId} is not accessible.` }
+    }
+
+    let parsedInput = toolInput.input
+    if (typeof parsedInput === 'string') {
+        const parsed = parseToJsonIfPossible(parsedInput)
+        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+            parsedInput = parsed as Record<string, unknown>
+        }
+    }
+    const result = await executeAdhocAction({
+        projectId: resolvedProjectId,
+        pieceName,
+        actionName,
+        input: parsedInput as Record<string, unknown> | undefined,
+        connectionExternalId,
+        log,
+    })
+
+    if (connectionLabel && typeof result === 'object' && result !== null) {
+        return { ...(result as Record<string, unknown>), _meta: { connectionLabel, pieceName: normalizedPiece } }
+    }
+    return result
 }
 
 function resolveConnectionInfo({ status, type, value }: { status: AppConnectionStatus, type: AppConnectionType, value: unknown }): { status: AppConnectionStatus, grantedScopes: string[] } {

@@ -34,7 +34,21 @@ function requiresActionPreview({ actionName, needsConfirmation }: {
     return needsConfirmation ?? true
 }
 
+function isReadActionName(actionName: string): boolean {
+    return actionNameMatchesPatterns({ actionName, patterns: READ_ACTION_PATTERNS })
+        && !actionNameMatchesPatterns({ actionName, patterns: WRITE_ACTION_PATTERNS })
+}
+
+function readOnlyRejection(actionName: string): { success: false, error: string } {
+    return {
+        success: false,
+        error: `ap_explore_data only runs read-only actions (list/get/search/find/fetch/read/count/check). "${actionName}" looks like a write — use ap_execute_action for changes.`,
+    }
+}
+
 export const chatToolClassification = {
     requiresApproval,
     requiresActionPreview,
+    isReadActionName,
+    readOnlyRejection,
 }

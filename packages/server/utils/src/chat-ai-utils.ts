@@ -87,16 +87,17 @@ function createChatModel({ provider, auth, config, modelId }: {
     }
 }
 
-const THINKING_PROVIDERS = new Set([
-    AIProviderName.ANTHROPIC,
-    AIProviderName.BEDROCK,
-    AIProviderName.OPENROUTER,
-    AIProviderName.ACTIVEPIECES,
-])
-
-function stripThinkingBlocks(messages: ModelMessage[], provider: AIProviderName): ModelMessage[] {
-    if (THINKING_PROVIDERS.has(provider)) return messages
-
+/**
+ * Strip reasoning/thinking blocks from the message history before sending to the
+ * provider. We never need to replay prior-turn thinking: the resulting text, tool
+ * calls, and tool results carry all the context, and re-sending a thinking block
+ * whose cryptographic `signature` didn't survive our DB round-trip (or the
+ * continuation/compaction reshaping) makes Anthropic reject the request with
+ * "Invalid `signature` in `thinking` block". In-flight thinking within a single
+ * streamText tool-loop is managed by the SDK with intact signatures and is
+ * unaffected — this only touches the cross-turn history we assemble.
+ */
+function stripThinkingBlocks(messages: ModelMessage[], _provider: AIProviderName): ModelMessage[] {
     const hasThinking = messages.some(
         (msg) => msg.role === 'assistant' && Array.isArray(msg.content)
             && (msg.content as Array<Record<string, unknown>>).some(
@@ -116,6 +117,38 @@ function stripThinkingBlocks(messages: ModelMessage[], provider: AIProviderName)
             return { ...msg, content: filtered }
         })
         .filter((msg): msg is ModelMessage => msg !== null)
+}
+
+function sanitizeTruncatedAssistantTail(messages: ModelMessage[]): ModelMessage[] {
+    const last = messages[messages.length - 1]
+    if (!last || last.role !== 'assistant' || !Array.isArray(last.content)) {
+        return messages
+    }
+
+    const resolvedToolCallIds = new Set(
+        messages
+            .flatMap((msg) => (msg.role === 'tool' && Array.isArray(msg.content) ? msg.content : []))
+            .flatMap((part) => (part.type === 'tool-result' ? [part.toolCallId] : [])),
+    )
+
+    const sanitizedParts = last.content.filter((part) => {
+        if (part.type === 'reasoning') {
+            return false
+        }
+        if (part.type === 'tool-call') {
+            return resolvedToolCallIds.has(part.toolCallId)
+        }
+        return true
+    })
+
+    const head = messages.slice(0, -1)
+    if (sanitizedParts.length === 0) {
+        return head
+    }
+    if (sanitizedParts.length === last.content.length) {
+        return messages
+    }
+    return [...head, { ...last, content: sanitizedParts }]
 }
 
 function buildProviderOptions({ provider, tier }: { provider: AIProviderName, tier: { id: string, thinkingBudget: number } }): SharedV3ProviderOptions {
@@ -240,6 +273,7 @@ function buildStepParts({ content }: {
 export const chatAiUtils = {
     createChatModel,
     stripThinkingBlocks,
+    sanitizeTruncatedAssistantTail,
     buildProviderOptions,
     buildSystemPromptWithCaching,
     buildStepParts,

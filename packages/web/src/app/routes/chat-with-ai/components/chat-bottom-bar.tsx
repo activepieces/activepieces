@@ -1,3 +1,4 @@
+import { SetupFormInput } from '@activepieces/shared';
 import { t } from 'i18next';
 import { motion } from 'motion/react';
 
@@ -24,8 +25,8 @@ import {
   ConnectionsRequiredCard,
 } from './connections-required-card';
 import { MultiQuestionForm } from './multi-question-form';
-import { PlanApprovalForm } from './plan-approval-form';
 import { ProjectPickerCard } from './project-picker-card';
+import { SetupForm } from './setup-form';
 import { ToolApprovalForm } from './tool-approval-form';
 
 export function ChatBottomBar({
@@ -39,12 +40,6 @@ export function ChatBottomBar({
   lastMessageId,
   placeholder,
 }: ChatBottomBarProps) {
-  const pendingPlanPart = useChatStoreContext((s) =>
-    chatStoreSelectors.pendingPlanApproval({
-      state: s,
-      lastAssistantMessage,
-    }),
-  );
   const pendingMcpApproval = useChatStoreContext((s) =>
     chatStoreSelectors.pendingMcpApproval({
       state: s,
@@ -74,24 +69,6 @@ export function ChatBottomBar({
   const rejectGate = useChatStoreContext((s) => s.rejectGate);
   const dismissGate = useChatStoreContext((s) => s.dismissGate);
   const dismissForm = useChatStoreContext((s) => s.dismissForm);
-
-  // Plan approval from tool state
-  if (pendingPlanPart) {
-    const input = pendingPlanPart.input as
-      | { planSummary?: string; steps?: string[] }
-      | undefined;
-    const toolCallId = chatPartUtils.getToolCallId(pendingPlanPart);
-    return (
-      <PlanApprovalForm
-        key={toolCallId}
-        planSummary={input?.planSummary ?? ''}
-        steps={input?.steps ?? []}
-        onApprove={() => approveGate(toolCallId)}
-        onReject={() => rejectGate(toolCallId)}
-        onDismiss={() => dismissGate(toolCallId)}
-      />
-    );
-  }
 
   // MCP tool approval from toolCallMeta
   if (pendingMcpApproval) {
@@ -219,6 +196,18 @@ function BlockingDisplayCard({
           onResolve={(payload) => approveGate(toolCallId, payload)}
         />
       );
+    case 'ap_show_setup_form': {
+      const parsed = SetupFormInput.safeParse(data);
+      if (!parsed.success) return null;
+      return (
+        <SetupForm
+          key={toolCallId}
+          input={parsed.data}
+          onSubmit={(payload) => approveGate(toolCallId, payload)}
+          onDismiss={() => rejectGate(toolCallId)}
+        />
+      );
+    }
     default:
       return null;
   }

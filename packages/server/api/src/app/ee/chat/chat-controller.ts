@@ -7,6 +7,7 @@ import {
     ErrorCode,
     LATEST_JOB_DATA_SCHEMA_VERSION,
     PrincipalType,
+    ResolveSetupFormOptionsRequest,
     SendChatMessageRequest,
     SERVICE_KEY_SECURITY_OPENAPI,
     UpdateChatConversationRequest,
@@ -22,6 +23,7 @@ import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-credits.service'
 import { chatApprovalGate } from './chat-approval-gate'
 import { chatHelpers } from './chat-helpers'
+import { resolveSetupFormOptions } from './chat-property-options'
 import { chatService } from './chat-service'
 import { findConnectionsForPiece } from './tools/chat-tools'
 
@@ -188,6 +190,29 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         return reply.status(StatusCodes.OK).send([])
     })
 
+    app.post('/conversations/:id/resolve-options', ResolveOptionsRoute, async (request, reply) => {
+        const conversationId = request.params.id
+        const platformId = request.principal.platform.id
+        const userId = request.principal.id
+        const [, projects] = await Promise.all([
+            chatService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId }),
+            chatHelpers.getUserProjects({ platformId, userId, log: request.log }),
+        ])
+        const hasProjectAccess = projects.some((p) => p.id === request.body.projectId)
+        if (!hasProjectAccess) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: { message: 'Project not accessible' },
+            })
+        }
+        const result = await resolveSetupFormOptions({
+            request: request.body,
+            platformId,
+            log: request.log,
+        })
+        return reply.status(StatusCodes.OK).send(result)
+    })
+
 }
 
 async function assertAiCreditsNotExhausted({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
@@ -334,6 +359,18 @@ const CancelConversationRoute = {
         tags: ['chat'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: CONVERSATION_PARAMS,
+    },
+}
+
+const ResolveOptionsRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: CONVERSATION_PARAMS,
+        body: ResolveSetupFormOptionsRequest,
     },
 }
 

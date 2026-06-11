@@ -1,4 +1,4 @@
-import { chatToolClassification, tryCatch } from '@activepieces/shared'
+import { chatToolClassification, chatToolPhases, tryCatch } from '@activepieces/shared'
 import { createMCPClient } from '@ai-sdk/mcp'
 import { ToolExecutionOptions } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -33,7 +33,13 @@ async function connectMcpClient({ mcpCredentials, conversationId, log }: {
         return { mcpClient: null, mcpToolSet: {} }
     }
 
-    const mcpToolSet = await client.tools()
+    const allMcpTools = await client.tools()
+    const mcpToolSet: Record<string, unknown> = {}
+    for (const [name, tool] of Object.entries(allMcpTools)) {
+        if (!chatToolPhases.isChatHiddenTool(name)) {
+            mcpToolSet[name] = tool
+        }
+    }
     return { mcpClient: client, mcpToolSet }
 }
 
