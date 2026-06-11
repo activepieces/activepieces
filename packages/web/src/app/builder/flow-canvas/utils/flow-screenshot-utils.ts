@@ -1,11 +1,13 @@
+import { tryCatch } from '@activepieces/shared';
 import { Node } from '@xyflow/react';
-import { getFontEmbedCSS, toCanvas } from 'html-to-image';
+import { getFontEmbedCSS } from 'html-to-image';
 
 import { ApNodeType } from './types';
 
 // collecting font-face CSS downloads and base64-encodes every font; do it
 // once per session instead of on every capture
 let cachedFontEmbedCss: string | null = null;
+const imageDataUrlCache = new Map<string, Promise<string | null>>();
 
 async function downloadFlowAsImage({
   nodes,
@@ -21,71 +23,158 @@ async function downloadFlowAsImage({
   if (!viewportElement || flowNodes.length === 0) {
     return;
   }
-  // let the capturing state paint before the heavy work blocks the main thread
-  await new Promise((resolve) => setTimeout(resolve, 0));
+  // let the capturing state paint before any work happens
+  await yieldToMain();
   const bounds = calculateNodesBoundsFromDom(flowNodes);
   if (!bounds) {
     return;
   }
+  const exportLayout = calculateExportLayout(bounds);
+  const captureSvgUrl = await buildCaptureSvgUrl({
+    viewportElement,
+    exportLayout,
+  });
+  const flowImage = new Image();
+  flowImage.src = captureSvgUrl;
+  // decoding happens off the main thread
+  await flowImage.decode();
+  const composedCanvas = composeImageWithCanvasBackground({
+    flowImage,
+    viewportElement,
+    exportLayout,
+  });
+  await downloadCanvasAsPng({
+    canvas: composedCanvas,
+    fileName: `${sanitizeFileName(flowName)}.png`,
+  });
+}
+
+/**
+ * The exported image covers the node bounds plus padding, scaled up for
+ * crispness — unless that would exceed the browser canvas size limit, in
+ * which case resolution is traded for coverage. `origin` is where the flow
+ * coordinate system's padded top-left corner lands in image pixels; both the
+ * capture transform and the dot grid alignment derive from it.
+ */
+function calculateExportLayout(bounds: Bounds): ExportLayout {
   const contentWidth = bounds.width + 2 * IMAGE_PADDING;
   const contentHeight = bounds.height + 2 * IMAGE_PADDING;
-  // long flows can exceed the browser canvas size limit, so trade resolution for coverage
   const scale = Math.min(
     PREFERRED_PIXEL_SCALE,
     MAX_IMAGE_DIMENSION / contentWidth,
     MAX_IMAGE_DIMENSION / contentHeight,
   );
-  const imageWidth = Math.round(contentWidth * scale);
-  const imageHeight = Math.round(contentHeight * scale);
-  cachedFontEmbedCss =
-    cachedFontEmbedCss ?? (await getFontEmbedCSS(viewportElement));
-  const restoreSvgStyles = inlineSvgStylesForCapture(viewportElement);
-  let flowCanvas: HTMLCanvasElement;
-  try {
-    flowCanvas = await toCanvas(viewportElement, {
-      pixelRatio: 1,
-      fontEmbedCSS: cachedFontEmbedCss,
-      filter: isCapturedElement,
-      width: imageWidth,
-      height: imageHeight,
-      style: {
-        width: `${imageWidth}px`,
-        height: `${imageHeight}px`,
-        transform: `translate(${(IMAGE_PADDING - bounds.x) * scale}px, ${
-          (IMAGE_PADDING - bounds.y) * scale
-        }px) scale(${scale})`,
-      },
-    });
-  } finally {
-    restoreSvgStyles();
-  }
-  const composedCanvas = composeImageWithCanvasBackground({
-    flowCanvas,
-    imageWidth,
-    imageHeight,
-    bounds,
+  const origin = {
+    x: (IMAGE_PADDING - bounds.x) * scale,
+    y: (IMAGE_PADDING - bounds.y) * scale,
+  };
+  return {
     scale,
-  });
+    imageWidth: Math.round(contentWidth * scale),
+    imageHeight: Math.round(contentHeight * scale),
+    origin,
+    transform: `translate(${origin.x}px, ${origin.y}px) scale(${scale})`,
+  };
+}
+
+async function downloadCanvasAsPng({
+  canvas,
+  fileName,
+}: {
+  canvas: HTMLCanvasElement;
+  fileName: string;
+}): Promise<void> {
   // toBlob encodes the PNG off the main thread, unlike toDataURL which
   // freezes the tab for large flows
   const blob = await new Promise<Blob | null>((resolve) =>
-    composedCanvas.toBlob(resolve, 'image/png'),
+    canvas.toBlob(resolve, 'image/png'),
   );
   if (!blob) {
     throw new Error('Failed to encode the flow image');
   }
   const objectUrl = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  link.download = `${sanitizeFileName(flowName)}.png`;
+  link.download = fileName;
   link.href = objectUrl;
   link.click();
   setTimeout(() => URL.revokeObjectURL(objectUrl), 10_000);
 }
 
-function isCapturedElement(domNode: HTMLElement): boolean {
-  if (!(domNode instanceof Element)) {
-    return true;
+/**
+ * Hand-rolled replacement for html-to-image's clone phase. That library
+ * copies the full computed style (~350 longhands) of every element in one
+ * synchronous pass, which freezes the tab for seconds on large flows. This
+ * pipeline copies only the properties that affect how the flow paints and
+ * stays responsive by yielding between chunks of style reads.
+ */
+async function buildCaptureSvgUrl({
+  viewportElement,
+  exportLayout,
+}: {
+  viewportElement: HTMLElement;
+  exportLayout: ExportLayout;
+}): Promise<string> {
+  const { imageWidth, imageHeight, transform } = exportLayout;
+  cachedFontEmbedCss =
+    cachedFontEmbedCss ?? (await getFontEmbedCSS(viewportElement));
+  const clonedViewport = await cloneViewportWithCapturedStyles(viewportElement);
+  await inlineImageSources(clonedViewport);
+  clonedViewport.style.transform = transform;
+  clonedViewport.style.overflow = 'visible';
+  const fontStyleElement = document.createElement('style');
+  fontStyleElement.textContent = cachedFontEmbedCss;
+  clonedViewport.insertBefore(fontStyleElement, clonedViewport.firstChild);
+  const serializedClone = new XMLSerializer().serializeToString(clonedViewport);
+  const svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="${imageWidth}" height="${imageHeight}"><foreignObject width="${imageWidth}" height="${imageHeight}" style="overflow: visible;">${serializedClone}</foreignObject></svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`;
+}
+
+/**
+ * Clones the viewport and inlines each element's captured styles onto its
+ * clone. The clone is taken first so the tree shape is frozen — document
+ * -order walks of both trees then stay in lockstep. All style reads happen
+ * before any write: interleaving them forces a full style recalculation per
+ * element, and writes only touch the detached clone, so the live page never
+ * reflows.
+ */
+async function cloneViewportWithCapturedStyles(
+  viewportElement: HTMLElement,
+): Promise<HTMLElement> {
+  const clonedViewport = viewportElement.cloneNode(true) as HTMLElement;
+  const originalElements = [
+    viewportElement,
+    ...Array.from(viewportElement.querySelectorAll('*')),
+  ];
+  const clonedElements = [
+    clonedViewport,
+    ...Array.from(clonedViewport.querySelectorAll('*')),
+  ];
+  const styleTexts: (string | null)[] = [];
+  for (let index = 0; index < originalElements.length; index++) {
+    const element = originalElements[index];
+    styleTexts.push(
+      element instanceof HTMLElement || element instanceof SVGElement
+        ? serializeComputedStyle(element)
+        : null,
+    );
+    if (index % STYLE_READ_CHUNK_SIZE === STYLE_READ_CHUNK_SIZE - 1) {
+      await yieldToMain();
+    }
   }
+  const elementsToRemove = clonedElements.filter(
+    (clonedElement) => !isCapturedElement(clonedElement),
+  );
+  clonedElements.forEach((clonedElement, index) => {
+    const styleText = styleTexts[index];
+    if (styleText) {
+      clonedElement.setAttribute('style', styleText);
+    }
+  });
+  elementsToRemove.forEach((element) => element.remove());
+  return clonedViewport;
+}
+
+function isCapturedElement(domNode: Element): boolean {
   const isBuilderChrome = domNode.classList.contains(
     'react-flow__viewport-portal',
   );
@@ -101,9 +190,7 @@ function isCapturedElement(domNode: HTMLElement): boolean {
  * by getNodes() in the builder don't carry `measured` dimensions, so the
  * rendered DOM elements are the source of truth for each node's size.
  */
-function calculateNodesBoundsFromDom(
-  nodes: Node[],
-): { x: number; y: number; width: number; height: number } | null {
+function calculateNodesBoundsFromDom(nodes: Node[]): Bounds | null {
   const boxes = nodes.flatMap((node) => {
     const nodeElement = document.querySelector<HTMLElement>(
       `.react-flow__node[data-id="${CSS.escape(node.id)}"]`,
@@ -130,46 +217,6 @@ function calculateNodesBoundsFromDom(
   return { x: left, y: top, width: right - left, height: bottom - top };
 }
 
-/**
- * html-to-image keeps DOM attributes but drops stylesheet-applied styling
- * everywhere inside <svg> subtrees — the edge lines lose their stroke and the
- * HTML inside edge foreignObjects (branch labels, add buttons) renders
- * unstyled. Inline the computed styles on every element inside the viewport's
- * SVGs for the capture, and restore the originals afterwards.
- */
-function inlineSvgStylesForCapture(viewportElement: HTMLElement): () => void {
-  // only the edge layer's svgs lose styling; svgs inside node HTML are
-  // handled correctly by html-to-image
-  const elements = Array.from(
-    viewportElement.querySelectorAll('.react-flow__edges svg'),
-  )
-    .flatMap((svg) => [svg, ...Array.from(svg.querySelectorAll('*'))])
-    .filter(
-      (element): element is HTMLElement | SVGElement =>
-        element instanceof HTMLElement || element instanceof SVGElement,
-    );
-  const computedStyleTexts = elements.map((element) =>
-    serializeComputedStyle(element),
-  );
-  const previousStyles = elements.map((element) =>
-    element.getAttribute('style'),
-  );
-  elements.forEach((element, index) => {
-    if (computedStyleTexts[index]) {
-      element.setAttribute('style', computedStyleTexts[index]);
-    }
-  });
-  return () =>
-    elements.forEach((element, index) => {
-      const previousStyle = previousStyles[index];
-      if (previousStyle === null) {
-        element.removeAttribute('style');
-      } else {
-        element.setAttribute('style', previousStyle);
-      }
-    });
-}
-
 function serializeComputedStyle(element: HTMLElement | SVGElement): string {
   const computedStyle = getComputedStyle(element);
   return CAPTURE_STYLE_PROPERTIES.flatMap((property) => {
@@ -178,30 +225,72 @@ function serializeComputedStyle(element: HTMLElement | SVGElement): string {
   }).join(' ');
 }
 
+/**
+ * The rasterizer renders the SVG in an isolated document with no network
+ * access, so every <img> source must be inlined as a data URL.
+ */
+async function inlineImageSources(clonedViewport: HTMLElement): Promise<void> {
+  const images = Array.from(clonedViewport.querySelectorAll('img'));
+  await Promise.all(
+    images.map(async (image) => {
+      image.removeAttribute('srcset');
+      const source = image.getAttribute('src');
+      if (!source || source.startsWith('data:')) {
+        return;
+      }
+      const dataUrl = await getImageDataUrl(source);
+      if (dataUrl) {
+        image.setAttribute('src', dataUrl);
+      }
+    }),
+  );
+}
+
+function getImageDataUrl(source: string): Promise<string | null> {
+  const cached = imageDataUrlCache.get(source);
+  if (cached) {
+    return cached;
+  }
+  const pending = fetchImageAsDataUrl(source);
+  imageDataUrlCache.set(source, pending);
+  return pending;
+}
+
+async function fetchImageAsDataUrl(source: string): Promise<string | null> {
+  const { data } = await tryCatch(async () => {
+    const response = await fetch(source);
+    const blob = await response.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  });
+  return data;
+}
+
 function composeImageWithCanvasBackground({
-  flowCanvas,
-  imageWidth,
-  imageHeight,
-  bounds,
-  scale,
+  flowImage,
+  viewportElement,
+  exportLayout,
 }: {
-  flowCanvas: HTMLCanvasElement;
-  imageWidth: number;
-  imageHeight: number;
-  bounds: { x: number; y: number };
-  scale: number;
+  flowImage: HTMLImageElement;
+  viewportElement: HTMLElement;
+  exportLayout: ExportLayout;
 }): HTMLCanvasElement {
+  const { imageWidth, imageHeight } = exportLayout;
   const composedCanvas = document.createElement('canvas');
   composedCanvas.width = imageWidth;
   composedCanvas.height = imageHeight;
   const context = composedCanvas.getContext('2d');
   if (!context) {
-    return flowCanvas;
+    throw new Error('Failed to create the flow image canvas');
   }
   context.fillStyle = getCanvasBackgroundColor();
   context.fillRect(0, 0, imageWidth, imageHeight);
-  drawCanvasDotPattern({ context, imageWidth, imageHeight, bounds, scale });
-  context.drawImage(flowCanvas, 0, 0, imageWidth, imageHeight);
+  drawCanvasDotPattern({ context, viewportElement, exportLayout });
+  context.drawImage(flowImage, 0, 0, imageWidth, imageHeight);
   return composedCanvas;
 }
 
@@ -212,18 +301,15 @@ function composeImageWithCanvasBackground({
  */
 function drawCanvasDotPattern({
   context,
-  imageWidth,
-  imageHeight,
-  bounds,
-  scale,
+  viewportElement,
+  exportLayout,
 }: {
   context: CanvasRenderingContext2D;
-  imageWidth: number;
-  imageHeight: number;
-  bounds: { x: number; y: number };
-  scale: number;
+  viewportElement: HTMLElement;
+  exportLayout: ExportLayout;
 }): void {
-  const dotPattern = readBackgroundDotPattern();
+  const { imageWidth, imageHeight, origin, scale } = exportLayout;
+  const dotPattern = readBackgroundDotPattern(viewportElement);
   if (!dotPattern) {
     return;
   }
@@ -234,9 +320,10 @@ function drawCanvasDotPattern({
   }
   // drawing one tile and repeating it is orders of magnitude faster than
   // arc-filling every dot on a large export
+  const tileSize = Math.max(1, Math.round(gap));
   const tile = document.createElement('canvas');
-  tile.width = Math.max(1, Math.round(gap));
-  tile.height = Math.max(1, Math.round(gap));
+  tile.width = tileSize;
+  tile.height = tileSize;
   const tileContext = tile.getContext('2d');
   if (!tileContext) {
     return;
@@ -249,8 +336,8 @@ function drawCanvasDotPattern({
   if (!pattern) {
     return;
   }
-  const originX = positiveModulo((IMAGE_PADDING - bounds.x) * scale, gap);
-  const originY = positiveModulo((IMAGE_PADDING - bounds.y) * scale, gap);
+  const originX = positiveModulo(origin.x, gap);
+  const originY = positiveModulo(origin.y, gap);
   context.save();
   context.translate(originX, originY);
   context.fillStyle = pattern;
@@ -258,7 +345,7 @@ function drawCanvasDotPattern({
   context.restore();
 }
 
-function readBackgroundDotPattern(): {
+function readBackgroundDotPattern(viewportElement: HTMLElement): {
   gap: number;
   radius: number;
   color: string;
@@ -267,10 +354,7 @@ function readBackgroundDotPattern(): {
     '.react-flow__background pattern',
   );
   const circleElement = patternElement?.querySelector('circle');
-  const viewportElement = document.querySelector<HTMLElement>(
-    '.react-flow__viewport',
-  );
-  if (!patternElement || !circleElement || !viewportElement) {
+  if (!patternElement || !circleElement) {
     return null;
   }
   const zoomMatch = viewportElement.style.transform.match(/scale\(([\d.]+)\)/);
@@ -308,9 +392,14 @@ function sanitizeFileName(name: string): string {
   return sanitized.length > 0 ? sanitized : 'flow';
 }
 
+function yieldToMain(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 const IMAGE_PADDING = 60;
 const MAX_IMAGE_DIMENSION = 8192;
 const PREFERRED_PIXEL_SCALE = 2;
+const STYLE_READ_CHUNK_SIZE = 400;
 const SCREENSHOT_EXCLUDE_ATTRIBUTE = 'data-flow-screenshot-exclude';
 const CAPTURE_STYLE_PROPERTIES = [
   'display',
@@ -319,10 +408,14 @@ const CAPTURE_STYLE_PROPERTIES = [
   'left',
   'right',
   'bottom',
+  'z-index',
   'transform',
-  'overflow',
+  'transform-origin',
+  'overflow-x',
+  'overflow-y',
   'visibility',
   'opacity',
+  'filter',
   'box-sizing',
   'width',
   'height',
@@ -331,12 +424,15 @@ const CAPTURE_STYLE_PROPERTIES = [
   'max-width',
   'max-height',
   'flex-direction',
+  'flex-wrap',
   'align-items',
+  'align-self',
   'justify-content',
   'gap',
   'flex-grow',
   'flex-shrink',
   'flex-basis',
+  'order',
   'margin-top',
   'margin-right',
   'margin-bottom',
@@ -361,8 +457,19 @@ const CAPTURE_STYLE_PROPERTIES = [
   'border-top-right-radius',
   'border-bottom-right-radius',
   'border-bottom-left-radius',
+  'outline-width',
+  'outline-style',
+  'outline-color',
+  'outline-offset',
   'background-color',
+  'background-image',
+  'background-size',
+  'background-position',
+  'background-repeat',
   'box-shadow',
+  'object-fit',
+  'object-position',
+  'vertical-align',
   'font-family',
   'font-size',
   'font-weight',
@@ -370,10 +477,17 @@ const CAPTURE_STYLE_PROPERTIES = [
   'line-height',
   'letter-spacing',
   'color',
+  // an ancestor's resolved -webkit-text-fill-color inherits down over
+  // `color`, so it must be pinned per element
   '-webkit-text-fill-color',
   'text-shadow',
   'text-align',
+  'text-decoration-line',
+  'text-decoration-color',
+  'text-decoration-style',
   'white-space',
+  'word-break',
+  'overflow-wrap',
   'text-overflow',
   'text-transform',
   'stroke',
@@ -389,4 +503,16 @@ const CAPTURE_STYLE_PROPERTIES = [
 export const flowScreenshotUtils = {
   downloadFlowAsImage,
   SCREENSHOT_EXCLUDE_ATTRIBUTE,
+};
+
+type Point = { x: number; y: number };
+
+type Bounds = Point & { width: number; height: number };
+
+type ExportLayout = {
+  scale: number;
+  imageWidth: number;
+  imageHeight: number;
+  origin: Point;
+  transform: string;
 };

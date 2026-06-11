@@ -5,6 +5,7 @@ import {
   Fullscreen,
   Hand,
   ImageDown,
+  LoaderCircle,
   Map,
   Minus,
   MousePointer,
@@ -311,7 +312,11 @@ const CanvasControls = ({
             disabled={isCapturingImage}
             onClick={() => handleDownloadFlowAsImage()}
           >
-            <ImageDown className="size-4" />
+            {isCapturingImage ? (
+              <LoaderCircle className="size-4 animate-spin" />
+            ) : (
+              <ImageDown className="size-4" />
+            )}
           </Button>
         </CanvasButtonWrapper>
         <CanvasButtonWrapper
