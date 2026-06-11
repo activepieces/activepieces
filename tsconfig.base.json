@@ -1162,6 +1162,9 @@
       "@activepieces/piece-sendpulse": [
         "packages/pieces/community/sendpulse/src/index.ts"
       ],
+      "@activepieces/piece-sendspark": [
+        "packages/pieces/community/sendspark/src/index.ts"
+      ],
       "@activepieces/piece-sendy": [
         "packages/pieces/community/sendy/src/index.ts"
       ],
