@@ -10,29 +10,21 @@ export const getJobLogs = createAction({
   description: 'Get recent stdout, stderr, or combined logs for a submitted Jungle Grid job.',
   props: {
     job_id: jungleGridCommon.jobId,
-    tail_lines: Property.Number({
-      displayName: 'Tail Lines',
-      description: 'Number of recent log lines to fetch. Jungle Grid accepts 1 to 500.',
+    limit: Property.Number({
+      displayName: 'Limit',
+      description: 'Number of recent log entries to fetch. Jungle Grid accepts 1 to 1000.',
       required: false,
       defaultValue: 100,
+    }),
+    tail_lines: Property.Number({
+      displayName: 'Tail Lines (Legacy)',
+      description: 'Compatibility alias for Limit. Prefer Limit for new workflows.',
+      required: false,
     }),
     cursor: Property.ShortText({
       displayName: 'Cursor',
       description: 'Optional `next_cursor` from a previous logs response.',
       required: false,
-    }),
-    stream: Property.StaticDropdown({
-      displayName: 'Stream',
-      description: 'Choose which log stream to fetch.',
-      required: false,
-      defaultValue: 'all',
-      options: {
-        options: [
-          { label: 'All', value: 'all' },
-          { label: 'stdout', value: 'stdout' },
-          { label: 'stderr', value: 'stderr' },
-        ],
-      },
     }),
   },
   async run(context) {
