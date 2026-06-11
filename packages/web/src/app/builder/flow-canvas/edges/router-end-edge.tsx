@@ -18,7 +18,9 @@ export const ApRouterEndCanvasEdge = ({
   const { isHorizontal, layout, layoutSource, layoutTarget, toCanvasPath } =
     useEdgeLayoutSpace({ sourceX, sourceY, targetX, targetY });
 
-  const verticalLineLength =
+  // layout-space (along-axis) length: vertical on the vertical canvas,
+  // horizontal on the horizontal canvas
+  const endLineAlongLength =
     layout.spaceAlongBetweenSteps -
     2 * flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE;
 
@@ -65,7 +67,7 @@ export const ApRouterEndCanvasEdge = ({
 
     // Optional ending vertical line with arrow
     if (data.drawEndingVerticalLine) {
-      path += `v${verticalLineLength}`;
+      path += `v${endLineAlongLength}`;
       if (!data.isNextStepEmpty) {
         path += flowCanvasConsts.ARROW_DOWN;
       }
@@ -79,7 +81,7 @@ export const ApRouterEndCanvasEdge = ({
 
   const buttonPosition = isHorizontal
     ? {
-        x: targetX - verticalLineLength,
+        x: targetX - endLineAlongLength,
         y:
           targetY -
           flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height / 2 -
@@ -90,7 +92,7 @@ export const ApRouterEndCanvasEdge = ({
           targetX -
           flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width / 2 -
           flowCanvasConsts.LINE_WIDTH / 2,
-        y: targetY - verticalLineLength,
+        y: targetY - endLineAlongLength,
       };
 
   return (

@@ -46,6 +46,7 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
     getNoteById,
     moveNote,
     setStepPositionOverride,
+    clearStepPositionOverride,
   ] = useBuilderStateContext((state) => [
     state.setActiveDraggingStep,
     state.applyOperation,
@@ -55,6 +56,7 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
     state.getNoteById,
     state.moveNote,
     state.setStepPositionOverride,
+    state.clearStepPositionOverride,
   ]);
 
   const fixCursorSnapOffset = useCallback(
@@ -127,6 +129,7 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
       activeDraggingStep,
       flowVersion,
       setStepPositionOverride,
+      clearStepPositionOverride,
       reactFlow,
     });
     handleNoteDragEnd({ e, getNoteById, moveNote, reactFlow });
@@ -172,6 +175,7 @@ function handleStepDragEnd({
   activeDraggingStep,
   flowVersion,
   setStepPositionOverride,
+  clearStepPositionOverride,
   reactFlow,
 }: { e: DragEndEvent } & Pick<
   BuilderState,
@@ -179,6 +183,7 @@ function handleStepDragEnd({
   | 'activeDraggingStep'
   | 'flowVersion'
   | 'setStepPositionOverride'
+  | 'clearStepPositionOverride'
 > & {
     reactFlow: ReactFlowInstance;
   }) {
@@ -237,6 +242,9 @@ function handleStepDragEnd({
               : undefined,
         },
       });
+      // a structural move places the step at a new auto-layout slot, so any
+      // free-drag position from before the move no longer applies
+      clearStepPositionOverride(draggedStep.name);
     }
   }
 }

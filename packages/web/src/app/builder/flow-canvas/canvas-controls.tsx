@@ -118,9 +118,17 @@ const CanvasControls = ({
         const stepNodeSize = flowCanvasConsts.STEP_NODE_SIZE.horizontal;
         const minX = Math.min(...nodes.map((node) => node.position.x));
         const maxX = Math.max(...nodes.map((node) => node.position.x));
+        const minY = Math.min(...nodes.map((node) => node.position.y));
+        const maxY =
+          Math.max(...nodes.map((node) => node.position.y)) +
+          stepNodeSize.height;
         const graphWidth = Math.max(maxX - minX, stepNodeSize.width);
+        const graphHeight = Math.max(maxY - minY, stepNodeSize.height);
         const zoomRatio = Math.min(
-          Math.max(canvasWidth / graphWidth, 0.9),
+          Math.max(
+            Math.min(canvasWidth / graphWidth, canvasHeight / graphHeight),
+            0.9,
+          ),
           1.25,
         );
         setViewport(
@@ -129,7 +137,7 @@ const CanvasControls = ({
               -minX * zoomRatio +
               verticalPaddingOnFitView * zoomRatio +
               stepNodeSize.width,
-            y: canvasHeight / 2 - (stepNodeSize.height * zoomRatio) / 2,
+            y: canvasHeight / 2 - ((minY + maxY) / 2) * zoomRatio,
             zoom: zoomRatio,
           },
           {

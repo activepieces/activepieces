@@ -20,6 +20,7 @@ export type CanvasState = {
     stepName: string;
     position: { x: number; y: number };
   }) => void;
+  clearStepPositionOverride: (stepName: string) => void;
   resetStepPositionOverrides: () => void;
   readonly: boolean;
   hideTestWidget: boolean;
@@ -106,6 +107,24 @@ export const createCanvasState = (
           ...state.stepPositionOverrides,
           [stepName]: position,
         };
+        saveStepPositionOverridesToLocalStorage({
+          flowId,
+          orientation: state.canvasOrientation,
+          stepPositionOverrides,
+        });
+        return { stepPositionOverrides };
+      });
+    },
+    clearStepPositionOverride: (stepName: string) => {
+      return set((state) => {
+        if (isNil(state.stepPositionOverrides[stepName])) {
+          return {};
+        }
+        const stepPositionOverrides = Object.fromEntries(
+          Object.entries(state.stepPositionOverrides).filter(
+            ([name]) => name !== stepName,
+          ),
+        );
         saveStepPositionOverridesToLocalStorage({
           flowId,
           orientation: state.canvasOrientation,
