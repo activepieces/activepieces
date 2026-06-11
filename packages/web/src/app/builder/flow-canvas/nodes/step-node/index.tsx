@@ -22,7 +22,6 @@ import { ApStepNode } from '../../utils/types';
 import { StepNodeChevron } from './step-node-chevron';
 import { StepNodeDisplayName } from './step-node-display-name';
 import { StepNodeLogo } from './step-node-logo';
-import { StepNodeName } from './step-node-name';
 import { ApStepNodeSkippedStatus } from './step-node-skipped-status';
 import { ApStepNodeStatusInDraft } from './step-node-status-in-draft';
 import { ApStepNodeStatusInRun } from './step-node-status-in-run';
@@ -155,7 +154,6 @@ const ApStepCanvasNode = React.memo(
         <ApStepNodeStatusInRun stepName={step.name} />
         <ApStepNodeSkippedStatus stepName={step.name} />
         <ApStepNodeStatusInDraft stepName={step.name} />
-        {!isHorizontal && <StepNodeName stepName={step.name} />}
         <div
           className={cn('h-full w-full', {
             'px-3 overflow-hidden': !isHorizontal,
@@ -222,7 +220,6 @@ const ApStepCanvasNode = React.memo(
                   pieceDisplayName={stepMetadata?.displayName ?? ''}
                   stepName={step.name}
                 />
-                <StepNodeName stepName={step.name} />
               </div>
             </div>
           )}
