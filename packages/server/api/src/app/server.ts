@@ -113,7 +113,7 @@ async function setupBaseApp(): Promise<FastifyInstance> {
     const flowRunLogSizeLimit = system.getNumberOrThrow(AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB)
     const app = fastify({
         disableRequestLogging: true,
-        querystringParser: qs.parse,
+        querystringParser: (str) => qs.parse(str, { arrayLimit: 1000 }),
         loggerInstance: system.globalLogger(),
         ignoreTrailingSlash: true,
         pluginTimeout: 120000,
