@@ -8,6 +8,8 @@ export const getCustomSourceById = createAction({
   name: 'getCustomSourceById',
   displayName: 'Get Custom Source by ID',
   description: 'Retrieve single source details by ID',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch the details of a single custom source in the Chat Aid knowledge base by its source ID. Use this to look up or verify a specific source you already have an ID for. Idempotent read-only lookup.', idempotent: true },
   props: {
     sourceId: Property.ShortText({
       displayName: 'Source ID',

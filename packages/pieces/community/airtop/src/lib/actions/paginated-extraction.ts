@@ -11,6 +11,11 @@ export const paginatedExtractionAction = createAction({
 	auth: airtopAuth,
 	displayName: 'Paginated Extraction',
 	description: 'Extract content from paginated or dynamically loaded pages.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Uses AI to extract data across paginated or dynamically loaded pages in a session window, driven by a natural-language prompt and an optional JSON output schema, navigating either by clicking next/previous links or by infinite scroll (auto-detected by default). Use this instead of Page Query when results span multiple pages or require scrolling to load. Requires session id, window id, and a prompt; read-only and idempotent in that it does not mutate the page.',
+		idempotent: true,
+	},
 	props: {
 		sessionId: sessionId,
 		windowId: windowId,

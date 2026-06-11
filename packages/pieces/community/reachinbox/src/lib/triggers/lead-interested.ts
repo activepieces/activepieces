@@ -27,6 +27,10 @@ export const leadInterested = createTrigger({
   name: 'leadInterested',
   displayName: 'Lead Interested',
   description: 'Triggers when a lead is set to interested.',
+  aiMetadata: {
+    description:
+      'Fires when a lead is marked as interested in ReachInbox (LEAD_INTERESTED), signaling a positive reply or qualification. Use to route hot leads onward; payload includes the lead and campaign. Requires the webhook to be configured in ReachInbox.',
+  },
   props: {
     markdown: Property.MarkDown({
       value: leadInterestedMessage,

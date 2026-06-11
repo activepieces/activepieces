@@ -12,6 +12,10 @@ export const newTimeEntryTrigger = createTrigger({
 	name: 'new-time-entry',
 	displayName: 'New Time Entry',
 	description: 'Triggers when a new time entry is created.',
+	aiMetadata: {
+		description:
+			'Fires when a new time entry is created, emitting the entry. Scope is narrowed by the optional project and task: with neither set it watches the whole workspace, with a project it watches that project, and with a task it watches that task.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {
 		workspaceId: workspaceId({

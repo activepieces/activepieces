@@ -7,6 +7,8 @@ export const getLeads = createAction({
   name: 'getLeads',
   displayName: 'Get Leads',
   description: 'Get all leads for the current business with pagination metadata.',
+  audience: 'both',
+  aiMetadata: { description: 'List leads for the authenticated Bookedin business, returning a page with pagination metadata. Use it to browse or find leads; leave the filter fields empty to fetch all, or narrow by free-text search (name/email/phone), exact email, phone, or source, and page through results with limit/skip. Read-only and idempotent.', idempotent: true },
   auth: bookedinAuth,
   props: {
     search: Property.ShortText({

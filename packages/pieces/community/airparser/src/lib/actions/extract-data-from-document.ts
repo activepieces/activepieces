@@ -9,6 +9,8 @@ export const extractDataFromDocumentAction = createAction({
 	name: 'extract_data_from_document',
 	displayName: 'Get Data from Document',
 	description: 'Retrieves parsed JSON data from a specific document.',
+	audience: 'both',
+	aiMetadata: { description: 'Fetches the parsed/extracted structured data and metadata for one already-processed Airparser document, identified by its inbox and document ID. Use after a document has finished parsing to read back the extracted fields. Read-only and idempotent; repeating the call returns the same result.', idempotent: true },
 	props: {
 		inboxId: inboxIdDropdown,
 		documentId: documentIdDropdown,

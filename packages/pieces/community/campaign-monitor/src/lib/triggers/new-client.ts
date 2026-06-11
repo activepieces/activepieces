@@ -8,6 +8,10 @@ export const newClientTrigger = createTrigger({
   name: 'new_client',
   displayName: 'New Client',
   description: 'Triggered when a new client is added to Campaign Monitor.',
+  aiMetadata: {
+    description:
+      'Fires when a new client account appears in the authenticated Campaign Monitor login, detected by polling the account client list for IDs not previously seen.',
+  },
   props: {},
   type: TriggerStrategy.POLLING,
   sampleData: {

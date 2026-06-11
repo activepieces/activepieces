@@ -47,6 +47,10 @@ export const addEventNewCalendarSubscriberTrigger = createTrigger({
   displayName: 'New Calendar Subscriber',
   description:
     'Triggers when a new subscriber is added to your AddEvent calendar. Leave the calendar blank to watch all of them.',
+  aiMetadata: {
+    description:
+      'Fires when a new subscriber is added to an AddEvent calendar, representing a person who has subscribed to receive the calendar. Watches a single calendar when one is specified, or every calendar when left blank.',
+  },
   type: TriggerStrategy.POLLING,
   props,
   sampleData: {

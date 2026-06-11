@@ -14,12 +14,14 @@ export function createEnvelopeEventTrigger({
   name,
   displayName,
   description,
+  aiMetadata,
   docusignEvent,
   sampleData,
 }: {
   name: string;
   displayName: string;
   description: string;
+  aiMetadata?: { description: string };
   docusignEvent: string;
   sampleData: Record<string, unknown>;
 }) {
@@ -28,6 +30,7 @@ export function createEnvelopeEventTrigger({
     name,
     displayName,
     description,
+    aiMetadata,
     type: TriggerStrategy.WEBHOOK,
     props: {
       accountId: Property.ShortText({

@@ -5,6 +5,10 @@ export const envelopeSent = createEnvelopeEventTrigger({
   displayName: 'Signing Request Sent',
   description:
     'Triggers when a signing request is emailed out to recipients for the first time.',
+  aiMetadata: {
+    description:
+      'Fires when a DocuSign envelope is sent out to its recipients for the first time, transitioning from draft to active. Represents the envelope entering the signing process for the whole recipient set.',
+  },
   docusignEvent: 'envelope-sent',
   sampleData: {
     event: 'envelope-sent',

@@ -10,6 +10,8 @@ export const createTask = createAction({
   name: 'createTask',
   displayName: 'Create Task',
   description: 'Creates a new Task',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new task in Bigin CRM with a subject plus optional due date, owner, priority, status, description, and tags. Supports optional recurrence (daily/weekly/monthly/yearly RRULE) and reminders, and can be linked to a related Contact, Pipeline, or Company record. Use to schedule follow-up work. Not idempotent: each call creates a new task.', idempotent: false },
   props: {
     subject: Property.ShortText({
       displayName: 'Subject',

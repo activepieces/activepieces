@@ -8,6 +8,8 @@ export const findCustomer = createAction({
   name: 'findCustomer',
   displayName: 'Find Customer',
   description: 'Find customers in Bokio by filtering and pagination',
+  audience: 'both',
+  aiMetadata: { description: 'Lists customers in a Bokio company with pagination, optionally filtered by name, type, VAT number, or organization number. Leaving the filter empty returns all customers; supplying a filter type and value narrows to matching records. Use to look up a customer or their ID. Idempotent read-only lookup.', idempotent: true },
   props: {
     filterType: Property.StaticDropdown({
       displayName: 'Filter Type',

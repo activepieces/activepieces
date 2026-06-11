@@ -8,6 +8,12 @@ export const findEnvelopeRecipients = createAction({
   displayName: 'Get People on a Signing Request',
   description:
     'Get the full list of people on a signing request — signers, viewers, and anyone copied.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves the list of all recipients on a DocuSign envelope by its ID — signers, carbon copies, certified deliveries, and other roles — along with their status. Use when you need to know who is on a signing request and where each person stands; requires the account ID and envelope ID. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: docusignAuth,
   props: {
     accountId: Property.ShortText({

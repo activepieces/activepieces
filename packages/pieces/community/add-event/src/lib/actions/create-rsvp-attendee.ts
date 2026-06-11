@@ -10,6 +10,12 @@ export const addEventCreateRsvpAttendeeAction = createAction({
   name: 'create_rsvp_attendee',
   displayName: 'Create RSVP Attendee',
   description: 'Creates a new RSVP attendee on your AddEvent event.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Adds an RSVP attendee (email, name, and response of going/maybe/not-going) to a specific AddEvent event. Use when an agent needs to register someone for an event. Requires a valid event ID; not idempotent, since each call creates another attendee record and, if notifications are enabled, sends a confirmation and organizer email.',
+    idempotent: false,
+  },
   props: {
     event_id: addEventProps.eventId({ required: true }),
     email: Property.ShortText({

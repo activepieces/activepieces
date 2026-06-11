@@ -11,6 +11,11 @@ export const clickAction = createAction({
 	auth: airtopAuth,
 	displayName: 'Click',
 	description: 'Execute a click interaction in a specific browser window.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Clicks an element in a session window located by a natural-language description, supporting left, double, and right click and optionally waiting for navigation to complete afterward. Use this to drive UI interactions such as pressing buttons or links. Requires session id, window id, and an element description; not idempotent since each click mutates page state and may trigger navigation or submissions.',
+		idempotent: false,
+	},
 	props: {
 		sessionId: sessionId,
 		windowId: windowId,

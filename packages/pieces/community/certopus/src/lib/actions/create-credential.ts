@@ -21,6 +21,11 @@ export const createCredential = createAction({
   name: 'create_credential',
   displayName: 'Create Credential',
   description: 'Create a credential',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Issues a Certopus certificate/credential for a single recipient under a given organisation, event, and category, supplying the recipient email plus the category-specific data fields. Use to grant a certificate to one person; the generate and publish flags control whether Certopus immediately produces and publishes it. Not idempotent — each call creates a new credential, so repeating it issues duplicates.',
+    idempotent: false,
+  },
   props: {
     organisation: Property.Dropdown({
       auth: certopusAuth,

@@ -8,6 +8,8 @@ export const listLeads = createAction({
   name: 'list_leads',
   displayName: 'List Leads',
   description: 'Get a list of all leads',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves leads from AskHandle, optionally narrowed by a start date, end date, and a maximum result limit; with no filters set it returns all leads. Use to query captured prospects over a time window. Read-only lookup, so it is idempotent.', idempotent: true },
   props: {
     start_date: Property.DateTime({
       displayName: 'Start Date',

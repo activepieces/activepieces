@@ -15,6 +15,8 @@ export const drupalCreateEntityAction = createAction({
   name: 'drupal-create-entity',
   displayName: 'Create Entity',
   description: 'Create a new entity in Drupal with smart field discovery and validation',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new content entity (node, taxonomy term, user, etc.) of a chosen entity type and bundle in Drupal via JSON:API. Available fields are discovered from the selected entity type, and at least one field value must be supplied. Use when adding new content; each call creates a distinct entity, so it is not idempotent.', idempotent: false },
   props: {
     entity_type: Property.Dropdown({
       auth: drupalAuth,

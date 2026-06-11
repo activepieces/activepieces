@@ -4,6 +4,10 @@ export const newPostTrigger = createCannyTrigger({
   name: 'new_post',
   displayName: 'New Post',
   description: 'Triggers when a new post is created on a Canny board.',
+  aiMetadata: {
+    description:
+      'Fires when a new feedback post is created on any Canny board, delivering the post with its board and author. Use to react to incoming feature requests or feedback as they are submitted.',
+  },
   eventType: 'post.created',
   sampleData: {
     created: '2026-04-06T10:35:59.055Z',

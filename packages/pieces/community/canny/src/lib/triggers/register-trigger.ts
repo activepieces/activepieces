@@ -13,12 +13,14 @@ export function createCannyTrigger({
   name,
   displayName,
   description,
+  aiMetadata,
   eventType,
   sampleData,
 }: {
   name: string;
   displayName: string;
   description: string;
+  aiMetadata: { description: string };
   eventType: CannyEventType;
   sampleData: unknown;
 }) {
@@ -27,6 +29,7 @@ export function createCannyTrigger({
     name,
     displayName,
     description,
+    aiMetadata,
     props: {},
     sampleData,
     type: TriggerStrategy.WEBHOOK,
