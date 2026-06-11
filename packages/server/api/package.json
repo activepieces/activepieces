@@ -53,6 +53,7 @@
     "@opentelemetry/sdk-node": "0.217.0",
     "@opentelemetry/sdk-trace-base": "2.1.0",
     "@opentelemetry/semantic-conventions": "1.37.0",
+    "posthog-node": "5.36.4",
     "@sentry/node": "7.120.0",
     "@smithy/node-http-handler": "4.4.14",
     "@socket.io/redis-adapter": "8.3.0",
