@@ -9,6 +9,8 @@ export const getFliqrAccountFlows = createAction({
   auth: fliqrAuth,
   displayName: 'Get Account Flows',
   description: 'Get all flows from the account',
+  audience: 'both',
+  aiMetadata: { description: 'Lists all chatbot flows configured on the authenticated Fliqr AI account. Use to discover the available flows (e.g. to find a flow id or confirm what automations exist) before referencing or triggering one. Read-only; repeating the call is safe.', idempotent: true },
   props: {},
   async run(context) {
     const res = await httpClient.sendRequest<string[]>({

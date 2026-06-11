@@ -9,6 +9,8 @@ export const fountainListOpenings = createAction({
   auth: fountainAuth,
   displayName: 'List All Opening Details',
   description: 'List job openings with optional filters',
+  audience: 'both',
+  aiMetadata: { description: 'Lists job openings (Fountain funnels), returning all openings when no filters are set or narrowing the results when any are supplied (active-only, location, hiring vs. sourcing funnel, private-only, or owner). Use to find or enumerate openings; supports cursor-based pagination via per_page and cursor. Read-only and idempotent.', idempotent: true },
   props: {
     active: Property.Checkbox({
       displayName: 'Active Only',

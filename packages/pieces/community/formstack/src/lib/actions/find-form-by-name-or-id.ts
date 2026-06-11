@@ -12,6 +12,8 @@ export const findFormByNameOrId = createAction({
   name: 'findFormByNameOrId',
   displayName: 'Find Form by Name or ID',
   description: 'Find a form by name or ID',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up Formstack forms by a search query that is interpreted in one of two modes: a purely numeric value fetches that single form directly by ID, while any other value searches forms by name (optionally restricted to exact name matches). Use to resolve a form reference before creating or reading submissions. Read-only and idempotent.', idempotent: true },
   props: {
     search_query: Property.ShortText({
       displayName: 'Form Name or ID',
