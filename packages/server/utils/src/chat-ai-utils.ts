@@ -88,14 +88,12 @@ function createChatModel({ provider, auth, config, modelId }: {
 }
 
 /**
- * Strip reasoning/thinking blocks from the message history before sending to the
- * provider. We never need to replay prior-turn thinking: the resulting text, tool
- * calls, and tool results carry all the context, and re-sending a thinking block
- * whose cryptographic `signature` didn't survive our DB round-trip (or the
- * continuation/compaction reshaping) makes Anthropic reject the request with
- * "Invalid `signature` in `thinking` block". In-flight thinking within a single
- * streamText tool-loop is managed by the SDK with intact signatures and is
- * unaffected — this only touches the cross-turn history we assemble.
+ * Strips for ALL providers (not just non-thinking ones) because Anthropic rejects
+ * a re-sent `thinking` block whose `signature` didn't survive our DB round-trip /
+ * compaction / truncation reshaping ("Invalid `signature` in `thinking` block"),
+ * and prior-turn reasoning adds nothing the text + tool results don't already carry.
+ * In-flight thinking within one streamText call keeps its intact signature and is
+ * untouched — this only touches the cross-turn history we assemble.
  */
 function stripThinkingBlocks(messages: ModelMessage[], _provider: AIProviderName): ModelMessage[] {
     const hasThinking = messages.some(
