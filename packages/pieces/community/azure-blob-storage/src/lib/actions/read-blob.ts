@@ -21,6 +21,8 @@ export const readBlob = createAction({
   name: 'readBlob',
   displayName: 'Read Blob',
   description: 'Read the Blob at the specified lcoation',
+  audience: 'both',
+  aiMetadata: { description: 'Downloads the blob at the given container and blob name and returns it as a file. Use to fetch the contents of a known blob for downstream processing; the blob name must already exist. Read-only and idempotent.', idempotent: true },
   props: {
     container: containerProp,
     blobName: Property.ShortText({

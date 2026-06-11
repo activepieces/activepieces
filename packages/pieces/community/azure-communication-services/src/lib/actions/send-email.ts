@@ -7,6 +7,12 @@ export const sendEmail = createAction({
   name: 'send_email',
   displayName: 'Send Email',
   description: 'Send a text or HTML email',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends an email through Azure Communication Services from a verified sender address, supporting either plain-text or HTML body via the content type selector. Use to deliver transactional or notification email when the workflow is wired to an Azure Communication Services connection. Requires a sender address provisioned in the Azure resource and at least one recipient; not idempotent — each call dispatches a new message.',
+    idempotent: false,
+  },
   props: {
     from: Property.ShortText({
       displayName: 'Sender Email (From)',

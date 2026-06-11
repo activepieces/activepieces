@@ -8,6 +8,12 @@ export const createVoteAction = createAction({
   name: 'create_vote',
   displayName: 'Create Vote',
   description: 'Casts a vote on a post on behalf of a user.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Registers a vote on a Canny post on behalf of a specific user. Use to record support for a feature request when acting as that voter. Requires the post ID and the voter Canny user ID. Effectively idempotent: re-voting the same user on the same post does not add duplicate votes.',
+    idempotent: true,
+  },
   props: {
     postID: Property.ShortText({
       displayName: 'Post ID',

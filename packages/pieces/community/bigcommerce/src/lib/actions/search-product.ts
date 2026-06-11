@@ -7,6 +7,12 @@ export const searchProduct = createAction({
   name: 'searchProduct',
   displayName: 'Search Product',
   description: 'Searches for a product in the catalog',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches the BigCommerce product catalog by name, SKU, type, brand, weight, and/or price. With no filters it returns all products; supplying any filter narrows to matches. Use to find a product or its id, or to check whether one exists before creating it. Idempotent read-only query with no side effects.',
+    idempotent: true,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Product Name',

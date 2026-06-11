@@ -44,6 +44,9 @@ export const newUpdatedWorkItemWebhookTrigger = createTrigger({
   displayName: 'New or Updated Work Item (Instant)',
   description:
     'Fires instantly when a work item is created, updated, or commented on in Azure DevOps via a Service Hooks subscription. Requires a public webhook URL reachable from Azure DevOps.',
+  aiMetadata: {
+    description: 'Fires in real time via an Azure DevOps Service Hooks subscription when a work item in the chosen project is created, updated, or commented on, depending on which of those event types are selected. Optionally scope to a single work item type. Requires a publicly reachable webhook URL; use the Polling trigger instead when the instance is not internet-reachable.',
+  },
   props: {
     project: azureDevOpsCommon.projectDropdown,
     work_item_type: azureDevOpsCommon.workItemTypeDropdownOptional,

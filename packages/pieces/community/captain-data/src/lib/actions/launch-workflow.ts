@@ -9,6 +9,12 @@ export const launchWorkflow = createAction({
   name: 'launchWorkflow',
   displayName: 'Launch a workflow',
   description: '',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Schedules a run of an existing Captain Data workflow, identified by its workflow UID, optionally supplying input rows, per-step account/parameter configuration, and a start delay. Use this to kick off a scraping/enrichment automation; it creates a new job on each call, so it is not idempotent. Each step requires the account UIDs and step UID matching the workflow definition.',
+    idempotent: false,
+  },
   auth: captainDataAuth,
   props: {
     workflow: workflowProp,

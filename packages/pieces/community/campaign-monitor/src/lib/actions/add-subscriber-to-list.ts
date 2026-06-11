@@ -10,6 +10,12 @@ export const addSubscriberToListAction = createAction({
   name: 'add_subscriber_to_list',
   displayName: 'Add Subscriber',
   description: 'Adds a new subscriber to a list.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Adds a subscriber (by email) to a specific Campaign Monitor list under a client, optionally setting name, phone, custom fields, and tracking/SMS consent. Choose this to enroll a new contact into an email list; enable Resubscribe to re-add someone who previously unsubscribed. Not idempotent: each call posts a new subscription and may overwrite or re-add the contact, so guard against duplicate runs.',
+    idempotent: false,
+  },
   props: {
     clientId: clientId,
     listId: listId,

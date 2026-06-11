@@ -8,6 +8,12 @@ export const searchCustomerAddress = createAction({
   name: 'searchCustomerAddress',
   displayName: 'Search Customer Address',
   description: 'Searches for a customer’s address',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches customer addresses in a BigCommerce store, optionally filtered by one or more customer ids and/or a name. With no filters it returns all addresses; supplying filters narrows to matches. Use to look up addresses belonging to specific customers. Idempotent read-only query with no side effects.',
+    idempotent: true,
+  },
   props: {
     customer_ids: multiCustomerDropdown({
       required: false,

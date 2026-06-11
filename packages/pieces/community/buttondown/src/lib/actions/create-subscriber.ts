@@ -14,6 +14,12 @@ export const createSubscriber = createAction({
   name: 'createSubscriber',
   displayName: 'Create Subscriber',
   description: 'Create a new subscriber in Buttondown.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Adds a subscriber to a Buttondown newsletter by email address, with optional tags, metadata, UTM attribution, and referral data. Use "regular" subscriber type to skip double opt-in. Not idempotent: each call creates a subscriber; control duplicate-email handling via collision behavior (default keeps the existing subscriber, or overwrite/merge tags).',
+    idempotent: false,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email Address',

@@ -8,6 +8,8 @@ export const runWorkflow = createAction({
   name: 'run_workflow',
   displayName: 'Run Workflow',
   description: 'Execute an AirOps workflow synchronously.',
+  audience: 'both',
+  aiMetadata: { description: 'Run a selected AirOps workflow synchronously and wait for its result, passing optional input values. Use when you need the workflow output back in the same call rather than polling; for long-running workflows prefer the async variant. Requires the target workflow (selected from the account) and triggers a new execution each time, so it is not idempotent.', idempotent: false },
   props: {
     app: Property.Dropdown({
       displayName: 'Workflow',

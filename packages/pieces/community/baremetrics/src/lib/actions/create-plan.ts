@@ -10,6 +10,8 @@ export const createPlan = createAction({
   name: 'create_plan',
   displayName: 'Create Plan',
   description: 'Creates a new plan for use when creating or updating subscriptions',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a billing plan under a Baremetrics data source, keyed on your own unique plan ID (oid), with currency, amount (in cents), and billing interval. Use to define a plan before creating subscriptions against it. Idempotent: the source treats oid as the unique key, so re-running with the same oid updates that plan rather than creating a duplicate.', idempotent: true },
   auth: baremetricsAuth,
   props: {
     source_id: Property.Dropdown({

@@ -7,6 +7,8 @@ export const getOrderDateAction = createAction({
   auth: cartloomAuth,
   displayName: 'Get Order by Date',
   description: 'Get a list of orders from Cartloom within a date range',
+  audience: 'both',
+  aiMetadata: { description: 'Lists all Cartloom orders placed within a date range. Use to retrieve orders for a period when you do not have specific invoice IDs; to narrow results to one customer, use Get Order by Email instead. Requires a start date; the end date defaults to today. Read-only and idempotent.', idempotent: true },
   props: {
     start: Property.DateTime({
       displayName: 'Start Date',

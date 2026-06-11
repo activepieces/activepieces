@@ -7,6 +7,8 @@ export const getLead = createAction({
   name: 'getLead',
   displayName: 'Get Lead',
   description: 'Get a specific lead by ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single lead by its Bookedin lead ID. Use it to read the full record for one known lead; if you only have a name, email, or phone, find the ID first with Get Leads. Read-only and idempotent.', idempotent: true },
   auth: bookedinAuth,
   props: {
     lead_id: leadIdDropdown,

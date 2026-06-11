@@ -10,6 +10,9 @@ export const pipelineRecordUpdated = createTrigger({
   name: 'pipelineRecordUpdated',
   displayName: 'Pipeline Record Updated',
   description: 'Triggers when a pipeline record is updated',
+  aiMetadata: {
+    description: 'Fires when an existing pipeline record (deal) is edited in Bigin CRM, via a Pipelines.edit webhook. Represents a change to a deal already in the CRM, such as a stage or amount update.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,
