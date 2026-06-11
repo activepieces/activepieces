@@ -8,6 +8,8 @@ export const sendMessageAction = createAction({
   name: 'send-message',
   displayName: 'Send Message',
   description: 'Sends a message to an Amazon SNS topic.',
+  audience: 'both',
+  aiMetadata: { description: 'Publishes a message to an Amazon SNS topic, fanning it out to that topic\'s subscribers (email, SMS, HTTP/S, SQS, Lambda, etc.). Use to send a notification or alert through a pre-existing SNS topic; you must supply the target topic\'s ARN and the message body. Not idempotent — each call publishes a new message and delivers it again.', idempotent: false },
   props: {
     topic: Property.Dropdown({
         auth: amazonSnsAuth,

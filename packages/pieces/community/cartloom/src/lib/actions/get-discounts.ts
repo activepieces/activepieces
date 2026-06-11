@@ -7,6 +7,8 @@ export const getAllDiscountsAction = createAction({
   auth: cartloomAuth,
   displayName: 'Get All Discounts',
   description: 'Get a list of discounts from Cartloom',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the full list of discounts configured in the connected Cartloom store. Use to browse existing discounts or find a discount ID before fetching one specific discount. Takes no input and returns all discounts; read-only and idempotent.', idempotent: true },
   props: {},
   async run(context) {
     return await getAllDiscounts(context.auth.props);

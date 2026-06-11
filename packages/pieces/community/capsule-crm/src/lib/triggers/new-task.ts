@@ -4,6 +4,10 @@ export const newTaskTrigger = capsuleCrmCreateTrigger({
   name: 'new_task',
   displayName: 'New Task',
   description: 'Fires when a new task is created.',
+  aiMetadata: {
+    description:
+      'Fires when a new task is created in Capsule CRM, delivering the created task record. Use to react to newly scheduled to-dos or follow-ups.',
+  },
   event: 'task/created',
   sampleData: {
     event: 'task/created',

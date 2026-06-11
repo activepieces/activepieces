@@ -12,6 +12,10 @@ export const newTaskTrigger = createTrigger({
 	name: 'new-task',
 	displayName: 'New Task',
 	description: 'Triggers when a new task is created in specified project.',
+	aiMetadata: {
+		description:
+			'Fires when a new task is created in the specified Clockify project, emitting the created task. Scoped to one workspace and project.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {
 		workspaceId: workspaceId({

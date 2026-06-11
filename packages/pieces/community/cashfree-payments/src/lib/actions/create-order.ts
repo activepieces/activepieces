@@ -6,6 +6,11 @@ export const createOrder = createAction({
   name: 'create-order',
   displayName: 'Create Order',
   description: 'Creates an order in Cashfree Payment Gateway',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a payment order in the Cashfree Payment Gateway (PG) given an amount, currency, and customer details, returning the order and its session for collecting payment. Use this to start a checkout/payment flow. Targets sandbox or production via the Environment prop; if no Order ID is supplied a unique one is auto-generated, so each call creates a distinct order and is not idempotent.',
+    idempotent: false,
+  },
   auth: cashfreePaymentsAuth,
   props: {
     environment: Property.StaticDropdown({

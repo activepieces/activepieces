@@ -7,6 +7,10 @@ export const buttondownNewSubscriber = createButtondownWebhookTrigger({
   name: 'buttondown_new_subscriber',
   displayName: 'New Subscriber',
   description: 'Triggers when a new subscriber is created.',
+  aiMetadata: {
+    description:
+      'Fires when a subscriber is added to the Buttondown newsletter, regardless of confirmation status. Represents a newly created subscriber record; the payload is enriched with the full subscriber details.',
+  },
   eventType: 'subscriber.created',
   sampleData: {
     event_type: 'subscriber.created',

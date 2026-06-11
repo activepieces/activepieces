@@ -8,6 +8,8 @@ export const listBlobs = createAction({
   name: 'listBlobs',
   displayName: 'List Blobs',
   description: 'List Blobs in the specified Azure Blob Storage container',
+  audience: 'both',
+  aiMetadata: { description: 'Lists the blobs in a given container, returning each blob name with its properties and metadata. Use to enumerate or discover blobs before reading or processing them; optionally narrow by a name prefix and include snapshots. Read-only and idempotent.', idempotent: true },
   props: {
     container: containerProp,
     includeSnapshots: Property.Checkbox({

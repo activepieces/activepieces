@@ -10,6 +10,9 @@ export const newNote = createTrigger({
   name: 'newNote',
   displayName: 'New Note',
   description: 'Triggers when a new note is added to a call.',
+  aiMetadata: {
+    description: 'Fires when a comment (note) is added to an Aircall call (the call.commented webhook event), emitting the call with its comments and associated contact.',
+  },
   props: {},
   sampleData:  {
       id: 12345,

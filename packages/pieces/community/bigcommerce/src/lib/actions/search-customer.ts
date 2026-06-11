@@ -7,6 +7,12 @@ export const searchCustomer = createAction({
   name: 'searchCustomer',
   displayName: 'Search Customer',
   description: 'Searches for a registered customer',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches registered customers in a BigCommerce store by email, phone, and/or name. With no filters it returns all customers; supplying any filter narrows to matches. Use to look up a customer or check whether one exists before creating it. Idempotent read-only query with no side effects.',
+    idempotent: true,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

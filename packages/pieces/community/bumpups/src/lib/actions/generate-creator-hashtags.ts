@@ -9,6 +9,8 @@ export const generateCreatorHashtags = createAction({
   displayName: 'Generate Creator Hashtags',
   description:
     'Generates relevant hashtags for a YouTube video based on its content.',
+  audience: 'both',
+  aiMetadata: { description: 'Calls the Bumpups AI model on a public YouTube video URL to generate social tags from the video content, with an output-format option to return either hashtags or plain keywords. Use when an agent needs discoverability tags for a specific YouTube video; the video URL is required and an optional language code sets the output language. Not idempotent — each call invokes the model and may produce different tags.', idempotent: false },
   props: {
     videoUrl: Property.ShortText({
       displayName: 'Video URL',

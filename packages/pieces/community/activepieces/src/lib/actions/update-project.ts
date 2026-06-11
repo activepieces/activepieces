@@ -11,6 +11,12 @@ export const updateProject = createAction({
   auth: activePieceAuth,
   displayName: 'Update Project',
   description: 'Update a project',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Update an existing project on an Activepieces platform, identified by its project id, setting its display name, notification status, and team-member limit. Use when reconfiguring a known project rather than creating one. Requires the target project id; idempotent — repeating with the same values leaves the project in the same state.',
+    idempotent: true,
+  },
   props: {
     id: Property.ShortText({
       displayName: 'Id',

@@ -13,6 +13,8 @@ export const addCustomSources = createAction({
   name: 'addCustomSources',
   displayName: 'Add Custom Sources',
   description: 'Upload one or more files as custom sources for training',
+  audience: 'both',
+  aiMetadata: { description: 'Upload one or more files (PDF, Word, text, Markdown, HTML, Excel, CSV, PowerPoint, or images) to a Chat Aid knowledge base as custom sources for training, optionally scoped to a specific team (defaults to org-wide). Use this to ingest new documents the assistant should be able to answer from. Not idempotent: each call appends new sources, so repeating it uploads duplicates.', idempotent: false },
   props: {
     files: Property.Array({
       displayName: 'Files',

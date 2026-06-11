@@ -7,6 +7,12 @@ export const createBlogPost = createAction({
   name: 'createBlogPost',
   displayName: 'Create Blog Post',
   description: 'Creates a blog post',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Creates a blog post in a BigCommerce store's blog. Requires a title and body (HTML supported); author, URL, published date, meta description/keywords, tags, and a published flag are optional. Use to publish store blog content. Not idempotent: each call creates a new post.",
+    idempotent: false,
+  },
   props: {
     title: Property.ShortText({
       displayName: 'Title',

@@ -8,6 +8,8 @@ export const moveCandidate = createAction({
   name: 'moveCandidate',
   displayName: 'Move Candidate',
   description: 'Moves candidate to the specified stage.',
+  audience: 'both',
+  aiMetadata: { description: 'Moves a Workable candidate into a target pipeline stage, recording the move on behalf of a given hiring-team member. Use to advance or change a candidate stage in the recruitment pipeline. Requires the candidate ID, the acting member ID, and the target stage slug (resolve valid slugs via Get Stages). Not idempotent — each call posts a stage transition.', idempotent: false },
   props: {
     id: Property.ShortText({
       displayName: "Candidate's Id",

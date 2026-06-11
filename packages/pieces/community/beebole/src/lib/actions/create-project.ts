@@ -20,6 +20,11 @@ export const createProjectAction = createAction({
   name: 'create_project',
   displayName: 'Create Project',
   description: 'Creates a new project under a company in Beebole.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a project owned by an existing company in Beebole, with an optional start date and description. Use after the company exists and before adding subprojects or logging time. Not idempotent: each call creates a new project even with identical details.',
+    idempotent: false,
+  },
   props: {
     company: beeboleProps.companyDropdown({
       required: true,

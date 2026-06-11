@@ -7,6 +7,12 @@ export const listCategories = createAction({
   name: 'listCategories',
   displayName: 'List Categories',
   description: 'Lists all categories',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists product categories from a BigCommerce store. With no name filter it returns all categories; provide a name to filter to matching categories. Use to discover category names or ids before assigning products. Idempotent read-only query with no side effects.',
+    idempotent: true,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Category Name',

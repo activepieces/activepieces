@@ -7,6 +7,11 @@ export const deleteRecordAction = createAction({
   name: 'teable_delete_record',
   displayName: 'Delete Record',
   description: 'Deletes a record from a Teable table by its ID.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Permanently removes a single record from a Teable table by its record ID. Use when the agent must delete a known row. Effectively idempotent on the end state (the record stays gone), though a repeat call on an already-deleted ID may error.',
+    idempotent: true,
+  },
   props: {
     base_id: TeableCommon.base_id,
     table_id: TeableCommon.table_id,

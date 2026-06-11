@@ -7,6 +7,12 @@ export const createFaq = createAction({
   name: 'create_faq',
   displayName: 'Create FAQ',
   description: 'Creates a new FAQ entry with title and description.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new, empty FAQ knowledge base in Aidbase identified by a title (description optional). Use this first to obtain an FAQ id before adding entries with Add FAQ Item. Not idempotent: each call creates a separate FAQ even with the same title.',
+    idempotent: false,
+  },
 
   props: {
     title: Property.ShortText({

@@ -13,6 +13,8 @@ export const queryDatastoretAction = createAction({
   name: 'query-datastore',
   auth: chaindeskAuth,
   description: 'Asks question to your Datastore.',
+  audience: 'both',
+  aiMetadata: { description: 'Runs a semantic search query against a specific Chaindesk datastore (selected by datastore ID) and returns the matching documents/chunks. Use to retrieve relevant knowledge-base content for a question without invoking an agent. Read-only and idempotent: the same query returns the same matches with no side effects.', idempotent: true },
   props: {
     datastoreId: datastoreIdDropdown,
     query: Property.LongText({
