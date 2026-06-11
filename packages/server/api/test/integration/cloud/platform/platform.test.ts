@@ -220,6 +220,134 @@ describe('Platform API', () => {
             expect(responseBody.favIconUrl.startsWith(baseUrl)).toBeTruthy()
         }),
 
+        it('updates platform theme colors', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    embeddingEnabled: false,
+                },
+                platform: {
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+            const requestBody: UpdatePlatformRequestBody = {
+                themeColors: {
+                    'blue-link': '#434fef',
+                    danger: '#e82c51',
+                    primary: {
+                        dark: '#ca6716',
+                    },
+                    warn: {
+                        default: '#fa9d52',
+                    },
+                },
+            }
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: requestBody,
+            })
+
+            // assert
+            const responseBody = response?.json()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(responseBody.themeColors).toStrictEqual(requestBody.themeColors)
+        }),
+
+        it('updates and clears theme colors via multipart form data', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    embeddingEnabled: false,
+                },
+                platform: {
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+            const formData = new FormData()
+            formData.append('name', 'updated name')
+            formData.append('themeColors', JSON.stringify({ danger: '#e82c51' }))
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: formData,
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().themeColors).toStrictEqual({ danger: '#e82c51' })
+
+            // act - clear the overrides
+            const clearFormData = new FormData()
+            clearFormData.append('name', 'updated name')
+            clearFormData.append('themeColors', 'null')
+
+            const clearResponse = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: clearFormData,
+            })
+
+            // assert
+            expect(clearResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(clearResponse?.json().themeColors).toBeNull()
+        }),
+
+        it('rejects invalid theme colors', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    embeddingEnabled: false,
+                },
+                platform: {
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: {
+                    themeColors: {
+                        danger: 'red',
+                    },
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        }),
+
         it('fails if user is not owner', async () => {
             // arrange
             const { mockPlatform } = await mockAndSaveBasicSetup()
@@ -332,12 +460,13 @@ describe('Platform API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            expect(Object.keys(responseBody).length).toBe(23)
+            expect(Object.keys(responseBody).length).toBe(24)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.ownerId).toBe(mockOwner.id)
             expect(responseBody.name).toBe(mockPlatform.name)
             expect(responseBody.federatedAuthProviders.saml).toStrictEqual({})
             expect(responseBody.primaryColor).toBe(mockPlatform.primaryColor)
+            expect(responseBody.themeColors).toBeNull()
             expect(responseBody.logoIconUrl).toBe(mockPlatform.logoIconUrl)
             expect(responseBody.fullLogoUrl).toBe(mockPlatform.fullLogoUrl)
             expect(responseBody.favIconUrl).toBe(mockPlatform.favIconUrl)

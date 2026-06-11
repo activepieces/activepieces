@@ -111,11 +111,38 @@ export const PlatformPlanLimits = PlatformPlan.omit({ id: true, platformId: true
 export type PlatformPlanLimits = z.infer<typeof PlatformPlanLimits>
 export type PlatformPlanWithOnlyLimits = Omit<PlatformPlanLimits, 'stripeSubscriptionStartDate' | 'stripeSubscriptionEndDate' | 'stripeBillingCycle'>
 
+export const HEX_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/
+
+const hexColor = z.string().regex(HEX_COLOR_PATTERN, 'invalidHexColor')
+
+export const PlatformThemeColors = z.object({
+    avatar: hexColor.optional(),
+    'blue-link': hexColor.optional(),
+    danger: hexColor.optional(),
+    selection: hexColor.optional(),
+    primary: z.object({
+        dark: hexColor.optional(),
+        light: hexColor.optional(),
+        medium: hexColor.optional(),
+    }).optional(),
+    warn: z.object({
+        default: hexColor.optional(),
+        light: hexColor.optional(),
+        dark: hexColor.optional(),
+    }).optional(),
+    success: z.object({
+        default: hexColor.optional(),
+        light: hexColor.optional(),
+    }).optional(),
+})
+export type PlatformThemeColors = z.infer<typeof PlatformThemeColors>
+
 export const Platform = z.object({
     ...BaseModelSchema,
     ownerId: ApId,
     name: z.string(),
     primaryColor: z.string(),
+    themeColors: Nullable(PlatformThemeColors),
     logoIconUrl: z.string(),
     fullLogoUrl: z.string(),
     favIconUrl: z.string(),
@@ -151,6 +178,7 @@ export const PlatformWithoutSensitiveData = z.object({
     ownerId: ApId,
     name: z.string(),
     primaryColor: z.string(),
+    themeColors: Nullable(PlatformThemeColors),
     logoIconUrl: z.string(),
     fullLogoUrl: z.string(),
     favIconUrl: z.string(),
