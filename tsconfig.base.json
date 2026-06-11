@@ -1014,6 +1014,9 @@
       "@activepieces/piece-productboard": [
         "packages/pieces/community/productboard/src/index.ts"
       ],
+      "@activepieces/piece-produktly": [
+        "packages/pieces/community/produktly/src/index.ts"
+      ],
       "@activepieces/piece-promotekit": [
         "packages/pieces/community/promotekit/src/index.ts"
       ],
