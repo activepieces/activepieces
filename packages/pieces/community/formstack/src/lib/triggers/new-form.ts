@@ -76,6 +76,9 @@ export const newForm = createTrigger({
   name: 'newForm',
   displayName: 'New Form',
   description: 'Triggers when a new form is created',
+  aiMetadata: {
+    description: 'Fires when a new form is created in the connected Formstack account, emitting the form and its metadata. Polls the account form list and detects forms created since the last check.',
+  },
   props: {},
   sampleData: {
     id: "6244510",

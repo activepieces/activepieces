@@ -7,6 +7,8 @@ export const findPhoneNumberCarrier = createAction({
   name: 'findPhoneNumberCarrier',
   displayName: 'Find Phone Number Carrier',
   description: 'Find the carrier of a phone number using ClearoutPhone API',
+  audience: 'both',
+  aiMetadata: { description: 'Look up the telecom carrier of a single phone number via ClearoutPhone, also returning line type and country details. Use when an agent needs to identify which provider owns a number. Requires the number in international format (e.g. +447766733573); this is a read-only lookup and is idempotent.', idempotent: true },
   props: {
     phoneNumber: Property.ShortText({
       displayName: 'Phone Number',

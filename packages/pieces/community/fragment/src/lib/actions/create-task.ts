@@ -8,6 +8,8 @@ export const createTask = createAction({
 	name: 'create_task',
 	displayName: 'Create Task',
 	description: 'Creates a new task in Fragment.',
+	audience: 'both',
+	aiMetadata: { description: 'Creates a new task in Fragment with a title and optional URL, due date, assignee email, tags, and custom fields. Use to add a work item to a Fragment queue. Not idempotent: each call creates a separate task even with identical input.', idempotent: false },
 	props: {
 		title: Property.ShortText({
 			displayName: 'Title',

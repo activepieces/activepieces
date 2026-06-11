@@ -11,6 +11,8 @@ export const findUserProfileAction = createAction({
 	name: 'find_user_profile',
 	displayName: 'Find User Profile',
 	description: 'Finds a user profile by email address.',
+	audience: 'both',
+	aiMetadata: { description: 'Looks up a single person profile in a Crisp website by exact email address, returning a found flag rather than erroring when no match exists. Use to check whether a contact already exists or to fetch its details. Idempotent: a read-only lookup with no side effects.', idempotent: true },
 	props: {
 		websiteId: websiteIdProp,
 		email: Property.ShortText({

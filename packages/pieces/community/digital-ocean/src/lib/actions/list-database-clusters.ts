@@ -8,6 +8,8 @@ export const listDatabaseClusters = createAction({
   name: 'list_database_clusters',
   displayName: 'List Database Clusters',
   description: 'Retrieve a list of all database clusters in your account.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists managed database clusters on the authenticated DigitalOcean account, optionally filtered to a single tag (empty tag returns all). Use to discover clusters or resolve a cluster id before acting on it. Read-only and idempotent.', idempotent: true },
   props: {
     tag_name: Property.ShortText({
       displayName: 'Tag Name',

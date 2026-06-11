@@ -7,6 +7,8 @@ export const addTargetAccountAction = createAction({
   name: 'add_target_account',
   displayName: 'Add Target Account',
   description: 'Add a target account to a list',
+  audience: 'both',
+  aiMetadata: { description: 'Adds a company domain as a target account to a specific DigitalPilot list (identified by tag and list IDs) so its website visits are tracked as high-priority. Use to build or grow an account-based marketing target list. Requires the tag ID, list ID, and the account domain (e.g. example.com); idempotent, since re-adding the same domain leaves the list membership unchanged.', idempotent: true },
   props: {
     tagId: tagIdProp,
     listId: listIdProp,

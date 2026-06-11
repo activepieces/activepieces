@@ -8,6 +8,8 @@ export const createFollower = createAction({
   name: 'create_follower',
   displayName: 'Create Follower',
   description: 'Add a new user (follower) to Frill, optionally with custom attributes and company data.',
+  audience: 'both',
+  aiMetadata: { description: 'Adds a new follower (end user) to Frill by name and email, optionally with custom attributes and associated companies (each company needs an id and name). Use to register a user so they can be linked to feedback. Not idempotent: each call creates a follower, so use Update Follower to change an existing one.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

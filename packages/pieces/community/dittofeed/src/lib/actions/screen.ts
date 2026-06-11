@@ -7,6 +7,8 @@ export const screenAction = createAction({
   auth: dittofeedAuth,
   displayName: 'Screen Event',
   description: 'Track a screen view event.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a screen event to Dittofeed recording that a user viewed a named screen or page, optionally with properties. Use to capture in-app screen-view activity for a user (the screen-specific counterpart to a track event). Requires a userId and screen name; each call appends a new event with a unique messageId, so it is not idempotent.', idempotent: false },
   props: {
     userId: Property.ShortText({
       displayName: 'User ID',

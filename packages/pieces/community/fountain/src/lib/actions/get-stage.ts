@@ -9,6 +9,8 @@ export const fountainGetStage = createAction({
   auth: fountainAuth,
   displayName: 'Get Stage',
   description: 'Retrieves a specific Stage',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves details for a single hiring-pipeline stage by its stage ID (the opening/funnel is selected only to scope the stage picker). Use to inspect a specific stage within an opening. Read-only and idempotent.', idempotent: true },
   props: {
     funnel_id: Property.Dropdown({
       displayName: 'Opening',

@@ -9,6 +9,12 @@ export const generateAiImage = createAction({
   displayName: 'Generate AI Image',
   description:
     'Generate AI images based on text prompts using various models and styles',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Generate an image from a text prompt via Easy-Peasy.AI, selecting the generation model (DALL-E 3/2, Midjourney, or Stable Diffusion) and optionally style, artist inspiration, dimensions, HD quality, and a reference image URL. Choose this to produce visual content from a description; the prompt and model are required. Each call creates a new image, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     prompt: Property.LongText({
       displayName: 'Prompt',
