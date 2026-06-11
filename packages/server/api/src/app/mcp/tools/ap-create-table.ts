@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { fieldService } from '../../tables/field/field.service'
 import { tableService } from '../../tables/table/table.service'
 import { mcpUtils } from './mcp-utils'
-import { fieldTypeSchema, formatFieldInfo } from './table-utils'
+import { fieldTypeSchema, formatFieldInfo, TABLE_ID_USAGE_NOTE } from './table-utils'
 
 const createTableInput = z.object({
     name: z.string().describe('The name of the table'),
@@ -59,7 +59,7 @@ export const apCreateTableTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
                 return {
                     content: [{
                         type: 'text',
-                        text: `✅ Table "${name}" created (id: ${table.id})\nFields:\n${fieldLines}`,
+                        text: `✅ Table "${name}" created (id: ${table.id}, externalId: ${table.externalId})\nFields:\n${fieldLines}\n\n${TABLE_ID_USAGE_NOTE}`,
                     }],
                 }
             }

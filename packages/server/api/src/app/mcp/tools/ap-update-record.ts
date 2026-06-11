@@ -3,10 +3,10 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { recordService } from '../../tables/record/record.service'
 import { mcpUtils } from './mcp-utils'
-import { formatPopulatedRecord, resolveFieldNamesForTable } from './table-utils'
+import { formatPopulatedRecord, getTableByAnyId, resolveFieldNamesForTable } from './table-utils'
 
 const updateRecordInput = z.object({
-    tableId: z.string().describe('The table ID'),
+    tableId: z.string().describe('The table ID (internal id or externalId — both accepted). Use ap_list_tables to find it.'),
     recordId: z.string().describe('The record ID to update. Use ap_find_records to find it.'),
     fields: z.record(z.string(), z.string()).describe('Object mapping field names to new values. Only specified fields are updated. Example: {"Name": "Bob", "Age": "25"}'),
 })
@@ -27,7 +27,8 @@ export const apUpdateRecordTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                     return { content: [{ type: 'text', text: '❌ No fields provided to update.' }] }
                 }
 
-                const { fieldMap, errors } = await resolveFieldNamesForTable(mcp.projectId, tableId, fieldNames)
+                const table = await getTableByAnyId({ projectId: mcp.projectId, tableId })
+                const { fieldMap, errors } = await resolveFieldNamesForTable(mcp.projectId, table.id, fieldNames)
                 if (errors.length > 0) {
                     return { content: [{ type: 'text', text: `❌ Field resolution error:\n${errors.join('\n')}` }] }
                 }
@@ -40,7 +41,7 @@ export const apUpdateRecordTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                 const updated = await recordService.update({
                     id: recordId,
                     projectId: mcp.projectId,
-                    request: { tableId, cells },
+                    request: { tableId: table.id, cells },
                 })
 
                 return {

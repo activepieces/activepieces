@@ -44,9 +44,13 @@ The agent tools above are for setup and inspection. To read/write a Table from i
 
 > New email (trigger) → **Tables: Create Record** → map `{{trigger['output'].subject}}` to the `Subject` field, `{{trigger['output'].from}}` to `Sender`, etc.
 
+**The two-id rule (the #1 Tables failure).** Every table and field has an internal `id` *and* an `externalId` — `ap_list_tables` / `ap_create_table` print both. They are not interchangeable:
+- **Tables piece step config:** `table_id` = the table's **externalId**, and the `values` object is keyed by **field externalIds**. An internal id fails at runtime with "Table with externalId not found" (and validation will NOT catch it).
+- **ap_* table tools:** accept either table id, and reference fields by **name**.
+
 ## Gotchas
 
-- **Use field _names_, not field ids**, when reading or writing records.
+- **Field _names_ for the ap_* tools; field _externalIds_ as the values keys in the Tables piece step.** Never field display labels.
 - **Resolve the table and its fields with `ap_list_tables` first** — don't assume a table or field exists.
 - Only call `ap_create_table` after confirming the table isn't already there.
 - `STATIC_DROPDOWN` values must match one of the field's configured options.

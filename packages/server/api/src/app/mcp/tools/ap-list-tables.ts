@@ -3,7 +3,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { fieldService } from '../../tables/field/field.service'
 import { tableService } from '../../tables/table/table.service'
 import { mcpUtils } from './mcp-utils'
-import { formatFieldInfo } from './table-utils'
+import { formatFieldInfo, TABLE_ID_USAGE_NOTE } from './table-utils'
 
 export const apListTablesTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
@@ -41,7 +41,7 @@ export const apListTablesTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                     const fields = fieldsByTable.get(table.id) ?? []
                     const rowCount = table.rowCount ?? 0
                     const fieldLines = fields.map(f => `    - ${formatFieldInfo(f)}`).join('\n')
-                    return `- ${table.name} (id: ${table.id}) — ${rowCount} records\n  Fields:\n${fieldLines}`
+                    return `- ${table.name} (id: ${table.id}, externalId: ${table.externalId}) — ${rowCount} records\n  Fields:\n${fieldLines}`
                 })
 
                 const structured = {
@@ -49,9 +49,10 @@ export const apListTablesTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                         const fields = fieldsByTable.get(table.id) ?? []
                         return {
                             id: table.id,
+                            externalId: table.externalId,
                             name: table.name,
                             rowCount: table.rowCount ?? 0,
-                            fields: fields.map(f => ({ id: f.id, name: f.name, type: f.type })),
+                            fields: fields.map(f => ({ id: f.id, externalId: f.externalId, name: f.name, type: f.type })),
                         }
                     }),
                     count: result.data.length,
@@ -64,7 +65,7 @@ export const apListTablesTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                 return {
                     content: [{
                         type: 'text',
-                        text: output + truncationNote,
+                        text: `${output + truncationNote}\n\n${TABLE_ID_USAGE_NOTE}`,
                     }],
                     structuredContent: structured,
                 }

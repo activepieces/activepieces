@@ -49,6 +49,25 @@ The trigger is always `trigger`. Actions are `step_1`, `step_2`, … numbered in
 - Reach for the native piece/action before `custom_api_call` or the HTTP piece. Only fall back to HTTP when no native action fits — then use a relative URL and the connection's auth.
 - Before configuring a step, `ap_get_piece_props` to get exact field names/types. For dropdowns, `ap_resolve_property_options` and use the option's **`value`/id, never its label**. Resolve parent fields before dependent children (e.g. spreadsheet before sheet).
 
+## Native pieces — check these before searching
+
+Activepieces ships built-in pieces that need **no external app and no connection**. Registry search often misses them (e.g. the form piece is named "Human Input"), so map the user's words directly:
+
+| User says | Piece | What it is |
+|---|---|---|
+| "a form" (no tool named) | `@activepieces/piece-forms` (shows as **Human Input**) | hosted web form trigger, generates a shareable link |
+| "every day / hour", "cron" | `@activepieces/piece-schedule` | schedule triggers |
+| "webhook", "receive events" | `@activepieces/piece-webhook` | inbound webhook trigger (+ optional response) |
+| "save / track data here" | `@activepieces/piece-tables` | built-in database — `ap_get_guide(tables)` |
+| "remember / count / dedup" | `@activepieces/piece-store` | key-value store — `ap_get_guide(state)` |
+| "ask AI / classify / extract" | `@activepieces/piece-ai` | native AI actions — `ap_get_guide(ai)` |
+| "human sign-off" | `@activepieces/piece-approval` | pause until approve/reject link is clicked |
+| "wait / pause" | `@activepieces/piece-delay` | delay step |
+| "call an API directly" | `@activepieces/piece-http` | raw HTTP — last resort, `ap_get_guide(error-handling)` |
+| "split big work" | `@activepieces/piece-subflows` | call another flow — `ap_get_guide(error-handling)` |
+
+If piece research returns nothing for a generic word like "form" or "table", the answer is almost always one of these — don't ask the user to pick a third-party tool they never mentioned.
+
 ## Hard limits to design around
 
 Activepieces' documented limits — plan within them:

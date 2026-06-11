@@ -1,6 +1,15 @@
-import { Field, FieldType, PopulatedRecord } from '@activepieces/shared'
+import { Field, FieldType, isNil, PopulatedRecord, Table, tryCatch } from '@activepieces/shared'
 import { z } from 'zod'
 import { fieldService } from '../../tables/field/field.service'
+import { tableService } from '../../tables/table/table.service'
+
+export async function getTableByAnyId({ projectId, tableId }: { projectId: string, tableId: string }): Promise<Table> {
+    const { data } = await tryCatch(() => tableService.getOneOrThrow({ projectId, id: tableId }))
+    if (!isNil(data)) {
+        return data
+    }
+    return tableService.getOneByExternalIdOrThrow({ projectId, externalId: tableId })
+}
 
 export async function resolveFieldNamesForTable(
     projectId: string,
@@ -59,10 +68,12 @@ export function formatPopulatedRecord(record: PopulatedRecord): string {
 export function formatFieldInfo(field: Field): string {
     if (field.type === FieldType.STATIC_DROPDOWN) {
         const options = field.data.options.map(o => o.value).join(', ')
-        return `${field.name} (id: ${field.id}, type: ${field.type}, options: ${options})`
+        return `${field.name} (id: ${field.id}, externalId: ${field.externalId}, type: ${field.type}, options: ${options})`
     }
-    return `${field.name} (id: ${field.id}, type: ${field.type})`
+    return `${field.name} (id: ${field.id}, externalId: ${field.externalId}, type: ${field.type})`
 }
+
+export const TABLE_ID_USAGE_NOTE = 'Flow steps (Tables piece): set table_id to the table\'s externalId and key record values by field externalIds — internal ids will fail at runtime. The ap_* table tools accept either id and use field names.'
 
 export const FIELD_TYPE_VALUES = [
     FieldType.TEXT,

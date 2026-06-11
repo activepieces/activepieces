@@ -3,7 +3,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { recordService } from '../../tables/record/record.service'
 import { mcpUtils } from './mcp-utils'
-import { formatPopulatedRecord, resolveFieldNamesForTable } from './table-utils'
+import { formatPopulatedRecord, getTableByAnyId, resolveFieldNamesForTable } from './table-utils'
 
 const OPERATOR_VALUES = [
     FilterOperator.EQ,
@@ -20,7 +20,7 @@ const OPERATOR_VALUES = [
 const operatorSchema = z.enum(OPERATOR_VALUES)
 
 const findRecordsInput = z.object({
-    tableId: z.string().describe('The table ID. Use ap_list_tables to find it.'),
+    tableId: z.string().describe('The table ID (internal id or externalId — both accepted). Use ap_list_tables to find it.'),
     filters: z.array(z.object({
         fieldName: z.string().describe('The field name to filter on'),
         operator: operatorSchema.describe('Filter operator'),
@@ -39,13 +39,14 @@ export const apFindRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
         execute: async (args) => {
             try {
                 const { tableId, filters, limit } = findRecordsInput.parse(args)
+                const table = await getTableByAnyId({ projectId: mcp.projectId, tableId })
                 const effectiveLimit = limit ?? 50
 
                 let resolvedFilters = null
                 let fields = undefined
                 if (filters && filters.length > 0) {
                     const fieldNames = filters.map(f => f.fieldName)
-                    const resolved = await resolveFieldNamesForTable(mcp.projectId, tableId, fieldNames)
+                    const resolved = await resolveFieldNamesForTable(mcp.projectId, table.id, fieldNames)
                     fields = resolved.fields
 
                     for (const filter of filters) {
@@ -68,7 +69,7 @@ export const apFindRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
                 }
 
                 const result = await recordService.list({
-                    tableId,
+                    tableId: table.id,
                     projectId: mcp.projectId,
                     filters: resolvedFilters,
                     limit: effectiveLimit,

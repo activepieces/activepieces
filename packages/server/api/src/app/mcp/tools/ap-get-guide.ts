@@ -19,7 +19,7 @@ const GUIDE_FILES: Record<GuideTopic, string> = {
 const getGuideInput = z.object({
     topic: z.enum(['flow-building', 'patterns', 'control-flow', 'state', 'tables', 'ai', 'error-handling']).describe([
         'Which guide to read:',
-        '- flow-building: the build loop, step references, auth, naming, validate/test discipline, hard limits. Read this first.',
+        '- flow-building: the build loop, native built-in pieces, step references, auth, naming, validate/test discipline, hard limits. Read this first.',
         '- patterns: recurring flow archetypes (passthrough, classify-then-route, lookup-or-create, enrichment, fan-out, …) so you build the right shape.',
         '- control-flow: routers and loops — branch indexing, the zombie-branch gotcha, loop output shape, sequential execution.',
         '- state: choosing Store vs Tables vs Sheets, scopes, idempotency gates, and dedup.',

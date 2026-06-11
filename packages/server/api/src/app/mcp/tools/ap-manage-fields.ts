@@ -3,10 +3,10 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { fieldService } from '../../tables/field/field.service'
 import { mcpUtils } from './mcp-utils'
-import { fieldTypeSchema, formatFieldInfo } from './table-utils'
+import { fieldTypeSchema, formatFieldInfo, getTableByAnyId } from './table-utils'
 
 const manageFieldsInput = z.object({
-    tableId: z.string().describe('The table ID'),
+    tableId: z.string().describe('The table ID (internal id or externalId — both accepted). Use ap_list_tables to find it.'),
     operation: z.enum(['ADD', 'UPDATE', 'DELETE']).describe('ADD a new field, UPDATE (rename) an existing field, or DELETE a field'),
     fieldId: z.string().optional().describe('The field ID (required for UPDATE and DELETE). Use ap_list_tables to find it.'),
     name: z.string().optional().describe('Field name (required for ADD and UPDATE)'),
@@ -24,6 +24,7 @@ export const apManageFieldsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
         execute: async (args) => {
             try {
                 const { tableId, operation, fieldId, name, type, options } = manageFieldsInput.parse(args)
+                const table = await getTableByAnyId({ projectId: mcp.projectId, tableId })
 
                 switch (operation) {
                     case 'ADD': {
@@ -38,8 +39,8 @@ export const apManageFieldsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                         }
 
                         const request = type === FieldType.STATIC_DROPDOWN
-                            ? { name, type, tableId, data: { options: (options ?? []).map(v => ({ value: v })) } }
-                            : { name, type, tableId }
+                            ? { name, type, tableId: table.id, data: { options: (options ?? []).map(v => ({ value: v })) } }
+                            : { name, type, tableId: table.id }
 
                         const field = await fieldService.create({
                             projectId: mcp.projectId,
@@ -55,7 +56,7 @@ export const apManageFieldsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                             return { content: [{ type: 'text', text: '❌ name is required for UPDATE operation' }] }
                         }
                         const existing = await fieldService.getById({ id: fieldId, projectId: mcp.projectId })
-                        if (existing.tableId !== tableId) {
+                        if (existing.tableId !== table.id) {
                             return { content: [{ type: 'text', text: `❌ Field (id: ${fieldId}) does not belong to table (id: ${tableId})` }] }
                         }
                         const field = await fieldService.update({
@@ -70,7 +71,7 @@ export const apManageFieldsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                             return { content: [{ type: 'text', text: '❌ fieldId is required for DELETE operation' }] }
                         }
                         const toDelete = await fieldService.getById({ id: fieldId, projectId: mcp.projectId })
-                        if (toDelete.tableId !== tableId) {
+                        if (toDelete.tableId !== table.id) {
                             return { content: [{ type: 'text', text: `❌ Field (id: ${fieldId}) does not belong to table (id: ${tableId})` }] }
                         }
                         await fieldService.delete({
