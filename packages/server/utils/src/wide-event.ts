@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
-import { RequestLogger } from 'evlog'
+import { audit as standaloneAudit, AuditInput, RequestLogger, withAuditMethods } from 'evlog'
 
 const als = new AsyncLocalStorage<RequestLogger>()
 
@@ -33,6 +33,15 @@ async function timed<T>({ name, fn }: { name: string, fn: () => Promise<T> }): P
     }
 }
 
+function audit(input: AuditInput): void {
+    const store = als.getStore()
+    if (store) {
+        withAuditMethods(store).audit(input)
+        return
+    }
+    standaloneAudit(input)
+}
+
 function current(): RequestLogger | undefined {
     return als.getStore()
 }
@@ -42,5 +51,6 @@ export const wideEvent = {
     set,
     error,
     timed,
+    audit,
     current,
 }

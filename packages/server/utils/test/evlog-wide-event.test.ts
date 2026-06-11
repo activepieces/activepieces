@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { wideEvent } from '../src/wide-event'
-import { createLogger, initLogger } from 'evlog'
+import { createLogger, initLogger, mockAudit } from 'evlog'
 import type { RequestLogger } from 'evlog'
 
 function makeMockLogger(): RequestLogger & {
@@ -153,5 +153,43 @@ describe('wideEvent', () => {
                 provisionMs: expect.any(Number),
             },
         })
+    })
+
+    it('audit() attaches audit fields to the ambient request logger', async () => {
+        initLogger({ env: { service: 'wide-event-test' }, silent: true })
+        const logger = createLogger({ event: 'request' })
+        await wideEvent.run({
+            logger,
+            fn: async () => {
+                wideEvent.audit({
+                    action: 'connection.listed',
+                    actor: { type: 'user', id: 'usr_1' },
+                    target: { type: 'project', id: 'proj_1' },
+                })
+            },
+        })
+        const emitted = logger.emit()
+        expect(emitted).toMatchObject({
+            audit: {
+                action: 'connection.listed',
+                actor: { type: 'user', id: 'usr_1' },
+                target: { type: 'project', id: 'proj_1' },
+                outcome: 'success',
+            },
+        })
+    })
+
+    it('audit() emits a standalone audit event outside a run()', () => {
+        initLogger({ env: { service: 'wide-event-test' }, silent: true })
+        const captured = mockAudit()
+        wideEvent.audit({
+            action: 'cron.cleanup',
+            actor: { type: 'system', id: 'cron' },
+        })
+        expect(captured.toIncludeAuditOf({
+            action: 'cron.cleanup',
+            outcome: 'success',
+        })).toBe(true)
+        captured.restore()
     })
 })

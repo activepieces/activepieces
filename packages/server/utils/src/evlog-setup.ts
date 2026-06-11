@@ -1,4 +1,4 @@
-import { initLogger, RedactConfig } from 'evlog'
+import { auditEnricher, auditRedactPreset, enricherPlugin, initLogger, RedactConfig } from 'evlog'
 import { apLogger, ApLogger } from './ap-logger'
 import { evlogDrains, EvlogDrainConfig } from './evlog-drains'
 
@@ -108,7 +108,9 @@ const PORTED_REDACT_PATHS = [
 ]
 
 const REDACT_CONFIG: RedactConfig = {
-    paths: PORTED_REDACT_PATHS,
+    // auditRedactPreset hardens audit payloads (Authorization/Cookie headers,
+    // credential field names) on top of the codebase-specific paths.
+    paths: [...PORTED_REDACT_PATHS, ...(auditRedactPreset.paths ?? [])],
     // Disable built-in PII patterns to avoid over-redacting business IDs,
     // versions, and other numeric/string fields. Explicit paths above cover
     // the secrets that matter in this codebase.
@@ -139,6 +141,9 @@ function init({ params }: { params: EvlogSetupParams }): ApLogger {
         },
         redact: REDACT_CONFIG,
         drain: resolved.drain,
+        // Fills audit.context (requestId, traceId, ip, userAgent) on audit-bearing
+        // events only; all other events pass through untouched.
+        plugins: [enricherPlugin('audit-context', auditEnricher())],
     })
 
     apLogger.setCurrentLevel(mappedLevel)
