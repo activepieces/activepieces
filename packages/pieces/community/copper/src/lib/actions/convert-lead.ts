@@ -13,6 +13,12 @@ export const convertLead = createAction({
   displayName: 'Convert Lead',
   description:
     'Converts a lead into a person (optionally with company/opportunity).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Converts a qualified lead in Copper CRM into a person, optionally linking it to an existing company and/or creating an opportunity from the selected opportunity template. Use once a lead is ready to be promoted into the contact/deal pipeline; requires the lead ID. Not idempotent: it consumes the lead and creates new records, so repeating it is not safe.',
+    idempotent: false,
+  },
   props: {
     leadId: leadDropdown(['auth']),
     companyId: companyDropdown({ refreshers: ['auth'] }),

@@ -8,6 +8,8 @@ export const listIncidents = createAction({
   name: 'listIncidents',
   displayName: 'List Incidents',
   description: 'Retrieve a filtered list of Coralogix incidents.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists Coralogix incidents, optionally filtered by status, severity, application, and subsystem; leave all filters empty to return every incident. Use to discover incidents and their IDs before acting on them, or to report on current incident state. Read-only and idempotent.', idempotent: true },
   requireAuth: true,
   props: {
     status: Property.StaticMultiSelectDropdown({

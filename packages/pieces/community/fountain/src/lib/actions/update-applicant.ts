@@ -27,6 +27,8 @@ export const fountainUpdateApplicant = createAction({
   auth: fountainAuth,
   displayName: 'Update Applicant Info',
   description: 'Update an applicant\'s information',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing applicant by their applicant ID, setting any of name, email, phone number, custom data, secure data, or rejection reason (only supplied fields are sent). Use to edit a candidate\'s record. Effectively idempotent: re-sending the same field values leaves the applicant in the same state.', idempotent: true },
   props: {
     id: Property.Dropdown({
       displayName: 'Applicant',

@@ -15,6 +15,12 @@ export const sendMessage = createAction({
   name: 'send_message',
   displayName: 'Send Message',
   description: 'Send a message to the chatbot and receive an AI response.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Send a user message to a specific Chatling chatbot and get back the AI-generated reply, querying the bot\'s knowledge base. Use to converse with or test a deployed chatbot programmatically. Requires the chatbot ID and message; optionally pass a conversation_id to continue an existing thread (omit it to start a new one) and tune the AI model, language, temperature, or extra instructions. Not idempotent — each call generates a fresh response and appends to the conversation.',
+    idempotent: false,
+  },
   props: {
     chatbotId: chatbotIdDropdown,
     message: Property.LongText({
