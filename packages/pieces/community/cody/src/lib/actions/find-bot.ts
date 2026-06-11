@@ -7,6 +7,8 @@ export const findBotAction = createAction({
     name: 'find_bot',
     displayName: 'Find Bot',
     description: 'Finds a bot based on its name.',
+    audience: 'both',
+    aiMetadata: { description: 'Searches Cody bots by name (case-insensitive partial match) and returns the matches. Use to resolve a bot name to its ID before creating a conversation. This is a read-only lookup and is idempotent.', idempotent: true },
     props: {
         name: Property.ShortText({
             displayName: 'Bot Name',

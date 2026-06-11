@@ -8,6 +8,8 @@ export const createTaskAction = createAction({
     name: 'create-task',
     displayName: 'Create Task',
     description: 'Creates a new task in a project.',
+    audience: 'both',
+    aiMetadata: { description: 'Creates a new task inside an Everhour project, identified by its project ID, with the given task name. Use when an agent needs to add a trackable work item before logging time or starting a timer against it. Not idempotent: each call creates a separate task even with identical input.', idempotent: false },
     props: {
         projectId: Property.ShortText({
             displayName: 'Project ID',

@@ -8,6 +8,8 @@ export const createSpace = createAction({
   name: 'create_space',
   displayName: 'Create Space',
   description: 'Create a new space or reuse an existing one. A space is a logical container for organizing related memories, configured with embedders that convert text to vector embeddings',
+  audience: 'both',
+  aiMetadata: { description: 'Provisions a GoodMem space (a named container of memories with a configured embedder model) and returns its ID, which is required before storing or retrieving memories. Use it to set up a target space when one does not already exist. It is idempotent on the space name: if a space with the same name already exists, its existing ID is returned instead of creating a duplicate.', idempotent: true },
   props: {
     name: Property.ShortText({
       displayName: 'Space Name',

@@ -93,6 +93,9 @@ export const freeAgentNewInvoiceTrigger = createTrigger({
   name: 'new_invoice',
   displayName: 'New Invoice',
   description: 'Triggers when a new invoice is created',
+  aiMetadata: {
+    description: 'Fires when a new invoice appears in FreeAgent, detected by polling. Can be filtered to a specific invoice status (open, overdue, draft, paid, etc.) or left to watch all invoices.',
+  },
   type: TriggerStrategy.POLLING,
   props,
   sampleData: {

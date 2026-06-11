@@ -9,6 +9,9 @@ export const newCommit = createTrigger({
   name: 'new_commit',
   displayName: 'New Commit',
   description: 'Triggers when a new commit is pushed to a repository.',
+  aiMetadata: {
+    description: 'Fires when commits are pushed to a Gitea repository (a push event), optionally filtered to a single branch. Each event represents a push and carries the commits it delivered.',
+  },
   props: {
     repository: giteaCommon.repositoryDropdown,
     branch: giteaCommon.branchDropdown,

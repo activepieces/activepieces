@@ -9,6 +9,11 @@ export const createChange = createAction({
   name: 'create_change',
   displayName: 'Create Change',
   description: 'Creates a new change request in Freshservice.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Opens a new change request (change management record) in Freshservice. Use to propose an IT change for planning, approval, and tracking; requires a subject and the requester id, with optional risk, impact, change type, status, and planned start/end dates. Not idempotent — each call creates a separate change.',
+    idempotent: false,
+  },
   props: {
     subject: Property.ShortText({
       displayName: 'Subject',

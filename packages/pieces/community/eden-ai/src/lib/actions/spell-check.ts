@@ -167,6 +167,12 @@ export const spellCheckAction = createAction({
   auth: edenAiAuth,
   displayName: 'Spell Check',
   description: 'Identify and correct spelling or grammar errors using Eden AI. Supports multiple providers, languages, and models.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Spell- and grammar-check a text via Eden AI, routed to a chosen provider, returning detected errors with their offsets and suggested corrections. Use it to find and propose fixes for spelling/grammar issues in a passage. Requires a provider and the text; language defaults to auto-detection. Read-only analysis with no side effect, so it is safe to repeat.',
+    idempotent: true,
+  },
   props: {
     provider: Property.Dropdown({
       auth: edenAiAuth,
