@@ -139,7 +139,7 @@ const ApStepCanvasNode = React.memo(
             'border-none': isDragging,
             'shadow-none': isDragging,
             'bg-accent': isSkipped,
-            'rounded-tl-none': isTrigger,
+            'rounded-tl-none': isTrigger && !isHorizontal,
             'hover:border-ring': !isSelected,
           },
         )}
