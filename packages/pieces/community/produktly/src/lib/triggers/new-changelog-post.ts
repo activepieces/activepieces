@@ -1,5 +1,6 @@
 import {
   DedupeStrategy,
+  HttpMethod,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
@@ -9,7 +10,6 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { produktlyApiCall } from '../common/client';
 import { produktlyAuth } from '../common/auth';
 import { produktlyProps } from '../common/props';
