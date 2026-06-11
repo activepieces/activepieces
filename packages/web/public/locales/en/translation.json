@@ -1965,5 +1965,7 @@
   "1 hour ago": "1 hour ago",
   "{count} hours ago": "{count} hours ago",
   "Horizontal layout": "Horizontal layout",
-  "Vertical layout": "Vertical layout"
+  "Vertical layout": "Vertical layout",
+  "Download as image": "Download as image",
+  "Failed to capture the flow image": "Failed to capture the flow image"
 }

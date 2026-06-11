@@ -1,8 +1,10 @@
+import { tryCatch } from '@activepieces/shared';
 import { Node, useKeyPress, useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import {
   Fullscreen,
   Hand,
+  ImageDown,
   Map,
   Minus,
   MousePointer,
@@ -11,7 +13,8 @@ import {
   Plus,
   StickyNote,
 } from 'lucide-react';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -27,6 +30,7 @@ import { NoteDragOverlayMode } from '../state/notes-state';
 
 import { flowCanvasConsts } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
+import { flowScreenshotUtils } from './utils/flow-screenshot-utils';
 import { ApNode, CanvasOrientation } from './utils/types';
 const verticalPaddingOnFitView = 100;
 const calculateNodePositionInCanvas = (
@@ -227,6 +231,7 @@ const CanvasControls = ({
     setShowMinimap,
     readonly,
     setCanvasOrientation,
+    flowDisplayName,
   ] = useBuilderStateContext((state) => {
     return [
       state.setPanningMode,
@@ -235,8 +240,24 @@ const CanvasControls = ({
       state.setShowMinimap,
       state.readonly,
       state.setCanvasOrientation,
+      state.flowVersion.displayName,
     ];
   });
+  const [isCapturingImage, setIsCapturingImage] = useState(false);
+  const handleDownloadFlowAsImage = async () => {
+    setIsCapturingImage(true);
+    const { error } = await tryCatch(() =>
+      flowScreenshotUtils.downloadFlowAsImage({
+        nodes: getNodes(),
+        flowName: flowDisplayName,
+      }),
+    );
+    if (error) {
+      console.error(error);
+      toast.error(t('Failed to capture the flow image'));
+    }
+    setIsCapturingImage(false);
+  };
   const spacePressed = useKeyPress('Space');
   const shiftPressed = useKeyPress('Shift');
   const isInGrabMode =
@@ -281,6 +302,16 @@ const CanvasControls = ({
             onClick={() => handleFitToView({ isInitialRenderCall: false })}
           >
             <Fullscreen className="size-4" />
+          </Button>
+        </CanvasButtonWrapper>
+        <CanvasButtonWrapper tooltip={t('Download as image')}>
+          <Button
+            variant="ghost"
+            size="icon"
+            disabled={isCapturingImage}
+            onClick={() => handleDownloadFlowAsImage()}
+          >
+            <ImageDown className="size-4" />
           </Button>
         </CanvasButtonWrapper>
         <CanvasButtonWrapper
