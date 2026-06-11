@@ -49,7 +49,12 @@ const ThirdPartyLogin = React.memo(
       event.stopPropagation();
       capture({
         name: TelemetryEventName.FEDERATED_LOGIN_STARTED,
-        payload: { provider: 'google' },
+        payload: {
+          provider:
+            providerName === ThirdPartyAuthnProviderEnum.GOOGLE
+              ? 'google'
+              : 'saml',
+        },
       });
       const { loginUrl } = await authenticationApi.getFederatedAuthLoginUrl(
         providerName,
