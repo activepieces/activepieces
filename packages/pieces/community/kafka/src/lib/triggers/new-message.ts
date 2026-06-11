@@ -134,7 +134,8 @@ export const newMessage = createTrigger({
     if (expected === 0) {
       return [];
     }
-    const messages = await readRecentMessages({ client, topic, ranges, expected });
+    const groupId = `activepieces-test-${context.flows.current.id}`;
+    const messages = await readRecentMessages({ client, groupId, topic, ranges, expected });
     return [...messages].sort((a, b) => b.timestamp.localeCompare(a.timestamp)).slice(0, SAMPLE_MESSAGE_COUNT);
   },
 });
@@ -257,18 +258,22 @@ async function fetchRecentRanges({ client, topic }: { client: Kafka; topic: stri
 
 async function readRecentMessages({
   client,
+  groupId,
   topic,
   ranges,
   expected,
 }: {
   client: Kafka;
+  groupId: string;
   topic: string;
   ranges: PartitionRange[];
   expected: number;
 }): Promise<KafkaMessagePayload[]> {
-  // A throwaway group that never commits, so testing does not consume messages from the flow's group.
+  // A dedicated per-flow test group that never commits offsets: it neither advances the flow's real
+  // consumer group nor spawns a new group per click. A stable name (vs. a timestamped one) keeps test
+  // groups bounded to one per flow on managed brokers like Event Hubs that cap consumer-group count.
   const consumer = client.consumer({
-    groupId: `activepieces-test-${Date.now()}`,
+    groupId,
     allowAutoTopicCreation: false,
   });
   await consumer.connect();
@@ -280,7 +285,7 @@ async function readRecentMessages({
       consumer,
       target: expected,
       windowMs: TEST_WINDOW_MS,
-      onRunning: () => {
+      onGroupJoin: () => {
         for (const range of ranges) {
           consumer.seek({ topic, partition: range.partition, offset: String(range.start) });
         }
@@ -296,32 +301,55 @@ async function collectMessages({
   consumer,
   target,
   windowMs,
-  onRunning,
+  onGroupJoin,
 }: {
   consumer: Consumer;
   target: number;
   windowMs: number;
-  onRunning?: () => void;
+  onGroupJoin?: () => void;
 }): Promise<KafkaMessagePayload[]> {
   const collected: KafkaMessagePayload[] = [];
+  let failure: Error | undefined;
   await new Promise<void>((resolve) => {
     let finished = false;
     let idleTimer: NodeJS.Timeout | undefined;
-    const finish = (): void => {
+    const finish = (error?: Error): void => {
       if (finished) {
         return;
       }
       finished = true;
+      failure = error;
       clearTimeout(hardTimer);
       if (idleTimer !== undefined) {
         clearTimeout(idleTimer);
       }
       resolve();
     };
+    // A fatal consumer crash — topic/group authorization denied, unsupported SASL mechanism —
+    // stops the fetch loop in the background WITHOUT rejecting run(), so capture it here and
+    // rethrow instead of returning a silent empty batch that hides the failure and stalls the
+    // offset. Retriable crashes (restart: true) are left for KafkaJS to recover within the window.
+    consumer.on(consumer.events.CRASH, (event) => {
+      if (!event.payload.restart) {
+        finish(event.payload.error);
+      }
+    });
+    // Seek only once the group has joined and partitions are assigned — the reliable point to
+    // reposition, rather than racing the moment run() resolves (which precedes assignment).
+    if (onGroupJoin !== undefined) {
+      consumer.on(consumer.events.GROUP_JOIN, () => {
+        try {
+          onGroupJoin();
+        }
+        catch (error) {
+          finish(error instanceof Error ? error : new Error(String(error)));
+        }
+      });
+    }
     // Hard deadline keeps a poll bounded even when compaction or aborted transactions make
     // the expected message count unreachable. finish() only runs once messages arrive via the
     // event loop, by which point hardTimer is assigned.
-    const hardTimer = setTimeout(finish, windowMs);
+    const hardTimer = setTimeout(() => finish(), windowMs);
     consumer
       .run({
         autoCommit: false,
@@ -337,12 +365,14 @@ async function collectMessages({
           if (idleTimer !== undefined) {
             clearTimeout(idleTimer);
           }
-          idleTimer = setTimeout(finish, IDLE_WINDOW_MS);
+          idleTimer = setTimeout(() => finish(), IDLE_WINDOW_MS);
         },
       })
-      .then(() => onRunning?.())
-      .catch(() => finish());
+      .catch((error) => finish(error instanceof Error ? error : new Error(String(error))));
   });
+  if (failure !== undefined) {
+    throw failure;
+  }
   return collected;
 }
 
