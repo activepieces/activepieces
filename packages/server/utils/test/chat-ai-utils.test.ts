@@ -112,3 +112,34 @@ describe('sanitizeTruncatedAssistantTail', () => {
         expect(messages).toEqual(snapshot)
     })
 })
+
+describe('collectStepMessages', () => {
+    const listCall: ModelMessage = {
+        role: 'assistant',
+        content: [{ type: 'tool-call', toolCallId: 'call_list', toolName: 'ap_list_tables', input: {} }],
+    }
+    const listResult: ModelMessage = {
+        role: 'tool',
+        content: [{ type: 'tool-result', toolCallId: 'call_list', toolName: 'ap_list_tables', output: { type: 'json', value: { tables: ['leads', 'orders'] } } }],
+    }
+    const finalText: ModelMessage = {
+        role: 'assistant',
+        content: [{ type: 'text', text: 'That table does not exist yet — want me to create it?' }],
+    }
+
+    it('returns the messages from every step, including the tool calls and results of earlier steps', () => {
+        const steps = [
+            { response: { messages: [listCall, listResult] } },
+            { response: { messages: [finalText] } },
+        ]
+        const result = chatAiUtils.collectStepMessages(steps)
+        expect(result).toEqual([listCall, listResult, finalText])
+        // The regression this guards: the tool call + its result must survive, not just the last step.
+        expect(result).toContainEqual(listResult)
+        expect(result).not.toEqual([finalText])
+    })
+
+    it('returns an empty array when there are no steps', () => {
+        expect(chatAiUtils.collectStepMessages([])).toEqual([])
+    })
+})

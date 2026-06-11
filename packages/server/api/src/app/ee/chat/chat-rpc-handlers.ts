@@ -35,13 +35,12 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
     async getChatConfig(input: GetChatConfigRequest): Promise<ChatConfigResponse> {
         const { conversationId, platformId, userId, userMessage, modelName, files } = input
 
-        const [conversation, providerConfig, userProjects, userContent, mcpCredentials, userMemories] = await Promise.all([
+        const [conversation, providerConfig, userProjects, userContent, mcpCredentials] = await Promise.all([
             chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId }),
             chatHelpers.resolveChatProvider({ platformId, log }),
             chatHelpers.getUserProjects({ platformId, userId, log }),
             buildUserContentWithFiles({ text: userMessage, files }),
             chatMcp.getCredentials({ platformId, userId, log }),
-            chatHelpers.getUserMemories({ platformId, userId }),
         ])
 
         const lockResult = await chatHelpers.conversationRepo()
@@ -71,7 +70,6 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             currentProjectId: selectedProjectId,
             frontendUrl,
             discoveryBrief: conversation.discoveryBrief ?? null,
-            userMemories,
         })
 
         const previousMessages = conversation.messages as ModelMessage[]

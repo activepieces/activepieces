@@ -254,14 +254,6 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             await chatHelpers.conversationRepo().update(conversationId, { discoveryBrief: parsed.data })
             return { updated: true }
         }
-        case 'ap_remember': {
-            const memory = typeof toolInput.memory === 'string' ? toolInput.memory.trim() : ''
-            if (!memory) {
-                return { success: false, error: 'Empty memory.' }
-            }
-            await chatHelpers.rememberForUser({ platformId, userId, memory })
-            return { remembered: true }
-        }
         case 'ap_list_across_projects': {
             const resource = toolInput.resource as string
             const status = toolInput.status as string | undefined

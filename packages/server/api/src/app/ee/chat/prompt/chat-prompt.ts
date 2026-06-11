@@ -63,19 +63,11 @@ function buildBriefBlock(brief: DiscoveryBrief | null): string {
     return lines.length > 0 ? lines.join('\n') : EMPTY_BRIEF_TEXT
 }
 
-const EMPTY_MEMORY_TEXT = 'Nothing remembered about this user yet.'
-
-function buildMemoryBlock(memories: string[]): string {
-    if (memories.length === 0) return EMPTY_MEMORY_TEXT
-    return memories.map((m) => `- ${m}`).join('\n')
-}
-
-function buildAgentSystemPrompt({ projects, currentProjectId, frontendUrl, discoveryBrief, userMemories }: {
+function buildAgentSystemPrompt({ projects, currentProjectId, frontendUrl, discoveryBrief }: {
     projects: Project[]
     currentProjectId: string | null
     frontendUrl: string
     discoveryBrief?: DiscoveryBrief | null
-    userMemories?: string[]
 }): string {
     const currentProject = currentProjectId
         ? projects.find((p) => p.id === currentProjectId) ?? null
@@ -85,7 +77,6 @@ function buildAgentSystemPrompt({ projects, currentProjectId, frontendUrl, disco
         .replace('{{PROJECT_LIST}}', buildProjectListBlock({ projects, frontendUrl }))
         .replace('{{PROJECT_CONTEXT}}', buildProjectContextBlock({ project: currentProject, frontendUrl }))
         .replace('{{DISCOVERY_BRIEF}}', buildBriefBlock(discoveryBrief ?? null))
-        .replace('{{USER_MEMORY}}', buildMemoryBlock(userMemories ?? []))
         .replaceAll('{{FRONTEND_URL}}', frontendUrl)
 }
 

@@ -149,6 +149,16 @@ function sanitizeTruncatedAssistantTail(messages: ModelMessage[]): ModelMessage[
     return [...head, { ...last, content: sanitizedParts }]
 }
 
+/**
+ * Collect the messages from EVERY step of a streamText turn, not just the last one.
+ * `result.response.messages` is the last step only — using it drops the tool calls and
+ * tool results of all earlier steps, so the persisted history would lose what the agent
+ * already did this conversation and it would re-run those tools on the next turn.
+ */
+function collectStepMessages(steps: Array<{ response: { messages: ModelMessage[] } }>): ModelMessage[] {
+    return steps.flatMap((step) => step.response.messages)
+}
+
 function buildProviderOptions({ provider, tier }: { provider: AIProviderName, tier: { id: string, thinkingBudget: number } }): SharedV3ProviderOptions {
     switch (provider) {
         case AIProviderName.ANTHROPIC:
@@ -272,6 +282,7 @@ export const chatAiUtils = {
     createChatModel,
     stripThinkingBlocks,
     sanitizeTruncatedAssistantTail,
+    collectStepMessages,
     buildProviderOptions,
     buildSystemPromptWithCaching,
     buildStepParts,

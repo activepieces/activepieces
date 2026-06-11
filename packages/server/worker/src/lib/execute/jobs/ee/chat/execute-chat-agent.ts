@@ -147,7 +147,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                     }
                 },
                 onAbort: ({ steps }) => {
-                    abortedStepMessages = steps.flatMap((step) => step.response.messages) as ModelMessage[]
+                    abortedStepMessages = chatAiUtils.collectStepMessages(steps)
                 },
                 onStepFinish: ({ content }) => {
                     uiParts.push(...chatAiUtils.buildStepParts({ content: content as ContentPartLike[] }))
@@ -174,21 +174,22 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 await streamChunksToClient({ result, ctx, userId, conversationId, runId, log })
                 if (abortController.signal.aborted || streamError) break
 
-                const [response, attemptUsage, finishReason] = await Promise.all([
-                    result.response,
+                const [steps, attemptUsage, finishReason] = await Promise.all([
+                    result.steps,
                     result.usage,
                     result.finishReason,
                 ])
+                const stepMessages = chatAiUtils.collectStepMessages(steps)
                 usage = attemptUsage
                 totalInputTokens += attemptUsage.inputTokens ?? 0
                 totalOutputTokens += attemptUsage.outputTokens ?? 0
 
                 if (finishReason !== 'length') {
-                    accumulatedResponseMessages.push(...response.messages)
+                    accumulatedResponseMessages.push(...stepMessages)
                     break
                 }
                 if (continuations >= MAX_AUTO_CONTINUATIONS) {
-                    accumulatedResponseMessages.push(...response.messages)
+                    accumulatedResponseMessages.push(...stepMessages)
                     truncatedAfterRetries = true
                     log.error({ conversationId, continuations }, 'Chat response still truncated after max auto-continuations')
                     break
@@ -196,7 +197,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
 
                 continuations++
                 log.warn({ conversationId, continuations, outputTokens: attemptUsage.outputTokens }, 'Chat response truncated by output limit — auto-continuing')
-                const sanitizedTail = chatAiUtils.sanitizeTruncatedAssistantTail(response.messages)
+                const sanitizedTail = chatAiUtils.sanitizeTruncatedAssistantTail(stepMessages)
                 const nudge: ModelMessage = { role: 'user', content: CONTINUE_NUDGE }
                 accumulatedResponseMessages.push(...sanitizedTail, nudge)
                 llmMessages = [...llmMessages, ...sanitizedTail, nudge]

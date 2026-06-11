@@ -124,14 +124,6 @@ export const DiscoveryBrief = z.object({
 })
 export type DiscoveryBrief = z.infer<typeof DiscoveryBrief>
 
-export const UserChatMemory = z.object({
-    ...BaseModelSchema,
-    platformId: z.string(),
-    userId: z.string(),
-    memories: z.array(z.string()).default([]),
-})
-export type UserChatMemory = z.infer<typeof UserChatMemory>
-
 export const ChatConversation = z.object({
     ...BaseModelSchema,
     platformId: z.string(),

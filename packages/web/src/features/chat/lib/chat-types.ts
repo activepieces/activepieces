@@ -42,7 +42,6 @@ const HIDDEN_TOOL_NAMES = new Set([
   'ap_update_brief',
   'ap_load_guide',
   'ap_set_phase',
-  'ap_remember',
 ]);
 
 const DISPLAY_TOOL_NAMES = new Set([

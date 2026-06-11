@@ -430,22 +430,12 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
         }),
 
         ap_update_brief: tool({
-            description: 'Record or update your structured understanding of the user\'s goal (silent, internal — the user does not see this). Send the FULL brief each time; it replaces the previous one. Update it as you learn: after the user clarifies scope, after ap_explore_data reveals real data, when open questions resolve. This is your durable memory and the source you build the setup form from.',
+            description: 'Record or update your structured understanding of the user\'s goal (silent, internal — the user does not see this). Send the FULL brief each time; it replaces the previous one. Update it as you learn: after the user clarifies scope, after ap_explore_data reveals real data, when open questions resolve. This is your durable memory of the goal and the basis of your recap and what you build.',
             inputSchema: z.object({
                 brief: DiscoveryBrief.describe('The complete current understanding'),
             }),
             execute: async (toolInput) => {
                 return executeTool('ap_update_brief', toolInput)
-            },
-        }),
-
-        ap_remember: tool({
-            description: 'Save a durable fact or preference about THIS user that should carry across all future conversations (silent, internal). Use ONLY for lasting truths — how they like to work, defaults they\'ve stated, corrections they\'ve made (e.g. "prefers I find things myself rather than asking", "default notify channel is #ops", "always wants EU-based candidates"). One short statement per call. Do NOT use for one-off task details (those go in the brief).',
-            inputSchema: z.object({
-                memory: z.string().describe('One concise durable preference/fact about the user'),
-            }),
-            execute: async (toolInput) => {
-                return executeTool('ap_remember', toolInput)
             },
         }),
 
