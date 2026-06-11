@@ -23,6 +23,10 @@ export const emailOpened = createTrigger({
   name: 'emailOpened',
   displayName: 'Email Opened',
   description: 'Triggers when an email is opened.',
+  aiMetadata: {
+    description:
+      'Fires when a lead opens an outreach email (EMAIL_OPENED). Represents recipient engagement; payload includes the lead, sending account, step, and campaign. Requires the webhook to be configured in ReachInbox.',
+  },
   props: {
     markdown: Property.MarkDown({
       value: emailOpenedMessage,

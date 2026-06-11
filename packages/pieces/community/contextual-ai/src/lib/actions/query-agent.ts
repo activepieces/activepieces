@@ -8,6 +8,8 @@ export const queryAgentAction = createAction({
   name: 'query_agent',
   displayName: 'Query Agent',
   description: 'Send a message to a Contextual AI agent and get a response',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a message to a specific Contextual AI RAG agent and returns its grounded answer along with retrieval context. Use to ask questions answered from the agent\'s attached datastores. Requires the target agent id; pass a conversation_id to continue an existing thread or omit it to start a new one. Each call is a new generation, not idempotent.', idempotent: false },
   props: {
     agentId: Property.Dropdown({
       auth: contextualAiAuth,

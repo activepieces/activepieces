@@ -14,6 +14,8 @@ export const gristUploadAttachmentsToDocumnetAction = createAction({
   name: 'grist-upload-attachments-to-document',
   displayName: 'Upload Attachment to Document',
   description: 'Uploads attachments to specific document.',
+  audience: 'both',
+  aiMetadata: { description: 'Uploads a file as an attachment to a specific Grist document and returns its attachment metadata. Use it to store a file in Grist before referencing it from an attachment-type column; requires the document identifier and a file. Not idempotent — each call uploads a new attachment with a fresh ID.', idempotent: false },
   props: {
     workspace_id: commonProps.workspace_id,
     document_id: commonProps.document_id,

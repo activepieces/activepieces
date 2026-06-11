@@ -8,6 +8,8 @@ export const unsubscribe = createAction({
   auth: sendfoxAuth,
   displayName: 'Unsubscribe Contact',
   description: 'Unsubscribe a contact',
+  audience: 'both',
+  aiMetadata: { description: 'Unsubscribes a contact from SendFox by email so they stop receiving emails. Use to honor an opt-out or remove someone from sends. Effectively idempotent in outcome (the contact ends up unsubscribed), but flagged not idempotent because each call issues a state-changing request.', idempotent: false },
   props: {
     email: Property.ShortText({
       displayName: 'Email',
