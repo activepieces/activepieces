@@ -346,6 +346,7 @@ function buildToolSet({ ctx, eventEmitter, log, planApproved, mcpToolSet, projec
             planApproved.approved = true
         },
         waitForApproval,
+        onGateOpened: storePendingGate,
     })
     const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate })
     const thinkingTools = chatWorkerTools.createThinkingTools()

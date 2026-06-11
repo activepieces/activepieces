@@ -551,9 +551,10 @@ function extractResultText(result: unknown): string {
     return JSON.stringify(result)
 }
 
-function createPlanTools({ onPlanApproved, waitForApproval }: {
+function createPlanTools({ onPlanApproved, waitForApproval, onGateOpened }: {
     onPlanApproved: () => void
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean }>
+    onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
 }): ToolSet {
     return {
         ap_request_plan_approval: tool({
@@ -564,7 +565,15 @@ function createPlanTools({ onPlanApproved, waitForApproval }: {
                 steps: z.array(z.string()).describe('List of concrete actions'),
                 mode: z.enum(['one_time', 'recurring']).describe('Whether this is a one-time task or a recurring automation. If ambiguous, default to one_time and ask the user.'),
             }),
-            execute: async (_input, options) => {
+            execute: async (input, options) => {
+                if (onGateOpened) {
+                    await tryCatch(() => onGateOpened({
+                        gateId: options.toolCallId,
+                        toolName: 'ap_request_plan_approval',
+                        displayName: typeof input['title'] === 'string' ? input['title'] : 'Review plan',
+                        toolInput: input,
+                    }))
+                }
                 const decision = await waitForApproval({ gateId: options.toolCallId })
                 if (decision.approved) {
                     onPlanApproved()
