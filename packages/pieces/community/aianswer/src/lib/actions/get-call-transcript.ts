@@ -8,6 +8,8 @@ export const getCallTranscript = createAction({
   auth: aiAnswerAuth,  // Auth configured here
   displayName: 'Get Call Transcript',
   description: 'Fetch the transcript of a call by Call ID',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the conversation transcript of a completed phone call by its call ID. Use to read what was said on a call after it has finished. Requires the call ID; read-only and idempotent.', idempotent: true },
   props: {
     callID: Property.ShortText({
       displayName: 'Call ID',

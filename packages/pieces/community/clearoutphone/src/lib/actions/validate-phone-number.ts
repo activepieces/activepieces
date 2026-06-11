@@ -8,6 +8,8 @@ export const validatePhoneNumber = createAction({
   displayName: 'Validate Phone Number',
   description:
     'Validate a phone number and retrieve comprehensive information using ClearoutPhone API',
+  audience: 'both',
+  aiMetadata: { description: 'Validate a single phone number via ClearoutPhone and retrieve comprehensive details including validity, line type, carrier, location, country, timezone, and formatted representations (international, local, E.164). Use this as the broadest lookup when an agent needs full number metadata rather than just carrier or mobile status. Requires the number in international format (e.g. +447766733573); this is a read-only lookup and is idempotent.', idempotent: true },
   props: {
     phoneNumber: Property.ShortText({
       displayName: 'Phone Number',

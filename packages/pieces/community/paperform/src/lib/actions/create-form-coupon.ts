@@ -10,6 +10,8 @@ export const createFormCoupon = createAction({
   name: 'createFormCoupon',
   displayName: 'Create Form Coupon',
   description: 'Creates a new discount coupon to a specified form.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new discount coupon on a specified Paperform form, configured as either a fixed amount or a percentage discount (the discount type prop selects the mode and the matching amount/percentage is required). Use to add a promotional code to a form; each call creates a separate coupon, so it is not idempotent.', idempotent: false },
   props: {
     formId: paperformCommonProps.formId,
     code: Property.ShortText({

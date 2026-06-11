@@ -12,6 +12,9 @@ export const webflowNewSubmission = createTrigger({
 	name: 'new_submission',
 	displayName: 'New Submission',
 	description: 'Triggers when Webflow Site receives a new submission',
+	aiMetadata: {
+		description: 'Fires when a form on the selected Webflow site receives a new submission, delivering the submitted form data. Optionally scoped to a single form by name; if no form name is given, it fires for submissions from any form on the site.',
+	},
 	props: {
 		site_id: webflowProps.site_id,
 		formName: Property.ShortText({

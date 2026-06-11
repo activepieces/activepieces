@@ -9,6 +9,11 @@ export const updateChange = createAction({
   name: 'update_change',
   displayName: 'Update Change',
   description: 'Updates an existing change request in Freshservice.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Modifies fields on an existing Freshservice change request identified by change id (e.g. subject, status, priority, risk, planned dates, assignment). Use to progress or revise a change; at least one field must be supplied or the call errors. Idempotent — re-sending the same field values leaves the change in the same state.',
+    idempotent: true,
+  },
   props: {
     change_id: freshserviceCommon.change(true),
     subject: Property.ShortText({

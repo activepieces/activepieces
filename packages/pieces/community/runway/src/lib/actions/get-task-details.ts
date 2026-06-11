@@ -44,6 +44,8 @@ export const getTaskDetails = createAction({
 	name: 'get_task_details',
 	displayName: 'Get Task Details',
 	description: 'Retrieve details of an existing Runway task by its ID',
+	audience: 'both',
+	aiMetadata: { description: 'Looks up a Runway generation task by its ID and returns its current status, progress, and output URLs; optionally downloads the generated files as attachments when the task has succeeded. Use to poll the result of an image or video generation started by the generate actions. Read-only and idempotent; requires a valid task UUID.', idempotent: true },
 	props: {
 		taskId: Property.ShortText({ 
 			displayName: 'Task ID', 

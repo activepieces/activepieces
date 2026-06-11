@@ -8,6 +8,8 @@ export const sendMessageAction = createAction({
     name: 'send_message',
     displayName: 'Send Message',
     description: 'Send your message and receive the AI-generated response.',
+    audience: 'both',
+    aiMetadata: { description: 'Posts a message to an existing Cody conversation and returns the bot AI-generated reply. Use to query a bot within an already-created conversation thread. Requires the conversation ID and message text (max 2000 characters); each call appends a new message, so it is not idempotent.', idempotent: false },
     props: {
         conversation_id: conversationIdDropdown,
         content: Property.LongText({

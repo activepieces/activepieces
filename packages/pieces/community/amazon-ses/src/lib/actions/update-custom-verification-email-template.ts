@@ -24,6 +24,12 @@ export const updateCustomVerificationEmailTemplate = createAction({
   name: 'update_custom_verification_email_template',
   displayName: 'Update Custom Verification Email Template',
   description: 'Modify an existing custom verification email template',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Overwrites an existing Amazon SES custom verification email template, replacing its from-address, subject, content, and success/failure redirect URLs; an optional preserve-unspecified mode keeps the current values when fields are left blank. Use to edit a verification template that already exists, not to create one. Idempotent: repeating the call with the same input leaves the template in the same final state.',
+    idempotent: true,
+  },
   props: {
     templateName: Property.Dropdown({
       auth: amazonSesAuth,

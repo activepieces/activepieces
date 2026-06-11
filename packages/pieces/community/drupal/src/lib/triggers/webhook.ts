@@ -16,6 +16,9 @@ export const drupalWebhook = createTrigger({
   name: 'drupalWebhook',
   displayName: 'Webhook',
   description: 'A webhook that the Drupal site can call to trigger a flow.',
+  aiMetadata: {
+    description: 'Fires in real time whenever the Drupal site calls the registered webhook URL (e.g. from an ECA action), emitting the request body sent by Drupal. Use for push-based events instead of polling; the webhook is registered on enable under the unique name supplied, which must match the name referenced on the Drupal side.',
+  },
   props: {
     id: Property.ShortText({
       displayName: 'Name',

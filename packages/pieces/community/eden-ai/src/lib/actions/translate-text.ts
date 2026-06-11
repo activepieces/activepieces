@@ -190,6 +190,12 @@ export const translateTextAction = createAction({
   auth: edenAiAuth,
   displayName: 'Translate Text',
   description: 'Translate text into different languages using Eden AI. Supports multiple providers, languages, and models.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Translate a text into a target language via Eden AI, routed to a chosen provider. Use it to convert text between languages; the source language can be set explicitly or left on auto-detection. Requires a provider, the text, and a target language. Read-only transform with no side effect, so it is safe to repeat.',
+    idempotent: true,
+  },
   props: {
     provider: Property.Dropdown({
       auth: edenAiAuth,

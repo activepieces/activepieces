@@ -7,6 +7,8 @@ export const getTransactionRbfTimeline = createAction({
   name: 'get_transaction_rbf_timeline',
   displayName: 'Get Transaction RBF Timeline',
   description: 'Get the Replace-By-Fee (RBF) timeline for a transaction',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve the Replace-By-Fee (RBF) history for a transaction ID, showing the chain of fee-bumping replacements over time. Pick this when investigating whether/how a transaction was replaced or fee-bumped. Read-only.', idempotent: true },
   // category: 'Transactions',
   props: {
     txid: Property.ShortText({

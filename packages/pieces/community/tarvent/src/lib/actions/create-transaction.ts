@@ -9,6 +9,8 @@ export const createTransaction = createAction({
   name: 'tarvent_create_transaction',
   displayName: 'Send A Transactional Email',
   description: 'Sends a transactional email. NOTE: This will use your email API credits.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a one-off transactional email through Tarvent to a specified recipient (with optional CC/BCC), using either an existing template or inline HTML/plain-text content with merge variables. Use for individual triggered messages such as receipts or confirmations, not bulk campaigns. Consumes email API credits and sends on every call, so it is not idempotent.', idempotent: false },
   props: {
     groupName: tarventCommon.txGroupName(false, 'Choose an existing group name or use "Custom" to enter a new group name. This name is used for reporting.'),
     fromEmail: Property.ShortText({

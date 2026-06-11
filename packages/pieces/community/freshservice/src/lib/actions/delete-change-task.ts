@@ -9,6 +9,11 @@ export const deleteChangeTask = createAction({
   name: 'delete_change_task',
   displayName: 'Delete Change Task',
   description: 'Deletes a task from a change request in Freshservice.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Permanently deletes a task from a Freshservice change request, identified by change id and task id. Use to remove a task that should no longer exist. Idempotent in effect — once deleted the task stays deleted, though repeat calls on an already-removed id may return a not-found error.',
+    idempotent: true,
+  },
   props: {
     change_id: freshserviceCommon.change(true),
     task_id: Property.Number({

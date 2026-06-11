@@ -13,6 +13,8 @@ export const userApplyCustomFeeAction = createAction({
   name: 'userApplyCustomFee',
   displayName: 'Actions - Users - Apply Custom Fee',
   description: 'Apply custom fee for a user.',
+  audience: 'both',
+  aiMetadata: { description: 'Charge an ad-hoc custom fee of the given amount to a user, optionally against a specific payment method (defaults to balance, rejecting if insufficient; corporate billing is not supported). The description is shown to the user and on their bank statement. Not idempotent: each call creates and charges a new fee.', idempotent: false },
   props: {
         
   user: Property.Number({

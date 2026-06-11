@@ -6,6 +6,8 @@ export const deleteApiTokenAction = createAction({
   name: 'delete_api_token',
   displayName: 'Delete API Token',
   description: 'Delete an API token from your user account',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently revoke the API token identified by its value from the authenticated user\'s account. Use to invalidate a token; destructive. Not strictly idempotent: a first call deletes it and a repeat may error if the token no longer exists.', idempotent: false },
   auth: zooAuth,
   // category: 'API Tokens',
   props: {

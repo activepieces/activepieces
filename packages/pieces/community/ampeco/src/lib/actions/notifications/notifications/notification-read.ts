@@ -14,6 +14,8 @@ export const notificationReadAction = createAction({
   name: 'notificationRead',
   displayName: 'Notifications - V2.0 - Notification Read',
   description: 'Get a notification.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve a single AMPECO notification subscription by its identifier. Read-only and idempotent; use it when you already know the subscription ID. To enumerate all subscriptions use the notifications listing action.', idempotent: true },
   props: {
         
   notification: Property.ShortText({

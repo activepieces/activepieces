@@ -8,6 +8,8 @@ export const createPdfFromHtml = createAction({
   name: 'createPdfFromHtml',
   displayName: 'Create PDF From HTML',
   description: 'Creates a PDF from HTML.',
+  audience: 'both',
+  aiMetadata: { description: 'Renders a new PDF directly from raw HTML (with optional CSS, templating data, and page settings such as size, orientation, margins, and headers/footers). Use when you have ad-hoc HTML markup rather than a saved template or a live URL. Requires the HTML body. Not idempotent: each call generates and stores a new PDF.', idempotent: false },
   props: {
     html: Property.LongText({
       displayName: 'HTML Content',

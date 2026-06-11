@@ -7,6 +7,9 @@ export const newExpense = createTrigger({
 	name: 'new_expense',
 	displayName: 'New Expense',
 	description: 'Fires when a new expense entry is added.',
+	aiMetadata: {
+		description: 'Fires when an expense entry is added in Teamwork (EXPENSE.CREATED webhook), optionally filtered to a single project. Each event represents one newly logged expense.',
+	},
 	auth: teamworkAuth,
 	props: {
 		projectId: Property.Dropdown({

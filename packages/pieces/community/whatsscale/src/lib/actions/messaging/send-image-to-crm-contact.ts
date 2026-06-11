@@ -10,6 +10,8 @@ export const sendImageToCrmContactAction = createAction({
   name: 'whatsscale_send_image_to_crm_contact',
   displayName: 'Send an Image to a CRM Contact',
   description: 'Send an image to a WhatsScale CRM contact selected from the dropdown.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends an image to a contact stored in the WhatsScale CRM, identified by CRM contact ID chosen from the dropdown, with an optional caption. Pick this when the recipient is a managed CRM record; use the plain contact, group, manual-entry, or channel image variants for non-CRM recipients. Requires a directly downloadable image URL. Not idempotent: each call delivers another image.', idempotent: false },
   props: {
     session: whatsscaleProps.session,
     crmContact: whatsscaleProps.crmContact,

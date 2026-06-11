@@ -79,6 +79,10 @@ export const newProductTrigger = createTrigger({
 	name: 'new-product',
 	displayName: 'New Product',
 	description: 'Triggers when new product is available.',
+	aiMetadata: {
+		description:
+			'Fires when a new product is created in the HubSpot product library. Each event represents one product record with properties such as name, description, price, and tax. Polls for products by creation date; does not fire on updates to existing products.',
+	},
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,

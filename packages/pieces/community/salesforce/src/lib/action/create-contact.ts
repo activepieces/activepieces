@@ -8,6 +8,8 @@ export const createContact = createAction({
     name: 'create_contact',
     displayName: 'Create Contact',
     description: 'Creates a new contact record.',
+    audience: 'both',
+    aiMetadata: { description: 'Create a new Contact in Salesforce; Last Name is required and the contact can be linked to an existing Account. Not idempotent — calling it twice creates duplicate contacts, so check for an existing match (e.g. via Find Record) first if dedup matters.', idempotent: false },
     props: {
         LastName: Property.ShortText({
             displayName: 'Last Name',

@@ -8,6 +8,8 @@ export const createPhoneCall = createAction({
   name: 'createPhoneCall',
   displayName: 'Create Phone Call',
   description: 'Create a new outbound phone call using OpenMic AI',
+  audience: 'both',
+  aiMetadata: { description: 'Places a new outbound AI phone call from one E.164 number to another via OpenMic AI. Use to initiate a voice call programmatically; optionally override the default bot/agent, attach a customer ID, inject dynamic prompt variables, or set a callback URL for call events. Not idempotent — each call dials a new outbound call.', idempotent: false },
   props: {
     fromNumber: Property.ShortText({
       displayName: 'From Number',

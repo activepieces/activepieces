@@ -8,6 +8,8 @@ export const deleteShortLinkAction = createAction({
   name: 'delete-short-link',
   displayName: 'Delete Short Link',
   description: 'Permanently delete a short link by its unique link ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes a short link identified by its link ID. Use to remove a link that is no longer needed. Not idempotent — repeating the call returns a not-found error once the link is already gone; this is destructive and cannot be undone.', idempotent: false },
   props: {
     linkId: Property.ShortText({
       displayName: 'Link ID',

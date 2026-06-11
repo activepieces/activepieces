@@ -15,6 +15,8 @@ export const paymentMethodCreateAction = createAction({
   name: 'paymentMethodCreate',
   displayName: 'Resources - Users - Payment Method Create',
   description: 'Initiate a new payment method registration, or finalize it. Note that this is a two step process! # For payment processors with web view integration You will need to initiate a call with no parameters to this endpoint to get a new request to add payment method (Step 1). Then you will have to redirect to an endpoint and wait for the client to enter his credit card details there.',
+  audience: 'both',
+  aiMetadata: { description: "Register a payment method for an AMPECO user via a two-step flow: call with only the user id to initiate a registration request, then call again with the returned transaction id to finalize. Optionally specify a tokenized type (card or bank transfer/SEPA). Not idempotent: each initiation starts a fresh registration. Use Payment Method Update to change an existing method.", idempotent: false },
   props: {
         
   user: Property.Number({

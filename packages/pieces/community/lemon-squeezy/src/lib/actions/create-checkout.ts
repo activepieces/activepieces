@@ -13,6 +13,8 @@ export const createCheckout = createAction({
   name: 'create_checkout',
   displayName: 'Create Checkout',
   description: 'Create a checkout URL for a specific Lemon Squeezy product variant.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a hosted Lemon Squeezy checkout URL for a given store and product variant, optionally pre-filling customer email/name, applying a discount code, overriding the price, attaching custom data, or setting a redirect and expiry. Use to generate a payable link to send a customer. Not idempotent: each call creates a new checkout, so repeated calls yield distinct URLs. Requires a store and variant ID.', idempotent: false },
   auth: lemonSqueezyAuth,
   props: {
     storeId: Property.Dropdown({

@@ -8,6 +8,12 @@ export const sendMessage = createAction({
   name: 'sendMessage',
   displayName: 'Send Message',
   description: 'Send a message to a chatbot session',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends a user message to a Chatsistant chatbot and returns its streamed reply. Provide the chatbot UUID and the message text; supply a session UUID to continue an existing conversation, or omit it to start a fresh session automatically. Not idempotent — each call appends a new message and generates a new response.',
+    idempotent: false,
+  },
   props: {
     chatbot_uuid: Property.ShortText({
       displayName: 'Chatbot UUID',

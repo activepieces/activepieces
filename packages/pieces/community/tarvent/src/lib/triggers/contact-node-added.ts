@@ -8,6 +8,9 @@ export const contactNoteAddedTrigger = createTrigger({
   name: 'tarvent_contact_note_added',
   displayName: 'Contact Note Added',
   description: 'Triggers when a note is added to a contact.',
+  aiMetadata: {
+    description: 'Fires when a note is added to a contact in Tarvent. Represents new annotation activity logged against a contact.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     include: tarventCommon.include,

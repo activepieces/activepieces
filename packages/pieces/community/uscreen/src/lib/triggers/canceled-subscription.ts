@@ -21,6 +21,9 @@ export const canceledSubscription = createTrigger({
   displayName: 'Canceled Subscription',
   description:
     'Triggers when a subscription is canceled for a user.',
+  aiMetadata: {
+    description: 'Fires when a user cancels (or has canceled) a subscription on the Uscreen storefront (event subscription_canceled). Represents a churn event, including the affected user, the subscription, and when it was canceled.',
+  },
   props: { setupInstructions: uscreenProps.webhookInstructions() },
   sampleData: sampleData,
   type: TriggerStrategy.WEBHOOK,

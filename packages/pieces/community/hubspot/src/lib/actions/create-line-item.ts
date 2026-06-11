@@ -16,6 +16,8 @@ export const createLineItemAction = createAction({
 	name: 'create-line-item',
 	displayName: 'Create Line Item',
 	description: 'Creates a line item in Hubspot.',
+	audience: 'both',
+	aiMetadata: { description: 'Creates a new standalone line item in HubSpot from a required product plus optional property values (quantity, price, discount), and returns the created line item. Use when building out a quote or deal\'s line items. Not idempotent: each call creates a separate line item.', idempotent: false },
 	props: {
 		productId: productDropdown({
 			displayName: 'Line Item Information: Product ID',

@@ -20,6 +20,8 @@ export const uploadAndQueueAction = createAction({
   displayName: 'Upload File & Add to Queue',
   description:
     'Upload a local file or HTTPS URL to SimplyPrint and add it to the print queue in one step. URL uploads stream with ~95 MiB peak RAM; File uploads are buffered by AP. Files over 95 MiB are chunked automatically. For starting the print afterwards, chain a "Start Print" action.',
+  audience: 'both',
+  aiMetadata: { description: 'Upload a print file (File input or HTTPS URL) and add it to the print queue in a single step, with quantity, group, target printers/models, tags, and custom fields; returns the new file ID and queue item ID. Pick this when the file is not yet on SimplyPrint; use add-to-queue if it already exists, and chain a start-print action to begin printing. Not idempotent — each call uploads and queues anew.', idempotent: false },
   props: {
     file: Property.File({
       displayName: 'File',

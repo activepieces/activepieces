@@ -7,6 +7,8 @@ export const getMeetingRecording = createAction({
   name: 'get_meeting_recording',
   displayName: 'Get Meeting Recording',
   description: 'Returns video and audio recording URLs for a given meeting',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches the audio and video recording URLs for a single Avoma meeting by its meeting UUID. Use to obtain downloadable media links for a recorded meeting; the returned URLs are time-limited (expire in ~5 days) and the recording may still be processing (not yet available). Read-only and idempotent.', idempotent: true },
   props: {
     meeting_uuid: avomaCommon.meetingDropdown
   },

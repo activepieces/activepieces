@@ -26,6 +26,9 @@ export const fountainUniversalTasksWebhook = createTrigger({
   name: 'universal_tasks_webhook',
   displayName: 'Universal Tasks Webhook',
   description: 'Triggers when workers complete tasks or reach flow endpoints in Fountain Onboard',
+  aiMetadata: {
+    description: 'Fires when a worker completes a Universal Task or reaches a flow endpoint in Fountain Onboard, carrying the worker and the affected task(s). Requires a Universal Task with webhook integration configured in Fountain Onboard pointing at this trigger\'s URL.',
+  },
   props: {
     setup: Property.MarkDown({
       value: setupMarkdown,

@@ -7,6 +7,8 @@ export const createCompany = createAction({
     name: 'create_company',
     displayName: 'Create Company',
     description: 'Add a new company record',
+    audience: 'both',
+    aiMetadata: { description: 'Create a new company (business entity) in Teamleader Focus CRM with name, VAT number, emails, phones, addresses, and other fields. Use for organizations; for an individual use Create Contact instead. Only the company name is required. Not idempotent: each call creates a separate company even with identical input, so check for an existing match first to avoid duplicates.', idempotent: false },
     auth: teamleaderAuth,
     props: {
         name: Property.ShortText({

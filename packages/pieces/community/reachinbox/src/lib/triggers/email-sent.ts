@@ -24,6 +24,10 @@ export const emailSent = createTrigger({
   name: 'emailSent',
   displayName: 'Email Sent',
   description: 'Triggers when an email is successfully sent.',
+  aiMetadata: {
+    description:
+      'Fires when an outreach email is successfully sent to a lead (EMAIL_SENT). Represents a delivered sequence step; payload includes the lead, sending account, step, and campaign. Requires the webhook to be configured in ReachInbox.',
+  },
   props: {
     markdown: Property.MarkDown({
       value: message,

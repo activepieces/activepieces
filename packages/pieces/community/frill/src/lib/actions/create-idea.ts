@@ -8,6 +8,8 @@ export const createIdea = createAction({
   name: 'create_idea',
   displayName: 'Create Idea',
   description: 'Create a new feedback idea or feature request in Frill.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new feedback idea or feature request in Frill, optionally tagged with topics, a status, a bug flag, and roadmap visibility. Use to capture incoming feedback or seed roadmap items. Not idempotent: each call creates a distinct idea even with identical input.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Title',

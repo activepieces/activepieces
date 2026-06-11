@@ -14,6 +14,12 @@ export const updateOrderStatus = createAction({
   displayName: 'Update Order Status',
   description:
     'Move an order forward in the Qawafel fulfilment workflow. Qawafel enforces a strict state machine — for example, an order must be **Out for Delivery** before it can be marked **Delivered**. To cancel an order, use the **Cancel Order** action instead.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Advances an order (by its `ord_` id) to the next fulfilment status via a chosen transition (e.g. confirm, ready for pickup, out for delivery, delivered, fulfilled). Qawafel enforces a strict state machine and rejects transitions invalid from the current state; the Not Delivered transition requires a reason. Use to progress an order; for cancellation use the Cancel Order action. Not idempotent: each call mutates the order state.',
+    idempotent: false,
+  },
   props: {
     order_id: Property.ShortText({
       displayName: 'Order ID',

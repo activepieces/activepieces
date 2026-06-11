@@ -80,6 +80,10 @@ export const updatedOrganizationTrigger = createTrigger({
 	name: 'updated-organization',
 	displayName: 'Updated Organization',
 	description: 'Triggers when an existing organization is updated.',
+	aiMetadata: {
+		description:
+			'Fires when any field of an existing organization (company) record changes in Pipedrive, such as its name, owner, address, labels, or custom fields. Use to react to edits on company records in the CRM.',
+	},
 	props: {},
 	type: TriggerStrategy.WEBHOOK,
 	async onEnable(context) {

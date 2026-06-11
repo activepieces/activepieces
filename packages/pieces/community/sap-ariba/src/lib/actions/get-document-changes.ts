@@ -8,6 +8,8 @@ export const getDocumentChanges = createAction({
     name: 'get_document_changes',
     displayName: 'Get Document Changes',
     description: 'Returns the list of changes to approvable documents.',
+    audience: 'both',
+    aiMetadata: { description: 'List changes to approvable documents in a SAP Ariba realm (required). Use to poll for incremental updates: pass a change sequence ID to return only changes after that point, or leave it empty to fetch all changes. Read-only and idempotent.', idempotent: true },
     props: {
         realm: Property.ShortText({
             displayName: 'Realm',

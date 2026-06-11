@@ -9,6 +9,9 @@ export const newActivity = createTrigger({
   name: 'newActivity',
   displayName: 'New Activity',
   description: 'Triggers for each new activity.',
+  aiMetadata: {
+    description: 'Fires on each new Lemlist activity event received via webhook, covering campaign engagement signals such as emails sent, opened, clicked, replied, bounced, or unsubscribed. Represents a single activity record as it occurs.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,

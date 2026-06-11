@@ -13,6 +13,12 @@ export const updateContactAction = createAction({
   name: 'update_contact',
   displayName: 'Update Contact',
   description: 'Update fields on an existing Person or Organisation.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates fields on an existing Capsule CRM contact identified by its contact ID. Editable fields depend on whether the contact is a person or an organisation, and nested email, phone, address, and website entries can be added or removed (each supports a delete flag). Use when you already know the target contact ID; only provided fields are changed. Not idempotent because it issues a mutating update on each call.',
+    idempotent: false,
+  },
   props: {
     contact_id: capsuleCrmProps.contact_id(),
     contactFields: Property.DynamicProperties({

@@ -8,6 +8,8 @@ export const create2stopBooking = createAction({
   name: 'create2stopBooking',
   displayName: 'Create 2-stop Booking',
   description: 'Create a hailing booking with two stops (pickup + dropoff).',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a MotionTools hailing booking with two stops, a pickup and a dropoff. Use when an agent needs a point-to-point ride or delivery (e.g. courier from origin to destination); supply the payment method (required) and optionally each stop\'s coordinates/address/contact details, a scheduled time, and metadata. Not idempotent — each call submits a new booking.', idempotent: false },
   props: {
     scheduled_at: Property.ShortText({
       displayName: 'Scheduled At',

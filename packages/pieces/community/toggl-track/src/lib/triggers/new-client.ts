@@ -16,6 +16,9 @@ export const newClient = createTrigger({
   name: 'new_client',
   displayName: 'New Client',
   description: 'Fires when a new client is created in a workspace.',
+  aiMetadata: {
+    description: 'Fires when a new client is created in the configured Toggl Track workspace, delivering the created client (id, name, notes, workspace). Delivered via a Toggl webhook the user must set up manually.',
+  },
   props: {
     workspace_id: togglCommon.workspace_id,
     setupInstructions: Property.MarkDown({

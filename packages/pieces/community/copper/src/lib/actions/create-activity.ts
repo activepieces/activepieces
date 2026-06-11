@@ -12,6 +12,12 @@ export const createActivity = createAction({
   name: 'createActivity',
   displayName: 'Create Activity',
   description: 'Logs an activity related to CRM entities.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Logs an activity (e.g. a note or interaction of a chosen activity type) against a parent Copper record — a person, company, lead, opportunity, project, or task. Use to record an interaction or note on an existing record; requires the parent entity type, the specific parent record, and an activity type. Not idempotent: each call appends a separate activity entry.',
+    idempotent: false,
+  },
   props: {
     entity: Property.StaticDropdown({
       displayName: 'Parent Entity',

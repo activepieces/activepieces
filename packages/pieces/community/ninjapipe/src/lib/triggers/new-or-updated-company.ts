@@ -8,6 +8,9 @@ export const newOrUpdatedCompany = createTrigger({
   name: 'new_or_updated_company',
   displayName: 'New or Updated Company',
   description: 'Triggers when a company is created or updated.',
+  aiMetadata: {
+    description: 'Fires whenever a company in NinjaPipe is created or has any field changed, detected by polling on the company last-updated timestamp. The event payload is the current state of the affected company, including its id, name, and updated_at. A given company can fire this multiple times as it is edited; the payload does not distinguish a first creation from a later update.',
+  },
   type: TriggerStrategy.POLLING,
   sampleData: { id: '1', name: 'Acme Inc', updated_at: '2024-01-01T00:00:00Z' },
   props: {},

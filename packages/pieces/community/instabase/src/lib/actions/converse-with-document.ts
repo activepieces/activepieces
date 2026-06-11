@@ -13,6 +13,8 @@ export const converseWithDocumentAction = createAction({
   name: 'converse_with_document',
   displayName: 'Converse with Document',
   description: 'Ask a question about a document in a conversation',
+  audience: 'both',
+  aiMetadata: { description: 'Asks a natural-language question about one or more uploaded documents within an existing Instabase AI Hub conversation and returns the generated answer. Use after a conversation with processed documents exists; requires the conversation ID, the question, and the target document IDs, and supports selecting a model mode (default, advanced, or fast). Not idempotent: each call submits a new prompt and produces a fresh answer.', idempotent: false },
   props: {
     conversation_id: Property.Dropdown({
       auth: instabaseAuth,

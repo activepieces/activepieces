@@ -6,6 +6,12 @@ export const getContactDetails = createAction({
   name: 'getContactDetails',
   displayName: 'Get Contact Details',
   description: 'Get Contact Details',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Looks up a single contact's full record in Sperse CRM. Identify the contact by any one of Contact ID, Contact Xref, Affiliate Code, User ID, or User Email (only the provided identifiers are sent as query parameters). Use this to read contact data before acting on it. Idempotent: a read-only lookup with no side effects.",
+    idempotent: true,
+  },
   auth: sperseAuth,
   props: {
     contactId: Property.Number({

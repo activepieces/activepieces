@@ -5,6 +5,8 @@ export const getAddressWithdrawals = createAction({
   name: 'get_address_withdrawals',
   displayName: 'Get Address Withdrawals',
   description: 'Get list of withdrawals for an address',
+  audience: 'both',
+  aiMetadata: { description: 'List beacon-chain (staking) withdrawals credited to an address. Choose this to inspect validator-staking payout history for an account; returns empty for addresses that received no withdrawals. Read-only lookup on eth.blockscout.com; requires a 0x address hash.', idempotent: true },
   // category: 'Addresses',
   props: {
     addressHash: Property.ShortText({

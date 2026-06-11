@@ -8,6 +8,8 @@ export const createContact = createAction({
   name: 'create_contact',
   displayName: 'Create Contact',
   description: 'Creates a new contact. Choose what happens if a contact with the same email already exists.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a NinjaPipe contact. Email is the only required field; the "If Contact Exists" mode controls duplicate handling (error, skip, get existing, or update existing) when the email already exists. Default mode (error) is non-idempotent and will fail on re-run; pick "update existing" or "upsert-contact" for safe retries.', idempotent: false },
   props: {
     firstName: Property.ShortText({ displayName: 'First Name', required: false }),
     lastName: Property.ShortText({ displayName: 'Last Name', required: false }),

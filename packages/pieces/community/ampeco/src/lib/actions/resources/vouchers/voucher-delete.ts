@@ -13,6 +13,8 @@ export const voucherDeleteAction = createAction({
   name: 'voucherDelete',
   displayName: 'Resources - Vouchers - Voucher Delete',
   description: 'Delete a Voucher.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete a voucher by its numeric id. Destructive and not reversible; deleting an already-removed id will error. Do not retry blindly.', idempotent: false },
   props: {
         
   voucher: Property.Number({

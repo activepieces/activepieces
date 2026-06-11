@@ -8,6 +8,12 @@ export const getMonitorsAction = createAction({
   displayName: 'Get Monitors',
   description:
     'List and search your UptimeRobot monitors with optional filters. Leave the Monitors / Monitor IDs fields empty to return all monitors.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves UptimeRobot monitors, with two modes: leave the monitor ID fields empty to fetch all monitors, or pass specific monitor IDs (and optional type/status filters) to narrow the result. Use this to look up a monitor or check current up/down status before editing, pausing, or deleting one. Read-only and safe to repeat.',
+    idempotent: true,
+  },
   props: {
     monitor_ids: uptimeRobotCommon.monitorMultiSelect,
     monitor_ids_csv: Property.ShortText({

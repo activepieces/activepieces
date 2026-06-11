@@ -77,6 +77,9 @@ export const newListItemTrigger = createTrigger({
 	name: 'new_list_item',
 	displayName: 'New List Item',
 	description: 'Triggers when a new item is created in a SharePoint list.',
+	aiMetadata: {
+		description: 'Fires when a new item (row) is added to one specific SharePoint list on a given site, based on item creation time (polling). Each event represents one newly created list item with its fields; updates to existing items do not trigger it.',
+	},
 	props: {
 		siteId: microsoftSharePointCommon.siteId,
 		listId: microsoftSharePointCommon.listId,

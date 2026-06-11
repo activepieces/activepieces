@@ -11,6 +11,8 @@ export const uploadFileToProject = createAction({
 	name: 'upload_file_to_project',
 	displayName: 'Upload File to Project',
 	description: 'Upload a file to a Teamwork project.',
+	audience: 'both',
+	aiMetadata: { description: 'Uploads a file to a Teamwork project (via presigned URL, then finalized as a project file), optionally with a description, category, and private flag. Use to attach a document to a project. Requires the target project and the file. Not idempotent — each call uploads a new file entry.', idempotent: false },
 	auth: teamworkAuth,
 	props: {
 		projectId: Property.Dropdown({

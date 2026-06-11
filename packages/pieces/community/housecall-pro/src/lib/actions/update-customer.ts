@@ -9,6 +9,11 @@ export const updateCustomer = createAction({
   name: 'update_customer',
   displayName: 'Update Customer',
   description: 'Updates an existing customer in Housecall Pro.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Update fields on an existing Housecall Pro customer identified by customer ID; only supplied fields change. Effectively idempotent because it targets a stable ID, but note that providing tags replaces the existing tag set rather than appending. To create a new customer use Create Customer instead.',
+    idempotent: true,
+  },
   props: {
     customer_id: Property.ShortText({
       displayName: 'Customer ID',

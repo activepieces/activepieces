@@ -7,6 +7,9 @@ export const taskDone = createTrigger({
   name: 'task_done',
   displayName: 'Task Done',
   description: 'Triggers when a task is marked as done',
+  aiMetadata: {
+    description: 'Fires when a manual task in Woodpecker is marked done. Represents completion of a follow-up task for a prospect and includes the associated prospect.',
+  },
   props: {},
   sampleData: {
     method: 'task_done',

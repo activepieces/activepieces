@@ -10,6 +10,8 @@ export const createRecordAction = createAction({
   name: 'bika_create_record',
   displayName: 'Create Record',
   description: 'Creates a new record in database.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new record in a Bika.ai database table, populating its fields. Requires a space and database (table) to target; field values must match the database schema (read-only field types like formulas and autonumber are ignored). Not idempotent: each call appends a new record.', idempotent: false },
   props: {
     space_id: BikaCommon.space_id,
     database_id: BikaCommon.database_id,

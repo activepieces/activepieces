@@ -14,6 +14,8 @@ export const circuitAttachChargePointAction = createAction({
   name: 'circuitAttachChargePoint',
   displayName: 'Actions - Circuit - Attach Charge Point',
   description: 'To maintain safety and compatibility, only charge points with an identical electrical configuration to the circuit can be added.',
+  audience: 'both',
+  aiMetadata: { description: 'Attach a charge point to a circuit for dynamic load management, optionally with an initial priority. Only charge points whose electrical configuration matches the circuit can be attached, otherwise the call is rejected. Use circuit-detach-charge-point to reverse. Idempotent: attaching an already-attached charge point leaves it on the circuit.', idempotent: true },
   props: {
         
   circuit: Property.Number({

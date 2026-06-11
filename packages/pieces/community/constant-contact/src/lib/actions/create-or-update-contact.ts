@@ -15,6 +15,8 @@ export const createOrUpdateContact = createAction({
   name: 'create_or_update_contact',
   displayName: 'Create or Update Contact',
   description: 'Create or Update a contact in Constant Contact',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a contact in Constant Contact or updates the existing one matching the email address, and adds it to one or more contact lists. Use this to add subscribers or keep contact details and list memberships in sync. The email address is required and is the key the upsert matches on, so repeating the call with the same email updates rather than duplicates.', idempotent: true },
   props: {
     list: Property.MultiSelectDropdown({
       auth: constantContactAuth,

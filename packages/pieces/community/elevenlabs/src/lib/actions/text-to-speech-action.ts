@@ -4,6 +4,8 @@ import { elevenlabsAuth } from '../..';
 
 export const textToSpeech = createAction({
   description: 'Convert text to speech using Elevenlabs',
+  audience: 'both',
+  aiMetadata: { description: 'Synthesizes spoken audio from a text string using a chosen ElevenLabs voice, returning an MP3 file. Use to turn written content into a narrated voiceover or speech clip. Requires a voice (selected from the account\'s available voices) and the text; the model is optional and defaults to ElevenLabs\' default. Not idempotent — each call generates a new audio file.', idempotent: false },
   displayName: 'Text to Speech',
   name: 'elevenlabs-text-to-speech',
   auth: elevenlabsAuth,

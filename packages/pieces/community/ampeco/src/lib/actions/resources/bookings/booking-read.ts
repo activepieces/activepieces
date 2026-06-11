@@ -14,6 +14,8 @@ export const bookingReadAction = createAction({
   name: 'bookingRead',
   displayName: 'Resources - Bookings - Read',
   description: 'Get information for a booking by ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch the details of one AMPECO charger booking by its numeric ID; optionally include linked EVSE information. Read-only and idempotent. Pick this when you already have a booking ID; to search or browse bookings, use the bookings listing action.', idempotent: true },
   props: {
         
   booking: Property.Number({

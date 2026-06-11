@@ -10,6 +10,9 @@ export const newSms = createTrigger({
   name: 'newSms',
   displayName: 'New SMS',
   description: 'Triggers when a new SMS message is received.',
+  aiMetadata: {
+    description: 'Fires when an inbound SMS message is received in Aircall (the message.received webhook event), emitting the message body, direction, sender/recipient numbers, the Aircall number, and the matched contact.',
+  },
   props: {},
   sampleData:  {
       id: 12345,

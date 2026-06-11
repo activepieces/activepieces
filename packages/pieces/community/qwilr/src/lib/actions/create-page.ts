@@ -6,6 +6,8 @@ export const createPageAction = createAction({
     name: 'create_page',
     displayName: 'Create Page',
     description: 'Creates a new Qwilr page from saved blocks or template.',
+    audience: 'both',
+    aiMetadata: { description: 'Creates a new Qwilr sales/proposal page from an existing template (template ID required), optionally publishing it live or leaving it as a draft, and applying token substitutions, tags, owner, and accept-block settings. Use to programmatically generate a personalized proposal or quote from a template. Not idempotent: each call creates a separate page.', idempotent: false },
     auth: qwilrAuth,
     props: {
         templateId: Property.ShortText({

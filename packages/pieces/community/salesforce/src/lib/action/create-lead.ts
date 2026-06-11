@@ -8,6 +8,8 @@ export const createLead = createAction({
     name: 'create_lead',
     displayName: 'Create Lead',
     description: 'Creates a new lead.',
+    audience: 'both',
+    aiMetadata: { description: 'Create a new Lead; Last Name and Company are required. Not idempotent — each call adds another Lead, so dedup beforehand if needed. Use Update Lead to modify an existing one.', idempotent: false },
     props: {
         LastName: Property.ShortText({
             displayName: 'Last Name',

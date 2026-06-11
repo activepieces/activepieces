@@ -17,6 +17,12 @@ export const enrichPersonEmailBulk = createAction({
   displayName: 'Enrich Person Email (Bulk)',
   description:
     'Find email addresses for up to 10 people in a single request. Returns email addresses where found, with error messages for failed lookups.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Read-only batch lookup of email addresses for up to 10 people, each identified by a LinkedIn URL or generic URL. Use specifically when you need contact emails; for general profile attributes use Enrich Person. Per-row errors are returned for misses rather than failing the whole call. Pure query, safe to retry.',
+    idempotent: true,
+  },
   props: {
     identifiers: Property.Array({
       displayName: 'Identifiers',

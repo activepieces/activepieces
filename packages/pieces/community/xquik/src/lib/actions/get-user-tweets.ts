@@ -7,6 +7,12 @@ export const getUserTweets = createAction({
   name: 'get_user_tweets',
   displayName: 'Get User Tweets',
   description: 'List recent posts from a public X/Twitter user',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Lists a public X/Twitter user's recent timeline posts, identified by username (with or without the @) or numeric user ID. Use to read an account's activity; replies and parent-post context can optionally be included. Read-only and idempotent.",
+    idempotent: true,
+  },
   props: {
     user: Property.ShortText({
       displayName: 'User',

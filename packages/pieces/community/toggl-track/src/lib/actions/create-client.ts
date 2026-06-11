@@ -8,6 +8,8 @@ export const createClient = createAction({
   name: 'create_client',
   displayName: 'Create Client',
   description: 'Create a new client in a workspace.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new client record in a Toggl Track workspace, given a workspace ID and client name (optional external reference and notes). Use when an agent needs to register a billable/organizational client before associating projects with it. Not idempotent: each call creates a new client even if the name already exists.', idempotent: false },
   props: {
     workspace_id: togglCommon.workspace_id,
     name: Property.ShortText({

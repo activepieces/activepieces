@@ -20,6 +20,9 @@ export const beganToPlayVideo = createTrigger({
   name: 'began_to_play_video',
   displayName: 'Began to Play Video',
   description: 'Triggers when a user plays a video for the first time.',
+  aiMetadata: {
+    description: 'Fires when a user begins playing a video for the first time on the Uscreen storefront (event video_play). Represents an initial video-engagement event, including the video and chapter identifiers and the viewer who started it.',
+  },
   props: {
     setupInstructions: uscreenProps.webhookInstructions(),
   },

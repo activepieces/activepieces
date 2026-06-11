@@ -17,6 +17,10 @@ export const newSubmissionTrigger = createTrigger({
 	displayName: 'New Submission',
 	auth: tallyAuth,
 	description: 'Triggers when a form receives a new submission',
+	aiMetadata: {
+		description:
+			'Fires when a respondent submits a Tally form, delivering the completed submission. The payload includes the response, submission, and respondent IDs, the form ID and name, the submission timestamp, and a fields map keyed by question label with each answer (choice/checkbox/dropdown/ranking options resolved to their text and matrix answers mapped to row/column labels). Use to react to new form entries such as contact requests, signups, or survey responses.',
+	},
 	props: {
 		form_id: formsDropdown,
 	},

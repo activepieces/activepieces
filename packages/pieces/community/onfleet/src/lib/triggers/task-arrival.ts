@@ -11,6 +11,10 @@ export const taskArrival = createTrigger({
   displayName: 'Task Arrival',
   description:
     'Triggers when a task worker arriving at or closer than threshold value provided, in meters',
+  aiMetadata: {
+    description:
+      'Fires when the worker assigned to an Onfleet task comes within the configured proximity threshold (in meters) of the task destination. Represents a near-arrival geofence event, useful for triggering arrival notifications or preparation steps. The payload includes the task ID, the measured distance, the assigned worker, and the full task object.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   //Create the webhook and save the webhook ID in store for disable behavior

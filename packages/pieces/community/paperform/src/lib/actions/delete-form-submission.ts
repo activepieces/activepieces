@@ -9,6 +9,8 @@ export const deleteFormSubmission = createAction({
   name: 'deleteFormSubmission',
   displayName: 'Delete Form Submission',
   description: 'Deletes a completed submission by its ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes a completed Paperform submission, identified by its submission ID, from the given form. Use to remove a finished response; the deletion is destructive and not idempotent since the record no longer exists on repeat calls.', idempotent: false },
   props: {
     formId: paperformCommonProps.formId,
     submissionId: Property.ShortText({

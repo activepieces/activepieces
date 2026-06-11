@@ -10,6 +10,12 @@ export const unsubscribeSubscriberAction = createAction({
   name: 'unsubscribe_subscriber',
   displayName: 'Unsubscribe Subscriber',
   description: 'Remove a subscriber from a list.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Unsubscribes a subscriber, identified by email, from a specific Campaign Monitor list under a client, marking them as opted out. Choose this to suppress a contact from further sends on that list. Idempotent: repeating the call leaves the subscriber in the same unsubscribed state.',
+    idempotent: true,
+  },
   props: {
     clientId: clientId,
     listId: listId,

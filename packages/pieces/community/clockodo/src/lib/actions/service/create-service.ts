@@ -7,6 +7,8 @@ export default createAction({
   name: 'create_service',
   displayName: 'Create Service',
   description: 'Creates a service in clockodo',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new clockodo service (a billable activity type) with a name and optional number, active flag, and note. Not idempotent: each call adds another service even with identical input, so guard against duplicates. To edit an existing service use Update Service.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

@@ -10,6 +10,12 @@ export const markFilamentDriedAction = createAction({
   name: 'mark_filament_dried',
   displayName: 'Mark Filament as Dried',
   description: 'Record that one or more spools were just dried. Updates each spool\'s last-dried timestamp.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Record a drying event for one or more spools (by numeric ID or 4-char short ID), setting each spool\'s last-dried timestamp to the given time or now. Pick this after running spools through a dryer to keep moisture tracking current; it overwrites the last-dried timestamp, so re-running it advances the recorded time rather than stacking.',
+    idempotent: false,
+  },
   props: {
     filamentIds: Property.Array({
       displayName: 'Filaments',

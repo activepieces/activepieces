@@ -11,6 +11,12 @@ export const addEventFindOrCreateEventAction = createAction({
   displayName: 'Find or Create Event',
   description:
     'Searches for an event by a term. If no match is found, creates a new event with the details below.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches AddEvent events by a term and returns the first match; if none is found, creates a new event from the supplied details. Use when an agent wants an event to exist without risking a duplicate. Not strictly idempotent: the search term is not a guaranteed unique key, so concurrent or near-duplicate inputs can still create more than one event.',
+    idempotent: false,
+  },
   props: {
     search: Property.ShortText({
       displayName: 'Search Term',

@@ -7,6 +7,9 @@ export const payerCreatedTrigger = createTrigger({
   name: 'payer_created',
   displayName: 'Payer Created',
   description: 'Triggers when a new payer record is created',
+  aiMetadata: {
+    description: 'Fires when a new payer (customer/contact) record is created in Pinch Payments. Use to react to newly onboarded payers, such as syncing them to another system.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

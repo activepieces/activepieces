@@ -9,6 +9,10 @@ export const updateUser = createTrigger({
   name: 'updateUser',
   displayName: 'Update User',
   description: '',
+  aiMetadata: {
+    description:
+      'Fires when an existing user profile is updated in Vero, representing a change to a contact such as edited properties or added/removed tags.',
+  },
   props: {
     instruction: Property.MarkDown({
       value: `## Vero Webhook Setup

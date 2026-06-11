@@ -7,6 +7,8 @@ export const createExpense = createAction({
 	name: 'create_expense',
 	displayName: 'Create Expense',
 	description: 'Log new expense in a project with cost, description, date.',
+	audience: 'both',
+	aiMetadata: { description: 'Records an expense against a Teamwork project with a name, cost, and date (and optional description). Use to log a project cost for billing or tracking. Requires the project, name, cost, and date. Not idempotent — each call creates a new expense.', idempotent: false },
 	auth: teamworkAuth,
 	props: {
 		'project-id': Property.Dropdown({

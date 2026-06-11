@@ -11,6 +11,12 @@ export const createInvoice = createAction({
   name: 'createInvoice',
   displayName: 'Create Invoice',
   description: 'Creates a new invoice in the CRM.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates an invoice for a contact in the Linka/Sperse CRM, including a single line item and an associated payment transaction. The contact is resolved by Contact ID or external Contact XREF; status, invoice number, dates, currency, and a description are required. Use to record a billable invoice. Not idempotent: each call records a new invoice and transaction, so repeating it appends duplicate billing records.',
+    idempotent: false,
+  },
   auth: linkaAuth,
   props: {
     contactId: Property.Number({

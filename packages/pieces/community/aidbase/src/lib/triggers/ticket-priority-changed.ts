@@ -11,6 +11,10 @@ export const ticketPriorityChanged = createTrigger({
   name: 'ticket_priority_changed',
   displayName: 'Ticket Priority Changed',
   description: 'Fires when the priority of an existing ticket changes.',
+  aiMetadata: {
+    description:
+      'Fires when an existing Aidbase ticket’s priority changes (Low, Medium, High), representing a re-prioritization of a support ticket. Can be filtered to a specific target priority and/or ticket form, or left open to fire on any priority change.',
+  },
 
   props: {
     ticket_form_id: ticketFormDropdown,

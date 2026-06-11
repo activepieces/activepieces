@@ -9,6 +9,8 @@ export const updateProject = createAction({
   name: 'updateProject',
   displayName: 'Update Project',
   description: "Update a project's name and description",
+  audience: 'both',
+  aiMetadata: { description: "Update a Zeplin project's name and/or description, identified by project ID. Only the fields you supply are changed; omitted fields are left untouched. Use to rename a project or revise its description. Idempotent: repeating the call with the same values leaves the project in the same state.", idempotent: true },
   props: {
     projectId: project_idProp,
     name: Property.ShortText({

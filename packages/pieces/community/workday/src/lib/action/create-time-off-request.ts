@@ -11,6 +11,12 @@ export const createTimeOffRequest = createAction({
 	name: 'create_time_off_request',
 	displayName: 'Create Time Off Request',
 	description: 'Creates a new time off request in Workday.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Submits and auto-completes a time-off request for a worker (by WID) of a given time-off type, entering 8 requested hours for each day in the inclusive start-to-end date range, with an optional comment. Use to book vacation, sick, or other leave on a worker’s behalf. Not idempotent: each call enters a new time-off request.',
+		idempotent: false,
+	},
 	props: {
 		workerId: Property.ShortText({
 			displayName: 'Worker ID',

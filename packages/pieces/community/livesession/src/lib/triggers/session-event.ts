@@ -11,6 +11,10 @@ export const sessionEvent = createTrigger({
   name: 'sessionEvent',
   displayName: 'Session Event',
   description: 'Triggered when a session event occurs in LiveSession',
+  aiMetadata: {
+    description:
+      'Fires when LiveSession reports a session event for the specified website via webhook. Each event represents activity in a visitor recording session (identified by session_id and website_id, with a Unix timestamp), letting agents react in real time to user sessions captured by LiveSession.',
+  },
   props: {
     website_id: Property.ShortText({
       displayName: 'Website ID',

@@ -8,6 +8,8 @@ export const runWorkflowAsync = createAction({
   name: 'run_workflow_async',
   displayName: 'Run Workflow (Async)',
   description: 'Queue an AirOps workflow for asynchronous execution.',
+  audience: 'both',
+  aiMetadata: { description: 'Queue a selected AirOps workflow for asynchronous execution and return immediately without waiting for the result. Use for long-running workflows, then retrieve the outcome later with Get Execution; use the synchronous Run Workflow instead when you need the output in the same call. Each call starts a new execution, so it is not idempotent.', idempotent: false },
   props: {
     app: Property.Dropdown({
       displayName: 'Workflow',

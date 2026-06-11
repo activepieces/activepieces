@@ -7,6 +7,8 @@ export const getCall = createAction({
   name: 'get_call',
   displayName: 'Get Call',
   description: 'Retrieve the details of a specific call by its ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Look up a single Vapi call by its unique ID and return its details (status, transcript, outcome, and related metadata). Use to check the result or progress of a call you previously initiated. Read-only and idempotent.', idempotent: true },
   props: {
     callId: Property.ShortText({
       displayName: 'Call ID',

@@ -6,6 +6,9 @@ export const conversationAssigned = createTrigger({
 	name: 'conversationAssigned',
 	displayName: 'Conversation assigned to any Intercom admin',
 	description: 'Triggers when a conversation is assigned to an admin',
+	aiMetadata: {
+		description: 'Fires when a conversation is assigned to an Intercom admin or teammate, whether manually or via routing rules. Outputs the conversation object including its admin_assignee_id and team_assignee_id.',
+	},
 	props: {},
 	sampleData: undefined,
 	auth: intercomAuth,

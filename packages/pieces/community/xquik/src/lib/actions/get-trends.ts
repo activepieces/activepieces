@@ -7,6 +7,12 @@ export const getTrends = createAction({
   name: 'get_trends',
   displayName: 'Get Trends',
   description: 'Get X/Twitter trending topics by region',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches current X/Twitter trending topics for a region, selected via a Yahoo WOEID (default 1 for worldwide). Use to see what is trending in a given location. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     woeid: Property.Number({
       displayName: 'WOEID',

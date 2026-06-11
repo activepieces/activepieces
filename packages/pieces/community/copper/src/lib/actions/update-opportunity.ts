@@ -16,6 +16,12 @@ export const updateOpportunity = createAction({
   name: 'updateOpportunity',
   displayName: 'Update Opportunity',
   description: 'Updates an opportunity using match criteria.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing opportunity (deal) in Copper CRM, identified by opportunity ID, overwriting its name, pipeline, stage, and primary contact with the supplied values. Use to move a deal between stages/pipelines or rename it; requires the target opportunity ID and a pipeline. Idempotent: re-applying the same values leaves the record in the same state.',
+    idempotent: true,
+  },
   props: {
     opportunityId: opportunityDropdown({
       refreshers: ['auth'],
