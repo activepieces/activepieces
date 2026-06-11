@@ -6,10 +6,13 @@ import { flowRunUtils } from '@/features/flow-runs';
 
 import { BuilderState } from '../builder-hooks';
 import { flowCanvasUtils } from '../flow-canvas/utils/flow-canvas-utils';
+import { CanvasOrientation } from '../flow-canvas/utils/types';
 
 export type StepDataPanelView = 'drawer' | 'split';
 
 export type CanvasState = {
+  canvasOrientation: CanvasOrientation;
+  setCanvasOrientation: (orientation: CanvasOrientation) => void;
   readonly: boolean;
   hideTestWidget: boolean;
   rightSidebar: RightSideBarType;
@@ -69,6 +72,16 @@ export const createCanvasState = (
     initiallySelectedStep === 'trigger' &&
     initialState.flowVersion.trigger.type === FlowTriggerType.EMPTY;
   return {
+    canvasOrientation: getCanvasOrientationFromLocalStorage(),
+    setCanvasOrientation: (orientation: CanvasOrientation) => {
+      localStorage.setItem(
+        CANVAS_ORIENTATION_KEY_IN_LOCAL_STORAGE,
+        orientation,
+      );
+      return set(() => ({
+        canvasOrientation: orientation,
+      }));
+    },
     showMinimap: false,
     setShowMinimap: (showMinimap: boolean) => set({ showMinimap }),
     readonly: initialState.readonly,
@@ -211,6 +224,14 @@ export const createCanvasState = (
     },
   };
 };
+
+const CANVAS_ORIENTATION_KEY_IN_LOCAL_STORAGE = 'ap.builder.canvasOrientation';
+function getCanvasOrientationFromLocalStorage(): CanvasOrientation {
+  return localStorage.getItem(CANVAS_ORIENTATION_KEY_IN_LOCAL_STORAGE) ===
+    'horizontal'
+    ? 'horizontal'
+    : 'vertical';
+}
 
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 function getPanningModeFromLocalStorage(): 'grab' | 'pan' {
