@@ -24,6 +24,10 @@ export const appointmentEvent = createTrigger({
   displayName: 'Appointment Event',
   description:
     'Fires when an appointment is confirmed or cancelled in iMeetify.',
+  aiMetadata: {
+    description:
+      'Fires when an iMeetify appointment matching the selected event type occurs: an appointment confirmation (newly scheduled/booked) or an appointment cancellation. Delivered via webhook, each event represents a single appointment lifecycle change and includes the appointment details (id, start/end times with timezone, type) and the invitee details (name, email, organization). Events whose type does not match the selected Event Type are ignored.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     instructions: Property.MarkDown({

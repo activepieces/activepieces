@@ -15,6 +15,8 @@ export const chargePointStartChargingSessionAction = createAction({
   name: 'chargePointStartChargingSession',
   displayName: 'Actions - Charge Point - Start Charging Session',
   description: 'Start a charging session.',
+  audience: 'both',
+  aiMetadata: { description: 'Remotely start a charging session on a specific EVSE of a charge point, optionally for a given user/payment method and with a full OCPP charging profile (schedule, limits, recurrence). Use when you need to target a particular connector; use start-charging-session-without-evse when the station should pick the connector. Each call begins a new session, so it is not idempotent.', idempotent: false },
   props: {
         
   chargePoint: Property.Number({

@@ -15,6 +15,8 @@ export const chargePointChangeAvailabilityAction = createAction({
   name: 'chargePointChangeAvailability',
   displayName: 'Actions - Charge Point - Change Availability',
   description: 'Change the availability to available or unavailable. A Charge Point is considered unavailable when it does not allow any charging.',
+  audience: 'both',
+  aiMetadata: { description: 'Set a charge point (or a single connector via evseNetworkId) to Operative (charging allowed) or Inoperative (charging blocked). Idempotent: it sets an absolute availability state, so re-running with the same type leaves the same end state.', idempotent: true },
   props: {
         
   chargePoint: Property.Number({

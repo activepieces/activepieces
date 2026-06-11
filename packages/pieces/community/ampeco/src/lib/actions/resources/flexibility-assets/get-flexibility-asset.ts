@@ -15,6 +15,8 @@ export const getFlexibilityAssetAction = createAction({
   name: 'getFlexibilityAsset',
   displayName: 'Resources - Flexibility Assets - Get',
   description: 'Get a flexibility asset.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single flexibility asset by its numeric ID. Read-only and idempotent. Use when you already know the asset ID; if you only have a charge point, EVSE, or circuit reference, use List Flexibility Assets first to find the matching asset ID.', idempotent: true },
   props: {
         
   flexibilityAsset: Property.Number({

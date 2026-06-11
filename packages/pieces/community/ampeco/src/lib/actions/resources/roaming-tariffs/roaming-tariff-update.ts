@@ -15,6 +15,8 @@ export const roamingTariffUpdateAction = createAction({
   name: 'roamingTariffUpdate',
   displayName: 'Resources - Roaming Tariffs - Update',
   description: 'Update Roaming Tariff.',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing roaming tariff by its numeric ID, assigning the local tariff group applied to its EVSEs. Use to modify a known roaming tariff; targets a specific record so re-running with the same values is safe.', idempotent: true },
   props: {
         
   roamingTariff: Property.Number({

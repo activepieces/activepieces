@@ -8,6 +8,8 @@ export const setClickupCustomFieldValue = createAction({
   name: 'set_custom_fields_value',
   displayName: 'Set Custom Field Value',
   description: 'Add data to a Custom field on a task.',
+  audience: 'both',
+  aiMetadata: { description: 'Set the value of a specific custom field on a ClickUp task, given the task ID and field ID. This overwrites the field with the supplied value, so repeating with the same value leaves the task in the same state (upsert by field). Use get-accessible-custom-fields first to find the field ID and its expected value format.', idempotent: true },
   props: {
     workspace_id: clickupCommon.workspace_id(true),
     space_id: clickupCommon.space_id(true),

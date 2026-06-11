@@ -7,6 +7,8 @@ export const findCountryAction = createAction({
   name: 'find_country',
   displayName: 'Find Country',
   description: 'Search for countries using various criteria',
+  audience: 'both',
+  aiMetadata: { description: 'Searches the Bexio country list by name or short code with operators such as contains or equals. Use to resolve a country to its id before setting country_id on a contact or other record. Read-only and idempotent.', idempotent: true },
   props: {
     search_criteria: Property.Array({
       displayName: 'Search Criteria',

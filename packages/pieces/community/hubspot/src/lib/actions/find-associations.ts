@@ -9,6 +9,8 @@ export const findAssociationsAction = createAction({
 	name: 'find-associations',
 	displayName: 'Find Associations',
 	description: 'Finds associations between objects',
+	audience: 'both',
+	aiMetadata: { description: 'Lists all associations from one CRM object to objects of another type (e.g. a company to its contacts or deals), paging through every result. Use to discover what records are linked to a known object given its ID and the from/to object types. Read-only and idempotent.', idempotent: true },
 	props: {
 		fromObjectId: Property.ShortText({
 			displayName: 'From Object ID',

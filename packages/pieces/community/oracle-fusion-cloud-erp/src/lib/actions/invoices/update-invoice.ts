@@ -7,6 +7,8 @@ export const updateInvoice = createAction({
     name: 'update_invoice',
     displayName: 'Update Invoice',
     description: 'Updates an existing payables invoice. Note: Only certain attributes can be updated and cascade defaulting does not apply.',
+    audience: 'both',
+    aiMetadata: { description: 'Modify an existing payables (supplier) invoice by InvoiceId; only a limited set of fields (description, payment terms, pay group, invoice group, payment method, remittance messages) can be changed and cascade defaulting does not apply. At least one field must be supplied or the call fails. Effectively idempotent since it sets the given values.', idempotent: true },
     props: {
         invoiceId: Property.ShortText({
             displayName: 'Invoice ID',
