@@ -8,12 +8,21 @@ import { AppSystemProp } from '../helper/system/system-props'
 
 const isPGlite = system.get(AppSystemProp.DB_TYPE) === DatabaseType.PGLITE
 
+// The extension only ever appears via the boot-time seed, so once it's installed it stays installed
+// for the process lifetime. Cache that result to avoid a per-request query on KB endpoints. While
+// absent we keep checking, but KB is hidden in the UI then, so those endpoints see ~no traffic.
+let extensionInstalled = false
+
 async function isVectorExtensionInstalled(): Promise<boolean> {
+    if (extensionInstalled) {
+        return true
+    }
     const { data } = await tryCatch(() => databaseConnection().query(
         'SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname = $1) AS installed',
         ['vector'],
     ))
-    return data?.[0]?.installed === true
+    extensionInstalled = data?.[0]?.installed === true
+    return extensionInstalled
 }
 
 export const knowledgeBaseSchema = {
