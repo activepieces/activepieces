@@ -1494,6 +1494,9 @@
         "packages/pieces/community/xquik/src/index.ts"
       ],
       "@activepieces/piece-xml": ["packages/pieces/core/xml/src/index.ts"],
+      "@activepieces/piece-ynab": [
+        "packages/pieces/community/ynab/src/index.ts"
+      ],
       "@activepieces/piece-youtube": [
         "packages/pieces/community/youtube/src/index.ts"
       ],
