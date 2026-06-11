@@ -312,7 +312,7 @@ describe('Jungle Grid actions', () => {
           kind: 'script',
         });
 
-        expect(result).toMatchObject({
+        expect(result).toStrictEqual({
           input_id: 'inp_script',
           filename: 'train.py',
           content_type: 'text/x-python',

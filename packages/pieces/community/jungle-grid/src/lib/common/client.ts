@@ -81,7 +81,6 @@ async function uploadJobInput({
   });
 
   return {
-    ...asRecord(slot),
     input_id: upload.input_id,
     filename: upload.filename ?? resolvedFilename,
     content_type: resolvedContentType,
