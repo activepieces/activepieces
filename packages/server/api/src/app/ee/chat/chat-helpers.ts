@@ -14,6 +14,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
+import { transaction } from '../../core/db/transaction'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { ChatConversationEntity } from './chat-conversation-entity'
@@ -33,12 +34,17 @@ async function getUserMemories({ platformId, userId }: { platformId: string, use
 
 async function rememberForUser({ platformId, userId, memory }: { platformId: string, userId: string, memory: string }): Promise<void> {
     const entry = memory.slice(0, MAX_MEMORY_LENGTH)
-    const row = await userChatMemoryRepo().findOneBy({ platformId, userId })
-    const memories = [...(row?.memories ?? []).filter((m) => m !== entry), entry].slice(-MAX_MEMORIES)
-    await userChatMemoryRepo().upsert(
-        { id: row?.id ?? apId(), platformId, userId, memories },
-        ['platformId', 'userId'],
-    )
+    await transaction(async (entityManager) => {
+        const repo = entityManager.getRepository(UserChatMemoryEntity)
+        await repo.createQueryBuilder()
+            .insert()
+            .values({ id: apId(), platformId, userId, memories: [] })
+            .orIgnore()
+            .execute()
+        const row = await repo.findOne({ where: { platformId, userId }, lock: { mode: 'pessimistic_write' } })
+        const memories = [...(row?.memories ?? []).filter((m) => m !== entry), entry].slice(-MAX_MEMORIES)
+        await repo.update({ platformId, userId }, { memories })
+    })
 }
 
 async function getConversationOrThrow({ id, platformId, userId }: { id: string, platformId: string, userId: string }) {

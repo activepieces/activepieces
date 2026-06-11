@@ -1,20 +1,24 @@
 # Chat Module
 
 ## Summary
-A platform-level AI chat assistant that lets users interact with an LLM to manage their Activepieces projects through natural language. The chat connects to the platform's configured AI provider, streams responses via a custom WebSocket chunk reducer, and exposes Activepieces resources (flows, tables, connections, runs) as callable tools through the project's MCP server. Conversations are persisted per-user with support for message compaction, file attachments, multi-project context switching, plan approval for multi-step operations, and a tool approval gate for destructive operations.
+A platform-level AI chat assistant that lets users interact with an LLM to manage their Activepieces projects through natural language. The chat connects to the platform's configured AI provider, streams responses via a custom WebSocket chunk reducer, and exposes Activepieces resources (flows, tables, connections, runs) as callable tools through the project's MCP server. Conversations are persisted per-user with support for message compaction, file attachments, multi-project context switching, a unified setup form for collecting automation inputs, cross-conversation user memory, two-phase (discovery/build) tool gating, and a tool approval gate for destructive operations.
 
 ## Key Files
 - `packages/server/api/src/app/ee/chat/chat.module.ts` — module registration with `chatEnabled` plan gate
 - `packages/server/api/src/app/ee/chat/chat-controller.ts` — HTTP endpoints (conversations CRUD, messages, tool approvals)
 - `packages/server/api/src/app/ee/chat/chat-service.ts` — core business logic (conversation management, message streaming)
-- `packages/server/api/src/app/ee/chat/chat-conversation-entity.ts` — ChatConversation TypeORM entity
+- `packages/server/api/src/app/ee/chat/chat-conversation-entity.ts` — ChatConversation TypeORM entity (includes nullable `discoveryBrief` JSONB)
+- `packages/server/api/src/app/ee/chat/user-chat-memory-entity.ts` — UserChatMemory TypeORM entity (platform+user scoped durable preferences)
+- `packages/server/api/src/app/ee/chat/chat-helpers.ts` — provider/tier resolution, project access, and user-memory read/write (`getUserMemories`, `rememberForUser`)
+- `packages/server/api/src/app/ee/chat/chat-history-hygiene.ts` — collapses stale tool outputs in history to control context dilution
+- `packages/server/api/src/app/ee/chat/chat-property-options.ts` — resolves setup-form field options (pieces, connections, property dropdowns) for the `resolve-options` endpoint
+- `packages/shared/src/lib/ee/chat/tool-phases.ts` — two-phase (discovery/build) denylist-based tool gating; shared by API and worker
 - `packages/server/api/src/app/ee/chat/chat-model-factory.ts` — creates AI SDK `LanguageModel` from provider config (OpenAI, Anthropic, Google, Azure, Bedrock, Cloudflare, Custom)
 - `packages/server/api/src/app/ee/chat/chat-compaction.ts` — long-conversation context management via summarization
 - `packages/server/api/src/app/ee/chat/chat-approval-gate.ts` — Redis pub/sub gate for tool execution approval (5-min timeout); uses atomic SET NX for first-decision-wins semantics; also stores per-conversation cancel signals with a 10-min TTL; manages server-side connection store (available/selected connections per conversation+piece) and pending gate persistence for refresh resilience
 - `packages/server/api/src/app/ee/chat/chat-file-utils.ts` — file attachment processing (base64, MIME validation, 10MB limit)
 - `packages/server/api/src/app/ee/chat/tools/chat-tools.ts` — cross-project tool execution (auth discovery, action execution with server-managed connections, resource listing); `ap_execute_action` auto-fills connectionExternalId and projectId from Redis connection store — the LLM never sees credential IDs
 - `packages/shared/src/lib/ee/chat/tool-classification.ts` — consolidated tool classification predicates (approval-required, action preview risk) as single source of truth; imported by both API server and worker
-- `packages/server/api/src/app/ee/chat/chat-prepare-step.ts` — per-step thinking-budget / tool-filter overrides via AI SDK `prepareStep`
 - `packages/server/api/src/app/ee/chat/mcp/chat-mcp.ts` — connects to Activepieces MCP server for project-scoped tools with approval wrapping
 - `packages/server/api/src/app/ee/chat/history/chat-history.ts` — reconstructs chat history from AI SDK `ModelMessage` format
 - `packages/server/api/src/app/ee/chat/prompt/chat-prompt.ts` — builds system prompt from markdown templates in `src/assets/prompts/`
@@ -23,7 +27,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `packages/web/src/app/routes/chat-with-ai/index.tsx` — main chat page component
 - `packages/web/src/app/routes/chat-with-ai/ai-chat-box.tsx` — chat interface with provider check, message streaming, Zustand store provider; manages suggestion prefill via counter-based key remount on empty-state suggestion clicks
 - `packages/web/src/app/routes/chat-with-ai/conversation-list.tsx` — conversation history sidebar
-- `packages/web/src/app/routes/chat-with-ai/components/` — sub-components (input, assistant message, user message, thinking details panel, plan progress card, approval forms, connection picker, action-preview-card, action-receipt-card); `chat-empty-state.tsx` renders a personalized greeting with the user's first name, horizontal flow cards with images, and a vertical text-suggestion list with lazy-loaded icons
+- `packages/web/src/app/routes/chat-with-ai/components/` — sub-components (input, assistant message, user message, thinking details panel, `setup-form.tsx` unified setup form, approval forms, connection picker, action-preview-card, action-receipt-card); `chat-empty-state.tsx` renders a personalized greeting with the user's first name, horizontal flow cards with images, and a vertical text-suggestion list with lazy-loaded icons
 - `packages/web/src/features/chat/lib/chat-api.ts` — API client for `/v1/chat/*` endpoints
 - `packages/web/src/features/chat/lib/chat-store.ts` — Zustand store for interaction state (approvals, plan progress, display cards, thinking panel)
 - `packages/web/src/features/chat/lib/chat-store-context.tsx` — React context provider and `useChatStoreContext` selector hook
@@ -46,8 +50,11 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - **ChatConversation** — a persisted conversation between a user and the AI assistant, scoped to a platform and user; optionally scoped to a project for tool access
 - **Message compaction** — when a conversation exceeds a token threshold, older messages are summarized by the LLM and replaced with a summary to keep context within the model's window
 - **Tool approval gate** — a Redis pub/sub mechanism that pauses destructive tool executions (delete, test, publish) until the user explicitly approves or denies in the UI; times out after 5 minutes
-- **Plan approval** — a multi-step approval mechanism where the agent presents a plan via `ap_request_plan_approval` (includes a required `mode` field: `one_time` or `recurring`), the user approves or rejects, and approved plans execute with progress tracking
-- **Local tools** — chat-specific tools not part of MCP: `ap_set_session_title`, `ap_select_project`, `ap_execute_action`, `ap_list_across_projects`, `ap_request_plan_approval`
+- **Setup form** — the unified input-collection surface (replaces the old plan-approval flow). After discovery, the agent renders one `ap_show_setup_form` card with the minimal required fields; submitting the form is the user's approval and the build executes directly. Field options are resolved server-side via the `resolve-options` endpoint
+- **DiscoveryBrief** — agent-curated JSONB on `ChatConversation` capturing the user's goal (what/why/constraints/dataFindings); injected into the system prompt via `{{DISCOVERY_BRIEF}}` and used as the internal plan. Updated only by the agent through `ap_update_brief` (never auto-derived from tool results)
+- **UserChatMemory** — durable, platform+user-scoped preferences/corrections (e.g. "default notify = Slack") captured by the agent via `ap_remember` and injected into the prompt via `{{USER_MEMORY}}`; strictly never cross-tenant
+- **Two-phase toolset gating** — the agent runs in a `discovery` or `build` phase (`tool-phases.ts`); a denylist hides build-only tools during discovery to shrink the tool surface. `ap_set_phase` flips the phase; the gate auto-widens if a build/manage tool fires so the agent can't get stuck
+- **Local tools** — chat-specific tools not part of MCP: `ap_set_session_title`, `ap_select_project`, `ap_deselect_project`, `ap_execute_action`, `ap_list_across_projects`, `ap_explore_data`, `ap_update_brief`, `ap_remember`, `ap_load_guide`, `ap_set_phase`
 - **Display tools** — tools that render interactive UI cards: `ap_show_connection_required`, `ap_show_connection_picker`, `ap_show_project_picker`, `ap_show_questions`, `ap_show_quick_replies`
 - **MCP tools** — project-scoped tools loaded from the Activepieces MCP server when a project is selected; destructive ones are wrapped with the approval gate
 - **Tool call UX metadata** — optional `title` (2-4 word chip label) and `description` (first-person conversational sentence) stored on `PersistedToolCallPart`; description is sourced from the preceding `ap_update_thinking_status` text with `input.description` as fallback, rendered above the tool card chip
@@ -66,9 +73,14 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 
 ## Data Model
 
-**ChatConversation**: id, platformId, userId, projectId (nullable), title (nullable), modelName (nullable), messages (JSONB array of `ModelMessage`), summary (text, nullable — compaction summary), summarizedUpToIndex (int, nullable — index up to which messages are summarized).
+**ChatConversation**: id, platformId, userId, projectId (nullable), title (nullable), modelName (nullable), messages (JSONB array of `ModelMessage`), summary (text, nullable — compaction summary), summarizedUpToIndex (int, nullable — index up to which messages are summarized), discoveryBrief (JSONB, nullable — agent-curated goal/constraints).
 - Relations: platform (many-to-one), project (many-to-one, SET NULL on delete), user (many-to-one, CASCADE on delete)
 - Index: `idx_chat_conversation_platform_user_created_id` on (platformId, userId, created, id)
+
+**UserChatMemory**: id, platformId, userId, memories (JSONB array of strings — durable preferences, capped at 50 entries / 280 chars each).
+- Relations: platform (many-to-one, CASCADE on delete), user (many-to-one, CASCADE on delete)
+- Index: unique `idx_user_chat_memory_platform_user` on (platformId, userId)
+- Writes go through `rememberForUser`, which serializes concurrent updates with a transaction + pessimistic row lock so the read-modify-write of `memories` can't lose entries
 
 ## Key Service Methods
 - `createConversation()` — creates a new conversation for a user on a platform
@@ -84,7 +96,12 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `ap_select_project` — switches project context (scopes MCP tools to that project)
 - `ap_execute_action` — executes a single piece action ad-hoc (e.g. "check my inbox"); connections are managed server-side (the LLM never sees externalIds); write/destructive actions trigger an action preview gate before execution; emits `ACTION_RECEIPT` events after completion
 - `ap_list_across_projects` — lists flows, tables, runs, or connections across all user-accessible projects
-- `ap_request_plan_approval` — presents a multi-step plan to the user for approval before executing destructive or write operations
+- `ap_deselect_project` — clears the selected project context
+- `ap_explore_data` — read-only exploration of the user's data (sheets, channels, columns) to build understanding during discovery; never configures the automation
+- `ap_update_brief` — silently updates the conversation's `DiscoveryBrief` (agent-controlled)
+- `ap_remember` — silently persists a durable user preference/correction to `UserChatMemory`
+- `ap_load_guide` — loads an on-demand prompt guide (e.g. `build_flow`) so guidance is only in context when needed
+- `ap_set_phase` — flips the agent between the `discovery` and `build` tool phases
 
 ## Display Tools
 - `ap_show_connection_required` — prompts the user to connect a service
@@ -92,6 +109,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `ap_show_project_picker` — lets the user select a project
 - `ap_show_questions` — renders an interactive multi-question form
 - `ap_show_quick_replies` — shows suggested response buttons
+- `ap_show_setup_form` — renders the unified setup form (sections per piece, project as a first-class step); submission triggers the build directly
 
 ## Endpoints
 - `POST /v1/chat/conversations` — create conversation
@@ -105,6 +123,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `POST /v1/chat/conversations/:id/cancel` — cancel an in-progress streaming response
 - `GET /v1/chat/conversations/:id/connections?pieceName=` — get available connections for connection picker; falls back to `findConnectionsForPiece` when the Redis cache is empty and stores the result for future calls
 - `GET /v1/chat/conversations/:id/pending-gate` — get pending approval gate for refresh resilience (returns gate info so the frontend can re-show display tool cards)
+- `POST /v1/chat/conversations/:id/resolve-options` — resolves setup-form field options (pieces, connections, property dropdowns) for the given project; enforces project access before resolving
 
 - `POST /v1/admin/chat/sync-all` — bulk historical sync of all conversations to console analytics (admin API key required)
 
