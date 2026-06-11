@@ -14,6 +14,12 @@ export const loadDataFromStageAction = createAction({
   displayName: 'Load Data from Stage',
   description:
     'Load data into a Snowflake table from a named internal or external stage using COPY INTO.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Bulk-loads files from a named internal or external Snowflake stage into a target table via COPY INTO, with configurable file format, file-name pattern, header skipping, and on-error behavior. Use to ingest staged CSV/JSON/Parquet/etc. data. By default COPY INTO skips files it has already loaded, but re-running may load newly added files; treat as a mutating load (not strictly idempotent).',
+    idempotent: false,
+  },
   auth: snowflakeAuth,
   props: {
     database: snowflakeCommonProps.database,

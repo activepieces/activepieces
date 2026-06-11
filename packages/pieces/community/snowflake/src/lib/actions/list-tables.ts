@@ -13,6 +13,12 @@ export const listTablesAction = createAction({
   name: 'list_tables',
   displayName: 'List Tables',
   description: 'List all tables in a Snowflake schema.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Lists the tables in a given Snowflake database and schema (via SHOW TABLES), returning each table's name, kind, row/byte counts, owner, and creation time. Use to discover what tables exist before querying or to enumerate a schema. Read-only and idempotent.",
+    idempotent: true,
+  },
   auth: snowflakeAuth,
   props: {
     database: snowflakeCommonProps.database,

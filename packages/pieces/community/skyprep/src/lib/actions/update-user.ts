@@ -9,6 +9,12 @@ export const updateUser = createAction({
   displayName: 'Update User',
   description:
     'Update user information. Omitted parameters will not be updated.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Updates an existing SkyPrep user's profile fields (name, role, title, contact details, notification preferences, access and password-expiration dates), keyed on the required user email; omitted fields are left unchanged. Use to modify a known user's attributes. Idempotent: repeating with the same input yields the same end state.",
+    idempotent: true,
+  },
   props: {
     user_email: Property.ShortText({
       displayName: 'User Email',

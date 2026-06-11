@@ -8,6 +8,12 @@ export const createProjectAction = createAction({
   name: 'create_project',
   displayName: 'Create Project',
   description: 'Create a new project in your Wistia account.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new Wistia project to hold media, with an optional admin owner email and anonymous-upload/download and public-link visibility flags. Use when an agent needs a new container before adding media. Not idempotent: each call creates a separate project even with the same name.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Project Name',

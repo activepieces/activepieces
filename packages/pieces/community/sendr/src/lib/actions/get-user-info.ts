@@ -8,6 +8,8 @@ export const getUserInfo = createAction({
   name: 'get_user_info',
   displayName: 'Get Account Info',
   description: 'Returns information about the currently connected Sendr API user. Useful for verifying that your API key is valid.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches the Sendr account/seat tied to the connected API key. Use it to verify the connection is valid or to read the current user identity before other Sendr calls. Read-only; takes no input.', idempotent: true },
   props: {},
   async run(context) {
     const response = await httpClient.sendRequest({

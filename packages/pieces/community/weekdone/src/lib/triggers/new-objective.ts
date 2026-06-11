@@ -98,6 +98,9 @@ export const newObjectiveTrigger = createTrigger({
   name: 'new_objective',
   displayName: 'New Objective',
   description: 'Triggers when a new OKR objective is added in Weekdone.',
+  aiMetadata: {
+    description: 'Fires when a new OKR objective is created in Weekdone, optionally limited to a specific level (company, department, team, or personal) or quarter. Represents a newly defined goal.',
+  },
   props,
   sampleData: {
     id: 1,

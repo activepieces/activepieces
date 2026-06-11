@@ -9,6 +9,9 @@ export const newPresentationTrigger = createTrigger({
   name: 'new-presentation',
   displayName: 'New Presentation',
   description: 'Triggers when a new presentation is created.',
+  aiMetadata: {
+    description: 'Fires via webhook when SlideSpeak finishes generating a new presentation, delivering the completed deck (e.g. its download URL). Use to react to presentation completion without polling.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

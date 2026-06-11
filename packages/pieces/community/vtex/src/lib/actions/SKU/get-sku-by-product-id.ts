@@ -7,6 +7,12 @@ export const getSkuByProductId = createAction({
   name: 'get-sku-by-product-id',
   displayName: 'Get SKU By Product ID',
   description: 'Find a Sku in your catalog by a Product id',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'List the SKUs (product variations) associated with a given product in a VTEX store catalog, identified by the numeric product ID. Use to enumerate a product\'s variants. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     productId: Property.Number({
       displayName: 'Product ID',

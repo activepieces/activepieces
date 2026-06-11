@@ -12,6 +12,8 @@ export const findTask = createAction({
   name: 'find_task',
   displayName: 'Find Task',
   description: 'Find a task by name and status.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists tasks in a Toggl Track workspace, optionally filtered by name, project ID, active/inactive/both status, and date range, with sorting and pagination; omitting filters returns all tasks. Use to resolve a task ID before logging time against it. Read-only and idempotent.', idempotent: true },
   props: {
     workspace_id: togglCommon.workspace_id,
     search: Property.ShortText({

@@ -9,6 +9,10 @@ export const emailConverted = createTrigger({
   name: 'emailConverted',
   displayName: 'Email Converted',
   description: '',
+  aiMetadata: {
+    description:
+      'Fires when a recipient completes the conversion goal tied to an email sent through Vero, representing a successful campaign conversion for a specific user and campaign.',
+  },
   props: {
     instruction: Property.MarkDown({
       value: `## Vero Webhook Setup

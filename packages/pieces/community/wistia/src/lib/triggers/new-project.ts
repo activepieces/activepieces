@@ -32,6 +32,10 @@ export const newProjectTrigger = createTrigger({
   name: 'new_project',
   displayName: 'New Project',
   description: 'Triggers when a new project is created in your account.',
+  aiMetadata: {
+    description:
+      'Fires when a new project is created in the Wistia account. Represents a newly added media container, detected by polling for recently created projects.',
+  },
   props: {},
   type: TriggerStrategy.POLLING,
   async test(context) {

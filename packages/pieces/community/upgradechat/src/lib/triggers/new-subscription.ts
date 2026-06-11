@@ -7,6 +7,10 @@ export const newSubscription = createTrigger({
   name: 'newSubscription',
   displayName: 'New Subscription',
   description: 'triggers when a new subscription is created',
+  aiMetadata: {
+    description:
+      'Fires when a subscription is created or updated in the Sperse/Upgrade.chat CRM (Subscription.CreatedOrUpdated event), delivering the contact, subscription name, dates, amount, frequency, and status. Use it to react to new or changed memberships, including renewals, plan changes, and cancellations.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {

@@ -8,6 +8,11 @@ export const lookup = createAction({
   name: 'lookup',
   displayName: 'Lookup Phone Numbers',
   description: 'Get information about CNAM, HLR, MNP, RCS capabilities and Number formats.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Looks up information about one or more phone numbers via the seven gateway. The lookup type selects what is returned — CNAM (caller name), HLR (network/status), MNP (number portability), RCS capability, or number format validation. Use to validate or enrich phone numbers before messaging. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     type: Property.StaticDropdown<string, true>({
       options: {

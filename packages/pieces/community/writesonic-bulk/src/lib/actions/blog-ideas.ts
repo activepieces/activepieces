@@ -12,6 +12,8 @@ export const blogIdeas = createAction({
   name: 'blogIdeas',
   displayName: 'Blog Ideas',
   description: 'Generate blog article ideas based on a topic or keyword',
+  audience: 'both',
+  aiMetadata: { description: 'Generates AI-written blog article ideas for a given topic or keyword via Writesonic, optionally biased toward an extra keyword and engine/language/copy-count settings. Use when an agent needs candidate blog headlines or angles to brainstorm content. Each call produces fresh generated text and is billed, so it is not idempotent.', idempotent: false },
   props: {
     topic: Property.ShortText({
       displayName: 'Topic',

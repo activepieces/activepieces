@@ -16,6 +16,8 @@ export const queryRecords = createAction({
   auth: vtigerAuth,
   displayName: 'Query Records',
   description: 'Query records by SQL statement.',
+  audience: 'both',
+  aiMetadata: { description: 'Runs a Vtiger VTQL/SQL-style read query (e.g. SELECT ... FROM Contacts) and returns matching records or aggregates such as count(*). Choose this when you need a custom filtered read with full control over columns, conditions, and limit rather than the simpler field-match Search. Read-only and idempotent.', idempotent: true },
   props: {
     query: Property.LongText({
       displayName: 'Query',

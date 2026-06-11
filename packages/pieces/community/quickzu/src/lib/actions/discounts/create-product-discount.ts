@@ -17,6 +17,12 @@ export const createProductDiscountAction = createAction({
   name: 'quickzu_create_product_discount',
   displayName: 'Create Product Discount',
   description: 'Creates a new discount for category or product level.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new item-level discount in a Quickzu store over a date range. The filter type selects scope: specific categories, specific products, or all products. Use to set up an automatic price reduction (not a coupon code). Not idempotent: each call creates a separate discount.',
+    idempotent: false,
+  },
   props: {
     title: Property.ShortText({
       displayName: 'Promotion / Discount Title',

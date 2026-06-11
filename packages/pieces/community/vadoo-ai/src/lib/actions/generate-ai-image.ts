@@ -13,6 +13,12 @@ export const generateAiImage = createAction({
   name: 'generate_ai_image',
   displayName: 'Generate AI Image',
   description: 'Generates AI generated image based on prompt for a character.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Generates an AI image for an existing Vadoo character from a text prompt and waits (polls up to ~5 minutes) for it to finish, returning the completed image URL. Requires the character ID (selected from the account character list), an aspect ratio, and a prompt. Each call starts a new generation job, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     id: Property.Dropdown({
   auth: vadooAiAuth,

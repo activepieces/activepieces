@@ -7,6 +7,9 @@ export const bookingEnded = createSessionsUsWebhookTrigger({
   name: 'booking_ended',
   displayName: 'Booking Ended',
   description: 'Triggered when a booking ends.',
+  aiMetadata: {
+    description: 'Fires when a booked session finishes (the meeting ends). The payload includes the booking details, the session, and its participants.',
+  },
   trigger: SessionsUsWebhookTrigger.BOOKING_ENDED,
   storeKey: 'sessions_booking_ended_trigger',
   sampleData: {

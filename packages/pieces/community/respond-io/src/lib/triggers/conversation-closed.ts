@@ -10,6 +10,9 @@ export const conversationClosedTrigger = createTrigger({
   name: 'conversation_closed',
   displayName: 'Conversation Closed',
   description: 'Triggers when a conversation is closed.',
+  aiMetadata: {
+    description: 'Fires when a conversation is closed in Respond.io, delivering the contact and conversation that was closed. Use to run follow-up actions after a conversation is resolved. Requires manually configuring a conversation.closed webhook in Respond.io.',
+  },
   auth: respondIoAuth,
   props: {
     webhookInstructions: Property.MarkDown({
