@@ -56,7 +56,7 @@ export const getEmployeeSystemId = createAction({
   async run(context) {
     const { email, employmentStatuses } = context.propsValue;
     const auth = context.auth as OmniHrAuth;
-    const headers = await getAuthHeaders(auth);
+    const headers = await getAuthHeaders(auth, context.store);
 
     const queryParams: Record<string, string> = {
       exclude_self: 'false',

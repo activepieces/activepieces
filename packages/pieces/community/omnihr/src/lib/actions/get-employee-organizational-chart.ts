@@ -19,7 +19,7 @@ export const getEmployeeOrganizationalChart = createAction({
   async run(context) {
     const { system_id } = context.propsValue;
     const auth = context.auth as OmniHrAuth;
-    const headers = await getAuthHeaders(auth);
+    const headers = await getAuthHeaders(auth, context.store);
 
     const snapshotResponse = await httpClient.sendRequest({
       method: HttpMethod.GET,

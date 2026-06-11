@@ -18,7 +18,7 @@ export const getEmployeeInfo = createAction({
   async run(context) {
     const { system_id } = context.propsValue;
     const auth = context.auth as OmniHrAuth;
-    const headers = await getAuthHeaders(auth);
+    const headers = await getAuthHeaders(auth, context.store);
 
     const employeeResponse = await httpClient.sendRequest({
       method: HttpMethod.GET,
