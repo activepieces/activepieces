@@ -411,6 +411,11 @@ const CAPTURE_STYLE_PROPERTIES = [
   'z-index',
   'transform',
   'transform-origin',
+  // tailwind's translate/rotate/scale utilities compile to the independent
+  // transform properties, not `transform`
+  'translate',
+  'rotate',
+  'scale',
   'overflow-x',
   'overflow-y',
   'visibility',
