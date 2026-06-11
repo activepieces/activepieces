@@ -115,15 +115,6 @@ export enum ChatConversationStatus {
     ERROR = 'ERROR',
 }
 
-export const DiscoveryBrief = z.object({
-    what: z.string().optional(),
-    why: z.string().optional(),
-    constraints: z.array(z.string()).optional(),
-    dataFindings: z.array(z.string()).optional(),
-    openQuestions: z.array(z.string()).optional(),
-})
-export type DiscoveryBrief = z.infer<typeof DiscoveryBrief>
-
 export const ChatConversation = z.object({
     ...BaseModelSchema,
     platformId: z.string(),
@@ -136,7 +127,6 @@ export const ChatConversation = z.object({
     uiMessages: z.array(PersistedChatMessageSchema).nullable().default(null),
     summary: Nullable(z.string()),
     summarizedUpToIndex: Nullable(z.number().int()),
-    discoveryBrief: Nullable(DiscoveryBrief),
 })
 export type ChatConversation = z.infer<typeof ChatConversation>
 

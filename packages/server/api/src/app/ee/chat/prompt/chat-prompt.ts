@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { DiscoveryBrief, isNil, Project, ProjectType } from '@activepieces/shared'
+import { Project, ProjectType } from '@activepieces/shared'
 
 function loadPromptTemplate(filename: string): string {
     return readFileSync(path.resolve(`packages/server/api/src/assets/prompts/${filename}`), 'utf8')
@@ -50,24 +50,10 @@ function buildProjectContextBlock({ project, frontendUrl }: {
         .replaceAll('{{FRONTEND_URL}}', frontendUrl)
 }
 
-const EMPTY_BRIEF_TEXT = 'No discovery brief yet — build your understanding of the goal first.'
-
-function buildBriefBlock(brief: DiscoveryBrief | null): string {
-    if (isNil(brief)) return EMPTY_BRIEF_TEXT
-    const lines: string[] = []
-    if (brief.what) lines.push(`- what: ${brief.what}`)
-    if (brief.why) lines.push(`- why: ${brief.why}`)
-    if (brief.constraints?.length) lines.push(`- constraints: ${brief.constraints.join('; ')}`)
-    if (brief.dataFindings?.length) lines.push(`- data findings: ${brief.dataFindings.join('; ')}`)
-    if (brief.openQuestions?.length) lines.push(`- open questions: ${brief.openQuestions.join('; ')}`)
-    return lines.length > 0 ? lines.join('\n') : EMPTY_BRIEF_TEXT
-}
-
-function buildAgentSystemPrompt({ projects, currentProjectId, frontendUrl, discoveryBrief }: {
+function buildAgentSystemPrompt({ projects, currentProjectId, frontendUrl }: {
     projects: Project[]
     currentProjectId: string | null
     frontendUrl: string
-    discoveryBrief?: DiscoveryBrief | null
 }): string {
     const currentProject = currentProjectId
         ? projects.find((p) => p.id === currentProjectId) ?? null
@@ -76,7 +62,6 @@ function buildAgentSystemPrompt({ projects, currentProjectId, frontendUrl, disco
     return PROMPT_TEMPLATES.system
         .replace('{{PROJECT_LIST}}', buildProjectListBlock({ projects, frontendUrl }))
         .replace('{{PROJECT_CONTEXT}}', buildProjectContextBlock({ project: currentProject, frontendUrl }))
-        .replace('{{DISCOVERY_BRIEF}}', buildBriefBlock(discoveryBrief ?? null))
         .replaceAll('{{FRONTEND_URL}}', frontendUrl)
 }
 

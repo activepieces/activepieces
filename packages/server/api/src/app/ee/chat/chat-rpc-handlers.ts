@@ -69,7 +69,6 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             projects: userProjects,
             currentProjectId: selectedProjectId,
             frontendUrl,
-            discoveryBrief: conversation.discoveryBrief ?? null,
         })
 
         const previousMessages = conversation.messages as ModelMessage[]

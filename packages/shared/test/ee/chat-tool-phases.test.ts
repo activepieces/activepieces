@@ -7,7 +7,6 @@ const ALL = [
     'ap_resolve_property_options',
     'ap_list_connections',
     'ap_explore_data',
-    'ap_update_brief',
     'ap_show_questions',
     'ap_build_flow',
     'ap_add_step',

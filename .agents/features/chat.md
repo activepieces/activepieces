@@ -7,7 +7,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `packages/server/api/src/app/ee/chat/chat.module.ts` — module registration with `chatEnabled` plan gate
 - `packages/server/api/src/app/ee/chat/chat-controller.ts` — HTTP endpoints (conversations CRUD, messages, tool approvals)
 - `packages/server/api/src/app/ee/chat/chat-service.ts` — core business logic (conversation management, message streaming)
-- `packages/server/api/src/app/ee/chat/chat-conversation-entity.ts` — ChatConversation TypeORM entity (includes nullable `discoveryBrief` JSONB)
+- `packages/server/api/src/app/ee/chat/chat-conversation-entity.ts` — ChatConversation TypeORM entity
 - `packages/server/api/src/app/ee/chat/chat-helpers.ts` — provider/tier resolution, project access, conversation fetch/lock
 - `packages/server/api/src/app/ee/chat/chat-history-hygiene.ts` — collapses stale tool outputs in history to control context dilution
 - `packages/shared/src/lib/ee/chat/tool-phases.ts` — two-phase (discovery/build) denylist-based tool gating; shared by API and worker
@@ -48,9 +48,8 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - **ChatConversation** — a persisted conversation between a user and the AI assistant, scoped to a platform and user; optionally scoped to a project for tool access
 - **Message compaction** — when a conversation exceeds a token threshold, older messages are summarized by the LLM and replaced with a summary to keep context within the model's window
 - **Tool approval gate** — a Redis pub/sub mechanism that blocks on user input until the user responds in the UI; times out after 5 minutes. Used to wait on display-tool cards (connection picker, multi-question card, project picker) and the ad-hoc action-preview gate. Flow build/test/publish and MCP tools are NOT gated — they execute directly
-- **DiscoveryBrief** — agent-curated JSONB on `ChatConversation` capturing the user's goal (what/why/constraints/dataFindings); injected into the system prompt via `{{DISCOVERY_BRIEF}}` and used as the internal plan. Updated only by the agent through `ap_update_brief` (never auto-derived from tool results)
 - **Two-phase toolset gating** — the agent runs in a `discovery` or `build` phase (`tool-phases.ts`); a denylist hides build-only tools during discovery to shrink the tool surface. `ap_set_phase` flips the phase; the gate auto-widens if a build/manage tool fires so the agent can't get stuck
-- **Local tools** — chat-specific tools not part of MCP: `ap_set_session_title`, `ap_select_project`, `ap_deselect_project`, `ap_execute_action`, `ap_list_across_projects`, `ap_explore_data`, `ap_update_brief`, `ap_load_guide`, `ap_set_phase`
+- **Local tools** — chat-specific tools not part of MCP: `ap_set_session_title`, `ap_select_project`, `ap_deselect_project`, `ap_execute_action`, `ap_list_across_projects`, `ap_explore_data`, `ap_load_guide`, `ap_set_phase`
 - **Display tools** — tools that render interactive UI cards: `ap_show_connection_required`, `ap_show_connection_picker`, `ap_show_project_picker`, `ap_show_questions`, `ap_show_quick_replies`
 - **MCP tools** — project-scoped tools loaded from the Activepieces MCP server when a project is selected; wrapped only with a per-call execution timeout (`withToolTimeouts`) — the chat no longer gates them behind approval
 - **Tool call UX metadata** — optional `title` (2-4 word chip label) and `description` (first-person conversational sentence) stored on `PersistedToolCallPart`; description is sourced from the preceding `ap_update_thinking_status` text with `input.description` as fallback, rendered above the tool card chip
@@ -69,7 +68,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 
 ## Data Model
 
-**ChatConversation**: id, platformId, userId, projectId (nullable), title (nullable), modelName (nullable), messages (JSONB array of `ModelMessage`), summary (text, nullable — compaction summary), summarizedUpToIndex (int, nullable — index up to which messages are summarized), discoveryBrief (JSONB, nullable — agent-curated goal/constraints).
+**ChatConversation**: id, platformId, userId, projectId (nullable), title (nullable), modelName (nullable), messages (JSONB array of `ModelMessage`), summary (text, nullable — compaction summary), summarizedUpToIndex (int, nullable — index up to which messages are summarized).
 - Relations: platform (many-to-one), project (many-to-one, SET NULL on delete), user (many-to-one, CASCADE on delete)
 - Index: `idx_chat_conversation_platform_user_created_id` on (platformId, userId, created, id)
 
@@ -89,7 +88,6 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `ap_list_across_projects` — lists flows, tables, runs, or connections across all user-accessible projects
 - `ap_deselect_project` — clears the selected project context
 - `ap_explore_data` — read-only exploration of the user's data (sheets, channels, columns) to build understanding during discovery; never configures the automation
-- `ap_update_brief` — silently updates the conversation's `DiscoveryBrief` (agent-controlled)
 - `ap_load_guide` — loads an on-demand prompt guide (e.g. `build_flow`) so guidance is only in context when needed
 - `ap_set_phase` — flips the agent between the `discovery` and `build` tool phases
 

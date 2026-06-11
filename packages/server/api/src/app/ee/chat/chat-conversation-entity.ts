@@ -54,10 +54,6 @@ export const ChatConversationEntity = new EntitySchema<ChatConversationWithRelat
             type: Number,
             nullable: true,
         },
-        discoveryBrief: {
-            type: 'jsonb',
-            nullable: true,
-        },
     },
     indices: [
         {

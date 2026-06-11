@@ -1,4 +1,4 @@
-import { AppConnectionStatus, AppConnectionType, chatToolClassification, DiscoveryBrief, FlowRunStatus, FlowStatus, isNil, isObject, parseToJsonIfPossible, Project, RunEnvironment } from '@activepieces/shared'
+import { AppConnectionStatus, AppConnectionType, chatToolClassification, FlowRunStatus, FlowStatus, isNil, isObject, parseToJsonIfPossible, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { flowService } from '../../../flows/flow/flow.service'
@@ -242,17 +242,6 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
                 return chatToolClassification.readOnlyRejection(actionName)
             }
             return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, log })
-        }
-        case 'ap_update_brief': {
-            if (!conversationId) {
-                return { success: false, error: 'No conversation context.' }
-            }
-            const parsed = DiscoveryBrief.safeParse(toolInput.brief)
-            if (!parsed.success) {
-                return { success: false, error: 'Invalid brief shape.' }
-            }
-            await chatHelpers.conversationRepo().update(conversationId, { discoveryBrief: parsed.data })
-            return { updated: true }
         }
         case 'ap_list_across_projects': {
             const resource = toolInput.resource as string

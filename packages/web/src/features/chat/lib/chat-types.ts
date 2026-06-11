@@ -39,7 +39,6 @@ const THINKING_STATUS_TOOL_NAME = 'ap_update_thinking_status';
 const HIDDEN_TOOL_NAMES = new Set([
   'ap_select_project',
   'ap_deselect_project',
-  'ap_update_brief',
   'ap_load_guide',
   'ap_set_phase',
 ]);

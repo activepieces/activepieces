@@ -6,7 +6,6 @@ import {
     ChatPhase,
     chatToolClassification,
     chunk,
-    DiscoveryBrief,
     isObject,
     SendChatEventRequest,
     ToolProgressEvent,
@@ -426,16 +425,6 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                 }
                 const rawResult = await executeWithTimeout('ap_explore_data', toolInput)
                 return truncateLargeResult(rawResult)
-            },
-        }),
-
-        ap_update_brief: tool({
-            description: 'Record or update your structured understanding of the user\'s goal (silent, internal — the user does not see this). Send the FULL brief each time; it replaces the previous one. Update it as you learn: after the user clarifies scope, after ap_explore_data reveals real data, when open questions resolve. This is your durable memory of the goal and the basis of your recap and what you build.',
-            inputSchema: z.object({
-                brief: DiscoveryBrief.describe('The complete current understanding'),
-            }),
-            execute: async (toolInput) => {
-                return executeTool('ap_update_brief', toolInput)
             },
         }),
 
