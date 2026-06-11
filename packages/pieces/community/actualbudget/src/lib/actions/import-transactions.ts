@@ -8,6 +8,8 @@ export const importTransactions = createAction({
   name: 'import_transactions',
   displayName: 'Import Transactions',
   description: 'Import Transactions',
+  audience: 'both',
+  aiMetadata: { description: 'Bulk-imports an array of transaction objects into a specified account in Actual Budget. Use it to add many transactions at once rather than one at a time; requires the target account ID and a JSON array of transactions (errors if not an array). Not idempotent — each call appends the transactions unless individual entries carry an Imported ID, which Actual uses to deduplicate against prior imports.', idempotent: false },
   props: {
     account_id: Property.ShortText({
       displayName: 'Account ID',

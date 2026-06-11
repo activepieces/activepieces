@@ -9,6 +9,12 @@ export const addEventDeleteEventAction = createAction({
   name: 'delete_event',
   displayName: 'Delete Event',
   description: 'Deletes an event on your AddEvent calendar.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently deletes an AddEvent event identified by its event ID. Use when an agent needs to remove an event entirely. Requires a valid event ID; idempotent, since once the event is deleted, repeating the call leaves it absent.',
+    idempotent: true,
+  },
   props: {
     event_id: addEventProps.eventId({ required: true }),
   },

@@ -6,6 +6,8 @@ export const createChartAction = createAction({
   name: 'create_chart',
   displayName: 'Create Chart',
   description: 'Generates a chart image based on the provided data, configuration, and chart type',
+  audience: 'both',
+  aiMetadata: { description: 'Renders a Chart.js configuration into a PNG or SVG image via the Chartly API and returns it as a base64 data URL. Build the chart from the simple props (chart type, labels, dataset values, colors, dimensions) or, for full control, pass a complete Chart.js config JSON in the advanced config prop, which overrides the simple settings. Use when an agent needs to produce a chart visualization from numeric data. Each call creates a new cached chart on Chartly, so it is not idempotent.', idempotent: false },
   props: {
     chart_type: Property.StaticDropdown({
       displayName: 'Chart Type',

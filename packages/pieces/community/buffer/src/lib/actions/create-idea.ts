@@ -56,6 +56,12 @@ export const createIdea = createAction({
   name: 'create_idea',
   displayName: 'Create Idea',
   description: "Save a new idea to your Buffer Idea Bank.",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Saves a new draft idea (title, body text, and/or attached images) to a Buffer organization\'s Idea Bank for later use. Choose it to stash content concepts without scheduling them to a channel. The idea must include at least a title, text, or one image. Not idempotent — each call creates a new idea.',
+    idempotent: false,
+  },
   props: {
     organizationId: bufferProps.organizationId(),
     title: Property.ShortText({

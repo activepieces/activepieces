@@ -4,6 +4,9 @@ export const newMeetingScheduled = createTrigger({
   name: 'new_meeting_scheduled',
   displayName: 'New Meeting Scheduled',
   description: 'Triggers when a meeting is booked via one of your Avoma scheduling pages',
+  aiMetadata: {
+    description: 'Fires when an invitee books a new meeting through one of your Avoma scheduling pages (the MEETING_BOOKED_VIA_SCHEDULER event), providing the booker, attendees, start/end times, and scheduling intake responses. Requires configuring the corresponding webhook in Avoma settings.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     setupInstructions: Property.MarkDown({

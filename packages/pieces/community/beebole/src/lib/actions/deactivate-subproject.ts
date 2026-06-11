@@ -13,6 +13,11 @@ export const deactivateSubprojectAction = createAction({
   name: 'deactivate_subproject',
   displayName: 'Deactivate Subproject',
   description: 'Marks a subproject as inactive in Beebole. Inactive subprojects are hidden from new time entries.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Deactivates a subproject in Beebole so it is hidden from new time entries while existing entries are preserved. Use to retire a completed or unused work stream. Effectively idempotent: a subproject already inactive stays inactive, though the call still hits the API each time.',
+    idempotent: true,
+  },
   props: {
     company: beeboleProps.companyDropdown({
       required: true,

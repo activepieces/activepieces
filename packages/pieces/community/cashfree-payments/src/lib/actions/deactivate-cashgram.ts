@@ -7,6 +7,11 @@ export const deactivateCashgram = createAction({
   name: 'deactivate-cashgram',
   displayName: 'Deactivate Cashgram',
   description: 'Deactivate a Cashgram to prevent further redemptions using Cashfree',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Deactivates an existing Cashfree Payout Cashgram, identified by its Cashgram ID, so the recipient can no longer redeem it. Use this to revoke a money-transfer link you previously created. Deactivating an already-deactivated Cashgram returns a conflict; the operation mutates payout state and is not treated as idempotent.',
+    idempotent: false,
+  },
   requireAuth: true,
   props: {
     environment: Property.StaticDropdown({

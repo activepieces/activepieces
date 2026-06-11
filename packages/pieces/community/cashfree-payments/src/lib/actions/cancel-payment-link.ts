@@ -7,6 +7,11 @@ export const cancelPaymentLink = createAction({
   name: 'cancel-payment-link',
   displayName: 'Cancel Payment Link',
   description: 'Cancel a payment link in Cashfree Payment Gateway. Only links in ACTIVE status can be cancelled.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Cancels an existing Cashfree payment link, identified by its Link ID, so it can no longer be paid. Use this to revoke a link you previously issued. Only links in ACTIVE status can be cancelled (already-cancelled or paid links return a conflict). Cancelling an already-cancelled link has no further effect, but the operation mutates link state and is not treated as idempotent.',
+    idempotent: false,
+  },
   requireAuth: true,
   props: {
     environment: Property.StaticDropdown({

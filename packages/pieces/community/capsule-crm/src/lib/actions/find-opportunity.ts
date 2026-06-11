@@ -8,6 +8,12 @@ export const findOpportunityAction = createAction({
   name: 'find_opportunity',
   displayName: 'Find Opportunity',
   description: 'Find an Opportunity by search criteria.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Finds Capsule CRM opportunities matching a structured filter query (a conditions array of field/operator/value clauses, per Capsule's filter API). Use to locate opportunities by field criteria rather than a free-text term. Idempotent: it is a read-only filter that does not modify any data.",
+    idempotent: true,
+  },
   props: {
     filter: Property.Json({
       displayName: 'Filter',

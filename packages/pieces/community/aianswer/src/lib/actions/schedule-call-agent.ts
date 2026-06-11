@@ -8,6 +8,8 @@ export const scheduleCallAgent = createAction({
   auth: aiAnswerAuth,
   displayName: 'Schedule Call Agent',
   description: 'Schedule a call with an agent',
+  audience: 'both',
+  aiMetadata: { description: 'Schedules an AI Answer agent to place an outbound call at a future date and time. Use when the call should happen later rather than immediately (for an immediate call use the create phone call action). Requires a valid agent ID, destination phone number, an execution time in YYYY-MM-DD HH:MM:SS format, and a timezone (e.g. Asia/Calcutta); optional prospect details can be attached. Not idempotent — each call schedules a new call.', idempotent: false },
   props: {
     agentID: Property.ShortText({
       displayName: 'Agent ID',

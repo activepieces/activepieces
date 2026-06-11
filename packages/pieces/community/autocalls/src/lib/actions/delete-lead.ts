@@ -8,6 +8,8 @@ export const deleteLead = createAction({
   name: 'deleteLead',
   displayName: 'Delete Lead',
   description: "Delete a lead from a campaign.",
+  audience: 'both',
+  aiMetadata: { description: 'Permanently removes a single lead from its Autocalls campaign by lead id, identified by phone number and campaign name. Use to drop a contact so it is no longer dialed. Requires the lead id; not idempotent since the lead no longer exists after the first successful delete.', idempotent: false },
   props: {
     lead: Property.Dropdown({
       auth: autocallsAuth,

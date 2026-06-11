@@ -11,6 +11,10 @@ export const orderStatusUpdated = createTrigger({
   name: 'orderStatusUpdated',
   displayName: 'Order Status Updated',
   description: 'Triggers when an order status has changed',
+  aiMetadata: {
+    description:
+      'Fires specifically when an order’s status changes in the BigCommerce store (e.g. moves to shipped or completed). Use this instead of Order Updated when you only care about status transitions. The event identifies the affected order.',
+  },
   props: {},
   sampleData: {
     producer: 'stores/xqcaklwsso',

@@ -70,6 +70,9 @@ export const newFile = createTrigger({
 	displayName: 'New or Updated File',
 	description:
 		'Triggers when you add or update a file in your bucket. The bucket/folder you choose must not contain more than 10,000 files.',
+	aiMetadata: {
+		description: 'Fires when an object is added or modified in the configured S3 bucket, optionally scoped to a folder prefix. Polls the bucket and emits each new or updated file based on its last-modified time. The watched bucket/folder must contain no more than 10,000 files.',
+	},
 	props: {
 		markdown:Property.MarkDown({
 			variant:MarkdownVariant.INFO,

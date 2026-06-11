@@ -9,6 +9,8 @@ export const updatePipelineRecord = createAction({
   name: 'updatePipeline',
   displayName: 'Update Pipeline',
   description: 'updates a pipeline record in Bigin',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing pipeline record (deal) in Bigin CRM, identified by selecting the record; any fields you set are overwritten (deal name, sub-pipeline, stage, amount, closing date, owner, company, contact, secondary contacts, associated products, tags). Use to advance a deal stage or revise its details. Idempotent: re-sending the same field values leaves the record in the same state.', idempotent: true },
   props: {
     pipelineRecordId: pipelineRecordsDropdown,
     pipelineDetails: Property.DynamicProperties({

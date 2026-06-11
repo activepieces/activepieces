@@ -9,6 +9,12 @@ export const createPostAction = createAction({
   name: 'create_post',
   displayName: 'Create Post',
   description: 'Creates a new post on a Canny board.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new feedback post (feature request, bug, etc.) on a Canny board. Use to submit feedback captured elsewhere into Canny. Requires a board ID, an author Canny user ID, a title, and details; creates a distinct post on each call (not idempotent).',
+    idempotent: false,
+  },
   props: {
     boardID: boardIdProp,
     authorID: Property.ShortText({

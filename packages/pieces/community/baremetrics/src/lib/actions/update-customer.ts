@@ -10,6 +10,8 @@ export const updateCustomer = createAction({
   name: 'update_customer',
   displayName: 'Update Customer',
   description: 'Updates the basic information stored on a customer',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing customer (name, email, notes, created date) identified by its customer_oid within a Baremetrics data source; only provided fields are changed. Use to amend customer details rather than register a new one. Idempotent: repeating with the same input leaves the customer in the same state.', idempotent: true },
   auth: baremetricsAuth,
   props: {
     source_id: Property.Dropdown({

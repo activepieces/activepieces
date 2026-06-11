@@ -19,6 +19,8 @@ export const analyzeDocumentAsync = createAction({
   displayName: 'Analyze Document from S3 (Multi-Page)',
   description:
     'Extract text, forms, tables, and signatures from a PDF or TIFF stored in S3. Works with both single-page and multi-page documents. This action waits for processing to finish and returns all results automatically — no extra steps needed.',
+  audience: 'both',
+  aiMetadata: { description: 'Analyze a multi-page (or single-page) document stored in S3 with AWS Textract, extracting forms, tables, signatures, and layout structure, optionally answering natural-language queries. Choose it for multi-page PDFs or TIFFs that the synchronous Analyze Document action cannot handle; the document must already be in S3 (no direct upload). It starts an async Textract job and blocks while polling until results are ready (up to a 5-minute timeout), then returns all pages. Effectively idempotent: it is a read-only extraction, and supplying the optional deduplication token makes AWS return the original job result if the same token is reused within 5 minutes.', idempotent: true },
   props: {
     s3Bucket: Property.ShortText({
       displayName: 'S3 Bucket',
