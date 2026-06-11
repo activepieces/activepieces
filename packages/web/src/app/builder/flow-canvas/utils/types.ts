@@ -195,3 +195,5 @@ export type ApGraph = {
   nodes: ApNode[];
   edges: ApEdge[];
 };
+
+export type CanvasOrientation = 'vertical' | 'horizontal';
