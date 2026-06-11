@@ -10,6 +10,12 @@ export const launchPhantom = createAction({
   name: 'launchPhantom',
   displayName: 'Launch Phantom',
   description: 'Launch a Phantombuster agent and add it to the execution queue',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Queues a Phantombuster agent (selected by id) to run, optionally passing a launch argument and a max-retries count. Use this to trigger a scraping or automation phantom. Each call starts a new execution, so it is not idempotent. By default it returns immediately after queuing; enable wait-for-output to block and poll until the run finishes (or errors), returning the run output instead.',
+    idempotent: false,
+  },
   props: {
     agentId: agentIdDropdown,
     waitForOutput: Property.Checkbox({

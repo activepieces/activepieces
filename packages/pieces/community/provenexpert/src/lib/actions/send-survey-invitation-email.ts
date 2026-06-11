@@ -7,6 +7,8 @@ export const sendSurveyInvitationEmailAction = createAction({
   name: 'send_survey_invitation_email',
   displayName: 'Send Survey Invitation Email',
   description: 'Sends a survey invitation email through ProvenExpert to a single recipient. A 7-day reminder is sent automatically unless disabled.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a survey invitation email to one recipient via ProvenExpert, optionally with a custom subject, salutation, and body, and an optional automatic 7-day reminder. Choose this over Create Survey Invitation URL when ProvenExpert should deliver the email itself. Requires a valid survey code and recipient email. Not idempotent: each call dispatches a new email.', idempotent: false },
   props: {
     survey_code: provenExpertCommon.surveyDropdown,
     email: Property.ShortText({

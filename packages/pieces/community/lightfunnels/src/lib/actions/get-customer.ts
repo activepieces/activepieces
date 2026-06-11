@@ -7,6 +7,8 @@ export const getCustomer = createAction({
   name: 'get_customer',
   displayName: 'Get Customer',
   description: 'Retrieve a specific customer by ID',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches a single Lightfunnels customer by its node ID, including contact details, location, order count, and expenses. Use when you have a customer ID and need their record; use List Customers first if you only have other criteria. Read-only and idempotent.', idempotent: true },
   props: {
     customerId: Property.ShortText({
       displayName: 'Customer ID',

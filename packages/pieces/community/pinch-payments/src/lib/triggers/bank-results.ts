@@ -7,6 +7,9 @@ export const bankResultsTrigger = createTrigger({
   name: 'bank_results',
   displayName: 'Bank Results Event',
   description: 'Triggers when a bank account transaction returns (may result in dishonour status)',
+  aiMetadata: {
+    description: 'Fires when a bank account (direct debit) transaction returns its result from the bank, which may be a successful clearance or a dishonour. Represents the settlement outcome of bank-account payments; use it to react to failed or dishonoured direct debits.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

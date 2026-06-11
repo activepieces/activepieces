@@ -7,6 +7,9 @@ export const subscriptionPausedTrigger = createTrigger({
   name: 'subscription_paused',
   displayName: 'Subscription Paused',
   description: 'Triggers when a subscription\'s payment collection is paused',
+  aiMetadata: {
+    description: 'Fires when a subscription in Lemon Squeezy has its payment collection paused. Represents the subscription with its pause mode set, indicating billing is temporarily suspended.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     store_id: createStoreDropdownProperty()

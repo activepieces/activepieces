@@ -13,6 +13,9 @@ export default createTrigger({
   name: 'paste_changed',
   displayName: 'Paste Changed',
   description: 'Triggers when the content (or title) of the paste changes',
+  aiMetadata: {
+    description: 'Fires when a specific paste (identified by its ID) has its content change since the last poll, optionally also detecting title changes when Include Title is enabled. Represents an edit to that tracked paste.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     paste_id: Property.ShortText({

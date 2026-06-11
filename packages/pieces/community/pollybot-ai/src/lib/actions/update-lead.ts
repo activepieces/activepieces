@@ -8,6 +8,8 @@ export const updateLead = createAction({
   name: 'update_lead',
   displayName: 'Update Lead',
   description: 'Updates an existing lead. Supports partial updates.',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing lead in the configured PollyBot chatbot, identified by its lead ID, with a partial set of fields (name, email, phone, source, status, metadata); metadata is merged into existing data. Use when modifying a known lead. Requires at least one field to change. Idempotent: repeating the same update yields the same final state.', idempotent: true },
   auth: pollybotAuth,
   props: {
     id: Property.ShortText({

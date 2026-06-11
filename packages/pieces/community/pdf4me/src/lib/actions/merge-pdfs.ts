@@ -7,6 +7,11 @@ export const mergePdfsAction = createAction({
   name: 'merge_pdfs',
   displayName: 'Merge PDF Files',
   description: 'Combines two or more PDF files into a single PDF document.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Merges two PDF files into one combined PDF via the PDF4me API, with the first file placed before the second. Use when an agent needs to concatenate two PDFs into a single document; both PDF files are required. A pure transformation that is idempotent — the same inputs always produce the same merged PDF with no stored side effect.',
+    idempotent: true,
+  },
   props: {
     file1: Property.File({
       displayName: 'First PDF File',

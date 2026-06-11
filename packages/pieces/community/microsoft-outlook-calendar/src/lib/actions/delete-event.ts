@@ -12,6 +12,8 @@ export const deleteEventAction = createAction({
   auth: outlookCalendarAuth,
   name: 'delete_event',
   description: 'Delete an event in a calendar',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes a specific event from a Microsoft Outlook calendar, identified by its calendar and event ID. Use to remove a known meeting or appointment. Requires the exact event ID. Not strictly idempotent: a repeat call for an already-deleted event will error, though no new side effect occurs.', idempotent: false },
   displayName: 'Delete an event in a calendar',
   props: {
     calendarId: outlookCalendarCommon.calendarDropdown,

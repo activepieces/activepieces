@@ -18,6 +18,12 @@ export const createContact = createAction({
   displayName: 'Create Contact',
   description:
     'Creates a new contact in Loops. Returns an error if a contact with the given email already exists.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new contact in Loops keyed on email, optionally setting name, internal user ID, marketing subscription status, user group, source, mailing-list memberships, and arbitrary custom properties. Use to add someone to the Loops audience; it errors if a contact with that email already exists (use the update/upsert path elsewhere for existing contacts). Not idempotent: a second call with the same email fails rather than no-op.',
+    idempotent: false,
+  },
   auth: loopsAuth,
   props: {
     email: Property.ShortText({

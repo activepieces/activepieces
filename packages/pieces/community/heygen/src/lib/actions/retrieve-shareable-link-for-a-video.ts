@@ -8,6 +8,11 @@ export const retrieveSharableVideoUrlAction = createAction({
   name: 'retrieve_sharable_video_url',
   displayName: 'Retrieve Sharable Video URL',
   description: 'Generates a public URL for a video, allowing it to be shared and accessed publicly.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Enables public sharing for a finished video and returns a publicly accessible share URL, given the video ID. Use when an agent needs a link it can hand out without authentication. This is a server-side mutation that toggles the video to shareable, so treat it as not idempotent.',
+    idempotent: false,
+  },
   props: {
     videoId: Property.ShortText({
       displayName: 'Video ID',

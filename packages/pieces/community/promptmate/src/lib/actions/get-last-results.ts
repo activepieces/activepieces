@@ -8,6 +8,8 @@ export const getLastResults = createAction({
   name: 'get_last_results',
   displayName: 'Get Last Result Rows',
   description: 'Retrieve the last result rows of a PromptMate app for examples or testing',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the most recent result rows produced by a given PromptMate app (appId), capped by an optional limit, optionally returning only the default result fields. Use it to sample an app\'s recent output for examples, testing, or to inspect its result shape without running a new job. Read-only and safe to repeat.', idempotent: true },
   props: {
     appId: Property.Dropdown({
       displayName: 'App',

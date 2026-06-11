@@ -16,6 +16,11 @@ export const findFileAction = createAction({
   name: 'microsoft_sharepoint_find_file',
   displayName: 'Find File',
   description: 'Look up a file by its name or path.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Locates files in a SharePoint document library (drive) on a given site, either by exact path from the drive root or by keyword search on the file name (optionally scoped to a folder). Use to resolve a file ID/metadata before downloading, moving, or copying. Read-only and idempotent; path mode returns an empty result rather than erroring when the file is missing.',
+    idempotent: true,
+  },
   props: {
     siteId: microsoftSharePointCommon.siteId,
     driveId: microsoftSharePointCommon.driveId,
