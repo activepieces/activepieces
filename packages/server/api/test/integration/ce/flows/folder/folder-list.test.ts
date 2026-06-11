@@ -89,8 +89,8 @@ describe('Folder N+1 fix', () => {
         it('parses more than 20 folderIds as an array (qs arrayLimit)', async () => {
             const ctx = await createTestContext(app)
             const folders = await Promise.all(
-                Array.from({ length: 25 }, async () => {
-                    const folder = createMockFolder({ projectId: ctx.project.id })
+                Array.from({ length: 25 }, async (_, index) => {
+                    const folder = createMockFolder({ projectId: ctx.project.id, displayName: `folder-${index}` })
                     await db.save('folder', folder)
                     return folder
                 }),
