@@ -10,6 +10,11 @@ export const createNewBrowserWindowAction = createAction({
 	auth: airtopAuth,
 	displayName: 'Create New Browser Window',
 	description: 'Opens a new window within a session, optionally navigating to a URL.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Opens a new browser window inside an existing Airtop session, optionally navigating to a starting URL and setting screen resolution and page-load wait strategy. Requires a session id from Create Session; the returned window id is needed for page interactions like clicking, typing, scraping, and screenshots. Not idempotent: each call creates an additional window.',
+		idempotent: false,
+	},
 	props: {
 		sessionId: sessionId,
 		url: Property.ShortText({

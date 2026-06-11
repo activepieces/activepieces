@@ -7,6 +7,8 @@ export const createUser = createAction({
   name: 'createUser',
   displayName: 'Create User on Aminos One',
   description: 'Create a user and plan in Aminos One Panel',
+  audience: 'both',
+  aiMetadata: { description: 'Provisions a new user account on an Aminos One panel by POSTing the user email, display name, and a numeric plan ID to the configured panel base URL. Use to onboard a customer or assign them to a specific pricing plan. Not idempotent: each call attempts a fresh creation and the panel returns an error if the email already exists, so it is not a safe retry.', idempotent: false },
   props: {
    useremail: Property.ShortText({
       displayName: 'Username (e-mail)',

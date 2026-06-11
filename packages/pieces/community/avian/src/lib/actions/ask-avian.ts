@@ -10,6 +10,8 @@ export const askAvian = createAction({
   name: 'ask_avian',
   displayName: 'Ask Avian',
   description: 'Ask Avian anything you want!',
+  audience: 'both',
+  aiMetadata: { description: 'Generate a text (or JSON) completion from an Avian language model for a given prompt, choosing the model and sampling parameters (temperature, top_p, penalties, max tokens). Use it for free-form LLM generation, Q&A, or rewriting against Avian. Optionally pass a memory key to persist and continue a conversation across runs. Not idempotent: each call produces a fresh generation and, when a memory key is set, appends to stored chat history.', idempotent: false },
   props: {
     model: Property.Dropdown({
       auth: avianAuth,

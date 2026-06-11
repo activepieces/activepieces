@@ -10,6 +10,9 @@ export const updatedRecord = createTrigger({
     name: 'updated_record',
     displayName: 'Updated Record',
     description: 'Fires when an existing record is updated in Insightly (requires webhook setup)',
+    aiMetadata: {
+        description: 'Fires when a record is created or edited in the selected Insightly object type (Contact, Lead, Opportunity, Organization, Project, Task, or Event). Each event carries the affected record. Requires a webhook to be configured manually in Insightly Workflow Automation for the chosen object type.',
+    },
     type: TriggerStrategy.WEBHOOK,
     props: {
         objectType: Property.StaticDropdown({

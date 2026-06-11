@@ -48,6 +48,11 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
           'Resolve dropdown options for a specific piece property — returns available choices with labels and IDs',
       },
       {
+        name: 'ap_resolve_property_chain',
+        description:
+          'Resolve a chain of dependent dropdown properties in one call — for cascading fields like Spreadsheet → Sheet → Columns',
+      },
+      {
         name: 'ap_validate_step_config',
         description:
           'Validate step configuration before applying — returns field-level errors without modifying any flow',

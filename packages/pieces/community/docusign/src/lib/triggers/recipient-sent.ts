@@ -5,6 +5,10 @@ export const recipientSent = createEnvelopeEventTrigger({
   displayName: 'Signing Email Sent to Person',
   description:
     'Triggers when DocuSign sends the signing email to a specific person.',
+  aiMetadata: {
+    description:
+      'Fires when DocuSign sends the signing email to a specific recipient on an envelope. Represents a per-recipient event (the payload identifies the recipient), useful for tracking an individual signer rather than the whole envelope.',
+  },
   docusignEvent: 'recipient-sent',
   sampleData: {
     event: 'recipient-sent',

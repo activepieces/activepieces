@@ -17,6 +17,8 @@ export const analyzeDocument = createAction({
   displayName: 'Analyze Document',
   description:
     'Extract text, forms (key-value pairs), tables, and signatures from a document. Supports JPEG and PNG via direct upload; PDF and TIFF via S3 only. For multi-page PDFs, use Start Document Analysis instead.',
+  audience: 'both',
+  aiMetadata: { description: 'Synchronously analyze a single-page document with AWS Textract to pull out forms (key-value pairs), tables, and signatures, optionally answering natural-language queries about it. Choose it when you need structured layout extraction rather than just raw text (use Detect Document Text for plain text only) and the document is one page. The source can be an uploaded file (JPEG/PNG only) or an S3 object (also PDF/TIFF, single-page only); for multi-page PDFs use the S3 multi-page action. Idempotent: it is a stateless read-only inference that returns the same result for the same input.', idempotent: true },
   props: {
     source: Property.StaticDropdown({
       displayName: 'Document Source',

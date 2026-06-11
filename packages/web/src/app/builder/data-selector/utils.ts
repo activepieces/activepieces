@@ -110,7 +110,8 @@ function convertArrayToZippedView(
     const stepName = propertyPath[0];
     const subPath = [...propertyPath.slice(1), key];
 
-    const propertyPathWithFlattenArray = `flattenNestedKeys(${stepName}['output'], ['${subPath
+    const arrayPath = pathHelpers.propertyPathStarter(String(stepName));
+    const propertyPathWithFlattenArray = `flattenNestedKeys(${arrayPath}, ['${subPath
       .map((s) => String(s))
       .join("', '")}'])`;
     const joinedValues = node.values.join(', ');
@@ -144,7 +145,7 @@ function buildJsonPath(propertyPath: PathSegment[]): string {
         ? `'${pathHelpers.escapeMentionKey(String(segment))}'`
         : segment
     }]`;
-  }, `${propertyPath[0]}['output']`) as string;
+  }, pathHelpers.propertyPathStarter(String(propertyPath[0]))) as string;
 }
 
 function buildDataSelectorNode(
@@ -322,7 +323,7 @@ function traverseStep(
         data: {
           type: 'value',
           displayName: t('Output'),
-          propertyPath: `${step.name}['output']`,
+          propertyPath: pathHelpers.propertyPathStarter(step.name),
           value: stepNode.data.value,
           insertable: true,
           hideStepIcon: true,

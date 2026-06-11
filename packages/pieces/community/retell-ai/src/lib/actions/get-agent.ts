@@ -9,6 +9,8 @@ export const getAgent = createAction({
   name: 'get_agent',
   displayName: 'Get Agent',
   description: 'Fetch details of a Retell AI agent by Agent ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Look up the configuration of a single Retell AI agent by its Agent ID, optionally pinned to a specific version (defaults to the latest). Use to inspect an agent\'s settings before placing a call or binding it to a number. Read-only and idempotent.', idempotent: true },
   props: {
     agentId: agentIdDropdown('Agent ID',true),
     version: Property.Number({

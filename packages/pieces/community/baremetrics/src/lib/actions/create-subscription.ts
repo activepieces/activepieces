@@ -10,6 +10,8 @@ export const createSubscription = createAction({
   name: 'create_subscription',
   displayName: 'Create Subscription',
   description: 'Creates a new subscription for a customer on a plan',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a subscription linking an existing customer to an existing plan under a Baremetrics data source, keyed on your own unique subscription ID (oid). Requires the customer and plan to already exist in that source. Idempotent: the source treats oid as the unique key, so re-running with the same oid updates that subscription rather than creating a duplicate.', idempotent: true },
   auth: baremetricsAuth,
   props: {
     source_id: Property.Dropdown({

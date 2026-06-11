@@ -10,6 +10,9 @@ export const contactUpdated = createTrigger({
   name: 'contactUpdated',
   displayName: 'Contact Updated',
   description: 'Triggers when a contact is updated',
+  aiMetadata: {
+    description: 'Fires when an existing contact (person) record is edited in Bigin CRM, via a Contacts.edit webhook. Represents a change to a person already in the CRM.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,

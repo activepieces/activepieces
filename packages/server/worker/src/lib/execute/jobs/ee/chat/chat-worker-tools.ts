@@ -79,6 +79,12 @@ function findTopLevelArray(obj: unknown): { array: unknown[], path: string, tota
     return null
 }
 
+function normalizePieceName(piece: string): string {
+    if (piece.startsWith('@')) return piece
+    const stripped = piece.startsWith('piece-') ? piece.slice('piece-'.length) : piece
+    return `@activepieces/piece-${stripped.replace(/_/g, '-')}`
+}
+
 function createEventEmitter({ sendEvent, userId, conversationId, log }: {
     sendEvent: (input: SendChatEventRequest) => Promise<void>
     userId: string
@@ -126,11 +132,12 @@ function createEventEmitter({ sendEvent, userId, conversationId, log }: {
     }
 }
 
-function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onGateOpened }: {
+function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onGateOpened, log }: {
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean, payload?: Record<string, unknown> }>
     displayToolTimeoutMs: number
     onConnectionSelected?: (params: { pieceName: string, connectionExternalId: string, label: string, projectId: string }) => Promise<void>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
+    log?: { warn: (obj: Record<string, unknown>, msg: string) => void }
 }): ToolSet {
     function blockingExecute({ dismissMessage, successKey, toolName }: {
         dismissMessage: string
@@ -162,7 +169,38 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
                 displayName: z.string().describe('Human-readable name (e.g. "Gmail", "Slack")'),
                 status: z.enum(['missing', 'error']).optional().describe('Set to "error" when connection exists but needs reconnecting'),
             }),
-            execute: blockingExecute({ dismissMessage: 'The user chose not to connect this service. Stop and ask: "Would you like me to continue building with a placeholder you can connect later, or would you prefer to stop here?"', successKey: 'connected', toolName: 'ap_show_connection_required' }),
+            execute: async (input, options) => {
+                if (onGateOpened) {
+                    await tryCatch(() => onGateOpened({
+                        gateId: options.toolCallId,
+                        toolName: 'ap_show_connection_required',
+                        displayName: input.displayName,
+                        toolInput: input as unknown as Record<string, unknown>,
+                    }))
+                }
+                const decision = await waitForApproval({ gateId: options.toolCallId, timeoutMs: displayToolTimeoutMs })
+                if (!decision.approved) {
+                    return { dismissed: true, message: 'The user chose not to connect this service. Stop and ask: "Would you like me to continue building with a placeholder you can connect later, or would you prefer to stop here?"' }
+                }
+                if (onConnectionSelected && decision.payload) {
+                    const connections = decision.payload['connections']
+                    if (Array.isArray(connections)) {
+                        await Promise.all(connections
+                            .filter((conn): conn is Record<string, unknown> =>
+                                isObject(conn) && typeof conn['connectionExternalId'] === 'string' && !!conn['connectionExternalId'])
+                            .map((conn) => onConnectionSelected({
+                                pieceName: normalizePieceName(typeof conn['piece'] === 'string' ? conn['piece'] : input.piece),
+                                connectionExternalId: conn['connectionExternalId'] as string,
+                                label: typeof conn['displayName'] === 'string' ? conn['displayName'] as string : input.displayName,
+                                projectId: typeof conn['projectId'] === 'string' ? conn['projectId'] as string : '',
+                            })))
+                    }
+                    else {
+                        log?.warn({ piece: input.piece, payload: decision.payload }, 'ap_show_connection_required approved but payload missing connections array')
+                    }
+                }
+                return { connected: true }
+            },
         }),
 
         ap_show_connection_picker: tool({
@@ -189,10 +227,8 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
                 const label = payload['label']
                 const projectId = payload['projectId']
                 if (typeof connectionExternalId === 'string' && onConnectionSelected) {
-                    const stripped = input.piece.startsWith('piece-') ? input.piece.slice('piece-'.length) : input.piece
-                    const pieceName = input.piece.startsWith('@') ? input.piece : `@activepieces/piece-${stripped.replace(/_/g, '-')}`
                     await onConnectionSelected({
-                        pieceName,
+                        pieceName: normalizePieceName(input.piece),
                         connectionExternalId,
                         label: typeof label === 'string' ? label : connectionExternalId,
                         projectId: typeof projectId === 'string' ? projectId : '',

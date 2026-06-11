@@ -10,6 +10,8 @@ export const createTranscription = createAction({
     name: 'create_transcription',
     displayName: 'Create Transcription',
     description: 'Creates a task to process speech into readable text.',
+    audience: 'both',
+    aiMetadata: { description: 'Transcribes speech from an audio/video source into text via Camb.AI, polling until the transcription task completes. The media can be supplied either as an uploaded file (max 20MB) or as a public file URL, selected via the media source mode; you must specify the spoken language. Use to convert recorded speech to text. Not idempotent: each call starts a new transcription task.', idempotent: false },
     props: {
         language: listSourceLanguagesDropdown,
         source_type: Property.StaticDropdown({

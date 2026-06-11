@@ -9,6 +9,12 @@ export const searchBusinessesAction = createAction({
   displayName: 'Search Businesses',
   description:
     'Searches public business registries by name and country, returning a list of matching companies with their entity IDs, types, and addresses. Useful for looking up a business before creating a profile or running a verification.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches public business registries by company name and country (optionally narrowed by state/province), returning matching companies with their registry entity IDs, types, and addresses. Use this to look up and identify a real-world business before creating a profile or running a verification. Requires a business name and a 2-letter country code; partial name matches are supported. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Business Name',

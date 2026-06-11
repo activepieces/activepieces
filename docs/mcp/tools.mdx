@@ -89,6 +89,23 @@ Resolve dropdown options for a single piece property. Returns available choices 
 Each option in the response has a `label` (human-readable name) and a `value` (internal ID). Always pass the **value** when configuring a step — never use the label. For example, if the response includes `{label: "general", value: "C1234567890"}`, use `"C1234567890"` as the channel value.
 </Tip>
 
+### ap_resolve_property_chain
+
+Resolve a chain of dependent dropdown properties in one call. For actions with cascading fields (e.g., Spreadsheet → Sheet → Columns), this resolves each property sequentially, feeding each selected value into the next resolution. Pass `selectedValue` for properties whose value you already know; the tool stops and returns options when it hits a property without a `selectedValue`.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `pieceName` | string | Yes | Piece name (e.g., `@activepieces/piece-google-sheets`) |
+| `actionOrTriggerName` | string | Yes | Action or trigger name (e.g., `insert_row`) |
+| `type` | string | Yes | `action` or `trigger` |
+| `propertyChain` | array | Yes | Ordered list of properties to resolve (max 10). Each item has `propertyName` (string) and optional `selectedValue` (any). |
+| `auth` | string | Yes | Connection externalId — required to fetch options from the user's account |
+| `currentInput` | object | No | Additional input values already known (e.g., `{"first_row_headers": true}`) |
+
+<Tip>
+Use this instead of multiple `ap_resolve_property_options` calls when fields depend on each other. For example, to resolve Google Sheets columns: pass `spreadsheetId` and `sheetId` with their `selectedValue`, and `values` without — the tool resolves the full chain and returns the column fields in one call.
+</Tip>
+
 ### ap_validate_step_config
 
 Validate a step configuration before applying it. Returns field-level errors without modifying any flow.

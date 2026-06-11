@@ -7,6 +7,12 @@ export const braveWebSearchAction = createAction({
   name: 'web_search',
   displayName: 'Web Search',
   description: 'Search the web using Brave Search',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Runs a web search query against the Brave Search API and returns the matching web results. Use it to retrieve current information from the public web for a given text query; set the optional count (1-20) to control how many results come back. Read-only lookup that returns the same results for the same query.',
+    idempotent: true,
+  },
   props: {
     query: Property.ShortText({
       displayName: 'Query',

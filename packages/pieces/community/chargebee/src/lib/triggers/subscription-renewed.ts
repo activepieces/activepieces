@@ -15,6 +15,10 @@ export const subscriptionRenewed = createTrigger({
   name: 'subscription_renewed',
   displayName: 'Subscription Renewed',
   description: 'Triggers when a subscription is successfully renewed.',
+  aiMetadata: {
+    description:
+      'Fires when Chargebee records a subscription_renewed event — a subscription has advanced into a new billing term. The payload carries the renewed subscription with its customer and invoice.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {

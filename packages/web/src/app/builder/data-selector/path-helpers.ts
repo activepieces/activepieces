@@ -4,6 +4,10 @@ function escapeMentionKey(key: string): string {
   return key.replaceAll(/[\\"'\n\r\t’]/g, (char) => `\\${char}`);
 }
 
+function propertyPathStarter(stepName: string): string {
+  return `${stepName}['output']`;
+}
+
 function convertValuePathToPropertyPath(
   stepName: string,
   valuePath: string,
@@ -14,10 +18,11 @@ function convertValuePathToPropertyPath(
       return `${acc}[${segment}]`;
     }
     return `${acc}['${escapeMentionKey(segment)}']`;
-  }, stepName);
+  }, propertyPathStarter(stepName));
 }
 
 export const pathHelpers = {
   escapeMentionKey,
   convertValuePathToPropertyPath,
+  propertyPathStarter,
 };

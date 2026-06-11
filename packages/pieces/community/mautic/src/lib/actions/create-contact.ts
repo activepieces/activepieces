@@ -10,6 +10,12 @@ import { mauticAuth } from '../auth';
 export const createContact = createAction({
   auth: mauticAuth,
   description: 'Creates a new contact in Mautic CRM', // Must be a unique across the piece, this shouldn't be changed.
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new contact (lead) in Mautic from the provided field values (name, email, phone, custom fields, etc.). Use when adding a person to Mautic; to modify an existing contact use Update Contact instead, and to avoid duplicates check first with Search Contact. Not idempotent: each call inserts a new contact, so repeating it produces duplicates.',
+    idempotent: false,
+  },
   displayName: 'Create Contact',
   name: 'create_mautic_contact',
   props: {

@@ -14,6 +14,11 @@ export const listCategoriesAction = createAction({
   name: 'carbone_list_categories',
   displayName: 'List Categories',
   description: 'List all categories used to organize your Carbone templates.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Returns all category names currently used to organize Carbone templates. Use to discover valid category values before filtering, uploading, or updating templates. Idempotent: read-only lookup with no inputs.',
+    idempotent: true,
+  },
   props: {},
   async run(context) {
     const request: HttpRequest = {

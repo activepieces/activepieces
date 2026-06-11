@@ -9,6 +9,8 @@ export const findDocumentAction = createAction({
 	name: 'findDocument',
 	displayName: 'Find Document',
 	description: 'Finds a document by ID.',
+	audience: 'both',
+	aiMetadata: { description: 'Look up a single PDFMonkey document by its document ID, returning its current state including generation status and download URL. Use to check whether a document finished generating or to retrieve its download link. Read-only and idempotent.', idempotent: true },
 	props: {
 		document_id: documentIdDropdown,
 	},
