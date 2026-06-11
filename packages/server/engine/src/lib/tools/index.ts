@@ -1,6 +1,5 @@
-import { Action, DropdownOption, ExecutePropsResult, PieceProperty, PropertyType } from '@activepieces/pieces-framework'
-import { AgentPieceTool, ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FieldControlMode, FlowActionType, isNil, PieceAction, PropertyExecutionType, StepOutputStatus } from '@activepieces/shared'
-import { generateText, JSONParseError, LanguageModel, NoObjectGeneratedError, Output, Tool, zodSchema } from 'ai'
+import { Action, AgentToolExecutor, AgentToolsResult, DropdownOption, ExecutePropsResult, PieceProperty, PropertyType } from '@activepieces/pieces-framework'
+import { AgentPieceTool, AgentPieceToolDescriptor, ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FieldControlMode, FlowActionType, isNil, PieceAction, PropertyExecutionType, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { z } from 'zod'
 import { EngineConstants } from '../handler/context/engine-constants'
@@ -11,35 +10,35 @@ import { pieceLoader } from '../helper/piece-loader'
 import { tsort } from './tsort'
 
 export const agentTools = {
-    async tools({ engineConstants, tools, model }: ConstructToolParams): Promise<Record<string, Tool>> {
-        const piecesTools = await Promise.all(tools.map(async (tool) => {
+    async tools({ engineConstants, tools, resolveObject }: ConstructToolParams): Promise<AgentToolsResult> {
+        const entries = await Promise.all(tools.map(async (tool) => {
             const { pieceAction } = await pieceLoader.getPieceAndActionOrThrow({
                 pieceName: tool.pieceMetadata.pieceName,
                 pieceVersion: tool.pieceMetadata.pieceVersion,
                 actionName: tool.pieceMetadata.actionName,
                 devPieces: EngineConstants.DEV_PIECES,
             })
-            return {
-                name: tool.toolName,
+            const executor: AgentToolExecutor = ({ instruction }) =>
+                execute({
+                    ...engineConstants,
+                    instruction,
+                    pieceName: tool.pieceMetadata.pieceName,
+                    pieceVersion: tool.pieceMetadata.pieceVersion,
+                    actionName: tool.pieceMetadata.actionName,
+                    predefinedInput: tool.pieceMetadata.predefinedInput,
+                    resolveObject,
+                })
+            const descriptor: AgentPieceToolDescriptor = {
+                toolName: tool.toolName,
                 description: pieceAction.description,
-                inputSchema: z.object({
-                    instruction: z.string().describe('The instruction to the tool'),
-                }),
-                execute: async ({ instruction }: { instruction: string }) =>
-                    execute({
-                        ...engineConstants,
-                        instruction,
-                        pieceName: tool.pieceMetadata.pieceName,
-                        pieceVersion: tool.pieceMetadata.pieceVersion,
-                        actionName: tool.pieceMetadata.actionName,
-                        predefinedInput: tool.pieceMetadata.predefinedInput,
-                        model,
-                    }),
+                pieceMetadata: tool.pieceMetadata,
             }
+            return { toolName: tool.toolName, executor, descriptor }
         }))
 
         return {
-            ...Object.fromEntries(piecesTools.map((tool) => [tool.name, tool])),
+            executors: Object.fromEntries(entries.map((entry) => [entry.toolName, entry.executor])),
+            descriptors: entries.map((entry) => entry.descriptor),
         }
     },
 }
@@ -48,7 +47,7 @@ async function resolveProperties(
     depthToPropertyMap: Record<number, string[]>,
     instruction: string,
     action: Action,
-    model: LanguageModel,
+    resolveObject: ResolveObject,
     operation: ExecuteToolOperation,
 ): Promise<Record<string, unknown>> {
     const auth = operation.predefinedInput?.auth
@@ -108,7 +107,6 @@ async function resolveProperties(
 
         if (Object.keys(propertyToFill).length === 0) continue
 
-        const schemaObject = zodSchema(z.object(propertyToFill).strict())
         const extractionPrompt = constructExtractionPrompt(
             instruction,
             propertyToFill,
@@ -116,33 +114,24 @@ async function resolveProperties(
             result,
         )
 
-        const { output } = await generateText({
-            model,
+        // Prop-resolution inference runs on the worker (decision #4) — the engine ships the JSON
+        // schema + prompt and gets back the structured object, so provider credentials never enter
+        // the sandbox for this call. The ```json-fence recovery now lives in the worker's runText.
+        const output = await resolveObject({
             prompt: extractionPrompt,
-            output: Output.object({
-                schema: schemaObject,
-
-            }),
-            
-        }).catch(error => {
-            if (NoObjectGeneratedError.isInstance(error) && JSONParseError.isInstance(error.cause) && error.text?.startsWith('```json') && error.text?.endsWith('```')) {
-                return {
-                    output: JSON.parse(error.text.replace('```json', '').replace('```', '')),
-                }
-            }
-            throw error
+            schema: z.toJSONSchema(z.object(propertyToFill).strict()),
         })
 
         result = {
             ...result,
-            ...(output as Record<string, unknown>),
+            ...output,
         }
 
     }
     return result
 }
 
-async function execute(operation: ExecuteToolOperationWithModel): Promise<ExecuteToolResponse> {
+async function execute(operation: ExecuteToolOperationWithResolveObject): Promise<ExecuteToolResponse> {
     try {
         const { pieceAction } = await pieceLoader.getPieceAndActionOrThrow({
             pieceName: operation.pieceName,
@@ -151,7 +140,7 @@ async function execute(operation: ExecuteToolOperationWithModel): Promise<Execut
             devPieces: EngineConstants.DEV_PIECES,
         })
         const depthToPropertyMap = tsort.sortPropertiesByDependencies(pieceAction.props)
-        const resolvedInput = await resolveProperties(depthToPropertyMap, operation.instruction, pieceAction, operation.model, operation)
+        const resolvedInput = await resolveProperties(depthToPropertyMap, operation.instruction, pieceAction, operation.resolveObject, operation)
         
         const step: PieceAction = {
             name: operation.actionName,
@@ -242,8 +231,8 @@ ${propertyDetailsSection}
 `
 }
 
-type ExecuteToolOperationWithModel = ExecuteToolOperation & {
-    model: LanguageModel
+type ExecuteToolOperationWithResolveObject = ExecuteToolOperation & {
+    resolveObject: ResolveObject
 }
 
 async function propertyToSchema(propertyName: string, property: PieceProperty, operation: ExecuteToolOperation, resolvedInput: Record<string, unknown>): Promise<z.ZodTypeAny> {
@@ -410,5 +399,7 @@ ${sections}
 type ConstructToolParams = {
     engineConstants: EngineConstants
     tools: AgentPieceTool[]
-    model: LanguageModel
+    resolveObject: ResolveObject
 }
+
+export type ResolveObject = (params: { prompt: string, schema: Record<string, unknown> }) => Promise<Record<string, unknown>>

@@ -1,7 +1,5 @@
-import { AIProviderName } from '@activepieces/shared';
-import { createAIModel } from '../../common/ai-sdk';
+import { AIProviderName, ExecuteAiMode } from '@activepieces/shared';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { generateText } from 'ai';
 import { aiProps } from '../../common/props';
 
 export const summarizeText = createAction({
@@ -28,25 +26,17 @@ export const summarizeText = createAction({
     }),
   },
   async run(context) {
-    const provider = context.propsValue.provider;
+    const provider = context.propsValue.provider as AIProviderName;
     const modelId = context.propsValue.model;
 
-    const model = await createAIModel({
-      provider: provider as AIProviderName,
-      modelId,
-      engineToken: context.server.token,
-      apiUrl: context.server.apiUrl,
-      projectId: context.project.id,
-      flowId: context.flows.current.id,
-      runId: context.run.id,
-    });
-
-    const response = await generateText({
-      model,
+    const response = await context.ai.execute({
+      mode: ExecuteAiMode.TEXT,
+      provider,
+      model: modelId,
       messages: [
         {
           role: 'user',
-          content: `${context.propsValue.prompt} Summarize the following text : ${context.propsValue.text}`
+          content: `${context.propsValue.prompt} Summarize the following text : ${context.propsValue.text}`,
         },
       ],
       maxOutputTokens: context.propsValue.maxOutputTokens,
@@ -54,8 +44,9 @@ export const summarizeText = createAction({
       providerOptions: {
         [provider]: {
           ...(provider === AIProviderName.OPENAI ? { reasoning_effort: 'minimal' } : {}),
-        }
-      }
+        },
+      },
+      actionName: 'summarizeText',
     });
 
     return response.text ?? '';

@@ -1,8 +1,8 @@
-import { dynamicTool, embed, embedMany, EmbeddingModel, LanguageModel, Tool } from "ai";
+import { dynamicTool, embed, embedMany, EmbeddingModel, Tool } from "ai";
 import z from "zod";
 import { agentUtils } from "./utils";
 import { agentOutputBuilder } from "./agent-output-builder";
-import { AgentKnowledgeBaseTool, AgentMcpTool, AgentOutputField, AgentTaskStatus, AgentTool, AgentToolType, buildAuthHeaders, isNil, isString, KnowledgeBaseSourceType, McpProtocol, mcpToolNameUtils, TASK_COMPLETION_TOOL_NAME } from "@activepieces/shared";
+import { AgentKnowledgeBaseTool, AgentMcpTool, AgentOutputField, AgentTaskStatus, AgentTool, AgentToolType, AIProviderName, buildAuthHeaders, isNil, isString, KnowledgeBaseSourceType, McpProtocol, mcpToolNameUtils, TASK_COMPLETION_TOOL_NAME } from "@activepieces/shared";
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { ActionContext } from "@activepieces/pieces-framework";
 import { ProviderOptions } from "@ai-sdk/provider-utils";
@@ -286,11 +286,26 @@ export async function constructAgentTools(
   params: ConstructAgentToolParams
 ): Promise<{ tools: Record<string, Tool>, mcpClients: MCPClient[], toolKeyToAgentTool: Record<string, AgentTool> }> {
 
-    const { outputBuilder, structuredOutput, agentTools, context, model, embeddingConfig } = params;
-    const agentPieceTools = await context.agent.tools({
+    const { outputBuilder, structuredOutput, agentTools, context, provider, model, embeddingConfig } = params;
+    // The framework contract no longer hands back ready-made AI-SDK tools — it returns in-sandbox
+    // executors plus descriptors (the worker builds the LLM stubs from the descriptors). This legacy
+    // in-sandbox loop wraps the executors back into AI-SDK tools itself.
+    const { executors, descriptors } = await context.agent.tools({
       tools: agentTools.filter(tool => tool.type === AgentToolType.PIECE),
-      model: model,
+      provider,
+      model,
     });
+    const agentPieceTools: Record<string, Tool> = Object.fromEntries(descriptors.map((descriptor) => [
+      descriptor.toolName,
+      dynamicTool({
+        description: descriptor.description,
+        inputSchema: z.object({ instruction: z.string().describe('The instruction to the tool') }),
+        execute: async (input) => {
+          const { instruction } = input as { instruction: string };
+          return executors[descriptor.toolName]({ instruction });
+        },
+      }),
+    ]));
     const flowsTools = await agentUtils.constructFlowsTools({
       tools: agentTools.filter(tool => tool.type === AgentToolType.FLOW),
       fetchFlows: context.flows.list,
@@ -381,7 +396,8 @@ type ConstructAgentToolParams = {
   structuredOutput?: AgentOutputField[];
   agentTools: AgentTool[];
   context: ActionContext
-  model: LanguageModel
+  provider: AIProviderName
+  model: string
   embeddingConfig?: EmbeddingConfig
 };
 

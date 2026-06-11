@@ -1,6 +1,8 @@
 import { z } from 'zod'
 import { BaseModelSchema } from '../../core/common/base-model'
 
+export * from './ai-usage'
+
 export enum AIProviderName {
     OPENAI = 'openai',
     OPENROUTER = 'openrouter',

@@ -1,3 +1,4 @@
+import { AgentYield, ContinueAgentRequest, ExecuteAiRequest, ExecuteAiResponse, RunAgentConfig } from './ai-transport'
 import { EngineOperation, EngineOperationType, EngineResponse, EngineStderr, EngineStdout } from './engine-operation'
 import { SendFlowResponseRequest, UpdateRunProgressRequest, UpdateStepProgressRequest, UploadRunLogsRequest } from './requests'
 
@@ -10,6 +11,9 @@ export type WorkerContract = {
     uploadRunLog(input: UploadRunLogsRequest): Promise<void>
     sendFlowResponse(input: SendFlowResponseRequest): Promise<void>
     updateStepProgress(input: UpdateStepProgressRequest): Promise<void>
+    executeAi(input: ExecuteAiRequest): Promise<ExecuteAiResponse>
+    runAgent(input: RunAgentConfig): Promise<AgentYield>
+    continueAgent(input: ContinueAgentRequest): Promise<AgentYield>
 }
 
 export type WorkerNotifyContract = {

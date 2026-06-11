@@ -1,8 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { generateText } from 'ai';
-import { createAIModel } from '../../common/ai-sdk';
 import { aiProps } from '../../common/props';
-import { AIProviderName } from '@activepieces/shared';
+import { AIProviderName, ExecuteAiMode } from '@activepieces/shared';
 
 export const classifyText = createAction({
   name: 'classifyText',
@@ -24,27 +22,20 @@ export const classifyText = createAction({
   async run(context) {
     const categories = (context.propsValue.categories as string[]) ?? [];
 
-    const provider = context.propsValue.provider;
+    const provider = context.propsValue.provider as AIProviderName;
     const modelId = context.propsValue.model;
 
-    const model = await createAIModel({
-      provider: provider as AIProviderName,
-      modelId,
-      engineToken: context.server.token,
-      apiUrl: context.server.apiUrl,
-      projectId: context.project.id,
-      flowId: context.flows.current.id,
-      runId: context.run.id,
-    });
-
-    const response = await generateText({
-      model,
+    const response = await context.ai.execute({
+      mode: ExecuteAiMode.TEXT,
+      provider,
+      model: modelId,
       prompt: `As a text classifier, your task is to assign one of the following categories to the provided text: ${categories.join(
         ', '
       )}. Please respond with only the selected category as a single word, and nothing else.
       Text to classify: "${context.propsValue.text}"`,
+      actionName: 'classifyText',
     });
-    const result = response.text.trim();
+    const result = (response.text ?? '').trim();
 
     if (!categories.includes(result)) {
       throw new Error(

@@ -1,10 +1,8 @@
 import { ApFile, createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
-import { createAIModel } from '../../common/ai-sdk';
-import { generateText, tool, jsonSchema, ModelMessage, UserModelMessage } from 'ai';
 import mime from 'mime-types';
 import Ajv from 'ajv';
 import { aiProps } from '../../common/props';
-import { AIProviderName } from '@activepieces/shared';
+import { AIProviderName, ExecuteAiMode, isNil } from '@activepieces/shared';
 
 export const extractStructuredData = createAction({
 	name: 'extractStructuredData',
@@ -125,7 +123,7 @@ export const extractStructuredData = createAction({
 		}),
 	},
 	async run(context) {
-		const provider = context.propsValue.provider;
+		const provider = context.propsValue.provider as AIProviderName;
 		const modelId = context.propsValue.model;
 		const text = context.propsValue.text;
 		const files = (context.propsValue.files as Array<{ file: ApFile }>) ?? [];
@@ -137,17 +135,7 @@ export const extractStructuredData = createAction({
 			throw new Error('Please provide text or image/PDF to extract data from.');
 		}
 
-		const model = await createAIModel({
-			provider: provider as AIProviderName,
-			modelId,
-			engineToken: context.server.token,
-			apiUrl: context.server.apiUrl,
-			projectId: context.project.id,
-			flowId: context.flows.current.id,
-			runId: context.run.id,
-		});
-
-		let schemaDefinition: any;
+		let schemaDefinition: Record<string, unknown>;
 		// Track sanitized-to-original name mapping to restore output keys.
 		const sanitizedNameMap: Record<string, string> = {};
 
@@ -164,7 +152,7 @@ export const extractStructuredData = createAction({
 				);
 			}
 
-			schemaDefinition = jsonSchema(schema['fields'] as any);
+			schemaDefinition = schema['fields'] as Record<string, unknown>;
 		} else {
 			const fields = schema['fields'] as Array<{
 				name: string;
@@ -173,7 +161,7 @@ export const extractStructuredData = createAction({
 				isRequired: boolean;
 			}>;
 
-			const properties: Record<string, any> = {};
+			const properties: Record<string, unknown> = {};
 			const required: string[] = [];
 
 			fields.forEach((field) => {
@@ -190,26 +178,14 @@ export const extractStructuredData = createAction({
 				}
 			});
 
-			const jsonSchemaObject = {
-				type: 'object' as const,
+			schemaDefinition = {
+				type: 'object',
 				properties,
 				required,
 			};
-
-			schemaDefinition = jsonSchema(jsonSchemaObject);
 		}
 
-		const extractionTool = tool({
-			description: 'Extract structured data from the provided content',
-			inputSchema: schemaDefinition,
-			execute: async (data) => {
-				return data;
-			},
-		});
-
-		const messages: Array<ModelMessage> = [];
-
-		const contentParts: UserModelMessage['content'] = [];
+		const contentParts: Array<Record<string, unknown>> = [];
 
 		let textContent = prompt || 'Extract the following data from the provided data.';
 		if (text) {
@@ -245,30 +221,30 @@ export const extractStructuredData = createAction({
 			}
 		}
 
-		messages.push({
-			role: 'user',
-			content: contentParts,
-		});
-
 		try {
-			const result = await generateText({
-				model,
+			// The worker runs `generateText` + `Output.object` against this JSON schema (with a
+			// fenced-JSON recovery fallback) and returns the structured object.
+			const response = await context.ai.execute({
+				mode: ExecuteAiMode.TEXT,
+				provider,
+				model: modelId,
+				messages: [
+					{
+						role: 'user',
+						content: contentParts,
+					},
+				],
 				maxOutputTokens,
-				tools: {
-					extractData: extractionTool,
-				},
-				toolChoice: 'required',
-				messages,
+				schema: schemaDefinition,
+				actionName: 'extractStructuredData',
 			});
 
-			const toolCalls = result.toolCalls;
-			if (!toolCalls || toolCalls.length === 0) {
+			const extractedData = response.object;
+			if (isNil(extractedData)) {
 				throw new Error('No structured data could be extracted from the input.');
 			}
 
-			const extractedData = toolCalls[0].input;
-
-			if (Object.keys(sanitizedNameMap).length > 0 && extractedData && typeof extractedData === 'object') {
+			if (Object.keys(sanitizedNameMap).length > 0 && typeof extractedData === 'object' && !isNil(extractedData)) {
 				const restoredData: Record<string, unknown> = {};
 				for (const [key, value] of Object.entries(extractedData)) {
 					const originalName = sanitizedNameMap[key] ?? key;
@@ -284,5 +260,3 @@ export const extractStructuredData = createAction({
 		}
 	},
 });
-
-

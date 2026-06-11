@@ -1,5 +1,6 @@
 import http from 'node:http'
 import https from 'node:https'
+import { Readable } from 'node:stream'
 import { isNil } from '@activepieces/shared'
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios'
 import axiosRetry from 'axios-retry'
@@ -67,6 +68,77 @@ function createRetryingAxios(config?: AxiosRequestConfig, options?: SafeAxiosOpt
     return instance
 }
 
+/**
+ * An SSRF-filtered `fetch` for code that must hand a WHATWG-`fetch`-shaped function to a library
+ * (e.g. the MCP SDK transports) rather than use axios. Node's global `fetch` (undici) ignores
+ * `http.Agent`, so it can't reuse `request-filtering-agent`; this builds the request on `node:http`/
+ * `node:https` with the filtering agents (which reject private/loopback/link-local/metadata IPs at
+ * connect time, closing the DNS-to-connect TOCTOU window) and adapts the Node response to a WHATWG
+ * `Response` with a streaming body (so streaming protocols like SSE keep working).
+ */
+function createSafeFetch({ httpsAgentOptions }: SafeAxiosOptions = {}): SafeFetch {
+    const { httpAgent, httpsAgent } = buildAgents({ allowList: parseAllowListFromEnv(), httpsAgentOptions })
+    return (url, init) => new Promise<Response>((resolve, reject) => {
+        const target = url instanceof URL ? url : new URL(String(url))
+        const isHttps = target.protocol === 'https:'
+        const requestModule = isHttps ? https : http
+        const request = requestModule.request(target, {
+            method: init?.method ?? 'GET',
+            headers: toOutgoingHeaders(init?.headers),
+            agent: isHttps ? httpsAgent : httpAgent,
+            ...(isNil(init?.signal) ? {} : { signal: init.signal }),
+        }, (response) => {
+            const hasBody = response.statusCode !== 204 && response.statusCode !== 304
+            resolve(new Response(hasBody ? toWebBody(response) : null, {
+                status: response.statusCode ?? 502,
+                statusText: response.statusMessage,
+                headers: toResponseHeaders(response.headers),
+            }))
+        })
+        request.on('error', reject)
+        writeRequestBody(request, init?.body)
+    })
+}
+
+function toOutgoingHeaders(headers: RequestInit['headers']): Record<string, string> {
+    const result: Record<string, string> = {}
+    new Headers(headers ?? {}).forEach((value, key) => {
+        result[key] = value
+    })
+    return result
+}
+
+function toResponseHeaders(headers: http.IncomingHttpHeaders): Headers {
+    const result = new Headers()
+    for (const [key, value] of Object.entries(headers)) {
+        if (Array.isArray(value)) {
+            for (const item of value) {
+                result.append(key, item)
+            }
+        }
+        else if (!isNil(value)) {
+            result.append(key, value)
+        }
+    }
+    return result
+}
+
+function toWebBody(response: http.IncomingMessage): ReadableStream<Uint8Array> {
+    return Readable.toWeb(response) as ReadableStream<Uint8Array>
+}
+
+function writeRequestBody(request: http.ClientRequest, body: RequestInit['body']): void {
+    if (isNil(body)) {
+        request.end()
+        return
+    }
+    if (typeof body === 'string' || body instanceof Uint8Array) {
+        request.end(body)
+        return
+    }
+    request.end()
+}
+
 let lazyDefaultAxios: AxiosInstance | undefined
 let lazyRetryingAxios: AxiosInstance | undefined
 
@@ -77,6 +149,7 @@ export const safeHttp = {
     buildAgents,
     createAxios,
     createRetryingAxios,
+    createSafeFetch,
     get axios(): AxiosInstance {
         lazyDefaultAxios ??= createAxios()
         return lazyDefaultAxios
@@ -86,6 +159,8 @@ export const safeHttp = {
         return lazyRetryingAxios
     },
 }
+
+export type SafeFetch = (url: string | URL, init?: RequestInit) => Promise<Response>
 
 export type SsrfAgents = {
     httpAgent: http.Agent

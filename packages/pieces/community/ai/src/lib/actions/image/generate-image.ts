@@ -1,4 +1,5 @@
 import {
+  AiContext,
   ApFile,
   createAction,
   DynamicPropsValue,
@@ -6,18 +7,8 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import {
-  GeneratedFile,
-  generateText,
-  GenerateTextResult,
-  ImagePart,
-  LanguageModel,
-  ToolSet,
-} from 'ai';
-import { generateImage } from 'ai';
 import mime from 'mime-types';
-import { isNil, getEffectiveProviderAndModel } from '@activepieces/shared';
-import { createAIModel } from '../../common/ai-sdk';
+import { isNil, getEffectiveProviderAndModel, ExecuteAiImage, ExecuteAiMode } from '@activepieces/shared';
 import { AIProviderName } from '@activepieces/shared';
 import { aiProps } from '../../common/props';
 
@@ -137,34 +128,43 @@ export const generateImageAction = createAction({
     }),
   },
   async run(context) {
-    const provider = context.propsValue.provider;
+    const provider = context.propsValue.provider as AIProviderName;
     const modelId = context.propsValue.model;
+    const prompt = context.propsValue.prompt;
+    const advancedOptions = context.propsValue.advancedOptions;
 
     const inputImages = collectInputImages({
       inputImages: context.propsValue.inputImages,
-      advancedOptions: context.propsValue.advancedOptions,
+      advancedOptions,
     });
+    const hasInputImages = inputImages.length > 0;
 
-    const image = await getGeneratedImage({
-      provider: provider as AIProviderName,
-      modelId,
-      engineToken: context.server.token,
-      apiUrl: context.server.apiUrl,
-      prompt: context.propsValue.prompt,
-      inputImages,
-      projectId: context.project.id,
-      flowId: context.flows.current.id,
-      runId: context.run.id,
-      advancedOptions: context.propsValue.advancedOptions,
+    const { provider: effectiveProvider } = getEffectiveProviderAndModel({ provider, model: modelId });
+    const resolvedProvider = (effectiveProvider ?? provider) as AIProviderName;
+
+    const image = await withImageInputErrorContext({ modelId, hasInputImages }, async () => {
+      // Google / OpenRouter / Activepieces / Cloudflare-gateway models emit images over the TEXT
+      // API (responseModalities); the rest use the dedicated image API. Both run on the worker.
+      if (TEXT_API_IMAGE_PROVIDERS.has(resolvedProvider)) {
+        return generateViaTextApi({ ai: context.ai, provider, modelId, prompt, inputImages });
+      }
+      const sanitizedAdvancedOptions = stripLegacyImageField(advancedOptions);
+      const response = await context.ai.execute({
+        mode: ExecuteAiMode.IMAGE,
+        provider,
+        model: modelId,
+        prompt,
+        ...(hasInputImages ? { inputImages: inputImages.map((file) => file.base64) } : {}),
+        providerOptions: {
+          [resolvedProvider]: { ...sanitizedAdvancedOptions },
+        },
+        actionName: 'generateImage',
+      });
+      return firstImageOrThrow(response.images);
     });
-
-    const imageData =
-      image.base64 && image.base64.length > 0
-        ? Buffer.from(image.base64, 'base64')
-        : Buffer.from(image.uint8Array);
 
     return context.files.write({
-      data: imageData,
+      data: Buffer.from(image.base64, 'base64'),
       fileName: 'image.png',
     });
   },
@@ -201,74 +201,50 @@ const extractImageFiles = (value: unknown): ApFile[] => {
   });
 };
 
-const getGeneratedImage = async ({
+const generateViaTextApi = async ({
+  ai,
   provider,
   modelId,
-  engineToken,
-  apiUrl,
   prompt,
   inputImages,
-  projectId,
-  flowId,
-  runId,
-  advancedOptions,
 }: {
+  ai: AiContext;
   provider: AIProviderName;
   modelId: string;
-  engineToken: string;
-  apiUrl: string;
   prompt: string;
   inputImages: ApFile[];
-  projectId: string;
-  flowId: string;
-  runId: string;
-  advancedOptions?: DynamicPropsValue;
-}): Promise<GeneratedFile> => {
-  const model = await createAIModel({
+}): Promise<ExecuteAiImage> => {
+  const imageParts = inputImages.map((file) => {
+    const detected = file.extension ? mime.lookup(file.extension) : false;
+    const fileType =
+      detected && ALLOWED_IMAGE_MIME_TYPES.has(detected)
+        ? detected
+        : 'image/jpeg';
+
+    return {
+      type: 'image',
+      image: `data:${fileType};base64,${file.base64}`,
+    };
+  });
+
+  const response = await ai.execute({
+    mode: ExecuteAiMode.TEXT,
     provider,
-    modelId,
-    engineToken,
-    apiUrl,
-    projectId,
-    flowId,
-    runId,
-    isImage: true,
+    model: modelId,
+    providerOptions: {
+      google: { responseModalities: ['TEXT', 'IMAGE'] },
+      openrouter: { modalities: ['image', 'text'] },
+    },
+    messages: [
+      {
+        role: 'user',
+        content: [{ type: 'text', text: prompt }, ...imageParts],
+      },
+    ],
+    actionName: 'generateImage',
   });
 
-  const { provider: effectiveProvider } = getEffectiveProviderAndModel({ provider, model: modelId });
-  const resolvedProvider = (effectiveProvider ?? provider) as AIProviderName;
-
-  const hasInputImages = inputImages.length > 0;
-
-  return withImageInputErrorContext({ modelId, hasInputImages }, async () => {
-    switch (resolvedProvider) {
-      case AIProviderName.GOOGLE:
-      case AIProviderName.ACTIVEPIECES:
-      case AIProviderName.OPENROUTER:
-      case AIProviderName.CLOUDFLARE_GATEWAY:
-        return generateImageUsingGenerateText({
-          model: model as unknown as LanguageModel,
-          prompt,
-          inputImages,
-        });
-      default: {
-        const sanitizedAdvancedOptions = stripLegacyImageField(advancedOptions);
-        const sdkImages = inputImages.map((file) =>
-          Buffer.from(file.base64, 'base64'),
-        );
-        const { image } = await generateImage({
-          model,
-          prompt: hasInputImages
-            ? { text: prompt, images: sdkImages }
-            : prompt,
-          providerOptions: {
-            [resolvedProvider]: { ...sanitizedAdvancedOptions },
-          },
-        });
-        return image;
-      }
-    }
-  });
+  return firstImageOrThrow(response.images);
 };
 
 const withImageInputErrorContext = async <T>(
@@ -291,45 +267,12 @@ const withImageInputErrorContext = async <T>(
   }
 };
 
-const generateImageUsingGenerateText = async ({
-  model,
-  prompt,
-  inputImages,
-}: {
-  model: LanguageModel;
-  prompt: string;
-  inputImages: ApFile[];
-}): Promise<GeneratedFile> => {
-  const imageFiles = inputImages.map<ImagePart>((file) => {
-    const detected = file.extension ? mime.lookup(file.extension) : false;
-    const fileType =
-      detected && ALLOWED_IMAGE_MIME_TYPES.has(detected)
-        ? detected
-        : 'image/jpeg';
-
-    return {
-      type: 'image',
-      image: `data:${fileType};base64,${file.base64}`,
-    };
-  });
-
-  const result = await generateText({
-    model,
-    providerOptions: {
-      google: { responseModalities: ['TEXT', 'IMAGE'] },
-      openrouter: { modalities: ['image', 'text'] },
-    },
-    messages: [
-      {
-        role: 'user',
-        content: [{ type: 'text', text: prompt }, ...imageFiles],
-      },
-    ],
-  });
-
-  assertImageGenerationSuccess(result);
-
-  return result.files[0];
+const firstImageOrThrow = (images: ExecuteAiImage[] | undefined): ExecuteAiImage => {
+  const image = images?.[0];
+  if (isNil(image)) {
+    throw new Error('No image generated');
+  }
+  return image;
 };
 
 const stripLegacyImageField = (
@@ -350,30 +293,9 @@ const ALLOWED_IMAGE_MIME_TYPES: ReadonlySet<string> = new Set([
   'image/avif',
 ]);
 
-const assertImageGenerationSuccess = (
-  result: GenerateTextResult<ToolSet, never>
-): void => {
-  const responseBody =
-    result.response.body &&
-      typeof result.response.body === 'object' &&
-      'candidates' in result.response.body
-      ? result.response.body
-      : { candidates: [] };
-
-  const responseCandidates = Array.isArray(responseBody?.candidates)
-    ? responseBody?.candidates
-    : [];
-
-  responseCandidates.forEach((candidate: { finishReason: string }) => {
-    if (candidate.finishReason !== 'STOP') {
-      throw new Error(
-        'Image generation failed Reason:\n ' +
-        JSON.stringify(responseCandidates, null, 2)
-      );
-    }
-  });
-
-  if (isNil(result.files) || result.files.length === 0) {
-    throw new Error('No image generated');
-  }
-};
+const TEXT_API_IMAGE_PROVIDERS: ReadonlySet<AIProviderName> = new Set([
+  AIProviderName.GOOGLE,
+  AIProviderName.ACTIVEPIECES,
+  AIProviderName.OPENROUTER,
+  AIProviderName.CLOUDFLARE_GATEWAY,
+]);

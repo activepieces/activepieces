@@ -23,16 +23,20 @@ import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { LanguageModel, ModelMessage, SystemModelMessage } from 'ai'
 
-function createChatModel({ provider, auth, config, modelId }: {
+function createChatModel({ provider, auth, config, modelId, openaiResponsesModel }: {
     provider: AIProviderName
     auth: Record<string, unknown>
     config: Record<string, unknown>
     modelId: string
+    // OpenAI's provider-native web-search tool only exists on the responses API, so callers that
+    // attach it (the agent loop, executeAi) must build a responses model instead of chat-completions.
+    openaiResponsesModel?: boolean
 }): LanguageModel {
     switch (provider) {
         case AIProviderName.OPENAI: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
-            return createOpenAI({ apiKey }).chat(modelId)
+            const openaiProvider = createOpenAI({ apiKey })
+            return openaiResponsesModel === true ? openaiProvider.responses(modelId) : openaiProvider.chat(modelId)
         }
         case AIProviderName.ANTHROPIC: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
@@ -55,7 +59,23 @@ function createChatModel({ provider, auth, config, modelId }: {
         case AIProviderName.CLOUDFLARE_GATEWAY: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
             const { accountId, gatewayId } = config as CloudflareGatewayProviderConfig
-            const { model: actualModelId } = splitCloudflareGatewayModelId(modelId)
+            const { provider: gatewayProviderPrefix, model: actualModelId } = splitCloudflareGatewayModelId(modelId)
+            if (openaiResponsesModel === true && gatewayProviderPrefix?.trim().toLowerCase() === 'openai') {
+                // The /compat endpoint is chat-completions only; route through the gateway's /openai
+                // endpoint to reach the responses API. The gateway authenticates via
+                // cf-aig-authorization and rejects the SDK's placeholder Authorization header, so a
+                // wrapping fetch strips it (same workaround the AI piece used in-sandbox).
+                return createOpenAI({
+                    apiKey: 'no-key',
+                    baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/openai`,
+                    headers: { 'cf-aig-authorization': `Bearer ${apiKey}` },
+                    fetch: (input, init) => {
+                        const headers = new Headers(init?.headers)
+                        headers.delete('Authorization')
+                        return fetch(input, { ...init, headers })
+                    },
+                }).responses(actualModelId)
+            }
             return createOpenAICompatible({
                 name: 'cloudflare',
                 baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/compat`,

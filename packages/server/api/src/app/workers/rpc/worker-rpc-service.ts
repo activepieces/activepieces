@@ -1,6 +1,8 @@
 import { apVersionUtil } from '@activepieces/server-utils'
 import {
+    ActivepiecesError,
     ApEdition,
+    ErrorCode,
     ExecutionType,
     ExecutioOutputFile,
     FileCompression,
@@ -11,6 +13,8 @@ import {
     isNil,
     logSerializer,
     PiecePackage,
+    Principal,
+    PrincipalType,
     RunInternalError,
     StreamStepProgress,
     truncateFailedStepMessage,
@@ -19,6 +23,9 @@ import {
     WorkerToApiContract,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { aiProviderService } from '../../ai/ai-provider-service'
+import { aiUsageTrackerHooks } from '../../ai/ai-usage-tracker'
+import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { websocketService } from '../../core/websockets.service'
 import { distributedStore } from '../../database/redis-connections'
 import { chatRpcHandlers } from '../../ee/chat/chat-rpc-handlers'
@@ -31,11 +38,16 @@ import { flowVersionService } from '../../flows/flow-version/flow-version.servic
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { pubsub } from '../../helper/pubsub'
 import { system } from '../../helper/system/system'
+import { knowledgeBaseService } from '../../knowledge-base/knowledge-base.service'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
+import { fieldService } from '../../tables/field/field.service'
+import { recordService } from '../../tables/record/record.service'
+import { tableService } from '../../tables/table/table.service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
+import { WebhookFlowVersionToRun, webhookService } from '../../webhooks/webhook.service'
 import { getWorkerGroupQueueName, QueueName, RunsMetadataUpsertData } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
@@ -275,8 +287,127 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
         async executeChatTool(input) {
             return chatRpcHandlers(log).executeChatTool(input)
         },
+
+        async resolveAiProvider(input) {
+            const principal = await verifyEngineToken({ log, engineToken: input.engineToken })
+            return aiProviderService(log).getConfigOrThrow({ platformId: principal.platform.id, provider: input.provider })
+        },
+
+        async reportAiUsage(input) {
+            const principal = await verifyEngineToken({ log, engineToken: input.engineToken })
+            const { event } = input
+            const dedupeKey = `ai_usage_reported_${event.idempotencyKey}`
+            const alreadyReported = await distributedStore.get<boolean>(dedupeKey)
+            if (alreadyReported) {
+                return
+            }
+            await distributedStore.put(dedupeKey, true, AI_USAGE_DEDUPE_TTL_SECONDS)
+            const { error } = await tryCatch(() => aiUsageTrackerHooks.get(log).track({
+                platformId: principal.platform.id,
+                projectId: principal.projectId,
+                event,
+            }))
+            if (error) {
+                await tryCatch(() => distributedStore.delete(dedupeKey))
+                throw error
+            }
+        },
+
+        async listKnowledgeChunks(input) {
+            const principal = await verifyEngineToken({ log, engineToken: input.engineToken })
+            return knowledgeBaseService(log).listChunks({
+                projectId: principal.projectId,
+                knowledgeBaseFileId: input.knowledgeBaseFileId,
+                embedded: input.embedded,
+            })
+        },
+
+        async storeKnowledgeChunks(input) {
+            const principal = await verifyEngineToken({ log, engineToken: input.engineToken })
+            await knowledgeBaseService(log).storeChunks({
+                projectId: principal.projectId,
+                knowledgeBaseFileId: input.knowledgeBaseFileId,
+                chunks: input.chunks,
+            })
+        },
+
+        async searchKnowledge(input) {
+            const principal = await verifyEngineToken({ log, engineToken: input.engineToken })
+            return knowledgeBaseService(log).search({
+                projectId: principal.projectId,
+                knowledgeBaseFileIds: input.knowledgeBaseFileIds,
+                queryEmbedding: input.queryEmbedding,
+                limit: input.limit,
+                similarityThreshold: input.similarityThreshold,
+            })
+        },
+
+        async getTableSchema(input) {
+            const principal = await verifyEngineToken({ log, engineToken: input.engineToken })
+            const table = await tableService.getOneOrThrow({ projectId: principal.projectId, id: input.tableId })
+            const fields = await fieldService.getAll({ projectId: principal.projectId, tableId: input.tableId })
+            return {
+                id: table.id,
+                name: table.name,
+                fields: fields.map((field) => ({ id: field.id, name: field.name, type: field.type })),
+            }
+        },
+
+        async listTableRecords(input) {
+            const principal = await verifyEngineToken({ log, engineToken: input.engineToken })
+            const page = await recordService.list({
+                projectId: principal.projectId,
+                tableId: input.tableId,
+                filters: input.filters,
+                limit: input.limit,
+                cursorRequest: null,
+            })
+            return { records: page.data }
+        },
+
+        async listPopulatedFlows(input) {
+            const principal = await verifyEngineToken({ log, engineToken: input.engineToken })
+            return flowService(log).list({
+                projectIds: [principal.projectId],
+                limit: ENGINE_FLOW_LIST_LIMIT,
+                cursorRequest: null,
+                externalIds: input.externalIds,
+            })
+        },
+
+        async invokeFlowTool(input) {
+            await verifyEngineToken({ log, engineToken: input.engineToken })
+            const response = await webhookService.handleWebhook({
+                logger: log,
+                flowId: input.flowId,
+                async: input.async,
+                saveSampleData: await triggerSourceService(log).existsByFlowId({ flowId: input.flowId, simulate: true }),
+                flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
+                payload: input.inputs,
+                execute: true,
+                failParentOnFailure: false,
+                data: () => Promise.resolve({ body: input.inputs, method: 'POST', headers: {}, queryParams: {} }),
+            })
+            return { status: response.status, body: response.body }
+        },
     }
 }
+
+const AI_USAGE_DEDUPE_TTL_SECONDS = 24 * 60 * 60
+const ENGINE_FLOW_LIST_LIMIT = 1000000
+
+async function verifyEngineToken({ log, engineToken }: { log: FastifyBaseLogger, engineToken: string }): Promise<EnginePrincipalLike> {
+    const principal: Principal = await accessTokenManager(log).verifyPrincipal(engineToken)
+    if (principal.type !== PrincipalType.ENGINE) {
+        throw new ActivepiecesError({
+            code: ErrorCode.INVALID_BEARER_TOKEN,
+            params: { message: 'AI delegation requires an engine token' },
+        })
+    }
+    return principal
+}
+
+type EnginePrincipalLike = Extract<Principal, { type: PrincipalType.ENGINE }>
 
 async function persistInternalErrorToLogs({ log, projectId, logsFileId, internalError }: PersistInternalErrorParams): Promise<void> {
     const { error } = await tryCatch(async () => {

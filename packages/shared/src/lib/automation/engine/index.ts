@@ -3,6 +3,7 @@ export * from './engine-contract'
 export * from './requests'
 export * from './engine-constants'
 export * from './execution-errors'
+export * from './ai-transport'
 
 export enum ExecutionMode {
     SANDBOX_PROCESS = 'SANDBOX_PROCESS',

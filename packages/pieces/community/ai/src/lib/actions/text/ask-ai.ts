@@ -2,11 +2,10 @@ import {
   createAction,
   Property,
 } from '@activepieces/pieces-framework';
-import { ModelMessage, generateText, stepCountIs } from 'ai';
-import { AIProviderName, getEffectiveProviderAndModel, spreadIfDefined } from '@activepieces/shared';
+import type { ModelMessage } from 'ai';
+import { AIProviderName, ExecuteAiMode, getEffectiveProviderAndModel, isNil } from '@activepieces/shared';
 import { aiProps } from '../../common/props';
-import { createAIModel } from '../../common/ai-sdk';
-import { buildWebSearchOptionsProperty, buildWebSearchConfig, WebSearchOptions } from '../../common/web-search';
+import { buildWebSearchOptionsProperty, WebSearchOptions } from '../../common/web-search';
 
 export const askAI = createAction({
   name: 'askAi',
@@ -51,33 +50,11 @@ export const askAI = createAction({
     ),
   },
   async run(context) {
-    const provider = context.propsValue.provider;
+    const provider = context.propsValue.provider as AIProviderName;
     const modelId = context.propsValue.model;
     const storage = context.store;
     const webSearchEnabled = !!context.propsValue.webSearch;
     const webSearchOptions = (context.propsValue.webSearchOptions ?? {}) as WebSearchOptions;
-
-    const { tools: webSearchTools, providerOptions } = buildWebSearchConfig({
-      provider,
-      model: modelId,
-      webSearchEnabled,
-      webSearchOptions,
-    });
-
-    const { provider: effectiveProvider } = getEffectiveProviderAndModel({
-      provider: provider as AIProviderName,
-      model: modelId,
-    });
-    const model = await createAIModel({
-      provider: provider as AIProviderName,
-      modelId,
-      engineToken: context.server.token,
-      apiUrl: context.server.apiUrl,
-      projectId: context.project.id,
-      flowId: context.flows.current.id,
-      runId: context.run.id,
-      ...spreadIfDefined('openaiResponsesModel', webSearchEnabled && effectiveProvider === AIProviderName.OPENAI ? true : undefined),
-    });
 
     const conversationKey = context.propsValue.conversationKey
       ? `ask-ai-conversation:${context.propsValue.conversationKey}`
@@ -91,12 +68,12 @@ export const askAI = createAction({
       }
     }
 
-    const stopWhen = webSearchTools
-      ? stepCountIs(webSearchOptions?.maxUses ?? 5)
-      : undefined;
-
-    const response = await generateText({
-      model,
+    // The model runs on the worker (provider credentials never enter the sandbox); the worker also
+    // builds the provider-native web-search tools and switches OpenAI to the responses API itself.
+    const response = await context.ai.execute({
+      mode: ExecuteAiMode.TEXT,
+      provider,
+      model: modelId,
       messages: [
         ...(conversation ?? []),
         {
@@ -106,9 +83,9 @@ export const askAI = createAction({
       ],
       maxOutputTokens: context.propsValue.maxOutputTokens,
       temperature: (context.propsValue.creativity ?? 100) / 100,
-      tools: webSearchTools,
-      stopWhen,
-      providerOptions,
+      webSearchEnabled,
+      webSearchOptions,
+      actionName: 'askAi',
     });
 
     conversation?.push({
@@ -125,10 +102,20 @@ export const askAI = createAction({
       await storage.put(conversationKey, conversation);
     }
 
-    const includeSources = webSearchTools && webSearchOptions.includeSources;
-    if (includeSources) {
+    // `sources` is only present when tool-based web search ran (OpenAI/Anthropic/Google) — the same
+    // providers the old in-sandbox path returned the `{ text, sources }` shape for.
+    const includeSources = webSearchEnabled && isToolBasedWebSearchProvider({ provider, model: modelId }) && webSearchOptions.includeSources;
+    if (includeSources && !isNil(response.sources)) {
       return { text: response.text, sources: response.sources };
     }
     return response.text;
   },
 });
+
+function isToolBasedWebSearchProvider({ provider, model }: { provider: AIProviderName; model: string }): boolean {
+  const { provider: effectiveProvider } = getEffectiveProviderAndModel({ provider, model });
+  const resolvedProvider = effectiveProvider ?? provider;
+  return resolvedProvider === AIProviderName.OPENAI
+    || resolvedProvider === AIProviderName.ANTHROPIC
+    || resolvedProvider === AIProviderName.GOOGLE;
+}

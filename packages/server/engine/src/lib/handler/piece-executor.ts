@@ -1,15 +1,15 @@
-import { ActionContext, backwardCompatabilityContextUtils, ConstructToolParams, CreateWaitpointHook, CreateWaitpointParams, CreateWaitpointResult, InputPropertyMap, PieceAuthProperty, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager, WaitForWaitpointHook } from '@activepieces/pieces-framework'
+import { ActionContext, backwardCompatabilityContextUtils, CreateWaitpointHook, CreateWaitpointParams, CreateWaitpointResult, InputPropertyMap, PieceAuthProperty, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager, WaitForWaitpointHook } from '@activepieces/pieces-framework'
 import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PausedFlowTimeoutError, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
-import type { ToolSet } from 'ai'
 import dayjs from 'dayjs'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
 import { pieceLoader } from '../helper/piece-loader'
+import { createAgentContext } from '../piece-context/agent'
+import { createAiContext } from '../piece-context/ai'
 import { createFileUploader } from '../piece-context/file-uploader'
 import { createFlowsContext } from '../piece-context/flows'
 import { createContextStore } from '../piece-context/store'
 import { waitpointClient } from '../piece-context/waitpoint-client'
-import { agentTools } from '../tools'
 import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { workerSocket } from '../worker-socket'
@@ -117,13 +117,14 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 apiUrl: constants.internalApiUrl,
                 publicUrl: constants.publicApiUrl,
             },
-            agent: {
-                tools: async (params: ConstructToolParams): Promise<ToolSet> => agentTools.tools({
-                    engineConstants: constants,
-                    tools: params.tools,
-                    model: params.model,
-                }),
-            },
+            agent: createAgentContext({ constants, stepName: action.name }),
+            ai: createAiContext({
+                engineToken: constants.engineToken,
+                projectId: constants.projectId,
+                flowId: constants.flowId,
+                runId: constants.flowRunId,
+                stepName: action.name,
+            }),
             propsValue: processedInput,
             tags: createTagsManager(params),
             connections: utils.createConnectionManager({

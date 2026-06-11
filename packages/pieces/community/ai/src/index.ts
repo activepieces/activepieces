@@ -12,7 +12,9 @@ import { runAgent } from "./lib/actions/agents/run-agent";
 export const ai = createPiece({
   displayName: "AI",
   auth: PieceAuth.None(),
-  minimumSupportedRelease: '0.78.2',
+  // The run-agent thin shell needs context.agent.run/continueRun (worker-side agent loop), which
+  // first ships in 0.86.0 — older platforms must keep serving the previous in-sandbox piece version.
+  minimumSupportedRelease: '0.86.0',
   categories: [
     PieceCategory.ARTIFICIAL_INTELLIGENCE,
     PieceCategory.UNIVERSAL_AI,

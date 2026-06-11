@@ -103,7 +103,7 @@ describe('createSandbox', () => {
             const log = createMockLogger()
             const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-1', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-1', defaultOptions, testPM.maker, workerHandlers, { epochMs: null })
 
             await sandbox.start(startOptions)
 
@@ -134,7 +134,7 @@ describe('createSandbox', () => {
             const log = createMockLogger()
             const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-no-mount', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-no-mount', defaultOptions, testPM.maker, workerHandlers, { epochMs: null })
 
             await sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] })
 
@@ -148,7 +148,7 @@ describe('createSandbox', () => {
             const log = createMockLogger()
             const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-scoped', { ...defaultOptions, reusable: false }, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-scoped', { ...defaultOptions, reusable: false }, testPM.maker, workerHandlers, { epochMs: null })
 
             await sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] })
 
@@ -165,7 +165,7 @@ describe('createSandbox', () => {
             const log = createMockLogger()
             const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-reuse', { ...defaultOptions, reusable: true }, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-reuse', { ...defaultOptions, reusable: true }, testPM.maker, workerHandlers, { epochMs: null })
 
             await sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] })
 
@@ -182,7 +182,7 @@ describe('createSandbox', () => {
             const log = createMockLogger()
             const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-no-fv', { ...defaultOptions, reusable: false }, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-no-fv', { ...defaultOptions, reusable: false }, testPM.maker, workerHandlers, { epochMs: null })
 
             await sandbox.start({ flowVersionId: undefined, platformId: '', mounts: [] })
 
@@ -195,7 +195,7 @@ describe('createSandbox', () => {
             const log = createMockLogger()
             const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-plat', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-plat', defaultOptions, testPM.maker, workerHandlers, { epochMs: null })
 
             await sandbox.start({ flowVersionId: 'fv-1', platformId: 'plat-xyz', mounts: [] })
 
@@ -220,7 +220,7 @@ describe('createSandbox', () => {
             const log = createMockLogger()
             const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-fv-trav', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-fv-trav', defaultOptions, testPM.maker, workerHandlers, { epochMs: null })
 
             let caughtErr: unknown
             try {
@@ -245,7 +245,7 @@ describe('createSandbox', () => {
             const log = createMockLogger()
             const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-plat-trav', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-plat-trav', defaultOptions, testPM.maker, workerHandlers, { epochMs: null })
 
             let caughtErr: unknown
             try {
@@ -263,7 +263,7 @@ describe('createSandbox', () => {
             const log = createMockLogger()
             const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-escape', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-escape', defaultOptions, testPM.maker, workerHandlers, { epochMs: null })
 
             const maliciousMount: SandboxMount = { hostPath: '/host/evil', sandboxPath: '/root/../etc' }
 
@@ -278,7 +278,7 @@ describe('createSandbox', () => {
             const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
             const baseMounts: SandboxMount[] = [{ hostPath: '/host/secret', sandboxPath: '/etc/passwd-evil' }]
-            sandbox = createSandbox(log, 'sb-base-escape', { ...defaultOptions, baseMounts }, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-base-escape', { ...defaultOptions, baseMounts }, testPM.maker, workerHandlers, { epochMs: null })
 
             await expect(
                 sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] }),
@@ -291,7 +291,7 @@ describe('createSandbox', () => {
             const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
             const baseMounts: SandboxMount[] = [{ hostPath: '/host/common', sandboxPath: '/root/common' }]
-            sandbox = createSandbox(log, 'sb-order', { ...defaultOptions, baseMounts }, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-order', { ...defaultOptions, baseMounts }, testPM.maker, workerHandlers, { epochMs: null })
 
             const callerMount: SandboxMount = { hostPath: '/host/x', sandboxPath: '/root/x' }
             await sandbox.start({ flowVersionId: 'fv-1', platformId: 'plat-1', mounts: [callerMount] })
@@ -309,7 +309,7 @@ describe('createSandbox', () => {
             const log = createMockLogger()
             const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-no-host-leak', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-no-host-leak', defaultOptions, testPM.maker, workerHandlers, { epochMs: null })
 
             await sandbox.start(startOptions)
 
@@ -326,7 +326,7 @@ describe('createSandbox', () => {
             const log = createMockLogger()
             const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-no-plat-env', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-no-plat-env', defaultOptions, testPM.maker, workerHandlers, { epochMs: null })
 
             await sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] })
 
@@ -338,7 +338,7 @@ describe('createSandbox', () => {
             const log = createMockLogger()
             const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-2', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-2', defaultOptions, testPM.maker, workerHandlers, { epochMs: null })
 
             await sandbox.start(startOptions)
             await sandbox.start(startOptions)
@@ -349,7 +349,7 @@ describe('createSandbox', () => {
             const log = createMockLogger()
             const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-token', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-token', defaultOptions, testPM.maker, workerHandlers, { epochMs: null })
 
             await sandbox.start(startOptions)
 
@@ -362,7 +362,7 @@ describe('createSandbox', () => {
             const workerHandlers = createMockWorkerHandlers()
             const reusableOptions = { ...defaultOptions, reusable: true }
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-rotate', reusableOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-rotate', reusableOptions, testPM.maker, workerHandlers, { epochMs: null })
 
             await sandbox.start(startOptions)
             const firstToken = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0].env.AP_SANDBOX_WS_TOKEN
@@ -379,7 +379,7 @@ describe('createSandbox', () => {
             const log = createMockLogger()
             const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-rej-noauth', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-rej-noauth', defaultOptions, testPM.maker, workerHandlers, { epochMs: null })
 
             await sandbox.start(startOptions)
             const port = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0].env.AP_SANDBOX_WS_PORT
@@ -404,7 +404,7 @@ describe('createSandbox', () => {
             const log = createMockLogger()
             const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-rej-wrong', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-rej-wrong', defaultOptions, testPM.maker, workerHandlers, { epochMs: null })
 
             await sandbox.start(startOptions)
             const port = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0].env.AP_SANDBOX_WS_PORT
@@ -430,7 +430,7 @@ describe('createSandbox', () => {
             const log = createMockLogger()
             const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-rej-second', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-rej-second', defaultOptions, testPM.maker, workerHandlers, { epochMs: null })
 
             await sandbox.start(startOptions)
             const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
@@ -459,7 +459,7 @@ describe('createSandbox', () => {
             const log = createMockLogger()
             const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-exec', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-exec', defaultOptions, testPM.maker, workerHandlers, { epochMs: null })
             await sandbox.start(startOptions)
             return { sandbox, log, workerHandlers }
         }
@@ -698,7 +698,7 @@ describe('createSandbox', () => {
             const log = createMockLogger()
             const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-shutdown', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-shutdown', defaultOptions, testPM.maker, workerHandlers, { epochMs: null })
             await sandbox.start(startOptions)
 
             await sandbox.shutdown()
