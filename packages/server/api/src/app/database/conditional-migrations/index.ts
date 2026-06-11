@@ -10,11 +10,6 @@ const registry: ConditionalMigration[] = [
 ]
 
 export const conditionalMigrations = {
-    // Runs after the regular TypeORM migrations, under the same distributed lock. Each conditional
-    // migration runs in its own transaction and records itself in the `migrations` table only on
-    // success. When its preconditions are not met (e.g. an optional extension can't be created on a
-    // locked-down database) it throws, the transaction rolls back, nothing is recorded, and it is
-    // retried on the next startup — without ever failing boot.
     async run({ log }: { log: FastifyBaseLogger }): Promise<void> {
         for (const migration of registry) {
             if (await conditionalMigrations.isApplied(migration.name)) {
