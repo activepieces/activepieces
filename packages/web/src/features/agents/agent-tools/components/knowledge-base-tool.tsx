@@ -98,10 +98,10 @@ export const KnowledgeBaseSection = ({
   const { data: pgvectorAvailable } = flagsHooks.useFlag<boolean>(
     ApFlagId.PGVECTOR_AVAILABLE,
   );
-  const pgvectorMissing = pgvectorAvailable === false;
-  const pgvectorMissingMessage = t(
-    'Knowledge base requires the pgvector extension on your PostgreSQL database. Ask your administrator to run CREATE EXTENSION vector to enable it.',
-  );
+
+  if (pgvectorAvailable === false) {
+    return null;
+  }
 
   return (
     <div className="mt-6">
@@ -116,11 +116,7 @@ export const KnowledgeBaseSection = ({
               removeTool={removeTool}
             />
 
-            {pgvectorMissing ? (
-              <p className="text-xs text-muted-foreground mt-3">
-                {pgvectorMissingMessage}
-              </p>
-            ) : supportsEmbeddings ? (
+            {supportsEmbeddings ? (
               <div className="mt-4">
                 <AddKnowledgeBaseDropdown disabled={disabled} />
               </div>
@@ -137,11 +133,7 @@ export const KnowledgeBaseSection = ({
             <div className="flex items-center justify-center h-10 w-10 rounded-full border bg-background">
               <BookOpen className="size-5" />
             </div>
-            {pgvectorMissing ? (
-              <p className="text-sm text-muted-foreground">
-                {pgvectorMissingMessage}
-              </p>
-            ) : supportsEmbeddings ? (
+            {supportsEmbeddings ? (
               <>
                 <p className="text-sm font-medium text-muted-foreground">
                   {t(
