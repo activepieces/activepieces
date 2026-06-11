@@ -8,6 +8,12 @@ export const setSpendingPolicyAction = createAction({
   auth: sardisAuth,
   displayName: 'Set Spending Policy',
   description: 'Set or update spending policies on a Sardis agent using natural language.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sets or replaces the spending policy on a Sardis agent from a plain-English description of the rules (e.g. per-transaction caps, daily limits, blocked merchant categories). Use it to configure how an agent is allowed to spend before it sends payments. Idempotent in effect — re-applying the same policy text to the same agent yields the same resulting policy. Requires the agent ID and the natural-language policy text.',
+    idempotent: true,
+  },
   props: {
     agentId: Property.ShortText({
       displayName: 'Agent ID',

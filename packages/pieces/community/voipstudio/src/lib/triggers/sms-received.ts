@@ -10,6 +10,10 @@ export const smsReceived = createTrigger({
   name: 'smsReceived',
   displayName: 'SMS Received',
   description: 'Triggers when an SMS message is received in VoipStudio.',
+  aiMetadata: {
+    description:
+      'Fires when an inbound SMS text message arrives in VoIPstudio, representing a received message with its sender number, recipient number, and text body. Requires the SMS Received webhook event to be enabled in the VoIPstudio integrations panel.',
+  },
   props: {
     instruction: Property.MarkDown({
       value: `

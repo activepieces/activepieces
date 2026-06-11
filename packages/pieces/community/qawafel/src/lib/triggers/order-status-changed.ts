@@ -26,6 +26,10 @@ export const orderStatusChanged = createTrigger({
   displayName: 'Order Status Changed',
   description:
     'Fires when an order moves to a specific status (confirmed, out for delivery, delivered, fulfilled, cancelled, etc.). Pick one status per trigger — add the trigger again for additional statuses.',
+  aiMetadata: {
+    description:
+      'Fires when an order transitions into one specific status that you choose (such as confirmed, ready for pickup, out for delivery, delivered, not delivered, fulfilled, or cancelled). It listens for a single configured status per trigger; each event represents that one order reaching the chosen status.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     status: Property.StaticDropdown<OrderStatusEvent>({

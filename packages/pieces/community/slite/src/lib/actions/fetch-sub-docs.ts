@@ -8,6 +8,12 @@ export const sliteFetchSubDocsAction = createAction({
   name: 'fetch_sub_docs',
   displayName: 'Fetch Sub Docs',
   description: 'Returns the list of sub docs nested under a parent doc.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists the child docs nested directly under a given parent doc id in Slite, paging through all children. Use it to enumerate the contents of a collection or folder doc when you have its id. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     note_id: sliteProps.noteId({
       required: true,

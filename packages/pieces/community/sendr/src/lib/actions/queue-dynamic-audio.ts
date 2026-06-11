@@ -8,6 +8,8 @@ export const queueDynamicAudio = createAction({
   name: 'queue_dynamic_audio',
   displayName: 'Queue Dynamic Audio Generation',
   description: 'Queues a job to generate personalized audio by replacing a target word in a base audio file.',
+  audience: 'both',
+  aiMetadata: { description: 'Queues an async job that produces personalized audio by replacing a target word in a base audio file with a replacement word, optionally using a specific ElevenLabs voice and language. Requires the base audio URL, target word, and replacement word; results are delivered later (optionally to a callback URL). Not idempotent: each call enqueues a new generation job.', idempotent: false },
   props: {
     audioUrl: Property.ShortText({
       displayName: 'Base Audio URL',

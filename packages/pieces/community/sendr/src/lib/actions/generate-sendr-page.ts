@@ -8,6 +8,8 @@ export const generateSendrPage = createAction({
   name: 'generate_sendr_page',
   displayName: 'Generate Sendr Page',
   description: 'Creates a personalized Sendr landing page from a template with custom variables.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a personalized Sendr landing page by rendering a template with supplied variable values; optionally screenshots a website background, renders an animated GIF, and posts status updates to a callback URL. Requires a template id and a key-value variables object (use Get Page Template Variables to find the keys). Not idempotent: each call generates a new page.', idempotent: false },
   props: {
     instructions: Property.MarkDown({
       value: `### How to Generate a Page

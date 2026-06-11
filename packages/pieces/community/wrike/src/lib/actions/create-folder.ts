@@ -9,6 +9,8 @@ export const createFolder = createAction({
     name: 'create_folder',
     displayName: 'Create Folder',
     description: 'Create a new folder in Wrike',
+    audience: 'both',
+    aiMetadata: { description: 'Create a folder in Wrike, either at root level or nested under a parent folder ID; enabling the project option turns it into a project with owner and start/end dates instead of a plain folder. Use when an agent needs to set up a new container for tasks. Each call creates a new folder, so it is not idempotent.', idempotent: false },
     auth: wrikeAuth,
     props: {
         parentFolderId: Property.ShortText({

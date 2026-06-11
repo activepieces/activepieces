@@ -18,6 +18,8 @@ export const makeAPICall = createAction({
   auth: vtigerAuth,
   displayName: 'Custom API Call (Deprecated)',
   description: 'Performs an arbitrary authorized API call. (Deprecated)',
+  audience: 'both',
+  aiMetadata: { description: 'Deprecated. Makes an arbitrary authenticated HTTP call to the Vtiger API, routing to either the legacy webservice.php endpoint or the REST base depending on the URL given. Prefer the dedicated record/query actions; reach for this only for endpoints they do not cover. Idempotency depends on the method and operation invoked, so treat write calls as non-idempotent.', idempotent: false },
   props: {
     method: Property.StaticDropdown<HttpMethod>({
       displayName: 'Http Method',

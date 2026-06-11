@@ -11,6 +11,12 @@ export const sliteAskQuestionAction = createAction({
   displayName: 'Ask Question',
   description:
     'Asks a question in natural language and returns an answer drawn from your Slite docs, with sources.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Runs Slite's AskX over the workspace knowledge base, returning a natural-language answer synthesized from indexed docs along with the source docs it drew from. Choose this for question-answering or retrieval over team docs rather than keyword lookup; optionally scope the answer to docs nested under a given parent doc id. Read-only and idempotent: repeating the same question produces the same answer for the current index state.",
+    idempotent: true,
+  },
   props: {
     question: Property.LongText({
       displayName: 'Question',

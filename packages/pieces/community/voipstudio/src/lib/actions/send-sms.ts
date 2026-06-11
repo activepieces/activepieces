@@ -8,6 +8,12 @@ export const sendSms = createAction({
   name: 'sendSms',
   displayName: 'Send SMS',
   description: 'Send new SMS resource',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends an SMS text message to a destination number in E.164 format; the destination and message text are required, while the sender number is optional. Use this for outbound text notifications. Not idempotent: each call sends a new message.',
+    idempotent: false,
+  },
   props: {
     from: Property.ShortText({
       displayName: 'From',

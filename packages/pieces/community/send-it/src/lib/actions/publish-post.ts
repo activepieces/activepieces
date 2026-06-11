@@ -15,6 +15,12 @@ export const publishPost = createAction({
   name: 'publish_post',
   displayName: 'Publish Post',
   description: 'Publish content to social media platforms immediately',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Immediately publishes a post (text plus optional image/video URL or a multi-image carousel) to one or more connected social platforms (X, LinkedIn, Instagram, Threads, TikTok, and others). Choose this to post right now rather than at a future time (use Schedule Post for that). Requires at least one selected platform whose account is connected in SendIt; note Instagram and TikTok require a media URL. Not idempotent: each call publishes a new post.',
+    idempotent: false,
+  },
   props: {
     platforms: platformProperty,
     text: textProperty,

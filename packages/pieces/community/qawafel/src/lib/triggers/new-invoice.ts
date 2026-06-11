@@ -5,6 +5,10 @@ export const newInvoice = createQawafelEventTrigger({
   displayName: 'New Invoice Generated',
   description:
     'Fires when a ZATCA-compliant invoice is finalized in Qawafel (the `invoice.generated` event). Use it to email PDFs to customers, archive invoices to Drive, or push to your accounting system.',
+  aiMetadata: {
+    description:
+      'Fires when a ZATCA-compliant invoice is finalized (generated) in Qawafel, distinct from when an invoice is first created as a draft or later paid. Each event represents one issued invoice, including its ZATCA PDF URL.',
+  },
   event: 'invoice.generated',
   sampleData: {
     id: 'inv_01jk5jtv3x6e5hjkfcwzvubejq',

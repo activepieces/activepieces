@@ -15,6 +15,12 @@ export const validateContent = createAction({
   name: 'validate_content',
   displayName: 'Validate Content',
   description: 'Check if content meets platform requirements before publishing',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Validates that a post (text plus optional media) meets the requirements of the selected social platforms, such as character limits and media rules, without publishing anything. Use this as a pre-flight check before Publish Post or Schedule Post. Idempotent: it is a read-only check with no side effects.',
+    idempotent: true,
+  },
   props: {
     platforms: platformProperty,
     text: textProperty,

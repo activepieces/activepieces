@@ -7,6 +7,8 @@ export const verifyEmail = createAction({
   name: 'verifyEmail',
   displayName: 'Verify Email',
   description: 'Verify a single email',
+  audience: 'both',
+  aiMetadata: { description: 'Validates one email address against the Reoon email verification API, returning deliverability and risk signals (e.g. invalid, disposable, role-based). Choose between a fast Quick mode and a slower, more accurate Power mode. Use for checking a single address before sending; for many addresses use the bulk action instead. Idempotent: a read-only lookup that returns the same result for the same input.', idempotent: true },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

@@ -8,6 +8,8 @@ export const uploadAgentFileAction = createAction({
     name: 'upload-agent-file',
     displayName: 'Upload Agent File',
     description: 'Upload file to a Raia Agent.',
+    audience: 'both',
+    aiMetadata: { description: 'Upload a file to the connected Raia AI agent so it can reference that content in subsequent prompts. Use when the agent needs a document as context. Requires the file binary; not idempotent, as each call uploads a new file to the agent.', idempotent: false },
     auth: raiaAiAuth,
     props: {
         file: Property.File({

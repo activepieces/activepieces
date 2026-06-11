@@ -33,6 +33,9 @@ export const pagePreviewAcceptedTrigger = createTrigger({
   name: 'page_preview_accepted',
   displayName: 'Page Preview Accepted',
   description: 'Triggers when a Qwilr page preview is accepted',
+  aiMetadata: {
+    description: 'Fires when a page is accepted while in preview (test) mode rather than as a live recipient acceptance. Use to validate acceptance workflows during testing without reacting to a real signed proposal.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

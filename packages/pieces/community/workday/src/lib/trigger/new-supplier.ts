@@ -24,6 +24,10 @@ export const newSupplier = createTrigger({
 	name: 'new_supplier',
 	displayName: 'New Supplier',
 	description: 'Triggers when a new supplier is created in Workday.',
+	aiMetadata: {
+		description:
+			'Fires when a new supplier appears in Workday, detected by polling the suppliers dataset. Represents a supplier-creation event. Use to sync new vendors into downstream systems or kick off supplier onboarding.',
+	},
 	props: {},
 	sampleData: { id: 'sup-001', descriptor: 'Acme Corp', createdDate: '2026-04-01T10:00:00Z' },
 	type: TriggerStrategy.POLLING,

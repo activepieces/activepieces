@@ -7,6 +7,9 @@ export const taskCreated = createTrigger({
   name: 'task_created',
   displayName: 'Task Created',
   description: 'Triggers when a task is created',
+  aiMetadata: {
+    description: 'Fires when a manual task is created in Woodpecker for a prospect (e.g. a call or LinkedIn step). Represents a new follow-up task and includes the associated prospect.',
+  },
   props: {},
   sampleData: {
     method: 'task_created',

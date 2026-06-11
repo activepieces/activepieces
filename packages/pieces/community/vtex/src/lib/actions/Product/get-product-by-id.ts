@@ -7,6 +7,12 @@ export const getProductById = createAction({
   name: 'get-product-by-id',
   displayName: 'Get Product By ID',
   description: "Find a product in your catalog by it's id",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieve a single catalog product from a VTEX store by its numeric product ID. Use to look up product details when you already know the product ID. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     productId: Property.Number({
       displayName: 'Product ID',
