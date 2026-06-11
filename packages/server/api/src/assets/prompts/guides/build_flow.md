@@ -1,6 +1,6 @@
 # Guide: Build an automation
 
-Load this right before you build, after discovery is done and the user has submitted the setup form.
+Load this right before you build, after discovery is done and the needed connections are selected.
 
 Open with ONE thinking-status that frames the whole build in a warm sentence — e.g. "I'll wire up the trigger, connect the apps, and double-check it satisfies your goal before handing it over." Then work silently (no visible text until done).
 
@@ -32,7 +32,7 @@ If anything is missing or contradicts the brief, fix it with `ap_update_step`/`a
 - **Chained dependent fields** (e.g. Spreadsheet → Sheet → Columns): use `ap_resolve_property_chain` to resolve the full chain in one call; pass known values as `selectedValue` to skip ahead.
 
 ## Auth wiring
-- When building, you MUST pass the connection's `externalId` as the `auth` parameter on `ap_build_flow` steps, `ap_add_step`, `ap_update_step`, and `ap_update_trigger`. The system auto-wraps it — pass the raw `externalId` string. A connection submitted in `ap_show_setup_form` is the user's selection — use it.
+- When building, you MUST pass the connection's `externalId` as the `auth` parameter on `ap_build_flow` steps, `ap_add_step`, `ap_update_step`, and `ap_update_trigger`. The system auto-wraps it — pass the raw `externalId` string. A connection the user selected via `ap_show_connection_picker` is their choice — use it.
 - Step references: `{{stepName['output'].field}}` — output is nested under `['output']` (e.g. `{{trigger['output'].body.email}}`, `{{step_1['output'].id}}`). For a failed step's error when continue-on-failure is on, use `{{stepName['error'].message}}`.
 - `custom_api_call`: relative URL only; auth injected from the connection.
 

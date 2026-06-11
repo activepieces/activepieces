@@ -19,7 +19,7 @@ describe('sanitizeTruncatedAssistantTail', () => {
                 role: 'assistant',
                 content: [
                     { type: 'text', text: 'Setting things up.' },
-                    { type: 'tool-call', toolCallId: 'call_truncated', toolName: 'ap_show_setup_form', input: {} },
+                    { type: 'tool-call', toolCallId: 'call_truncated', toolName: 'ap_show_questions', input: {} },
                 ],
             },
         ]

@@ -9,9 +9,6 @@ import {
     DiscoveryBrief,
     isObject,
     SendChatEventRequest,
-    SetupFormInput,
-    SetupFormOutput,
-    ToolApprovalRequestEvent,
     ToolProgressEvent,
     tryCatch,
 } from '@activepieces/shared'
@@ -115,12 +112,6 @@ function createEventEmitter({ sendEvent, userId, conversationId, log }: {
                 maxAttempts: 2,
             })
         },
-        emitToolApprovalRequest(data: ToolApprovalRequestEvent): void {
-            void sendWithRetry({
-                event: { type: ChatAgentEventType.TOOL_APPROVAL_REQUEST, data },
-                maxAttempts: 3,
-            })
-        },
         emitActionPreview(data: ActionPreviewEvent): void {
             void sendWithRetry({
                 event: { type: ChatAgentEventType.ACTION_PREVIEW, data },
@@ -136,12 +127,11 @@ function createEventEmitter({ sendEvent, userId, conversationId, log }: {
     }
 }
 
-function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onGateOpened, onSetupFormSubmitted, log }: {
+function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onGateOpened, log }: {
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean, payload?: Record<string, unknown> }>
     displayToolTimeoutMs: number
     onConnectionSelected?: (params: { pieceName: string, connectionExternalId: string, label: string, projectId: string }) => Promise<void>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
-    onSetupFormSubmitted?: () => void
     log?: { warn: (obj: Record<string, unknown>, msg: string) => void }
 }): ToolSet {
     function blockingExecute({ dismissMessage, successKey, toolName, getDisplayName, onApproved }: {
@@ -267,38 +257,6 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
             execute: async () => {
                 return { displayed: true }
             },
-        }),
-
-        ap_show_setup_form: tool({
-            description: 'Display ONE unified setup form gathering everything needed to build an automation: project selection, a connection per piece, and all config fields with recommended defaults pre-filled. Show it FAST — call it right after ap_get_piece_props, with no other tools in between. The UI fetches available connections per piece and preselects the best one; only pass recommendedConnectionExternalId when the user already named an account. Do NOT pre-resolve account-dependent dropdowns — set `dynamic: true` with no `options` and the UI loads them live (list parent property names in `refreshers`). Pass `options` only for STATIC_DROPDOWN fields, straight from piece metadata (value IDs, never labels). Every field should have a sensible default so the user can submit without changes. The submission IS the user\'s approval: start building immediately after it, with no plan-approval or confirmation step. Use the returned values as-is — do not re-ask for anything the form already covered.',
-            inputSchema: SetupFormInput,
-            execute: blockingExecute({
-                toolName: 'ap_show_setup_form',
-                dismissMessage: 'The user dismissed the setup form. Stop and ask what they would like to change, or whether they prefer answering step by step instead.',
-                getDisplayName: (input) => (typeof input['title'] === 'string' ? input['title'] : 'Automation setup'),
-                onApproved: async ({ payload }) => {
-                    const parsed = SetupFormOutput.safeParse(payload)
-                    if (!parsed.success) {
-                        log?.warn({ payload, error: parsed.error.message }, 'ap_show_setup_form approved but payload failed validation')
-                        return { dismissed: true, message: 'The setup form submission could not be read. Fall back to gathering the missing information with individual display tools.' }
-                    }
-                    const { projectId, sections } = parsed.data
-                    onSetupFormSubmitted?.()
-                    if (onConnectionSelected) {
-                        await Promise.all(sections.map((section) => {
-                            const { connectionExternalId } = section
-                            if (!connectionExternalId) return Promise.resolve()
-                            return onConnectionSelected({
-                                pieceName: normalizePieceName(section.piece),
-                                connectionExternalId,
-                                label: section.connectionLabel ?? connectionExternalId,
-                                projectId: section.connectionProjectId ?? '',
-                            })
-                        }))
-                    }
-                    return { submitted: true, projectId, sections }
-                },
-            }),
         }),
     }
 }
@@ -661,7 +619,6 @@ function createPhaseTools({ onPhaseChange }: {
 
 export type ChatEventEmitter = {
     emitToolProgress(data: ToolProgressEvent): void
-    emitToolApprovalRequest(data: ToolApprovalRequestEvent): void
     emitActionPreview(data: ActionPreviewEvent): void
     emitActionReceipt(data: ActionReceiptEvent): void
 }

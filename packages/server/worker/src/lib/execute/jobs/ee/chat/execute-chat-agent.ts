@@ -81,11 +81,10 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
         }, 3_000)
 
         try {
-            const executionApproved = { approved: false }
             const phaseState: { phase: ChatPhase } = { phase: 'discovery' }
 
             const allTools = buildToolSet({
-                ctx, eventEmitter, log, executionApproved, phaseState, mcpToolSet,
+                ctx, eventEmitter, log, phaseState, mcpToolSet,
                 projects: config.projects, conversationId, runId, platformId, userId,
                 guides: config.guides,
             })
@@ -314,11 +313,10 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
     },
 }
 
-function buildToolSet({ ctx, eventEmitter, log, executionApproved, phaseState, mcpToolSet, projects, conversationId, runId, platformId, userId, guides }: {
+function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, projects, conversationId, runId, platformId, userId, guides }: {
     ctx: JobContext
     eventEmitter: ReturnType<typeof chatWorkerTools.createEventEmitter>
     log: JobContext['log']
-    executionApproved: { approved: boolean }
     phaseState: { phase: ChatPhase }
     mcpToolSet: Record<string, unknown>
     projects: Array<{ id: string, displayName: string, type: string }>
@@ -398,20 +396,15 @@ function buildToolSet({ ctx, eventEmitter, log, executionApproved, phaseState, m
             }))
         },
         onGateOpened: storePendingGate,
-        onSetupFormSubmitted: () => {
-            executionApproved.approved = true
-        },
     })
     const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, guides })
     const thinkingTools = chatWorkerTools.createThinkingTools()
     const phaseTools = chatWorkerTools.createPhaseTools({ onPhaseChange: (phase) => {
-        phaseState.phase = phase 
+        phaseState.phase = phase
     } })
-    const gatedMcpTools = chatMcpClient.withApprovalGates({
-        mcpToolSet, eventEmitter, log, isApproved: () => executionApproved.approved, waitForApproval,
-    })
+    const mcpTools = chatMcpClient.withToolTimeouts({ mcpToolSet })
 
-    return { ...localTools, ...displayTools, ...crossProjectTools, ...thinkingTools, ...phaseTools, ...(gatedMcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
+    return { ...localTools, ...displayTools, ...crossProjectTools, ...thinkingTools, ...phaseTools, ...(mcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
 }
 
 async function streamChunksToClient({ result, ctx, userId, conversationId, runId, log }: {

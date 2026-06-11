@@ -8,7 +8,7 @@ const ALL = [
     'ap_list_connections',
     'ap_explore_data',
     'ap_update_brief',
-    'ap_show_setup_form',
+    'ap_show_questions',
     'ap_build_flow',
     'ap_add_step',
     'ap_test_flow',
@@ -21,7 +21,7 @@ describe('chatToolPhases.activeToolsForPhase', () => {
         const active = chatToolPhases.activeToolsForPhase({ phase: 'discovery', allToolNames: ALL })
         expect(active).toContain('ap_research_pieces')
         expect(active).toContain('ap_explore_data')
-        expect(active).toContain('ap_show_setup_form')
+        expect(active).toContain('ap_show_questions')
         expect(active).not.toContain('ap_build_flow')
         expect(active).not.toContain('ap_add_step')
         expect(active).not.toContain('ap_test_flow')

@@ -51,7 +51,6 @@ const DISPLAY_TOOL_NAMES = new Set([
   'ap_show_project_picker',
   'ap_show_questions',
   'ap_show_quick_replies',
-  'ap_show_setup_form',
 ]);
 
 function isDisplayTool(name: string): boolean {

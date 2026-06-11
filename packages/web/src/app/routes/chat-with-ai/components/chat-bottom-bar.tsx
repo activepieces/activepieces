@@ -1,4 +1,3 @@
-import { SetupFormInput } from '@activepieces/shared';
 import { t } from 'i18next';
 import { motion } from 'motion/react';
 
@@ -26,8 +25,6 @@ import {
 } from './connections-required-card';
 import { MultiQuestionForm } from './multi-question-form';
 import { ProjectPickerCard } from './project-picker-card';
-import { SetupForm } from './setup-form';
-import { ToolApprovalForm } from './tool-approval-form';
 
 export function ChatBottomBar({
   isStreaming,
@@ -40,12 +37,6 @@ export function ChatBottomBar({
   lastMessageId,
   placeholder,
 }: ChatBottomBarProps) {
-  const pendingMcpApproval = useChatStoreContext((s) =>
-    chatStoreSelectors.pendingMcpApproval({
-      state: s,
-      lastAssistantMessage,
-    }),
-  );
   const pendingActionPreview = useChatStoreContext((s) =>
     chatStoreSelectors.pendingActionPreview({
       state: s,
@@ -67,21 +58,7 @@ export function ChatBottomBar({
 
   const approveGate = useChatStoreContext((s) => s.approveGate);
   const rejectGate = useChatStoreContext((s) => s.rejectGate);
-  const dismissGate = useChatStoreContext((s) => s.dismissGate);
   const dismissForm = useChatStoreContext((s) => s.dismissForm);
-
-  // MCP tool approval from toolCallMeta
-  if (pendingMcpApproval) {
-    return (
-      <ToolApprovalForm
-        key={pendingMcpApproval.toolCallId}
-        displayName={pendingMcpApproval.displayName}
-        onApprove={() => approveGate(pendingMcpApproval.toolCallId)}
-        onReject={() => rejectGate(pendingMcpApproval.toolCallId)}
-        onDismiss={() => dismissGate(pendingMcpApproval.toolCallId)}
-      />
-    );
-  }
 
   if (pendingActionPreview) {
     return (
@@ -196,18 +173,6 @@ function BlockingDisplayCard({
           onResolve={(payload) => approveGate(toolCallId, payload)}
         />
       );
-    case 'ap_show_setup_form': {
-      const parsed = SetupFormInput.safeParse(data);
-      if (!parsed.success) return null;
-      return (
-        <SetupForm
-          key={toolCallId}
-          input={parsed.data}
-          onSubmit={(payload) => approveGate(toolCallId, payload)}
-          onDismiss={() => rejectGate(toolCallId)}
-        />
-      );
-    }
     default:
       return null;
   }

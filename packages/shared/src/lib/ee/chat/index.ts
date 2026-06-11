@@ -199,9 +199,6 @@ export type ChatToolOutputs = {
     ap_show_project_picker: { displayed: boolean }
     ap_show_questions: { displayed: boolean }
     ap_show_quick_replies: { displayed: boolean }
-    ap_show_setup_form:
-    | { submitted: true, projectId?: string, sections: SetupFormSubmittedSection[] }
-    | { dismissed: true, message: string }
     ap_update_thinking_status: { success: boolean }
 }
 
@@ -212,93 +209,6 @@ export type ConnectionOption = {
     projectId: string
     status: string
 }
-
-export enum SetupFormFieldType {
-    TEXT = 'text',
-    LONG_TEXT = 'long_text',
-    DROPDOWN = 'dropdown',
-    MULTI_DROPDOWN = 'multi_dropdown',
-    CHECKBOX = 'checkbox',
-    CHOICE = 'choice',
-}
-
-export const SetupFormFieldOption = z.object({
-    label: z.string(),
-    value: z.unknown(),
-})
-export type SetupFormFieldOption = z.infer<typeof SetupFormFieldOption>
-
-export const SetupFormField = z.object({
-    name: z.string(),
-    displayName: z.string(),
-    description: z.string().optional(),
-    type: z.enum(SetupFormFieldType),
-    required: z.boolean(),
-    defaultValue: z.union([z.string(), z.array(z.string()), z.boolean()]).optional(),
-    options: z.array(SetupFormFieldOption).optional(),
-    placeholder: z.string().optional(),
-    refreshers: z.array(z.string()).optional(),
-    dynamic: z.boolean().optional(),
-})
-export type SetupFormField = z.infer<typeof SetupFormField>
-
-export const SetupFormSection = z.object({
-    piece: z.string(),
-    displayName: z.string(),
-    role: z.enum(['trigger', 'action']),
-    stepTitle: z.string(),
-    actionOrTriggerName: z.string(),
-    requiresConnection: z.boolean(),
-    recommendedConnectionExternalId: z.string().optional(),
-    fields: z.array(SetupFormField),
-})
-export type SetupFormSection = z.infer<typeof SetupFormSection>
-
-export const SetupFormInput = z.object({
-    title: z.string().optional(),
-    project: z.object({
-        suggestedProjects: z.array(z.object({
-            name: z.string(),
-            id: z.string(),
-        })).min(1),
-        defaultProjectId: z.string().optional(),
-    }).optional(),
-    sections: z.array(SetupFormSection).min(1),
-})
-export type SetupFormInput = z.infer<typeof SetupFormInput>
-
-export const SetupFormSubmittedSection = z.object({
-    piece: z.string(),
-    actionOrTriggerName: z.string(),
-    connectionExternalId: z.string().optional(),
-    connectionProjectId: z.string().optional(),
-    connectionLabel: z.string().optional(),
-    fields: z.record(z.string(), z.unknown()),
-})
-export type SetupFormSubmittedSection = z.infer<typeof SetupFormSubmittedSection>
-
-export const SetupFormOutput = z.object({
-    projectId: z.string().optional(),
-    sections: z.array(SetupFormSubmittedSection),
-})
-export type SetupFormOutput = z.infer<typeof SetupFormOutput>
-
-export const ResolveSetupFormOptionsRequest = z.object({
-    pieceName: z.string(),
-    actionOrTriggerName: z.string(),
-    type: z.enum(['trigger', 'action']),
-    propertyName: z.string(),
-    connectionExternalId: z.string().optional(),
-    projectId: z.string(),
-    input: z.record(z.string(), z.unknown()).optional(),
-    searchValue: z.string().optional(),
-})
-export type ResolveSetupFormOptionsRequest = z.infer<typeof ResolveSetupFormOptionsRequest>
-
-export const ResolveSetupFormOptionsResponse = z.object({
-    options: z.array(SetupFormFieldOption),
-})
-export type ResolveSetupFormOptionsResponse = z.infer<typeof ResolveSetupFormOptionsResponse>
 
 export type ChatToolName = keyof ChatToolOutputs
 

@@ -4,8 +4,6 @@ import {
   ChatConversation,
   ConnectionOption,
   CreateChatConversationRequest,
-  ResolveSetupFormOptionsRequest,
-  ResolveSetupFormOptionsResponse,
   SeekPage,
   UpdateChatConversationRequest,
 } from '@activepieces/shared';
@@ -102,19 +100,6 @@ async function getPickerConnections({
   });
 }
 
-async function resolveSetupFormOptions({
-  conversationId,
-  request,
-}: {
-  conversationId: string;
-  request: ResolveSetupFormOptionsRequest;
-}): Promise<ResolveSetupFormOptionsResponse> {
-  return api.post<ResolveSetupFormOptionsResponse>(
-    `/v1/chat/conversations/${conversationId}/resolve-options`,
-    request,
-  );
-}
-
 async function getPendingGate(conversationId: string): Promise<{
   gateId: string;
   toolName: string;
@@ -136,5 +121,4 @@ export const chatApi = {
   cancelConversation,
   getPickerConnections,
   getPendingGate,
-  resolveSetupFormOptions,
 };

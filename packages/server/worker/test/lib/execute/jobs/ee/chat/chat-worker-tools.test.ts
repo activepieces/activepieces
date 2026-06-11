@@ -1,17 +1,16 @@
-import { ToolApprovalRequestEvent, ToolProgressEvent } from '@activepieces/shared'
+import { ToolProgressEvent } from '@activepieces/shared'
 import { describe, expect, it, vi } from 'vitest'
 import { ChatEventEmitter, chatWorkerTools } from '../../../../../../src/lib/execute/jobs/ee/chat/chat-worker-tools'
 
-function makeMockEventEmitter(): { eventEmitter: ChatEventEmitter, progressEvents: ToolProgressEvent[], approvalEvents: ToolApprovalRequestEvent[] } {
+function makeMockEventEmitter(): { eventEmitter: ChatEventEmitter, progressEvents: ToolProgressEvent[] } {
     const progressEvents: ToolProgressEvent[] = []
-    const approvalEvents: ToolApprovalRequestEvent[] = []
     return {
         eventEmitter: {
             emitToolProgress: (data: ToolProgressEvent) => { progressEvents.push(data) },
-            emitToolApprovalRequest: (data: ToolApprovalRequestEvent) => { approvalEvents.push(data) },
+            emitActionPreview: () => {},
+            emitActionReceipt: () => {},
         },
         progressEvents,
-        approvalEvents,
     }
 }
 
@@ -93,7 +92,7 @@ describe('chatWorkerTools', () => {
             const { eventEmitter, progressEvents } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue(mcpSuccess('sent'))
 
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }) })
             const result = await tools.ap_execute_action.execute({
                 pieceName: 'slack',
                 actionName: 'send_message',
@@ -145,7 +144,7 @@ describe('chatWorkerTools', () => {
                 .mockResolvedValueOnce(mcpFailure('Invalid channel'))
                 .mockResolvedValueOnce(mcpSuccess('sent'))
 
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }) })
             const result = await tools.ap_execute_action.execute({
                 pieceName: 'slack',
                 actionName: 'send_message',
@@ -178,7 +177,7 @@ describe('chatWorkerTools', () => {
             const { eventEmitter, progressEvents } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue(mcpSuccess('done'))
 
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }) })
             await tools.ap_execute_action.execute({
                 pieceName: 'http',
                 actionName: 'send_request',
@@ -193,7 +192,7 @@ describe('chatWorkerTools', () => {
             const { eventEmitter, progressEvents } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue(mcpSuccess('done'))
 
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }) })
             await tools.ap_execute_action.execute({
                 pieceName: 'slack',
                 actionName: 'send_message',
@@ -208,7 +207,7 @@ describe('chatWorkerTools', () => {
             const { eventEmitter, progressEvents } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue(mcpSuccess('done'))
 
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }) })
             await tools.ap_execute_action.execute({
                 pieceName: 'slack',
                 actionName: 'send_message',
@@ -227,7 +226,7 @@ describe('chatWorkerTools', () => {
             const { eventEmitter } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue(mcpSuccess('done'))
 
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }) })
             await tools.ap_execute_action.execute({
                 pieceName: 'gmail',
                 actionName: 'send_email',
@@ -247,7 +246,7 @@ describe('chatWorkerTools', () => {
             const executeTool = vi.fn()
                 .mockResolvedValueOnce({ success: false, error: 'No projects available' })
 
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }) })
             const result = await tools.ap_execute_action.execute({
                 pieceName: 'slack',
                 actionName: 'send_message',
@@ -266,7 +265,7 @@ describe('chatWorkerTools', () => {
             const { eventEmitter, progressEvents } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue(mcpFailure('Bad auth'))
 
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }) })
             const result = await tools.ap_execute_action.execute({
                 pieceName: 'slack',
                 actionName: 'send_message',
@@ -297,7 +296,7 @@ describe('chatWorkerTools', () => {
                 .mockResolvedValueOnce(mcpFailure('err'))
                 .mockResolvedValueOnce(mcpSuccess('ok'))
 
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }) })
             await tools.ap_execute_action.execute({
                 pieceName: 'slack',
                 actionName: 'send_message',

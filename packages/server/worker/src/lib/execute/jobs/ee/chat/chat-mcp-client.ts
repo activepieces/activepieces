@@ -1,8 +1,8 @@
-import { chatToolClassification, chatToolPhases, tryCatch } from '@activepieces/shared'
+import { chatToolPhases, tryCatch } from '@activepieces/shared'
 import { createMCPClient } from '@ai-sdk/mcp'
 import { ToolExecutionOptions } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
-import { ChatEventEmitter, chatWorkerTools } from './chat-worker-tools'
+import { chatWorkerTools } from './chat-worker-tools'
 
 const CONVERSATION_ID_HEADER = 'x-ap-conversation-id'
 
@@ -43,23 +43,12 @@ async function connectMcpClient({ mcpCredentials, conversationId, log }: {
     return { mcpClient: client, mcpToolSet }
 }
 
-function humanizeToolName(name: string): string {
-    return name
-        .replace(/^ap_/, '')
-        .replace(/_/g, ' ')
-        .replace(/\b\w/g, (c) => c.toUpperCase())
-}
-
 function hasExecute(tool: object): tool is object & { execute: (args: unknown, options?: ToolExecutionOptions) => Promise<unknown> } {
     return 'execute' in tool && typeof tool.execute === 'function'
 }
 
-function withApprovalGates({ mcpToolSet, eventEmitter, log, isApproved, waitForApproval }: {
+function withToolTimeouts({ mcpToolSet }: {
     mcpToolSet: Record<string, unknown>
-    eventEmitter: ChatEventEmitter
-    log: FastifyBaseLogger
-    isApproved: () => boolean
-    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean }>
 }): Record<string, unknown> {
     const result: Record<string, unknown> = {}
 
@@ -70,45 +59,14 @@ function withApprovalGates({ mcpToolSet, eventEmitter, log, isApproved, waitForA
         }
 
         const originalExecute = tool.execute.bind(tool)
-        const needsApproval = chatToolClassification.requiresApproval(name)
-        const executeWithTimeout = (args: unknown, options?: ToolExecutionOptions) =>
-            chatWorkerTools.withToolTimeout({
-                fn: (timeoutSignal) => originalExecute(args, options ? { ...options, abortSignal: timeoutSignal } : undefined),
-                timeoutMs: chatWorkerTools.TOOL_EXECUTION_TIMEOUT_MS,
-                toolName: name,
-            })
 
         result[name] = Object.assign({}, tool, {
-            execute: async (args: unknown, options?: ToolExecutionOptions) => {
-                if (isApproved() || !needsApproval) {
-                    return executeWithTimeout(args, options)
-                }
-                const toolCallId = options?.toolCallId
-                if (!toolCallId) {
-                    return executeWithTimeout(args, options)
-                }
-                const argsObj = typeof args === 'object' && args !== null ? args as Record<string, unknown> : {}
-                const displayName = (typeof argsObj['title'] === 'string' && argsObj['title'])
-                    || (typeof argsObj['displayName'] === 'string' && argsObj['displayName'])
-                    || humanizeToolName(name)
-
-                eventEmitter.emitToolApprovalRequest({
-                    toolCallId,
+            execute: (args: unknown, options?: ToolExecutionOptions) =>
+                chatWorkerTools.withToolTimeout({
+                    fn: (timeoutSignal) => originalExecute(args, options ? { ...options, abortSignal: timeoutSignal } : undefined),
+                    timeoutMs: chatWorkerTools.TOOL_EXECUTION_TIMEOUT_MS,
                     toolName: name,
-                    displayName,
-                })
-
-                log.info({ toolCallId, toolName: name }, 'Tool approval gate opened')
-                const decision = await waitForApproval({ gateId: toolCallId })
-
-                if (!decision.approved) {
-                    log.info({ toolCallId, toolName: name }, 'Tool approval rejected or timed out')
-                    return { content: [{ type: 'text', text: 'Action cancelled by user.' }] }
-                }
-
-                log.info({ toolCallId, toolName: name }, 'Tool approval granted')
-                return executeWithTimeout(args, options)
-            },
+                }),
         })
     }
 
@@ -122,5 +80,5 @@ type McpConnection = {
 
 export const chatMcpClient = {
     connect: connectMcpClient,
-    withApprovalGates,
+    withToolTimeouts,
 }

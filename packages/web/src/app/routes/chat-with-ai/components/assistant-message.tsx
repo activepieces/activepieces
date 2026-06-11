@@ -1,4 +1,4 @@
-import { BatchProgressData, SetupFormInput } from '@activepieces/shared';
+import { BatchProgressData } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, RefreshCw, Volume2, VolumeOff } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -36,7 +36,6 @@ import {
 } from './connections-required-card';
 import { CopyIconButton } from './copy-icon-button';
 import { ProjectPickerCard } from './project-picker-card';
-import { SetupFormSummary } from './setup-form';
 import { StreamingText } from './streaming-text';
 import { ToolShimmerPills } from './tool-shimmer-pills';
 
@@ -540,11 +539,6 @@ function DisplayToolCard({
           : undefined;
       if (!answersText) return null;
       return <AnsweredQuestionsCard answersText={answersText} />;
-    }
-    case 'ap_show_setup_form': {
-      const parsed = SetupFormInput.safeParse(data);
-      if (!parsed.success) return null;
-      return <SetupFormSummary input={parsed.data} output={toolOutput} />;
     }
     default:
       return null;
