@@ -188,18 +188,6 @@ export const CanvasContextMenuContent = ({
         </ContextMenuItem>
       )}
 
-      {showCopyReference && (
-        <ContextMenuItem
-          onClick={() => {
-            navigator.clipboard.writeText(`{{${selectedNodes[0]}['output']}}`);
-            toast.success(t('Reference copied to clipboard'));
-          }}
-          className="flex items-center gap-2"
-        >
-          <Braces className="w-4 h-4"></Braces> {t('Copy reference')}
-        </ContextMenuItem>
-      )}
-
       <>
         {showDuplicate && (
           <ContextMenuItem
@@ -230,6 +218,20 @@ export const CanvasContextMenuContent = ({
               )}
               {areAllStepsSkipped ? t('Unskip') : t('Skip')}
             </ShortcutWrapper>
+          </ContextMenuItem>
+        )}
+
+        {showCopyReference && (
+          <ContextMenuItem
+            onClick={() => {
+              navigator.clipboard.writeText(
+                `{{${selectedNodes[0]}['output']}}`,
+              );
+              toast.success(t('Reference copied to clipboard'));
+            }}
+            className="flex items-center gap-2"
+          >
+            <Braces className="w-4 h-4"></Braces> {t('Copy reference')}
           </ContextMenuItem>
         )}
         {(showPasteAsFirstLoopAction ||
