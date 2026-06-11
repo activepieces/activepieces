@@ -224,7 +224,7 @@ const ApStepCanvasNode = React.memo(
             </div>
           )}
           {isHorizontal && !readonly && !isDragging && (
-            <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 z-10">
+            <div className="absolute top-0 right-0  translate-x-[30px] z-10">
               <StepNodeChevron />
             </div>
           )}
