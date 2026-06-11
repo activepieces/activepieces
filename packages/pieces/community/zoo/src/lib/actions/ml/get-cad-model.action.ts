@@ -6,6 +6,8 @@ export const getCadModelAction = createAction({
   name: 'get_cad_model',
   displayName: 'Get CAD Model',
   description: 'Retrieve details of a specific 3D model',
+  audience: 'both',
+  aiMetadata: { description: 'Look up a single previously generated text-to-CAD model by its model ID, including its status and conversion results. Read-only and repeatable. Use to poll or fetch a model created by the generate CAD model action; requires a known model ID.', idempotent: true },
   auth: zooAuth,
   // category: 'Machine Learning (ML)',
   props: {

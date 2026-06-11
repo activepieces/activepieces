@@ -8,6 +8,8 @@ export const create_client_property = createAction({
     auth: simplirouteAuth,
     displayName: 'Create Client Custom Property',
     description: 'Create a new custom attribute for clients.',
+    audience: 'both',
+    aiMetadata: { description: 'Define a new custom property (str, int, float or bool) on the client schema so subsequent client records can store that attribute. Use when an attribute you need does not yet exist on clients; not idempotent (each call adds another property definition).', idempotent: false },
     props: {
         label: Property.ShortText({ 
             displayName: 'label', 

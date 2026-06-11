@@ -14,6 +14,9 @@ export const tidycalnewcontact = createTrigger({
   name: 'new_contact',
   displayName: 'New Contact',
   description: 'Triggers when a new contact is created',
+  aiMetadata: {
+    description: 'Fires when a new contact is added to the TidyCal account. A contact represents a person who has booked or interacted with the scheduling account, including their id, name, email, and creation timestamp. Use this to react to newly captured contacts, such as syncing them to a CRM or mailing list.',
+  },
   props: {},
   sampleData: {
     data: [

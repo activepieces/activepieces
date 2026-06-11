@@ -8,6 +8,12 @@ export const getCurrentUser = createAction({
   displayName: 'Get Current User',
   description:
     "Get profile information for the authenticated user — id, email, name, account creation date, sync completion status, and active flag. Useful for verifying auth and checking whether the user's network data is ready.",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetch the authenticated user\'s own profile, including their ID and a sync-completion flag. Read-only and idempotent. Use to confirm the token is valid and to check whether the user\'s network data has finished syncing before relying on graph queries.',
+    idempotent: true,
+  },
   props: {},
   async run(context) {
     const response = await httpClient.sendRequest({

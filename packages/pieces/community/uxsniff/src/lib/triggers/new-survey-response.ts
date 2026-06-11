@@ -63,6 +63,10 @@ export const newSurveyResponseTrigger = createTrigger({
   name: 'new_survey_response',
   displayName: 'New Survey Response',
   description: 'Triggers when a visitor submits a new response to the selected survey.',
+  aiMetadata: {
+    description:
+      'Fires when a website visitor submits a new response to the selected UXsniff survey. Each event represents one completed survey response and includes the answers given (serialized as JSON), the page URL where the survey was answered, visitor context such as country, operating system, browser, and referrer, plus client and session identifiers.',
+  },
   props,
   type: TriggerStrategy.POLLING,
   sampleData: {

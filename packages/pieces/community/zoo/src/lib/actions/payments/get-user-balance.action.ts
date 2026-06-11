@@ -6,6 +6,8 @@ export const getUserBalanceAction = createAction({
   name: 'get_user_balance',
   displayName: 'Get User Balance',
   description: 'Retrieve the current balance for your user account',
+  audience: 'both',
+  aiMetadata: { description: 'Read the current account balance for the authenticated user. Use for the individual user; the org-level equivalent is the get organization balance action. Read-only and idempotent; takes no inputs.', idempotent: true },
   auth: zooAuth,
   // category: 'Payments',
   props: {},

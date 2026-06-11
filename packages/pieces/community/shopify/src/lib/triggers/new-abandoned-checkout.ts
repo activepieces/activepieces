@@ -13,6 +13,10 @@ export const newAbandonedCheckout = createTrigger({
   auth: shopifyAuth,
   displayName: 'New Abandoned Checkout',
   description: 'Triggers when a checkout is abandoned.',
+  aiMetadata: {
+    description:
+      'Fires when a shopper adds items to their cart and begins the Shopify checkout but leaves without completing the purchase. Each event represents one abandoned checkout, including the line items, contact details, and recovery URL, enabling cart-recovery and follow-up workflows. Detected via polling, so there may be a delay before an abandoned checkout surfaces.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.POLLING,

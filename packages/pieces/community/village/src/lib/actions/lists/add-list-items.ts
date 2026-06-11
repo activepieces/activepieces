@@ -15,6 +15,12 @@ export const addListItems = createAction({
   displayName: 'Add items to list',
   description:
     'Add people or companies to a list. Each identifier is resolved (LinkedIn URLs, company domains, emails, or graph IDs) and added. Returns detailed results per item.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Add up to 100 people or companies to an existing list, resolving each identifier (LinkedIn URL, company domain, email, or graph ID) to an entity. Effectively idempotent per entity: re-adding one already on the list does not duplicate it. Per-item results report which identifiers resolved and were added.',
+    idempotent: true,
+  },
   props: {
     id: Property.ShortText({
       displayName: 'List ID',

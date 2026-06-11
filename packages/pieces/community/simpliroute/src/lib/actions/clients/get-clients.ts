@@ -8,6 +8,8 @@ export const get_clients = createAction({
     auth: simplirouteAuth,
     displayName: 'Get Clients',
     description: 'Retrieves the list of clients associated with the account. Can filter by client key.',
+    audience: 'both',
+    aiMetadata: { description: 'Look up account clients, filtered to the given unique client key. Use to find a client and its stored details (id, address, coordinates, contacts) before creating visits or routes. Read-only and idempotent.', idempotent: true },
     props: {
         key: Property.ShortText({ 
             displayName: 'Client Key', 

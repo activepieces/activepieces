@@ -16,6 +16,12 @@ export const createLeadAction = createAction({
     name: 'create-lead',
     displayName: 'Create Lead',
     description: 'Creates a new lead.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Creates a new lead with a required title and optional value, owner, channel, and custom fields. At least one of a linked person or organization must be supplied. Use to capture an unqualified opportunity (use Create Deal once it advances to your pipeline, or Update Lead to edit one). Not idempotent: each call creates a separate lead.',
+        idempotent: false,
+    },
     props: {
         title: Property.ShortText({
             displayName: 'Title',
