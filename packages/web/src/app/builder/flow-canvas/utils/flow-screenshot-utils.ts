@@ -21,13 +21,13 @@ async function downloadFlowAsImage({
   );
   const flowNodes = nodes.filter((node) => node.type !== ApNodeType.NOTE);
   if (!viewportElement || flowNodes.length === 0) {
-    return;
+    throw new Error('No flow steps available to capture');
   }
   // let the capturing state paint before any work happens
   await yieldToMain();
   const bounds = calculateNodesBoundsFromDom(flowNodes);
   if (!bounds) {
-    return;
+    throw new Error('Could not determine the flow bounds to capture');
   }
   const exportLayout = calculateExportLayout(bounds);
   const captureSvgUrl = await buildCaptureSvgUrl({
@@ -252,6 +252,14 @@ function getImageDataUrl(source: string): Promise<string | null> {
     return cached;
   }
   const pending = fetchImageAsDataUrl(source);
+  // bound the cache so a long session opening many flows can't grow it
+  // without limit; evict the oldest entry once the cap is reached
+  if (imageDataUrlCache.size >= IMAGE_CACHE_MAX_ENTRIES) {
+    const oldestSource = imageDataUrlCache.keys().next().value;
+    if (oldestSource !== undefined) {
+      imageDataUrlCache.delete(oldestSource);
+    }
+  }
   imageDataUrlCache.set(source, pending);
   return pending;
 }
@@ -400,6 +408,7 @@ const IMAGE_PADDING = 60;
 const MAX_IMAGE_DIMENSION = 8192;
 const PREFERRED_PIXEL_SCALE = 2;
 const STYLE_READ_CHUNK_SIZE = 400;
+const IMAGE_CACHE_MAX_ENTRIES = 200;
 const SCREENSHOT_EXCLUDE_ATTRIBUTE = 'data-flow-screenshot-exclude';
 const CAPTURE_STYLE_PROPERTIES = [
   'display',
