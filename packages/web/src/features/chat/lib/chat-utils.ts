@@ -67,6 +67,10 @@ const TOOL_LABELS: Record<string, { active: string; done: string }> = {
     active: 'Loading options',
     done: 'Loaded options',
   },
+  ap_resolve_property_chain: {
+    active: 'Loading field options',
+    done: 'Loaded field options',
+  },
 };
 
 function cleanMcpToolName(raw: string): string {

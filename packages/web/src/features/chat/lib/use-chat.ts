@@ -339,21 +339,7 @@ export function useAgentChat({
 
         if (conv.status !== ChatConversationStatus.STREAMING) {
           reconcileAndClearRef.current(convId);
-          return;
         }
-
-        const latestAssistant =
-          streamingMessage ??
-          persistedMessagesRef.current.findLast((m) => m.role === 'assistant');
-        const hasBlockingCard = chatStoreSelectors.hasBlockingCard({
-          state: store.getState(),
-          lastAssistantMessage: latestAssistant,
-        });
-        if (hasBlockingCard) return;
-
-        stopStream();
-        setIsPollingForAgentReply(true);
-        void reconcile(convId);
       });
     },
   });

@@ -11,12 +11,10 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { getPiecePackageWithoutArchive } from '../../pieces/metadata/piece-metadata-service'
-import { projectService } from '../../project/project-service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { mcpUtils } from './mcp-utils'
 
-const RESOLVE_TIMEOUT_MS = 30_000
-const { withTimeout } = mcpUtils
+const { withTimeout, RESOLVE_TIMEOUT_MS } = mcpUtils
 
 export const apResolvePropertyOptionsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
@@ -28,11 +26,14 @@ export const apResolvePropertyOptionsTool = (mcp: ProjectScopedMcpServer, log: F
             try {
                 const { pieceName, actionOrTriggerName, type, propertyName, auth, input: providedInput, searchValue } = resolvePropertyOptionsInput.parse(args)
 
+                const platformId = await mcpUtils.resolvePlatformId({ mcp, log })
+
                 const lookup = await mcpUtils.lookupPieceComponent({
                     pieceName,
                     componentName: actionOrTriggerName,
                     componentType: type,
                     projectId: mcp.projectId,
+                    platformId,
                     log,
                 })
                 if (lookup.error) {
@@ -47,9 +48,7 @@ export const apResolvePropertyOptionsTool = (mcp: ProjectScopedMcpServer, log: F
                     }
                 }
 
-                const project = await projectService(log).getOneOrThrow(mcp.projectId)
-
-                const piecePackage = await getPiecePackageWithoutArchive(log, project.platformId, { pieceName: normalized, pieceVersion: piece.version })
+                const piecePackage = await getPiecePackageWithoutArchive(log, platformId, { pieceName: normalized, pieceVersion: piece.version })
 
                 const input: Record<string, unknown> = {
                     ...(providedInput ?? {}),
@@ -62,7 +61,7 @@ export const apResolvePropertyOptionsTool = (mcp: ProjectScopedMcpServer, log: F
                         disabled?: boolean
                     }>>({
                         jobType: WorkerJobType.EXECUTE_PROPERTY,
-                        platformId: project.platformId,
+                        platformId,
                         projectId: mcp.projectId,
                         flowVersion: undefined,
                         propertyName,
@@ -91,7 +90,7 @@ export const apResolvePropertyOptionsTool = (mcp: ProjectScopedMcpServer, log: F
                     }
                 }
 
-                const optionsArray = extractOptionsArray(options)
+                const optionsArray = mcpUtils.extractOptionsArray(options)
 
                 if (optionsArray !== null) {
                     const mapped = optionsArray.map((o: { label: string, value: unknown }) => ({ label: String(o.label ?? ''), value: o.value }))
@@ -120,19 +119,6 @@ export const apResolvePropertyOptionsTool = (mcp: ProjectScopedMcpServer, log: F
             }
         },
     }
-}
-
-function extractOptionsArray(options: unknown): Array<{ label: string, value: unknown }> | null {
-    if (Array.isArray(options)) return options
-
-    if (isObject(options) && !Array.isArray(options)) {
-        const obj = options as Record<string, unknown>
-        if (Array.isArray(obj.options)) {
-            return obj.options as Array<{ label: string, value: unknown }>
-        }
-    }
-
-    return null
 }
 
 const resolvePropertyOptionsInput = z.object({
