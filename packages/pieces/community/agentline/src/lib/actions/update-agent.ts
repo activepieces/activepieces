@@ -80,8 +80,14 @@ export const updateAgent = createAction({
       body['model_tier'] = context.propsValue.model_tier;
     }
 
+    if (Object.keys(body).length === 0) {
+      throw new Error(
+        'At least one field (name, system_prompt, initial_greeting, voice_id, or model_tier) must be provided to update.',
+      );
+    }
+
     const response = await agentlineApiCall(
-      context.auth as string,
+      context.auth.secret_text,
       HttpMethod.PATCH,
       `/v1/agents/${context.propsValue.agent_id}`,
       body,

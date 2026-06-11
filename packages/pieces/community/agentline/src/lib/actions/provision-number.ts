@@ -51,7 +51,7 @@ export const provisionNumber = createAction({
     }
 
     const response = await agentlineApiCall(
-      context.auth as string,
+      context.auth.secret_text,
       HttpMethod.POST,
       '/v1/numbers',
       body,

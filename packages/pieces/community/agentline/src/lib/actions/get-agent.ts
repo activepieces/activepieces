@@ -23,7 +23,7 @@ export const getAgent = createAction({
   },
   async run(context) {
     const response = await agentlineApiCall(
-      context.auth as string,
+      context.auth.secret_text,
       HttpMethod.GET,
       `/v1/agents/${context.propsValue.agent_id}`,
     );

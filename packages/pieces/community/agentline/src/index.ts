@@ -56,7 +56,7 @@ export const agentline = createPiece({
       baseUrl: () => 'https://api.agentline.cloud',
       auth: agentlineAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth as string}`,
+        Authorization: `Bearer ${(auth as { secret_text: string }).secret_text}`,
       }),
     }),
   ],

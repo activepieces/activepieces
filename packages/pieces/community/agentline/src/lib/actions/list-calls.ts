@@ -52,7 +52,7 @@ export const listCalls = createAction({
     }
 
     const response = await agentlineApiCall(
-      context.auth as string,
+      context.auth.secret_text,
       HttpMethod.GET,
       '/v1/calls',
       undefined,

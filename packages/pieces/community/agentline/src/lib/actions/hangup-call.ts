@@ -23,7 +23,7 @@ export const hangupCall = createAction({
   },
   async run(context) {
     const response = await agentlineApiCall(
-      context.auth as string,
+      context.auth.secret_text,
       HttpMethod.POST,
       `/v1/calls/${context.propsValue.call_id}/hangup`,
     );
