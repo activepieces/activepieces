@@ -7,6 +7,8 @@ export const getCustomerAction = createAction({
   name: 'get_customer',
   displayName: 'Get Customer',
   description: `Get an existing customer's information.`,
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single Shopify customer record by customer ID. Use when you already have the ID and need the full customer details; to search by name or email use a product/customer listing action instead. Read-only and idempotent.', idempotent: true },
   props: {
     customerId: Property.ShortText({
       displayName: 'Customer ID',

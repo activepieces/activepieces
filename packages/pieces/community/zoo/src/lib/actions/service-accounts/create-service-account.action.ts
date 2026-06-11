@@ -6,6 +6,8 @@ export const createServiceAccountAction = createAction({
   name: 'create_service_account',
   displayName: 'Create Service Account',
   description: 'Create a new service account for your organization',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new organization service account with the given name and return its credentials. Use to provision programmatic access for the org. Not idempotent: each call creates a distinct service account even if the name repeats.', idempotent: false },
   auth: zooAuth,
   // category: 'Service Accounts',
   props: {
