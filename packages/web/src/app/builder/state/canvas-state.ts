@@ -10,18 +10,9 @@ import { CanvasOrientation } from '../flow-canvas/utils/types';
 
 export type StepDataPanelView = 'drawer' | 'split';
 
-export type StepPositionOverrides = Record<string, { x: number; y: number }>;
-
 export type CanvasState = {
   canvasOrientation: CanvasOrientation;
   setCanvasOrientation: (orientation: CanvasOrientation) => void;
-  stepPositionOverrides: StepPositionOverrides;
-  setStepPositionOverride: (params: {
-    stepName: string;
-    position: { x: number; y: number };
-  }) => void;
-  clearStepPositionOverride: (stepName: string) => void;
-  resetStepPositionOverrides: () => void;
   readonly: boolean;
   hideTestWidget: boolean;
   rightSidebar: RightSideBarType;
@@ -80,10 +71,8 @@ export const createCanvasState = (
   const isEmptyTriggerInitiallySelected =
     initiallySelectedStep === 'trigger' &&
     initialState.flowVersion.trigger.type === FlowTriggerType.EMPTY;
-  const flowId = initialState.flowVersion.flowId;
-  const initialOrientation = getCanvasOrientationFromLocalStorage();
   return {
-    canvasOrientation: initialOrientation,
+    canvasOrientation: getCanvasOrientationFromLocalStorage(),
     setCanvasOrientation: (orientation: CanvasOrientation) => {
       localStorage.setItem(
         CANVAS_ORIENTATION_KEY_IN_LOCAL_STORAGE,
@@ -91,57 +80,7 @@ export const createCanvasState = (
       );
       return set(() => ({
         canvasOrientation: orientation,
-        stepPositionOverrides: getStepPositionOverridesFromLocalStorage({
-          flowId,
-          orientation,
-        }),
       }));
-    },
-    stepPositionOverrides: getStepPositionOverridesFromLocalStorage({
-      flowId,
-      orientation: initialOrientation,
-    }),
-    setStepPositionOverride: ({ stepName, position }) => {
-      return set((state) => {
-        const stepPositionOverrides = {
-          ...state.stepPositionOverrides,
-          [stepName]: position,
-        };
-        saveStepPositionOverridesToLocalStorage({
-          flowId,
-          orientation: state.canvasOrientation,
-          stepPositionOverrides,
-        });
-        return { stepPositionOverrides };
-      });
-    },
-    clearStepPositionOverride: (stepName: string) => {
-      return set((state) => {
-        if (isNil(state.stepPositionOverrides[stepName])) {
-          return {};
-        }
-        const stepPositionOverrides = Object.fromEntries(
-          Object.entries(state.stepPositionOverrides).filter(
-            ([name]) => name !== stepName,
-          ),
-        );
-        saveStepPositionOverridesToLocalStorage({
-          flowId,
-          orientation: state.canvasOrientation,
-          stepPositionOverrides,
-        });
-        return { stepPositionOverrides };
-      });
-    },
-    resetStepPositionOverrides: () => {
-      return set((state) => {
-        saveStepPositionOverridesToLocalStorage({
-          flowId,
-          orientation: state.canvasOrientation,
-          stepPositionOverrides: {},
-        });
-        return { stepPositionOverrides: {} };
-      });
     },
     showMinimap: false,
     setShowMinimap: (showMinimap: boolean) => set({ showMinimap }),
@@ -292,80 +231,6 @@ function getCanvasOrientationFromLocalStorage(): CanvasOrientation {
     'horizontal'
     ? 'horizontal'
     : 'vertical';
-}
-
-const STEP_POSITIONS_KEY_PREFIX_IN_LOCAL_STORAGE = 'ap.builder.stepPositions';
-function getStepPositionOverridesStorageKey({
-  flowId,
-  orientation,
-}: {
-  flowId: string;
-  orientation: CanvasOrientation;
-}): string {
-  return `${STEP_POSITIONS_KEY_PREFIX_IN_LOCAL_STORAGE}.${flowId}.${orientation}`;
-}
-
-function getStepPositionOverridesFromLocalStorage({
-  flowId,
-  orientation,
-}: {
-  flowId: string;
-  orientation: CanvasOrientation;
-}): StepPositionOverrides {
-  const raw = localStorage.getItem(
-    getStepPositionOverridesStorageKey({ flowId, orientation }),
-  );
-  if (isNil(raw)) {
-    return {};
-  }
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (typeof parsed !== 'object' || isNil(parsed)) {
-      return {};
-    }
-    return Object.entries(parsed).reduce<StepPositionOverrides>(
-      (overrides, [stepName, position]) => {
-        if (isXYPosition(position)) {
-          return {
-            ...overrides,
-            [stepName]: { x: position.x, y: position.y },
-          };
-        }
-        return overrides;
-      },
-      {},
-    );
-  } catch {
-    return {};
-  }
-}
-
-function isXYPosition(value: unknown): value is { x: number; y: number } {
-  return (
-    typeof value === 'object' &&
-    !isNil(value) &&
-    'x' in value &&
-    'y' in value &&
-    typeof value.x === 'number' &&
-    typeof value.y === 'number'
-  );
-}
-
-function saveStepPositionOverridesToLocalStorage({
-  flowId,
-  orientation,
-  stepPositionOverrides,
-}: {
-  flowId: string;
-  orientation: CanvasOrientation;
-  stepPositionOverrides: StepPositionOverrides;
-}): void {
-  const key = getStepPositionOverridesStorageKey({ flowId, orientation });
-  if (Object.keys(stepPositionOverrides).length === 0) {
-    localStorage.removeItem(key);
-    return;
-  }
-  localStorage.setItem(key, JSON.stringify(stepPositionOverrides));
 }
 
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';

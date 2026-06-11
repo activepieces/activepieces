@@ -55,7 +55,6 @@ export const FlowCanvas = React.memo(
       rightSidebar,
       notes,
       canvasOrientation,
-      stepPositionOverrides,
     ] = useBuilderStateContext((state) => {
       return [
         state.flowVersion,
@@ -67,7 +66,6 @@ export const FlowCanvas = React.memo(
         state.rightSidebar,
         state.flowVersion.notes,
         state.canvasOrientation,
-        state.stepPositionOverrides,
       ];
     });
     const containerRef = useRef<HTMLDivElement>(null);
@@ -88,23 +86,16 @@ export const FlowCanvas = React.memo(
       },
       [setSelectedNodes, selectedStep],
     );
-    const overridesKey = Object.entries(stepPositionOverrides)
-      .map(
-        ([stepName, position]) =>
-          `${stepName}:${Math.round(position.x)},${Math.round(position.y)}`,
-      )
-      .join('|');
     const graphKey = `${createGraphKey(
       flowVersion,
       notes,
       selectedStep ?? '',
-    )}-${canvasOrientation}-${overridesKey}`;
+    )}-${canvasOrientation}`;
     const graph = useMemo(() => {
       return flowCanvasUtils.createFlowGraph({
         version: flowVersion,
         notes,
         orientation: canvasOrientation,
-        stepPositionOverrides,
       });
     }, [graphKey]);
     const [contextMenuType, setContextMenuType] = useState<ContextMenuType>(

@@ -36,8 +36,5 @@ export function useEdgeLayoutSpace({
       : { x: targetX, y: targetY },
     toCanvasPath: (layoutPath: string) =>
       isHorizontal ? svgPathUtils.transposePath(layoutPath) : layoutPath,
-    adaptiveArrowHead: isHorizontal
-      ? flowCanvasConsts.ARROW_RIGHT_HEAD
-      : flowCanvasConsts.ARROW_DOWN,
   };
 }

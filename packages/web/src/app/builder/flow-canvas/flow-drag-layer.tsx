@@ -45,8 +45,6 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
     setDraggedNote,
     getNoteById,
     moveNote,
-    setStepPositionOverride,
-    clearStepPositionOverride,
   ] = useBuilderStateContext((state) => [
     state.setActiveDraggingStep,
     state.applyOperation,
@@ -55,8 +53,6 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
     state.setDraggedNote,
     state.getNoteById,
     state.moveNote,
-    state.setStepPositionOverride,
-    state.clearStepPositionOverride,
   ]);
 
   const fixCursorSnapOffset = useCallback(
@@ -123,15 +119,7 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
   const handleDragEnd = (e: DragEndEvent) => {
     setActiveDraggingStep(null);
     setDraggedNote(null, null);
-    handleStepDragEnd({
-      e,
-      applyOperation,
-      activeDraggingStep,
-      flowVersion,
-      setStepPositionOverride,
-      clearStepPositionOverride,
-      reactFlow,
-    });
+    handleStepDragEnd({ e, applyOperation, activeDraggingStep, flowVersion });
     handleNoteDragEnd({ e, getNoteById, moveNote, reactFlow });
   };
 
@@ -174,39 +162,16 @@ function handleStepDragEnd({
   applyOperation,
   activeDraggingStep,
   flowVersion,
-  setStepPositionOverride,
-  clearStepPositionOverride,
-  reactFlow,
 }: { e: DragEndEvent } & Pick<
   BuilderState,
-  | 'applyOperation'
-  | 'activeDraggingStep'
-  | 'flowVersion'
-  | 'setStepPositionOverride'
-  | 'clearStepPositionOverride'
-> & {
-    reactFlow: ReactFlowInstance;
-  }) {
+  'applyOperation' | 'activeDraggingStep' | 'flowVersion'
+>) {
   const draggedStep = activeDraggingStep
     ? flowStructureUtil.getStep(activeDraggingStep, flowVersion.trigger)
     : undefined;
   const isOverSomething =
     !isNil(e.over?.data?.current) &&
     e.over.data.current.accepts === e.active.data?.current?.type;
-  if (!isOverSomething && !isNil(draggedStep)) {
-    const draggedNode = reactFlow.getNode(draggedStep.name);
-    const { zoom } = reactFlow.getViewport();
-    if (!isNil(draggedNode)) {
-      setStepPositionOverride({
-        stepName: draggedStep.name,
-        position: {
-          x: draggedNode.position.x + e.delta.x / zoom,
-          y: draggedNode.position.y + e.delta.y / zoom,
-        },
-      });
-    }
-    return;
-  }
   if (isOverSomething) {
     const droppedAtNodeData: ApButtonData | undefined = e.over?.data
       .current as unknown as ApButtonData | undefined;
@@ -242,9 +207,6 @@ function handleStepDragEnd({
               : undefined,
         },
       });
-      // a structural move places the step at a new auto-layout slot, so any
-      // free-drag position from before the move no longer applies
-      clearStepPositionOverride(draggedStep.name);
     }
   }
 }

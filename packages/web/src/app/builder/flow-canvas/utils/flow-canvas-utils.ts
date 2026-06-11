@@ -43,8 +43,6 @@ import {
  * reflected across the y = x axis — node positions by transposeGraphPositions
  * below, edge SVG paths by svgPathUtils.transposePath inside the edge
  * components — turning the top-to-bottom layout into a left-to-right one.
- * Dragged steps get their persisted position applied last; edges notice the
- * deviation from the auto layout and fall back to a smooth-step path.
  */
 const getLayout = (orientation: CanvasOrientation) =>
   flowCanvasLayoutConsts.ORIENTATION_LAYOUT[orientation];
@@ -127,7 +125,7 @@ const createStepGraph: (params: {
   const straightLineEdge: ApStraightLineEdge = {
     id: `${step.name}-${step.nextAction?.name ?? 'graph-end'}-edge`,
     source: step.name,
-    target: step.nextAction?.name ?? `${step.name}-subgraph-end`,
+    target: `${step.name}-subgraph-end`,
     type: ApEdgeType.STRAIGHT_LINE as const,
     data: {
       drawArrowHead: !isNil(step.nextAction),
@@ -148,8 +146,7 @@ const createStepGraph: (params: {
 const buildFlowGraph: (params: {
   step: FlowAction | FlowTrigger | undefined;
   orientation: CanvasOrientation;
-  overriddenSteps: ReadonlySet<string>;
-}) => ApGraph = ({ step, orientation, overriddenSteps }) => {
+}) => ApGraph = ({ step, orientation }) => {
   if (isNil(step)) {
     return {
       nodes: [],
@@ -164,24 +161,19 @@ const buildFlowGraph: (params: {
   });
   const childGraph =
     step.type === FlowActionType.LOOP_ON_ITEMS
-      ? buildLoopChildGraph({ step, orientation, overriddenSteps })
+      ? buildLoopChildGraph({ step, orientation })
       : step.type === FlowActionType.ROUTER
-      ? buildRouterChildGraph({ step, orientation, overriddenSteps })
+      ? buildRouterChildGraph({ step, orientation })
       : sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
-      ? buildContinueOnFailureBranchesGraph({
-          step,
-          orientation,
-          overriddenSteps,
-        })
+      ? buildContinueOnFailureBranchesGraph({ step, orientation })
       : null;
 
   const graphWithChild = childGraph ? mergeGraph(graph, childGraph) : graph;
   const nextStepGraph = buildFlowGraph({
     step: step.nextAction,
     orientation,
-    overriddenSteps,
   });
-  const mergedGraph = mergeGraph(
+  return mergeGraph(
     graphWithChild,
     offsetGraph(nextStepGraph, {
       x: 0,
@@ -189,51 +181,7 @@ const buildFlowGraph: (params: {
         .height,
     }),
   );
-  const reconnectEdge = createStructureReconnectEdge({
-    step,
-    childGraph,
-    overriddenSteps,
-  });
-  return reconnectEdge
-    ? { nodes: mergedGraph.nodes, edges: [...mergedGraph.edges, reconnectEdge] }
-    : mergedGraph;
 };
-
-/**
- * When the step right after a loop/router is dragged away from its default
- * spot, the composite end edge keeps pointing at the old merge point. This
- * edge re-establishes the visual connection to the moved step.
- */
-function createStructureReconnectEdge({
-  step,
-  childGraph,
-  overriddenSteps,
-}: {
-  step: FlowAction | FlowTrigger;
-  childGraph: ApGraph | null;
-  overriddenSteps: ReadonlySet<string>;
-}): ApStraightLineEdge | null {
-  const mergeNodeId = childGraph?.nodes.at(-1)?.id;
-  if (
-    isNil(childGraph) ||
-    isNil(mergeNodeId) ||
-    isNil(step.nextAction) ||
-    !overriddenSteps.has(step.nextAction.name)
-  ) {
-    return null;
-  }
-  return {
-    id: `${step.name}-reconnect-${step.nextAction.name}`,
-    source: mergeNodeId,
-    target: step.nextAction.name,
-    type: ApEdgeType.STRAIGHT_LINE as const,
-    data: {
-      drawArrowHead: true,
-      hideAddButton: true,
-      parentStepName: step.name,
-    },
-  };
-}
 
 function offsetGraph(
   graph: ApGraph,
@@ -264,25 +212,6 @@ function transposeGraphPositions(graph: ApGraph): ApGraph {
         y: node.position.x,
       },
     })),
-    edges: graph.edges,
-  };
-}
-
-function applyStepPositionOverrides({
-  graph,
-  stepPositionOverrides,
-}: {
-  graph: ApGraph;
-  stepPositionOverrides: Record<string, { x: number; y: number }>;
-}): ApGraph {
-  return {
-    nodes: graph.nodes.map((node) => {
-      const override =
-        node.type === ApNodeType.STEP
-          ? stepPositionOverrides[node.id]
-          : undefined;
-      return override ? { ...node, position: override } : node;
-    }),
     edges: graph.edges,
   };
 }
@@ -343,14 +272,12 @@ const calculateGraphBoundingBox = ({
 const buildLoopChildGraph: (params: {
   step: LoopOnItemsAction;
   orientation: CanvasOrientation;
-  overriddenSteps: ReadonlySet<string>;
-}) => ApGraph = ({ step, orientation, overriddenSteps }) => {
+}) => ApGraph = ({ step, orientation }) => {
   const layout = getLayout(orientation);
   const childGraph = step.firstLoopAction
     ? buildFlowGraph({
         step: step.firstLoopAction,
         orientation,
-        overriddenSteps,
       })
     : createBigAddButtonGraph({
         parentStep: step,
@@ -417,8 +344,7 @@ const buildLoopChildGraph: (params: {
       data: {
         parentStepName: step.name,
         isLoopEmpty: isNil(step.firstLoopAction),
-        drawArrowHeadAfterEnd:
-          !isNil(step.nextAction) && !overriddenSteps.has(step.nextAction.name),
+        drawArrowHeadAfterEnd: !isNil(step.nextAction),
         verticalSpaceBetweenReturnNodeStartAndEnd:
           childGraphBoundingBox.height + layout.spaceAlongBetweenSteps,
       },
@@ -450,16 +376,14 @@ const buildLoopChildGraph: (params: {
 const buildRouterChildGraph = ({
   step,
   orientation,
-  overriddenSteps,
 }: {
   step: RouterAction;
   orientation: CanvasOrientation;
-  overriddenSteps: ReadonlySet<string>;
 }) => {
   const layout = getLayout(orientation);
   const childGraphs = step.children.map((branch, index) => {
     return branch
-      ? buildFlowGraph({ step: branch, orientation, overriddenSteps })
+      ? buildFlowGraph({ step: branch, orientation })
       : createBigAddButtonGraph({
           parentStep: step,
           nodeData: {
@@ -537,9 +461,7 @@ const buildRouterChildGraph = ({
               branchIndex === 0 ||
               branchIndex === childGraphsAfterOffset.length - 1,
             routerOrBranchStepName: step.name,
-            isNextStepEmpty:
-              isNil(step.nextAction) ||
-              overriddenSteps.has(step.nextAction.name),
+            isNextStepEmpty: isNil(step.nextAction),
           },
         },
       ];
@@ -558,11 +480,9 @@ const buildRouterChildGraph = ({
 const buildContinueOnFailureBranchesGraph = ({
   step,
   orientation,
-  overriddenSteps,
 }: {
   step: FlowAction;
   orientation: CanvasOrientation;
-  overriddenSteps: ReadonlySet<string>;
 }): ApGraph => {
   const layout = getLayout(orientation);
   const branches =
@@ -584,7 +504,7 @@ const buildContinueOnFailureBranchesGraph = ({
 
   const childGraphs = branchOrder.map(({ branch, location }, index) =>
     branch
-      ? buildFlowGraph({ step: branch, orientation, overriddenSteps })
+      ? buildFlowGraph({ step: branch, orientation })
       : createBigAddButtonGraph({
           parentStep: step,
           nodeData: {
@@ -654,9 +574,7 @@ const buildContinueOnFailureBranchesGraph = ({
               flowCanvasLayoutConsts.ARC_LENGTH,
             drawHorizontalLine: true,
             routerOrBranchStepName: step.name,
-            isNextStepEmpty:
-              isNil(step.nextAction) ||
-              overriddenSteps.has(step.nextAction.name),
+            isNextStepEmpty: isNil(step.nextAction),
           },
         },
       ];
@@ -802,18 +720,14 @@ export const flowCanvasUtils = {
     version,
     notes,
     orientation,
-    stepPositionOverrides,
   }: {
     version: FlowVersion;
     notes: Note[];
     orientation: CanvasOrientation;
-    stepPositionOverrides: Record<string, { x: number; y: number }>;
   }): ApGraph {
-    const overriddenSteps = new Set(Object.keys(stepPositionOverrides));
     const stepsGraph = buildFlowGraph({
       step: version.trigger,
       orientation,
-      overriddenSteps,
     });
     const notesGraph = buildNotesGraph(notes);
     const graphEndWidget = stepsGraph.nodes.findLast(
@@ -828,11 +742,7 @@ export const flowCanvasUtils = {
       orientation === 'horizontal'
         ? transposeGraphPositions(stepsGraph)
         : stepsGraph;
-    const graphWithOverrides = applyStepPositionOverrides({
-      graph: orientedGraph,
-      stepPositionOverrides,
-    });
-    return mergeGraph(graphWithOverrides, notesGraph);
+    return mergeGraph(orientedGraph, notesGraph);
   },
   createFocusStepInGraphParams,
   calculateGraphBoundingBox,

@@ -242,10 +242,6 @@ export const createFlowState = (
               delete inputSampleData[name];
               delete outputSampleData[name];
               state.removeStepTestListener(name);
-              // step names are reused (step_1, step_2, ...), so a stale saved
-              // drag position would snap a future step with the same name to
-              // the deleted step's coordinates
-              state.clearStepPositionOverride(name);
             });
             set(() => {
               return {

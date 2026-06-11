@@ -1,10 +1,5 @@
 import { StepLocationRelativeToParent } from '@activepieces/shared';
-import {
-  BaseEdge,
-  EdgeProps,
-  getSmoothStepPath,
-  Position,
-} from '@xyflow/react';
+import { BaseEdge, EdgeProps } from '@xyflow/react';
 
 import { flowCanvasConsts } from '../utils/consts';
 import { ApStraightLineEdge } from '../utils/types';
@@ -20,49 +15,21 @@ export const ApStraightLineCanvasEdge = ({
   data,
   id,
 }: EdgeProps & ApStraightLineEdge) => {
-  const {
-    isHorizontal,
-    layoutSource,
-    layoutTarget,
-    toCanvasPath,
-    adaptiveArrowHead,
-  } = useEdgeLayoutSpace({ sourceX, sourceY, targetX, targetY });
-  const isAlignedWithAutoLayout =
-    Math.abs(layoutTarget.x - layoutSource.x) < 1 &&
-    layoutTarget.y > layoutSource.y;
+  const { layoutSource, layoutTarget, toCanvasPath } = useEdgeLayoutSpace({
+    sourceX,
+    sourceY,
+    targetX,
+    targetY,
+  });
 
-  const buildAlignedEdge = () => {
-    const lineLength = layoutTarget.y - layoutSource.y;
-    const layoutPath = `M ${layoutSource.x} ${layoutSource.y} v${lineLength}
+  const lineLength = layoutTarget.y - layoutSource.y;
+  const layoutPath = `M ${layoutSource.x} ${layoutSource.y} v${lineLength}
    ${data.drawArrowHead ? flowCanvasConsts.ARROW_DOWN : ''}`;
-    return {
-      path: toCanvasPath(layoutPath),
-      buttonCenter: {
-        x: (sourceX + targetX) / 2,
-        y: (sourceY + targetY) / 2,
-      },
-    };
+  const path = toCanvasPath(layoutPath);
+  const buttonCenter = {
+    x: (sourceX + targetX) / 2,
+    y: (sourceY + targetY) / 2,
   };
-
-  const buildAdaptiveEdge = () => {
-    const [smoothPath, labelX, labelY] = getSmoothStepPath({
-      sourceX,
-      sourceY,
-      targetX,
-      targetY,
-      sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
-      targetPosition: isHorizontal ? Position.Left : Position.Top,
-      borderRadius: flowCanvasConsts.ARC_LENGTH,
-    });
-    return {
-      path: `${smoothPath} ${data.drawArrowHead ? adaptiveArrowHead : ''}`,
-      buttonCenter: { x: labelX, y: labelY },
-    };
-  };
-
-  const { path, buttonCenter } = isAlignedWithAutoLayout
-    ? buildAlignedEdge()
-    : buildAdaptiveEdge();
 
   return (
     <>

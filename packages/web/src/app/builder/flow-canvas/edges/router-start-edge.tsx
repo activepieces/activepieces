@@ -1,10 +1,5 @@
 import { StepLocationRelativeToParent } from '@activepieces/shared';
-import {
-  BaseEdge,
-  EdgeProps,
-  getSmoothStepPath,
-  Position,
-} from '@xyflow/react';
+import { BaseEdge, EdgeProps } from '@xyflow/react';
 
 import { flowCanvasConsts } from '../utils/consts';
 import { ApRouterStartEdge } from '../utils/types';
@@ -28,23 +23,13 @@ export const ApRouterStartCanvasEdge = ({
   target,
   id,
 }: EdgeProps & Omit<ApRouterStartEdge, 'position'>) => {
-  const {
-    isHorizontal,
-    layout,
-    layoutSource,
-    layoutTarget,
-    toCanvasPath,
-    adaptiveArrowHead,
-  } = useEdgeLayoutSpace({ sourceX, sourceY, targetX, targetY });
+  const { isHorizontal, layout, layoutSource, layoutTarget, toCanvasPath } =
+    useEdgeLayoutSpace({ sourceX, sourceY, targetX, targetY });
 
   const verticalLineLength =
     layout.spaceAlongBetweenSteps -
     flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE +
     (layout.routerOffsetAlong - layout.loopOffsetAlong);
-
-  // handles render a couple of pixels outside the node bounds, so compare with a tolerance
-  const isAlignedWithAutoLayout =
-    Math.abs(layoutTarget.y - layoutSource.y - layout.routerOffsetAlong) < 10;
 
   const distanceBetweenSourceAndTarget = Math.abs(
     layoutTarget.x - layoutSource.x,
@@ -105,61 +90,25 @@ export const ApRouterStartCanvasEdge = ({
     return path;
   };
 
-  const buildAlignedEdge = () => {
-    const layoutPath = generateAlignedLayoutPath();
-    return {
-      path: toCanvasPath(layoutPath),
-      buttonPosition: isHorizontal
-        ? {
-            // sits on the entry line, right before the arrow head
-            x:
-              targetX -
-              HORIZONTAL_BUTTON_END_MARGIN -
-              flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width,
-            y: targetY - flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height / 2,
-          }
-        : {
-            x: targetX - flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width / 2,
-            y: targetY - verticalLineLength / 2,
-          },
-      labelAnchor: null,
-    };
-  };
-
-  const buildAdaptiveEdge = () => {
-    const [smoothPath, labelX, labelY] = getSmoothStepPath({
-      sourceX,
-      sourceY,
-      targetX,
-      targetY,
-      sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
-      targetPosition: isHorizontal ? Position.Left : Position.Top,
-      borderRadius: flowCanvasConsts.ARC_LENGTH,
-    });
-    return {
-      path: `${smoothPath} ${!data.isBranchEmpty ? adaptiveArrowHead : ''}`,
-      buttonPosition: {
-        x: labelX - flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width / 2,
-        y: labelY - flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height / 2,
-      },
-      labelAnchor: { x: labelX, y: labelY },
-    };
-  };
-
-  const { path, buttonPosition, labelAnchor } = isAlignedWithAutoLayout
-    ? buildAlignedEdge()
-    : buildAdaptiveEdge();
+  const path = toCanvasPath(generateAlignedLayoutPath());
+  const buttonPosition = isHorizontal
+    ? {
+        // sits on the entry line, right before the arrow head
+        x:
+          targetX -
+          HORIZONTAL_BUTTON_END_MARGIN -
+          flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width,
+        y: targetY - flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height / 2,
+      }
+    : {
+        x: targetX - flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width / 2,
+        y: targetY - verticalLineLength / 2,
+      };
 
   const labelBoxWidth = flowCanvasConsts.AP_NODE_SIZE.STEP.width - 10;
   const labelBoxHeight =
     flowCanvasConsts.LABEL_HEIGHT + flowCanvasConsts.LABEL_VERTICAL_PADDING;
   const getLabelBoxPosition = () => {
-    if (labelAnchor) {
-      return {
-        x: labelAnchor.x - labelBoxWidth / 2,
-        y: labelAnchor.y - labelBoxHeight - 4,
-      };
-    }
     if (isHorizontal) {
       // the pill sits on the entry line itself (its background masks the line),
       // ending right before the add button / branch slot
@@ -184,10 +133,6 @@ export const ApRouterStartCanvasEdge = ({
     };
   };
   const labelBoxPosition = getLabelBoxPosition();
-  const labelAlign =
-    isHorizontal && isAlignedWithAutoLayout
-      ? ('end' as const)
-      : ('center' as const);
 
   const branchLabelProps =
     data.stepLocationRelativeToParent ===
@@ -250,7 +195,6 @@ export const ApRouterStartCanvasEdge = ({
       >
         <BranchLabel
           key={branchLabelProps.label + branchLabelProps.targetNodeName}
-          align={labelAlign}
           {...branchLabelProps}
         />
       </foreignObject>

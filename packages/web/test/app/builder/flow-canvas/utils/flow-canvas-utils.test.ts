@@ -81,7 +81,6 @@ describe('flowCanvasUtils.createFlowGraph', () => {
       version: createFlowVersion(createCodeAction('step_1')),
       notes: [],
       orientation: 'vertical',
-      stepPositionOverrides: {},
     });
     expect(getStepNode(graph, 'trigger').position).toEqual({ x: 0, y: 0 });
     expect(getStepNode(graph, 'step_1').position).toEqual({ x: 0, y: 120 });
@@ -94,35 +93,22 @@ describe('flowCanvasUtils.createFlowGraph', () => {
       ),
       notes: [],
       orientation: 'horizontal',
-      stepPositionOverrides: {},
     });
     expect(getStepNode(graph, 'trigger').position).toEqual({ x: 0, y: 0 });
     expect(getStepNode(graph, 'step_1').position).toEqual({ x: 160, y: 0 });
     expect(getStepNode(graph, 'step_2').position).toEqual({ x: 320, y: 0 });
   });
 
-  it('connects each step edge to the next step node', () => {
+  it('connects each step edge to its subgraph end node', () => {
     const graph = flowCanvasUtils.createFlowGraph({
       version: createFlowVersion(createCodeAction('step_1')),
       notes: [],
       orientation: 'vertical',
-      stepPositionOverrides: {},
     });
     const triggerEdge = graph.edges.find((edge) => edge.source === 'trigger');
     expect(triggerEdge?.type).toEqual(ApEdgeType.STRAIGHT_LINE);
-    expect(triggerEdge?.target).toEqual('step_1');
+    expect(triggerEdge?.target).toEqual('trigger-subgraph-end');
     const lastEdge = graph.edges.find((edge) => edge.source === 'step_1');
     expect(lastEdge?.target).toEqual('step_1-subgraph-end');
-  });
-
-  it('applies step position overrides on top of the auto layout', () => {
-    const graph = flowCanvasUtils.createFlowGraph({
-      version: createFlowVersion(createCodeAction('step_1')),
-      notes: [],
-      orientation: 'horizontal',
-      stepPositionOverrides: { step_1: { x: 500, y: 90 } },
-    });
-    expect(getStepNode(graph, 'step_1').position).toEqual({ x: 500, y: 90 });
-    expect(getStepNode(graph, 'trigger').position).toEqual({ x: 0, y: 0 });
   });
 });

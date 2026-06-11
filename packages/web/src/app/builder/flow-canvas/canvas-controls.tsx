@@ -10,7 +10,6 @@ import {
   MoveVertical,
   Plus,
   StickyNote,
-  Wand2,
 } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
 
@@ -228,8 +227,6 @@ const CanvasControls = ({
     setShowMinimap,
     readonly,
     setCanvasOrientation,
-    hasStepPositionOverrides,
-    resetStepPositionOverrides,
   ] = useBuilderStateContext((state) => {
     return [
       state.setPanningMode,
@@ -238,8 +235,6 @@ const CanvasControls = ({
       state.setShowMinimap,
       state.readonly,
       state.setCanvasOrientation,
-      Object.keys(state.stepPositionOverrides).length > 0,
-      state.resetStepPositionOverrides,
     ];
   });
   const spacePressed = useKeyPress('Space');
@@ -320,17 +315,6 @@ const CanvasControls = ({
             )}
           </Button>
         </CanvasButtonWrapper>
-        {hasStepPositionOverrides && (
-          <CanvasButtonWrapper tooltip={t('Reset layout')}>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => resetStepPositionOverrides()}
-            >
-              <Wand2 className="size-4" />
-            </Button>
-          </CanvasButtonWrapper>
-        )}
         <div>
           <Separator orientation="vertical" className="h-5"></Separator>
         </div>
