@@ -28,7 +28,7 @@ export const produktly = createPiece({
   displayName: 'Produktly',
   description: 'Onboarding, in-app announcements, feedback collection and NPS for SaaS products.',
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://raw.githubusercontent.com/cumonvip1/activepieces/feat/produktly-piece/packages/pieces/community/produktly/produktly-logo.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/produktly.png',
   categories: [PieceCategory.PRODUCTIVITY, PieceCategory.MARKETING],
   auth: produktlyAuth,
   authors: [],

@@ -1,5 +1,5 @@
-import { PieceAuth, httpClient, HttpMethod } from '@activepieces/pieces-framework';
-import { AuthenticationType } from '@activepieces/pieces-common';
+import { PieceAuth } from '@activepieces/pieces-framework';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
 
 export const produktlyAuth = PieceAuth.SecretText({
   displayName: 'API Key',

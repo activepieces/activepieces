@@ -1,6 +1,7 @@
 import { DropdownState, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { produktlyApiCall } from './client';
+import { produktlyAuth } from './auth';
 
 export const produktlyProps = {
   changelog: Property.Dropdown({
