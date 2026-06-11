@@ -153,4 +153,19 @@ describe('evlogDrains.resolve', () => {
         expect(result.drain).toBeTypeOf('function')
         expect(result.flush).toBeTypeOf('function')
     })
+
+    it('returns a drain pipeline when axiomToken and axiomDataset are provided', () => {
+        const result = evlogDrains.resolve({
+            config: { serviceName: 'svc', axiomToken: 'xaat-token', axiomDataset: 'logs' },
+        })
+        expect(result.drain).toBeTypeOf('function')
+        expect(result.flush).toBeTypeOf('function')
+    })
+
+    it('returns no drain when axiomToken is set but axiomDataset is missing', () => {
+        const result = evlogDrains.resolve({
+            config: { serviceName: 'svc', axiomToken: 'xaat-token' },
+        })
+        expect(result.drain).toBeUndefined()
+    })
 })

@@ -1,4 +1,5 @@
 import { DrainContext } from 'evlog'
+import { createAxiomDrain } from 'evlog/axiom'
 import { createBetterStackDrain } from 'evlog/better-stack'
 import { createHyperDXDrain } from 'evlog/hyperdx'
 import { createOTLPDrain } from 'evlog/otlp'
@@ -58,6 +59,12 @@ function buildLokiClient({ url: _url, username, password }: BuildLokiClientParam
 }
 
 function resolve({ config }: { config: EvlogDrainConfig }): ResolvedDrain {
+    if (config.axiomToken && config.axiomDataset) {
+        const adapter = createAxiomDrain({ apiKey: config.axiomToken, dataset: config.axiomDataset })
+        const pipeline = buildPipeline((batch) => adapter(batch))
+        return { drain: pipeline, flush: () => pipeline.flush() }
+    }
+
     if (config.hyperdxToken) {
         const adapter = createHyperDXDrain({ apiKey: config.hyperdxToken, serviceName: config.serviceName })
         const pipeline = buildPipeline((batch) => adapter(batch))
@@ -113,6 +120,8 @@ export const evlogDrains = {
 export type EvlogDrainConfig = {
     serviceName: string
     hyperdxToken?: string
+    axiomToken?: string
+    axiomDataset?: string
     lokiUrl?: string
     lokiUsername?: string
     lokiPassword?: string

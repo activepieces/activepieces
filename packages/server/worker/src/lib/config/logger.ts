@@ -20,6 +20,8 @@ function buildLogger(): ApLogger {
             drainConfig: {
                 serviceName: 'activepieces-worker',
                 hyperdxToken: system.get(WorkerSystemProp.HYPERDX_TOKEN),
+                axiomToken: system.get(WorkerSystemProp.AXIOM_TOKEN),
+                axiomDataset: system.get(WorkerSystemProp.AXIOM_DATASET),
                 lokiUrl: system.get(WorkerSystemProp.LOKI_URL),
                 lokiUsername: system.get(WorkerSystemProp.LOKI_USERNAME),
                 lokiPassword: system.get(WorkerSystemProp.LOKI_PASSWORD),

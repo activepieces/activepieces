@@ -23,6 +23,8 @@ function buildFacade(): FastifyBaseLogger {
             drainConfig: {
                 serviceName: 'activepieces-api',
                 hyperdxToken: environmentVariables.getEnvironment(AppSystemProp.HYPERDX_TOKEN),
+                axiomToken: environmentVariables.getEnvironment(AppSystemProp.AXIOM_TOKEN),
+                axiomDataset: environmentVariables.getEnvironment(AppSystemProp.AXIOM_DATASET),
                 lokiUrl: environmentVariables.getEnvironment(AppSystemProp.LOKI_URL),
                 lokiUsername: environmentVariables.getEnvironment(AppSystemProp.LOKI_USERNAME),
                 lokiPassword: environmentVariables.getEnvironment(AppSystemProp.LOKI_PASSWORD),

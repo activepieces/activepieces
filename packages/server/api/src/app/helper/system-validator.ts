@@ -71,6 +71,8 @@ const systemPropValidators: {
     [AppSystemProp.BETTERSTACK_HOST]: stringValidator,
     [AppSystemProp.OTEL_ENABLED]: booleanValidator,
     [AppSystemProp.HYPERDX_TOKEN]: stringValidator,
+    [AppSystemProp.AXIOM_TOKEN]: stringValidator,
+    [AppSystemProp.AXIOM_DATASET]: stringValidator,
     [AppSystemProp.FRONTEND_URL]: urlValidator,
     [AppSystemProp.CONTAINER_TYPE]: enumValidator(Object.values(ContainerType)),
     [AppSystemProp.PORT]: numberValidator,
