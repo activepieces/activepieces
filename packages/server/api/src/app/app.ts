@@ -149,7 +149,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
     await app.register(rateLimitModule)
     app.addHook('onResponse', async (request, reply) => {
-        // eslint-disable-next-line
+        // eslint-disable-next-line                                                                                                                                                                                                                     
         reply.header('x-request-id', request.id)
     })
     app.addHook('onRequest', async (request, reply) => {
@@ -157,6 +157,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             method: request.method as HTTPMethods,
             url: request.routeOptions.url!,
         })
+        request.log = request.log.child({ route: request.routeOptions.url })
         if (!route) {
             return reply.code(404).send({
                 statusCode: 404,
