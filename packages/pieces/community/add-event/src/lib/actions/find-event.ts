@@ -11,6 +11,12 @@ export const addEventFindEventAction = createAction({
   displayName: 'Find Event',
   description:
     'Finds events matching a search term. Returns up to 20 of the best matches.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches AddEvent events by a required search term matched against title, internal name, description, and location, returning up to 20 matches. Use when an agent needs to look up existing events; optionally narrow by calendar and by an earliest/latest start datetime. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     search: Property.ShortText({
       displayName: 'Search Term',

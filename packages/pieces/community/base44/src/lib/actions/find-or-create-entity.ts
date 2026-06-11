@@ -7,6 +7,8 @@ export const findOrCreateEntity = createAction({
   name: 'find_or_create_entity',
   displayName: 'Find or Create Entity',
   description: 'Find a matching entity record, or create one if not found',
+  audience: 'both',
+  aiMetadata: { description: 'Searches a Base44 app for an existing record of a given entity type matching a JSON query, and creates one from the supplied data only if no match is found. Use this upsert-style action to avoid duplicates when you want a record to exist but should not create a second copy. Because creation is gated on the search query, it is effectively idempotent so long as the query reliably identifies the same record.', idempotent: true },
   props: {
     entityType: Property.ShortText({
       displayName: 'Entity Type',

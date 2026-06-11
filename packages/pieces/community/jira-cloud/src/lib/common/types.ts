@@ -43,4 +43,5 @@ export const VALID_CUSTOM_FIELD_TYPES = [
 	'textfield',
 	'url',
 	'project',
+	'people',
 ];

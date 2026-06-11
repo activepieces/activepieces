@@ -10,6 +10,8 @@ export const updateContactEmail = createAction({
     name: 'update_contact_email',
     displayName: "Update Contact's Email Address",
     description: "Change the email address of a contact in a list.",
+    audience: 'both',
+    aiMetadata: { description: "Changes a contact's email address within an EmailOctopus list, locating the contact by its current email. Use to correct or migrate a subscriber's address. Requires the list id, the current email (used to find the record), and the new email. Not idempotent — once changed, the original email no longer resolves to the contact, so a repeated call with the same inputs will not match.", idempotent: false },
     props: {
         list_id: emailOctopusProps.listId(),
         current_email_address: Property.ShortText({

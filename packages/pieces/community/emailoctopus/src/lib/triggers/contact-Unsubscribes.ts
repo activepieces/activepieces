@@ -19,6 +19,9 @@ export const contactUnsubscribes = createTrigger({
   name: 'contactUnsubscribes',
   displayName: 'Contact Unsubscribes',
   description: 'Triggers when a contact unsubscribes from a list.',
+  aiMetadata: {
+    description: 'Fires when a contact unsubscribes from an EmailOctopus list (a contact.unsubscribed webhook event), representing an opt-out. Can be scoped to a single list id, or left unfiltered to catch unsubscribes across all lists.',
+  },
   props: {
     list_id: emailOctopusProps.listId(true),
         liveMarkdown: Property.MarkDown({

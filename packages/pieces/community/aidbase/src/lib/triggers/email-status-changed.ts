@@ -11,6 +11,10 @@ export const emailStatusChanged = createTrigger({
   name: 'email_status_changed',
   displayName: 'Email Status Changed',
   description: 'Fires when the status of an email changes.',
+  aiMetadata: {
+    description:
+      'Fires when an Aidbase email transitions to a new status (e.g. Opened, Assigned, Need More Info, Resolved, Closed), representing a workflow state change on a support email. Can be filtered to a specific target status and/or inbox, or left open to fire on any status change.',
+  },
 
   props: {
     inbox_id: emailInboxDropdown,

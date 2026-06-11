@@ -8,6 +8,8 @@ export const createList = createAction({
   auth: sendfoxAuth,
   displayName: 'Create List',
   description: 'Create a new list',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new contact list in SendFox with the given name. Use to set up a list before adding subscribers to it. Not idempotent: each call creates a new list even if one with the same name already exists.', idempotent: false },
   props: {
     task_name: Property.ShortText({
       displayName: 'List Name',

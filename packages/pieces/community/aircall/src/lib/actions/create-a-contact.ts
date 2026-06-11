@@ -8,6 +8,8 @@ export const createAContact = createAction({
   name: 'createAContact',
   displayName: 'Create a Contact',
   description:'Creates a new contact.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new contact in Aircall with at least one phone number, plus optional name, company, emails, and free-text information. Use when adding a person not yet in the address book; to change an existing one use Update Contact instead. Not idempotent: each call creates a separate contact even with identical details.', idempotent: false },
   props: {
     phone_numbers: Property.Array({
       displayName: 'Phone Numbers',

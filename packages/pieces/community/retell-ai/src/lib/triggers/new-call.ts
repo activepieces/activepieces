@@ -10,6 +10,9 @@ export const newCallTrigger = createTrigger({
   name: 'new_call',
   displayName: 'New Call',
   description: 'Triggers when a new outgoing or incoming call is created.',
+  aiMetadata: {
+    description: 'Fires when a new call is created in Retell, for either inbound or outbound direction, via the call.created webhook event. Each event represents a freshly initiated call with its call ID, numbers, direction, agent, and metadata. Requires a manually configured webhook in the Retell dashboard.',
+  },
   auth: retellAiAuth,
   props: {
     webhookInstructions: Property.MarkDown({

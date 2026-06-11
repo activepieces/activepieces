@@ -9,6 +9,12 @@ export const listEnvelopes = createAction({
   displayName: 'Search Signing Requests',
   description:
     'Find and list signing requests with optional filters like status, date range, or keyword.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists DocuSign envelopes (signing requests) for an account, auto-paginating through all results. Filters are optional: with no filters it returns all envelopes, otherwise it narrows by status, sender/received date range, or a search keyword. Use to find envelopes by criteria before acting on them; requires the account ID. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: docusignAuth,
   props: {
     accountId: Property.ShortText({

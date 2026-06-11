@@ -8,6 +8,9 @@ export const personUpdated = createTrigger({
   name: 'person_updated',
   displayName: 'Person Updated',
   description: 'Fires when a person is updated in your Folk workspace.',
+  aiMetadata: {
+    description: 'Fires when an existing person (contact) is modified in the connected Folk workspace, optionally scoped to a single group. The event payload carries the person ID and a list of field-level changes (including company links and custom field values) describing what was set, added, or removed.',
+  },
   props: {
     groupId: folkProps.group_id(false, 'Group ID'),
   },

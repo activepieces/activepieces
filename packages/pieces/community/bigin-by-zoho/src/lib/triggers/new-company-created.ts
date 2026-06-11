@@ -10,6 +10,9 @@ export const newCompanyCreated = createTrigger({
   name: 'newCompanyCreated',
   displayName: 'New Company Created',
   description: 'Triggers when a new company record is created',
+  aiMetadata: {
+    description: 'Fires when a new company (account) record is created in Bigin CRM, via an Accounts.create webhook. Represents a newly added organization.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,

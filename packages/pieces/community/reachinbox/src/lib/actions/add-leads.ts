@@ -20,6 +20,12 @@ export const addLeads = createAction({
   displayName: 'Add Leads',
   description:
     'Add leads to campaigns dynamically by selecting a campaign, entering lead details, and including custom variables.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Adds a single lead (email plus name and optional custom variables) to a specific ReachInbox campaign. Use to enroll a new contact into an outreach sequence. Requires a campaign id; not idempotent since repeated calls append the lead again.',
+    idempotent: false,
+  },
   props: {
     campaignId: Property.Dropdown({
   auth: ReachinboxAuth,

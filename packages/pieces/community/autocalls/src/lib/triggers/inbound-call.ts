@@ -8,6 +8,9 @@ export const inboundCall = createTrigger({
     name: 'inboundCall',
     displayName: 'Inbound Call',
     description: 'Triggers for variables before connecting an inbound call.',
+    aiMetadata: {
+      description: 'Fires via webhook when an inbound call reaches the selected Autocalls assistant, before the call is connected, providing the caller and assistant phone numbers so the flow can supply variables for the conversation.',
+    },
     props: {
         assistant: Property.Dropdown({
             auth: autocallsAuth,

@@ -192,27 +192,67 @@ export const AssistantMessage = memo(function AssistantMessage({
 
     const withReceipts: MessageBlock[] = [];
     for (const block of result) {
-      withReceipts.push(block);
-      if (block.kind === 'thinking') {
-        for (const step of block.steps) {
-          if (step.kind !== 'tool') continue;
-          const toolName = chatPartUtils.getToolPartName(step.part);
-          if (toolName !== 'ap_execute_action') continue;
-          const toolCallId = chatPartUtils.getToolCallId(step.part);
-          if (toolCallId) {
-            withReceipts.push({ kind: 'action-receipt', toolCallId });
+      if (block.kind !== 'thinking') {
+        withReceipts.push(block);
+        continue;
+      }
+
+      let currentSteps: ThinkingStep[] = [];
+      // Reasoning is one flat string from the AI SDK — no way to slice per tool call,
+      // so only the first sub-block after a split shows the reasoning accordion text.
+      let currentReasoning = block.reasoningText;
+
+      for (const step of block.steps) {
+        currentSteps.push(step);
+
+        if (step.kind !== 'tool') continue;
+        const toolName = chatPartUtils.getToolPartName(step.part);
+        if (toolName !== 'ap_execute_action') continue;
+        const toolCallId = chatPartUtils.getToolCallId(step.part);
+        if (!toolCallId) continue;
+
+        const hasReceipt = !!toolCallMeta[toolCallId]?.actionReceipt;
+        if (hasReceipt) {
+          if (currentSteps.length > 0 || currentReasoning.length > 0) {
+            withReceipts.push({
+              kind: 'thinking',
+              steps: currentSteps,
+              reasoningText: currentReasoning,
+            });
           }
+          withReceipts.push({ kind: 'action-receipt', toolCallId });
+          currentSteps = [];
+          currentReasoning = '';
         }
+      }
+
+      if (currentSteps.length > 0 || currentReasoning.length > 0) {
+        withReceipts.push({
+          kind: 'thinking',
+          steps: currentSteps,
+          reasoningText: currentReasoning,
+        });
+      } else if (block.steps.length === 0 && block.reasoningText.length === 0) {
+        withReceipts.push(block);
       }
     }
 
+    const lastThinkingWithReceiptsIdx = withReceipts.findLastIndex(
+      (b) => b.kind === 'thinking',
+    );
+    const cleaned = withReceipts.filter((block, idx) => {
+      if (block.kind !== 'thinking') return true;
+      if (idx === lastThinkingWithReceiptsIdx && isStreaming) return true;
+      return block.steps.length > 0 || block.reasoningText.length > 0;
+    });
+
     return {
-      blocks: withReceipts,
+      blocks: cleaned,
       hasContent: hasText,
       lastDisplayIdx,
       lastTextIdx,
     };
-  }, [message.parts, isStreaming]);
+  }, [message.parts, isStreaming, toolCallMeta]);
 
   const fullText = useMemo(
     () => (isStreaming ? '' : getTextFromParts(message.parts)),
@@ -378,6 +418,28 @@ export const AssistantMessage = memo(function AssistantMessage({
                 return null;
             }
           })}
+
+          {!isStreaming && !hasContent && hasRenderedContent && (
+            <motion.div
+              className="flex items-center gap-2 py-3 text-sm text-muted-foreground"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+            >
+              <span>
+                {t(
+                  "The agent completed its work but didn't provide a summary.",
+                )}
+              </span>
+              <button
+                type="button"
+                onClick={onRetry}
+                className={cn(ACTION_BUTTON_CLASS, 'inline-flex')}
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+              </button>
+            </motion.div>
+          )}
 
           <MessageActions
             className={cn(

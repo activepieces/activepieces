@@ -8,6 +8,8 @@ export const emailValidation = createAction({
   name: 'email_validation',
   displayName: 'Email Validation',
   description: 'Validate email addresses by checking domain validity, detecting disposable emails, and assessing risk factors',
+  audience: 'both',
+  aiMetadata: { description: 'Validate and risk-score a single email address, checking domain/MX validity, disposable-email detection, and fraud indicators. Use to verify an email before signup, contact, or fraud screening. Read-only scoring call; safe to repeat.', idempotent: true },
   props: {
     email: Property.ShortText({
       displayName: 'Email Address',

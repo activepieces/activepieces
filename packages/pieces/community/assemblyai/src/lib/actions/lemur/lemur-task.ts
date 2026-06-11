@@ -9,6 +9,12 @@ export const lemurTask = createAction({
   requireAuth: true,
   displayName: 'Run a Task using LeMUR',
   description: 'Use the LeMUR task endpoint to input your own LLM prompt.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Runs a custom LLM prompt over one or more existing transcripts using AssemblyAI LeMUR, returning the model-generated response. Use this to summarize, answer questions about, or otherwise reason over transcript content with your own prompt. Requires transcript IDs and a prompt; each call invokes the LLM and produces a new request, so it is not idempotent.',
+    idempotent: false,
+  },
   props,
   async run(context) {
     const client = getAssemblyAIClient(context);

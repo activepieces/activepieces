@@ -10,6 +10,12 @@ export const findSecret = createAction({
   name: 'findSecret',
   displayName: 'Find Secret',
   description: 'Finds an existing secret using filters.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists/searches secrets in AWS Secrets Manager, filtering by a chosen field (name, description, tag key, tag value, primary region, owning service, or "all") against a search value, with optional max results and sort. Use to discover secrets or resolve a name/ARN before another action. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     filterKey: Property.StaticDropdown({
       displayName: 'Filter Key',
