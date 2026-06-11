@@ -19,17 +19,18 @@ const StepNodeRunDuration = ({ duration }: { duration: number }) => {
 const StepNodeRunDurationAndPieceName = ({
   stepName,
   pieceDisplayName,
-  align = 'start',
 }: {
   stepName: string;
   pieceDisplayName: string;
-  align?: 'start' | 'center';
 }) => {
-  const [run, loopIndexes, flowVersion] = useBuilderStateContext((state) => [
-    state.run,
-    state.loopsIndexes,
-    state.flowVersion,
-  ]);
+  const [run, loopIndexes, flowVersion, canvasOrientation] =
+    useBuilderStateContext((state) => [
+      state.run,
+      state.loopsIndexes,
+      state.flowVersion,
+      state.canvasOrientation,
+    ]);
+  const isHorizontal = canvasOrientation === 'horizontal';
   const selectedStepOutput = useMemo(() => {
     return run && run.steps
       ? flowRunUtils.extractStepOutput(stepName, loopIndexes, run.steps)
@@ -39,8 +40,8 @@ const StepNodeRunDurationAndPieceName = ({
   return (
     <div
       className={cn('flex mt-0.5 w-full items-center', {
-        'justify-between': align === 'start',
-        'justify-center': align === 'center',
+        'justify-between': !isHorizontal,
+        'justify-center': isHorizontal,
       })}
     >
       <TextWithTooltip
@@ -49,8 +50,8 @@ const StepNodeRunDurationAndPieceName = ({
       >
         <div
           className={cn('text-xs text-muted-foreground truncate grow shrink', {
-            'w-full': align === 'start',
-            'text-center': align === 'center',
+            'w-full': !isHorizontal,
+            'text-center': isHorizontal,
           })}
         >
           {pieceDisplayName}

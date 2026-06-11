@@ -184,7 +184,6 @@ const ApStepCanvasNode = React.memo(
                     isSkipped={isSkipped}
                     logoUrl={stepMetadata?.logoUrl ?? ''}
                     displayName={stepMetadata?.displayName ?? ''}
-                    size="lg"
                   />
                 </div>
               ) : (
@@ -222,7 +221,6 @@ const ApStepCanvasNode = React.memo(
                   isSkipped={isSkipped}
                   pieceDisplayName={stepMetadata?.displayName ?? ''}
                   stepName={step.name}
-                  align="center"
                 />
                 <StepNodeName stepName={step.name} />
               </div>
