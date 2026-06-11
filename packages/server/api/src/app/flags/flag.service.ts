@@ -4,6 +4,8 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { conditionalMigrations } from '../database/conditional-migrations'
+import { enableKnowledgeBaseVector } from '../database/conditional-migrations/enable-knowledge-base-vector'
 import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
 import { domainHelper } from '../helper/domain-helper'
@@ -305,6 +307,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
             {
                 id: ApFlagId.SMTP_CONFIGURED,
                 value: smtpEmailSender(log).isSmtpConfigured(),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.PGVECTOR_AVAILABLE,
+                value: await conditionalMigrations.isApplied(enableKnowledgeBaseVector.name),
                 created,
                 updated,
             },

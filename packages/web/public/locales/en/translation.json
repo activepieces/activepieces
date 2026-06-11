@@ -1340,6 +1340,7 @@
   "The selected provider does not support embeddings. Switch to a provider like OpenAI or Google for knowledge base to work.": "The selected provider does not support embeddings. Switch to a provider like OpenAI or Google for knowledge base to work.",
   "Add files or tables as knowledge sources for your agent.": "Add files or tables as knowledge sources for your agent.",
   "Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.": "Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.",
+  "Knowledge base requires the pgvector extension on your PostgreSQL database. Ask your administrator to run CREATE EXTENSION vector to enable it.": "Knowledge base requires the pgvector extension on your PostgreSQL database. Ask your administrator to run CREATE EXTENSION vector to enable it.",
   "MCP Servers": "MCP Servers",
   "Remove MCP server": "Remove MCP server",
   "Add MCP Server": "Add MCP Server",
