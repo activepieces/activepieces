@@ -15,6 +15,8 @@ export const receiptsListingAction = createAction({
   name: 'receiptsListing',
   displayName: 'Resources - Receipts - Receipts Listing',
   description: 'Get all receipts.',
+  audience: 'both',
+  aiMetadata: { description: 'List receipts with optional filters by user, tax ID, payment status, and billing period. Read-only and safe to repeat. Enable Paginate Results to retrieve all matches; to fetch one known receipt by ID use receipt-read instead.', idempotent: true },
   props: {
         
   filter__userId: Property.Number({

@@ -7,6 +7,11 @@ export const addJobNote = createAction({
   name: "add_job_note",
   displayName: "Add job note",
   description: "Add a note to a job",
+  audience: 'both',
+  aiMetadata: {
+    description: "Append a text note to a Housecall Pro job by job ID. Not idempotent: each call adds another note, so repeating it creates duplicate notes.",
+    idempotent: false,
+  },
   props: {
     job_id: Property.ShortText({
       displayName: "Job ID",

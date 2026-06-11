@@ -14,6 +14,8 @@ export const chargePointSharedPartnersSyncAction = createAction({
   name: 'chargePointSharedPartnersSync',
   displayName: 'Resources - Charge Points - Charge Point Shared Partners Sync',
   description: 'Set the Shared Partners of the Charge Point. Attach Shared Partners within the Charge Point. The charge point must have an owner associated and its "access_type" must be "private".',
+  audience: 'both',
+  aiMetadata: { description: 'Replace the full set of shared partners on a private charge point with the provided partner IDs (a sync, not an append). The charge point must already have an owner and access_type "private". Repeating the same partner list is idempotent, but omitted partners are removed, so always send the complete desired list.', idempotent: true },
   props: {
         
   chargePoint: Property.Number({

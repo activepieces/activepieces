@@ -8,6 +8,8 @@ export const sendToDatabin = createAction({
   name: 'send_to_databin',
   displayName: 'Send to Databin',
   description: 'Sends a JSON payload to a Databin webhook URL on your connected NinjaPipe workspace.',
+  audience: 'both',
+  aiMetadata: { description: 'Post an arbitrary JSON payload to a NinjaPipe Databin webhook. The webhook URL must be HTTPS, contain /api/webhooks/, and resolve to the same host as the connected workspace, or the call is rejected. Each send is a fresh delivery, so repeated calls are not idempotent.', idempotent: false },
   props: {
     webhookUrl: Property.ShortText({
       displayName: 'Databin Webhook URL',

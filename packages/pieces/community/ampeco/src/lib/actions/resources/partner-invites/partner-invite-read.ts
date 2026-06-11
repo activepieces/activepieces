@@ -15,6 +15,8 @@ export const partnerInviteReadAction = createAction({
   name: 'partnerInviteRead',
   displayName: 'Resources - Partner Invites - Read',
   description: 'Get a invite.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches a single partner invite from AMPECO by its numeric ID. Use to retrieve one known invite; to search or discover invite IDs use the Listing action. Read-only and idempotent.', idempotent: true },
   props: {
         
   partnerInvite: Property.Number({

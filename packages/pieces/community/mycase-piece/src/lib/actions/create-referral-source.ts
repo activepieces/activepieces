@@ -7,6 +7,8 @@ export const createReferralSource = createAction({
   name: 'create_referral_source',
   displayName: 'Create Referral Source',
   description: 'Creates a new referral source in MyCase',
+  audience: 'both',
+  aiMetadata: { description: 'Always inserts a new MyCase referral source with the given name. Not idempotent: calling twice with the same name creates two sources, so check Find Referral Source first if you need to avoid duplicates.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Referral Source Name',

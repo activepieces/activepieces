@@ -15,6 +15,8 @@ export const circuitUpdateAction = createAction({
   name: 'circuitUpdate',
   displayName: 'Resources - Circuits - Update',
   description: 'Update a circuit.',
+  audience: 'both',
+  aiMetadata: { description: 'Modify an existing AMPECO load-management circuit (identified by circuit ID), changing properties such as name, phases, max/min current, electrical configuration, parent circuit for multi-level DLM, or load-balancing integration. Only the fields you supply are changed. Not idempotent in the create sense: it edits a circuit that must already exist; use the circuit create action to add a new one.', idempotent: false },
   props: {
         
   circuit: Property.Number({

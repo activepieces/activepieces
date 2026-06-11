@@ -15,6 +15,8 @@ export const subscriptionPlanCreateAction = createAction({
   name: 'subscriptionPlanCreate',
   displayName: 'Resources - Subscription Plans -  Create',
   description: 'Create a new Subscription plans.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new AMPECO subscription plan (pre-paid or post-paid) defining renewal cycle, fees, kWh allowances, and visibility restrictions for EV charging subscribers. Not idempotent: each call creates a separate plan, so re-running duplicates it. To change an existing plan, use a subscription-plan update action instead.', idempotent: false },
   props: {
         
   name: Property.Array({

@@ -15,6 +15,8 @@ export const partnerCreateAction = createAction({
   name: 'partnerCreate',
   displayName: 'Resources - Partners - Create',
   description: 'Create new partner.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new AMPECO partner (B2B company) with company name plus optional address, contact details, billing, bank, and permission options. Not idempotent: each call creates a separate partner even with the same name. Use partner update to change an existing partner.', idempotent: false },
   props: {
         
   businessName: Property.ShortText({

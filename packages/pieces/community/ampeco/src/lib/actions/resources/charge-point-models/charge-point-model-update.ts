@@ -15,6 +15,8 @@ export const chargePointModelUpdateAction = createAction({
   name: 'chargePointModelUpdate',
   displayName: 'Resources - Charge Point Models - Update',
   description: 'Charge Point Model.',
+  audience: 'both',
+  aiMetadata: { description: 'Partially update an existing charge point model (by model ID), changing only the fields you supply (name, vendor ID, user/installer manual links). Idempotent: applying the same values repeatedly leaves the model unchanged. Use this to modify an existing model rather than Create (which would make a duplicate).', idempotent: true },
   props: {
         
   modelId: Property.Number({

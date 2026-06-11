@@ -14,6 +14,8 @@ export const notificationsResendFailedAction = createAction({
   name: 'notificationsResendFailed',
   displayName: 'Actions - Notifications - Resend Failed',
   description: 'Resend failed webhook notifications. - Resend for a specific notification ID can be requested once every 15 minutes. - Notifications that are disabled cannot be resent.',
+  audience: 'both',
+  aiMetadata: { description: 'Re-deliver previously failed webhook notifications for a given notification endpoint, filtered by notification types and an optional start/end time window. Subject to rate limiting (one resend per notification ID every 15 minutes), and disabled notifications cannot be resent. Not idempotent: each call dispatches the matching notifications again.', idempotent: false },
   props: {
         
   notification: Property.Number({

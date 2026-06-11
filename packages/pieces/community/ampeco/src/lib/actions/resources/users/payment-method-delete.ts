@@ -14,6 +14,8 @@ export const paymentMethodDeleteAction = createAction({
   name: 'paymentMethodDelete',
   displayName: 'Resources - Users - Payment Method Delete',
   description: 'Delete Payment method. Please note that ";balance"; and ";corporate"; payment methods CANNOT be removed from this interface.',
+  audience: 'both',
+  aiMetadata: { description: "Remove a single payment method from an AMPECO user, identified by user id and payment method id. Destructive and irreversible. Built-in 'balance' and 'corporate' payment methods cannot be deleted here. Idempotent in effect once the method is gone, but it does not silently succeed on an unknown id.", idempotent: false },
   props: {
         
   user: Property.Number({

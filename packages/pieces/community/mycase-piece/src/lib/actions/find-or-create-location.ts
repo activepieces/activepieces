@@ -7,6 +7,8 @@ export const findOrCreateLocation = createAction({
   name: 'find_or_create_location',
   displayName: 'Find or Create Location',
   description: 'Finds a location by name or creates a new one if it does not exist',
+  audience: 'both',
+  aiMetadata: { description: 'Returns the MyCase location matching the given name (case-insensitive), creating it with the optional address fields only if no match exists. Use to guarantee a location exists without risking duplicates; repeat calls with the same name converge to one record. The address fields are applied only on creation, never to an existing match.', idempotent: true },
   props: {
     name: Property.ShortText({
       displayName: 'Location Name',

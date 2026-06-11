@@ -8,6 +8,8 @@ export const getConversationAction = createAction({
 	name: 'get-conversation',
 	displayName: 'Retrieve a Conversation',
 	description: 'Retrieves a specific conversation by ID.',
+	audience: 'both',
+	aiMetadata: { description: 'Fetch a single Intercom conversation by its conversation ID. Use when you already have the exact ID and need its full details (messages, parts, assignee, state); read-only and repeatable. To locate a conversation by subject, body, author, assignee, or tag instead, use Find Conversation.', idempotent: true },
 	props: {
 		conversationId: conversationIdProp('Conversation ID', true),
 	},
