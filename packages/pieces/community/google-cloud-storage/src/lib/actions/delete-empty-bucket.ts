@@ -9,6 +9,8 @@ export const deleteEmptyBucket = createAction({
   name: 'delete_empty_bucket',
   displayName: 'Delete Empty Bucket',
   description: 'Clean up unused buckets by deleting them if they contain no live objects.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes a Cloud Storage bucket. Use to clean up an unused bucket. The bucket must be empty (no live or noncurrent objects) or the call fails, so delete its objects first. Not idempotent: the first call removes the bucket and a repeat fails because it no longer exists.', idempotent: false },
   props: {
     projectId: projectIdProperty,
     bucket: bucketDropdown,

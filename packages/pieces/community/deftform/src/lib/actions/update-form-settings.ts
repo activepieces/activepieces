@@ -8,6 +8,8 @@ export const updateFormSettings = createAction({
     name: 'update_form_settings',
     displayName: 'Update Form Settings',
     description: 'Updates any combination of form settings via a single call — from title and status to integrations, SEO, and security.',
+    audience: 'both',
+    aiMetadata: { description: 'Update one form configuration in a single call, covering any subset of general info, after-submission behaviour, admin/respondent email, SEO, integration toggles (Slack, Discord, Google Sheets, HubSpot), security/CAPTCHA, layout, and submission numbering. Only the fields you provide are changed; omitted fields are left untouched. Requires the form id. Idempotent: re-sending the same values leaves the form in the same state.', idempotent: true },
     props: {
         formId: DeftformCommon.formDropdown,
 
