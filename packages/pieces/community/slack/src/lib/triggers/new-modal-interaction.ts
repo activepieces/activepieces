@@ -8,6 +8,10 @@ export const newModalInteractionTrigger = createTrigger({
     name: 'new-modal-interaction',
     displayName: 'New Modal Interaction',
     description: 'Triggers when a user interacts with a modal.',
+    aiMetadata: {
+        description:
+            'Fires when a user interacts with a Slack modal view, either submitting it (view_submission) or closing it (view_closed) depending on the selected interaction type. The event payload is the Slack interaction payload (with the auth token stripped), including the submitted view, its state values, and the acting user.',
+    },
     props: {
         interactionType: Property.StaticDropdown({
             displayName: 'Interaction Type',

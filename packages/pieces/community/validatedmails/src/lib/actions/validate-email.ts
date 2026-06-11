@@ -7,6 +7,8 @@ export const validateEmail = createAction({
   name: 'validateEmail',
   displayName: 'Validate Email',
   description: 'Validate a single email address using the ValidatedMails API.',
+  audience: 'both',
+  aiMetadata: { description: 'Validates one email address against the ValidatedMails API and returns deliverability signals (syntax, MX, SMTP, disposable/role/free flags, score, and overall status). Use to verify whether an address is real and deliverable before sending to it or persisting it. Requires the email; the Mode option only switches the HTTP method (POST vs GET) used for the same lookup. Read-only and idempotent: re-running with the same address returns the same result with no side effect.', idempotent: true },
   props: {
     email: Property.ShortText({
       displayName: 'Email Address',

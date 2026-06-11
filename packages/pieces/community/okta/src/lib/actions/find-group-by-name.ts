@@ -8,6 +8,8 @@ export const findGroupByNameAction = createAction({
   name: 'find_group_by_name',
   displayName: 'Find Group by Name',
   description: 'Search for an Okta group by name',
+  audience: 'both',
+  aiMetadata: { description: 'Searches Okta groups by name (substring query) and returns matching groups. Use as a read-only lookup to resolve a group name to its ID before a membership action. Idempotent.', idempotent: true },
   props: {
     groupName: Property.ShortText({
       displayName: 'Group Name',

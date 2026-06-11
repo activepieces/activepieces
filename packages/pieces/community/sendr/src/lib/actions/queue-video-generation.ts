@@ -8,6 +8,8 @@ export const queueVideoGeneration = createAction({
   name: 'queue_video_generation',
   displayName: 'Queue Video Generation',
   description: 'Queues a job to merge audio and video or generate a lipsync video.',
+  audience: 'both',
+  aiMetadata: { description: 'Queues an async video-generation job in one of two modes: merge an audio track onto a base video, or produce a lipsync video. Requires the mode and audio URL (plus a video/Mux source as the mode needs); results are delivered later (optionally to a callback URL). Not idempotent: each call enqueues a new job.', idempotent: false },
   props: {
     mode: Property.StaticDropdown({
       displayName: 'Mode',

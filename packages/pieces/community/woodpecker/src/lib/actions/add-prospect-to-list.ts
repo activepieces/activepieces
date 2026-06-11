@@ -8,6 +8,8 @@ export const addProspectToList = createAction({
   name: 'add_prospect_to_list',
   displayName: 'Create/Update Prospect',
   description: 'Adds a new prospect or updates existing prospect in the global prospect list',
+  audience: 'both',
+  aiMetadata: { description: 'Add or update a prospect (keyed by email) in the global Woodpecker prospect list, independent of any campaign. Use to maintain contact records or seed the prospect database; existing prospects are only modified when the update flag is enabled (otherwise they are left untouched). Re-running with the same email upserts the same record rather than duplicating it.', idempotent: true },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

@@ -8,6 +8,10 @@ export const newSubmission = createTrigger({
   displayName: 'New Submission',
   description:
     'Triggers when someone submits a response to your form. Each form field is returned as a separate field using the question label as the key.',
+  aiMetadata: {
+    description:
+      'Fires in real time (via webhook) when a respondent submits the selected JotForm form. The event represents one completed form submission and returns submission metadata (form ID, submission ID, submitter IP, submission type) along with each answered question flattened as its own field, keyed by a snake_cased version of the question label.',
+  },
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
     form_id: '31751954731962',

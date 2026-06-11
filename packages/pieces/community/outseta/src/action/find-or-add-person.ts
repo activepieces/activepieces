@@ -8,6 +8,12 @@ export const findOrAddPersonAction = createAction({
   displayName: 'Find or Add Person',
   description:
     'Search for a person by email. If not found, create a new one.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up an Outseta CRM person by exact (case-insensitive) email match and returns it; if no match exists, creates a new person with that email plus optional name, phone, and mailing address. Use to ensure a contact exists without creating a duplicate. Email is the dedup key, so reusing the same email is safe; supplying a different email creates a new person.',
+    idempotent: false,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

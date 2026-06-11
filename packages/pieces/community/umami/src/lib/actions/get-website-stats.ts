@@ -9,6 +9,12 @@ export const getWebsiteStats = createAction({
   displayName: 'Get Website Stats',
   description:
     'Returns a summary of visitors, pageviews, bounce rate, and average visit duration for a date range.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetch aggregate analytics for one Umami-tracked website over a date range: total visitors, pageviews, bounce rate, and average visit duration. Use for a high-level traffic summary rather than per-dimension breakdowns or time series. Requires a website ID and a start/end date. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     websiteId: umamiCommon.websiteDropdown,
     startDate: umamiCommon.dateRange.startDate,

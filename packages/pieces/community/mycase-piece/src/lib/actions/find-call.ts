@@ -7,6 +7,8 @@ export const findCall = createAction({
   name: 'find_call',
   displayName: 'Find Call',
   description: 'Searches for calls with optional filters',
+  audience: 'both',
+  aiMetadata: { description: 'List or search MyCase call-log entries, optionally filtering by last-updated date and limiting page size. Use to review logged phone calls or look one up. Read-only and idempotent. To log a new call, use Create Call.', idempotent: true },
   props: {
     updated_after: Property.DateTime({
       displayName: 'Updated After',

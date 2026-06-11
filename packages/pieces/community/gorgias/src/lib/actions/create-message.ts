@@ -12,6 +12,8 @@ export const createMessageAction = createAction({
   name: 'create_gorgias_ticket_message',
   displayName: 'Create Message',
   description: 'Create a reply or message on an existing Gorgias ticket.',
+  audience: 'both',
+  aiMetadata: { description: 'Append a new message (reply) to an existing Gorgias ticket identified by its numeric ID. The From Agent flag controls direction: when true the message comes from an agent/user (Sender ID is a user, Receiver ID a customer), when false it comes from the customer (the IDs swap). Use to continue an existing conversation; to open a brand-new ticket use Create Ticket. Not idempotent: each call appends another message.', idempotent: false },
   props: {
     ticketId: Property.Number({
       displayName: 'Ticket ID',

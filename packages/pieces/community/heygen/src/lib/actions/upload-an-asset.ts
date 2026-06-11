@@ -8,6 +8,11 @@ export const uploadAssetAction = createAction({
 	displayName: 'Upload an Asset',
 	description:
 		'Upload media files (images, videos, or audio) to HeyGen. Supports JPEG, PNG, MP4, WEBM, and MPEG files.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Uploads a media file (image, video, or audio) to HeyGen so it can be referenced in later video/template generation. Use to stage assets before composing a video. Only JPEG, PNG, MP4, WEBM, and MPEG are accepted; content type is inferred from the file extension. Each call creates a new asset, so it is not idempotent.',
+		idempotent: false,
+	},
 	props: {
 		file: Property.File({
 			displayName: 'File',

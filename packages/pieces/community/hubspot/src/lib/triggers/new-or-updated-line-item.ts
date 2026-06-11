@@ -75,6 +75,10 @@ export const newOrUpdatedLineItemTrigger = createTrigger({
 	name: 'new-or-updated-line-item',
 	displayName: 'Line Item Recently Created or Updated',
 	description: 'Triggers when a line item recently created or updated.',
+	aiMetadata: {
+		description:
+			'Fires when a line item is created or modified in HubSpot. Each event represents one line item with properties such as name, price, quantity, amount, discount, tax, SKU, and linked product. Polls by last-modified date, so both new and edited line items trigger it.',
+	},
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,

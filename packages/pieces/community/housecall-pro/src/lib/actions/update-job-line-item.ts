@@ -7,6 +7,11 @@ export const updateJobLineItem = createAction({
   name: "update_job_line_item",
   displayName: "Update a single line item for a job",
   description: "Update a specific line item for a job",
+  audience: 'both',
+  aiMetadata: {
+    description: "Update fields on an existing line item of a Housecall Pro job, identified by job ID and line item ID; only supplied fields change. Idempotent because it targets a stable line item ID. To add a new line item use Add a line item to a job instead.",
+    idempotent: true,
+  },
   props: {
     job_id: Property.ShortText({
       displayName: "Job ID",

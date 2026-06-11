@@ -8,6 +8,8 @@ export const createJob = createAction({
   name: 'create_job',
   displayName: 'Create Job',
   description: 'Create and queue a new job to run for a workflow',
+  audience: 'both',
+  aiMetadata: { description: 'Queues a new job to execute a Hystruct document-structuring/data-extraction workflow, identified by its workflow ID. Use this to kick off a workflow run on demand. Not idempotent: each call enqueues a separate job run.', idempotent: false },
   props: {
     workflowId: Property.ShortText({
       displayName: 'Workflow ID',

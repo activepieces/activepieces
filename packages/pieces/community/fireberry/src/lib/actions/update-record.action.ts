@@ -235,6 +235,8 @@ export const updateRecordAction = createAction({
   name: 'update_record',
   displayName: 'Update Record',
   description: 'Update an existing record in Fireberry.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing Fireberry record, identified by its record ID under a given object type, applying only the field values you provide (empty fields are skipped and left unchanged). Use when modifying a known record. Idempotent: re-running with the same id and field values converges on the same record state.', idempotent: true },
   auth: fireberryAuth,
   props: {
     objectType: objectTypeDropdown,

@@ -8,6 +8,12 @@ export const makeACall = createAction({
   name: 'makeACall',
   displayName: 'Make a Call',
   description: 'Make a call to a number in e164 format',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Initiates an outbound call to a destination number in E.164 format; only the destination is required, while the originating user ID and caller ID (an E.164 number or 'anonymous') are optional. Use this to place a standard phone call from a VoIPstudio user. Not idempotent: each call starts a new call.",
+    idempotent: false,
+  },
   props: {
     to: Property.ShortText({
       displayName: 'To',

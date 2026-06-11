@@ -9,6 +9,12 @@ export const mollieCreatePaymentLink = createAction({
   displayName: 'Create Payment Link',
   description:
     'Generate a new payment link targeting a customer, product, or specific amount',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a shareable Mollie payment link a customer can open to pay. Can carry a fixed amount, an open/minimum amount the customer fills in, and can be one-off or reusable for multiple payments. Choose this for sending a checkout URL (invoice, donation, manual collection) rather than driving a redirect-based checkout in code. Not idempotent: each call creates a new link.',
+    idempotent: false,
+  },
   props: {
     description: Property.ShortText({
       displayName: 'Description',

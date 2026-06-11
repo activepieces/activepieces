@@ -8,6 +8,11 @@ export const listAffiliates = createAction({
   name: 'list_affiliates',
   displayName: 'List Affiliates',
   description: 'List all affiliates in your PromoteKit account.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Retrieve a paginated list of affiliates in the PromoteKit account. Use to enumerate or browse affiliates rather than look one up by a known ID. Supports page and per-page limit (max 100); read-only and safe to repeat.',
+    idempotent: true,
+  },
   props: {
     page: Property.Number({
       displayName: 'Page',

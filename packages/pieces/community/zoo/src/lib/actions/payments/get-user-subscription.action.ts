@@ -6,6 +6,8 @@ export const getUserSubscriptionAction = createAction({
   name: 'get_user_subscription',
   displayName: 'Get User Subscription',
   description: 'Retrieve the current subscription for your user account',
+  audience: 'both',
+  aiMetadata: { description: 'Read the current subscription tied to the authenticated user account (plan, status, billing period). Use this for the individual user; for the organization-level subscription use Get Organization Subscription instead. Read-only and safe to repeat.', idempotent: true },
   auth: zooAuth,
   // category: 'Payments',
   props: {},

@@ -7,6 +7,8 @@ export const createTaskList = createAction({
 	name: 'create_task_list',
 	displayName: 'Create Task List',
 	description: 'Add a new task list under a project.',
+	audience: 'both',
+	aiMetadata: { description: 'Creates a new task list inside an existing Teamwork project to group related tasks. Use after a project exists and before creating tasks that should live in a specific list; requires the target project and a list name, and can set default priority/tags for tasks added later. Not idempotent — each call adds another list even with the same name.', idempotent: false },
 	auth: teamworkAuth,
 	props: {
 		projectId: Property.Dropdown({

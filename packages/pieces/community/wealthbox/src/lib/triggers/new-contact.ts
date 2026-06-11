@@ -91,6 +91,9 @@ export const newContact = createTrigger({
   name: 'new_contact',
   displayName: 'New Contact',
   description: 'Fires when a new contact is created',
+  aiMetadata: {
+    description: 'Fires when a new contact is created in Wealthbox, optionally narrowed by contact type, entity type, household title, assignee, tags, or active status. Each fired item represents one newly created contact record.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     contact_type: Property.StaticDropdown({

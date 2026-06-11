@@ -8,6 +8,12 @@ export const createLead = createAction({
   name: 'createLead',
   displayName: 'Create Lead',
   description: 'Create a lead in Lofty',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new lead (contact) in the Lofty real-estate CRM with the given name, email(s), and optional details such as phone, address, lead type, source, buyer/seller property criteria, and communication opt-ins. Use when adding a person to Lofty. First name and at least one email are required. Not idempotent: each call creates a new lead, so repeated calls produce duplicates.',
+    idempotent: false,
+  },
   props: {
     firstName: Property.ShortText({
       displayName: 'First name',

@@ -11,6 +11,10 @@ export const smsRecipientResponseMissed = createTrigger({
   displayName: 'SMS Recipient Response Missed',
   description:
     'Triggers when a recipient responds to a notification via SMS, but the organization is unable to handle it at that time',
+  aiMetadata: {
+    description:
+      'Fires when a recipient replies by SMS to an Onfleet delivery notification but the organization cannot handle the response automatically at that moment. Represents an unhandled inbound recipient SMS, useful for routing the message to a human agent or support workflow. The payload includes the recipient and the message content.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   //Create the webhook and save the webhook ID in store for disable behavior

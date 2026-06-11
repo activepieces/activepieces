@@ -31,6 +31,8 @@ export const descriptGetProjectAction = createAction({
   displayName: 'Get Project',
   description:
     'Retrieves details for a Descript project including its compositions and media files.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches full details for a single Descript project by ID, including its compositions and media files. Use to resolve composition IDs or inspect project contents before editing or publishing. Read-only and idempotent.', idempotent: true },
   props: {
     project_id: descriptCommon.projectIdProp,
   },

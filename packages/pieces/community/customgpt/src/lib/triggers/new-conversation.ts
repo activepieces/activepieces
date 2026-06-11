@@ -58,6 +58,10 @@ export const newConversation = createTrigger({
   name: 'new_conversation',
   displayName: 'New Conversation',
   description: 'Triggers when a new conversation is created in an agent',
+  aiMetadata: {
+    description:
+      'Fires when a new conversation (chat session) is started in the specified CustomGPT agent, emitting that conversation. Use to react to fresh chat threads as they begin, for example to log, route, or notify on new customer chats. Scoped to a single agent project via the project id; polls periodically for conversations created since the last check.',
+  },
   props: {
     project_id: projectId,
   },

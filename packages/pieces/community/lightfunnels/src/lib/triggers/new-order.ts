@@ -8,6 +8,9 @@ export const newOrderTrigger = createTrigger({
   name: 'new_order',
   displayName: 'New Order',
   description: 'Triggers when a new order is created',
+  aiMetadata: {
+    description: 'Fires when an order is confirmed in Lightfunnels (the order/confirmed webhook event), emitting the new order record. Use to react to incoming sales such as fulfillment, notifications, or downstream sync.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {

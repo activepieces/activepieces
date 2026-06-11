@@ -15,6 +15,9 @@ export const newObjectCreated = createTrigger({
   name: 'new_object_created',
   displayName: 'New Object Created',
   description: 'Triggers when a new object is created in a bucket',
+  aiMetadata: {
+    description: 'Fires when a new object is finalized (fully written) in the configured bucket, optionally limited to objects whose name starts with a given prefix. Represents a newly created/uploaded file; delivered via a Cloud Pub/Sub push notification (OBJECT_FINALIZE event).',
+  },
   props: {
     projectId: projectIdProperty,
     bucket: bucketDropdown,

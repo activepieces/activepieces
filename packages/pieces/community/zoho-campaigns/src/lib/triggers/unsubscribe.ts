@@ -48,6 +48,10 @@ export const unsubscribe = createTrigger({
   displayName: 'Unsubscribe',
   description:
     'Fires when a contact is removed from a mailing list or unsubscribed.',
+  aiMetadata: {
+    description:
+      'Fires when a contact in the selected mailing list reaches the unsubscribed status, representing a subscriber who has opted out or been removed. Polls the list for contacts with that status.',
+  },
   props: zohoCampaignsCommon.unsubscribeProperties(),
   sampleData: {
     contact_email: 'unsubscribed@example.com',

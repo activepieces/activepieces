@@ -14,6 +14,8 @@ export const taxUpdateAction = createAction({
   name: 'taxUpdate',
   displayName: 'Resources - Taxes - Update',
   description: 'Update Taxes.',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing tax in AMPECO, identified by its numeric tax id, changing its name, localized display names, percentage rate, or linked tax identification number. Only the fields you supply are changed. Re-running with the same values is safe, but supplied values overwrite the current configuration.', idempotent: false },
   props: {
         
   tax: Property.Number({

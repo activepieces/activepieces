@@ -13,6 +13,8 @@ export const getUsers = createAction({
   auth: harvestAuth,
   displayName: 'Get Users',
   description: 'Fetches Users',
+  audience: 'both',
+  aiMetadata: { description: 'Lists users (team members) in a Harvest account; with no filters it returns every user, or narrow by active/inactive state or updated-since timestamp. Use to resolve a person to their user ID or enumerate the team. Read-only and idempotent.', idempotent: true },
   props: {
     is_active: Property.ShortText({
     description: 'Pass `true` to only return active users and `false` to return inactive users.',

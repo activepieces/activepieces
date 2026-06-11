@@ -8,6 +8,12 @@ export const deleteTask = createAction({
   name: 'delete_task',
   displayName: 'Delete Task',
   description: 'Deletes a task',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently delete an Onfleet task by its ID. Idempotent in effect: once the task is gone the result is the same, though deleting an already-removed task may error. Destructive and irreversible, so confirm the task ID before calling.',
+    idempotent: true,
+  },
   props: {
     task: Property.ShortText({
       displayName: 'Task ID',

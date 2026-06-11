@@ -10,6 +10,8 @@ export const sendImageToContactAction = createAction({
   name: 'whatsscale_send_image_to_contact',
   displayName: 'Send an Image to a Contact',
   description: 'Send an image to a WhatsApp contact selected from the dropdown.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends an image to a WhatsApp contact whose chat ID is chosen from the session contact list, with an optional caption. Pick this when the recipient is a known direct contact; use the manual-entry image action for a raw phone number, or the group/CRM/channel variants for other recipient types. Requires a directly downloadable image URL. Not idempotent: each call delivers another image.', idempotent: false },
   props: {
     session: whatsscaleProps.session,
     contact: whatsscaleProps.contact,

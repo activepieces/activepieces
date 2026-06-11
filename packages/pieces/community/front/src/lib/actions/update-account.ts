@@ -9,6 +9,12 @@ export const updateAccount = createAction({
   name: 'updateAccount',
   displayName: 'Update Account',
   description: 'Update an existing account in Front.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Update fields (name, description, domains, custom fields) of an existing Front company account identified by account ID; only the fields you supply change. Use to edit an account found via "Find Account"; to create a new one use "Create Account". Idempotent: re-applying the same values yields the same result.',
+    idempotent: true,
+  },
   props: {
     account_id: accountIdDropdown,
     name: Property.ShortText({

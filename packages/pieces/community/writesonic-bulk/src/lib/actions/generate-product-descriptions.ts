@@ -14,6 +14,8 @@ export const generateProductDescriptions = createAction({
   displayName: 'Generate Product Descriptions',
   description:
     'Generate authentic product descriptions that compel, inspire, and influence',
+  audience: 'both',
+  aiMetadata: { description: 'Generates AI-written product descriptions via Writesonic from a product name and its key characteristics (both required), with optional primary/secondary keywords, tone of voice, and engine/language/copy-count controls. Use when an agent needs ecommerce or catalog copy for a product. Each call produces fresh generated text and is billed, so it is not idempotent.', idempotent: false },
   props: {
     product_name: Property.ShortText({
       displayName: 'Product Name',

@@ -10,6 +10,12 @@ export const createCadenceMembershipAction = createAction({
   displayName: 'Add Person to Cadence',
   description:
     'Add a person to a cadence. The person and cadence must be visible to the authenticated user.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Enrolls a Salesloft person into a cadence (sequence) so they begin receiving its steps. Use to start outreach for a contact. Requires a person ID and cadence ID, both of which must be visible to the authenticated user; an optional user ID assigns the membership owner. Not idempotent — each call creates a new membership.',
+    idempotent: false,
+  },
   auth: salesloftAuth,
   props: {
     person_id: personIdProp,

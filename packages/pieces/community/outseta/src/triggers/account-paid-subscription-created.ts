@@ -4,6 +4,10 @@ export const accountPaidSubscriptionCreatedTrigger = createManualWebhookTrigger(
   name: 'account_paid_subscription_created',
   displayName: 'Account Paid Subscription Created',
   description: 'Triggers when a paid subscription is created for an account in Outseta.',
+  aiMetadata: {
+    description:
+      'Fires when a paid (non-free) subscription is created for an account in Outseta, delivering the account with its new current subscription and plan. Use to react specifically to new revenue rather than any subscription start.',
+  },
   sampleData: {
     Name: 'Acme Corp',
     IsDemo: false,

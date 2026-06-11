@@ -9,6 +9,10 @@ export const emailComplained = createTrigger({
   name: 'emailComplained',
   displayName: 'Email Complained',
   description: 'Triggered when an email is marked as complained',
+  aiMetadata: {
+    description:
+      'Fires when a recipient marks an email sent through Vero as spam or files a complaint, representing a spam/abuse report for a specific user and campaign.',
+  },
   props: {
     instruction: Property.MarkDown({
       value: `## Vero Webhook Setup

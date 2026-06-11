@@ -9,6 +9,12 @@ export const listContactsAction = createAction({
   name: 'list_contacts',
   displayName: 'List Contacts',
   description: 'Fetch a paginated list of contacts from Elastic Email.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves a paginated list of contacts from the Elastic Email account using limit and offset. Use to browse or page through contacts. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: elasticEmailAuth,
   props: {
     limit: Property.Number({

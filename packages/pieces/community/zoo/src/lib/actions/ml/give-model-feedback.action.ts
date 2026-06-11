@@ -6,6 +6,8 @@ export const giveModelFeedbackAction = createAction({
   name: 'give_model_feedback',
   displayName: 'Give Model Feedback',
   description: 'Provide feedback on a generated 3D model',
+  audience: 'both',
+  aiMetadata: { description: 'Record feedback on a text-to-CAD model identified by its model ID, choosing thumbs_up, thumbs_down, accepted, or rejected. Use to rate a generation; this mutates the model\'s stored feedback, so repeated calls overwrite or re-submit the rating rather than being a no-op.', idempotent: false },
   auth: zooAuth,
   // category: 'Machine Learning (ML)',
   props: {

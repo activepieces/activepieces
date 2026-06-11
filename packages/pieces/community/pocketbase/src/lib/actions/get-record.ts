@@ -7,6 +7,8 @@ export const getRecord = createAction({
   name: 'getRecord',
   displayName: 'Get Record',
   description: 'Gets a single record by ID from a collection',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches one record from a PocketBase collection by its record ID, optionally expanding relations or limiting returned fields. Use when you already know the exact record ID; to search or list by criteria use Get List or Get Full List instead. Read-only and idempotent.', idempotent: true },
   auth: pocketbaseAuth,
   props: {
     collection: Property.ShortText({

@@ -8,6 +8,8 @@ export const updatePostAction = createAction({
   name: 'update_post',
   displayName: 'Update Post',
   description: 'Updates an existing post in FeedHive. Only the fields you fill in will be changed.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing FeedHive post identified by its post ID; only the fields you supply (text, status, schedule, accounts, labels, notes) are changed, leaving the rest intact. Use to edit or reschedule a draft or scheduled post. Idempotent: applying the same field values repeatedly leaves the post in the same state.', idempotent: true },
   props: {
     post_id: feedhiveCommon.postDropdown,
     text: Property.LongText({

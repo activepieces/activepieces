@@ -8,6 +8,12 @@ export const getAccountPlanAction = createAction({
   auth: outsetaAuth,
   displayName: 'Get Account Plan',
   description: 'Retrieve the current plan and subscription details for an account.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Fetches an Outseta account's current subscription by account UID, returning the plan name/UID, plan family, subscription status, billing term, renewal/start/end dates, and active add-ons. Use to check what plan an account is on before changing or billing it. Read-only and idempotent.",
+    idempotent: true,
+  },
   props: {
     accountUid: accountUidDropdown(),
   },

@@ -10,6 +10,8 @@ export const createEvent = createAction({
   auth: talkableAuth,
   displayName: 'Create event',
   description: 'Create event in Talkable',
+  audience: 'both',
+  aiMetadata: { description: 'Record a single non-purchase event origin (e.g. a signup or newsletter subscription) in Talkable for a customer by email, used to attribute referrals and trigger rewards. Use for conversion events that are not purchases; requires email, event category, event number, and subtotal. Not idempotent: each call posts a new event (use Create batch of events for multiple at once).', idempotent: false },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

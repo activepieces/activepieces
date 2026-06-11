@@ -9,6 +9,12 @@ export const updateLead = createAction({
   name: 'updateLead',
   displayName: 'Update Lead',
   description: 'Update a lead in Lofty',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates fields on an existing Lofty lead identified by lead id, sending only the fields you provide (name, emails, phone, address, lead type, source, buyer/seller criteria, opt-ins, etc.). Use to modify a known lead rather than create one. Idempotent: applying the same field values repeatedly leaves the lead in the same state.',
+    idempotent: true,
+  },
   props: {
     leadId: leadIdDropdown,
     firstName: Property.ShortText({

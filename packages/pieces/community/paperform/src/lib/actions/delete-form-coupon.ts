@@ -9,6 +9,8 @@ export const deleteFormCoupon = createAction({
   name: 'deleteFormCoupon',
   displayName: 'Delete Form Coupon',
   description: 'Deletes a coupon from a form.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes a discount coupon, identified by its coupon code, from the specified Paperform form. Use to remove a promotional code; this is destructive and not idempotent.', idempotent: false },
   props: {
     formId: paperformCommonProps.formId,
     couponCode:paperformCommonProps.couponCode,

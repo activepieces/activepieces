@@ -10,6 +10,12 @@ export const getFilamentAction = createAction({
   name: 'get_filament',
   displayName: 'Get Filament',
   description: 'Get detailed information about a specific filament spool by numeric ID or 4-character short ID (uid).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Read-only lookup of a single filament spool\'s full details by numeric spool ID or 4-char short ID (uid). Pick this when you already have one spool reference and need its current attributes (material, color, remaining amount, etc.); to enumerate spools instead, use the list action.',
+    idempotent: true,
+  },
   props: {
     filamentId: Property.ShortText({
       displayName: 'Filament',

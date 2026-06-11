@@ -15,6 +15,8 @@ export const getEvseLatestHardwareStatusLogAction = createAction({
   name: 'getEvseLatestHardwareStatusLog',
   displayName: 'Resources - Evses - Get Evse Latest Hardware Status Log',
   description: 'Get the latest hardware status log entry for an EVSE.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch only the most recent hardware status log entry for one EVSE (charging connector), identified by its numeric id. Read-only and idempotent; pick this for a quick current-status check, as opposed to List Evse Hardware Status Logs which returns the full history.', idempotent: true },
   props: {
         
   evse: Property.Number({

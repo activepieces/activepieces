@@ -133,6 +133,10 @@ export const mollieNewChargeback = createTrigger({
   name: 'new_chargeback',
   displayName: 'New Payment Chargeback',
   description: 'Fires upon a payment chargeback event',
+  aiMetadata: {
+    description:
+      'Fires when a chargeback is filed against a specific Mollie payment, representing a customer-disputed transaction reversed by their bank or card issuer. Requires selecting the payment to monitor; polls that payment\'s chargebacks and emits each new one.',
+  },
 
   type: TriggerStrategy.POLLING,
 

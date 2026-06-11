@@ -7,6 +7,9 @@ export const bookingStarted = createSessionsUsWebhookTrigger({
   name: 'booking_started',
   displayName: 'Booking Started',
   description: 'Triggered when a booking starts.',
+  aiMetadata: {
+    description: 'Fires when a booked session goes live (the meeting actually begins). The payload includes the booking details, the session, and its participants.',
+  },
   trigger: SessionsUsWebhookTrigger.BOOKING_STARTED,
   storeKey: 'sessions_booking_started_trigger',
   sampleData: {

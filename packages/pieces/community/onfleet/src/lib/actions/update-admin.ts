@@ -9,6 +9,8 @@ export const updateAdmin = createAction({
   name: 'update_admin',
   displayName: 'Update Administrator',
   description: 'Update an existing administrator',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing Onfleet organization administrator by admin ID, currently only their full name. Not idempotent: it patches the live admin record. Requires a known admin ID; use create-admin to add a new administrator or delete-admin to remove one.', idempotent: false },
   props: {
     admin: common.admin,
     name: Property.ShortText({

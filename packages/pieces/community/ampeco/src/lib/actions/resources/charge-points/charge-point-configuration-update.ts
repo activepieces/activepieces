@@ -22,6 +22,8 @@ export const chargePointConfigurationUpdateAction = createAction({
   displayName: 'Resources - Charge Points - Charge Point Configuration Update',
   description:
     "Update a charge point's configuration. The configuration is applied directly to the charge point and you will get response code 406 in case the application fails.",
+  audience: 'both',
+  aiMetadata: { description: 'Set a single OCPP configuration key on a charge point, identified by charge point ID and configuration key. The new value is pushed live to the hardware, so this is a real mutation (not idempotent-safe to blindly retry) and fails with 406 if the device rejects it. A value is required for standard OCPP keys.', idempotent: false },
   props: {
     chargePoint: Property.Number({
       displayName: 'Charge Point',

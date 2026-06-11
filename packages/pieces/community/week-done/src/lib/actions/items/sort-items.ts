@@ -17,6 +17,8 @@ export const sortItemsAction = createAction({
   name: 'sort_items',
   displayName: 'Sort Items',
   description: 'Sort items within a type and period.',
+  audience: 'both',
+  aiMetadata: { description: 'Reorder the Weekdone items of a given type within a team and reporting period by supplying the full ordered list of item IDs. Requires type, period, the desired ID order, and any one item ID from the list (used in the request URL). Mutates the stored ordering, so not idempotent across differing inputs.', idempotent: false },
   props: {
     team_id: Property.Dropdown({
       auth: weekdoneAuth,

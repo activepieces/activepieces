@@ -13,6 +13,10 @@ export const newTeamCustomEmojiTrigger = createTrigger({
 	name: 'new-team-custom-emoji',
 	displayName: 'New Team Custom Emoji',
 	description: 'Triggers when a custom emoji has been added to a team.',
+	aiMetadata: {
+		description:
+			'Fires when a new custom emoji is added to the Slack workspace (an emoji_changed event with the "add" subtype). The event payload includes the emoji id (name) and the image URL of the added emoji.',
+	},
 	props: {},
 	type: TriggerStrategy.APP_WEBHOOK,
 	sampleData,

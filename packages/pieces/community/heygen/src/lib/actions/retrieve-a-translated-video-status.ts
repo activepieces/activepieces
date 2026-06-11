@@ -8,6 +8,11 @@ export const retrieveTranslatedVideoStatus = createAction({
   name: 'retrieve-translated-video-status',
   displayName: 'Retrieve Translated Video Status',
   description: 'Retrieves the status of a translated video.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Looks up the current processing status (and result details) of a video-translation job by its translation video ID. Use to poll whether a previously submitted Translate Video job has completed. Read-only and idempotent. Note the ID here is the translate-job ID, distinct from the avatar-video ID used by Retrieve Video Status.',
+    idempotent: true,
+  },
   props: {
     videoId: Property.ShortText({
       displayName: 'Video ID',

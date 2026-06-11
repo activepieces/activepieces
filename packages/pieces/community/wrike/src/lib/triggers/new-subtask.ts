@@ -12,6 +12,9 @@ export const newSubtask = createTrigger({
   name: 'new_subtask_created',
   displayName: 'New Subtask Created',
   description: 'Triggers when a subtask is created.',
+  aiMetadata: {
+    description: 'Fires when a task gains a parent in Wrike (the TaskParentsAdded event), representing a subtask being created under another task; can be scoped to a single parent task so it only fires for subtasks added beneath it.',
+  },
   auth: wrikeAuth,
   type: TriggerStrategy.WEBHOOK,
   props: {

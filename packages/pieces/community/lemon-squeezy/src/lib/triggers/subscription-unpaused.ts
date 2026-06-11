@@ -7,6 +7,9 @@ export const subscriptionUnpausedTrigger = createTrigger({
   name: 'subscription_unpaused',
   displayName: 'Subscription Unpaused',
   description: 'Triggers when a subscription\'s payment collection is resumed after being previously paused',
+  aiMetadata: {
+    description: 'Fires when a paused subscription in Lemon Squeezy has its payment collection resumed. Represents the subscription returning to normal billing after a pause.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     store_id: createStoreDropdownProperty()

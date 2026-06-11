@@ -11,6 +11,8 @@ export const sendDocumentToCrmContactAction = createAction({
   name: 'whatsscale_send_document_to_crm_contact',
   displayName: 'Send a Document to a CRM Contact',
   description: 'Send a document to a WhatsScale CRM contact selected from the dropdown.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a document/file to a contact stored in the WhatsScale CRM, identified by CRM contact ID chosen from the dropdown, with an optional display filename and caption. Pick this when the recipient is a managed CRM record; use the plain contact, group, manual-entry, or channel document variants for non-CRM recipients. Requires a directly downloadable document URL. Not idempotent: each call delivers another document.', idempotent: false },
   props: {
     session: whatsscaleProps.session,
     crmContact: whatsscaleProps.crmContact,

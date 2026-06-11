@@ -71,6 +71,12 @@ export const imageGenerationAction = createAction({
   name: 'image_generation',
   displayName: 'Image Generation',
   description: 'Create images from text prompts using Eden AI. Supports multiple providers, models, and resolutions.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Generate one or more images from a text prompt via Eden AI, routed to a chosen provider (OpenAI/DALL-E, StabilityAI, Replicate, Amazon, Leonardo, and others) at a selected resolution. Use it for text-to-image creation when you want provider/model choice behind a single call. Requires a provider, prompt, and resolution; image count defaults to 1. Generative and non-deterministic, but stateless — repeating the call creates no extra side effect.',
+    idempotent: true,
+  },
   props: {
     provider: Property.Dropdown({
       auth: edenAiAuth,

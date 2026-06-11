@@ -7,6 +7,8 @@ export const getBlockRaw = createAction({
     name: 'get_block_raw',
     displayName: 'Get Block Raw',
     description: 'Returns the raw block representation in binary',
+    audience: 'both',
+    aiMetadata: { description: 'Fetches the full raw serialized block (binary representation) for a given block hash. Read-only and idempotent. Choose this only when you need the complete on-the-wire block bytes; for human-readable fields use Get Block, and for just the 80-byte header use Get Block Header.', idempotent: true },
     // category: 'Blocks',
     props: {
         hash: Property.ShortText({

@@ -8,6 +8,12 @@ export const getAppointmentDetails = createAction({
   name: 'getAppointmentDetails',
   displayName: 'Get Appointment Details',
   description: 'Get details of an appointment using its booking ID',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieve the full details of a single Zoho Bookings appointment by its booking ID. Use the from/to time range to locate the booking ID first. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     from_time: Property.DateTime({
       displayName: 'From Time',

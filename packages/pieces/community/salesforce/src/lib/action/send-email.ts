@@ -8,6 +8,8 @@ export const sendEmail = createAction({
     name: 'send_email',
     displayName: 'Send Email',
     description: 'Sends an email to a Contact or Lead by creating an EmailMessage record.',
+    audience: 'both',
+    aiMetadata: { description: 'Send an email to a Contact or Lead (body may be plain text or HTML) and log it as an EmailMessage, optionally related to another record. Not idempotent — each call sends and records another email.', idempotent: false },
     props: {
         recipientId: salesforcesCommon.recipient,
         subject: Property.ShortText({

@@ -15,6 +15,8 @@ export const createContact = createAction({
   name: 'create_contact',
   displayName: 'Create Contact',
   description: 'Create a new contact in your OpenPhone workspace',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new contact in the OpenPhone workspace with optional emails, phone numbers, company, role, and custom fields. Choose this when adding a brand-new person; use Update Contact to modify an existing one. First name is required. Not idempotent — each call creates a separate contact even with identical input.', idempotent: false },
   props: {
     firstName: Property.ShortText({
       displayName: 'First Name',

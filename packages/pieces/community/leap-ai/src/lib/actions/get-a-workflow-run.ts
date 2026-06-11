@@ -8,6 +8,12 @@ export const getAWorkflowRun = createAction({
   name: 'getAWorkflowRun',
   displayName: 'Get a Workflow Run',
   description: 'Retrieve the status and results of a workflow run',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches the current status and results of a single Leap AI workflow run by its run ID. Use to poll a run started by "Run a Workflow" until it completes. Requires the workflow run ID. Read-only and safe to call repeatedly.',
+    idempotent: true,
+  },
   props: {
     workflow_run_id: Property.ShortText({
       displayName: 'Workflow Run ID',

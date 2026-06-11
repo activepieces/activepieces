@@ -8,6 +8,12 @@ export const lookupTechnology = createAction({
   name: 'lookup_technology',
   displayName: 'Lookup Technology',
   description: 'Look up technologies used by a company',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Return the technology stack (technographics) detected for a single company, identified via lookup_type: domain, LinkedIn URL, domain_search_id, or domain_id (integer). Read-only and repeatable. Use to learn what tools/software a known company uses; for general firmographic detail use Lookup Company instead.',
+    idempotent: true,
+  },
   props: {
     lookup_type: Property.StaticDropdown({
       displayName: 'Lookup Type',

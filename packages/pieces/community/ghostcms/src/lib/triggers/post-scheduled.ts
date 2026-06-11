@@ -8,6 +8,9 @@ export const postScheduled = createTrigger({
   name: 'post_scheduled',
   displayName: 'Post Scheduled',
   description: 'Triggers when a post is scheduled',
+  aiMetadata: {
+    description: 'Fires when a post is scheduled in the Ghost publication (post.scheduled), i.e. a post is set to auto-publish at a future time (fires at scheduling, not at the publish moment). Payload carries the scheduled post record including its published_at time.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

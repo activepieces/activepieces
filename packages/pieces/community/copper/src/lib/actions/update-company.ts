@@ -12,6 +12,12 @@ export const updateCompany = createAction({
   name: 'updateCompany',
   displayName: 'Update Company',
   description: 'Updates a company record.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing company in Copper CRM, identified by company ID, overwriting name, email domain, details, phone numbers, address, and primary contact with the supplied values. Use to modify a known company; requires the target company ID. Idempotent: re-applying the same values leaves the record in the same state.',
+    idempotent: true,
+  },
   props: {
     companyId: companyDropdown({ refreshers: ['auth'], required: true }),
     fields: Property.DynamicProperties({

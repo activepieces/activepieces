@@ -11,6 +11,10 @@ export const workerDeleted = createTrigger({
   name: 'worker_deleted',
   displayName: 'Worker Deleted',
   description: 'Triggers when a worker is deleted',
+  aiMetadata: {
+    description:
+      'Fires when a worker (driver) is removed from the Onfleet organization. Represents offboarding of a delivery worker, useful for deprovisioning accounts or updating staff records in external systems. The payload includes the deleted worker object or its identifier.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   //Create the webhook and save the webhook ID in store for disable behavior

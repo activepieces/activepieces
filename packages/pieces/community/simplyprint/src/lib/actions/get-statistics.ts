@@ -9,6 +9,12 @@ export const getStatisticsAction = createAction({
   name: 'get_statistics',
   displayName: 'Get Account Statistics',
   description: 'Fetch high-level printing statistics (total prints, materials used, hours, etc.).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Read-only fetch of lifetime account-level printing statistics (total prints, materials used, total hours, etc.) in the panel\'s general/overview mode. Pick this for a high-level summary of account usage; it takes no inputs and never modifies anything.',
+    idempotent: true,
+  },
   props: {},
   async run(context) {
     // account/GetStatistics declares only post_validation and reads filters

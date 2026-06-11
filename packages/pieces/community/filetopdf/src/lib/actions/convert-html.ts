@@ -14,6 +14,12 @@ export const convertHtml = createAction({
   name: 'convert_html',
   displayName: 'Convert HTML',
   description: 'Render a raw HTML string (with optional CSS) to PDF using Chromium.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Renders a raw HTML string (with optional injected CSS) to PDF via Chromium. Choose this when the agent holds HTML markup it generated or assembled in memory, rather than a file or URL. Requires the HTML content as input; rendering is deterministic with no stored side effect, so re-running on the same input is safe and idempotent.',
+    idempotent: true,
+  },
   props: {
     html: Property.LongText({
       displayName: 'HTML',

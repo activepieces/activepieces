@@ -8,6 +8,8 @@ export const listDomains = createAction({
   name: 'list_domains',
   displayName: 'List All Domains',
   description: 'Retrieve a list of all domains in your account.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists all DNS domains managed under the authenticated DigitalOcean account, paginated. Use to discover available domains or look one up by name before acting on it. Read-only and idempotent; supports per-page and page controls.', idempotent: true },
   props: {
     per_page: Property.Number({
       displayName: 'Results Per Page',

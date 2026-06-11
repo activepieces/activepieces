@@ -8,6 +8,12 @@ export const voidSignatureAction = createAction({
   displayName: 'Void Signature',
   description:
     'Cancel an in-progress signature request. The document becomes inaccessible to all signers.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently cancel an in-progress signature request by its requester token, after which the document can no longer be signed and becomes inaccessible to every signer. This is a destructive, irreversible state change; calling it again on an already-voided request has no further effect.',
+    idempotent: false,
+  },
   props: {
     token_requester: Property.ShortText({
       displayName: 'Requester Token',
