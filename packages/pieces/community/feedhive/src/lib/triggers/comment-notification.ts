@@ -8,6 +8,9 @@ export const commentNotificationTrigger = createTrigger({
   name: 'comment_notification',
   displayName: 'Comment Notification',
   description: 'Triggers when a comment is added to one of your posts.',
+  aiMetadata: {
+    description: 'Fires via webhook when a new comment is added to one of your FeedHive posts. Represents a single incoming comment, carrying the comment text and author details along with the related post.',
+  },
   props: {
     instructions: Property.MarkDown({
       value: `### Setup Instructions

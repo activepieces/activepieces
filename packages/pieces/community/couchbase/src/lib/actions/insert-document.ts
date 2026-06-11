@@ -16,6 +16,8 @@ export default createAction({
   name: 'insert_document',
   displayName: 'Insert Document',
   description: 'Create a new document. Fails if document already exists.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new Couchbase document in a bucket/scope/collection, failing if a document with the same ID already exists. Use when you specifically need create-only semantics; choose Upsert Document instead to overwrite. Not idempotent: a stable ID fails on retry, and if the ID is left blank a fresh random UUID is generated each call, creating a new document.', idempotent: false },
   props: {
     bucket: couchbaseCommonProps.bucket,
     scope: couchbaseCommonProps.scope,

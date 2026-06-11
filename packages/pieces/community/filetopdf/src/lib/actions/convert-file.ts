@@ -20,6 +20,12 @@ export const convertFile = createAction({
   displayName: 'Convert a File',
   description:
     'Convert an uploaded file or a public file URL to PDF. The engine is chosen automatically from the extension — Office (DOCX, XLSX, PPTX…), images, HTML, Markdown, or PDF passthrough.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Converts an existing document to PDF, choosing the rendering engine from the file extension (Office formats, images, HTML, Markdown, or PDF passthrough). Operates in one of two source modes: upload binary file data, or pass a public http(s) file URL the server downloads (private/internal addresses are rejected). Choose this when the agent already has a source file or its URL, rather than raw HTML/Markdown text. The conversion is deterministic with no stored side effect, so re-running on the same input is safe and idempotent.',
+    idempotent: true,
+  },
   props: {
     source: Property.StaticDropdown({
       displayName: 'Source',

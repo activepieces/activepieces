@@ -8,6 +8,8 @@ export const retrieveMemories = createAction({
   name: 'retrieve_memories',
   displayName: 'Retrieve Memories',
   description: 'Perform similarity-based semantic retrieval across one or more spaces. Returns matching chunks ranked by relevance, with optional full memory definitions.',
+  audience: 'both',
+  aiMetadata: { description: 'Runs a semantic (vector-similarity) search over one or more GoodMem spaces using a natural-language query and returns the matching memory chunks ranked by relevance, optionally reranked or LLM-post-processed. Use it to recall stored knowledge relevant to a question; requires at least one space ID. Read-only and idempotent, though by default it retries for up to 60 seconds when no results are found so freshly added memories have time to finish indexing.', idempotent: true },
   props: {
     query: Property.LongText({
       displayName: 'Query',

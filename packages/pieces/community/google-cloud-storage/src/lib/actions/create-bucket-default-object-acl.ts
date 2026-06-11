@@ -9,6 +9,8 @@ export const createBucketDefaultObjectAcl = createAction({
   name: 'create_bucket_default_object_acl',
   displayName: 'Create Bucket Default Object ACL',
   description: 'Set default ACLs for new objects added to a bucket. Perfect for automatically assigning permissions to new uploads.',
+  audience: 'both',
+  aiMetadata: { description: 'Adds an entry to a bucket\'s default object ACL, which is applied automatically to objects later uploaded without their own ACL. Use to pre-set permissions for future uploads. Not idempotent: adding an entry that already exists fails, and it does not affect existing objects. Only works on buckets using fine-grained ACLs, not uniform bucket-level access; requires bucket, entity, and role.', idempotent: false },
   props: {
     projectId: projectIdProperty,
     bucket: bucketDropdown,

@@ -26,6 +26,12 @@ export const createRowsAction = createAction({
   displayName: 'Create Rows',
   description:
     'Creates new rows of data in a BigQuery table (accepts an array of row objects). Rows are available to query within seconds.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Streams a batch of rows into a BigQuery table in one streaming-insert call, taking a JSON array of objects whose keys match the column names. Choose this over Create Row when appending multiple records at once. Optional flags control whether the whole batch fails on a bad row or skips invalid rows / unknown fields. Not idempotent: every call appends the rows again, so repeating it duplicates them.',
+    idempotent: false,
+  },
   props: {
     project_id: projectIdProp,
     dataset_id: datasetIdProp,

@@ -8,6 +8,8 @@ export const fountainCreateApplicant = createAction({
   auth: fountainAuth,
   displayName: 'Create Applicant',
   description: 'Add a new applicant to your hiring pipeline',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new applicant record in Fountain from a name, email, and phone number. Use to add a candidate into the hiring pipeline. Optionally enable the duplicate check to apply the company\'s configured duplicate-blocking rules. Not idempotent: each call creates a new applicant.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Full Name',

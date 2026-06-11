@@ -6,6 +6,8 @@ export const getSessionDetails = createAction({
   name: 'get_session_details',
   displayName: 'Get Session Details',
   description: 'Retrieves details of a specific Devin session',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches the current details and status of an existing Devin session by its session id. Use this to check progress, read results, or poll the outcome of a previously created session. Read-only and idempotent; requires a valid session id.', idempotent: true },
   auth: devinAuth,
   props: {
     sessionId: Property.ShortText({

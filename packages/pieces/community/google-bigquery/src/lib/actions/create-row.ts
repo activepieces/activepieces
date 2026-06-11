@@ -36,6 +36,12 @@ export const createRowAction = createAction({
   displayName: 'Create Row',
   description:
     'Creates a single new row in a BigQuery table. Column fields are loaded from the table schema.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Streams one new row into a BigQuery table via the streaming insert API, with each column supplied as a separate value (loaded from the live table schema; empty values are dropped rather than written as nulls). Choose this when an agent has a single record to append and knows the target project, dataset, and table. Not idempotent: each call appends another row, so repeating it duplicates the record.',
+    idempotent: false,
+  },
   props: {
     project_id: projectIdProp,
     dataset_id: datasetIdProp,

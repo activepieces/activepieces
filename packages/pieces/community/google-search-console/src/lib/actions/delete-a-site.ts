@@ -9,6 +9,8 @@ export const deleteSite = createAction({
   displayName: 'Delete a Site',
   description:
     "Removes a site from the set of the user's Search Console sites.",
+  audience: 'both',
+  aiMetadata: { description: "Remove a site (property) from the authenticated user's Google Search Console account, ending management of it. Choose this to deregister a property. Requires the exact siteUrl of an existing property; a confirmed destructive action. Not idempotent: a repeat call for an already-removed site fails.", idempotent: false },
   props: {
     siteUrl: commonProps.siteUrl,
   },

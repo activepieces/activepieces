@@ -87,16 +87,15 @@ function createChatModel({ provider, auth, config, modelId }: {
     }
 }
 
-const THINKING_PROVIDERS = new Set([
-    AIProviderName.ANTHROPIC,
-    AIProviderName.BEDROCK,
-    AIProviderName.OPENROUTER,
-    AIProviderName.ACTIVEPIECES,
-])
-
-function stripThinkingBlocks(messages: ModelMessage[], provider: AIProviderName): ModelMessage[] {
-    if (THINKING_PROVIDERS.has(provider)) return messages
-
+/**
+ * Strips for ALL providers (not just non-thinking ones) because Anthropic rejects
+ * a re-sent `thinking` block whose `signature` didn't survive our DB round-trip /
+ * compaction / truncation reshaping ("Invalid `signature` in `thinking` block"),
+ * and prior-turn reasoning adds nothing the text + tool results don't already carry.
+ * In-flight thinking within one streamText call keeps its intact signature and is
+ * untouched — this only touches the cross-turn history we assemble.
+ */
+function stripThinkingBlocks(messages: ModelMessage[], _provider: AIProviderName): ModelMessage[] {
     const hasThinking = messages.some(
         (msg) => msg.role === 'assistant' && Array.isArray(msg.content)
             && (msg.content as Array<Record<string, unknown>>).some(
