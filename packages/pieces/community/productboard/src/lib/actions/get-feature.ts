@@ -11,6 +11,8 @@ export const getFeature = createAction({
     name: 'get_feature',
     displayName: 'Get Feature',
     description: 'Get an existing feature in Productboard',
+    audience: 'both',
+    aiMetadata: { description: 'Retrieves a single Productboard feature by its feature id. Use to look up a feature\'s current details before acting on it or to confirm it exists. Read-only and idempotent.', idempotent: true },
     auth: productboardAuth,
     props: {
         feature_id: productboardProps.feature_id(),

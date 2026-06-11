@@ -14,6 +14,8 @@ export const getSchedulingLinkAction = createAction({
   name: 'get_scheduling_link',
   displayName: 'Get Scheduling Link',
   description: 'Retrieves the details of a specific scheduling link by its ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches the full configuration of a single SavvyCal scheduling link by its id, including its custom fields. Use to inspect a known link before booking or to read its settings; get the id from List Scheduling Links. Read-only and idempotent.', idempotent: true },
   props: {
     team_id: Property.Dropdown({
       auth: savvyCalAuth,

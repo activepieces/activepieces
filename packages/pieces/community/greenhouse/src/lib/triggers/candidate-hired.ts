@@ -76,6 +76,10 @@ export const candidateHiredTrigger = createTrigger({
   name: 'candidate_hired',
   displayName: 'Candidate Hired',
   description: 'Triggers when a candidate is hired.',
+  aiMetadata: {
+    description:
+      'Fires when a candidate application reaches the hired status in Greenhouse, representing a completed hire. Use to kick off onboarding or downstream HR steps; polls applications filtered to hired status.',
+  },
   props: {},
   sampleData: {
     id: 48206478,

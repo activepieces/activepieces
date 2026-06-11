@@ -13,6 +13,8 @@ export const getClickupChannelMessages = createAction({
   auth: clickupAuth,
   name: 'get_channel_messages',
   description: 'Gets all messages in a ClickUp channel',
+  audience: 'both',
+  aiMetadata: { description: 'Read-only: list the messages in a ClickUp Chat channel, given the workspace and channel IDs, with an optional limit (1-100) and markdown or plain-text content format. Use to read channel history; does not post anything. Safe to call repeatedly.', idempotent: true },
   displayName: 'Get Channel Messages',
   props: {
     workspace_id: clickupCommon.workspace_id(),

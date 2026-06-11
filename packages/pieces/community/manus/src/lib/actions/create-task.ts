@@ -7,6 +7,8 @@ export const createTask = createAction({
   auth: manusAuth,
   displayName: 'Create Task',
   description: 'Create a new task for Manus AI to execute',
+  audience: 'both',
+  aiMetadata: { description: 'Submits a prompt to the Manus AI agent to run as a task, optionally with an agent profile, interaction mode (chat/adaptive/agent), connectors, and attachments. Use to kick off new agent work, or pass an existing task ID to continue that task as a multi-turn conversation. Not idempotent: each call without a task ID creates a new task.', idempotent: false },
   props: {
     prompt: Property.LongText({
       displayName: 'Prompt',

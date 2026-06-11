@@ -112,6 +112,9 @@ export const xeroNewBill = createTrigger({
   name: 'xero_new_bill',
   displayName: 'New Bill',
   description: 'Fires when a new bill (Accounts Payable) is added.',
+  aiMetadata: {
+    description: 'Fires when a new bill (Accounts Payable, Type ACCPAY) is added in the connected Xero organisation. Polls the Xero Invoices endpoint restricted to ACCPAY and emits each bill the first time its InvoiceID is seen, optionally filtered by status (DRAFT, SUBMITTED, AUTHORISED, PAID, VOIDED, DELETED), contact, or date range. Each item is a bill record (number, status, supplier contact, totals; line items unless summary-only). Excludes sales invoices and represents a newly added bill, not an update.',
+  },
   props: {
     tenant_id: props.tenant_id,
     statuses: Property.StaticMultiSelectDropdown({

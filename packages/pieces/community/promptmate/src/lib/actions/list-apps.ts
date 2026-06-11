@@ -7,6 +7,8 @@ export const listApps = createAction({
   name: 'list_apps',
   displayName: 'List Apps',
   description: 'Retrieve a list of available apps',
+  audience: 'both',
+  aiMetadata: { description: 'Lists all PromptMate apps available to the authenticated account, returning each app id, name, credit estimate, and its data fields. Use it to discover which app to run or to look up an appId before calling run, get-job-status, get-app-details, or get-last-results. Read-only and safe to repeat.', idempotent: true },
   props: {},
   async run({ auth }) {
     const response = await httpClient.sendRequest<{

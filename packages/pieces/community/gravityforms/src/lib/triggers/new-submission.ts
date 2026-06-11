@@ -23,6 +23,10 @@ export const gravityFormsNewSubmission = createTrigger({
   displayName: 'New Submission',
   auth: PieceAuth.None(),
   description: 'Triggers when form receives a new submission',
+  aiMetadata: {
+    description:
+      'Fires when a Gravity Forms form on the connected WordPress site receives a new submission, delivered via the form\'s configured webhook. Each event represents one completed form entry and carries the submitted field values as its payload.',
+  },
   props: {
     md: Property.MarkDown({
       value: markdown,

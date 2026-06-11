@@ -7,6 +7,8 @@ export const findFormProduct = createAction({
   name: 'findFormProduct',
   displayName: 'Find Form Product',
   description: 'Finds a form product by name.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches the products of a selected Paperform form by product name and returns matching products. Use to look up a product (e.g. to get its SKU) before updating or deleting it; this is a read-only search and is idempotent.', idempotent: true },
   props: {
     formId: Property.Dropdown({
       auth: paperformAuth,

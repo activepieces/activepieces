@@ -7,6 +7,8 @@ export const validateAddress = createAction({
     name: 'validate_address',
     displayName: 'Validate Address',
     description: 'Validates a Bitcoin address',
+    audience: 'both',
+    aiMetadata: { description: 'Checks whether a string is a valid Bitcoin address and reports its type and script details without touching chain history. Read-only and idempotent. Use this as a cheap pre-check before any address lookup; it confirms format/validity only, not whether the address has ever been used or holds funds.', idempotent: true },
     // category: 'Addresses',
     props: {
         address: Property.ShortText({

@@ -27,6 +27,9 @@ export const newPayout = createTrigger({
     name: 'new_payout',
     displayName: 'New Payout',
     description: "Triggers when a payout is successfully sent to your bank account.",
+    aiMetadata: {
+      description: 'Fires when Respaid sends a payout to your bank account, carrying the payout id, date, and the list of collected payments (with amounts and fees) bundled into that payout. Use to reconcile disbursed collections against your bank deposits.',
+    },
     auth: respaidAuth,
     props: {},
     sampleData: {

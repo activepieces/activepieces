@@ -11,6 +11,8 @@ export const sendVideoToGroupAction = createAction({
   name: 'whatsscale_send_video_to_group',
   displayName: 'Send a Video to a Group',
   description: 'Send a video to a WhatsApp group selected from the dropdown.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a video to a WhatsApp group whose chat ID is chosen from the session group list, with an optional caption. Pick this when the recipient is a known group; use the manual-entry video action instead to target a raw group ID, or the contact/CRM/channel variants for other recipient types. Requires a directly downloadable video URL. Not idempotent: each call delivers another video.', idempotent: false },
   props: {
     session: whatsscaleProps.session,
     group: whatsscaleProps.group,

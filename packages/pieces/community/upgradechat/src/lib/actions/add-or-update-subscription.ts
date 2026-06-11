@@ -6,6 +6,12 @@ export const addOrUpdateSubscription = createAction({
   name: 'addOrUpdateSubscription',
   displayName: 'Add or Update Subscription',
   description: 'Creates a new subscription.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates or updates a subscription for a contact in the Sperse/Upgrade.chat CRM, linking the given product (by Product Code, required) at a chosen payment period (Monthly, Annual, or LifeTime) with optional recurring billing. The contact must be identifiable by Contact ID or External Contact ID (Contact XREF). Choose this to attach a subscription/plan to an existing contact. The underlying update is an upsert keyed on the contact and product, so repeating the same call converges to the same subscription state rather than stacking duplicates.',
+    idempotent: true,
+  },
   auth: upgradechatAuth,
   props: {
     contactId: Property.Number({

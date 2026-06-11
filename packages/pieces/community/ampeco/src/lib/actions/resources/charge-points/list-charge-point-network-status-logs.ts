@@ -15,6 +15,8 @@ export const listChargePointNetworkStatusLogsAction = createAction({
   name: 'listChargePointNetworkStatusLogs',
   displayName: 'Resources - Charge Points - List Charge Point Network Status Logs',
   description: 'Get paginated list of network status logs for a charge point with optional date filtering.',
+  audience: 'both',
+  aiMetadata: { description: 'List the network (online/offline) status log entries for a given charge point, optionally bounded by a created-after/created-before date range. Read-only and idempotent; enable Paginate Results to fetch every page, or leave it off for a single page (up to per_page, max 100). Use to audit connectivity history for one charge point.', idempotent: true },
   props: {
         
   chargePoint: Property.Number({

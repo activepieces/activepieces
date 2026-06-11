@@ -8,6 +8,8 @@ export const getSheetColumns = createAction({
   name: 'get_sheet_columns',
   displayName: 'Get Sheet Columns',
   description: 'Returns all columns (fields) of a contact list, including their enrichment status.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists the columns (fields) of a contact list (sheet), including each column type and enrichment status. Use it to discover the valid column names before building row data for Add Row to Sheet. Read-only; requires the sheet id.', idempotent: true },
   props: {
     sheet: sheetDropdown,
   },

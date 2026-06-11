@@ -10,6 +10,12 @@ export const sliteFetchDocAction = createAction({
   name: 'fetch_doc',
   displayName: 'Fetch Doc',
   description: 'Returns a readable doc by its ID.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves a single Slite doc by its note id, returning its content in the requested format (Markdown, HTML, or SliteML). Use it when you already have a doc id and need to read its body. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     note_id: sliteProps.noteId({ required: true }),
     format: Property.StaticDropdown({

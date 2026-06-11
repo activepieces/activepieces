@@ -7,6 +7,8 @@ export default createAction({
   name: 'create_customer',
   displayName: 'Create Customer',
   description: 'Creates a customer in clockodo',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new clockodo customer with a name and optional number, active flag, billable default, note, and color. Not idempotent: each call adds another customer even with identical input, so guard against duplicates. To edit an existing customer use Update Customer.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

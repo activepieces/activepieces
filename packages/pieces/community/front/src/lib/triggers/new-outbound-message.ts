@@ -58,6 +58,10 @@ export const newOutboundMessage = createTrigger({
   name: 'newOutboundMessage',
   displayName: 'New Outbound Message',
   description: 'Fires when a message is sent or replied to in Front.',
+  aiMetadata: {
+    description:
+      'Fires when an outbound message is sent from Front, such as a reply or a new message to a contact, optionally scoped to a specific inbox. Represents a message leaving the team toward an external recipient and emits the outbound event with its message body, recipients, and parent conversation.',
+  },
   props,
   sampleData: {
     _links: {

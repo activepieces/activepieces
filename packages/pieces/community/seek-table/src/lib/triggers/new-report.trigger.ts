@@ -43,6 +43,9 @@ export const newReportTrigger = createTrigger({
   name: 'new_report',
   displayName: 'New Report',
   description: 'Triggers when a new report is added to your SeekTable account.',
+  aiMetadata: {
+    description: 'Fires when a new report appears in the connected SeekTable account. Polls the report list and emits one event per newly created report, representing a report definition that is now available to run or share.',
+  },
   type: TriggerStrategy.POLLING,
   props: {},
   sampleData: {

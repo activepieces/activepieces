@@ -8,6 +8,9 @@ export const transactionSentTrigger = createTrigger({
   name: 'tarvent_transaction_sent',
   displayName: 'Transaction Sent',
   description: 'Triggers when a transactional email is processed and sent to one or more recipients.',
+  aiMetadata: {
+    description: 'Fires when a transactional email is processed and delivered to one or more recipients. Represents a completed transactional send.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     include: tarventCommon.include,

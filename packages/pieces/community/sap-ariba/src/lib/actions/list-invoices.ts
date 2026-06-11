@@ -8,6 +8,8 @@ export const listInvoices = createAction({
     name: 'list_invoices',
     displayName: 'List Invoices',
     description: 'Retrieves header information of one or more invoices in Ariba Network.',
+    audience: 'both',
+    aiMetadata: { description: 'List invoice headers from SAP Ariba Network for a given Ariba Network ID (required). Use to find or browse invoices; optional filters narrow by buyer/supplier ANID, document number, document/routing status, document purpose, and creation or status-update date ranges, and leaving them empty returns all invoices paginated. Read-only and idempotent.', idempotent: true },
     props: {
         anId: Property.ShortText({
             displayName: 'Ariba Network ID',

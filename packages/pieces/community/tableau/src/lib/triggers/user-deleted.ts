@@ -6,6 +6,9 @@ export const userDeletedTrigger = createTrigger({
   name: 'user_deleted',
   displayName: 'User Deleted',
   description: 'Triggers when a user is deleted',
+  aiMetadata: {
+    description: 'Fires when a user is removed from the Tableau site. Represents a single user-deletion event and carries the deleted user\'s name and ID.',
+  },
   auth: tableauAuth,
   type: TriggerStrategy.WEBHOOK,
   props: {},

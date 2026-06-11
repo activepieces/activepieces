@@ -8,6 +8,12 @@ export const findMessage = createAction({
   name: 'findMessage',
   displayName: 'Find Message',
   description: 'Retrieve details for a specific message by message ID',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves the details of a single Webex message by its message ID. Use it to look up the content and metadata of a known message. Read-only and idempotent; requires the exact message ID (this is not a search across messages).',
+    idempotent: true,
+  },
   props: {
     messageId: Property.ShortText({
       displayName: 'Message ID',

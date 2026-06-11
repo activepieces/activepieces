@@ -9,6 +9,12 @@ export const customGeneratorText = createAction({
   displayName: 'Custom Generator (Text)',
   description:
     'Generate custom text for any purpose using the EasyPeasy AI template engine',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Generate freeform text from keywords/instructions via Easy-Peasy.AI\'s custom-generator preset. Choose this for open-ended copy or content generation where no purpose-specific template fits; supply the prompt in Keywords, optionally set language, output count, and a GPT-4 toggle. Each call produces fresh generated text, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     keywords: Property.LongText({
       displayName: 'Keywords',

@@ -8,6 +8,11 @@ export const listReferrals = createAction({
   name: 'list_referrals',
   displayName: 'List Referrals',
   description: 'List all referrals in your PromoteKit account.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Retrieve a paginated list of referrals (referred customers) in the PromoteKit account. Use to enumerate or browse referrals rather than look one up by a known ID. Supports page and per-page limit (max 100); read-only and safe to repeat.',
+    idempotent: true,
+  },
   props: {
     page: Property.Number({
       displayName: 'Page',

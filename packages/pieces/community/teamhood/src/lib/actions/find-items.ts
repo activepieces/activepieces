@@ -17,6 +17,12 @@ export const findItemsAction = createAction({
   name: 'find_items',
   displayName: 'Find Items',
   description: 'Search for Teamhood items using filters.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches Teamhood items, optionally narrowed by workspace, board, row, status, assignee, owner, completion state, and created/modified/completed-since timestamps; with all filters left empty it returns items broadly. Use to look up or enumerate items matching criteria, or to resolve an item ID before another action. Supports take/skip pagination (defaults to 100). Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     workspaceId: workspaceIdDropdown(false),
     boardId: boardIdDropdown(false),

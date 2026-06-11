@@ -8,6 +8,11 @@ export const listVoicesAction = createAction({
   name: 'list_voices',
   displayName: 'List Voices',
   description: 'Retrieve a list of all available voices.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Retrieves all voices available to the account. Use to discover voice IDs before composing or generating a video. Takes no input; read-only and idempotent.',
+    idempotent: true,
+  },
   props: {},
   async run({ auth }) {
     return await heygenApiCall({

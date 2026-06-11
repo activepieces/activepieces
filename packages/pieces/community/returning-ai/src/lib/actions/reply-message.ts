@@ -30,6 +30,8 @@ export const replyMessage = createAction({
   name: 'replyMessage',
   displayName: 'Reply Message',
   description: 'Reply to a specific message as a chosen user in a channel.',
+  audience: 'both',
+  aiMetadata: { description: 'Posts a threaded reply to an existing Returning.ai message on behalf of a given user (identified by username or email), so the reply appears as if that user sent it. Use to respond in-thread to a known message; requires the target message ID and the reply text. Not idempotent: each call adds a new reply.', idempotent: false },
   props: {
     description: Property.MarkDown({
       value:

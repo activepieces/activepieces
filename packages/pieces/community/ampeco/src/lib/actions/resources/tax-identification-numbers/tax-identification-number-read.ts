@@ -14,6 +14,8 @@ export const taxIdentificationNumberReadAction = createAction({
   name: 'taxIdentificationNumberRead',
   displayName: 'Resources - Tax Identification Numbers - Read',
   description: 'Get a Tax Identification Number.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve a single tax identification number by its numeric ID. Use when you already know the ID and need its details; read-only and safe to retry. To search or browse multiple records use the listing action instead.', idempotent: true },
   props: {
         
   taxIdentificationNumber: Property.Number({

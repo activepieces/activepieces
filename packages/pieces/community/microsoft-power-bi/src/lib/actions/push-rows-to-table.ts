@@ -12,6 +12,8 @@ export const pushRowsToDatasetTableAction = createAction({
     name: 'push_rows_to_dataset_table',
     displayName: 'Push Rows to Dataset Table',
     description: 'Add rows to a table in a Power BI dataset (supports Push, Streaming, and PushStreaming modes)',
+    audience: 'both',
+    aiMetadata: { description: 'Appends rows of data to a specific table within an existing Power BI dataset, then (unless Skip Dataset Refresh is set) triggers a dataset refresh. Use this to feed live or batch data into a push/streaming dataset created beforehand. Requires the target dataset id and table name; rows must be a JSON array (or an object with a rows array) whose fields match the table schema. Not idempotent: each call appends new rows rather than replacing existing data.', idempotent: false },
     props: {
         dataset_id: Property.Dropdown({
             auth: microsoftPowerBiAuth,

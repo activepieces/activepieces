@@ -15,6 +15,8 @@ export const createInstallerJobAction = createAction({
   name: 'createInstallerJob',
   displayName: 'Resources - Installer Jobs - Create',
   description: 'Create Installer Job.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new installer job assigned to an installation and maintenance company, with a description and optional installer admin or access PIN. Use to dispatch a new job; to change an existing one use the update action. Not idempotent — each call creates a new job.', idempotent: false },
   props: {
         
   installationAndMaintenanceCompanyId: Property.Number({

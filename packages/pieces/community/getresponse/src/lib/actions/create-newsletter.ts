@@ -13,6 +13,12 @@ export const createNewsletterAction = createAction({
   name: 'create-newsletter',
   displayName: 'Create Newsletter',
   description: 'Creates a newsletter and queues it to send to the selected campaign.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a newsletter (email broadcast) and queues it to send to all subscribers of the selected GetResponse campaign. Use to send a one-off email blast to a list. Requires a campaign ID, a verified from-field address, and a subject, plus HTML and/or plain-text content (at least one is required). Not idempotent: each call creates and dispatches a new newsletter, so repeating it sends another email.',
+    idempotent: false,
+  },
   props: {
     campaignId: getresponseProps.campaign(),
     fromFieldId: getresponseProps.fromField(),

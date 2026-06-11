@@ -9,6 +9,11 @@ export const uploadFile = createAction({
   name: 'microsoft_sharepoint_upload_file',
   displayName: 'Upload File',
   description: 'Uploads a new file at path you specify.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Uploads file content to a SharePoint document library (drive), placing it under a parent folder path with the file name you specify. Use to push a file (from a prior step or URL) into a site. Idempotent on the target path: uploading the same name to the same folder replaces the existing file rather than creating a duplicate.',
+    idempotent: true,
+  },
   props: {
     siteId: microsoftSharePointCommon.siteId,
     driveId: microsoftSharePointCommon.driveId,

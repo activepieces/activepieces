@@ -6,6 +6,12 @@ export const getContactDetails = createAction({
   name: 'getContactDetails',
   displayName: 'Get Contact Details',
   description: 'Get Contact Details',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up and returns the full detail record for a single contact in the Sperse/Upgrade.chat CRM. Provide at least one identifier to resolve the contact: Contact ID, Contact Xref, Affiliate Code, User ID, or User Email (all optional individually, but a lookup needs one). Choose this to read a contact before deciding to update, invoice, or subscribe them. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: upgradechatAuth,
   props: {
     contactId: Property.Number({

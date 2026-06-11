@@ -7,6 +7,8 @@ export const createSurveyInvitationUrlAction = createAction({
   name: 'create_survey_invitation_url',
   displayName: 'Create Survey Invitation URL',
   description: 'Generates a personalised, one-time-use survey link that you can send to a customer.',
+  audience: 'both',
+  aiMetadata: { description: 'Generates a personalised, one-time-use survey invitation link for a specific survey and recipient email, returning the URL for you to deliver yourself (rather than having ProvenExpert email it). Requires a valid survey code and the recipient email the link is bound to. Not idempotent: each call mints a fresh invitation.', idempotent: false },
   props: {
     survey_code: provenExpertCommon.surveyDropdown,
     email: Property.ShortText({

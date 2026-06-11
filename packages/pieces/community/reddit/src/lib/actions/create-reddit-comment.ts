@@ -7,6 +7,8 @@ export const createRedditComment = createAction({
   name: 'createRedditComment',
   displayName: 'Create Comment',
   description: 'Comment on a Reddit post or reply to a comment.',
+  audience: 'both',
+  aiMetadata: { description: 'Posts a comment from the authenticated account, either as a top-level reply to a post or as a nested reply to another comment, determined by the parent ID type (t3_ for a post, t1_ for a comment). Requires the parent ID and the comment text. Not idempotent — each call creates a separate comment.', idempotent: false },
   props: {
     parent_id: Property.ShortText({
       displayName: 'Parent ID',

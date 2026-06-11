@@ -42,6 +42,9 @@ export default createTrigger({
   name: 'new_entry',
   displayName: 'New Entry',
   description: 'Triggers when a new time entry is created',
+  aiMetadata: {
+    description: 'Fires when a new time entry is created in Clockodo, such as logged work time, a lump-sum service, or a recorded expense. Emits the newly created entry record, including details like the associated customer, project, service, duration, and billing information.',
+  },
   type: TriggerStrategy.POLLING,
   props: {},
   sampleData: {},

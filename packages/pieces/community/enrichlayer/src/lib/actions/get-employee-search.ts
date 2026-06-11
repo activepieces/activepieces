@@ -9,6 +9,12 @@ export const getEmployeeSearch = createAction({
   displayName: 'Search Company Employees',
   description:
     'Search employees of a company by job title using boolean or regex keywords (10 credits base + 3 per match)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Find employees of a company whose job title matches a boolean (or legacy regex) keyword, given the company URL. Read-only and safe to retry. Use this when you need people in specific roles (e.g. "ceo OR cto"); to list all employees without a title filter use List Company Employees. Carries a base cost plus per-match credits, and country filtering or profile enrichment add more.',
+    idempotent: true,
+  },
   props: {
     company_profile_url: Property.ShortText({
       displayName: 'Company Profile URL',

@@ -9,6 +9,12 @@ export const getInvoice = createAction({
   displayName: 'Get Invoice',
   description:
     'Fetch a single invoice by its Qawafel ID. Returns the full invoice including line items, totals, ZATCA PDF URL, and current state.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves a single invoice by its Qawafel invoice id (the `inv_` identifier), including line items, totals, current state, and the ZATCA PDF URL. Use when you have an invoice id and need its current details or the PDF link. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     invoice_id: Property.ShortText({
       displayName: 'Invoice ID',

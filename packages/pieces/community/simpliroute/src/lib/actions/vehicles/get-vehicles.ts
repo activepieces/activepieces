@@ -8,6 +8,8 @@ export const get_vehicles = createAction({
     auth: simplirouteAuth,
     displayName: 'Get Vehicles',
     description: 'Retrieve the list of vehicles registered in the account.',
+    audience: 'both',
+    aiMetadata: { description: 'List all vehicles registered in the account. Read-only and idempotent; takes no input. Use to discover vehicle IDs or check the fleet before creating, fetching, or deleting a specific vehicle.', idempotent: true },
     props: {},
     async run(context) {
         const url = `${API_BASE_URL}/v1/routes/vehicles/`;

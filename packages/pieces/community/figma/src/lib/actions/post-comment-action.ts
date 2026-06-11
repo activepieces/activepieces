@@ -9,6 +9,8 @@ export const postCommentAction = createAction({
   name: 'post_comment',
   displayName: 'Post File Comment',
   description: 'Post file comment',
+  audience: 'both',
+  aiMetadata: { description: 'Post a new comment with the given message text onto a Figma file, identified by its file key (the alphanumeric segment in a Figma file URL). Use to leave feedback or notes on a design. Not idempotent: each call appends another distinct comment.', idempotent: false },
   props: {
     file_key: Property.ShortText({
       displayName: 'File Key',

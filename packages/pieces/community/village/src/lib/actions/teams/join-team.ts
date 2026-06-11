@@ -8,6 +8,12 @@ export const joinTeam = createAction({
   displayName: 'Join Team',
   description:
     'Join a team using an invite link. Provide the invite link code (the part after /join/ in the URL).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Add the authenticated user to a team using an invite-link code (the segment after /join/ in the share URL). Use when you have an invite code rather than wanting to create a team. Not idempotent in effect, though re-joining a team the user already belongs to is harmless.',
+    idempotent: false,
+  },
   props: {
     team_invite_link: Property.ShortText({
       displayName: 'Team Invite Link',

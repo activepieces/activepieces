@@ -9,6 +9,11 @@ export const getDeploymentStatus = createAction({
   name: 'get_deployment_status',
   displayName: 'Get Deployment Status',
   description: 'Retrieve a deployment and inspect its current status.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Fetch a single Vercel deployment by ID and inspect its current state (e.g. building, ready, error), optionally including Git repository info. Use this to poll or check the outcome of a deployment. Requires the deployment ID, scoped to a chosen project. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     project: vercelProjectDropdown,
     deployment: Property.Dropdown({

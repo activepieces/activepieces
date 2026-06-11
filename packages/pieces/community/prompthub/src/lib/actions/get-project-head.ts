@@ -8,6 +8,8 @@ export const getProjectHead = createAction({
   name: 'get_project_head',
   displayName: 'Get Project Head',
   description: 'Get the production-ready version of a PromptHub project (typically the last commit on master/main branch). Useful for integrating prompts into your application.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch the head (production-ready) revision of a PromptHub project, returning its prompt text, system message, model/provider configuration, and variables. Use this to read a project\'s current prompt without executing it; an optional branch targets a non-default branch and supplied variables can be interpolated into the returned request. Read-only and idempotent. Requires the numeric project ID.', idempotent: true },
   props: getProjectHeadProps,
   auth: prompthubAuth,
   async run({ auth, propsValue }) {

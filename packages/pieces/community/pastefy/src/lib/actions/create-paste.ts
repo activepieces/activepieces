@@ -9,6 +9,8 @@ export default createAction({
   name: 'create_paste',
   displayName: 'Create Paste',
   description: 'Creates a new paste',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new paste (code/text snippet) on a Pastefy instance, optionally setting a title, folder, visibility, and expiry. Use to publish a snippet; if an encryption password is supplied, the content (and title) are AES-encrypted client-side before upload. Creates a new paste with a new ID on every call, so it is not idempotent.', idempotent: false },
   props: {
     content: Property.LongText({
       displayName: 'Content',

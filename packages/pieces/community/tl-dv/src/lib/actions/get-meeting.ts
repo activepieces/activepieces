@@ -9,6 +9,11 @@ export const getMeeting = createAction({
   name: 'get_meeting',
   displayName: 'Get Meeting',
   description: 'Get meeting details by ID',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Retrieves the metadata for a single tl;dv meeting by its id, including name, date, duration, organizer, invitees, and the meeting URL. Use when you already have a meeting id and need its details. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     meetingId: meetingIdProperty,
   },

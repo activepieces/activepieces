@@ -11,6 +11,12 @@ export const findCampaignListAction = createAction({
   name: 'find-campaign-list',
   displayName: 'Find Campaign List',
   description: 'Finds campaign lists by name.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches GetResponse campaigns (lists) by a partial or full name match, or returns the first lists in the account when the name is left empty. Use to resolve a campaign list ID or to enumerate available lists before creating contacts or newsletters. Read-only and idempotent; a limit caps how many lists are returned.',
+    idempotent: true,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Campaign Name',

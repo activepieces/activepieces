@@ -9,6 +9,8 @@ export const createNote = createAction({
     name: 'create_note',
     displayName: 'Create Note',
     description: 'Add a note to a deal, lead, or contact.',
+    audience: 'both',
+    aiMetadata: { description: 'Attaches a free-text note to a lead, contact, or deal in Zendesk Sell. Select the resource type then the specific record, and provide the note content. Use to log a comment or activity against a CRM record. Not idempotent — each call appends a new note even with identical content.', idempotent: false },
     props: {
         resource_type: Property.StaticDropdown({
             displayName: 'Resource Type',

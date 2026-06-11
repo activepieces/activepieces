@@ -9,6 +9,12 @@ export const updateOrCreateContact = createAction({
   displayName: 'Update or Create Contact',
   description:
     'Searches for a contact by email and updates it, or creates a new one if not found.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Upserts a ClickFunnels contact keyed on email address: updates the matching contact if one exists, otherwise creates it. Use to add or sync a contact (name, phone, tags, custom attributes) without first checking for a duplicate. Idempotent — repeating with the same email and fields converges to the same contact rather than creating duplicates. Custom-attribute keys that collide with default contact fields will error.',
+    idempotent: true,
+  },
   props: {
     teamId: teamsDropdown(['auth']),
     workspaceId: workspacesDropdown(['auth', 'teamId']),

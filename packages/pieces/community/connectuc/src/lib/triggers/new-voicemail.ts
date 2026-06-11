@@ -8,6 +8,9 @@ export const newVoicemail = createTrigger({
     name: 'newVoicemail',
     displayName: 'New Voicemail',
     description: 'Triggers when a new voicemail is received',
+    aiMetadata: {
+        description: 'Fires when a new voicemail is received for the selected ConnectUC domain and users. Represents a deposited voicemail message with its metadata, audio file reference, and optional transcription.',
+    },
     props: {
         domain: domainProp(),
         users: usersProp(),

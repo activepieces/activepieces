@@ -11,6 +11,10 @@ export const autoDispatchCompleted = createTrigger({
   name: 'auto_dispatch_completed',
   displayName: 'Auto Dispatch Completed',
   description: 'Triggers when team auto-dispatch calculation is completed',
+  aiMetadata: {
+    description:
+      'Fires when an Onfleet team finishes an auto-dispatch calculation, meaning unassigned tasks have been algorithmically routed and assigned to available workers. Represents the completion of the dispatch optimization for a team, useful for kicking off post-dispatch workflows once route assignments are settled.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   //Create the webhook and save the webhook ID in store for disable behavior

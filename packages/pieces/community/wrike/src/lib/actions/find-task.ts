@@ -7,6 +7,8 @@ export const findTask = createAction({
     name: 'find_task',
     displayName: 'Find Task',
     description: 'Retrieve a task by its ID or lookup fields',
+    audience: 'both',
+    aiMetadata: { description: 'Look up Wrike tasks: pass a task ID to fetch that exact task (other criteria are ignored), or omit it to search/filter by title, folder, status, importance, assignees, or authors with sorting and page size. Use when an agent needs to find or read tasks before acting on them. Read-only and idempotent.', idempotent: true },
     auth: wrikeAuth,
     props: {
         taskId: Property.ShortText({

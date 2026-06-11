@@ -9,6 +9,10 @@ export const newLead = createTrigger({
   name: 'newLead',
   displayName: 'New Lead',
   description: 'Triggers when a new lead is created.',
+  aiMetadata: {
+    description:
+      'Fires when a new lead is created in Copper CRM, via a Copper webhook. Emits the newly created lead record.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,

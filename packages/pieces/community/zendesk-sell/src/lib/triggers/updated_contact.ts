@@ -45,6 +45,9 @@ export const updatedContact = createTrigger({
     name: 'updated_contact',
     displayName: 'Updated Contact',
     description: 'Fires when an existing contact is updated (polls for updates).',
+    aiMetadata: {
+      description: 'Fires when an existing contact is modified in Zendesk Sell. Each event represents one contact whose fields changed, discovered by polling sorted by last-updated time.',
+    },
     props: {},
     sampleData: {
         "id": 2,

@@ -8,6 +8,12 @@ export const joinGroup = createAction({
   displayName: 'Join Group',
   description:
     'Join a group using an invite link. Once joined, you gain access to the shared network of all group members.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Add yourself to a group via its invite-link code, which changes your membership and grants access to the group\'s shared network. This is a state-changing write, not a read; to enumerate groups you already belong to use List Groups, and to exit one use Leave Group.',
+    idempotent: false,
+  },
   props: {
     group_invite_link: Property.ShortText({
       displayName: 'Group Invite Link',

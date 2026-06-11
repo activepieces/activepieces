@@ -13,6 +13,8 @@ export const transactionIssueInvoiceAction = createAction({
   name: 'transactionIssueInvoice',
   displayName: 'Actions - Transactions - Issue Invoice',
   description: 'Issue ad-hoc invoice for the transaction (only if AMPECO invoice integration is used). For Számlázz.hu integration in Hungary, if a fiscalized receipt exists for the transaction, it will be automatically canceled and both the invoice and storno receipt will be sent to the user.',
+  audience: 'both',
+  aiMetadata: { description: 'Generate a new ad-hoc invoice for a transaction and send it to the given email, supplying individual or company billing details. Requires the AMPECO invoice integration to be enabled. To re-send an invoice that already exists, use the resend-invoice action instead. Not idempotent: each call issues a fresh invoice document.', idempotent: false },
   props: {
         
   transaction: Property.Number({

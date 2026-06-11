@@ -7,6 +7,9 @@ export const emailOpened = createTrigger({
   name: 'email_opened',
   displayName: 'Prospect Opened an Email',
   description: 'Triggers when a prospect opens an email',
+  aiMetadata: {
+    description: 'Fires when a prospect opens a campaign email (tracked open). Represents an email-open engagement event for a single prospect.',
+  },
   props: {},
   sampleData: {
     method: 'email_opened',

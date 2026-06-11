@@ -32,12 +32,14 @@ export function createNotifyWebhookTrigger({
   name,
   displayName,
   description,
+  aiMetadata,
   sampleData,
 }: {
   event: NotifyEvent;
   name: string;
   displayName: string;
   description: string;
+  aiMetadata: { description: string };
   sampleData: Record<string, unknown>;
 }) {
   return createTrigger({
@@ -45,6 +47,7 @@ export function createNotifyWebhookTrigger({
     name,
     displayName,
     description,
+    aiMetadata,
     props: {},
     sampleData,
     type: TriggerStrategy.WEBHOOK,

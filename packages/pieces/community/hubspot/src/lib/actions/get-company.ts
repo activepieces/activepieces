@@ -13,6 +13,8 @@ export const getCompanyAction = createAction({
 	name: 'get-company',
 	displayName: 'Get Company',
 	description: 'Gets a company.',
+	audience: 'both',
+	aiMetadata: { description: 'Fetches a single company by its HubSpot company ID, returning default and any requested additional properties. Use when you already have the company ID; use Find Company to look one up by domain or another property first. Read-only and idempotent.', idempotent: true },
 	props: {
 		companyId: Property.ShortText({
 			displayName: 'Company ID',

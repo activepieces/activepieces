@@ -13,6 +13,9 @@ export const newAffiliateEvent = createTrigger({
   name: 'new_affiliate_event',
   displayName: 'New Affiliate Event',
   description: 'Triggers when a PromoteKit affiliate event is received.',
+  aiMetadata: {
+    description: 'Fires on a PromoteKit affiliate webhook event — when an affiliate is created or approved. Optionally filter to specific event types; leave the selection empty to fire on any affiliate event. Requires the webhook endpoint to be configured in the PromoteKit dashboard.',
+  },
   props: {
     eventTypes: Property.StaticMultiSelectDropdown({
       displayName: 'Affiliate Event Types',

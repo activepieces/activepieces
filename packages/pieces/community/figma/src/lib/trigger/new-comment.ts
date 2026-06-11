@@ -20,6 +20,9 @@ export const newCommentTrigger = createTrigger({
   name: 'new_comment',
   displayName: 'New Comment (Figma Professional plan only)',
   description: 'Triggers when a new comment is posted',
+  aiMetadata: {
+    description: 'Fires when a new comment is posted on any file within the specified Figma team (subscribes to the team-level FILE_COMMENT webhook event). Requires a Figma Professional plan.',
+  },
   type: TriggerStrategy.WEBHOOK,
   sampleData: [
     {

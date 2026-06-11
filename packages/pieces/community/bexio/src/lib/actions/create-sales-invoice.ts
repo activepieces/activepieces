@@ -8,6 +8,8 @@ export const createSalesInvoiceAction = createAction({
   name: 'create_sales_invoice',
   displayName: 'Create Sales Invoice',
   description: 'Create a new product-based sales invoice',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new sales invoice in Bexio from one or more line-item positions (custom, article, text, subtotal, discount, or page-break). Use when billing a customer for products or services; requires a user, language, bank account, currency, payment type, tax handling, and at least one position. Not idempotent: each call creates a separate invoice, so guard against duplicates.', idempotent: false },
   props: {
     document_nr: Property.ShortText({
       displayName: 'Document Number',

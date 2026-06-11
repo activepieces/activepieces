@@ -8,6 +8,8 @@ export const findSubscriber = createAction({
   name: 'findSubscriber',
   displayName: 'Find Subscriber',
   description: 'Search for subscribers by unique identifiers (ID, email, phone, external ID) or name',
+  audience: 'both',
+  aiMetadata: { description: 'Look up Smoove contacts via the Search Type prop, which selects one of three modes: by identifier (contact ID, email, phone, or external ID), by name (first/last name), or all active contacts with pagination. Use to resolve a contact ID or confirm a subscriber exists before acting on them. Identifier search requires at least one identifier and name search requires a name; idempotent read-only lookup.', idempotent: true },
   props: {
     searchType: Property.StaticDropdown({
       displayName: 'Search Type',

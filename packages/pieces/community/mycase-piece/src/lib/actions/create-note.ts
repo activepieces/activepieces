@@ -7,6 +7,8 @@ export const createNote = createAction({
   name: 'create_note',
   displayName: 'Create Note',
   description: 'Creates a new note for a case, client, or company in MyCase',
+  audience: 'both',
+  aiMetadata: { description: 'Add a note (subject, body, and date) to a MyCase case, client, or company, selected via the entity type and entity ID. Use to attach written notes to a record; not idempotent, so repeated calls create duplicate notes.', idempotent: false },
   props: {
     entity_type: Property.StaticDropdown({
       displayName: 'Entity Type',

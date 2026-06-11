@@ -10,6 +10,12 @@ export const getCustomObjectsAction = createAction({
   displayName: 'Get Custom Objects',
   description:
     'Retrieves all custom objects (KObjects) for a given class in Kustomer.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists the custom objects (KObjects) of a given class in Kustomer, identified by the class\'s API name (the lowercase identifier, not the display label). Optionally pass a from-date to return only objects created or updated on or after it; leave it empty to return all objects of the class. Use to read or enumerate custom-object records. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     klassName: Property.ShortText({
       displayName: 'KObject Class Name',

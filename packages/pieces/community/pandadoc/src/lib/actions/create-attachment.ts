@@ -7,6 +7,11 @@ export const createAttachment = createAction({
   name: 'createAttachment',
   displayName: 'Create Attachment',
   description: 'Adds an attachment to a document.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Attach a file (fetched from a public file URL) to an existing PandaDoc document, with an optional display name. Requires the target document ID and a reachable source URL. Not idempotent — each call appends another attachment.',
+    idempotent: false,
+  },
   auth: pandadocAuth,
   props: {
     document_id: documentDropdown,

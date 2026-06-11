@@ -9,6 +9,8 @@ export const createSpace = createAction({
   name: 'createSpace',
   displayName: 'Create Space',
   description: 'Creates a new space.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new Paperform space (a workspace/folder for organizing forms) with the given name. Use to set up a new container for forms; each call creates a separate space, so it is not idempotent.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Space Name',

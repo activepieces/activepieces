@@ -11,6 +11,12 @@ export const setCustomFieldValuesAction = createAction({
   displayName: 'Set Custom Field Values',
   description:
     'Set custom field values on one or more entities (queue items, files, printers, etc.).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Writes custom-field values onto one or more entities selected by a category (print, printer, filament, user file, user) and, for the "print" category, a sub-category that pins the exact entity type. Values are an object keyed by custom-field UUID. Use to populate or overwrite metadata on known entity IDs; idempotent because it sets each field to the supplied value rather than appending.',
+    idempotent: true,
+  },
   props: {
     category: Property.StaticDropdown({
       displayName: 'Category',

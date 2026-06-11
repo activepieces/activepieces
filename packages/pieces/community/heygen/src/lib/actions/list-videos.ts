@@ -8,6 +8,11 @@ export const listVideosAction = createAction({
   name: 'list_videos',
   displayName: 'List Videos',
   description: 'Retrieve a list of all generated videos.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Lists previously generated videos on the account, optionally capped by a limit (default 20, max 100). Use to enumerate videos and their IDs/statuses for follow-up lookups. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     limit: Property.Number({
       displayName: 'Limit',

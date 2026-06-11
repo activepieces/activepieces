@@ -8,6 +8,8 @@ export const getCampaign = createAction({
   name: 'get_campaign',
   displayName: 'Get Campaign',
   description: 'Returns detailed information about a specific campaign.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches full details of a single campaign by its id. Use it after List Campaigns to inspect one campaign. Read-only; requires the campaign id.', idempotent: true },
   props: {
     campaign: campaignDropdown,
   },

@@ -12,6 +12,8 @@ export const createOrUpdateContactAction = createAction({
 	name: 'create-or-update-contact',
 	displayName: 'Create or Update Contact',
 	description: 'Creates a new contact or updates an existing contact based on email address.',
+	audience: 'both',
+	aiMetadata: { description: 'Upserts a contact keyed on email: searches for a contact with the given email and updates it if found, otherwise creates a new one with the provided properties. Use this safe-to-retry path when you want to set a contact by email without risking duplicates; use Create Contact when you specifically need a new record. Idempotent on the email key.', idempotent: true },
 	props: {
 		email: Property.ShortText({
 			displayName: 'Contact Email',

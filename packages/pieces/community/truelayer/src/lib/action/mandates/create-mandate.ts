@@ -7,6 +7,8 @@ export const createMandate = createAction({
   name: 'create-mandate',
   displayName: 'Create Mandate',
   description: 'Create a new mandate. This API must be called using a backend bearer token.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new TrueLayer payment mandate (a recurring-payment authorization) using a backend bearer token. Use when setting up variable recurring payments before any individual payment is taken. This writes a new resource each call; supply the optional idempotency key to prevent duplicate mandates on retry.', idempotent: false },
   props: {
     IdempotencyKeyHeader: Property.ShortText({
       displayName: 'Idempotency Key Header',

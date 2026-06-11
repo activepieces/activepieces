@@ -11,6 +11,12 @@ export const createProductFromProductInfo = createAction({
   name: 'createProductFromProductInfo',
   displayName: 'Create Product from Product Info',
   description: 'Creates a product from product information',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a JoggAI product from supplied details (name, description, target audience, and media items) and/or a product URL. Use when you already hold the product info to pass directly; at least one of a URL or some product info must be provided, otherwise the call is rejected. Not idempotent: each call creates a new product record.',
+    idempotent: false,
+  },
   auth: joggAiAuth,
   props: {
     url: Property.ShortText({

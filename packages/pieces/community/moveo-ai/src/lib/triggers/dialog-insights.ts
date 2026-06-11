@@ -9,6 +9,9 @@ export const dialogInsights = createTrigger({
   name: 'dialog_insights',
   displayName: 'Dialog Insights',
   description: 'Triggers when the dialog insights are available.',
+  aiMetadata: {
+    description: 'Fires when Moveo finishes computing analytics and insights for a completed conversation (dialog). The event payload represents the dialog insights, such as summary, sentiment, resolution, and other derived metrics for that conversation.',
+  },
   auth: moveoAuth,
   props: {
     setupInstructions: Property.MarkDown({

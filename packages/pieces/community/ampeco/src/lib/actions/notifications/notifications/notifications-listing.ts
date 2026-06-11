@@ -14,6 +14,8 @@ export const notificationsListingAction = createAction({
   name: 'notificationsListing',
   displayName: 'Notifications - V2.0 - Notifications Listing',
   description: 'Notifications / Listing',
+  audience: 'both',
+  aiMetadata: { description: 'List all AMPECO notification subscriptions (webhook and kafka), optionally auto-paginating across pages when Paginate Results is enabled. Read-only and idempotent. To fetch one subscription by its ID use the notification read action.', idempotent: true },
   props: {
         
     per_page: Property.Number({

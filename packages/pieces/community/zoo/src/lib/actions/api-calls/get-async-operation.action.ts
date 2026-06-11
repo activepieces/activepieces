@@ -6,6 +6,8 @@ export const getAsyncOperationAction = createAction({
   name: 'get_async_operation',
   displayName: 'Get Async Operation',
   description: 'Retrieve details of an asynchronous operation',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch the current state of a long-running async operation by its operation ID, including status and result when complete. Use to poll the outcome of asynchronous jobs such as conversions or model generation. Read-only; safe to call repeatedly while polling.', idempotent: true },
   auth: zooAuth,
   // category: 'API Calls',
   props: {

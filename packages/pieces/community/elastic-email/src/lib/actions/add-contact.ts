@@ -14,6 +14,12 @@ export const addContactAction = createAction({
   displayName: 'Add Contact to Mailing List',
   description:
     'Add a new contact to one or more mailing lists in Elastic Email.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Adds a contact (identified by email) to one or more named mailing lists in Elastic Email, with optional name, status, custom fields, and consent details. Use when subscribing someone to specific lists rather than just creating a bare contact. Each call appends the contact, so it is not idempotent.',
+    idempotent: false,
+  },
   auth: elasticEmailAuth,
   props: {
     email: Property.ShortText({
