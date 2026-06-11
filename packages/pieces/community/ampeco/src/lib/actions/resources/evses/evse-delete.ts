@@ -14,6 +14,8 @@ export const evseDeleteAction = createAction({
   name: 'evseDelete',
   displayName: 'Resources - Evses - Evse Delete',
   description: 'Delete an EVSE.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete an EVSE (charging connector) identified by its numeric id. Destructive and not idempotent: deleting an already-removed id will fail. Use Listing or Read first to confirm the correct EVSE before deleting.', idempotent: false },
   props: {
         
   evse: Property.Number({

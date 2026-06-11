@@ -8,6 +8,8 @@ export const getIssueAction = createAction({
   name: 'get_issue',
   displayName: 'Get Issue',
   description: 'Retrieves full details of an issue including all custom field values.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch the full details of a single issue by its ID, including summary, description, and all custom field values. Use to read the current state of a known issue. Read-only and idempotent.', idempotent: true },
   props: { issue: issueDropdown },
   async run(context) {
     const { baseUrl, apiToken } = context.auth.props;

@@ -41,6 +41,10 @@ export const newMediaTrigger = createTrigger({
   name: 'new_media',
   displayName: 'New Media',
   description: 'Triggers when a new video or media file is added to your account.',
+  aiMetadata: {
+    description:
+      'Fires when a new media item (video, audio, image, or document) appears in the Wistia account, optionally scoped to a single project. Represents a newly added asset, detected by polling for recently created media.',
+  },
   props,
   type: TriggerStrategy.POLLING,
   async test(context) {

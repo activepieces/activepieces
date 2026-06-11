@@ -12,6 +12,12 @@ export const uploadMedia = createAction({
   displayName: 'Upload Media',
   description:
     'Generate a signed URL for file upload. Use the returned sign_url to upload your file with a PUT request.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Requests a signed upload URL from JoggAI for a given filename (must include a file extension and no special characters); the caller then PUTs the actual file bytes to the returned sign_url. Use as the first step to get media into JoggAI before referencing it in product or video actions. Not idempotent: each call mints a new signed upload target.',
+    idempotent: false,
+  },
   auth: joggAiAuth,
   props: {
     filename: Property.ShortText({

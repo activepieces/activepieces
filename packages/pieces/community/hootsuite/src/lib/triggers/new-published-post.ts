@@ -49,6 +49,9 @@ export const newPublishedPostTrigger = createTrigger({
   name: 'new_published_post',
   displayName: 'New Published Post',
   description: 'Triggers when a post is published (sent) in Hootsuite.',
+  aiMetadata: {
+    description: 'Fires when a post transitions to the SENT state in Hootsuite, representing content that has actually been published to its social networks.',
+  },
   props: {},
   sampleData: {
     id: 'msg_xyz456',

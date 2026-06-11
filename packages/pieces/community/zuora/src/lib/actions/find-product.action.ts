@@ -13,6 +13,12 @@ export const findProductAction = createAction({
   name: 'find-product',
   displayName: 'Find Product',
   description: 'Retrieves product based on sku.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up a Zuora product by exact SKU match via an object query. Use to resolve a product (e.g. to obtain its product ID before finding rate plans) when you know the SKU; matching is exact equality on the SKU, not a partial search. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     sku: Property.ShortText({
       displayName: 'Product SKU',

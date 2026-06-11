@@ -14,6 +14,12 @@ export const updateRegistrationFolder = createAction({
   displayName: 'Mettre à jour un dossier de formation',
   description:
     "Met à jour certaines informations modifiables d'un dossier de formation",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Updates editable fields on a single training registration folder (price, session start/end dates, notes, public description, completion rate, durations, tags); only the fields explicitly selected are sent. Idempotent: re-sending the same values leaves the folder unchanged. Note that tags are replaced wholesale, so include any existing tags you wish to keep. For changing only the completion rate, the dedicated update-completion-rate action is also available.",
+    idempotent: true,
+  },
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de formation',

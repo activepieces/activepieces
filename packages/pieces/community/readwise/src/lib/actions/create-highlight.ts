@@ -7,6 +7,12 @@ export const createHighlight = createAction({
   name: 'create_highlight',
   displayName: 'Create Highlight',
   description: 'Save a new highlight to Readwise.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Saves a new highlight to the connected Readwise account, optionally attaching source metadata (title, author, URL, category) and a note. Use when an agent needs to capture a passage or quote into Readwise. Only the highlight text is required; not idempotent — each call appends a new highlight.',
+    idempotent: false,
+  },
   auth: readwiseAuth,
   props: {
     text: Property.LongText({

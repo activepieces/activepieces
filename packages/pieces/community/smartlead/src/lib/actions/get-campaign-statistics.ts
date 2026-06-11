@@ -9,6 +9,12 @@ export const getCampaignStatisticsAction = createAction({
   displayName: 'Get Campaign Statistics',
   description:
     'Retrieve comprehensive analytics for a campaign including open rates, click rates, reply rates, and engagement statistics.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches aggregate performance analytics for a single SmartLead campaign by campaign ID, covering open, click, and reply rates and related engagement metrics. Use to report on or evaluate how a campaign is performing. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     campaign_id: Property.Number({
       displayName: 'Campaign ID',

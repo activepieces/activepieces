@@ -12,6 +12,12 @@ export const findCustomer = createAction({
   name: 'find_customer',
   displayName: 'Find Customer',
   description: 'Find a customer by name, email, or phone number.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches customers in the Katana manufacturing ERP, filtering by any combination of name, first/last name, company, email, phone, currency, reference ID, or category; with no filters set it lists all customers (paginated). Use to look up a customer ID before creating an order, to check whether a customer already exists, or to browse the customer list. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

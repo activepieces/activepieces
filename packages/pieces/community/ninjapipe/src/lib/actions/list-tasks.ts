@@ -8,6 +8,8 @@ export const listTasks = createAction({
   name: 'list_tasks',
   displayName: 'List Tasks',
   description: 'Retrieves the tasks of a project as a flat list. Use parent_id on each item to build a tree.',
+  audience: 'both',
+  aiMetadata: { description: 'List the tasks of a given project as a flat array, with optional status, priority, and parent-task filters plus sorting. Read-only; pass a parent task ID to fetch its subtasks, or an empty string to fetch only root tasks. Use to discover task IDs before updating a task.', idempotent: true },
   props: {
     projectId: ninjapipeCommon.projectDropdownRequired,
     statusFilter: Property.StaticDropdown({

@@ -13,6 +13,8 @@ export const findWorkbook = createAction({
   name: 'find_workbook',
   displayName: 'Find Workbook',
   description: 'Finds a workbook based on ID or content URL',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up a single Tableau workbook and returns its full metadata (name, project, owner, views, timestamps). Search By selects the lookup mode: by workbook ID, or by content URL (the slug from /workbooks/<name>) — supply the field matching the chosen mode. Use to resolve a workbook reference into details or its ID; errors if not found. Read-only and idempotent.', idempotent: true },
   auth: tableauAuth,
   props: {
     searchType: Property.StaticDropdown({

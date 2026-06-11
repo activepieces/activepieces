@@ -14,6 +14,8 @@ export const tariffGroupUpdateAction = createAction({
   name: 'tariffGroupUpdate',
   displayName: 'Resources - Tariff Groups - Update',
   description: 'Update a tariff group.',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing AMPECO tariff group identified by its numeric ID, replacing its name, ordered tariff list, or assigned partner. Not idempotent in effect since it overwrites the current tariff ordering (which is evaluated bottom-to-top); send the full intended tariff list rather than a partial set. Use tariff group create for a new group.', idempotent: false },
   props: {
         
   tariffGroup: Property.Number({

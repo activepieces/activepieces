@@ -17,6 +17,9 @@ export const eventOnDataFinished = createTrigger({
   name: 'event_on_data_finished',
   displayName: 'Event On Data Finished',
   description: 'Handle EventOnData save event via webhooks',
+  aiMetadata: {
+    description: 'Fires when a data record is saved (finished) on the chosen Kizeo Forms form. Represents a completed form submission becoming available.',
+  },
   props: {
     format: Property.StaticDropdown({
       displayName: 'Output Format',

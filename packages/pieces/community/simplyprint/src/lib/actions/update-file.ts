@@ -10,6 +10,12 @@ export const updateFileAction = createAction({
   displayName: 'Update File',
   description:
     'Rename a user file and / or update its compatible-printer assignments. (Thumbnail upload is not exposed here — multipart isn\'t supported on this endpoint over OAuth via the AP HTTP client.)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Update an existing user file (identified by its UID): rename it and/or set which printers or printer models it is allowed to print on, and optionally remove its stored thumbnail. Pick this to edit file metadata in place; passing empty printer/model arrays clears those restrictions. It sets fields to the supplied values (upsert-by-UID), so repeating the same update is idempotent; at least one field must be provided.',
+    idempotent: true,
+  },
   props: {
     fileUid: Property.ShortText({
       displayName: 'File UID',

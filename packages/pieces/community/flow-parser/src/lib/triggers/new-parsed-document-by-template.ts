@@ -84,6 +84,9 @@ export const newParsedDocumentByTemplate = createTrigger({
   name: 'new_parsed_document_by_template',
   displayName: 'New Parsed Document by Template',
   description: 'Triggers when a new document is parsed using a specific template',
+  aiMetadata: {
+    description: 'Fires when a document is successfully parsed in FlowParser using the specific template selected in this trigger, polling for status changes scoped to that template ID. Represents a newly extracted/parsed document tied to one parsing template, letting downstream steps act only on results from that template.',
+  },
   props,
   sampleData: {
     id: 'uuid',

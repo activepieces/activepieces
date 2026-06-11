@@ -14,6 +14,9 @@ export const newInvoice = createTrigger({
   name: 'new_invoice',
   displayName: 'New Invoice',
   description: 'Triggers when a new invoice is drafted',
+  aiMetadata: {
+    description: 'Fires when a new invoice is drafted in Teamleader, via the invoice.drafted webhook. Emits the full invoice record (in draft status). Use to react to newly created invoices, such as syncing to accounting or notifying finance.',
+  },
   auth: teamleaderAuth,
   type: TriggerStrategy.WEBHOOK,
   props: {},

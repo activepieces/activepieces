@@ -8,6 +8,8 @@ export const findPerson = createAction({
   name: 'find_person',
   displayName: 'Find Person',
   description: 'Searches for person records in Twenty CRM.',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up person records in Twenty CRM, optionally filtering by an exact-match email, first name, and/or last name. Use to resolve a person to their record ID before updating, or to check existence; leaving all filters empty returns all people. Idempotent: a read-only query with no side effects.', idempotent: true },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

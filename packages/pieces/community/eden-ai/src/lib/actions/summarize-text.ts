@@ -69,6 +69,12 @@ export const summarizeTextAction = createAction({
   auth: edenAiAuth,
   displayName: 'Summarize Text',
   description: 'Extract key sentences and create summaries from long text passages using various AI providers.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Summarize a block of text into a configurable number of sentences via Eden AI, routed to a chosen provider. Use it to condense articles, documents, or other long-form text. Requires a provider and the text; language defaults to auto-detection. Read-only analysis that produces no persistent resource, so it is safe to repeat.',
+    idempotent: true,
+  },
   props: {
     provider: Property.Dropdown({
       auth: edenAiAuth,

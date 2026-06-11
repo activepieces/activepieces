@@ -14,6 +14,8 @@ export const flexibilityAssetCreateActivationRequestAction = createAction({
   name: 'flexibilityAssetCreateActivationRequest',
   displayName: 'Actions - Flexibility Asset - Create Activation Request',
   description: 'Create Flexibility Activation Request for a specific Asset.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a flexibility activation request for a specific asset, scheduling one or more activation periods to flex its energy use. Not idempotent: each call creates a new activation request.', idempotent: false },
   props: {
         
   flexibilityAsset: Property.ShortText({

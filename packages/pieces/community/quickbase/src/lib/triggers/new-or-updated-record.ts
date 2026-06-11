@@ -72,6 +72,9 @@ export const newOrUpdatedRecord = createTrigger({
   name: 'new_or_updated_record',
   displayName: 'New or Updated Record',
   description: 'Triggers when a record is created or updated in a Quickbase table',
+  aiMetadata: {
+    description: 'Fires when a record in the selected Quickbase table is either created or modified. Detected by polling the table ordered on its most recent modified/created timestamp field, so it surfaces both brand-new rows and edits to existing ones. Use when changes to records matter, not just new ones.',
+  },
   props,
   type: TriggerStrategy.POLLING,
   sampleData: {

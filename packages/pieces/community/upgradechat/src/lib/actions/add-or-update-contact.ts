@@ -6,6 +6,12 @@ export const addOrUpdateContact = createAction({
   name: 'addOrUpdateContact',
   displayName: 'Add or Update Contact',
   description: 'Creates a new contact.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Imports a contact (Lead, Client, or Partner) into the Sperse/Upgrade.chat CRM. When 'Match Existing Contact' is enabled (the default), it looks up an existing record by email and full name and updates it instead of creating a duplicate, making it an upsert; with matching disabled it always inserts a new contact. Choose this for basic contact records; use the extended variant when you need company, address, subscription, or tracking detail. First or Last name is required (or a Company Name). Idempotent only while matching is enabled and the same email/name is supplied.",
+    idempotent: true,
+  },
   auth: upgradechatAuth,
   props: {
     importType: Property.StaticDropdown({

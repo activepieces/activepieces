@@ -9,6 +9,12 @@ export const addDealAction = createAction({
   displayName: 'Add Deal',
   description:
     'Create a deal and optionally associate it with an account or a person.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new Outseta CRM deal in a given pipeline stage, optionally linking it to an account and/or person and setting amount, assignee, and due date. Use to log a new sales opportunity. Requires the name and the pipeline stage UID. Not idempotent: each call creates a separate deal even with identical input.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

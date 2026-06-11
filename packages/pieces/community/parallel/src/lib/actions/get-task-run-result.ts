@@ -9,6 +9,12 @@ export const getTaskRunResultAction = createAction({
   displayName: 'Get Task Run Result',
   description:
     'Retrieve a task run result by run ID. Blocks until the run completes (or until the timeout is reached).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetch the final result of a Parallel research task by its run id, blocking until the run completes or the configured timeout (default 600s) is reached. Use it after Create Task Run to wait for and collect the task output. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     run_id: Property.ShortText({
       displayName: 'Run ID',

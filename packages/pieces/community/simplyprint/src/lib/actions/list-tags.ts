@@ -10,6 +10,12 @@ export const listTagsAction = createAction({
   name: 'list_tags',
   displayName: 'List Tags',
   description: 'List all custom tags configured on your account.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists every custom tag configured on the account. Use to discover tag IDs/names before filtering or attaching tags, or to delete one via "Delete Tag". Takes no input; returns an empty list when the account has no custom tags. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {},
   async run(context) {
     try {

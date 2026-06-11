@@ -10,6 +10,12 @@ export const listQueueAction = createAction({
   name: 'list_queue',
   displayName: 'List Queue Items',
   description: 'List items in the print queue, optionally filtered to a single queue group.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Read-only, paginated listing of items in the active print queue, optionally filtered to a single queue group ID. Enable "Include completed items" to also return done items (this switches to the legacy path and ignores paging). Pick this for the main print queue; use List Pending Queue Items for the approval workflow instead. Never modifies anything.',
+    idempotent: true,
+  },
   props: {
     groupId: Property.Number({
       displayName: 'Queue group ID (optional)',

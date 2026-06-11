@@ -9,6 +9,12 @@ export const addFollowerAction = createAction({
 	name: 'add-follower',
 	displayName: 'Add Follower',
 	description: 'Adds a follower to a deal, person, organization or product.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Adds a user as a follower of a single record, with the Target Object dropdown selecting the type (deal, person, organization, or product) and the Target Object ID identifying it. Use to subscribe a user to updates on a record; requires the follower user ID. Not idempotent: each call creates a follower association.',
+		idempotent: false,
+	},
 	props: {
 		followerId: ownerIdProp('Follower', true),
 		entity: Property.StaticDropdown({

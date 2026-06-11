@@ -12,6 +12,8 @@ export const getClickupChannels = createAction({
   auth: clickupAuth,
   name: 'get_channels',
   description: 'Gets all channels in a ClickUp workspace',
+  audience: 'both',
+  aiMetadata: { description: 'Read-only: list the Chat channels in a ClickUp workspace, optionally including hidden ones and capping the count (1-100). Use to discover channel IDs before reading or posting messages. Safe to call repeatedly.', idempotent: true },
   displayName: 'Get Channels',
   props: {
     workspace_id: clickupCommon.workspace_id(),

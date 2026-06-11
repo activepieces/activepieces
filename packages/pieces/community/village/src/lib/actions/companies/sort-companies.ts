@@ -10,6 +10,12 @@ export const sortCompanies = createAction({
   displayName: 'Sort Companies',
   description:
     'Rank a list of companies (up to 100 LinkedIn URLs or domains) by how well-connected you are to people there. Each result includes a score, label, LinkedIn URL, and domain.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Read-only ranking of a caller-supplied set of companies (up to 100 LinkedIn URLs or domains) by how strongly your network reaches people there, ordered strongest-first. Use when you already have specific companies to prioritize; to discover companies use Search Companies. Pure query, safe to retry.',
+    idempotent: true,
+  },
   props: {
     companies: Property.Array({
       displayName: 'Companies',

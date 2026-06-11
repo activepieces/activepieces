@@ -9,6 +9,12 @@ export const createRecordAction = createAction({
   name: 'create-record',
   displayName: 'Create Record',
   description: 'Creates a new record.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new record in a Microsoft Dynamics 365 Business Central company, of a chosen entity type (e.g. customers, items, sales invoices, or line entities like salesInvoiceLines/salesOrderLines that are created under a parent record via its id field). Use to add business data; requires the company id, the record type, and the field values for the new record. Not idempotent — each call inserts a new record.',
+    idempotent: false,
+  },
   props: {
     company_id: commonProps.company_id,
     record_type: Property.StaticDropdown({

@@ -56,6 +56,10 @@ export const newUserTrigger = createTrigger({
 	name: 'new-user',
 	displayName: 'New User',
 	description: 'Triggers when a new user is created / first joins your org.',
+	aiMetadata: {
+		description:
+			'Fires when a new member joins the Slack workspace (a team_join event). The event payload is the new user object, including their id, name, profile, and account flags.',
+	},
 	props: {},
 	type: TriggerStrategy.APP_WEBHOOK,
 	sampleData,

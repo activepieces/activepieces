@@ -5,6 +5,8 @@ export const getBlockWithdrawals = createAction({
   name: 'get_block_withdrawals',
   displayName: 'Get Block Withdrawals',
   description: 'Get list of withdrawals for a specific block',
+  audience: 'both',
+  aiMetadata: { description: 'List the validator (beacon-chain) staking withdrawals included in one Ethereum block, identified by its hash or number. Read-only. Use this for post-Merge withdrawal data of a specific block; for the regular transactions in that block use Get Block Transactions instead.', idempotent: true },
   // category: 'Blocks',
   props: {
     blockIdentifier: Property.ShortText({

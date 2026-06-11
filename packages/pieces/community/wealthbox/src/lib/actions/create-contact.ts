@@ -6,6 +6,8 @@ export const createContact = createAction({
   name: 'create_contact',
   displayName: 'Create Contact',
   description: 'Adds a new contact with rich details (name, address, email, tags, etc.)',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new contact record in Wealthbox CRM with name, contact details, classification, address, and tags. Use to add a person, organization, trust, or household to the CRM; the Contact Type prop switches between these entity kinds (a Household type maps the first name to the household name). Not idempotent: each call creates a separate contact even with identical input, so guard against duplicates.', idempotent: false },
   auth: wealthboxAuth,
   props: {
     first_name: Property.ShortText({

@@ -9,6 +9,12 @@ export const getFilamentHistoryAction = createAction({
   name: 'get_filament_history',
   displayName: 'Get Filament History',
   description: 'Paginated usage history for a specific spool — print jobs, weight adjustments, drying cycles, etc.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Read-only, paginated history of events for a single filament spool (by numeric ID or 4-char short ID) — print jobs, weight adjustments, drying cycles, and similar. Pick this to audit how a specific spool has been used over time; use Get Filament for the spool\'s current state rather than its event log.',
+    idempotent: true,
+  },
   props: {
     filamentId: Property.ShortText({
       displayName: 'Filament',

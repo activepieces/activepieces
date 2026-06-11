@@ -115,6 +115,10 @@ export const chatStarted = createTrigger({
   displayName: 'Conversation Started',
   description:
     'Trigger when a new conversation is started or an existing conversation is updated',
+  aiMetadata: {
+    description:
+      'Fires when a conversation in the monitored Heymarket inbox(es) is started or updated (e.g. a new message arrives or its status changes). Polls for conversations updated since the last run, scoped to the configured Inbox IDs and verifying User ID. Emits each new or changed conversation.',
+  },
   props: {
     userId: Property.Number({
       displayName: 'User ID',

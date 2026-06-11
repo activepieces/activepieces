@@ -45,6 +45,10 @@ export const newCommission = createTrigger({
   name: 'new_commission',
   displayName: 'New Commission',
   description: 'Triggers when a new commission is received on Ko-fi.',
+  aiMetadata: {
+    description:
+      'Fires when a supporter places a paid commission request on the connected Ko-fi creator account. Emits the commission event including the requester name, email, the commission brief or message, amount, currency, and shipping details when delivery of a physical item is involved. Use to intake commission work, create tasks, or notify on new requests.',
+  },
   props: {
     instructions: Property.MarkDown({
       value:

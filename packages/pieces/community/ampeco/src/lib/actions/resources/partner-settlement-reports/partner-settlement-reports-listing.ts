@@ -15,6 +15,8 @@ export const partnerSettlementReportsListingAction = createAction({
   name: 'partnerSettlementReportsListing',
   displayName: 'Resources - Partner Settlement Reports - Listing',
   description: 'Get all Partner Settlement Reports.',
+  audience: 'both',
+  aiMetadata: { description: 'List partner settlement reports, optionally filtered by partner id and a settlement-period date range. Read-only and idempotent. Use to discover reports; for the individual records within a report use the record listing actions. Enable Paginate Results to walk every page.', idempotent: true },
   props: {
         
   filter__partnerId: Property.Number({

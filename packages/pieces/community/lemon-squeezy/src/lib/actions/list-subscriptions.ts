@@ -15,6 +15,8 @@ export const listSubscriptions = createAction({
   name: 'list_subscriptions',
   displayName: 'List Subscriptions',
   description: 'Retrieve a paginated list of subscriptions from your Lemon Squeezy store.',
+  audience: 'both',
+  aiMetadata: { description: 'List subscriptions from Lemon Squeezy, optionally filtered by store, order, order item, product, variant, customer email, and status (active, on_trial, cancelled, expired, etc.), with page-based pagination. Use to find subscriptions matching criteria or to audit a customer\'s subscriptions. Read-only and idempotent.', idempotent: true },
   auth: lemonSqueezyAuth,
   props: {
     storeId: Property.Dropdown({

@@ -9,6 +9,8 @@ export const deleteDataSourceAction = createAction({
   name: 'delete_data_source',
   displayName: 'Delete Data Source',
   description: 'Delete a data source',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete an IBM Cognos data source by its id. Use to remove a database connection that is no longer needed. Destructive and not idempotent: a repeat call on an already-deleted data source returns not-found.', idempotent: false },
   props: {
     datasourceId: dataSourceDropdown,
   },

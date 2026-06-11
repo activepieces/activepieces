@@ -11,12 +11,14 @@ export const formitableRegisterTrigger = ({
   name,
   displayName,
   description,
+  aiMetadata,
   event,
   sampleData,
 }: {
   name: string;
   displayName: string;
   description: string;
+  aiMetadata?: { description: string };
   event: string;
   sampleData: unknown;
 }) =>
@@ -25,6 +27,7 @@ export const formitableRegisterTrigger = ({
     name: `formitable_${name}`,
     displayName,
     description,
+    aiMetadata,
     props: {
       restaurant: formitableCommon.restaurant,
     },

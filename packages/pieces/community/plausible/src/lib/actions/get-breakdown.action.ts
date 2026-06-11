@@ -8,6 +8,8 @@ export const getBreakdown = createAction({
   auth: plausibleAuth,
   displayName: 'Get Traffic Breakdown',
   description: 'Break down traffic by page, source, country, or other dimensions',
+  audience: 'both',
+  aiMetadata: { description: 'Breaks down a site\'s visitor stats by a single chosen dimension (page, source, country, browser, OS, or device) over a preset time period, returning the top entries up to an optional limit. Use to see which pages, sources, or segments drive traffic rather than overall totals. Read-only and safe to repeat.', idempotent: true },
   props: {
     site_id: siteIdDropdown,
     period: Property.StaticDropdown({

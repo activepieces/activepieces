@@ -58,6 +58,10 @@ export const updatedItemTrigger = createTrigger({
   name: 'updated_item',
   displayName: 'Updated Item',
   description: 'Fires when an existing Teamhood item is modified.',
+  aiMetadata: {
+    description:
+      'Fires when an existing Teamhood item is modified, optionally scoped to a specific workspace and board. Each event represents one item whose details changed since the last poll.',
+  },
   props,
   type: TriggerStrategy.POLLING,
   sampleData: {

@@ -9,6 +9,8 @@ export const createSection = createAction({
 	name: 'create_section',
 	displayName: 'Create Section',
 	description: 'Creates a new section in notebook.',
+	audience: 'both',
+	aiMetadata: { description: 'Creates a new section inside a chosen OneNote notebook, given a display name. Use to organize a notebook before adding pages; the name must be unique within the notebook, under 50 characters, and avoid characters such as ?*/:<>|&#\'%~. Not idempotent: each call attempts to create another section.', idempotent: false },
 	props: {
 		notebook_id: Property.Dropdown({
 			auth: oneNoteAuth,

@@ -9,6 +9,12 @@ export const getTask = createAction({
   displayName: 'Get Task',
   description:
     'Retrieves the result of a specific Flipando application task by its task ID.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches the current state and result of a Flipando task by its task ID, typically the job returned by Run App or Run App Generator. Use it to poll for or read back the outcome of an asynchronous application run. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     task_id: Property.ShortText({
       displayName: 'Task ID',

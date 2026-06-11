@@ -6,6 +6,9 @@ export const labelEventTrigger = createTrigger({
   name: 'label_event',
   displayName: 'Label Event',
   description: 'Triggers when a label event occurs (created, updated, or deleted)',
+  aiMetadata: {
+    description: 'Fires when a label (e.g. a data-quality or sensitivity label on a content asset) changes on the Tableau site — one of created, updated, or deleted, selected via the Event Type. Carries the affected asset\'s name and ID.',
+  },
   auth: tableauAuth,
   type: TriggerStrategy.WEBHOOK,
   props: {

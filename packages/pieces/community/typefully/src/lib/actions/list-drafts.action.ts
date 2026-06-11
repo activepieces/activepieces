@@ -10,6 +10,12 @@ export const listDraftsAction = createAction({
 	name: 'typefully_list_drafts',
 	displayName: 'List Drafts',
 	description: 'List drafts with optional filters.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Lists drafts within a Typefully social set, optionally filtered by status (draft, scheduled, published, publishing, error) and sorted, returning up to the given limit (1-50, default 10). Use to discover draft IDs or survey drafts before reading, scheduling, publishing, or deleting them. Read-only and idempotent.',
+		idempotent: true,
+	},
 	props: {
 		social_set_id: socialSetDropdown,
 		status: Property.StaticDropdown({

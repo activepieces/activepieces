@@ -148,6 +148,12 @@ export const moderateTextAction = createAction({
   name: 'moderate_text',
   displayName: 'Moderate Text',
   description: 'Detect explicit or policy-violating text using Eden AI. Supports multiple providers, languages, and models.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Moderate a text for explicit or policy-violating content via Eden AI, routed to a chosen provider, returning an NSFW likelihood plus per-category labels. Use it to screen user-generated or untrusted text before publishing or acting on it. Requires a provider and the text; language defaults to auto-detection. Read-only analysis with no side effect, so it is safe to repeat.',
+    idempotent: true,
+  },
   props: {
     provider: Property.Dropdown({
       auth: edenAiAuth,

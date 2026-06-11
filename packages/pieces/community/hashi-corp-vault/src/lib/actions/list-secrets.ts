@@ -8,6 +8,11 @@ export const listSecrets = createAction({
   name: 'list_secrets',
   displayName: 'List Secrets',
   description: 'List secrets at a path in HashiCorp Vault',
+  audience: 'both',
+  aiMetadata: {
+    description: 'List the secret keys and sub-paths directly under a path in a HashiCorp Vault secrets engine (mount). Use to discover what secrets exist before reading them. Requires the secrets-engine mount name; the path is optional and defaults to the engine root, so leaving it empty lists the top level. Read-only and idempotent; returns only immediate child keys, not nested values, and an empty/missing path returns no keys rather than erroring.',
+    idempotent: true,
+  },
   props: {
     secretEngine: Property.ShortText({
       displayName: 'Secret Engine',

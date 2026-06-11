@@ -5,6 +5,10 @@ export const newOrder = createQawafelEventTrigger({
   displayName: 'New Order',
   description:
     'Fires the moment a new sales order is created in Qawafel. Use it to fan out to fulfillment, accounting, Slack alerts, or your CRM.',
+  aiMetadata: {
+    description:
+      'Fires when a new sales order is created in Qawafel (the order.created event), at the start of the fulfilment workflow before it is confirmed. Each event represents one newly placed order with its line items and totals.',
+  },
   event: 'order.created',
   sampleData: {
     id: 'ord_01jk5jtv3x6e5hjkfcwzvubejq',

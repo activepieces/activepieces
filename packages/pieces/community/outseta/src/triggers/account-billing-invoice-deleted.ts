@@ -4,6 +4,10 @@ export const accountBillingInvoiceDeletedTrigger = createManualWebhookTrigger({
   name: 'account_billing_invoice_deleted',
   displayName: 'Account Billing Invoice Deleted',
   description: 'Triggers when a billing invoice is deleted for an account in Outseta.',
+  aiMetadata: {
+    description:
+      'Fires when a billing invoice is deleted for an account in Outseta, delivering the deleted invoice and its owning account.',
+  },
   sampleData: {
     Number: 1001,
     BillingInvoiceDate: '2024-02-01T00:00:00',

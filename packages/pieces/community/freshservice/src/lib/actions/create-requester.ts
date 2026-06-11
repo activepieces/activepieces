@@ -9,6 +9,11 @@ export const createRequester = createAction({
   name: 'create_requester',
   displayName: 'Create Requester',
   description: 'Creates a new requester (end user) in Freshservice.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a new requester (end-user) record in Freshservice. Use to onboard a person who will submit tickets; requires a first name and primary email. Not idempotent — each call creates a new requester and will fail if the email already belongs to an existing requester.',
+    idempotent: false,
+  },
   props: {
     first_name: Property.ShortText({
       displayName: 'First Name',

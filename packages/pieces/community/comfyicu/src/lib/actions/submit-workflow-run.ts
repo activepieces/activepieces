@@ -8,6 +8,8 @@ export const submitWorkflowRunAction = createAction({
   name: 'submit-workflow-run',
   displayName: 'Submit Workflow Run',
   description: 'Execute a workflow with specified prompt.',
+  audience: 'both',
+  aiMetadata: { description: 'Submits a new run of a Comfy.ICU workflow, queuing image/video generation with the given prompt graph (the API-format workflow JSON). Use to kick off generation; optionally supply a webhook URL to be notified of run status. Each call starts a new run, so it is not idempotent.', idempotent: false },
   props: {
     workflow_id:commonProps.workflow_id,
     prompt:Property.Json({

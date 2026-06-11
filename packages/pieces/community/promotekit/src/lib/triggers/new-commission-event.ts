@@ -8,6 +8,9 @@ export const newCommissionEvent = createTrigger({
   name: 'new_commission_event',
   displayName: 'New Commission Event',
   description: 'Triggers when a PromoteKit commission webhook event is received.',
+  aiMetadata: {
+    description: 'Fires when a PromoteKit commission is created (a commission.created webhook event), representing a new commission earned by an affiliate. Requires the webhook endpoint to be configured in the PromoteKit dashboard.',
+  },
   props: {
     instructions: Property.MarkDown({
       value: `### Setup Instructions

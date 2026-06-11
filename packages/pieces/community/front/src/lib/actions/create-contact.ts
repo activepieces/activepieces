@@ -8,6 +8,12 @@ export const createContact = createAction({
   name: 'createContact',
   displayName: 'Create Contact',
   description: 'Create a new contact in Front.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new contact in Front from one or more handles (email, phone, social) plus optional name, links, groups and custom fields. Use when adding a person who is not yet in the address book; to attach an additional handle to an existing contact use "Add Contact Handle", and to edit fields use "Update Contact". Not idempotent: repeated calls create duplicate contacts.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

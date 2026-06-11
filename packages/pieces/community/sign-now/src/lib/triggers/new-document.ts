@@ -9,6 +9,10 @@ export const newDocumentTrigger = createTrigger({
   name: 'new_document',
   displayName: 'New Document',
   description: 'Triggers when a document has been uploaded to SignNow.',
+  aiMetadata: {
+    description:
+      'Fires when a new document is created/uploaded in the connected SignNow account, signaling that a fresh document is now available to act on (e.g. send for signing).',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {

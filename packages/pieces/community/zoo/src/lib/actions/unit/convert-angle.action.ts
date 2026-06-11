@@ -6,6 +6,8 @@ export const convertAngleAction = createAction({
   name: 'convert_angle',
   displayName: 'Convert Angle',
   description: 'Convert angle measurements between different units',
+  audience: 'both',
+  aiMetadata: { description: 'Convert a single angle value between degrees, radians, and gradians. Use only for angles; other quantities have their own dedicated convert actions. Read-only calculation that returns the same result for the same inputs.', idempotent: true },
   auth: zooAuth,
   // category: 'Unit Conversion',
   props: {

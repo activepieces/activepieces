@@ -7,6 +7,11 @@ export const bulkUpdateJobInputMaterials = createAction({
   name: "bulk_update_job_input_materials",
   displayName: "Bulk update a job's input materials",
   description: "Bulk update job input materials. If upsert not define for a job input material it will be consider as a new entry.",
+  audience: 'both',
+  aiMetadata: {
+    description: "Upsert a job's input materials in bulk for a given job ID. Entries that supply an existing material ID are updated; entries without one are created as new, so omitting IDs on a repeat call will add duplicates rather than no-op.",
+    idempotent: false,
+  },
   props: {
     job_id: Property.ShortText({
       displayName: "Job ID",

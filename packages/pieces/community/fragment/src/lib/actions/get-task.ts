@@ -8,6 +8,8 @@ export const getTask = createAction({
   name: 'get_task',
   displayName: 'Get Task',
   description: 'Retrieves details of a specific task.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches the full details of a single Fragment task by its unique task UID. Use when you already have a task identifier and need its current data. Read-only and idempotent.', idempotent: true },
   props: {
     task_uid: Property.ShortText({
       displayName: 'Task UID',

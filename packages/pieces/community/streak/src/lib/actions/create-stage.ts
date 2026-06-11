@@ -10,6 +10,12 @@ export const createStageAction = createAction({
   name: 'create_stage',
   displayName: 'Create Stage',
   description: 'Add a new stage (column) to a pipeline.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Add a new stage (a pipeline column representing a step like "Negotiating") to the specified pipeline. Use when an agent needs to extend a pipeline\'s set of stages before placing boxes in them; requires the target pipeline and a stage name. Not idempotent: each call appends another stage even with the same name.',
+    idempotent: false,
+  },
   props: {
     pipelineKey: pipelineDropdown,
     name: Property.ShortText({

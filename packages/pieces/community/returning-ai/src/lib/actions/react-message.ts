@@ -30,6 +30,8 @@ export const reactMessage = createAction({
   name: 'reactMessage', 
   displayName: 'React to Message',
   description: 'Add an emoji reaction to a specific message as a chosen user.',
+  audience: 'both',
+  aiMetadata: { description: 'Adds an emoji reaction to an existing Returning.ai message on behalf of a given user (identified by username or email), so the reaction appears as if that user added it. Use to acknowledge or react to a known message; requires the target message ID and an emoji shortcode (e.g. :sparkling_heart:). Not idempotent: the API is called on each invocation.', idempotent: false },
   props: {
     description: Property.MarkDown({
       value:

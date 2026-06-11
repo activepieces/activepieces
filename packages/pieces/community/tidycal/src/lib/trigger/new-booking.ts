@@ -14,6 +14,9 @@ export const tidycalnewbooking = createTrigger({
   name: 'new_booking',
   displayName: 'New Booking',
   description: 'Triggers when a new booking is created',
+  aiMetadata: {
+    description: 'Fires when a new (non-canceled) booking is created in TidyCal. The event represents the scheduled appointment, including its id, booking type, start/end times, timezone, meeting URL, intake question answers, creation timestamp, and the associated contact. Use this to react to newly scheduled meetings, such as sending confirmations or creating calendar events.',
+  },
   props: {},
   sampleData: {
     data: [

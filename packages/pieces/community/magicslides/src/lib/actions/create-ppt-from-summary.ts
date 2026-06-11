@@ -9,6 +9,8 @@ export const createPptFromSummary = createAction({
   name: 'createPptFromText',
   displayName: 'Create PPT from Text/Summary',
   description: 'Generates a PPT presentation from provided text or summary.',
+  audience: 'both',
+  aiMetadata: { description: 'Generate a new PowerPoint presentation from a block of supplied text or summary using AI, with optional control over slide count, language, template, AI model, and image sourcing. Choose this when you already have the source content as text and want it turned into a deck, rather than the topic variant (generates from a subject line) or the YouTube variant. Each call generates a fresh presentation, so it is not idempotent.', idempotent: false },
   props: {
     msSummaryText: Property.LongText({
       displayName: "Summary Text",

@@ -8,6 +8,8 @@ export const updateProduct = createAction({
   name: 'update_product',
   displayName: 'Update Product',
   description: 'Updates a product by ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing product identified by Product ID, applying only the fields you supply (name, SKU, description, price, currency, status, custom fields); omitted fields are left unchanged. Requires a valid product ID; repeating with the same values is safe.', idempotent: true },
   props: {
     productId: ninjapipeCommon.productDropdownRequired,
     name: Property.ShortText({ displayName: 'Name', required: false }),

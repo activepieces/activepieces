@@ -115,6 +115,9 @@ export const newRowInTableTrigger = createTrigger({
     name: 'new_row_in_table',
     displayName: 'New Row in Table',
     description: 'Fires when a new row is added to a table within a worksheet.',
+    aiMetadata: {
+        description: 'Fires when a new row is appended to a specific Excel table inside a worksheet. Each event represents one newly detected table row, returning its zero-based row index and the cell values (keyed by the table header names when headers are enabled, otherwise by column letters). Use this to react to records added to a structured Excel table.',
+    },
     props: {
         storageSource: commonProps.storageSource,
         siteId: commonProps.siteId,

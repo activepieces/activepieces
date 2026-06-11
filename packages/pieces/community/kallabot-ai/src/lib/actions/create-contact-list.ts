@@ -6,6 +6,11 @@ export const createContactListAction = createAction({
     name: 'create-contact-list',
     displayName: 'Create Contact List',
     description: 'Create a new contact list.',
+    audience: 'both',
+    aiMetadata: {
+        description: 'Create a new named contact list seeded with an array of contacts, each requiring a phone_number and optionally a name and template_variables; an optional description can be set. Use it to set up a fresh list for calling or campaigns. Not idempotent — each call creates a separate new list even with identical input.',
+        idempotent: false,
+    },
     auth: kallabotAuth,
 
     props: {

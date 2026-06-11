@@ -14,6 +14,8 @@ export const tariffReadAction = createAction({
   name: 'tariffRead',
   displayName: 'Resources - Tariffs - Read',
   description: 'Get a tariff.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single AMPECO tariff by its numeric ID, returning its full pricing definition and settings. Use when you already know the tariff ID; to search or browse tariffs (including resolving the tariff that applies to a user within a group) use the tariffs listing action. Read-only and idempotent.', idempotent: true },
   props: {
         
   tariff: Property.Number({

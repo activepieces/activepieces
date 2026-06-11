@@ -12,6 +12,8 @@ export const addToQueueAction = createAction({
   displayName: 'Add File to Queue',
   description:
     'Add an existing file (API-uploaded or user-file) to the print queue. For uploading a new file at the same time, use "Upload File & Add to Queue".',
+  audience: 'both',
+  aiMetadata: { description: 'Queue an already-uploaded file for printing — choose the source (an API file hex ID from an upload step, or an existing user-file UID) plus quantity, target group, printers/models, tags, and custom fields. Use this when the file already exists on SimplyPrint; to upload and queue together use the upload-and-queue tool. Not idempotent — each call adds a new queue item.', idempotent: false },
   props: {
     fileSource: Property.StaticDropdown<'apiFile' | 'userFile'>({
       displayName: 'File source',

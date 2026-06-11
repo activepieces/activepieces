@@ -5,6 +5,8 @@ export const getBlocks = createAction({
   name: 'get_blocks',
   displayName: 'Get Blocks',
   description: 'Get list of blocks',
+  audience: 'both',
+  aiMetadata: { description: 'List recent Ethereum blocks across the chain (newest first), takes no inputs. Read-only. Use this for chain-wide block browsing; to fetch one specific block use Get Block by Hash or Number.', idempotent: true },
   // category: 'Blocks',
   props: {},
   async run(context) {
