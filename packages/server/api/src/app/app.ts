@@ -74,6 +74,7 @@ import { SystemJobName } from './helper/system-jobs/common'
 import { systemJobHandlers } from './helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from './helper/system-jobs/system-job'
 import { validateEnvPropsOnStartup } from './helper/system-validator'
+import { shutdownTelemetry } from './helper/telemetry.utils'
 import { knowledgeBaseModule } from './knowledge-base/knowledge-base.module'
 import { mcpServerModule } from './mcp/mcp-module'
 import { mcpOAuthApproveController } from './mcp/oauth/code/mcp-oauth-approve.controller'
@@ -323,6 +324,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         await redisConnections.destroy()
         await distributedLock(app.log).destroy()
         await engineResponseWatcher(app.log).shutdown()
+        await shutdownTelemetry()
     })
 
     return app

@@ -4,6 +4,7 @@ import {
   ApFlagId,
   ErrorCode,
   isNil,
+  TelemetryEventName,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Eye, EyeOff } from 'lucide-react';
@@ -11,6 +12,7 @@ import { useMemo, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -89,6 +91,7 @@ const SignUpForm = ({
 
   const redirectAfterLogin = useRedirectAfterLogin();
   const navigate = useNavigate();
+  const { capture } = useTelemetry();
 
   const { mutate, isPending } = authMutations.useSignUp({
     onSuccess: (data) => {
@@ -109,6 +112,10 @@ const SignUpForm = ({
         const errorCode: ErrorCode | undefined = (
           error.response?.data as { code: ErrorCode }
         )?.code;
+        capture({
+          name: TelemetryEventName.SIGN_UP_FAILED,
+          payload: { errorCode: errorCode ?? 'UNKNOWN' },
+        });
         if (isNil(errorCode)) {
           form.setError('root.serverError', {
             message: t('Something went wrong, please try again later'),
@@ -160,6 +167,10 @@ const SignUpForm = ({
   const onSubmit: SubmitHandler<SignUpSchema> = (data) => {
     form.setError('root.serverError', {
       message: undefined,
+    });
+    capture({
+      name: TelemetryEventName.SIGN_UP_SUBMITTED,
+      payload: { method: 'email' },
     });
     mutate({
       ...data,
