@@ -7,6 +7,8 @@ export const trackEvent = createAction({
   name: 'track_event',
   displayName: 'Track Event',
   description: 'Send a track event to Pendo.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a custom track event to Pendo for a given visitor (and optionally an account), recording product-usage activity for analytics. Choose this to log a behavioral/usage event; requires an event type/name and a visitor ID, with optional account ID, millisecond timestamp (defaults to now), and arbitrary event properties. Not idempotent — each call appends a new event.', idempotent: false },
   props: {
     type: Property.ShortText({
       displayName: 'Event Type',

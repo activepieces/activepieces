@@ -9,6 +9,12 @@ export const sendCustomerEventAction = createAction({
   displayName: 'Send Customer Event',
   description:
     'Send a customer event to Omnisend. Events track customer behavior and trigger automations (e.g. welcome emails, abandoned cart reminders). Use predefined events or create custom ones.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Record a customer event for a contact (identified by email) in Omnisend, which can trigger automations such as welcome emails or abandoned-cart reminders. The event name may be a predefined Omnisend event (e.g. "placed order") or a custom name, with optional key-value properties. Not idempotent: each call appends a new event, so repeating it can re-fire automations.',
+    idempotent: false,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Contact Email',

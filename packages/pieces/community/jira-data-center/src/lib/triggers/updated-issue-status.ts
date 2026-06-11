@@ -38,6 +38,10 @@ export const updatedIssueStatus = createTrigger({
 	name: 'updated_issue_status',
 	displayName: 'Updated Issue Status',
 	description: 'Triggers when an issue status is updated',
+	aiMetadata: {
+		description:
+			'Fires specifically when an issue\'s status (workflow state) changes in Jira Data Center/Server — narrower than Updated Issue, which fires on any field change. Uses JQL "status CHANGED" polling; an optional JQL filter further narrows which issues are watched.',
+	},
 	auth: jiraDataCenterAuth,
 	type: TriggerStrategy.POLLING,
 	props: {

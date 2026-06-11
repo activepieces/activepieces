@@ -10,6 +10,12 @@ export const addProspectToCampaignAction = createAction({
   displayName: 'Add Prospect to Campaign',
   description:
     'Add a prospect to a Klenty campaign/cadence using the startcadence endpoint.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Enrolls a prospect (by email) into a named Klenty cadence/campaign, starting the outreach sequence for them. Use to kick off automated emails to an existing prospect; the prospect should already exist in Klenty and the cadence name must match one configured in the account. Not idempotent: it triggers cadence enrollment as an outbound side effect on each call.',
+    idempotent: false,
+  },
   auth: klentyAuth,
   props: {
     email: Property.ShortText({

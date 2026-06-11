@@ -9,6 +9,8 @@ export const createLabel = createAction({
   name: 'create_label',
   displayName: 'Create Label',
   description: 'Creates a new label',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new label in a MeisterTask project, optionally with a hex color. Use to define a reusable tag for tasks; requires the target project and a label name. Not idempotent — each call creates another label even if one with the same name already exists (use Find or Create Label to avoid duplicates).', idempotent: false },
   props: {
     project: meisterTaskCommon.project,
     name: Property.ShortText({

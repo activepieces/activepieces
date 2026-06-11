@@ -42,6 +42,9 @@ export const keyUpdated = createTrigger({
   name: 'keyUpdated',
   displayName: 'Key Updated',
   description: 'Trigger when a key is updated in your Lokalise project',
+  aiMetadata: {
+    description: 'Fires when an existing translation key is modified in the selected Lokalise project, emitting that key. Polls the project keys list and detects changes by modification timestamp.',
+  },
   props: { projectId: projectDropdown },
   sampleData: {
     event: 'project.key.modified',

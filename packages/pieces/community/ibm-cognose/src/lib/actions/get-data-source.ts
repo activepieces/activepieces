@@ -9,6 +9,8 @@ export const getDataSourceAction = createAction({
   name: 'get_data_source',
   displayName: 'Get Data Source',
   description: 'Retrieve data source details',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch the details of a single IBM Cognos data source by its id. Use to read or verify a data source\'s configuration before acting on it; optionally request extra fields such as connections or signons. Idempotent read-only lookup.', idempotent: true },
   props: {
     datasourceId: dataSourceDropdown,
     fields: Property.ShortText({

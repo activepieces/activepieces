@@ -10,6 +10,9 @@ export const videoGenerationFailedTrigger = createTrigger({
 	name: 'video_generation_failed',
 	displayName: 'New Avatar Video Event (Fail)',
 	description: 'Triggers when a video generation process fails.',
+	aiMetadata: {
+		description: 'Fires when an avatar video generation fails (HeyGen avatar_video.fail webhook event), providing the affected video ID and an error message so the failure can be handled.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 

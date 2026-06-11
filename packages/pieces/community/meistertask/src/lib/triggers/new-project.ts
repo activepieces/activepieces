@@ -44,6 +44,9 @@ export const newProject = createTrigger({
   name: 'new_project',
   displayName: 'New Project',
   description: 'Triggers when a new project is created.',
+  aiMetadata: {
+    description: 'Fires when a new project is created in the connected MeisterTask account. Represents a newly added project board accessible to the connection.',
+  },
   props: {},
   sampleData:  {
     "id": 123,

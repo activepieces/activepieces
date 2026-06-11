@@ -7,6 +7,11 @@ export const makeOutboundCallAction = createAction({
   name: 'make_outbound_call',
   displayName: 'Make Outbound Call',
   description: 'Initiate an outbound call to a phone number using a configured widget',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Places an outbound phone call to a destination number (E.164 format) through an Insighto.ai widget wired to a telephony provider such as Twilio, Plivo, or Telnyx. Optionally injects dynamic variables into the call prompt. Use when an agent should trigger a real voice call. Not idempotent: each call dials the recipient again.',
+    idempotent: false,
+  },
   auth: insightoAuth,
   props: {
     widget_id: Property.Dropdown({

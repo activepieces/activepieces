@@ -8,6 +8,8 @@ export const markInvoiceCancelled = createAction({
   name: 'mark_invoice_cancelled',
   displayName: 'Mark Invoice Cancelled',
   description: 'Marks an invoice currently in final as cancelled',
+  audience: 'both',
+  aiMetadata: { description: 'Transitions a final JustInvoice invoice (by ID or invoice number) to cancelled status. Use to void an issued invoice instead of deleting it. Idempotent: an invoice already cancelled stays cancelled.', idempotent: true },
   props: {
     invoiceId: Property.ShortText({
       displayName: 'Invoice ID',

@@ -4,6 +4,10 @@ export const personUpdatedTrigger = createManualWebhookTrigger({
   name: 'person_updated',
   displayName: 'Person Updated',
   description: 'Triggers when an existing person is updated in Outseta.',
+  aiMetadata: {
+    description:
+      'Fires when an existing person (contact) is updated in Outseta, delivering the updated person record and their account.',
+  },
   sampleData: {
     Email: 'jane.doe@example.com',
     FirstName: 'Jane',

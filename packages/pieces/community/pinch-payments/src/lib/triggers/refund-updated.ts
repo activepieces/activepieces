@@ -7,6 +7,9 @@ export const refundUpdatedTrigger = createTrigger({
   name: 'refund_updated',
   displayName: 'Refund Updated',
   description: 'Triggers when a refund is updated (e.g., status change)',
+  aiMetadata: {
+    description: 'Fires when an existing refund changes in Pinch Payments, most commonly a status change (e.g., from pending to completed). Use to track a refund through to settlement.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

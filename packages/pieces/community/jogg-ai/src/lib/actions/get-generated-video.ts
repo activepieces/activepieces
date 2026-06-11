@@ -12,6 +12,12 @@ export const getGeneratedVideo = createAction({
   displayName: 'Get Generated Video',
   description:
     'Get information about a specific generated video project using its ID',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves the current status and details of a JoggAI video project by its project_id. Use to poll an in-progress avatar/template video generation job for completion or to fetch the finished video URL. Idempotent: a read-only lookup with no side effects.',
+    idempotent: true,
+  },
   auth: joggAiAuth,
   props: {
     project_id: Property.ShortText({

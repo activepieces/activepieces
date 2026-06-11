@@ -6,6 +6,8 @@ export const retrivePlan = createAction({
   name: 'retrivePlan',
   displayName: 'Retrieve Plan',
   description: 'Retrieve a customer plan from MoonClerk using the customer ID',
+  audience: 'both',
+  aiMetadata: { description: 'Look up a MoonClerk customer by their customer ID and return the subscription plan attached to that customer. Use to fetch plan/pricing details (amount, interval, currency) for a known customer. Requires a valid customer ID; returns nothing if the customer has no subscription. Read-only and safe to repeat.', idempotent: true },
   props: {
     customerId: Property.ShortText({
       displayName: 'Customer ID',

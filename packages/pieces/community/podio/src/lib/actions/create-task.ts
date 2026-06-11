@@ -8,6 +8,8 @@ export const createTaskAction = createAction({
   name: 'create_task',
   displayName: 'Create Task',
   description: 'Add a new task to an item or workspace with due dates, assignees, and attachments.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a Podio task, optionally attached to a reference object (item, status, or another task via the reference type/id) or standalone if no reference is given. Supports due date/time, a responsible assignee, file attachments, labels, reminders, and recurrence. Use to add a to-do; requires task text. Not idempotent — each call creates a new task.', idempotent: false },
   props: {
     text: Property.LongText({
       displayName: 'Task Text',

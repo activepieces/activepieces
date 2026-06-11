@@ -42,6 +42,9 @@ export const keyAdded = createTrigger({
   name: 'keyAdded',
   displayName: 'Key Added',
   description: 'Trigger when a new key is added to your Lokalise project',
+  aiMetadata: {
+    description: 'Fires when a new translation key is created in the selected Lokalise project, emitting that key. Polls the project keys list and detects keys by creation timestamp.',
+  },
   props: {
     projectId: projectDropdown,
   },

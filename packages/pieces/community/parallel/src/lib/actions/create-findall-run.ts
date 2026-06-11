@@ -9,6 +9,12 @@ export const createFindAllRunAction = createAction({
   displayName: 'Create FindAll Run',
   description:
     'Discover and verify entities matching plain-language criteria. Match conditions can be supplied directly or auto-generated from the objective.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Start a Parallel FindAll run that discovers and verifies a list of entities (e.g. companies or people) matching a plain-language objective. Match conditions can be supplied explicitly or, when left empty, are auto-generated from the objective via an extra ingest call. Use it to build verified entity lists rather than answering a single question; pick a generator tier and a match limit (5-1000). Not idempotent: each call queues a new run whose id is then read with Get FindAll Result.",
+    idempotent: false,
+  },
   props: {
     objective: Property.LongText({
       displayName: 'Objective',

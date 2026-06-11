@@ -8,6 +8,11 @@ export const deleteUser = createAction({
   name: 'delete_user',
   displayName: 'Delete User',
   description: 'Delete a user from Knock by their ID.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Permanently deletes a Knock user identified by its unique user ID. Choose this to remove a recipient from Knock. Destructive and not idempotent — the first call removes the user and a repeat call fails to find it.',
+    idempotent: false,
+  },
   props: {
     userId: Property.ShortText({
       displayName: 'User ID',

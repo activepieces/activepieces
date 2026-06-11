@@ -9,6 +9,8 @@ export const listVoices = createAction({
   name: "list-voices",
   displayName: "List Voices",
   description: "Get the list of available voices for text-to-speech",
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the catalog of Murf text-to-speech voices, optionally narrowing the result to a given locale and/or voice style; leave both filters empty to fetch every available voice. Use this to discover a valid voiceId (and its supported locales/styles) before calling Text to Speech or Voice Changer. Read-only and idempotent.', idempotent: true },
   props: {
     locale: murfCommon.language,
     style: Property.Dropdown({

@@ -14,6 +14,9 @@ export const outgoingMessageDelivered = createTrigger({
   displayName: 'Outgoing Message Delivered',
   description:
     'Fires when an outbound message is delivered successfully. Useful for message confirmation workflows.',
+  aiMetadata: {
+    description: 'Fires when an outbound SMS/MMS sent from an OpenPhone number is successfully delivered to the recipient, delivering the message details. Use to confirm delivery or trigger follow-up steps. Can be scoped to a specific OpenPhone number or all numbers.',
+  },
   props: {
     phoneNumbers: phoneNumberDropdown,
   },

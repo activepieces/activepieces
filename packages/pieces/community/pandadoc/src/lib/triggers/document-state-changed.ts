@@ -7,6 +7,9 @@ export const documentStateChanged = createTrigger({
   name: 'documentStateChanged',
   displayName: 'Document State Changed',
   description: 'Triggers when a document status changes.',
+  aiMetadata: {
+    description: 'Fires whenever a PandaDoc document changes status (e.g. draft, sent, viewed, completed, paid, voided, declined), optionally filtered to specific target statuses. Represents a transition in a document lifecycle.',
+  },
   auth: pandadocAuth,
   props: {
     filter_status: Property.StaticMultiSelectDropdown({
