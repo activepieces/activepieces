@@ -10,6 +10,12 @@ export const createSummaryAction = createAction({
   name: 'create_summary',
   displayName: 'Create Summary',
   description: 'Produces a summary of the content from an audio file.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Uploads an audio file to Deepgram and returns an AI-generated summary of its spoken content (summarize v2), synchronously. Pick this over Create Transcription when you need a condensed overview rather than the full text; by default it falls back to the full transcript if no summary is available. Re-running re-processes the audio and incurs another billed request, though it creates no persistent resource.',
+    idempotent: false,
+  },
   props: {
     audioFile: Property.File({
       displayName: 'Audio File',

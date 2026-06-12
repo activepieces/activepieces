@@ -18,6 +18,12 @@ export const createObject = createAction({
   displayName: 'Create Object',
   description:
     'Creates a record in the selected Coupa module (Purchase Orders, Suppliers, or Contracts).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new record in a Coupa module — purchase orders, suppliers, contracts, or any other resource via the custom-module option — from a raw JSON body matching the Coupa API schema. Not idempotent: each run POSTs a new record, so retries create duplicates. Use Update Object to modify an existing record instead.',
+    idempotent: false,
+  },
   props: {
     module: moduleProperty,
     customResource: customModuleResourceProperty,

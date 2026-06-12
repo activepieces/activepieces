@@ -8,6 +8,12 @@ export const getUserByIdAction = createAction({
     name: 'get_user_by_id',
     displayName: 'Get User by ID',
     description: 'Retrieves an Azure AD user by object ID or user principal name.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Retrieves a single Azure AD user profile by object ID or user principal name. Read-only and idempotent; use it to verify a user exists or fetch their details before update, license, or delete operations. Use List Users when you only know a partial name or other attribute.',
+        idempotent: true,
+    },
     props: {
         userId: userDropdown,
     },

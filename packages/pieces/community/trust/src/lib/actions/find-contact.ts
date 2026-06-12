@@ -8,6 +8,12 @@ export const findContactAction = createAction({
   name: 'find_contact',
   displayName: 'Find Contact',
   description: 'Finds a contact by ID or email address.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Look up a Trust contact either by its contact ID (direct fetch) or by email address (search) — provide at least one, and the ID takes priority when both are given. Pick this to resolve a contact ID before an update or delete, or to check whether a person already exists before creating them. Read-only and safe to retry (idempotent).',
+    idempotent: true,
+  },
   props: {
     contactId: Property.ShortText({
       displayName: 'Contact ID',

@@ -8,6 +8,12 @@ export const getJobStatus = createAction({
   name: 'get_job_status',
   displayName: 'Get Job Status',
   description: 'Get the current status and metadata for a submitted Jungle Grid job.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Look up the current lifecycle status and metadata of a Jungle Grid job by job ID. Pick this as the standard poll after Submit Job to check whether a job is queued, running, or finished; for exit codes and log tails use Get Job Runtime, and for output files use List Job Artifacts. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     job_id: jungleGridCommon.jobId,
   },

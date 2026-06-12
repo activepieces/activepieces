@@ -17,6 +17,12 @@ export const searchObjects = createAction({
   displayName: 'Search Objects (Batch)',
   description:
     'Searches records in a Coupa module with pagination (50 per page) and returns standardized fields.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Search and list records in a Coupa module — purchase orders, suppliers, contracts, or any other resource via the custom-module option — using optional Coupa query parameters as filters, auto-paginating through all matching pages. Use this to find records by criteria; use Get Object by ID when you already have an ID. Read-only and idempotent, but unfiltered searches on large modules can be slow.',
+    idempotent: true,
+  },
   props: {
     module: moduleProperty,
     customResource: customModuleResourceProperty,
