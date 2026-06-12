@@ -199,7 +199,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 log.warn({ conversationId, continuations, outputTokens: attemptUsage.outputTokens }, 'Chat response truncated by output limit — auto-continuing')
                 const sanitizedTail = chatAiUtils.sanitizeTruncatedAssistantTail(stepMessages)
                 const nudge: ModelMessage = { role: 'user', content: CONTINUE_NUDGE }
-                accumulatedResponseMessages.push(...sanitizedTail, nudge)
+                accumulatedResponseMessages.push(...sanitizedTail)
                 llmMessages = [...llmMessages, ...sanitizedTail, nudge]
             }
 

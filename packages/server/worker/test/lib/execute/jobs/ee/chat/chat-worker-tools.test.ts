@@ -111,7 +111,7 @@ describe('chatWorkerTools', () => {
                 input: { channel: 'C01', text: 'Hi Alice' },
             }))
 
-            expect(progressEvents.length).toBe(4)
+            expect(progressEvents.length).toBe(2)
             expect(progressEvents[0].toolCallId).toBe('tc1')
 
             const initial = progressEvents[0].data
@@ -120,7 +120,7 @@ describe('chatWorkerTools', () => {
             expect(initial.done).toBe(false)
             expect(initial.label).toBe('Sending messages')
 
-            const final = progressEvents[3].data
+            const final = progressEvents[progressEvents.length - 1].data
             expect(final.completed).toBe(3)
             expect(final.succeeded).toBe(3)
             expect(final.failed).toBe(0)
@@ -261,7 +261,7 @@ describe('chatWorkerTools', () => {
             expect(resultObj.content[0].text).toContain('0/1 succeeded')
         })
 
-        it('stops early after 3 consecutive failures', async () => {
+        it('stops early once consecutive failures cross the limit', async () => {
             const { eventEmitter, progressEvents } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue(mcpFailure('Bad auth'))
 
@@ -273,17 +273,19 @@ describe('chatWorkerTools', () => {
                 description: 'Sending messages',
             }, { toolCallId: 'tc8', messages: [], abortSignal: undefined as unknown as AbortSignal })
 
-            expect(executeTool).toHaveBeenCalledTimes(3)
+            // Items run concurrently in chunks of 5; the first chunk all fails, crossing
+            // the limit of 3, so it stops after that chunk — 5 ran, the remaining 5 skipped.
+            expect(executeTool).toHaveBeenCalledTimes(5)
 
             const final = progressEvents[progressEvents.length - 1].data
-            expect(final.failed).toBe(3)
-            expect(final.completed).toBe(3)
+            expect(final.failed).toBe(5)
+            expect(final.completed).toBe(5)
             expect(final.total).toBe(10)
             expect(final.done).toBe(true)
 
             const resultObj = result as { content: Array<{ text: string }> }
             expect(resultObj.content[0].text).toContain('Stopped early')
-            expect(resultObj.content[0].text).toContain('7 items skipped')
+            expect(resultObj.content[0].text).toContain('5 items skipped')
         })
 
         it('resets consecutive failure count on success', async () => {
