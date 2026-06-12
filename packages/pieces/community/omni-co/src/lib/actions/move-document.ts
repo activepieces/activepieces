@@ -9,6 +9,12 @@ export const moveDocument = createAction({
   name: 'moveDocument',
   displayName: 'Move document',
   description: 'Moves a document to a new folder or to the root level',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Moves an Omni document to a target folder path, or to the root level when the path is set to "null". Optionally sets the sharing scope (organization or restricted). Use to reorganize where a document lives. Idempotent: moving a document to the same destination repeatedly yields the same placement.',
+    idempotent: true,
+  },
   props: {
     identifier: documentIdDropdown,
     folderPath: Property.ShortText({

@@ -13,6 +13,8 @@ export const addMemberToSpace = createAction({
 	name: 'add_member_to_space',
 	displayName: 'Add Member to Space',
 	description: 'Add an existing member to a specific space by their email.',
+	audience: 'both',
+	aiMetadata: { description: 'Grants an existing community member access to a specific Circle space, matched by their email address. Use to expand a member into additional spaces; the member must already exist in the community. Effectively keyed on the space/email pair, so re-running with the same inputs is safe.', idempotent: true },
 	props: {
 		space_id: spaceIdDropdown,
 		email: Property.ShortText({

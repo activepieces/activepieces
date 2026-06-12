@@ -14,6 +14,12 @@ export const updateTicketAction = createAction({
   name: 'update_ticket',
   displayName: 'Update Ticket',
   description: 'Updates a ticket in Wayfront. Only the fields you provide will be changed.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing Wayfront ticket identified by its reference, applying a partial patch to subject, status, assigned employees, tags, linked order, or metadata; omitted fields are left untouched, but supplying tags replaces all existing tags. Use to change a ticket’s state or routing. Idempotent: re-sending the same patch yields the same ticket state.',
+    idempotent: true,
+  },
   props: {
     ticket_ref: ticketsDropdown,
     subject: Property.ShortText({

@@ -75,6 +75,10 @@ export const newOrUpdatedContactTrigger = createTrigger({
 	name: 'new-or-updated-contact',
 	displayName: 'Contact Recently Created or Updated',
 	description: 'Triggers when a contact recently created or updated.',
+	aiMetadata: {
+		description:
+			'Fires when a contact is created or modified in HubSpot. Each event represents one contact record with properties such as name, email, company, phone, lifecycle stage, and address. Polls by last-modified date, so both new and edited contacts trigger it.',
+	},
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,

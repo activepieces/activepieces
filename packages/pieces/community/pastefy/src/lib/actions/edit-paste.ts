@@ -8,6 +8,8 @@ export default createAction({
   name: 'edit_paste',
   displayName: 'Edit Paste',
   description: 'Edits an existing private paste',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing private paste identified by its ID, replacing fields such as content, title, folder, visibility, and expiry. Use to modify a paste you already know the ID of. If an encryption password is supplied, the provided content/title are AES-encrypted client-side. Idempotent: re-applying the same field values to the same paste yields the same result.', idempotent: true },
   props: {
     paste_id: Property.ShortText({
       displayName: 'Paste ID',

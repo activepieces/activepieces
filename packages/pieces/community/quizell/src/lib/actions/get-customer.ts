@@ -8,6 +8,8 @@ export const getCustomer = createAction({
   name: 'get_customer',
   displayName: 'Get Customer',
   description: 'Retrieves details of a specific customer by their ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches the full details of a single Quizell customer by customer_id, including custom fields. Use when you already have the customer ID (e.g. from List Customers) and need their complete record. Read-only and idempotent.', idempotent: true },
   props: {
     customer_id: Property.ShortText({
       displayName: 'Customer ID',

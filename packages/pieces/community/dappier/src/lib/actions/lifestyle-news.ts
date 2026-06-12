@@ -9,6 +9,12 @@ export const lifestyleNewsSearch = createAction({
   displayName: 'Lifestyle News',
   description:
     'Real-time updates, analysis, and personalized content from top sources like The Mix, Snipdaily, Nerdable, and Familyproof.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches Dappier lifestyle-news sources for articles matching a natural-language query or URL. Choose this for lifestyle content rather than the general web search, stock, or sports actions. Optionally tune result count, restrict to a preferred domain, and pick the search algorithm (semantic, most recent, most recent + semantic, or trending) to control whether matching is contextual or recency-driven. Read-only and safe to repeat.',
+    idempotent: true,
+  },
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

@@ -7,6 +7,11 @@ export const lockJob = createAction({
   name: "lock_job",
   displayName: "Lock Job",
   description: "Lock the job identified by the given job_id",
+  audience: 'both',
+  aiMetadata: {
+    description: "Lock a Housecall Pro job by its job ID, preventing further edits. Targets a stable job ID, so re-running on an already-locked job is harmless.",
+    idempotent: true,
+  },
   props: {
     job_id: Property.ShortText({
       displayName: "Job ID",

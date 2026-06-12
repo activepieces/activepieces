@@ -23,6 +23,7 @@ import { chatApprovalGate } from './chat-approval-gate'
 import { chatCompaction } from './chat-compaction'
 import { buildUserContentWithFiles } from './chat-file-utils'
 import { chatHelpers } from './chat-helpers'
+import { chatHistoryHygiene } from './chat-history-hygiene'
 import { chatAnalyticsTelemetry } from './chat-sync-job'
 import { chatMcp } from './mcp/chat-mcp'
 import { chatPrompt } from './prompt/chat-prompt'
@@ -73,6 +74,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         const previousMessages = conversation.messages as ModelMessage[]
         const newUserMessage: ModelMessage = { role: 'user' as const, content: userContent }
         const allMessages = [...previousMessages, newUserMessage]
+        const llmHistory = chatHistoryHygiene.collapseStaleToolOutputs({ messages: allMessages })
 
         const previousUiMessages = (conversation.uiMessages ?? []) as PersistedChatMessage[]
         const uiMessagesWithUser: PersistedChatMessage[] = [
@@ -85,10 +87,10 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         })
         await chatApprovalGate.clearCancel({ conversationId })
 
-        const estimatedTokens = chatCompaction.estimateTokenCount({ messages: allMessages, systemPromptLength: systemPromptText.length })
+        const estimatedTokens = chatCompaction.estimateTokenCount({ messages: llmHistory, systemPromptLength: systemPromptText.length })
         let compactionState = { summary: conversation.summary ?? null, summarizedUpToIndex: conversation.summarizedUpToIndex ?? null }
 
-        if (chatCompaction.shouldCompact({ estimatedTokens, provider: providerConfig.provider, messageCount: allMessages.length })) {
+        if (chatCompaction.shouldCompact({ estimatedTokens, provider: providerConfig.provider, messageCount: llmHistory.length })) {
             const model = chatAiUtils.createChatModel({
                 provider: providerConfig.provider,
                 auth: providerConfig.auth as Record<string, unknown>,
@@ -96,7 +98,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
                 modelId: resolvedModelId,
             })
             compactionState = await chatCompaction.compactMessages({
-                messages: allMessages,
+                messages: llmHistory,
                 existingSummary: compactionState.summary,
                 summarizedUpToIndex: compactionState.summarizedUpToIndex,
                 provider: providerConfig.provider,
@@ -110,7 +112,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         }
 
         const messagesForLlm = chatCompaction.buildCompactedPayload({
-            messages: allMessages,
+            messages: llmHistory,
             summary: compactionState.summary,
             summarizedUpToIndex: compactionState.summarizedUpToIndex,
             provider: providerConfig.provider,
@@ -130,6 +132,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
                 ? { mcpServerUrl: mcpCredentials.mcpServerUrl, mcpToken: mcpCredentials.mcpToken }
                 : null,
             projects: userProjects.map((p) => ({ id: p.id, displayName: p.displayName, type: p.type })),
+            guides: chatPrompt.guides,
         }
     },
 

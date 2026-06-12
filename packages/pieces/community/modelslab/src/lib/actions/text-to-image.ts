@@ -35,6 +35,8 @@ export const textToImage = createAction({
   name: 'text-to-image',
   displayName: 'Text to Image',
   description: 'Generate an image from a text prompt using ModelsLab.',
+  audience: 'both',
+  aiMetadata: { description: 'Generates one or more images from a natural-language text prompt via the ModelsLab text-to-image API; use it to synthesize new artwork rather than edit or fetch existing images. Optionally control the diffusion model, dimensions, sample count, and a seed. Not idempotent: each call submits a fresh generation request and returns newly created images (with the default seed of -1 results vary even for an identical prompt); it also polls until the asynchronous job completes.', idempotent: false },
   props: {
     prompt: Property.LongText({
       displayName: 'Prompt',

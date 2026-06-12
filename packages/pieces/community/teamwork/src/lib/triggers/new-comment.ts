@@ -7,6 +7,9 @@ export const newComment = createTrigger({
 	name: 'new_comment',
 	displayName: 'New Comment',
 	description: 'Fires when a new comment is posted.',
+	aiMetadata: {
+		description: 'Fires when a comment is posted in Teamwork (COMMENT.CREATED webhook), optionally filtered to a single project. Each event represents one newly posted comment.',
+	},
 	auth: teamworkAuth,
 	props: {
 		projectId: Property.Dropdown({

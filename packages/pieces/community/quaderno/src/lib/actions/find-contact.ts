@@ -8,6 +8,12 @@ export const findContact = createAction({
   name: 'findContact',
   displayName: 'Find Contact',
   description: 'Search and list contacts from Quaderno',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up contacts in Quaderno via GET. With a search query it filters contacts by name, email, or tax ID; left empty it lists all contacts (capped by the results limit). Use to resolve a contact before referencing it or to check whether one already exists. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     searchQuery: Property.ShortText({
       displayName: 'Search Query',

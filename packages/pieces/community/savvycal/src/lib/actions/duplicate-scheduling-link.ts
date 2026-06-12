@@ -14,6 +14,8 @@ export const duplicateSchedulingLinkAction = createAction({
   name: 'duplicate_scheduling_link',
   displayName: 'Duplicate Scheduling Link',
   description: 'Creates a copy of an existing scheduling link.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new scheduling link as a copy of an existing one, identified by the source link id. Use to clone a link\'s configuration as a starting point. Not idempotent — each call produces another distinct copy.', idempotent: false },
   props: {
     team_id: Property.Dropdown({
       auth: savvyCalAuth,

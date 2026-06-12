@@ -10,6 +10,12 @@ export const createPersonAction = createAction({
   displayName: 'Create Person',
   description:
     'Create a new person in Salesloft.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new person (contact/lead) record in Salesloft. Use when adding a prospect not yet tracked. Requires either an email address, or both a phone number and last name; the call fails if neither identifier set is supplied. Not idempotent — each call creates a separate person, so repeating risks duplicates.',
+    idempotent: false,
+  },
   auth: salesloftAuth,
   props: {
     email_address: Property.ShortText({

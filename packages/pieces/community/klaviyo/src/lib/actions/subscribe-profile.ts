@@ -9,6 +9,11 @@ export const subscribeProfile = createAction({
   name: 'subscribeProfile',
   displayName: 'Subscribe Profile',
   description: 'Subscribe profiles to email or SMS marketing on a list.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Opts profiles in to email and/or SMS marketing consent via a bulk subscription job, optionally scoped to a list. At least one channel must be selected; enabling historical import bypasses double opt-in and requires a consent date. Use this for consent changes rather than Add Profile to List (which only sets membership). Not idempotent: each call queues a new subscription job (max 1000 profiles).',
+    idempotent: false,
+  },
   props: {
     list_id: listIdDropdown,
     profile_ids: profileIdsMultiSelectDropdown,

@@ -22,6 +22,10 @@ export const bulkBounceThresholdExceeded = createTrigger({
   displayName: 'Bulk Bounce Threshold Exceeded',
   description:
     'Triggers once when too many emails bounce within a set time period. Useful for catching spam attacks or deliverability problems early.',
+  aiMetadata: {
+    description:
+      'Fires once when the number of bounced emails for a domain exceeds a configured threshold within a rolling time window, counting permanent, temporary, or all failures depending on the chosen bounce type. Represents a deliverability incident (e.g. a spam attack or sudden delivery problems) and re-arms only after counts fall back below the threshold, so a sustained spike does not fire repeatedly.',
+  },
   props: {
     domain: mailgunCommon.domainDropdown,
     threshold: Property.Number({

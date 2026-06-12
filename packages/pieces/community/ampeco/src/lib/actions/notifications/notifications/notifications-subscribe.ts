@@ -14,6 +14,8 @@ export const notificationsSubscribeAction = createAction({
   name: 'notificationsSubscribe',
   displayName: 'Notifications - V2.0 - Notifications Subscribe',
   description: 'Subscribe for a webhook or kafka events. Each notification sent to the webhook/kafka will be retried a number of times and will be rate limited. The rate limits, retries and retry intervals will be configured by Ampeco.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new AMPECO notification subscription that pushes selected event types to either a webhook callback URL or a Kafka topic. Not idempotent: each call registers another subscription. Choose delivery with the Via field (webhook vs kafka) and supply the matching delivery config; to change an existing subscription use the notification update action.', idempotent: false },
   props: {
         
   via: Property.StaticDropdown({

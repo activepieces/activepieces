@@ -8,6 +8,8 @@ export const uploadDocument = createAction({
   name: 'upload_document',
   displayName: 'Upload Document',
   description: 'Upload a text document to AI assistant.',
+  audience: 'both',
+  aiMetadata: { description: 'Upload a text document (raw text plus a title) to the Personal AI assistant so it can reference the content, with optional tags, source, and add-to-memory flag. Use when the source is plain text already in hand; use Upload File for binary files or Upload URL Content to fetch from a link. Each call creates a new document, so it is not idempotent.', idempotent: false },
   // category: 'Documents',
   props: {
     text: Property.LongText({

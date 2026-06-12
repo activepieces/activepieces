@@ -7,6 +7,8 @@ export const getCustomers = createAction({
   name: 'get_customers',
   displayName: 'Get Customers',
   description: 'Retrieves a list of customers from Housecall Pro.',
+  audience: 'both',
+  aiMetadata: { description: "List Housecall Pro customers with optional full-text search (name, email, mobile, address), location filtering, sorting, and pagination. Read-only and idempotent. Use the q search query to locate a customer by name or contact details before referencing their ID in other actions.", idempotent: true },
   props: {
     page: Property.Number({
       displayName: 'Page',

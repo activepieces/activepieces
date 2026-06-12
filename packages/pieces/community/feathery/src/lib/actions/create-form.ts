@@ -8,6 +8,8 @@ export const createFormAction = createAction({
   name: 'create_form',
   displayName: 'Create Form',
   description: 'Create a form based on an existing template form.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new Feathery form by cloning an existing template form and applying step/element overrides (images, videos, texts, buttons, fields, navigation rules, logic rules). Use to provision a new form programmatically from a template; requires a unique form name and the template form ID. Not idempotent — each call creates a separate form.', idempotent: false },
   props: {
     form_name: Property.ShortText({
       displayName: 'Form Name',

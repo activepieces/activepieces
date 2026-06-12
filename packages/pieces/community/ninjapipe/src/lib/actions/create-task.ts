@@ -8,6 +8,8 @@ export const createTask = createAction({
   name: 'create_task',
   displayName: 'Create Task',
   description: 'Creates a task or subtask in a project.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a task inside a given project, with optional description, status, priority, assignee, due date, tags, and settings. Set Parent Task ID to instead create a subtask under an existing task in the same project. Requires a project ID and title; not idempotent, so each call adds another task.', idempotent: false },
   props: {
     projectId: ninjapipeCommon.projectDropdownRequired,
     title: Property.ShortText({ displayName: 'Title', description: 'Task title.', required: true }),

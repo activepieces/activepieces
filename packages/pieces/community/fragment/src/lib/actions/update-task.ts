@@ -9,6 +9,8 @@ export const updateTask = createAction({
 	name: 'update_task',
 	displayName: 'Update Task',
 	description: 'Updates an existing task.',
+	audience: 'both',
+	aiMetadata: { description: 'Updates an existing Fragment task identified by its task UID, changing any of title, URL, due date, status (TODO/STARTED/DONE), assignee email, tags, or custom fields. Only the fields you supply are modified. Idempotent: re-applying the same field values to the same task yields the same end state.', idempotent: true },
 	props: {
 		task_uid: Property.ShortText({
 			displayName: 'Task UID',

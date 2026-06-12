@@ -14,6 +14,11 @@ export const launchAgent = createAction({
   name: 'launch_agent',
   displayName: 'Launch Agent',
   description: 'Start a new cloud agent to work on your repository',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Launches a new Cursor cloud agent against a GitHub repository, giving it a task prompt (optionally with images) to autonomously make code changes on a branch. Use to kick off automated coding work; optionally auto-create a pull request when the agent finishes and register a webhook for status notifications. Requires a repository URL and prompt text. Each call starts a distinct agent run, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     promptText: Property.LongText({
       displayName: 'Task Prompt',

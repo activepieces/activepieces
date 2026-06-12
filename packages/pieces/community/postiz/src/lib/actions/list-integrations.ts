@@ -8,6 +8,11 @@ export const listIntegrations = createAction({
   name: 'list_integrations',
   displayName: 'List Channels',
   description: 'List all connected social media channels in your organization',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Lists every social media channel connected to the organization, returning each channel id, name, and provider. Use to discover which channels are available and to resolve the integration id required by Create Post, Find Available Slot, and Get Platform Analytics. Idempotent — a read-only lookup.',
+    idempotent: true,
+  },
   props: {},
   async run(context) {
     const auth = context.auth;

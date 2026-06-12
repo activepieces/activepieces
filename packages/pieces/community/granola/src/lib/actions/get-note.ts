@@ -12,6 +12,12 @@ export const getNoteAction = createAction({
   name: 'get_note',
   displayName: 'Get Note',
   description: 'Retrieve a single meeting note by its ID, with optional transcript.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches one Granola meeting note by its note ID, including title, owner, calendar/attendee details, and AI summary. Enable the include-transcript option to also return the full speaker-by-speaker meeting transcript. Use it after List Notes (or a note trigger) to read a specific note in depth. Requires a valid note ID (format `not_` followed by 14 characters). Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     note_id: Property.ShortText({
       displayName: 'Note ID',

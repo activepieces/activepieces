@@ -51,6 +51,10 @@ export const callTracking = createTrigger({
   displayName: 'Call Tracking',
   description:
     'Triggers when call associated with Call Tracking campaign visits is finished.',
+  aiMetadata: {
+    description:
+      'Fires when a call tied to a Call Tracking campaign finishes, representing a completed tracked call with its billing, duration, and source/destination details. Polls the VoIPstudio call tracking campaigns endpoint and emits each newly completed call since the last check.',
+  },
   props: {},
   sampleData: {
     id: 6743,

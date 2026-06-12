@@ -6,6 +6,8 @@ export const humanizeText = createAction({
   name: 'humanize_text',
   displayName: 'Humanize Text',
   description: 'Humanize text to make it sound more natural',
+  audience: 'both',
+  aiMetadata: { description: 'Rewrites a block of text via the DetectingAI humanize API to read as more natural and less machine-generated, typically to reduce AI-detection scores. Use to transform AI-drafted content into a more human-sounding version. Requires the text and a rewriting model (cognia or lexi). Not idempotent — each call regenerates the text, so repeating it produces a different rewrite.', idempotent: false },
   auth: detectingAiAuth,
   requireAuth: true,
   props: {

@@ -7,6 +7,8 @@ export const findForm = createAction({
   name: 'findForm',
   displayName: 'Find Form',
   description: 'Finds a form by title.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches the account\'s Paperform forms by title and returns matching forms. Use to resolve a form ID from its title before acting on it; this is a read-only search and is idempotent.', idempotent: true },
   props: {
     search: Property.ShortText({
       displayName: 'Form Title',

@@ -10,6 +10,12 @@ export const sliteCreateDocAction = createAction({
   name: 'create_doc',
   displayName: 'Create Doc',
   description: 'Creates a doc inside a parent doc or your private channel.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Creates a new Slite doc with the given title and optional body, placed under a parent doc id or, if no parent is given, in the caller's private channel. Content may be supplied as Markdown or HTML, and a template can be applied by id. Not idempotent: each call creates a separate doc even with identical input.",
+    idempotent: false,
+  },
   props: {
     title: Property.ShortText({
       displayName: 'Title',

@@ -8,6 +8,11 @@ export const createList = createAction({
   name: 'createList',
   displayName: 'Create List',
   description: 'Create a new subscriber list.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a new, empty subscriber list in Klaviyo with the given name. Use when you need a fresh list to group profiles into; to find an existing list use Find List by Name. Requires a non-empty name; not idempotent, so each call creates another list even if the name matches an existing one.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'List Name',

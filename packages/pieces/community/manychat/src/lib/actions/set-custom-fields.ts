@@ -8,6 +8,8 @@ export const setCustomFieldAction = createAction({
 	name: 'setCustomField',
 	displayName: 'Set Custom Field',
 	description: 'Ass or Updates a custom field value for a user.',
+	audience: 'both',
+	aiMetadata: { description: 'Sets or updates a custom field value on a Manychat subscriber, identified by subscriber ID and the chosen custom field, then returns the updated subscriber info. Use to store or change a single attribute on a known contact; the input type adapts to the field (text, number, date, or boolean). Idempotent: setting the same value again yields the same state.', idempotent: true },
 	props: {
 		subscriber_id: subscriberId,
 		field_id: Property.Dropdown({

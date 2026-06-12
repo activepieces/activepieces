@@ -15,6 +15,8 @@ export const firmwareVersionAttachedModelsAction = createAction({
   name: 'firmwareVersionAttachedModels',
   displayName: 'Resources - Firmware Versions - Get Attached Models',
   description: 'Get all charge point models attached to this firmware version.',
+  audience: 'both',
+  aiMetadata: { description: 'List the charge-point models attached to a specific AMPECO firmware version, identified by the firmware version ID, with auto-pagination available. Use to check which hardware models a firmware build supports. Read-only and idempotent.', idempotent: true },
   props: {
         
   firmwareVersion: Property.Number({

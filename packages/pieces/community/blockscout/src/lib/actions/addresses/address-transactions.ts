@@ -5,6 +5,8 @@ export const getAddressTransactions = createAction({
   name: 'get_address_transactions',
   displayName: 'Get Address Transactions',
   description: 'Get list of transactions for an address',
+  audience: 'both',
+  aiMetadata: { description: 'List the top-level transactions in which an address was the sender or receiver. Pick this for an account’s normal transaction history; use Get Address Internal Transactions for contract-internal value moves or Get Address Token Transfers for token movements. Read-only lookup on eth.blockscout.com; requires a 0x address hash.', idempotent: true },
   // category: 'Addresses',
   props: {
     addressHash: Property.ShortText({

@@ -8,6 +8,8 @@ export const getSheet = createAction({
   name: 'get_sheet',
   displayName: 'Get Sheet',
   description: 'Returns details of a specific contact list (sheet).',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches details of a single contact list (sheet) by its id. Use it after List Sheets to inspect a specific sheet. Read-only; requires the sheet id.', idempotent: true },
   props: {
     sheet: sheetDropdown,
   },

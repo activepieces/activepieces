@@ -7,6 +7,8 @@ export const createProjectAction = createAction({
   name: 'create_project',
   displayName: 'Create Project',
   description: 'Create a new project',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new Bexio project linked to a contact, with status, type, responsible user, optional dates, and optional invoicing/budget settings. Use to set up a project before tracking time or billing against it. Requires a name, project status, project type, contact, and user. Not idempotent: each call creates a separate project.', idempotent: false },
   props: {
     document_nr: Property.ShortText({
       displayName: 'Document Number',

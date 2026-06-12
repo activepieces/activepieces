@@ -7,6 +7,8 @@ export default createAction({
   name: 'delete_folder',
   displayName: 'Delete Folder',
   description: 'Deletes a folder',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes a folder by its ID from a Pastefy instance. Use to remove a folder you no longer need. Keyed on the stable folder ID, so the end state (folder absent) is the same on repeat calls; idempotent.', idempotent: true },
   props: {
     folder_id: pastefyCommon.folder_id(true),
   },

@@ -17,6 +17,12 @@ export const downloadFileAction = createAction({
   displayName: 'Download File',
   description:
     'Download a file from SimplyPrint by user-file UID, queue-item ID, or print-job UID. Returns the file as an Activepieces file reference plus content-type / size metadata.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Downloads a file from SimplyPrint and returns it as a reusable file reference for downstream steps. A "source" mode selects which kind of file the identifier refers to: user-file UID, numeric queue-item ID, or print-job UID. Use after locating the item via "List Files" / "List Queue Items" / "List Print History"; the identifier format must match the chosen source. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     source: Property.StaticDropdown<'userFile' | 'queueItem' | 'printJob'>({
       displayName: 'Source',

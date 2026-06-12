@@ -1,11 +1,12 @@
 import { PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
-import { BranchOperator, FlowActionType, flowStructureUtil, isNil, isObject, McpServerType, McpToolResult, ProjectScopedMcpServer, singleValueConditions } from '@activepieces/shared'
+import { BranchOperator, EngineResponse, EngineResponseStatus, FlowActionType, flowStructureUtil, isNil, isObject, McpServerType, McpToolResult, ProjectScopedMcpServer, singleValueConditions, tryCatch, WorkerJobType } from '@activepieces/shared'
 import type { RouterAction, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { expressionRewriter } from '../../flows/flow-version/migrations/expression-rewriter'
-import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
+import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
+import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 
 const NON_INPUT_PROP_TYPES = new Set<PropertyType>([
     PropertyType.OAUTH2,
@@ -398,6 +399,61 @@ function extractOptionsArray(options: unknown): Array<{ label: string, value: un
 
 const RESOLVE_TIMEOUT_MS = 30_000
 
+async function executePropertyResolution({ pieceName, pieceVersion, actionOrTriggerName, propertyName, auth, input, searchValue, projectId, platformId, log }: {
+    pieceName: string
+    pieceVersion: string
+    actionOrTriggerName: string
+    propertyName: string
+    auth?: string
+    input?: Record<string, unknown>
+    searchValue?: string
+    projectId: string
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<PropertyResolutionResult> {
+    const piecePackage = await getPiecePackageWithoutArchive(log, platformId, { pieceName, pieceVersion })
+    const resolvedInput: Record<string, unknown> = {
+        ...(input ?? {}),
+        ...(auth ? { auth: `{{connections['${auth}']}}` } : {}),
+    }
+
+    const { data: result, error } = await tryCatch(() => withTimeout({
+        promise: userInteractionWatcher.submitAndWaitForResponse<EngineResponse<{
+            options: Array<{ label: string, value: unknown }> | PiecePropertyMap
+            disabled?: boolean
+        }>>({
+            jobType: WorkerJobType.EXECUTE_PROPERTY,
+            platformId,
+            projectId,
+            flowVersion: undefined,
+            propertyName,
+            actionOrTriggerName,
+            input: resolvedInput,
+            sampleData: {},
+            searchValue,
+            piece: piecePackage,
+        }, log),
+        ms: RESOLVE_TIMEOUT_MS,
+    }))
+
+    if (error || result.status !== EngineResponseStatus.OK || isNil(result.response?.options)) {
+        return { status: 'failed', message: error instanceof Error ? error.message : 'Could not resolve options' }
+    }
+
+    const { options } = result.response
+    const optionsArray = extractOptionsArray(options)
+    if (optionsArray !== null) {
+        return {
+            status: 'options',
+            options: optionsArray.map((o) => ({ label: String(o.label ?? ''), value: o.value })),
+        }
+    }
+    if (isObject(options) && !Array.isArray(options)) {
+        return { status: 'dynamic', props: options }
+    }
+    return { status: 'failed', message: 'Unrecognized options format' }
+}
+
 export const mcpUtils = {
     mcpToolError,
     truncate,
@@ -418,12 +474,18 @@ export const mcpUtils = {
     withTimeout,
     rewriteAllReferences,
     extractOptionsArray,
+    executePropertyResolution,
     RESOLVE_TIMEOUT_MS,
     STEP_REFERENCE_HINT,
     BRANCH_CONDITIONS_INPUT_SCHEMA,
 }
 
 export type { PropSummary }
+
+export type PropertyResolutionResult =
+    | { status: 'options', options: Array<{ label: string, value: unknown }> }
+    | { status: 'dynamic', props: PiecePropertyMap }
+    | { status: 'failed', message: string }
 
 type FindResolvablePropsParams = {
     props: PropSummary[]

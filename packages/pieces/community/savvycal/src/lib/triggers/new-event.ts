@@ -26,6 +26,9 @@ export const newEventTrigger = createTrigger({
   name: 'new_event',
   displayName: 'New Event',
   description: 'Triggers when a SavvyCal event occurs. Select one or more event types, or leave empty to trigger on all types.',
+  aiMetadata: {
+    description: 'Fires when a SavvyCal booking-level event occurs via webhook — covering created, requested, approved, declined, rescheduled, changed, canceled, checkout state changes, and attendee add/cancel/reschedule. Can be scoped to specific event types and/or scheduling links, or left open to fire on every booking event. Each firing represents one such event with the affected booking\'s details.',
+  },
   props: {
     event_types: Property.StaticMultiSelectDropdown({
       displayName: 'Event Types',

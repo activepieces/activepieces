@@ -13,6 +13,12 @@ export const generateAiCaptions = createAction({
   name: 'generate_ai_captions',
   displayName: 'Generate AI Captions',
   description: 'Generates AI captions for a video.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Adds AI-generated captions to an existing video on Vadoo and waits (polls up to ~5 minutes) for processing to finish, returning the completed captioned video URL. Requires the source video URL; optional theme and language control caption styling and language. Each call starts a new captioning job, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     url: Property.ShortText({
       displayName: 'Video URL',

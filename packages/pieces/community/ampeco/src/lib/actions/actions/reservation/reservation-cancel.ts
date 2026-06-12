@@ -13,6 +13,8 @@ export const reservationCancelAction = createAction({
   name: 'reservationCancel',
   displayName: 'Actions - Reservation - Reservation Cancel',
   description: 'Cancel a reservation.',
+  audience: 'both',
+  aiMetadata: { description: 'Cancel an existing charge-point reservation by id, optionally with a reason. Set force=true to end the reservation regardless of the charge point response. Effectively idempotent: once cancelled the reservation stays cancelled, though cancelling a non-cancellable reservation may error.', idempotent: true },
   props: {
         
   reservation: Property.Number({

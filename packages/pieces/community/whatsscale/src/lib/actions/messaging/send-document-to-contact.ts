@@ -11,6 +11,8 @@ export const sendDocumentToContactAction = createAction({
   name: 'whatsscale_send_document_to_contact',
   displayName: 'Send a Document to a Contact',
   description: 'Send a document to a WhatsApp contact selected from the dropdown.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a document/file to a WhatsApp contact whose chat ID is chosen from the session contact list, with an optional display filename and caption. Pick this when the recipient is a known direct contact; use the manual-entry document action for a raw phone number, or the group/CRM/channel variants for other recipient types. Requires a directly downloadable document URL. Not idempotent: each call delivers another document.', idempotent: false },
   props: {
     session: whatsscaleProps.session,
     contact: whatsscaleProps.contact,

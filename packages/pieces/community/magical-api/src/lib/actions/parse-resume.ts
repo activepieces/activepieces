@@ -10,6 +10,8 @@ export const parseResume = createAction({
     name: 'parse_resume',
     displayName: 'Parse Resume',
     description: 'Extract structured data (name, email, experience, skills, etc.) from a resume file.',
+    audience: 'both',
+    aiMetadata: { description: 'Parses a publicly accessible resume file (PDF/DOC/DOCX) at a given URL into structured fields such as name, contact info, experience, education, and skills. Use to turn an unstructured resume into machine-readable data. Either supply the resume URL to start a job, or pass the Request ID from a prior timed-out run to retrieve that result instead; the call polls until parsing completes. Idempotent: re-running with the same URL re-parses the same document and yields the same data.', idempotent: true },
     props: {
         url: Property.ShortText({
             displayName: 'Resume URL',

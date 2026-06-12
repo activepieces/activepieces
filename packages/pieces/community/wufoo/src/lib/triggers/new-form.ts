@@ -10,6 +10,9 @@ export const newFormTrigger = createTrigger({
   name: 'new_form_created',
   displayName: 'New Form Created',
   description: 'Triggers when a new form is created in your Wufoo account.',
+  aiMetadata: {
+    description: 'Fires when a new form appears in the connected Wufoo account, detected by polling the account\'s form list. Can optionally be limited to forms whose name contains given text and to public/active forms only.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     pollingInterval: Property.StaticDropdown({

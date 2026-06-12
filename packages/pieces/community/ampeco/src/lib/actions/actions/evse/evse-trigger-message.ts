@@ -14,6 +14,8 @@ export const evseTriggerMessageAction = createAction({
   name: 'evseTriggerMessage',
   displayName: 'Actions - EVSE - Trigger Message',
   description: 'Trigger message to given EVSE.',
+  audience: 'both',
+  aiMetadata: { description: 'Send an OCPP TriggerMessage to an EVSE, asking the charger to emit a specific message such as BootNotification, StatusNotification, MeterValues, or Heartbeat. Some message types (e.g. LogStatusNotification, TransactionEvent) are only valid for OCPP 2.0.1 chargers. Not idempotent: each call issues a fresh trigger to the device.', idempotent: false },
   props: {
         
   evse: Property.Number({

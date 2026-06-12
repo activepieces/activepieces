@@ -8,6 +8,12 @@ export const createCustomer = createAction({
   name: 'createCustomer',
   displayName: 'Create Customer',
   description: 'Create a new customer',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new customer record in Vouchery, keyed by a unique customer identifier from your application (hash, id, email, or any unique value). Use when onboarding a customer before issuing or assigning vouchers. Not idempotent: each call creates a customer, so repeating it with the same identifier may produce a duplicate or error.',
+    idempotent: false,
+  },
   props: {
     identifier: Property.ShortText({
       displayName: 'Customer Identifier',

@@ -7,6 +7,9 @@ export const affiliateActivatedTrigger = createTrigger({
   name: 'affiliate_activated',
   displayName: 'Affiliate Activated',
   description: 'Triggers when an affiliate is activated',
+  aiMetadata: {
+    description: 'Fires when an affiliate is activated in a Lemon Squeezy store. Represents the activated affiliate record, marking them eligible to earn commissions.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     store_id: createStoreDropdownProperty()

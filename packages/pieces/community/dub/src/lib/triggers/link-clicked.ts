@@ -12,6 +12,10 @@ export const linkClicked = createTrigger({
   displayName: 'Link Clicked',
   description:
     'Triggers in real time whenever one of your Dub short links is clicked.',
+  aiMetadata: {
+    description:
+      'Fires in real time each time any short link in the Dub workspace is clicked, delivering the click event together with the link and visitor context (location, device, browser, referrer). Use to react to traffic or attribution events as they happen.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     md: Property.MarkDown({

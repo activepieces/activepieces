@@ -7,6 +7,8 @@ export const createSalesOrderAction = createAction({
   name: 'create_sales_order',
   displayName: 'Create Sales Order',
   description: 'Create a new product-based sales order',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new sales order in Bexio from one or more line-item positions (custom, article, text, subtotal, discount, or page-break). Use when confirming an order for products or services; pick Create Sales Invoice to bill instead. Requires a contact, user, language, bank account, currency, payment type, tax handling, a valid-from date, and at least one position; supports a separate delivery address. Not idempotent: each call creates a separate order.', idempotent: false },
   props: {
     document_nr: Property.ShortText({
       displayName: 'Document Number',

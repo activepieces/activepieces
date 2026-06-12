@@ -5,6 +5,10 @@ export const taskDueTrigger = createPipelineWebhookTrigger({
   displayName: 'Task Due',
   description:
     'Triggers when a task becomes due (but has not yet been completed) on a box in the selected pipeline.',
+  aiMetadata: {
+    description:
+      'Fires when a still-incomplete task on a box in the selected pipeline reaches its due date, representing an outstanding action item that has come due on a CRM record.',
+  },
   event: 'TASK_DUE',
   sampleData: {
     key: 'agxzfm1haWxmb29nYWVyMQsSBFRhc2sYgICAwI_oogow',

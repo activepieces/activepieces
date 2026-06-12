@@ -17,6 +17,12 @@ export const createCommentAction = createAction({
   name: 'create_comment',
   displayName: 'Create Comment',
   description: 'Add a comment to a box.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Post a comment with the given message text onto a specific box. Use when an agent needs to record a note or update on a Streak record\'s activity feed; requires the box key and message. Not idempotent: each call appends another comment.',
+    idempotent: false,
+  },
   props: {
     pipelineKey: pipelineDropdown,
     boxKey: boxDropdown,

@@ -95,6 +95,10 @@ export const updatedDealStageTrigger = createTrigger({
 	name: 'updated-deal-stage',
 	displayName: 'Updated Deal Stage',
 	description: "Triggers when a deal's stage is updated.",
+	aiMetadata: {
+		description:
+			"Fires when an existing deal moves from one pipeline stage to another (its stage_id changes). Represents progress of a deal through the sales pipeline; can optionally be limited to a specific stage. Use to react when deals advance, regress, or reach a particular stage.",
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {
 		stage_id: Property.Dropdown({

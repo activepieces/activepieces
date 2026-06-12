@@ -14,6 +14,9 @@ export const jobFailed = createTrigger({
   name: 'job_failed',
   displayName: 'Job Failed',
   description: 'Triggers when a CloudConvert job has failed',
+  aiMetadata: {
+    description: 'Fires when a CloudConvert job fails (job.failed webhook event). Represents a job that ended in error, carrying the failed tasks along with their error message and code for handling or alerting.',
+  },
   auth: cloudconvertAuth,
   type: TriggerStrategy.WEBHOOK,
   props: {},

@@ -14,6 +14,12 @@ export const generateImage = createAction({
   displayName: 'Generate Image',
   description:
     'Generate an image from a text prompt using Google Imagen models on Vertex AI.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Generates one or more images from a text prompt on Google Vertex AI, returning them as files. The selected model determines the path: Gemini image models support image-to-image editing from a supplied input image and a configurable aspect ratio, while Imagen models support a negative prompt, person-generation safety controls, output format, seed, and prompt enhancement. Use to create or edit images from a description. Requires a Vertex AI service-account credential and a region/model selection. Not idempotent — each call produces fresh, varying output.',
+    idempotent: false,
+  },
   props: {
     location: Property.Dropdown({
       displayName: 'Location',

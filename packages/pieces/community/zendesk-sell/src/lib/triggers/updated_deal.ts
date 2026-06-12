@@ -48,6 +48,9 @@ export const updatedDeal = createTrigger({
     name: 'updated_deal',
     displayName: 'Updated Deal',
     description: 'Fires when an existing deal is modified (polls for updates).',
+    aiMetadata: {
+      description: 'Fires when an existing deal is modified in Zendesk Sell, including any field change such as value, stage, or owner. Each event represents one changed deal, discovered by polling sorted by last-updated time; to react only to stage transitions, use the Deal Enters New Stage trigger instead.',
+    },
     props: {},
     sampleData: {
         "id": 123,

@@ -8,6 +8,8 @@ export const deleteOpportunity = createAction({
     name: 'delete_opportunity',
     displayName: 'Delete Opportunity',
     description: 'Deletes an opportunity.',
+    audience: 'both',
+    aiMetadata: { description: 'Delete a single Opportunity by its ID. Destructive and irreversible; not idempotent, since deleting an already-removed Opportunity errors. For other object types use the generic Delete Record.', idempotent: false },
     props: {
         opportunity_id: salesforcesCommon.opportunity,
     },

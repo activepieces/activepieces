@@ -12,6 +12,8 @@ export const findCompaniesAction = createAction({
   name: 'predict-leads_find_companies',
   displayName: 'List Companies',
   description: 'Retrieves all companies.',
+  audience: 'both',
+  aiMetadata: { description: 'Discovers companies in the PredictLeads database filtered by location and employee headcount range (e.g. "11-50"). Use to prospect or build a target-account list when you do not yet know specific company domains; both location and size range are required. Read-only and idempotent; supports pagination.', idempotent: true },
   props: {
     location: Property.ShortText({
       displayName: 'Location',
@@ -57,6 +59,8 @@ export const findCompanyByDomainAction = createAction({
   name: 'predict-leads_find_company_by_domain',
   displayName: 'Retrieve a company',
   description: 'Retrieves a company by its domain.',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up a single company profile in PredictLeads by its web domain (e.g. "stripe.com"). Use when you already know the domain and want that company\'s details. Read-only and idempotent.', idempotent: true },
   props: {
     domain: Property.ShortText({
       displayName: 'Domain',

@@ -10,6 +10,9 @@ export const workflowRunCompletedTrigger = createTrigger({
     name: 'workflow_run_completed',
     displayName: 'Workflow Run Completed',
     description: 'Triggered when a workflow run is completed.',
+    aiMetadata: {
+      description: 'Fires via webhook when an execution of the specified Copy.ai workflow finishes, delivering the completed run including its status, inputs, and generated outputs. Scoped to the single workflow ID configured on the trigger.',
+    },
     props: {
         workflowId: Property.ShortText({
 			displayName: 'Workflow ID',

@@ -13,6 +13,12 @@ export const xeroAddItemsToSalesInvoice = createAction({
   name: 'xero_add_items_to_sales_invoice',
   displayName: 'Add Items to Existing Sales Invoice',
   description: 'Adds line items to an existing sales invoice (ACCREC).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Append new line items to an existing ACCREC sales invoice, preserving its current lines (the action fetches the invoice and merges). Pick this to add charges to an invoice without touching existing lines; to edit or replace existing lines use Update Sales Invoice instead. Not idempotent: re-running appends the same items again. AUTHORISED invoices require the allow-authorised flag.',
+    idempotent: false,
+  },
   props: {
     tenant_id: props.tenant_id,
     invoice_id: props.invoice_id(true),

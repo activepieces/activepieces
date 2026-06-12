@@ -10,6 +10,9 @@ export const videoGenerationCompletedTrigger = createTrigger({
 	name: 'video_generation_completed',
 	displayName: 'New Avatar Video Event (Success)',
 	description: 'Triggers when a video is generated successfully.',
+	aiMetadata: {
+		description: 'Fires when an avatar video finishes generating successfully (HeyGen avatar_video.success webhook event), signaling the rendered output is ready with its video ID and download URLs.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 	sampleData: {

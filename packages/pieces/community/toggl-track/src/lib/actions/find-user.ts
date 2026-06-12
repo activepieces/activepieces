@@ -8,6 +8,8 @@ export const findUser = createAction({
   name: 'find_user',
   displayName: 'Find User',
   description: 'Find a user in a workspace by their name or email.',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up workspace members in a Toggl Track workspace, given organization ID and workspace ID; an empty search term returns all members, while a name or email filters to matches. Use to resolve a user before assigning work or attributing time. Read-only and idempotent.', idempotent: true },
   props: {
     workspace_id: togglCommon.workspace_id,
     organization_id: togglCommon.organization_id,

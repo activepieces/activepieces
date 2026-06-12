@@ -8,6 +8,8 @@ export const listTestimonialsAction = createAction({
   name: 'list_testimonials',
   displayName: 'List Testimonials',
   description: 'Retrieve all testimonials from your Senja project.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists testimonials from a Senja project, returning all of them or only those matching optional filters (full-text search, approval status, type, rating, source platform, tags, language) with sorting and pagination. Use to find, audit, or enumerate testimonials before acting on them. Read-only and idempotent.', idempotent: true },
   props: {
     query: Property.ShortText({
       displayName: 'Search',

@@ -8,6 +8,12 @@ export const createCampaignAction = createAction({
   name: 'create_campaign',
   displayName: 'Create Campaign',
   description: 'Create a new cold email campaign in SmartLead',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new, empty cold email campaign in SmartLead, identified by name; on agency/white-label accounts an optional client ID associates it with a specific client. Use this as the first step before adding leads or configuring sequences. Not idempotent: each call creates a separate campaign even with the same name.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Campaign Name',

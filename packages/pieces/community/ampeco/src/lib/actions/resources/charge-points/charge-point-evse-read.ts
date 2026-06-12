@@ -15,6 +15,8 @@ export const chargePointEvseReadAction = createAction({
   name: 'chargePointEvseRead',
   displayName: 'Resources - Charge Points - Charge Point Evse Read',
   description: 'Get an EVSE from a Charge Point.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single EVSE on a charge point by charge point ID and EVSE ID, optionally including its charging profile and connectors. Read-only and safe to retry. Use when you already know the EVSE ID rather than listing all EVSEs.', idempotent: true },
   props: {
         
   chargePoint: Property.Number({

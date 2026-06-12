@@ -15,6 +15,12 @@ export const updateActivityAction = createAction({
   name: 'update_activity',
   displayName: 'Update Activity',
   description: 'Updates an existing activity for a client in Wayfront.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing activity on a Wayfront client, changing its content and optionally its assignee or scheduled date (rescheduling only applies to already-scheduled activities). Use to edit a known activity; requires both the client user ID and the activity ID. Idempotent: re-sending the same values yields the same activity state.',
+    idempotent: true,
+  },
   props: {
     user_id: clientsDropdown,
     activity_id: activitiesDropdown,
