@@ -5,12 +5,20 @@ Load this right before you build, after discovery is done and the needed connect
 Open with ONE thinking-status that frames the whole build in a warm sentence — e.g. "I'll wire up the trigger, connect the apps, and double-check it satisfies your goal before handing it over." Then work silently (no visible text until done).
 
 ## Order of work (no visible text until ALL steps are done)
-- **Simple flows** (linear, no branches/loops): `ap_build_flow` → validate every step (below) → `ap_test_flow` → reflect (below) → `ap_manage_notes`.
+- **Simple flows** (linear, no branches/loops): `ap_build_flow` → validate every step (below) → test for real with cases (below) → reflect (below) → `ap_manage_notes`.
 - **Flows with loops**: `ap_build_flow` supports nesting. For steps inside a loop, set `parentStepName` to the loop step's name and `stepLocationRelativeToParent` to `INSIDE_LOOP`. Steps that omit `parentStepName` are placed after the last top-level step (not inside the loop).
-- **Complex flows** (branches, routers, many steps): `ap_create_flow` → configure trigger → validate → for each action: `ap_add_step` → validate → `ap_test_flow` → reflect → `ap_manage_notes`.
+- **Complex flows** (branches, routers, many steps): `ap_create_flow` → configure trigger → validate → for each action: `ap_add_step` → validate → test for real with cases (below) → reflect → `ap_manage_notes`.
 - Share the flow link. The flow is a draft — do NOT auto-publish.
 
 **After `ap_build_flow`** it creates the skeleton but does NOT validate configs or field mappings. You MUST: (1) `ap_validate_step_config` on the trigger and each step, (2) fix any errors with `ap_update_step`/`ap_update_trigger`, (3) `ap_validate_flow` to confirm all steps are valid.
+
+## Test until it actually works — "valid" is NOT "working"
+`ap_validate_flow` only proves the config is structurally sound; it does NOT prove the mappings carry the right data. A step can return SUCCEEDED while passing an empty, wrong, or mis-referenced value — that is the #1 silent failure, and the user will see a broken automation that "validated fine." So never stop at validation. Actually run it:
+
+1. **Build representative cases.** Derive 1–3 realistic trigger payloads for the automation's real scenarios — a typical case plus an edge case (a missing field, an empty list, the exception the user mentioned). Prefer real data you already saw via `ap_explore_data` (an actual row/message/record) over invented values, so the test reflects reality.
+2. **Run each case** with `ap_test_flow`, passing `triggerTestData` = that payload (it seeds the trigger's sample data and runs the flow end-to-end). For a single suspect step, `ap_test_step`.
+3. **Verify the OUTPUT, not the status.** Read the run result (`ap_get_run` for step-by-step detail) and confirm each step produced the value you intended: the right fields are populated, every `{{...}}` reference resolved to real data (not blank/`undefined`/the wrong column), and the final result matches the user's goal for that case. SUCCEEDED with empty or wrong output IS a failure — fix the mapping with `ap_update_step` and re-run.
+4. **Loop until every case genuinely passes.** Never share a flow you have not watched produce a correct result at least once. (Test runs execute the real actions — a message really gets sent — so use sample data that is safe to act on.)
 
 ## Reflect against the user's goal before sharing
 Before you share the link, check the built flow against what the user actually asked for — this is where good becomes great. Re-read their request and every constraint they stated in this conversation, and confirm each is satisfied:
@@ -20,7 +28,10 @@ Before you share the link, check the built flow against what the user actually a
 - Does the output go where they wanted, in the form they wanted?
 If anything is missing or contradicts what they asked for, fix it with `ap_update_step`/`ap_update_trigger`, re-validate, and only then share. Don't hand over a flow that quietly drops part of the goal.
 
-**Done when**: flow created, all steps validated, reflected against the user's goal and gaps fixed, test passed (or noted), and link shared.
+## Show the result so the user can trust it
+When you hand back, show what you actually verified — concrete tested results, never "it should work." For each case, one line of *input → what the flow produced*, e.g. `New row {name: "Ada", email: "ada@x.com"} → posted to #leads: "New lead: Ada (ada@x.com)"`. Then the link, the notable assumptions/defaults you chose, and an invite to tweak. Seeing its own real output is what earns trust.
+
+**Done when**: flow created, all steps validated, **tested with representative cases and the actual outputs verified correct (not just SUCCEEDED), with those results shown to the user**, reflected against the user's goal and gaps fixed, and link shared.
 
 ## Resolving field values
 - STATIC_DROPDOWN: options are in piece metadata — use `value` (the ID) directly, never `label`, no API call needed.
