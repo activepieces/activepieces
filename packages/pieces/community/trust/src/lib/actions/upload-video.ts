@@ -8,6 +8,12 @@ export const uploadVideoAction = createAction({
   name: 'upload_video',
   displayName: 'Upload Video',
   description: 'Uploads a video to the Trust media library for use in testimonials.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Upload a video file (MP4, MOV, AVI, etc.) to the Trust media library for use in testimonials. Pick this for standard or longer videos; for brief clips under about 30 seconds, Upload Small Video uses a lighter endpoint, and already-hosted videos can be referenced by URL without uploading. Each call uploads a new copy, so retries create duplicate media (not idempotent).',
+    idempotent: false,
+  },
   props: {
     file: Property.File({
       displayName: 'Video File',

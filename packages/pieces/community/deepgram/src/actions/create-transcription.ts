@@ -10,6 +10,12 @@ export const createTranscriptionCallbackAction = createAction({
   name: 'create_transcription_callback',
   displayName: 'Create Transcription (Callback)',
   description: 'Creates a transcription using a callback URL.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Submits an audio file to Deepgram for asynchronous speech-to-text: the action returns only a request ID immediately, and the finished transcript is delivered later to the callback URL you provide. Pick this for long audio or when a webhook endpoint will consume the result; it does not return the transcript itself. Each run submits a new billed transcription job, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     audioFile: Property.File({
       displayName: 'Audio File',

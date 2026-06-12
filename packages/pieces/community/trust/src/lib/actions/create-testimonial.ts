@@ -8,6 +8,12 @@ export const createTestimonialAction = createAction({
   name: 'create_testimonial',
   displayName: 'Create Testimonial',
   description: 'Creates a new testimonial in the system.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new testimonial in the Trust workspace with author details (name, email, job title, company), text and/or video content, a 1-5 star rating, plus published and consent flags. Pick this to add a fresh testimonial; media must already be hosted (pass URLs or embed HTML — upload files first via the upload actions). Each call creates a new testimonial, so retries produce duplicates (not idempotent).',
+    idempotent: false,
+  },
   props: {
     firstname: Property.ShortText({
       displayName: 'First Name',

@@ -28,6 +28,10 @@ export const addTag = createTrigger({
   name: 'webhook_subscriber_tag_add',
   displayName: 'Tag added to subscriber',
   description: 'Trigger when a tag is added to a subscriber',
+  aiMetadata: {
+    description:
+      'Fires when the selected tag is added to a subscriber in ConvertKit (Kit), via webhook. Returns the tagged subscriber record; use it to react to segmentation changes such as enrolling the subscriber elsewhere or syncing the tag to another system.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     tagId: tag,
@@ -74,6 +78,10 @@ export const removeTag = createTrigger({
   name: 'webhook_subscriber_tag_remove',
   displayName: 'Tag removed from subscriber',
   description: 'Trigger when a tag is removed from a subscriber',
+  aiMetadata: {
+    description:
+      'Fires when the selected tag is removed from a subscriber in ConvertKit (Kit), via webhook. Returns the affected subscriber record; useful for reversing automations or updating external systems when a subscriber leaves a segment.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     tagId: tag,
@@ -121,6 +129,10 @@ export const subscriberActivated = createTrigger({
   displayName: 'Subscriber activated',
   description:
     'Trigger when a subscriber is activated. This happens when a subscriber confirms their subscription.',
+  aiMetadata: {
+    description:
+      'Fires when a subscriber becomes active in ConvertKit (Kit), i.e. they confirm their subscription (double opt-in), via webhook. Returns the activated subscriber record; use it to welcome new confirmed subscribers or add them to downstream systems.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   sampleData,
@@ -162,6 +174,10 @@ export const subscriberUnsubscribed = createTrigger({
   name: 'webhook_subscriber_unsubscribed',
   displayName: 'Subscriber unsubscribed',
   description: 'Trigger when a subscriber is unsubscribed',
+  aiMetadata: {
+    description:
+      'Fires when a subscriber unsubscribes from the ConvertKit (Kit) account, via webhook. Returns the unsubscribed subscriber record; use it to suppress the contact in other tools or record the opt-out.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   sampleData,
@@ -204,6 +220,10 @@ export const subscriberBounced = createTrigger({
   displayName: 'Subscriber bounced',
   description:
     'Trigger when a subscriber bounced. This happens when an email is sent to a subscriber and the email bounces.',
+  aiMetadata: {
+    description:
+      "Fires when an email sent to a subscriber bounces in ConvertKit (Kit), marking the subscriber as bounced, via webhook. Returns the bounced subscriber record; use it to clean lists or flag invalid email addresses.",
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   sampleData,
@@ -249,6 +269,10 @@ export const subscriberComplained = createTrigger({
   displayName: 'Subscriber complained',
   description:
     'Trigger when a subscriber complained. This happens when a subscriber marks an email as spam.',
+  aiMetadata: {
+    description:
+      'Fires when a subscriber marks an email as spam, putting them in the complained state in ConvertKit (Kit), via webhook. Returns the complaining subscriber record; use it to suppress the contact and protect sender reputation.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   sampleData,
@@ -290,6 +314,10 @@ export const formSubscribed = createTrigger({
   name: 'webhook_form_subscribed',
   displayName: 'Form subscribed',
   description: 'Trigger when a form is subscribed',
+  aiMetadata: {
+    description:
+      'Fires when someone subscribes through the selected ConvertKit (Kit) form, via webhook. Returns the new subscriber record; use it to start onboarding sequences or sync new sign-ups to a CRM.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     formId,
@@ -333,6 +361,10 @@ export const sequenceSubscribed = createTrigger({
   name: 'webhook_sequence_subscribed',
   displayName: 'Sequence subscribed',
   description: 'Trigger when a sequence is subscribed',
+  aiMetadata: {
+    description:
+      'Fires when a subscriber is added to the selected email sequence (course) in ConvertKit (Kit), via webhook. Returns the enrolled subscriber record; use it to track enrollments or mirror them in other systems.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     sequenceIdChoice: sequenceIdDropdown,
@@ -379,6 +411,10 @@ export const sequenceCompleted = createTrigger({
   name: 'webhook_sequence_completed',
   displayName: 'Sequence completed',
   description: 'Trigger when a sequence is completed',
+  aiMetadata: {
+    description:
+      'Fires when a subscriber finishes the last email of the selected sequence (course) in ConvertKit (Kit), via webhook. Returns the subscriber record; use it to follow up after a course ends, e.g. with an offer or a next sequence.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     sequenceIdChoice: sequenceIdDropdown,
@@ -425,6 +461,10 @@ export const linkClicked = createTrigger({
   name: 'webhook_link_clicked',
   displayName: 'Link clicked',
   description: 'Trigger when a link is clicked',
+  aiMetadata: {
+    description:
+      'Fires when a subscriber clicks the specified link URL in a ConvertKit (Kit) email, via webhook. Returns the clicking subscriber record plus the watched link URL; use it to score engagement or trigger interest-based follow-ups.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     initiatorValue,
@@ -470,6 +510,10 @@ export const productPurchased = createTrigger({
   name: 'webhook_product_purchased',
   displayName: 'Product purchased',
   description: 'Trigger when a product is purchased',
+  aiMetadata: {
+    description:
+      'Fires when a subscriber purchases the selected ConvertKit (Kit) Commerce product, via webhook. Returns the purchasing subscriber record plus the product ID; use it to deliver the product, tag buyers, or record the sale elsewhere.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     productId,
@@ -513,6 +557,10 @@ export const purchaseCreated = createTrigger({
   name: 'webhook_purchase_created',
   displayName: 'Purchase created',
   description: 'Trigger when a purchase is created',
+  aiMetadata: {
+    description:
+      'Fires when any new purchase record is created in the ConvertKit (Kit) account (across all products), via webhook. Returns the subscriber associated with the purchase; use it for account-wide sales notifications or bookkeeping.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   sampleData,

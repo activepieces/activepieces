@@ -17,6 +17,9 @@ export const newUserTrigger = createTrigger({
     name: 'new_user',
     displayName: 'New User',
     description: 'Triggers when a new user is created in Microsoft Entra ID.',
+    aiMetadata: {
+        description: 'Fires when a new user account is created in the Microsoft Entra ID (Azure AD) directory, detected by polling the Microsoft Graph users delta endpoint. Each event represents one newly created user with profile fields such as display name, user principal name, mail, job title, and creation timestamp; updates to existing users do not re-fire it.',
+    },
     type: TriggerStrategy.POLLING,
     props: {},
     sampleData: {

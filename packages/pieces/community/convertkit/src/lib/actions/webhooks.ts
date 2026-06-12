@@ -16,6 +16,12 @@ export const createWebhook = createAction({
   name: 'create_webhook',
   displayName: 'Add Webhook',
   description: 'Create a webhook automation',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Registers a webhook automation that POSTs to a target URL whenever the chosen ConvertKit event fires (e.g. subscriber activated, tag added); some events also need an event parameter such as a tag or form ID. Not idempotent — each call registers another webhook, so keep the returned rule ID for later deletion.',
+    idempotent: false,
+  },
   props: {
     targetUrl,
     event,
@@ -41,6 +47,12 @@ export const deleteWebhook = createAction({
   name: 'destroy_webhook',
   displayName: 'Delete Webhook',
   description: 'Delete a webhook automation',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Deletes a previously registered webhook automation by its webhook rule ID (returned when the webhook was created). Not retry-safe — a repeat call fails once the webhook is gone.',
+    idempotent: false,
+  },
   props: {
     webhookId,
   },
