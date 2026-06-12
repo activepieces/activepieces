@@ -3,7 +3,9 @@
   "version": "0.85.2",
   "packageManager": "bun@1.3.3",
   "trustedDependencies": [
-    "sqlite3"
+    "sqlite3",
+    "isolated-vm",
+    "redis-memory-server"
   ],
   "scripts": {
     "prebuild": "node tools/scripts/install-bun.js",
