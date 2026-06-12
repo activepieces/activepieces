@@ -8,6 +8,12 @@ export const uploadImageAction = createAction({
   name: 'upload_image',
   displayName: 'Upload Image',
   description: 'Uploads an image to the Trust media library.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Upload an image file (JPEG, PNG, GIF, etc.) to the Trust media library, typically to use as a profile image for a contact or testimonial. Pick this only when you have raw file data; if the image is already hosted at a URL, pass that URL directly to the contact or testimonial actions instead. Each call uploads a new copy, so retries create duplicate media (not idempotent).',
+    idempotent: false,
+  },
   props: {
     file: Property.File({
       displayName: 'Image File',

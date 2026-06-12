@@ -11,6 +11,12 @@ export const moveFolderItem = createAction({
   name: 'move_folder_item',
   displayName: 'Move Folder Item',
   description: 'Move an item from one folder to another in Canva',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Moves a design or image asset into a specified destination folder in Canva, identified by item ID and folder ID. Pick this to reorganize library content; it fails for items that currently live in multiple folders (those must be moved in the Canva UI). Effectively idempotent: repeating the same move leaves the item in the same destination folder.',
+    idempotent: true,
+  },
   props: {
     to_folder_id: Property.Dropdown({
       displayName: 'Destination Folder',

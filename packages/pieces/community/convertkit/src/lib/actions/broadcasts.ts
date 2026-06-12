@@ -28,6 +28,12 @@ export const listBroadcasts = createAction({
   name: 'broadcasts_list_broadcasts',
   displayName: 'List Broadcasts',
   description: 'List all broadcasts',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves a page of broadcasts (one-off emails) in the ConvertKit account, 50 per page. Use it to find a broadcast ID before getting, updating, or deleting one. Read-only and idempotent; pass a page number to fetch beyond the first 50.',
+    idempotent: true,
+  },
   props: {
     page: broadcastPageNumber,
   },
@@ -42,6 +48,12 @@ export const createBroadcast = createAction({
   name: 'broadcasts_create_broadcast',
   displayName: 'Create Broadcast',
   description: 'Create a new broadcast',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new email broadcast (one-off email), optionally scheduled via the send-at field; without it the broadcast is saved unsent. Not idempotent — every call creates another broadcast, so do not retry blindly.',
+    idempotent: false,
+  },
   props: {
     content: broadcastContent,
     description,
@@ -106,6 +118,12 @@ export const getBroadcastById = createAction({
   name: 'broadcasts_get_broadcast',
   displayName: 'Get Broadcast',
   description: 'Get a broadcast',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches a single broadcast by its ID, returning its content and settings. Use when the broadcast ID is already known (e.g. from List Broadcasts); for delivery metrics use Broadcast Stats instead. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     broadcastId: broadcastId,
   },
@@ -137,6 +155,12 @@ export const updateBroadcast = createAction({
   name: 'broadcasts_update_broadcast',
   displayName: 'Update Broadcast',
   description: 'Update a broadcast',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates the content, subject, scheduling, or other fields of an existing broadcast by broadcast ID. Idempotent — repeating the same update leaves the broadcast in the same state. Requires a valid broadcast ID from List Broadcasts.',
+    idempotent: true,
+  },
   props: {
     broadcastId: broadcastId,
     content: broadcastContent,
@@ -205,6 +229,12 @@ export const broadcastStats = createAction({
   name: 'broadcasts_broadcast_stats',
   displayName: 'Broadcast Stats',
   description: 'Get broadcast stats',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves delivery and engagement statistics (recipients, opens, clicks, unsubscribes) for one broadcast by ID. Pick this over Get Broadcast when performance metrics are needed rather than content. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     broadcastId: broadcastId,
   },
@@ -236,6 +266,12 @@ export const deleteBroadcast = createAction({
   name: 'broadcasts_delete_broadcast',
   displayName: 'Delete Broadcast',
   description: 'Delete a broadcast',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently deletes a broadcast by ID. Destructive and not retry-safe — a repeat call fails once the broadcast is gone, so confirm the ID via List Broadcasts first.',
+    idempotent: false,
+  },
   props: {
     broadcastId: broadcastId,
   },

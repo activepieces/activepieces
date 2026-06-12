@@ -8,6 +8,12 @@ export const cancelJob = createAction({
   name: 'cancel_job',
   displayName: 'Cancel Job',
   description: 'Cancel a non-terminal Jungle Grid job. This may stop active execution.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Request cancellation of a running or queued Jungle Grid job by job ID, optionally recording a reason. Pick this to stop a job that is no longer needed; it mutates job state and only applies to jobs that have not already reached a terminal status. Not idempotent: retrying against an already-cancelled or finished job may fail.',
+    idempotent: false,
+  },
   props: {
     job_id: jungleGridCommon.jobId,
     reason: Property.ShortText({
