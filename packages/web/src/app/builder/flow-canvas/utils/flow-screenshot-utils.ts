@@ -273,6 +273,9 @@ function getImageDataUrl(source: string): Promise<string | null> {
 async function fetchImageAsDataUrl(source: string): Promise<string | null> {
   const { data } = await tryCatch(async () => {
     const response = await fetch(source);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image source: ${response.status}`);
+    }
     const blob = await response.blob();
     return await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
