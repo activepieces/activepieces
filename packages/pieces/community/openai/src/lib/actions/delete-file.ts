@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
 
 export const deleteFile = createAction({
+  audience: 'human',
   auth: openaiAuth,
   name: 'delete_file',
   displayName: 'Delete File',

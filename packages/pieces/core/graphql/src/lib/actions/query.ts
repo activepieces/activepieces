@@ -17,6 +17,7 @@ import { HttpsProxyAgent } from 'https-proxy-agent';
 import axios from 'axios';
 
 export const query = createAction({
+  audience: 'human',
   name: 'send_request',
   displayName: 'Send Request',
   description: 'Makes a GraphQL request.',

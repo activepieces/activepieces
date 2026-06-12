@@ -16,6 +16,7 @@ interface MaskItem {
 }
 
 export const imageToImage = createAction({
+  audience: 'human',
   auth: imageRouterAuth,
   name: 'imageToImage',
   displayName: 'Image to Image',

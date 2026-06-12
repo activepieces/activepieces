@@ -6,6 +6,7 @@ import { isEmpty, MarkdownVariant } from '@activepieces/shared';
 import mime from 'mime-types';
 
 export const generateContentAction = createAction({
+  audience: 'human',
 	description: 'Generate content using Google Gemini using the "gemini-pro" model',
 	displayName: 'Generate Content',
 	name: 'generate_content',

@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { encodings } from '../common/encodings';
 
 export const createFile = createAction({
+  audience: 'human',
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'createFile',
   displayName: 'Create file',
