@@ -11,6 +11,11 @@ props: {
         value: `Manual triggers are used to start a flow on demand, publish your flow and click (Run Flow) at the start of the flow.`,
         variant: MarkdownVariant.INFO,
     }),
+    file: Property.File({
+        displayName: 'File',
+        description: 'Optional file to pass to the next step.',
+        required: false,
+    }),
 },
 sampleData: {},
 type: TriggerStrategy.MANUAL,

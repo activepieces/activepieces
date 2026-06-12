@@ -6,9 +6,9 @@ export const convertsHeif = createAction({
   displayName: 'Convert HEIF/HEIC Image',
   description: 'Converts a HEIF/HEIC image to another format',
   props: {
-    image: Property.File({
-      displayName: 'Image',
-      description: 'The HEIF/HEIC image to convert.',
+    imageUrl: Property.ShortText({
+      displayName: 'Image URL',
+      description: 'URL of the HEIF/HEIC image to convert. Paste the file URL from a previous step or any direct link to a .heic / .heif file.',
       required: true,
     }),
     outputFormat: Property.StaticDropdown({
@@ -29,14 +29,19 @@ export const convertsHeif = createAction({
     }),
   },
   async run(context) {
-    const { image, outputFormat, resultFileName } = context.propsValue;
+    const { imageUrl, outputFormat, resultFileName } = context.propsValue;
 
-    const sourceMimetype = detectHeifMimetype(image.data);
+    const response = await fetch(imageUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to download image: ${response.status} ${response.statusText}`);
+    }
+    const buffer = Buffer.from(await response.arrayBuffer());
 
+    const sourceMimetype = detectHeifMimetype(buffer);
     const format = outputFormat === 'PNG' ? 'PNG' : 'JPEG';
 
     const outputBuffer = await convert({
-      buffer: image.data,
+      buffer,
       format,
       quality: 1,
     });
@@ -52,9 +57,9 @@ export const convertsHeif = createAction({
 });
 
 function detectHeifMimetype(buffer: Buffer): string {
-  // HEIF/HEIC files have an `ftyp` box at bytes 4–8
-  const ftyp = buffer.toString('ascii', 4, 8);
-  switch (ftyp) {
+  // HEIF box layout: [0-3] size, [4-7] "ftyp", [8-11] major brand
+  const brand = buffer.toString('ascii', 8, 12);
+  switch (brand) {
     case 'heic':
     case 'heix':
       return 'image/heic';

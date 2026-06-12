@@ -17,6 +17,7 @@ import { dropboxSearch } from './lib/actions/search';
 import { dropboxUploadFile } from './lib/actions/upload-file';
 import { dropboxDownloadFile } from './lib/actions/download-file';
 import { dropboxAuth } from './lib/auth';
+import { dropboxNewFile } from './lib/triggers/new-file';
 import { dropboxNewFolder } from './lib/triggers/new-folder';
 
 export const dropbox = createPiece({
@@ -54,6 +55,6 @@ export const dropbox = createPiece({
     'abuaboud',
   ],
   categories: [PieceCategory.CONTENT_AND_FILES],
-  triggers: [dropboxNewFolder],
+  triggers: [dropboxNewFile, dropboxNewFolder],
   auth: dropboxAuth,
 });
