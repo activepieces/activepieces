@@ -10,6 +10,7 @@ import {
 } from '../common';
 
 export const dateDifferenceAction = createAction({
+  audience: 'human',
   name: 'date_difference',
   displayName: 'Date Difference',
   description: 'Get the difference between two dates',

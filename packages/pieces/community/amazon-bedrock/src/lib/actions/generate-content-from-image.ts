@@ -15,6 +15,7 @@ import {
 } from '../common';
 
 export const generateContentFromImage = createAction({
+  audience: 'human',
   auth: awsBedrockAuth,
   name: 'generate_content_from_image',
   displayName: 'Generate Content from Image',

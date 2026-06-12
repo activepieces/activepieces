@@ -33,6 +33,7 @@ async function executeStoragePut(context: ActionContext<PieceAuthProperty | unde
 }
 
 export const storagePutAction = createAction({
+  audience: 'human',
   name: 'put',
   displayName: 'Put',
   description: 'Put a value in storage',

@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
 
 export const listModels = createAction({
+  audience: 'human',
   auth: openaiAuth,
   name: 'list_models',
   displayName: 'List Models',

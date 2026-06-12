@@ -5,6 +5,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { huggingFaceAuth } from '../auth';
 
 export const createImage = createAction({
+  audience: 'human',
   name: 'create_image',
   auth: huggingFaceAuth,
   displayName: 'Create Image',

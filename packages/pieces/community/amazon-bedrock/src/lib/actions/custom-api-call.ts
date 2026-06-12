@@ -68,6 +68,7 @@ async function signAwsRequest({
 }
 
 export const customApiCall = createAction({
+  audience: 'human',
   name: 'custom_api_call',
   displayName: 'Custom API Call',
   description:

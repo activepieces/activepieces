@@ -11,6 +11,7 @@ import { z } from 'zod';
 import { baseUrlv1 } from '../common/common';
 
 export const promptCompletion = createAction({
+  audience: 'human',
   auth: straicoAuth,
   name: 'prompt_completion',
   displayName: 'Ask AI',

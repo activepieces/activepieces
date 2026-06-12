@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { PDFDocument } from 'pdf-lib';
 
 export const pdfPageCount = createAction({
+  audience: 'human',
   name: 'pdfPageCount',
   displayName: 'PDF Page Count',
   description: 'Get page count of PDF file.',

@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { huggingFaceAuth } from '../auth';
 
 export const textSummarization = createAction({
+  audience: 'human',
   name: 'text_summarization',
   auth: huggingFaceAuth,
   displayName: 'Text Summarization',

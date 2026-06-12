@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const askAssistant = createAction({
+  audience: 'human',
   auth: openaiAuth,
   name: 'ask_assistant',
   displayName: 'Ask Assistant',

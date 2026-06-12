@@ -2,6 +2,7 @@ import { createAction, PieceAuth, Property } from '@activepieces/pieces-framewor
 import { ExecutionType, MarkdownVariant } from '@activepieces/shared';
 
 export const waitForApprovalLink = createAction({
+  audience: 'human',
   auth: PieceAuth.None(),
   name: 'wait_for_approval',
   displayName: 'Wait for Approval',
