@@ -1966,6 +1966,8 @@
   "{count} mins ago": "{count} mins ago",
   "1 hour ago": "1 hour ago",
   "{count} hours ago": "{count} hours ago",
+  "Download as image": "Download as image",
+  "Failed to capture the flow image": "Failed to capture the flow image",
   "Setup submitted": "Setup submitted",
   "Set up your automation": "Set up your automation",
   "Setup complete": "Setup complete",
