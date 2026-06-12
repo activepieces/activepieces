@@ -58,6 +58,7 @@ export type BaseOAuth2ConnectionValue = {
 export type CustomAuthConnectionValue<T extends Record<string, unknown> = Record<string, unknown>> = {
     type: AppConnectionType.CUSTOM_AUTH
     props: T
+    nextRefreshEpochMs?: number
 }
 
 export type CloudOAuth2ConnectionValue = {

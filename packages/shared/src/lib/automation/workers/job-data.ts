@@ -60,6 +60,7 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
         case WorkerJobType.EXECUTE_PROPERTY:
         case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
         case WorkerJobType.EXECUTE_VALIDATION:
+        case WorkerJobType.EXECUTE_REFRESH:
         case WorkerJobType.EXECUTE_TRIGGER_HOOK:
             return 'critical'
         case WorkerJobType.EXECUTE_CHAT_AGENT:
@@ -74,6 +75,7 @@ export enum WorkerJobType {
     EXECUTE_WEBHOOK = 'EXECUTE_WEBHOOK',
     EXECUTE_FLOW = 'EXECUTE_FLOW',
     EXECUTE_VALIDATION = 'EXECUTE_VALIDATION',
+    EXECUTE_REFRESH = 'EXECUTE_REFRESH',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_EXTRACT_PIECE_INFORMATION = 'EXECUTE_EXTRACT_PIECE_INFORMATION',
@@ -85,6 +87,7 @@ export const NON_SCHEDULED_JOB_TYPES: WorkerJobType[] = [
     WorkerJobType.EXECUTE_WEBHOOK,
     WorkerJobType.EXECUTE_FLOW,
     WorkerJobType.EXECUTE_VALIDATION,
+    WorkerJobType.EXECUTE_REFRESH,
     WorkerJobType.EXECUTE_TRIGGER_HOOK,
     WorkerJobType.EXECUTE_PROPERTY,
     WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
@@ -178,6 +181,18 @@ export const ExecuteValidateAuthJobData = z.object({
 })
 export type ExecuteValidateAuthJobData = z.infer<typeof ExecuteValidateAuthJobData>
 
+export const ExecuteRefreshAuthJobData = z.object({
+    jobType: z.literal(WorkerJobType.EXECUTE_REFRESH),
+    projectId: z.string().optional(),
+    platformId: z.string(),
+    piece: PiecePackage,
+    schemaVersion: z.number(),
+    connectionValue: z.unknown(),
+    requestId: z.string(),
+    webserverId: z.string(),
+})
+export type ExecuteRefreshAuthJobData = z.infer<typeof ExecuteRefreshAuthJobData>
+
 
 export const ExecuteTriggerHookJobData = z.object({
     jobType: z.literal(WorkerJobType.EXECUTE_TRIGGER_HOOK),
@@ -224,6 +239,7 @@ export type ExecuteExtractPieceMetadataJobData = z.infer<typeof ExecuteExtractPi
 
 export const UserInteractionJobData = z.union([
     ExecuteValidateAuthJobData,
+    ExecuteRefreshAuthJobData,
     ExecuteTriggerHookJobData,
     ExecutePropertyJobData,
     ExecuteExtractPieceMetadataJobData,
@@ -232,6 +248,7 @@ export type UserInteractionJobData = z.infer<typeof UserInteractionJobData>
 
 export const UserInteractionJobDataWithoutWatchingInformation = z.union([
     ExecuteValidateAuthJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
+    ExecuteRefreshAuthJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
     ExecuteTriggerHookJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
     ExecutePropertyJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
     ExecuteExtractPieceMetadataJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),

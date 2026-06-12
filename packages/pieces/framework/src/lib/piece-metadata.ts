@@ -112,6 +112,8 @@ export type PieceMetadata = Omit<PieceBase, 'getContextInfo'> & {
   triggers: Record<string, TriggerBase>;
   // this property didn't exist in older version
   contextInfo: { version: ContextVersion } | undefined;
+  // whether the piece's auth defines a refresh callback (for CUSTOM_AUTH auto-refresh); populated by the engine during metadata extraction
+  hasRefresh?: boolean;
 };
 
 export const PieceMetadataSummary = z.object({

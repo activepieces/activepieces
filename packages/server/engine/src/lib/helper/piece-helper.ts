@@ -17,6 +17,8 @@ import {
     EngineGenericError,
     ExecuteExtractPieceMetadata,
     ExecutePropsOptions,
+    ExecuteRefreshAuthOperation,
+    ExecuteRefreshAuthResponse,
     ExecuteValidateAuthOperation,
     ExecuteValidateAuthResponse,
     isNil,
@@ -148,6 +150,23 @@ export const pieceHelper = {
 
     },
 
+    async executeRefreshAuth(
+        { params, devPieces }: { params: ExecuteRefreshAuthOperation, devPieces: string[] },
+    ): Promise<ExecuteRefreshAuthResponse> {
+        const { piece: piecePackage } = params
+
+        const piece = await pieceLoader.loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, devPieces })
+        const server = {
+            apiUrl: params.internalApiUrl.endsWith('/') ? params.internalApiUrl : params.internalApiUrl + '/',
+            publicUrl: params.publicApiUrl,
+        }
+        return refreshAuth({
+            authValue: params.auth,
+            pieceAuth: piece.auth,
+            server,
+        })
+    },
+
     async extractPieceMetadata({ devPieces, params }: { devPieces: string[], params: ExecuteExtractPieceMetadata }): Promise<PieceMetadata> {
         const { pieceName, pieceVersion } = params
         const piece = await pieceLoader.loadPieceOrThrow({ pieceName, pieceVersion, devPieces })
@@ -156,12 +175,14 @@ export const pieceHelper = {
         const pieceDistRoot = path.dirname(path.dirname(pieceIndexPath))
         const i18n = await pieceTranslation.initializeI18n(pieceDistRoot)
         const fullMetadata = piece.metadata()
+        const pieceAuth = Array.isArray(piece.auth) ? piece.auth[0] : piece.auth
         return {
             ...fullMetadata,
             name: pieceName,
             version: pieceVersion,
             authors: piece.authors,
             i18n,
+            hasRefresh: !isNil(pieceAuth) && !isNil(pieceAuth.refresh),
         }
     },
 }
@@ -244,6 +265,42 @@ const validateAuth = async ({
         default: {
             throw new EngineGenericError('InvalidAuthTypeError', 'Invalid auth type')
         }
+    }
+}
+
+const refreshAuth = async ({
+    server,
+    authValue,
+    pieceAuth,
+}: ValidateAuthParams): Promise<ExecuteRefreshAuthResponse> => {
+    if (isNil(pieceAuth)) {
+        return { value: authValue }
+    }
+    const usedPieceAuth = getAuthPropertyForValue({
+        authValueType: authValue.type,
+        pieceAuth,
+    })
+
+    if (isNil(usedPieceAuth) || usedPieceAuth.type !== PropertyType.CUSTOM_AUTH) {
+        return { value: authValue }
+    }
+    if (authValue.type !== AppConnectionType.CUSTOM_AUTH) {
+        return { value: authValue }
+    }
+    if (isNil(usedPieceAuth.refresh)) {
+        return { value: authValue }
+    }
+
+    const result = await usedPieceAuth.refresh({
+        auth: authValue.props,
+        server,
+    })
+    return {
+        value: {
+            ...authValue,
+            props: result.value,
+        },
+        nextRefreshEpochMs: result.nextRefreshEpochMs,
     }
 }
 

@@ -13,9 +13,11 @@ import {
     AppConnectionWithoutSensitiveData,
     ConnectionState,
     Cursor,
+    CustomAuthConnectionValue,
     EngineResponse,
     EngineResponseStatus,
     ErrorCode,
+    ExecuteRefreshAuthResponse,
     ExecuteValidateAuthResponse,
     isNil,
     MAX_PLATFORM_APP_CONNECTION_OWNERS,
@@ -578,7 +580,6 @@ const validateConnectionValue = async (
         }
         case AppConnectionType.NO_AUTH:
             break
-        case AppConnectionType.CUSTOM_AUTH:
         case AppConnectionType.BASIC_AUTH:
         case AppConnectionType.SECRET_TEXT:
             await engineValidateAuth({
@@ -587,6 +588,35 @@ const validateConnectionValue = async (
                 projectId,
                 auth: value,
             }, log)
+            break
+        case AppConnectionType.CUSTOM_AUTH: {
+            await engineValidateAuth({
+                platformId,
+                pieceName,
+                projectId,
+                auth: value,
+            }, log)
+            const meta = await pieceMetadataService(log).getOrThrow({
+                name: pieceName,
+                version: undefined,
+                platformId,
+            })
+            if (meta.hasRefresh) {
+                const refreshResult = await engineRefreshCustomAuth({
+                    platformId,
+                    pieceName,
+                    projectId,
+                    auth: value,
+                }, log)
+                const refreshedProps = (refreshResult.value as CustomAuthConnectionValue).props
+                return {
+                    ...value,
+                    props: refreshedProps,
+                    nextRefreshEpochMs: refreshResult.nextRefreshEpochMs,
+                }
+            }
+            break
+        }
     }
 
     return value
@@ -643,6 +673,50 @@ const engineValidateAuth = async (
             },
         })
     }
+}
+
+const engineRefreshCustomAuth = async (
+    params: EngineRefreshAuthParams,
+    log: FastifyBaseLogger,
+): Promise<ExecuteRefreshAuthResponse> => {
+    const environment = system.getOrThrow(AppSystemProp.ENVIRONMENT)
+    if (environment === ApEnvironment.TESTING) {
+        return { value: params.auth }
+    }
+    const { pieceName, auth, projectId, platformId } = params
+
+    const pieceMetadata = await pieceMetadataService(log).getOrThrow({
+        name: pieceName,
+        version: undefined,
+        platformId,
+    })
+
+    const engineResponse = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<ExecuteRefreshAuthResponse>>({
+        piece: await getPiecePackageWithoutArchive(log, platformId, {
+            pieceName,
+            pieceVersion: pieceMetadata.version,
+        }),
+        projectId,
+        platformId,
+        connectionValue: auth,
+        jobType: WorkerJobType.EXECUTE_REFRESH,
+    }, log)
+
+    if (engineResponse.status !== EngineResponseStatus.OK) {
+        log.error(
+            { engineResponse },
+            'Engine refresh auth failed',
+        )
+        throw new ActivepiecesError({
+            code: ErrorCode.ENGINE_OPERATION_FAILURE,
+            params: {
+                message: 'Failed to run engine refresh auth',
+                context: engineResponse,
+            },
+        })
+    }
+
+    return engineResponse.response
 }
 
 async function fetchFlowIdsForConnections(
@@ -805,6 +879,13 @@ type UpdateParams = {
 }
 
 type EngineValidateAuthParams = {
+    pieceName: string
+    projectId: ProjectId | undefined
+    platformId: string
+    auth: AppConnectionValue
+}
+
+type EngineRefreshAuthParams = {
     pieceName: string
     projectId: ProjectId | undefined
     platformId: string

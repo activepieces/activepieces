@@ -1,7 +1,7 @@
 # App Connections
 
 ## Summary
-App Connections store encrypted authentication credentials (OAuth2 tokens, API keys, basic auth, or custom piece-defined fields) that flow steps use to call external services. They support automatic OAuth2 token refresh with distributed locking, a dual-scope model (project-level or platform-wide), and a "replace" operation that atomically rewires all flow references from one connection to another. The module handles all OAuth2 variants: user-supplied credentials, platform-managed OAuth apps, and Activepieces-hosted cloud OAuth, Users can optionally select a subset of a piece's declared OAuth2 scopes when creating a connection.
+App Connections store encrypted authentication credentials (OAuth2 tokens, API keys, basic auth, or custom piece-defined fields) that flow steps use to call external services. They support automatic OAuth2 token refresh with distributed locking, automatic CUSTOM_AUTH refresh via a piece-defined `refresh` callback, a dual-scope model (project-level or platform-wide), and a "replace" operation that atomically rewires all flow references from one connection to another. The module handles all OAuth2 variants: user-supplied credentials, platform-managed OAuth apps, and Activepieces-hosted cloud OAuth, Users can optionally select a subset of a piece's declared OAuth2 scopes when creating a connection.
 
 ## Key Files
 - `packages/server/api/src/app/app-connection/` — backend module (controller, service, entity)
@@ -49,7 +49,7 @@ App Connections store encrypted authentication credentials (OAuth2 tokens, API k
 | PLATFORM_OAUTH2 | Same but uses platform-managed OAuth app credentials | Auto-refresh |
 | SECRET_TEXT | token | None |
 | BASIC_AUTH | username, password | None |
-| CUSTOM_AUTH | piece-defined custom fields | None |
+| CUSTOM_AUTH | piece-defined custom fields + `nextRefreshEpochMs?` | Auto-refresh via piece-defined `refresh` callback when `nextRefreshEpochMs` is set |
 | NO_AUTH | (empty) | None |
 
 ## Scope
@@ -66,6 +66,17 @@ Automatic on connection retrieval:
 4. Re-encrypts updated tokens, stores in DB, sets status=ACTIVE
 5. On error (invalid refresh token): sets status=ERROR
 6. Always strips refresh_token and client_secret from API responses
+
+## Custom Auth Refresh
+
+See `.agents/features/custom-auth-refresh.md` for full details.
+
+Piece developers can define an optional `refresh` callback on `CUSTOM_AUTH` auth. When present:
+1. After `validate` passes at creation time, `refresh` is called immediately to set the initial `nextRefreshEpochMs`
+2. On every connection retrieval, `needRefresh()` checks whether `Date.now() >= nextRefreshEpochMs - 15 min`
+3. If due: acquires the same distributed lock, dispatches `EXECUTE_REFRESH_AUTH` worker job → runs `piece.auth.refresh()` in sandbox
+4. Updated `props` + new `nextRefreshEpochMs` stored in DB
+5. On any refresh error: sets status=ERROR (unlike OAuth2 which distinguishes user vs system errors)
 
 ## Endpoints
 

@@ -7,6 +7,7 @@ import {
     ExecuteExtractPieceMetadataOperation,
     ExecuteFlowOperation,
     ExecutePropsOptions,
+    ExecuteRefreshAuthOperation,
     ExecuteTriggerOperation,
     ExecuteValidateAuthOperation,
     ExecutionError,
@@ -15,6 +16,7 @@ import {
     TriggerHookType,
     tryCatch,
 } from '@activepieces/shared'
+import { authRefreshOperation } from './auth-refresh.operation'
 import { authValidationOperation } from './auth-validation.operation'
 import { flowOperation } from './flow.operation'
 import { pieceMetadataOperation } from './piece-metadata.operation'
@@ -39,6 +41,9 @@ export async function execute(operationType: EngineOperationType, operation: Eng
             }
             case EngineOperationType.EXECUTE_VALIDATE_AUTH: {
                 return authValidationOperation.execute(operation as ExecuteValidateAuthOperation)
+            }
+            case EngineOperationType.EXECUTE_REFRESH_AUTH: {
+                return authRefreshOperation.execute(operation as ExecuteRefreshAuthOperation)
             }
             default: {
                 throw new ExecutionError('Unsupported operation type', `Unsupported operation type: ${operationType}`, ExecutionErrorType.ENGINE)

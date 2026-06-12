@@ -4,6 +4,7 @@ import { eventDestinationJob } from './jobs/event-destination'
 import { executeFlowJob } from './jobs/execute-flow'
 import { executePollingJob } from './jobs/execute-polling'
 import { executePropertyJob } from './jobs/execute-property'
+import { executeRefreshJob } from './jobs/execute-refresh'
 import { executeTriggerHookJob } from './jobs/execute-trigger-hook'
 import { executeValidationJob } from './jobs/execute-validation'
 import { executeWebhookJob } from './jobs/execute-webhook'
@@ -19,6 +20,7 @@ const registry: Record<WorkerJobType, JobHandler> = {
     [WorkerJobType.EXECUTE_TRIGGER_HOOK]: executeTriggerHookJob,
     [WorkerJobType.EXECUTE_PROPERTY]: executePropertyJob,
     [WorkerJobType.EXECUTE_VALIDATION]: executeValidationJob,
+    [WorkerJobType.EXECUTE_REFRESH]: executeRefreshJob,
     [WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION]: extractPieceInfoJob,
     [WorkerJobType.EVENT_DESTINATION]: eventDestinationJob,
     [WorkerJobType.EXECUTE_CHAT_AGENT]: executeChatAgentJob,
