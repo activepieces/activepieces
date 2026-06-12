@@ -35,9 +35,17 @@ export const convertsHeif = createAction({
     if (!response.ok) {
       throw new Error(`Failed to download image: ${response.status} ${response.statusText}`);
     }
+//wraps arraybuffer in Buffer to work with heic-convert, which expects a Node.js Buffer.
     const buffer = Buffer.from(await response.arrayBuffer());
+//50mb max file size for conversion
+    const MAX_SIZE = 50 * 1024 * 1024;
+    if (buffer.length > MAX_SIZE) {
+      throw new Error('Image too large: maximum supported size is 50MB');
+    }
 
     const sourceMimetype = detectHeifMimetype(buffer);
+
+    //JPEG for library compatibility as library(heic-convert) expects JPEG, even if user selects PNG, as it can convert to PNG internally.
     const format = outputFormat === 'PNG' ? 'PNG' : 'JPEG';
 
     const outputBuffer = await convert({
@@ -45,10 +53,13 @@ export const convertsHeif = createAction({
       format,
       quality: 1,
     });
-
+//output file conventionally require jpg not jpeg
     const extension = outputFormat === 'JPEG' ? 'jpg' : 'png';
+//uploads converted file to AP internal file storage  
     const file = await context.files.write({
+      //builds the output filename
       fileName: (resultFileName ?? 'image') + '.' + extension,
+      //heic-convert returns a Buffer, which is compatible with AP's file storage API.
       data: Buffer.from(outputBuffer),
     });
 
@@ -68,6 +79,7 @@ function detectHeifMimetype(buffer: Buffer): string {
     case 'mif1':
     case 'msf1':
       return 'image/heif';
+      //if file does not match any known value, defaults to 'image/heic' as it's the most common and widely supported HEIF variant. This ensures that even if detection fails, we still provide a reasonable default mimetype for HEIF files.
     default:
       return 'image/heic';
   }
