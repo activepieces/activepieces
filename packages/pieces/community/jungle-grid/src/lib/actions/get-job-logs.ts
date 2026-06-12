@@ -8,6 +8,12 @@ export const getJobLogs = createAction({
   name: 'get_job_logs',
   displayName: 'Get Job Logs',
   description: 'Get recent stdout, stderr, or combined logs for a submitted Jungle Grid job.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetch recent log lines for a Jungle Grid job by job ID, choosing stdout, stderr, or both, with a tail of up to 500 lines and cursor-based paging for more. Pick this to debug a failing job or inspect output text; for structured status or exit-code details use Get Job Status or Get Job Runtime instead. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     job_id: jungleGridCommon.jobId,
     tail_lines: Property.Number({

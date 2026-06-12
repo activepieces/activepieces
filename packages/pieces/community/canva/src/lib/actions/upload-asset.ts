@@ -21,6 +21,12 @@ export const uploadAsset = createAction({
   name: 'upload_asset',
   displayName: 'Upload Asset',
   description: 'Upload an image or video asset to your Canva library. This creates an asynchronous job that you can monitor for completion.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Uploads an image (max 50MB) or video (max 500MB) file into the user's Canva media library via an asynchronous job, with a required asset name of at most 50 characters. Pick this to add media for later use in designs; use Import Design instead when the file should become an editable design itself. Not idempotent: each call starts a new upload and creates a duplicate asset.",
+    idempotent: false,
+  },
   props: {
     file: Property.File({
       displayName: 'Asset File',

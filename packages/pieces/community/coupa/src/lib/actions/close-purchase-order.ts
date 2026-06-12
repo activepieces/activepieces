@@ -11,6 +11,12 @@ export const closePurchaseOrder = createAction({
   displayName: 'Close Purchase Order',
   description:
     'Closes a purchase order using `PUT /api/purchase_orders/:id/close`.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Close an existing Coupa purchase order by ID, marking it complete so no further receiving or invoicing occurs — use Cancel Purchase Order to void an order instead. Not idempotent: closing is a one-way workflow transition and re-running on an already-closed order may fail.',
+    idempotent: false,
+  },
   props: {
     purchaseOrderId: purchaseOrderDropdown,
   },
