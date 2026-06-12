@@ -16,6 +16,12 @@ export const copyFile = createAction({
   name: 'copy_file',
   displayName: 'Copy File',
   description: 'Create a copy of a file in your OneDrive, optionally in a different folder or with a new name.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a copy of a OneDrive file, optionally into a different folder and/or under a new name, and returns the copied item once the asynchronous copy completes. Use to duplicate a file or stamp out copies of a template document. Not idempotent: each run creates another copy — with the default rename conflict behavior, repeated runs produce numbered duplicates.',
+    idempotent: false,
+  },
   props: {
     markdown: oneDriveCommon.parentFolderInfo,
     sourceFolderId: oneDriveCommon.folderDropdown({
@@ -110,9 +116,12 @@ export const copyFile = createAction({
       baseUrl: getGraphBaseUrl(cloud),
     });
 
-    const body: { parentReference?: { id: string }; name?: string } = {};
+    const body: { parentReference?: { driveId: string; id: string }; name?: string } = {};
     if (destinationFolderId) {
-      body.parentReference = { id: destinationFolderId };
+      // Docs: "The parentReference parameter should include the driveId and id
+      // parameters for the target folder."
+      const drive = await client.api('/me/drive').select('id').get();
+      body.parentReference = { driveId: drive.id, id: destinationFolderId };
     }
     if (newName) {
       body.name = newName;

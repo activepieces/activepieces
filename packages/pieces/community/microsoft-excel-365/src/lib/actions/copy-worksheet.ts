@@ -21,11 +21,22 @@ export const copyWorksheetAction = createAction({
   displayName: 'Copy Worksheet',
   description:
     'Duplicate a worksheet into a new worksheet, in the same workbook or a different one. Copies values, formulas, and number formats.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Duplicates an Excel worksheet (tab) into the same or a different workbook by copying its used range — cell values or formulas plus number formats; cell styles, charts, and tables are not carried over. Use to clone a template tab or copy sheet data across workbooks. Not idempotent: each run creates another worksheet, and re-running with the same explicit name fails on the name collision.',
+    idempotent: false,
+  },
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,
     documentId: commonProps.documentId,
-    workbookId: commonProps.workbookId,
+    folderId: commonProps.folderId,
+    workbookId: commonProps.workbookDropdown({
+      displayName: 'Workbook',
+      required: true,
+      folderRefresherKey: 'folderId',
+    }),
     worksheetId: commonProps.worksheetId,
     destinationWorkbookId: commonProps.destinationWorkbookId,
     newWorksheetName: Property.ShortText({
@@ -99,15 +110,18 @@ export const copyWorksheetAction = createAction({
       const { error: patchError } = await tryCatch(() =>
         client
           .api(`${drivePath}/items/${targetWorkbookId}/workbook/worksheets/${newWorksheet.id}/range(address='${copiedRange}')`)
-          .select('address')
           .patch(patchBody),
       );
       if (patchError) {
         await tryCatch(() =>
           client.api(`${drivePath}/items/${targetWorkbookId}/workbook/worksheets/${newWorksheet.id}`).delete(),
         );
+        const formulasModeHint =
+          copyMode === 'formulas'
+            ? ' Sheets that use table (structured-reference) formulas or merged cells may not be copyable with formulas — try setting Copy Mode to "Values only".'
+            : '';
         throw new Error(
-          `Failed to write the copied contents, so the new worksheet was removed: ${patchError.message}`,
+          `Failed to write the copied contents, so the new worksheet was removed: ${patchError.message}${formulasModeHint}`,
         );
       }
     }
