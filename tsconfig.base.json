@@ -1355,6 +1355,9 @@
       "@activepieces/piece-totalcms": [
         "packages/pieces/community/totalcms/src/index.ts"
       ],
+      "@activepieces/piece-travel-code": [
+        "packages/pieces/community/travel-code/src/index.ts"
+      ],
       "@activepieces/piece-trello": [
         "packages/pieces/community/trello/src/index.ts"
       ],
