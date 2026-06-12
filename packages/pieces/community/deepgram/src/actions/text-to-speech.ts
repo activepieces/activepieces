@@ -9,6 +9,12 @@ export const textToSpeechAction = createAction({
   name: 'text_to_speech',
   displayName: 'Text to Speech',
   description: 'Converts text to audio file.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Synthesizes speech from text using a Deepgram Aura voice and saves the result as an audio file in a chosen encoding (mp3 by default). Pick this only for generating spoken audio from text, the inverse of the transcription actions. Each run produces a newly generated, billed audio file, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     text: Property.LongText({
       displayName: 'Text',

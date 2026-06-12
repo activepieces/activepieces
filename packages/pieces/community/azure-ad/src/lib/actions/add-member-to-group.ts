@@ -8,6 +8,12 @@ export const addMemberToGroupAction = createAction({
     name: 'add_member_to_group',
     displayName: 'Add Member to Group',
     description: 'Adds a user or group as a member of an Azure AD group.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Adds an existing user or group (by directory object ID) as a member of an Azure AD group. Use when granting group-based access or distribution membership; both the group and the member must already exist. Not idempotent — re-adding someone who is already a member fails with a Graph error, so check membership with List Group Members first if unsure.',
+        idempotent: false,
+    },
     props: {
         groupId: groupDropdown,
         memberId: directoryObjectDropdown,
