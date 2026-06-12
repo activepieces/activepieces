@@ -7,6 +7,13 @@ import {
 
 export const ASQAV_BASE_URL = 'https://api.asqav.com/api/v1';
 
+export class AsqavApiError extends Error {
+  constructor(message: string, public readonly status?: number) {
+    super(message);
+    this.name = 'AsqavApiError';
+  }
+}
+
 interface AsqavApiCallParams {
   apiKey: string;
   method: HttpMethod;
@@ -75,40 +82,47 @@ function mapAsqavError(error: unknown): Error {
 
   switch (status) {
     case 401:
-      return new Error(
-        'Asqav rejected the API key (401). Reconnect with a valid key from your Asqav dashboard at https://asqav.com.'
+      return new AsqavApiError(
+        'Asqav rejected the API key (401). Reconnect with a valid key from your Asqav dashboard at https://asqav.com.',
+        status
       );
     case 403:
       if (reason === 'content_scan_blocked') {
-        return new Error(
-          `Asqav's content scanner blocked signing (403): ${text} Remove sensitive data such as PII from the Context and retry.`
+        return new AsqavApiError(
+          `Asqav's content scanner blocked signing (403): ${text} Remove sensitive data such as PII from the Context and retry.`,
+          status
         );
       }
-      return new Error(
-        `Asqav refused the request (403): ${text} The key may lack the required scope, or the agent may be suspended or owned by another organization.`
+      return new AsqavApiError(
+        `Asqav refused the request (403): ${text} The key may lack the required scope, or the agent may be suspended or owned by another organization.`,
+        status
       );
     case 412:
       if (reason === 'no_policy_evaluated_for_action_type') {
-        return new Error(
-          `Asqav precondition failed (412): ${text} Compliance mode needs an active policy matching this action type. Create one in your Asqav dashboard, or turn off Compliance Mode on this step.`
+        return new AsqavApiError(
+          `Asqav precondition failed (412): ${text} Compliance mode needs an active policy matching this action type. Create one in your Asqav dashboard, or turn off Compliance Mode on this step.`,
+          status
         );
       }
       if (reason === 'compliance_mode_strict_unsigned_action') {
-        return new Error(
-          `Asqav precondition failed (412): ${text} Your organization requires compliance mode, so enable Compliance Mode on this step.`
+        return new AsqavApiError(
+          `Asqav precondition failed (412): ${text} Your organization requires compliance mode, so enable Compliance Mode on this step.`,
+          status
         );
       }
-      return new Error(`Asqav precondition failed (412): ${text}`);
+      return new AsqavApiError(`Asqav precondition failed (412): ${text}`, status);
     case 422:
-      return new Error(
-        `Asqav rejected the request payload (422): ${text}. Check the step inputs, for example Context must be a JSON object.`
+      return new AsqavApiError(
+        `Asqav rejected the request payload (422): ${text}. Check the step inputs, for example Context must be a JSON object.`,
+        status
       );
     case 429:
-      return new Error(
-        `Asqav rate limit reached (429): ${text} Wait and retry, or raise the plan limit in your Asqav dashboard.`
+      return new AsqavApiError(
+        `Asqav rate limit reached (429): ${text} Wait and retry, or raise the plan limit in your Asqav dashboard.`,
+        status
       );
     default:
-      return new Error(`Asqav API error (${status}): ${text}`);
+      return new AsqavApiError(`Asqav API error (${status}): ${text}`, status);
   }
 }
 
@@ -116,23 +130,51 @@ interface AsqavAgent {
   agent_id: string;
   name: string;
   algorithm: string;
+  created_at: string;
+}
+
+// The Asqav API does not enforce unique agent names, so two concurrent
+// first runs can each create an agent with the same name. To keep every
+// run converging on one canonical agent, always pick the oldest exact
+// match (created_at ascending, agent_id as tiebreaker) instead of relying
+// on API listing order.
+function pickCanonicalAgent(
+  agents: AsqavAgent[],
+  name: string
+): AsqavAgent | undefined {
+  return agents
+    .filter((agent) => agent.name === name)
+    .sort(
+      (a, b) =>
+        a.created_at.localeCompare(b.created_at) ||
+        a.agent_id.localeCompare(b.agent_id)
+    )[0];
+}
+
+async function listAgentsByName(
+  apiKey: string,
+  name: string
+): Promise<AsqavAgent[]> {
+  return asqavApiCall<AsqavAgent[]>({
+    apiKey,
+    method: HttpMethod.GET,
+    resourceUri: '/agents',
+    queryParams: { name, revoked: 'false', limit: '50' },
+  });
 }
 
 export async function getOrCreateAgent(
   apiKey: string,
   name: string
 ): Promise<AsqavAgent> {
-  const existing = await asqavApiCall<AsqavAgent[]>({
-    apiKey,
-    method: HttpMethod.GET,
-    resourceUri: '/agents',
-    queryParams: { name, revoked: 'false', limit: '50' },
-  });
-  const match = existing.find((agent) => agent.name === name);
-  if (match) {
-    return match;
+  const existing = pickCanonicalAgent(
+    await listAgentsByName(apiKey, name),
+    name
+  );
+  if (existing) {
+    return existing;
   }
-  return asqavApiCall<AsqavAgent>({
+  const created = await asqavApiCall<AsqavAgent>({
     apiKey,
     method: HttpMethod.POST,
     resourceUri: '/agents/create',
@@ -142,4 +184,11 @@ export async function getOrCreateAgent(
       capabilities: [],
     },
   });
+  // Re-list after creating: if a concurrent run created the same name in
+  // the GET-to-POST window, both runs settle on the same canonical agent.
+  const canonical = pickCanonicalAgent(
+    await listAgentsByName(apiKey, name),
+    name
+  );
+  return canonical ?? created;
 }

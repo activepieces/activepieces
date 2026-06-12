@@ -1,6 +1,6 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { asqavApiCall } from './common';
+import { asqavApiCall, AsqavApiError } from './common';
 
 export const asqavAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -18,11 +18,21 @@ export const asqavAuth = PieceAuth.SecretText({
         queryParams: { limit: '1' },
       });
       return { valid: true };
-    } catch {
+    } catch (error) {
+      if (error instanceof AsqavApiError && error.status === 401) {
+        return {
+          valid: false,
+          error:
+            'Invalid API key. Copy a current key from your Asqav dashboard under API Keys.',
+        };
+      }
+      if (error instanceof AsqavApiError && error.status !== undefined) {
+        return { valid: false, error: error.message };
+      }
       return {
         valid: false,
         error:
-          'Invalid API key. Copy a current key from your Asqav dashboard under API Keys.',
+          'Could not reach the Asqav API. Check your network connection and try again.',
       };
     }
   },
