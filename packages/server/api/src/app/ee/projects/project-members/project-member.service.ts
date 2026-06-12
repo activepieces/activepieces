@@ -22,16 +22,17 @@ import {
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { Equal } from 'typeorm'
-import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { buildPaginator } from '../../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
 import { system } from '../../../helper/system/system'
 import { projectService } from '../../../project/project-service'
+import { UserSchema } from '../../../user/user-entity'
 import { userService } from '../../../user/user-service'
 import { projectRoleService } from '../project-role/project-role.service'
 import {
     ProjectMemberEntity,
+    ProjectMemberSchema,
 } from './project-member.entity'
 const repo = repoFactory(ProjectMemberEntity)
 
@@ -94,8 +95,16 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
+        // Eager-load every relation the response needs (user + its identity, project
+        // role, project) in a single query. These are all many-to-one, so there is no
+        // row fan-out and the cursor LIMIT stays correct. This avoids the previous N+1
+        // that ran ~5 queries per returned member.
         const queryBuilder = repo()
             .createQueryBuilder('project_member')
+            .leftJoinAndSelect('project_member.user', 'user')
+            .leftJoinAndSelect('user.identity', 'identity')
+            .leftJoinAndSelect('project_member.projectRole', 'projectRole')
+            .leftJoinAndSelect('project_member.project', 'project')
             .where({ platformId })
 
         if (projectId) {
@@ -107,22 +116,10 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
         }
 
         const { data, cursor } = await paginator.paginate(queryBuilder)
-        const enrichedData: (ProjectMemberWithUser | null)[] = await Promise.all(
-            data.map(async (member) => {
-                const enrichedMember = await enrichProjectMemberWithUser(member, log)
-                if (isNil(enrichedMember)) {
-                    return null
-                }
-                return {
-                    ...enrichedMember,
-                    projectRole: await projectRoleService.getOneOrThrowById({
-                        id: member.projectRoleId,
-                    }),
-                }
-            }),
-        )
-        const filteredEnrichedData = enrichedData.filter((member) => !isNil(member))
-        return paginationHelper.createPage<ProjectMemberWithUser>(filteredEnrichedData, cursor)
+        const enrichedData = data
+            .map(toProjectMemberWithUser)
+            .filter((member): member is ProjectMemberWithUser => !isNil(member))
+        return paginationHelper.createPage<ProjectMemberWithUser>(enrichedData, cursor)
     },
     async getRole({
         userId,
@@ -290,28 +287,28 @@ type HasPermissionOnAnyProjectParams = {
     permission: Permission
 }
 
-async function enrichProjectMemberWithUser(
-    projectMember: ProjectMember,
-    log: FastifyBaseLogger,
-): Promise<ProjectMemberWithUser | null> {  
-    const isProjectSoftDeleted = await projectService(log).exists({
-        projectId: projectMember.projectId,
-        isSoftDeleted: true,
-    })
-    if (isProjectSoftDeleted) {
+function toProjectMemberWithUser(
+    member: ProjectMemberSchema,
+): ProjectMemberWithUser | null {
+    const { project, projectRole } = member
+    // Skip members whose project has been soft-deleted (matches the prior behaviour).
+    if (isNil(project) || !isNil(project.deleted)) {
         return null
     }
 
-    const user = await userService(log).getOneOrFail({
-        id: projectMember.userId,
-    })
-    const identity = await userIdentityService(log).getBasicInformation(user.identityId)
-    const projectRole = await projectRoleService.getOneOrThrowById({
-        id: projectMember.projectRoleId,
-    })
-    const project = await projectService(log).getOneOrThrow(projectMember.projectId)
+    const user = member.user as UserSchema
+    if (isNil(user) || isNil(user.identity)) {
+        return null
+    }
+    const { identity } = user
     return {
-        ...projectMember,
+        id: member.id,
+        created: member.created,
+        updated: member.updated,
+        platformId: member.platformId,
+        projectId: member.projectId,
+        userId: member.userId,
+        projectRoleId: member.projectRoleId,
         projectRole,
         project: {
             id: project.id,
