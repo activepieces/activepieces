@@ -47,6 +47,9 @@ export const updatedChangeTask = createTrigger({
   name: 'updated_change_task',
   displayName: 'Updated Change Task',
   description: 'Triggers when a task on a specific change request is updated. Note: newly created tasks may also fire this trigger because their updated_at matches created_at.',
+  aiMetadata: {
+    description: 'Fires when a task on one specific change request is modified in Freshservice (e.g. status, assignee, or due-date change), representing the latest state of that task. Scoped to a single change id chosen in setup; polls newest-first by last-updated time, and note that newly created tasks can also fire this because their updated time initially equals their creation time.',
+  },
   props: {
     change_id: freshserviceCommon.change(true),
   },

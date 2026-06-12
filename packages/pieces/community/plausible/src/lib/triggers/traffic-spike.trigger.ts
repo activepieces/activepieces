@@ -14,6 +14,9 @@ export const trafficSpike = createTrigger({
   displayName: 'Traffic Spike',
   description:
     'Triggers once when current visitors exceed a threshold, then resets when they drop below it',
+  aiMetadata: {
+    description: 'Fires once when a site\'s real-time visitor count crosses above a configured threshold, representing the onset of a traffic spike. It does not fire again until the count drops back below the threshold and then rises above it once more, so each sustained spike yields a single event.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     site_id: siteIdDropdown,

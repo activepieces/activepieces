@@ -6,6 +6,8 @@ export const addOrUpdateContactExtended = createAction({
   name: 'addOrUpdateContact(extended)',
   displayName: 'Add or Update Contact (Extended)',
   description: 'Adds or updates a contact (extended version)',
+  audience: 'both',
+  aiMetadata: { description: 'Imports a contact into the ChargeKeep/Sperse CRM with the full field set (driving license, military/citizenship flags, company details, tracking/UTM data, custom fields, and up to three inline subscriptions), upserting by Contact ID, Contact XREF, or email/name match. Prefer this over the basic Add or Update Contact when you need those extra fields. Can also provision a portal user and send a welcome email when Create User / Send Welcome Email are enabled (that email is a one-time side effect); otherwise repeating with the same identifying input upserts the same contact.', idempotent: true },
   auth: chargekeepAuth,
   props: {
     matchExisting: Property.StaticDropdown({

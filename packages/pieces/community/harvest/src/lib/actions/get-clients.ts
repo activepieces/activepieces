@@ -13,6 +13,8 @@ export const getClients = createAction({
   auth: harvestAuth,
   displayName: 'Get Clients',
   description: 'Fetches Clients',
+  audience: 'both',
+  aiMetadata: { description: 'Lists clients from a Harvest account; with no filters it returns every client, or narrow by active/inactive state or updated-since timestamp. Use to resolve a client name to its ID or enumerate clients. Read-only and idempotent.', idempotent: true },
   props: {
     is_active: Property.ShortText({
     description: 'Pass `true` to only return active clients and `false` to return inactive clients.',

@@ -17,6 +17,9 @@ export const newRowAddedTrigger = createTrigger({
 	name: 'new_row_added',
 	displayName: 'New Row Added',
 	description: 'Triggers when a new row is added.',
+	aiMetadata: {
+		description: 'Fires when a new row is created in the configured Smartsheet sheet, delivering the created row event along with the fetched full row details. Represents a row-level creation on that sheet.',
+	},
 	props: {
 		sheet_id: smartsheetCommon.sheet_id(),
 	},

@@ -8,6 +8,12 @@ export const findRaindropsAction = createAction({
   name: 'find_raindrops',
   displayName: 'Find Bookmarks',
   description: 'Lists bookmarks from a collection, with optional keyword search',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists bookmarks from a Raindrop.io collection, sorted newest-first. Operates in two modes: with an empty search it returns all bookmarks in the collection, and with a search query it filters by keyword (supporting operators like #tag or type:article). Defaults to a collection covering all bookmarks when none is chosen; returns up to 50 per call. Use to discover bookmark IDs or browse saved content. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     collection_id: raindropCommons.collectionDropdown,
     search: Property.ShortText({

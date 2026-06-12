@@ -10,6 +10,8 @@ export const removeTagFromContact = createAction({
     name: 'remove_tag_from_contact',
     displayName: 'Remove Tag from Contact',
     description: 'Remove one or more tags from a contact in a specified list.',
+    audience: 'both',
+    aiMetadata: { description: 'Removes one or more tags from a contact in an EmailOctopus list, located by email address. Use to unlabel or re-segment a known subscriber. Requires the list id, the contact email, and the tags to remove. Idempotent — removing tags the contact no longer has leaves it unchanged.', idempotent: true },
     props: {
         list_id: emailOctopusProps.listId(),
         email_address: Property.ShortText({

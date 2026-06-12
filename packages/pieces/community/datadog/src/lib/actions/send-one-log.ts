@@ -7,6 +7,12 @@ export const sendOneLog = createAction({
   name: 'sendOneLog',
   displayName: 'Send One log',
   description: 'Send one log to your Datadog platform over HTTP.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Submits a single log entry to Datadog via the Logs intake API. Use to ship one application or system log; requires a `message` and accepts optional `ddsource`, comma-separated `ddtags`, `hostname`, `service`, and additional key-value properties (e.g. status/level). Not idempotent — each call appends a new log entry, so re-running duplicates it.',
+    idempotent: false,
+  },
   auth: datadogAuth,
   requireAuth: true,
   props: {

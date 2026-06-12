@@ -9,6 +9,12 @@ export const listCalls = createAction({
   name: 'listCalls',
   displayName: 'List Calls',
   description: 'List calls with optional filters.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'List call records, optionally narrowed by status, direction (inbound/outbound), phone number, assistant, campaign, date range, and paginated. Use to browse or search calls; to fetch one call\'s full transcript and recording use Get Call instead. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: famulorCommon.listCallsProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, famulorCommon.listCallsSchema);

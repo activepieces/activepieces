@@ -167,17 +167,9 @@ export type ChatHistoryMessage = {
     thoughts?: string
 }
 
-export type PlanStepStatus = 'pending' | 'executing' | 'done' | 'error'
-
-export type PlanStepUpdate = {
-    stepIndex: number
-    status: PlanStepStatus
-}
-
 export type ChatToolOutputs = {
     ap_set_session_title: { success: boolean }
     ap_select_project: { success: boolean, message?: string, error?: string }
-    ap_request_plan_approval: { success: boolean, message: string }
     ap_list_across_projects: { content: { type: string, text: string }[] }
     ap_execute_action:
     | { noAuthRequired: true, piece: string }
@@ -237,3 +229,4 @@ export type ChatAllowedMimeType = typeof CHAT_ALLOWED_MIME_TYPES[number]
 export { CHAT_ALLOWED_MIME_TYPES }
 
 export { chatToolClassification } from './tool-classification'
+export { chatToolPhases, type ChatPhase } from './tool-phases'

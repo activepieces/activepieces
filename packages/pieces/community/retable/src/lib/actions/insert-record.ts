@@ -9,6 +9,8 @@ export const retableCreateRecordAction = createAction({
   name: 'retable_create_record',
   displayName: 'Create Retable Record',
   description: 'Adds a record into a retable',
+  audience: 'both',
+  aiMetadata: { description: 'Appends a new row to a Retable table, mapping the supplied column values into a single record. Use to write data into a specific retable; requires the workspace, project, and retable identifiers plus the field values (empty cell values are skipped). Not idempotent — each call inserts another record.', idempotent: false },
   props: {
     workspace_id: retableCommon.workspace_id(),
     project_id: retableCommon.project_id(),

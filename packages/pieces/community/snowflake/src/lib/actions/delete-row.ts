@@ -14,6 +14,12 @@ export const deleteRowAction = createAction({
   displayName: 'Delete Row',
   description:
     'Delete one or more rows from a Snowflake table that match a WHERE condition.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Runs a DELETE on a Snowflake table, removing every row matching the required WHERE condition. Use to remove records; the condition is mandatory to guard against wiping the whole table, and it is embedded directly into SQL so pass only trusted values. Re-running after the matching rows are gone deletes nothing further, but treat this as a destructive mutating operation.',
+    idempotent: false,
+  },
   auth: snowflakeAuth,
   props: {
     database: snowflakeCommonProps.database,

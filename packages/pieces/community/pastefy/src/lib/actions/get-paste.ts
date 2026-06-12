@@ -8,6 +8,8 @@ export default createAction({
   name: 'get_paste',
   displayName: 'Get Paste',
   description: 'Retrieves a paste',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches a single paste by its ID from a Pastefy instance. Use to read the content/metadata of a known paste. If the paste is encrypted and an encryption password is provided, the content (and title) are AES-decrypted client-side. Read-only and idempotent.', idempotent: true },
   props: {
     paste_id: Property.ShortText({
       displayName: 'Paste ID',

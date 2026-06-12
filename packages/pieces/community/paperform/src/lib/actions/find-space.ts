@@ -7,6 +7,8 @@ export const findSpace = createAction({
   name: 'findSpace',
   displayName: 'Find Space',
   description: 'Finds a space by name.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches the account\'s Paperform spaces by name and returns matching spaces. Use to resolve a space ID from its name before updating it; this is a read-only search and is idempotent.', idempotent: true },
   props: {
     search: Property.ShortText({
       displayName: 'Space Name',

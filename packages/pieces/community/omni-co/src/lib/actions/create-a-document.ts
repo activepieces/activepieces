@@ -9,6 +9,12 @@ export const createADocument = createAction({
   name: 'createADocument',
   displayName: 'Create a document',
   description: 'Creates a new document',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new Omni document (workbook) under a given model, optionally seeding it with query presentations. Use to programmatically provision a document for analysis or dashboards. Not idempotent: each call creates a separate document even with identical inputs.',
+    idempotent: false,
+  },
   props: {
     modelId: modelIdDropdown,
     name: Property.ShortText({

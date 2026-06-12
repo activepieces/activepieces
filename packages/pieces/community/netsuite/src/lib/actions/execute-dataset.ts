@@ -8,6 +8,12 @@ export const executeDataset = createAction({
   auth: netsuiteAuth,
   displayName: 'Execute Dataset',
   description: 'Execute Dataset on NetSuite.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Runs a saved NetSuite dataset (workbook query) by its dataset ID and returns all result rows, auto-paginating across them. Use when a predefined dataset already captures the query you need, rather than writing raw SuiteQL. The dataset ID is selected from the datasets available on the connected account. This is a read-only execution and is safe to repeat.',
+    idempotent: true,
+  },
   props: {
     datasetId: Property.Dropdown({
       auth: netsuiteAuth,

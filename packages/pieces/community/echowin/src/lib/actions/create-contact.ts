@@ -9,6 +9,12 @@ export const createContact = createAction({
   displayName: 'Create Contact',
   description:
     'Create a new contact with optional tags, custom fields, notes, and board assignments',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new contact in the Echowin CRM. Requires a phone number; first/last name, email, and carrier are optional. Use when adding a person to Echowin. Not idempotent — each call creates a separate contact even with identical input.',
+    idempotent: false,
+  },
   props: {
     firstName: Property.ShortText({
       displayName: 'First Name',

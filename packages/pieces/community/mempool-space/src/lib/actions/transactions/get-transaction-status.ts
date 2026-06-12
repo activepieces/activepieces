@@ -7,6 +7,8 @@ export const getTransactionStatus = createAction({
   name: 'get_transaction_status',
   displayName: 'Get Transaction Status',
   description: 'Get the confirmation status of a transaction',
+  audience: 'both',
+  aiMetadata: { description: 'Check whether a transaction is confirmed and, if so, in which block (height, hash, time) by its transaction ID. Pick this for a quick confirmed/unconfirmed answer; use Get Transaction for the full transaction detail. Read-only.', idempotent: true },
   // category: 'Transactions',
   props: {
     txid: Property.ShortText({

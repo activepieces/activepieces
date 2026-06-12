@@ -8,6 +8,12 @@ export const updateList = createAction({
   displayName: 'Update a list',
   description:
     "Update a list's metadata. Provide at least one of: title or description. The list type cannot be changed after creation.",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Update an existing list's title and/or description by ID; at least one field must be supplied. Idempotent: applying the same values repeatedly yields the same result. The list type (people vs company) is fixed at creation and cannot be changed here.",
+    idempotent: true,
+  },
   props: {
     id: Property.ShortText({
       displayName: 'List ID',

@@ -13,6 +13,8 @@ export const bubbleListThingsAction = createAction({
   name: 'bubble_list_things',
   displayName: 'List Thing',
   description: 'List things by type',
+  audience: 'both',
+  aiMetadata: { description: 'Search and list records ("things") of a given data type in a Bubble app via the Bubble Data API, filtering by a single constraint (e.g. equals, text contains, greater/less than, in, empty, geographic_search) on a chosen field and value, with cursor and limit for pagination. Use to find records matching a condition or to page through a type. Read-only and idempotent.', idempotent: true },
   props: {
     typename: bubbleCommon.typename,
     constraint: Property.StaticDropdown({

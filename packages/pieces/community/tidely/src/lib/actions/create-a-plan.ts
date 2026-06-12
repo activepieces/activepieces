@@ -8,6 +8,12 @@ export const createAPlan = createAction({
   name: 'createAPlan',
   displayName: 'Create a Plan',
   description: 'Create a new financial plan in Tidely',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new financial plan entry in Tidely for cash-flow planning, with a name, amount, period (daily/weekly/monthly), type (one-time/recurring), and date; optionally tied to a category and scenario. Use to add planned inflows or outflows to a Tidely forecast. Not idempotent — each call creates a new plan.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Plan Name',

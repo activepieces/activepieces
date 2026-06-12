@@ -7,6 +7,10 @@ export const certificationPartnerActive = createTrigger({
   name: 'certificationPartnerActive',
   displayName: 'Partenariat actif',
   description: "Se déclenche Lorsqu'une demande de partenariat est actif",
+  aiMetadata: {
+    description:
+      "Fires when a certification partnership (partenariat) becomes active in Wedof, meaning the partner organisation is now approved to manage certification folders for the certifier. The payload describes the partnership webhook event and links to the organisation involved.",
+  },
   props: {},
   sampleData: {
     id: 0,

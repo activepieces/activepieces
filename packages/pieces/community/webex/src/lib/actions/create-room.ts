@@ -9,6 +9,12 @@ export const createRoom = createAction({
   displayName: 'Create Room',
   description:
     'Create a new Webex room (space). The authenticated user is automatically added as a member.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new Webex room (space) with the given title, optionally associating it with a team and configuring public/discoverable, locked/moderated, or announcement-only modes. Use it to provision a fresh space for messaging. Each call creates a distinct room, so it is not idempotent; a description is required when making the room public, and announcement-only mode requires the room to be locked.',
+    idempotent: false,
+  },
   props: {
     title: Property.ShortText({
       displayName: 'Room Title',

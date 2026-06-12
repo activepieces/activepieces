@@ -14,6 +14,8 @@ export const updateFlexibilityAssetAction = createAction({
   name: 'updateFlexibilityAsset',
   displayName: 'Resources - Flexibility Assets - Update',
   description: 'Update a flexibility asset.',
+  audience: 'both',
+  aiMetadata: { description: 'Partially update an existing flexibility asset (by ID), changing only its description and/or flexibility integration. Idempotent: applying the same values repeatedly leaves the asset in the same state. Use this to modify an existing asset rather than Create (which would make a duplicate).', idempotent: true },
   props: {
         
   flexibilityAsset: Property.Number({

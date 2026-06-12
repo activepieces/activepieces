@@ -9,6 +9,9 @@ export const fraudulentPaymentDetectedTrigger = createTrigger({
   name: 'fraudulent_payment_detected',
   displayName: 'Fraudulent Payment Detected',
   description: 'Triggers when a new fraudulent payment is detected by Greip',
+  aiMetadata: {
+    description: 'Fires when Greip flags a payment as fraudulent, carrying the customer details, fraud score, and the rules that matched. Delivered via a Greip webhook (fraud_payment event) that must be configured manually in the Greip dashboard.',
+  },
   auth: greipAuth,
   props: {
     webhookInstructions: Property.MarkDown({

@@ -8,6 +8,12 @@ export const getTaskRunAction = createAction({
   name: 'get_task_run',
   displayName: 'Get Task Run Status',
   description: 'Retrieve the current status of a task run by its ID.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Look up the current status of a previously created Parallel research task by its run id, without blocking. Use it to poll whether a task started with Create Task Run is still queued or running before fetching its result. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     run_id: Property.ShortText({
       displayName: 'Run ID',

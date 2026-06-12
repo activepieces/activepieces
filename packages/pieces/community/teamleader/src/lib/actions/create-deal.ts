@@ -7,6 +7,8 @@ export const createDeal = createAction({
     name: 'create_deal',
     displayName: 'Create Deal',
     description: 'Create a new deal/opportunity',
+    audience: 'both',
+    aiMetadata: { description: 'Create a new sales deal/opportunity in Teamleader for a given customer (a company or a contact). Use to open a new pipeline opportunity. Requires a title, a customer type (company or contact), and the matching customer ID; phase, source, department, responsible user, estimated value, and closing date are optional. Not idempotent: each call creates a separate deal.', idempotent: false },
     auth: teamleaderAuth,
     props: {
         title: Property.ShortText({

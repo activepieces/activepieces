@@ -7,6 +7,8 @@ export const encodeVideoAction = createAction({
   name: 'encode_video',
   displayName: 'Encode a Video',
   description: 'Requests a video encoding job on slashed.cloud.',
+  audience: 'both',
+  aiMetadata: { description: 'Submits a new AV1 video encoding/transcoding job to slashed.cloud for a given service ID, pointing at a source file (path or URL in the service\'s configured storage) and a `jobs` array of operations to apply. Use to kick off transcoding; optionally set a callback URL to be POSTed when encoding completes. Not idempotent — each call queues a separate encoding job.', idempotent: false },
   props: {
     service_id: Property.Number({
       displayName: 'Service ID',

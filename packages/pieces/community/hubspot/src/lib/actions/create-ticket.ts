@@ -11,6 +11,8 @@ export const createTicketAction = createAction({
 	name: 'create-ticket',
 	displayName: 'Create Ticket',
 	description: 'Creates a ticket in HubSpot.',
+	audience: 'both',
+	aiMetadata: { description: 'Create a new HubSpot support ticket with a name, pipeline, and pipeline stage plus optional properties. Each call creates a separate ticket even for identical input, so it is not idempotent.', idempotent: false },
 	props: {
 		ticketName: Property.ShortText({
 			displayName: 'Ticket Name',

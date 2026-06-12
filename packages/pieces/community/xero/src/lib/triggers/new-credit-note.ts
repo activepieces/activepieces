@@ -108,6 +108,9 @@ export const xeroNewCreditNote = createTrigger({
   name: 'xero_new_credit_note',
   displayName: 'New Credit Note',
   description: 'Fires when a new credit note is created.',
+  aiMetadata: {
+    description: 'Fires when a new credit note is created in the connected Xero organisation. Polls the Xero CreditNotes endpoint and emits each credit note the first time its CreditNoteID is seen, optionally filtered by type (ACCRECCREDIT sales credit / ACCPAYCREDIT supplier credit), status (DRAFT, AUTHORISED, PAID, VOIDED), contact, reference, or date range. Each item is a full credit note record. Represents a newly added credit note, not subsequent edits.',
+  },
   props: {
     tenant_id: props.tenant_id,
     types: Property.StaticMultiSelectDropdown({

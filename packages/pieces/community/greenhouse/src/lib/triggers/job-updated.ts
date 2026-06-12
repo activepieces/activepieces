@@ -86,6 +86,10 @@ export const jobUpdatedTrigger = createTrigger({
   name: 'job_updated',
   displayName: 'Job Updated',
   description: 'Triggers when an existing job is updated.',
+  aiMetadata: {
+    description:
+      'Fires when an existing job in Greenhouse is modified, representing any change to its details, status, or openings. Polls jobs by their updated timestamp, so the same job can fire again each time it changes.',
+  },
   props: {},
   sampleData: {
     id: 6404,

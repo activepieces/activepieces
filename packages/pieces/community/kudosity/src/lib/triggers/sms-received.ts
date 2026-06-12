@@ -6,6 +6,10 @@ export const smsReceived = createTrigger({
   name: 'smsReceived',
   displayName: 'SMS received',
   description: 'Triggered when an inbound SMS is received',
+  aiMetadata: {
+    description:
+      'Fires when an inbound SMS is received on a Kudosity number (an SMS_INBOUND event), representing a reply or incoming message from a recipient.',
+  },
   props: {},
   sampleData: {
     event_type: 'SMS_INBOUND',

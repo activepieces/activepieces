@@ -9,6 +9,12 @@ export const listConversations = createAction({
   name: 'listConversations',
   displayName: 'List Conversations',
   description: 'List conversations with optional filters.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'List conversations, optionally filtered by channel type, assistant, customer phone, WhatsApp sender phone, or external identifier, with cursor-based pagination. Use to find a conversation or its UUID; to read one thread\'s messages use Get Conversation. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: famulorCommon.listConversationsProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, famulorCommon.listConversationsSchema);

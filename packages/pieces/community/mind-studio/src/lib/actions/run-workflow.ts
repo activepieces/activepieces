@@ -7,6 +7,11 @@ export const runWorkflowAction = createAction({
   name: 'run_workflow',
   displayName: 'Run Workflow',
   description: 'Run a workflow from your MindStudio app and start a thread.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Executes a MindStudio app workflow to get an AI result, identified by App ID (and optionally a specific workflow name within the app). Pass input as key-value variables; optionally supply a callback URL to receive the result asynchronously instead of inline. Use when an agent needs to invoke a prebuilt MindStudio AI app. Not idempotent: each call starts a new thread/execution and may incur billing cost.',
+    idempotent: false,
+  },
   props: {
     appId: Property.ShortText({
       displayName: 'App ID',

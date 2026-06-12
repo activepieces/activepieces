@@ -8,6 +8,12 @@ export const mollieSearchPayment = createAction({
   name: 'search_payment',
   displayName: 'Search Payment',
   description: 'Retrieve all payments created with the current website profile',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists payments for the connected Mollie profile, paginated with an optional cursor (from payment ID), limit, sort direction, and profile filter. Use to look up existing payments or page through payment history. Idempotent: read-only listing with no side effects.',
+    idempotent: true,
+  },
   props: {
     from: Property.ShortText({
       displayName: 'From Payment ID',

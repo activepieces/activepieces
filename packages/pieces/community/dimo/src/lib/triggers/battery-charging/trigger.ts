@@ -18,6 +18,10 @@ export const batteryChargingTrigger = createTrigger({
 	name: 'battery-is-charging-trigger',
 	displayName: 'Battery is Charging Trigger',
 	description: 'Triggers when vehicle battery charging status changes (True/False).',
+	aiMetadata: {
+		description:
+			"Fires via DIMO webhook when a monitored vehicle's traction-battery charging status matches the selected state (charging = true, or not charging = false). Each event represents a single charging-status telemetry signal and includes the vehicle token ID, timestamp, a boolean isCharging flag, and a CHARGING/NOT CHARGING label. Use to detect when a vehicle starts or stops charging.",
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {
 		vehicleTokenIds: Property.Array({

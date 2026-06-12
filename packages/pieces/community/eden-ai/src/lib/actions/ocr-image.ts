@@ -254,6 +254,12 @@ export const ocrImageAction = createAction({
   auth: edenAiAuth,
   displayName: 'Extract Text in Image (OCR)',
   description: 'Extract text from images (OCR) using Eden AI. Supports multiple providers, languages, and bounding box coordinates.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Run OCR on an image or document referenced by URL via Eden AI, routed to a chosen provider, returning the extracted text plus bounding-box coordinates. Use it to pull raw text out of an image or scanned file. Requires a provider and a valid file URL; language defaults to auto-detection. Read-only extraction with no side effect, so it is safe to repeat.',
+    idempotent: true,
+  },
   props: {
     provider: Property.Dropdown({
       auth: edenAiAuth,

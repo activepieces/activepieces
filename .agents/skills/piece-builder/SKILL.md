@@ -287,12 +287,12 @@ Full patterns and examples: read `output-quality.md`
 
 ---
 
-## AI-Ready Metadata (Optional)
+## AI-Ready Metadata (Required on New Actions & Triggers)
 
-- **`audience`** (actions only): `'human' | 'ai' | 'both'` — fence an action to one surface. Default is both.
-- **`aiMetadata`**: `{ description?, idempotent? }` — agent-facing description and safe-retry hint.
+- **`audience`** (actions only): `'human' | 'ai' | 'both'` — written explicitly on every action (`'both'` for normal integration actions; `'human'` for LLM-wrappers/utilities). Downstream filters only see it when physically present.
+- **`aiMetadata`**: `{ description, idempotent }` on every action, `{ description }` on every trigger — agent-facing description (what + when-to-pick + key constraint) and safe-retry hint derived from `run()`.
 
-Skip both unless deliberately tuning for agents. Full guidance: read `ai-metadata.md`
+The catalog is fully curated; a new action or trigger without these is a regression. Writing rules, `idempotent` derivation, factory gotchas: read `ai-metadata.md`
 
 ---
 
@@ -304,6 +304,7 @@ Skip both unless deliberately tuning for agents. Full guidance: read `ai-metadat
 4. **Always provide `sampleData`** on triggers — even `{}`.
 5. **Build AND lint must both pass** — lint failures (unused imports, `any`, unused vars) block CI even when build is green.
 6. **Bump version on every existing-piece change** — see Versioning above. Skipping means flows never get your fix.
+7. **AI metadata on every new action & trigger** — explicit `audience` + `aiMetadata { description, idempotent }` on actions, `aiMetadata { description }` on triggers. See `ai-metadata.md`.
 
 ---
 

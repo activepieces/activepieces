@@ -13,6 +13,8 @@ export const reportsUninvoiced = createAction({
   auth: harvestAuth,
   displayName: 'Uninvoiced Report',
   description: 'Uninvoiced hours and expenses for all billable projects',
+  audience: 'both',
+  aiMetadata: { description: 'Returns a report of uninvoiced hours and expenses across all billable projects in a Harvest account for a given date range; optionally include fixed-fee projects. Use to find work that has not yet been billed. Requires both From and To dates (YYYY-MM-DD). Read-only and idempotent.', idempotent: true },
   props: {
     from: Property.ShortText({
       description: 'Only report on time entries and expenses with a spent_date on or after the given date. (YYYY-MM-DD)',

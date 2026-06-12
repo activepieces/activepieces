@@ -10,6 +10,12 @@ export const getJobResults = createAction({
   name: 'getJobResults',
   displayName: 'Get job results',
   description: 'Get all results for a specific job',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves all output records produced by a specific Captain Data job (a single past run of a workflow), identified by its workflow UID and job UID. Use this to read the data a launched workflow has gathered. Read-only and idempotent; results are not paginated.',
+    idempotent: true,
+  },
   auth: captainDataAuth,
   props: {
     workflow: workflowProp,

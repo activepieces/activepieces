@@ -3,7 +3,6 @@ import {
   ActionReceiptEvent,
   BatchProgressData,
   omit,
-  ToolApprovalRequestEvent,
 } from '@activepieces/shared';
 import { StoreApi, create } from 'zustand';
 
@@ -39,7 +38,6 @@ function isNotDismissed(
 
 export type ToolCallMeta = {
   batchProgress?: BatchProgressData;
-  approvalRequest?: ToolApprovalRequestEvent;
   actionPreview?: ActionPreviewEvent;
   actionReceipt?: ActionReceiptEvent;
 };
@@ -117,21 +115,6 @@ function selectActiveDisplayTool({
   return isNotDismissed(part, state) ? part : null;
 }
 
-function selectPendingPlanApproval({
-  state,
-  lastAssistantMessage,
-}: {
-  state: ChatStoreState;
-  lastAssistantMessage: ChatUIMessage | undefined;
-}): AnyToolPart | null {
-  const part = chatPartUtils.findLastToolPart({
-    message: lastAssistantMessage,
-    predicate: (name, p) =>
-      name === 'ap_request_plan_approval' && p.state === 'input-available',
-  });
-  return isNotDismissed(part, state) ? part : null;
-}
-
 function selectPendingActionPreview({
   state,
   lastAssistantMessage,
@@ -150,32 +133,6 @@ function selectPendingActionPreview({
   if (!isNotDismissed(part, state)) return null;
   const toolCallId = chatPartUtils.getToolCallId(part);
   return state.toolCallMeta[toolCallId]?.actionPreview ?? null;
-}
-
-function selectPendingMcpApproval({
-  state,
-  lastAssistantMessage,
-}: {
-  state: ChatStoreState;
-  lastAssistantMessage: ChatUIMessage | undefined;
-}): { toolCallId: string; toolName: string; displayName: string } | null {
-  const part = chatPartUtils.findLastToolPart({
-    message: lastAssistantMessage,
-    predicate: (_name, p) => {
-      if (p.state !== 'input-available') return false;
-      const id = chatPartUtils.getToolCallId(p);
-      return !!id && !!state.toolCallMeta[id]?.approvalRequest;
-    },
-  });
-  if (!isNotDismissed(part, state)) return null;
-  const toolCallId = chatPartUtils.getToolCallId(part);
-  const meta = state.toolCallMeta[toolCallId]?.approvalRequest;
-  if (!meta) return null;
-  return {
-    toolCallId,
-    toolName: meta.toolName,
-    displayName: meta.displayName,
-  };
 }
 
 function selectActiveQuestions({
@@ -237,11 +194,7 @@ function selectHasBlockingCard({
       if (state.dismissedGateIds[id]) return false;
       if (chatPartUtils.isDisplayTool(name) && name !== 'ap_show_quick_replies')
         return true;
-      if (name === 'ap_request_plan_approval') return true;
-      return (
-        !!state.toolCallMeta[id]?.approvalRequest ||
-        !!state.toolCallMeta[id]?.actionPreview
-      );
+      return !!state.toolCallMeta[id]?.actionPreview;
     },
   });
   return part !== null;
@@ -259,8 +212,6 @@ function selectBatchProgress({
 
 export const chatStoreSelectors = {
   activeDisplayTool: selectActiveDisplayTool,
-  pendingPlanApproval: selectPendingPlanApproval,
-  pendingMcpApproval: selectPendingMcpApproval,
   pendingActionPreview: selectPendingActionPreview,
   activeQuestions: selectActiveQuestions,
   hasActiveForm: selectHasActiveForm,

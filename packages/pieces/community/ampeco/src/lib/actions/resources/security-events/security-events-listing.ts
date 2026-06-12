@@ -15,6 +15,8 @@ export const securityEventsListingAction = createAction({
   name: 'securityEventsListing',
   displayName: 'Resources - Security Events - Security Events Listing',
   description: 'Get all Security Events.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists charge-point security events (firmware updates, reboots, tamper detection, etc.) in AMPECO, optionally filtered by event type, charge point, or a timestamp range. Use to audit or monitor device security activity; with no filters it returns all events, and enabling Paginate Results walks every page rather than a single capped page. Read-only and idempotent.', idempotent: true },
   props: {
         
   filter__type: Property.StaticDropdown({

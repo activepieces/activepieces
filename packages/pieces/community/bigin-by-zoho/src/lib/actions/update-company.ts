@@ -14,6 +14,8 @@ export const updateCompany = createAction({
   displayName: 'Update Company',
   description:
     'Updates an existing Company and prepopulates its fields for editing.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing company (account) record in Bigin CRM, identified by selecting the company; its current fields are prepopulated and any you set are overwritten (owner, tags, billing address, and module-defined fields). Use to modify an organization that already exists. Idempotent: re-sending the same field values leaves the record in the same state.', idempotent: true },
   props: {
     companyId: Property.Dropdown({
       auth: biginAuth,

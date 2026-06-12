@@ -27,6 +27,9 @@ export const fountainApplicantWebhook = createTrigger({
   name: 'applicant_webhook',
   displayName: 'Applicant Webhook',
   description: 'Triggers when Fountain sends applicant webhook events',
+  aiMetadata: {
+    description: 'Fires when a Fountain automation sends an applicant webhook event (e.g. an applicant is created or their status/stage changes), per the conditions configured on the Fountain automation. The event payload represents the applicant. Requires a webhook to be set up in Fountain pointing at this trigger\'s URL.',
+  },
   props: {
     setup: Property.MarkDown({
       value: setupMarkdown,

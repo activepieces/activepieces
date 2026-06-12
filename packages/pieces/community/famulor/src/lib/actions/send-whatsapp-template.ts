@@ -8,6 +8,8 @@ export const sendWhatsAppTemplate = createAction({
   name: 'sendWhatsAppTemplate',
   displayName: 'Send WhatsApp Template Message',
   description: 'Send an approved WhatsApp template message via a Famulor sender.',
+  audience: 'both',
+  aiMetadata: { description: 'Send a pre-approved WhatsApp Business template message to a recipient phone number through a specific Famulor sender, filling any template variables. Pick when initiating outbound WhatsApp contact; requires a sender_id and template_id that already exist on the account. Not idempotent — each call dispatches a new message.', idempotent: false },
   props: famulorCommon.sendWhatsAppTemplateProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, famulorCommon.sendWhatsAppTemplateSchema);

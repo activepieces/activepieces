@@ -9,6 +9,12 @@ export const getJobProfile = createAction({
   displayName: 'Get Job Profile',
   description:
     'Get structured data of a job posting (2 credits)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieve full structured data for a single job posting from its professional-network job URL. Read-only and safe to retry. Use when you have a specific job URL; to discover job postings for a company use Search Company Jobs first.',
+    idempotent: true,
+  },
   props: {
     url: Property.ShortText({
       displayName: 'Job URL',

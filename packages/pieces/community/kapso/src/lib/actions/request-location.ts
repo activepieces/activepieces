@@ -8,6 +8,11 @@ export const requestLocation = createAction({
   name: 'request_user_location',
   displayName: 'Request User Location',
   description: 'Send a location request message to a WhatsApp user.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Sends an interactive prompt asking a WhatsApp user to share their current location, with a body text explaining the request. Use to collect a location from the recipient; to share a location you already have, use Send Location instead. Each call delivers a new request message, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     businessAccountId: businessAccountIdProp,
     phoneNumberId: phoneNumberIdDropdown,

@@ -9,6 +9,12 @@ export const createCertificationFolder = createAction({
   name: 'createCertificationFolder',
   displayName: "Créer un dossier de certification hors CPF",
   description: "Permet de créer un nouveau dossier de certification",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Create a new non-CPF Wedof certification folder linking an attendee to a certification, with funding type, registration initiative, access modality, tags, and custom metadata. Pick this to register a candidate for a certification outside the CPF channel. Each call creates a distinct folder, so it is not idempotent. Requires the certification's certifInfo and the attendee's id.",
+    idempotent: false,
+  },
   props: {
     certifInfo: Property.ShortText({
       displayName: 'N° du certification',

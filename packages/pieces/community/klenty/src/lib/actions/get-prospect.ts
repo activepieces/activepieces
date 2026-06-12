@@ -7,6 +7,12 @@ export const getProspectAction = createAction({
   name: 'get_prospect',
   displayName: 'Get Prospect by Email',
   description: 'Find a prospect by email address in Klenty.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up a single Klenty prospect by exact email address and returns their record, throwing an error if no prospect matches. Use to read or verify a prospect before updating or enrolling them. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: klentyAuth,
   props: {
     email: Property.ShortText({

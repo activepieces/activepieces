@@ -8,6 +8,12 @@ export const findOrCreateCandidateAction = createAction({
   displayName: 'Find or Create Candidate',
   description:
     'Searches for a candidate by email address. If no match is found, creates a new candidate profile instead.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up a candidate by exact email and returns the existing match if found, otherwise creates a new candidate from the supplied name and details. Prefer this over Create Candidate when the person may already exist, to avoid duplicates. Idempotent — keyed on email, so repeating with the same email returns the same candidate rather than creating another; first and last name are required for the create path.',
+    idempotent: true,
+  },
   auth: greenhouseAuth,
   props: {
     email: Property.ShortText({

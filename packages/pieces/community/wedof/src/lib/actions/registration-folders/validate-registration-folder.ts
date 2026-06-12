@@ -8,6 +8,12 @@ export const validateRegistrationFolder = createAction({
   name: 'validateRegistrationFolder',
   displayName: 'Valider le dossier de formation',
   description: "Passer l'état du dossier de formation à l'état validé",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Transitions a training registration folder into the 'validated' state, optionally supplying total training duration and weekly intensity. Not idempotent: it advances the folder's lifecycle and should be called once. The duration field is mandatory for France Travail (Pôle Emploi) funded folders.",
+    idempotent: false,
+  },
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de formation',

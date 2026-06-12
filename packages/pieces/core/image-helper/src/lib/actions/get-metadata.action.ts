@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import * as ExifReader from 'exifreader';
 
 export const getMetaData = createAction({
+  audience: 'human',
   name: 'get_meta_data',
   description: 'Gets metadata from an image',
   displayName: 'Get image metadata',

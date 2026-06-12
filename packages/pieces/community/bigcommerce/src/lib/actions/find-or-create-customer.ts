@@ -7,6 +7,12 @@ export const findOrCreateCustomer = createAction({
   name: 'findOrCreateCustomer',
   displayName: 'Find or Create Customer',
   description: 'Finds or creates a customer',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up a BigCommerce customer by email (and phone if given) and returns the match if found, otherwise creates a new customer from the supplied details. Use this instead of Create Customer when the customer may already exist, to avoid duplicate-email errors. Idempotent: repeated calls match the same existing record rather than creating duplicates.',
+    idempotent: true,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

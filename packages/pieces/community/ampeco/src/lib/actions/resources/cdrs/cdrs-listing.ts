@@ -15,6 +15,8 @@ export const cdrsListingAction = createAction({
   name: 'cdrsListing',
   displayName: 'Resources - Cdrs - Listing',
   description: 'Get all CDRs.',
+  audience: 'both',
+  aiMetadata: { description: 'List charge detail records (CDRs), with optional filters by start/end time, received/sent time, roaming operator or platform, credit, local vs received, and delivery response. Read-only and idempotent. Enable the Paginate Results option to fetch across pages up to Per page total; otherwise a single page (max 100) is returned. Use cdrRead when you already know a CDR id.', idempotent: true },
   props: {
         
   filter__startDateTimeFrom: Property.DateTime({

@@ -14,6 +14,8 @@ export const parkingSpaceUpdateOccupancyStatusAction = createAction({
   name: 'parkingSpaceUpdateOccupancyStatus',
   displayName: 'Actions - Parking Spaces - Update Occupancy Status',
   description: 'Parking Space / Update occupancy status.',
+  audience: 'both',
+  aiMetadata: { description: 'Set a parking space\'s occupancy status to "available" or "occupied" by its numeric ID. Use to report whether an EV parking bay is currently free or taken. Idempotent: re-applying the same status is a no-op.', idempotent: true },
   props: {
         
   parkingSpace: Property.Number({

@@ -27,6 +27,12 @@ export const listOrders = createAction({
   displayName: 'List Orders',
   description:
     'Get orders, optionally filtered by status, customer, or creation date. Returns up to 500 orders (5 pages of 100).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists orders (up to 500). Use to browse or search orders: leave filters blank for all, or narrow by order state, customer merchant id, or creation date. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     state: Property.StaticDropdown<string>({
       displayName: 'Status (filter)',

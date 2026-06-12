@@ -21,6 +21,12 @@ export const createTaskAction = createAction({
   name: 'create_task',
   displayName: 'Create Task',
   description: 'Create a new task on a box.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new task (a to-do item) attached to a specific box, with task text and an optional due date and assignee emails. Use when an agent needs to add a follow-up or action item to a Streak record; requires the box key and task text. Not idempotent: each call creates another task on the box.',
+    idempotent: false,
+  },
   props: {
     pipelineKey: pipelineDropdown,
     boxKey: boxDropdown,

@@ -8,6 +8,10 @@ export const certificationFolderToretake = createTrigger({
   displayName: 'Dossier de certification à repasser',
   description:
     "Se déclanche lorsqu'un dossier de certification est prét à repasser",
+  aiMetadata: {
+    description:
+      "Fires when a Wedof certification folder (dossier de certification) transitions to the 'to retake' (à repasser) state, meaning the candidate is set to retake the certification exam. Emits the full certification-folder record.",
+  },
   props: {},
   sampleData: {
     attendeeLink: 'https://test.wedof.fr/candidat-1234-123456789',

@@ -25,6 +25,11 @@ export const createMultipleTimeEntriesAction = createAction({
   displayName: 'Create Multiple Time Entries',
   description:
     'Creates time entries (working time or absence) across multiple days in Beebole.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Logs the same number of hours on each of several dates in Beebole, in one of two modes: working time against a chosen subproject, or an absence of a chosen type (e.g. vacation, sick leave). Use to bulk-log time across a date range; per-date failures are collected rather than aborting unless continue-on-error is disabled. Not idempotent: each call appends new time entries, so repeating it duplicates them.',
+    idempotent: false,
+  },
   props: {
     entryType: Property.StaticDropdown({
       displayName: 'Entry Type',

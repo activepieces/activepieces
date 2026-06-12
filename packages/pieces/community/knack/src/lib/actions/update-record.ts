@@ -14,6 +14,11 @@ export const updateRecordAction = createAction({
   name: 'update_record',
   displayName: 'Update Record',
   description: 'Updates an existing record.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Updates an existing record in a chosen Knack object (table), identified by its record ID, applying the supplied field values keyed by Knack field IDs. Use when modifying a known row. Requires a valid record ID; a missing ID returns a not-found error. Idempotent: re-applying the same field values to the same record yields the same result.',
+    idempotent: true,
+  },
   props: {
     object: objectDropdown,
     recordId: Property.ShortText({

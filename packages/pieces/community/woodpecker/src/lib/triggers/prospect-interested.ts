@@ -7,6 +7,9 @@ export const prospectInterested = createTrigger({
   name: 'prospect_interested',
   displayName: 'Prospect Interested',
   description: 'Triggers when a prospect is marked as interested',
+  aiMetadata: {
+    description: 'Fires when a prospect is categorized as INTERESTED in Woodpecker. Represents a positive-intent signal for a single prospect, useful for routing hot leads.',
+  },
   props: {},
   sampleData: {
     method: 'prospect_interested',

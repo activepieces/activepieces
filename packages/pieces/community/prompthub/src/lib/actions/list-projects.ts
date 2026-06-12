@@ -8,6 +8,8 @@ export const listProjects = createAction({
   name: 'list_projects',
   displayName: 'List Projects',
   description: 'List PromptHub projects for a team. Returns information about each project\'s head revision and groups.',
+  audience: 'both',
+  aiMetadata: { description: 'List the prompt projects belonging to a PromptHub team, each with its head revision and group assignments. Use this to discover available projects and their IDs before reading a head or running a prompt; optional group/model/provider filters narrow the results. Read-only and idempotent. Requires the numeric team ID.', idempotent: true },
   props: listProjectsProps,
   auth: prompthubAuth,
   async run({ auth, propsValue }) {

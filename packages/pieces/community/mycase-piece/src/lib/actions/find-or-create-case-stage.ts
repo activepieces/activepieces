@@ -7,6 +7,8 @@ export const findOrCreateCaseStage = createAction({
   name: 'find_or_create_case_stage',
   displayName: 'Find or Create Case Stage',
   description: 'Finds a case stage by name or creates a new one if it does not exist',
+  audience: 'both',
+  aiMetadata: { description: 'Resolve a MyCase case stage by exact (case-insensitive) name, creating it if no match exists, and return the stage. Use to guarantee a named stage is present without risking duplicates. Idempotent: repeated calls with the same name return the existing stage rather than creating another. Use Find Case Stage instead for a pure read with no creation.', idempotent: true },
   props: {
     name: Property.ShortText({
       displayName: 'Case Stage Name',

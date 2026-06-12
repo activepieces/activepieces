@@ -9,6 +9,8 @@ export const createTextToSpeech = createAction({
     name: 'create_text_to_speech',
     displayName: 'Create Text-to-Speech',
     description: 'Convert text into speech using a specified voice, language, gender, and age group.',
+    audience: 'both',
+    aiMetadata: { description: 'Synthesizes spoken-voice audio from text via Camb.AI text-to-speech, polling until the task completes and writing the resulting WAV to a file. Requires a language and a voice_id (both selected from Camb.AI dropdowns); optionally tune gender and age. Use for spoken narration/dialogue; for non-speech sound effects use Create Text-to-Sound instead. Not idempotent: each call starts a new synthesis task and produces a new audio file.', idempotent: false },
     props: {
         text: Property.LongText({
             displayName: 'Text',

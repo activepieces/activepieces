@@ -10,6 +10,10 @@ export const taskCompleted = createTrigger({
   name: 'task_completed',
   displayName: 'Task Completed',
   description: 'Triggers when a task is completed',
+  aiMetadata: {
+    description:
+      'Fires when a worker marks an Onfleet task as successfully completed, meaning the delivery or pickup was fulfilled. Represents the successful end state of a task, useful for triggering confirmation messages, billing, or proof-of-delivery workflows. The payload includes the full task object with completion details such as timestamp, signature, and photos.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   //Create the webhook and save the webhook ID in store for disable behavior

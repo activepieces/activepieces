@@ -8,6 +8,12 @@ export const updateProduct = createAction({
   name: 'Update-product',
   displayName: 'Update a Product',
   description: 'Update a product in your catalog',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Update an existing catalog product in a VTEX store, identified by its product ID. Requires the full set of core fields (name, title, description, brand ID, category ID, department ID) since it replaces the product record. Idempotent: repeating with the same input leaves the product in the same state.',
+    idempotent: true,
+  },
   props: {
     productId: Property.Number({
       displayName: 'Product ID',

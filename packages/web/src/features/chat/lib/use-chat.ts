@@ -10,7 +10,6 @@ import {
   ErrorCode,
   isNil,
   PersistedChatMessage,
-  ToolApprovalRequestEvent,
   ToolProgressEvent,
   tryCatch,
 } from '@activepieces/shared';
@@ -87,15 +86,7 @@ function buildToolCallMetaFromGate(gate: {
       },
     };
   }
-  return {
-    [gate.gateId]: {
-      approvalRequest: {
-        toolCallId: gate.gateId,
-        toolName: gate.toolName,
-        displayName: gate.displayName,
-      },
-    },
-  };
+  return {};
 }
 
 const ALLOWED_MIME_SET: ReadonlySet<string> = new Set(CHAT_ALLOWED_MIME_TYPES);
@@ -255,13 +246,6 @@ export function useAgentChat({
     [store],
   );
 
-  const handleToolApprovalRequest = useCallback(
-    (event: ToolApprovalRequestEvent) => {
-      updateToolCallMeta('approvalRequest', event);
-    },
-    [updateToolCallMeta],
-  );
-
   const handleActionPreview = useCallback(
     (event: ActionPreviewEvent) => {
       updateToolCallMeta('actionPreview', event);
@@ -320,7 +304,6 @@ export function useAgentChat({
   } = useStreamingReducer({
     onTitleUpdate: handleTitleUpdate,
     onToolProgress: handleToolProgress,
-    onToolApprovalRequest: handleToolApprovalRequest,
     onActionPreview: handleActionPreview,
     onActionReceipt: handleActionReceipt,
     onStreamFinished: (convId) => {

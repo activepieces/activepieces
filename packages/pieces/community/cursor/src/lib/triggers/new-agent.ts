@@ -70,6 +70,9 @@ export const newAgentTrigger = createTrigger({
   name: 'new_agent',
   displayName: 'New Agent',
   description: 'Triggers when a new Cursor agent is created or when agent status changes',
+  aiMetadata: {
+    description: 'Fires when a new Cursor cloud agent appears in the account, polling the agent list to detect recently created agents.',
+  },
   type: TriggerStrategy.POLLING,
   props: {},
   sampleData: {

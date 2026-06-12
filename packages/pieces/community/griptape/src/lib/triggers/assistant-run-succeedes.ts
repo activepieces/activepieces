@@ -56,6 +56,10 @@ export const assistantRunSucceedes = createTrigger({
   name: 'assistantRunSucceedes',
   displayName: 'Assistant Run Succeeds',
   description: 'Trigger when an assistant run succeeds',
+  aiMetadata: {
+    description:
+      'Fires when a run for the selected Griptape Cloud assistant completes with status SUCCEEDED. Polls for newly succeeded runs; use when you only want to react to successful assistant runs and ignore failures or cancellations.',
+  },
   props,
   sampleData: {
     assistant_run_id: 'sample-run-id',

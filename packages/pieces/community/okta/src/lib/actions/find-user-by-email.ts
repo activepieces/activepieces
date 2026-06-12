@@ -8,6 +8,8 @@ export const findUserByEmailAction = createAction({
   name: 'find_user_by_email',
   displayName: 'Find User by Email',
   description: 'Look up an Okta user by their email address',
+  audience: 'both',
+  aiMetadata: { description: 'Searches Okta for a user by exact email address and returns the first match. Use as a read-only lookup to resolve an email to an Okta user (e.g. to obtain a user ID before a lifecycle or group action). Idempotent — returns a not-found indicator when no user matches.', idempotent: true },
   props: {
     domain: Property.ShortText({
       displayName: 'Okta Domain',

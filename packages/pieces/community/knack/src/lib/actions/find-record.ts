@@ -14,6 +14,11 @@ export const findRecordAction = createAction({
   name: 'find_record',
   displayName: 'Find Record',
   description: 'Finds a single record using field value.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Looks up a single record in a chosen Knack object (table) by matching one field against a value (exact "is" match), returning the first match or a not-found result. Use to find a record by a known field value rather than its record ID. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     object: objectDropdown,
     fieldId: fieldIdDropdown,

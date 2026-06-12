@@ -9,6 +9,8 @@ export const descriptAgentEditAction = createAction({
   displayName: 'Agent Edit (Underlord)',
   description:
     'Use Descript\'s AI agent "Underlord" to edit an existing project or create a new one with a natural language prompt.',
+  audience: 'both',
+  aiMetadata: { description: 'Starts an asynchronous Descript Underlord AI editing job driven by a natural-language prompt, operating in one of two modes: editing an existing project (optionally targeting a specific composition) or creating a new project from the prompt. Use to apply AI edits like removing filler words, adding studio sound, or assembling highlight reels. Frame the prompt as a single one-shot instruction. Not idempotent: each call queues a new job and returns a job_id to poll for completion.', idempotent: false },
   props: {
     mode: Property.StaticDropdown({
       displayName: 'Mode',

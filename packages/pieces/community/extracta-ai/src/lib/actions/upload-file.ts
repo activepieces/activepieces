@@ -9,6 +9,8 @@ export const uploadFile = createAction({
   name: 'upload_file',
   displayName: 'Upload File',
   description: 'Uploads document for extraction',
+  audience: 'both',
+  aiMetadata: { description: 'Uploads a document file to an already-existing Extracta.ai extraction (identified by extractionId) so it can be processed against that extraction\'s field schema; optionally adds it to a given batch, otherwise a new batch is created. Use this when the extraction config already exists and you only need to feed it another file. Requires a valid extractionId; not idempotent, since each call uploads the file and starts new processing.', idempotent: false },
   props: {
     extractionId: Property.ShortText({
       displayName: 'Extraction ID',

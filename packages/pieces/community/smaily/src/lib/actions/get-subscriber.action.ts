@@ -12,6 +12,12 @@ export const getSubscriberAction = createAction({
   displayName: 'Get Subscriber',
   description:
     'retrieves detailed subscriber information for a given email address.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Look up a single subscriber in a Smaily account by their email address and return their stored details (subscription status and custom fields). Use to check whether a contact exists or to read their current data before acting on it. Read-only and idempotent; requires the exact email.',
+    idempotent: true,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

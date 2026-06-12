@@ -10,6 +10,12 @@ export const checkListMembership = createAction({
   displayName: 'Check list membership',
   description:
     'Check which lists contain the given entities. Returns a map of entity_id to the lists that contain it. Entities not in any list are omitted.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'For up to 1000 entity IDs (all people or all companies), look up which lists each one belongs to. Read-only and idempotent despite using POST. Use to reverse the list-to-members relationship — finding an entity\'s memberships rather than reading a list\'s contents.',
+    idempotent: true,
+  },
   props: {
     entity_ids: Property.Array({
       displayName: 'Entity IDs',

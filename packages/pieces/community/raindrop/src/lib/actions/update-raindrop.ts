@@ -8,6 +8,12 @@ export const updateRaindropAction = createAction({
   name: 'update_raindrop',
   displayName: 'Update Bookmark',
   description: 'Updates the details of an existing bookmark',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing Raindrop.io bookmark identified by its numeric ID, changing any of title, excerpt, note, tags, collection, or favourite flag. Only supplied fields are changed; supplying tags replaces the existing tag list. Idempotent: repeating the same update yields the same final state.',
+    idempotent: true,
+  },
   props: {
     raindrop_id: Property.ShortText({
       displayName: 'Bookmark ID',

@@ -15,6 +15,8 @@ export const partnerInviteCreateAction = createAction({
   name: 'partnerInviteCreate',
   displayName: 'Resources - Partner Invites - Create',
   description: 'Create new invite.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new partner invite in AMPECO for a given partner ID, optionally emailing it to an invitee (email is required unless Send Via Email is false) and setting billing/access option flags. Use to invite someone to a partner; to change an existing invite use the Update action. Not idempotent: each call issues a separate invite (and may send an email), so guard against duplicates.', idempotent: false },
   props: {
         
   partnerId: Property.Number({

@@ -15,6 +15,12 @@ export const getRowByIdAction = createAction({
   displayName: 'Get Row by ID',
   description:
     'Retrieve a single row from a Snowflake table by matching a column value.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up and returns a single row from a Snowflake table where the chosen ID column equals a given value (the first match, LIMIT 1). Use for a targeted point lookup by primary key or unique identifier; for multi-row or condition-based queries use Search Rows. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: snowflakeAuth,
   props: {
     database: snowflakeCommonProps.database,

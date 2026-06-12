@@ -5,6 +5,8 @@ export const getTokenByAddress = createAction({
   name: 'get_token_by_address',
   displayName: 'Get Token by Address',
   description: 'Get token info by its contract address',
+  audience: 'both',
+  aiMetadata: { description: 'Look up the metadata for a single token by its contract address (name, symbol, decimals, type, total supply). Read-only. Use this when you have a specific token contract address; to discover tokens without an address use Get Tokens, and for holder or transfer detail use the dedicated token actions.', idempotent: true },
   // category: 'Tokens',
   props: {
     addressHash: Property.ShortText({

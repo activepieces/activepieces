@@ -8,6 +8,8 @@ export const createBlogPostAction = createAction({
 	name: 'create-blog-post',
 	displayName: 'Create COS Blog Post',
 	description: 'Creates a blog post in you Hubspot COS blog.',
+	audience: 'both',
+	aiMetadata: { description: 'Create a post in a HubSpot CMS (COS) blog with title, slug, body, and featured image, then optionally publish it immediately when Status is set to publish rather than draft. Each call creates a new post, so it is not idempotent.', idempotent: false },
 	props: {
 		contentGroupId: blogUrlDropdown,
 		authorId: blogAuthorDropdown,

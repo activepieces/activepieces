@@ -8,6 +8,11 @@ export const createMemAction = createAction({
   name: 'create_mem',
   displayName: 'Create Mem',
   description: 'Save any content to Mem.ai for intelligent processing and future reference.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Sends raw content (HTML, emails, transcripts, or plain notes) to Mem.ai\'s "mem-it" endpoint, where it is intelligently processed and filed into the knowledge base; optionally accepts processing instructions and background context. Use to capture unstructured material and let Mem decide how to organize it, rather than writing a specific note. Not idempotent: each call ingests the content anew.',
+    idempotent: false,
+  },
   props: {
     input: Property.LongText({
       displayName: 'Input',

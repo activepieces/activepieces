@@ -8,6 +8,8 @@ export const createDiscussionAction = createAction({
   auth: bettermodeAuth,
   displayName: 'Create Discussion Post',
   description: 'Create a new discussion post in a space',
+  audience: 'both',
+  aiMetadata: { description: 'Publishes a new discussion post (title, HTML content, optional comma-separated tags, optional locked flag) into a Bettermode community space identified by its space ID. Use to start a conversation thread programmatically. Not idempotent: each call publishes a separate post.', idempotent: false },
   props: {
     spaceId: Property.Dropdown({
       auth: bettermodeAuth,

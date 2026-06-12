@@ -41,6 +41,10 @@ export const newTag = createTrigger({
   name: 'newTag',
   displayName: 'New Tag',
   description: 'Triggered when a new tag is added',
+  aiMetadata: {
+    description:
+      'Fires when a new tag is added to the AppFollow account. Each event represents a single newly created tag with its name, category, and color.',
+  },
   props,
   sampleData: {
     tag: 't0021',

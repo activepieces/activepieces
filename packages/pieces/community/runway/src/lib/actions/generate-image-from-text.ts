@@ -9,6 +9,8 @@ export const generateImageFromText = createAction({
 	name: 'generate_image_from_text',
 	displayName: 'Generate Image From Text',
 	description: 'Generates an image using a text prompt via Runway\'s AI models',
+	audience: 'both',
+	aiMetadata: { description: 'Submits a text-to-image generation job to Runway and returns the created task ID; the image is produced asynchronously, so poll Get Task Details with that ID to retrieve the result. Choose when an agent needs to create an image from a prompt. Each call starts a new billable generation, so it is not idempotent; the gen4_image_turbo model requires at least one reference image.', idempotent: false },
 	props: {
 		model: Property.StaticDropdown({
 			displayName: 'Model',

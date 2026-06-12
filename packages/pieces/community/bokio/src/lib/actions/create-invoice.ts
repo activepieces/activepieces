@@ -9,6 +9,8 @@ export const createInvoice = createAction({
   name: 'createInvoice',
   displayName: 'Create Invoice',
   description: 'Creates a new draft invoice in Bokio',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new draft invoice in a Bokio company with a single line item. Use to start a new customer invoice; invoice date, due date, and item type are required, and the customer is linked by passing the customer UUID. Not idempotent — each call creates a separate draft invoice.', idempotent: false },
   props: {
     invoiceType: Property.StaticDropdown({
       displayName: 'Invoice Type',

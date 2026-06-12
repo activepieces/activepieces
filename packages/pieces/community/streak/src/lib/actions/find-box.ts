@@ -11,6 +11,12 @@ export const findBoxAction = createAction({
   displayName: 'Find Boxes',
   description:
     'Search boxes by name or query. Returns matching boxes across all pipelines, optionally filtered to one pipeline.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Search for boxes by a text query matched against box name, notes, emails, and text custom fields, returning the matching boxes; by default it spans all pipelines, or it can be restricted to a single pipeline. Use when an agent needs to look up a box by name or content rather than by a known box key. Read-only and idempotent; a search query is required.',
+    idempotent: true,
+  },
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

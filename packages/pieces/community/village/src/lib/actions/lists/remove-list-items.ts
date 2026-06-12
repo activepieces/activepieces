@@ -10,6 +10,12 @@ export const removeListItems = createAction({
   displayName: 'Remove items from list',
   description:
     'Remove items from a list by their item IDs (obtained from get_list). Returns the count of successfully removed items.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Remove up to 100 items from a list by their list-item IDs, which you must first obtain from Get a list (these are not entity/person IDs). Effectively idempotent: removing an item already gone is a no-op rather than an error.',
+    idempotent: true,
+  },
   props: {
     id: Property.ShortText({
       displayName: 'List ID',

@@ -5,6 +5,8 @@ export const search = createAction({
   name: 'search',
   displayName: 'Search',
   description: 'Search for addresses, transactions, blocks, or tokens',
+  audience: 'both',
+  aiMetadata: { description: 'Run a free-text search across the chain for addresses, transactions, blocks, and tokens, returning ranked matches. Pick this when you have a name, symbol, or partial identifier and need to resolve it to an entity; use the dedicated by-hash lookups when you already hold an exact hash. Read-only lookup on eth.blockscout.com.', idempotent: true },
   // category: 'Search',
   props: {
     query: Property.ShortText({

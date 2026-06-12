@@ -8,6 +8,8 @@ export const publishEvent = createAction({
   name: 'publish_event',
   displayName: 'Publish Event',
   description: 'Quickly publish an event.',
+  audience: 'both',
+  aiMetadata: { description: 'Publish an existing draft event on Sessions.us so it becomes live and open for registration, identified by its event id. Use after Create Event when the event should go public. Requires a valid event id; publishing an already-published event has no further effect, so the call is effectively idempotent.', idempotent: true },
   props: {
     event: Property.Dropdown({
       auth: sessionAuth,

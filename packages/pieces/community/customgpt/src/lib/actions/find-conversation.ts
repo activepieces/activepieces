@@ -10,6 +10,12 @@ export const findConversation = createAction({
   displayName: 'Find Conversation',
   description:
     'List and search conversations for an agent with optional filtering',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists conversations for a CustomGPT agent, optionally filtered by name, by which user created them, and by a last-updated cutoff date; with no filters it returns all conversations for the agent. Use to look up a conversation or its session id before sending or exporting messages. Requires the agent project id. Idempotent: read-only search with no side effects.',
+    idempotent: true,
+  },
   props: {
     project_id: projectId,
     name: Property.ShortText({

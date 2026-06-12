@@ -51,6 +51,10 @@ export const newContact = createTrigger({
   name: 'newContact',
   displayName: 'New Contact',
   description: 'Trigger when a new contact is created in Echowin',
+  aiMetadata: {
+    description:
+      'Fires when a new contact is created in the Echowin CRM. Polls for contacts whose creation time is later than the last check, emitting one event per newly created contact.',
+  },
   props: {},
   sampleData: {
     id: '123e4567-e89b-12d3-a456-426614174000',

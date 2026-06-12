@@ -7,6 +7,10 @@ export const newLead = createTrigger({
   name: 'newLead',
   displayName: 'New Lead',
   description: 'Triggers when a new lead is created',
+  aiMetadata: {
+    description:
+      'Fires when a new lead contact is created in the Sperse/Upgrade.chat CRM, delivering the full lead record (personal, business, tracking, application, and classification details). Use it to react to inbound prospects as they enter the CRM.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {

@@ -8,6 +8,8 @@ export const updateFollower = createAction({
   name: 'update_follower',
   displayName: 'Update Follower',
   description: 'Update an existing user (follower), including custom attributes and company associations.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing Frill follower identified by follower ID, changing name or email and merging in custom attributes and company associations; only the fields you set are applied. Use to enrich or correct a known follower. Idempotent: re-running with the same input converges to the same state.', idempotent: true },
   props: {
     follower: frillDropdowns.followerDropdown,
     name: Property.ShortText({

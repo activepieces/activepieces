@@ -39,6 +39,10 @@ export const updatedIssueStatus = createTrigger({
   name: 'updated_issue_status',
   displayName: 'Updated Issue Status',
   description: 'Triggers when an issue status is updated',
+  aiMetadata: {
+    description:
+      "Fires when a Jira issue's status changes (e.g. To Do -> In Progress -> Done), optionally limited to issues matching a JQL filter. Each event represents one issue whose status was updated and includes the issue's current field data. Polling-based; events arrive on the next poll, not instantly.",
+  },
   auth: jiraCloudAuth,
   type: TriggerStrategy.POLLING,
   props: {

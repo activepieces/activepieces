@@ -5,6 +5,8 @@ export const getTokenTransfers = createAction({
   name: 'get_token_transfers',
   displayName: 'Get Token Transfers',
   description: 'Get list of token transfers',
+  audience: 'both',
+  aiMetadata: { description: 'List recent transfers of one token, identified by its contract address, across all holders (newest first). Read-only. Use this to track movement of a specific token over time; for the token transfers inside a single transaction use the Transactions Get Transaction Token Transfers action instead.', idempotent: true },
   // category: 'Tokens',
   props: {
     addressHash: Property.ShortText({
