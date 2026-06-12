@@ -13,6 +13,64 @@ const createEmptyOptions = (message: string) => {
 	};
 };
 
+const createWorkbookDropdown = <R extends boolean>({
+	displayName,
+	description,
+	required,
+}: {
+	displayName: string;
+	description?: string;
+	required: R;
+}) =>
+	Property.Dropdown({
+		displayName,
+		description,
+		refreshers: ['storageSource', 'siteId', 'documentId'],
+		required,
+		auth: excelAuth,
+		options: async ({ auth, storageSource, siteId, documentId }) => {
+			if (!auth) {
+				return createEmptyOptions('please connect your account first.');
+			}
+			if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+				return createEmptyOptions(
+					'please select SharePoint site and document library first.'
+				);
+			}
+
+			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+			const client = createMSGraphClient(auth.access_token, cloud);
+
+			const options: DropdownOption<string>[] = [];
+
+			const drivePath =
+				storageSource === 'onedrive'
+					? '/me/drive'
+					: `/sites/${siteId}/drives/${documentId}`;
+
+			// Drive search can return an empty page that still carries
+			// @odata.nextLink (common on OneDrive personal), so keep following
+			// the link instead of stopping at the first empty page.
+			let response: PageCollection | undefined = await client
+				.api(`${drivePath}/root/search(q='.xlsx')`)
+				.select('id,name')
+				.get();
+
+			while (response) {
+				for (const file of (response.value ?? []) as DriveItem[]) {
+					options.push({ label: file.name!, value: file.id! });
+				}
+				const nextLink = response['@odata.nextLink'];
+				response = nextLink ? await client.api(nextLink).get() : undefined;
+			}
+
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	});
+
 export const commonProps = {
 	storageSource: Property.StaticDropdown({
 		displayName: 'Excel File Source',
@@ -115,52 +173,14 @@ export const commonProps = {
 			};
 		},
 	}),
-	workbookId: Property.Dropdown({
+	workbookId: createWorkbookDropdown({
 		displayName: 'Workbook',
-		refreshers: ['storageSource', 'siteId', 'documentId'],
 		required: true,
-		auth: excelAuth,
-		options: async ({ auth, storageSource, siteId, documentId }) => {
-			if (!auth) {
-				return createEmptyOptions('please connect your account first.');
-			}
-			if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
-				return createEmptyOptions(
-					'please select SharePoint site and document library first.'
-				);
-			}
-
-			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
-			const client = createMSGraphClient(auth.access_token, cloud);
-
-			const options: DropdownOption<string>[] = [];
-
-			const drivePath =
-				storageSource === 'onedrive'
-					? '/me/drive'
-					: `/sites/${siteId}/drives/${documentId}`;
-
-			let response: PageCollection = await client
-				.api(`${drivePath}/root/search(q='.xlsx')`)
-				.select('id,name')
-				.get();
-
-			while (response.value.length > 0) {
-				for (const file of response.value as DriveItem[]) {
-					options.push({ label: file.name!, value: file.id! });
-				}
-				if (response['@odata.nextLink']) {
-					response = await client.api(response['@odata.nextLink']).get();
-				} else {
-					break;
-				}
-			}
-
-			return {
-				disabled: false,
-				options,
-			};
-		},
+	}),
+	destinationWorkbookId: createWorkbookDropdown({
+		displayName: 'Destination Workbook',
+		description: 'The workbook to copy the worksheet into. Leave empty to copy within the source workbook.',
+		required: false,
 	}),
 	worksheetId: Property.Dropdown({
 		auth: excelAuth,
