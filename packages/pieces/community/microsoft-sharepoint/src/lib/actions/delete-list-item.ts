@@ -9,6 +9,11 @@ export const deleteListItemAction = createAction({
   name: 'microsoft_sharepoint_delete_list_item',
   displayName: 'Delete List Item',
   description: 'Deletes an existing item from a list.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Permanently removes an item from a SharePoint list, identified by its list item ID on a given site. Use to clean up or retract a specific row. Destructive but idempotent: once the item is gone, repeating the call with the same ID leaves the list unchanged.',
+    idempotent: true,
+  },
   props: {
     siteId: microsoftSharePointCommon.siteId,
     listId: microsoftSharePointCommon.listId,

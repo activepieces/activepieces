@@ -9,6 +9,12 @@ export const getCompanyLookup = createAction({
   displayName: 'Look Up Company',
   description:
     'Resolve a Company Profile from company name, domain, or location (2 credits)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Resolve a single company's professional-network URL/profile from its name or domain (one of the two is required), optionally narrowed by country. Read-only and safe to retry. Use this as the entry point when you only know a company name or domain; to find many companies by attributes use Search Companies, and to enrich an already-known URL use Get Company Profile.",
+    idempotent: true,
+  },
   props: {
     company_name: Property.ShortText({
       displayName: 'Company Name',

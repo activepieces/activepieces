@@ -7,6 +7,8 @@ export const findProductAction = createAction({
   name: 'find_product',
   displayName: 'Find Product',
   description: 'Search for products by name or code',
+  audience: 'both',
+  aiMetadata: { description: 'Searches Bexio products/articles by internal name or internal code with operators such as contains or equals, with ordering and paging. Use to resolve a product to its id before referencing it on an invoice/order position or before Update Product. Read-only and idempotent.', idempotent: true },
   props: {
     search_criteria: Property.Array({
       displayName: 'Search Criteria',

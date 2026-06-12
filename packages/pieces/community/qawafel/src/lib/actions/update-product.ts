@@ -10,6 +10,12 @@ export const updateProduct = createAction({
   displayName: 'Update Product',
   description:
     "Edit a product's price, description, or active state. Only the fields you fill in are updated — leave the rest blank to keep them unchanged.",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing product identified by its Qawafel product id, applying a partial patch of price, English/Arabic description, or active state — fields left blank are unchanged. Use when modifying a known product rather than creating one. Idempotent: re-applying the same patch leaves the product in the same state.',
+    idempotent: true,
+  },
   props: {
     product_id: qawafelProps.productDropdown({
       displayName: 'Product to update',

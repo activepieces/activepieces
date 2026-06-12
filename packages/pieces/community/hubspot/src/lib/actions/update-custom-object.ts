@@ -14,6 +14,8 @@ export const updateCustomObjectAction = createAction({
 	name: 'update-custome-object',
 	displayName: 'Update Custom Object',
 	description: 'Updates a custom object in Hubspot.',
+	audience: 'both',
+	aiMetadata: { description: 'Updates properties on an existing custom-object record identified by its custom object type and record ID, then returns the refreshed record. Use to modify a known custom-object record; for standard CRM objects use the dedicated update actions instead. Idempotent: applying the same property values converges to the same record state.', idempotent: true },
 	props: {
 		customObjectType: customObjectDropdown,
 		customObjectId: Property.ShortText({

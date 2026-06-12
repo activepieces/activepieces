@@ -7,6 +7,12 @@ export const listLiveOrdersAction = createAction({
   name: 'quickzu_list_live_orders',
   displayName: 'List Live Orders',
   description: 'Retrieves live orders of store.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves currently active (live) orders for a Quickzu store, grouped by order status, with a per-status limit on how many are returned. Use to monitor in-progress orders rather than full history. Idempotent read-only lookup.',
+    idempotent: true,
+  },
   props: {
     limit: Property.Number({
       displayName:

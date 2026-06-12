@@ -9,6 +9,12 @@ export const findSimilarCreator = createAction({
   displayName: 'Find Similar Creator',
   description:
     'Find creators similar to a given creator handle or profile URL with optional filters',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Discover creators/influencers similar to a seed creator on a given platform, identifying that seed by URL, username, or platform user ID (set via the filter key). Choose this for lookalike discovery once you have a reference creator. Optionally narrow results by follower-count range, engagement-rate range, verified-only, or excluding private profiles, and cap the result count (1-50). This is a read-only search and is idempotent.',
+    idempotent: true,
+  },
   props: {
     platform: Property.StaticDropdown({
       displayName: 'Platform',

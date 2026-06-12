@@ -8,6 +8,8 @@ export const findOrCreateLabel = createAction({
   name: 'find_or_create_label',
   displayName: 'Find or Create Label',
   description: 'Finds a label by searching, or creates one if it doesn\'t exist',
+  audience: 'both',
+  aiMetadata: { description: 'Ensure a label with a given name exists in a MeisterTask project: returns the existing label if one matches the name exactly (case-insensitive), otherwise creates it with the optional hex color. Use to obtain a label without duplicating it. Idempotent on the name — repeat calls return the existing label rather than creating another. Requires the project and a label name.', idempotent: true },
   props: {
     project: meisterTaskCommon.project,
     name: Property.ShortText({

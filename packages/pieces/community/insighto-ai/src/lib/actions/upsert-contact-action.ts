@@ -6,6 +6,11 @@ export const upsertContactAction = createAction({
   name: 'upsert_contact',
   displayName: 'Upsert Contact',
   description: 'Create or update a contact using email or phone number',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates or updates an Insighto.ai contact, matching on the supplied email or phone number. Use when you need a contact to exist before referencing it elsewhere without checking first. At least one of email or phone number is required. Idempotent: the contact is keyed on email/phone, so repeating with the same input converges to the same record rather than creating duplicates.',
+    idempotent: true,
+  },
   auth: insightoAuth,
   props: {
     first_name: Property.ShortText({

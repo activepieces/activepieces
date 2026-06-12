@@ -7,6 +7,9 @@ export const payerUpdatedTrigger = createTrigger({
   name: 'payer_updated',
   displayName: 'Payer Updated',
   description: 'Triggers when a payer record is updated',
+  aiMetadata: {
+    description: 'Fires when an existing payer (customer/contact) record is modified in Pinch Payments. Use to keep external records in sync when payer details change.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

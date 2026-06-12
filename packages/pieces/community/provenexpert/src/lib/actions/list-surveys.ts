@@ -19,6 +19,8 @@ export const listSurveysAction = createAction({
   name: 'list_surveys',
   displayName: 'List Surveys',
   description: 'Returns all surveys on your ProvenExpert profile with their codes, names, and share links.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists all surveys on the authenticated ProvenExpert profile, including each survey code, name, active state, and share links. Use to discover available surveys or to resolve a survey code needed by the invitation actions. Takes no input; read-only and idempotent.', idempotent: true },
   props: {},
   async run(context) {
     const response = await provenExpertCommon.apiCall<{

@@ -7,6 +7,8 @@ export const lookupPersonEmailAction = createAction({
   name: 'lookup_person_email',
   displayName: 'Lookup Person Email',
   description: 'Lookup the work email address for a LinkedIn person profile.',
+  audience: 'both',
+  aiMetadata: { description: 'Resolve the work email address for a person from their LinkedIn profile URL via Proxycurl. Choose this when you have a profile URL and specifically need a contact email rather than the full profile. Requires the public LinkedIn profile URL; an optional callback URL receives an async completion webhook. Read-only lookup, safe to repeat.', idempotent: true },
   auth: proxycurlAuth,
   props: {
     linkedin_profile_url: Property.ShortText({

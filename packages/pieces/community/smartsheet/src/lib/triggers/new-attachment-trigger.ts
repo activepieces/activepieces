@@ -16,6 +16,9 @@ export const newAttachmentTrigger = createTrigger({
 	name: 'new_attachment_',
 	displayName: 'New Attachment Added',
 	description: 'Triggers when a new attachment is added to a row or sheet.',
+	aiMetadata: {
+		description: 'Fires when a new attachment (file or link) is added within the configured Smartsheet sheet, delivering the attachment event with fetched full attachment details. The attachment may be parented to a row, comment, or the sheet itself.',
+	},
 	props: {
 		sheet_id: smartsheetCommon.sheet_id(),
 	},

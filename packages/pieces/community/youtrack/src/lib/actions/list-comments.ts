@@ -8,6 +8,8 @@ export const listCommentsAction = createAction({
   name: 'list_comments',
   displayName: 'List Comments',
   description: 'Lists all comments on an issue with author details and timestamps.',
+  audience: 'both',
+  aiMetadata: { description: 'List the comments on an issue, given its ID, with author and timestamp details (capped by an optional limit). Use to read the discussion on a known issue. Read-only and idempotent.', idempotent: true },
   props: {
     issue: issueDropdown,
     limit: Property.Number({ displayName: 'Limit', description: 'Max comments. Default 100.', required: false, defaultValue: 100 }),

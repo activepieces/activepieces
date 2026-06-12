@@ -7,6 +7,8 @@ export const getReport = createAction({
   name: 'getreport_task',
   displayName: 'Get Report',
   description: 'Gets report data from InvoiceNinja.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches report data from Invoice Ninja for the selected report type (currently invoices) over a fixed last-7-days range, capped by a max-results limit. Use to pull aggregated invoice report data. Read-only and idempotent.', idempotent: true },
 
   props: {
     reportType: Property.StaticDropdown({

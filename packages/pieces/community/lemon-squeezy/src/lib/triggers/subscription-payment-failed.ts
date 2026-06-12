@@ -7,6 +7,9 @@ export const subscriptionPaymentFailedTrigger = createTrigger({
   name: 'subscription_payment_failed',
   displayName: 'Subscription Payment Failed',
   description: 'Triggers when a subscription renewal payment fails',
+  aiMetadata: {
+    description: 'Fires when a subscription renewal payment in Lemon Squeezy fails. Represents the failed subscription invoice; use to handle dunning, notify the customer, or restrict access.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     store_id: createStoreDropdownProperty()

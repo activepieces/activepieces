@@ -78,6 +78,9 @@ export const newOrderTrigger = createTrigger({
   name: 'new_order',
   displayName: 'New Order',
   description: 'Triggers when an Order is created or updated with the chosen status',
+  aiMetadata: {
+    description: 'Fires when a sales order is created or its updated timestamp changes in Bexio, optionally filtered to a chosen order status. Emits each matching order with its document number, contact, totals (gross, net, taxes), valid-from date, and status. Use to react to new or modified orders.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     status_id: Property.Dropdown({

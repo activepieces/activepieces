@@ -7,6 +7,10 @@ export const newLead = createTrigger({
   name: 'newLead',
   displayName: 'New Lead',
   description: 'Triggers when a new lead is created',
+  aiMetadata: {
+    description:
+      'Fires when a new lead is created in the Linka/Sperse CRM (via the LeadCreated webhook), delivering the lead\'s full contact, business, tracking, and application details. Use to start a flow whenever a new lead enters the CRM.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {

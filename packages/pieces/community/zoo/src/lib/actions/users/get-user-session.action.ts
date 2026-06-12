@@ -6,6 +6,8 @@ export const getUserSessionAction = createAction({
   name: 'get_user_session',
   displayName: 'Get User Session',
   description: 'Get details about a specific user session',
+  audience: 'both',
+  aiMetadata: { description: 'Look up details of a specific Zoo user session by its session token. Read-only and repeatable. Requires the session token of the session you want to inspect.', idempotent: true },
   auth: zooAuth,
   // category: 'Users',
   props: {

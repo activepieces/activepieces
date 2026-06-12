@@ -13,6 +13,8 @@ export const chargePointVendorDeleteAction = createAction({
   name: 'chargePointVendorDelete',
   displayName: 'Resources - Charge Point Vendors - Delete',
   description: 'Delete a Charge Point Vendor.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete an AMPECO charge-point vendor by its numeric vendor ID. Destructive and cannot be undone; deleting an already-removed vendor will error. Confirm the vendor is no longer referenced before calling.', idempotent: false },
   props: {
         
   vendorId: Property.Number({

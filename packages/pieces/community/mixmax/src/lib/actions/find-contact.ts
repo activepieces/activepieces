@@ -9,6 +9,12 @@ export const findContact = createAction({
   displayName: 'Find Contact',
   description:
     'Search for a contact in Mixmax. [See the documentation](https://developer.mixmax.com/reference/contactsquery)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches Mixmax contacts by a query string (email address or name), which is required. Use to look up an existing contact before acting on it; optionally include Salesforce contacts in the results. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

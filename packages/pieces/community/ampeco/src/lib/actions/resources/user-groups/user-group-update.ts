@@ -14,6 +14,8 @@ export const userGroupUpdateAction = createAction({
   name: 'userGroupUpdate',
   displayName: 'Resources - User Groups - Update',
   description: 'Update a user group.',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing AMPECO user group identified by its numeric ID, setting its name and optional description and partner. Idempotent: applying the same field values repeatedly yields the same state. partnerId can only be changed while the group has no users assigned.', idempotent: true },
   props: {
         
   userGroup: Property.Number({

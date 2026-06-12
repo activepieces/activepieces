@@ -7,6 +7,8 @@ export const getTransactionAction = createAction({
   name: 'get_transaction',
   displayName: 'Get Transaction',
   description: `Get an existing transaction's information.`,
+  audience: 'both',
+  aiMetadata: { description: 'Look up a single payment transaction by its transaction ID within a given order. Read-only and repeatable; use to inspect payment, capture, or refund details when you already know both the order ID and transaction ID.', idempotent: true },
   props: {
     orderId: Property.Number({
       displayName: 'Order',

@@ -8,7 +8,13 @@ export const addProductToDealAction = createAction({
     auth: pipedriveAuth,
     name: 'add-product-to-deal',
     displayName: 'Add Product to Deal',
-    description: 'Adds a product to a deal.', 
+    description: 'Adds a product to a deal.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Attaches an existing product (by product ID) as a line item on a deal (by deal ID), setting its unit price, quantity, and optional discount and tax. Use when building out the products on a deal; requires both IDs and a price and quantity. Not idempotent: each call adds another line item, so calling it twice attaches the product twice.',
+        idempotent: false,
+    },
     props: {
         dealId: dealIdProp(true),
         productId: productIdProp(true),

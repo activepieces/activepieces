@@ -8,6 +8,8 @@ export const deleteAttachmentAction = createAction({
   name: 'delete_attachment',
   displayName: 'Delete Attachment',
   description: 'Deletes an attachment from an issue.',
+  audience: 'both',
+  aiMetadata: { description: 'Delete a single attachment from an issue, given the issue ID and the attachment database ID (e.g. "134-31", found via List Attachments or Get Issue). Idempotent: deleting an already-removed attachment has no further effect.', idempotent: true },
   props: {
     issue: issueDropdown,
     attachmentId: Property.ShortText({

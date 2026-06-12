@@ -2,6 +2,8 @@ import { Node, useKeyPress, useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import {
   Fullscreen,
+  GalleryHorizontalEnd,
+  GalleryVerticalEnd,
   Hand,
   Map,
   Minus,
@@ -25,7 +27,7 @@ import { NoteDragOverlayMode } from '../state/notes-state';
 
 import { flowCanvasConsts } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
-import { ApNode } from './utils/types';
+import { ApNode, CanvasOrientation } from './utils/types';
 const verticalPaddingOnFitView = 100;
 const calculateNodePositionInCanvas = (
   canvasWidth: number,
@@ -97,13 +99,58 @@ const CanvasControls = ({
     });
   }, [zoomOut]);
 
+  const canvasOrientation = useBuilderStateContext(
+    (state) => state.canvasOrientation,
+  );
   const handleFitToView = useCallback(
-    (isInitialRenderCall: boolean) => {
+    ({
+      isInitialRenderCall,
+      orientation,
+    }: {
+      isInitialRenderCall: boolean;
+      orientation?: CanvasOrientation;
+    }) => {
+      const effectiveOrientation = orientation ?? canvasOrientation;
       const nodes = getNodes();
       if (nodes.length === 0) return;
+      if (effectiveOrientation === 'horizontal') {
+        const stepNodeSize = flowCanvasConsts.STEP_NODE_SIZE.horizontal;
+        const minX = Math.min(...nodes.map((node) => node.position.x));
+        const maxX = Math.max(...nodes.map((node) => node.position.x));
+        const minY = Math.min(...nodes.map((node) => node.position.y));
+        const maxY =
+          Math.max(...nodes.map((node) => node.position.y)) +
+          stepNodeSize.height;
+        const graphWidth = Math.max(maxX - minX, stepNodeSize.width);
+        const graphHeight = Math.max(maxY - minY, stepNodeSize.height);
+        const zoomRatio = Math.min(
+          Math.max(
+            Math.min(canvasWidth / graphWidth, canvasHeight / graphHeight),
+            0.9,
+          ),
+          1.25,
+        );
+        setViewport(
+          {
+            x:
+              -minX * zoomRatio +
+              verticalPaddingOnFitView * zoomRatio +
+              stepNodeSize.width,
+            y: canvasHeight / 2 - ((minY + maxY) / 2) * zoomRatio,
+            zoom: zoomRatio,
+          },
+          {
+            duration: isInitialRenderCall ? 0 : 500,
+          },
+        );
+        return;
+      }
       const graphHeight = flowCanvasUtils.calculateGraphBoundingBox({
-        nodes: nodes as ApNode[],
-        edges: [],
+        graph: {
+          nodes: nodes as ApNode[],
+          edges: [],
+        },
+        orientation: effectiveOrientation,
       }).height;
       const zoomRatio = Math.min(
         Math.max(canvasHeight / graphHeight, 0.9),
@@ -126,13 +173,13 @@ const CanvasControls = ({
         },
       );
     },
-    [getNodes, canvasHeight, setViewport, canvasWidth],
+    [getNodes, canvasHeight, setViewport, canvasWidth, canvasOrientation],
   );
 
   useEffect(() => {
     if (!hasCanvasBeenInitialised) return;
 
-    handleFitToView(true);
+    handleFitToView({ isInitialRenderCall: true });
 
     if (selectedStep) {
       adjustViewportForSelectedStep(selectedStep);
@@ -173,16 +220,23 @@ const CanvasControls = ({
   const [noteDragOverlayMode, setDraggedNote] = useBuilderStateContext(
     (state) => [state.noteDragOverlayMode, state.setDraggedNote],
   );
-  const [setPanningMode, panningMode, showMinimap, setShowMinimap, readonly] =
-    useBuilderStateContext((state) => {
-      return [
-        state.setPanningMode,
-        state.panningMode,
-        state.showMinimap,
-        state.setShowMinimap,
-        state.readonly,
-      ];
-    });
+  const [
+    setPanningMode,
+    panningMode,
+    showMinimap,
+    setShowMinimap,
+    readonly,
+    setCanvasOrientation,
+  ] = useBuilderStateContext((state) => {
+    return [
+      state.setPanningMode,
+      state.panningMode,
+      state.showMinimap,
+      state.setShowMinimap,
+      state.readonly,
+      state.setCanvasOrientation,
+    ];
+  });
   const spacePressed = useKeyPress('Space');
   const shiftPressed = useKeyPress('Shift');
   const isInGrabMode =
@@ -224,9 +278,41 @@ const CanvasControls = ({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => handleFitToView(false)}
+            onClick={() => handleFitToView({ isInitialRenderCall: false })}
           >
             <Fullscreen className="size-4" />
+          </Button>
+        </CanvasButtonWrapper>
+        <CanvasButtonWrapper
+          tooltip={
+            canvasOrientation === 'horizontal'
+              ? t('Vertical layout')
+              : t('Horizontal layout')
+          }
+        >
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              const newOrientation =
+                canvasOrientation === 'horizontal' ? 'vertical' : 'horizontal';
+              setCanvasOrientation(newOrientation);
+              // the canvas remounts when the orientation changes, give it a frame to sync nodes before fitting
+              setTimeout(
+                () =>
+                  handleFitToView({
+                    isInitialRenderCall: false,
+                    orientation: newOrientation,
+                  }),
+                100,
+              );
+            }}
+          >
+            {canvasOrientation === 'horizontal' ? (
+              <GalleryVerticalEnd className="size-4" />
+            ) : (
+              <GalleryHorizontalEnd className="size-4" />
+            )}
           </Button>
         </CanvasButtonWrapper>
         <div>

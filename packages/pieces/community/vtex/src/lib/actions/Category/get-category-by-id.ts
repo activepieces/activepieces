@@ -7,6 +7,12 @@ export const getCategoryById = createAction({
   name: 'get-category-by-id',
   displayName: 'Get Category',
   description: "Find a Category in your catalog by it's id",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieve a VTEX store catalog category. Pass a category ID to fetch that single category, or omit it to fetch all categories. Use to look up a category or resolve a category ID needed when creating products. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     categoryId: Property.Number({
       displayName: 'Category ID',

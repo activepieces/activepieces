@@ -9,6 +9,12 @@ export const getIncident = createAction({
   name: 'get_incident',
   displayName: 'Get Incident',
   description: 'Retrieve a PagerDuty incident by ID.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches a single PagerDuty incident by its incident ID. Use when you already have the ID and need the full current details of one incident. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     incidentId: incidentIdProp,
   },

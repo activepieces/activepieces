@@ -8,6 +8,8 @@ export const create_visits = createAction({
     auth: simplirouteAuth,
     displayName: 'Create Visits',
     description: 'Create visits. Multiple visits can be created in a single request.',
+    audience: 'both',
+    aiMetadata: { description: 'Create one or more delivery visits (stops) in a single batch request, each requiring a title, address, planned date, and load. Not idempotent: re-running creates duplicate visits, so do not retry blindly. To change an existing visit use the update actions instead.', idempotent: false },
     props: {
         visits: Property.Array({
             displayName: 'visits',

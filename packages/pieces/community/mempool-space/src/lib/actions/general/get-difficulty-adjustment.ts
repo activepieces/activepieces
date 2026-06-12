@@ -7,6 +7,8 @@ export const getDifficultyAdjustment = createAction({
     name: 'get_difficulty_adjustment',
     displayName: 'Get Difficulty Adjustment',
     description: 'Returns details about Bitcoin difficulty adjustment',
+    audience: 'both',
+    aiMetadata: { description: 'Read the current Bitcoin mining difficulty-adjustment status: progress through the current 2016-block epoch, estimated next-retarget difficulty change, and time/blocks remaining. Pick this for network-wide difficulty/retarget questions, not for a specific block or transaction. Read-only and takes no input.', idempotent: true },
     // category: 'General',
     props: {},
     async run() {

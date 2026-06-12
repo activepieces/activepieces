@@ -13,6 +13,8 @@ export const unsubscribeMultipleAction = createAction({
   auth: sendyAuth,
   displayName: 'Unsubscribe Multiple Lists',
   description: 'Unsubscribe a subscriber from multiple lists',
+  audience: 'both',
+  aiMetadata: { description: 'Marks the same subscriber, identified by email, as unsubscribed across several Sendy lists in one call, iterating over each selected list while keeping the records. Use to opt a contact out of multiple lists at once; for a single list use Unsubscribe. Requires the lists and a valid email; repeating the call on already-unsubscribed lists has no further effect, so it is idempotent.', idempotent: true },
   props: {
     lists: Property.MultiSelectDropdown({
       auth: sendyAuth,

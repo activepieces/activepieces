@@ -21,6 +21,8 @@ export const createEventAction = createAction({
   name: 'create_event',
   displayName: 'Create Event',
   description: 'Books a meeting on a scheduling link at a specific time slot.',
+  audience: 'both',
+  aiMetadata: { description: 'Books a new SavvyCal meeting on a given scheduling link for an attendee at a specific start/end time. Use to schedule a booking on the attendee\'s behalf; the chosen time must match an available slot on the link (call Get Available Slots first if unsure). Requires the link id, attendee name/email, and time zone in Olson format. Not idempotent — each call creates a separate booking.', idempotent: false },
   props: {
     team_id: Property.Dropdown({
       auth: savvyCalAuth,

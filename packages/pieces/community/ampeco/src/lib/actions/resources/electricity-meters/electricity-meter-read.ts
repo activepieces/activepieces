@@ -15,6 +15,8 @@ export const electricityMeterReadAction = createAction({
   name: 'electricityMeterRead',
   displayName: 'Resources - Electricity Meters - Read',
   description: 'Get information for an electricity meter by ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch the details of a single AMPECO electricity meter by its numeric ID. Read-only and idempotent. Pick this when you already have a meter ID; to browse all meters, use the electricity meters listing action.', idempotent: true },
   props: {
         
   electricityMeter: Property.Number({

@@ -9,6 +9,12 @@ export const updateContact = createAction({
   name: 'updateContact',
   displayName: 'Update Contact',
   description: 'Update an existing contact in Front.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Update fields (name, description, avatar URL, links) of an existing Front contact identified by contact ID; only the fields you supply change, and this does not modify handles. Use to edit core details; manage handles with "Add Contact Handle"/"Remove Contact Handle". Idempotent: re-applying the same values yields the same result.',
+    idempotent: true,
+  },
   props: {
     contact_id: contactIdDropdown,
     name: Property.ShortText({

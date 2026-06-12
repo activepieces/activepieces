@@ -8,6 +8,11 @@ export const listCampaigns = createAction({
   name: 'list_campaigns',
   displayName: 'List Campaigns',
   description: 'List all campaigns in your PromoteKit account.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Retrieve all campaigns (up to 100) in the PromoteKit account, each with its commission type and amount. Use to discover campaign IDs and commission terms, e.g. before assigning an affiliate to a campaign. Read-only and safe to repeat.',
+    idempotent: true,
+  },
   props: {},
   async run(context) {
     const response = await promotekitApiCall<{

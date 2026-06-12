@@ -10,6 +10,12 @@ export const reportInvoiceToTaxAuthority = createAction({
   displayName: 'Report Invoice to Tax Authority',
   description:
     'Submit an invoice to the tax authority (ZATCA in Saudi Arabia, FTA in UAE). The invoice must already be finalized in Wafeq before you can report it.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Submits an already-finalized Wafeq invoice to the government tax authority (ZATCA in Saudi Arabia, FTA in UAE) for e-invoicing compliance. Choose this after an invoice has been created and moved to Finalized status; it will fail on draft invoices. Requires the invoice ID. Not idempotent — it is a reporting submission against the external authority.',
+    idempotent: false,
+  },
   props: {
     invoice: wafeqProps.invoiceDropdown({
       description:

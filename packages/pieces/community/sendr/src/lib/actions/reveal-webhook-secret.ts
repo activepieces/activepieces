@@ -8,6 +8,8 @@ export const revealWebhookSecret = createAction({
   name: 'reveal_webhook_secret',
   displayName: 'Reveal Webhook Secret',
   description: 'Reveals the secret key for a registered webhook so you can verify incoming signatures.',
+  audience: 'both',
+  aiMetadata: { description: 'Returns the signing secret of a registered webhook, identified by its URL, so incoming webhook signatures can be verified. Use List Webhooks to find the URL. Read-only lookup; repeating the call returns the same secret.', idempotent: true },
   props: {
     webhook: webhookDropdown,
   },

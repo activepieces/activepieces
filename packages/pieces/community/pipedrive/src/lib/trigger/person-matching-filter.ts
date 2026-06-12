@@ -82,6 +82,10 @@ export const personMatchingFilterTrigger = createTrigger({
 	name: 'person-matching-filter',
 	displayName: 'Person Matching Filter',
 	description: 'Triggers when a person newly matches a Pipedrive filter for the first time.',
+	aiMetadata: {
+		description:
+			'Fires when a person (contact) record first becomes a member of a selected Pipedrive filter — that is, the person newly satisfies the filter conditions. Polls the filter and emits each person the first time it appears; does not re-fire for people already in the filter.',
+	},
 	type: TriggerStrategy.POLLING,
 	props: {
 		filterId: filterIdProp('people', true),

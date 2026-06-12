@@ -19,6 +19,9 @@ export const newSuccessfulCollectionViaLegalOfficer = createTrigger({
     name: 'new_successful_collection_via_legal_officer',
     displayName: 'New Successful Collection via Legal Officer',
     description: "Triggers when a debt is paid to the Legal Officer responsible for the collection campaign.",
+    aiMetadata: {
+      description: 'Fires when a debt is paid to the legal officer handling the collection campaign, carrying the debtor/invoice details, amount, and payment timestamp. Use to react to a settlement collected through the legal channel.',
+    },
     auth: respaidAuth,
     props: {},
     sampleData: {

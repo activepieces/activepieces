@@ -7,6 +7,9 @@ export const newMessage = createTrigger({
 	name: 'new_message',
 	displayName: 'New Message',
 	description: 'Fires when a new message is posted (in project messages or discussions).',
+	aiMetadata: {
+		description: 'Fires when a message is posted in Teamwork project messages or discussions (MESSAGE.CREATED webhook), optionally filtered to a single project. Each event represents one newly posted message.',
+	},
 	auth: teamworkAuth,
 	props: {
 		projectId: Property.Dropdown({

@@ -15,6 +15,8 @@ export const updateContactAction = createAction({
   name: 'update_contact',
   displayName: 'Update Contact',
   description: 'Updates an existing contact.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing Kommo CRM contact identified by contact ID, changing only the supplied fields (name, email/phone, responsible user) and adding or removing tags. Use to amend a known contact; resolve the contact ID first via Find Contact if unknown. Idempotent — repeating the same update yields the same contact state, though tag add/delete depends on the current tag set.', idempotent: true },
   props: {
     contactId: contactDropdown,
     name: Property.ShortText({

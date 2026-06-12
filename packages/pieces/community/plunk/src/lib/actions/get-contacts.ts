@@ -23,6 +23,12 @@ export const getContacts = createAction({
   name: 'get_all_contacts',
   displayName: 'Get All Contacts',
   description: 'Retrieve every contact in your Plunk project.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches the full list of contacts in the Plunk project, automatically paging through all results. Use it to enumerate or scan contacts when you do not already have a specific contact ID. Takes no input. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {},
   async run(context) {
     const items: unknown[] = [];

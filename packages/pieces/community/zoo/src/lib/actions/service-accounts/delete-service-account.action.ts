@@ -6,6 +6,8 @@ export const deleteServiceAccountAction = createAction({
   name: 'delete_service_account',
   displayName: 'Delete Service Account',
   description: 'Delete a service account from your organization',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently remove the organization service account identified by its token. Use to revoke a service account; destructive. Not strictly idempotent: a first call deletes it and a repeat may error if the token no longer exists.', idempotent: false },
   auth: zooAuth,
   // category: 'Service Accounts',
   props: {

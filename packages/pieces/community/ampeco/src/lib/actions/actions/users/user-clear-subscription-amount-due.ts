@@ -19,6 +19,8 @@ export const userClearSubscriptionAmountDueAction = createAction({
   displayName: 'Actions - Users - Clear Subscription Amount Due',
   description:
     "Clear a user's subscription amount due. Any unsettled transactions related to the user's current subscription — such as fees and charging sessions will be set to an amount of 0.This operation is irreversible.",
+  audience: 'both',
+  aiMetadata: { description: "Zero out all unsettled amounts due (fees and charging sessions) on a user's current subscription. This is irreversible and only affects the user's current subscription. Effectively idempotent: once cleared the amount due is 0, so re-running has no further effect.", idempotent: true },
   props: {
     user: Property.Number({
       displayName: 'User',

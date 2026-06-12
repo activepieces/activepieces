@@ -13,6 +13,11 @@ export const createUpdateRecordsBulk = createAction({
   name: 'create_update_records_bulk',
   displayName: 'Create / Update Records From Array',
   description: 'Bulk create or update multiple records based on a merge key',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Upsert many Quickbase records in one call from an array, chunked in batches of 1000. A merge-behavior mode controls handling of existing rows: overwrite all fields on the matched merge key, update only the provided fields, or always insert new records (no merge). Use for batch imports or syncs. Requires the app, table, merge field, and records array. Idempotent only in the merge modes (keyed on the merge field); the always-create mode inserts new rows on each call and is not idempotent.',
+    idempotent: false,
+  },
   auth: quickbaseAuth,
   props: {
     appId: appIdProp,

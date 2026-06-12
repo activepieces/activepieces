@@ -10,6 +10,12 @@ const cancelSubscriptionAction = createAction({
   name: 'cancel-subscription',
   displayName: 'Cancel Subscription',
   description: 'Cancels a Paddle subscription immediately or at the next billing period.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Cancels a Paddle subscription by ID, applying the cancellation either immediately or at the end of the current billing period via the effective-from option. Use to end a subscription; this changes billing state and is not idempotent (repeating it on an already-canceled subscription will error or re-apply).',
+    idempotent: false,
+  },
   props: {
     subscriptionId: paddleProps.subscription(),
     effectiveFrom: Property.StaticDropdown({

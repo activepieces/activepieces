@@ -7,6 +7,9 @@ export const newLeadTrigger = createTrigger({
   name: 'new_lead',
   displayName: 'New Lead',
   description: 'Triggers when a new lead subscribes',
+  aiMetadata: {
+    description: 'Fires when a new lead signs up in Lightfunnels (the contact/signup webhook event), emitting the new customer/contact record. Use to react to newly captured leads such as CRM sync, welcome emails, or list enrollment.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {

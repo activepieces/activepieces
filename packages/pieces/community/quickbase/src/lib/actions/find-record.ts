@@ -9,6 +9,11 @@ export const findRecord = createAction({
   name: 'find_record',
   displayName: 'Find Record',
   description: 'Search for records in a Quickbase table using filters',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Query records from a Quickbase table, optionally narrowing with filter conditions, sorting, and a max-record cap. With no filters it returns all records (up to the limit); with filters it returns only matching rows. Use to look up or list records before acting on them. Requires the app and table. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: quickbaseAuth,
   props: {
     appId: appIdProp,

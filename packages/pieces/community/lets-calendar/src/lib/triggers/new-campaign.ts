@@ -64,6 +64,9 @@ export const newCampaign = createTrigger({
   name: 'newCampaign',
   displayName: 'New Campaign',
   description: 'Trigger when a new campaign is created',
+  aiMetadata: {
+    description: 'Fires when a new campaign is created in the connected Let\'s Calendar account, polling the campaigns list periodically and emitting each newly seen campaign by its creation time. Each event represents one newly created campaign with its title, subject, schedule, and timezone.',
+  },
   props: {},
   sampleData: {
     campaign_id: 'Q2Q4g1rr333lcxZXkzW4',

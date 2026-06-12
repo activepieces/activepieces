@@ -17,6 +17,9 @@ export const newTimeEntry = createTrigger({
   displayName: 'New Time Entry',
   description:
     'Fires when a new time entry is added (with optional project/task filter).',
+  aiMetadata: {
+    description: 'Fires when a new time entry is created in the configured Toggl Track workspace, delivering the entry (start/stop, duration, description, tags, project/task, billable). Can be narrowed to a specific project and/or task via the optional filters. Delivered via a Toggl webhook the user must set up manually.',
+  },
   props: {
     workspace_id: togglCommon.workspace_id,
     optional_project_id: togglCommon.optional_project_id,

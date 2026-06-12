@@ -46,6 +46,8 @@ const action = () => {
     name: 'zoom_create_meeting', // Must be a unique across the piece, this shouldn't be changed.
     displayName: 'Create Zoom Meeting',
     description: 'Create a new Zoom Meeting',
+    audience: 'both',
+    aiMetadata: { description: 'Schedules a new Zoom meeting on the authenticated user\'s account, returning the meeting ID and join URL. Use to set up a video call; only the topic is required, with optional start time, duration, password, and audio/recording settings. Each call creates a distinct meeting, so it is not idempotent.', idempotent: false },
     props: {
       topic: Property.ShortText({
         displayName: "Meeting's topic",

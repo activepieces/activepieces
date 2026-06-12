@@ -9,6 +9,8 @@ export const createTeam = createAction({
   name: 'create_team',
   displayName: 'Create Team',
   description: 'Create a new team',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new Onfleet team with a name and optional workers, managers, hub, and self-assignment setting. Not idempotent: calling it repeatedly creates duplicate teams. Use update-team to modify an existing team.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

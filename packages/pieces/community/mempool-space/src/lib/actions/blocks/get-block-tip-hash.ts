@@ -7,6 +7,8 @@ export const getBlockTipHash = createAction({
     name: 'get_block_tip_hash',
     displayName: 'Get Block Tip Hash',
     description: 'Returns the hash of the last block',
+    audience: 'both',
+    aiMetadata: { description: 'Get the hash of the current chain-tip (latest) block. Pick this as the starting point for "most recent block" queries, then feed the hash into other block actions. Read-only and takes no input; the result changes as new blocks are mined.', idempotent: true },
     // category: 'Blocks',
     props: {},
     async run() {

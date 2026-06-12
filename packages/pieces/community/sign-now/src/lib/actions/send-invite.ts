@@ -7,6 +7,12 @@ export const sendInviteAction = createAction({
   name: 'send_invite',
   displayName: 'Invite to Sign',
   description: 'Sends an invite to sign an existing document.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends a role-based field invite for an existing SignNow document, emailing each named signer to sign. Use when you already have an uploaded document with defined roles and want recipients to sign. Requires the document ID, the sender email tied to the SignNow account, and one signer entry per role (email, role name, signing order); signers sharing an order sign in parallel. Each call dispatches new invite emails, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     document_id: Property.ShortText({
       displayName: 'Document ID',
