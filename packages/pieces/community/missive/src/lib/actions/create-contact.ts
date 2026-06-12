@@ -8,6 +8,8 @@ export const createContact = createAction({
     name: 'create_contact',
     displayName: 'Create Contact',
     description: 'Add a new contact within a specified contact book',
+    audience: 'both',
+    aiMetadata: { description: 'Create a new contact in a given Missive contact book, optionally with names, phone/email/address infos, and organization/group memberships. Use to add a person to Missive contacts. Not idempotent: each call creates a separate contact even with identical input; to change an existing one use Update Contact.', idempotent: false },
     auth: missiveAuth,
     props: {
         contact_book: contactBookDropdown,

@@ -8,6 +8,12 @@ export const addOrRemoveUserLicenseAction = createAction({
     name: 'add_or_remove_user_license',
     displayName: 'Add or Remove User License',
     description: 'Assigns or removes licenses for a user. Use addLicenses to add (include disabledPlans to disable specific service plans) and removeLicenses to remove by SkuId.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Assigns and/or removes Microsoft 365 license SKUs for an existing user in one call: pass skuId entries to add (optionally with disabledPlans to switch off specific service plans) and SKU ID strings to remove. The user must have a usageLocation set before licenses can be assigned. Not idempotent — removing a license the user does not hold fails, so verify current assignments before retrying.',
+        idempotent: false,
+    },
     props: {
         userId: userDropdown,
         addLicenses: Property.Json({

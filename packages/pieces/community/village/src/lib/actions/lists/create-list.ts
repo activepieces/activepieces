@@ -8,6 +8,12 @@ export const createList = createAction({
   displayName: 'Create a list',
   description:
     'Create a new list to organize people or companies. The creator becomes the list owner. List creation may be limited based on your subscription plan.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new people or company list, making the caller its owner. Not idempotent: each call creates a separate list even with the same title, and the entity type is fixed at creation. Subscription plan limits may cap how many lists can exist.',
+    idempotent: false,
+  },
   props: {
     title: Property.ShortText({
       displayName: 'Title',

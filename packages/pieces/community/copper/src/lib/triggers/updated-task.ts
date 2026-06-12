@@ -9,6 +9,10 @@ export const updatedTask = createTrigger({
   name: 'updatedTask',
   displayName: 'Updated Task',
   description: 'Triggers when a task is updated.',
+  aiMetadata: {
+    description:
+      'Fires when an existing task is modified in Copper CRM (any field change), via a Copper webhook. Emits the updated task record.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,

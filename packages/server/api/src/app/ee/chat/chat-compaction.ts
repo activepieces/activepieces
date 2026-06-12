@@ -9,6 +9,7 @@ const RECENT_WINDOW_RATIO = 0.3
 const CHARS_PER_TOKEN_ESTIMATE = 4
 const MIN_MESSAGES_BEFORE_COMPACTION = 6
 const ESTIMATED_TOKENS_PER_MESSAGE = 200
+const MAX_TOOL_RESULT_CHARS_FOR_SUMMARY = 2_000
 
 const COMPACTION_SYSTEM_PROMPT = readFileSync(
     path.resolve('packages/server/api/src/assets/prompts/chat-compaction-prompt.md'),
@@ -177,7 +178,7 @@ function extractTextContent(message: ModelMessage): string {
             }
             else if (part.type === 'tool-result' && 'output' in part) {
                 const output = typeof part.output === 'string' ? part.output : JSON.stringify(part.output)
-                text += `[Tool result: ${output.slice(0, 500)}]`
+                text += `[Tool result: ${output.slice(0, MAX_TOOL_RESULT_CHARS_FOR_SUMMARY)}]`
             }
         }
     }

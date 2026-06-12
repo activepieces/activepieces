@@ -14,6 +14,8 @@ export const deleteDowntimePeriodNoticeAction = createAction({
   name: 'deleteDowntimePeriodNotice',
   displayName: 'Resources - Downtime Period Notices - Delete',
   description: 'Delete Downtime Period Notice.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete a downtime period notice by its numeric ID. Use when removing a notice; this is destructive and cannot be undone, so confirm the ID first. Re-running after the notice is gone will error.', idempotent: false },
   props: {
         
   notice: Property.Number({

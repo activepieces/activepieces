@@ -8,6 +8,8 @@ export const createPostAction = createAction({
   name: 'create_post',
   displayName: 'Create Post',
   description: 'Creates a new post in FeedHive (draft or scheduled).',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new FeedHive social media post from provided text, either saved as a draft or scheduled for a chosen publish date (set Status to "scheduled" and supply a date/time). Use to author and queue content for one or more connected social accounts. Each call creates a separate post, so it is not idempotent.', idempotent: false },
   props: {
     text: Property.LongText({
       displayName: 'Post Text',

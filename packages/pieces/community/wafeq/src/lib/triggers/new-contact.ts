@@ -58,6 +58,10 @@ export const newContact = createTrigger({
   displayName: 'New Contact',
   description:
     'Fires every time a new customer or supplier is added to your Wafeq address book. Useful for syncing new customers to HubSpot, Mailchimp, or your CRM.',
+  aiMetadata: {
+    description:
+      'Fires when a new contact is added to Wafeq (polling by creation time), representing a newly created customer or supplier. An optional relationship filter can restrict it to only new customers or only new suppliers. Use to sync new contacts into a CRM or mailing list.',
+  },
   props,
   sampleData: {
     id: 'con_xyz789',

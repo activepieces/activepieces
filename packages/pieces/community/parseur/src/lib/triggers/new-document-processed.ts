@@ -9,6 +9,10 @@ export const newDocumentProcessed = createTrigger({
   displayName: 'New Document Processed',
   description:
     'Fires when a new document is successfully processed and parsed by Parseur.',
+  aiMetadata: {
+    description:
+      'Fires when a document in the selected Parseur mailbox is successfully parsed, emitting the document with its extracted/structured fields. Use to react to newly available parsed data.',
+  },
   props: {
     mailboxId: parserDropdown({ required: true }),
   },

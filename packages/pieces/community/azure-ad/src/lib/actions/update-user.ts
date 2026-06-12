@@ -8,6 +8,12 @@ export const updateUserAction = createAction({
     name: 'update_user',
     displayName: 'Update User',
     description: 'Updates an Azure AD user. Only provide fields you want to change.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Updates profile fields (display name, given name/surname, job title, mail, mobile phone, accountEnabled) on an existing Azure AD user; only the supplied fields change, and at least one is required. Idempotent — re-applying the same values leaves the same state. Also the way to disable or re-enable sign-in via accountEnabled without deleting the account.',
+        idempotent: true,
+    },
     props: {
         userId: userDropdown,
         displayName: Property.ShortText({

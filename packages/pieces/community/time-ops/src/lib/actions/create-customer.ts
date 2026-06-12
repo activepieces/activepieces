@@ -8,6 +8,8 @@ export const createCustomer = createAction({
   name: 'create_customer',
   displayName: 'Create Customer',
   description: 'Creates a customer.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new customer record in TimeOps, optionally with a name, VAT number, and default hourly rate. Use when onboarding a client into TimeOps before creating projects or registrations for them. Not idempotent: each call creates another customer with a new id even if the fields are identical.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

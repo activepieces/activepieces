@@ -6,13 +6,18 @@ import {
   HttpRequest,
 } from '@activepieces/pieces-common';
 import { stableDiffusionAuth } from '../auth';
-import { StableDiffusionAuthType } from '../../index';
 import { kebabCase } from '@activepieces/shared';
 
 export const textToImage = createAction({
   name: 'textToImage',
   displayName: 'Text to Image',
   description: '',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Generate one or more images from a text prompt by calling a Stable Diffusion web UI (AUTOMATIC1111) txt2img endpoint, selecting the checkpoint model and optionally passing raw API parameters (sampler, steps, dimensions, etc.) as key/value overrides. Use when an agent needs to synthesize new imagery from a description against a self-hosted Stable Diffusion server. Requires the server base URL via auth and a model from the connected instance; each call produces fresh images, so it is not idempotent.',
+    idempotent: false,
+  },
   auth: stableDiffusionAuth,
   props: {
     prompt: Property.LongText({

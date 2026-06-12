@@ -5,6 +5,7 @@ You MUST preserve:
 - Names of entities: flows, pieces, connections, tables, projects (with IDs where available)
 - Connections used so far (piece name → connection label → externalId → projectId)
 - Tool call outcomes: what was called and the final result (omit intermediate failed attempts — only note if a tool ultimately failed)
+- What was already looked up and what exists vs. does NOT exist (e.g. tables/sheets/flows already listed, with their names/IDs) so the assistant does not re-list or re-query things it already checked
 - The current task or question being worked on
 - Any errors or issues encountered and their resolution status
 

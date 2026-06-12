@@ -11,6 +11,8 @@ export const findCustomObjectAction = createAction({
 	name: 'find-custom-object',
 	displayName: 'Find Custom Object',
 	description: 'Finds a custom object by searching.',
+	audience: 'both',
+	aiMetadata: { description: 'Search records of a selected HubSpot custom object type by one or two property/value pairs (matched with equality) and return the matches. Read-only and repeatable. Requires choosing the custom object type; use Create Custom Object to add a new record.', idempotent: true },
 	props: {
 		customObjectType: customObjectDropdown,
 		firstSearchPropertyName: customObjectPropertiesDropdown(

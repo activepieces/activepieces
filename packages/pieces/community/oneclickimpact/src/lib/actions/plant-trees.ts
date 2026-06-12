@@ -8,6 +8,8 @@ export const plantTrees = createAction({
   name: 'plantTrees',
   displayName: 'Plant Trees',
   description: 'Plant trees for yourself or on behalf of the customer',
+  audience: 'both',
+  aiMetadata: { description: 'Purchases tree planting through 1ClickImpact for a given number of trees (1 to 10,000,000), optionally attributed to a named customer email/name. Use to fund reforestation as part of a transaction or fulfillment flow. Not idempotent — each call records a new planting, so repeating it plants additional trees.', idempotent: false },
   props: {
     amount: Property.Number({
       displayName: 'Amount',

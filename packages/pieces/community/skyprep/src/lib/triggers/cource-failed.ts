@@ -54,6 +54,10 @@ export const courceFailed = createTrigger({
   name: 'courceFailed',
   displayName: 'Course Failed',
   description: 'Trigger when a user fails a course',
+  aiMetadata: {
+    description:
+      'Fires when a user fails a course in SkyPrep, emitting that failed course-progress record. Scoped to a single course when a course ID is supplied, or watches failures across all courses when left empty.',
+  },
   props,
   sampleData: {
     id: 21869069,

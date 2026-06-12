@@ -8,6 +8,11 @@ export const deleteRecord = createAction({
   name: 'delete_record',
   displayName: 'Delete Record',
   description: 'Delete a record from a Quickbase table',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Permanently delete a single record from a Quickbase table, matched by its record ID. Use when removing one specific row. Requires the app, table, and record ID. Idempotent: re-running after the record is gone deletes nothing further (numberDeleted will be 0), but the destructive removal cannot be undone.',
+    idempotent: true,
+  },
   auth: quickbaseAuth,
   props: {
     appId: appIdProp,

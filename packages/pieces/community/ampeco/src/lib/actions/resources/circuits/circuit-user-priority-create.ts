@@ -15,6 +15,8 @@ export const circuitUserPriorityCreateAction = createAction({
   name: 'circuitUserPriorityCreate',
   displayName: 'Resources - Circuits - Circuit User Priority Create',
   description: 'Create a circuit\'s user priority.',
+  audience: 'both',
+  aiMetadata: { description: 'Add a user-priority rule to an AMPECO load-balancing circuit, weighting how much power a user group or partner gets during charging (priority 1 = baseline, 2 = twice as important, 0.5 = half). Not idempotent: each call creates a new priority rule. Use the circuit user priorities listing to inspect existing rules.', idempotent: false },
   props: {
         
   circuit: Property.Number({

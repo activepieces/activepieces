@@ -8,6 +8,12 @@ export const searchPeople = createAction({
   displayName: 'Search People',
   description:
     'Search for people using natural language queries. Pass your search text in "prompt" (e.g. "engineers at Google"). Supports cursor-based pagination and structured filters.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Read-only discovery search for people by a natural-language prompt and/or structured filters (at least one required); scope controls whether you search your network, everyone (global), or a caller-supplied candidate list. Use when you do not already have a specific profile URL — for a known person use Enrich Person instead. Cursor-paginated and safe to retry.',
+    idempotent: true,
+  },
   props: {
     prompt: Property.LongText({
       displayName: 'Prompt',

@@ -8,6 +8,8 @@ export const createMemory = createAction({
   name: 'create_memory',
   displayName: 'Create Memory',
   description: 'Upload memories to your AI assistant stack.',
+  audience: 'both',
+  aiMetadata: { description: 'Append a plain-text memory to the Personal AI memory stack so the assistant can recall it later, tagging it with a required source name and optional tags/domain/timestamp. Use when you want to persist a fact or note for future retrieval. Each call adds a new memory entry, so it is not idempotent.', idempotent: false },
   // category: 'Memory',
   props: {
     text: Property.LongText({

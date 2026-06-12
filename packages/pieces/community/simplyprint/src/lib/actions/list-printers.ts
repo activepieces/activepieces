@@ -10,6 +10,12 @@ export const listPrintersAction = createAction({
   name: 'list_printers',
   displayName: 'List Printers',
   description: 'List every printer in your SimplyPrint account with current status.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Read-only listing of printers in the account with current status. By default it walks all pages and returns every printer; pass a page number to fetch just that single page instead. Pick this to discover printer IDs and live state (e.g. to find idle printers before starting a job); it never modifies anything.',
+    idempotent: true,
+  },
   props: {
     page: Property.Number({
       displayName: 'Page (optional)',

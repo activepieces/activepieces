@@ -9,6 +9,10 @@ export const transactionCompleted = createTrigger({
   displayName: 'Transaction Completed',
   description:
     'Triggers when a transaction completes successfully — send a receipt or update records.',
+  aiMetadata: {
+    description:
+      'Fires on the Paddle transaction.completed event, when a transaction is fully paid and finalized. Represents a successful payment/collection for a customer, useful for sending receipts or updating records.',
+  },
   props: {},
   sampleData: {
     event_id: 'evt_01abc126',

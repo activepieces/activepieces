@@ -21,6 +21,8 @@ export const chargePointEvseConnectorUpdateAction = createAction({
   name: 'chargePointEvseConnectorUpdate',
   displayName: 'Resources - Charge Points - Charge Point Evse Connector Update',
   description: "Update a charge point evse's connector.",
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing connector on a charge point EVSE (by charge point ID, EVSE ID, and connector ID), changing its type, format, or status. Only the fields you supply are changed. Use the connector-create action to add a new connector rather than to modify one.', idempotent: false },
   props: {
     chargePoint: Property.Number({
       displayName: 'Charge Point',

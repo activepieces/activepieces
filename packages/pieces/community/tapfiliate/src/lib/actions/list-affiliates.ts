@@ -11,6 +11,8 @@ export const listAffiliatesAction = createAction({
   name: 'list_affiliates',
   displayName: 'List Affiliates',
   description: 'Lists affiliates with optional Tapfiliate filters.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists affiliates in the Tapfiliate account, paginating through all results. With no filters it returns every affiliate; supplying any of email, referral code, click ID, source ID, parent affiliate ID, or affiliate group ID narrows to matching records. Use it to discover affiliates or resolve an affiliate ID from an email. Read-only and idempotent.', idempotent: true },
   props: {
     clickId: Property.ShortText({
       displayName: 'Click ID',

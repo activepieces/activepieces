@@ -48,6 +48,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
     step,
     applyOperation,
     readonly,
+    canvasOrientation,
   ] = useBuilderStateContext((state) => [
     state.selectedStep,
     state.selectedBranchIndex,
@@ -56,7 +57,9 @@ const BranchLabel = (props: BaseBranchLabel) => {
     flowStructureUtil.getStep(props.sourceNodeName, state.flowVersion.trigger),
     state.applyOperation,
     state.readonly,
+    state.canvasOrientation,
   ]);
+  const isHorizontal = canvasOrientation === 'horizontal';
 
   const isOnSuccessBranch =
     props.stepLocationRelativeToParent ===
@@ -94,7 +97,10 @@ const BranchLabel = (props: BaseBranchLabel) => {
 
   return (
     <div
-      className="h-full flex items-center justify-center "
+      className={cn('h-full flex items-center', {
+        'justify-center': !isHorizontal,
+        'justify-end': isHorizontal,
+      })}
       onContextMenu={(e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -102,7 +108,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
       }}
     >
       <div
-        className="bg-builder-background"
+        className="bg-builder-background pointer-events-auto"
         style={{
           paddingTop: flowCanvasConsts.LABEL_VERTICAL_PADDING / 2 + 'px',
           paddingBottom: flowCanvasConsts.LABEL_VERTICAL_PADDING / 2 + 'px',

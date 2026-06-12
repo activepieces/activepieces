@@ -8,6 +8,8 @@ export const findRowsByQuery = createAction({
   name: 'find_rows_by_query',
   displayName: 'Find Row',
   description: 'Finds rows in a specific sheet or across all accessible sheets using text queries with advanced filtering options.',
+  audience: 'both',
+  aiMetadata: { description: 'Runs a text search in Smartsheet and returns matching items. The search scope switches between two modes: a single sheet (requires its sheet ID) or every sheet the account can access. Use to locate rows (or other object types such as comments, attachments, or sheets) by keyword before acting on them; results can be narrowed by content scope, object type, and modified-since date. Read-only and idempotent.', idempotent: true },
   props: {
     search_scope: Property.StaticDropdown({
       displayName: 'Search Scope',

@@ -6,6 +6,9 @@ export const workbookEventTrigger = createTrigger({
   name: 'workbook_event',
   displayName: 'Workbook Event',
   description: 'Triggers when a workbook event occurs (created, updated, or deleted)',
+  aiMetadata: {
+    description: 'Fires when a workbook lifecycle event happens on the Tableau site — one of created, updated, or deleted, selected via the Event Type. Represents a single workbook change and carries the affected workbook\'s name and ID.',
+  },
   auth: tableauAuth,
   type: TriggerStrategy.WEBHOOK,
   props: {

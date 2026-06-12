@@ -8,6 +8,8 @@ export const createWebhook = createAction({
   name: 'create_webhook',
   displayName: 'Create Webhook',
   description: 'Registers a new webhook in Sendr to receive event notifications.',
+  audience: 'both',
+  aiMetadata: { description: 'Registers a new webhook so Sendr posts event notifications to a target URL. Requires a name, the destination URL, and a list of event names to subscribe to (e.g. page_render:created, contact_page_engagement:created). Not idempotent: each call registers another webhook.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Webhook Name',

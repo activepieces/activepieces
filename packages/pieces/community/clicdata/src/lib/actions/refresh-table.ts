@@ -9,6 +9,8 @@ export const refreshTable = createAction({
   name: 'refresh_table',
   displayName: 'Refresh Table',
   description: 'Refresh the selected table depending on the refresh mode',
+  audience: 'both',
+  aiMetadata: { description: 'Triggers a refresh of a ClicData table by table ID to re-pull or recompute its data. The refresh mode is required and controls how data is applied — reload, rebuild, update, append, or update+append. Use after a source changes to update the table. Not idempotent: append-based modes add rows on each call, so repeated runs change the result.', idempotent: false },
   props: {
     table_id: clicdataCommonProps.table_id,
     mode: Property.StaticDropdown({

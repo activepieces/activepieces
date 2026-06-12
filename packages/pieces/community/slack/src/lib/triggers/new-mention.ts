@@ -12,6 +12,10 @@ export const newMention = createTrigger({
   name: 'new_mention',
   displayName: 'New Mention in Channel',
   description: 'Triggers when a user or user group is mentioned.',
+  aiMetadata: {
+    description:
+      'Fires when a channel or group message @-mentions one of the configured users or user groups. Can be optionally filtered to specific channels, and bot messages can be ignored. When the remove-mention option is enabled, the event payload includes a clean_text field with the mention tokens stripped from the message text; otherwise the raw Slack message event is returned.',
+  },
   props: {
     info: multiSelectChannelInfo,
     users: userIds,

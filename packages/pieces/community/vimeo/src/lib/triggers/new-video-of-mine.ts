@@ -48,6 +48,9 @@ export const newVideoOfMine = createTrigger({
   name: 'new_video_of_mine',
   displayName: 'New Video of Mine',
   description: 'Triggers when you add/upload a new video',
+  aiMetadata: {
+    description: 'Fires when the authenticated user uploads or adds a new video to their own Vimeo account. Polls the user\'s videos sorted by date and emits each newly added one.',
+  },
   auth: vimeoAuth,
   props: {
   },

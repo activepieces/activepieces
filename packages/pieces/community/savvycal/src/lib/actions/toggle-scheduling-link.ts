@@ -14,6 +14,8 @@ export const toggleSchedulingLinkAction = createAction({
   name: 'toggle_scheduling_link',
   displayName: 'Toggle Scheduling Link',
   description: 'Switches a scheduling link between active and disabled states.',
+  audience: 'both',
+  aiMetadata: { description: 'Flips a scheduling link between active and disabled, identified by its link id. Use to enable or pause a link; note it toggles relative to the link\'s current state, so repeating the call alternates the state rather than converging — not idempotent.', idempotent: false },
   props: {
     team_id: Property.Dropdown({
       auth: savvyCalAuth,

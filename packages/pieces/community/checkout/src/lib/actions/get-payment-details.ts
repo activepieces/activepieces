@@ -7,6 +7,8 @@ export const getPaymentDetailsAction = createAction({
   auth: checkoutComAuth,
   displayName: 'Get Payment Details',
   description: 'Check transaction amount and status before refunding.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the full details of a single Checkout.com payment by its payment ID (resolved from an order reference), including amount and status. Choose it to inspect a transaction, for example to verify it is captured before issuing a refund. Read-only and idempotent.', idempotent: true },
   props: {
     reference: Property.ShortText({
       displayName: 'Reference',

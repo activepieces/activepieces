@@ -13,6 +13,8 @@ export const getRoles = createAction({
   auth: harvestAuth,
   displayName: 'Get Roles',
   description: 'Fetches Roles',
+  audience: 'both',
+  aiMetadata: { description: 'Lists all roles defined in a Harvest account, each with its assigned user IDs. Use to discover role IDs or see which users belong to a role. Takes only pagination options. Read-only and idempotent.', idempotent: true },
   props: {
     page: Property.ShortText({
       description: 'DEPRECATED: The page number to use in pagination.',

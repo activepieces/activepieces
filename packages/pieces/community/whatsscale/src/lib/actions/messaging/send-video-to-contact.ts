@@ -11,6 +11,8 @@ export const sendVideoToContactAction = createAction({
   name: 'whatsscale_send_video_to_contact',
   displayName: 'Send a Video to a Contact',
   description: 'Send a video to a WhatsApp contact selected from the dropdown.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a video to a WhatsApp contact whose chat ID is chosen from the session contact list, with an optional caption. Pick this when the recipient is a known direct contact; use the manual-entry video action for a raw phone number, or the group/CRM/channel variants for other recipient types. Requires a directly downloadable video URL. Not idempotent: each call delivers another video.', idempotent: false },
   props: {
     session: whatsscaleProps.session,
     contact: whatsscaleProps.contact,

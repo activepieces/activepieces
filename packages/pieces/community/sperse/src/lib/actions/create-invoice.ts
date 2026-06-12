@@ -11,6 +11,12 @@ export const createInvoice = createAction({
   name: 'createInvoice',
   displayName: 'Create Invoice',
   description: 'Creates a new invoice in the CRM.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates an invoice in Sperse CRM for a contact, including billing/shipping addresses, a single line item, and an associated payment transaction, with a chosen status (Draft, Final, Paid, or Sent). Identify the contact by Contact ID or External Contact ID; an invoice number, description, quantity, currency, dates, and the historical-data flag are required. Not idempotent: each call submits another invoice.',
+    idempotent: false,
+  },
   auth: sperseAuth,
   props: {
     contactId: Property.Number({

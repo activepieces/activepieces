@@ -9,6 +9,12 @@ export const addConversationLinks = createAction({
   name: 'addConversationLinks',
   displayName: 'Add Conversation Links',
   description: 'Link external references (URLs) to a conversation.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Attach existing Front Links (referenced by their link IDs) to a conversation, associating external resources such as tickets or CRM records. Requires links that already exist; create them first with "Create Link". To detach links use "Remove Conversation Links". Not idempotent: attaching an already-attached link may error.',
+    idempotent: false,
+  },
   props: {
     conversation_id: conversationIdDropdown,
     link_ids: linkidsDropdown,

@@ -176,6 +176,12 @@ export const invoiceParserAction = createAction({
   name: 'invoice_parser',
   displayName: 'Invoice Parser',
   description: 'Extract structured invoice data from files using Eden AI. Supports multiple providers, languages, and document types.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Parse an uploaded financial document (PDF/image) into structured fields via Eden AI financial parser, routed to a chosen provider. The document type can be fixed to invoice or receipt or left on auto-detection. Use it to extract line items, totals, and metadata from invoices or receipts; takes an actual file upload (not a URL) and optionally a password for protected PDFs. Read-only extraction with no side effect, so it is safe to repeat.',
+    idempotent: true,
+  },
   props: {
     provider: Property.Dropdown({
       auth: edenAiAuth,

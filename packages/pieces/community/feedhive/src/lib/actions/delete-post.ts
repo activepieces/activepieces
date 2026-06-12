@@ -8,6 +8,8 @@ export const deletePostAction = createAction({
   name: 'delete_post',
   displayName: 'Delete Post',
   description: 'Deletes a post from FeedHive. This action cannot be undone.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes a FeedHive post by its post ID; this cannot be undone. Use to remove a draft or scheduled post you no longer want. Idempotent: once the post is gone, repeating the call leaves it deleted with no further effect.', idempotent: true },
   props: {
     post_id: feedhiveCommon.postDropdown,
   },

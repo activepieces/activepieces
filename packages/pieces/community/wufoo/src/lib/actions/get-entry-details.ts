@@ -9,6 +9,8 @@ export const getEntryDetailsAction = createAction({
   name: 'get-entry-details',
   displayName: 'Get Entry Details',
   description: 'Get form entries with filtering, sorting, and pagination options.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves entries from a Wufoo form, either a single entry by its Entry ID or a filtered/sorted/paginated list (up to two field filters combined with AND/OR). Use to fetch one known entry or to query and page through many submissions. Requires the form identifier; read-only and idempotent.', idempotent: true },
   props: {
     formIdentifier: formIdentifier,
     format: Property.StaticDropdown({

@@ -11,6 +11,12 @@ export const createCustomer = createAction({
   name: 'create_customer',
   displayName: 'Create Customer',
   description: 'Adds a new customer to Help Scout.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new customer record in Help Scout from an email plus optional profile details (name, phone, organization, social profiles, etc.). Use to register a contact before associating conversations. Email is required and must be valid; not idempotent — each call creates a new customer even if one already exists for that email, so look the customer up first if duplicates matter.',
+    idempotent: false,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

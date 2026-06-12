@@ -10,6 +10,12 @@ export const findUser = createAction({
   name: 'find_user',
   displayName: 'Find User',
   description: 'Finds a user by email.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up a Help Scout user (a teammate/agent, not a customer) by email and returns the first match (with a found flag). Use to resolve a user ID for assignment or reply attribution. Email is required; read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

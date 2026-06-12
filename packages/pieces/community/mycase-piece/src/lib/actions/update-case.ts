@@ -7,6 +7,8 @@ export const updateCase = createAction({
   name: 'update_case',
   displayName: 'Update Case',
   description: 'Updates an existing case in MyCase',
+  audience: 'both',
+  aiMetadata: { description: 'Overwrites an existing case (selected by ID) with the supplied name, stage, practice area, parties, staff, and billing fields. Use to modify a known case rather than create one. The update replaces the named fields wholesale, so pass complete values; lawyer roles are derived from which selected staff member matches the chosen lead/originating lawyer. Re-running with the same input lands the case in the same state.', idempotent: true },
   props: {
     case_id: Property.Dropdown({
   auth: mycaseAuth,

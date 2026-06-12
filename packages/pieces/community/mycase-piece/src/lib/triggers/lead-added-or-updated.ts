@@ -15,6 +15,10 @@ export const leadAddedOrUpdated = createTrigger({
   name: 'lead_added_or_updated',
   displayName: 'Lead Added or Updated',
   description: 'Triggers when a lead has been added or updated',
+  aiMetadata: {
+    description:
+      'Fires whenever a lead (prospective client) is created or modified in MyCase, delivering the full lead payload including name, contact details, address, lead details, status, approval flag, referral source, and custom fields. Use to capture new prospects or react to changes in a lead during intake.',
+  },
   props: {},
   sampleData: {
     id: 12345,

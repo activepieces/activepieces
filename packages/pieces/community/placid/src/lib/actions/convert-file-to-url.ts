@@ -9,6 +9,8 @@ export const convertFileToUrl = createAction({
 	name: 'convert_file_to_url',
 	displayName: 'Convert File to URL',
 	description: 'Convert uploaded file(s) into media URL(s) consumable by Placid templates.',
+	audience: 'both',
+	aiMetadata: { description: 'Upload a file to Placid and get back a hosted media URL that can be passed into template layers (e.g. as an image source). Use this before a create action when you need to reference local file content by URL. Requires a file input; may need a paid Placid plan. Not idempotent — each call uploads the file as a new media object.', idempotent: false },
 	props: {
 		file: Property.File({
 			displayName: 'File',

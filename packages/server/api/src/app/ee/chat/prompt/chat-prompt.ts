@@ -6,11 +6,17 @@ function loadPromptTemplate(filename: string): string {
     return readFileSync(path.resolve(`packages/server/api/src/assets/prompts/${filename}`), 'utf8')
 }
 
+const GUIDE_TOPICS = ['build_flow', 'one_time_task', 'error_handling', 'http_fallback'] as const
+
 const PROMPT_TEMPLATES = {
     system: loadPromptTemplate('chat-system-prompt.md'),
     projectSelected: loadPromptTemplate('chat-project-context-selected.md'),
     noProject: loadPromptTemplate('chat-project-context-none.md'),
 }
+
+const GUIDES: Record<string, string> = Object.fromEntries(
+    GUIDE_TOPICS.map((topic) => [topic, loadPromptTemplate(`guides/${topic}.md`)]),
+)
 
 function sanitizeProjectName(name: string): string {
     return name.replace(/[^a-zA-Z0-9 \-_.]/g, '').slice(0, 64)
@@ -61,5 +67,6 @@ function buildAgentSystemPrompt({ projects, currentProjectId, frontendUrl }: {
 
 export const chatPrompt = {
     buildSystemPrompt: buildAgentSystemPrompt,
+    guides: GUIDES,
     projectDisplayName,
 }

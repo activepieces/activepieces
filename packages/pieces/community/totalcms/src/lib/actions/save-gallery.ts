@@ -12,6 +12,8 @@ export const saveGalleryAction = createAction({
   auth: cmsAuth,
   displayName: 'Save Gallery Image',
   description: 'Save image to Total CMS gallery',
+  audience: 'both',
+  aiMetadata: { description: 'Uploads an image into a gallery-type CMS field in Total CMS, identified by the gallery CMS ID (slug), with alt text and thumbnail sizing/crop options. Use to add a photo to a standalone gallery. Not idempotent: each call appends another image to the gallery.', idempotent: false },
   props: {
     slug: Property.ShortText({
       displayName: 'CMS ID',

@@ -9,6 +9,8 @@ export const findSubmissionByFieldAction = createAction({
   name: 'find-submission-by-field',
   displayName: 'Find Submission by Field Value',
   description: 'Search for form submissions by field value for deduplication and lookup operations.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches a Wufoo form\'s entries for those whose value in a given field matches a search value, with a selectable match type (exact, contains, starts/ends with, not-equal, not-contains). Use to look up a specific submission or check for duplicates before creating one. Requires the form identifier, the target field ID, and the value; read-only and idempotent.', idempotent: true },
   props: {
     formIdentifier: formIdentifier,
     format: Property.StaticDropdown({

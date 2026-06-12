@@ -14,6 +14,10 @@ export const speedTrigger = createTrigger({
 	name: 'speed-trigger',
 	displayName: 'Speed Trigger',
 	description: 'Triggers when vehicle speed meets specified conditions.',
+	aiMetadata: {
+		description:
+			'Fires via DIMO webhook when a monitored vehicle reports a speed reading (km/h) that satisfies the configured comparison operator against the threshold. Each event represents a single speed telemetry signal and includes the vehicle token ID, timestamp, and the measured speed value. Use to detect speeding, movement, or a vehicle coming to a stop.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 
 	props: {

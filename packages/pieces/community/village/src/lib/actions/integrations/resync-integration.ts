@@ -8,6 +8,12 @@ export const resyncIntegration = createAction({
   displayName: 'Reset Integration',
   description:
     'Trigger a full resync of a Google or LinkedIn integration. Clears sync cursors and re-imports all contacts/calendar data; all graph operations use MERGE so it is fully idempotent.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Trigger a full resync of a Google or LinkedIn integration by numeric ID, clearing sync cursors and re-importing all contacts and calendar data. Idempotent: graph writes use MERGE, so repeating it re-imports without creating duplicates. Use when synced network data looks stale or incomplete.',
+    idempotent: true,
+  },
   props: {
     id: Property.Number({
       displayName: 'Integration ID',

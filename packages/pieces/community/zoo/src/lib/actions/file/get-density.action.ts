@@ -6,6 +6,8 @@ export const getDensityAction = createAction({
   name: 'get_density',
   displayName: 'Get Density',
   description: 'Calculate the density of a CAD file',
+  audience: 'both',
+  aiMetadata: { description: 'Compute the density of a 3D solid from an uploaded CAD file (FBX, GLB, glTF, OBJ, PLY, STEP, or STL). Pick this for the mass-per-unit-volume mass property specifically; sibling actions cover mass, volume, surface area, and center of mass. Read-only analysis that does not modify the file and returns the same value for the same input.', idempotent: true },
   auth: zooAuth,
   // category: 'File Operations',
   props: {

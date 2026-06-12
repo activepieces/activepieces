@@ -7,6 +7,8 @@ export const findFolder = createAction({
     name: 'find_folder',
     displayName: 'Find Folder / Project',
     description: 'Retrieve folder / project metadata by ID or name',
+    audience: 'both',
+    aiMetadata: { description: 'Look up Wrike folders or projects: pass a folder ID to fetch that exact one (other criteria are ignored), or omit it to search/filter by title, parent folders, authors, owners, or the projects-only flag. Use when an agent needs to resolve or read folder/project metadata before acting. Read-only and idempotent.', idempotent: true },
     auth: wrikeAuth,
     props: {
         folderId: Property.ShortText({

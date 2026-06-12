@@ -8,6 +8,8 @@ export const clearRowAction = createAction({
     name: 'clear_row',
     displayName: 'Clear Row by ID',
     description: 'Clear contents/formatting of an entire row by its ID.',
+    audience: 'both',
+    aiMetadata: { description: 'Clear an entire row in a worksheet by its 1-based row number. Choose what to remove via Clear Type: contents, formats, or both. Clears in place without deleting the row or shifting cells up — use Delete Row when you need the row removed and rows below shifted. Idempotent — re-running on an already-cleared row has no further effect.', idempotent: true },
     props: {
         storageSource: commonProps.storageSource,
         siteId: commonProps.siteId,

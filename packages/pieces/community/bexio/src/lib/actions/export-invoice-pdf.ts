@@ -7,6 +7,8 @@ export const exportInvoicePdfAction = createAction({
   name: 'export_invoice_pdf',
   displayName: 'Export Invoice to PDF',
   description: 'Export an existing sales invoice as a PDF document',
+  audience: 'both',
+  aiMetadata: { description: 'Renders an existing Bexio sales invoice as a PDF and returns the downloadable file, keyed by the invoice id. Use when an agent needs the document itself (to attach or store); pick Send Sales Invoice to email it to a recipient instead. Optionally toggle the letterhead. Read-only and idempotent: it generates the file without changing the invoice.', idempotent: true },
   props: {
     invoice_id: Property.Dropdown({
       auth: bexioAuth,

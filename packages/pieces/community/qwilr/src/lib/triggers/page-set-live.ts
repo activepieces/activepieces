@@ -33,6 +33,9 @@ export const pageSetLiveTrigger = createTrigger({
   name: 'page_set_live',
   displayName: 'Page Set Live',
   description: 'Triggers when a Qwilr page is set to live',
+  aiMetadata: {
+    description: 'Fires when a Qwilr page is published and set to live (made publicly accessible), transitioning out of draft status. Use to react when a proposal becomes ready to share with a recipient.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

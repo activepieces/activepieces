@@ -9,6 +9,8 @@ export const getIssueHistoryAction = createAction({
   name: 'get_issue_history',
   displayName: 'Get Issue History',
   description: 'Retrieves the full change history (activity log) for a specific issue.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve the change history (activity log) for an issue, given its ID, filtered to the selected activity types (custom field changes and/or comments). Use to audit what changed on an issue and by whom. Read-only and idempotent.', idempotent: true },
   props: {
     issue: issueDropdown,
     categories: Property.StaticMultiSelectDropdown({

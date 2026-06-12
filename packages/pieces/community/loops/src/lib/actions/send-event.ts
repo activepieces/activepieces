@@ -7,6 +7,12 @@ export const sendEvent = createAction({
   displayName: 'Send Event',
   description:
     'Sends an event to Loops for a contact. Events can trigger email automations configured in your Loops dashboard.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends a named event for a contact to Loops, which can trigger email automations configured in the dashboard; the contact is identified by email or internal user ID (at least one is required), and the call can also attach event properties and update mailing-list memberships or contact properties. Use to fire behavioral events like signup or purchase. The event name must match one set up in Loops. Not idempotent: each call records a new event occurrence.',
+    idempotent: false,
+  },
   auth: loopsAuth,
   props: {
     email: Property.ShortText({

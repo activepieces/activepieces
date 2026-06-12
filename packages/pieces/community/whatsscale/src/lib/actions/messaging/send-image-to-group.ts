@@ -10,6 +10,8 @@ export const sendImageToGroupAction = createAction({
   name: 'whatsscale_send_image_to_group',
   displayName: 'Send an Image to a Group',
   description: 'Send an image to a WhatsApp group selected from the dropdown.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends an image to a WhatsApp group whose chat ID is chosen from the session group list, with an optional caption. Pick this when the recipient is a known group; use the manual-entry image action to target a raw group ID, or the contact/CRM/channel variants for other recipient types. Requires a directly downloadable image URL. Not idempotent: each call delivers another image.', idempotent: false },
   props: {
     session: whatsscaleProps.session,
     group: whatsscaleProps.group,

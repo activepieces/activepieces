@@ -25,6 +25,8 @@ export const updateItemAction = createAction({
   name: 'update_item',
   displayName: 'Update Item',
   description: 'Updates an existing report item in Weekdone.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing Weekdone report item identified by its item ID, changing fields such as description, report category, priority, or due date. Use when modifying an item the agent already knows the ID of; only supplied fields change, and moving the item to a different category also requires a target week. Idempotent — re-sending the same field values leaves the item in the same state.', idempotent: true },
   props: {
     search_period: Property.ShortText({
       displayName: 'Search Week',

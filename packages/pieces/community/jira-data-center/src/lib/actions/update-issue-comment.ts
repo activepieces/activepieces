@@ -9,6 +9,12 @@ export const updateIssueCommentAction = createAction({
 	name: 'update_issue_comment',
 	displayName: 'Update Issue Comment',
 	description: 'Updates a comment to a specific issue.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Replaces the body of an existing comment on a Jira Data Center/Server issue, identified by issue and comment ID. Use to edit a previously posted comment rather than add a new one. Idempotent — re-running with the same body leaves the comment unchanged.',
+		idempotent: true,
+	},
 	props: {
 		projectId: getProjectIdDropdown(),
 		issueId: getIssueIdDropdown({ refreshers: ['projectId'] }),

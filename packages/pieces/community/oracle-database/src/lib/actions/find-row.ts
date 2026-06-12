@@ -8,6 +8,8 @@ export const findRowAction = createAction({
   name: 'find_row',
   displayName: 'Find Row',
   description: 'Find rows in an Oracle table',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up rows in an Oracle Database table matching the filter (WHERE) conditions. Use to read existing records by exact-match column values. The filter cannot be empty (use Run Custom SQL to fetch all rows); read-only and idempotent.', idempotent: true },
   props: {
     tableName: oracleDbProps.tableName(),
     filter: Property.Object({

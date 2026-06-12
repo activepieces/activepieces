@@ -14,6 +14,8 @@ export const circuitSetChargePointPriorityAction = createAction({
   name: 'circuitSetChargePointPriority',
   displayName: 'Actions - Circuit - Set Charge Point Priority',
   description: 'Circuit / Set Charge Point Priority.',
+  audience: 'both',
+  aiMetadata: { description: 'Set the dynamic-load-management priority for an entire charge point within a circuit, addressed by circuit and charge point IDs. Use this for charge-point-level load bias; for a single connector use circuit-set-charge-point-evse-priority, and for an in-progress session use circuit-set-session-priority. Idempotent: writes the priority to a fixed value.', idempotent: true },
   props: {
         
   circuit: Property.Number({

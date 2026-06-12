@@ -8,6 +8,9 @@ export const newTaskCreatedTrigger = createTrigger({
   name: 'new_task_created',
   displayName: 'New Task Created',
   description: 'Triggered when a new task is created.',
+  aiMetadata: {
+    description: 'Fires when a new task is created in the Kommo CRM account, emitting the full new task record (including its linked entity and due date). Represents a follow-up or to-do being scheduled against a lead, contact, or company.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

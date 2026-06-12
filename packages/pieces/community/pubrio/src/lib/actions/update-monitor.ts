@@ -8,6 +8,12 @@ export const updateMonitor = createAction({
   name: 'update_monitor',
   displayName: 'Update Monitor',
   description: 'Update an existing signal monitor',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Modify the configuration of an existing signal monitor identified by monitor_id, changing only the fields you supply (name, signal types, destination, filters, frequency, active/paused state, etc.). Mutating: it overwrites the named settings on the live monitor, so re-running with the same inputs is safe but changes take effect immediately. Use to edit an already-created monitor; use Create Monitor to make a new one.',
+    idempotent: false,
+  },
   props: {
     monitor_id: Property.ShortText({
       displayName: 'Monitor ID',
