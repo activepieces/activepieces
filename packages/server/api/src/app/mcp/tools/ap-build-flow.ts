@@ -55,7 +55,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
     return {
         title: 'ap_build_flow',
         permission: Permission.WRITE_FLOW,
-        description: 'Create a complete flow in one call: trigger + steps. Steps are added sequentially by default (trigger → step_1 → step_2 → ...). To nest steps inside a loop, set parentStepName to the loop step name and stepLocationRelativeToParent to INSIDE_LOOP.',
+        description: 'Create a NEW flow from scratch in one call: trigger + steps. Steps are added sequentially by default (trigger → step_1 → step_2 → ...). To nest steps inside a loop, set parentStepName to the loop step name and stepLocationRelativeToParent to INSIDE_LOOP. For EDITING an existing flow, do NOT rebuild it — use the granular ap_add_step / ap_update_step / ap_update_trigger instead.',
         inputSchema: {
             flowName: z.string().describe('Name for the new flow'),
             trigger: z.object({

@@ -1,20 +1,12 @@
-import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
+import { PropertyType } from '@activepieces/pieces-framework'
 import {
-    EngineResponse,
-    EngineResponseStatus,
     isNil,
-    isObject,
     McpToolDefinition,
     ProjectScopedMcpServer,
-    WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { getPiecePackageWithoutArchive } from '../../pieces/metadata/piece-metadata-service'
-import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { mcpUtils } from './mcp-utils'
-
-const { withTimeout, RESOLVE_TIMEOUT_MS } = mcpUtils
 
 export const apResolvePropertyOptionsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
@@ -23,99 +15,68 @@ export const apResolvePropertyOptionsTool = (mcp: ProjectScopedMcpServer, log: F
         inputSchema: resolvePropertyOptionsInput.shape,
         annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
-            try {
-                const { pieceName, actionOrTriggerName, type, propertyName, auth, input: providedInput, searchValue } = resolvePropertyOptionsInput.parse(args)
+            const { pieceName, actionOrTriggerName, type, propertyName, auth, input: providedInput, searchValue } = resolvePropertyOptionsInput.parse(args)
 
-                const platformId = await mcpUtils.resolvePlatformId({ mcp, log })
+            const platformId = await mcpUtils.resolvePlatformId({ mcp, log })
 
-                const lookup = await mcpUtils.lookupPieceComponent({
-                    pieceName,
-                    componentName: actionOrTriggerName,
-                    componentType: type,
-                    projectId: mcp.projectId,
-                    platformId,
-                    log,
-                })
-                if (lookup.error) {
-                    return lookup.error
-                }
+            const lookup = await mcpUtils.lookupPieceComponent({
+                pieceName,
+                componentName: actionOrTriggerName,
+                componentType: type,
+                projectId: mcp.projectId,
+                platformId,
+                log,
+            })
+            if (lookup.error) {
+                return lookup.error
+            }
 
-                const { piece, component, pieceName: normalized } = lookup
-                const propDef = component.props[propertyName]
-                if (isNil(propDef)) {
-                    return {
-                        content: [{ type: 'text', text: `❌ Property "${propertyName}" not found on ${normalized}/${actionOrTriggerName}. Use ap_get_piece_props to see available properties.` }],
-                    }
-                }
-
-                const piecePackage = await getPiecePackageWithoutArchive(log, platformId, { pieceName: normalized, pieceVersion: piece.version })
-
-                const input: Record<string, unknown> = {
-                    ...(providedInput ?? {}),
-                    ...(auth ? { auth: `{{connections['${auth}']}}` } : {}),
-                }
-
-                const result = await withTimeout({
-                    promise: userInteractionWatcher.submitAndWaitForResponse<EngineResponse<{
-                        options: Array<{ label: string, value: unknown }> | PiecePropertyMap
-                        disabled?: boolean
-                    }>>({
-                        jobType: WorkerJobType.EXECUTE_PROPERTY,
-                        platformId,
-                        projectId: mcp.projectId,
-                        flowVersion: undefined,
-                        propertyName,
-                        actionOrTriggerName,
-                        input,
-                        sampleData: {},
-                        searchValue,
-                        piece: piecePackage,
-                    }, log),
-                    ms: RESOLVE_TIMEOUT_MS,
-                })
-
-                if (result.status !== EngineResponseStatus.OK || isNil(result.response?.options)) {
-                    return {
-                        content: [{ type: 'text', text: `⚠️ Could not resolve options for "${propertyName}". You may use the value the user provided directly — it may work at runtime. However, the dropdown in the flow editor will appear unset. Mention this to the user.` }],
-                    }
-                }
-
-                const { options } = result.response
-
-                if (propDef.type === PropertyType.DYNAMIC && isObject(options) && !Array.isArray(options)) {
-                    const dynamicFields = mcpUtils.buildPropSummaries(options as PiecePropertyMap)
-                    return {
-                        content: [{ type: 'text', text: `✅ Dynamic fields for "${propertyName}":\n${JSON.stringify(dynamicFields, null, 2)}` }],
-                        structuredContent: { propertyName, options: dynamicFields, count: dynamicFields.length },
-                    }
-                }
-
-                const optionsArray = mcpUtils.extractOptionsArray(options)
-
-                if (optionsArray !== null) {
-                    const mapped = optionsArray.map((o: { label: string, value: unknown }) => ({ label: String(o.label ?? ''), value: o.value }))
-                    if (mapped.length === 0) {
-                        return {
-                            content: [{ type: 'text', text: `⚠️ No options found for "${propertyName}". The account may have no items. You may use the value the user provided directly, but the dropdown in the flow editor will appear unset.` }],
-                            structuredContent: { propertyName, options: [], count: 0 },
-                        }
-                    }
-                    return {
-                        content: [{ type: 'text', text: `✅ Options for "${propertyName}" (${mapped.length} found). IMPORTANT: Use the "value" field (the ID), NOT the "label", when setting this property.\n${JSON.stringify(mapped, null, 2)}` }],
-                        structuredContent: { propertyName, options: mapped, count: mapped.length },
-                    }
-                }
-
-                log.warn({ propertyName, optionsType: typeof options, options }, 'ap_resolve_property_options: unrecognized options format')
+            const { piece, component, pieceName: normalized } = lookup
+            const propDef = component.props[propertyName]
+            if (isNil(propDef)) {
                 return {
-                    content: [{ type: 'text', text: `⚠️ Could not parse options for "${propertyName}". You may use the value the user provided directly — it may work at runtime.` }],
+                    content: [{ type: 'text', text: `❌ Property "${propertyName}" not found on ${normalized}/${actionOrTriggerName}. Use ap_get_piece_props to see available properties.` }],
                 }
             }
-            catch (err) {
-                const message = err instanceof Error ? err.message : String(err)
+
+            const result = await mcpUtils.executePropertyResolution({
+                pieceName: normalized,
+                pieceVersion: piece.version,
+                actionOrTriggerName,
+                propertyName,
+                auth,
+                input: providedInput,
+                searchValue,
+                projectId: mcp.projectId,
+                platformId,
+                log,
+            })
+
+            if (result.status === 'dynamic' && propDef.type === PropertyType.DYNAMIC) {
+                const dynamicFields = mcpUtils.buildPropSummaries(result.props)
                 return {
-                    content: [{ type: 'text', text: `⚠️ Options resolution timed out for "${(args as Record<string, unknown>).propertyName ?? 'unknown'}": ${message}. You may use the user-provided value directly — it often works at runtime. The dropdown in the flow editor may appear unset; mention this to the user.` }],
+                    content: [{ type: 'text', text: `✅ Dynamic fields for "${propertyName}":\n${JSON.stringify(dynamicFields, null, 2)}` }],
+                    structuredContent: { propertyName, options: dynamicFields, count: dynamicFields.length },
                 }
+            }
+
+            if (result.status === 'options') {
+                if (result.options.length === 0) {
+                    return {
+                        content: [{ type: 'text', text: `⚠️ No options found for "${propertyName}". The account may have no items. You may use the value the user provided directly, but the dropdown in the flow editor will appear unset.` }],
+                        structuredContent: { propertyName, options: [], count: 0 },
+                    }
+                }
+                return {
+                    content: [{ type: 'text', text: `✅ Options for "${propertyName}" (${result.options.length} found). IMPORTANT: Use the "value" field (the ID), NOT the "label", when setting this property.\n${JSON.stringify(result.options, null, 2)}` }],
+                    structuredContent: { propertyName, options: result.options, count: result.options.length },
+                }
+            }
+
+            const failureDetail = result.status === 'failed' ? `: ${result.message}` : ''
+            log.warn({ propertyName, result }, 'ap_resolve_property_options: could not resolve options')
+            return {
+                content: [{ type: 'text', text: `⚠️ Could not resolve options for "${propertyName}"${failureDetail}. You may use the value the user provided directly — it may work at runtime. However, the dropdown in the flow editor will appear unset. Mention this to the user.` }],
             }
         },
     }
