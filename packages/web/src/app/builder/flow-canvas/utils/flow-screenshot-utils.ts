@@ -23,8 +23,7 @@ async function downloadFlowAsImage({
   if (!viewportElement || flowNodes.length === 0) {
     throw new Error('No flow steps available to capture');
   }
-  // let the capturing state paint before any work happens
-  await yieldToMain();
+  await sleep();
   const bounds = calculateNodesBoundsFromDom(flowNodes);
   if (!bounds) {
     throw new Error('Could not determine the flow bounds to capture');
@@ -105,7 +104,7 @@ async function downloadCanvasAsPng({
  * copies the full computed style (~350 longhands) of every element in one
  * synchronous pass, which freezes the tab for seconds on large flows. This
  * pipeline copies only the properties that affect how the flow paints and
- * stays responsive by yielding between chunks of style reads.
+ * stays responsive by sleeping between chunks of style reads.
  */
 async function buildCaptureSvgUrl({
   viewportElement,
@@ -158,7 +157,7 @@ async function cloneViewportWithCapturedStyles(
         : null,
     );
     if (index % STYLE_READ_CHUNK_SIZE === STYLE_READ_CHUNK_SIZE - 1) {
-      await yieldToMain();
+      await sleep();
     }
   }
   const elementsToRemove = clonedElements.filter(
@@ -175,14 +174,14 @@ async function cloneViewportWithCapturedStyles(
 }
 
 function isCapturedElement(domNode: Element): boolean {
-  const isBuilderChrome = domNode.classList.contains(
+  const isBuilderPortal = domNode.classList.contains(
     'react-flow__viewport-portal',
   );
   const isNote = domNode.classList.contains(
     `react-flow__node-${ApNodeType.NOTE}`,
   );
   const isExcluded = domNode.hasAttribute(SCREENSHOT_EXCLUDE_ATTRIBUTE);
-  return !isBuilderChrome && !isNote && !isExcluded;
+  return !isBuilderPortal && !isNote && !isExcluded;
 }
 
 /**
@@ -251,7 +250,14 @@ function getImageDataUrl(source: string): Promise<string | null> {
   if (cached) {
     return cached;
   }
-  const pending = fetchImageAsDataUrl(source);
+  // a failed fetch resolves to null; evict it so the next capture retries
+  // instead of permanently rendering the icon blank for the session
+  const pending = fetchImageAsDataUrl(source).then((dataUrl) => {
+    if (!dataUrl) {
+      imageDataUrlCache.delete(source);
+    }
+    return dataUrl;
+  });
   // bound the cache so a long session opening many flows can't grow it
   // without limit; evict the oldest entry once the cap is reached
   if (imageDataUrlCache.size >= IMAGE_CACHE_MAX_ENTRIES) {
@@ -400,7 +406,7 @@ function sanitizeFileName(name: string): string {
   return sanitized.length > 0 ? sanitized : 'flow';
 }
 
-function yieldToMain(): Promise<void> {
+function sleep(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
