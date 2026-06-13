@@ -33,7 +33,7 @@ const MAX_RESPONSE_OUTPUT_TOKENS = 32_000
 const MAX_AUTO_CONTINUATIONS = 3
 const MAX_EMPTY_CONTINUATIONS = 2
 const CONTINUE_NUDGE = '[system note — not from the user] Your previous response was cut off by the output token limit before it finished. Continue exactly where you stopped. If a tool call was cut off, re-issue it in FULL. Do not repeat content you already produced.'
-const EMPTY_OUTPUT_NUDGE = '[system note — not from the user] Your previous step produced no visible reply and no tool call, so the user saw nothing. Continue the task now: either call the next tool, or write your reply to the user. Do not stop silently.'
+const EMPTY_OUTPUT_NUDGE = '[system note — not from the user] Your previous step produced no visible reply to the user. Continue the task now: either call the next tool, or write your reply to the user. Do not stop silently.'
 
 export function decideLoopAction({ finishReason, producedVisibleOutput, continuations, emptyContinuations }: {
     finishReason: string

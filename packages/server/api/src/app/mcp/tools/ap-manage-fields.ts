@@ -61,7 +61,7 @@ export const apManageFieldsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                         }
                         const existing = await fieldService.getById({ id: fieldId, projectId: mcp.projectId })
                         if (existing.tableId !== resolvedTableId) {
-                            return { content: [{ type: 'text', text: `❌ Field (id: ${fieldId}) does not belong to table (id: ${tableId})` }] }
+                            return { content: [{ type: 'text', text: `❌ Field (id: ${fieldId}) does not belong to table (id: ${resolvedTableId})` }] }
                         }
                         const field = await fieldService.update({
                             id: fieldId,
@@ -76,7 +76,7 @@ export const apManageFieldsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                         }
                         const toDelete = await fieldService.getById({ id: fieldId, projectId: mcp.projectId })
                         if (toDelete.tableId !== resolvedTableId) {
-                            return { content: [{ type: 'text', text: `❌ Field (id: ${fieldId}) does not belong to table (id: ${tableId})` }] }
+                            return { content: [{ type: 'text', text: `❌ Field (id: ${fieldId}) does not belong to table (id: ${resolvedTableId})` }] }
                         }
                         await fieldService.delete({
                             id: fieldId,
