@@ -308,4 +308,64 @@ describe('chatWorkerTools', () => {
             expect(executeTool).toHaveBeenCalledTimes(6)
         })
     })
+
+    describe('shrinkLargeValue', () => {
+        it('truncates long strings with a marker and keeps short ones', () => {
+            const long = 'a'.repeat(5000)
+            const result = chatWorkerTools.shrinkLargeValue({ short: 'hi', long }, { maxStringLength: 2000, maxArrayItems: 20 }) as Record<string, string>
+            expect(result.short).toBe('hi')
+            expect(result.long.startsWith('a'.repeat(2000))).toBe(true)
+            expect(result.long).toContain('…[truncated 3000 chars]')
+        })
+
+        it('caps arrays and appends an overflow marker', () => {
+            const arr = Array.from({ length: 50 }, (_, i) => i)
+            const result = chatWorkerTools.shrinkLargeValue(arr, { maxStringLength: 2000, maxArrayItems: 20 }) as unknown[]
+            expect(result.length).toBe(21)
+            expect(result[20]).toBe('…and 30 more items')
+        })
+
+        it('preserves nested object structure', () => {
+            const input = { a: { b: { c: 'value' } }, list: [1, 2] }
+            const result = chatWorkerTools.shrinkLargeValue(input, { maxStringLength: 2000, maxArrayItems: 20 })
+            expect(result).toEqual(input)
+        })
+    })
+
+    describe('truncateLargeResult', () => {
+        it('returns small results unchanged', () => {
+            const small = { ok: true, items: [1, 2, 3] }
+            expect(chatWorkerTools.truncateLargeResult(small)).toBe(small)
+        })
+
+        it('previews the first 3 items of a large top-level array', () => {
+            const result = chatWorkerTools.truncateLargeResult({
+                items: Array.from({ length: 5000 }, (_, i) => ({ id: i, text: 'x'.repeat(50) })),
+            }) as { content: Array<{ text: string }> }
+            const text = result.content[0].text
+            expect(text).toContain('[LARGE RESPONSE]')
+            expect(text).toContain('5000 items')
+            expect(text).toContain('Preview (3 of 5000 items)')
+        })
+
+        it('structurally shrinks a large non-array object instead of discarding it', () => {
+            const result = chatWorkerTools.truncateLargeResult({
+                description: 'd'.repeat(60_000),
+                detail: 'e'.repeat(60_000),
+            }) as { content: Array<{ text: string }> }
+            const text = result.content[0].text
+            expect(text).toContain('long values were truncated to fit, structure preserved')
+            expect(text).toContain('…[truncated')
+            expect(text).toContain('description')
+            expect(text).toContain('detail')
+        })
+
+        it('truncates based on byte size, not UTF-16 length (multibyte)', () => {
+            const emojiHeavy = { s: '😀'.repeat(30_000) }
+            expect(JSON.stringify(emojiHeavy).length).toBeLessThanOrEqual(100 * 1024)
+            const result = chatWorkerTools.truncateLargeResult(emojiHeavy)
+            expect(result).not.toBe(emojiHeavy)
+            expect(result).toHaveProperty('content')
+        })
+    })
 })
