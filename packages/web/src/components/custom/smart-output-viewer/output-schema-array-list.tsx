@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import { OutputFieldList } from './output-field-list';
 import { schemaUtils } from './resolve-schema';
+import { truncateValue } from './shared-value-rendering';
 import { OutputSchema } from './types';
 
 function SchemaArrayItemRow({
@@ -28,6 +29,21 @@ function SchemaArrayItemRow({
         })
       : fallbackLabel;
 
+  // A non-object item has no schema fields to expand into — show its value as a
+  // static row instead of a clickable chevron that opens to nothing.
+  if (!isObject(item)) {
+    return (
+      <div className="flex items-center gap-3 py-2 px-4 hover:bg-accent/50 border-b border-dividers last:border-b-0">
+        <span className="text-sm font-medium text-muted-foreground shrink-0">
+          {label}
+        </span>
+        <span className="text-sm text-foreground/70 truncate flex-1 min-w-0">
+          {truncateValue(item)}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className="border-b border-dividers last:border-b-0">
       <button
@@ -46,9 +62,7 @@ function SchemaArrayItemRow({
           {label}
         </span>
       </button>
-      {expanded && isObject(item) && (
-        <OutputFieldList json={item} schema={schema} />
-      )}
+      {expanded && <OutputFieldList json={item} schema={schema} />}
     </div>
   );
 }
