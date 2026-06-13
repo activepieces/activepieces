@@ -24,6 +24,9 @@ export const forSimpleOutputFormat = (format: string): string => {
 // Download and save screenshot(s) - works for both single scrape and crawl results
 export async function downloadAndSaveScreenshot(screenshotTarget: any, context: any): Promise<void> {
   const screenshotUrl = screenshotTarget.screenshot;
+  if (!screenshotUrl) {
+    return;
+  }
   const response = await httpClient.sendRequest({
     method: HttpMethod.GET,
     url: screenshotUrl,

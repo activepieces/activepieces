@@ -1,4 +1,4 @@
-import { createAction, Property, DynamicPropsValue, InputPropertyMap } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { crwAuth } from '../auth';
 import { CRW_API_BASE_URL } from '../common/common';

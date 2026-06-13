@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, pollingHelper } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { crwAuth } from '../auth';
 import { forJsonOutputFormat, polling, CRW_API_BASE_URL } from '../common/common';
 
