@@ -15,6 +15,7 @@ import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const askOpenAI = createAction({
+  audience: 'human',
   auth: openaiAuth,
   name: 'ask_chatgpt',
   displayName: 'Ask ChatGPT',

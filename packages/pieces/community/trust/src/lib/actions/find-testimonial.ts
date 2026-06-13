@@ -8,6 +8,12 @@ export const findTestimonialAction = createAction({
   name: 'find_testimonial',
   displayName: 'Find Testimonial',
   description: 'Finds a testimonial by ID.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetch a single Trust testimonial by its testimonial ID. Pick this to inspect a known testimonial before updating or deleting it; it requires the exact ID and cannot search by author email or text. Read-only and safe to retry (idempotent).',
+    idempotent: true,
+  },
   props: {
     testimonialId: Property.ShortText({
       displayName: 'Testimonial ID',

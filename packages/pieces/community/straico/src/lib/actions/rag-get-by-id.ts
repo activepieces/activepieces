@@ -8,6 +8,7 @@ import {
 import { baseUrlv0 } from '../common/common';
 
 export const getRagById = createAction({
+  audience: 'human',
   auth: straicoAuth,
   name: 'get_rag_by_id',
   displayName: 'Get RAG by ID',

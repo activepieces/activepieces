@@ -9,6 +9,7 @@ import {
 } from '../common';
 
 export const generateEmbeddings = createAction({
+  audience: 'human',
   auth: awsBedrockAuth,
   name: 'generate_embeddings',
   displayName: 'Generate Embeddings',

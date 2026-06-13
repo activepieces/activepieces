@@ -26,6 +26,7 @@ interface ExtractDataField {
 }
 
 export const extractDataFromText = createAction({
+  audience: 'human',
   auth: grokAuth,
   name: 'extract_data_from_text',
   displayName: 'Extract Data From Text',

@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { XMLParser } from 'fast-xml-parser';
 
 export const convertXmlToJson = createAction({
+  audience: 'human',
   name: 'convert-xml-to-json',
   displayName: 'Convert XML to JSON',
   description: 'Convert XML to JSON',

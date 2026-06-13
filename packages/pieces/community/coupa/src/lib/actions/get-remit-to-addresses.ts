@@ -15,6 +15,12 @@ export const getRemitToAddresses = createAction({
   displayName: 'Get Remit-To Addresses by Object ID',
   description:
     'Lists remit-to addresses for a Supplier or resolves the supplier from a Purchase Order.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'List the remit-to (payment) addresses on file for a Coupa supplier. Works in two modes: pass a supplier ID directly, or pass a purchase order ID and it resolves the linked supplier first (failing if the order has no supplier). Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     parentModule: remitToParentTypeProperty,
     parentRecord: Property.DynamicProperties({

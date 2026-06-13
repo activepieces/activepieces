@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import TurndownService from 'turndown';
 
 export const htmlToMarkdown = createAction({
+  audience: 'human',
   name: 'html_to_markdown',
   displayName: 'HTML to Markdown',
   description: 'Convert HTML to Markdown',

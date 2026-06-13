@@ -28,6 +28,7 @@ import { clearColumnAction } from './lib/actions/clear-column-by-index';
 import { clearRowAction } from './lib/actions/clear-row-by-id';
 import { deleteRowAction } from './lib/actions/delete-row';
 import { createWorksheetAction } from './lib/actions/create-worksheet';
+import { copyWorksheetAction } from './lib/actions/copy-worksheet';
 import { findRowAction } from './lib/actions/find-row';
 import { getRangeAction } from './lib/actions/get-cells-in-range';
 import { getRowAction } from './lib/actions/get-row-by-id';
@@ -88,6 +89,7 @@ export const microsoftExcel = createPiece({
 		clearRowAction,
 		deleteRowAction,
 		createWorksheetAction,
+		copyWorksheetAction,
 		findRowAction,
 		findWorkbookAction,
 		findWorksheetAction,

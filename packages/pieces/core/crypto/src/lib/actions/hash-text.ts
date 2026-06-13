@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import Crypto from 'crypto';
 
 export const hashText = createAction({
+  audience: 'human',
   name: 'hash-text',
   description: 'Converts text to a hash value using various hashing algorithms',
   displayName: 'Text to Hash',

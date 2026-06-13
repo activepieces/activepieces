@@ -1,6 +1,7 @@
 import { createAction} from '@activepieces/pieces-framework';
 
 export const stopFlow = createAction({
+  audience: 'human',
   name: 'stopFlow',
   displayName: 'Stop Flow',
   description: 'Stops the flow immediately this step is reached.',

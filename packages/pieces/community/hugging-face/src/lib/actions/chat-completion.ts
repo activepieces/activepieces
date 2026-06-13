@@ -5,6 +5,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { huggingFaceAuth } from '../auth';
 
 export const chatCompletion = createAction({
+  audience: 'human',
   name: 'chat_completion',
   auth: huggingFaceAuth,
   displayName: 'Chat Completion',

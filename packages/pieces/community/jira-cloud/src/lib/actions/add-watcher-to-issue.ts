@@ -10,6 +10,12 @@ export const addWatcherToIssueAction = createAction({
 	name: 'add-watcher-to-issue',
 	displayName: 'Add Watcher to Issue',
 	description: 'Adds a new watcher to an issue.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Subscribe a specific user as a watcher on a Jira issue (by issue ID/key and user account) so they get notifications about its updates. Use to loop someone in without assigning or commenting. Effectively idempotent: adding a user who already watches the issue leaves it unchanged.',
+		idempotent: true,
+	},
 	props: {
 		issueId: issueIdOrKeyProp('Issue ID or Key', true),
 		userId: getUsersDropdown({

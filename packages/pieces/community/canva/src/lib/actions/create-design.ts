@@ -12,6 +12,12 @@ export const createDesign = createAction({
   name: 'create_design',
   displayName: 'Create Design',
   description: 'Create a new Canva design using preset design types or custom dimensions. Blank designs are automatically deleted if not edited within 7 days.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a brand-new Canva design, either from a preset type (doc, whiteboard, presentation) or with custom pixel dimensions (40-8000px), optionally titled and seeded with an existing image asset. Pick this to start a fresh design; use Import Design instead when converting an existing file like a PDF or PPTX. Not idempotent: every call creates another design, and untouched blank designs are auto-deleted after 7 days.',
+    idempotent: false,
+  },
   props: {
     designTypeOption: Property.StaticDropdown({
       displayName: '🎨 Design Type',
