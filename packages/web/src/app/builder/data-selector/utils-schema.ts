@@ -50,51 +50,16 @@ function buildFieldChildNode({
   };
 }
 
-function buildItemChildNode({
-  basePath,
-  child,
-  parentArrayPath,
-  itemIndex,
-  sampleData,
-}: {
-  basePath: string;
-  child: OutputSchemaField;
-  parentArrayPath: string;
-  itemIndex: number;
-  sampleData: unknown;
-}): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
-  const relativePath = schemaUtils.resolveItemFieldPath(child);
-  const fullPath = `${parentArrayPath}[${itemIndex}].${relativePath}`;
-  const { value, resolvedPath } = pathUtils.resolvePathWithWrapperFallback(
-    sampleData,
-    fullPath,
-  );
-  const propertyPath = pathHelpers.appendValuePathToPropertyPath(
-    basePath,
-    resolvedPath,
-  );
-
-  return {
-    key: propertyPath,
-    data: {
-      type: 'value',
-      value,
-      displayName: schemaUtils.resolveFieldLabel(child),
-      propertyPath,
-      insertable: true,
-      format: child.format,
-    },
-  };
-}
-
 function buildFieldNode({
   basePath,
   field,
   sampleData,
+  itemLabelTemplate,
 }: {
   basePath: string;
   field: OutputSchemaField;
   sampleData: unknown;
+  itemLabelTemplate?: string;
 }): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
   const rawValuePath = field.value ?? field.key;
   const { value, resolvedPath: valuePath } =
@@ -108,30 +73,42 @@ function buildFieldNode({
   if (field.listItems && field.listItems.length > 0 && Array.isArray(value)) {
     const listItems = field.listItems;
     const listChildren = value.map((itemValue, idx) => {
-      const itemLabel = schemaUtils.resolveEntryLabel({
-        value: itemValue,
-        labelKey: field.labelKey,
-        fallback: `${label} ${idx + 1}`,
-      });
-      const itemChildren = listItems.map((child) =>
-        buildItemChildNode({
-          basePath,
-          child,
-          parentArrayPath: valuePath,
-          itemIndex: idx,
-          sampleData,
-        }),
+      const fallback = `${label} ${idx + 1}`;
+      const itemLabel = itemLabelTemplate
+        ? schemaUtils.resolveTemplateLabel({
+            value: itemValue,
+            template: itemLabelTemplate,
+            fallback,
+          })
+        : schemaUtils.resolveEntryLabel({
+            value: itemValue,
+            labelKey: field.labelKey,
+            fallback,
+          });
+      const itemBase = pathHelpers.appendValuePathToPropertyPath(
+        basePath,
+        `${valuePath}[${idx}]`,
       );
+      // Build each item field through buildFieldNode (not a flat leaf) so a
+      // listItem that is itself a container — a nested object, a dynamicKey map,
+      // another array — drills in instead of dead-ending at a raw value.
+      // Key by field index, not the resolved path: two whole-item (value:'')
+      // children would otherwise collide on the same propertyPath-based key.
+      const itemChildren = listItems.map((child, childIdx) => {
+        const childNode = buildFieldNode({
+          basePath: itemBase,
+          field: child,
+          sampleData: itemValue,
+        });
+        return { ...childNode, key: `${itemBase}_field_${childIdx}` };
+      });
       return {
         key: `${propertyPath}_item_${idx}`,
         data: {
           type: 'value' as const,
           value: '',
           displayName: itemLabel,
-          propertyPath: pathHelpers.appendValuePathToPropertyPath(
-            basePath,
-            `${valuePath}[${idx}]`,
-          ),
+          propertyPath: itemBase,
           insertable: false,
         },
         children: itemChildren,
@@ -151,7 +128,7 @@ function buildFieldNode({
   }
 
   if (
-    !field.listItems &&
+    !field.listItems?.length &&
     Array.isArray(value) &&
     schemaUtils.isPrimitiveArray(value)
   ) {
@@ -220,7 +197,7 @@ function buildFieldNode({
     };
   }
 
-  if (field.children && field.children.length > 0) {
+  if (field.children && field.children.length > 0 && isObject(value)) {
     const childNodes = field.children.map((child) =>
       buildFieldChildNode({
         basePath,
@@ -241,6 +218,91 @@ function buildFieldNode({
       },
       children: childNodes,
     };
+  }
+
+  // The schema names this field but not its inner structure. Mirror the output
+  // viewer: drill matrices into rows/cells and other containers into their full
+  // (schemaless) contents, so no described field dead-ends at a bare value.
+  if (schemaUtils.isMatrixArray(value)) {
+    const rowNodes = value.map((row, rowIdx) => {
+      const rowPath = pathHelpers.appendValuePathToPropertyPath(
+        basePath,
+        `${valuePath}[${rowIdx}]`,
+      );
+      const cellNodes = row.map((cell, cellIdx) => {
+        const cellPath = pathHelpers.appendValuePathToPropertyPath(
+          basePath,
+          `${valuePath}[${rowIdx}][${cellIdx}]`,
+        );
+        return {
+          key: cellPath,
+          data: {
+            type: 'value' as const,
+            value: cell,
+            displayName: `${t('Cell')} ${cellIdx + 1}`,
+            propertyPath: cellPath,
+            insertable: true,
+          },
+        };
+      });
+      return {
+        key: rowPath,
+        data: {
+          type: 'value' as const,
+          value: row,
+          displayName: `${t('Row')} ${rowIdx + 1}`,
+          propertyPath: rowPath,
+          insertable: true,
+        },
+        children: cellNodes,
+      };
+    });
+    return {
+      key: propertyPath,
+      data: {
+        type: 'value' as const,
+        value,
+        displayName: label,
+        propertyPath,
+        insertable: true,
+        format: field.format,
+      },
+      children: rowNodes,
+    };
+  }
+
+  if (Array.isArray(value) && value.length > 0) {
+    const itemNodes = value.map((item, idx) => {
+      const itemPath = pathHelpers.appendValuePathToPropertyPath(
+        basePath,
+        `${valuePath}[${idx}]`,
+      );
+      return buildSampleValueNode({
+        value: item,
+        displayName: `${t('Item')} ${idx + 1}`,
+        path: itemPath,
+      });
+    });
+    return {
+      key: propertyPath,
+      data: {
+        type: 'value' as const,
+        value,
+        displayName: label,
+        propertyPath,
+        insertable: true,
+        format: field.format,
+      },
+      children: itemNodes,
+    };
+  }
+
+  if (isObject(value) && Object.keys(value).length > 0) {
+    return buildSampleValueNode({
+      value,
+      displayName: label,
+      path: propertyPath,
+    });
   }
 
   return {
@@ -270,7 +332,14 @@ function buildTreeFromSchema({
   const fields = schema.fields ?? [];
   const basePath = pathHelpers.propertyPathStarter(stepName);
   const children = fields.map((field) =>
-    buildFieldNode({ basePath, field, sampleData }),
+    buildFieldNode({
+      basePath,
+      field,
+      sampleData,
+      // A field that IS the whole output (value:'') over a top-level array is the
+      // array's wrapper; label its rows with the schema's array itemLabel template.
+      itemLabelTemplate: field.value === '' ? schema.itemLabel : undefined,
+    }),
   );
 
   return {
@@ -452,8 +521,16 @@ function buildTreeFromArrayWithSchema({
   };
 }
 
+function selectArrayTreeKind(
+  schema: OutputSchema | null | undefined,
+): 'wrapper' | 'perItem' | 'plain' {
+  if (isNil(schema)) return 'plain';
+  return schemaUtils.isWholeOutputSchema(schema) ? 'wrapper' : 'perItem';
+}
+
 export const schemaTreeUtils = {
   buildTreeFromSchema,
   buildTreeFromArray,
   buildTreeFromArrayWithSchema,
+  selectArrayTreeKind,
 };

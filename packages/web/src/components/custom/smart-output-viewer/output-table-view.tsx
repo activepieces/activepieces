@@ -152,7 +152,26 @@ function OutputTableView({ items }: OutputTableViewProps) {
   );
 }
 
-export { OutputTableView, isTabularArray, buildColumns };
+// Chooses the friendly renderer for a top-level array. A flat, uniform array
+// reads best as a table — prefer it even when a schema exists (curated schemas
+// describe nested structure, which is never tabular, so they fall through).
+function selectArrayFriendlyView({
+  items,
+  hasSchema,
+}: {
+  items: unknown[];
+  hasSchema: boolean;
+}): 'table' | 'schema' | 'list' {
+  if (isTabularArray(items)) return 'table';
+  return hasSchema ? 'schema' : 'list';
+}
+
+export {
+  OutputTableView,
+  isTabularArray,
+  buildColumns,
+  selectArrayFriendlyView,
+};
 
 type Column = {
   key: string;

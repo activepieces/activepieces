@@ -3,6 +3,7 @@ import { describe, it, expect } from 'vitest';
 import {
   buildColumns,
   isTabularArray,
+  selectArrayFriendlyView,
 } from '@/components/custom/smart-output-viewer/output-table-view';
 
 describe('isTabularArray', () => {
@@ -95,5 +96,36 @@ describe('buildColumns', () => {
 
   it('returns null for an empty object', () => {
     expect(buildColumns({})).toBeNull();
+  });
+});
+
+describe('selectArrayFriendlyView', () => {
+  it('chooses table for a flat tabular array even when a schema exists (find_rows)', () => {
+    const findRows = [
+      { row: 2, values: { Name: 'Alice', Email: 'alice@acme.com' } },
+      { row: 3, values: { Name: 'Bob', Email: 'bob@acme.com' } },
+    ];
+    expect(selectArrayFriendlyView({ items: findRows, hasSchema: true })).toBe(
+      'table',
+    );
+    expect(selectArrayFriendlyView({ items: findRows, hasSchema: false })).toBe(
+      'table',
+    );
+  });
+
+  it('uses the schema renderer for a non-tabular array with a schema', () => {
+    const issues = [
+      { key: 'ADS-1', fields: { summary: 'x', status: { name: 'To Do' } } },
+    ];
+    expect(selectArrayFriendlyView({ items: issues, hasSchema: true })).toBe(
+      'schema',
+    );
+  });
+
+  it('falls back to the schemaless list for a non-tabular array with no schema', () => {
+    const issues = [{ key: 'ADS-1', fields: { status: { name: 'To Do' } } }];
+    expect(selectArrayFriendlyView({ items: issues, hasSchema: false })).toBe(
+      'list',
+    );
   });
 });

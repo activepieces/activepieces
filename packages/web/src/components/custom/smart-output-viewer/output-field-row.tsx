@@ -17,7 +17,7 @@ import {
   getValueByDotPath,
 } from './format-value';
 import { schemaUtils } from './resolve-schema';
-import { truncateValue } from './shared-value-rendering';
+import { formatKey, truncateValue, ValueRow } from './shared-value-rendering';
 import { OutputSchemaField } from './types';
 
 function ChildFieldRow({
@@ -140,6 +140,71 @@ function ListItemRow({
   );
 }
 
+function MatrixRow({
+  row,
+  rowKey,
+  rowLabel,
+  format,
+  currency,
+}: {
+  row: unknown[];
+  rowKey: string;
+  rowLabel: string;
+  format: OutputSchemaField['format'];
+  currency: OutputSchemaField['currency'];
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <>
+      <button
+        type="button"
+        className="flex items-center gap-3 py-1.5 px-3 pl-10 hover:bg-accent/50 cursor-pointer w-full text-left"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <span className="flex items-center gap-1 text-sm text-muted-foreground min-w-[120px] max-w-[160px] shrink-0">
+          {expanded ? (
+            <ChevronDown className="h-3 w-3 shrink-0" />
+          ) : (
+            <ChevronRight className="h-3 w-3 shrink-0" />
+          )}
+          <span className="truncate">{rowLabel}</span>
+        </span>
+      </button>
+      {expanded && (
+        <div>
+          {row.map((cell, idx) => (
+            <div
+              key={`${rowKey}-${idx}`}
+              className="flex items-start gap-3 py-1.5 px-3 pl-16 hover:bg-accent/50"
+            >
+              <span className="flex h-5 items-center shrink-0">
+                <FieldTypeIcon value={cell} format={format} />
+              </span>
+              <span className="text-sm text-muted-foreground min-w-[100px] max-w-[140px] shrink-0 truncate">
+                {t('Cell')} {idx + 1}
+              </span>
+              <span className="flex-1 text-sm min-w-0">
+                {isNil(cell) || cell === '' ? (
+                  <span className="text-muted-foreground italic">
+                    {t('empty')}
+                  </span>
+                ) : (
+                  <FormatSingleValue
+                    value={cell}
+                    format={format}
+                    currency={currency}
+                  />
+                )}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
 function OutputFieldRow({ field, json }: OutputFieldRowProps) {
   const [expanded, setExpanded] = useState(false);
 
@@ -153,18 +218,52 @@ function OutputFieldRow({ field, json }: OutputFieldRowProps) {
 
   const children = field.children ?? [];
   const itemChildren = field.listItems ?? [];
-  const hasChildren = children.length > 0 || dynamicEntries.length > 0;
-  const isList = itemChildren.length > 0 && Array.isArray(value);
+  // A description only counts when it matches the value's actual shape, so a
+  // field whose declared structure contradicts its runtime value (e.g. children
+  // declared but the value is an array) falls through to the drill-down below.
+  // This keeps the viewer and the data selector classifying inputs identically.
+  const isDescribedList = itemChildren.length > 0 && Array.isArray(value);
+  const isDescribedObject =
+    !isDynamicMap && children.length > 0 && isObject(value);
+  const innerDescribed = isDescribedList || isDescribedObject || isDynamicMap;
+
+  // When the schema names the field but not its inner structure, show everything
+  // inside it rather than dead-ending at a badge: matrices drill into rows/cells,
+  // other containers fall back to the generic (schemaless) renderer. The schema
+  // stays a whitelist at the top level — undescribed root siblings are not shown.
+  const isMatrix = !innerDescribed && schemaUtils.isMatrixArray(value);
   const isPrimitiveList =
-    !isList &&
-    !hasChildren &&
-    !field.listItems &&
+    !innerDescribed &&
+    !isMatrix &&
     Array.isArray(value) &&
     value.length > 0 &&
     schemaUtils.isPrimitiveArray(value);
-  const isExpandable = hasChildren || isList || isPrimitiveList;
-  const listItems: unknown[] = isList && Array.isArray(value) ? value : [];
-  const primitiveItems: unknown[] = isPrimitiveList ? value : [];
+  const isGenericArray =
+    !innerDescribed &&
+    !isMatrix &&
+    !isPrimitiveList &&
+    Array.isArray(value) &&
+    value.length > 0;
+  const isGenericObject =
+    !innerDescribed && isObject(value) && Object.keys(value).length > 0;
+
+  const isExpandable =
+    innerDescribed ||
+    isMatrix ||
+    isPrimitiveList ||
+    isGenericArray ||
+    isGenericObject;
+
+  const listItems: unknown[] =
+    isDescribedList && Array.isArray(value) ? value : [];
+  const matrixRows: unknown[][] =
+    isMatrix && schemaUtils.isMatrixArray(value) ? value : [];
+  const primitiveItems: unknown[] =
+    isPrimitiveList && Array.isArray(value) ? value : [];
+  const genericArrayItems: unknown[] =
+    isGenericArray && Array.isArray(value) ? value : [];
+  const genericObjectEntries: Array<[string, unknown]> =
+    isGenericObject && isObject(value) ? Object.entries(value) : [];
 
   return (
     <div className="border-b border-dividers last:border-b-0">
@@ -204,11 +303,15 @@ function OutputFieldRow({ field, json }: OutputFieldRowProps) {
           )}
         </div>
         <div className="flex-1 text-sm min-w-0">
-          {isList ? (
+          {isDescribedList || isMatrix ? (
             <span className="text-muted-foreground">
-              {t('itemCount', { count: listItems.length })}
+              {t('itemCount', {
+                count: isMatrix ? matrixRows.length : listItems.length,
+              })}
             </span>
-          ) : isPrimitiveList && expanded ? null : hasChildren && !expanded ? (
+          ) : expanded ? null : isDescribedObject ||
+            isDynamicMap ||
+            isGenericObject ? (
             <span
               className="text-muted-foreground truncate"
               title={
@@ -221,7 +324,7 @@ function OutputFieldRow({ field, json }: OutputFieldRowProps) {
                 ? t('fieldCount', { count: dynamicEntries.length })
                 : truncateValue(value)}
             </span>
-          ) : hasChildren && expanded ? null : (
+          ) : (
             <FormatValue value={value} field={field} />
           )}
         </div>
@@ -252,7 +355,7 @@ function OutputFieldRow({ field, json }: OutputFieldRowProps) {
         </div>
       )}
 
-      {expanded && !isDynamicMap && children.length > 0 && (
+      {expanded && isDescribedObject && (
         <div className="pb-1">
           {children.map((child) => (
             <ChildFieldRow
@@ -265,7 +368,7 @@ function OutputFieldRow({ field, json }: OutputFieldRowProps) {
         </div>
       )}
 
-      {expanded && isList && (
+      {expanded && isDescribedList && (
         <div className="pb-1">
           {listItems.map((item, idx) => (
             <ListItemRow
@@ -278,6 +381,47 @@ function OutputFieldRow({ field, json }: OutputFieldRowProps) {
                 fallback: `${label} ${idx + 1}`,
               })}
               itemChildren={itemChildren}
+            />
+          ))}
+        </div>
+      )}
+
+      {expanded && isMatrix && (
+        <div className="pb-1">
+          {matrixRows.map((row, idx) => (
+            <MatrixRow
+              key={`${path}-${idx}`}
+              rowKey={`${path}-${idx}`}
+              row={row}
+              rowLabel={`${t('Row')} ${idx + 1}`}
+              format={field.format}
+              currency={field.currency}
+            />
+          ))}
+        </div>
+      )}
+
+      {expanded && isGenericArray && (
+        <div className="pb-1">
+          {genericArrayItems.map((item, idx) => (
+            <ValueRow
+              key={`${path}-${idx}`}
+              label={`${t('Item')} ${idx + 1}`}
+              value={item}
+              depth={0}
+            />
+          ))}
+        </div>
+      )}
+
+      {expanded && isGenericObject && (
+        <div className="pb-1">
+          {genericObjectEntries.map(([entryKey, entryValue]) => (
+            <ValueRow
+              key={entryKey}
+              label={formatKey(entryKey)}
+              value={entryValue}
+              depth={0}
             />
           ))}
         </div>

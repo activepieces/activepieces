@@ -240,7 +240,19 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
         const schema = schemaMap[step.name];
 
         if (Array.isArray(stepData) && stepData.length > 0) {
-          if (schema) {
+          const arrayKind = schemaTreeUtils.selectArrayTreeKind(schema);
+          // A whole-output wrapper schema (single value:'' field) names the
+          // array itself — render it object-style so the wrapper field sits at
+          // the top with rows beneath, instead of wrapping each row in Item N.
+          if (schema && arrayKind === 'wrapper') {
+            return schemaTreeUtils.buildTreeFromSchema({
+              stepName: step.name,
+              displayName,
+              schema,
+              sampleData: stepData,
+            });
+          }
+          if (schema && arrayKind === 'perItem') {
             return schemaTreeUtils.buildTreeFromArrayWithSchema({
               stepName: step.name,
               displayName,

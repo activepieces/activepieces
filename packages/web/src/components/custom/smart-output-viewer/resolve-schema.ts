@@ -3,7 +3,7 @@ import { isNil } from '@activepieces/shared';
 import { pathUtils } from '@/lib/path-utils';
 import { stringUtils } from '@/lib/string-utils';
 
-import type { OutputSchemaField } from './types';
+import type { OutputSchema, OutputSchemaField } from './types';
 
 function resolveFieldLabel(field: OutputSchemaField): string {
   return field.label ?? stringUtils.titleCase(field.key);
@@ -61,6 +61,19 @@ function isPrimitiveArray(value: unknown): value is Array<unknown> {
   return value.every((item) => item === null || typeof item !== 'object');
 }
 
+function isMatrixArray(value: unknown): value is unknown[][] {
+  if (!Array.isArray(value) || value.length === 0) return false;
+  // Only scalar grids (e.g. Google Sheets `values`) get the row/cell treatment.
+  // Arrays of arrays whose cells are objects fall through to the generic drill,
+  // which can render those objects instead of stringifying them.
+  return value.every((row) => isPrimitiveArray(row));
+}
+
+function isWholeOutputSchema(schema: OutputSchema): boolean {
+  const fields = schema.fields ?? [];
+  return fields.length === 1 && fields[0].value === '';
+}
+
 export const schemaUtils = {
   resolveFieldLabel,
   resolveEntryLabel,
@@ -68,4 +81,6 @@ export const schemaUtils = {
   resolveFieldPath,
   resolveItemFieldPath,
   isPrimitiveArray,
+  isMatrixArray,
+  isWholeOutputSchema,
 };
