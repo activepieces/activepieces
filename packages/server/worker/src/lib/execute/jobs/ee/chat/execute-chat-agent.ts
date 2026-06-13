@@ -31,7 +31,26 @@ const RETRY_MAX_ATTEMPTS = 3
 const RETRY_BASE_DELAY_MS = 1_000
 const MAX_RESPONSE_OUTPUT_TOKENS = 32_000
 const MAX_AUTO_CONTINUATIONS = 3
+const MAX_EMPTY_CONTINUATIONS = 2
 const CONTINUE_NUDGE = '[system note — not from the user] Your previous response was cut off by the output token limit before it finished. Continue exactly where you stopped. If a tool call was cut off, re-issue it in FULL. Do not repeat content you already produced.'
+const EMPTY_OUTPUT_NUDGE = '[system note — not from the user] Your previous step produced no visible reply to the user. Continue the task now: either call the next tool, or write your reply to the user. Do not stop silently.'
+
+export function decideLoopAction({ finishReason, producedVisibleOutput, continuations, emptyContinuations }: {
+    finishReason: string
+    producedVisibleOutput: boolean
+    continuations: number
+    emptyContinuations: number
+}): LoopDecision {
+    if (finishReason === 'length') {
+        return continuations >= MAX_AUTO_CONTINUATIONS ? 'finish' : 'continue_truncation'
+    }
+    if (!producedVisibleOutput && emptyContinuations < MAX_EMPTY_CONTINUATIONS) {
+        return 'continue_empty'
+    }
+    return 'finish'
+}
+
+type LoopDecision = 'finish' | 'continue_truncation' | 'continue_empty'
 
 export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_CHAT_AGENT,
@@ -99,6 +118,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             let llmMessages = config.messages as ModelMessage[]
             const accumulatedResponseMessages: ModelMessage[] = []
             let continuations = 0
+            let emptyContinuations = 0
             let truncatedAfterRetries = false
             let usage: LanguageModelUsage | undefined
             let totalInputTokens = 0
@@ -170,6 +190,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             })
 
             for (;;) {
+                const uiPartsCountBefore = uiParts.length
                 const result = runStreamAttempt(llmMessages)
                 await streamChunksToClient({ result, ctx, userId, conversationId, runId, log })
                 if (abortController.signal.aborted || streamError) break
@@ -184,23 +205,31 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 totalInputTokens += attemptUsage.inputTokens ?? 0
                 totalOutputTokens += attemptUsage.outputTokens ?? 0
 
-                if (finishReason !== 'length') {
+                const producedVisibleOutput = uiParts.length > uiPartsCountBefore
+                const decision = decideLoopAction({ finishReason, producedVisibleOutput, continuations, emptyContinuations })
+
+                if (decision === 'finish') {
                     accumulatedResponseMessages.push(...stepMessages)
-                    break
-                }
-                if (continuations >= MAX_AUTO_CONTINUATIONS) {
-                    accumulatedResponseMessages.push(...stepMessages)
-                    truncatedAfterRetries = true
-                    log.error({ conversationId, continuations }, 'Chat response still truncated after max auto-continuations')
+                    if (finishReason === 'length') {
+                        truncatedAfterRetries = true
+                        log.error({ conversationId, continuations }, 'Chat response still truncated after max auto-continuations')
+                    }
                     break
                 }
 
-                continuations++
-                log.warn({ conversationId, continuations, outputTokens: attemptUsage.outputTokens }, 'Chat response truncated by output limit — auto-continuing')
                 const sanitizedTail = chatAiUtils.sanitizeTruncatedAssistantTail(stepMessages)
-                const nudge: ModelMessage = { role: 'user', content: CONTINUE_NUDGE }
+                if (decision === 'continue_truncation') {
+                    continuations++
+                    log.warn({ conversationId, continuations, outputTokens: attemptUsage.outputTokens }, 'Chat response truncated by output limit — auto-continuing')
+                    accumulatedResponseMessages.push(...sanitizedTail)
+                    llmMessages = [...llmMessages, ...sanitizedTail, { role: 'user', content: CONTINUE_NUDGE }]
+                    continue
+                }
+
+                emptyContinuations++
+                log.warn({ conversationId, emptyContinuations, finishReason }, 'Chat step produced no visible output — auto-continuing')
                 accumulatedResponseMessages.push(...sanitizedTail)
-                llmMessages = [...llmMessages, ...sanitizedTail, nudge]
+                llmMessages = [...llmMessages, ...sanitizedTail, { role: 'user', content: EMPTY_OUTPUT_NUDGE }]
             }
 
             if (abortController.signal.aborted) {
@@ -254,7 +283,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 messages: [...(config.allMessages as ModelMessage[]), ...accumulatedResponseMessages],
                 uiMessages: [
                     ...(config.previousUiMessages as PersistedChatMessage[]),
-                    { role: PersistedChatRole.ASSISTANT, parts: uiParts, thinkingDurationMs },
+                    ...(uiParts.length > 0 ? [{ role: PersistedChatRole.ASSISTANT, parts: uiParts, thinkingDurationMs }] : []),
                 ],
                 ...spreadIfDefined('title', autoTitle),
                 ...spreadIfDefined('modelName', isNil(data.modelName) ? config.tier.id : undefined),

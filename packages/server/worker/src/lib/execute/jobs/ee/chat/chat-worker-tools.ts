@@ -43,7 +43,8 @@ async function withToolTimeout<T>({ fn, timeoutMs, toolName }: {
 
 function truncateLargeResult(result: unknown): unknown {
     const serialized = JSON.stringify(result)
-    if (serialized.length <= MAX_RESULT_SIZE_BYTES) return result
+    const byteSize = Buffer.byteLength(serialized, 'utf8')
+    if (byteSize <= MAX_RESULT_SIZE_BYTES) return result
 
     const topLevelArray = findTopLevelArray(result)
     if (topLevelArray) {
@@ -52,7 +53,18 @@ function truncateLargeResult(result: unknown): unknown {
         return {
             content: [{
                 type: 'text',
-                text: `[LARGE RESPONSE] The result contains ${totalCount} items (at ${path}) but the full response is ${Math.round(serialized.length / 1024)}KB which is too large to process. Only the first 3 items are shown as a preview.\n\nTo handle this data, either:\n1. Use a more specific filter to reduce the number of results\n2. Fetch only IDs or metadata fields instead of full content\n3. Process items in smaller batches\n\nPreview (3 of ${totalCount} items):\n${JSON.stringify(preview, null, 2)}`,
+                text: `[LARGE RESPONSE] The result contains ${totalCount} items (at ${path}) but the full response is ${Math.round(byteSize / 1024)}KB which is too large to process. Only the first 3 items are shown as a preview.\n\nTo handle this data, either:\n1. Use a more specific filter to reduce the number of results\n2. Fetch only IDs or metadata fields instead of full content\n3. Process items in smaller batches\n\nPreview (3 of ${totalCount} items):\n${JSON.stringify(preview, null, 2)}`,
+            }],
+        }
+    }
+
+    const shrunk = shrinkLargeValue(result, { maxStringLength: 2_000, maxArrayItems: 20 })
+    const shrunkSerialized = JSON.stringify(shrunk, null, 2)
+    if (Buffer.byteLength(shrunkSerialized, 'utf8') <= MAX_RESULT_SIZE_BYTES) {
+        return {
+            content: [{
+                type: 'text',
+                text: `[LARGE RESPONSE — long values were truncated to fit, structure preserved] The full response was ${Math.round(byteSize / 1024)}KB. Truncated values are marked with "…[truncated]".\n\n${shrunkSerialized}`,
             }],
         }
     }
@@ -60,9 +72,26 @@ function truncateLargeResult(result: unknown): unknown {
     return {
         content: [{
             type: 'text',
-            text: `[LARGE RESPONSE] The response is ${Math.round(serialized.length / 1024)}KB which is too large to process. Retry with a more specific filter, request fewer items, or fetch only IDs/metadata fields instead of full content.`,
+            text: `[LARGE RESPONSE] The response is ${Math.round(byteSize / 1024)}KB which is too large to process even after truncation. Retry with a more specific filter, request fewer items, or fetch only IDs/metadata fields instead of full content.`,
         }],
     }
+}
+
+function shrinkLargeValue(value: unknown, limits: { maxStringLength: number, maxArrayItems: number }): unknown {
+    if (typeof value === 'string') {
+        if (value.length <= limits.maxStringLength) return value
+        return `${value.slice(0, limits.maxStringLength)}…[truncated ${value.length - limits.maxStringLength} chars]`
+    }
+    if (Array.isArray(value)) {
+        const kept = value.slice(0, limits.maxArrayItems).map((item) => shrinkLargeValue(item, limits))
+        return value.length > limits.maxArrayItems
+            ? [...kept, `…and ${value.length - limits.maxArrayItems} more items`]
+            : kept
+    }
+    if (isObject(value)) {
+        return Object.fromEntries(Object.entries(value).map(([key, val]) => [key, shrinkLargeValue(val, limits)]))
+    }
+    return value
 }
 
 function findTopLevelArray(obj: unknown): { array: unknown[], path: string, totalCount: number } | null {
@@ -611,6 +640,8 @@ export const chatWorkerTools = {
     createPhaseTools,
     isSuccessResult,
     extractResultText,
+    truncateLargeResult,
+    shrinkLargeValue,
     withToolTimeout,
     TOOL_EXECUTION_TIMEOUT_MS,
 }

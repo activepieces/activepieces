@@ -9,7 +9,7 @@ export const apListTablesTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
     return {
         title: 'ap_list_tables',
         permission: Permission.READ_TABLE,
-        description: 'List all tables in the current project with their fields (name, type, id) and row counts. Use this to discover available tables before querying or modifying data. Returns table IDs needed by other table tools.',
+        description: 'List all tables in the current project with their fields (name, type, id) and row counts. Use this to discover available tables before querying or modifying data. Each table has two ids: use "id" with the record/field MCP tools (ap_insert_records, ap_find_records, ap_manage_fields, etc.), and use "externalId" as the table_id value when configuring a Tables piece step inside a flow.',
         inputSchema: {},
         annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async () => {
@@ -41,7 +41,7 @@ export const apListTablesTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                     const fields = fieldsByTable.get(table.id) ?? []
                     const rowCount = table.rowCount ?? 0
                     const fieldLines = fields.map(f => `    - ${formatFieldInfo(f)}`).join('\n')
-                    return `- ${table.name} (id: ${table.id}) — ${rowCount} records\n  Fields:\n${fieldLines}`
+                    return `- ${table.name} (id: ${table.id}, externalId: ${table.externalId}) — ${rowCount} records\n  Fields:\n${fieldLines}`
                 })
 
                 const structured = {
@@ -49,15 +49,17 @@ export const apListTablesTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                         const fields = fieldsByTable.get(table.id) ?? []
                         return {
                             id: table.id,
+                            externalId: table.externalId,
                             name: table.name,
                             rowCount: table.rowCount ?? 0,
-                            fields: fields.map(f => ({ id: f.id, name: f.name, type: f.type })),
+                            fields: fields.map(f => ({ id: f.id, externalId: f.externalId, name: f.name, type: f.type })),
                         }
                     }),
                     count: result.data.length,
                 }
 
-                const output = tableDetails.join('\n\n')
+                const idHint = '\n\nℹ️ Use "id" with the record/field tools; use "externalId" as table_id when configuring a Tables piece step in a flow.'
+                const output = tableDetails.join('\n\n') + idHint
                 const truncationNote = result.data.length >= 100
                     ? '\n\n⚠️ Showing first 100 tables. There may be more in this project.'
                     : ''
