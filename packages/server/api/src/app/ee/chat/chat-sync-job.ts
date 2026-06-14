@@ -55,14 +55,14 @@ async function syncConversations({ conversations, log }: {
 
     const { userCache, platformCache, providerCache } = await resolveLookups({ conversations, log })
 
-    const platformGroups = new Map<string, { licenseKey: string, conversations: ChatConversation[] }>()
-    let skipped = 0
-    for (const conversation of conversations) {
+    const syncable = conversations.flatMap((conversation) => {
         const licenseKey = licenseKeyByPlatform.get(conversation.platformId)
-        if (isNil(licenseKey)) {
-            skipped += 1
-            continue
-        }
+        return isNil(licenseKey) ? [] : [{ conversation, licenseKey }]
+    })
+    let skipped = conversations.length - syncable.length
+
+    const platformGroups = new Map<string, { licenseKey: string, conversations: ChatConversation[] }>()
+    for (const { conversation, licenseKey } of syncable) {
         const group = platformGroups.get(conversation.platformId)
         if (isNil(group)) {
             platformGroups.set(conversation.platformId, { licenseKey, conversations: [conversation] })
