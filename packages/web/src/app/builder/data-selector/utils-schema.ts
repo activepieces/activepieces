@@ -106,7 +106,9 @@ function buildFieldNode({
         key: `${propertyPath}_item_${idx}`,
         data: {
           type: 'value' as const,
-          value: '',
+          // Carry the real item so its type icon reflects the item (object => {},
+          // array => list) instead of defaulting to the text icon.
+          value: itemValue,
           displayName: itemLabel,
           propertyPath: itemBase,
           insertable: false,
@@ -118,7 +120,10 @@ function buildFieldNode({
       key: propertyPath,
       data: {
         type: 'value' as const,
-        value: t('itemCount', { count: value.length }),
+        // Carry the real array (not a formatted count string) so the node shows
+        // the list icon + item-count badge, matching the matrix/primitive/generic
+        // array branches and the output viewer.
+        value,
         displayName: label,
         propertyPath,
         insertable: false,
@@ -398,7 +403,8 @@ function buildSampleValueNode({
       key: path,
       data: {
         type: 'value',
-        value: '',
+        // Carry the real object so the node shows the {} icon, not the text icon.
+        value,
         displayName,
         propertyPath: path,
         insertable: true,
@@ -429,32 +435,13 @@ function buildTreeFromArray({
   items: unknown[];
 }): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
   const children: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[] =
-    items.map((item, idx) => {
-      const itemPath = `${pathHelpers.propertyPathStarter(stepName)}[${idx}]`;
-      const itemNode = buildSampleValueNode({
+    items.map((item, idx) =>
+      buildSampleValueNode({
         value: item,
         displayName: `${t('Item')} ${idx + 1}`,
-        path: itemPath,
-      });
-
-      if (!isObject(item)) {
-        return itemNode;
-      }
-
-      const preview = Object.values(item)
-        .filter((v) => !isNil(v) && v !== '' && typeof v !== 'object')
-        .slice(0, 3)
-        .map((v) => {
-          const s = String(v);
-          return s.length > 20 ? s.slice(0, 20) + '...' : s;
-        })
-        .join(' · ');
-
-      return {
-        ...itemNode,
-        data: { ...itemNode.data, value: preview },
-      };
-    });
+        path: `${pathHelpers.propertyPathStarter(stepName)}[${idx}]`,
+      }),
+    );
 
   return {
     key: stepName,
@@ -496,7 +483,8 @@ function buildTreeFromArrayWithSchema({
       key: itemBase,
       data: {
         type: 'value' as const,
-        value: '',
+        // Carry the real item so its type icon reflects the item, not text.
+        value: item,
         displayName: itemLabel,
         propertyPath: itemBase,
         insertable: true,

@@ -120,10 +120,22 @@ describe('schemaTreeUtils.buildTreeFromSchema — primitive arrays', () => {
       displayName: 'Attachments',
       insertable: false,
     });
+    // The list node carries the real array (drives the list icon + count badge),
+    // not a pre-formatted "N items" string.
+    expect(
+      attachmentsNode?.data.type === 'value' &&
+        Array.isArray(attachmentsNode.data.value),
+    ).toBe(true);
     expect(attachmentsNode?.children).toHaveLength(2);
     expect(attachmentsNode?.children?.[0].data).toMatchObject({
       displayName: 'Attachments 1',
     });
+    // each item node carries the real item object (drives the {} icon)
+    expect(
+      attachmentsNode?.children?.[0].data.type === 'value' &&
+        typeof attachmentsNode.children[0].data.value === 'object' &&
+        !Array.isArray(attachmentsNode.children[0].data.value),
+    ).toBe(true);
     expect(attachmentsNode?.children?.[0].children).toHaveLength(2);
   });
 
@@ -356,6 +368,12 @@ describe('schemaTreeUtils.buildTreeFromArrayWithSchema', () => {
     expect(
       firstItem?.data.type === 'value' && firstItem.data.propertyPath,
     ).toBe("step_1['output'][0]");
+    // the item node carries the real item object (drives the {} icon, not text)
+    expect(
+      firstItem?.data.type === 'value' &&
+        typeof firstItem.data.value === 'object' &&
+        !Array.isArray(firstItem.data.value),
+    ).toBe(true);
 
     const summaryNode = firstItem?.children?.[1];
     expect(summaryNode?.data).toMatchObject({
@@ -398,16 +416,16 @@ describe('schemaTreeUtils.buildTreeFromArray', () => {
     });
 
     const payloadNode = tree.children?.[0]?.children?.[0];
-    expect(payloadNode?.data).toMatchObject({
-      displayName: 'Payload',
-      value: '',
-    });
+    expect(payloadNode?.data).toMatchObject({ displayName: 'Payload' });
+    // container nodes carry the real object so they render the {} icon, not text
+    expect(
+      payloadNode?.data.type === 'value' &&
+        typeof payloadNode.data.value === 'object' &&
+        !Array.isArray(payloadNode.data.value),
+    ).toBe(true);
 
     const customerNode = payloadNode?.children?.[0];
-    expect(customerNode?.data).toMatchObject({
-      displayName: 'Customer',
-      value: '',
-    });
+    expect(customerNode?.data).toMatchObject({ displayName: 'Customer' });
 
     const addressNode = customerNode?.children?.[0];
     expect(addressNode?.children).toHaveLength(1);
@@ -448,7 +466,7 @@ describe('schemaTreeUtils.buildTreeFromArray', () => {
     ).toBe("step_1['output'][0]['tags'][1]");
   });
 
-  it('keeps primitive items as insertable leaves with a preview on object items', () => {
+  it('keeps primitive items as insertable leaves and expands object items', () => {
     const tree = schemaTreeUtils.buildTreeFromArray({
       stepName: 'step_1',
       displayName: 'Step',
@@ -462,10 +480,13 @@ describe('schemaTreeUtils.buildTreeFromArray', () => {
     });
     expect(tree.children?.[0]?.children).toBeUndefined();
 
-    expect(tree.children?.[1]?.data).toMatchObject({
-      displayName: 'Item 2',
-      value: '7 · Alpha',
-    });
+    // object item carries the real object (drives the {} icon) and expands
+    expect(tree.children?.[1]?.data).toMatchObject({ displayName: 'Item 2' });
+    expect(
+      tree.children?.[1]?.data.type === 'value' &&
+        typeof tree.children[1].data.value === 'object' &&
+        !Array.isArray(tree.children[1].data.value),
+    ).toBe(true);
     expect(tree.children?.[1]?.children).toHaveLength(2);
   });
 });
