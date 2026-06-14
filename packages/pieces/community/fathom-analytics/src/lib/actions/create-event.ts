@@ -6,6 +6,8 @@ export const createEvent = createAction({
   name: 'create_event',
   displayName: 'Create Event',
   description: 'Create a custom event (goal) for a specific site.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new custom event (conversion goal) under a Fathom Analytics site, identified by site ID and a goal name. Use it to set up a goal before tracking conversions against it. Not idempotent — each call creates another event, so repeated calls with the same name can produce duplicates.', idempotent: false },
   auth: fathomAuth,
   props: {
     site_id: Property.ShortText({

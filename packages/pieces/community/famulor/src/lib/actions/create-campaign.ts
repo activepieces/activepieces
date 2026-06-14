@@ -9,6 +9,8 @@ export const createCampaign = createAction({
   name: 'createCampaign',
   displayName: 'Create Campaign',
   description: 'Create a new outbound calling campaign.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new outbound calling campaign bound to an AI assistant, optionally configuring dialing windows (timezone, allowed hours/days), parallelism, and retry behavior. Pick when setting up a fresh campaign before adding leads to it; this always creates a new campaign (not idempotent — repeated calls make duplicates).', idempotent: false },
   props: famulorCommon.createCampaignProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, famulorCommon.createCampaignSchema);

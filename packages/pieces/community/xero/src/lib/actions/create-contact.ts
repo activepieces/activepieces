@@ -13,6 +13,12 @@ export const xeroCreateContact = createAction({
   name: 'xero_create_contact',
   description: 'Create Xero Contact',
   displayName: 'Create or Update Contact',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new Xero contact (customer or supplier) or update an existing one when a contact ID is supplied. Pick this to maintain the contact record that invoices, bills, and payments attach to. Supplying an existing contact ID updates that record in place (idempotent on a fixed ID); omitting it creates a new contact each call, so de-duplicate by looking the contact up first.',
+    idempotent: false,
+  },
   props: {
     tenant_id: props.tenant_id,
     contact_id: props.contact_id(false),

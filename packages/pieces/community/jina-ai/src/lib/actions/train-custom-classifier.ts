@@ -9,6 +9,12 @@ export const trainCustomClassifierAction = createAction({
   displayName: 'Train Custom Classifier',
   description:
     'Fine-tune a classifier with labeled examples for domain-specific tasks.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Train a custom Jina AI classifier from an array of labeled text or image-URL examples, choosing the base embedding model, iteration count, and private/public visibility. Pick this only when zero-shot labeling (Classify Text or Image) is not accurate enough and you have labeled training data. Each call creates a new training job/classifier, so repeated calls are not idempotent.',
+    idempotent: false,
+  },
   props: {
     model: Property.StaticDropdown({
       displayName: 'Model',

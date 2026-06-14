@@ -8,6 +8,12 @@ export const sendANewSms = createAction({
   name: 'sendANewSms',
   displayName: 'Send a New SMS',
   description: 'Send an SMS message to one or more recipients',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends an SMS campaign to a recipient via Octopush, with an optional "Send At" time to schedule delivery instead of sending immediately. Use to deliver alerts, transactional, marketing, or OTP messages; requires the message text and a 3-11 character alphanumeric sender ID, and the recipient phone number in international format. Not idempotent: each call dispatches a new message.',
+    idempotent: false,
+  },
   props: {
     phone_number: Property.ShortText({
       displayName: 'Phone Number',

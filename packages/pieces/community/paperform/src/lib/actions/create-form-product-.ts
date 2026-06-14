@@ -11,6 +11,8 @@ export const createFormProduct = createAction({
   name: 'createFormProduct',
   displayName: 'Create Form Product',
   description: 'Creates a form product.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new purchasable product (name, SKU, price, optional quantity/min/max and image) on a product field of a specified Paperform form. Use to add an item to a form-based store; each call creates a separate product, so it is not idempotent.', idempotent: false },
   props: {
     formId:paperformCommonProps.formId,
     productFieldKey: paperformCommonProps.productFieldKey,

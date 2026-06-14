@@ -40,6 +40,10 @@ export const reportFieldChanged = createTrigger({
   displayName: 'Report Field Changed',
   description:
     'Triggers when a specific field in a BambooHR report changes for any employee.',
+  aiMetadata: {
+    description:
+      "Fires when the value of a monitored field (e.g. department, job title, or status) changes for any employee within a specified BambooHR report. The trigger polls the report on a schedule and compares each employee's current field value against the previously stored value, emitting one event per detected change with the employee identity, the field name, and the old and new values.",
+  },
   props: {
     reportId: Property.ShortText({
       displayName: 'Report ID',

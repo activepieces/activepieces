@@ -10,6 +10,10 @@ export const taskDelayed = createTrigger({
   name: 'task_delayed',
   displayName: 'Task Delayed',
   description: 'Triggers when a task is delayed',
+  aiMetadata: {
+    description:
+      "Fires when an Onfleet task is detected as delayed, meaning its estimated completion is expected to fall outside the task's scheduled completion window. Represents a task running behind schedule, useful for proactively alerting recipients or operations staff. The payload includes the full task object with delay timing.",
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   //Create the webhook and save the webhook ID in store for disable behavior

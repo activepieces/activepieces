@@ -7,6 +7,8 @@ export const findCaseStage = createAction({
   name: 'find_case_stage',
   displayName: 'Find Case Stage',
   description: 'Searches for case stages with optional filters',
+  audience: 'both',
+  aiMetadata: { description: 'List or search MyCase case stages, optionally filtering by last-updated date and limiting page size. Use to resolve a stage name to its ID or browse configured stages. Read-only and idempotent. To create a stage when none matches, use Find or Create Case Stage.', idempotent: true },
   props: {
     updated_after: Property.DateTime({
       displayName: 'Updated After',

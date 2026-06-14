@@ -3,6 +3,7 @@ import { groqAuth } from '../..';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 
 export const askGroq = createAction({
+  audience: 'human',
 	auth: groqAuth,
 	name: 'ask-ai',
 	displayName: 'Ask AI',

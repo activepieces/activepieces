@@ -5,6 +5,8 @@ export const getTransactionByHash = createAction({
   name: 'get_transaction_by_hash',
   displayName: 'Get Transaction by Hash',
   description: 'Get transaction details by its hash',
+  audience: 'both',
+  aiMetadata: { description: 'Look up a single Ethereum transaction by its full hash and return its core details (status, value, gas, from/to, block). Read-only. Use this when you have a specific transaction hash; for the related transfers, logs, internal calls, or state changes of that same transaction use the dedicated per-transaction actions instead.', idempotent: true },
   // category: 'Transactions',
   props: {
     transactionHash: Property.ShortText({

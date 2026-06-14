@@ -8,6 +8,8 @@ export const addTagToIssueAction = createAction({
   name: 'add_tag_to_issue',
   displayName: 'Add Tag to Issue',
   description: 'Adds an existing tag to an issue.',
+  audience: 'both',
+  aiMetadata: { description: 'Attach an existing tag to an issue, given both the issue ID and the tag ID; the tag must already exist (use Create Tag first if needed). Idempotent: adding a tag already present leaves the issue unchanged.', idempotent: true },
   props: { issue: issueDropdown, tag: tagDropdown },
   async run(context) {
     const { baseUrl, apiToken } = context.auth.props;

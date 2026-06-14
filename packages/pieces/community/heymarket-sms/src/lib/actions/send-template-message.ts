@@ -9,6 +9,12 @@ export const sendTemplateMessage = createAction({
   displayName: 'Send Template Message',
   description:
     'Send a message using a template to an individual contact or a list',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends a message built from a saved Heymarket template (by Template ID) from a given inbox. Route to a single recipient via Phone Number, or supply multiple numbers in Group Targets for a group MMS; optional override text supplements the template. Requires the sending Inbox ID and Creator ID. Not idempotent: each call dispatches a new message.',
+    idempotent: false,
+  },
   props: {
     inbox_id: Property.Number({
       displayName: 'Inbox ID',

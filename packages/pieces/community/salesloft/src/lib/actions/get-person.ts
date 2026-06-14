@@ -9,6 +9,12 @@ export const getPersonAction = createAction({
   name: 'get_person',
   displayName: 'Get Person',
   description: 'Fetch a single person by ID from Salesloft.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves a single Salesloft person record by its numeric person ID. Use to look up a known contact\'s current details. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: salesloftAuth,
   props: {
     person_id: personIdProp,

@@ -8,6 +8,8 @@ export const createDroplet = createAction({
   name: 'create_droplet',
   displayName: 'Create Droplet',
   description: 'Create a new Droplet or multiple Droplets.',
+  audience: 'both',
+  aiMetadata: { description: 'Provisions one or more new Droplets (virtual machines) on the DigitalOcean account. The creation mode switches between a single Droplet (uses the single name) and a batch of up to 10 (uses the names list); size and image are required. Use to spin up compute. Not idempotent — each call launches new billable Droplets.', idempotent: false },
   props: {
     creation_mode: Property.StaticDropdown({
       displayName: 'Creation Mode',

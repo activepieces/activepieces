@@ -10,6 +10,12 @@ export const eventsById = createAction({
   displayName: 'Get Events by ID',
   description:
     'Gets event data by a list of event IDs and optional calendar ID to filter.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches Webling calendar events by their IDs, optionally narrowing the result to a single calendar. Use it when you already have event IDs and need their full details. Pass IDs as a comma-separated string (e.g. "536,525,506"); if any ID does not exist the entire request fails with a 404. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     eventIds: Property.ShortText({
       displayName: 'Event ID list',

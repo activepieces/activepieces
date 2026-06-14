@@ -48,6 +48,10 @@ export const newMessage = createTrigger({
   displayName: 'New Incoming Message',
   description:
     'Triggers when a contact sends a new message in a Chatwoot conversation',
+  aiMetadata: {
+    description:
+      'Fires when a contact sends a new inbound message in a Chatwoot conversation. Only incoming, non-empty messages are emitted (outgoing agent replies and private notes are filtered out), representing a fresh customer message awaiting a response.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   sampleData: {

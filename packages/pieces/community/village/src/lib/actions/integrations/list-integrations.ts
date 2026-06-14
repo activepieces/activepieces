@@ -8,6 +8,12 @@ export const listIntegrations = createAction({
   displayName: 'List Gmail Integrations',
   description:
     'Get all your connected Gmail integrations, including rate limits, timezone, the default sending account, and whether you can add more based on your plan.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'List the caller\'s connected Gmail integrations with their rate limits, timezone, and default-sender status. Read-only and idempotent. Use to discover integration IDs before updating or resyncing one.',
+    idempotent: true,
+  },
   props: {},
   async run(context) {
     const response = await httpClient.sendRequest({

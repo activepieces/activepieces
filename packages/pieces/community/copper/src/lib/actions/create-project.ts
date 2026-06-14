@@ -7,6 +7,12 @@ export const createProject = createAction({
   name: 'createProject',
   displayName: 'Create Project',
   description: 'Adds a new project.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new project in Copper CRM with a name and optional details. Use to add a project record. Requires a name. Not idempotent: each call creates a separate project even with identical input.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

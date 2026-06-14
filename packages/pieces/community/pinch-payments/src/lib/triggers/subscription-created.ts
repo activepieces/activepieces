@@ -7,6 +7,9 @@ export const subscriptionCreatedTrigger = createTrigger({
   name: 'subscription_created',
   displayName: 'Subscription Created',
   description: 'Triggers when a subscription is created for a payer',
+  aiMetadata: {
+    description: 'Fires when a recurring subscription is created for a payer in Pinch Payments. Use to react when a customer is enrolled in ongoing billing against a plan.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

@@ -18,6 +18,12 @@ export const assignTagAction = createAction({
   displayName: 'Assign Custom Tag',
   description:
     'Attach an existing custom tag to a printer, printer group, file, or queue item. Use "Create or Update Tag" first to get the tag ID.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Attach one or more existing custom tags (by tag ID) to printers, printer groups, files, or queue items, selected via the subject type. By default it merges the tags into the subject\'s current set, so re-applying the same tags is harmless; enable "Replace existing tags" to overwrite the subject\'s tags instead, which is a destructive mode. The tags must already exist (create them first); this does not auto-create tags.',
+    idempotent: true,
+  },
   props: {
     subjectType: Property.StaticDropdown<1 | 2 | 3 | 4>({
       displayName: 'Subject type',

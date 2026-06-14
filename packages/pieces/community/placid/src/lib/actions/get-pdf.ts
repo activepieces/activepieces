@@ -7,6 +7,8 @@ export const getPdf = createAction({
 	name: 'get_pdf',
 	displayName: 'Get PDF',
 	description: 'Retrieves the generated PDF by its ID.',
+	audience: 'both',
+	aiMetadata: { description: 'Look up a previously created Placid PDF by its ID to read its current status and download URL. Use this to poll a queued render to completion or fetch the result of an earlier Create PDF call. Requires the PDF ID. Idempotent read-only lookup.', idempotent: true },
 	props: {
 		pdfId: Property.ShortText({
 			displayName: 'PDF ID',

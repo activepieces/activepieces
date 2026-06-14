@@ -9,6 +9,8 @@ export const createSocialMediaCaption = createAction({
   name: 'create_social_media_caption',
   displayName: 'Create Social Media Caption',
   description: 'Generate a caption tailored for a specific social media channel (requires channel and keywords).',
+  audience: 'both',
+  aiMetadata: { description: 'Generate a social media caption with TextCortex AI from a description of the post, tuned for a specific platform (Twitter or LinkedIn). Requires the post context and a platform selection; optional comma-separated keywords are woven into the caption. Not idempotent: each call produces fresh, non-deterministic text and consumes account credits.', idempotent: false },
   props: {
     context: Property.LongText({
       displayName: 'Post Context',

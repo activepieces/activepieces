@@ -47,6 +47,9 @@ export const newLead = createTrigger({
     name: 'new_lead',
     displayName: 'New Lead',
     description: 'Fires when a new lead is created (polls for new records).',
+    aiMetadata: {
+      description: 'Fires when a new lead is created in Zendesk Sell. Each event represents one newly added lead (an unqualified prospect), discovered by polling sorted by creation time.',
+    },
     props: {},
     sampleData: {
         "id": 1,

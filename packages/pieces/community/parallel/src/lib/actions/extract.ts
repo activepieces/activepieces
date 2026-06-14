@@ -9,6 +9,12 @@ export const extractAction = createAction({
   displayName: 'Extract Web Content',
   description:
     'Extract clean, citation-aware content from specific web URLs. Up to 20 URLs per request.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Fetch and extract clean, citation-aware content from a known list of web URLs (up to 20 per request) via Parallel's research API. Use it when you already have the pages and want their readable content rather than searching for them; an optional objective and queries focus the returned excerpts, and full-page markdown can be requested at the cost of higher latency. Requires at least one URL. Read-only and idempotent.",
+    idempotent: true,
+  },
   props: {
     urls: Property.Array({
       displayName: 'URLs',

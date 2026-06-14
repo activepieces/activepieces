@@ -15,6 +15,10 @@ export const eventAddedOrUpdated = createTrigger({
   name: 'event_added_or_updated',
   displayName: 'Event Added or Updated',
   description: 'Triggers when an event has been added or updated',
+  aiMetadata: {
+    description:
+      'Fires whenever a calendar event (such as a meeting, appointment, or deadline) is created or modified in MyCase, delivering the full event payload including name, description, start and end times, all-day and private flags, event type, location, associated case, and assigned staff. Use to sync calendars or react to scheduling changes.',
+  },
   props: {},
   sampleData: {
     id: 12345,

@@ -49,6 +49,10 @@ export const newShopOrder = createTrigger({
   name: 'new_shop_order',
   displayName: 'New Shop Order',
   description: 'Triggers when a new shop order is received on Ko-fi.',
+  aiMetadata: {
+    description:
+      'Fires when a supporter purchases an item from the Ko-fi shop on the connected creator account. Emits the order event including buyer name, email, amount, currency, the purchased shop items (with variation and quantity), and shipping details when the product requires delivery. Use to fulfill orders, record sales, or notify on new purchases.',
+  },
  props: {
      instructions: Property.MarkDown({
        value:

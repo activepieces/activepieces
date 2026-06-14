@@ -10,6 +10,9 @@ export const transcriptReady = createTrigger({
   name: 'transcript_ready',
   displayName: 'Transcript Ready',
   description: 'Triggers when a meeting transcript has been generated',
+  aiMetadata: {
+    description: 'Fires when a tl;dv meeting transcript has been generated, delivering the speaker-attributed, time-stamped transcript for the meeting via a webhook the user configures in tl;dv for the TranscriptReady event.',
+  },
   props: {
     webhookInstructions: Property.MarkDown({
       value: `

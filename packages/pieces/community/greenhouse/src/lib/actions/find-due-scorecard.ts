@@ -25,6 +25,12 @@ export const findDueScorecardAction = createAction({
   displayName: 'Find Due Scorecard',
   description:
     'Retrieves the full details of a scorecard by its ID. Use with the New Scorecard Due trigger to look up the scorecard that fired the flow.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches the full details of a single scorecard by its numeric ID, returning null if no scorecard matches. Use to enrich a New Scorecard Due trigger event with the complete scorecard record. Idempotent read-only lookup.',
+    idempotent: true,
+  },
   auth: greenhouseAuth,
   props: {
     scorecard_id: Property.ShortText({

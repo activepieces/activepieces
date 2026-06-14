@@ -8,6 +8,12 @@ export const enrichPersonEmail = createAction({
   displayName: 'Enrich Person Email',
   description:
     'Find the email address for a person by LinkedIn URL or generic URL. Returns the verified email address if found, or null if unavailable.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Look up a single person\'s email address from exactly one identifier — either a LinkedIn URL or a generic URL (provide one, not both). Read-only and idempotent. Use for email discovery specifically; use Enrich Person (Bulk) for full profile data on many people.',
+    idempotent: true,
+  },
   props: {
     linkedin_url: Property.ShortText({
       displayName: 'LinkedIn URL',

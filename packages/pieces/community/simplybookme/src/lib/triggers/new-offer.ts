@@ -71,6 +71,9 @@ export const newOffer = createTrigger({
   name: 'new_offer',
   displayName: 'New Offer',
   description: 'Triggers when a new offer (proposal or quote) is created (bookings with promo: false)',
+  aiMetadata: {
+    description: 'Fires when a new offer (proposal or quote) is created in SimplyBook.me, identified as a recently created booking with promo set to false. Polls bookings by creation date and emits each newly seen offer.',
+  },
   type: TriggerStrategy.POLLING,
   props: {},
   async test(context) {

@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
 
 export const createEmbedding = createAction({
+  audience: 'human',
   auth: openaiAuth,
   name: 'create_embedding',
   displayName: 'Create Embedding',

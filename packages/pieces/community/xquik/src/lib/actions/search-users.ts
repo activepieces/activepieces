@@ -7,6 +7,12 @@ export const searchUsers = createAction({
   name: 'search_users',
   displayName: 'Search Users',
   description: 'Search public X/Twitter users by name or username.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches public X/Twitter user accounts by name, username, brand, or keyword. Use to discover or disambiguate accounts before fetching a specific user or their posts. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     query: Property.ShortText({
       displayName: 'Query',

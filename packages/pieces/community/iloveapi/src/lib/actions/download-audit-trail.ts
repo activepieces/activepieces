@@ -8,6 +8,12 @@ export const downloadAuditTrailAction = createAction({
   displayName: 'Download Audit Trail',
   description:
     'Download the audit-trail PDF for a completed signature request. Useful for compliance and dispute resolution.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetch the audit-trail PDF (the legal evidence/event log) for a completed signature request, identified by its requester token, for compliance and dispute resolution. Read-only retrieval, safe to repeat; to get the actual signed documents use Download Signed Files instead.',
+    idempotent: true,
+  },
   props: {
     token_requester: Property.ShortText({
       displayName: 'Requester Token',

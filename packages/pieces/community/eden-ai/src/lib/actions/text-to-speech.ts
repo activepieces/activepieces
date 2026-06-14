@@ -293,6 +293,12 @@ export const textToSpeechAction = createAction({
   auth: edenAiAuth,
   displayName: 'Generate Audio From Text',
   description: 'Convert text to spoken audio using Eden AI. Supports multiple providers, languages, and voice customization.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Synthesize spoken audio from text via Eden AI text-to-speech, routed to a chosen provider, with optional language/locale, voice gender, and rate/pitch/volume tuning. Use it to turn text into an audio clip. Requires a provider and the text; language defaults to en-US and voice to female. Generative but stateless — repeating the call creates no extra side effect.',
+    idempotent: true,
+  },
   props: {
     provider: Property.Dropdown({
       auth: edenAiAuth,

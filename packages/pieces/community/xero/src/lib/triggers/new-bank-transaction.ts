@@ -122,6 +122,9 @@ export const xeroNewBankTransaction = createTrigger({
   name: 'xero_new_bank_transaction',
   displayName: 'New Bank Transaction',
   description: 'Fires when a new bank transaction is created.',
+  aiMetadata: {
+    description: 'Fires when a new bank transaction is created in the connected Xero organisation. Polls the Xero BankTransactions endpoint and emits each transaction the first time its BankTransactionID is seen, optionally filtered by type (RECEIVE/SPEND and their overpayment, prepayment, and transfer variants), status (AUTHORISED, DELETED), contact, bank account, or date range. Each item is a full bank transaction record (amount, type, date, line items, bank account). Represents a newly created transaction, not an update to one.',
+  },
   props: {
     tenant_id: props.tenant_id,
     types: Property.StaticMultiSelectDropdown({

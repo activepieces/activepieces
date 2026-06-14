@@ -6,6 +6,7 @@ import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
 
 export const generateImage = createAction({
+  audience: 'human',
   auth: openaiAuth,
   name: 'generate_image',
   displayName: 'Generate Image',

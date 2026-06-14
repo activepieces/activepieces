@@ -7,6 +7,8 @@ export const getBlockTransactions = createAction({
     name: 'get_block_transactions',
     displayName: 'Get Block Transactions',
     description: 'Returns a list of transactions in the block (up to 25 transactions)',
+    audience: 'both',
+    aiMetadata: { description: 'List full transaction objects within a block by block hash, returning up to 25 per call with an optional start index for pagination. Pick this for transaction detail; use Get Block Transaction IDs when you only need the IDs. Read-only.', idempotent: true },
     // category: 'Blocks',
     props: {
         hash: Property.ShortText({

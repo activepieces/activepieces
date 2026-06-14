@@ -11,6 +11,12 @@ export const createVideoFromTemplate = createAction({
   name: 'createVideoFromTemplate',
   displayName: 'Create Video from Template',
   description: 'Creates a new video from templates',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Starts generation of a JoggAI video from a template, choosing the template from either the common library or the user’s own templates, and filling in template variables (text/script content or image/video URLs) plus optional avatar, voice, captions, and music. Use to render a video off a predefined template rather than building one from scratch; the call queues an async job whose output is polled via Get Generated Video. Not idempotent: each call queues and is billed for a new video.',
+    idempotent: false,
+  },
   auth: joggAiAuth,
   props: {
     template_type: Property.StaticDropdown({

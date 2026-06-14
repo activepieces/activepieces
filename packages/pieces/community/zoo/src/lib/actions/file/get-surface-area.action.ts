@@ -6,6 +6,8 @@ export const getSurfaceAreaAction = createAction({
   name: 'get_surface_area',
   displayName: 'Get Surface Area',
   description: 'Calculate the surface area of a CAD file',
+  audience: 'both',
+  aiMetadata: { description: 'Compute the total surface area of a 3D solid from an uploaded CAD file (FBX, GLB, glTF, OBJ, PLY, STEP, or STL). Pick this for surface area specifically; sibling actions cover mass, density, volume, and center of mass. Read-only analysis that does not modify the file and returns the same value for the same input.', idempotent: true },
   auth: zooAuth,
   // category: 'File Operations',
   props: {

@@ -74,6 +74,9 @@ export const newListCreated = createTrigger({
     name: 'newListCreated',
     displayName: 'New List Created',
     description: 'Fires when a new mailing list is created in your Smoove account',
+    aiMetadata: {
+      description: 'Fires when a new mailing list is created in the connected Smoove account, polling the Lists endpoint to detect newly added lists.',
+    },
     props: {
         fields: Property.ShortText({
             displayName: 'Fields to Include',

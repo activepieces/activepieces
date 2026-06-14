@@ -13,6 +13,8 @@ export const getTime_entries = createAction({
   auth: harvestAuth,
   displayName: 'Get Time Entries',
   description: 'Fetches Time Entries',
+  audience: 'both',
+  aiMetadata: { description: 'Lists tracked time entries from a Harvest account; with all filters empty it returns every entry, or narrow by spent-date range, user/client/project/task ID, external reference ID, billed status, currently-running status, or updated-since timestamp. Use to pull timesheet data or find a running timer. Read-only and idempotent.', idempotent: true },
   props: {
     from: Property.ShortText({
       description: 'Only return time entries with an spent_date on or after the given date. (YYYY-MM-DD)',

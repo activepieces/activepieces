@@ -8,6 +8,8 @@ export const createMember = createAction({
   name: 'create_member',
   displayName: 'Create Member',
   description: 'Create a new member',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new member in a Ghost publication from an email (required), with optional name, internal note, and newsletter subscriptions. Use to add a subscriber/member to the audience. Not idempotent: each call creates a member and re-running with the same email may produce a duplicate or error.', idempotent: false },
   auth: ghostAuth,
   props: {
     email: Property.ShortText({

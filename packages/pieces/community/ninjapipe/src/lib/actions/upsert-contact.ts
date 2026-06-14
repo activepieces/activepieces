@@ -8,6 +8,8 @@ export const upsertContact = createAction({
   name: 'upsert_contact',
   displayName: 'Upsert Contact',
   description: 'Creates a contact or updates an existing one by email.',
+  audience: 'both',
+  aiMetadata: { description: 'Create-or-update a contact keyed on email: if a contact with the given email exists it is updated, otherwise a new one is created. Email is required and serves as the stable match key, making this safe to re-run (idempotent) unlike plain create-contact.', idempotent: true },
   props: {
     firstName: Property.ShortText({ displayName: 'First Name', required: false }),
     lastName: Property.ShortText({ displayName: 'Last Name', required: false }),

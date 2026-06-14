@@ -8,6 +8,12 @@ export const sortPeople = createAction({
   displayName: 'Sort People',
   description:
     'Rank a list of LinkedIn profile URLs by how well-connected you are to them. Returns each person sorted by connection strength (highest first), with score (0-100) and score_label.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Read-only ranking of a caller-supplied set of people (LinkedIn profile URLs) by how strongly you are connected to each, ordered strongest-first. Use when you already have specific candidates and want them prioritized; to discover candidates use Search People. Pure query, safe to retry.',
+    idempotent: true,
+  },
   props: {
     people: Property.Array({
       displayName: 'People',

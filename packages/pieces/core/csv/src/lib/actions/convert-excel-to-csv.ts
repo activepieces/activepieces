@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import * as XLSX from 'xlsx';
 
 export const excelToCsvAction = createAction({
+  audience: 'human',
   name: 'convert_excel_to_csv',
   displayName: 'Convert Excel to CSV',
   description: 'Converts an Excel file (.xlsx or .xls) into CSV text.',

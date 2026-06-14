@@ -14,6 +14,8 @@ export const topUpPackageDeleteAction = createAction({
   name: 'topUpPackageDelete',
   displayName: 'Resources - Top Up Packages - Delete',
   description: 'Delete a Top-Up Package.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete a top-up package by its numeric id. Destructive and not idempotent: deleting an already-removed package will fail. Confirm the package with Listing before deleting; consider disabling via Update instead if you only need to take it offline.', idempotent: false },
   props: {
         
   topUpPackage: Property.Number({

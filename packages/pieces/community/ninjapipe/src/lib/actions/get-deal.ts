@@ -8,6 +8,8 @@ export const getDeal = createAction({
   name: 'get_deal',
   displayName: 'Get Deal',
   description: 'Retrieves a deal by ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches a single deal by its ID, returning its full record. Pick this when you already have a deal ID and need its details; use List Deals instead to search or browse. Read-only and safe to repeat.', idempotent: true },
   props: {
     dealId: ninjapipeCommon.dealDropdownRequired,
   },

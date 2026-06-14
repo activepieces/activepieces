@@ -7,6 +7,8 @@ export const convertToRangeAction = createAction({
   auth: excelAuth,
   name: 'convert_to_range',
   description: 'Converts a table to a range',
+  audience: 'both',
+  aiMetadata: { description: 'Convert an existing Excel table back into a plain cell range, removing table structure while keeping the data and formatting. Pick this as the inverse of Create Table when you no longer need table behavior. Not idempotent: re-running fails once the table no longer exists.', idempotent: false },
   displayName: 'Convert to Range',
   props: {
     storageSource: commonProps.storageSource,

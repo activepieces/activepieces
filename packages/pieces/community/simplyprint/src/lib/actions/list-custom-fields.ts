@@ -10,6 +10,8 @@ export const listCustomFieldsAction = createAction({
   name: 'list_custom_fields',
   displayName: 'List Custom Fields',
   description: 'List all custom field definitions on your account.',
+  audience: 'both',
+  aiMetadata: { description: 'List the custom-field definitions on the account, optionally filtered by entity (e.g. PRINT_QUEUE, FILE, USER). Read-only; pick it to discover field UUIDs before submitting custom-field values on queue/upload actions. By default walks every page; pass an explicit page for single-page mode. Idempotent.', idempotent: true },
   props: {
     entity: Property.ShortText({
       displayName: 'Entity filter',

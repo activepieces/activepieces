@@ -7,6 +7,9 @@ export const extractionFailed = createTrigger({
   name: 'extraction_failed',
   displayName: 'Extraction Failed',
   description: 'Triggers when a document extraction fails.',
+  aiMetadata: {
+    description: 'Fires when an Extracta.ai document extraction fails to process, emitting the affected extraction, batch, and file identifiers along with the error detail. Filters incoming webhook events to only the extraction.failed event.',
+  },
   props: {
     webhookInstructions: Property.MarkDown({
       value: `

@@ -68,6 +68,9 @@ export const newRowTrigger = createTrigger({
   name: 'new_row',
   displayName: 'New Row',
   description: 'Triggers when a new row is created',
+  aiMetadata: {
+    description: 'Fires when a new row appears in the configured Oracle Database table. Polls the table ordered by the chosen order column (defaulting to newest first) and emits each newly seen row; represents a freshly inserted record detected by the ordering key.',
+  },
   props: {
     description: Property.MarkDown({
       value: `**NOTE:** Fetches latest rows using the order column (newest first), then keeps polling for new rows.`,

@@ -39,6 +39,10 @@ export const newBill = createTrigger({
   displayName: 'New Bill',
   description:
     'Fires when a new bill from a supplier is created. Useful for approval workflows — e.g. post the new bill to a Slack channel for a manager to authorize.',
+  aiMetadata: {
+    description:
+      'Fires when a new supplier bill (accounts payable) is created in Wafeq (polling by creation time), representing a newly recorded amount owed to a vendor. Use to drive bill-approval or payment workflows.',
+  },
   props: {},
   sampleData: {
     id: 'bill_abc123',

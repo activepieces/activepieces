@@ -10,6 +10,8 @@ export const getProfileData = createAction({
     name: 'get_profile_data',
     displayName: 'Get Profile Data',
     description: 'Given a LinkedIn profile username, retrieve comprehensive profile data.',
+    audience: 'both',
+    aiMetadata: { description: 'Retrieves comprehensive public LinkedIn profile data (experience, education, headline, etc.) for a given profile username — the slug from the profile URL, e.g. "williamhgates", not a full URL or display name. Use to enrich a person record from their LinkedIn handle. Either supply the profile username to start a lookup, or pass the Request ID from a prior timed-out run to retrieve that result; the call polls until data is ready. Idempotent: it is a read-only lookup that returns the same profile for the same username.', idempotent: true },
     props: {
         profile_name: Property.ShortText({
             displayName: 'LinkedIn Profile Username',

@@ -7,6 +7,8 @@ export const postTransaction = createAction({
   name: 'post_transaction',
   displayName: 'Post Transaction',
   description: 'Submit a raw transaction to the network',
+  audience: 'both',
+  aiMetadata: { description: 'Broadcast a signed raw Bitcoin transaction (hex) to the network for inclusion in the mempool. This is the only write action here and is not idempotent: re-submitting may error or have real on-chain effects, so call it once with a fully signed transaction. Returns the resulting transaction ID.', idempotent: false },
   // category: 'Transactions',
   props: {
     rawTx: Property.LongText({

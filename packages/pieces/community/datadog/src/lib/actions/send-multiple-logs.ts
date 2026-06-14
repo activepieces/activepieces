@@ -8,6 +8,12 @@ export const sendMultipleLogs = createAction({
   name: 'sendMultipleLogs',
   displayName: 'Send Multiple logs',
   description: 'Send your logs to your Datadog platform over HTTP.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Submits a batch of log entries to Datadog via the Logs intake API. Use to ship multiple application or system logs at once; pass a `logs` key holding an array of objects (each with at least a `message`, plus optional `ddsource`, `ddtags`, `hostname`, `service`, and arbitrary additional properties). Not idempotent — each call appends new log entries, so re-running duplicates them.',
+    idempotent: false,
+  },
   auth: datadogAuth,
   requireAuth: true,
   props: {

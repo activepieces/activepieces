@@ -145,6 +145,10 @@ export const updatedRowTrigger = createTrigger({
   displayName: 'Updated Row',
   description:
     'Triggers when an existing row is updated in a BigQuery table. Requires an `updated_at` TIMESTAMP column that is set whenever a row changes.',
+  aiMetadata: {
+    description:
+      'Fires for each row whose updated-at TIMESTAMP column advances past the previous check, representing a modified row in a BigQuery table. Requires that column to be set whenever a row changes; supplying an optional created-at column excludes brand-new rows so only genuine updates fire.',
+  },
   props,
   sampleData: { id: '1', updated_at: '2024-01-15T10:30:00Z', status: 'active' },
   type: TriggerStrategy.POLLING,

@@ -7,6 +7,10 @@ export const certificationPartnerAborted = createTrigger({
   name: 'certificationPartnerAborted',
   displayName: 'Demande de partenariat abandonnée',
   description: "Se déclenche Lorsqu'une demande de partenariat estabandonnée",
+  aiMetadata: {
+    description:
+      "Fires when a certification partnership request (demande de partenariat) is abandoned in Wedof, meaning the application was withdrawn or dropped before being accepted. The payload describes the partnership webhook event and links to the organisation involved.",
+  },
   props: {},
   sampleData: {
     id: 0,

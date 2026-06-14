@@ -10,6 +10,8 @@ export const searchProducts = createAction({
   name: 'search_products',
   displayName: 'Search Products',
   description: 'Searches for products in your Quizell catalog by title or SKU.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches the Quizell product catalog with paginated results; leaving title and SKU empty returns all products, while supplying either filters the catalog, and an optional active/inactive status filter narrows further. Use to browse the catalog or resolve a product by title/SKU when you lack its ID. Read-only and idempotent.', idempotent: true },
   props: {
     title: Property.ShortText({
       displayName: 'Product Title',

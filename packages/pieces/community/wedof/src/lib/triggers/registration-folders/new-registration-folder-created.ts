@@ -8,6 +8,10 @@ export const newRegistrationFolderNotProcessed = createTrigger({
   displayName: 'Nouveau dossier de formation',
   description:
     "Se déclenche lorsqu'un nouveau dossier de formation est créé (non traité)",
+  aiMetadata: {
+    description:
+      "Fires when a new Wedof training registration folder (dossier de formation) is created and is still in the unprocessed (non traité) state. Represents a newly received enrollment awaiting handling, and emits the full folder record.",
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   sampleData: {

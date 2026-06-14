@@ -8,6 +8,12 @@ export const searchIssuesAction = createAction({
 	name: 'search_issues',
 	displayName: 'Search Issues',
 	description: 'Search for issues with JQL',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Searches issues in Jira Data Center/Server using a JQL query and returns the matching issues (capped by Max Results, 1-100). Use when an agent needs to find or list issues by any criteria expressible in JQL — project, status, assignee, date, label, etc. Requires a valid JQL string. Read-only and idempotent.',
+		idempotent: true,
+	},
 	auth: jiraDataCenterAuth,
 	props: {
 		jql: Property.LongText({

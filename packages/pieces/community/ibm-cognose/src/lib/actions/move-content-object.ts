@@ -9,6 +9,8 @@ export const moveContentObjectAction = createAction({
   name: 'move_content_object',
   displayName: 'Move Content Object',
   description: 'Move an object with all its descendants',
+  audience: 'both',
+  aiMetadata: { description: 'Move a content-store object, together with all of its descendants, from its current location into a destination container within the IBM Cognos content tree. Use to reorganize reports, dashboards, or folders. Source and destination must differ. Not idempotent: a repeat call after the object has moved fails because the source no longer exists at its original location.', idempotent: false },
   props: {
     sourceId: contentObjectDropdown,
     destinationId: {

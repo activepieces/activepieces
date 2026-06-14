@@ -9,6 +9,8 @@ export const fountainListApplicants = createAction({
   auth: fountainAuth,
   displayName: 'List All Applicant Details',
   description: 'List applicants with optional filters',
+  audience: 'both',
+  aiMetadata: { description: 'Lists applicants in Fountain, returning all applicants when no filters are set or narrowing the results when any are supplied (by opening, location, stage, stage name, labels, or phone number). Use to find or enumerate candidates; supports cursor-based pagination via per_page and cursor. Read-only and idempotent.', idempotent: true },
   props: {
     funnel_id: Property.Dropdown({
       displayName: 'Opening',

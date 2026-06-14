@@ -8,6 +8,12 @@ export const findContact = createAction({
   name: 'findContact',
   displayName: 'Find Contact',
   description: 'Search for contacts in Oncehub by various criteria',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Look up existing OnceHub contacts filtered by email address. Use to check whether a contact already exists or to retrieve a contact before referencing it elsewhere. Read-only and repeatable; the email filter is required.',
+    idempotent: true,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

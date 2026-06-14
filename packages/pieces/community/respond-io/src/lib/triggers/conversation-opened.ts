@@ -11,6 +11,9 @@ export const conversationOpenedTrigger = createTrigger({
   name: 'conversation_opened',
   displayName: 'Conversation Opened',
   description: 'Triggers when a new conversation is opened.',
+  aiMetadata: {
+    description: 'Fires when a conversation is opened in Respond.io, delivering the contact and conversation details (including source and first incoming message). Use to start a workflow when a new conversation begins. Requires manually configuring a conversation.opened webhook in Respond.io.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     webhookInstructions: Property.MarkDown({

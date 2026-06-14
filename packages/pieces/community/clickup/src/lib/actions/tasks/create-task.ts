@@ -17,6 +17,8 @@ export const createClickupTask = createAction({
   auth: clickupAuth,
   name: 'create_task',
   description: 'Create a new task in a ClickUp workspace and list',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new top-level task in a ClickUp list, with optional status, priority, assignees, description, dates, time estimate, and custom fields. Pick this for a standalone task; use Create Subtask to nest under a parent or Create Task From Template to inherit a template. Each call creates a new task, so it is not idempotent.', idempotent: false },
   displayName: 'Create Task',
   props: {
     workspace_id: clickupCommon.workspace_id(),

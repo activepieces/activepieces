@@ -11,6 +11,12 @@ export const createAiAvatarPhoto = createAction({
   name: 'createAiAvatarPhoto',
   displayName: 'Create AI Avatar Photo',
   description: 'Creates an AI avatar photo using JoggAI API',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Generates a brand-new AI avatar photo on JoggAI from specified traits (age, gender, style, ethnicity, aspect ratio, model) plus optional appearance/background text or a reference image URL. Use to produce an avatar still image for downstream avatar-video creation. Not idempotent: each call generates and is billed for a new photo.',
+    idempotent: false,
+  },
   auth: joggAiAuth,
   props: {
     age: Property.StaticDropdown({

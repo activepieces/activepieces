@@ -9,6 +9,8 @@ export const deleteContact = createAction({
   name: 'delete_contact',
   displayName: 'Delete Contact',
   description: 'Permanently delete a contact from Respond.io.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes a contact from Respond.io, identified by the contact identifier. Destructive and irreversible — use only when the contact should be fully removed. Idempotent on end state: once deleted, repeating leaves the contact absent.', idempotent: true },
   props: {
     identifier: contactIdentifierDropdown,
   },

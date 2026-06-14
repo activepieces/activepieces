@@ -9,6 +9,12 @@ export const searchPeople = createAction({
   displayName: 'Search People',
   description:
     'Search business professionals by name, title, department, seniority, or company',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Search the people database for business professionals using filters such as name, job title, management level, department, location, employer company/domain, or LinkedIn URL, with paging (per_page max 25). Read-only and repeatable; results identify people but do not include contact details. Use to discover prospects, then pass a people_search_id to Reveal Contact (credit cost) or Lookup Person.',
+    idempotent: true,
+  },
   props: {
     search_term: Property.ShortText({
       displayName: 'Search Term',

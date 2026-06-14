@@ -121,6 +121,10 @@ export const mollieNewCustomer = createTrigger({
   name: 'new_customer',
   displayName: 'New Customer',
   description: 'Fires when a new customer is created in Mollie',
+  aiMetadata: {
+    description:
+      'Fires when a new customer is created in the connected Mollie account. Polls the customer list and emits each newly created customer, representing a contact that can be used for payments and recurring mandates.',
+  },
 
   type: TriggerStrategy.POLLING,
 

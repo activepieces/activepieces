@@ -8,6 +8,9 @@ export const pageRenderUpdated = createTrigger({
   name: 'page_render_updated',
   displayName: 'Page Render Updated',
   description: 'Triggers when a Sendr Page render is updated (e.g. GIF or audio is ready).',
+  aiMetadata: {
+    description: 'Fires when an existing Sendr Page render is updated, typically when asynchronously produced assets become ready (GIF, audio, or lipsync video). Use it to react once media for a page has finished generating.',
+  },
   props: {},
   sampleData: {
     event_type: 'page_render:updated',

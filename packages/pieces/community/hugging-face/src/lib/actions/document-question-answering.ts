@@ -6,6 +6,7 @@ import {
 import { huggingFaceAuth } from '../auth';
 
 export const documentQuestionAnswering = createAction({
+  audience: 'human',
   name: 'document_question_answering',
   auth: huggingFaceAuth,
   displayName: 'Document Question Answering',

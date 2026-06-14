@@ -21,6 +21,8 @@ export const chargePointCreateAction = createAction({
   name: 'chargePointCreate',
   displayName: 'Resources - Charge Points - Charge Point Create',
   description: 'Create new charge point.',
+  audience: 'both',
+  aiMetadata: { description: 'Register a new charge point (public, private, or personal) with its name, status, location, and communication/network configuration. Not idempotent: each call creates a separate charge point, so guard against duplicates. Required fields vary by type (e.g. locationId for commercial chargers, pin for personal); to change an existing charge point use a dedicated update action instead.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

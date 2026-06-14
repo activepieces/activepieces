@@ -24,9 +24,7 @@ import {
   ConnectionsRequiredCard,
 } from './connections-required-card';
 import { MultiQuestionForm } from './multi-question-form';
-import { PlanApprovalForm } from './plan-approval-form';
 import { ProjectPickerCard } from './project-picker-card';
-import { ToolApprovalForm } from './tool-approval-form';
 
 export function ChatBottomBar({
   isStreaming,
@@ -39,18 +37,6 @@ export function ChatBottomBar({
   lastMessageId,
   placeholder,
 }: ChatBottomBarProps) {
-  const pendingPlanPart = useChatStoreContext((s) =>
-    chatStoreSelectors.pendingPlanApproval({
-      state: s,
-      lastAssistantMessage,
-    }),
-  );
-  const pendingMcpApproval = useChatStoreContext((s) =>
-    chatStoreSelectors.pendingMcpApproval({
-      state: s,
-      lastAssistantMessage,
-    }),
-  );
   const pendingActionPreview = useChatStoreContext((s) =>
     chatStoreSelectors.pendingActionPreview({
       state: s,
@@ -72,39 +58,7 @@ export function ChatBottomBar({
 
   const approveGate = useChatStoreContext((s) => s.approveGate);
   const rejectGate = useChatStoreContext((s) => s.rejectGate);
-  const dismissGate = useChatStoreContext((s) => s.dismissGate);
   const dismissForm = useChatStoreContext((s) => s.dismissForm);
-
-  // Plan approval from tool state
-  if (pendingPlanPart) {
-    const input = pendingPlanPart.input as
-      | { planSummary?: string; steps?: string[] }
-      | undefined;
-    const toolCallId = chatPartUtils.getToolCallId(pendingPlanPart);
-    return (
-      <PlanApprovalForm
-        key={toolCallId}
-        planSummary={input?.planSummary ?? ''}
-        steps={input?.steps ?? []}
-        onApprove={() => approveGate(toolCallId)}
-        onReject={() => rejectGate(toolCallId)}
-        onDismiss={() => dismissGate(toolCallId)}
-      />
-    );
-  }
-
-  // MCP tool approval from toolCallMeta
-  if (pendingMcpApproval) {
-    return (
-      <ToolApprovalForm
-        key={pendingMcpApproval.toolCallId}
-        displayName={pendingMcpApproval.displayName}
-        onApprove={() => approveGate(pendingMcpApproval.toolCallId)}
-        onReject={() => rejectGate(pendingMcpApproval.toolCallId)}
-        onDismiss={() => dismissGate(pendingMcpApproval.toolCallId)}
-      />
-    );
-  }
 
   if (pendingActionPreview) {
     return (

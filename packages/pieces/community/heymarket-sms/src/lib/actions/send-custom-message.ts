@@ -8,6 +8,12 @@ export const sendCustomMessage = createAction({
   name: 'sendCustomMessage',
   displayName: 'Send Custom Message',
   description: 'Send a custom text message to an individual contact or a list',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends a free-form SMS/MMS text from a Heymarket inbox. Route to a single recipient via Phone Number, or supply multiple numbers in Group Targets for a group MMS. Requires the sending Inbox ID and Creator ID (the member sending). Not idempotent: each call dispatches a new message.',
+    idempotent: false,
+  },
   props: {
     inbox_id: Property.Number({
       displayName: 'Inbox ID',

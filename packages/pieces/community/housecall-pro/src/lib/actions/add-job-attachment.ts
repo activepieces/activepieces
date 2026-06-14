@@ -7,6 +7,8 @@ export const addJobAttachment = createAction({
   name: "add_job_attachment",
   displayName: "Add an attachment to a job",
   description: "Upload an attachment to a job",
+  audience: 'both',
+  aiMetadata: { description: "Upload a file attachment to a Housecall Pro job identified by job ID, sent as multipart form data. Not idempotent: repeated calls add duplicate attachments.", idempotent: false },
   props: {
     job_id: Property.ShortText({
       displayName: "Job ID",

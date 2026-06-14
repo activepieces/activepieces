@@ -7,6 +7,8 @@ export const addUsersToGroup = createAction({
   auth: discourseAuth,
   name: 'add_users_to_group',
   description: 'Add users to a group',
+  audience: 'both',
+  aiMetadata: { description: 'Add one or more users (by username) as members of a Discourse group, identified by its numeric group ID. Use when an agent needs to grant group membership. Re-adding users who are already members has no additional effect, so the call is effectively idempotent.', idempotent: true },
   displayName: 'Add Users to Group',
   props: {
     group_id: Property.Dropdown({

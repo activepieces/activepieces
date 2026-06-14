@@ -8,6 +8,8 @@ export const findRecordsByQuery = createAction({
     name: 'find_records_by_query',
     displayName: 'Find Records by Query (Advanced)',
     description: 'Finds records in an object using a SOQL WHERE clause.',
+    audience: 'both',
+    aiMetadata: { description: 'Search records of one Salesforce object by providing the object API name and a SOQL WHERE clause (no "WHERE" keyword); returns up to 200 matching records with all fields. Use this to look up or filter existing records by field conditions. Read-only and idempotent. Constraint: the WHERE clause is interpolated directly into the query, so it must be valid SOQL and properly escaped.', idempotent: true },
     props: {
         object: salesforcesCommon.object,
         where_clause: Property.ShortText({

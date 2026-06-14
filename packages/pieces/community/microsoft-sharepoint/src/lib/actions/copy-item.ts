@@ -17,6 +17,11 @@ export const copyItemAction = createAction({
   displayName: 'Copy File or Folder (Across Sites)',
   description:
     'Copy a file or folder from one site to another within the same tenant, with overwrite option.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Copies a file or folder from one SharePoint site/drive to a destination site, drive, and folder within the same tenant, optionally renaming the copy. Use to duplicate content across sites; for same-site copies use the within-site variant. The conflict behavior (fail, replace, or rename) controls what happens on a name clash. Not idempotent: each run produces another copy (rename mode) or overwrites the target (replace mode).',
+    idempotent: false,
+  },
   props: {
 
     siteId: microsoftSharePointCommon.siteId,

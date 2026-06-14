@@ -8,6 +8,8 @@ export const listCampaigns = createAction({
   name: 'list_campaigns',
   displayName: 'List Campaigns',
   description: 'Lists all campaigns in your Sendr workspace, optionally filtered by status.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists campaigns in the Sendr workspace (up to 50), optionally narrowed by status (Draft, Active, or Paused); leaving the status filter empty returns all campaigns. Use it to discover the campaign id needed by Get Campaign. Read-only.', idempotent: true },
   props: {
     status: Property.StaticDropdown({
       displayName: 'Status Filter',

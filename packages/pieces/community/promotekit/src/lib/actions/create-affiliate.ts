@@ -8,6 +8,11 @@ export const createAffiliate = createAction({
   name: 'create_affiliate',
   displayName: 'Create Affiliate',
   description: 'Create a new affiliate in PromoteKit.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Create a new affiliate in PromoteKit, optionally assigning them to a campaign. Email is required; first/last name and campaign are optional. Not idempotent: each call adds another affiliate, so guard against duplicates by checking for an existing affiliate first.',
+    idempotent: false,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

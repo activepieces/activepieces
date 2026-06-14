@@ -20,6 +20,8 @@ export const circuitUnmanagedLoadReadAction = createAction({
   name: 'circuitUnmanagedLoadRead',
   displayName: 'Resources - Circuits - Circuit Unmanaged Load Read',
   description: "Get a circuit's unmanaged load.",
+  audience: 'both',
+  aiMetadata: { description: "Fetch the unmanaged-load reading for an AMPECO load-balancing circuit by its numeric ID (the load consumed by devices outside AMPECO's control). Read-only and idempotent; use when monitoring available capacity for a known circuit.", idempotent: true },
   props: {
     circuit: Property.Number({
       displayName: 'Circuit',

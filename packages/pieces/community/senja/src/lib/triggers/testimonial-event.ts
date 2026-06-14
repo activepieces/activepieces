@@ -14,6 +14,9 @@ export const testimonialEventTrigger = createTrigger({
   displayName: 'Testimonial Event',
   description:
     'Triggers when a testimonial is created, updated, or deleted in Senja.',
+  aiMetadata: {
+    description: 'Fires when a testimonial is created, updated, or deleted in Senja, delivering the affected testimonial via a manually configured webhook. Can be filtered to only the selected event types (created, updated, deleted) or left to fire on all of them.',
+  },
   props: {
     instructions: Property.MarkDown({
       value: `## Setup Instructions

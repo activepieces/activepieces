@@ -7,6 +7,8 @@ export const deleteJobNote = createAction({
   name: "delete_job_note",
   displayName: "Delete job note",
   description: "Delete a specific job note",
+  audience: 'both',
+  aiMetadata: { description: "Delete a single note from a Housecall Pro job, identified by job ID and note ID. Idempotent: deleting an already-removed note has no further effect.", idempotent: true },
   props: {
     job_id: Property.ShortText({
       displayName: "Job ID",

@@ -27,6 +27,8 @@ export const fountainDeleteApplicant = createAction({
   auth: fountainAuth,
   displayName: 'Delete Applicant',
   description: 'Delete an applicant by their ID',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes an applicant from Fountain by their applicant ID. Use to remove a candidate from the system. Idempotent in effect: once the applicant is gone, repeating the call has no further effect, though it is a destructive mutation.', idempotent: true },
   props: {
     id: Property.Dropdown({
       auth: fountainAuth,

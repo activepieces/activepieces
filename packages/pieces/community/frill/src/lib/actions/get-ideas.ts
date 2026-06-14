@@ -7,6 +7,8 @@ export const getIdeas = createAction({
   name: 'get_ideas',
   displayName: 'Get Ideas',
   description: 'Fetch a list of ideas/feedback entries from Frill.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves a list of ideas/feedback entries from Frill, optionally filtered by status, with a result limit (defaults to 20). Use to browse or search existing feedback, e.g. to find an idea ID before commenting or updating. Idempotent: read-only.', idempotent: true },
   props: {
     limit: Property.Number({
       displayName: 'Limit',

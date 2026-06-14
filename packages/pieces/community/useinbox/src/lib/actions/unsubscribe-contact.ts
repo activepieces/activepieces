@@ -22,6 +22,12 @@ export const unsubscribeContactAction = createAction({
   displayName: 'Mark Contact as Unsubscribed',
   description:
     'Changes a contact status to Unsubscribed so they stop receiving campaigns from INBOX. You can also mark them as Hard Bounce or Spam Reported.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Sets an existing INBOX contact's deliverability status, defaulting to Unsubscribed so they stop receiving campaigns; the status can instead be set to Hard Bounce or Spam Reported. Use to suppress a contact or record a deliverability outcome. Requires the contact id; setting the same status again is a no-op.",
+    idempotent: true,
+  },
   props: {
     contactId: useinboxProps.contactDropdown(),
     status: Property.StaticDropdown({

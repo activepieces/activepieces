@@ -11,6 +11,12 @@ export const createBill = createAction({
   displayName: 'Create Bill',
   description:
     'Record a bill you received from a supplier (e.g. a vendor invoice you need to pay).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Records a supplier bill (accounts payable) in Wafeq with line items, an expense account, currency, and tax handling, in Draft or Authorized status. Choose this for vendor invoices you owe, as opposed to Create Invoice for money customers owe you. Requires an existing supplier contact ID and a bill_number unique per supplier. Not idempotent — each call creates a new bill.',
+    idempotent: false,
+  },
   props: {
     contact: wafeqProps.contactDropdown({
       displayName: 'Supplier',

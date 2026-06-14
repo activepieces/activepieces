@@ -12,6 +12,8 @@ export const createTicketAction = createAction({
   name: 'create_gorgias_ticket',
   displayName: 'Create Ticket',
   description: 'Create a new Gorgias ticket with an initial message.',
+  audience: 'both',
+  aiMetadata: { description: 'Open a new support ticket in Gorgias seeded with one initial message, specifying the sender (from) and recipient (to) addresses, subject, body, and the channel/via the message came through. Use to start a fresh conversation rather than reply to an existing thread; to add a follow-up message to a ticket that already exists, use Create Message instead. Not idempotent: each call creates a separate ticket.', idempotent: false },
   props: {
     fromAddress: Property.ShortText({
       displayName: 'From Address',

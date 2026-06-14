@@ -15,6 +15,8 @@ export const partnerSettlementReportPartnerSettlementRecordUpdateAction = create
   name: 'partnerSettlementReportPartnerSettlementRecordUpdate',
   displayName: 'Resources - Partner Settlement Reports - Update Partner Settlement Record',
   description: 'Update a single Partner Settlement Record.',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing settlement record (date, paid amount, note) within a partner settlement report, identified by the report id plus the record id. This is a full replace of the supplied fields, so it is idempotent - repeating it with the same values yields the same result. To add a new record use Create Partner Settlement Record.', idempotent: true },
   props: {
         
   partnerSettlementReport: Property.Number({

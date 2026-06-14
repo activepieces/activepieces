@@ -14,6 +14,8 @@ export const tariffGroupsListingAction = createAction({
   name: 'tariffGroupsListing',
   displayName: 'Resources - Tariff Groups - Listing',
   description: 'Get all tariff groups.',
+  audience: 'both',
+  aiMetadata: { description: 'List AMPECO tariff groups, optionally filtered by managing partner ID, and enable Paginate Results to auto-fetch across pages. Read-only and idempotent; use this to discover group IDs before reading, updating, or deleting a specific group.', idempotent: true },
   props: {
         
   filter__partnerId: Property.Number({

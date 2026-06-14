@@ -9,6 +9,12 @@ export const addConversationTags = createAction({
   name: 'addConversationTags',
   displayName: 'Add Conversation Tags',
   description: 'Add one or more tags to a conversation.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Apply one or more existing tags (by tag ID) to a Front conversation for categorization or routing. Use to label a thread; tags must already exist. Effectively idempotent: re-applying a tag already present leaves the conversation tag set unchanged.',
+    idempotent: true,
+  },
   props: {
     conversation_id: conversationIdDropdown,
     tag_ids: tagIdsDropdown,
