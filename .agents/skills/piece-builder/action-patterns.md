@@ -48,3 +48,7 @@ The `token` field above assumes a `PieceAuth.SecretText()` auth. For other auth 
 **Real example:** `packages/pieces/community/github/src/lib/actions/create-issue.ts`
 
 For all available property types (`Property.ShortText`, `Property.Dropdown`, `Property.Array`, etc.) read `props-patterns.md`.
+
+## AI-Ready Metadata (optional)
+
+Actions accept two optional fields that tune how they appear to AI agents: `audience` (`'human' | 'ai' | 'both'`) and `aiMetadata` (`{ description?, idempotent? }`). They are additive and change nothing for human users. Skip them unless you are deliberately tuning the action for agents — see `ai-metadata.md`.

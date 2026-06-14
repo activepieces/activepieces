@@ -81,6 +81,10 @@ async function approveToolCall({
   });
 }
 
+async function cancelConversation(conversationId: string): Promise<void> {
+  return api.post<void>(`/v1/chat/conversations/${conversationId}/cancel`);
+}
+
 export const chatApi = {
   createConversation,
   listConversations,
@@ -90,4 +94,5 @@ export const chatApi = {
   deleteConversation,
   sendMessage,
   approveToolCall,
+  cancelConversation,
 };

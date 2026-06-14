@@ -1,3 +1,4 @@
+import { apVersionUtil } from '@activepieces/server-utils'
 import {
     ApEdition,
     ExecutionType,
@@ -48,6 +49,12 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
         async poll(input) {
             log.info({ workerId: input.workerId, workerGroupId }, '[workerRpc#poll] Poll request received')
             await machineService(log).onConnection(input, workerGroupId)
+            const workerVersion = input.workerProps.version
+            const appVersion = apVersionUtil.getCurrentRelease()
+            if (workerVersion !== appVersion) {
+                log.warn({ workerId: input.workerId, workerVersion, appVersion }, '[workerRpc#poll] Withholding job — worker version does not match app; worker will idle until upgraded')
+                return null
+            }
             const pollQueueName = getPollQueueName(workerGroupId)
             const job = await jobBroker(log).poll(pollQueueName)
             if (job) {

@@ -36,12 +36,13 @@ import {
 import { CopyIconButton } from './copy-icon-button';
 import { PlanProgressCard } from './plan-progress-card';
 import { ProjectPickerCard } from './project-picker-card';
+import { StreamingText } from './streaming-text';
 
 const PROSE_CLASSES =
   'max-w-none break-words text-sm [&_p]:mb-4 [&_p:last-child]:mb-0 [&_table]:mb-4 [&_h1]:text-[18px] [&_h2]:text-[18px] [&_h3]:text-[18px]';
 
 const ACTION_BUTTON_CLASS =
-  'flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground';
+  'flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring';
 
 export const AssistantMessage = memo(function AssistantMessage({
   message,
@@ -60,6 +61,7 @@ export const AssistantMessage = memo(function AssistantMessage({
     blocks,
     hasContent,
     lastDisplayIdx: lastDisplayToolIdx,
+    lastTextIdx,
   } = useMemo(() => {
     const result: MessageBlock[] = [];
     let currentThinking: {
@@ -173,19 +175,20 @@ export const AssistantMessage = memo(function AssistantMessage({
       (b) => b.kind === 'display-tool',
     );
 
-    if (isStreaming) {
-      const hasThinkingAfter = result.some(
-        (b, idx) => b.kind === 'thinking' && idx > lastDisplayIdx,
-      );
-      if (result.length === 0 || (lastDisplayIdx >= 0 && !hasThinkingAfter)) {
+    if (isStreaming && !hasText) {
+      const hasThinkingBlock = result.some((b) => b.kind === 'thinking');
+      if (!hasThinkingBlock) {
         result.push({ kind: 'thinking', steps: [], reasoningText: '' });
       }
     }
+
+    const lastTextIdx = result.findLastIndex((b) => b.kind === 'text');
 
     return {
       blocks: result,
       hasContent: hasText,
       lastDisplayIdx,
+      lastTextIdx,
     };
   }, [message.parts, isStreaming]);
 
@@ -221,71 +224,85 @@ export const AssistantMessage = memo(function AssistantMessage({
   return (
     <motion.div
       className="py-3 group/msg"
-      initial={isFromHistory ? false : { opacity: 0, y: 10 }}
+      initial={isFromHistory || isStreaming ? false : { opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
       <Message>
-        <div className="min-w-0 space-y-2 flex-1">
+        <div className="min-w-0 flex-1">
           {blocks.map((block, i) => {
             switch (block.kind) {
               case 'thinking':
                 return (
-                  <ThinkingBlock
-                    key={`thinking-${i}`}
-                    thinkingSteps={block.steps}
-                    reasoningText={block.reasoningText}
-                    isStreaming={
-                      isStreaming &&
-                      i === lastThinkingIdx &&
-                      !hasActiveDisplayCard &&
-                      i > lastDisplayToolIdx
-                    }
-                    thinkingDurationMs={
-                      i === lastThinkingIdx
-                        ? (
-                            message as ChatUIMessage & {
-                              thinkingDurationMs?: number;
-                            }
-                          ).thinkingDurationMs
-                        : undefined
-                    }
-                  />
-                );
-              case 'text':
-                return (
-                  <div key={`text-${i}`} className={PROSE_CLASSES}>
-                    <Markdown>{block.text}</Markdown>
+                  <div key={`thinking-${i}`} className="py-2">
+                    <ThinkingBlock
+                      thinkingSteps={block.steps}
+                      reasoningText={block.reasoningText}
+                      isStreaming={
+                        isStreaming &&
+                        i === lastThinkingIdx &&
+                        !hasActiveDisplayCard &&
+                        i > lastDisplayToolIdx
+                      }
+                      thinkingDurationMs={
+                        i === lastThinkingIdx
+                          ? (
+                              message as ChatUIMessage & {
+                                thinkingDurationMs?: number;
+                              }
+                            ).thinkingDurationMs
+                          : undefined
+                      }
+                    />
                   </div>
                 );
+              case 'text': {
+                const isActiveText = isStreaming && i === lastTextIdx;
+                return (
+                  <div key={`text-${i}`} className={cn('py-1', PROSE_CLASSES)}>
+                    {isActiveText ? (
+                      <StreamingText text={block.text} isStreaming={true} />
+                    ) : (
+                      <Markdown>{block.text}</Markdown>
+                    )}
+                    {isActiveText && lastTextIdx === blocks.length - 1 && (
+                      <StreamingCursor />
+                    )}
+                  </div>
+                );
+              }
               case 'display-tool': {
                 const toolCompleted =
                   block.part.state === 'output-available' ||
                   block.part.state === 'output-error';
                 if (toolCompleted) {
                   return (
-                    <DisplayToolCard
-                      key={block.part.toolCallId}
-                      part={block.part}
-                      onResolve={approveGate}
-                      isInteractive={false}
-                    />
+                    <div key={block.part.toolCallId} className="py-2">
+                      <DisplayToolCard
+                        part={block.part}
+                        onResolve={approveGate}
+                        isInteractive={false}
+                      />
+                    </div>
                   );
                 }
                 return null;
               }
               case 'plan-marker':
                 return (
-                  <InlinePlanCard
-                    key={`plan-${i}`}
-                    planPart={block.part}
-                    message={message}
-                    isStreaming={isStreaming}
-                  />
+                  <div key={`plan-${i}`} className="py-2">
+                    <InlinePlanCard
+                      planPart={block.part}
+                      message={message}
+                      isStreaming={isStreaming}
+                    />
+                  </div>
                 );
               case 'batch-progress':
                 return (
-                  <BatchProgressCard key={`batch-${i}`} progress={block.data} />
+                  <div key={`batch-${i}`} className="py-2">
+                    <BatchProgressCard progress={block.data} />
+                  </div>
                 );
               default:
                 return null;
@@ -297,7 +314,7 @@ export const AssistantMessage = memo(function AssistantMessage({
               'gap-1 transition-opacity',
               isLastMessage
                 ? 'opacity-100'
-                : 'opacity-0 group-hover/msg:opacity-100',
+                : 'opacity-0 group-hover/msg:opacity-100 focus-within:opacity-100',
             )}
           >
             {hasContent && !isStreaming && (
@@ -386,6 +403,7 @@ function InlinePlanCard({
 
   const updates = useMemo(() => {
     if (!localPlan) return [];
+    if (messageUpdates.length > 0) return messageUpdates;
     if (planCompleted) {
       return localPlan.steps.map(
         (_stepText, i): PlanStepUpdate => ({ stepIndex: i, status: 'done' }),
@@ -499,6 +517,12 @@ function AnsweredQuestionsCard({ answersText }: { answersText: string }) {
         ))}
       </div>
     </motion.div>
+  );
+}
+
+function StreamingCursor() {
+  return (
+    <span className="inline-block w-[3px] h-[1.1em] bg-foreground/70 rounded-sm align-text-bottom ml-0.5 animate-pulse" />
   );
 }
 
