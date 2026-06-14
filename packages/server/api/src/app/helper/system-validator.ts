@@ -83,7 +83,6 @@ const systemPropValidators: {
     [AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW]: stringValidator,
     [AppSystemProp.CLIENT_REAL_IP_HEADER]: stringValidator,
     [AppSystemProp.CLOUD_AUTH_ENABLED]: booleanValidator,
-    [AppSystemProp.CONSOLE_API_KEY]: stringValidator,
     [AppSystemProp.CONFIG_PATH]: stringValidator,
     [AppSystemProp.DB_TYPE]: enumValidator(Object.values(DatabaseType)),
     [AppSystemProp.DEV_PIECES]: stringValidator,
@@ -193,9 +192,6 @@ const systemPropValidators: {
 
     // On-call
     [AppSystemProp.PAGE_ONCALL_WEBHOOK]: urlValidator,
-
-    // Console
-    [AppSystemProp.CONSOLE_API_SECRET_KEY]: stringValidator,
 }
 
 

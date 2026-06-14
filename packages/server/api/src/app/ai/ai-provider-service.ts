@@ -146,6 +146,11 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         }
     },
 
+    async getChatProviderName({ platformId }: { platformId: PlatformId }): Promise<AIProviderName | null> {
+        const chatProvider = await aiProviderRepo().findOneBy({ platformId, enabledForChat: true })
+        return chatProvider?.provider ?? null
+    },
+
     async getChatProvider({ platformId }: { platformId: PlatformId }): Promise<GetProviderConfigResponse | null> {
         const chatProvider = await aiProviderRepo().findOneBy({ platformId, enabledForChat: true })
         if (isNil(chatProvider)) {

@@ -1,67 +1,67 @@
-import { ApEdition, FlowStatus, isEmpty, isNil, ProjectType, tryCatch } from '@activepieces/shared'
+import { FlowStatus, ProjectType, RunEnvironment, tryCatch } from '@activepieces/shared'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import { FastifyBaseLogger } from 'fastify'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { exceptionHandler } from '../../helper/exception-handler'
-import { rejectedPromiseHandler } from '../../helper/promise-handler'
-import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-props'
-import { platformService } from '../../platform/platform.service'
 import { projectRepo } from '../../project/project-repo'
 import { userRepo } from '../../user/user-service'
 import { platformPlanRepo } from '../platform/platform-plan/platform-plan.service'
 
+dayjs.extend(utc)
+
 const CONSOLE_API_URL = 'https://console.activepieces.com'
-const CLOUD_API_URL = 'https://cloud.activepieces.com'
-const CONSOLE_API_KEY = system.get(AppSystemProp.CONSOLE_API_KEY)
+const REQUEST_TIMEOUT_MS = 30000
+const COMPLETED_DAYS_WINDOW = 2
 
 export const consoleUsageService = (log: FastifyBaseLogger) => ({
+    /**
+     * Reports per-platform usage to the Console for billing/metering — this is NOT telemetry, so it
+     * is intentionally not gated on AP_TELEMETRY_ENABLED. The license key is both the gate and the
+     * credential: only licensed platforms are reported, and the key is sent as the Bearer token the
+     * Console validates. Unlicensed instances bail before the heavy aggregate queries, so they send
+     * nothing. Only *completed* UTC days are reported (the current day is excluded), so each
+     * (platform, day) count is final on first send; the 2-day window gives a one-day healing margin
+     * for a missed run, and re-sends carry the same value — letting the Console store them with a
+     * plain idempotent upsert, no max-merge.
+     */
     async reportAllPlatforms(): Promise<void> {
-        const edition = system.getEdition()
-        const isCloud = edition === ApEdition.CLOUD
+        const licenseKeysByPlatform = await queryLicenseKeysByPlatform()
 
-        if (!isCloud) {
-            const telemetryEnabled = system.getBoolean(AppSystemProp.TELEMETRY_ENABLED)
-            if (!telemetryEnabled) {
-                return
-            }
-        }
-
-        if (isCloud && isNil(CONSOLE_API_KEY)) {
+        if (licenseKeysByPlatform.size === 0) {
             return
         }
+
+        const platformIds = [...licenseKeysByPlatform.keys()]
+        const windowStart = utcMidnight(COMPLETED_DAYS_WINDOW)
+        const todayStart = utcMidnight(0)
 
         const [
             activeFlowsByPlatform,
             usersByPlatform,
             teamProjectsByPlatform,
-            executionsByPlatform,
-            licenseKeysByPlatform,
+            dailyExecutionsByPlatform,
         ] = await Promise.all([
-            queryActiveFlowsByPlatform(),
-            queryUsersByPlatform(),
-            queryTeamProjectsByPlatform(),
-            queryExecutionsByPlatform(),
-            queryLicenseKeysByPlatform(),
+            queryActiveFlowsByPlatform(platformIds),
+            queryUsersByPlatform(platformIds),
+            queryTeamProjectsByPlatform(platformIds),
+            queryDailyExecutionsByPlatform(platformIds, windowStart, todayStart),
         ])
 
-        const platforms = await platformService(log).getAll()
         const reportedAt = new Date().toISOString()
 
         const results = await Promise.allSettled(
-            platforms.map((platform) => {
+            [...licenseKeysByPlatform.entries()].map(([platformId, licenseKey]) => {
                 const body = buildSnapshotBody({
-                    platformId: platform.id,
-                    activeFlows: activeFlowsByPlatform.get(platform.id) ?? 0,
-                    users: usersByPlatform.get(platform.id) ?? 0,
-                    projects: teamProjectsByPlatform.get(platform.id) ?? 0,
-                    executions: executionsByPlatform.get(platform.id) ?? 0,
-                    licenseKey: licenseKeysByPlatform.get(platform.id) ?? null,
+                    platformId,
+                    activeFlows: activeFlowsByPlatform.get(platformId) ?? 0,
+                    users: usersByPlatform.get(platformId) ?? 0,
+                    projects: teamProjectsByPlatform.get(platformId) ?? 0,
+                    dailyExecutions: dailyExecutionsByPlatform.get(platformId) ?? [],
                     reportedAt,
                 })
-                return CONSOLE_API_KEY
-                    ? postSnapshot({ url: `${CONSOLE_API_URL}/api/external/usage/snapshot`, body, apiKey: CONSOLE_API_KEY })
-                    : postSnapshot({ url: `${CLOUD_API_URL}/api/v1/console-usage/snapshots`, body })
+                return postSnapshot({ body, licenseKey })
             }),
         )
 
@@ -71,70 +71,74 @@ export const consoleUsageService = (log: FastifyBaseLogger) => ({
             }
         }
     },
-
-    async processRelayedSnapshot({ platformId, snapshot }: { platformId: string, snapshot: Record<string, unknown> }): Promise<void> {
-        if (system.getEdition() !== ApEdition.CLOUD || isNil(CONSOLE_API_KEY)) {
-            return
-        }
-        const platform = await platformService(log).getOne(platformId)
-        if (isNil(platform)) {
-            log.warn({ platformId }, 'Ignoring relayed snapshot for unknown platform')
-            return
-        }
-        rejectedPromiseHandler(
-            postSnapshot({ url: `${CONSOLE_API_URL}/api/external/usage/snapshot`, body: snapshot, apiKey: CONSOLE_API_KEY }),
-            log,
-        )
-    },
 })
 
-async function queryActiveFlowsByPlatform(): Promise<Map<string, number>> {
+async function queryActiveFlowsByPlatform(platformIds: string[]): Promise<Map<string, number>> {
     const rows = await flowRepo()
         .createQueryBuilder('flow')
         .innerJoin('flow.project', 'project')
         .select('project.platformId', 'platformId')
         .addSelect('COUNT(*)', 'count')
         .where('flow.status = :status', { status: FlowStatus.ENABLED })
+        .andWhere('project.platformId IN (:...platformIds)', { platformIds })
         .groupBy('project.platformId')
         .getRawMany<{ platformId: string, count: string }>()
 
     return toCountMap(rows)
 }
 
-async function queryUsersByPlatform(): Promise<Map<string, number>> {
+async function queryUsersByPlatform(platformIds: string[]): Promise<Map<string, number>> {
     const rows = await userRepo()
         .createQueryBuilder('user')
         .select('user.platformId', 'platformId')
         .addSelect('COUNT(*)', 'count')
+        .where('user.platformId IN (:...platformIds)', { platformIds })
         .groupBy('user.platformId')
         .getRawMany<{ platformId: string, count: string }>()
 
     return toCountMap(rows)
 }
 
-async function queryTeamProjectsByPlatform(): Promise<Map<string, number>> {
+async function queryTeamProjectsByPlatform(platformIds: string[]): Promise<Map<string, number>> {
     const rows = await projectRepo()
         .createQueryBuilder('project')
         .select('project.platformId', 'platformId')
         .addSelect('COUNT(*)', 'count')
         .where('project.type = :type', { type: ProjectType.TEAM })
+        .andWhere('project.platformId IN (:...platformIds)', { platformIds })
         .groupBy('project.platformId')
         .getRawMany<{ platformId: string, count: string }>()
 
     return toCountMap(rows)
 }
 
-// Cumulative all-time total — the Console tracks lifetime executions per platform for billing/usage dashboards
-async function queryExecutionsByPlatform(): Promise<Map<string, number>> {
+/**
+ * Counts only production runs because test runs (RunEnvironment.TESTING) are not billable, and
+ * scopes to licensed platforms while bounding on `created` so PostgreSQL hits the
+ * flow_run (projectId, environment, ..., created) indexes instead of scanning the whole table.
+ */
+async function queryDailyExecutionsByPlatform(platformIds: string[], windowStart: string, todayStart: string): Promise<Map<string, DailyExecutionCount[]>> {
     const rows = await flowRunRepo()
         .createQueryBuilder('flow_run')
         .innerJoin('flow_run.project', 'project')
         .select('project.platformId', 'platformId')
+        .addSelect('to_char(flow_run.created AT TIME ZONE \'UTC\', \'YYYY-MM-DD\')', 'day')
         .addSelect('COUNT(*)', 'count')
+        .where('project.platformId IN (:...platformIds)', { platformIds })
+        .andWhere('flow_run.environment = :environment', { environment: RunEnvironment.PRODUCTION })
+        .andWhere('flow_run.created >= :windowStart', { windowStart })
+        .andWhere('flow_run.created < :todayStart', { todayStart })
         .groupBy('project.platformId')
-        .getRawMany<{ platformId: string, count: string }>()
+        .addGroupBy('to_char(flow_run.created AT TIME ZONE \'UTC\', \'YYYY-MM-DD\')')
+        .getRawMany<{ platformId: string, day: string, count: string }>()
 
-    return toCountMap(rows)
+    const map = new Map<string, DailyExecutionCount[]>()
+    for (const row of rows) {
+        const days = map.get(row.platformId) ?? []
+        days.push({ date: row.day, count: parseInt(row.count, 10) })
+        map.set(row.platformId, days)
+    }
+    return map
 }
 
 async function queryLicenseKeysByPlatform(): Promise<Map<string, string>> {
@@ -165,45 +169,40 @@ function buildSnapshotBody({
     activeFlows,
     users,
     projects,
-    executions,
-    licenseKey,
+    dailyExecutions,
     reportedAt,
 }: {
     platformId: string
     activeFlows: number
     users: number
     projects: number
-    executions: number
-    licenseKey: string | null
+    dailyExecutions: DailyExecutionCount[]
     reportedAt: string
 }): Record<string, unknown> {
-    const body: Record<string, unknown> = {
+    return {
         platform_id: platformId,
-        executions,
         active_flows: activeFlows,
         projects,
         users,
+        daily_executions: dailyExecutions,
         reported_at: reportedAt,
     }
-
-    if (!isNil(licenseKey) && !isEmpty(licenseKey)) {
-        body.key_value = licenseKey
-    }
-
-    return body
 }
 
-async function postSnapshot({ url, body, apiKey }: { url: string, body: Record<string, unknown>, apiKey?: string }): Promise<void> {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-    if (apiKey) {
-        headers['Authorization'] = `Bearer ${apiKey}`
-    }
+function utcMidnight(daysAgo: number): string {
+    return dayjs.utc().startOf('day').subtract(daysAgo, 'day').toISOString()
+}
 
+async function postSnapshot({ body, licenseKey }: { body: Record<string, unknown>, licenseKey: string }): Promise<void> {
     const result = await tryCatch(() =>
-        fetch(url, {
+        fetch(`${CONSOLE_API_URL}/api/external/usage/snapshot`, {
             method: 'POST',
-            headers,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${licenseKey}`,
+            },
             body: JSON.stringify(body),
+            signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
         }),
     )
 
@@ -212,6 +211,11 @@ async function postSnapshot({ url, body, apiKey }: { url: string, body: Record<s
     }
 
     if (!result.data.ok) {
-        throw new Error(`Console usage POST to ${url} failed with status ${result.data.status}`)
+        throw new Error(`Console usage snapshot POST failed with status ${result.data.status}`)
     }
+}
+
+type DailyExecutionCount = {
+    date: string
+    count: number
 }
