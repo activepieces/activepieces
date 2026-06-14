@@ -81,6 +81,7 @@ async function queryActiveFlowsByPlatform(platformIds: string[]): Promise<Map<st
         .addSelect('COUNT(*)', 'count')
         .where('flow.status = :status', { status: FlowStatus.ENABLED })
         .andWhere('project.platformId IN (:...platformIds)', { platformIds })
+        .andWhere('project.deleted IS NULL')
         .groupBy('project.platformId')
         .getRawMany<{ platformId: string, count: string }>()
 
@@ -106,6 +107,7 @@ async function queryTeamProjectsByPlatform(platformIds: string[]): Promise<Map<s
         .addSelect('COUNT(*)', 'count')
         .where('project.type = :type', { type: ProjectType.TEAM })
         .andWhere('project.platformId IN (:...platformIds)', { platformIds })
+        .andWhere('project.deleted IS NULL')
         .groupBy('project.platformId')
         .getRawMany<{ platformId: string, count: string }>()
 
