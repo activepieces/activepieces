@@ -225,7 +225,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
     },
 
     async replace(params: ReplaceParams): Promise<void> {
-        const { sourceAppConnectionId, targetAppConnectionId, projectId, platformId, userId } = params
+        const { sourceAppConnectionId, targetAppConnectionId, projectId, platformId, userId, deleteSourceConnection, applyToPublishedVersions } = params
         const sourceAppConnection = await this.getOneOrThrowWithoutValue({
             id: sourceAppConnectionId,
             projectId,
@@ -261,9 +261,25 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             appConnection: sourceAppConnection,
             newAppConnection: targetAppConnection,
             userId,
+            applyToPublishedVersions,
         })
 
-        log.info({ oldConnectionId: sourceAppConnectionId, newConnectionId: targetAppConnectionId, affectedFlows: flows.data.length }, 'App connection replaced')
+        log.info({ oldConnectionId: sourceAppConnectionId, newConnectionId: targetAppConnectionId, affectedFlows: flows.data.length, deleteSourceConnection, applyToPublishedVersions }, 'App connection replaced')
+
+        if (!deleteSourceConnection) {
+            return
+        }
+
+        const stillReferencedByPublishedFlows = !applyToPublishedVersions && flows.data.some((flow) => !isNil(flow.publishedVersionId))
+        if (stillReferencedByPublishedFlows) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Cannot delete the old connection because it is still used by published flows that were not updated',
+                },
+            })
+        }
+
         await this.delete({
             id: sourceAppConnection.id,
             platformId,
@@ -817,5 +833,7 @@ type ReplaceParams = {
     projectId: ProjectId
     platformId: string
     userId: UserId
+    deleteSourceConnection: boolean
+    applyToPublishedVersions: boolean
 }
 
