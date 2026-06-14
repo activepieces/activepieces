@@ -195,9 +195,6 @@ const systemPropValidators: {
     // On-call
     [AppSystemProp.PAGE_ONCALL_WEBHOOK]: urlValidator,
 
-    // Console
-    [AppSystemProp.CONSOLE_API_SECRET_KEY]: stringValidator,
-
     // evlog sampling / slow-event threshold
     [AppSystemProp.LOG_SAMPLE_RATE_INFO]: (value: string) => {
         const n = parseInt(value, 10)
