@@ -7,6 +7,12 @@ export const addReplyAction = createAction({
   auth: outsetaAuth,
   displayName: 'Reply to Ticket',
   description: 'Add a reply to an existing support ticket (case) in Outseta.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Posts an agent reply onto an existing support ticket, by case UID. Use to respond within a ticket thread; to open a new ticket use Create Ticket. Not idempotent: each call appends a new reply.',
+    idempotent: false,
+  },
   props: {
     caseUid: Property.ShortText({
       displayName: 'Case UID',

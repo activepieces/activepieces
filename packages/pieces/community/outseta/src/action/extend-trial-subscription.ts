@@ -8,6 +8,12 @@ export const extendTrialSubscriptionAction = createAction({
   displayName: 'Extend Trial Subscription',
   description:
     "Extend the trial period of an account by setting a new trial end date.",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sets a new trial end date on an account\'s subscription, by account UID. Use to prolong a trial; the date must be in the future and is applied as an absolute target (yyyy-MM-dd). Idempotent: setting the same end date again has no further effect.',
+    idempotent: true,
+  },
   props: {
     accountUid: Property.ShortText({
       displayName: 'Account UID',

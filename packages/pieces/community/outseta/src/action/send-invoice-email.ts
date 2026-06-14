@@ -8,6 +8,12 @@ export const sendInvoiceEmailAction = createAction({
   displayName: 'Send Invoice Email',
   description:
     'Send (or resend) the invoice email to the customer associated with an invoice.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends (or resends) the invoice email to the customer for a given invoice UID. Use to deliver a copy of an invoice. Not idempotent: each call sends another email.',
+    idempotent: false,
+  },
   props: {
     invoiceUid: Property.ShortText({
       displayName: 'Invoice UID',

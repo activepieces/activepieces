@@ -8,6 +8,12 @@ export const getLastPaymentAction = createAction({
   displayName: 'Get Last Payment for Account',
   description:
     'Retrieve the most recent payment transaction for an account. Returns found=false if no payment has ever been recorded.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Returns the single most recent payment transaction for an account, or found=false if none exists. Use for the latest payment only; for the full payment/refund/invoice history use List Account Transactions. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     accountUid: Property.ShortText({
       displayName: 'Account UID',

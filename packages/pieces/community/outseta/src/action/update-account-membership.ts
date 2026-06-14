@@ -8,6 +8,12 @@ export const updateAccountMembershipAction = createAction({
   displayName: 'Update Account Membership',
   description:
     "Update a person's membership on an account — typically used to designate them as the primary contact.",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing person\'s membership on an account — typically to set them as the primary contact — by account and person UID. Use to change a member\'s role; to add or remove the member entirely use Manage Account Membership. Idempotent: setting the same primary-contact state again has no further effect.',
+    idempotent: true,
+  },
   props: {
     accountUid: Property.ShortText({
       displayName: 'Account UID',

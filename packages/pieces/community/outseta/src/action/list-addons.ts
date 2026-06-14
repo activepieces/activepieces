@@ -8,6 +8,12 @@ export const listAddOnsAction = createAction({
   displayName: 'List Add-Ons',
   description:
     'Retrieve a paginated list of add-ons from your Outseta billing catalog.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Returns a paginated list of add-ons from the billing catalog. Use to discover available add-on UIDs, e.g. before Add Add-on to Subscription. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     limit: Property.Number({
       displayName: 'Limit',

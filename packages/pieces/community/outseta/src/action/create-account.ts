@@ -10,6 +10,12 @@ export const createAccountAction = createAction({
   displayName: 'Create Account',
   description:
     'Create a new account in Outseta CRM. Optionally start a subscription on a plan in the same call.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new CRM account, optionally with a primary contact person and an initial subscription on a plan. Use to onboard a new customer; to attach a person to an existing account use Manage Account Membership, and to start a subscription on an existing account use Change Account Plan. Not idempotent: each call creates a new account.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

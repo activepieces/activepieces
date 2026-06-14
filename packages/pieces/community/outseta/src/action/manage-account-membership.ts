@@ -7,6 +7,12 @@ export const manageAccountMembershipAction = createAction({
   auth: outsetaAuth,
   displayName: 'Manage Account Membership',
   description: 'Add or remove a person from an account.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Adds or removes a person on an account (membership), by account and person UID. Use to attach or detach a contact; to change an existing member\'s primary-contact flag use Update Account Membership. Idempotent: re-adding an existing member or removing a non-member is a no-op.',
+    idempotent: true,
+  },
   props: {
     action: Property.StaticDropdown({
       displayName: 'Action',

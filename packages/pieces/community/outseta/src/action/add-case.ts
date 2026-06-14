@@ -7,6 +7,12 @@ export const addCaseAction = createAction({
   auth: outsetaAuth,
   displayName: 'Create Ticket',
   description: 'Create a new support ticket (case) in Outseta.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Opens a new support ticket (case) from a person, with subject and body. Use to file a customer support request; to respond within an existing ticket use Reply to Ticket. Not idempotent: each call creates a new case.',
+    idempotent: false,
+  },
   props: {
     personUid: Property.ShortText({
       displayName: 'Person UID',

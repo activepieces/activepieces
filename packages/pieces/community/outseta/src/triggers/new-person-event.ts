@@ -9,6 +9,10 @@ export const newPersonEventTrigger = createTrigger({
   description:
     "Triggers on any person-scoped event (lifecycle, login, email engagement, list subscription, segment, support ticket). The webhook payload is always a Person object — event-specific details such as the email message, list, segment or ticket are in the Person's ActivityEventData field.",
   type: TriggerStrategy.WEBHOOK,
+  aiMetadata: {
+    description:
+      'Fires on any person-scoped Outseta event (lifecycle, login, email engagement, list, segment, support ticket). Each webhook delivers one Person object; the specific event\'s details are nested in its ActivityEventData.',
+  },
   props: {
     setup: Property.MarkDown({
       value:

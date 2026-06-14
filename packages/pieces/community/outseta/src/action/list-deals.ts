@@ -7,6 +7,12 @@ export const listDealsAction = createAction({
   auth: outsetaAuth,
   displayName: 'List Deals',
   description: 'Retrieve a paginated list of deals from your Outseta CRM.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Returns a paginated list of CRM deals. Use to browse or scan deals; to fetch one known deal use Retrieve Deal. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     limit: Property.Number({
       displayName: 'Limit',

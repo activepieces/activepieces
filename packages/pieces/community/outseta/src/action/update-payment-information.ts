@@ -8,6 +8,12 @@ export const updatePaymentInformationAction = createAction({
   displayName: 'Update Payment Information',
   description:
     "Update the credit card / payment method on an account. The payment processor tokens (CustomerToken, PaymentToken) must come from your payment processor (e.g. Stripe Elements) — not from Outseta.",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sets the payment method on an account from processor tokens (CustomerToken/PaymentToken), by account UID. Use to attach or replace a card; the tokens must come from your payment processor (e.g. Stripe), not Outseta. Idempotent: re-sending the same tokens yields the same stored method.',
+    idempotent: true,
+  },
   props: {
     accountUid: Property.ShortText({
       displayName: 'Account UID',

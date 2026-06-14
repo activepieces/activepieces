@@ -9,6 +9,10 @@ export const newDealEventTrigger = createTrigger({
   description:
     "Triggers on any deal-scoped event (lifecycle, contact / account association). The webhook payload is always a Deal object — event-specific details such as the added person or account are in the Deal's ActivityEventData field.",
   type: TriggerStrategy.WEBHOOK,
+  aiMetadata: {
+    description:
+      'Fires on any deal-scoped Outseta event (lifecycle, contact/account association). Each webhook delivers one Deal object; the specific event\'s details are nested in its ActivityEventData.',
+  },
   props: {
     setup: Property.MarkDown({
       value:

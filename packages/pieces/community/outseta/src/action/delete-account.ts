@@ -7,6 +7,12 @@ export const deleteAccountAction = createAction({
   auth: outsetaAuth,
   displayName: 'Delete Account',
   description: 'Delete an account from Outseta CRM.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently deletes a CRM account by its UID. Use to remove an account entirely; to only end billing while keeping the record use Cancel Subscription. Destructive. Not idempotent: a repeat call errors because the account no longer exists.',
+    idempotent: false,
+  },
   props: {
     accountUid: Property.ShortText({
       displayName: 'Account UID',

@@ -9,6 +9,12 @@ export const addAddonToSubscriptionAction = createAction({
   displayName: 'Add Add-on to Subscription',
   description:
     "Attach a recurring add-on to an account's current subscription. Different from Add Usage for Add-on, which only records consumption on a metered add-on already attached.",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Attaches a recurring add-on to an account\'s current subscription, by account UID and add-on UID. Use to add an ongoing add-on charge; to report metered consumption on an add-on that is already attached use Add Usage for Add-on instead. Requires an active subscription. Not idempotent: each call adds another add-on instance.',
+    idempotent: false,
+  },
   props: {
     accountUid: Property.ShortText({
       displayName: 'Account UID',

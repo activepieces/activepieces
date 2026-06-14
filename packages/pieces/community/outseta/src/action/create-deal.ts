@@ -9,6 +9,12 @@ export const createDealAction = createAction({
   auth: outsetaAuth,
   displayName: 'Create Deal',
   description: 'Create a new deal in the CRM.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new CRM deal in a pipeline stage, optionally linked to a person and account. Use when you always want a new deal; to avoid duplicates keyed on contact email use Find or Add Deal instead. Not idempotent: each call creates a new deal.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Deal Name',

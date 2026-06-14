@@ -9,6 +9,10 @@ export const newPlanEventTrigger = createTrigger({
   description:
     "Triggers on Outseta Plan catalog events (creation or update of a billing plan in your Outseta configuration). The webhook payload is a Plan object — event-specific details are in the Plan's ActivityEventData field. Note: this fires when an admin edits the plan catalog in Outseta, not when a customer's subscription plan changes (use New Account Event → Account Subscription Plan Updated for that).",
   type: TriggerStrategy.WEBHOOK,
+  aiMetadata: {
+    description:
+      'Fires when a billing plan is created or updated in the Outseta catalog (admin configuration), not when a customer\'s subscription changes. Each webhook delivers one Plan object.',
+  },
   props: {
     setup: Property.MarkDown({
       value:

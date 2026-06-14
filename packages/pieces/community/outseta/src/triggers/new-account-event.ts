@@ -9,6 +9,10 @@ export const newAccountEventTrigger = createTrigger({
   description:
     "Triggers on any account-scoped event (account lifecycle, account stage, billing information, subscription, invoice). The webhook payload is always an Account object — event-specific details such as the invoice or amount for a payment event are in the Account's ActivityEventData field.",
   type: TriggerStrategy.WEBHOOK,
+  aiMetadata: {
+    description:
+      'Fires on any account-scoped Outseta event (account lifecycle, stage change, billing, subscription, invoice). Each webhook delivers one Account object; the specific event\'s details are nested in its ActivityEventData.',
+  },
   props: {
     setup: Property.MarkDown({
       value:

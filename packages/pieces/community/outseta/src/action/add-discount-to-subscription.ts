@@ -9,6 +9,12 @@ export const addDiscountToSubscriptionAction = createAction({
   displayName: 'Apply Discount to Account',
   description:
     'Apply a discount coupon to the current subscription of an account.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Applies a discount coupon to an account\'s current subscription, by account UID and discount UID. Use to grant a promotion to an existing subscriber; to create the coupon itself first use Create Discount. Requires an active subscription. Not idempotent: re-applying re-adds the discount.',
+    idempotent: false,
+  },
   props: {
     accountUid: Property.ShortText({
       displayName: 'Account UID',

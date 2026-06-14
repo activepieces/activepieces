@@ -8,6 +8,12 @@ export const addInvoicePaymentAction = createAction({
   displayName: 'Add Invoice Payment',
   description:
     'Record a payment against an invoice. The invoice is marked as paid if the total payments match the invoice amount.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Records a payment transaction against a specific invoice, by account and invoice UID. Use to log a payment on an invoice; to (re)trigger automatic collection of a recorded payment use Process Payment instead. Amount must be negative per the Outseta API. Not idempotent: each call appends a payment transaction.',
+    idempotent: false,
+  },
   props: {
     accountUid: Property.ShortText({
       displayName: 'Account UID',

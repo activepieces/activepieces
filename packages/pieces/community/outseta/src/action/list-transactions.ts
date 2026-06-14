@@ -8,6 +8,12 @@ export const listTransactionsAction = createAction({
   displayName: 'List Account Transactions',
   description:
     'Retrieve all billing transactions (payments, refunds, invoices) for a given account.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Returns a paginated list of all billing transactions (payments, refunds, invoices) for an account, by account UID. Use for full history; for just the latest payment use Get Last Payment for Account. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     accountUid: Property.ShortText({
       displayName: 'Account UID',

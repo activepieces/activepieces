@@ -9,6 +9,10 @@ export const newTaskEventTrigger = createTrigger({
   description:
     "Triggers on Outseta Task lifecycle events (creation, update). The webhook payload is a Task object — event-specific details are in the Task's ActivityEventData field.",
   type: TriggerStrategy.WEBHOOK,
+  aiMetadata: {
+    description:
+      'Fires on Outseta task events (created, updated). Each webhook delivers one Task object; the event\'s details are nested in its ActivityEventData.',
+  },
   props: {
     setup: Property.MarkDown({
       value:

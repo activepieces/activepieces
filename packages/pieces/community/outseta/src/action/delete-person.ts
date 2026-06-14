@@ -7,6 +7,12 @@ export const deletePersonAction = createAction({
   auth: outsetaAuth,
   displayName: 'Delete Person',
   description: 'Delete a person from Outseta CRM.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently deletes a CRM person (contact) by its UID. Use to remove a contact entirely; to only detach them from an account use Manage Account Membership. Destructive. Not idempotent: a repeat call errors because the person no longer exists.',
+    idempotent: false,
+  },
   props: {
     personUid: Property.ShortText({
       displayName: 'Person UID',

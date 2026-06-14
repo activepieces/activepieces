@@ -8,6 +8,12 @@ export const manageEmailListSubscriptionAction = createAction({
   auth: outsetaAuth,
   displayName: 'Manage Email List Subscription',
   description: 'Subscribe a person to an email list, or unsubscribe them from it.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Subscribes or unsubscribes a person on an email list, by email and list. Use to manage list membership in a single action. Idempotent: re-subscribing an existing subscriber or unsubscribing a non-subscriber is a no-op.',
+    idempotent: true,
+  },
   props: {
     action: Property.StaticDropdown({
       displayName: 'Action',

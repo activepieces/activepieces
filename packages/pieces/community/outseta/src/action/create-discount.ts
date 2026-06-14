@@ -8,6 +8,12 @@ export const createDiscountAction = createAction({
   displayName: 'Create Discount',
   description:
     'Create a new discount coupon in the Outseta billing catalog. Either AmountOff or PercentOff must be set, never both.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a discount coupon in the billing catalog (fixed amount or percentage, with a duration). Use to define a new promotion code; to apply an existing coupon to a subscriber use Apply Discount to Account. Set either Amount Off or Percent Off, not both. Not idempotent: each call creates a new coupon.',
+    idempotent: false,
+  },
   props: {
     uniqueIdentifier: Property.ShortText({
       displayName: 'Coupon Code',

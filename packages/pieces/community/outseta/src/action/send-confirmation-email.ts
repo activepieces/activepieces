@@ -8,6 +8,12 @@ export const sendConfirmationEmailAction = createAction({
   displayName: 'Send Confirmation Email',
   description:
     'Send a confirmation email to the primary contact of an account, a specific person, or all members.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends the account confirmation/activation email to the primary contact, a specific person, or all members of an account. Use to (re)deliver activation emails. Not idempotent: each call sends another email.',
+    idempotent: false,
+  },
   props: {
     accountUid: Property.ShortText({
       displayName: 'Account UID',

@@ -8,6 +8,12 @@ export const processPaymentAction = createAction({
   displayName: 'Process Payment',
   description:
     "Manually trigger the processing (retry) of a previously recorded payment. Typically used to retry a failed payment after a customer updates their card.",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Triggers (re)processing of an existing payment by its payment UID, e.g. to retry a declined charge after a card update. Use to collect a previously recorded payment; to log a manual payment against an invoice use Add Invoice Payment. Not idempotent: a successful retry can capture funds, so repeating may charge again.',
+    idempotent: false,
+  },
   props: {
     paymentUid: Property.ShortText({
       displayName: 'Payment UID',

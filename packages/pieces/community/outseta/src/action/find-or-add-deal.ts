@@ -10,6 +10,12 @@ export const findOrAddDealAction = createAction({
   displayName: 'Find or Add Deal',
   description:
     'Search for a deal by contact email and pipeline. If not found, create a new one.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up a deal by contact email within a pipeline and returns it, creating one only if none exists. Use to upsert a deal without duplicating; to always create use Create Deal. Pipeline stage is required only on the create path. Idempotent: a repeat call returns the same deal rather than creating another.',
+    idempotent: true,
+  },
   props: {
     contactEmail: Property.ShortText({
       displayName: 'Contact Email',

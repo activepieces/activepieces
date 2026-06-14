@@ -8,6 +8,12 @@ export const listPlansAction = createAction({
   displayName: 'List Plans',
   description:
     'Retrieve a paginated list of subscription plans from your Outseta billing catalog.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Returns a paginated list of subscription plans from the billing catalog. Use to discover available plan UIDs, e.g. before Change Account Plan or Create Account. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     limit: Property.Number({
       displayName: 'Limit',

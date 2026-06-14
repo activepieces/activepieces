@@ -8,6 +8,12 @@ export const getSubscriptionAction = createAction({
   displayName: 'Retrieve Subscription',
   description:
     "Retrieve a subscription by its UID, or fetch the current subscription of an account by Account UID. Returns plan, billing terms, renewal dates, discount, and add-on details.",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches a subscription by its UID, or an account\'s current subscription by account UID, returning plan, billing term, renewal dates, discount, and add-ons. Use to read subscription/billing state; for account-level fields use Retrieve Account. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     lookupBy: Property.StaticDropdown({
       displayName: 'Lookup by',

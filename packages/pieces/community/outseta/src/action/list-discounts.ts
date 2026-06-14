@@ -8,6 +8,12 @@ export const listDiscountsAction = createAction({
   displayName: 'List Discounts',
   description:
     'Retrieve a paginated list of discount coupons from your Outseta billing catalog.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Returns a paginated list of discount coupons from the billing catalog. Use to discover existing coupon UIDs, e.g. before Apply Discount to Account. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     limit: Property.Number({
       displayName: 'Limit',

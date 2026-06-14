@@ -8,6 +8,12 @@ export const addInvoiceAction = createAction({
   displayName: 'Create Invoice',
   description:
     'Create an ad-hoc invoice for an account. The invoice is linked to the account\'s current subscription.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates an ad-hoc invoice on an account\'s current subscription with a line item. Use to bill a one-off charge; to record a payment against it use Add Invoice Payment. Requires an active subscription. Not idempotent: each call creates a new invoice.',
+    idempotent: false,
+  },
   props: {
     accountUid: Property.ShortText({
       displayName: 'Account UID',

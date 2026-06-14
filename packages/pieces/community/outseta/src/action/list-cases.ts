@@ -8,6 +8,12 @@ export const listCasesAction = createAction({
   displayName: 'List Cases',
   description:
     'Retrieve a paginated list of support tickets (cases) from Outseta. Optionally filter by the person who submitted them.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Returns a paginated list of support tickets, optionally filtered by the submitting person\'s UID or email. Use to scan or find tickets; to open one use Create Ticket. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     fromPersonUid: Property.ShortText({
       displayName: 'From Person UID',

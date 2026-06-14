@@ -9,6 +9,10 @@ export const newAddOnEventTrigger = createTrigger({
   description:
     "Triggers on Outseta Add-On catalog events (creation or update of a billing add-on in your Outseta configuration). The webhook payload is an Add-On object — event-specific details are in the Add-On's ActivityEventData field. Note: this fires when an admin edits the add-on catalog in Outseta, not when a customer's subscription add-ons change (use New Account Event → Account Subscription Add Ons Changed for that).",
   type: TriggerStrategy.WEBHOOK,
+  aiMetadata: {
+    description:
+      'Fires when an add-on is created or updated in the Outseta catalog (admin configuration), not when a customer\'s subscription add-ons change. Each webhook delivers one Add-On object.',
+  },
   props: {
     setup: Property.MarkDown({
       value:

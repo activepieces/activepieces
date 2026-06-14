@@ -7,6 +7,12 @@ export const listPersonsAction = createAction({
   auth: outsetaAuth,
   displayName: 'List Persons',
   description: 'Retrieve a paginated list of persons from your Outseta CRM.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Returns a paginated list of CRM persons (contacts). Use to browse or scan contacts; to fetch one known person use Retrieve Person. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     limit: Property.Number({
       displayName: 'Limit',
