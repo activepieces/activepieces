@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { PackageType, PieceType } from '@activepieces/shared'
 import type { OfficialPiecePackage } from '@activepieces/shared'
-import type { Logger } from 'pino'
+import type { ApLogger } from '@activepieces/server-utils'
 
 // Module-level variable updated per test so the vi.mock factory can reference it
 let testWorkspace = ''
@@ -57,12 +57,16 @@ async function pathExists(p: string): Promise<boolean> {
 }
 
 const fakeLog = {
+    level: 'silent',
+    silent: vi.fn(),
     debug: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
+    fatal: vi.fn(),
+    trace: vi.fn(),
     child: vi.fn().mockReturnThis(),
-} as unknown as Logger
+} as unknown as ApLogger
 
 // REGISTRY pieces don't call apiClient.getPieceArchive so an empty object suffices
 const fakeApiClient = {} as never

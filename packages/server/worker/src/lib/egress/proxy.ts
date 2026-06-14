@@ -1,7 +1,7 @@
 import dns from 'node:dns/promises'
 import net from 'node:net'
+import { type ApLogger } from '@activepieces/server-utils'
 import { ssrfIpClassifier } from '@activepieces/shared'
-import { Logger } from 'pino'
 import { Server as ProxyServer, RequestError } from 'proxy-chain'
 
 export async function startEgressProxy({ log, allowList }: StartOptions): Promise<EgressProxy> {
@@ -38,14 +38,14 @@ async function assertHostnameAllowedOrThrow({ hostname, allowList, log }: Assert
 }
 
 type StartOptions = {
-    log: Logger
+    log: ApLogger
     allowList: string[]
 }
 
 type AssertHostnameAllowedParams = {
     hostname: string
     allowList: string[]
-    log: Logger
+    log: ApLogger
 }
 
 export type EgressProxy = {

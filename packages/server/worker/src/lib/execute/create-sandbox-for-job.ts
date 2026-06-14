@@ -1,6 +1,6 @@
+import { type ApLogger } from '@activepieces/server-utils'
 import { ExecutionMode, maxSocketHttpBufferSizeBytes, NetworkMode, WorkerContract, WorkerToApiContract } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
-import { Logger } from 'pino'
 import { getEnginePath, getGlobalCacheCommonPath, getGlobalCodeCachePath } from '../cache/cache-paths'
 import { workerSettings } from '../config/worker-settings'
 import { sandboxCapacity } from '../sandbox/capacity'
@@ -10,7 +10,7 @@ import { createSandbox } from '../sandbox/sandbox'
 import { Sandbox, SandboxMount } from '../sandbox/types'
 
 export function createSandboxForJob(params: {
-    log: Logger
+    log: ApLogger
     apiClient: WorkerToApiContract
     boxId: number
     reusable: boolean
@@ -58,7 +58,7 @@ export function isIsolateMode(mode: ExecutionMode): boolean {
     return mode === ExecutionMode.SANDBOX_PROCESS || mode === ExecutionMode.SANDBOX_CODE_AND_PROCESS
 }
 
-function getProcessMaker(executionMode: string, log: Logger, boxId: number) {
+function getProcessMaker(executionMode: string, log: ApLogger, boxId: number) {
     switch (executionMode) {
         case ExecutionMode.SANDBOX_PROCESS:
         case ExecutionMode.SANDBOX_CODE_AND_PROCESS:
