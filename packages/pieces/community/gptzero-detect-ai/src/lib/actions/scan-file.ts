@@ -7,6 +7,11 @@ export const scanFile = createAction({
   name: 'scanFile',
   displayName: 'Scan File',
   description: 'Scan a file for AI-generated content detection',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Submits a document file to GPTZero to estimate how likely its text was AI-generated, returning per-document and per-sentence detection scores. Choose this over Scan Text when the content lives in a file (the file must be passed as a File input, not a path or URL). Read-only analysis: re-running on the same file is safe and yields the same result.',
+    idempotent: true,
+  },
   props: {
     file: Property.File({
       displayName: 'File',

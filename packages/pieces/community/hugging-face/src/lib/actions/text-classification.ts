@@ -8,6 +8,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { huggingFaceAuth } from '../auth';
 
 export const textClassification = createAction({
+  audience: 'human',
   name: 'text_classification',
   auth: huggingFaceAuth,
   displayName: 'Text Classification',

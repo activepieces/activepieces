@@ -15,6 +15,8 @@ export const electricityRatePricePeriodsWeekDayListingAction = createAction({
   name: 'electricityRatePricePeriodsWeekDayListing',
   displayName: 'Resources - Electricity Rates - Price Periods Week Day Listing',
   description: 'List all of the configured price period week days.',
+  audience: 'both',
+  aiMetadata: { description: 'List the configured recurring week-day price periods for an electricity rate in AMPECO (e.g. Monday, weekend, or any). Read-only and safe to repeat. Use the date listing action for one-off calendar-date periods, or the combined listing for both.', idempotent: true },
   props: {
         
   electricityRate: Property.Number({

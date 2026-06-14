@@ -13,6 +13,8 @@ export const refreshWorkbook = createAction({
   name: 'refresh_workbook',
   displayName: 'Refresh Workbook',
   description: 'Refreshes the specified workbook immediately',
+  audience: 'both',
+  aiMetadata: { description: 'Queues an immediate extract refresh for a workbook (by workbook ID), starting a background job on the Tableau site and returning its job identifier. Use to update a workbook\'s extracted data on demand. Not idempotent: each call enqueues a new refresh job.', idempotent: false },
   auth: tableauAuth,
   props: {
     workbookId: Property.Dropdown({

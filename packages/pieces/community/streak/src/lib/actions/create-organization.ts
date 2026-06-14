@@ -27,6 +27,12 @@ export const createOrganizationAction = createAction({
   displayName: 'Create or Find Organization',
   description:
     'Create an organization in a team. If an organization with the same domain already exists, return that organization instead of creating a duplicate.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a company/organization record in a team, or return the existing one if an organization with the same domain already exists (get-if-existing upsert keyed on domain). Use when an agent needs to ensure a company exists before associating contacts or boxes; requires the team plus at least one of name or domains. Idempotent when matched by domain: repeating returns the same organization rather than duplicating.',
+    idempotent: true,
+  },
   props: {
     teamKey: teamDropdown,
     name: Property.ShortText({

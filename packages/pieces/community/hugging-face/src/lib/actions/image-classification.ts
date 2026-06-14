@@ -10,6 +10,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { huggingFaceAuth } from '../auth';
 
 export const imageClassification = createAction({
+  audience: 'human',
   name: 'image_classification',
   auth: huggingFaceAuth,
   displayName: 'Image Classification',

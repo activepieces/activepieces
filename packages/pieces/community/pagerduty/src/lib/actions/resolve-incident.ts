@@ -9,6 +9,12 @@ export const resolveIncident = createAction({
   name: 'resolve_incident',
   displayName: 'Resolve Incident',
   description: 'Resolve an existing PagerDuty incident.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sets an existing PagerDuty incident to the resolved status, requiring the incident ID and the acting user email (From); an optional resolution note is added to the resolve log entry. Use to close out an incident. Idempotent on the status — re-resolving leaves the incident resolved.',
+    idempotent: true,
+  },
   props: {
     incidentId: incidentIdProp,
     fromEmail: fromEmailProp,

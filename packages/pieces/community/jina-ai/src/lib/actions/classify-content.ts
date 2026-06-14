@@ -9,6 +9,12 @@ export const classifyContentAction = createAction({
   displayName: 'Classify Text or Image',
   description:
     'Assign categories to text or images using the Classifier API (zero-shot/few-shot).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Classify a single piece of text or an image URL into one of a provided set of labels using Jina AI zero-shot classification; returns the winning label. Pick this to categorize content against your own label set without training; if the input string is a URL it is treated as an image. Stateless inference, so repeat calls are idempotent. To fine-tune a reusable classifier on labeled examples instead, use Train Custom Classifier.',
+    idempotent: true,
+  },
   props: {
     model: Property.StaticDropdown({
       displayName: 'Model',

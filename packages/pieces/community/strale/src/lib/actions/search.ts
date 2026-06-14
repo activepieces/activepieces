@@ -12,6 +12,12 @@ export const searchCapabilities = createAction({
   displayName: 'Search Capabilities',
   description:
     'Search 271 API capabilities by keyword, category, or natural language query. Returns matching capabilities with slug, description, price, and quality score. No API key required.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Discover Strale API capabilities (company verification, sanctions screening, IBAN/VAT validation, web intelligence, etc.) by keyword or natural-language query, optionally narrowed to a single category. Use this first to find the slug to feed into Execute Capability. Read-only and idempotent; requires a search query.',
+    idempotent: true,
+  },
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

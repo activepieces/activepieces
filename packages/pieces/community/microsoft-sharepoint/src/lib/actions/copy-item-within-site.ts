@@ -23,6 +23,11 @@ export const copyItemWithinSiteAction = createAction({
   name: 'microsoft_sharepoint_copy_item_within_site',
   displayName: 'Copy File or Folder (Within Site)',
   description: 'Copy a file or folder to another folder within the same site.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Copies a file or folder to another folder within the same SharePoint site and drive, optionally renaming the copy; select the root to copy to the drive top level. Use for same-site duplication; for cross-site copies use the across-sites variant. The conflict behavior (fail, replace, or rename) controls name clashes. Not idempotent: each run produces another copy (rename mode) or overwrites the target (replace mode).',
+    idempotent: false,
+  },
   props: {
     siteId: microsoftSharePointCommon.siteId,
     driveId: microsoftSharePointCommon.driveId,

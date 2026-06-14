@@ -8,6 +8,12 @@ export const createTask = createAction({
   name: 'createTask',
   displayName: 'Create Task',
   description: 'Adds a new task under a person, lead, or opportunity.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new task in Copper CRM with a name and optional details, assignee, due/reminder dates, priority, and tags, optionally linked to a related record (person, company, lead, opportunity, or project). Use to schedule follow-up work; requires a task name. Not idempotent: each call creates a separate task even with identical input.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({ displayName: 'Task Name', required: true }),
     details: Property.ShortText({

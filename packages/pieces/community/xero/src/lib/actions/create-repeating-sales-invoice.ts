@@ -13,6 +13,12 @@ export const xeroCreateRepeatingSalesInvoice = createAction({
   name: 'xero_create_repeating_sales_invoice',
   displayName: 'Create Repeating Sales Invoice',
   description: 'Creates a repeating sales invoice (Accounts Receivable).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Set up a recurring accounts-receivable (ACCREC) sales invoice template in Xero that auto-generates invoices on a weekly or monthly schedule. Pick this for subscriptions or retainers that bill a contact on a repeating cadence, not for a single invoice (use Create Invoice for that). Not idempotent: each call creates another recurring template; the schedule unit constrains which due-date types are valid.',
+    idempotent: false,
+  },
   props: {
     tenant_id: props.tenant_id,
     contact_id: props.contact_dropdown(true),

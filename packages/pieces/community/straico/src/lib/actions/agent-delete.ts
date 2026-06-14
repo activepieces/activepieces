@@ -9,6 +9,7 @@ import { baseUrlv0 } from '../common/common';
 import { agentIdDropdown } from '../common/props';
 
 export const agentDelete = createAction({
+  audience: 'human',
   auth: straicoAuth,
   name: 'agent_delete',
   displayName: 'Delete Agent',

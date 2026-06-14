@@ -13,6 +13,12 @@ export const createInvoiceAction = createAction({
   name: 'create-invoice',
   displayName: 'Create Invoice',
   description: 'Create a standalone invoice.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a standalone invoice in Zuora for a given customer account, with one or more line items billed to product rate plan charges. Use when an agent needs to bill an account outside the normal subscription cycle; the target account is identified by its account number and each invoice item must reference a product rate plan charge ID. Not idempotent: each call posts a new invoice, so repeating it produces duplicates.',
+    idempotent: false,
+  },
   props: {
     accountNumber: Property.ShortText({
       displayName: 'Customer Account Number',

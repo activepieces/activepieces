@@ -9,6 +9,11 @@ export const createOpportunity = createAction({
 	name: 'create_opportunity',
 	displayName: 'Create Opportunity',
 	description: 'Create a new opportunity.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Creates a new opportunity (deal) on an existing lead in Close CRM, with optional value, value period, confidence, status, contact, and custom fields. Use to log a sales deal against a lead. Requires the lead ID and an opportunity status. Not idempotent; each call creates a separate opportunity.',
+		idempotent: false,
+	},
 	props: {
 		lead_id: leadId(),
 		status_id: statusId('opportunity', true),

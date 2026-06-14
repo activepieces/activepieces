@@ -8,6 +8,12 @@ export const addContact = createAction({
   name: 'addContact',
   displayName: 'Add Contact',
   description: 'Add one or more contacts to a contact list',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates or updates a contact in an Octopush contact list, keyed by phone number (international format required). Use to register or enrich a recipient before messaging; optionally assign it to a named list and a tag. By default an existing contact is updated, but enabling "Do Not Overwrite" makes it skip already-present numbers. Not idempotent: re-running can re-add or re-update the contact.',
+    idempotent: false,
+  },
   props: {
     phone_number: Property.ShortText({
       displayName: 'Phone Number',

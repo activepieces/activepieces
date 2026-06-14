@@ -13,6 +13,12 @@ export default createAction({
   name: 'create_absence',
   displayName: 'Create Absence',
   description: 'Creates a absence in clockodo',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new clockodo absence (e.g. vacation, sick leave) for a user over a start/end date range, with an absence type and optional approved/half-day/sick-note flags. Use to request or record time off; requires a date range and absence type, and defaults to the requested status unless approved is set. Not idempotent: each call creates a separate absence record.',
+    idempotent: false,
+  },
   props: {
     date_since: Property.DateTime({
       displayName: 'Start Date',

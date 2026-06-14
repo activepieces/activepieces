@@ -14,6 +14,8 @@ export const userGroupCreateAction = createAction({
   name: 'userGroupCreate',
   displayName: 'Resources - User Groups - Create',
   description: 'Create new user group.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new AMPECO user group with a name and optional description and partner association. Not idempotent: each call adds another group, so re-running creates duplicates. Note that partnerId can only be set while the group has no users; use the update action to modify an existing group.', idempotent: false },
   props: {
         
   name: Property.ShortText({

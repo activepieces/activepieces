@@ -8,6 +8,11 @@ export const sendList = createAction({
   name: 'send_list_message',
   displayName: 'Send List Message',
   description: 'Send an interactive list message via WhatsApp.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Sends an interactive WhatsApp list message: a tap-to-open button reveals selectable rows grouped into sections. Use when the recipient must choose from more options than fit in reply buttons (the 3-button limit). Each row needs an id and title; rows are passed as a JSON array per section. Each call delivers a new message, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     businessAccountId: businessAccountIdProp,
     phoneNumberId: phoneNumberIdDropdown,

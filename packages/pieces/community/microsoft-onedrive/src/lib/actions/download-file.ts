@@ -28,6 +28,8 @@ export const downloadFile = createAction({
   auth: oneDriveAuth,
   name: 'download_file',
   description: 'Get and download a file using a File ID or filename.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve a single file from Microsoft OneDrive and download its content, looking it up either by its File ID or by its exact file name (a name lookup searches the drive and resolves to the matching file). Use when you need the file bytes plus its metadata; when only metadata is needed prefer a list action. Read-only and idempotent.', idempotent: true },
   displayName: 'Get File',
   props: {
     lookupBy: Property.StaticDropdown({

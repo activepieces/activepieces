@@ -8,6 +8,7 @@ import {
 import { t } from 'i18next';
 import {
   ArrowLeftRight,
+  Braces,
   ClipboardPaste,
   ClipboardPlus,
   Copy,
@@ -16,6 +17,7 @@ import {
   RouteOff,
   Trash,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Shortcut, ShortcutProps } from '@/components/custom/shortcut';
 import {
@@ -119,6 +121,8 @@ export const CanvasContextMenuContent = ({
 
   const showCopy =
     !doSelectedNodesIncludeTrigger && contextMenuType === ContextMenuType.STEP;
+  const showCopyReference =
+    selectedNodes.length === 1 && contextMenuType === ContextMenuType.STEP;
   const showDuplicate =
     selectedNodes.length === 1 &&
     !doSelectedNodesIncludeTrigger &&
@@ -145,6 +149,7 @@ export const CanvasContextMenuContent = ({
   const showContextMenuContent =
     showReplace ||
     showCopy ||
+    showCopyReference ||
     showDuplicate ||
     showSkip ||
     showPasteAsFirstLoopAction ||
@@ -213,6 +218,20 @@ export const CanvasContextMenuContent = ({
               )}
               {areAllStepsSkipped ? t('Unskip') : t('Skip')}
             </ShortcutWrapper>
+          </ContextMenuItem>
+        )}
+
+        {showCopyReference && (
+          <ContextMenuItem
+            onClick={() => {
+              navigator.clipboard.writeText(
+                `{{${selectedNodes[0]}['output']}}`,
+              );
+              toast.success(t('Reference copied to clipboard'));
+            }}
+            className="flex items-center gap-2"
+          >
+            <Braces className="w-4 h-4"></Braces> {t('Copy reference')}
           </ContextMenuItem>
         )}
         {(showPasteAsFirstLoopAction ||

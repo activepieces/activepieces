@@ -11,6 +11,8 @@ export const getDealAction = createAction({
 	name: 'get-deal',
 	displayName: 'Get Deal',
 	description: 'Gets a deal.',
+	audience: 'both',
+	aiMetadata: { description: 'Fetches a single deal by its HubSpot deal ID, returning default and any requested additional properties such as amount, stage, and close date. Use when you already have the deal ID. Read-only and idempotent.', idempotent: true },
 	props: {
 		dealId: Property.ShortText({
 			displayName: 'Deal ID',

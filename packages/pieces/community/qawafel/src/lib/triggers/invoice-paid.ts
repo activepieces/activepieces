@@ -5,6 +5,10 @@ export const invoicePaid = createQawafelEventTrigger({
   displayName: 'Invoice Paid',
   description:
     'Fires when an invoice is marked as paid in Qawafel. Useful for posting payment receipts to Slack, releasing fulfilment, or syncing revenue to your books.',
+  aiMetadata: {
+    description:
+      'Fires when an invoice is marked as paid in Qawafel (the invoice.paid event). Each event represents one invoice whose payment has been received, useful for triggering revenue sync, receipts, or releasing fulfilment.',
+  },
   event: 'invoice.paid',
   sampleData: {
     id: 'inv_01jk5jtv3x6e5hjkfcwzvubejq',

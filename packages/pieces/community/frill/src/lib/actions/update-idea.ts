@@ -8,6 +8,8 @@ export const updateIdea = createAction({
   name: 'update_idea',
   displayName: 'Update Idea',
   description: 'Update an existing idea, including status, topics, or archive flag.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates fields of an existing Frill idea identified by its idea ID, such as title, description, status, topics, bug/archive/completed flags, and roadmap visibility; only the fields you set are changed. Use to modify or transition an idea you already know the ID of. Idempotent: re-running with the same input leaves the idea in the same state.', idempotent: true },
   props: {
     idea: frillDropdowns.ideaDropdown,
     name: Property.ShortText({

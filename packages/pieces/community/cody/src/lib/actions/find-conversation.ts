@@ -8,6 +8,8 @@ export const findConversationAction = createAction({
     name: 'find_conversation',
     displayName: 'Find Conversation',
     description: 'Finds a conversation based on its name and/or the bot it belongs to.',
+    audience: 'both',
+    aiMetadata: { description: 'Searches Cody conversations, filtering by owning bot ID and/or by name (partial match) and returns the matches. Use to resolve an existing conversation to its ID. At least one of bot or name must be provided. This is a read-only lookup and is idempotent.', idempotent: true },
     props: {
         
         bot_id: {

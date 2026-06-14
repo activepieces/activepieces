@@ -10,6 +10,9 @@ export const newLead = createTrigger({
   name: 'newLead',
   displayName: 'New Lead',
   description: 'Trigger when a new lead is captured by your Orimon chatbot',
+  aiMetadata: {
+    description: 'Fires when the Orimon chatbot captures a new lead, delivering the lead details (such as contact email, IP/geolocation, and browser/platform info) via a configured webhook.',
+  },
   props: {
     markdown: Property.MarkDown({
       value: `

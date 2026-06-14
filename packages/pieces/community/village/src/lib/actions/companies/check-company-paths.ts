@@ -8,6 +8,12 @@ export const checkCompanyPaths = createAction({
   displayName: 'Check Company Paths',
   description:
     'Quickly check if you have connections to a company without fetching full details. Returns whether paths exist, an overall score, count of reachable people, and avatar thumbnails.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Read-only lightweight check of whether any introduction paths to a company exist, identified by domain, LinkedIn URL, or generic url (supply exactly one). Use as a cheap yes/no-with-score screen before calling Get Company Paths, which returns the actual reachable employees. Pure query, safe to retry.',
+    idempotent: true,
+  },
   props: {
     domain: Property.ShortText({
       displayName: 'Domain',

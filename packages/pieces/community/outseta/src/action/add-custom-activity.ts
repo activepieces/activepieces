@@ -9,6 +9,12 @@ export const addCustomActivityAction = createAction({
   displayName: 'Add Custom Activity',
   description:
     'Record a custom activity on an account, person, or deal. Activities show on the activity feed and can trigger drip campaigns.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Records a custom activity entry on an account, person, or deal (entity type selects which, then its UID), appearing in the activity feed and able to start/stop drip campaigns. Use to log a custom event or drive automation; the title must match the drip-campaign start/stop value when used for automation. Not idempotent: each call appends a new activity record.',
+    idempotent: false,
+  },
   props: {
     title: Property.ShortText({
       displayName: 'Title',

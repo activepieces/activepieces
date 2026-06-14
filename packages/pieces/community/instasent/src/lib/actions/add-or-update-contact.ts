@@ -16,6 +16,8 @@ export const addOrUpdateContact = createAction({
     name: 'add_or_update_contact',
     displayName: 'Add/Update contact',
     description: 'Add or update a single contact',
+    audience: 'both',
+    aiMetadata: { description: 'Upserts one contact in an Instasent datasource, keyed on the contact User ID (mandatory) — creates it if new, updates it otherwise. Use to push or sync contact attributes; the available attribute fields are loaded dynamically from the datasource. Enable the Instant option only when a following step must add an event for this contact (it processes synchronously instead of queuing). Idempotent: re-running with the same User ID and data converges to the same contact.', idempotent: true },
     auth: instasentAuth,
     props: {
         contact: Property.DynamicProperties({

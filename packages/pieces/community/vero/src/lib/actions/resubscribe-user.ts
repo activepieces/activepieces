@@ -8,6 +8,12 @@ export const resubscribeUser = createAction({
   name: 'resubscribeUser',
   displayName: 'Resubscribe User',
   description: 'Globally resubscribe a user to all communications',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Globally resubscribes a Vero user, identified by user ID, restoring their consent to receive all communications. Use to reverse a prior unsubscribe. Repeating the call leaves the user subscribed, so it is idempotent.',
+    idempotent: true,
+  },
   props: {
     id: Property.ShortText({
       displayName: 'User ID',

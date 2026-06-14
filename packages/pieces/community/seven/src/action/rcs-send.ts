@@ -8,6 +8,11 @@ export const sendRcsAction = createAction({
   name: 'send-rcs',
   displayName: 'Send RCS',
   description: 'Sends a Rich Communication Services message.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Sends a Rich Communication Services (RCS) message via the seven gateway to a single recipient phone number, optionally falling back to SMS or webview if RCS is unavailable. Use when sending a rich messaging payload rather than plain SMS; supports scheduled dispatch (delay), TTL, and performance tracking. Each call dispatches a new message, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     to: Property.ShortText({
       displayName: 'To',

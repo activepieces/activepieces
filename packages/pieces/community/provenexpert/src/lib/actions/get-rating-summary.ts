@@ -7,6 +7,8 @@ export const getRatingSummaryAction = createAction({
   name: 'get_rating_summary',
   displayName: 'Get Rating Summary',
   description: 'Retrieves the overall rating value and total review count for your ProvenExpert profile.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches the aggregate rating value and total review count for the authenticated ProvenExpert profile. Use to read a single profile-wide rating score, not individual reviews. Takes no input; read-only and idempotent.', idempotent: true },
   props: {},
   async run(context) {
     const response = await provenExpertCommon.apiCall<{

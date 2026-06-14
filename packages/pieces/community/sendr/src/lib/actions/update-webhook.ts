@@ -8,6 +8,8 @@ export const updateWebhook = createAction({
   name: 'update_webhook',
   displayName: 'Update Webhook',
   description: 'Updates an existing Sendr webhook by its URL.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing webhook, identified by its URL, replacing the supplied fields (name, subscribed events, attributes, or resource filters). Use List Webhooks to find the URL. Idempotent: repeating the same update keyed on that URL yields the same final state.', idempotent: true },
   props: {
     webhook: webhookDropdown,
     name: Property.ShortText({

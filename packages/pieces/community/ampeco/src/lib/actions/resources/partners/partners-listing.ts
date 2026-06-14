@@ -15,6 +15,8 @@ export const partnersListingAction = createAction({
   name: 'partnersListing',
   displayName: 'Resources - Partners - Listing',
   description: 'Get all partners.',
+  audience: 'both',
+  aiMetadata: { description: 'List AMPECO partners, optionally filtered by country, registration number, or external ID, with Paginate Results to fetch every page. Read-only and idempotent; use this to discover partner IDs before reading, updating, or deleting a specific partner.', idempotent: true },
   props: {
         
   filter__country: Property.StaticDropdown({

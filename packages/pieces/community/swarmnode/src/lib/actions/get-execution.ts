@@ -8,6 +8,8 @@ export const getExecutionAction = createAction({
     auth: swarmnodeAuth,
     displayName: 'Get Execution',
     description: "Gets AI Agent's execution details.",
+    audience: 'both',
+    aiMetadata: { description: 'Retrieves the details and result of a single SwarmNode agent execution by its agent executor job ID. Use to look up the status or output of a previously started execution. Read-only and idempotent.', idempotent: true },
     props: {
         jobId: Property.ShortText({
             displayName: 'Agent Executor Job ID',

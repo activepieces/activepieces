@@ -13,6 +13,12 @@ export const getHighlights = createAction({
   displayName: 'Get Highlights',
   description:
     'Retrieve your Readwise highlights, optionally filtered by book or date.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists highlights from the connected Readwise account. With no filters it returns all highlights (paginated); set book_id to scope to one source or updated_after to fetch only highlights changed since a timestamp. Use when an agent needs to read or search existing highlights. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: readwiseAuth,
   props: {
     book_id: readwiseProps.bookId({ required: false }),

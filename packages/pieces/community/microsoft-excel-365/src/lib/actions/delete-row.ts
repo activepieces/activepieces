@@ -8,6 +8,8 @@ export const deleteRowAction = createAction({
     name: 'delete_row',
     displayName: 'Delete Row',
     description: 'Delete an entire row from a worksheet by its row number.',
+    audience: 'both',
+    aiMetadata: { description: 'Delete an entire worksheet row by its 1-based row number and shift the rows below it up. Use when the row must be removed and the gap closed; to only blank a row in place without shifting use Clear Row by ID. Not idempotent — because deletion renumbers rows, re-running with the same number targets a different row.', idempotent: false },
     props: {
         storageSource: commonProps.storageSource,
         siteId: commonProps.siteId,

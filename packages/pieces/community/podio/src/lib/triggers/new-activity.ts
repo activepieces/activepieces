@@ -8,6 +8,9 @@ export const newActivityTrigger = createTrigger({
   name: 'new_activity',
   displayName: 'New Status',
   description: 'Fires when a new status is created in a workspace stream',
+  aiMetadata: {
+    description: 'Fires when a new status update is posted to the selected Podio workspace (space) stream, via a status.create webhook on that space. Represents a newly shared status update.',
+  },
   props: {
     orgId: dynamicOrgProperty,
     spaceId: dynamicSpaceProperty,

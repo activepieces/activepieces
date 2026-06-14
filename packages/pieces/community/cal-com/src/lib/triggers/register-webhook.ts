@@ -16,17 +16,20 @@ export const registerWebhooks = ({
   description,
   displayName,
   sampleData,
+  aiMetadata,
 }: {
   name: string;
   description: string;
   displayName: string;
   sampleData: Record<string, unknown>;
+  aiMetadata?: { description: string };
 }) =>
   createTrigger({
     auth: calcomAuth,
     name,
     description,
     displayName,
+    aiMetadata,
     props: {},
     sampleData: sampleData,
     type: TriggerStrategy.WEBHOOK,

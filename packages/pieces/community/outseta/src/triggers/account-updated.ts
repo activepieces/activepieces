@@ -4,6 +4,10 @@ export const accountUpdatedTrigger = createManualWebhookTrigger({
   name: 'account_updated',
   displayName: 'Account Updated',
   description: 'Triggers when an existing account is updated in Outseta.',
+  aiMetadata: {
+    description:
+      'Fires when an existing CRM account is updated in Outseta, delivering the updated account record. Use to react to any account change; for stage-specific transitions prefer the Account Stage Updated trigger.',
+  },
   sampleData: {
     Name: 'Acme Corp',
     InvoiceNotes: '',

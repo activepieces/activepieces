@@ -7,6 +7,8 @@ export const submitConsentMandate = createAction({
   name: 'submit-consent-mandate',
   displayName: 'Submit consent',
   description: 'Submit the consent given by the user. This API can be called using either the mandate_token associated with the mandate or a backend bearer token.',
+  audience: 'both',
+  aiMetadata: { description: 'Submit the user\'s consent action within a mandate authorization flow, identified by the mandate ID. Use after Start Authorization Flow when the flow requires a consent step; this advances mandate state and is not idempotent.', idempotent: false },
   props: {
     id: Property.ShortText({
       displayName: 'Mandate ID',

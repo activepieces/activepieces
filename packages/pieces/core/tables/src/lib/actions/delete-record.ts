@@ -3,6 +3,7 @@ import { tablesCommon } from '../common';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const deleteRecord = createAction({
+  audience: 'human',
   name: 'tables-delete-record',
   displayName: 'Delete Record(s)',
   description: 'Delete record(s) from a table',

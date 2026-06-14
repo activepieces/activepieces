@@ -15,6 +15,8 @@ export const userGroupReadAction = createAction({
   name: 'userGroupRead',
   displayName: 'Resources - User Groups - Read',
   description: 'Get an user group.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve a single AMPECO user group by its numeric ID. Read-only and idempotent; pick this when you already know the group ID. To search or enumerate groups instead, use the user groups listing action.', idempotent: true },
   props: {
         
   userGroup: Property.Number({

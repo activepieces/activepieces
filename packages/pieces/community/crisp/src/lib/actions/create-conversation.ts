@@ -11,6 +11,8 @@ export const createConversationAction = createAction({
 	name: 'create_conversation',
 	displayName: 'Create Conversation',
 	description: 'Creates a new conversation.',
+	audience: 'both',
+	aiMetadata: { description: 'Starts a new Crisp conversation in a website inbox: ensures the customer profile exists (upserted by email), creates an empty conversation, posts the first message (sent as either user or operator), and attaches the customer email/nickname to it. Use to open a fresh support thread. Not idempotent: each call creates a separate conversation.', idempotent: false },
 	props: {
 		websiteId: websiteIdProp,
 		email: Property.ShortText({

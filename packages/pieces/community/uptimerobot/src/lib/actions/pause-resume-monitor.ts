@@ -10,6 +10,12 @@ export const pauseResumeMonitorAction = createAction({
   name: 'pause_resume_monitor',
   displayName: 'Pause or Resume Monitor',
   description: 'Temporarily pause or resume monitoring for a specific monitor.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Pauses or resumes monitoring for a single UptimeRobot monitor; the Action prop selects which (pause stops all checks and alerts, resume restarts them). The target is chosen from the dropdown or by a raw Monitor ID passed from a prior step, which overrides the dropdown. Sets a fixed paused/active state, so repeating the same call leaves the monitor in the same state.',
+    idempotent: true,
+  },
   props: {
     monitor: uptimeRobotCommon.monitorDropdownOptional,
     monitor_id_override: Property.ShortText({

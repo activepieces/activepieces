@@ -8,6 +8,8 @@ export const createCommentAction = createAction({
   name: 'create_comment',
   displayName: 'Create Comment',
   description: 'Post a comment on an item or task.',
+  audience: 'both',
+  aiMetadata: { description: 'Posts a text comment on a Podio item or task, chosen via the comment-on type and object id, with optional file or embed attachments. Use to add a note or reply to a record; requires the target type/id and comment text. Not idempotent — each call posts a separate comment.', idempotent: false },
   props: {
     orgId: dynamicOrgProperty,
     spaceId: dynamicSpaceProperty,

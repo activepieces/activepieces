@@ -15,6 +15,8 @@ export const roamingProviderReadAction = createAction({
   name: 'roamingProviderRead',
   displayName: 'Resources - Roaming Providers - Read',
   description: 'Get a Roaming Provider.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch the details of a single AMPECO roaming provider by its numeric ID. Read-only and idempotent. Pick this when you already have a provider ID; to search or browse providers, use the roaming providers listing action.', idempotent: true },
   props: {
         
   roamingProvider: Property.Number({

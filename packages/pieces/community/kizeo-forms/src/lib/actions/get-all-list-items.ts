@@ -14,6 +14,8 @@ export const getAllListItems = createAction({
   name: 'get_all_list_items',
   displayName: 'Get All List Items',
   description: 'Get all items from a specific list',
+  audience: 'both',
+  aiMetadata: { description: 'List items from a Kizeo Forms external list by its list ID, with optional search pattern, pagination (offset/limit) and sorting; leaving the search empty returns all items while a search value filters to matches. Use to browse or look up items when you do not have a specific item ID. Read-only and idempotent.', idempotent: true },
   props: {
     search: Property.ShortText({
       displayName: 'Search',

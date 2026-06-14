@@ -7,6 +7,8 @@ export const submitMandateProviderSelection = createAction({
   name: 'submit-mandate-provider-selection',
   displayName: 'Submit provider selection',
   description: 'Submit the provider details selected by the PSU. This API can be called using either the mandate_token associated with the mandate or a backend bearer token.',
+  audience: 'both',
+  aiMetadata: { description: 'Advance a mandate\'s authorization flow by submitting the bank provider the user selected. Use during an interactive mandate setup when the flow requires a provider-selection step. This mutates the flow state and is not safe to repeat; it is the mandate counterpart to the payment provider-selection action.', idempotent: false },
   props: {
     id: Property.ShortText({
       displayName: 'Mandate ID',

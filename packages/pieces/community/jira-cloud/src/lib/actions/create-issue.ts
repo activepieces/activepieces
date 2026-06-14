@@ -32,6 +32,12 @@ export const createIssueAction = createAction({
 	name: 'create_issue',
 	displayName: 'Create Issue',
 	description: 'Creates a new issue in a project.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Create a new Jira issue in a given project and issue type, with fields driven by that type\'s create screen (summary, description, custom fields, etc.); selected rich-text fields can be supplied as raw ADF JSON. Use for brand-new work items — to modify an existing one use Update Issue. Not idempotent: every run creates another issue.',
+		idempotent: false,
+	},
 	auth: jiraCloudAuth,
 	props: {
 		projectId: getProjectIdDropdown(),

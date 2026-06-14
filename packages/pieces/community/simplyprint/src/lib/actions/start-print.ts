@@ -13,6 +13,12 @@ export const startPrintAction = createAction({
   displayName: 'Start Print',
   description:
     'Start a print job on one or more printers from an existing file, queue item, or print-job reference.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Start a print job on one or more selected printers from an existing reference — choose the file source mode: an uploaded API file (hash), an existing user file (UID), or a pending queue item ID. Pick this to physically begin printing; it is the main "go" action and supports per-job custom fields, start options, and multi-material slot maps. Not idempotent — each call launches new jobs, so re-running starts additional prints.',
+    idempotent: false,
+  },
   props: {
     printerIds: simplyprintProps.printerMultiSelectDropdown({ required: true }),
     fileSource: Property.StaticDropdown<'apiFile' | 'userFile' | 'queueItem'>({

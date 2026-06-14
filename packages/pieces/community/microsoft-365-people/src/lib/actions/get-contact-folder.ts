@@ -7,6 +7,8 @@ export const getContactFolder = createAction({
   name: 'getContactFolder',
   displayName: 'Get a Contact Folder',
   description: 'Retrieve metadata (name, ID) of a specified contact folder.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves metadata for a single contact folder in the authenticated user\'s Microsoft 365 People (Outlook) account, identified by its folder ID. Use to look up a folder\'s details (such as its name) by ID. Read-only and idempotent.', idempotent: true },
   props: { contactFolder: microsoft365PeopleCommon.contactFolderDropdown("Contact Folder", "Select a contact folder", true) },
   async run({ auth, propsValue }) {
     if (!propsValue.contactFolder) {

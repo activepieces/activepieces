@@ -8,6 +8,8 @@ export const createTask = createAction({
   auth: niftyAuth,
   displayName: 'Create Task',
   description: 'Create a task in nitfy',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new task in Nifty under a chosen project, status (task group), and optional milestone. Use when an agent needs to add a work item to a Nifty project; requires a task name and a target status. Not idempotent — each call creates a separate task even with identical input.', idempotent: false },
   props: {
     portfolio: nitfyCommon.portfolio,
     project: nitfyCommon.project,

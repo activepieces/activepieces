@@ -8,6 +8,8 @@ export const startWorkflow = createAction({
   displayName: 'Start Workflow',
   auth: wealthboxAuth,
   description: 'Triggers a workflow template on a contact/project/opportunity. Automate multi-step sequences based on CRM events.',
+  audience: 'both',
+  aiMetadata: { description: 'Starts an instance of a Wealthbox workflow template, attached to a specific record; the Link To prop chooses whether it runs against a Contact, Project, or Opportunity. Use to kick off a predefined multi-step sequence (e.g. client onboarding); requires a workflow template id, a link type, and the linked record. Not idempotent: each call launches a new workflow instance.', idempotent: false },
   props: {
     workflow_template: Property.Dropdown({
       auth: wealthboxAuth,

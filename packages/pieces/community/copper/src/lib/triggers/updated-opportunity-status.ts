@@ -9,6 +9,10 @@ export const updatedOpportunityStatus = createTrigger({
   name: 'updatedOpportunityStatus',
   displayName: 'Updated Opportunity Status',
   description: "Triggers when an opportunity's status changes.",
+  aiMetadata: {
+    description:
+      "Fires only when an opportunity's status changes in Copper CRM, e.g. Open to Won/Lost/Abandoned (other opportunity edits are ignored), via a Copper webhook. Emits a status-change event with the previous and current status.",
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,

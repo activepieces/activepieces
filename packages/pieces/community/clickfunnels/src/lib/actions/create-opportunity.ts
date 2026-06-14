@@ -16,6 +16,12 @@ export const createOpportunity = createAction({
   displayName: 'Create Opportunity',
   description:
     'Create a new opportunity for a contact.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a sales opportunity in a ClickFunnels CRM pipeline, attached to a primary contact and placed in a specific pipeline stage. Use to register a new deal/lead in the sales pipeline. Requires a workspace, pipeline stage, and contact; optional value and close date. Not idempotent — each call creates a separate opportunity.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Opportunity Name',

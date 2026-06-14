@@ -14,6 +14,8 @@ export const sendEmail = createAction({
   name: 'send_email',
   displayName: 'Send Email',
   description: 'Send a text or HTML email',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a one-off email via SendGrid with subject and body supplied inline, choosing plain-text or HTML content. Use to send transactional or ad-hoc messages where you compose the body directly; for prebuilt designs with merge variables use Send Dynamic Template instead. Requires a verified sender address and at least one recipient; optional file attachments are supported. Not idempotent — each call dispatches a new email.', idempotent: false },
   props: {
     to: Property.Array({
       displayName: 'To',

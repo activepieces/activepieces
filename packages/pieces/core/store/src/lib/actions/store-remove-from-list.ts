@@ -55,6 +55,7 @@ async function executeStorageRemoveFromList(context: ActionContext<PieceAuthProp
 }
 
 export const storageRemoveFromList = createAction({
+  audience: 'human',
   name: 'remove_from_list',
   displayName: 'Remove from List',
   description: 'Remove Item from a list',

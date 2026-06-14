@@ -7,6 +7,8 @@ export const createCustomer = createAction({
   name: 'create_customer',
   displayName: 'Create Customer',
   description: 'Create a new customer',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new customer record in Lightfunnels with first/last name, email, phone, marketing-consent flag, and tags. Use to add a contact; not for updating an existing customer. Not idempotent — each call creates a separate customer even with identical input.', idempotent: false },
   props: {
     firstName: Property.ShortText({
       displayName: 'First Name',

@@ -9,6 +9,9 @@ export const paymentSucceeds = createTrigger({
   name: 'paymentSucceeds',
   displayName: 'Payment Succeeds',
   description: '',
+  aiMetadata: {
+    description: 'Fires when a payment in MoonClerk succeeds (is collected successfully). Use to react only to successful charges, distinct from the New Payment trigger which fires on payments in any state. Requires a MoonClerk webhook configured for the Payment Succeeds event.',
+  },
   props: {
     markdown: Property.MarkDown({
       value: `## MoonClerk Webhook Setup

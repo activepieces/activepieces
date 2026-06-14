@@ -8,6 +8,8 @@ export const listLeads = createAction({
   name: 'list_leads',
   displayName: 'List Leads',
   description: 'Retrieves a list of leads with filtering.',
+  audience: 'both',
+  aiMetadata: { description: 'List leads for the configured PollyBot chatbot, with optional pagination (page, limit up to 100) and filtering by status, source, or a free-text search across name and email; omitting all filters returns the page unfiltered. Use to browse or find leads when you do not have a specific lead ID. Read-only and idempotent.', idempotent: true },
   auth: pollybotAuth,
   props: {
     page: Property.Number({

@@ -15,6 +15,8 @@ export const createRoamingCustomTariffFilterAction = createAction({
   name: 'createRoamingCustomTariffFilter',
   displayName: 'Resources - Roaming Operators - Create Roaming Custom Tariff Filter',
   description: 'Create new custom tariff filter for a roaming operator.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new custom tariff filter under a roaming operator, with a name, status, and optional matching criteria (country code, current types, power-below threshold, EVSE ID prefix, order). Not idempotent: each call adds another filter, so check existing filters first. To change one instead, use the update action.', idempotent: false },
   props: {
         
   roamingOperator: Property.Number({

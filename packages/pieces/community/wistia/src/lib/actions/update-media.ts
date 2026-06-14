@@ -8,6 +8,12 @@ export const updateMediaAction = createAction({
   name: 'update_media',
   displayName: 'Update Media',
   description: 'Update the name or description of a video or media file.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates the name and/or description of an existing Wistia media item identified by its hashed media id; omitted fields are left unchanged. Use to rename or re-describe a known media. Idempotent: repeating with the same values leaves the media in the same state.',
+    idempotent: true,
+  },
   props: {
     mediaId: wistiaCommon.mediaDropdown(true),
     name: Property.ShortText({

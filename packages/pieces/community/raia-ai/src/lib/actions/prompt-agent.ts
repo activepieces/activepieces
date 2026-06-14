@@ -7,6 +7,8 @@ export const promptAgentAction = createAction({
     name: 'prompt-agent',
     displayName: 'Prompt Agent',
     description: 'Sends a prompt to a Raia Agent.',
+    audience: 'both',
+    aiMetadata: { description: 'Send a text prompt to the connected Raia AI agent and get its response. Use to query or instruct the agent inline within a flow. Not idempotent: each call creates a new prompt/conversation turn on the agent.', idempotent: false },
     auth: raiaAiAuth,
     props: {
         prompt: Property.LongText({

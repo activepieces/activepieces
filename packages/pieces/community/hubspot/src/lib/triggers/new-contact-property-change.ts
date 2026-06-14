@@ -128,6 +128,10 @@ export const newContactPropertyChangeTrigger = createTrigger({
 	name: 'new-contact-property-change',
 	displayName: 'New Contact Property Change',
 	description: 'Triggers when a specified property is updated on a contact.',
+	aiMetadata: {
+		description:
+			'Fires when the chosen property changes on any HubSpot contact. Each event represents one contact whose selected property was modified since the last poll, returning the full contact record. Use to react to specific field updates (e.g. lifecycle stage, lead status) rather than every contact change.',
+	},
 	props: {
 		propertyName: standardObjectPropertiesDropdown(
 			{

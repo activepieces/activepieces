@@ -10,6 +10,7 @@ import mime from 'mime-types';
 import { Languages, baseUrl } from '../common/common';
 
 export const transcribeAction = createAction({
+  audience: 'human',
   name: 'transcribe',
   displayName: 'Transcribe Audio',
   description: 'Transcribe audio to text using whisper-1 model',

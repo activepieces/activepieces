@@ -19,6 +19,9 @@ export const newFileInFolderTrigger = createTrigger({
   name: 'new_file_in_folder',
   displayName: 'New File in Folder',
   description: 'Fires when a new file is created or added in a specific folder.',
+  aiMetadata: {
+    description: 'Fires when a new file appears directly inside one specific monitored folder of a SharePoint drive (the folder itself, not its subfolders). Each event represents a single newly created or added file with its metadata.',
+  },
   props: {
     siteId: microsoftSharePointCommon.siteId,
     driveId: microsoftSharePointCommon.driveId,

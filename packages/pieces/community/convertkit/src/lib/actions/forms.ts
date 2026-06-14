@@ -18,6 +18,12 @@ export const listForms = createAction({
   name: 'forms_list_forms',
   displayName: 'List Forms',
   description: 'Returns a list of all forms',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists all forms and landing pages in the account with their IDs and names. Use it to find a form ID before adding subscribers to a form or listing form subscriptions. Takes no inputs; read-only and idempotent.',
+    idempotent: true,
+  },
   props: {},
   run(context) {  
     return fetchForms(context.auth.secret_text);
@@ -36,6 +42,12 @@ export const addSubscriberToForm = createAction({
   name: 'forms_add_subscriber_to_form',
   displayName: 'Add Subscriber To Form',
   description: 'Add a subscriber to a form',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Subscribes an email address to a specific form, optionally setting first name, tags, and custom field values. This is the standard way to add a new subscriber in ConvertKit. Effectively idempotent — re-subscribing the same email to the same form upserts rather than creating a duplicate.',
+    idempotent: true,
+  },
   props: {
     formId,
     email: subscriberEmail,
@@ -78,6 +90,12 @@ export const listFormSubscriptions = createAction({
   name: 'forms_list_form_subscriptions',
   displayName: 'List Form Subscriptions',
   description: 'List form subscriptions',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists the subscriptions for one form by form ID, one entry per subscriber who signed up through it. Use it to audit who joined via a given form. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     formId,
   },

@@ -10,6 +10,12 @@ export const scheduleDraftAction = createAction({
 	name: 'typefully_schedule_draft',
 	displayName: 'Schedule Draft',
 	description: 'Schedules an existing draft to be published at a specific time.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Schedules an existing Typefully draft to publish at a specific future date and time (ISO 8601 with timezone). Use to queue content for later; use Publish Draft Now to go live immediately. Requires the social set ID, the draft ID, and the schedule time. Re-running with the same time leaves the draft scheduled for that time, so it is effectively idempotent on a stable input.',
+		idempotent: true,
+	},
 	props: {
 		social_set_id: socialSetDropdown,
 		draft_id: Property.ShortText({

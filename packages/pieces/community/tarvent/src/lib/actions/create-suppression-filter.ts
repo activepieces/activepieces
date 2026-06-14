@@ -9,6 +9,8 @@ export const createSuppressionFilter = createAction({
   name: 'tarvent_create_suppression_filter',
   displayName: 'Add Contact To Suppression List',
   description: 'Creates a suppression filter in your account to suppress a contact.',
+  audience: 'both',
+  aiMetadata: { description: 'Adds an email address to the Tarvent account-level suppression list so it is blocked from future sends, with an optional reason. Use to permanently stop messaging a specific address. Not idempotent: each call creates another suppression filter record.', idempotent: false },
   props: {
     email: Property.ShortText({
       displayName: 'Email address',

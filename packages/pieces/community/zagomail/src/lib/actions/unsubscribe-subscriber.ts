@@ -8,6 +8,8 @@ export const unsubscribeSubscriber = createAction({
   name: 'unsubscribeSubscriber',
   displayName: 'Unsubscribe Subscriber',
   description: 'Unsubscribes a subscriber.',
+  audience: 'both',
+  aiMetadata: { description: 'Unsubscribes a subscriber from a specific Zagomail list, identified by the list UID and subscriber UID. Use to opt a contact out of a known list; requires both IDs. Idempotent: re-running leaves the subscriber unsubscribed.', idempotent: true },
   props: {
     listUId: listUId,
     subscriberUid: Property.ShortText({

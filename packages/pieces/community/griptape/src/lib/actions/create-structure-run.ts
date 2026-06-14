@@ -9,6 +9,12 @@ export const createStructureRun = createAction({
   name: 'createStructureRun',
   displayName: 'Create Structure Run',
   description: 'Create a run for a structure and wait for completion',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Starts a Griptape Cloud structure run by passing input arguments to a chosen structure, then blocks and polls until the run reaches SUCCEEDED before returning. Use to execute a deployed structure (workflow/agent) and get its result in one step. Not idempotent: each call creates a new run.',
+    idempotent: false,
+  },
   props: {
     structure_id: structureIdDropdown,
     input_args: Property.Array({

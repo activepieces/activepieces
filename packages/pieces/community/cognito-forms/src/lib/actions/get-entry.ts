@@ -9,6 +9,8 @@ export const getEntryAction = createAction({
   name: 'get_entry',
   displayName: 'Get Entry',
   description: 'Gets a specified entry.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves a single entry from a Cognito Forms form by its entry ID. Choose this to read back the field values of one known submission. Read-only and idempotent; requires both the form ID and the entry ID.', idempotent: true },
   props: {
     formId: formIdDropdown,
     entryId: Property.ShortText({
