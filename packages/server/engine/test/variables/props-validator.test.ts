@@ -418,5 +418,33 @@ describe('Property Validation', () => {
                 object: ['Expected object, received: not an object'],
             })
         })
+        it('should coerce serialized string booleans for checkbox properties', async () => {
+            const props = {
+                flag: Property.Checkbox({
+                    displayName: 'Checkbox',
+                    required: true,
+                }),
+            }
+
+            const { processedInput: falseInput, errors: falseErrors } = await propsProcessor.applyProcessorsAndValidators(
+              { flag: 'false' },
+              props,
+              PieceAuth.None(),
+              false,
+              {},
+            )
+            expect(falseErrors).toEqual({})
+            expect(falseInput.flag).toBe(false)
+
+            const { processedInput: trueInput, errors: trueErrors } = await propsProcessor.applyProcessorsAndValidators(
+              { flag: 'true' },
+              props,
+              PieceAuth.None(),
+              false,
+              {},
+            )
+            expect(trueErrors).toEqual({})
+            expect(trueInput.flag).toBe(true)
+        })
     })
 })
