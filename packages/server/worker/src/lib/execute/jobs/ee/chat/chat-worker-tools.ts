@@ -458,9 +458,9 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
         }),
 
         ap_load_guide: tool({
-            description: 'Load a detailed playbook into context before that kind of work (silent, internal). Topics: build_flow (constructing/validating/testing an automation), one_time_task (one-shot do-it-now action), error_handling (success/failure branches), http_fallback (calling an API directly when no connection exists).',
+            description: 'Load a detailed playbook into context before that kind of work (silent, internal). Topics: build_flow (constructing/validating/testing an automation), one_time_task (one-shot do-it-now action), error_handling (success/failure branches), http_fallback (calling an API directly when no connection exists), control_flow (routers/conditions & loops — exact operators and gotchas), state (remembering data across runs: Store vs Tables vs Sheets, dedup/idempotency), tables (the built-in Tables database), ai (native AI steps and their output shapes).',
             inputSchema: z.object({
-                topic: z.enum(['build_flow', 'one_time_task', 'error_handling', 'http_fallback']).describe('Which guide to load'),
+                topic: z.enum(['build_flow', 'one_time_task', 'error_handling', 'http_fallback', 'control_flow', 'state', 'tables', 'ai']).describe('Which guide to load'),
             }),
             execute: async (toolInput) => {
                 const guide = guides[toolInput.topic]
