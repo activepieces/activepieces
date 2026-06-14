@@ -16,40 +16,6 @@ import {
   DataSelectorTreeNodeDataUnion,
 } from './type';
 
-function buildFieldChildNode({
-  basePath,
-  child,
-  sampleData,
-  parentPath,
-}: {
-  basePath: string;
-  child: OutputSchemaField;
-  sampleData: unknown;
-  parentPath: string;
-}): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
-  const rawPath = schemaUtils.resolveFieldPath(child, parentPath);
-  const { value, resolvedPath } = pathUtils.resolvePathWithWrapperFallback(
-    sampleData,
-    rawPath,
-  );
-  const propertyPath = pathHelpers.appendValuePathToPropertyPath(
-    basePath,
-    resolvedPath,
-  );
-
-  return {
-    key: propertyPath,
-    data: {
-      type: 'value',
-      value,
-      displayName: schemaUtils.resolveFieldLabel(child),
-      propertyPath,
-      insertable: true,
-      format: child.format,
-    },
-  };
-}
-
 function buildFieldNode({
   basePath,
   field,
@@ -168,26 +134,22 @@ function buildFieldNode({
   }
 
   if (field.dynamicKey === true && isObject(value)) {
-    const dynamicChildren: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[] =
-      Object.entries(value).map(([key, childValue]) => {
-        const childPath = `${propertyPath}['${pathHelpers.escapeMentionKey(
-          key,
-        )}']`;
-        return {
-          key: childPath,
-          data: {
-            type: 'value' as const,
-            value: childValue,
-            displayName: schemaUtils.resolveEntryLabel({
-              value: childValue,
-              labelKey: field.labelKey,
-              fallback: key,
-            }),
-            propertyPath: childPath,
-            insertable: true,
-          },
-        };
+    // Mirror the viewer: each entry's value drills generically when it is itself
+    // a container (object/array) instead of dead-ending at a raw value.
+    const dynamicChildren = Object.entries(value).map(([key, childValue]) => {
+      const childPath = `${propertyPath}['${pathHelpers.escapeMentionKey(
+        key,
+      )}']`;
+      return buildSampleValueNode({
+        value: childValue,
+        displayName: schemaUtils.resolveEntryLabel({
+          value: childValue,
+          labelKey: field.labelKey,
+          fallback: key,
+        }),
+        path: childPath,
       });
+    });
     return {
       key: propertyPath,
       data: {
@@ -203,14 +165,21 @@ function buildFieldNode({
   }
 
   if (field.children && field.children.length > 0 && isObject(value)) {
-    const childNodes = field.children.map((child) =>
-      buildFieldChildNode({
-        basePath,
-        child,
-        sampleData,
-        parentPath: valuePath,
-      }),
-    );
+    const objectChildren = field.children;
+    // Build each child through buildFieldNode (not a flat leaf) so a child that
+    // is itself a described object/list/dynamic map drills in instead of
+    // dead-ending at a raw value (which would surface as "[object Object]").
+    // Resolve children against this field's value, mirroring the listItems
+    // branch above and the output viewer's recursion. Key by field index so two
+    // whole-object (value:'') children cannot collide on the same key.
+    const childNodes = objectChildren.map((child, childIdx) => {
+      const childNode = buildFieldNode({
+        basePath: propertyPath,
+        field: child,
+        sampleData: value,
+      });
+      return { ...childNode, key: `${propertyPath}_field_${childIdx}` };
+    });
     return {
       key: propertyPath,
       data: {

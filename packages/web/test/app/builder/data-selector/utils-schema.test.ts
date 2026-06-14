@@ -292,6 +292,112 @@ describe('schemaTreeUtils.buildTreeFromSchema — primitive arrays', () => {
     ).toBe("step_1['output']['user']['email']");
   });
 
+  it('recurses into a described-object child that has its own children (no dead-end)', () => {
+    const schema: OutputSchema = {
+      fields: [
+        {
+          key: 'message',
+          label: 'Message',
+          value: 'message',
+          children: [
+            { key: 'text', label: 'Text' },
+            {
+              key: 'from',
+              label: 'Sender',
+              children: [
+                { key: 'id', label: 'User ID' },
+                { key: 'first_name', label: 'First Name' },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const tree = schemaTreeUtils.buildTreeFromSchema({
+      stepName: 'step_1',
+      displayName: 'Step',
+      schema,
+      sampleData: {
+        message: {
+          text: 'Hello',
+          from: { id: 42, first_name: 'Ada', last_name: 'L' },
+        },
+      },
+    });
+
+    const messageNode = tree.children?.[0];
+    const senderNode = messageNode?.children?.find(
+      (c) => c.data.type === 'value' && c.data.displayName === 'Sender',
+    );
+    // Sender drills into its described fields instead of dead-ending at a value.
+    expect(senderNode?.children).toHaveLength(2);
+    expect(senderNode?.children?.[0]?.data).toMatchObject({
+      displayName: 'User ID',
+      value: 42,
+    });
+    expect(
+      senderNode?.children?.[0]?.data.type === 'value' &&
+        senderNode.children[0].data.propertyPath,
+    ).toBe("step_1['output']['message']['from']['id']");
+    // only described fields surface — the undescribed last_name stays hidden.
+    expect(
+      senderNode?.children?.map(
+        (c) => c.data.type === 'value' && c.data.displayName,
+      ),
+    ).toEqual(['User ID', 'First Name']);
+  });
+
+  it('recurses into a nested object child two levels deep inside a list item', () => {
+    const schema: OutputSchema = {
+      fields: [
+        {
+          key: 'rows',
+          label: 'Rows',
+          value: 'rows',
+          listItems: [
+            { key: 'id', label: 'Id' },
+            {
+              key: 'author',
+              label: 'Author',
+              children: [
+                { key: 'name', label: 'Name' },
+                { key: 'org', label: 'Org', children: [{ key: 'title' }] },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const tree = schemaTreeUtils.buildTreeFromSchema({
+      stepName: 'step_1',
+      displayName: 'Step',
+      schema,
+      sampleData: {
+        rows: [{ id: 1, author: { name: 'Ada', org: { title: 'CEO' } } }],
+      },
+    });
+
+    const firstItem = tree.children?.[0]?.children?.[0];
+    const authorNode = firstItem?.children?.find(
+      (c) => c.data.type === 'value' && c.data.displayName === 'Author',
+    );
+    const orgNode = authorNode?.children?.find(
+      (c) => c.data.type === 'value' && c.data.displayName === 'Org',
+    );
+    // The object-in-object inside a list item drills instead of stringifying.
+    expect(orgNode?.children).toHaveLength(1);
+    expect(orgNode?.children?.[0]?.data).toMatchObject({
+      displayName: 'Title',
+      value: 'CEO',
+    });
+    expect(
+      orgNode?.children?.[0]?.data.type === 'value' &&
+        orgNode.children[0].data.propertyPath,
+    ).toBe("step_1['output']['rows'][0]['author']['org']['title']");
+  });
+
   it('ignores children and drills the value when children is declared but the value is a primitive array (mirrors the viewer)', () => {
     const schema: OutputSchema = {
       fields: [
@@ -522,6 +628,41 @@ describe('schemaTreeUtils.buildTreeFromSchema — labelKey', () => {
     });
     expect(first?.data.type === 'value' && first.data.propertyPath).toContain(
       "['uuid-1']",
+    );
+  });
+
+  it('drills dynamicKey entries whose values are objects (mirrors the viewer)', () => {
+    const schema: OutputSchema = {
+      fields: [
+        { key: 'servers', label: 'Servers', value: 'servers', dynamicKey: true },
+      ],
+    };
+
+    const tree = schemaTreeUtils.buildTreeFromSchema({
+      stepName: 'step_1',
+      displayName: 'Step',
+      schema,
+      sampleData: {
+        servers: {
+          'db-1': { host: 'localhost', port: 5432 },
+          'db-2': { host: 'remote', port: 5433 },
+        },
+      },
+    });
+
+    const serversNode = tree.children?.[0];
+    expect(serversNode?.children).toHaveLength(2);
+
+    const db1 = serversNode?.children?.[0];
+    expect(db1?.data).toMatchObject({ displayName: 'db-1' });
+    // The object entry drills into host/port instead of being a flat leaf.
+    expect(db1?.children).toHaveLength(2);
+    const hostNode = db1?.children?.find(
+      (c) => c.data.type === 'value' && c.data.displayName === 'Host',
+    );
+    expect(hostNode?.data).toMatchObject({ value: 'localhost' });
+    expect(hostNode?.data.type === 'value' && hostNode.data.propertyPath).toBe(
+      "step_1['output']['servers']['db-1']['host']",
     );
   });
 
