@@ -4,6 +4,35 @@ Load this right before you build, after discovery is done and the needed connect
 
 Open with ONE thinking-status that frames the whole build in a warm sentence — e.g. "I'll wire up the trigger, connect the apps, and double-check it satisfies your goal before handing it over." Then work silently (no visible text until done).
 
+## Most automations are simple — don't over-build
+The majority are 2–5 linear steps: a schedule or form/webhook trigger and a couple of actions. Reach for routing/conditions, loops, or stored state ONLY when the goal genuinely needs them — adding them "to be safe" makes a flow harder to run and debug. Match the shape to the real requirement, nothing more. (Routing & loops: `ap_load_guide('control_flow')`; remembering data across runs: `ap_load_guide('state')`.)
+
+## Prefer the built-in pieces (no connection needed)
+Activepieces ships pieces that need no external app or connection; registry search often misses them (the form piece is literally named **Human Input**). For a generic ask, map the user's words → piece directly instead of asking them to name a third-party tool:
+
+| User says | Piece | What it is |
+|---|---|---|
+| "a form" | `@activepieces/piece-forms` (**Human Input**) | hosted web form trigger w/ shareable link |
+| "every day/hour", "cron" | `@activepieces/piece-schedule` | schedule triggers |
+| "webhook", "receive events" | `@activepieces/piece-webhook` | inbound webhook trigger |
+| "save/track data here" | `@activepieces/piece-tables` | built-in database — `ap_load_guide('tables')` |
+| "remember/count/dedup" | `@activepieces/piece-store` | key-value store — `ap_load_guide('state')` |
+| "ask AI/classify/extract" | `@activepieces/piece-ai` | native AI — `ap_load_guide('ai')` |
+| "human sign-off" | `@activepieces/piece-approval` | pause for approve/reject |
+| "wait/pause" | `@activepieces/piece-delay` | delay step |
+| "split big work" | `@activepieces/piece-subflows` | call another flow |
+
+## Hard limits to design around
+| Limit | Value | If exceeded |
+|---|---|---|
+| Flow runtime | **600 s** active (Wait/Delay/Approval pauses don't count) | run times out |
+| Run log | ~25 MB (step inputs+outputs) | run truncates/fails |
+| Memory | ~1 GB | run crashes |
+| Webhook payload | 5 MB | rejected |
+| Store value | 512 KB/key | use Tables instead |
+
+A loop over thousands of items will blow 600 s — chunk it or split into sub-flows (`ap_load_guide('error_handling')`). Don't capture full payloads across many iterations (25 MB log). Hold large files by URL/reference, never inline base64.
+
 ## Order of work (no visible text until ALL steps are done)
 - **Simple flows** (linear, no branches/loops): `ap_build_flow` → validate every step (below) → test for real with cases (below) → reflect (below) → `ap_manage_notes`.
 - **Flows with loops**: `ap_build_flow` supports nesting. For steps inside a loop, set `parentStepName` to the loop step's name and `stepLocationRelativeToParent` to `INSIDE_LOOP`. Steps that omit `parentStepName` are placed after the last top-level step (not inside the loop).
@@ -19,6 +48,7 @@ Open with ONE thinking-status that frames the whole build in a warm sentence —
 2. **Run each case** with `ap_test_flow`, passing `triggerTestData` = that payload (it seeds the trigger's sample data and runs the flow end-to-end). For a single suspect step, `ap_test_step`.
 3. **Verify the OUTPUT, not the status.** Read the run result (`ap_get_run` for step-by-step detail) and confirm each step produced the value you intended: the right fields are populated, every `{{...}}` reference resolved to real data (not blank/`undefined`/the wrong column), and the final result matches the user's goal for that case. SUCCEEDED with empty or wrong output IS a failure — fix the mapping with `ap_update_step` and re-run.
 4. **Loop until every case genuinely passes.** Never share a flow you have not watched produce a correct result at least once. (Test runs execute the real actions — a message really gets sent — so use sample data that is safe to act on.)
+5. **Be honest about mock vs. real.** For a trigger-based flow you can only feed `ap_test_flow` *mock* `triggerTestData` — that exercises the steps but does NOT prove the live trigger fires or that its real field names match what you mapped. When that's all you've done, say exactly that: "I tested the steps with sample data; confirm it end-to-end by [submitting the form / sending a test email / opening a test issue] once." **Never claim "verified with real runs" or "everything works" off a mock-data test.** Where you can, reduce the risk first — pull a real sample of the trigger's output (`ap_explore_data` or the piece's "get latest" action) and check your `{{...}}` field names against the *actual* keys (this is where Title-case-vs-camelCase mismatches surface).
 
 ## Reflect against the user's goal before sharing
 Before you share the link, check the built flow against what the user actually asked for — this is where good becomes great. Re-read their request and every constraint they stated in this conversation, and confirm each is satisfied:
