@@ -16,11 +16,12 @@ import { AppSystemProp } from '../../helper/system/system-props'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { chatApprovalGate } from './chat-approval-gate'
+import { chatHelpers } from './chat-helpers'
 import { chatService } from './chat-service'
 import { chatPrompt } from './prompt/chat-prompt'
 
 const SIMULATION_POLL_INTERVAL_MS = 1_500
-const SIMULATION_MAX_ATTEMPTS = 80
+const SIMULATION_MAX_ATTEMPTS = 120
 const SIMULATION_TIMEOUT_STATUS = 'TIMEOUT'
 
 type SimulationStatus = ChatConversationStatus | typeof SIMULATION_TIMEOUT_STATUS
@@ -76,26 +77,33 @@ export const chatEvalController: FastifyPluginAsyncZod = async (app) => {
 }
 
 async function waitForSimulationResult({ conversationId, platformId, userId, log }: { conversationId: string, platformId: string, userId: string, log: FastifyBaseLogger }): Promise<{ status: SimulationStatus, uiMessages: unknown[] | null }> {
+    // Read the row directly rather than via getConversationOrThrow: that helper resets a
+    // >2min-stale STREAMING conversation to IDLE, which would let the poller both race the
+    // staleness threshold and mutate production state. A direct read keeps the poller a
+    // pure observer — a still-running turn stays STREAMING until it genuinely settles.
     for (let attempt = 0; attempt < SIMULATION_MAX_ATTEMPTS; attempt++) {
         await new Promise((resolve) => setTimeout(resolve, SIMULATION_POLL_INTERVAL_MS))
-        const conversation = await chatService(log).getConversationOrThrow({ id: conversationId, platformId, userId })
-        const uiMessages = conversation.uiMessages ?? null
-        if (conversation.status === ChatConversationStatus.ERROR) {
-            return { status: conversation.status, uiMessages }
+        const settled = readSettledState(await chatHelpers.conversationRepo().findOneBy({ id: conversationId, platformId, userId }))
+        if (settled) {
+            return settled
         }
-        if (conversation.status === ChatConversationStatus.IDLE && (uiMessages?.length ?? 0) > 0) {
-            return { status: conversation.status, uiMessages }
-        }
-    }
-    // Polling exhausted while the run is still streaming — surface a distinct TIMEOUT
-    // status so callers don't mistake an in-progress run for a completed empty result.
-    const finalConversation = await chatService(log).getConversationOrThrow({ id: conversationId, platformId, userId })
-    const uiMessages = finalConversation.uiMessages ?? null
-    if (finalConversation.status === ChatConversationStatus.ERROR || (finalConversation.status === ChatConversationStatus.IDLE && (uiMessages?.length ?? 0) > 0)) {
-        return { status: finalConversation.status, uiMessages }
     }
     log.warn({ conversationId }, 'Chat simulation timed out before completing')
-    return { status: SIMULATION_TIMEOUT_STATUS, uiMessages }
+    return { status: SIMULATION_TIMEOUT_STATUS, uiMessages: null }
+}
+
+function readSettledState(conversation: { status: ChatConversationStatus, uiMessages: unknown[] | null } | null): { status: ChatConversationStatus, uiMessages: unknown[] | null } | null {
+    if (!conversation) {
+        return null
+    }
+    const uiMessages = conversation.uiMessages ?? null
+    if (conversation.status === ChatConversationStatus.ERROR) {
+        return { status: conversation.status, uiMessages }
+    }
+    if (conversation.status === ChatConversationStatus.IDLE && (uiMessages?.length ?? 0) > 0) {
+        return { status: conversation.status, uiMessages }
+    }
+    return null
 }
 
 const PromptSourcesRoute = {
