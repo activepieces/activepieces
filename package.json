@@ -2,6 +2,11 @@
   "name": "activepieces",
   "version": "0.83.0",
   "packageManager": "bun@1.3.3",
+  "trustedDependencies": [
+    "sqlite3",
+    "isolated-vm",
+    "redis-memory-server"
+  ],
   "scripts": {
     "prebuild": "node tools/scripts/install-bun.js",
     "serve:frontend": "turbo run serve --filter=web",
