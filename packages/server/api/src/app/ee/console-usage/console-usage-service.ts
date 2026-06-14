@@ -13,7 +13,6 @@ dayjs.extend(utc)
 
 const CONSOLE_API_URL = 'https://console.activepieces.com'
 const REQUEST_TIMEOUT_MS = 30000
-const COMPLETED_DAYS_WINDOW = 2
 const SNAPSHOT_BATCH_SIZE = 25
 
 export const consoleUsageService = (log: FastifyBaseLogger) => ({
@@ -22,10 +21,11 @@ export const consoleUsageService = (log: FastifyBaseLogger) => ({
      * is intentionally not gated on AP_TELEMETRY_ENABLED. The license key is both the gate and the
      * credential: only licensed platforms are reported, and the key is sent as the Bearer token the
      * Console validates. Unlicensed instances bail before the heavy aggregate queries, so they send
-     * nothing. Only *completed* UTC days are reported (the current day is excluded), so each
-     * (platform, day) count is final on first send; the 2-day window gives a one-day healing margin
-     * for a missed run, and re-sends carry the same value — letting the Console store them with a
-     * plain idempotent upsert, no max-merge.
+     * nothing. Only the previous *completed* UTC day is reported (the current, in-progress day is
+     * excluded), so the count is final on first send. Re-running the same day carries the same value,
+     * which the Console stores with a plain idempotent upsert (no max-merge). Note: with a single-day
+     * window there is no healing margin — if a day's run is missed entirely, the next run won't
+     * backfill it, since it only ever looks at yesterday.
      */
     async reportAllPlatforms(): Promise<void> {
         const licenseKeysByPlatform = await queryLicenseKeysByPlatform()
@@ -35,8 +35,8 @@ export const consoleUsageService = (log: FastifyBaseLogger) => ({
         }
 
         const platformIds = [...licenseKeysByPlatform.keys()]
-        const windowStart = utcMidnight(COMPLETED_DAYS_WINDOW)
-        const todayStart = utcMidnight(0)
+        const dayStart = utcMidnight(1)
+        const dayEnd = utcMidnight(0)
 
         const [
             activeFlowsByPlatform,
@@ -47,7 +47,7 @@ export const consoleUsageService = (log: FastifyBaseLogger) => ({
             queryActiveFlowsByPlatform(platformIds),
             queryUsersByPlatform(platformIds),
             queryTeamProjectsByPlatform(platformIds),
-            queryDailyExecutionsByPlatform(platformIds, windowStart, todayStart),
+            queryDailyExecutionsByPlatform(platformIds, dayStart, dayEnd),
         ])
 
         const reportedAt = new Date().toISOString()
@@ -122,7 +122,7 @@ async function queryTeamProjectsByPlatform(platformIds: string[]): Promise<Map<s
  * scopes to licensed platforms while bounding on `created` so PostgreSQL hits the
  * flow_run (projectId, environment, ..., created) indexes instead of scanning the whole table.
  */
-async function queryDailyExecutionsByPlatform(platformIds: string[], windowStart: string, todayStart: string): Promise<Map<string, DailyExecutionCount[]>> {
+async function queryDailyExecutionsByPlatform(platformIds: string[], dayStart: string, dayEnd: string): Promise<Map<string, DailyExecutionCount[]>> {
     const rows = await flowRunRepo()
         .createQueryBuilder('flow_run')
         .innerJoin('flow_run.project', 'project')
@@ -131,8 +131,8 @@ async function queryDailyExecutionsByPlatform(platformIds: string[], windowStart
         .addSelect('COUNT(*)', 'count')
         .where('project.platformId IN (:...platformIds)', { platformIds })
         .andWhere('flow_run.environment = :environment', { environment: RunEnvironment.PRODUCTION })
-        .andWhere('flow_run.created >= :windowStart', { windowStart })
-        .andWhere('flow_run.created < :todayStart', { todayStart })
+        .andWhere('flow_run.created >= :dayStart', { dayStart })
+        .andWhere('flow_run.created < :dayEnd', { dayEnd })
         .groupBy('project.platformId')
         .addGroupBy('to_char(flow_run.created AT TIME ZONE \'UTC\', \'YYYY-MM-DD\')')
         .getRawMany<{ platformId: string, day: string, count: string }>()
