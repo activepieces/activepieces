@@ -130,13 +130,13 @@ function SmartOutputViewer({
   if (Array.isArray(json) && json.length > 0) {
     const arrayView = selectArrayFriendlyView({
       items: json,
-      hasSchema: pieceDefinedSchema !== null,
+      schema: pieceDefinedSchema,
     });
     const friendlyContent =
-      arrayView === 'table' ? (
+      arrayView.kind === 'table' ? (
         <OutputTableView items={json} />
-      ) : arrayView === 'schema' && pieceDefinedSchema ? (
-        <OutputSchemaArrayList items={json} schema={pieceDefinedSchema} />
+      ) : arrayView.kind === 'schema' ? (
+        <OutputSchemaArrayList items={json} schema={arrayView.schema} />
       ) : (
         <OutputArrayList items={json} />
       );

@@ -1,8 +1,11 @@
-import { isObject } from '@activepieces/shared';
+import { isNil, isObject } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { stringUtils } from '@/lib/string-utils';
 import { cn } from '@/lib/utils';
+
+import { schemaUtils } from './resolve-schema';
+import { OutputSchema } from './types';
 
 const MAX_TABLE_ROWS = 100;
 
@@ -152,18 +155,37 @@ function OutputTableView({ items }: OutputTableViewProps) {
   );
 }
 
-// Chooses the friendly renderer for a top-level array. A flat, uniform array
-// reads best as a table — prefer it even when a schema exists (curated schemas
-// describe nested structure, which is never tabular, so they fall through).
+// Chooses the friendly renderer for a top-level array, and the schema to apply.
+// A flat, uniform array reads best as a table — prefer it even when a schema
+// exists (curated schemas describe nested structure, which is never tabular).
+// A "wrapper" schema (single value:'' field naming the whole array) describes
+// each item via its listItems, so rebuild a per-item schema from those — passing
+// the wrapper unchanged would resolve value:'' against an item object and drop
+// the listItems entirely.
 function selectArrayFriendlyView({
   items,
-  hasSchema,
+  schema,
 }: {
   items: unknown[];
-  hasSchema: boolean;
-}): 'table' | 'schema' | 'list' {
-  if (isTabularArray(items)) return 'table';
-  return hasSchema ? 'schema' : 'list';
+  schema?: OutputSchema | null;
+}): ArrayFriendlyView {
+  if (isTabularArray(items)) {
+    return { kind: 'table' };
+  }
+  if (isNil(schema)) {
+    return { kind: 'list' };
+  }
+  if (schemaUtils.isWholeOutputSchema(schema)) {
+    const listItems = schema.fields[0]?.listItems ?? [];
+    if (listItems.length === 0) {
+      return { kind: 'list' };
+    }
+    return {
+      kind: 'schema',
+      schema: { fields: listItems, itemLabel: schema.itemLabel },
+    };
+  }
+  return { kind: 'schema', schema };
 }
 
 export {
@@ -172,6 +194,11 @@ export {
   buildColumns,
   selectArrayFriendlyView,
 };
+
+type ArrayFriendlyView =
+  | { kind: 'table' }
+  | { kind: 'schema'; schema: OutputSchema }
+  | { kind: 'list' };
 
 type Column = {
   key: string;
