@@ -1,4 +1,4 @@
-import { FlowStatus, ProjectType, RunEnvironment, tryCatch } from '@activepieces/shared'
+import { chunk, FlowStatus, ProjectType, RunEnvironment, tryCatch } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { FastifyBaseLogger } from 'fastify'
@@ -14,6 +14,7 @@ dayjs.extend(utc)
 const CONSOLE_API_URL = 'https://console.activepieces.com'
 const REQUEST_TIMEOUT_MS = 30000
 const COMPLETED_DAYS_WINDOW = 2
+const SNAPSHOT_BATCH_SIZE = 25
 
 export const consoleUsageService = (log: FastifyBaseLogger) => ({
     /**
@@ -51,23 +52,25 @@ export const consoleUsageService = (log: FastifyBaseLogger) => ({
 
         const reportedAt = new Date().toISOString()
 
-        const results = await Promise.allSettled(
-            [...licenseKeysByPlatform.entries()].map(([platformId, licenseKey]) => {
-                const body = buildSnapshotBody({
-                    platformId,
-                    activeFlows: activeFlowsByPlatform.get(platformId) ?? 0,
-                    users: usersByPlatform.get(platformId) ?? 0,
-                    projects: teamProjectsByPlatform.get(platformId) ?? 0,
-                    dailyExecutions: dailyExecutionsByPlatform.get(platformId) ?? [],
-                    reportedAt,
-                })
-                return postSnapshot({ body, licenseKey })
-            }),
-        )
+        for (const batch of chunk([...licenseKeysByPlatform.entries()], SNAPSHOT_BATCH_SIZE)) {
+            const results = await Promise.allSettled(
+                batch.map(([platformId, licenseKey]) => {
+                    const body = buildSnapshotBody({
+                        platformId,
+                        activeFlows: activeFlowsByPlatform.get(platformId) ?? 0,
+                        users: usersByPlatform.get(platformId) ?? 0,
+                        projects: teamProjectsByPlatform.get(platformId) ?? 0,
+                        dailyExecutions: dailyExecutionsByPlatform.get(platformId) ?? [],
+                        reportedAt,
+                    })
+                    return postSnapshot({ body, licenseKey })
+                }),
+            )
 
-        for (const result of results) {
-            if (result.status === 'rejected') {
-                exceptionHandler.handle(result.reason, log)
+            for (const result of results) {
+                if (result.status === 'rejected') {
+                    exceptionHandler.handle(result.reason, log)
+                }
             }
         }
     },
