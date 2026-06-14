@@ -11,7 +11,6 @@ import { AppSystemProp } from '../../../helper/system/system-props'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { ChatConversationEntity } from '../../chat/chat-conversation-entity'
 import { chatAnalyticsBulkSync } from '../../chat/chat-sync-job'
-import { consoleUsageService } from '../../console-usage/console-usage-service'
 import { CANARY_WORKER_GROUP_ID, workerGroupService } from '../platform-plan/worker-group.service'
 import { adminPlatformService } from './admin-platform.service'
 
@@ -101,11 +100,6 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
         }
 
         return res.status(StatusCodes.OK).send({ synced, failed, total: totalCount })
-    })
-
-    app.post('/console-usage/report', ReportConsoleUsageRequest, async (req, res) => {
-        await consoleUsageService(req.log).reportAllPlatforms()
-        return res.status(StatusCodes.OK).send()
     })
 }
 
@@ -203,12 +197,6 @@ const CreatePieceRequest = {
 }
 
 const SyncAllConversationsRequest = {
-    config: {
-        security: securityAccess.public(),
-    },
-}
-
-const ReportConsoleUsageRequest = {
     config: {
         security: securityAccess.public(),
     },
