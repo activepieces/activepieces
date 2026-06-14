@@ -20,11 +20,11 @@ import { chatHelpers } from './chat-helpers'
 import { chatHistory } from './history/chat-history'
 
 export const chatService = (log: FastifyBaseLogger) => ({
-    async createConversation({ platformId, userId, request }: CreateConversationParams): Promise<ChatConversation> {
+    async createConversation({ platformId, userId, request, projectId }: CreateConversationParams): Promise<ChatConversation> {
         const conversation = await chatHelpers.conversationRepo().save({
             id: apId(),
             platformId,
-            projectId: null,
+            projectId: projectId ?? null,
             userId,
             title: request.title ?? null,
             modelName: request.modelName ?? null,
@@ -112,6 +112,7 @@ type CreateConversationParams = {
     platformId: string
     userId: string
     request: CreateChatConversationRequest
+    projectId?: string | null
 }
 
 type ListConversationsParams = {

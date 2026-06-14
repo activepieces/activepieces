@@ -74,6 +74,8 @@ const systemPropValidators: {
     [AppSystemProp.FRONTEND_URL]: urlValidator,
     [AppSystemProp.CONTAINER_TYPE]: enumValidator(Object.values(ContainerType)),
     [AppSystemProp.PORT]: numberValidator,
+    [AppSystemProp.CHAT_PLAYGROUND_SANDBOX_USER_ID]: stringValidator,
+    [AppSystemProp.CHAT_PLAYGROUND_SANDBOX_PROJECT_ID]: stringValidator,
     // AppSystemProp
     [AppSystemProp.API_KEY]: stringValidator,
     [AppSystemProp.TEMPLATES_API_KEY]: stringValidator,

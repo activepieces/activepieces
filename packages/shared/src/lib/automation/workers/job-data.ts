@@ -238,6 +238,14 @@ export const UserInteractionJobDataWithoutWatchingInformation = z.union([
 ])
 export type UserInteractionJobDataWithoutWatchingInformation = z.infer<typeof UserInteractionJobDataWithoutWatchingInformation>
 
+export const ChatPromptOverride = z.object({
+    system: z.string().optional(),
+    projectSelected: z.string().optional(),
+    noProject: z.string().optional(),
+    guides: z.record(z.string(), z.string()).optional(),
+})
+export type ChatPromptOverride = z.infer<typeof ChatPromptOverride>
+
 export const ExecuteChatAgentJobData = z.object({
     schemaVersion: z.number(),
     jobType: z.literal(WorkerJobType.EXECUTE_CHAT_AGENT),
@@ -253,6 +261,7 @@ export const ExecuteChatAgentJobData = z.object({
         mimeType: z.string(),
         data: z.string(),
     })).optional(),
+    promptOverride: ChatPromptOverride.optional(),
 })
 export type ExecuteChatAgentJobData = z.infer<typeof ExecuteChatAgentJobData>
 

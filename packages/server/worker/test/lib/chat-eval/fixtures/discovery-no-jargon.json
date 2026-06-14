@@ -1,0 +1,33 @@
+{
+    "id": "discovery-no-jargon",
+    "description": "Seed example: on a vague business request the assistant scopes in plain language and never asks how/technical questions or shows more than two question cards. Replace with a real exported transcript.",
+    "kind": "regression",
+    "initialMessages": [],
+    "userTurns": [
+        "I want to get notified when someone fills out my contact form"
+    ],
+    "recordedToolCalls": [],
+    "model": {
+        "provider": "anthropic",
+        "modelId": "claude-sonnet-4-6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "claude-sonnet-4-6" }
+    },
+    "assertions": [
+        { "type": "neverCutOff" },
+        { "type": "neverAskedHow" },
+        { "type": "maxQuestionCards", "n": 2 },
+        { "type": "noBuildToolBeforePhaseSet" }
+    ],
+    "judge": [
+        {
+            "dimension": "plain_language",
+            "rubric": "The assistant responds in plain business language and does NOT ask the user about technical implementation details (fields, columns, triggers, steps, connections).",
+            "expectedLabel": "pass"
+        },
+        {
+            "dimension": "moves_forward",
+            "rubric": "The assistant either takes a concrete next step or asks at most one focused scoping question to understand the user's goal — it does not stall or dump options.",
+            "expectedLabel": "pass"
+        }
+    ]
+}
