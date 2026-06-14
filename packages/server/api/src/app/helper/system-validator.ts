@@ -71,6 +71,8 @@ const systemPropValidators: {
     [AppSystemProp.BETTERSTACK_HOST]: stringValidator,
     [AppSystemProp.OTEL_ENABLED]: booleanValidator,
     [AppSystemProp.HYPERDX_TOKEN]: stringValidator,
+    [AppSystemProp.AXIOM_TOKEN]: stringValidator,
+    [AppSystemProp.AXIOM_DATASET]: stringValidator,
     [AppSystemProp.FRONTEND_URL]: urlValidator,
     [AppSystemProp.CONTAINER_TYPE]: enumValidator(Object.values(ContainerType)),
     [AppSystemProp.PORT]: numberValidator,
@@ -192,6 +194,13 @@ const systemPropValidators: {
 
     // On-call
     [AppSystemProp.PAGE_ONCALL_WEBHOOK]: urlValidator,
+
+    // evlog sampling / slow-event threshold
+    [AppSystemProp.LOG_SAMPLE_RATE_INFO]: (value: string) => {
+        const n = parseInt(value, 10)
+        return !isNaN(n) && n >= 0 && n <= 100 ? true : 'Value must be a number between 0 and 100'
+    },
+    [AppSystemProp.LOG_KEEP_SLOW_MS]: numberValidator,
 }
 
 
