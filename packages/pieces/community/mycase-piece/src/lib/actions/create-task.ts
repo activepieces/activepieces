@@ -7,6 +7,8 @@ export const createTask = createAction({
   name: 'create_task',
   displayName: 'Create Task',
   description: 'Creates a new task in MyCase',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new task in MyCase with a name, priority, due date, and at least one assigned staff member, optionally linking it to a case. Use to add to-do items for the firm; not idempotent, so repeated calls create duplicate tasks.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Task Name',

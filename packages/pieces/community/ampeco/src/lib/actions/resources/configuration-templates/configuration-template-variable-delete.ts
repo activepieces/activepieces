@@ -14,6 +14,8 @@ export const configurationTemplateVariableDeleteAction = createAction({
   name: 'configurationTemplateVariableDelete',
   displayName: 'Resources - Configuration Templates - Configuration Template Variable Delete',
   description: 'Delete a Configuration Template Variable.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete a single configuration variable from an OCPP configuration template, identified by template id and variable id. Destructive and not idempotent: deleting an already-removed variable will fail. Use the variable Listing action first to confirm the variable id.', idempotent: false },
   props: {
         
   template: Property.Number({

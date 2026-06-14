@@ -8,6 +8,8 @@ export const deleteDomain = createAction({
   name: 'delete_domain',
   displayName: 'Delete Domain',
   description: 'Remove a domain from your DigitalOcean account.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes a DNS domain (and its records) from the DigitalOcean account, identified by exact domain name. Use to tear down DNS for a domain you no longer manage. Destructive; effectively idempotent on the end state but the first call removes the domain and later calls on a missing domain fail.', idempotent: false },
   props: {
     domain_name: Property.ShortText({
       displayName: 'Domain Name',

@@ -6,6 +6,12 @@ export const addOrUpdateContactExtended = createAction({
   name: 'addOrUpdateContactExtended',
   displayName: 'Add or Update Contact (Extended)',
   description: 'Adds or updates a contact (extended version)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Upserts a contact in Sperse CRM using the full field set, including custom fields, UTM/tracking data, optional user-account creation, and up to three bundled product subscriptions. Choose this over the basic Add or Update Contact when you need those extended attributes. When Match Existing is enabled it matches by email and full name (or by Contact ID / Contact XREF) and updates that record, otherwise it inserts a new one; first or last name is required unless a company name is supplied. Idempotent in match mode: re-sending the same identifying details updates the same record rather than duplicating it.',
+    idempotent: true,
+  },
   auth: sperseAuth,
   props: {
     matchExisting: Property.StaticDropdown({

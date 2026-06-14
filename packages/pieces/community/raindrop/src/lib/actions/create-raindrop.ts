@@ -8,6 +8,12 @@ export const createRaindropAction = createAction({
   name: 'create_raindrop',
   displayName: 'Create Bookmark',
   description: 'Saves a new bookmark to your Raindrop.io account',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new bookmark (raindrop) in Raindrop.io from a URL, optionally setting title, excerpt, note, tags, target collection, and favourite flag. Use to save a web page to a user\'s account. The URL is required; if no title is given Raindrop auto-extracts it from the page. Not idempotent: each call adds another bookmark, even for a URL already saved.',
+    idempotent: false,
+  },
   props: {
     link: Property.ShortText({
       displayName: 'URL',

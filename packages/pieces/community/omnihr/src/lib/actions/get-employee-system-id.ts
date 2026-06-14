@@ -9,6 +9,12 @@ export const getEmployeeSystemId = createAction({
   displayName: 'Get Employee System ID by Email',
   description:
     'Searches for an employee by email and returns their system ID and user ID',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up an OmniHR employee by exact email address and returns their system ID, user ID, full name, and email. Use this first to resolve an email into the system ID required by the other employee actions. At least one employment status must be selected to scope the search, and the match is case-insensitive but exact on the email. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Employee Email',

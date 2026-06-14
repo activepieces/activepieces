@@ -12,6 +12,8 @@ export const updateTicketAction = createAction({
   name: 'update_gorgias_ticket',
   displayName: 'Update Ticket',
   description: 'Update a Gorgias ticket.',
+  audience: 'both',
+  aiMetadata: { description: 'Modify fields on an existing Gorgias ticket identified by its numeric ID, such as subject, status (e.g. open/closed), channel, attached customer, spam/unread flags, or external ID. Use to change ticket state or metadata; this does not add a reply or message (use Create Message for that). Idempotent: it sets fields to the supplied values, so repeating the same call leaves the ticket in the same state.', idempotent: true },
   props: {
     ticketId: Property.Number({
       displayName: 'Ticket ID',

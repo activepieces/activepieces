@@ -5,6 +5,7 @@ import { parseMistralError } from '../common/props';
 import { mistralRequest } from '../common/request';
 
 export const listModels = createAction({
+  audience: 'human',
 	auth: mistralAuth,
 	name: 'list_models',
 	displayName: 'List Models',

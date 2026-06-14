@@ -7,6 +7,8 @@ export const downloadView = createAction({
   name: 'download_view',
   displayName: 'Download View',
   description: 'Download a view from a workbook in the specified format',
+  audience: 'both',
+  aiMetadata: { description: 'Exports a single Tableau view (identified by its view ID) as a file in one of four formats — CSV data, PNG image, PDF, or Excel crosstab — each producing a different output and accepting format-specific sizing/page options. Use to capture a view\'s rendered content or underlying data for sharing or downstream processing. Read-only against Tableau and safe to repeat, though the rendered result reflects data current at call time (subject to the cache max-age).', idempotent: true },
   auth: tableauAuth,
   props: {
     viewId: Property.Dropdown({

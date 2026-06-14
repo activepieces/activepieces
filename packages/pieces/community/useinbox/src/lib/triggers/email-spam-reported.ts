@@ -6,6 +6,10 @@ export const emailSpamReportedTrigger = createNotifyWebhookTrigger({
   displayName: 'Email Spam Reported',
   description:
     'Triggers when a recipient marks a transactional email as spam in their inbox.',
+  aiMetadata: {
+    description:
+      'Fires when a recipient marks a transactional email sent through INBOX Notify as spam. Represents a spam complaint for a specific message and recipient.',
+  },
   sampleData: {
     event: 'SpamReported',
     eventId: 2,

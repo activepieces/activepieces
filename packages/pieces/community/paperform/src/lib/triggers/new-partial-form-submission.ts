@@ -10,6 +10,9 @@ export const newPartialFormSubmission = createTrigger({
   name: 'new_partial_form_submission',
   displayName: 'New Partial Form Submission',
   description: 'Triggers when a partial/in-progress submission is received.',
+  aiMetadata: {
+    description: 'Fires when a respondent saves or abandons an in-progress (not yet completed) submission on the selected Paperform form. The event represents a partial submission and may carry empty or incomplete field data.',
+  },
   props: {
     formId: paperformCommonProps.formId,
   },

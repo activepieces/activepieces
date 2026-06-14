@@ -6,6 +6,8 @@ export const createUserPaymentAction = createAction({
   name: 'create_user_payment',
   displayName: 'Create User Payment Info',
   description: 'Create payment information for your user account',
+  audience: 'both',
+  aiMetadata: { description: 'Attach a payment method to the authenticated user\'s own Zoo account using the given payment method ID. Use for the individual user; the organization equivalent is the org payment update action. Not idempotent: each call registers payment information.', idempotent: false },
   auth: zooAuth,
   // category: 'Payments',
   props: {

@@ -7,6 +7,8 @@ export const updateContact = createAction({
     name: 'update_contact',
     displayName: 'Update Contact',
     description: 'Modify existing contact data',
+    audience: 'both',
+    aiMetadata: { description: 'Update fields on an existing Teamleader contact identified by contact ID. Use when you already know the contact and want to change profile data. Only provided fields are sent; note that array fields (emails, phones, addresses, tags) fully replace the existing values rather than appending. Idempotent: re-sending the same values leaves the contact in the same state.', idempotent: true },
     auth: teamleaderAuth,
     props: {
         contact_id: Property.Dropdown({

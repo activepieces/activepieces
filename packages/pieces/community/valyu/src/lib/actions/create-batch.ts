@@ -7,6 +7,8 @@ export const createBatchAction = createAction({
   name: 'create_batch',
   displayName: 'Create Batch',
   description: 'Create a batch for processing multiple DeepResearch tasks with shared configuration.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a DeepResearch batch container with shared configuration (mode, output format, search scope, webhook) that subsequent deep-research tasks can run under. Use when grouping multiple research tasks that should share settings. Each call creates a new batch, so it is not idempotent.', idempotent: false },
   auth: valyuAuth,
   props: {
     name: Property.ShortText({

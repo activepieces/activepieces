@@ -34,6 +34,9 @@ export const newConversationTrigger = createTrigger({
   name: 'new_conversation',
   displayName: 'New Conversation',
   description: 'Triggers when a new conversation is created',
+  aiMetadata: {
+    description: 'Fires when a new conversation is created in the connected Instabase AI Hub account, emitting the conversation. Polls the conversations list on an interval, so newly created conversations surface on the next poll.',
+  },
   props: {},
   type: TriggerStrategy.POLLING,
   sampleData: {

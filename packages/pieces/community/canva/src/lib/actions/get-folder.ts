@@ -11,6 +11,12 @@ export const getFolder = createAction({
   name: 'get_folder',
   displayName: 'Get Folder',
   description: 'Retrieve metadata for a specific folder, including name, creation date, and thumbnail.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches metadata for a single Canva folder by folder ID, including its name, created/updated timestamps, and thumbnail. Pick this to verify a folder exists or get its details before moving items into it; it returns folder metadata only, not the folder contents. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     folder_id: Property.Dropdown({
       displayName: 'Folder',

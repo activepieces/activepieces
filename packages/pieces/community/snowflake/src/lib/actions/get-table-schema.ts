@@ -14,6 +14,12 @@ export const getTableSchemaAction = createAction({
   displayName: 'Get Table Schema',
   description:
     'Retrieve the column definitions (name, data type, nullability, default) for a Snowflake table.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Describes a Snowflake table, returning its column definitions (name, data type, nullability, default, key flags, comment) via DESCRIBE TABLE. Use to discover a table's structure before building inserts, updates, or queries against it. Read-only and idempotent.",
+    idempotent: true,
+  },
   auth: snowflakeAuth,
   props: {
     database: snowflakeCommonProps.database,

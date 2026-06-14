@@ -9,6 +9,12 @@ export const billRegistrationFolder = createAction({
   displayName: 'Facturer le dossier de formation',
   description:
     'Associe le dossier de formation à un n° de facture et transmets les informations de facturation au financeur (EDOF par exemple)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Associates an invoice number with a training registration folder and transmits the billing details to the funder (e.g. EDOF), optionally forcing a VAT rate. Not idempotent: it triggers a billing transmission and should be called once per folder. VAT is computed from the folder unless explicitly overridden.",
+    idempotent: false,
+  },
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de formation',

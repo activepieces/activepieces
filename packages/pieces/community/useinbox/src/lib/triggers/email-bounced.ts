@@ -6,6 +6,10 @@ export const emailBouncedTrigger = createNotifyWebhookTrigger({
   displayName: 'Email Bounced',
   description:
     'Triggers when a transactional email permanently bounces (hard bounce) — the recipient address does not exist or is blocked.',
+  aiMetadata: {
+    description:
+      'Fires when a transactional email sent through INBOX Notify hard-bounces, meaning the recipient address is permanently undeliverable (does not exist or is blocked). Represents a permanent delivery failure for a specific message and recipient.',
+  },
   sampleData: {
     event: 'HardBounce',
     eventId: 0,

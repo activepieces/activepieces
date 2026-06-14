@@ -9,6 +9,12 @@ const listCustomersAction = createAction({
   name: 'list-customers',
   displayName: 'List Customers',
   description: 'Lists customers from your Paddle account.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists customers in a Paddle Billing account, returning all customers by default or filtering when an exact email and/or status (active/archived) is supplied. Use to look up a customer or enumerate the customer base; the email filter matches exactly, not partially. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

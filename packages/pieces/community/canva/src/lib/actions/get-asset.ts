@@ -11,6 +11,12 @@ export const getAsset = createAction({
   name: 'get_asset',
   displayName: 'Get Asset',
   description: 'Retrieve metadata for a specific asset (image or video), including name, tags, creation date, and thumbnail.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches metadata for a single Canva library asset (image or video) by asset ID, including name, tags, timestamps, thumbnail, and import status. Pick this when you already have an asset ID and need its details or to confirm an upload finished importing; it is about library assets, not designs (use Get Design for those). Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     asset_id: Property.Dropdown({
       displayName: 'Asset',

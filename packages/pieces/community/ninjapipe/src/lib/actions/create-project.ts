@@ -8,6 +8,8 @@ export const createProject = createAction({
   name: 'create_project',
   displayName: 'Create Project',
   description: 'Creates a new project.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new project in NinjaPipe with optional description, status, priority, due date, linked contact, team members, tags, and extra settings. Only Name is required. Not idempotent: each call creates another project, so avoid retries that would duplicate it.', idempotent: false },
   props: {
     name: Property.ShortText({ displayName: 'Name', required: true }),
     description: Property.LongText({ displayName: 'Description', required: false }),

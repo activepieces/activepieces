@@ -13,6 +13,8 @@ export const contentShorten = createAction({
   displayName: 'Content Shorten',
   description:
     'Shorten your content in a different voice and style to appeal to different readers',
+  audience: 'both',
+  aiMetadata: { description: 'Condenses supplied text into a shorter version via Writesonic, controlled by engine/language/copy-count settings. Use when an agent needs to trim or compress existing content rather than expand or generate it. Each call produces fresh generated text and is billed, so it is not idempotent.', idempotent: false },
   props: {
     content_to_shorten: Property.LongText({
       displayName: 'Original Content',

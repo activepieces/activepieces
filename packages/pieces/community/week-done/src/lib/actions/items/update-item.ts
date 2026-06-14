@@ -18,6 +18,8 @@ export const updateItemAction = createAction({
   name: 'update_item',
   displayName: 'Update Item',
   description: 'Update an existing item.',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing Weekdone item by its ID, changing fields such as description, type, priority, or due date; the user/team/period filters only help locate the item. Note that changing the type requires also supplying the period. Mutates the target item, so not idempotent across differing inputs.', idempotent: false },
   props: {
     user_id: Property.Dropdown({
       auth: weekdoneAuth,

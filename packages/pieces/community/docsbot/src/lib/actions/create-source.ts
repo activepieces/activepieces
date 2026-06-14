@@ -8,6 +8,8 @@ export const createSource = createAction({
   name: 'createSource',
   displayName: 'Create Source',
   description: 'Create a new source for a bot.',
+  audience: 'both',
+  aiMetadata: { description: 'Add a new training source to a DocsBot bot so it can answer from that content. The source type selects the mode: url/sitemap/youtube/rss ingest from a URL, document/wp/csv/urls ingest from a previously uploaded file path (use Upload Source File first), and qa ingests an array of question/answer pairs. Creates a new source on each call, so it is not idempotent.', idempotent: false },
   props: docsbotCommon.createSourceProperties(),
   async run({ auth: apiKey, propsValue }) {
     // Some fields are conditionally required, so we need to use Zod validation manually here

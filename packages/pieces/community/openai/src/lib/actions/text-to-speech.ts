@@ -7,6 +7,7 @@ type Voice = 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer';
 type ResponseFormat = 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm';
 
 export const textToSpeech = createAction({
+  audience: 'human',
 	auth: openaiAuth,
 	name: 'text_to_speech',
 	displayName: 'Text-to-Speech',

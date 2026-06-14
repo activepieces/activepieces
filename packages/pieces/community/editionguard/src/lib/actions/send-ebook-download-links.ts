@@ -8,6 +8,12 @@ export const sendEbookDownloadLinks = createAction({
   displayName: 'Send eBook Download Links',
   description:
     'Creates a transaction for an eBook and sends the download link(s) to your customer. Returns the download link you can deliver by email or any other channel.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates an EditionGuard fulfillment transaction for a selected DRM-protected eBook (referenced by its resource_id) and generates protected download link(s) for a customer email. Use to deliver a purchased eBook after an order. The watermark name/email/phone inputs apply only to Social DRM (EditionMark) titles and are ignored for Adobe DRM or Readium LCP. Not idempotent: each call creates a new transaction and issues fresh links.',
+    idempotent: false,
+  },
   props: {
     resource_id: Property.Dropdown({
       displayName: 'eBook',

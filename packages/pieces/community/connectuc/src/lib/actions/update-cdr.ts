@@ -8,6 +8,8 @@ export const updateCdrAction = createAction({
     name: 'update-cdr',
     displayName: 'Update CDR',
     description: 'Update a Call Detail Record (CDR) in ConnectUC',
+    audience: 'both',
+    aiMetadata: { description: 'Updates the notes on an existing Call Detail Record (CDR) for the authenticated user, setting a required note plus optional disposition and reason. Use when an agent needs to annotate a known call with an outcome or comment; requires the CDR ID. Idempotent: it overwrites the same fields on the identified CDR, so repeating the call with the same input yields the same final state.', idempotent: true },
     props: {
         cdrId: Property.ShortText({
             displayName: 'CDR ID',

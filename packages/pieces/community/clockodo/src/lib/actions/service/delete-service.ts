@@ -7,6 +7,8 @@ export default createAction({
   name: 'delete_service',
   displayName: 'Delete Service',
   description: 'Deletes a service in clockodo',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete a clockodo service by its numeric service ID. Destructive and not safely repeatable: a second call for the same ID fails because the service is already gone. Confirm the correct ID before calling.', idempotent: false },
   props: {
     service_id: clockodoCommon.service_id(true, false),
   },

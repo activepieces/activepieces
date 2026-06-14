@@ -211,6 +211,9 @@ export const profileAddedToListOrSegmentTrigger = createTrigger({
   name: 'profile_added_to_list_or_segment',
   displayName: 'Profile Added to List/Segment',
   description: 'Triggers when a profile is added to a specific list or segment.',
+  aiMetadata: {
+    description: 'Fires when a profile joins a chosen Klaviyo list or segment, polling by the profile join timestamp. The monitored target is configurable as either a specific list or a specific segment, so each event represents one profile newly added to that particular group.',
+  },
   props,
   sampleData: {
     id: '01JZTTZ2NNC8ZCP45SM4J84RG2',

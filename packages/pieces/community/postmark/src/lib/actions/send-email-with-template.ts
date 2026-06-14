@@ -21,6 +21,12 @@ export const sendEmailWithTemplate = createAction({
   name: 'send_email_with_template',
   displayName: 'Send Email With Template',
   description: 'Send an email using a Postmark template ID and template model.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends a transactional email rendered from a saved Postmark template, populating it with a template model (the JSON of merge variables). Use when the message content lives in a Postmark template rather than being composed inline; for free-form subject and body use Send Email instead. Requires the numeric template ID and a verified From address. Not idempotent: each call dispatches a new email.',
+    idempotent: false,
+  },
   auth: postmarkAuth,
   props: {
     from: Property.ShortText({

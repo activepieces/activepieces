@@ -10,6 +10,10 @@ export const documentCompletedTrigger = createTrigger({
   name: 'document_completed',
   displayName: 'Document Completed',
   description: 'Triggers when all signers have filled in and signed the document.',
+  aiMetadata: {
+    description:
+      'Fires when a SignNow document is fully completed, meaning every signer has filled in and signed it. Use to act on a finished, signed document (e.g. download, archive, or notify).',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {

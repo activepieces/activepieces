@@ -7,6 +7,12 @@ export default createAction({
   name: 'get_absence',
   displayName: 'Get Absence',
   description: 'Retrieves a single absence from clockodo',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches one clockodo absence record by its numeric absence_id and returns that absence. Use to read the current details or status of a known absence before updating or deleting it; to find absences for a year instead, use Get Absences. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     absence_id: Property.Number({
       displayName: 'Absence ID',

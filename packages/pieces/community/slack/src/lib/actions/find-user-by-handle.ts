@@ -8,6 +8,8 @@ export const findUserByHandleAction = createAction({
   name: 'slack-find-user-by-handle',
   displayName: 'Find User by Handle',
   description: 'Finds a user by matching against their Slack handle.',
+  audience: 'both',
+  aiMetadata: { description: 'Look up a workspace member by their Slack handle (display name without the leading @) and return that member; read-only and repeatable. Pick this when you only know the handle and need the user object or ID; use Find User by ID when you already have the user ID. Scans the full member list and errors if no exact display-name match is found.', idempotent: true },
   props: {
     handle: Property.ShortText({
       displayName: 'Handle',

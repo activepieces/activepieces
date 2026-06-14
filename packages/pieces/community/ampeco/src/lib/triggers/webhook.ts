@@ -17,6 +17,9 @@ export const webhookTrigger = createTrigger({
   name: 'new_notification',
   displayName: 'New notification',
   description: 'Triggers when a webhook notification event is received from Ampeco',
+  aiMetadata: {
+    description: 'Fires when one of the selected Ampeco notification events occurs, such as a charging session starting or stopping, a charge point or EVSE changing state, an authorization, reservation, tariff, user, subscription, payment method, or balance change, a circuit consumption update, a CDR being received, or a settlement report being created. The event represents a real-time push from the Ampeco EV charging platform for the notification types subscribed to in the trigger configuration; the payload contains the raw notification body for the event that fired.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     liveMarkdown: Property.MarkDown({

@@ -13,6 +13,12 @@ export const listOrdersAction = createAction({
   name: 'list_orders',
   displayName: 'List Orders',
   description: 'Returns a list of orders from your Wayfront workspace, sorted by most recent first.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves a page of orders from the Wayfront workspace, newest first, with configurable page size and page number for pagination. Use to browse, scan, or look up recent orders. Read-only and idempotent: it returns current data without modifying anything.',
+    idempotent: true,
+  },
   props: {
     limit: Property.Number({
       displayName: 'Limit',

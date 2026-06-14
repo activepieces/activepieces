@@ -15,6 +15,8 @@ export const getChargePointLatestHardwareStatusLogAction = createAction({
   name: 'getChargePointLatestHardwareStatusLog',
   displayName: 'Resources - Charge Points - Get Charge Point Latest Hardware Status Log',
   description: 'Get the latest hardware status log entry for a charge point.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch only the single most recent hardware status log entry for a charge point, by charge point ID. Read-only and safe to retry. Use this for a current-state snapshot; to get a time range or full history use the hardware-status-logs listing action instead.', idempotent: true },
   props: {
         
   chargePoint: Property.Number({

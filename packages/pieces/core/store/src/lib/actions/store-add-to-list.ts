@@ -55,6 +55,7 @@ import { common, getScopeAndKey, PieceStoreScope } from './common';
 }
 
 export const storageAddtoList = createAction({
+  audience: 'human',
 	name: 'add_to_list',
 	displayName: 'Add To List',
 	description: 'Add Items to a list.',

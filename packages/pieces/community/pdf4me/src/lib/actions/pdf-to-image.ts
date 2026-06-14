@@ -7,6 +7,11 @@ export const pdfToImageAction = createAction({
   name: 'pdf_to_image',
   displayName: 'Convert PDF to Image',
   description: 'Converts one or more pages of a PDF file to an image.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Renders selected pages of a PDF as images via the PDF4me API; the page selection accepts a single page, a comma list, a range, or "all", and the output format (PNG, JPG, TIFF, BMP) and width in pixels are configurable. Use when an agent needs a rasterized image of PDF pages rather than the PDF itself; the PDF file is required. A pure transformation that is idempotent — the same input and settings always produce the same image(s) with no stored side effect.',
+    idempotent: true,
+  },
   props: {
     file: Property.File({
       displayName: 'PDF File',

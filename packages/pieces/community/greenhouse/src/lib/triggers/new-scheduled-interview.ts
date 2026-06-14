@@ -83,6 +83,10 @@ export const newScheduledInterviewTrigger = createTrigger({
   name: 'new_scheduled_interview',
   displayName: 'New Scheduled Interview',
   description: 'Triggers when a new scheduled interview is created within the configured time window.',
+  aiMetadata: {
+    description:
+      'Fires when a newly created interview is scheduled to start within a configurable look-ahead window (in days), representing an upcoming interview for an application. Use for interview reminders or prep; only interviews starting within the time window are emitted.',
+  },
   props: {
     days_ahead: Property.Number({
       displayName: 'Time Window (Days)',

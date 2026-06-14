@@ -9,6 +9,8 @@ export const getLeadAction = createAction({
     name: 'get-lead',
     displayName: 'Get Lead',
     description: 'Retrieve details of a specific lead.',
+    audience: 'both',
+    aiMetadata: { description: 'Retrieves the full record for a single lead by its lead ID, including contact, company, verification, and list details. Use to inspect a known lead before updating or acting on it. Requires the lead ID; read-only and idempotent.', idempotent: true },
     props: {
         lead_id: leadSelectDropdownProp,
     },

@@ -116,6 +116,7 @@ export function createCustomApiCallAction<
   authLocation?: 'headers' | 'queryParams';
 }) {
   return createAction({
+    audience: 'human',
     name: name ? name : 'custom_api_call',
     displayName: displayName ? displayName : 'Custom API Call',
     description: description

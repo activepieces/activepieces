@@ -7,6 +7,9 @@ export const subscriptionUpdatedTrigger = createTrigger({
   name: 'subscription_updated',
   displayName: 'Subscription Updated',
   description: 'Triggers when a subscription\'s data is changed or updated',
+  aiMetadata: {
+    description: 'Fires whenever a subscription in Lemon Squeezy changes (status change, plan/variant swap, renewal, or other attribute update). Represents the subscription in its updated state; this is a broad event covering many kinds of change.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     store_id: createStoreDropdownProperty()

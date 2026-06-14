@@ -8,6 +8,8 @@ export const createContractWorkspace = createAction({
     name: 'create_contract_workspace',
     displayName: 'Create Contract Workspace',
     description: 'Create a new contract workspace in SAP Ariba Contracts.',
+    audience: 'both',
+    aiMetadata: { description: 'Create a new contract workspace in a SAP Ariba Contracts realm, acting on behalf of a user (requires realm, user, password adapter, and a title). Use to start a new contract; optional fields set template, dates, amount/currency, owner, and supplier. Not idempotent: each call creates a separate workspace.', idempotent: false },
     props: {
         realm: Property.ShortText({
             displayName: 'Realm',

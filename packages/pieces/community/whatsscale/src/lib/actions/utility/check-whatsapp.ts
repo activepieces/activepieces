@@ -9,6 +9,8 @@ export const checkWhatsappAction = createAction({
   name: 'whatsscale_check_whatsapp',
   displayName: 'Check WhatsApp Number',
   description: 'Check if a phone number has WhatsApp',
+  audience: 'both',
+  aiMetadata: { description: 'Checks whether a given phone number is registered on WhatsApp for the selected session. Use to validate or filter recipients before attempting to send any message; accepts the number in nearly any format with or without a country-code prefix. Read-only and idempotent.', idempotent: true },
   props: {
     session: whatsscaleProps.session,
     phone: Property.ShortText({

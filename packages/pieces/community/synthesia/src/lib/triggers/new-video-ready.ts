@@ -11,6 +11,10 @@ export const newVideoReady = createTrigger({
   name: 'newVideoReady',
   displayName: 'New Video Ready',
   description: 'Trigger when a new video is completed in Synthesia',
+  aiMetadata: {
+    description:
+      'Fires when a Synthesia video finishes rendering and becomes ready (the video.completed event), delivered via a registered webhook. Represents a single completed video; use it to act on a video once generation has finished.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,

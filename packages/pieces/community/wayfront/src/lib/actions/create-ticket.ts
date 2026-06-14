@@ -14,6 +14,12 @@ export const createTicketAction = createAction({
   name: 'create_ticket',
   displayName: 'Create Ticket',
   description: 'Creates a new support ticket for a client in Wayfront.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new support ticket for a specific Wayfront client, with a subject and optional note, status, assigned employees, tags, linked order reference, and metadata. Use to open a support case from an inbound request. Requires the client user ID and a subject. Not idempotent: each call opens a separate ticket.',
+    idempotent: false,
+  },
   props: {
     user_id: clientsDropdown,
     subject: Property.ShortText({

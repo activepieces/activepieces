@@ -9,6 +9,8 @@ export const addNoteToConversationAction = createAction({
 	name: 'add_note',
 	displayName: 'Add Note to Conversation',
 	description: 'Adds an internal note to a conversation.',
+	audience: 'both',
+	aiMetadata: { description: 'Appends an internal operator-only note message to an existing Crisp conversation, identified by website ID and conversation session ID. Use to record private context the customer cannot see. Not idempotent: each call posts a new note.', idempotent: false },
 	props: {
 		websiteId: websiteIdProp,
 		sessionId: sessionIdProp,

@@ -8,6 +8,9 @@ export const newTaskTrigger = createTrigger({
   name: 'new_task',
   displayName: 'New Task',
   description: 'Fires when a new task is added to any workspace',
+  aiMetadata: {
+    description: 'Fires when a new task is created in the selected Podio workspace (space), via a task.create webhook on that space. Represents a newly added task.',
+  },
   props: {
     orgId: dynamicOrgProperty,
     spaceId: dynamicSpaceProperty,

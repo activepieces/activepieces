@@ -9,6 +9,8 @@ export const updateScreen = createAction({
   name: 'updateScreen',
   displayName: 'Update Screen',
   description: "Update a screen's description",
+  audience: 'both',
+  aiMetadata: { description: "Set the description of a specific Zeplin screen, identified by project ID and screen ID. Use to revise the textual description shown for a screen. Idempotent: repeating the call with the same description leaves the screen in the same state.", idempotent: true },
   props: {
     projectId: project_idProp,
     screenId: screen_idProp,

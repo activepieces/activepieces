@@ -10,6 +10,8 @@ export const sendImageToChannelAction = createAction({
   name: 'whatsscale_send_image_to_channel',
   displayName: 'Send an Image to a Channel',
   description: 'Broadcast an image to a WhatsApp Channel selected from the dropdown.',
+  audience: 'both',
+  aiMetadata: { description: 'Broadcasts an image to a WhatsApp Channel whose ID is chosen from the session channel list, with an optional caption. Pick this for one-to-many channel broadcasts rather than the contact/group/CRM variants used for direct chats. Requires a directly downloadable image URL. Not idempotent: each call posts another image to the channel.', idempotent: false },
   props: {
     session: whatsscaleProps.session,
     channel: whatsscaleProps.channel,

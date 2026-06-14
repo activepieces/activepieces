@@ -10,6 +10,12 @@ export const saveQueueGroupAction = createAction({
   displayName: 'Save Queue Group',
   description:
     'Create or update a queue group. Pass an existing group ID to edit it; omit it to create a new one. Requires the Queue Groups feature on the account.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new queue group or update an existing one (pass a group ID to edit, omit it to create), configuring its name, accepted file extensions, printer/model/group restrictions, visibility, and approval rules. When editing by ID it overwrites the group with the supplied settings, so re-running with the same ID is idempotent; omitting the ID always creates a new group. Requires the Queue Groups account feature.',
+    idempotent: true,
+  },
   props: {
     groupId: Property.Number({
       displayName: 'Group ID (edit existing)',

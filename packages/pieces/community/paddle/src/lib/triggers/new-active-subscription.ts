@@ -9,6 +9,10 @@ export const newActiveSubscription = createTrigger({
   displayName: 'New Active Subscription',
   description:
     'Triggers when a subscription activates — a trial converts or the first payment succeeds.',
+  aiMetadata: {
+    description:
+      'Fires on the Paddle subscription.activated event, when a subscription becomes active — for example a trial converts to paid or the first payment succeeds. Represents a newly live recurring subscription for a customer.',
+  },
   props: {},
   sampleData: {
     event_id: 'evt_01abc123',

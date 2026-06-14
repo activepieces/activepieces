@@ -11,6 +11,12 @@ export const sliteReplaceDocAction = createAction({
   displayName: 'Replace Doc',
   description:
     'Replaces the entire content and/or title of a doc. Fields you leave blank are kept unchanged.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Overwrites an existing Slite doc identified by its note id, replacing the whole body (Markdown or HTML) and/or the title; omitted fields are left untouched. Use this for a full-content rewrite rather than a targeted block edit (see Update Doc for that). Idempotent: applying the same input to the same doc id leaves it in the same final state.',
+    idempotent: true,
+  },
   props: {
     note_id: sliteProps.noteId({ required: true }),
     title: Property.ShortText({

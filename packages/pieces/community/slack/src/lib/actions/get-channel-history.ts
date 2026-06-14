@@ -11,6 +11,8 @@ export const getChannelHistory = createAction({
   displayName: 'Get channel history',
   description:
     'Retrieve all messages from a specific channel ("conversation") between specified timestamps',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve top-level messages from a known channel, paging through the full range and optionally bounded by oldest/latest timestamps; read-only and repeatable. Use this to read a channel you already have the ID for; use Search messages to find messages by content across the workspace, or Retrieve Thread Messages to read replies within a thread.', idempotent: true },
   props: {
     info: singleSelectChannelInfo,
     channel: slackChannel(true),

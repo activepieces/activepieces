@@ -11,6 +11,8 @@ export const createOrUpdateContactAction = createAction({
 	name: 'create_update_contact',
 	displayName: 'Create/Update Contact',
 	description: 'Creates a new contact or updates an existing contact.',
+	audience: 'both',
+	aiMetadata: { description: 'Upserts a person profile in a Crisp website by email: updates the existing contact if one matches, otherwise creates it. Use to keep contact details (name, phone, address, company, website, notepad) in sync. Idempotent: keyed on the stable email, so repeating with the same input yields the same contact.', idempotent: true },
 	props: {
 		websiteId: websiteIdProp,
 		email: Property.ShortText({

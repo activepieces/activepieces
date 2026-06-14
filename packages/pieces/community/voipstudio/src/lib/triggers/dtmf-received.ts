@@ -9,6 +9,10 @@ export const dtmfReceived = createTrigger({
   displayName: 'DTMF Received',
   description:
     'Triggered when a DTMF (Dual-Tone Multi-Frequency) tone is received during a call',
+  aiMetadata: {
+    description:
+      'Fires when a DTMF keypad tone is received during an active VoIPstudio call, representing caller input such as a menu selection or PIN digit (the pressed tone and its target are included). Requires the DTMF Received webhook event to be enabled in the VoIPstudio integrations panel.',
+  },
   props: {
     instruction: Property.MarkDown({
       value: `

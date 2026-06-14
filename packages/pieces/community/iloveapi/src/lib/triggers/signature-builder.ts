@@ -6,6 +6,7 @@ export type SignatureTriggerSpec = {
   name: string;
   displayName: string;
   description: string;
+  aiMetadata?: { description: string };
   event: string;
   sampleData: unknown;
 };
@@ -16,6 +17,7 @@ export function buildSignatureTrigger(spec: SignatureTriggerSpec) {
     name: spec.name,
     displayName: spec.displayName,
     description: spec.description,
+    aiMetadata: spec.aiMetadata,
     type: TriggerStrategy.WEBHOOK,
     props: {
       instructions: Property.MarkDown({

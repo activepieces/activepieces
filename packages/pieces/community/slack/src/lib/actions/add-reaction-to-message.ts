@@ -16,6 +16,8 @@ export const addRectionToMessageAction = createAction({
   name: 'slack-add-reaction-to-message',
   displayName: 'Add Reaction to Message',
   description: 'Add an emoji reaction to a message.',
+  audience: 'both',
+  aiMetadata: { description: 'Add an emoji reaction to a specific message identified by its channel and timestamp, optionally reacting as the authenticated user instead of the bot. Adding the same reaction twice has no extra effect (Slack returns an already-reacted error), so the end state is stable. Provide the emoji name without colons, e.g. thumbsup.', idempotent: true },
 
   props: {
     info: singleSelectChannelInfo,

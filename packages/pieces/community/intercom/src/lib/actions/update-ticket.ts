@@ -11,6 +11,8 @@ export const updateTicketAction = createAction({
 	name: 'update-ticket',
 	displayName: 'Update Ticket',
 	description: 'Updates an existing ticket.',
+	audience: 'both',
+	aiMetadata: { description: 'Modify an existing ticket by ID: change its open flag, state (in progress / waiting on customer / resolved), snooze time, assigned admin, and ticket-type attributes. Updating with the same values converges on the same result, so it is effectively idempotent. To create a new ticket instead, use Create Ticket.', idempotent: true },
 	props: {
 		ticketTypeId: ticketTypeIdProp('Ticket Type', true),
 		ticketId: ticketIdProp('Ticket', true),

@@ -6,6 +6,9 @@ export const conversationRated = createTrigger({
 	name: 'conversationRated',
 	displayName: 'Conversation was rated',
 	description: 'Triggers when a conversation is rated',
+	aiMetadata: {
+		description: 'Fires when a customer submits a rating for a conversation in Intercom, such as a CSAT score and optional remark left after the conversation. Outputs the conversation object including its conversation_rating details.',
+	},
 	props: {},
 	auth: intercomAuth,
 	type: TriggerStrategy.APP_WEBHOOK,

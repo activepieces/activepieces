@@ -9,6 +9,12 @@ export const archivePrintJobsAction = createAction({
   name: 'archive_print_jobs',
   displayName: 'Archive Print Jobs',
   description: 'Archive one or more completed print jobs (removes them from the active history view).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Archive one or more completed print jobs by ID, removing them from the active history view, with an optional reason note. Use this to clean up finished jobs from the working history; archiving an already-archived job has no further effect, so the state change is idempotent per job.',
+    idempotent: true,
+  },
   props: {
     jobIds: Property.Array({
       displayName: 'Job IDs',

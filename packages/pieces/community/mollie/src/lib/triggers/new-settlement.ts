@@ -125,6 +125,10 @@ export const mollieNewSettlement = createTrigger({
   name: 'new_settlement',
   displayName: 'New Settlement',
   description: 'Fires upon a new settlement event (e.g. payout)',
+  aiMetadata: {
+    description:
+      'Fires when a new settlement appears in Mollie, representing a payout of accumulated payments (minus fees, refunds, and chargebacks) to the merchant bank account. Polls the settlement list and emits each new settlement. Use for reconciliation and payout-driven accounting.',
+  },
 
   type: TriggerStrategy.POLLING,
 

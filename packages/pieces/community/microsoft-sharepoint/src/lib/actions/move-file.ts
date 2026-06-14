@@ -16,6 +16,11 @@ export const moveFileAction = createAction({
   name: 'microsoft_sharepoint_move_file',
   displayName: 'Move File',
   description: 'Move a file from one folder to another within the same drive.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Moves a file to a different folder within the same SharePoint drive, optionally renaming it in the process; select the root to move to the drive top level. Use to relocate an existing file rather than copy it. Idempotent: moving a file already at the destination (with the same name) leaves it where it is.',
+    idempotent: true,
+  },
   props: {
     siteId: microsoftSharePointCommon.siteId,
     driveId: microsoftSharePointCommon.driveId,

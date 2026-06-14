@@ -8,6 +8,8 @@ export const deleteFormAction = createAction({
   name: 'delete_form',
   displayName: 'Delete Form',
   description: 'Delete a specific form.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes a Feathery form identified by its form ID; this cannot be undone. Use when an agent must remove a form entirely. Requires the confirm-delete flag to be set or the call errors. Not idempotent — the form is removed once and subsequent calls target a non-existent form.', idempotent: false },
   props: {
     form_id: Property.Dropdown({
       displayName: 'Form',

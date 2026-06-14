@@ -13,6 +13,8 @@ export const partnerInviteDeleteAction = createAction({
   name: 'partnerInviteDelete',
   displayName: 'Resources - Partner Invites - Partner Invite Delete',
   description: 'Delete an invite.',
+  audience: 'both',
+  aiMetadata: { description: 'Deletes one partner invite in AMPECO by its numeric ID. Use to revoke or remove an outstanding invite; requires the partner invite ID. Idempotent in effect: the end state is the invite being gone, though a repeat call may report it as already removed.', idempotent: true },
   props: {
         
   partnerInvite: Property.Number({

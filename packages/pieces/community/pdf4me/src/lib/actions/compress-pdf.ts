@@ -7,6 +7,11 @@ export const compressPdfAction = createAction({
   name: 'compress_pdf',
   displayName: 'Compress PDF',
   description: 'Reduces the file size of a PDF document while maintaining readability.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Reduces the size of a PDF via the PDF4me Optimize API, with an optional compression profile that trades size against quality (web, print, grayscale, or aggressive-maximum modes). Use when an agent needs to shrink a PDF for storage or delivery; the PDF file is required. A pure transformation that is idempotent — the same input and profile always yield the same optimized PDF with no stored side effect.',
+    idempotent: true,
+  },
   props: {
     file: Property.File({
       displayName: 'PDF File',

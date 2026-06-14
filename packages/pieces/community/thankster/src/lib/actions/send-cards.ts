@@ -6,6 +6,8 @@ export const sendCards = createAction({
   name: 'send_handwritten_cards',
   displayName: 'Send Cards',
   description: 'Automatically send handwritten cards.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a physical handwritten card via Thankster, using one of the account\'s saved card templates, to a recipient mailing address. Choose this to mail a real card (thank-you, greeting, marketing) from an automation. Requires a valid template ID plus sender and recipient name/address; the optional text and image-URL fields override the template\'s corresponding text/image boxes, otherwise the template\'s own content is used. Not idempotent — each call places a new card order.', idempotent: false },
   auth: thanksterAuth,
   props: {
     templateID: Property.Dropdown({

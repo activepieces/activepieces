@@ -8,6 +8,12 @@ export const getEnabledUsersAction = createAction({
     name: 'get_enabled_users',
     displayName: 'Get Enabled Users',
     description: 'Retrieves a single page of enabled users (accountEnabled eq true).',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Fetches a single page (up to 999) of directory users whose accounts are enabled. Read-only and idempotent. Pick List Enabled Users instead when you need the complete set across all pages, or List Users for arbitrary OData filters.',
+        idempotent: true,
+    },
     props: {
         top: Property.Number({
             displayName: 'Top',

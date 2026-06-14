@@ -14,6 +14,7 @@ import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const createChatCompletionAction = createAction({
+  audience: 'human',
   auth: perplexityAiAuth,
   name: 'ask-ai',
   displayName: 'Ask AI',

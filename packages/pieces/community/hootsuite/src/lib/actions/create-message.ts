@@ -8,6 +8,8 @@ export const createMessageAction = createAction({
   name: 'create_message',
   displayName: 'Schedule Post',
   description: 'Schedules or immediately publishes a post to one or more social media profiles.',
+  audience: 'both',
+  aiMetadata: { description: 'Publishes a post to one or more connected Hootsuite social profiles, either immediately or scheduled for a future time depending on whether a scheduled time is provided (leave it empty to post now; a future time must be at least 5 minutes ahead and in UTC). Use to create and distribute social media content across networks. Not idempotent: each call creates a new post, so repeating it produces duplicate posts. Requires the target social profile IDs and the post text.', idempotent: false },
   props: {
     socialProfileIds: Property.MultiSelectDropdown({
       displayName: 'Social Profiles',

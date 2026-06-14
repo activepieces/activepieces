@@ -56,6 +56,10 @@ export const structureRunSucceeds = createTrigger({
   name: 'structureRunSucceeds',
   displayName: 'Structure Run Succeeds',
   description: '',
+  aiMetadata: {
+    description:
+      'Fires when a run for the selected Griptape Cloud structure completes with status SUCCEEDED. Polls for newly succeeded runs; use when you only want to react to successful structure runs and ignore failures or cancellations.',
+  },
   props,
   sampleData: {},
   type: TriggerStrategy.POLLING,

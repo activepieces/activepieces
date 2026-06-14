@@ -11,6 +11,11 @@ export const getSession = createAction({
   name: 'get-session',
   displayName: 'Get Session',
   description: 'Retrieve a specific session by ID.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Fetch a single Hedy meeting session by its ID (must be prefixed with "sess_"). Use when you already have a session ID and need its details. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     sessionId: commonProps.sessionId,
   },

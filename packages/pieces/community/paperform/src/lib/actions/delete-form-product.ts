@@ -9,6 +9,8 @@ export const deleteFormProduct = createAction({
   name: 'deleteFormProduct',
   displayName: 'Delete Form Product',
   description: 'Deletes an existing form product.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes a product, identified by its SKU, from the specified Paperform form. Use to remove a store item; this is destructive and not idempotent.', idempotent: false },
   props: {
     formId: paperformCommonProps.formId,
     productSku: paperformCommonProps.productSku,

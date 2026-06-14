@@ -9,6 +9,10 @@ export function normalizePieceName(piece: string): string {
     : `@activepieces/piece-${shortName}`;
 }
 
+export function isConnectionHealthy(status: string): boolean {
+  return status === AppConnectionStatus.ACTIVE;
+}
+
 export function getTextFromParts(parts: ChatUIMessage['parts']): string {
   return parts
     .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
@@ -36,5 +40,3 @@ export type ProjectPickerData = {
     id: string;
   }>;
 };
-
-export type { PlanProgressData } from '@/features/chat/lib/chat-store-types';

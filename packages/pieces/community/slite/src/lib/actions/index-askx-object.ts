@@ -10,6 +10,12 @@ export const sliteIndexAskxObjectAction = createAction({
   displayName: 'Index AskX Object',
   description:
     'Sends an object to be indexed by AskX for your custom source. Note: Slite has deprecated this endpoint.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Upserts a single object (title plus Markdown or HTML content) into a custom AskX data source so it becomes searchable by Ask Question, keyed by the source's root id and the object's own id. Note: Slite has deprecated this endpoint. Idempotent: re-sending the same root id and object id overwrites that indexed entry rather than adding a duplicate.",
+    idempotent: true,
+  },
   props: {
     root_id: Property.ShortText({
       displayName: 'Root ID',

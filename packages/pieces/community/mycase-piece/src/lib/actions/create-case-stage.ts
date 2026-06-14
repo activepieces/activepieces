@@ -7,6 +7,8 @@ export const createCaseStage = createAction({
   name: 'create_case_stage',
   displayName: 'Create Case Stage',
   description: 'Creates a new case stage in MyCase',
+  audience: 'both',
+  aiMetadata: { description: 'Always inserts a new case stage with the given name, which can then be assigned to cases. Not idempotent: calling twice with the same name creates two stages, so verify the stage does not already exist before creating.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Case Stage Name',

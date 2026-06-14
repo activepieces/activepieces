@@ -15,6 +15,8 @@ export const getDowntimePeriodNoticesAction = createAction({
   name: 'getDowntimePeriodNotices',
   displayName: 'Resources - Downtime Period Notices - Get Downtime Period Notices',
   description: 'Get all Downtime Period Notices.',
+  audience: 'both',
+  aiMetadata: { description: 'List downtime period notices, optionally filtered by type (downtime or exempt) and auto-paginated across all pages. Use to browse or find notices; read-only and safe to retry. To fetch one known notice by ID use the get action instead.', idempotent: true },
   props: {
         
   filter__type: Property.StaticDropdown({
