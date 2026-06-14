@@ -67,6 +67,8 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS]: '300000',
     [AppSystemProp.SCIM_DEFAULT_PROJECT_ROLE]: DefaultProjectRole.EDITOR,
     [AppSystemProp.NETWORK_MODE]: NetworkMode.UNRESTRICTED,
+    [AppSystemProp.LOG_SAMPLE_RATE_INFO]: '100',
+    [AppSystemProp.LOG_KEEP_SLOW_MS]: '2000',
 }
 
 let globalLogger: FastifyBaseLogger

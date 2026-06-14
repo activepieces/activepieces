@@ -1,6 +1,6 @@
 import { rm, writeFile } from 'node:fs/promises'
 import path, { dirname, join } from 'node:path'
-import { fileSystemUtils, memoryLock } from '@activepieces/server-utils'
+import { type ApLogger, fileSystemUtils, memoryLock, wideEvent } from '@activepieces/server-utils'
 import {
     ExecutionMode,
     getPieceNameFromAlias,
@@ -14,20 +14,16 @@ import {
     tryCatch,
     WorkerToApiContract,
 } from '@activepieces/shared'
-import { trace } from '@opentelemetry/api'
-import { Logger } from 'pino'
 import writeFileAtomic from 'write-file-atomic'
 import { workerSettings } from '../../config/worker-settings'
 import { getGlobalCacheCommonPath, getGlobalCachePathLatestVersion } from '../cache-paths'
 import { bunRunner } from '../code/bun-runner'
 
-const tracer = trace.getTracer('piece-installer')
-
 const usedPiecesMemoryCache: Record<string, boolean> = {}
 const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 const piecePath = (rootWorkspace: string, piece: PiecePackage) => join(rootWorkspace, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 
-export const pieceInstaller = (log: Logger, apiClient: WorkerToApiContract) => ({
+export const pieceInstaller = (log: ApLogger, apiClient: WorkerToApiContract) => ({
     async install({ pieces, includeFilters }: InstallParams): Promise<void> {
         const groupedPieces = groupPiecesByPackagePath(pieces)
         const installPromises = Object.entries(groupedPieces).map(async ([packagePath, piecesInGroup]) => {
@@ -52,7 +48,7 @@ function getCustomPiecesPath(platformId: string): string {
     }
 }
 
-async function installPieces(rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean, log: Logger, apiClient: WorkerToApiContract): Promise<void> {
+async function installPieces(rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean, log: ApLogger, apiClient: WorkerToApiContract): Promise<void> {
     const devPieces = workerSettings.getSettings().DEV_PIECES
     const nonDevPieces = pieces.filter(piece => !devPieces.includes(getPieceNameFromAlias(piece.pieceName)))
     const { piecesToInstall } = await partitionPiecesToInstall(rootWorkspace, nonDevPieces)
@@ -90,11 +86,9 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
                 piecePackage: piece,
             })))
 
-            await tracer.startActiveSpan('pieceInstaller.bunInstall', async (span) => {
-                try {
-                    span.setAttribute('pieces.count', piecesToInstall.length)
-                    span.setAttribute('pieces.rootWorkspace', rootWorkspace)
-
+            await wideEvent.timed({
+                name: 'bunInstall',
+                fn: async () => {
                     const { error: batchError } = await tryCatch(async () => bunRunner(log).install({
                         path: rootWorkspace,
                         filtersPath: includeFilters ? piecesToInstall.map(relativePiecePath) : [],
@@ -108,8 +102,6 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
                         }, '[pieceInstaller] Installed registry pieces using bun')
                         return
                     }
-
-                    span.recordException(batchError instanceof Error ? batchError : new Error(String(batchError)))
 
                     if (piecesToInstall.length === 1) {
                         log.error({ rootWorkspace, error: batchError }, '[pieceInstaller] Piece installation failed, rolling back')
@@ -134,10 +126,7 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
                         rootWorkspace,
                         piecesCount: piecesToInstall.length,
                     }, '[pieceInstaller] Installed registry pieces using bun (individual fallback)')
-                }
-                finally {
-                    span.end()
-                }
+                },
             })
         },
     })
@@ -153,7 +142,7 @@ async function rollbackInstallation(rootWorkspace: string, pieces: PiecePackage[
 async function tryInstallPiecesIndividually(
     rootWorkspace: string,
     pieces: PiecePackage[],
-    log: Logger,
+    log: ApLogger,
 ): Promise<PiecePackage[]> {
     const failures: PiecePackage[] = []
     for (const piece of pieces) {

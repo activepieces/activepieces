@@ -1,3 +1,4 @@
+import { wideEvent } from '@activepieces/server-utils'
 import { ApId,
     apId,
     AppConnectionScope,
@@ -16,6 +17,7 @@ import { z } from 'zod'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { applicationEvents } from '../../helper/application-events'
+import { auditEvents } from '../../helper/audit-events'
 import { securityHelper } from '../../helper/security-helper'
 import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 
@@ -79,10 +81,19 @@ const globalConnectionController: FastifyPluginAsyncZod = async (app) => {
             externalIds: undefined,
         })
 
-        return {
+        const appConnectionsWithoutSensitiveData = {
             ...appConnections,
             data: appConnections.data.map(appConnectionService(request.log).removeSensitiveData),
         }
+        wideEvent.audit(auditEvents.globalConnectionListed({
+            actor: auditEvents.actorFromPrincipal(request.principal),
+            target: {
+                type: 'platform',
+                id: request.principal.platform.id,
+                connectionCount: appConnectionsWithoutSensitiveData.data.length,
+            },
+        }))
+        return appConnectionsWithoutSensitiveData
     },
     )
 

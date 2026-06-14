@@ -1,5 +1,5 @@
+import { type ApLogger } from '@activepieces/server-utils'
 import { FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PiecePackage, tryCatch, WorkerToApiContract } from '@activepieces/shared'
-import { Logger } from 'pino'
 import { CodeArtifact } from '../../cache/code/code-builder'
 import { pieceCache, PieceNotFoundError } from '../../cache/pieces/piece-cache'
 import { provisioner } from '../../cache/provisioner'
@@ -9,7 +9,7 @@ export async function provisionFlowPieces(params: {
     platformId: string
     flowId: string
     projectId: string
-    log: Logger
+    log: ApLogger
     apiClient: WorkerToApiContract
 }): Promise<boolean> {
     const { flowVersion, platformId, flowId, projectId, log, apiClient } = params
@@ -34,7 +34,7 @@ export async function provisionFlowPieces(params: {
     return true
 }
 
-export async function extractPiecePackages(flowVersion: FlowVersion, platformId: string, log: Logger, apiClient: WorkerToApiContract): Promise<PiecePackage[]> {
+export async function extractPiecePackages(flowVersion: FlowVersion, platformId: string, log: ApLogger, apiClient: WorkerToApiContract): Promise<PiecePackage[]> {
     const pieceSteps = flowStructureUtil.getAllSteps(flowVersion.trigger)
         .filter((step) => step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE)
 
