@@ -14,6 +14,8 @@ export const chargePointAvailablePersonalSmartChargingModesListingAction = creat
   name: 'chargePointAvailablePersonalSmartChargingModesListing',
   displayName: 'Resources - Charge Points - Available Personal Smart Charging Modes Listing',
   description: 'Get all available personal smart charging modes.',
+  audience: 'both',
+  aiMetadata: { description: 'List the personal smart-charging modes that a given charge point supports, by charge point ID. Read-only and safe to retry. Use this to discover valid modes before setting them with the personal-smart-charging-preferences update action.', idempotent: true },
   props: {
         
   chargePoint: Property.Number({

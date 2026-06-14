@@ -4,6 +4,9 @@ export const meetingCancelled = createTrigger({
   name: 'meeting_cancelled',
   displayName: 'Meeting Cancelled',
   description: 'Triggers when a meeting booked via the scheduling page is cancelled',
+  aiMetadata: {
+    description: 'Fires when a meeting booked through an Avoma scheduling page is cancelled (the MEETING_BOOKED_VIA_SCHEDULER_CANCELED event), providing the cancellation reason along with the booker and original meeting details. Requires configuring the corresponding webhook in Avoma settings.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     setupInstructions: Property.MarkDown({

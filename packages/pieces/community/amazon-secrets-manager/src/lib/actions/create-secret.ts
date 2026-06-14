@@ -11,6 +11,12 @@ export const createSecret = createAction({
   name: 'createSecret',
   displayName: 'Create Secret',
   description: 'Creates a new secret.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new secret in AWS Secrets Manager in the connection\'s region, storing the supplied text value under a given name with optional description and tags. Use when provisioning a brand-new credential or config value to store. Not idempotent: the name must be unique, and re-running fails (or duplicates) rather than updating — use Update Secret to change an existing secret.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Secret Name',

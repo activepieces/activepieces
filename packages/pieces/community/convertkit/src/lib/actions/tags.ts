@@ -30,6 +30,12 @@ export const listTags = createAction({
   name: 'tags_list_tags',
   displayName: 'List Tags',
   description: 'Returns a list of all tags',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists every tag in the account with its ID and name. Use it to find a tag ID before tagging or untagging subscribers, or before listing a tag\'s subscriptions. Takes no inputs; read-only and idempotent.',
+    idempotent: true,
+  },
   props: {},
   run(context) {
     return fetchTags(context.auth.secret_text);
@@ -41,6 +47,12 @@ export const createTag = createAction({
   name: 'tags_create_tag',
   displayName: 'Create Tag',
   description: 'Create a tag',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new tag with the given name. Not idempotent — calling it again can create a duplicate, so check List Tags for an existing tag first.',
+    idempotent: false,
+  },
   props: {
     name,
   },
@@ -48,7 +60,7 @@ export const createTag = createAction({
     const url = TAGS_API_ENDPOINT;
 
     const body = {
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
       tag: { name: context.propsValue.name },
     };
 
@@ -76,6 +88,12 @@ export const tagSubscriber = createAction({
   name: 'tags_tag_subscriber',
   displayName: 'Tag Subscriber',
   description: 'Tag a subscriber',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Applies one or more existing tags to a subscriber by email address (subscribing the email to the first tag and attaching the rest), optionally setting first name and custom fields; at least one tag is required. Effectively idempotent — re-applying the same tags converges to the same state.',
+    idempotent: true,
+  },
   props: {
     email: subscriberEmail,
     // tagId: tag,
@@ -97,7 +115,7 @@ export const tagSubscriber = createAction({
       first_name: firstName,
       tags,
       fields,
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
     };
 
     const request: HttpRequest = {
@@ -123,6 +141,12 @@ export const removeTagFromSubscriberByEmail = createAction({
   name: 'tags_remove_tag_from_subscriber_by_email',
   displayName: 'Remove Tag From Subscriber By Email',
   description: 'Remove a tag from a subscriber by email',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Removes a single tag from a subscriber identified by email address. Use the By Id variant when the numeric subscriber ID is already known. Treated as non-idempotent — a retry may error once the tag is already removed, though the end state is the same.',
+    idempotent: false,
+  },
   props: {
     email: subscriberEmail,
     tagId: tagIdByEmail,
@@ -133,7 +157,7 @@ export const removeTagFromSubscriberByEmail = createAction({
 
     const body = {
       email,
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
     };
 
     const request: HttpRequest = {
@@ -157,6 +181,12 @@ export const removeTagFromSubscriberById = createAction({
   name: 'tags_remove_tag_from_subscriber_by_id',
   displayName: 'Remove Tag From Subscriber By Id',
   description: 'Remove a tag from a subscriber by id',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Removes a single tag from a subscriber identified by numeric subscriber ID. Use the By Email variant when only an address is known. Treated as non-idempotent — a retry may error once the tag is already removed.',
+    idempotent: false,
+  },
   props: {
     subscriberId,
     tagId: tagIdBySubscriberId,
@@ -167,7 +197,7 @@ export const removeTagFromSubscriberById = createAction({
 
     const body = {
       id: subscriberId,
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
     };
 
     const request: HttpRequest = {
@@ -191,6 +221,12 @@ export const listSubscriptionsToATag = createAction({
   name: 'tags_list_subscriptions_to_tag',
   displayName: 'List Subscriptions To Tag',
   description: 'List all subscriptions to a tag',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists the subscribers subscribed to a specific tag, with paging, sort order, and subscriber-state filtering. Use List Tags first to find the tag ID. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     tagId: tag,
     page: tagsPageNumber,
@@ -202,7 +238,7 @@ export const listSubscriptionsToATag = createAction({
     const url = `${TAGS_API_ENDPOINT}/${tagId}/subscriptions?`;
 
     const body = {
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
       page,
       sort_order: sortOrder,
       subscriber_state: subscriberState,

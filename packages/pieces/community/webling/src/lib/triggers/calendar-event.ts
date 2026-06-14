@@ -35,6 +35,10 @@ export const onEventChanged = createTrigger({
   name: 'onEventChanged',
   displayName: 'New or Updated Event',
   description: 'Triggers when an event is added or updated.',
+  aiMetadata: {
+    description:
+      'Fires when a calendar event in Webling is created or updated since the last poll, optionally scoped to a specific calendar. Represents a new or modified event you may want to act on.',
+  },
   props: {
     calendarId: weblingCommon.calendarDropdown(),
   },

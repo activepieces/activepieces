@@ -8,6 +8,8 @@ export const createRealtimePaymentAction = createAction({
   name: 'create_realtime_payment',
   displayName: 'Create Realtime Payment',
   description: 'Create a real-time payment against a credit card or bank account',
+  audience: 'both',
+  aiMetadata: { description: 'Charges a one-off real-time payment against a credit card or bank account in Pinch Payments. Bill either an existing payer (set Use Existing Payer and select the payer) or new payer details supplied inline. Amount is required and given in cents. Use when an agent needs to take an immediate payment rather than schedule one. Not idempotent: each call attempts a new charge; supply a nonce to guard against accidental double submissions.', idempotent: false },
   props: {
     payerId: Property.Dropdown({
       displayName: 'Payer',

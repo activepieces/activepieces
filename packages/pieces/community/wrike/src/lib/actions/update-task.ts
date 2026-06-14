@@ -7,6 +7,8 @@ export const updateTask = createAction({
     name: 'update_task',
     displayName: 'Update Task',
     description: 'Update fields of an existing task in Wrike',
+    audience: 'both',
+    aiMetadata: { description: 'Update an existing Wrike task identified by its task ID, setting only the provided fields (title, description, status, importance, assignees, dates, duration, custom fields); supplied assignees replace the existing ones. Use when an agent needs to modify a known task rather than create one. Requires the task ID; re-running with the same input leaves the task in the same state, so it is idempotent.', idempotent: true },
     auth: wrikeAuth,
     props: {
         taskId: Property.ShortText({

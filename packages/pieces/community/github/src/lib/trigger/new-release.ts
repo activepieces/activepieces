@@ -14,6 +14,10 @@ export const newReleaseTrigger = createTrigger({
   name: 'new_release',
   displayName: 'New Release',
   description: 'Triggers when a new release is added.',
+  aiMetadata: {
+    description:
+      'Fires when a release is created in the chosen repository (release event filtered to the created action). Represents a newly created release.',
+  },
   props: {
     repository: githubCommon.repositoryDropdown,
   },
@@ -39,7 +43,7 @@ export const newReleaseTrigger = createTrigger({
     const { repo, owner } = context.propsValue.repository!;
 
     const response = await githubApiCall<{ id: number }>({
-      accessToken: context.auth.access_token,
+      auth: context.auth,
       method: HttpMethod.POST,
       resourceUri: `/repos/${owner}/${repo}/hooks`,
       body: {
@@ -66,7 +70,7 @@ export const newReleaseTrigger = createTrigger({
     );
     if (webhook !== null && webhook !== undefined) {
       await githubApiCall({
-        accessToken: context.auth.access_token,
+        auth: context.auth,
         method: HttpMethod.DELETE,
         resourceUri: `/repos/${webhook.owner}/${webhook.repo}/hooks/${webhook.webhookId}`,
       });

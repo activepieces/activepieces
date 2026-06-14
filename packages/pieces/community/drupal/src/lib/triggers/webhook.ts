@@ -8,13 +8,17 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { drupalAuth } from '../auth';
-import { DrupalAuthType } from '../common/jsonapi';
+
+const webhookStoreKey = (id: string) => `_drupal_webhook_trigger_${id}`;
 
 export const drupalWebhook = createTrigger({
   auth: drupalAuth,
   name: 'drupalWebhook',
   displayName: 'Webhook',
   description: 'A webhook that the Drupal site can call to trigger a flow.',
+  aiMetadata: {
+    description: 'Fires in real time whenever the Drupal site calls the registered webhook URL (e.g. from an ECA action), emitting the request body sent by Drupal. Use for push-based events instead of polling; the webhook is registered on enable under the unique name supplied, which must match the name referenced on the Drupal side.',
+  },
   props: {
     id: Property.ShortText({
       displayName: 'Name',
@@ -40,11 +44,11 @@ export const drupalWebhook = createTrigger({
       },
     });
     console.debug('Webhook register response', response);
-    await context.store.put(`_drupal_webhook_trigger_` + context.propsValue.id, response.body);
+    await context.store.put(webhookStoreKey(context.propsValue.id), response.body);
   },
   async onDisable(context) {
     const { website_url, username, password } = context.auth.props;
-    const webhook = await context.store.get(`_drupal_webhook_trigger` + context.propsValue.id);
+    const webhook = await context.store.get(webhookStoreKey(context.propsValue.id));
     if (webhook) {
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,

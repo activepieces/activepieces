@@ -7,6 +7,12 @@ export const batchCreateRowsAction = createAction({
   displayName: 'Batch Create Rows',
   description:
     'Creates multiple rows in a single request. Accepts up to 200 rows.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates many new rows in a Baserow table in one request from a JSON array of row objects (field names as keys), up to 200 rows per call. Use for bulk inserts instead of repeated Create Row calls. Not idempotent — each call appends another set of rows, so it can produce duplicates if re-run.',
+    idempotent: false,
+  },
   auth: baserowAuth,
   props: {
     table_id: baserowCommon.tableId(),
@@ -25,9 +31,7 @@ export const batchCreateRowsAction = createAction({
       throw new Error('Rows must be a JSON array.');
     }
     const client = await makeClient(context.auth);
-    return await client.batchCreateRows(
-      table_id,
-      rows as Record<string, unknown>[]
-    );
+    const response = await client.batchCreateRows(table_id, rows);
+    return { count: response.items.length, rows: response.items };
   },
 });

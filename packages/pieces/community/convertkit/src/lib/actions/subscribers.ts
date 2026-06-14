@@ -35,6 +35,12 @@ export const getSubscriberById = createAction({
   name: 'subscribers_get_subscriber_by_id',
   displayName: 'Get Subscriber By Id',
   description: 'Returns data for a single subscriber',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches one subscriber record (email, name, state, custom fields) by numeric subscriber ID. Use Get Subscriber By Email when only an address is known. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     subscriberId,
   },
@@ -49,6 +55,12 @@ export const getSubscriberByEmail = createAction({
   name: 'subscribers_get_subscriber_by_email',
   displayName: 'Get Subscriber By Email',
   description: 'Returns data for a single subscriber',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up a single subscriber by email address and returns the full record including the numeric subscriber ID. Prefer this over Get Subscriber By Id when the ID is unknown. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     email_address: subscriberEmail,
   },
@@ -63,6 +75,12 @@ export const listSubscribers = createAction({
   name: 'subscribers_list_subscribers',
   displayName: 'List Subscribers',
   description: 'Returns a list of all subscribers',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists subscribers with optional filters (created/updated date ranges, email address), paging, and sorting. Use it for bulk audits or fuzzy searches; for one known subscriber prefer the Get Subscriber actions. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     page: subscribersPageNumber,
     sortOrder,
@@ -88,7 +106,7 @@ export const listSubscribers = createAction({
     const url = SUBSCRIBERS_API_ENDPOINT;
 
     const body = {
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
       page,
       from,
       to,
@@ -122,6 +140,12 @@ export const updateSubscriber = createAction({
   name: 'subscribers_update_subscriber',
   displayName: 'Update Subscriber',
   description: 'Update a subscriber',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates a subscriber email address, first name, or custom field values by numeric subscriber ID. Idempotent — repeating the same update leaves the subscriber in the same state. It cannot change subscription status; use Unsubscribe Subscriber for that.',
+    idempotent: true,
+  },
   props: {
     subscriberId,
     emailAddress: subscriberEmailOptional,
@@ -134,7 +158,7 @@ export const updateSubscriber = createAction({
 
     const url = `${SUBSCRIBERS_API_ENDPOINT}/${subscriberId}`;
     const body = {
-      api_secret: context.auth,
+      api_secret: context.auth.secret_text,
       email_address: emailAddress,
       first_name: firstName,
       fields,
@@ -163,6 +187,12 @@ export const unsubscribeSubscriber = createAction({
   name: 'subscribers_unsubscribe_subscriber',
   displayName: 'Unsubscribe Subscriber',
   description: 'Unsubscribe a subscriber',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Unsubscribes the given email address from all emails in the account; this is the only removal mechanism, as there is no delete-subscriber action. Treated as non-idempotent — a retry may error once the address is already unsubscribed, though the end state is the same.',
+    idempotent: false,
+  },
   props: {
     email: subscriberEmail,
   },
@@ -170,7 +200,7 @@ export const unsubscribeSubscriber = createAction({
     const { email } = context.propsValue;
     const url = `${CONVERTKIT_API_URL}/unsubscribe`;
 
-    const body = { email, api_secret: context.auth };
+    const body = { email, api_secret: context.auth.secret_text };
 
     const request: HttpRequest = {
       url,
@@ -195,6 +225,12 @@ export const listTagsBySubscriberId = createAction({
   name: 'subscribers_list_tags_by_subscriber_id',
   displayName: 'List Tags By Subscriber Id',
   description: 'Returns a list of all subscribed tags',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists all tags currently applied to a subscriber, looked up by numeric subscriber ID. Use List Tags By Email when only an address is known. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     subscriberId,
   },
@@ -209,6 +245,12 @@ export const listSubscriberTagsByEmail = createAction({
   name: 'subscribers_list_tags_by_email',
   displayName: 'List Tags By Email',
   description: 'Returns a list of all subscribed tags',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists all tags applied to a subscriber, looked up by email address (the email is resolved to a subscriber ID internally). Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     email_address: subscriberEmail,
   },

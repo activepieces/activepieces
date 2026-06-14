@@ -7,6 +7,9 @@ export const subscriptionCancelledTrigger = createTrigger({
   name: 'subscription_cancelled',
   displayName: 'Subscription Cancelled',
   description: 'Triggers when a subscription is cancelled manually by the customer or store owner',
+  aiMetadata: {
+    description: 'Fires when a subscription in Lemon Squeezy is cancelled by the customer or store owner. The subscription typically remains active until the period end; the record carries the cancelled status and end date.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     store_id: createStoreDropdownProperty()

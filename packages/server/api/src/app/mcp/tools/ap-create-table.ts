@@ -1,4 +1,4 @@
-import { apId, FieldType, McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
+import { apId, FieldType, McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { fieldService } from '../../tables/field/field.service'
@@ -15,7 +15,7 @@ const createTableInput = z.object({
     })).describe('Fields to create. Max 100 fields per table.'),
 })
 
-export const apCreateTableTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apCreateTableTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_create_table',
         permission: Permission.WRITE_TABLE,
@@ -59,8 +59,14 @@ export const apCreateTableTool = (mcp: McpServer, log: FastifyBaseLogger): McpTo
                 return {
                     content: [{
                         type: 'text',
-                        text: `✅ Table "${name}" created (id: ${table.id})\nFields:\n${fieldLines}`,
+                        text: `✅ Table "${name}" created (id: ${table.id}, externalId: ${table.externalId})\nFields:\n${fieldLines}\n\nℹ️ Use "id" with the record/field tools; use "externalId" as table_id when configuring a Tables piece step in a flow.`,
                     }],
+                    structuredContent: {
+                        id: table.id,
+                        externalId: table.externalId,
+                        name: table.name,
+                        fields: createdFields.map(f => ({ id: f.id, externalId: f.externalId, name: f.name, type: f.type })),
+                    },
                 }
             }
             catch (err) {

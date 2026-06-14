@@ -21,6 +21,10 @@ export const postPublished = createTrigger({
   name: 'post_published',
   displayName: 'Post Published',
   description: 'Triggers when a post is successfully published to a platform',
+  aiMetadata: {
+    description:
+      'Fires when SendIt successfully publishes a post to a connected social platform, representing a completed publication. Each event carries the platform, post ID, post URL, and content of the published post.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {

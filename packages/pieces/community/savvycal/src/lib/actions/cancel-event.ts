@@ -1,13 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { savvyCalApiCall } from '../common';
-import { savvyCalAuth } from '../../';
+import { savvyCalAuth, getToken } from '../auth';
 
 export const cancelEventAction = createAction({
   auth: savvyCalAuth,
   name: 'cancel_event',
   displayName: 'Cancel Event',
   description: 'Cancels a scheduled meeting in SavvyCal.',
+  audience: 'both',
+  aiMetadata: { description: 'Cancels a scheduled SavvyCal meeting identified by its event id. Use when a booking needs to be called off; obtain the event id from a trigger, List Events, or Get Event. Cancelling an already-cancelled event has no further effect, but this mutates state and is not a read.', idempotent: false },
   props: {
     event_id: Property.ShortText({
       displayName: 'Event ID',
@@ -17,7 +19,7 @@ export const cancelEventAction = createAction({
   },
   async run(context) {
     await savvyCalApiCall({
-      token: context.auth.secret_text,
+      token: getToken(context.auth),
       method: HttpMethod.POST,
       path: `/events/${context.propsValue.event_id}/cancel`,
     });

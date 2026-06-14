@@ -1,6 +1,7 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { githubAuth } from '../auth';
 import { githubApiCall, githubCommon } from '../common';
+import { getAuthenticatedLogin, GithubAuthValue } from '../common/auth-helpers';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 interface WebhookInformation {
@@ -8,10 +9,6 @@ interface WebhookInformation {
   repo: string;
   owner: string;
   username: string;
-}
-
-interface GitHubUserResponse {
-  login: string;
 }
 
 interface MentionPayload {
@@ -40,6 +37,10 @@ export const newMentionTrigger = createTrigger({
   name: 'new_mention',
   displayName: 'New Mention',
   description: 'Triggers when you are mentioned in a comment.',
+  aiMetadata: {
+    description:
+      'Fires when the authenticated user is @-mentioned in a newly created or edited issue or pull-request review comment in the chosen repository. Represents someone tagging you in a comment.',
+  },
 
   props: {
     repository: githubCommon.repositoryDropdown,
@@ -60,14 +61,12 @@ export const newMentionTrigger = createTrigger({
 
   async onEnable(context) {
     const { repo, owner } = context.propsValue.repository!;
-    const userResponse = await githubApiCall<GitHubUserResponse>({
-      accessToken: context.auth.access_token,
-      method: HttpMethod.GET,
-      resourceUri: '/user',
-    });
+    const username = await getAuthenticatedLogin(
+      context.auth as GithubAuthValue
+    );
 
     const response = await githubApiCall<{ id: number }>({
-      accessToken: context.auth.access_token,
+      auth: context.auth,
       method: HttpMethod.POST,
       resourceUri: `/repos/${owner}/${repo}/hooks`,
       body: {
@@ -85,7 +84,7 @@ export const newMentionTrigger = createTrigger({
       webhookId: response.body.id,
       repo,
       owner,
-      username: userResponse.body.login,
+      username,
     });
   },
 
@@ -94,7 +93,7 @@ export const newMentionTrigger = createTrigger({
 
     if (webhook !== null && webhook !== undefined) {
       await githubApiCall({
-        accessToken: context.auth.access_token,
+        auth: context.auth,
         method: HttpMethod.DELETE,
         resourceUri: `/repos/${webhook.owner}/${webhook.repo}/hooks/${webhook.webhookId}`,
       });
@@ -115,12 +114,7 @@ export const newMentionTrigger = createTrigger({
     const webhook = await context.store.get<WebhookInformation>(STORE_KEY);
     let username = webhook?.username;
     if (!username) {
-      const userResponse = await githubApiCall<GitHubUserResponse>({
-        accessToken: context.auth.access_token,
-        method: HttpMethod.GET,
-        resourceUri: '/user',
-      });
-      username = userResponse.body.login;
+      username = await getAuthenticatedLogin(context.auth as GithubAuthValue);
     }
 
     if (username && containsMention(comment, username)) {

@@ -11,6 +11,8 @@ export const createContactAction = createAction({
 	name: 'create-contact',
 	displayName: 'Create Contact',
 	description: 'Creates a contact in Hubspot.',
+	audience: 'both',
+	aiMetadata: { description: 'Creates a new contact record in HubSpot from the supplied property values, then returns the created contact. Use when you specifically need a new contact; to avoid duplicates when a contact may already exist, prefer Create or Update Contact, which upserts on email. Not idempotent: each call creates a separate contact.', idempotent: false },
 	props: {
 		objectProperties: standardObjectDynamicProperties(OBJECT_TYPE.CONTACT, []),
 		markdown: Property.MarkDown({

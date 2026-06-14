@@ -1,5 +1,5 @@
 {
-  "Enter your Lemlist API key": "Entrez votre clé API Lemlist",
+  "\n  \n  1.Click on your profile picture in the bottom left-hand corner and click on Settings.\n  2.Go to the Integrations tab.\n  3.Click on Generate a new API key.\n  4.Store it securely because you won’t be able to see it again": "\n  \n  1.Click on your profile picture in the bottom left-hand corner and click on Settings.\n  2.Go to the Integrations tab.\n  3.Click on Generate a new API key.\n  4.Store it securely because you won’t be able to see it again",
   "Mark Lead From One Campaign as Interested": "Marquer le plomb d'une campagne comme intéressé",
   "Mark Lead From One Campaign as Not Interested": "Marquer le prospect d'une seule campagne comme non intéressé",
   "Mark Lead From All Campaign as Interested": "Marquer le prospect de toutes les campagnes comme étant intéressé",

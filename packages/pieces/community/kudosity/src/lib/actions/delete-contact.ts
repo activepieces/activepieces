@@ -9,6 +9,12 @@ export const deleteContact = createAction({
   name: 'deleteContact',
   displayName: 'Delete Contact',
   description: 'Remove a list member from a Kudosity recipient list',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Remove a contact (list member), identified by MSISDN, from Kudosity recipient lists. If a list ID is supplied the contact is removed only from that list; if omitted the removal applies across lists. Use to unsubscribe or clean up contacts. Safe to repeat — re-running once the contact is gone leaves the same end state.',
+    idempotent: true,
+  },
   props: {
     listId: Property.ShortText({
       displayName: 'List ID',

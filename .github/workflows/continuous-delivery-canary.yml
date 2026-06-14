@@ -2,19 +2,23 @@ name: Continuous Delivery — Canary
 
 on:
   workflow_dispatch:
+  workflow_call:
   schedule:
     - cron: '0 9 * * *'  # Daily 9 AM UTC
 
 jobs:
   build-image:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
     concurrency:
       group: canary-deploy
       cancel-in-progress: true
     outputs:
       image_tag: ${{ steps.set-tag.outputs.image_tag }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set image tag
         id: set-tag
@@ -22,7 +26,7 @@ jobs:
           RELEASE=$(node --print "require('./package.json').version")
           echo "image_tag=${RELEASE}.${{ github.sha }}.canary" >> $GITHUB_OUTPUT
 
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -43,6 +47,11 @@ jobs:
           no-cache: true
           tags: ghcr.io/activepieces/activepieces-cloud:${{ steps.set-tag.outputs.image_tag }}
 
+      - uses: ./.github/actions/sbom
+        with:
+          image: ghcr.io/activepieces/activepieces-cloud:${{ steps.set-tag.outputs.image_tag }}
+          version: ${{ steps.set-tag.outputs.image_tag }}
+
   check-migrations:
     needs: build-image
     runs-on: ubuntu-latest
@@ -50,9 +59,9 @@ jobs:
       has_breaking: ${{ steps.check.outputs.has_breaking }}
       breaking_names: ${{ steps.check.outputs.breaking_names }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 24
 
@@ -135,5 +144,5 @@ jobs:
 
       - name: Deploy canary workers
         run: |
-          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ needs.build-image.outputs.image_tag }} --config-file=config/worker.yml --roles=canary --skip-push; exit"'
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ needs.build-image.outputs.image_tag }} --config-file=config/worker-canary.yml --skip-push; exit"'
 

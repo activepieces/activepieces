@@ -9,6 +9,8 @@ export const createTask = createAction({
   name: 'createTask',
   displayName: 'Create Task',
   description: 'Create a new task in your Lokalise project',
+  audience: 'both',
+  aiMetadata: { description: 'Create a workflow task (translation, automatic translation, LQA by AI, or review) in a Lokalise project, scoped to specific keys and target languages. Use to assign translation or review work. Not idempotent: each call creates a separate task.', idempotent: false },
   props: {
     projectId: projectDropdown,
     taskTitle: Property.ShortText({

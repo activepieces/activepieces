@@ -1,0 +1,17 @@
+{
+  "Receive triggers for donations, subscriptions, commissions, and shop orders from Ko-fi.": "Ko-Fiから寄付、サブスクリプション、手数料、ショップ注文に対するトリガーを受け取ります。",
+  "Your Ko-fi webhook verification token. Find it in Ko-fi Dashboard > Settings > API/Webhooks > Advanced Settings > Webhook verification token.": "あなたのKo-fi Webhook検証トークン。Ko-Fiダッシュボード > 設定 > API/Webhooks > 詳細設定 > Webhook検証トークンから見つけてください。",
+  "New Donation": "新しい寄付",
+  "New Subscription": "新しいサブスクリプション",
+  "New Commission": "New Commission",
+  "New Shop Order": "新規ショップの注文",
+  "Triggers when a new one-time donation is received on Ko-fi.": "Ko-fiで新しい一回限りの寄付を受け取ったときに発生します。",
+  "Triggers when a new subscription is received on Ko-fi.": "Ko-fiで新しいサブスクリプションを受信したときにトリガーします。",
+  "Triggers when a new commission is received on Ko-fi.": "Ko-fiで新しい手数料を受け取ったときに発生します。",
+  "Triggers when a new shop order is received on Ko-fi.": "Ko-Fiで新しいショップの注文が受信されたときに発生します。",
+  "Markdown": "Markdown",
+  "To receive donation events, set up a webhook in your Ko-fi Dashboard: go to Settings > API/Webhooks, paste the URL {{webhookUrl}}, and select the \"Donation\" event type.": "寄付イベントを受け取るには、Ko-fi ダッシュボードで Webhook を設定します。設定 > API/Webhooks に移動します。 URL {{webhookUrl}}を貼り付け、「寄付」イベントタイプを選択します。",
+  "To receive subscription events, set up a webhook in your Ko-fi Dashboard: go to Settings > API/Webhooks, paste the URL {{webhookUrl}}, and select the \"Subscription\" event type.": "サブスクリプションイベントを受信するには、Ko-fi ダッシュボードで Webhook を設定します。設定 > API/Webhooks に移動します。 URL {{webhookUrl}}を貼り付け、\"Subscription\" イベントタイプを選択します。",
+  "To receive commission events, set up a webhook in your Ko-fi Dashboard: go to Settings > API/Webhooks, paste the URL {{webhookUrl}}, and select the \"Commission\" event type.": "コミッションイベントを受け取るには、Ko-fi ダッシュボードで Webhook を設定します。設定 > API/Webhooks に移動します。 URL {{webhookUrl}}を貼り付け、\"Commission\" イベントタイプを選択します。",
+  "To receive shop order events, set up a webhook in your Ko-fi Dashboard: go to Settings > API/Webhooks, paste the URL {{webhookUrl}}, and select the \"Shop Order\" event type.": "ショップ注文イベントを受信するには、Ko-FiダッシュボードでWebフックを設定してください: 設定 > API/Webhookを開きます。 URL {{webhookUrl}}を貼り付け、「ショップ注文」イベントタイプを選択します。"
+}

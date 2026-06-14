@@ -9,6 +9,12 @@ export const extractWebpageContentAction = createAction({
   displayName: 'Extract Webpage Content',
   description:
     'Convert a URL into clean, LLM-friendly Markdown using the Reader API.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetch a single webpage by URL via the Jina Reader API and return its content cleaned for LLM consumption, with optional markdown/HTML/text/screenshot output, CSS-selector targeting or exclusion, and link/image summaries. Pick this when you already have the target URL; to find pages by keyword first, use Web Search Summarization. Read-only fetch, so repeat calls are idempotent (results may be served from cache unless do-not-track is set).',
+    idempotent: true,
+  },
   props: {
     url: Property.ShortText({
       displayName: 'URL',

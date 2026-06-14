@@ -1,5 +1,5 @@
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, EngineGenericError, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, flowStructureUtil, FlowVersionState, PlatformId, ProgressUpdateType, Project, ProjectId, ResumePayload, RunEnvironment, TriggerHookType } from '@activepieces/shared'
+import { BeginExecuteFlowOperation, DEFAULT_MCP_DATA, EngineGenericError, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionState, ExecutionType, flowStructureUtil, FlowVersionState, PlatformId, Project, ProjectId, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment, StreamStepProgress, TriggerHookType } from '@activepieces/shared'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
@@ -19,13 +19,12 @@ type EngineConstantsParams = {
     retryConstants: RetryConstants
     engineToken: string
     projectId: ProjectId
-    progressUpdateType: ProgressUpdateType
-    serverHandlerId: string | null
+    streamStepProgress: StreamStepProgress
+    workerHandlerId: string | null
     httpRequestId: string | null
     resumePayload?: ResumePayload
     runEnvironment?: RunEnvironment
     stepNameToTest?: string
-    logsUploadUrl?: string
     logsFileId?: string
     timeoutInSeconds: number
     platformId: PlatformId
@@ -60,13 +59,12 @@ export class EngineConstants {
     public readonly retryConstants: RetryConstants
     public readonly engineToken: string
     public readonly projectId: ProjectId
-    public readonly progressUpdateType: ProgressUpdateType
-    public readonly serverHandlerId: string | null
+    public readonly streamStepProgress: StreamStepProgress
+    public readonly workerHandlerId: string | null
     public readonly httpRequestId: string | null
     public readonly resumePayload?: ResumePayload
     public readonly runEnvironment?: RunEnvironment
     public readonly stepNameToTest?: string
-    public readonly logsUploadUrl?: string
     public readonly logsFileId?: string
     public readonly stepNames: string[] = []
     private project: Project | null = null
@@ -76,7 +74,7 @@ export class EngineConstants {
     }
 
     public get isTestFlow(): boolean {
-        return this.progressUpdateType === ProgressUpdateType.TEST_FLOW
+        return this.streamStepProgress === StreamStepProgress.WEBSOCKET
     }
 
     public get baseCodeDirectory(): string {
@@ -105,20 +103,19 @@ export class EngineConstants {
         this.triggerPieceName = params.triggerPieceName
         this.engineToken = params.engineToken
         this.projectId = params.projectId
-        this.progressUpdateType = params.progressUpdateType
-        this.serverHandlerId = params.serverHandlerId
+        this.streamStepProgress = params.streamStepProgress
+        this.workerHandlerId = params.workerHandlerId
         this.httpRequestId = params.httpRequestId
         this.resumePayload = params.resumePayload
         this.runEnvironment = params.runEnvironment
         this.stepNameToTest = params.stepNameToTest
-        this.logsUploadUrl = params.logsUploadUrl
         this.logsFileId = params.logsFileId
         this.platformId = params.platformId
         this.timeoutInSeconds = params.timeoutInSeconds
         this.stepNames = params.stepNames
     }
   
-    public static fromExecuteFlowInput(input: ExecuteFlowOperation): EngineConstants {
+    public static fromExecuteFlowInput(input: ResolvedExecuteFlowOperation): EngineConstants {
         return new EngineConstants({
             flowId: input.flowVersion.flowId,
             flowVersionId: input.flowVersion.id,
@@ -130,13 +127,12 @@ export class EngineConstants {
             retryConstants: DEFAULT_RETRY_CONSTANTS,
             engineToken: input.engineToken,
             projectId: input.projectId,
-            progressUpdateType: input.progressUpdateType,
-            serverHandlerId: input.serverHandlerId ?? null,
+            streamStepProgress: input.streamStepProgress,
+            workerHandlerId: input.workerHandlerId ?? null,
             httpRequestId: input.httpRequestId ?? null,
             resumePayload: input.executionType === ExecutionType.RESUME ? input.resumePayload : undefined,
             runEnvironment: input.runEnvironment,
             stepNameToTest: input.stepNameToTest ?? undefined,
-            logsUploadUrl: input.logsUploadUrl, 
             logsFileId: input.logsFileId,
             timeoutInSeconds: input.timeoutInSeconds,
             platformId: input.platformId,
@@ -156,8 +152,8 @@ export class EngineConstants {
             retryConstants: DEFAULT_RETRY_CONSTANTS,
             engineToken: input.engineToken,
             projectId: input.projectId,
-            progressUpdateType: ProgressUpdateType.NONE,
-            serverHandlerId: null,
+            streamStepProgress: StreamStepProgress.NONE,
+            workerHandlerId: null,
             httpRequestId: null,
             resumePayload: undefined,
             runEnvironment: undefined,
@@ -180,8 +176,8 @@ export class EngineConstants {
             retryConstants: DEFAULT_RETRY_CONSTANTS,
             engineToken: input.engineToken,
             projectId: input.projectId,
-            progressUpdateType: ProgressUpdateType.NONE,
-            serverHandlerId: null,
+            streamStepProgress: StreamStepProgress.NONE,
+            workerHandlerId: null,
             httpRequestId: null,
             resumePayload: undefined,
             runEnvironment: undefined,
@@ -192,7 +188,7 @@ export class EngineConstants {
         })
     }
 
-    public static fromExecuteTriggerInput(input: ExecuteTriggerOperation<TriggerHookType>): EngineConstants {
+    public static fromExecuteTriggerInput(input: ResolvedExecuteTriggerOperation<TriggerHookType>): EngineConstants {
         return new EngineConstants({
             flowId: input.flowVersion.flowId,
             flowVersionId: input.flowVersion.id,
@@ -204,8 +200,8 @@ export class EngineConstants {
             retryConstants: DEFAULT_RETRY_CONSTANTS,
             engineToken: input.engineToken,
             projectId: input.projectId,
-            progressUpdateType: ProgressUpdateType.NONE,
-            serverHandlerId: null,
+            streamStepProgress: StreamStepProgress.NONE,
+            workerHandlerId: null,
             httpRequestId: null,
             resumePayload: undefined,
             runEnvironment: undefined,
@@ -251,3 +247,18 @@ export class EngineConstants {
 const addTrailingSlashIfMissing = (url: string): string => {
     return url.endsWith('/') ? url : url + '/'
 }
+
+export type ResolvedBeginExecuteFlowOperation = Omit<BeginExecuteFlowOperation, 'triggerPayload'> & {
+    triggerPayload: unknown
+}
+
+export type ResolvedExecuteTriggerOperation<HT extends TriggerHookType> = Omit<ExecuteTriggerOperation<HT>, 'triggerPayload'> & {
+    triggerPayload?: unknown
+}
+
+export type ResolvedResumeExecuteFlowOperation = Omit<ResumeExecuteFlowOperation, 'resumePayload'> & {
+    resumePayload: ResumePayload
+    executionState: ExecutionState
+}
+
+export type ResolvedExecuteFlowOperation = ResolvedBeginExecuteFlowOperation | ResolvedResumeExecuteFlowOperation

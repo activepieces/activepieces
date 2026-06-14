@@ -8,6 +8,8 @@ export default createAction({
   name: 'create_paste',
   displayName: 'Create Paste',
   description: 'Creates a new paste',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new Pastebin paste from the given text content, returning its id and URL. Use to publish or share a snippet; optionally set a syntax format, name, expiry, privacy (public/unlisted/private), and folder. Not idempotent — each call creates a separate paste even with identical content.', idempotent: false },
   props: {
     content: Property.LongText({
       displayName: 'Content',

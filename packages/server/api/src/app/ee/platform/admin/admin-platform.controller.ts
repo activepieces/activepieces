@@ -1,14 +1,17 @@
 import { ErrorHandlingOptionsParam, PieceMetadata, PieceMetadataModel, WebhookRenewConfiguration } from '@activepieces/pieces-framework'
-import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, ExactVersionType, IncreaseAICreditsForPlatformRequestBody, isNil, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
+import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, ChatConversation, ExactVersionType, IncreaseAICreditsForPlatformRequestBody, isNil, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { repoFactory } from '../../../core/db/repo-factory'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
-import { workerGroupService } from '../platform-plan/worker-group.service'
+import { ChatConversationEntity } from '../../chat/chat-conversation-entity'
+import { chatAnalyticsBulkSync } from '../../chat/chat-sync-job'
+import { CANARY_WORKER_GROUP_ID, workerGroupService } from '../platform-plan/worker-group.service'
 import { adminPlatformService } from './admin-platform.service'
 
 const API_KEY_HEADER = 'api-key'
@@ -60,21 +63,43 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
     })
 
     app.post('/platforms/worker-group', UpdateWorkerGroupRequest, async (req, res) => {
-        await workerGroupService(req.log).updateWorkerGroup({
-            platformId: req.body.platformId,
-            workerGroupId: req.body.workerGroupId,
-        })
+        const { platformId, workerGroupId } = req.body
+        await workerGroupService(req.log).moveJobsToTargetQueue({ platformId, workerGroupId })
+        await workerGroupService(req.log).updateWorkerGroup({ platformId, workerGroupId })
         return res.status(StatusCodes.OK).send()
     })
 
     app.post('/platforms/canary', UpdateCanaryRequest, async (req, res) => {
-        await workerGroupService(req.log).updateCanary({ platformId: req.body.platformId, canary: req.body.canary })
+        const { platformId, canary } = req.body
+        await workerGroupService(req.log).moveJobsToTargetQueue({ platformId, workerGroupId: canary ? CANARY_WORKER_GROUP_ID : null })
+        await workerGroupService(req.log).updateCanary({ platformId, canary })
         return res.status(StatusCodes.OK).send()
     })
 
-    app.delete('/platforms/canary', DisableAllCanaryRequest, async (req, res) => {
-        await workerGroupService(req.log).disableAllCanary()
-        return res.status(StatusCodes.OK).send()
+    app.post('/chat/sync-all', SyncAllConversationsRequest, async (req, res) => {
+        const PAGE_SIZE = 100
+        const conversationRepo = repoFactory(ChatConversationEntity)
+        const totalCount = await conversationRepo().count()
+        const totalPages = Math.ceil(totalCount / PAGE_SIZE)
+
+        req.log.info({ totalCount, totalPages }, 'Starting bulk chat analytics sync')
+
+        let synced = 0
+        let failed = 0
+
+        for (let page = 0; page < totalPages; page++) {
+            const conversations: ChatConversation[] = await conversationRepo().find({
+                skip: page * PAGE_SIZE,
+                take: PAGE_SIZE,
+                order: { created: 'ASC' },
+            })
+            const result = await chatAnalyticsBulkSync(req.log).syncAll({ conversations })
+            synced += result.synced
+            failed += result.failed
+            req.log.info({ page: page + 1, totalPages, synced, failed }, 'Synced chat analytics page')
+        }
+
+        return res.status(StatusCodes.OK).send({ synced, failed, total: totalCount })
     })
 }
 
@@ -102,14 +127,6 @@ const UpdateCanaryRequest = {
         security: securityAccess.public(),
     },
 }
-
-const DisableAllCanaryRequest = {
-    schema: {},
-    config: {
-        security: securityAccess.public(),
-    },
-}
-
 
 const AdminRetryRunsRequest = {
     schema: {
@@ -174,6 +191,12 @@ const CreatePieceRequest = {
             i18n: z.record(z.string(), z.record(z.string(), z.string())).optional(),
         }),
     },
+    config: {
+        security: securityAccess.public(),
+    },
+}
+
+const SyncAllConversationsRequest = {
     config: {
         security: securityAccess.public(),
     },

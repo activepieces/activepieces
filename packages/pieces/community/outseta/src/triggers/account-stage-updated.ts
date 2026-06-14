@@ -4,6 +4,10 @@ export const accountStageUpdatedTrigger = createManualWebhookTrigger({
   name: 'account_stage_updated',
   displayName: 'Account Stage Updated',
   description: 'Triggers when an account\'s stage changes in Outseta (e.g. Trialing → Subscribing).',
+  aiMetadata: {
+    description:
+      "Fires when an account's lifecycle stage changes in Outseta (e.g. Trialing to Subscribing, or to Cancelling/Expired), delivering the account with its new stage and the prior stage in the activity event data. Use to react to lifecycle transitions rather than any account edit.",
+  },
   sampleData: {
     Name: 'Acme Corp',
     IsDemo: false,

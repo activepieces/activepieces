@@ -6,6 +6,8 @@ export const localScraper = createAction({
   name: 'local_scraper',
   displayName: 'Local Scraper',
   description: 'Extract content from HTML content using AI by providing a natural language prompt.',
+  audience: 'both',
+  aiMetadata: { description: 'Uses AI to extract information described in a natural-language prompt from raw HTML you supply directly (max 2MB); optionally pass an output schema to shape the result into structured fields. Choose this when you already have the page HTML in hand and do not want the service to fetch a URL — for a live URL use Smart Scraper instead. Read-only and safe to retry.', idempotent: true },
   auth: scrapegraphaiAuth,
   props: {
     website_html: Property.LongText({

@@ -9,6 +9,11 @@ export const saveRecordsAction = createAction({
   name: 'save-records',
   displayName: 'Save Records',
   description: 'Adds or updates records in an Algolia index.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Adds or updates one or more records in an Algolia search index (creating the index if it does not yet exist). Pass an array of JSON objects; include an `objectID` on a record to overwrite that existing record, or omit it to have Algolia generate a new one. Not idempotent: records without an `objectID` create a fresh record on every call, so repeating the call appends duplicates.',
+    idempotent: false,
+  },
   props: {
     indexName: Property.ShortText({
       displayName: 'Index Name',

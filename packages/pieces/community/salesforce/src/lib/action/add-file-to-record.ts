@@ -8,6 +8,8 @@ export const addFileToRecord = createAction({
     name: 'add_file_to_record',
     displayName: 'Add File to Record',
     description: 'Uploads a file and attaches it to an existing record.',
+    audience: 'both',
+    aiMetadata: { description: 'Upload a file and attach it to an existing Salesforce record by creating a ContentVersion linked to the target record Id. Use when you need to attach a document, image, or other binary to a record. Not idempotent: each call creates a new file version, so re-running attaches a duplicate file.', idempotent: false },
     props: {
         object: salesforcesCommon.object,
         record_id: salesforcesCommon.record,

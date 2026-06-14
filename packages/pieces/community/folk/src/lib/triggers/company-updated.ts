@@ -12,6 +12,9 @@ export const companyUpdated = createTrigger({
   name: 'company_updated',
   displayName: 'Company Updated',
   description: 'Fires when a company is updated in your Folk workspace.',
+  aiMetadata: {
+    description: 'Fires when an existing company is modified in the connected Folk workspace, optionally scoped to a single group. The event payload carries the company ID and a list of field-level changes (including custom field values) describing what was set, added, or removed.',
+  },
   props: {
     groupId: folkProps.group_id(false, 'Group ID'),
   },

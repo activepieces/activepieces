@@ -8,11 +8,7 @@ import {
 import { google } from 'googleapis';
 import MailComposer from 'nodemailer/lib/mail-composer';
 import Mail from 'nodemailer/lib/mailer';
-import {
-  assertNotNullOrUndefined,
-  ExecutionType,
-  PauseType,
-} from '@activepieces/shared';
+import { assertNotNullOrUndefined, ExecutionType } from '@activepieces/shared';
 
 export const requestApprovalInEmail = createAction({
   auth: gmailAuth,
@@ -20,6 +16,12 @@ export const requestApprovalInEmail = createAction({
   displayName: 'Request Approval in Email',
   description:
     'Send approval request email and then wait until the email is approved or disapproved',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends an email containing Approve and Disapprove links to a recipient, then pauses the flow until the recipient clicks one, resuming with their decision. Use this as a human-in-the-loop gate before proceeding with a sensitive action. The flow blocks indefinitely until a response arrives. Not idempotent: each call sends a new approval email and creates a new wait.',
+    idempotent: false,
+  },
   props: {
     receiver: Property.ShortText({
       displayName: 'Receiver Email (To)',
@@ -83,10 +85,14 @@ export const requestApprovalInEmail = createAction({
         assertNotNullOrUndefined(subject, 'subject');
         assertNotNullOrUndefined(body, 'body');
 
-        const approvalLink = context.generateResumeUrl({
+        const waitpoint = await context.run.createWaitpoint({
+          type: 'WEBHOOK',
+        });
+
+        const approvalLink = waitpoint.buildResumeUrl({
           queryParams: { action: 'approve' },
         });
-        const disapprovalLink = context.generateResumeUrl({
+        const disapprovalLink = waitpoint.buildResumeUrl({
           queryParams: { action: 'disapprove' },
         });
 
@@ -170,12 +176,7 @@ export const requestApprovalInEmail = createAction({
             raw: encodedPayload,
           },
         });
-        context.run.pause({
-          pauseMetadata: {
-            type: PauseType.WEBHOOK,
-            response: {},
-          },
-        });
+        context.run.waitForWaitpoint(waitpoint.id);
 
         return {
           approved: false, // default approval is false

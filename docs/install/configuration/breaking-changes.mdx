@@ -4,17 +4,32 @@ description: "This list shows all versions that include breaking changes and how
 icon: "hammer"
 ---
 
-## Latest (Unreleased)
+## 0.84.0
 
 ### What has changed?
 
-#### Environment Variable Rename: `AP_MAX_CONCURRENT_JOBS_PER_PROJECT` → `AP_DEFAULT_CONCURRENT_JOBS_LIMIT`
-- The environment variable `AP_MAX_CONCURRENT_JOBS_PER_PROJECT` has been renamed to `AP_DEFAULT_CONCURRENT_JOBS_LIMIT`.
-- The default value has changed from `100` to `5`.
+#### Flow Run Log Size Enforcement
+This is an important behavior change in how flow run logs are stored and capped, but **no action is required** — the existing default (`AP_MAX_FLOW_RUN_LOG_SIZE_MB=50`) is preserved.
+
+- Large step outputs are now offloaded to object storage instead of sitting inline in worker memory, controlled by the new `AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB` env var (default `32`).
+- Large step input values are replaced with a `(truncated, original size <N>)` placeholder in the log via the new `AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB` env var (default `2`). The step still receives the full value at runtime.
+- Runs whose combined step inputs and outputs exceed `AP_MAX_FLOW_RUN_LOG_SIZE_MB` now terminate with the new `LOG_SIZE_EXCEEDED` status instead of silently trimming inputs. Offloaded outputs still count their original size against the cap.
+- See [Technical Limits → Files & flow run logs](/flows/known-limits#files-flow-run-logs) for the full behavior, environment variables, and defaults.
+- Embedding now requires setting allowed embed origins, which means only the domains listed in the field can embed the app (wildcards are supported). There is also a new env variable `AP_ALLOWED_EMBED_ORIGINS` for setting pre-allowed origins, and a new endpoint for adding these origins — [check docs](/endpoints/embedding/add-allowed-embed-origins).
 
 ### Do you need to take action?
-- If you have `AP_MAX_CONCURRENT_JOBS_PER_PROJECT` set in your environment, rename it to `AP_DEFAULT_CONCURRENT_JOBS_LIMIT`.
-- If you relied on the previous default of `100`, explicitly set `AP_DEFAULT_CONCURRENT_JOBS_LIMIT=100` to preserve the old behavior.
+- **Embedding** — if you are embedding your self-hosted activepieces somewhere make sure it's on the allow list
+
+
+## 0.84.0
+
+### What has changed?
+Now both workers and app servers must be on the same version to run flows (to avoid mismatch errors and unpredictability).
+
+## 0.83.0 
+
+### What has changed?
+When creating a project now, the platform owner email doesn't automatically get added to the alert recievers list of the project, you can manually assign it in the UI/API, when creating a project.
 
 ## 0.82.0
 
@@ -31,10 +46,16 @@ icon: "hammer"
 - `LOCK_AND_PUBLISH` no longer modifies `pieceVersion` on any step. The version in the draft is the version that will run.
 - A new endpoint `GET /v1/pieces/:name/versions` is available to list all versions of a piece, useful for building custom version selection.
 
+#### Concurrent Jobs Env Var Renamed
+- `AP_MAX_CONCURRENT_JOBS_PER_PROJECT` → `AP_DEFAULT_CONCURRENT_JOBS_LIMIT`. Default drops from `100` to `5`.
+
+#### Outbound HTTP is SSRF-filtered
+- Server-side HTTP (OAuth, Vault, Conjur, event destinations, on-call pager, MCP validator) now blocks private, loopback, and cloud-metadata IPs. Reach internal hosts by adding their IP/CIDR to `AP_SSRF_ALLOW_LIST`.
+
 ### Do you need to take action?
-- If you use the REST API to create or update flows with wildcard piece versions (`~` or `^`), update your integration to pass exact versions instead. Wildcards will still be accepted but silently stripped to their base version.
-- If your publish workflow relied on `LOCK_AND_PUBLISH` resolving wildcards to the latest matching version, you must now explicitly set the desired exact version on each step before publishing.
-- Use the new `GET /v1/pieces/:name/versions` endpoint to discover available versions when building custom integrations.
+- **Pinned piece versions** — if you create or update flows via the REST API with wildcard versions (`~` or `^`), switch to exact versions; wildcards are silently stripped. If your publish flow relied on `LOCK_AND_PUBLISH` resolving wildcards, set the exact version on each step before publishing. Use `GET /v1/pieces/:name/versions` to list available versions.
+- **Concurrent jobs** — rename `AP_MAX_CONCURRENT_JOBS_PER_PROJECT` to `AP_DEFAULT_CONCURRENT_JOBS_LIMIT`. To keep the old cap, set `AP_DEFAULT_CONCURRENT_JOBS_LIMIT=100`.
+- **SSRF filter** — if you self-host Vault, Conjur, an OAuth2 token endpoint, or any internal webhook on a private IP, set `AP_SSRF_ALLOW_LIST` (comma-separated IPs or CIDRs, e.g. `10.0.5.12,192.168.10.0/24`) before upgrading.
 
 
 ## 0.80.0

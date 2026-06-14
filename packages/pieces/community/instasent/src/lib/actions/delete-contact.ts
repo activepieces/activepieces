@@ -7,6 +7,8 @@ export const deleteContact = createAction({
     name: 'delete_contact',
     displayName: 'Delete Contact',
     description: 'Delete a single contact by User ID',
+    audience: 'both',
+    aiMetadata: { description: 'Deletes one contact from an Instasent datasource by its User ID. Use to remove a contact you can identify by stable User ID. Idempotent: deleting an already-removed contact leaves the same end state.', idempotent: true },
     auth: instasentAuth,
     props: {
         userId: Property.ShortText({

@@ -120,10 +120,25 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
         applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.FLOW_UPDATED,
             data: {
+                flow: {
+                    id: updatedFlow.id,
+                    externalId: updatedFlow.externalId,
+                    created: updatedFlow.created,
+                    updated: updatedFlow.updated,
+                },
                 request: request.body,
                 flowVersion: flow.version,
             },
         })
+        for (const action of pickLifecycleActions({ operation: request.body, previousStatus: flow.status })) {
+            applicationEvents(request.log).sendUserEvent(request, {
+                action,
+                data: {
+                    flow: updatedFlow,
+                    flowVersion: updatedFlow.version,
+                },
+            })
+        }
         return updatedFlow
     })
 
@@ -131,6 +146,7 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
         return flowService(request.log).list({
             projectIds: [request.projectId],
             folderId: request.query.folderId,
+            folderIds: request.query.folderIds,
             cursorRequest: request.query.cursor ?? null,
             limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
             status: request.query.status,
@@ -193,6 +209,32 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
         })
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
+}
+
+function pickLifecycleActions({ operation, previousStatus }: PickLifecycleActionsParams): ApplicationEventName[] {
+    if (operation.type === FlowOperationType.LOCK_AND_PUBLISH) {
+        const actions: ApplicationEventName[] = [ApplicationEventName.FLOW_PUBLISHED]
+        const newStatus = operation.request.status ?? FlowStatus.ENABLED
+        const transitionAction = pickTransitionAction({ previousStatus, newStatus })
+        if (transitionAction) {
+            actions.push(transitionAction)
+        }
+        return actions
+    }
+    if (operation.type === FlowOperationType.CHANGE_STATUS) {
+        const transitionAction = pickTransitionAction({ previousStatus, newStatus: operation.request.status })
+        return transitionAction ? [transitionAction] : []
+    }
+    return []
+}
+
+function pickTransitionAction({ previousStatus, newStatus }: PickTransitionActionParams): ApplicationEventName | undefined {
+    if (newStatus === previousStatus) {
+        return undefined
+    }
+    return newStatus === FlowStatus.ENABLED
+        ? ApplicationEventName.FLOW_ACTIVATED
+        : ApplicationEventName.FLOW_DEACTIVATED
 }
 
 function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
@@ -343,4 +385,12 @@ const DeleteFlowRequestOptions = {
     },
 }
 
+type PickLifecycleActionsParams = {
+    operation: FlowOperationRequest
+    previousStatus: FlowStatus
+}
 
+type PickTransitionActionParams = {
+    previousStatus: FlowStatus
+    newStatus: FlowStatus
+}

@@ -1,9 +1,9 @@
-import { McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
+import { isNil, McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { recordService } from '../../tables/record/record.service'
 import { mcpUtils } from './mcp-utils'
-import { formatPopulatedRecord, resolveFieldNamesForTable } from './table-utils'
+import { formatPopulatedRecord, resolveFieldNamesForTable, resolveInternalTableId, tableNotFoundError } from './table-utils'
 
 const updateRecordInput = z.object({
     tableId: z.string().describe('The table ID'),
@@ -11,7 +11,7 @@ const updateRecordInput = z.object({
     fields: z.record(z.string(), z.string()).describe('Object mapping field names to new values. Only specified fields are updated. Example: {"Name": "Bob", "Age": "25"}'),
 })
 
-export const apUpdateRecordTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apUpdateRecordTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_update_record',
         permission: Permission.WRITE_TABLE,
@@ -27,7 +27,12 @@ export const apUpdateRecordTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
                     return { content: [{ type: 'text', text: '❌ No fields provided to update.' }] }
                 }
 
-                const { fieldMap, errors } = await resolveFieldNamesForTable(mcp.projectId, tableId, fieldNames)
+                const resolvedTableId = await resolveInternalTableId({ projectId: mcp.projectId, tableId })
+                if (isNil(resolvedTableId)) {
+                    return tableNotFoundError(tableId)
+                }
+
+                const { fieldMap, errors } = await resolveFieldNamesForTable(mcp.projectId, resolvedTableId, fieldNames)
                 if (errors.length > 0) {
                     return { content: [{ type: 'text', text: `❌ Field resolution error:\n${errors.join('\n')}` }] }
                 }
@@ -40,7 +45,7 @@ export const apUpdateRecordTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
                 const updated = await recordService.update({
                     id: recordId,
                     projectId: mcp.projectId,
-                    request: { tableId, cells },
+                    request: { tableId: resolvedTableId, cells },
                 })
 
                 return {

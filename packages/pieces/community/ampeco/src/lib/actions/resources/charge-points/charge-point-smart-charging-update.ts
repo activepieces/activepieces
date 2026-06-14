@@ -15,6 +15,8 @@ export const chargePointSmartChargingUpdateAction = createAction({
   name: 'chargePointSmartChargingUpdate',
   displayName: 'Resources - Charge Points - Charge Point Smart Charging Update',
   description: 'Update smart charging details for the charge point.',
+  audience: 'both',
+  aiMetadata: { description: 'Configure a charge point\'s smart charging settings, selecting a mode (tod time-of-day, dynamic, user_schedule, or disabled) that determines which electrical and scheduling fields apply. Replaces the existing smart charging configuration for the charge point, so re-sending the same payload is idempotent; required fields differ per mode.', idempotent: true },
   props: {
         
   chargePoint: Property.Number({

@@ -1,4 +1,5 @@
 import {
+  ApEdition,
   ApFlagId,
   ThirdPartyAuthnProviderEnum,
   ThirdPartyAuthnProvidersToShowMap,
@@ -18,67 +19,88 @@ const ThirdPartyIcon = ({ icon }: { icon: string }) => {
   return <img src={icon} alt="icon" width={24} height={24} className="mr-2" />;
 };
 
-const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
-  const { data: thirdPartyAuthProviders } =
-    flagsHooks.useFlag<ThirdPartyAuthnProvidersToShowMap>(
-      ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
+const ThirdPartyLogin = React.memo(
+  ({
+    isSignUp,
+    onSamlClick,
+  }: {
+    isSignUp: boolean;
+    onSamlClick: () => void;
+  }) => {
+    const { data: thirdPartyAuthProviders } =
+      flagsHooks.useFlag<ThirdPartyAuthnProvidersToShowMap>(
+        ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
+      );
+    const { data: thirdPartyRedirectUrl } = flagsHooks.useFlag<string>(
+      ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
     );
-  const { data: thirdPartyRedirectUrl } = flagsHooks.useFlag<string>(
-    ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
-  );
-  const thirdPartyLogin = oauth2Utils.useThirdPartyLogin();
+    const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+    const isCloud = edition === ApEdition.CLOUD;
+    const thirdPartyLogin = oauth2Utils.useThirdPartyLogin();
 
-  const handleProviderClick = async (
-    event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-    providerName: ThirdPartyAuthnProviderEnum,
-  ) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const { loginUrl } = await authenticationApi.getFederatedAuthLoginUrl(
-      providerName,
+    const handleProviderClick = async (
+      event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+      providerName: ThirdPartyAuthnProviderEnum,
+    ) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const { loginUrl } = await authenticationApi.getFederatedAuthLoginUrl(
+        providerName,
+      );
+
+      if (!loginUrl || !thirdPartyRedirectUrl) {
+        internalErrorToast();
+        return;
+      }
+      thirdPartyLogin(loginUrl, providerName);
+    };
+
+    return (
+      <div className="flex flex-col gap-4">
+        {thirdPartyAuthProviders?.google && (
+          <Button
+            variant="outline"
+            className="w-full rounded-sm"
+            onClick={(e) =>
+              handleProviderClick(e, ThirdPartyAuthnProviderEnum.GOOGLE)
+            }
+          >
+            <ThirdPartyIcon icon={GoogleIcon} />
+            {isSignUp
+              ? `${t(`Sign up With`)} ${t('Google')}`
+              : `${t(`Sign in With`)} ${t('Google')}`}
+          </Button>
+        )}
+        {isCloud && (
+          <Button
+            variant="outline"
+            className="w-full rounded-sm"
+            onClick={onSamlClick}
+          >
+            <ThirdPartyIcon icon={SamlIcon} />
+            {isSignUp
+              ? `${t(`Sign up With`)} ${t('SAML')}`
+              : `${t(`Sign in With`)} ${t('SAML')}`}
+          </Button>
+        )}
+        {!isCloud && thirdPartyAuthProviders?.saml && (
+          <Button
+            variant="outline"
+            className="w-full rounded-sm"
+            onClick={() => {
+              window.location.href = '/api/v1/authn/saml/login';
+            }}
+          >
+            <ThirdPartyIcon icon={SamlIcon} />
+            {isSignUp
+              ? `${t(`Sign up With`)} ${t('SAML')}`
+              : `${t(`Sign in With`)} ${t('SAML')}`}
+          </Button>
+        )}
+      </div>
     );
-
-    if (!loginUrl || !thirdPartyRedirectUrl) {
-      internalErrorToast();
-      return;
-    }
-    thirdPartyLogin(loginUrl, providerName);
-  };
-
-  const signInWithSaml = () =>
-    (window.location.href = '/api/v1/authn/saml/login');
-
-  return (
-    <div className="flex flex-col gap-4">
-      {thirdPartyAuthProviders?.google && (
-        <Button
-          variant="outline"
-          className="w-full rounded-sm"
-          onClick={(e) =>
-            handleProviderClick(e, ThirdPartyAuthnProviderEnum.GOOGLE)
-          }
-        >
-          <ThirdPartyIcon icon={GoogleIcon} />
-          {isSignUp
-            ? `${t(`Sign up With`)} ${t('Google')}`
-            : `${t(`Sign in With`)} ${t('Google')}`}
-        </Button>
-      )}
-      {thirdPartyAuthProviders?.saml && (
-        <Button
-          variant="outline"
-          className="w-full rounded-sm"
-          onClick={signInWithSaml}
-        >
-          <ThirdPartyIcon icon={SamlIcon} />
-          {isSignUp
-            ? `${t(`Sign up With`)} ${t('SAML')}`
-            : `${t(`Sign in With`)} ${t('SAML')}`}
-        </Button>
-      )}
-    </div>
-  );
-});
+  },
+);
 
 ThirdPartyLogin.displayName = 'ThirdPartyLogin';
 export { ThirdPartyLogin };

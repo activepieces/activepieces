@@ -8,6 +8,8 @@ export const convertFileToPdf = createAction({
   name: 'convert_file_to_pdf',
   displayName: 'Convert File to PDF',
   description: 'Convert a given file to PDF',
+  audience: 'both',
+  aiMetadata: { description: 'Convert a single source file to PDF on DocuMerge, supplying the file by name plus an optional remote URL or inline contents. Use when an agent needs a PDF rendering of another document format. Requires a file name; each call generates a fresh PDF (not idempotent).', idempotent: false },
   props: {
     fileName: Property.ShortText({
       displayName: 'File Name',

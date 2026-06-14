@@ -1,0 +1,84 @@
+import { chatToolPhases, tryCatch } from '@activepieces/shared'
+import { createMCPClient } from '@ai-sdk/mcp'
+import { ToolExecutionOptions } from 'ai'
+import { FastifyBaseLogger } from 'fastify'
+import { chatWorkerTools } from './chat-worker-tools'
+
+const CONVERSATION_ID_HEADER = 'x-ap-conversation-id'
+
+async function connectMcpClient({ mcpCredentials, conversationId, log }: {
+    mcpCredentials: { mcpServerUrl: string, mcpToken: string } | null
+    conversationId: string
+    log: FastifyBaseLogger
+}): Promise<McpConnection> {
+    if (!mcpCredentials) {
+        return { mcpClient: null, mcpToolSet: {} }
+    }
+
+    const { mcpServerUrl, mcpToken } = mcpCredentials
+
+    const { data: client, error } = await tryCatch(async () => createMCPClient({
+        transport: {
+            type: 'http',
+            url: mcpServerUrl,
+            headers: {
+                'Authorization': `Bearer ${mcpToken}`,
+                [CONVERSATION_ID_HEADER]: conversationId,
+            },
+        },
+    }))
+
+    if (!client) {
+        log.warn({ err: error }, 'Failed to create MCP client — chat will work without MCP tools')
+        return { mcpClient: null, mcpToolSet: {} }
+    }
+
+    const allMcpTools = await client.tools()
+    const mcpToolSet: Record<string, unknown> = {}
+    for (const [name, tool] of Object.entries(allMcpTools)) {
+        if (!chatToolPhases.isChatHiddenTool(name)) {
+            mcpToolSet[name] = tool
+        }
+    }
+    return { mcpClient: client, mcpToolSet }
+}
+
+function hasExecute(tool: object): tool is object & { execute: (args: unknown, options?: ToolExecutionOptions) => Promise<unknown> } {
+    return 'execute' in tool && typeof tool.execute === 'function'
+}
+
+function withToolTimeouts({ mcpToolSet }: {
+    mcpToolSet: Record<string, unknown>
+}): Record<string, unknown> {
+    const result: Record<string, unknown> = {}
+
+    for (const [name, tool] of Object.entries(mcpToolSet)) {
+        if (typeof tool !== 'object' || tool === null || !hasExecute(tool)) {
+            result[name] = tool
+            continue
+        }
+
+        const originalExecute = tool.execute.bind(tool)
+
+        result[name] = Object.assign({}, tool, {
+            execute: (args: unknown, options?: ToolExecutionOptions) =>
+                chatWorkerTools.withToolTimeout({
+                    fn: (timeoutSignal) => originalExecute(args, options ? { ...options, abortSignal: timeoutSignal } : undefined),
+                    timeoutMs: chatWorkerTools.TOOL_EXECUTION_TIMEOUT_MS,
+                    toolName: name,
+                }),
+        })
+    }
+
+    return result
+}
+
+type McpConnection = {
+    mcpClient: Awaited<ReturnType<typeof createMCPClient>> | null
+    mcpToolSet: Record<string, unknown>
+}
+
+export const chatMcpClient = {
+    connect: connectMcpClient,
+    withToolTimeouts,
+}

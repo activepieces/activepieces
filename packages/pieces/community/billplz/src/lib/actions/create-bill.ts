@@ -9,6 +9,8 @@ export const createBill = createAction({
   name: 'create_bill',
   displayName: 'Create Bill',
   description: 'Create a new bill within a collection',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new Billplz bill (payment request) inside a given collection, charging a recipient identified by email and/or mobile for an amount in Malaysian Ringgit. Either email or mobile is required, along with a recipient name, description, and callback URL; optionally set a due date, redirect URL, and reference fields. Enabling the deliver option sends the recipient an email/SMS notification. Not idempotent: each call creates a distinct bill and may dispatch a notification.', idempotent: false },
   auth: billplzAuth,
   props: {
     collection_id: Property.Dropdown({

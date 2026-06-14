@@ -8,6 +8,8 @@ import {
 export const discordSendMessageWebhook = createAction({
   name: 'send_message_webhook',
   description: 'Send a discord message via webhook',
+  audience: 'both',
+  aiMetadata: { description: 'Posts a message to a Discord channel through an incoming webhook URL, with optional custom username, avatar, and rich embeds. Use when you have a webhook URL rather than a bot connection; no Discord auth is needed. Each call posts a new message, so it is not idempotent.', idempotent: false },
   displayName: 'Send Message Webhook',
   requireAuth: false,
   props: {

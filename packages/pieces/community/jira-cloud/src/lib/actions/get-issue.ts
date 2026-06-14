@@ -9,6 +9,12 @@ export const getIssueAction = createAction({
   name: 'get_issue',
   displayName: 'Get Issue',
   description: 'Get issue data.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetch a single Jira issue by project and issue, optionally expanding extras like rendered fields, transitions, edit metadata, or changelog, and optionally remapping cryptic field/transition IDs to human-readable names. Use when you know which issue you want; to find issues by criteria use Search Issues instead. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     projectId: getProjectIdDropdown(),
     issueId: getIssueIdDropdown({ refreshers: ['projectId'] }),

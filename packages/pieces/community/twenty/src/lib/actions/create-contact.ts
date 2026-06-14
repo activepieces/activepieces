@@ -8,6 +8,8 @@ export const createContact = createAction({
   name: 'create_contact',
   displayName: 'Create Contact',
   description: 'Creates a new person record in your Twenty CRM workspace.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new person (contact) in Twenty CRM. Use when adding a known individual to the CRM; first name is required, last name and primary email are optional. Not idempotent: each call inserts a new record with no de-duplication, so repeated calls create duplicate people.', idempotent: false },
   props: {
     firstName: Property.ShortText({
       displayName: 'First Name',

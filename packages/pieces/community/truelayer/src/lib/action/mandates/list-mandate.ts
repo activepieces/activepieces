@@ -7,6 +7,8 @@ export const listMandate = createAction({
   name: 'list-mandate',
   displayName: 'List Mandates',
   description: 'List all the mandates associated with the client. This API must be called using a backend bearer token.',
+  audience: 'both',
+  aiMetadata: { description: 'List the variable recurring payment (VRP) mandates belonging to your client, optionally filtered by user ID and paged via cursor. Use to discover mandate IDs or audit a user\'s mandates; read-only and safe to repeat.', idempotent: true },
   props: {
     user_id: Property.ShortText({
       displayName: 'User ID',

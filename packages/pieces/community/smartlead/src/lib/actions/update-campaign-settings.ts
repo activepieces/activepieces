@@ -9,6 +9,12 @@ export const updateCampaignSettingsAction = createAction({
   displayName: 'Update Campaign Settings',
   description:
     'Update campaign settings including tracking, stop conditions, and deliverability options.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates configuration on an existing SmartLead campaign by campaign ID, such as open/click tracking, the stop-lead condition, unsubscribe text, AI ESP matching, plain-text sending, and follow-up percentage. Use to adjust how a campaign sends and tracks; at least one setting must be supplied and follow-up percentage must be 0-100. Idempotent: it overwrites the targeted settings, so repeating the same input leaves the campaign in the same state.',
+    idempotent: true,
+  },
   props: {
     campaign_id: Property.Number({
       displayName: 'Campaign ID',

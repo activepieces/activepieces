@@ -8,6 +8,8 @@ export const getAccountInformation = createAction({
   name: 'getAccountInformation',
   displayName: 'Get Account Information',
   description: 'Retrieves account information including usage statistics and account details.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches the APITemplate.io account profile, including plan and generation usage/quota stats. Use to check remaining quota or account status before generating documents. Read-only and idempotent; takes no input.', idempotent: true },
   props: {},
   async run({ auth }) {
     const authConfig = auth.props;

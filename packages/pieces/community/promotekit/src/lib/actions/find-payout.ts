@@ -8,6 +8,11 @@ export const findPayout = createAction({
   name: 'find_payout',
   displayName: 'Find Payout',
   description: 'Get details of a specific payout by ID.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Fetch a single payout by its PromoteKit payout ID. Use when you already have the exact ID and need that payout\'s details; to discover IDs, list payouts first. Read-only and safe to repeat.',
+    idempotent: true,
+  },
   props: {
     payout_id: Property.ShortText({
       displayName: 'Payout ID',

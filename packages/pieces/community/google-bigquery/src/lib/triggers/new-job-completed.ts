@@ -137,6 +137,10 @@ export const newJobCompletedTrigger = createTrigger({
   displayName: 'New Job Completed',
   description:
     'Triggers when any BigQuery job (query, load, copy, or extract) finishes. Returns the job metadata including status, type, and timing.',
+  aiMetadata: {
+    description:
+      'Fires when any BigQuery job of any type (query, load, copy, or extract) finishes in the project, detected by polling the job history. Each event represents one completed job and carries its metadata — type, status, timing, bytes processed, and DML row counts. By default only successful jobs fire; enabling the include-failed option also surfaces jobs that ended with an error.',
+  },
   props,
   sampleData: {
     job_id: 'job_xyz789',

@@ -1,24 +1,22 @@
 import {
-  PiecePropValueSchema,
   Property,
   createAction,
-  DynamicPropsValue,
 } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { drupalAuth } from '../auth';
 import { drupal } from '../common/jsonapi';
-import { 
+import {
   fetchEntityTypesForEditing,
   buildFieldProperties
 } from '../common/drupal-entities';
 
-type DrupalAuthType = PiecePropValueSchema<typeof drupalAuth>;
 
 export const drupalCreateEntityAction = createAction({
   auth: drupalAuth,
   name: 'drupal-create-entity',
   displayName: 'Create Entity',
   description: 'Create a new entity in Drupal with smart field discovery and validation',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new content entity (node, taxonomy term, user, etc.) of a chosen entity type and bundle in Drupal via JSON:API. Available fields are discovered from the selected entity type, and at least one field value must be supplied. Use when adding new content; each call creates a distinct entity, so it is not idempotent.', idempotent: false },
   props: {
     entity_type: Property.Dropdown({
       auth: drupalAuth,
@@ -35,7 +33,7 @@ export const drupalCreateEntityAction = createAction({
       required: false,
       refreshers: ['entity_type'],
       props: async (propsValue) => {
- 
+
         const { auth, entity_type } = propsValue;
         if (!auth) {
           return {
@@ -51,22 +49,22 @@ export const drupalCreateEntityAction = createAction({
   async run({ auth, propsValue }) {
     const entityInfo = propsValue['entity_type'] as any;
     const fieldsData = propsValue['entity_fields'] as any;
-    
+
     // Extract field values, handling text fields with format correctly
     const fieldsToCreate: Record<string, any> = {};
     const processedFormatFields = new Set<string>();
-    
+
     for (const [key, value] of Object.entries(fieldsData)) {
       // Skip empty values and already processed format fields
       if (value === undefined || value === null || value === '' || processedFormatFields.has(key)) {
         continue;
       }
-      
+
       // Handle format fields (they should be combined with their text field)
       if (key.endsWith('_format')) {
         const textFieldName = key.replace('_format', '');
         const textValue = fieldsData[textFieldName];
-        
+
         if (textValue) {
           fieldsToCreate[textFieldName] = {
             value: textValue,
@@ -80,7 +78,7 @@ export const drupalCreateEntityAction = createAction({
       else {
         const formatKey = `${key}_format`;
         const formatValue = fieldsData[formatKey];
-        
+
         if (formatValue && formatValue !== 'undefined') {
           fieldsToCreate[key] = {
             value: value,
@@ -92,11 +90,11 @@ export const drupalCreateEntityAction = createAction({
         }
       }
     }
-    
+
     if (Object.keys(fieldsToCreate).length === 0) {
       throw new Error('At least one field must be provided to create an entity');
     }
-    
+
     return await drupal.createEntity(
       auth,
       entityInfo.entity_type,

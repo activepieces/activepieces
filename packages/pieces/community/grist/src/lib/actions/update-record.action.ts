@@ -8,6 +8,8 @@ export const gristUpdateRecordAction = createAction({
   name: 'grist-update-record',
   displayName: 'Update Record',
   description: 'Updates an existing record in specific table.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates the fields of an existing Grist record identified by its numeric Record ID in a given document/table. Use it to modify a row you already know the ID of (typically from a search or trigger). Idempotent — re-running with the same ID and values leaves the record in the same state.', idempotent: true },
   props: {
     workspace_id: commonProps.workspace_id,
     document_id: commonProps.document_id,

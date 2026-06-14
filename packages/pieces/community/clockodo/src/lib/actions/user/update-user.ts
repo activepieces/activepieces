@@ -7,6 +7,8 @@ export default createAction({
   name: 'update_user',
   displayName: 'Update User',
   description: 'Updates a user in clockodo',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing clockodo user identified by their numeric user ID, changing only the fields you supply (name, email, role, team, language, wage type, absence/customer permissions, active flag). Idempotent: re-sending the same values leaves the user unchanged. Requires a user ID; use Create User to add a new one.', idempotent: true },
   props: {
     user_id: clockodoCommon.user_id(true, null),
     name: Property.ShortText({

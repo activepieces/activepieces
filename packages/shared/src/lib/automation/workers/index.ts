@@ -13,6 +13,29 @@ export enum WorkerMachineType {
     DEDICATED = 'DEDICATED',
 }
 
+export enum NetworkMode {
+    UNRESTRICTED = 'UNRESTRICTED',
+    STRICT = 'STRICT',
+}
+
+
+export const SandboxInformation = z.object({
+    sandboxId: z.string(),
+    boxId: z.number(),
+    busy: z.boolean(),
+    memoryUsageBytes: z.number(),
+})
+
+export type SandboxInformation = z.infer<typeof SandboxInformation>
+export const WorkerProps = z.object({
+    EXECUTION_MODE: z.string().optional(),
+    WORKER_CONCURRENCY: z.string().optional(),
+    SANDBOX_MEMORY_LIMIT: z.string().optional(),
+    REUSE_SANDBOX: z.string().optional(),
+    version: z.string().optional(),
+})
+
+export type WorkerProps = z.infer<typeof WorkerProps>
 
 export const MachineInformation = z.object({
     cpuUsagePercentage: z.number(),
@@ -23,11 +46,12 @@ export const MachineInformation = z.object({
         percentage: z.number(),
     }),
     workerId: z.string(),
-    workerProps: z.record(z.string(), z.string()),
+    workerProps: WorkerProps,
     ramUsagePercentage: z.number(),
     totalAvailableRamInBytes: z.number(),
     totalCpuCores: z.number(),
     ip: z.string(),
+    sandboxes: z.array(SandboxInformation).default([]),
 })
 
 export type MachineInformation = z.infer<typeof MachineInformation>
@@ -62,7 +86,6 @@ export const ConsumeJobResponse = z.object({
     status: z.nativeEnum(EngineResponseStatus),
     errorMessage: z.string().optional(),
     logs: z.string().optional(),
-    delayInSeconds: z.number().optional(),
     response: z.unknown().optional(),
 })
 
@@ -102,9 +125,10 @@ export const WorkerSettingsResponse = z.object({
     EVENT_DESTINATION_TIMEOUT_SECONDS: z.number(),
     WORKER_GROUP_ID: z.string().optional(),
     EDITION: z.string(),
-    SSRF_PROTECTION_ENABLED: z.boolean(),
+    NETWORK_MODE: z.enum(NetworkMode),
     SSRF_ALLOW_LIST: z.array(z.string()),
     PAGE_ONCALL_WEBHOOK: z.string().optional(),
+    APP_VERSION: z.string().optional(),
 })
 
 export type WorkerSettingsResponse = z.infer<typeof WorkerSettingsResponse>

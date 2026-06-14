@@ -88,6 +88,9 @@ export const agentPullRequestCreatedTrigger = createTrigger({
   name: 'agent_pull_request_created',
   displayName: 'Agent Pull Request Created',
   description: 'Triggers when a background agent creates a pull request',
+  aiMetadata: {
+    description: 'Fires when a Cursor cloud agent first produces a pull request for its work, detected by polling agents for a newly populated PR URL.',
+  },
   type: TriggerStrategy.POLLING,
   props: {},
   sampleData: {

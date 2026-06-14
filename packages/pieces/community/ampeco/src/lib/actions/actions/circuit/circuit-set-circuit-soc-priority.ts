@@ -14,6 +14,8 @@ export const circuitSetCircuitSocPriorityAction = createAction({
   name: 'circuitSetCircuitSocPriority',
   displayName: 'Actions - Circuit - Set Circuit SoC Priority',
   description: 'Set DLM priority based on the session\'s state of charge (SoC). The active priority will be used to either decrease or increase the energy used by the session\'s EVSE. - If the SoC exceeds the &#x60;upperThresholdPercent&#x60;, then the &#x60;highSoCPriority&#x60; will be applied.',
+  audience: 'both',
+  aiMetadata: { description: 'Configure state-of-charge-based dynamic-load-management priorities for a circuit: sets upper/lower SoC thresholds and the priority applied above/below each. Upper and lower thresholds must differ by at least 5 percentage points; passing null for a threshold removes that branch. Idempotent: overwrites the circuit\'s SoC priority configuration with the supplied values.', idempotent: true },
   props: {
         
   circuit: Property.Number({

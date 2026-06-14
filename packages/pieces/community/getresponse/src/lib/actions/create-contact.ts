@@ -13,6 +13,12 @@ export const createContactAction = createAction({
   name: 'create-contact',
   displayName: 'Create Contact',
   description: 'Creates a new contact in a GetResponse campaign.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Adds a new subscriber to a GetResponse campaign (list) by email, optionally with a name. Use when you intend to create a contact unconditionally; it does not check for an existing contact, so repeated calls with the same email may add duplicates. Requires a campaign ID and an email address. Not idempotent. To avoid duplicates, prefer Create or Update Contact.',
+    idempotent: false,
+  },
   props: {
     campaignId: getresponseProps.campaign(),
     email: Property.ShortText({

@@ -7,6 +7,9 @@ export const secondaryReplied = createTrigger({
   name: 'secondary_replied',
   displayName: 'Secondary Replied',
   description: 'Triggers when a secondary email address replies',
+  aiMetadata: {
+    description: 'Fires when a reply comes from a prospect\'s secondary email address rather than their primary one. Represents an inbound response from an alternate address for a single prospect.',
+  },
   props: {},
   sampleData: {
     method: 'secondary_replied',

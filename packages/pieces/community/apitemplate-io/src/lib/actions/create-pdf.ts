@@ -9,6 +9,8 @@ export const createPdf = createAction({
   name: 'createPdf',
   displayName: 'Create PDF',
   description: 'Creates a PDF from a template with provided data.',
+  audience: 'both',
+  aiMetadata: { description: 'Renders a new PDF from a saved APITemplate.io template, merging in the supplied JSON `overrides` array to fill template objects. Use when the layout is already designed as a template; for ad-hoc HTML or a webpage use the from-HTML or from-URL actions instead. Requires a template ID. Not idempotent: each call generates and stores a new PDF.', idempotent: false },
   props: {
     templateId: templateIdDropdown,
     data: Property.Json({

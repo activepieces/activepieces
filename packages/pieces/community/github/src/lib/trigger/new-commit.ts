@@ -24,6 +24,10 @@ export const newCommitTrigger = createTrigger({
   name: 'new_commit',
   displayName: 'New Commit',
   description: 'Triggers when a new commit is pushed.',
+  aiMetadata: {
+    description:
+      'Fires when commits are pushed to a branch of the chosen repository (push events to refs/heads/*; branch deletions are ignored), emitting one item per distinct new commit. Represents new commits landing on a branch.',
+  },
   props: {
     repository: githubCommon.repositoryDropdown,
   },
@@ -52,7 +56,7 @@ export const newCommitTrigger = createTrigger({
     const { repo, owner } = context.propsValue.repository!;
 
     const response = await githubApiCall<{ id: number }>({
-      accessToken: context.auth.access_token,
+      auth: context.auth,
       method: HttpMethod.POST,
       resourceUri: `/repos/${owner}/${repo}/hooks`,
       body: {
@@ -81,7 +85,7 @@ export const newCommitTrigger = createTrigger({
 
     if (webhook !== null && webhook !== undefined) {
       await githubApiCall({
-        accessToken: context.auth.access_token,
+        auth: context.auth,
         method: HttpMethod.DELETE,
         resourceUri: `/repos/${webhook.owner}/${webhook.repo}/hooks/${webhook.webhookId}`,
       });

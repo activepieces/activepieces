@@ -5,7 +5,6 @@ import { createGraphClient } from '../common/graph';
 import {
   assertNotNullOrUndefined,
   ExecutionType,
-  PauseType,
 } from '@activepieces/shared';
 import { ChatMessage } from '@microsoft/microsoft-graph-types';
 
@@ -14,6 +13,11 @@ export const requestApprovalInChannel = createAction({
   name: 'request_approval_in_channel',
   displayName: 'Request Approval in Channel',
   description: 'Send approval message to a channel and then wait until the message is approved or disapproved',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Posts an Approve/Disapprove adaptive card into a Microsoft Teams channel (by team ID and channel ID) and pauses the flow until a recipient clicks one of the buttons, then resumes reporting whether it was approved. Use as a human-in-the-loop gate where channel members decide; for a direct-message gate use Request Approval from a User instead. Not idempotent — each call posts another approval message and creates a new wait.',
+    idempotent: false,
+  },
   props: {
     teamId: microsoftTeamsCommon.teamId,
     channelId: microsoftTeamsCommon.channelId,
@@ -36,10 +40,13 @@ export const requestApprovalInChannel = createAction({
       const client = createGraphClient(token, cloud);
 
       const attachmentId = Date.now().toString();
-      const approvalLink = context.generateResumeUrl({
+      const waitpoint = await context.run.createWaitpoint({
+        type: 'WEBHOOK',
+      });
+      const approvalLink = waitpoint.buildResumeUrl({
         queryParams: { action: 'approve' },
       });
-      const disapprovalLink = context.generateResumeUrl({
+      const disapprovalLink = waitpoint.buildResumeUrl({
         queryParams: { action: 'disapprove' },
       });
 
@@ -88,12 +95,7 @@ export const requestApprovalInChannel = createAction({
         .api(`/teams/${teamId}/channels/${channelId}/messages`)
         .post(chatMessage);
 
-      context.run.pause({
-        pauseMetadata: {
-          type: PauseType.WEBHOOK,
-          response: {},
-        },
-      });
+      context.run.waitForWaitpoint(waitpoint.id);
       return {
         approved: false, // default approval is false
       };

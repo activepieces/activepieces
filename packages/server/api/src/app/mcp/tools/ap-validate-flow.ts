@@ -1,11 +1,12 @@
 import {
+    BranchExecutionType,
     FlowActionType,
     flowStructureUtil,
     FlowTriggerType,
     isNil,
-    McpServer,
     McpToolDefinition,
     Permission,
+    ProjectScopedMcpServer,
     Step,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -13,13 +14,13 @@ import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { mcpUtils } from './mcp-utils'
 
-export const apValidateFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apValidateFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_validate_flow',
         permission: Permission.READ_FLOW,
         description: 'Validate a flow for structural issues without publishing. Checks step validity, template references, and empty branches. Returns a detailed report with all issues found. Use this before ap_lock_and_publish to catch problems early.',
         inputSchema: validateFlowInput.shape,
-        annotations: { readOnlyHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {
                 const { flowId } = validateFlowInput.parse(args)
@@ -30,7 +31,17 @@ export const apValidateFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
                 }
 
                 const result = validateFlow({ trigger: flow.version.trigger })
-                return { content: [{ type: 'text', text: formatValidationResult({ result, flowDisplayName: flow.version.displayName }) }] }
+                return {
+                    content: [{ type: 'text', text: formatValidationResult({ result, flowDisplayName: flow.version.displayName }) }],
+                    structuredContent: {
+                        valid: hasNoBlockingIssues(result.issues) && result.validSteps > 0,
+                        totalSteps: result.totalSteps,
+                        validSteps: result.validSteps,
+                        invalidSteps: result.invalidSteps,
+                        skippedSteps: result.skippedSteps,
+                        issues: result.issues.map(i => ({ category: i.category, severity: i.severity, stepName: i.stepName, message: i.message })),
+                    },
+                }
             }
             catch (err) {
                 return mcpUtils.mcpToolError('Flow validation failed', err)
@@ -49,7 +60,7 @@ function validateFlow({ trigger }: { trigger: Step }): ValidationResult {
     const issues: ValidationIssue[] = []
 
     if (trigger.type === FlowTriggerType.EMPTY) {
-        issues.push({ category: 'step_validity', stepName: 'trigger', message: 'Trigger is not configured (use ap_update_trigger).' })
+        issues.push({ category: 'step_validity', severity: 'error', stepName: 'trigger', message: 'Trigger is not configured (use ap_update_trigger).' })
     }
 
     const seenSteps = new Set<string>()
@@ -69,7 +80,7 @@ function validateFlow({ trigger }: { trigger: Step }): ValidationResult {
         else {
             invalidCount++
             if (!flowStructureUtil.isTrigger(step.type)) {
-                issues.push({ category: 'step_validity', stepName: step.name, message: `"${step.displayName}" is invalid (use ap_update_step to fix).` })
+                issues.push({ category: 'step_validity', severity: 'error', stepName: step.name, message: `"${step.displayName}" is invalid (use ap_update_step to fix).` })
             }
         }
 
@@ -81,10 +92,10 @@ function validateFlow({ trigger }: { trigger: Step }): ValidationResult {
                 if (seenRefs.has(ref)) continue
                 seenRefs.add(ref)
                 if (!allStepNames.has(ref)) {
-                    issues.push({ category: 'template_reference', stepName: step.name, message: `"${step.displayName}" references "{{${ref}...}}" which does not exist in the flow.` })
+                    issues.push({ category: 'template_reference', severity: 'error', stepName: step.name, message: `"${step.displayName}" references "{{${ref}...}}" which does not exist in the flow.` })
                 }
                 else if (!seenSteps.has(ref)) {
-                    issues.push({ category: 'template_reference', stepName: step.name, message: `"${step.displayName}" references "{{${ref}...}}" which comes AFTER it in execution order.` })
+                    issues.push({ category: 'template_reference', severity: 'error', stepName: step.name, message: `"${step.displayName}" references "{{${ref}...}}" which comes AFTER it in execution order.` })
                 }
             }
         }
@@ -95,7 +106,15 @@ function validateFlow({ trigger }: { trigger: Step }): ValidationResult {
             for (let i = 0; i < children.length; i++) {
                 if (isNil(children[i])) {
                     const branchName = branches[i]?.branchName ?? `Branch ${i}`
-                    issues.push({ category: 'empty_branch', stepName: step.name, message: `"${step.displayName}" has empty branch: "${branchName}".` })
+                    const isFallback = branches[i]?.branchType === BranchExecutionType.FALLBACK
+                    issues.push({
+                        category: 'empty_branch',
+                        severity: isFallback ? 'info' : 'warning',
+                        stepName: step.name,
+                        message: isFallback
+                            ? `"${step.displayName}" has an empty fallback branch: "${branchName}". This is fine if the unmatched case intentionally does nothing.`
+                            : `"${step.displayName}" has empty branch: "${branchName}".`,
+                    })
                 }
             }
         }
@@ -173,21 +192,39 @@ const CATEGORY_LABELS: Record<ValidationIssue['category'], string> = {
     empty_branch: 'Empty Branches',
 }
 
+function hasNoBlockingIssues(issues: ValidationIssue[]): boolean {
+    return issues.every(i => i.severity === 'info')
+}
+
+function formatInfoNotes(infoIssues: ValidationIssue[]): string[] {
+    if (infoIssues.length === 0) {
+        return []
+    }
+    return ['', 'Notes (non-blocking):', ...infoIssues.map(i => `- ${i.stepName}: ${i.message}`)]
+}
+
 function formatValidationResult({ result, flowDisplayName }: { result: ValidationResult, flowDisplayName: string }): string {
-    if (result.issues.length === 0) {
+    const blockingIssues = result.issues.filter(i => i.severity !== 'info')
+    const infoIssues = result.issues.filter(i => i.severity === 'info')
+
+    if (blockingIssues.length === 0 && result.validSteps > 0) {
         const skippedNote = result.skippedSteps > 0 ? `, ${result.skippedSteps} skipped` : ''
-        return `✅ Flow "${flowDisplayName}" is ready to publish (${result.totalSteps} steps, ${result.validSteps} valid${skippedNote}).`
+        return [`✅ Flow "${flowDisplayName}" is ready to publish (${result.totalSteps} steps, ${result.validSteps} valid${skippedNote}).`, ...formatInfoNotes(infoIssues)].join('\n')
+    }
+
+    if (blockingIssues.length === 0 && result.validSteps === 0) {
+        return [`⚠️ Flow "${flowDisplayName}" has no valid steps (${result.totalSteps} total). Configure the trigger and actions before publishing.`, ...formatInfoNotes(infoIssues)].join('\n')
     }
 
     const grouped = new Map<ValidationIssue['category'], ValidationIssue[]>()
-    for (const issue of result.issues) {
+    for (const issue of blockingIssues) {
         const list = grouped.get(issue.category) ?? []
         list.push(issue)
         grouped.set(issue.category, list)
     }
 
     const lines: string[] = []
-    lines.push(`⚠️ Flow "${flowDisplayName}" has ${result.issues.length} issue(s):`)
+    lines.push(`⚠️ Flow "${flowDisplayName}" has ${blockingIssues.length} issue(s):`)
     lines.push('')
 
     for (const category of CATEGORY_ORDER) {
@@ -201,11 +238,14 @@ function formatValidationResult({ result, flowDisplayName }: { result: Validatio
 
     lines.push(`Summary: ${result.totalSteps} total, ${result.validSteps} valid, ${result.invalidSteps} invalid, ${result.skippedSteps} skipped`)
 
-    return lines.join('\n')
+    return [...lines, ...formatInfoNotes(infoIssues)].join('\n')
 }
+
+type ValidationSeverity = 'error' | 'warning' | 'info'
 
 type ValidationIssue = {
     category: 'step_validity' | 'template_reference' | 'empty_branch'
+    severity: ValidationSeverity
     stepName: string
     message: string
 }

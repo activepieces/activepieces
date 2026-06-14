@@ -6,6 +6,8 @@ import { StepStatusIcon, flowRunUtils } from '@/features/flow-runs';
 import { useBuilderStateContext } from '../../../builder-hooks';
 import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
 
+import { StepNodeBadgeContainer } from './step-node-badge-container';
+
 const ApStepNodeStatusInRun = ({ stepName }: { stepName: string }) => {
   const [run, loopIndexes] = useBuilderStateContext((state) => [
     state.run,
@@ -21,7 +23,7 @@ const ApStepNodeStatusInRun = ({ stepName }: { stepName: string }) => {
     ? flowRunUtils.getStatusIconForStep(stepStatusInRun)
     : ({ variant: 'default', text: t('Testing...') } as const);
   return (
-    <div className="absolute right-[1px]  h-[20px] -top-[28px]">
+    <StepNodeBadgeContainer>
       <div className={flowRunUtils.getStatusContainerClassName(variant, true)}>
         <StepStatusIcon
           status={stepStatusInRun}
@@ -30,7 +32,7 @@ const ApStepNodeStatusInRun = ({ stepName }: { stepName: string }) => {
         ></StepStatusIcon>
         <div>{text}</div>
       </div>
-    </div>
+    </StepNodeBadgeContainer>
   );
 };
 ApStepNodeStatusInRun.displayName = 'ApStepNodeStatus';

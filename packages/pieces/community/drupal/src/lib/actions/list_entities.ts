@@ -1,26 +1,25 @@
 import {
-  PiecePropValueSchema,
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { drupalAuth } from '../auth';
 import { drupal } from '../common/jsonapi';
 import { fetchEntityTypesForReading } from '../common/drupal-entities';
 
-type DrupalAuthType = PiecePropValueSchema<typeof drupalAuth>;
 
 export const drupalListEntitiesAction = createAction({
   auth: drupalAuth,
   name: 'drupal-list-entities',
   displayName: 'List Entities',
   description: 'List entities from Drupal using JSON:API',
+  audience: 'both',
+  aiMetadata: { description: 'Lists/retrieves entities of a chosen type and bundle from Drupal via JSON:API, with optional filtering by published status, sorting, and a result limit (limit 0 returns all entities, following pagination). Use to query or scan existing content rather than fetch one known item. Read-only and idempotent.', idempotent: true },
   props: {
     entity_type: Property.Dropdown({
       displayName: 'Entity Type',
       description: 'Choose what type of content to list.',
       required: true,
-      refreshers: [], 
+      refreshers: [],
       auth: drupalAuth,
       options: async ({ auth }) => fetchEntityTypesForReading(auth),
     }),
@@ -46,9 +45,9 @@ export const drupalListEntitiesAction = createAction({
       props: async (propsValue) => {
         const entityInfo = propsValue['entity_type'] as any;
         if (!entityInfo) return {} as any;
-        
-        let sortOptions: Array<{label: string; value: string}> = [];
-        
+
+        let sortOptions: Array<{ label: string; value: string }> = [];
+
         if (entityInfo.entity_type === 'taxonomy_term') {
           sortOptions = [
             { label: 'Updated date', value: 'changed' },
@@ -67,7 +66,7 @@ export const drupalListEntitiesAction = createAction({
             { label: 'Title', value: 'title' },
           ];
         }
-        
+
         return {
           sort_field: Property.StaticDropdown({
             displayName: 'Sort By',
@@ -122,18 +121,18 @@ export const drupalListEntitiesAction = createAction({
   },
   async run({ auth, propsValue }) {
     const entityInfo = propsValue.entity_type as any;
-    
+
     const filters: Record<string, any> = {};
-    
+
     if (propsValue.published_status === 'published') {
       filters['status'] = '1';
     } else if (propsValue.published_status === 'unpublished') {
       filters['status'] = '0';
     }
-    
+
     let fields: string[] | undefined;
     const outputOptions = propsValue.output_options as any;
-    
+
     if (entityInfo.entity_type === 'node' && outputOptions?.minimal_output) {
       fields = ['id', 'title', 'status', 'created', 'changed', 'drupal_internal__nid', 'path'];
     } else if (entityInfo.entity_type === 'taxonomy_term') {
@@ -141,7 +140,7 @@ export const drupalListEntitiesAction = createAction({
     } else if (entityInfo.entity_type === 'user') {
       fields = ['id', 'name', 'mail', 'created', 'changed', 'status'];
     }
-    
+
     const sortField = (propsValue.sort_by as any)?.sort_field;
 
     let entities = await drupal.listEntities(
@@ -156,17 +155,17 @@ export const drupalListEntitiesAction = createAction({
         limit: propsValue.limit,
       }
     );
-    
+
     // Remove type field for cleaner output
     const removeType = (entity: any) => {
       const { type, ...entityWithoutType } = entity;
       return entityWithoutType;
     };
-    
-    entities = Array.isArray(entities) 
+
+    entities = Array.isArray(entities)
       ? entities.map(removeType)
       : removeType(entities);
-    
+
     return {
       entities: Array.isArray(entities) ? entities : [entities],
       count: Array.isArray(entities) ? entities.length : 1,

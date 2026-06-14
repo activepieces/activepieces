@@ -52,14 +52,24 @@ Tools are organized into categories. **Discovery tools** are always available. O
 | Category | Description |
 |----------|-------------|
 | Discovery | Read-only tools for exploring flows, pieces, connections, tables, runs, and validation |
-| Flow Management | Create, rename, publish, and enable/disable flows |
+| Flow Management | Create, duplicate, rename, publish, and enable/disable flows |
 | Flow Building | Add, update, and delete steps and triggers |
-| Router & Branching | Add and delete conditional branches |
+| Router & Branching | Add, update, and delete conditional branches |
 | Annotations | Manage canvas notes |
 | Tables | Full CRUD for tables, fields, and records |
 | Testing & Runs | Test flows, inspect results, retry failures |
 
 See the [Tools Reference](/mcp/tools) for the complete catalog with input schemas.
+
+## Self-Hosting Behind a Reverse Proxy
+
+The MCP server and its OAuth endpoints are reachable both at the host root (`https://your-instance.com/mcp`) and under a path prefix (`https://your-instance.com/<prefix>/mcp`) when your reverse proxy routes `https://host/<prefix>/*` to Activepieces.
+
+For a subpath deployment to work, set `AP_FRONTEND_URL` to the full public URL **including the prefix** (e.g. `https://your-instance.com/activepieces`). Activepieces then advertises its OAuth issuer, authorization/token endpoints, protected-resource metadata, and the `WWW-Authenticate` discovery header under that prefix, so the entire handshake stays inside your proxy rule.
+
+<Note>
+Clients that ignore the `WWW-Authenticate` header and probe the RFC well-known paths at the host root (`https://host/.well-known/oauth-*`) require an additional proxy rule forwarding those host-root paths to Activepieces — that namespace is anchored to the host root by RFC 8414/9728 and cannot be relocated under the prefix. Header-honoring clients (such as Claude) do not need this.
+</Note>
 
 ## Security
 

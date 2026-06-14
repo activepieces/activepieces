@@ -4,7 +4,6 @@ import { slackAuth } from '../auth';
 import {
   assertNotNullOrUndefined,
   ExecutionType,
-  PauseType,
 } from '@activepieces/shared';
 import {
   profilePicture,
@@ -23,6 +22,8 @@ export const requestSendApprovalMessageAction = createAction({
   displayName: 'Request Approval in a Channel',
   description:
     'Send approval message to a channel and then wait until the message is approved or disapproved',
+  audience: 'both',
+  aiMetadata: { description: 'Post a message with Approve/Disapprove buttons to a channel and pause the flow until someone clicks one, then resume with the boolean outcome. Use this for a simple approval gate visible to a channel; use Request Action from A User for a private DM with custom action choices. Posts a new message each run, so it is not idempotent.', idempotent: false },
   props: {
     info: singleSelectChannelInfo,
     channel: slackChannel(true),
@@ -40,6 +41,10 @@ export const requestSendApprovalMessageAction = createAction({
       assertNotNullOrUndefined(text, 'text');
       assertNotNullOrUndefined(channel, 'channel');
 
+      const waitpoint = await context.run.createWaitpoint({
+        type: 'WEBHOOK',
+      });
+
       const postMessage = await slackSendMessage({
         token,
         text: `${context.propsValue.text}`,
@@ -49,10 +54,10 @@ export const requestSendApprovalMessageAction = createAction({
       });
       const messageTs = (postMessage as ChatPostMessageResponse).ts as string
 
-      const approvalLink = context.generateResumeUrl({
+      const approvalLink = waitpoint.buildResumeUrl({
         queryParams: { action: 'approve', channel, messageTs },
       });
-      const disapprovalLink = context.generateResumeUrl({
+      const disapprovalLink = waitpoint.buildResumeUrl({
         queryParams: { action: 'disapprove', channel, messageTs },
       });
 
@@ -93,12 +98,7 @@ export const requestSendApprovalMessageAction = createAction({
         ],
       });
 
-      context.run.pause({
-        pauseMetadata: {
-          type: PauseType.WEBHOOK,
-          response: {},
-        },
-      });
+      context.run.waitForWaitpoint(waitpoint.id);
 
       return {
         approved: false, // default approval is false

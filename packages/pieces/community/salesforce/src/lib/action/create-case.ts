@@ -8,6 +8,8 @@ export const createCase = createAction({
     name: 'create_case',
     displayName: 'Create Case',
     description: 'Creates a Case, which represents a customer issue or problem.',
+    audience: 'both',
+    aiMetadata: { description: 'Create a new support Case (customer issue/problem) with a required Subject and optional status, priority, origin, and links to an Account or Contact. Not idempotent — each call opens a separate Case, so guard against duplicate submissions.', idempotent: false },
     props: {
         Subject: Property.ShortText({
             displayName: 'Subject',

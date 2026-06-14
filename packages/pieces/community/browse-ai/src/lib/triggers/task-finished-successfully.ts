@@ -13,6 +13,10 @@ export const taskFinishedSuccessfullyTrigger = createTrigger({
   displayName: 'Task Finished Successfully',
   description:
     'Triggers when a robot finishes a task successfully.',
+  aiMetadata: {
+    description:
+      'Fires when a task run for the selected Browse AI robot completes successfully, delivering the finished task record with its captured/extracted data. Use to process scrape results as soon as they are ready.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     robotId: robotIdDropdown,

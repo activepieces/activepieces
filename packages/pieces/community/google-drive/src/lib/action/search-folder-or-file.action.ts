@@ -8,6 +8,8 @@ export const googleDriveSearchFolder = createAction({
   name: 'search-folder',
   displayName: 'Search',
   description: 'Search a Google Drive folder for files/sub-folders',
+  audience: 'both',
+  aiMetadata: { description: 'Searches Google Drive for files or folders matching a name, full-text, or MIME-type query, optionally scoped to a parent folder and filtered to files or folders only. Use to resolve a file/folder ID from a human-readable name before acting on it. Read-only and idempotent.', idempotent: true },
   props: {
     queryTerm: Property.StaticDropdown({
       displayName: 'Query Term',
@@ -86,6 +88,7 @@ export const googleDriveSearchFolder = createAction({
         fields: 'nextPageToken, files(id, name, mimeType, createdTime, modifiedTime)',
         includeItemsFromAllDrives: context.propsValue.include_team_drives,
         supportsAllDrives: true,
+        corpora: context.propsValue.include_team_drives ? 'allDrives' : 'user',
         pageSize: 1000,
       };
       if (pageToken) listParams.pageToken = pageToken;

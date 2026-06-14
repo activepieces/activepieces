@@ -1,13 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { savvyCalApiCall, flattenEvent, SavvyCalEvent } from '../common';
-import { savvyCalAuth } from '../../';
+import { savvyCalAuth, getToken } from '../auth';
 
 export const getEventAction = createAction({
   auth: savvyCalAuth,
   name: 'get_event',
   displayName: 'Get Event',
   description: 'Retrieves the details of a specific scheduled meeting by its ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches the full details of a single SavvyCal event by its event id. Use to look up a known booking (attendee, times, state, link); obtain the id from a trigger, List Events, or the event URL. Read-only and idempotent.', idempotent: true },
   props: {
     event_id: Property.ShortText({
       displayName: 'Event ID',
@@ -17,7 +19,7 @@ export const getEventAction = createAction({
   },
   async run(context) {
     const response = await savvyCalApiCall<SavvyCalEvent>({
-      token: context.auth.secret_text,
+      token: getToken(context.auth),
       method: HttpMethod.GET,
       path: `/events/${context.propsValue.event_id}`,
     });

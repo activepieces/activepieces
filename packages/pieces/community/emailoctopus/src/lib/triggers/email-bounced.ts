@@ -8,6 +8,9 @@ export const emailBounced = createTrigger({
     name: 'email_bounced',
     displayName: 'Email Bounced',
     description: 'Triggers when an email to a recipient bounces from a specific campaign.',
+    aiMetadata: {
+      description: 'Fires when an EmailOctopus campaign email bounces for a recipient (a contact.bounced webhook event), representing a delivery failure. Can be scoped to a single campaign id, or left unfiltered to catch bounces across all campaigns.',
+    },
     props: {
         campaign_id: emailOctopusProps.campaignId(),
             liveMarkdown: Property.MarkDown({

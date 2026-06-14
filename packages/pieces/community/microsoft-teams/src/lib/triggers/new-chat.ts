@@ -6,7 +6,7 @@ import {
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
-import { createGraphClient } from '../common/graph';
+import { createGraphClient, withGraphRetry } from '../common/graph';
 import { PageCollection } from '@microsoft/microsoft-graph-client';
 import { Chat, ChatType } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
@@ -20,6 +20,9 @@ export const newChatTrigger = createTrigger({
 	name: 'new-chat',
 	displayName: 'New Chat',
 	description: 'Triggers when a new chat is created.',
+	aiMetadata: {
+		description: 'Fires when a new chat (one-on-one or group) involving the authenticated user is created in Microsoft Teams. Each event represents the newly created chat and its metadata. Polls periodically by creation time, so events appear with a short delay rather than instantly.',
+	},
 	props: {},
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
@@ -65,10 +68,9 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftTeamsAu
 				? '$top=10'
 				: `$filter=createdDateTime gt ${lastFetchDate}`;
 
-		let response: PageCollection = await client.api(`/chats?${filter}`).get();
-
-		console.log('RESPONE');
-		console.log(JSON.stringify(response))
+		let response: PageCollection = await withGraphRetry(() =>
+			client.api(`/chats?${filter}`).get(),
+		);
 
 		while (response.value && response.value.length > 0) {
 			for (const channel of response.value as Chat[]) {
@@ -77,8 +79,9 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftTeamsAu
 				}
 				chats.push(channel);
 			}
-			if (lastFetchEpochMS !== 0 && response['@odata.nextLink']) {
-				response = await client.api(response['@odata.nextLink']).get();
+			const nextLink = response['@odata.nextLink'];
+			if (lastFetchEpochMS !== 0 && nextLink) {
+				response = await withGraphRetry(() => client.api(nextLink).get());
 			} else {
 				break;
 			}

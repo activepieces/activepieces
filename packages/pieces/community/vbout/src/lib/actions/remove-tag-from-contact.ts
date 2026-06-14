@@ -7,6 +7,11 @@ export const removeTagFromContactAction = createAction({
   name: 'vbout_remove_tag',
   displayName: 'Remove Tags from Contact',
   description: 'Removes tags from an existing contact.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Removes one or more tags from an existing VBOUT contact identified by email. Use to unlabel or re-segment a contact. Tag names are passed as a comma-separated string; idempotent, since removing already-absent tags yields the same end state.',
+    idempotent: true,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email Address',

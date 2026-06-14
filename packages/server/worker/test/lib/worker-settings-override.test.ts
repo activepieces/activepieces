@@ -4,6 +4,7 @@ import { Server as IOServer } from 'socket.io'
 import {
     createRpcServer,
     ExecutionMode,
+    NetworkMode,
     WebsocketServerEvent,
 } from '@activepieces/shared'
 import type { WorkerToApiContract, WorkerSettingsResponse } from '@activepieces/shared'
@@ -61,7 +62,7 @@ function buildWorkerSettingsResponse(overrides?: Partial<WorkerSettingsResponse>
         S3_USE_SIGNED_URLS: 'false',
         EVENT_DESTINATION_TIMEOUT_SECONDS: 30,
         EDITION: 'community',
-        SSRF_PROTECTION_ENABLED: false,
+        NETWORK_MODE: NetworkMode.UNRESTRICTED,
         SSRF_ALLOW_LIST: [],
         ...overrides,
     }
@@ -81,7 +82,6 @@ function buildMinimalHandlers(): WorkerToApiContract {
         getPiece: vi.fn(),
         getPieceArchive: vi.fn(),
         extendLock: vi.fn(),
-        getPayloadFile: vi.fn(),
         getUsedPieces: vi.fn().mockResolvedValue([]),
         markPieceAsUsed: vi.fn(),
         disableFlow: vi.fn(),
@@ -113,6 +113,7 @@ describe('worker settings override', () => {
         await worker.stop()
         delete process.env.AP_EXECUTION_MODE
         delete process.env.AP_WORKER_GROUP_ID
+        delete process.env.AP_REUSE_SANDBOX
         await new Promise<void>((resolve) => {
             ioServer.close(() => resolve())
         })
@@ -190,6 +191,7 @@ describe('worker settings override', () => {
     it('worker group + SANDBOX_PROCESS passes validation', async () => {
         process.env.AP_WORKER_GROUP_ID = 'group-1'
         process.env.AP_EXECUTION_MODE = ExecutionMode.SANDBOX_PROCESS
+        process.env.AP_REUSE_SANDBOX = 'false'
         const serverSettings = buildWorkerSettingsResponse()
         await connectAndWaitForSettings(serverSettings)
 
@@ -201,6 +203,7 @@ describe('worker settings override', () => {
     it('worker group + SANDBOX_CODE_AND_PROCESS passes validation', async () => {
         process.env.AP_WORKER_GROUP_ID = 'group-1'
         process.env.AP_EXECUTION_MODE = ExecutionMode.SANDBOX_CODE_AND_PROCESS
+        process.env.AP_REUSE_SANDBOX = 'false'
         const serverSettings = buildWorkerSettingsResponse()
         await connectAndWaitForSettings(serverSettings)
 
@@ -229,6 +232,7 @@ describe('worker settings override', () => {
 
     it('worker group + no local override, server sends SANDBOX_PROCESS → passes', async () => {
         process.env.AP_WORKER_GROUP_ID = 'group-1'
+        process.env.AP_REUSE_SANDBOX = 'false'
         const serverSettings = buildWorkerSettingsResponse({ EXECUTION_MODE: ExecutionMode.SANDBOX_PROCESS })
         await connectAndWaitForSettings(serverSettings)
 

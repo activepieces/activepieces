@@ -8,6 +8,8 @@ export const findAttachmentByRowId = createAction({
   name: 'find_attachment_by_row_id',
   displayName: 'List Row Attachments',
   description: 'Get all attachments for a specific row in a Smartsheet, including row and discussion-level attachments with comprehensive pagination and filtering options',
+  audience: 'both',
+  aiMetadata: { description: 'Lists the attachments on a specific Smartsheet row, identified by sheet ID and row ID, covering both row-level and discussion-level attachments. Use to discover or download files and links tied to a row; results can be paginated and filtered by attachment type, parent type, and file size. Read-only and idempotent.', idempotent: true },
   props: {
     sheet_id: smartsheetCommon.sheet_id(),
     row_id: smartsheetCommon.row_id,

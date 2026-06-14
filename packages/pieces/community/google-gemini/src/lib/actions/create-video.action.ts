@@ -1,32 +1,24 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { googleGeminiAuth } from '../auth';
+import { getGeminiVideoModelOptions } from '../common/common';
 import { GoogleGenAI } from '@google/genai';
 import mime from 'mime-types';
 
 export const createVideoAction = createAction({
+  audience: 'human',
   name: 'create_video',
   auth: googleGeminiAuth,
   displayName: 'Create Video',
   description: 'Generate a video from a text prompt using Google Veo models.',
   props: {
-    model: Property.StaticDropdown({
+    model: Property.Dropdown({
       displayName: 'Model',
       required: true,
+      auth: googleGeminiAuth,
+      refreshers: [],
       defaultValue: 'veo-3.1-generate-preview',
-      options: {
-        disabled: false,
-        options: [
-          { label: 'Veo 3.1 Preview', value: 'veo-3.1-generate-preview' },
-          {
-            label: 'Veo 3.1 Fast Preview',
-            value: 'veo-3.1-fast-generate-preview',
-          },
-          { label: 'Veo 3.0', value: 'veo-3.0-generate-001' },
-          { label: 'Veo 3.0 Fast', value: 'veo-3.0-fast-generate-001' },
-          { label: 'Veo 2.0', value: 'veo-2.0-generate-001' },
-        ],
-      },
+      options: async ({ auth }) => getGeminiVideoModelOptions({ auth }),
     }),
     prompt: Property.LongText({
       displayName: 'Prompt',

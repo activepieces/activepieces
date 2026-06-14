@@ -12,6 +12,8 @@ export const updateOrderAction = createAction({
   name: 'update_order',
   displayName: 'Update Order',
   description: 'Update an existing order.',
+  audience: 'both',
+  aiMetadata: { description: 'Update editable fields on an existing Shopify order by order ID (email, phone, tags, note). Use to amend order metadata; this does not change line items, fulfillment, or payment. Sets absolute field values, so re-running with the same input is idempotent.', idempotent: true },
   props: {
     id: Property.ShortText({
       displayName: 'Order',

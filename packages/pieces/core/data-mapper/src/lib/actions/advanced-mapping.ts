@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 export const advancedMapping = createAction({
+  audience: 'human',
   name: 'advanced_mapping',
   displayName: 'Advanced Mapping',
   description: 'Map data from one format to another',

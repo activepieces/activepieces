@@ -14,6 +14,8 @@ export default createAction({
   name: 'query',
   displayName: 'Execute SQL++ Query',
   description: 'Run a SQL++ (N1QL) query with optional vector search filters',
+  audience: 'both',
+  aiMetadata: { description: 'Run a read SQL++ (N1QL) SELECT query against Couchbase, optionally layering vector-similarity WHERE filters and ORDER BY for nearest-neighbor search; the query is wrapped as a subquery, so it must be a SELECT and must not contain LIMIT or OFFSET (use the Limit/Offset fields instead). Use for ad-hoc reads, joins, aggregations, or vector search across documents. Idempotent for read queries.', idempotent: true },
   props: {
     bucket: couchbaseCommonProps.bucket,
     scope: couchbaseCommonProps.scope,

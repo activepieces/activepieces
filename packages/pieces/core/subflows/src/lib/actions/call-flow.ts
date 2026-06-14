@@ -5,8 +5,8 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, isNil, PauseType, PARENT_RUN_ID_HEADER } from '@activepieces/shared';
-import { CallableFlowRequest, CallableFlowResponse, findFlowByExternalIdOrThrow, listEnabledFlowsWithSubflowTrigger } from '../common';
+import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, FlowStatus, isNil, PARENT_RUN_ID_HEADER } from '@activepieces/shared';
+import { CallableFlowRequest, CallableFlowResponse, findFlowByExternalIdOrThrow, listFlowsWithSubflowTrigger } from '../common';
 
 type FlowValue = {
   externalId: string;
@@ -14,6 +14,7 @@ type FlowValue = {
 };
 
 export const callFlow = createAction({
+  audience: 'human',
   name: 'callFlow',
   displayName: 'Call Flow',
   description: 'Call a flow that has "Callable Flow" trigger',
@@ -21,10 +22,10 @@ export const callFlow = createAction({
     flow: Property.Dropdown<FlowValue>({
       auth: PieceAuth.None(),
       displayName: 'Flow',
-      description: 'The flow to execute',
+      description: 'The flow to execute. Published flows with a "Callable Flow" trigger appear here; disabled flows are marked "(inactive)" and cannot be executed until they are enabled.',
       required: true,
       options: async (_, context) => {
-        const flows = await listEnabledFlowsWithSubflowTrigger({
+        const flows = await listFlowsWithSubflowTrigger({
           flowsContext: context.flows,
         });
         return {
@@ -33,7 +34,10 @@ export const callFlow = createAction({
               externalId: flow.externalId ?? flow.id,
               exampleData: flow.version.trigger.settings.input.exampleData,
             },
-            label: flow.version.displayName,
+            label:
+              flow.status === FlowStatus.ENABLED
+                ? flow.version.displayName
+                : `${flow.version.displayName} (inactive)`,
           })),
         };
       },
@@ -115,6 +119,25 @@ export const callFlow = createAction({
       externalId: context.propsValue.flow?.externalId,
     });
 
+    if (flow.status !== FlowStatus.ENABLED) {
+      throw new Error(JSON.stringify({
+        message: 'The selected subflow is disabled. Enable it before calling it from a parent flow.',
+        externalId: context.propsValue.flow?.externalId,
+        flowName: flow.version.displayName,
+      }));
+    }
+
+    let callbackUrl: string | undefined
+    if (context.propsValue.waitForResponse) {
+      const waitpoint = await context.run.createWaitpoint({
+        type: 'WEBHOOK',
+      });
+      callbackUrl = waitpoint.buildResumeUrl({
+        queryParams: {},
+      });
+      context.run.waitForWaitpoint(waitpoint.id);
+    }
+
     const response = await httpClient.sendRequest<CallableFlowRequest>({
       method: HttpMethod.POST,
       url: `${context.server.apiUrl}v1/webhooks/${flow?.id}`,
@@ -125,19 +148,9 @@ export const callFlow = createAction({
       },
       body: {
         data: payload,
-        callbackUrl: context.propsValue.waitForResponse ?  context.generateResumeUrl({
-          queryParams: {}
-        }) : undefined,
+        callbackUrl,
       },
     });
-    if (context.propsValue.waitForResponse) {
-      context.run.pause({
-        pauseMetadata: {
-          type: PauseType.WEBHOOK,
-          response: {},
-        }
-      })
-    }
     return response.body;
   },
   errorHandlingOptions: {

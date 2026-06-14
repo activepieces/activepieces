@@ -3,6 +3,7 @@ import { groqAuth } from '../..';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 
 export const translateAudio = createAction({
+  audience: 'human',
 	auth: groqAuth,
 	name: 'translate-audio',
 	displayName: 'Translate Audio',

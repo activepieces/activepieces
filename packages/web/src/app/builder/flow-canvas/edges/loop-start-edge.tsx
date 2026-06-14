@@ -5,37 +5,46 @@ import { flowCanvasConsts } from '../utils/consts';
 import { ApLoopStartEdge } from '../utils/types';
 
 import { ApAddButton } from './add-button';
+import { useEdgeLayoutSpace } from './use-edge-layout-space';
 
 export const ApLoopStartLineCanvasEdge = ({
   sourceX,
   sourceY,
   targetX,
+  targetY,
   data,
   source,
   id,
 }: EdgeProps & ApLoopStartEdge) => {
-  const startY =
-    sourceY + flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE;
-  const verticalLineLength =
-    flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEPS -
-    2 * flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE;
+  const { isHorizontal, layout, layoutSource, layoutTarget, toCanvasPath } =
+    useEdgeLayoutSpace({ sourceX, sourceY, targetX, targetY });
 
+  const verticalLineLength =
+    layout.spaceAlongBetweenSteps -
+    2 * flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE;
   const horizontalLineLength =
-    Math.abs(targetX - sourceX) - 2 * flowCanvasConsts.ARC_LENGTH;
-  const path = `M ${sourceX} ${startY} v${verticalLineLength / 2}
+    Math.abs(layoutTarget.x - layoutSource.x) - 2 * flowCanvasConsts.ARC_LENGTH;
+
+  const layoutStartY =
+    layoutSource.y + flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE;
+  const layoutPath = `M ${layoutSource.x} ${layoutStartY} v${
+    verticalLineLength / 2
+  }
   ${flowCanvasConsts.ARC_RIGHT_DOWN} h${horizontalLineLength}
   ${flowCanvasConsts.ARC_RIGHT} v${verticalLineLength}
    ${!data.isLoopEmpty ? flowCanvasConsts.ARROW_DOWN : ''}`;
-
-  const showDebugForLineEndPoint = false;
-  const buttonPosition = {
+  const path = toCanvasPath(layoutPath);
+  const layoutButtonPosition = {
     x:
-      sourceX -
+      layoutSource.x -
       flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width / 2 +
       horizontalLineLength +
       flowCanvasConsts.ARC_LENGTH * 2,
-    y: startY + verticalLineLength + flowCanvasConsts.ARC_LENGTH,
+    y: layoutStartY + verticalLineLength + flowCanvasConsts.ARC_LENGTH,
   };
+  const buttonPosition = isHorizontal
+    ? { x: layoutButtonPosition.y, y: layoutButtonPosition.x }
+    : layoutButtonPosition;
 
   return (
     <>
@@ -59,16 +68,6 @@ export const ApLoopStartLineCanvasEdge = ({
             }
             parentStepName={source}
           ></ApAddButton>
-        </foreignObject>
-      )}
-
-      {showDebugForLineEndPoint && (
-        <foreignObject
-          x={sourceX}
-          y={startY}
-          className="w-[20px] h-[20px] rounded-full bg-[red] flex items-center justify-center absolute"
-        >
-          <div className=" w-[20px] h-[20px] rounded-full bg-[red] flex items-center justify-center"></div>
         </foreignObject>
       )}
     </>

@@ -62,6 +62,10 @@ export const streamStarted = createTrigger({
   name: 'stream_started',
   displayName: 'Streamer(s) Go Live',
   description: 'Triggers when a stream from a list of streamers has started',
+  aiMetadata: {
+    description:
+      'Fires when any of the monitored Twitch streamers goes live (transitions from offline to broadcasting). Polls the Twitch Helix streams API for the given user logins and emits one event per newly started stream. Each event represents an active live stream and includes the streamer (user_id, user_login, user_name), the game/category (game_id, game_name), stream title, current viewer_count, language, started_at timestamp, thumbnail_url, tags, and is_mature flag.',
+  },
   props: props,
   sampleData: {
     id: '316465520862',

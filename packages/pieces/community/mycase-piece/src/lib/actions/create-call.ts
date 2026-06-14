@@ -7,6 +7,8 @@ export const createCall = createAction({
   name: 'create_call',
   displayName: 'Create Call',
   description: 'Creates a new call in the call log in MyCase',
+  audience: 'both',
+  aiMetadata: { description: 'Log a phone call in MyCase, recording when it happened, the caller phone number, a message, and the staff member it is for. Identify the caller by name (unknown), an existing client, or an existing lead via the caller type. Use to record inbound/outbound calls; not idempotent, so repeated calls create duplicate log entries. To review logged calls, use Find Call.', idempotent: false },
   props: {
     called_at: Property.DateTime({
       displayName: 'Called At',

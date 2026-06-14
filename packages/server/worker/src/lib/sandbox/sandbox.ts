@@ -1,11 +1,58 @@
 import { ChildProcess } from 'child_process'
+import { randomBytes, timingSafeEqual } from 'crypto'
 import { createServer, Server as HttpServer } from 'http'
 import path from 'path'
 import { ActivepiecesError, assertNotNullOrUndefined, createNotifyServer, createRpcClient, createRpcServer, EngineContract, EngineOperation, EngineOperationType, EngineResponse, EngineStderr, EngineStdout, ErrorCode, isNil, WorkerContract, WorkerNotifyContract } from '@activepieces/shared'
 import { Socket, Server as SocketIOServer } from 'socket.io'
 import treeKill from 'tree-kill'
-import { getGlobalCachePathLatestVersion } from '../cache/cache-paths'
+import { getGlobalCachePathLatestVersion, getGlobalCodeCachePath } from '../cache/cache-paths'
 import { Sandbox, SandboxInitOptions, SandboxLogger, SandboxMount, SandboxOptions, SandboxProcessMaker, SandboxResult } from './types'
+
+function assertSafePathSegment(value: string, field: string): void {
+    const isUnsafe = value.length === 0
+        || value === '.'
+        || value === '..'
+        || value.includes('..')
+        || value.includes('/')
+        || value.includes('\\')
+        || value.includes('\0')
+    if (isUnsafe) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: `Invalid ${field}: "${value}" — path segment contains disallowed characters` },
+        })
+    }
+}
+
+function assertSandboxPathUnderRoot(mount: SandboxMount): void {
+    const normalized = path.posix.normalize(mount.sandboxPath)
+    if (!normalized.startsWith('/root/') && normalized !== '/root') {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: `Mount sandboxPath "${mount.sandboxPath}" must be under /root/` },
+        })
+    }
+}
+
+function buildCodeMount({ flowVersionId, reusable }: { flowVersionId: string | undefined, reusable: boolean }): SandboxMount | null {
+    const codeCachePath = getGlobalCodeCachePath()
+    if (reusable) {
+        return {
+            hostPath: codeCachePath,
+            sandboxPath: '/root/codes',
+            optional: true,
+        }
+    }
+    if (!isNil(flowVersionId)) {
+        assertSafePathSegment(flowVersionId, 'flowVersionId')
+        return {
+            hostPath: path.join(codeCachePath, flowVersionId),
+            sandboxPath: `/root/codes/${flowVersionId}`,
+            optional: true,
+        }
+    }
+    return null
+}
 
 export function createSandbox(
     log: SandboxLogger,
@@ -19,16 +66,26 @@ export function createSandbox(
     let io: SocketIOServer | null = null
     let connectedSocket: Socket | null = null
     let connectionResolve: (() => void) | null = null
+    let wsRpcToken: string | null = null
+    let busy = false
+    let killedByShutdown = false
 
     function createSocketServer(): number {
         httpServer = createServer()
         io = new SocketIOServer(httpServer, {
             path: '/worker/ws',
-            maxHttpBufferSize: 1e8,
+            maxHttpBufferSize: options.maxHttpBufferSizeBytes,
             cors: { origin: '*' },
         })
 
+        io.use(authenticateHandshake({ getExpectedToken: () => wsRpcToken, log, sandboxId }))
+
         io.on('connection', (socket) => {
+            if (!isNil(connectedSocket) && connectedSocket.connected) {
+                log.warn({ sandboxId, socketId: socket.id }, '[WebSocket] Rejecting extra connection — sandbox already has an active socket')
+                socket.disconnect(true)
+                return
+            }
             connectedSocket = socket
             log.info({ sandboxId, socketId: socket.id }, '[WebSocket] Sandbox connected')
 
@@ -36,7 +93,9 @@ export function createSandbox(
 
             socket.on('disconnect', (reason) => {
                 log.info({ sandboxId, reason, socketId: socket.id }, '[WebSocket] Sandbox disconnected')
-                connectedSocket = null
+                if (connectedSocket === socket) {
+                    connectedSocket = null
+                }
             })
 
             if (connectionResolve) {
@@ -45,7 +104,7 @@ export function createSandbox(
             }
         })
 
-        httpServer.listen(0)
+        httpServer.listen(options.wsRpcPort ?? 0)
 
         const address = httpServer.address()
         if (typeof address === 'object' && address !== null) {
@@ -87,10 +146,13 @@ export function createSandbox(
                 platformId,
             }, 'Starting sandbox')
 
+            wsRpcToken = randomBytes(32).toString('hex')
             const port = createSocketServer()
 
+            const codeMount = buildCodeMount({ flowVersionId, reusable: options.reusable })
             const customPieceMounts: SandboxMount[] = []
             if (platformId) {
+                assertSafePathSegment(platformId, 'platformId')
                 const customPiecesHostPath = path.resolve(getGlobalCachePathLatestVersion(), 'custom_pieces', platformId)
                 customPieceMounts.push({
                     hostPath: customPiecesHostPath,
@@ -99,19 +161,30 @@ export function createSandbox(
                 })
             }
 
+            const allMounts: SandboxMount[] = [
+                ...(options.baseMounts ?? []),
+                ...(codeMount ? [codeMount] : []),
+                ...mounts,
+                ...customPieceMounts,
+            ]
+            for (const mount of allMounts) {
+                assertSandboxPathUnderRoot(mount)
+            }
+
             childProcess = await processMaker.create({
                 sandboxId,
                 command: options.command ?? [],
-                mounts: [...(options.baseMounts ?? []), ...mounts, ...customPieceMounts],
+                mounts: allMounts,
                 env: {
                     ...options.env,
                     AP_SANDBOX_WS_PORT: String(port),
+                    AP_SANDBOX_WS_TOKEN: wsRpcToken,
                     ...(customPieceMounts.length > 0
                         ? { AP_CUSTOM_PIECES_PATHS: '/root/custom_pieces' }
                         : {}),
                 },
                 resourceLimits: {
-                    memoryBytes: options.memoryLimitMb * 1024 * 1024,
+                    memoryLimitMb: options.memoryLimitMb,
                     cpuMsPerSec: options.cpuMsPerSec,
                     timeLimitSeconds: options.timeLimitSeconds,
                 },
@@ -133,6 +206,7 @@ export function createSandbox(
             }, 'Sandbox started')
         },
         execute: async (operationType: EngineOperationType, operation: EngineOperation, executeOptions: SandboxOptions) => {
+            busy = true
             let killedByTimeout = false
             let timeout: NodeJS.Timeout | null = null
             const executeSocket = connectedSocket
@@ -172,6 +246,7 @@ export function createSandbox(
                         code,
                         signal,
                         killedByTimeout,
+                        killedByShutdown,
                         stdOut,
                         stdError,
                         reject,
@@ -193,6 +268,7 @@ export function createSandbox(
                 return await operationPromise
             }
             finally {
+                busy = false
                 log.debug({
                     sandboxId,
                     operationType,
@@ -207,8 +283,11 @@ export function createSandbox(
             }
         },
         isReady,
+        getPid: () => childProcess?.pid ?? null,
+        isBusy: () => busy,
         shutdown: async () => {
             if (!isNil(childProcess)) {
+                killedByShutdown = true
                 log.debug({ sandboxId }, 'Shutting down sandbox')
                 await killProcess(childProcess, log)
                 childProcess = null
@@ -221,20 +300,22 @@ export function createSandbox(
             }
             io = null
             httpServer = null
+            wsRpcToken = null
         },
     }
 }
 
 function handleProcessExit(log: SandboxLogger, params: ProcessExitParams): void {
-    const { sandboxId, operationType, code, signal, killedByTimeout, stdOut, stdError, reject } = params
+    const { sandboxId, operationType, code, signal, killedByTimeout, killedByShutdown, stdOut, stdError, reject } = params
     log.info({
         sandboxId,
         operationType,
         code: String(code),
         signal: signal ?? 'null',
         killedByTimeout: String(killedByTimeout),
+        killedByShutdown: String(killedByShutdown),
     }, '[Sandbox] Process exit event fired')
-    const isRamIssue = stdError.includes('JavaScript heap out of memory') || stdError.includes('Allocation failed - JavaScript heap out of memory') || (code === 134 || signal === 'SIGABRT' || signal === 'SIGKILL')
+    const isRamIssue = stdError.includes('JavaScript heap out of memory') || stdError.includes('Allocation failed - JavaScript heap out of memory') || (code === 134 || signal === 'SIGABRT' || (signal === 'SIGKILL' && !killedByShutdown))
     const isLogSizeExceeded = stdError.includes('Flow run data size exceeded the maximum allowed size')
 
     if (killedByTimeout) {
@@ -293,12 +374,35 @@ function buildLogs(stdOut: string, stdError: string): string | undefined {
     return parts.length > 0 ? parts.join('\n') : undefined
 }
 
+function authenticateHandshake({ getExpectedToken, log, sandboxId }: {
+    getExpectedToken: () => string | null
+    log: SandboxLogger
+    sandboxId: string
+}): (socket: Socket, next: (err?: Error) => void) => void {
+    return (socket, next) => {
+        const provided = socket.handshake.auth?.['connectionToken']
+        const expected = getExpectedToken()
+        if (typeof provided !== 'string' || expected === null) {
+            log.warn({ sandboxId, socketId: socket.id }, '[WebSocket] Rejecting handshake: missing connection token')
+            return next(new Error('unauthorized'))
+        }
+        const a = Buffer.from(provided)
+        const b = Buffer.from(expected)
+        if (a.length !== b.length || !timingSafeEqual(a, b)) {
+            log.warn({ sandboxId, socketId: socket.id }, '[WebSocket] Rejecting handshake: invalid connection token')
+            return next(new Error('unauthorized'))
+        }
+        next()
+    }
+}
+
 type ProcessExitParams = {
     sandboxId: string
     operationType: EngineOperationType
     code: number | null
     signal: string | null
     killedByTimeout: boolean
+    killedByShutdown: boolean
     stdOut: string
     stdError: string
     reject: (error: ActivepiecesError) => void

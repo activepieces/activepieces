@@ -16,6 +16,9 @@ export const newTask = createTrigger({
   name: 'new_task',
   displayName: 'New Task',
   description: 'Fires when a new task is created.',
+  aiMetadata: {
+    description: 'Fires when a new task is created in the configured Toggl Track workspace, delivering the created task (id, name, project association, estimated time). Can be narrowed to a single project via the optional project filter. Delivered via a Toggl webhook the user must set up manually.',
+  },
   props: {
     workspace_id: togglCommon.workspace_id,
     optional_project_id: togglCommon.optional_project_id,

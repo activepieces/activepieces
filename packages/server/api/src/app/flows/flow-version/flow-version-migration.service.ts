@@ -31,6 +31,7 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
 
         const { data: migratedFlowVersion, error: migrationError } = await tryCatch(() => flowMigrations.apply(flowVersion, { log, projectId }))
         if (migrationError) {
+            log.error({ migrationError }, '[flowVersionMigration] Failed to migrate flow version')
             onCallService(log, system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK)).page({
                 code: ErrorCode.FLOW_MIGRATION_FAILED,
                 message: migrationError.message,

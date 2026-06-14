@@ -7,12 +7,18 @@ export const batchDeleteRowsAction = createAction({
   displayName: 'Batch Delete Rows',
   description:
     'Deletes multiple rows in a single request. Accepts up to 200 row IDs.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently deletes many Baserow rows in one request from a list of numeric row IDs, up to 200 per call. Use for bulk removal of known rows; for a single row use Delete Row. Destructive — verify the IDs first (List Rows or Find Row can supply them). Not idempotent against changing data once the rows are removed.',
+    idempotent: false,
+  },
   auth: baserowAuth,
   props: {
     table_id: baserowCommon.tableId(),
     row_ids: Property.Array({
       displayName: 'Row IDs',
-      description: 'List of row IDs to delete.',
+      description: 'Numeric IDs of the rows to delete. You can get row IDs from the List Rows or Find Row actions.',
       required: true,
     }),
   },
@@ -26,6 +32,7 @@ export const batchDeleteRowsAction = createAction({
       .map((id) => parseInt(String(id), 10))
       .filter((id) => !isNaN(id));
     const client = await makeClient(context.auth);
-    return await client.batchDeleteRows(table_id, ids);
+    await client.batchDeleteRows(table_id, ids);
+    return { deleted_count: ids.length };
   },
 });

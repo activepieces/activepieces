@@ -11,6 +11,10 @@ export const newCustomer = createTrigger({
   name: 'new_customer',
   displayName: 'New Customer',
   description: 'Triggers when a new customer is added.',
+  aiMetadata: {
+    description:
+      'Fires when a new customer record is created in Help Scout (customer.created webhook event), representing a newly registered contact across all mailboxes.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   sampleData: {},

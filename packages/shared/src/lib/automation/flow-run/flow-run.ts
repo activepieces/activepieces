@@ -2,8 +2,27 @@ import { z } from 'zod'
 import { ErrorCode } from '../../core/common/activepieces-error'
 import { BaseModelSchema, Nullable } from '../../core/common/base-model'
 import { ApId } from '../../core/common/id-generator'
-import { ExecutionState } from './execution/execution-output'
-import { FlowRunStatus, PauseMetadata } from './execution/flow-execution'
+import { isNil, truncateString } from '../../core/common/utils/utils'
+import { ExecutionState, RunInternalError } from './execution/execution-output'
+import { FlowRunStatus } from './execution/flow-execution'
+
+export const FAILED_STEP_MESSAGE_MAX_LENGTH = 700
+
+export function truncateFailedStepMessage(
+    failedStep: FailedStep | undefined,
+): FailedStep | undefined {
+    if (isNil(failedStep) || isNil(failedStep.message)) {
+        return failedStep
+    }
+    const truncated = truncateString({
+        value: failedStep.message,
+        maxLength: FAILED_STEP_MESSAGE_MAX_LENGTH,
+    })
+    if (truncated === failedStep.message) {
+        return failedStep
+    }
+    return { ...failedStep, message: truncated }
+}
 
 export const PARENT_RUN_ID_HEADER = 'ap-parent-run-id'
 export const FAIL_PARENT_ON_FAILURE_HEADER = 'ap-fail-parent-on-failure'
@@ -25,6 +44,13 @@ export type FlowRetryPayload = {
     strategy: FlowRetryStrategy
 }
 
+export const FailedStep = z.object({
+    name: z.string(),
+    displayName: z.string(),
+    message: z.string().optional(),
+})
+export type FailedStep = z.infer<typeof FailedStep>
+
 export const FlowRun = z.object({
     ...BaseModelSchema,
     projectId: z.string(),
@@ -39,28 +65,19 @@ export const FlowRun = z.object({
     }).optional(),
     logsFileId: Nullable(z.string()),
     status: z.nativeEnum(FlowRunStatus),
-    startTime: z.string().optional(),
-    finishTime: z.string().optional(),
+    startTime: z.string().nullish(),
+    finishTime: z.string().nullish(),
     environment: z.nativeEnum(RunEnvironment),
-    pauseMetadata: PauseMetadata.optional(),
     // The steps data may be missing if the flow has not started yet,
     // or if the run is older than AP_EXECUTION_DATA_RETENTION_DAYS and its execution data has been purged.
     steps: Nullable(z.record(z.string(), z.unknown())),
-    failedStep: z.object({
-        name: z.string(),
-        displayName: z.string(),
-    }).optional(),
+    failedStep: FailedStep.optional(),
     stepNameToTest: z.string().optional(),
     archivedAt: Nullable(z.string()),
     stepsCount: z.number().optional(),
+    // Populated only for platform admins on INTERNAL_ERROR runs; stripped from the response otherwise.
+    internalError: RunInternalError.optional(),
 })
-
-export const FailedStep = z.object({
-    name: z.string(),
-    displayName: z.string(),
-    message: z.string(),
-})
-export type FailedStep = z.infer<typeof FailedStep>
 
 export type FlowRun = z.infer<typeof FlowRun> & ExecutionState
 

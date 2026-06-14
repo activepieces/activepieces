@@ -1,14 +1,20 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { kapsoAuth } from '../common';
 import { makeClient } from '../common';
-import { phoneNumberIdDropdown } from '../common/props';
+import { businessAccountIdProp, phoneNumberIdDropdown } from '../common/props';
 
 export const sendImage = createAction({
   auth: kapsoAuth,
   name: 'send_image',
   displayName: 'Send Image',
   description: 'Send an image message via WhatsApp.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Sends an image to a WhatsApp recipient, optionally with a caption. Supply the image either as a public URL or as the media ID of a previously uploaded file (use one or the other). Each call delivers a new message, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
+    businessAccountId: businessAccountIdProp,
     phoneNumberId: phoneNumberIdDropdown,
     to: Property.ShortText({
       displayName: 'Recipient Phone Number',

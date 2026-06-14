@@ -9,6 +9,8 @@ export const updateTask = createAction({
   name: 'update_task',
   displayName: 'Update Task',
   description: 'Updates a task',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing Onfleet delivery/pickup task by its task ID, changing fields such as merchant, executor, complete-after/before window, quantity, or service time. Not idempotent: each call patches the live task, so passing a different value overwrites the prior one. Requires a known task ID; to create a task instead use the create-task action.', idempotent: false },
   props: {
     task: Property.ShortText({
       displayName: 'Task ID',

@@ -7,6 +7,8 @@ export const identifyUser = createAction({
   name: 'identifyUser',
   displayName: 'Identify User',
   description: 'Create or update user information and traits in LogRocket to contextualize user behavior.',
+  audience: 'both',
+  aiMetadata: { description: 'Upserts a LogRocket user record keyed by user ID, attaching identity fields (name, email) and arbitrary custom traits so sessions can be attributed and filtered. Use when enriching who a user is before or alongside session tracking. At least one of name, email, timestamp, or traits must be provided. Idempotent: it overwrites the same user record via PUT, so repeating with identical input yields the same state.', idempotent: true },
   props: {
     orgId: Property.ShortText({
       displayName: 'Organization ID',

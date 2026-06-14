@@ -8,6 +8,12 @@ export const runWorkflow = createAction({
   displayName: 'Run Workflow',
   description:
     'Run a Bursty AI workflow and optionally wait for and return the results',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Starts (triggers) a BurstyAI no-code AI workflow by its workflow ID, launching a new asynchronous execution. Use to kick off a BurstyAI content/SEO/outreach automation; enable "Wait for Result" to block and poll until the job completes (returns the result, times out after ~10 minutes), or leave it off to fire-and-return the job handle immediately. Not idempotent: each call starts a separate workflow run.',
+    idempotent: false,
+  },
   props: {
     workflow_id: Property.ShortText({
       displayName: 'Workflow ID',

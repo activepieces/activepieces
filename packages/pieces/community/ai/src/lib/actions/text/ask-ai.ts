@@ -3,12 +3,13 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { ModelMessage, generateText, stepCountIs } from 'ai';
-import { AIProviderName } from '@activepieces/shared';
+import { AIProviderName, getEffectiveProviderAndModel, spreadIfDefined } from '@activepieces/shared';
 import { aiProps } from '../../common/props';
 import { createAIModel } from '../../common/ai-sdk';
 import { buildWebSearchOptionsProperty, buildWebSearchConfig, WebSearchOptions } from '../../common/web-search';
 
 export const askAI = createAction({
+  audience: 'human',
   name: 'askAi',
   displayName: 'Ask AI',
   description: 'A flexible AI step. ask it to analyze data, explain, draft, or decide based on your flow\'s data.',
@@ -43,7 +44,10 @@ export const askAI = createAction({
         'Whether to use web search to find information for the AI to use in its response.',
     }),
     webSearchOptions: buildWebSearchOptionsProperty(
-      (propsValue) => propsValue['provider'] as unknown as string,
+      (propsValue) => ({
+        provider: propsValue['provider'] as string | undefined,
+        model: propsValue['model'] as string | undefined,
+      }),
       ['webSearch', 'provider', 'model'],
     ),
   },
@@ -51,14 +55,20 @@ export const askAI = createAction({
     const provider = context.propsValue.provider;
     const modelId = context.propsValue.model;
     const storage = context.store;
+    const webSearchEnabled = !!context.propsValue.webSearch;
     const webSearchOptions = (context.propsValue.webSearchOptions ?? {}) as WebSearchOptions;
 
     const { tools: webSearchTools, providerOptions } = buildWebSearchConfig({
       provider,
-      webSearchEnabled: !!context.propsValue.webSearch,
+      model: modelId,
+      webSearchEnabled,
       webSearchOptions,
     });
 
+    const { provider: effectiveProvider } = getEffectiveProviderAndModel({
+      provider: provider as AIProviderName,
+      model: modelId,
+    });
     const model = await createAIModel({
       provider: provider as AIProviderName,
       modelId,
@@ -67,7 +77,7 @@ export const askAI = createAction({
       projectId: context.project.id,
       flowId: context.flows.current.id,
       runId: context.run.id,
-      openaiResponsesModel: true,
+      ...spreadIfDefined('openaiResponsesModel', webSearchEnabled && effectiveProvider === AIProviderName.OPENAI ? true : undefined),
     });
 
     const conversationKey = context.propsValue.conversationKey

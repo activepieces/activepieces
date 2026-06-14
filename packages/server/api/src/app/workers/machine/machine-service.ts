@@ -1,6 +1,8 @@
+import { apVersionUtil } from '@activepieces/server-utils'
 import {
     ExecutionMode,
     isNil,
+    NetworkMode,
     partition,
     WorkerMachineHealthcheckRequest,
     WorkerMachineStatus,
@@ -12,8 +14,8 @@ import {
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { FastifyBaseLogger } from 'fastify'
-import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { workerGroupService } from '../../ee/platform/platform-plan/worker-group.service'
+import { domainHelper } from '../../helper/domain-helper'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { workerMachineCache } from './machine-cache'
@@ -59,8 +61,9 @@ async function buildSettingsResponse(_log: FastifyBaseLogger): Promise<WorkerSet
         EVENT_DESTINATION_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.EVENT_DESTINATION_TIMEOUT_SECONDS),
         EDITION: system.getOrThrow(AppSystemProp.EDITION),
         SSRF_ALLOW_LIST: system.get(AppSystemProp.SSRF_ALLOW_LIST)?.split(',').map(f => f.trim()) ?? [],
-        SSRF_PROTECTION_ENABLED: system.get(AppSystemProp.SSRF_PROTECTION_ENABLED) === 'true',
+        NETWORK_MODE: system.getOrThrow<NetworkMode>(AppSystemProp.NETWORK_MODE),
         PAGE_ONCALL_WEBHOOK: system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK),
+        APP_VERSION: apVersionUtil.getCurrentRelease(),
     }
     settingsCache.set(cacheKey, settings)
     return settings

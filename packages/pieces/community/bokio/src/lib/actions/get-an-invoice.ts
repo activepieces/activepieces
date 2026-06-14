@@ -8,6 +8,8 @@ export const getAnInvoice = createAction({
   name: 'getAnInvoice',
   displayName: 'Get an invoice',
   description: 'Retrieve a specific invoice by its ID',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves a single invoice from a Bokio company by its invoice ID. Use when you already have the invoice ID and need its full details. Idempotent read-only lookup.', idempotent: true },
   props: {
     invoiceId: Property.ShortText({
       displayName: 'Invoice ID',

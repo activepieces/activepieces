@@ -9,6 +9,12 @@ export const getPersonPicture = createAction({
   displayName: 'Get Person Profile Picture',
   description:
     'Get the profile picture URL of a person from cached profiles (0 credits)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Return the profile picture URL for a person from a known professional-network profile URL, served from cached profiles. Read-only, free, and safe to retry. Use only when you need the avatar image link; for full profile data use Get Person Profile.",
+    idempotent: true,
+  },
   props: {
     person_profile_url: Property.ShortText({
       displayName: 'Person Profile URL',

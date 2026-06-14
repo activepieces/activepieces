@@ -1,11 +1,11 @@
 import { PiecePropertyMap, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework'
-import { assertEqual, AUTHENTICATION_PROPERTY_NAME, EngineGenericError, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, FlowTrigger, InvalidCronExpressionError, isNil, PieceTrigger, PropertySettings, ScheduleOptions, TriggerHookType, TriggerSourceScheduleType } from '@activepieces/shared'
+import { assertEqual, AUTHENTICATION_PROPERTY_NAME, EngineGenericError, EventPayload, ExecuteTriggerResponse, FlowTrigger, InvalidCronExpressionError, isNil, PieceTrigger, PropertySettings, ScheduleOptions, TriggerHookType, TriggerSourceScheduleType } from '@activepieces/shared'
 import { isValidCron } from 'cron-validator'
-import { EngineConstants } from '../handler/context/engine-constants'
+import { EngineConstants, ResolvedExecuteTriggerOperation } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
-import { createFlowsContext } from '../services/flows.service'
-import { createFilesService } from '../services/step-files.service'
-import { createContextStore } from '../services/storage.service'
+import { createFileUploader } from '../piece-context/file-uploader'
+import { createFlowsContext } from '../piece-context/flows'
+import { createContextStore } from '../piece-context/store'
 import { utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { createPropsResolver } from '../variables/props-resolver'
@@ -177,11 +177,9 @@ export const triggerHelper = {
             case TriggerHookType.TEST: {
                 const { data: testResponse, error: testResponseError } = await utils.tryCatchAndThrowOnEngineError(() => pieceTrigger.test({
                     ...context,
-                    files: createFilesService({
+                    files: createFileUploader({
                         apiUrl: constants.internalApiUrl,
                         engineToken: params.engineToken!,
-                        stepName: triggerName,
-                        flowId: params.flowVersion.flowId,
                     }),
                 }))
 
@@ -221,11 +219,9 @@ export const triggerHelper = {
                 const { data: triggerRunResult, error: triggerRunError } = await utils.tryCatchAndThrowOnEngineError(async () => {
                     const items = await pieceTrigger.run({
                         ...context,
-                        files: createFilesService({
+                        files: createFileUploader({
                             apiUrl: constants.internalApiUrl,
                             engineToken: params.engineToken!,
-                            flowId: params.flowVersion.flowId,
-                            stepName: triggerName,
                         }),
                     })
                     return {
@@ -243,7 +239,7 @@ export const triggerHelper = {
 }
 
 type ExecuteTriggerParams = {
-    params: ExecuteTriggerOperation<TriggerHookType>
+    params: ResolvedExecuteTriggerOperation<TriggerHookType>
     constants: EngineConstants
 }
 

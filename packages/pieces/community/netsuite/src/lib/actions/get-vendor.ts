@@ -8,6 +8,12 @@ export const getVendor = createAction({
   auth: netsuiteAuth,
   displayName: 'Get Vendor',
   description: 'Gets vendor details from NetSuite.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches a single vendor record from NetSuite by its internal record ID. Use when you already have the vendor ID and need its full details; this is a read-only lookup that is safe to repeat.',
+    idempotent: true,
+  },
   props: {
     vendorId: Property.ShortText({
       displayName: 'Vendor ID',

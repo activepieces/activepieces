@@ -9,6 +9,8 @@ export const addLineItemToInvoice = createAction({
   name: 'addLineItemToInvoice',
   displayName: 'Add line item to invoice',
   description: 'Adds a line item to an existing draft invoice',
+  audience: 'both',
+  aiMetadata: { description: 'Appends a single line item to an existing draft invoice in Bokio, identified by invoice ID. Use to add a product, service, or description-only row to an invoice that already exists; pricing fields apply only when item type is a sales item. Not idempotent — each call appends another line item.', idempotent: false },
   props: {
     invoiceId: invoiceIdDropdown,
     itemType: Property.StaticDropdown({

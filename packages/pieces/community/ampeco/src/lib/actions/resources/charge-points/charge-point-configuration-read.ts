@@ -19,6 +19,8 @@ export const chargePointConfigurationReadAction = createAction({
   name: 'chargePointConfigurationRead',
   displayName: 'Resources - Charge Points - Charge Point Configuration Read',
   description: "Get a charge point's cached configuration for a single key.",
+  audience: 'both',
+  aiMetadata: { description: "Read a single cached OCPP configuration value from a charge point by its ID and the configuration key name. Read-only and idempotent; returns the cached value rather than querying the device live. Use when you need one specific configuration setting for a known charge point.", idempotent: true },
   props: {
     chargePoint: Property.Number({
       displayName: 'Charge Point',

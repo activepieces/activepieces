@@ -1,44 +1,41 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth } from '../../..';
+import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 
 export const sortPeople = createAction({
-  name: 'sortPeople',
   auth: villageAuth,
+  name: 'sort_people',
   displayName: 'Sort People',
-  description: 'Sort a list of LinkedIn profiles by relationship strength with the user',
+  description:
+    'Rank a list of LinkedIn profile URLs by how well-connected you are to them. Returns each person sorted by connection strength (highest first), with score (0-100) and score_label.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Read-only ranking of a caller-supplied set of people (LinkedIn profile URLs) by how strongly you are connected to each, ordered strongest-first. Use when you already have specific candidates and want them prioritized; to discover candidates use Search People. Pure query, safe to retry.',
+    idempotent: true,
+  },
   props: {
     people: Property.Array({
-      displayName: 'People URLs',
-      description: 'Array of LinkedIn URLs',
+      displayName: 'People',
+      description:
+        'Array of LinkedIn person profile URLs (e.g. https://linkedin.com/in/johndoe). At least one is required.',
       required: true,
-    }),
-    user_identifier: Property.ShortText({
-      displayName: 'User Identifier',
-      description: 'Specify the user making the request. This identifier should match the one you used when integrating the user with Village.',
-      required: false,
+      defaultValue: [],
     }),
   },
   async run(context) {
-    const { people, user_identifier } = context.propsValue;
-    
-    const headers: Record<string, string> = {
-      'secret-key': context.auth.secret_text,
-    };
-    
-    if (user_identifier) {
-      headers['user-identifier'] = user_identifier;
+    const { people } = context.propsValue;
+
+    if (!Array.isArray(people) || people.length === 0) {
+      throw new Error('At least one person URL is required.');
     }
-    
-    const res = await httpClient.sendRequest({
+
+    const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: 'https://api.village.do/v1/people/sort',
-      headers,
-      body: {
-        people,
-      },
+      url: `${VILLAGE_API_BASE_URL}/v2/people/sort`,
+      headers: { Authorization: `Bearer ${context.auth.secret_text}` },
+      body: { people: people.map(String) },
     });
-    
-    return res.body;
+    return response.body;
   },
 });

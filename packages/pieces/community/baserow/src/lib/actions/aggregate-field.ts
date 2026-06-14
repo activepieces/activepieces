@@ -11,6 +11,12 @@ export const aggregateFieldAction = createAction({
   displayName: 'Aggregate Field',
   description:
     'Calculates an aggregation (sum, average, min, max, count, etc.) over all values of a field in a grid view.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Computes a single aggregate value (sum, average, min, max, median, std dev, variance, or empty/non-empty/unique counts) over one field across all rows of a Baserow grid view. Use for roll-up metrics over a whole view rather than fetching rows yourself; numeric aggregations require a number field. Requires a grid view ID and a field ID. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: baserowAuth,
   props: {
     table_id: baserowCommon.tableId(),
@@ -61,7 +67,7 @@ export const aggregateFieldAction = createAction({
     aggregation_type: Property.StaticDropdown({
       displayName: 'Aggregation Type',
       description:
-        'Sum, average, min, max, std_dev and variance only work on number fields.',
+        'The calculation to run over the field. **Sum, Average, Min, Max, Median, Std Dev, and Variance** only work with number fields.',
       required: true,
       options: {
         disabled: false,
@@ -83,11 +89,7 @@ export const aggregateFieldAction = createAction({
   async run(context) {
     const { view_id, field_id, aggregation_type } = context.propsValue;
     const client = await makeClient(context.auth);
-    const raw = (await client.aggregateField(
-      view_id!,
-      field_id!,
-      aggregation_type!
-    )) as { value: unknown };
+    const raw = await client.aggregateField(view_id!, field_id!, aggregation_type!);
     return { result: raw['value'] };
   },
 });

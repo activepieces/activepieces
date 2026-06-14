@@ -11,6 +11,12 @@ export const createProject = createAction({
   auth: activePieceAuth,
   displayName: 'Create Project',
   description: 'Create a new project',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new project on an Activepieces platform (requires a platform-edition API key). Use when provisioning a fresh project workspace; the only input is its display name. Not idempotent — each call creates a separate project even with the same name.',
+    idempotent: false,
+  },
   props: {
     display_name: Property.ShortText({
       displayName: 'Display Name',

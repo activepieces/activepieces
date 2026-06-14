@@ -9,6 +9,8 @@ export const addLeadToACampaign = createAction({
   displayName: 'Add Lead To A Campaign',
   description:
     'Adds a lead to a specific campaign with optional enrichment and lead details.',
+  audience: 'both',
+  aiMetadata: { description: 'Adds a lead (by email, with optional name, company, phone, LinkedIn and other details) to a specific Lemlist campaign, optionally running enrichment such as email/phone finding, email verification, or LinkedIn lookup. Use to enroll a new contact into outreach. Not idempotent: each call adds the lead and re-runs requested enrichment unless the deduplicate option is enabled to skip leads already present in any campaign.', idempotent: false },
   props: {
     campaignId: campaignsDropdown({ refreshers: ['auth'] }),
     email: Property.ShortText({

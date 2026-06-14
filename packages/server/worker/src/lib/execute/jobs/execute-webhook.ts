@@ -6,9 +6,8 @@ import {
     isNil,
     parseToJsonIfPossible,
     PieceTrigger,
-    ProgressUpdateType,
+    StreamStepProgress,
     TriggerHookType,
-    TriggerPayload,
     tryCatch,
     WebhookJobData,
     WorkerJobType,
@@ -17,7 +16,6 @@ import { flowCache } from '../../cache/flow/flow-cache'
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 import { provisionFlowPieces } from '../utils/flow-helpers'
-import { resolvePayload } from '../utils/resolve-payload'
 import { isSandboxTimeout } from '../utils/sandbox-helpers'
 import { getAppWebhookUrl, getWebhookUrl } from '../utils/webhook-url'
 
@@ -41,7 +39,6 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
     async execute(ctx: JobContext, data: WebhookJobData): Promise<FireAndForgetJobResult> {
         const settings = workerSettings.getSettings()
         const timeoutInSeconds = settings.TRIGGER_TIMEOUT_SECONDS
-        const resolvedPayload = await resolvePayload(data.payload, data.projectId, ctx.apiClient)
 
         const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionIdToRun })
         if (isNil(flowVersion)) {
@@ -71,7 +68,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
                         hookType: TriggerHookType.RUN,
                         flowVersion,
                         webhookUrl: getWebhookUrl(ctx.publicApiUrl, data.flowId, true),
-                        triggerPayload: resolvedPayload as TriggerPayload,
+                        triggerPayload: data.payload,
                         test: true,
                         projectId: data.projectId,
                         platformId: data.platformId,
@@ -108,7 +105,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
                     hookType: TriggerHookType.RUN,
                     flowVersion,
                     webhookUrl: getWebhookUrl(ctx.publicApiUrl, data.flowId),
-                    triggerPayload: resolvedPayload as TriggerPayload,
+                    triggerPayload: data.payload,
                     test: false,
                     projectId: data.projectId,
                     platformId: data.platformId,
@@ -148,7 +145,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
                     payloads: triggerResult.output,
                     httpRequestId: data.requestId,
                     environment: data.runEnvironment,
-                    progressUpdateType: ProgressUpdateType.NONE,
+                    streamStepProgress: StreamStepProgress.NONE,
                     parentRunId: data.parentRunId,
                     failParentOnFailure: data.failParentOnFailure,
                 })

@@ -8,6 +8,12 @@ export const createSku = createAction({
   name: 'create-sku',
   displayName: 'Create New Sku',
   description: 'Create a new SKU to your catalog',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new SKU (product variation) in a VTEX store catalog, associated with an existing product ID. Requires the SKU name and packaging dimensions/weight. Optionally pass a SKU ID to set it explicitly. Not idempotent: each call creates a separate SKU.',
+    idempotent: false,
+  },
   props: {
     ProductId: Property.Number({
       displayName: 'Product ID',

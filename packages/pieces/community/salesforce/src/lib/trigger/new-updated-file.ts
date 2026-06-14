@@ -19,6 +19,9 @@ export const newUpdatedFile = createTrigger({
     name: 'new_updated_file',
     displayName: 'New or Updated File',
     description: 'Fires when a file (ContentDocument) is created or updated. Does not fire for classic Attachments or Notes.',
+    aiMetadata: {
+        description: 'Fires whenever a Salesforce Files ContentDocument is created or modified, detected by polling for records whose SystemModstamp is later than the last poll. Each event represents the current state of one file and includes its fields plus a Type of ContentDocument. Does not fire for classic Attachments or Notes.',
+    },
     props: {},
     sampleData: {
         "Id": "0697Q000002qB9iQAE",

@@ -1,9 +1,9 @@
-import { FilterOperator, McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
+import { FilterOperator, isNil, McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { recordService } from '../../tables/record/record.service'
 import { mcpUtils } from './mcp-utils'
-import { formatPopulatedRecord, resolveFieldNamesForTable } from './table-utils'
+import { formatPopulatedRecord, resolveFieldNamesForTable, resolveInternalTableId, tableNotFoundError } from './table-utils'
 
 const OPERATOR_VALUES = [
     FilterOperator.EQ,
@@ -29,23 +29,28 @@ const findRecordsInput = z.object({
     limit: z.number().min(1).max(500).optional().describe('Max records to return (default 50, max 500)'),
 })
 
-export const apFindRecordsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apFindRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_find_records',
         permission: Permission.READ_TABLE,
         description: 'Query records from a table with optional filtering. Operators: eq, neq, gt, gte, lt, lte, co, exists, not_exists.',
         inputSchema: findRecordsInput.shape,
-        annotations: { readOnlyHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {
                 const { tableId, filters, limit } = findRecordsInput.parse(args)
                 const effectiveLimit = limit ?? 50
 
+                const resolvedTableId = await resolveInternalTableId({ projectId: mcp.projectId, tableId })
+                if (isNil(resolvedTableId)) {
+                    return tableNotFoundError(tableId)
+                }
+
                 let resolvedFilters = null
                 let fields = undefined
                 if (filters && filters.length > 0) {
                     const fieldNames = filters.map(f => f.fieldName)
-                    const resolved = await resolveFieldNamesForTable(mcp.projectId, tableId, fieldNames)
+                    const resolved = await resolveFieldNamesForTable(mcp.projectId, resolvedTableId, fieldNames)
                     fields = resolved.fields
 
                     for (const filter of filters) {
@@ -68,7 +73,7 @@ export const apFindRecordsTool = (mcp: McpServer, log: FastifyBaseLogger): McpTo
                 }
 
                 const result = await recordService.list({
-                    tableId,
+                    tableId: resolvedTableId,
                     projectId: mcp.projectId,
                     filters: resolvedFilters,
                     limit: effectiveLimit,
@@ -77,15 +82,28 @@ export const apFindRecordsTool = (mcp: McpServer, log: FastifyBaseLogger): McpTo
                 })
 
                 if (result.data.length === 0) {
-                    return { content: [{ type: 'text', text: 'No records found.' }] }
+                    return {
+                        content: [{ type: 'text', text: 'No records found.' }],
+                        structuredContent: { records: [], count: 0 },
+                    }
                 }
 
                 const formatted = result.data.map(r => formatPopulatedRecord(r)).join('\n\n')
+                const structured = {
+                    records: result.data.map(r => ({
+                        id: r.id,
+                        cells: Object.fromEntries(
+                            Object.entries(r.cells).map(([fieldId, c]) => [c.fieldName ?? fieldId, c.value]),
+                        ),
+                    })),
+                    count: result.data.length,
+                }
                 return {
                     content: [{
                         type: 'text',
                         text: `Found ${result.data.length} record(s):\n\n${formatted}`,
                     }],
+                    structuredContent: structured,
                 }
             }
             catch (err) {

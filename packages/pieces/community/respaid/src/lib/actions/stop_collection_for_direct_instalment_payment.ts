@@ -8,6 +8,8 @@ export const stopCollectionForDirectInstalmentPayment = createAction({
   name: 'stop_collection_for_direct_instalment_payment',
   displayName: 'Stop Collection for Direct Instalment Payment',
   description: 'Stops the collection process for a case when an instalment plan is set up with the creditor.',
+  audience: 'both',
+  aiMetadata: { description: 'Halts the Respaid collection process for a single case because the debtor and creditor agreed on a direct instalment (payment plan) arrangement. Use when collection should pause in favour of a creditor-side instalment plan rather than full settlement. The case must be identified by either unique_identifier or email (one is required); it mutates case state, so it is not idempotent.', idempotent: false },
   auth: respaidAuth,
   props: {
     unique_identifier: Property.ShortText({

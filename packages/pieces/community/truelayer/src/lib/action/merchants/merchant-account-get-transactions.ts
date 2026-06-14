@@ -7,6 +7,8 @@ export const merchantAccountGetTransactions = createAction({
   name: 'merchant-account-get-transactions',
   displayName: 'Get Transactions',
   description: 'Get the transactions of a single merchant account. If pagination is missing, add a header `tl-enable-pagination: true` to enable pagination.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve the transaction history for one merchant account over a required ISO-8601 from/to date range, optionally filtered by type (payments or payouts) and paged via cursor. Use to reconcile activity on a specific account; read-only and safe to repeat. To get account metadata instead, use Get Merchant Account.', idempotent: true },
   props: {
     id: Property.ShortText({
       displayName: 'Merchant Account ID',

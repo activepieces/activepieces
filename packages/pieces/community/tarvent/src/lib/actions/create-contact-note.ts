@@ -9,6 +9,8 @@ export const createContactNote = createAction({
   name: 'tarvent_create_contact_note',
   displayName: 'Add Note To Contact',
   description: 'Adds a note to a contact.',
+  audience: 'both',
+  aiMetadata: { description: 'Appends a free-text note to a Tarvent contact record. Use to log context or activity against a contact. Not idempotent: each call adds another note, so repeating creates duplicates.', idempotent: false },
   props: {
     contactId: tarventCommon.contactId,
     note: Property.LongText({

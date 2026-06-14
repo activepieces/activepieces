@@ -102,6 +102,9 @@ export const dropboxNewFolder = createTrigger({
   displayName: 'New Folder',
   description:
     'Triggers when a new folder is created inside a watched Dropbox folder.',
+  aiMetadata: {
+    description: 'Fires when a new folder appears inside the watched Dropbox folder path, detected by polling the folder for changes since the last cursor. Each fired event represents one newly created folder; enable recursive watching to also detect folders created within subfolders.',
+  },
 
   type: TriggerStrategy.POLLING,
 

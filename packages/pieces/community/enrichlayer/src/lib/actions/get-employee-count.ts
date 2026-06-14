@@ -9,6 +9,12 @@ export const getEmployeeCount = createAction({
   displayName: 'Get Employee Count',
   description:
     'Get the total number of employees of a company (1 credit)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Return only the total employee head count for a company from its professional-network URL, with optional current/past/all status and an as-of date. Read-only and safe to retry. Use when you need a size metric, not the people; to retrieve the actual employee roster use List Company Employees. Estimated-count and historical date options add credits.',
+    idempotent: true,
+  },
   props: {
     url: Property.ShortText({
       displayName: 'Company URL',

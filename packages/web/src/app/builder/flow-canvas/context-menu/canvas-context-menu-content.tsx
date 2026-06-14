@@ -8,6 +8,7 @@ import {
 import { t } from 'i18next';
 import {
   ArrowLeftRight,
+  Braces,
   ClipboardPaste,
   ClipboardPlus,
   Copy,
@@ -16,6 +17,7 @@ import {
   RouteOff,
   Trash,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Shortcut, ShortcutProps } from '@/components/custom/shortcut';
 import {
@@ -100,6 +102,14 @@ export const CanvasContextMenuContent = ({
     firstSelectedStep?.type === FlowActionType.ROUTER &&
     !readonly &&
     contextMenuType === ContextMenuType.STEP;
+  const showPasteAsCofBranchChild =
+    selectedNodes.length === 1 &&
+    (firstSelectedStep?.type === FlowActionType.CODE ||
+      firstSelectedStep?.type === FlowActionType.PIECE) &&
+    firstSelectedStep.settings.errorHandlingOptions?.continueOnFailure
+      ?.value === true &&
+    !readonly &&
+    contextMenuType === ContextMenuType.STEP;
   const showPasteAfterCurrentStep =
     selectedNodes.length === 1 &&
     !readonly &&
@@ -111,6 +121,8 @@ export const CanvasContextMenuContent = ({
 
   const showCopy =
     !doSelectedNodesIncludeTrigger && contextMenuType === ContextMenuType.STEP;
+  const showCopyReference =
+    selectedNodes.length === 1 && contextMenuType === ContextMenuType.STEP;
   const showDuplicate =
     selectedNodes.length === 1 &&
     !doSelectedNodesIncludeTrigger &&
@@ -137,10 +149,12 @@ export const CanvasContextMenuContent = ({
   const showContextMenuContent =
     showReplace ||
     showCopy ||
+    showCopyReference ||
     showDuplicate ||
     showSkip ||
     showPasteAsFirstLoopAction ||
     showPasteAsBranchChild ||
+    showPasteAsCofBranchChild ||
     showPasteAfterCurrentStep ||
     showPasteAfterLastStep ||
     showDelete;
@@ -206,8 +220,23 @@ export const CanvasContextMenuContent = ({
             </ShortcutWrapper>
           </ContextMenuItem>
         )}
+
+        {showCopyReference && (
+          <ContextMenuItem
+            onClick={() => {
+              navigator.clipboard.writeText(
+                `{{${selectedNodes[0]}['output']}}`,
+              );
+              toast.success(t('Reference copied to clipboard'));
+            }}
+            className="flex items-center gap-2"
+          >
+            <Braces className="w-4 h-4"></Braces> {t('Copy reference')}
+          </ContextMenuItem>
+        )}
         {(showPasteAsFirstLoopAction ||
           showPasteAsBranchChild ||
+          showPasteAsCofBranchChild ||
           showPasteAfterCurrentStep) && (
           <ContextMenuSeparator></ContextMenuSeparator>
         )}
@@ -321,6 +350,47 @@ export const CanvasContextMenuContent = ({
                 }}
               >
                 + {t('New Branch')}
+              </ContextMenuItem>
+            </ContextMenuSubContent>
+          </ContextMenuSub>
+        )}
+
+        {showPasteAsCofBranchChild && (
+          <ContextMenuSub>
+            <ContextMenuSubTrigger className="flex items-center gap-2">
+              <ClipboardPaste className="w-4 h-4"></ClipboardPaste>{' '}
+              {t('Paste Inside...')}
+            </ContextMenuSubTrigger>
+            <ContextMenuSubContent>
+              <ContextMenuItem
+                onClick={() => {
+                  pasteNodes(
+                    flowVersion,
+                    {
+                      parentStepName: selectedNodes[0],
+                      stepLocationRelativeToParent:
+                        StepLocationRelativeToParent.INSIDE_ON_SUCCESS_BRANCH,
+                    },
+                    applyOperation,
+                  );
+                }}
+              >
+                {t('Success')}
+              </ContextMenuItem>
+              <ContextMenuItem
+                onClick={() => {
+                  pasteNodes(
+                    flowVersion,
+                    {
+                      parentStepName: selectedNodes[0],
+                      stepLocationRelativeToParent:
+                        StepLocationRelativeToParent.INSIDE_ON_FAILURE_BRANCH,
+                    },
+                    applyOperation,
+                  );
+                }}
+              >
+                {t('Failure')}
               </ContextMenuItem>
             </ContextMenuSubContent>
           </ContextMenuSub>

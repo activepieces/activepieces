@@ -7,6 +7,8 @@ export const searchVector = createAction({
   name: 'search_vector',
   displayName: 'Search Vectors',
   description: 'Search a namespace using a query vector to find similar records.',
+  audience: 'both',
+  aiMetadata: { description: 'Runs a similarity search over a namespace of a Pinecone index, returning the top-K nearest vectors. The query can be supplied either as a raw query vector or as the ID of an existing stored vector to search by, selected via the query method, with an optional metadata filter to narrow matches. Use for semantic retrieval over stored embeddings. Requires the index name and a top-K between 1 and 10000. Idempotent read-only search.', idempotent: true },
   props: {
     indexName: Property.ShortText({
       displayName: 'Index Name',

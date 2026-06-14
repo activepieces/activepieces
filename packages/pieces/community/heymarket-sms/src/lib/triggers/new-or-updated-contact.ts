@@ -74,6 +74,10 @@ export const newOrUpdatedContact = createTrigger({
   displayName: 'New or Updated Contact',
   description:
     'Trigger when a new contact is created or an existing contact is updated',
+  aiMetadata: {
+    description:
+      'Fires when a Heymarket contact is created or any of its details change (name, email, phone, tags, opt-out status). Polls the team contact list for records updated since the last run and emits each new or changed contact.',
+  },
   props: {},
   sampleData: {
     id: 123456,

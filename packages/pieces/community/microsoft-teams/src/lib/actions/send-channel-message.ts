@@ -3,13 +3,18 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { PageCollection } from '@microsoft/microsoft-graph-client';
 import { ConversationMember } from '@microsoft/microsoft-graph-types';
 import { microsoftTeamsCommon } from '../common';
-import { createGraphClient } from '../common/graph';
+import { createGraphClient, withGraphRetry } from '../common/graph';
 
 export const sendChannelMessageAction = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_send_channel_message',
   displayName: 'Send Channel Message',
   description: "Sends a message to a teams's channel.",
+  audience: 'both',
+  aiMetadata: {
+    description: 'Posts a new top-level message to a Microsoft Teams channel, identified by team ID and channel ID. Use to broadcast to a channel rather than a private chat; to answer an existing thread use Reply to Channel Message instead. Supports @username mentions, which are resolved to team members before posting. Not idempotent — each call posts another message.',
+    idempotent: false,
+  },
   props: {
     teamId: microsoftTeamsCommon.teamId,
     channelId: microsoftTeamsCommon.channelId,
@@ -73,15 +78,18 @@ export const sendChannelMessageAction = createAction({
       ]);
 
       const members: ConversationMember[] = [];
-      let response: PageCollection = await client
-        .api(`/teams/${teamId}/members`)
-        .filter(filterClauses.join(' or '))
-        .get();
+      let response: PageCollection = await withGraphRetry(() =>
+        client
+          .api(`/teams/${teamId}/members`)
+          .filter(filterClauses.join(' or '))
+          .get(),
+      );
 
-      while (response.value.length > 0) {
+      while (response.value && response.value.length > 0) {
         members.push(...(response.value as ConversationMember[]));
-        if (response['@odata.nextLink']) {
-          response = await client.api(response['@odata.nextLink']).get();
+        const nextLink = response['@odata.nextLink'];
+        if (nextLink) {
+          response = await withGraphRetry(() => client.api(nextLink).get());
         } else {
           break;
         }

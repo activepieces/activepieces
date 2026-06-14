@@ -18,6 +18,9 @@ export const newMessage = createTrigger({
   displayName: 'New Message',
   auth: PieceAuth.None(),
   description: 'Triggers when a new message is received',
+  aiMetadata: {
+    description: 'Fires when the LINE bot receives an inbound message event from a user via the Messaging API webhook. Each emitted item represents one active message event, carrying the sender details and message content needed to react or reply.',
+  },
   props: {
     md: Property.MarkDown({
       value: markdown,

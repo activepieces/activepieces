@@ -8,6 +8,12 @@ export const githubGetIssueInformation = createAction({
   name: 'getIssueInformation',
   displayName: 'Get issue information',
   description: 'Grabs information from a specific issue',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches the full details of a single issue in a repository by its issue number. Use when you already know the issue number and need its current state, title, body, labels, or assignees. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     repository: githubCommon.repositoryDropdown,
     issue_number: Property.Number({
@@ -21,7 +27,7 @@ export const githubGetIssueInformation = createAction({
     const { owner, repo } = propsValue.repository!;
 
     const response = await githubApiCall({
-      accessToken: auth.access_token,
+      auth,
       method: HttpMethod.GET,
       resourceUri: `/repos/${owner}/${repo}/issues/${issue_number}`,
     });

@@ -8,6 +8,8 @@ export const updateContractWorkspace = createAction({
     name: 'update_contract_workspace',
     displayName: 'Update Contract Workspace',
     description: 'Update an existing contract workspace in SAP Ariba Contracts.',
+    audience: 'both',
+    aiMetadata: { description: 'Update fields (title, description, dates, amount/currency, amendment reason) on an existing contract workspace in a SAP Ariba Contracts realm, identified by contract ID and acting on behalf of a user (requires realm, user, and password adapter). Idempotent: repeating the call with the same field values converges to the same state.', idempotent: true },
     props: {
         realm: Property.ShortText({
             displayName: 'Realm',

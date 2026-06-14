@@ -2,12 +2,15 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { attioAuth } from '../auth';
 import { formatInputFields, objectFields, objectTypeIdDropdown } from '../common/props';
-import { attioApiCall, attioPaginatedApiCall } from '../common/client';
+import { attioApiCall, attioPaginatedApiCall, buildMembersMap, normalizeRecord } from '../common/client';
+import { AttioRecordResponse } from '../common/types';
 
 export const findRecordAction = createAction({
 	name: 'find_record',
 	displayName: 'Find Record',
 	description: 'Search for records in Attio using filters and return matching results.',
+	audience: 'both',
+	aiMetadata: { description: 'Looks up records of a chosen Attio object type. Operates in two modes: supply a Record ID to fetch that exact record (all attribute filters are then ignored), or leave it empty and provide attribute filters to query for matching records (empty filters return all records). Use this to resolve a record before updating or referencing it. Read-only and idempotent.', idempotent: true },
 	auth: attioAuth,
 	props: {
 		objectTypeId: objectTypeIdDropdown({
@@ -31,14 +34,16 @@ export const findRecordAction = createAction({
 		}
 
 		if (recordId) {
-			const response = await attioApiCall<{ data: Record<string, unknown> }>({
+			const response = await attioApiCall<{ data: AttioRecordResponse }>({
 				method: HttpMethod.GET,
 				accessToken,
 				resourceUri: `/objects/${objectTypeId}/records/${recordId}`,
 			});
+			const records = [response.data];
+			const membersMap = await buildMembersMap(accessToken, records);
 			return {
 				found: true,
-				result: [response.data],
+				result: records.map((r) => normalizeRecord(r, membersMap)),
 			};
 		}
 
@@ -52,7 +57,7 @@ export const findRecordAction = createAction({
 		);
 
 		// https://docs.attio.com/rest-api/endpoint-reference/records/list-records
-		const response = await attioPaginatedApiCall({
+		const records = await attioPaginatedApiCall<AttioRecordResponse>({
 			method: HttpMethod.POST,
 			accessToken,
 			resourceUri: `/objects/${objectTypeId}/records/query`,
@@ -61,9 +66,10 @@ export const findRecordAction = createAction({
 			},
 		});
 
+		const membersMap = await buildMembersMap(accessToken, records);
 		return {
-			found: response.length > 0,
-			result: response,
+			found: records.length > 0,
+			result: records.map((r) => normalizeRecord(r, membersMap)),
 		};
 	},
 });

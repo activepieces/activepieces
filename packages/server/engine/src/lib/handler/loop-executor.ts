@@ -1,5 +1,6 @@
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
 import { FlowRunStatus, isNil, LoopOnItemsAction, LoopStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { utils } from '../utils'
 import { BaseExecutor } from './base-executor'
 import { flowExecutor } from './flow-executor'
 
@@ -14,17 +15,35 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
         constants,
     }) {
         const stepStartTime = performance.now()
-        const { resolvedInput, censoredInput } = await constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<LoopOnActionResolvedSettings>({
-            unresolvedInput: {
-                items: action.settings.items,
-            },
-            executionState,
-        })
+        const { data: resolved, error: resolveError } = await utils.tryCatchAndThrowOnEngineError(() =>
+            constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<LoopOnActionResolvedSettings>({
+                unresolvedInput: {
+                    items: action.settings.items,
+                },
+                executionState,
+            }),
+        )
+        if (resolveError) {
+            const errorMessage = utils.formatError(resolveError)
+            const failedStepOutput = LoopStepOutput.init({ input: {} })
+                .setStatus(StepOutputStatus.FAILED)
+                .setErrorMessage(errorMessage)
+                .setDuration(performance.now() - stepStartTime)
+            return (await executionState.upsertStep(action.name, failedStepOutput)).setVerdict({
+                status: FlowRunStatus.FAILED,
+                failedStep: {
+                    name: action.name,
+                    displayName: action.displayName,
+                    message: errorMessage,
+                },
+            })
+        }
+        const { resolvedInput, censoredInput } = resolved
         const previousStepOutput = executionState.getLoopStepOutput({ stepName: action.name })
         let stepOutput = previousStepOutput ?? LoopStepOutput.init({
             input: censoredInput,
         })
-        let newExecutionContext = executionState.upsertStep(action.name, stepOutput)
+        let newExecutionContext = await executionState.upsertStep(action.name, stepOutput)
 
         if (!Array.isArray(resolvedInput.items)) {
             const errorMessage = JSON.stringify({
@@ -34,7 +53,7 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
                 .setStatus(StepOutputStatus.FAILED)
                 .setErrorMessage(errorMessage)
                 .setDuration( performance.now() - stepStartTime)
-            return newExecutionContext.upsertStep(action.name, failedStepOutput).setVerdict({ status: FlowRunStatus.FAILED, failedStep: {
+            return (await newExecutionContext.upsertStep(action.name, failedStepOutput)).setVerdict({ status: FlowRunStatus.FAILED, failedStep: {
                 name: action.name,
                 displayName: action.displayName,
                 message: errorMessage,
@@ -53,7 +72,7 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
             if (addEmptyIteration) {
                 stepOutput = stepOutput.addIteration()
             }
-            newExecutionContext = newExecutionContext.upsertStep(action.name, stepOutput).setCurrentPath(newCurrentPath)
+            newExecutionContext = (await newExecutionContext.upsertStep(action.name, stepOutput)).setCurrentPath(newCurrentPath)
             if (!isNil(firstLoopAction) && !testSingleStepMode) {
                 newExecutionContext = await flowExecutor.execute({
                     action: firstLoopAction,

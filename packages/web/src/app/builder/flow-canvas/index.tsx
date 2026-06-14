@@ -1,4 +1,5 @@
 import {
+  flowCanvasUtils as sharedFlowCanvasUtils,
   FlowActionType,
   flowStructureUtil,
   FlowTriggerType,
@@ -53,6 +54,7 @@ export const FlowCanvas = React.memo(
       selectStepByName,
       rightSidebar,
       notes,
+      canvasOrientation,
     ] = useBuilderStateContext((state) => {
       return [
         state.flowVersion,
@@ -63,6 +65,7 @@ export const FlowCanvas = React.memo(
         state.selectStepByName,
         state.rightSidebar,
         state.flowVersion.notes,
+        state.canvasOrientation,
       ];
     });
     const containerRef = useRef<HTMLDivElement>(null);
@@ -83,9 +86,17 @@ export const FlowCanvas = React.memo(
       },
       [setSelectedNodes, selectedStep],
     );
-    const graphKey = createGraphKey(flowVersion, notes, selectedStep ?? '');
+    const graphKey = `${createGraphKey(
+      flowVersion,
+      notes,
+      selectedStep ?? '',
+    )}-${canvasOrientation}`;
     const graph = useMemo(() => {
-      return flowCanvasUtils.createFlowGraph(flowVersion, notes);
+      return flowCanvasUtils.createFlowGraph({
+        version: flowVersion,
+        notes,
+        orientation: canvasOrientation,
+      });
     }, [graphKey]);
     const [contextMenuType, setContextMenuType] = useState<ContextMenuType>(
       ContextMenuType.CANVAS,
@@ -150,7 +161,8 @@ export const FlowCanvas = React.memo(
       selectedSteps.forEach((step) => {
         if (
           step.type === FlowActionType.LOOP_ON_ITEMS ||
-          step.type === FlowActionType.ROUTER
+          step.type === FlowActionType.ROUTER ||
+          sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
         ) {
           const childrenNotSelected = flowStructureUtil
             .getAllChildSteps(step)
@@ -202,6 +214,7 @@ export const FlowCanvas = React.memo(
         <FlowDragLayer>
           <CanvasContextMenu contextMenuType={contextMenuType}>
             <ReactFlow
+              key={`canvas-${canvasOrientation}`}
               className="bg-builder-background"
               onContextMenu={onContextMenu}
               onPaneClick={() => {
@@ -269,8 +282,22 @@ const getChildrenKey = (step: Step) => {
         return `${routerKey}-${childrenKey}`;
       }, '');
     case FlowActionType.CODE:
-    case FlowActionType.PIECE:
-      return '';
+    case FlowActionType.PIECE: {
+      const cofEnabled =
+        sharedFlowCanvasUtils.hasContinueOnFailureBranches(step);
+      const branches = step.continueOnFailureBranches;
+      const onSuccessKey = branches?.onSuccess
+        ? flowStructureUtil
+            .getAllSteps(branches.onSuccess)
+            .reduce((acc, s) => `${acc}-${s.name}`, '')
+        : 'null';
+      const onFailureKey = branches?.onFailure
+        ? flowStructureUtil
+            .getAllSteps(branches.onFailure)
+            .reduce((acc, s) => `${acc}-${s.name}`, '')
+        : 'null';
+      return `cof:${cofEnabled}-success:${onSuccessKey}-failure:${onFailureKey}`;
+    }
   }
 };
 const createGraphKey = (

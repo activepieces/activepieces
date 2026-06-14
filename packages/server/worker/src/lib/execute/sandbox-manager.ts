@@ -5,23 +5,7 @@ import { workerSettings } from '../config/worker-settings'
 import { Sandbox } from '../sandbox/types'
 import { createSandboxForJob } from './create-sandbox-for-job'
 
-function canReuseSandbox(): boolean {
-    const reuseSandbox = system.get(WorkerSystemProp.REUSE_SANDBOX)
-    if (!isNil(reuseSandbox)) {
-        return reuseSandbox === 'true'
-    }
-    const settings = workerSettings.getSettings()
-    if (settings.ENVIRONMENT === ApEnvironment.DEVELOPMENT) {
-        return true
-    }
-    const trustedModes = [ExecutionMode.SANDBOX_CODE_ONLY, ExecutionMode.UNSANDBOXED]
-    if (trustedModes.includes(settings.EXECUTION_MODE as ExecutionMode)) {
-        return true
-    }
-    return false
-}
-
-export function createSandboxManager(boxId: number): SandboxManager {
+export function createSandboxManager({ boxId, proxyPort }: { boxId: number, proxyPort: number | null }): SandboxManager {
     let currentSandbox: Sandbox | null = null
 
     return {
@@ -35,7 +19,7 @@ export function createSandboxManager(boxId: number): SandboxManager {
                     params.log.error({ err }, 'Error shutting down previous sandbox'),
                 )
             }
-            currentSandbox = createSandboxForJob({ ...params, boxId })
+            currentSandbox = createSandboxForJob({ ...params, boxId, reusable: canReuseSandbox(), proxyPort })
             return currentSandbox
         },
         async invalidate(log: Logger): Promise<void> {
@@ -54,7 +38,45 @@ export function createSandboxManager(boxId: number): SandboxManager {
         async shutdown(log: Logger): Promise<void> {
             await this.invalidate(log)
         },
+        getActiveSandbox(): ActiveSandboxInfo | null {
+            if (isNil(currentSandbox) || !currentSandbox.isReady()) {
+                return null
+            }
+            const pid = currentSandbox.getPid()
+            if (isNil(pid)) {
+                return null
+            }
+            return {
+                sandboxId: currentSandbox.id,
+                boxId,
+                pid,
+                busy: currentSandbox.isBusy(),
+            }
+        },
     }
+}
+
+function canReuseSandbox(): boolean {
+    const reuseSandbox = system.get(WorkerSystemProp.REUSE_SANDBOX)
+    if (!isNil(reuseSandbox)) {
+        return reuseSandbox === 'true'
+    }
+    const settings = workerSettings.getSettings()
+    if (settings.ENVIRONMENT === ApEnvironment.DEVELOPMENT) {
+        return true
+    }
+    const trustedModes = [ExecutionMode.SANDBOX_CODE_ONLY, ExecutionMode.UNSANDBOXED]
+    if (trustedModes.includes(settings.EXECUTION_MODE as ExecutionMode)) {
+        return true
+    }
+    return false
+}
+
+export type ActiveSandboxInfo = {
+    sandboxId: string
+    boxId: number
+    pid: number
+    busy: boolean
 }
 
 export type SandboxManager = {
@@ -62,4 +84,5 @@ export type SandboxManager = {
     invalidate(log: Logger): Promise<void>
     release(log: Logger): Promise<void>
     shutdown(log: Logger): Promise<void>
+    getActiveSandbox(): ActiveSandboxInfo | null
 }

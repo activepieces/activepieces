@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { tavilyAuth } from '../auth';
 
 export const searchAction = createAction({
   name: 'search',
   displayName: 'Search',
   description: 'Search for data based on a query.',
+  audience: 'both',
+  aiMetadata: { description: 'Run a web search through the Tavily search engine for a natural-language query and return relevant results; tune scope with search depth, a general vs. news topic, recency windows, and domain include/exclude lists, and optionally include images, raw page content, or an LLM-generated answer summary. Use to look up current or external information from the web. Read-only and idempotent: the same query returns equivalent results without side effects, though live web data may shift over time.', idempotent: true },
   auth: tavilyAuth,
   props: {
     query: Property.LongText({
@@ -105,11 +107,14 @@ export const searchAction = createAction({
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: 'https://api.tavily.com/search',
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: auth.secret_text
+      },
       headers: {
         'Content-Type': 'application/json',
       },
       body: {
-        api_key: auth,
         query: propsValue.query,
         search_depth: propsValue.search_depth,
         topic: propsValue.topic,

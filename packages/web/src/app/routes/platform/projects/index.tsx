@@ -12,14 +12,12 @@ import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import {
   DataTable,
   RowDataWithActions,
   BulkAction,
 } from '@/components/custom/data-table';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
-import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -28,13 +26,17 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { globalConnectionsQueries } from '@/features/connections';
-import { EditProjectDialog, projectCollectionUtils } from '@/features/projects';
+import {
+  CreateProjectButton,
+  EditProjectDialog,
+  projectCollectionUtils,
+} from '@/features/projects';
+import { PlatformAdminProjectAlertSubscriptionBulkActions } from '@/features/projects/components/platform-admin-project-alert-subscription-bulk-actions';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/format-utils';
 import { validationUtils } from '@/lib/validation-utils';
 
 import { projectsTableColumns } from './columns';
-import { NewProjectDialog } from './new-project-dialog';
 
 export default function ProjectsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -201,7 +203,9 @@ export default function ProjectsPage() {
                   ? t(
                       'Cannot delete active project, switch to another project first',
                     )
-                  : t('Personal projects cannot be deleted')}
+                  : t(
+                      "Personal projects cannot be deleted, and you can't subscribe to their alerts",
+                    )}
               </TooltipContent>
             )}
           </Tooltip>
@@ -213,6 +217,20 @@ export default function ProjectsPage() {
 
   const bulkActions: BulkAction<ProjectWithLimits>[] = useMemo(
     () => [
+      {
+        render: (
+          _: RowDataWithActions<ProjectWithLimits>[],
+          resetSelection: () => void,
+        ) => (
+          <PlatformAdminProjectAlertSubscriptionBulkActions
+            selectedProjects={selectedRows}
+            resetSelection={() => {
+              resetSelection();
+              setSelectedRows([]);
+            }}
+          />
+        ),
+      },
       {
         render: (
           _: RowDataWithActions<ProjectWithLimits>[],
@@ -273,13 +291,13 @@ export default function ProjectsPage() {
 
   const toolbarButtons = useMemo(
     () => [
-      <NewProjectDialog key="new-project">
-        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
-          {t('New Project')}
-        </AnimatedIconButton>
-      </NewProjectDialog>,
+      <CreateProjectButton
+        key="new-project"
+        variant="full"
+        projects={allProjects}
+      />,
     ],
-    [],
+    [allProjects],
   );
 
   const errorToastMessage = (error: unknown): string | undefined => {

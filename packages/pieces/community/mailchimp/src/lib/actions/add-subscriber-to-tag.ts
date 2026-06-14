@@ -10,6 +10,8 @@ export const addSubscriberToTag = createAction({
   name: 'add_subscriber_to_tag',
   displayName: 'Add Subscriber to Tag',
   description: 'Add a subscriber to a specific tag in your Mailchimp audience.',
+  audience: 'both',
+  aiMetadata: { description: 'Activates a tag on a subscriber, identified by email within a given audience (list); the tag is created if it does not already exist. Use to segment or label a contact. Idempotent: re-applying an already-active tag leaves the member state unchanged.', idempotent: true },
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
     email: Property.ShortText({

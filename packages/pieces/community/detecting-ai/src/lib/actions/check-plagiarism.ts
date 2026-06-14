@@ -6,6 +6,8 @@ export const checkPlagiarism = createAction({
   name: 'check_plagiarism',
   displayName: 'Check Plagiarism',
   description: 'Check text for plagiarism',
+  audience: 'both',
+  aiMetadata: { description: 'Scans a block of text against the DetectingAI plagiarism API to find matching or copied passages from external sources. Use to verify originality of submitted or generated content. Requires the text to check. Read-only analysis — repeating the call with the same text returns the same result with no side effects.', idempotent: true },
   auth: detectingAiAuth,
   requireAuth: true,
   props: {

@@ -7,6 +7,8 @@ export const searchProductRecord = createAction({
   name: 'searchProductRecord',
   displayName: 'Search Product Record',
   description: 'Searches products by name/code via criteria or word',
+  audience: 'both',
+  aiMetadata: { description: 'Searches product records in Bigin CRM and returns matches. Choose between Criteria mode (matches Product Name or Product Code with equals or starts-with) and Word mode (a free-text word search across the module). Use to find a product by name or code before associating it with a deal. Idempotent: read-only, repeating the search returns the same matches.', idempotent: true },
   props: {
     mode: Property.StaticDropdown({
       displayName: 'Search Mode',

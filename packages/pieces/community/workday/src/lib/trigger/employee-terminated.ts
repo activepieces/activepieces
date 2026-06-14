@@ -25,6 +25,10 @@ export const employeeTerminated = createTrigger({
 	name: 'employee_terminated',
 	displayName: 'Employee Terminated',
 	description: 'Triggers when an employee is terminated in Workday.',
+	aiMetadata: {
+		description:
+			'Fires for each worker whose termination is recorded in Workday after the trigger was enabled, detected by polling workers by termination date. Represents an employee offboarding event. Use to drive offboarding workflows (access revocation, notifications).',
+	},
 	props: {},
 	sampleData: { id: '3aa5550b7fe348b98d7b5741afc65534', descriptor: 'Jane Doe', terminationDate: '2026-04-01' },
 	type: TriggerStrategy.POLLING,

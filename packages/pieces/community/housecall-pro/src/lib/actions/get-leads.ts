@@ -7,6 +7,8 @@ export const getLeads = createAction({
   name: "get_leads",
   displayName: "Get Leads",
   description: "Get a list of leads",
+  audience: 'both',
+  aiMetadata: { description: "List Housecall Pro leads with filtering by customer, employees, locations, lead source, status, and tags, plus sorting and pagination. Read-only and idempotent. Use to find leads before converting one into an estimate or job.", idempotent: true },
   props: {
     customer_id: Property.ShortText({
       displayName: "Customer ID",

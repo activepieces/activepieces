@@ -1,10 +1,12 @@
 import {
-    BeginExecuteFlowOperation,
     EngineGenericError,
     EngineResponse,
     EngineResponseStatus,
     ExecuteFlowOperation,
     ExecuteTriggerResponse,
+    ExecutionError,
+    ExecutionErrorType,
+    ExecutionState,
     ExecutionType,
     FlowActionType,
     FlowRunStatus,
@@ -12,40 +14,45 @@ import {
     GenericStepOutput,
     isNil,
     LoopStepOutput,
+    ResumePayload,
+    ResumeReason,
     StepOutput,
     StepOutputStatus,
     TriggerHookType,
     TriggerPayload,
+    tryCatch,
 } from '@activepieces/shared'
-import { EngineConstants } from '../handler/context/engine-constants'
+import { engineFileApi } from '../engine-file-api'
+import { EngineConstants, ResolvedBeginExecuteFlowOperation, ResolvedExecuteFlowOperation } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { testExecutionContext } from '../handler/context/test-execution-context'
 import { flowExecutor } from '../handler/flow-executor'
+import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
 import { triggerHelper } from '../helper/trigger-helper'
-import { progressService } from '../services/progress.service'
+import { utils } from '../utils'
+import { resolveJobPayload } from './utils/resolve-job-payload'
 
 export const flowOperation = {
     execute: async (operation: ExecuteFlowOperation): Promise<EngineResponse<undefined>> => {
-        const input = operation as ExecuteFlowOperation
+        const input = await resolveExecuteFlowOperation(operation)
         const constants = EngineConstants.fromExecuteFlowInput(input)
-        const output: FlowExecutorContext = (await executieSingleStepOrFlowOperation(input)).finishExecution()
-        await progressService.backup({
+        const output: FlowExecutorContext = (await executieSingleStepOrFlowOperation(input, constants)).finishExecution()
+        await flowRunProgressReporter.sendUpdate({
             engineConstants: constants,
             flowExecutorContext: output,
         })
+        await flowRunProgressReporter.backup()
         const status = output.verdict.status === FlowRunStatus.LOG_SIZE_EXCEEDED
             ? EngineResponseStatus.LOG_SIZE_EXCEEDED
             : EngineResponseStatus.OK
         return {
             status,
             response: undefined,
-            delayInSeconds: output.getDelayedInSeconds(),
         }
     },
 }
 
-const executieSingleStepOrFlowOperation = async (input: ExecuteFlowOperation): Promise<FlowExecutorContext> => {
-    const constants = EngineConstants.fromExecuteFlowInput(input)
+const executieSingleStepOrFlowOperation = async (input: ResolvedExecuteFlowOperation, constants: EngineConstants): Promise<FlowExecutorContext> => {
     const testSingleStepMode = !isNil(constants.stepNameToTest)
     if (testSingleStepMode) {
         const testContext = await testExecutionContext.stateFromFlowVersion({
@@ -58,51 +65,87 @@ const executieSingleStepOrFlowOperation = async (input: ExecuteFlowOperation): P
             engineConstants: constants,
         })
         const step = flowStructureUtil.getActionOrThrow(input.stepNameToTest!, input.flowVersion.trigger)
+        const executionState = await resolveStateOrThrowOnNonUserError({ input, constants, baseContext: testContext })
+        if (executionState.verdict.status !== FlowRunStatus.RUNNING) {
+            return executionState
+        }
         return flowExecutor.execute({
             action: step,
-            executionState: await getFlowExecutionState(input, testContext),
-            constants: EngineConstants.fromExecuteFlowInput(input),
+            executionState,
+            constants,
         })
     }
+    const emptyContext = FlowExecutorContext.empty({
+        engineApi: {
+            engineToken: constants.engineToken,
+            internalApiUrl: constants.internalApiUrl,
+        },
+    })
+    const executionState = await resolveStateOrThrowOnNonUserError({ input, constants, baseContext: emptyContext })
+    if (executionState.verdict.status !== FlowRunStatus.RUNNING) {
+        return executionState
+    }
     return flowExecutor.executeFromTrigger({
-        executionState: await getFlowExecutionState(input, FlowExecutorContext.empty()),
+        executionState,
         constants,
         input,
     })
 }
 
-async function getFlowExecutionState(input: ExecuteFlowOperation, flowContext: FlowExecutorContext): Promise<FlowExecutorContext> {
-    switch (input.executionType) {
-        case ExecutionType.BEGIN: {
-            if (Object.keys(input.executionState.steps).length > 0) {
-                throw new EngineGenericError('InvalidBeginStateError', 'BEGIN operation received with non-empty execution state')
-            }
-            const newPayload = await runOrReturnPayload(input)
-            flowContext = flowContext.upsertStep(input.flowVersion.trigger.name, GenericStepOutput.create({
+async function resolveStateOrThrowOnNonUserError({ input, constants, baseContext }: ResolveStateParams): Promise<FlowExecutorContext> {
+    const { data: executionState, error } = await tryCatch(() => getFlowExecutionState(input, constants, baseContext))
+    if (!error) {
+        return executionState
+    }
+    if (error instanceof ExecutionError && error.type === ExecutionErrorType.USER) {
+        return buildFailedTriggerContext({ input, baseContext, error })
+    }
+    throw error
+}
+
+async function buildFailedTriggerContext({ input, baseContext, error }: BuildFailedTriggerContextParams): Promise<FlowExecutorContext> {
+    const trigger = input.flowVersion.trigger
+    const message = utils.formatExecutionError(error)
+    const triggerPayload = input.executionType === ExecutionType.BEGIN ? input.triggerPayload : undefined
+    const failedTriggerOutput = GenericStepOutput.create({
+        type: trigger.type,
+        status: StepOutputStatus.FAILED,
+        input: {},
+    }).setOutput(triggerPayload ?? {}).setErrorMessage(message)
+    return (await baseContext.upsertStep(trigger.name, failedTriggerOutput)).setVerdict({
+        status: FlowRunStatus.FAILED,
+        failedStep: {
+            name: trigger.name,
+            displayName: trigger.displayName,
+            message,
+        },
+    })
+}
+
+async function getFlowExecutionState(input: ResolvedExecuteFlowOperation, constants: EngineConstants, flowContext: FlowExecutorContext): Promise<FlowExecutorContext> {
+    if (input.executionType === ExecutionType.BEGIN) {
+        const newPayload = await runOrReturnPayload(input, constants)
+        return flowContext.upsertStep(input.flowVersion.trigger.name,
+            GenericStepOutput.create({
                 type: input.flowVersion.trigger.type,
                 status: StepOutputStatus.SUCCEEDED,
                 input: {},
             }).setOutput(newPayload))
-            break
-        }
-        case ExecutionType.RESUME: {
-            flowContext = flowContext.addTags(input.executionState.tags)
-            break
-        }
     }
-
+    flowContext = flowContext.addTags(input.executionState.tags)
+    const isWaitpointResume = input.resumeReason === ResumeReason.WAITPOINT
     for (const [step, output] of Object.entries(input.executionState.steps)) {
-        if ([StepOutputStatus.SUCCEEDED, StepOutputStatus.PAUSED].includes(output.status)) {
-            const newOutput = await insertSuccessStepsOrPausedRecursively(output)
+        if (isStepRestorable({ status: output.status, isWaitpointResume })) {
+            const newOutput = await insertSuccessStepsOrPausedRecursively({ stepOutput: output, isWaitpointResume })
             if (!isNil(newOutput)) {
-                flowContext = flowContext.upsertStep(step, newOutput)
+                flowContext = await flowContext.upsertStep(step, newOutput)
             }
         }
     }
     return flowContext
 }
 
-async function runOrReturnPayload(input: BeginExecuteFlowOperation): Promise<TriggerPayload> {
+async function runOrReturnPayload(input: ResolvedBeginExecuteFlowOperation, constants: EngineConstants): Promise<TriggerPayload> {
     if (!input.executeTrigger) {
         return input.triggerPayload as TriggerPayload
     }
@@ -112,16 +155,16 @@ async function runOrReturnPayload(input: BeginExecuteFlowOperation): Promise<Tri
             hookType: TriggerHookType.RUN,
             test: false,
             webhookUrl: '',
-            triggerPayload: input.triggerPayload as TriggerPayload,
+            triggerPayload: input.triggerPayload,
         },
-        constants: EngineConstants.fromExecuteFlowInput(input),
+        constants,
     }) as ExecuteTriggerResponse<TriggerHookType.RUN>
     return newPayload.output[0] as TriggerPayload
 }
 
 
-async function insertSuccessStepsOrPausedRecursively(stepOutput: StepOutput): Promise<StepOutput | null> {
-    if (![StepOutputStatus.SUCCEEDED, StepOutputStatus.PAUSED].includes(stepOutput.status)) {
+async function insertSuccessStepsOrPausedRecursively({ stepOutput, isWaitpointResume }: InsertStepsParams): Promise<StepOutput | null> {
+    if (!isStepRestorable({ status: stepOutput.status, isWaitpointResume })) {
         return null
     }
     if (stepOutput.type === FlowActionType.LOOP_ON_ITEMS) {
@@ -131,7 +174,7 @@ async function insertSuccessStepsOrPausedRecursively(stepOutput: StepOutput): Pr
         for (const iteration of iterations) {
             const newSteps: Record<string, StepOutput> = {}
             for (const [step, output] of Object.entries(iteration)) {
-                const newOutput = await insertSuccessStepsOrPausedRecursively(output)
+                const newOutput = await insertSuccessStepsOrPausedRecursively({ stepOutput: output, isWaitpointResume })
                 if (!isNil(newOutput)) {
                     newSteps[step] = newOutput
                 }
@@ -141,4 +184,72 @@ async function insertSuccessStepsOrPausedRecursively(stepOutput: StepOutput): Pr
         return loopOutput.setIterations(newIterations)
     }
     return stepOutput
+}
+
+async function resolveExecuteFlowOperation(operation: ExecuteFlowOperation): Promise<ResolvedExecuteFlowOperation> {
+    if (operation.executionType === ExecutionType.BEGIN) {
+        return {
+            ...operation,
+            triggerPayload: await resolveJobPayload({ payload: operation.triggerPayload, apiUrl: operation.internalApiUrl, engineToken: operation.engineToken }),
+        }
+    }
+    const executionState = await fetchExecutionStateFromLogs(operation.logsFileId, operation)
+    if (Object.keys(executionState.steps).length === 0) {
+        throw new EngineGenericError('EmptyResumeStateError', 'RESUME operation received with empty execution state')
+    }
+    return {
+        ...operation,
+        resumePayload: await resolveJobPayload({ payload: operation.resumePayload, apiUrl: operation.internalApiUrl, engineToken: operation.engineToken }) as ResumePayload,
+        executionState,
+    }
+}
+
+async function fetchExecutionStateFromLogs(logsFileId: string | undefined, operation: ExecuteFlowOperation): Promise<ExecutionState> {
+    if (isNil(logsFileId)) {
+        throw new EngineGenericError('ResumeLogsFileMissing', 'logsFileId is missing for RESUME operation')
+    }
+    const bytes = await engineFileApi.download({
+        fileId: logsFileId,
+        apiUrl: operation.internalApiUrl,
+        engineToken: operation.engineToken,
+    })
+    const parsed = JSON.parse(new TextDecoder('utf-8').decode(bytes))
+    if (isNil(parsed?.executionState)) {
+        throw new EngineGenericError('ExecutionStateMissing', 'executionState is missing in logs file')
+    }
+    return parsed.executionState as ExecutionState
+}
+
+// Waitpoint resumes preserve FAILED so a `continueOnFailure` step isn't replayed,
+// which would re-fire its waitpoint and let the global `constants.resumePayload`
+// pollute the new output. Retry resumes (FlowRetryStrategy.FROM_FAILED_STEP) drop
+// FAILED so the engine re-executes the failed step. The discriminator is the
+// explicit `resumeReason` set when the run is enqueued.
+function isStepRestorable({ status, isWaitpointResume }: IsStepRestorableParams): boolean {
+    if (status === StepOutputStatus.SUCCEEDED || status === StepOutputStatus.PAUSED) {
+        return true
+    }
+    return isWaitpointResume && status === StepOutputStatus.FAILED
+}
+
+type ResolveStateParams = {
+    input: ResolvedExecuteFlowOperation
+    constants: EngineConstants
+    baseContext: FlowExecutorContext
+}
+
+type BuildFailedTriggerContextParams = {
+    input: ResolvedExecuteFlowOperation
+    baseContext: FlowExecutorContext
+    error: ExecutionError
+}
+
+type IsStepRestorableParams = {
+    status: StepOutputStatus
+    isWaitpointResume: boolean
+}
+
+type InsertStepsParams = {
+    stepOutput: StepOutput
+    isWaitpointResume: boolean
 }

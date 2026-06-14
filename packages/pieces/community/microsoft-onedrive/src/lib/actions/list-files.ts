@@ -9,6 +9,8 @@ export const listFiles = createAction({
 	auth: oneDriveAuth,
 	name: 'list_files',
 	description: 'List files in a OneDrive folder',
+	audience: 'both',
+	aiMetadata: { description: 'List the files contained in a Microsoft OneDrive folder, returning only file items (subfolders are excluded) and paging through all results. Provide a parent folder ID to scope the listing, or leave it empty to list from the drive root. Read-only and idempotent.', idempotent: true },
 	displayName: 'List Files',
 	props: {
 		markdown:oneDriveCommon.parentFolderInfo,

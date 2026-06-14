@@ -1,0 +1,41 @@
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { aiprise } from '../common';
+import { aipriseAuth } from '../common/auth';
+
+export const runBusinessVerificationAction = createAction({
+  auth: aipriseAuth,
+  name: 'run_business_verification',
+  displayName: 'Start Business Verification',
+  description:
+    'Kicks off a company background check. AiPrise will run the checks defined in your template — which can include company registry lookup, ownership structure (UBO), sanctions screening, and adverse media.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Starts a business (KYB) verification on an existing business profile by running the checks bundled in a given template (registry lookup, UBO/ownership, sanctions screening, adverse media). Use when you want to begin verifying a company you have already created or looked up a profile for. Requires a template ID and the business_profile_id. Not idempotent — each call launches a new verification session.',
+    idempotent: false,
+  },
+  props: {
+    template_id: Property.ShortText({
+      displayName: 'Verification Template',
+      description:
+        'Which set of checks to run on the business. To find this: log in to AiPrise → go to **Templates** → open the template you want → copy the **Template ID** shown at the top of the page.',
+      required: true,
+    }),
+    business_profile_id: Property.ShortText({
+      displayName: 'Business Profile ID',
+      description: ' The ID of the business profile you want to verify. This is returned when you create a business profile, or you can look it up using the List Business Profiles action.',
+      required: true,
+    }),
+  },
+  async run(context) {
+    const { template_id, business_profile_id } = context.propsValue;
+    const result = await aiprise.makeRequest<Record<string, unknown>>({
+      auth: context.auth.props,
+      method: HttpMethod.POST,
+      path: '/verify/run_verification_for_business_profile_id',
+      body: { template_id, business_profile_id },
+    });
+    return result;
+  },
+});

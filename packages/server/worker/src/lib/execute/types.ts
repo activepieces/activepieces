@@ -20,7 +20,6 @@ export type JobContext = {
 export type FireAndForgetJobResult = {
     kind: JobResultKind.FIRE_AND_FORGET
     status: EngineResponseStatus
-    delayInSeconds?: number
     logs?: string
 }
 

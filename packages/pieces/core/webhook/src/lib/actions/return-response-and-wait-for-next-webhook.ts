@@ -4,7 +4,7 @@ import {
     Property,
     createAction,
   } from '@activepieces/pieces-framework';
-  import { ExecutionType, PauseType, StopResponse } from '@activepieces/shared';
+  import { ExecutionType, StopResponse } from '@activepieces/shared';
   import { StatusCodes } from 'http-status-codes';
   
   enum ResponseType {
@@ -16,6 +16,7 @@ import {
 
   const RESUME_WEBHOOK_HEADER = 'x-activepieces-resume-webhook-url';
   export const returnResponseAndWaitForNextWebhook = createAction({
+    audience: 'human',
     name: 'return_response_and_wait_for_next_webhook',
     displayName: 'Respond and Wait for Next Webhook',
     description: 'return a response and wait for the next webhook to resume the flow',
@@ -100,19 +101,12 @@ import {
       const { fields, responseType } = context.propsValue;
       const bodyInput = fields ['body'];
       const headers = fields['headers'] ?? {};
-      headers[RESUME_WEBHOOK_HEADER] = context.generateResumeUrl({
-        queryParams: {
-          created: new Date().toISOString(),
-          runId: context.run.id,
-        },
-        sync:true
-      });
       const status = fields['status'];
       const response: StopResponse = {
         status: status ?? StatusCodes.OK,
         headers,
       };
-      
+
       switch (responseType) {
         case ResponseType.JSON:
           response.body = praseToJson(bodyInput);
@@ -127,14 +121,19 @@ import {
           break;
       }
 
-      
       if(context.executionType === ExecutionType.BEGIN){
-        context.run.pause({
-          pauseMetadata: {
-            type: PauseType.WEBHOOK,
-            response
-          },
+        const waitpoint = await context.run.createWaitpoint({
+          type: 'WEBHOOK',
+          responseToSend: response,
         });
+        headers[RESUME_WEBHOOK_HEADER] = waitpoint.buildResumeUrl({
+          queryParams: {
+            created: new Date().toISOString(),
+            runId: context.run.id,
+          },
+          sync: true,
+        });
+        context.run.waitForWaitpoint(waitpoint.id);
         return {
           nextWebhookUrl: headers[RESUME_WEBHOOK_HEADER],
         };

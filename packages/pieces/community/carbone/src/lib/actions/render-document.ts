@@ -14,6 +14,11 @@ export const renderDocumentAction = createAction({
   name: 'carbone_render_document',
   displayName: 'Render Document',
   description: 'Render a Carbone template with JSON data and download the generated document.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Merges a stored Carbone template (referenced by template ID) with a JSON data object and produces the generated document, optionally converting it to another format such as PDF, XLSX, or DOCX. Use this to produce a finished report or document from a template the agent has already uploaded; the JSON keys must match the `{d.variableName}` placeholders in the template. Not idempotent: each call generates and writes a new output file.',
+    idempotent: false,
+  },
   props: {
     templateId: carboneProps.templateDropdown({
       displayName: 'Template ID',

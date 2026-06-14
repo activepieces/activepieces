@@ -8,6 +8,8 @@ export const bulk_delete_clients = createAction({
     auth: simplirouteAuth,
     displayName: 'Bulk Delete Clients',
     description: 'Delete multiple clients in a single call.',
+    audience: 'both',
+    aiMetadata: { description: 'Permanently remove several clients at once by passing a list of their numeric client IDs. Use for batch cleanup rather than deleting one at a time; destructive and irreversible. Re-running with already-deleted IDs has no further effect.', idempotent: false },
     props: {
         ids: Property.Array({
             displayName: 'IDs',

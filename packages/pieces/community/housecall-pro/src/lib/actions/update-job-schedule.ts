@@ -7,6 +7,8 @@ export const updateJobSchedule = createAction({
   name: "update_job_schedule",
   displayName: "Update Job Schedule",
   description: "Updates a job's schedule. Jobs with multi days feature containing more than 1 appointment can't be updated through this action.",
+  audience: 'both',
+  aiMetadata: { description: 'Overwrites the schedule (start time, end time, arrival window, dispatched employees) of an existing Housecall Pro job, identified by job ID. Use to reschedule or re-dispatch a single-appointment job; not idempotent since it mutates the job and can trigger customer/pro notifications on each call. Cannot update multi-day jobs that contain more than one appointment.', idempotent: false },
   props: {
     job_id: Property.ShortText({
       displayName: "Job ID",

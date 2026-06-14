@@ -9,6 +9,8 @@ export const cloneObject = createAction({
   name: 'clone_object',
   displayName: 'Clone Object',
   description: 'Copy / clone an object (file) to a new location (same or different bucket), optionally overriding metadata. Perfect for duplicating files as backup or version.',
+  audience: 'both',
+  aiMetadata: { description: 'Copies an existing object to a destination bucket/name (same or different bucket), optionally overriding metadata such as contentType or cacheControl. Use to duplicate a file for backups or to move data between buckets. Not idempotent: it writes a new destination object on each call, creating a fresh generation. Requires the source bucket/object and a destination bucket and object name.', idempotent: false },
   props: {
     projectId: projectIdProperty,
     sourceBucket: bucketDropdown,

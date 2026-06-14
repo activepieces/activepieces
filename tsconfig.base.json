@@ -35,6 +35,9 @@
       "@activepieces/piece-acumbamail": [
         "packages/pieces/community/acumbamail/src/index.ts"
       ],
+      "@activepieces/piece-add-event": [
+        "packages/pieces/community/add-event/src/index.ts"
+      ],
       "@activepieces/piece-afforai": [
         "packages/pieces/community/afforai/src/index.ts"
       ],
@@ -49,6 +52,9 @@
       ],
       "@activepieces/piece-aidbase": [
         "packages/pieces/community/aidbase/src/index.ts"
+      ],
+      "@activepieces/piece-aiprise": [
+        "packages/pieces/community/aiprise/src/index.ts"
       ],
       "@activepieces/piece-aircall": [
         "packages/pieces/community/aircall/src/index.ts"
@@ -116,11 +122,20 @@
       "@activepieces/piece-autocalls": [
         "packages/pieces/community/autocalls/src/index.ts"
       ],
+      "@activepieces/piece-avian": [
+        "packages/pieces/community/avian/src/index.ts"
+      ],
       "@activepieces/piece-avoma": [
         "packages/pieces/community/avoma/src/index.ts"
       ],
+      "@activepieces/piece-azure-ad": [
+        "packages/pieces/community/azure-ad/src/index.ts"
+      ],
       "@activepieces/piece-azure-communication-services": [
         "packages/pieces/community/azure-communication-services/src/index.ts"
+      ],
+      "@activepieces/piece-azure-devops": [
+        "packages/pieces/community/azure-devops/src/index.ts"
       ],
       "@activepieces/piece-azure-openai": [
         "packages/pieces/community/azure-openai/src/index.ts"
@@ -140,11 +155,20 @@
       "@activepieces/piece-beamer": [
         "packages/pieces/community/beamer/src/index.ts"
       ],
+      "@activepieces/piece-beebole": [
+        "packages/pieces/community/beebole/src/index.ts"
+      ],
       "@activepieces/piece-beehiiv": [
         "packages/pieces/community/beehiiv/src/index.ts"
       ],
       "@activepieces/piece-bettermode": [
         "packages/pieces/community/bettermode/src/index.ts"
+      ],
+      "@activepieces/piece-bocha-search": [
+        "packages/pieces/community/bocha-search/src/index.ts"
+      ],
+      "@activepieces/piece-bigcommerce": [
+        "packages/pieces/community/bigcommerce/src/index.ts"
       ],
       "@activepieces/piece-bigin-by-zoho": [
         "packages/pieces/community/bigin-by-zoho/src/index.ts"
@@ -180,6 +204,9 @@
       "@activepieces/piece-bubble": [
         "packages/pieces/community/bubble/src/index.ts"
       ],
+      "@activepieces/piece-buffer": [
+        "packages/pieces/community/buffer/src/index.ts"
+      ],
       "@activepieces/piece-bumpups": [
         "packages/pieces/community/bumpups/src/index.ts"
       ],
@@ -197,6 +224,9 @@
       ],
       "@activepieces/piece-campaign-monitor": [
         "packages/pieces/community/campaign-monitor/src/index.ts"
+      ],
+      "@activepieces/piece-canva": [
+        "packages/pieces/community/canva/src/index.ts"
       ],
       "@activepieces/piece-capsule-crm": [
         "packages/pieces/community/capsule-crm/src/index.ts"
@@ -230,6 +260,9 @@
       ],
       "@activepieces/piece-checkout": [
         "packages/pieces/community/checkout/src/index.ts"
+      ],
+      "@activepieces/piece-chess-com": [
+        "packages/pieces/community/chess-com/src/index.ts"
       ],
       "@activepieces/piece-circle": [
         "packages/pieces/community/circle/src/index.ts"
@@ -315,6 +348,9 @@
       "@activepieces/piece-copy-ai": [
         "packages/pieces/community/copy-ai/src/index.ts"
       ],
+      "@activepieces/piece-coupa": [
+        "packages/pieces/community/coupa/src/index.ts"
+      ],
       "@activepieces/piece-crisp": [
         "packages/pieces/community/crisp/src/index.ts"
       ],
@@ -349,7 +385,13 @@
       "@activepieces/piece-deepseek": [
         "packages/pieces/community/deepseek/src/index.ts"
       ],
+      "@activepieces/piece-deftform": [
+        "packages/pieces/community/deftform/src/index.ts"
+      ],
       "@activepieces/piece-delay": ["packages/pieces/core/delay/src/index.ts"],
+      "@activepieces/piece-descript": [
+        "packages/pieces/community/descript/src/index.ts"
+      ],
       "@activepieces/piece-devin": [
         "packages/pieces/community/devin/src/index.ts"
       ],
@@ -387,6 +429,9 @@
       "@activepieces/piece-eden-ai": [
         "packages/pieces/community/eden-ai/src/index.ts"
       ],
+      "@activepieces/piece-editionguard": [
+        "packages/pieces/community/editionguard/src/index.ts"
+      ],
       "@activepieces/piece-elastic-email": [
         "packages/pieces/community/elastic-email/src/index.ts"
       ],
@@ -409,11 +454,17 @@
       "@activepieces/piece-fathom-analytics": [
         "packages/pieces/community/fathom-analytics/src/index.ts"
       ],
+      "@activepieces/piece-feedhive": [
+        "packages/pieces/community/feedhive/src/index.ts"
+      ],
       "@activepieces/piece-figma": [
         "packages/pieces/community/figma/src/index.ts"
       ],
       "@activepieces/piece-file-helper": [
         "packages/pieces/core/file-helper/src/index.ts"
+      ],
+      "@activepieces/piece-filetopdf": [
+        "packages/pieces/community/filetopdf/src/index.ts"
       ],
       "@activepieces/piece-fillout-forms": [
         "packages/pieces/community/fillout-forms/src/index.ts"
@@ -429,6 +480,9 @@
       ],
       "@activepieces/piece-fliqr-ai": [
         "packages/pieces/community/fliqr-ai/src/index.ts"
+      ],
+      "@activepieces/piece-frill": [
+        "packages/pieces/community/frill/src/index.ts"
       ],
       "@activepieces/piece-flow-helper": [
         "packages/pieces/community/flow-helper/src/index.ts"
@@ -533,6 +587,9 @@
       "@activepieces/piece-gotify": [
         "packages/pieces/community/gotify/src/index.ts"
       ],
+      "@activepieces/piece-gorgias": [
+        "packages/pieces/community/gorgias/src/index.ts"
+      ],
       "@activepieces/piece-granola": [
         "packages/pieces/community/granola/src/index.ts"
       ],
@@ -541,6 +598,9 @@
       ],
       "@activepieces/piece-gravityforms": [
         "packages/pieces/community/gravityforms/src/index.ts"
+      ],
+      "@activepieces/piece-greenhouse": [
+        "packages/pieces/community/greenhouse/src/index.ts"
       ],
       "@activepieces/piece-grist": [
         "packages/pieces/community/grist/src/index.ts"
@@ -569,6 +629,9 @@
       "@activepieces/piece-heygen": [
         "packages/pieces/community/heygen/src/index.ts"
       ],
+      "@activepieces/piece-hootsuite": [
+        "packages/pieces/community/hootsuite/src/index.ts"
+      ],
       "@activepieces/piece-http": ["packages/pieces/core/http/src/index.ts"],
       "@activepieces/piece-http-oauth2": [
         "packages/pieces/community/http-oauth2/src/index.ts"
@@ -582,6 +645,9 @@
       "@activepieces/piece-hunter": [
         "packages/pieces/community/hunter/src/index.ts"
       ],
+      "@activepieces/piece-iloveapi": [
+        "packages/pieces/community/iloveapi/src/index.ts"
+      ],
       "@activepieces/piece-image-ai": [
         "packages/pieces/community/image-ai/src/index.ts"
       ],
@@ -590,6 +656,9 @@
       ],
       "@activepieces/piece-imap": [
         "packages/pieces/community/imap/src/index.ts"
+      ],
+      "@activepieces/piece-imeetify": [
+        "packages/pieces/community/imeetify/src/index.ts"
       ],
       "@activepieces/piece-insighto-ai": [
         "packages/pieces/community/insighto-ai/src/index.ts"
@@ -608,6 +677,9 @@
       ],
       "@activepieces/piece-jina-ai": [
         "packages/pieces/community/jina-ai/src/index.ts"
+      ],
+      "@activepieces/piece-jungle-grid": [
+        "packages/pieces/community/jungle-grid/src/index.ts"
       ],
       "@activepieces/piece-jira-cloud": [
         "packages/pieces/community/jira-cloud/src/index.ts"
@@ -633,11 +705,20 @@
       "@activepieces/piece-klaviyo": [
         "packages/pieces/community/klaviyo/src/index.ts"
       ],
+      "@activepieces/piece-klipy": [
+        "packages/pieces/community/klipy/src/index.ts"
+      ],
       "@activepieces/piece-klenty": [
         "packages/pieces/community/klenty/src/index.ts"
       ],
       "@activepieces/piece-knack": [
         "packages/pieces/community/knack/src/index.ts"
+      ],
+      "@activepieces/piece-ko-fi": [
+        "packages/pieces/community/ko-fi/src/index.ts"
+      ],
+      "@activepieces/piece-kustomer": [
+        "packages/pieces/community/kustomer/src/index.ts"
       ],
       "@activepieces/piece-kommo": [
         "packages/pieces/community/kommo/src/index.ts"
@@ -764,6 +845,9 @@
       "@activepieces/piece-mistral-ai": [
         "packages/pieces/community/mistral-ai/src/index.ts"
       ],
+      "@activepieces/piece-mixmax": [
+        "packages/pieces/community/mixmax/src/index.ts"
+      ],
       "@activepieces/piece-mixpanel": [
         "packages/pieces/community/mixpanel/src/index.ts"
       ],
@@ -782,6 +866,9 @@
       "@activepieces/piece-moxie-crm": [
         "packages/pieces/community/moxie-crm/src/index.ts"
       ],
+      "@activepieces/piece-muna-ai": [
+        "packages/pieces/community/muna-ai/src/index.ts"
+      ],
       "@activepieces/piece-murf-api": [
         "packages/pieces/community/murf-api/src/index.ts"
       ],
@@ -799,6 +886,9 @@
       ],
       "@activepieces/piece-nifty": [
         "packages/pieces/community/nifty/src/index.ts"
+      ],
+      "@activepieces/piece-ninjapipe": [
+        "packages/pieces/community/ninjapipe/src/index.ts"
       ],
       "@activepieces/piece-ninox": [
         "packages/pieces/community/ninox/src/index.ts"
@@ -820,6 +910,9 @@
       ],
       "@activepieces/piece-okta": [
         "packages/pieces/community/okta/src/index.ts"
+      ],
+      "@activepieces/piece-omnisend": [
+        "packages/pieces/community/omnisend/src/index.ts"
       ],
       "@activepieces/piece-onfleet": [
         "packages/pieces/community/onfleet/src/index.ts"
@@ -848,6 +941,9 @@
       "@activepieces/piece-pagerduty": [
         "packages/pieces/community/pagerduty/src/index.ts"
       ],
+      "@activepieces/piece-parallel": [
+        "packages/pieces/community/parallel/src/index.ts"
+      ],
       "@activepieces/piece-parseur": [
         "packages/pieces/community/parseur/src/index.ts"
       ],
@@ -861,11 +957,17 @@
       "@activepieces/piece-pdf-co": [
         "packages/pieces/community/pdf-co/src/index.ts"
       ],
+      "@activepieces/piece-pdf4me": [
+        "packages/pieces/community/pdf4me/src/index.ts"
+      ],
       "@activepieces/piece-pdfmonkey": [
         "packages/pieces/community/pdfmonkey/src/index.ts"
       ],
       "@activepieces/piece-peekshot": [
         "packages/pieces/community/peekshot/src/index.ts"
+      ],
+      "@activepieces/piece-pendo": [
+        "packages/pieces/community/pendo/src/index.ts"
       ],
       "@activepieces/piece-perplexity-ai": [
         "packages/pieces/community/perplexity-ai/src/index.ts"
@@ -903,6 +1005,9 @@
       "@activepieces/piece-postiz": [
         "packages/pieces/community/postiz/src/index.ts"
       ],
+      "@activepieces/piece-postmark": [
+        "packages/pieces/community/postmark/src/index.ts"
+      ],
       "@activepieces/piece-predict-leads": [
         "packages/pieces/community/predict-leads/src/index.ts"
       ],
@@ -915,11 +1020,20 @@
       "@activepieces/piece-prompthub": [
         "packages/pieces/community/prompthub/src/index.ts"
       ],
+      "@activepieces/piece-provenexpert": [
+        "packages/pieces/community/provenexpert/src/index.ts"
+      ],
+      "@activepieces/piece-pubrio": [
+        "packages/pieces/community/pubrio/src/index.ts"
+      ],
       "@activepieces/piece-pushover": [
         "packages/pieces/community/pushover/src/index.ts"
       ],
       "@activepieces/piece-pylon": [
         "packages/pieces/community/pylon/src/index.ts"
+      ],
+      "@activepieces/piece-qawafel": [
+        "packages/pieces/community/qawafel/src/index.ts"
       ],
       "@activepieces/piece-qdrant": [
         "packages/pieces/community/qdrant/src/index.ts"
@@ -936,8 +1050,14 @@
       "@activepieces/piece-quickzu": [
         "packages/pieces/community/quickzu/src/index.ts"
       ],
+      "@activepieces/piece-quizell": [
+        "packages/pieces/community/quizell/src/index.ts"
+      ],
       "@activepieces/piece-rabbitmq": [
         "packages/pieces/community/rabbitmq/src/index.ts"
+      ],
+      "@activepieces/piece-raindrop": [
+        "packages/pieces/community/raindrop/src/index.ts"
       ],
       "@activepieces/piece-razorpay": [
         "packages/pieces/community/razorpay/src/index.ts"
@@ -948,8 +1068,14 @@
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"
       ],
+      "@activepieces/piece-readwise": [
+        "packages/pieces/community/readwise/src/index.ts"
+      ],
       "@activepieces/piece-reddit": [
         "packages/pieces/community/reddit/src/index.ts"
+      ],
+      "@activepieces/piece-rendex": [
+        "packages/pieces/community/rendex/src/index.ts"
       ],
       "@activepieces/piece-reoon-verifier": [
         "packages/pieces/community/reoon-verifier/src/index.ts"
@@ -997,6 +1123,9 @@
       "@activepieces/piece-salesforce": [
         "packages/pieces/community/salesforce/src/index.ts"
       ],
+      "@activepieces/piece-salesloft": [
+        "packages/pieces/community/salesloft/src/index.ts"
+      ],
       "@activepieces/piece-savvycal": [
         "packages/pieces/community/savvycal/src/index.ts"
       ],
@@ -1017,6 +1146,9 @@
       ],
       "@activepieces/piece-sender": [
         "packages/pieces/community/sender/src/index.ts"
+      ],
+      "@activepieces/piece-sendr": [
+        "packages/pieces/community/sendr/src/index.ts"
       ],
       "@activepieces/piece-sendfox": [
         "packages/pieces/community/sendfox/src/index.ts"
@@ -1048,6 +1180,9 @@
       "@activepieces/piece-seven": [
         "packages/pieces/community/seven/src/index.ts"
       ],
+      "@activepieces/piece-service-now": [
+        "packages/pieces/community/service-now/src/index.ts"
+      ],
       "@activepieces/piece-sftp": ["packages/pieces/core/sftp/src/index.ts"],
       "@activepieces/piece-shopify": [
         "packages/pieces/community/shopify/src/index.ts"
@@ -1064,6 +1199,9 @@
       "@activepieces/piece-simplybookme": [
         "packages/pieces/community/simplybookme/src/index.ts"
       ],
+      "@activepieces/piece-simplyprint": [
+        "packages/pieces/community/simplyprint/src/index.ts"
+      ],
       "@activepieces/piece-sitespeakai": [
         "packages/pieces/community/sitespeakai/src/index.ts"
       ],
@@ -1073,8 +1211,14 @@
       "@activepieces/piece-slack": [
         "packages/pieces/community/slack/src/index.ts"
       ],
+      "@activepieces/piece-slashed": [
+        "packages/pieces/community/slashed/src/index.ts"
+      ],
       "@activepieces/piece-slidespeak": [
         "packages/pieces/community/slidespeak/src/index.ts"
+      ],
+      "@activepieces/piece-slite": [
+        "packages/pieces/community/slite/src/index.ts"
       ],
       "@activepieces/piece-smaily": [
         "packages/pieces/community/smaily/src/index.ts"
@@ -1120,6 +1264,9 @@
       "@activepieces/piece-straico": [
         "packages/pieces/community/straico/src/index.ts"
       ],
+      "@activepieces/piece-streak": [
+        "packages/pieces/community/streak/src/index.ts"
+      ],
       "@activepieces/piece-stripe": [
         "packages/pieces/community/stripe/src/index.ts"
       ],
@@ -1163,6 +1310,9 @@
       "@activepieces/piece-tavily": [
         "packages/pieces/community/tavily/src/index.ts"
       ],
+      "@activepieces/piece-teamhood": [
+        "packages/pieces/community/teamhood/src/index.ts"
+      ],
       "@activepieces/piece-teamleader": [
         "packages/pieces/community/teamleader/src/index.ts"
       ],
@@ -1171,6 +1321,9 @@
       ],
       "@activepieces/piece-telegram-bot": [
         "packages/pieces/community/telegram-bot/src/index.ts"
+      ],
+      "@activepieces/piece-telnyx": [
+        "packages/pieces/community/telnyx/src/index.ts"
       ],
       "@activepieces/piece-text-ai": [
         "packages/pieces/community/text-ai/src/index.ts"
@@ -1208,6 +1361,9 @@
       "@activepieces/piece-truelayer": [
         "packages/pieces/community/truelayer/src/index.ts"
       ],
+      "@activepieces/piece-trust": [
+        "packages/pieces/community/trust/src/index.ts"
+      ],
       "@activepieces/piece-twilio": [
         "packages/pieces/community/twilio/src/index.ts"
       ],
@@ -1232,8 +1388,17 @@
       "@activepieces/piece-upgradechat": [
         "packages/pieces/community/upgradechat/src/index.ts"
       ],
+      "@activepieces/piece-uptimerobot": [
+        "packages/pieces/community/uptimerobot/src/index.ts"
+      ],
+      "@activepieces/piece-useinbox": [
+        "packages/pieces/community/useinbox/src/index.ts"
+      ],
       "@activepieces/piece-utility-ai": [
         "packages/pieces/community/utility-ai/src/index.ts"
+      ],
+      "@activepieces/piece-uxsniff": [
+        "packages/pieces/community/uxsniff/src/index.ts"
       ],
       "@activepieces/piece-vadoo-ai": [
         "packages/pieces/community/vadoo-ai/src/index.ts"
@@ -1259,6 +1424,9 @@
       "@activepieces/piece-vtiger": [
         "packages/pieces/community/vtiger/src/index.ts"
       ],
+      "@activepieces/piece-wafeq": [
+        "packages/pieces/community/wafeq/src/index.ts"
+      ],
       "@activepieces/piece-wealthbox": [
         "packages/pieces/community/wealthbox/src/index.ts"
       ],
@@ -1277,6 +1445,9 @@
       "@activepieces/piece-wedof": [
         "packages/pieces/community/wedof/src/index.ts"
       ],
+      "@activepieces/piece-weekdone": [
+        "packages/pieces/community/weekdone/src/index.ts"
+      ],
       "@activepieces/piece-what-converts": [
         "packages/pieces/community/what-converts/src/index.ts"
       ],
@@ -1288,6 +1459,9 @@
       ],
       "@activepieces/piece-whatsscale": [
         "packages/pieces/community/whatsscale/src/index.ts"
+      ],
+      "@activepieces/piece-wistia": [
+        "packages/pieces/community/wistia/src/index.ts"
       ],
       "@activepieces/piece-wonderchat": [
         "packages/pieces/community/wonderchat/src/index.ts"
@@ -1316,9 +1490,15 @@
       "@activepieces/piece-xero": [
         "packages/pieces/community/xero/src/index.ts"
       ],
+      "@activepieces/piece-xquik": [
+        "packages/pieces/community/xquik/src/index.ts"
+      ],
       "@activepieces/piece-xml": ["packages/pieces/core/xml/src/index.ts"],
       "@activepieces/piece-youtube": [
         "packages/pieces/community/youtube/src/index.ts"
+      ],
+      "@activepieces/piece-youtrack": [
+        "packages/pieces/community/youtrack/src/index.ts"
       ],
       "@activepieces/piece-zagomail": [
         "packages/pieces/community/zagomail/src/index.ts"
@@ -1397,8 +1577,8 @@
       "@activepieces/piece-videoask": [
         "packages/pieces/community/videoask/src/index.ts"
       ],
-      "@activepieces/piece-presenton": [
-        "packages/pieces/community/presenton/src/index.ts"
+      "@activepieces/piece-presentation": [
+        "packages/pieces/community/presentation/src/index.ts"
       ],
       "@activepieces/piece-formspark": [
         "packages/pieces/community/formspark/src/index.ts"
@@ -1925,6 +2105,15 @@
       ],
       "@activepieces/piece-knock": [
         "packages/pieces/community/knock/src/index.ts"
+      ],
+      "@activepieces/piece-plunk": [
+        "packages/pieces/community/plunk/src/index.ts"
+      ],
+      "@activepieces/piece-proxycurl": [
+        "packages/pieces/community/proxycurl/src/index.ts"
+      ],
+      "@activepieces/piece-connectuc": [
+        "packages/pieces/community/connectuc/src/index.ts"
       ]
     },
     "resolveJsonModule": true
