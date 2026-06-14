@@ -16,6 +16,8 @@ export const getWorkflowRulesAction = createAction({
   name: 'get_workflow_rules',
   displayName: 'Get Workflow Rules',
   description: 'Returns the rules configured for a specific workflow.',
+  audience: 'both',
+  aiMetadata: { description: 'Returns the trigger/action rules configured on a specific SavvyCal workflow, identified by its workflow id. Use to inspect how a workflow is set up; get the id from List Workflows. Read-only and idempotent.', idempotent: true },
   props: {
     workflow_id: Property.Dropdown({
       auth: savvyCalAuth,

@@ -11,6 +11,12 @@ export const clarifaiAskLLM = createAction({
   displayName: 'Ask LLM',
   description:
     'Send a prompt to any large language models (LLM) supported by clarifai.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends a text prompt to a Clarifai-hosted LLM (e.g. GPT-4) and returns the generated text completion. Use to generate or transform text via Clarifai rather than calling the provider directly; supply the Clarifai model id (looked up by name) and the prompt. Generative and non-deterministic, so repeated calls may return different text.',
+    idempotent: false,
+  },
   auth: clarifaiAuth,
   props: {
     models: Property.Dropdown({

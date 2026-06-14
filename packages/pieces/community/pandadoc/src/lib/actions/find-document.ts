@@ -14,6 +14,11 @@ export const findDocument = createAction({
   name: 'findDocument',
   displayName: 'Find Document(s)',
   description: 'Finds documents based various filter.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Search and list PandaDoc documents, optionally narrowed by query text, status, template, form, folder, contact, tags, date ranges, or metadata; with no filters it returns all documents (paginated). Use to locate documents or enumerate them before acting on a specific one. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: pandadocAuth,
   props: {
     q: Property.ShortText({

@@ -75,6 +75,10 @@ export const newOrUpdatedCompanyTrigger = createTrigger({
 	name: 'new-or-updated-company',
 	displayName: 'Company Recently Created or Updated',
 	description: 'Triggers when a company recently created or updated.',
+	aiMetadata: {
+		description:
+			'Fires when a company is created or modified in HubSpot. Each event represents one company record with properties such as name, domain, industry, address, employee count, revenue, and lifecycle stage. Polls by last-modified date, so both new and edited companies trigger it.',
+	},
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,

@@ -16,6 +16,12 @@ export const getEmailBounces = createAction({
   name: 'get_email_bounces',
   displayName: 'Get Email Bounces',
   description: 'List bounces from your Postmark server.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves a paginated list of email bounces recorded on the Postmark server. Use to inspect delivery failures or check whether a specific recipient bounced; optional filters narrow by bounce type, inactive-only, recipient email, or message ID, and leaving them empty returns all bounces. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: postmarkAuth,
   props: {
     count: Property.Number({

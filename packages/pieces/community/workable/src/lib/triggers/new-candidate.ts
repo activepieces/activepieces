@@ -22,6 +22,9 @@ export const newCandidate = createTrigger({
     name: 'newCandidate',
     displayName: 'New Candidate',
     description: 'Triggers when new candidate submits application. Can be filtered by specific job and/or hiring pipeline stage.',
+    aiMetadata: {
+      description: 'Fires when a new candidate is created in Workable (a candidate_created event), representing a newly submitted application. Can be scoped to a single job shortcode and/or a single pipeline stage slug, or left unfiltered to fire for all jobs and stages.',
+    },
     props: {
         shortcode: Property.ShortText({
             displayName: "Shortcode",

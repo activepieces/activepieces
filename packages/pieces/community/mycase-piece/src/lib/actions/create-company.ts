@@ -7,6 +7,8 @@ export const createCompany = createAction({
   name: 'create_company',
   displayName: 'Create Company',
   description: 'Creates a new company in MyCase',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new company (organization) record in MyCase, optionally setting contact details, an address, and linking it to existing cases and clients. Use when adding a firm or business contact; not idempotent, so calling it repeatedly creates duplicate companies. To revise an existing company instead, use Update Company.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Company Name',

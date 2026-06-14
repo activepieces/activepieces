@@ -18,6 +18,10 @@ export const channelCreated = createTrigger({
   name: 'channel_created',
   displayName: 'Channel created',
   description: 'Triggers when a channel is created',
+  aiMetadata: {
+    description:
+      'Fires when a new public or private channel is created in the connected Slack workspace. The event payload includes the new channel id, name, creation timestamp, and the id of the user who created it.',
+  },
   props: {},
   type: TriggerStrategy.APP_WEBHOOK,
   sampleData: sampleData,

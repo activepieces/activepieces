@@ -8,6 +8,8 @@ export const createOrUpdateScheduledPaymentAction = createAction({
   name: 'create_or_update_scheduled_payment',
   displayName: 'Create or Update Scheduled Payment',
   description: 'Create a new scheduled payment or update an existing one',
+  audience: 'both',
+  aiMetadata: { description: 'Schedules a future-dated payment for a payer in Pinch Payments, or updates an existing scheduled payment when a payment id is provided. Use this (not Create Realtime Payment) when the charge should be attempted on a specific transaction date rather than immediately. Requires payer, amount in cents, and a transaction date. The update-by-id path is idempotent; omitting the id creates a new scheduled payment on each call.', idempotent: true },
   props: {
     paymentId: Property.ShortText({
       displayName: 'Payment ID',

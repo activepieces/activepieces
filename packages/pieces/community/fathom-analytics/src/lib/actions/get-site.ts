@@ -6,6 +6,8 @@ export const getSite = createAction({
   name: 'get_site',
   displayName: 'Get Site',
   description: 'Retrieve details for a specific site by its ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch the details of a single Fathom Analytics site by its site ID (e.g. CDBUGS). Use it when you already know the target site ID and need its metadata; call List Sites first if you only have a name. Read-only and safe to repeat.', idempotent: true },
   auth: fathomAuth,
   props: {
     site_id: Property.ShortText({

@@ -7,6 +7,8 @@ export const addAnnotationAction = createAction({
   auth: matomoAuth,
   displayName: 'Add Annotation',
   description: 'Add an annotation to a Matomo site',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a dated annotation (a note marking an event) on the configured Matomo site, optionally starred. Use to flag a date in analytics reports, e.g. tagging a deployment or campaign launch. Requires the note text and a date in YYYY-MM-DD format. Not idempotent: each call adds a new annotation, even with identical input.', idempotent: false },
   props: {
     note: Property.ShortText({
       displayName: 'Note',

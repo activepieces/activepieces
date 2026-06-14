@@ -14,6 +14,9 @@ export const jobFinished = createTrigger({
   name: 'job_finished',
   displayName: 'Job Finished',
   description: 'Triggers when a CloudConvert job has been completed',
+  aiMetadata: {
+    description: 'Fires when a CloudConvert job finishes successfully (job.finished webhook event). Represents a completed job whose tasks have all succeeded, carrying the finished tasks and the download URLs of the resulting output files.',
+  },
   auth: cloudconvertAuth,
   type: TriggerStrategy.WEBHOOK,
   props: {},

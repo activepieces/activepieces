@@ -59,8 +59,14 @@ export const apCreateTableTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
                 return {
                     content: [{
                         type: 'text',
-                        text: `✅ Table "${name}" created (id: ${table.id})\nFields:\n${fieldLines}`,
+                        text: `✅ Table "${name}" created (id: ${table.id}, externalId: ${table.externalId})\nFields:\n${fieldLines}\n\nℹ️ Use "id" with the record/field tools; use "externalId" as table_id when configuring a Tables piece step in a flow.`,
                     }],
+                    structuredContent: {
+                        id: table.id,
+                        externalId: table.externalId,
+                        name: table.name,
+                        fields: createdFields.map(f => ({ id: f.id, externalId: f.externalId, name: f.name, type: f.type })),
+                    },
                 }
             }
             catch (err) {

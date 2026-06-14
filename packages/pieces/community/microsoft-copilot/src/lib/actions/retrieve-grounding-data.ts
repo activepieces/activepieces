@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { getGraphBaseUrl, getMicrosoftCloudFromAuth } from '../common/microsoft-cloud';
 
 export const retrieveGroundingData = createAction({
+  audience: 'human',
   auth: microsoft365CopilotAuth,
   name: 'retrieveGroundingData',
   displayName: 'Retrieve Grounding Data',

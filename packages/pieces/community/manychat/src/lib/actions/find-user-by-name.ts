@@ -8,6 +8,8 @@ export const findUserByNameAction = createAction({
 	name: 'findUserByName',
 	displayName: 'Find User by Name',
 	description: 'Finds a user by name.',
+	audience: 'both',
+	aiMetadata: { description: "Searches Manychat subscribers by full name, returning whether any matched and the list of matches. Use to resolve a contact to their subscriber record when you only know their name. Read-only and idempotent.", idempotent: true },
 	props: {
 		name: Property.ShortText({
 			displayName: 'Name',

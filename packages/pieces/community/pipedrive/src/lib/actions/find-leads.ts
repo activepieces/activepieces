@@ -9,6 +9,12 @@ export const findLeadAction = createAction({
 	name: 'find-lead',
 	displayName: 'Find Lead',
 	description: 'Finds leads by title.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Searches leads by title text and returns all matches, paging through every result. By default it matches titles containing the term; enable Exact Match for full case-insensitive title equality only. Use to locate leads before reading or updating them. Read-only and idempotent.',
+		idempotent: true,
+	},
 	props: {
 		term: Property.ShortText({
 			displayName: 'Title',

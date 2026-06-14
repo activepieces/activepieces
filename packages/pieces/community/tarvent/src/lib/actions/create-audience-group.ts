@@ -9,6 +9,8 @@ export const createAudienceGroup = createAction({
   name: 'tarvent_create_audience_group',
   displayName: 'Create An Audience Group',
   description: 'Creates an audience group in the selected audience.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new group within a Tarvent audience, optionally marked public so it appears as a question on forms. Use to set up a segment before assigning contacts to it. Not idempotent: each call creates another group, even with the same name.', idempotent: false },
   props: {
     audienceId: tarventCommon.audienceId(true, 'Audience to create the group in.'),
     name: tarventCommon.name('Group name', true, 'Enter the group name. (100 character limit)'),

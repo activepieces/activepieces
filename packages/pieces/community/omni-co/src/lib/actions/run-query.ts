@@ -9,6 +9,12 @@ export const runQuery = createAction({
   displayName: 'Run query',
   description:
     'Runs a query and returns the results as base64 encoded Apache Arrow table or in specified format',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Executes an Omni query (passed as a JSON query object) and returns the result rows, in base64 Apache Arrow by default or in CSV/JSON/XLSX when a result type is set; can instead return only the execution plan without running. Use to read data from Omni for analysis or downstream steps. Read-only and idempotent: it fetches data and does not mutate state. Requires a valid query JSON object (obtainable from an Omni workbook Inspector panel).',
+    idempotent: true,
+  },
   props: {
     query: Property.Json({
       displayName: 'Query',

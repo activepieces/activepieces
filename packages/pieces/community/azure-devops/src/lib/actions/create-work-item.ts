@@ -12,6 +12,8 @@ export const createWorkItemAction = createAction({
   name: 'create_work_item',
   displayName: 'Create Work Item',
   description: 'Creates a new work item (Bug, Task, User Story, etc.) in Azure DevOps',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new work item of the chosen type (Bug, Task, User Story, etc.) in an Azure DevOps project, optionally setting description, assignee, and priority. Use to file a new tracked item. Requires a project and work item type; not idempotent, as each call creates a separate item with a new ID.', idempotent: false },
   props: {
     project: azureDevOpsCommon.projectDropdown,
     work_item_type: azureDevOpsCommon.workItemTypeDropdown,

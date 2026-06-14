@@ -29,6 +29,7 @@ export enum PersistedChatPartType {
     TOOL_CALL = 'tool-call',
     THINKING_STATUS = 'thinking-status',
     BATCH_PROGRESS = 'batch-progress',
+    ACTION_RECEIPT = 'action-receipt',
 }
 
 export enum PersistedToolCallStatus {
@@ -73,12 +74,25 @@ const PersistedBatchProgressPartSchema = z.object({
     data: z.record(z.string(), z.unknown()),
 })
 
+const PersistedActionReceiptPartSchema = z.object({
+    type: z.literal(PersistedChatPartType.ACTION_RECEIPT),
+    toolCallId: z.string(),
+    actionDisplayName: z.string(),
+    pieceName: z.string(),
+    connectionLabel: z.string().optional(),
+    status: z.enum(['success', 'failed']),
+    output: z.unknown().optional(),
+    errorMessage: z.string().optional(),
+    timestamp: z.string(),
+})
+
 const PersistedChatPartSchema = z.discriminatedUnion('type', [
     PersistedTextPartSchema,
     PersistedReasoningPartSchema,
     PersistedToolCallPartSchema,
     PersistedThinkingStatusPartSchema,
     PersistedBatchProgressPartSchema,
+    PersistedActionReceiptPartSchema,
 ])
 
 export const PersistedChatMessageSchema = z.object({
@@ -91,6 +105,7 @@ export type PersistedTextPart = z.infer<typeof PersistedTextPartSchema>
 export type PersistedReasoningPart = z.infer<typeof PersistedReasoningPartSchema>
 export type PersistedToolCallPart = z.infer<typeof PersistedToolCallPartSchema>
 export type PersistedThinkingStatusPart = z.infer<typeof PersistedThinkingStatusPartSchema>
+export type PersistedActionReceiptPart = z.infer<typeof PersistedActionReceiptPartSchema>
 export type PersistedChatPart = z.infer<typeof PersistedChatPartSchema>
 export type PersistedChatMessage = z.infer<typeof PersistedChatMessageSchema>
 
@@ -129,6 +144,7 @@ export type UpdateChatConversationRequest = z.infer<typeof UpdateChatConversatio
 
 export const SendChatMessageRequest = z.object({
     content: z.string().max(51200),
+    runId: z.string().optional(),
     files: z.array(ChatMessageFile).max(10).optional(),
 }).refine(
     (val) => val.content.length > 0 || (val.files && val.files.length > 0),
@@ -151,17 +167,9 @@ export type ChatHistoryMessage = {
     thoughts?: string
 }
 
-export type PlanStepStatus = 'pending' | 'executing' | 'done' | 'error'
-
-export type PlanStepUpdate = {
-    stepIndex: number
-    status: PlanStepStatus
-}
-
 export type ChatToolOutputs = {
     ap_set_session_title: { success: boolean }
     ap_select_project: { success: boolean, message?: string, error?: string }
-    ap_request_plan_approval: { success: boolean, message: string }
     ap_list_across_projects: { content: { type: string, text: string }[] }
     ap_execute_action:
     | { noAuthRequired: true, piece: string }
@@ -219,3 +227,6 @@ export type BatchProgressData = {
 
 export type ChatAllowedMimeType = typeof CHAT_ALLOWED_MIME_TYPES[number]
 export { CHAT_ALLOWED_MIME_TYPES }
+
+export { chatToolClassification } from './tool-classification'
+export { chatToolPhases, type ChatPhase } from './tool-phases'

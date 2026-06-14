@@ -104,6 +104,10 @@ export const newOrUpdatedRowTrigger = createTrigger({
   displayName: 'New or Updated Row',
   description:
     'Triggers when a row is inserted or updated in the selected table. Uses an "updated at" timestamp column you choose — any row whose timestamp is newer than the last check will fire the trigger.',
+  aiMetadata: {
+    description:
+      'Fires for each row that is inserted or modified in the selected Snowflake table, detected by polling a chosen "updated at" timestamp column against the last-seen watermark. Relies on that column being refreshed on every change (by the application or a DEFAULT clause); a row whose timestamp does not advance on update will not fire.',
+  },
   props,
   sampleData: {
     ID: 1001,

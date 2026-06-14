@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 export const failFlow = createAction({
+  audience: 'human',
   name: 'failFlow',
   displayName: 'Fail Flow',
   description: 'Fails the flow execution with a custom message.',

@@ -7,6 +7,8 @@ export const getAssetAction = createAction({
   name: 'get_asset',
   displayName: 'Get Asset',
   description: `Get a theme's asset.`,
+  audience: 'both',
+  aiMetadata: { description: "Fetch a single asset (e.g. a template, snippet, or stylesheet) from a Shopify theme by asset key and theme ID. Use to read theme file contents; both the asset key and theme ID are required. Read-only and idempotent.", idempotent: true },
   props: {
     key: Property.ShortText({
       displayName: 'Asset Key',

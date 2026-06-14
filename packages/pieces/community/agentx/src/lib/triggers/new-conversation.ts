@@ -60,6 +60,9 @@ export const newConversation = createTrigger({
   name: "new_conversation",
   displayName: "New Conversation",
   description: "Triggers when a new conversation begins with a specific Agent. Only detects conversations created after the trigger is enabled.",
+  aiMetadata: {
+    description: 'Fires when a new conversation begins with the configured AgentX agent (selected by agent ID), emitting the new conversation. Polls periodically and only detects conversations created after the trigger was enabled.',
+  },
   type: TriggerStrategy.POLLING,
 
   props: {

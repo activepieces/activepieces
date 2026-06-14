@@ -43,7 +43,6 @@ export type WorkerToApiContract = {
     getPiece(input: GetPieceRequest): Promise<unknown>
     getPieceArchive(input: { archiveId: string }): Promise<Buffer>
     extendLock(input: { jobId: string, token: string, queueName: string }): Promise<void>
-    getPayloadFile(input: { fileId: string, projectId: string }): Promise<Buffer>
     getUsedPieces(input: Record<string, never>): Promise<PiecePackage[]>
     markPieceAsUsed(input: { pieces: PiecePackage[] }): Promise<void>
     disableFlow(input: DisableFlowRequest): Promise<void>
@@ -58,6 +57,7 @@ export type WorkerToApiContract = {
 export type SendChatEventRequest = {
     userId: string
     conversationId: string
+    runId?: string
     event: ChatAgentEvent
 }
 
@@ -67,7 +67,8 @@ export enum ChatAgentEventType {
     ERROR = 'ERROR',
     TITLE_UPDATE = 'TITLE_UPDATE',
     TOOL_PROGRESS = 'TOOL_PROGRESS',
-    TOOL_APPROVAL_REQUEST = 'TOOL_APPROVAL_REQUEST',
+    ACTION_PREVIEW = 'ACTION_PREVIEW',
+    ACTION_RECEIPT = 'ACTION_RECEIPT',
 }
 
 export type ToolProgressEvent = {
@@ -83,10 +84,27 @@ export type ToolProgressEvent = {
     }
 }
 
-export type ToolApprovalRequestEvent = {
+export type ActionPreviewEvent = {
     toolCallId: string
-    toolName: string
-    displayName: string
+    pieceName: string
+    actionName: string
+    actionDisplayName: string
+    connectionLabel?: string
+    input: Record<string, unknown>
+    isBatch: boolean
+    batchCount?: number
+    batchSamples?: Record<string, unknown>[]
+}
+
+export type ActionReceiptEvent = {
+    toolCallId: string
+    actionDisplayName: string
+    pieceName: string
+    connectionLabel?: string
+    status: 'success' | 'failed'
+    output: unknown
+    errorMessage?: string
+    timestamp: string
 }
 
 export type ChatAgentEvent =
@@ -95,10 +113,12 @@ export type ChatAgentEvent =
     | { type: ChatAgentEventType.ERROR, data: { message: string, code?: string } }
     | { type: ChatAgentEventType.TITLE_UPDATE, data: { title: string } }
     | { type: ChatAgentEventType.TOOL_PROGRESS, data: ToolProgressEvent }
-    | { type: ChatAgentEventType.TOOL_APPROVAL_REQUEST, data: ToolApprovalRequestEvent }
+    | { type: ChatAgentEventType.ACTION_PREVIEW, data: ActionPreviewEvent }
+    | { type: ChatAgentEventType.ACTION_RECEIPT, data: ActionReceiptEvent }
 
 export type GetChatConfigRequest = {
     conversationId: string
+    runId?: string
     platformId: string
     userId: string
     userMessage: string
@@ -118,6 +138,7 @@ export type ChatConfigResponse = {
     tier: { id: string, thinkingBudget: number, modelId: string }
     mcpCredentials: { mcpServerUrl: string, mcpToken: string } | null
     projects: Array<{ id: string, displayName: string, type: string }>
+    guides: Record<string, string>
 }
 
 export type SaveChatMessagesRequest = {
@@ -143,6 +164,7 @@ export type ExecuteChatToolRequest = {
     toolInput: Record<string, unknown>
     platformId: string
     userId: string
+    conversationId?: string
 }
 
 export type ExecuteChatToolResponse = {

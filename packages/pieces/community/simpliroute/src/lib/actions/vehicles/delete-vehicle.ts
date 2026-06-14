@@ -8,6 +8,8 @@ export const delete_vehicle = createAction({
     auth: simplirouteAuth,
     displayName: 'Delete Vehicle',
     description: 'Delete a vehicle by its ID.',
+    audience: 'both',
+    aiMetadata: { description: 'Permanently delete a vehicle by its ID. Destructive and not safely repeatable: a repeat call fails once the vehicle is gone, so confirm the ID first.', idempotent: false },
     props: {
         vehicle_id: Property.Number({ 
             displayName: 'vehicle_id', 

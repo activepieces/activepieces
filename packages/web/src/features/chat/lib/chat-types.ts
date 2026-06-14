@@ -4,7 +4,6 @@ import {
   ChatToolOutputs,
   isObject,
   parseToJsonIfPossible,
-  PlanStepUpdate,
 } from '@activepieces/shared';
 import {
   DynamicToolUIPart,
@@ -40,7 +39,8 @@ const THINKING_STATUS_TOOL_NAME = 'ap_update_thinking_status';
 const HIDDEN_TOOL_NAMES = new Set([
   'ap_select_project',
   'ap_deselect_project',
-  'ap_update_plan',
+  'ap_load_guide',
+  'ap_set_phase',
 ]);
 
 const DISPLAY_TOOL_NAMES = new Set([
@@ -173,34 +173,23 @@ function extractBatchProgressFromOutput(
   return record['batchProgress'] as BatchProgressData;
 }
 
-function extractPlanUpdatesFromMessage(
-  message: ChatUIMessage,
-): PlanStepUpdate[] {
-  const updates: PlanStepUpdate[] = [];
-  for (const p of message.parts) {
-    if (!isAnyToolPart(p)) continue;
-    if (getToolPartName(p) !== 'ap_update_plan') continue;
-    if (p.state === 'input-streaming') continue;
-    const input = p.input as
-      | { updates?: Array<{ stepIndex: number; status: string }> }
-      | undefined;
-    if (!input?.updates) continue;
-    for (const u of input.updates) {
-      const existing = updates.findIndex((e) => e.stepIndex === u.stepIndex);
-      if (existing >= 0) {
-        updates[existing] = {
-          stepIndex: u.stepIndex,
-          status: u.status as PlanStepUpdate['status'],
-        };
-      } else {
-        updates.push({
-          stepIndex: u.stepIndex,
-          status: u.status as PlanStepUpdate['status'],
-        });
-      }
-    }
-  }
-  return updates;
+function extractToolTitles(part: AnyToolPart): {
+  title: string;
+  activeTitle: string | undefined;
+  doneTitle: string | undefined;
+} {
+  const input = isObject(part.input) ? part.input : undefined;
+  const title =
+    input && typeof input.title === 'string' && input.title
+      ? input.title
+      : getToolPartName(part);
+  const activeTitle =
+    input && typeof input.activeTitle === 'string'
+      ? input.activeTitle
+      : undefined;
+  const doneTitle =
+    input && typeof input.doneTitle === 'string' ? input.doneTitle : undefined;
+  return { title, activeTitle, doneTitle };
 }
 
 function extractQuickRepliesFromParts(message: ChatUIMessage | null): string[] {
@@ -228,12 +217,12 @@ export const chatPartUtils = {
   isThinkingStatusTool,
   deriveToolStatus,
   extractToolOutputText,
+  extractToolTitles,
   extractPieceNames,
   parseToolOutput,
   parseTypedToolOutput,
   findLastToolPart,
   extractBatchProgressFromOutput,
-  extractPlanUpdatesFromMessage,
   extractQuickRepliesFromParts,
   HIDDEN_TOOL_NAMES,
   DISPLAY_TOOL_NAMES,

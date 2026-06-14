@@ -27,6 +27,12 @@ export const createCampaignAction = createAction({
   displayName: 'Create Campaign',
   description:
     'Schedules an INBOX campaign that sends a saved newsletter to one or more contact lists.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates and schedules an INBOX campaign that sends an existing saved newsletter from a verified sender to one or more contact lists, optionally at a future planned time. Use to broadcast a newsletter to lists. Requires a sender, a newsletter id, and at least one target list; the newsletter must already exist. Not idempotent: each call creates a new campaign.',
+    idempotent: false,
+  },
   props: {
     senderAccountId: useinboxProps.senderDropdown({
       displayName: 'Sender',

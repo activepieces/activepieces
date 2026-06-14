@@ -9,6 +9,12 @@ export const getDealAction = createAction({
   displayName: 'Retrieve Deal',
   description:
     'Retrieve a deal by its UID, or by the email of the contact associated with the deal plus the pipeline.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches a single Outseta CRM deal by its UID, or by the contact email plus pipeline, returning amount, due date, pipeline stage, and the associated account. Use to read a deal by either identifier. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     lookupBy: Property.StaticDropdown({
       displayName: 'Lookup by',

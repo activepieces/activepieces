@@ -92,20 +92,18 @@ const polling: Polling<undefined, Record<string, never>> = {
 
 ### Polling with Props
 
-When the trigger has user-configurable props (e.g., filter by project):
+When the trigger has user-configurable props (e.g., a project filter), update the Polling generic type to include them:
 
 ```typescript
-const props = {
-  projectId: Property.Dropdown({ /* ... */ }),
-};
+const props = { projectId: Property.Dropdown({ /* ... */ }) };
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof myAppAuth>,
-  StaticPropsValue<typeof props>
+  StaticPropsValue<typeof props>  // ← add your props type here
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue }) => {
-    // propsValue.projectId is available here
+    // propsValue.projectId is now available and typed
     const response = await httpClient.sendRequest<{ data: any[] }>({
       method: HttpMethod.GET,
       url: `https://api.example.com/v1/projects/${propsValue.projectId}/records`,
@@ -117,18 +115,9 @@ const polling: Polling<
     }));
   },
 };
-
-export const newRecordTrigger = createTrigger({
-  auth: myAppAuth,
-  name: 'new_record',
-  displayName: 'New Record',
-  description: 'Triggers when a new record is created in a project',
-  props,
-  sampleData: {},
-  type: TriggerStrategy.POLLING,
-  // test, onEnable, onDisable, run -- same pattern as above
-});
 ```
+
+Pass `props` to `createTrigger` — everything else follows the same pattern as the basic TIMEBASED example above.
 
 ---
 
@@ -285,6 +274,6 @@ export const myTrigger = createTrigger({
 
 ---
 
-## AI-Ready Metadata (optional)
+## AI-Ready Metadata (required on new triggers)
 
-Triggers accept an optional `aiMetadata` field (`{ description?, idempotent? }`) to describe the event for AI agents. They do **not** take `audience` — that field is actions-only, since a trigger is an event rather than an agent-callable operation. The field is additive and changes nothing for human users. See `ai-metadata.md`.
+Every new trigger ships with `aiMetadata: { description }` — one or two sentences on when the event fires and what one payload represents. Triggers do **not** take `audience` (actions-only — a trigger is an event, not an agent-callable operation) and don't need `idempotent`. The field is additive and changes nothing for human users. See `ai-metadata.md`.

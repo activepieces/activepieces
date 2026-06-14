@@ -78,6 +78,9 @@ export const newJobTrigger = createTrigger({
   name: 'new_job',
   displayName: 'New Job',
   description: 'Triggers when a job matches the specified criteria',
+  aiMetadata: {
+    description: 'Polls the Tableau site\'s background jobs and fires for each newly created job, optionally narrowed by Job Type (e.g. refresh extracts, run flow) and Status (e.g. Success, Failed, InProgress); leaving a filter empty matches all values for it. Use to watch for new or completed background jobs.',
+  },
   auth: tableauAuth,
   type: TriggerStrategy.POLLING,
   props: {

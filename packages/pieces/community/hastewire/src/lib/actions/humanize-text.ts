@@ -7,6 +7,8 @@ export const humanizeTextAction = createAction({
     auth: hastewireAuth,
     displayName: 'Humanize Text',
     description: 'Rephrases a given AI-generated text to be more human like.',
+    audience: 'both',
+    aiMetadata: { description: 'Rewrites AI-generated text into a more human-sounding version via the Hastewire API, optionally targeting a writing style (formal, standard, or academic). Choose this to make machine-written content read naturally or to reduce AI-detection signals. Each call performs a fresh generative rewrite, so it is not idempotent and repeated calls may return different output.', idempotent: false },
     props: {
         text: Property.LongText({
             displayName: 'Input Text',

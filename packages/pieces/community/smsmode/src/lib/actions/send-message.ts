@@ -7,6 +7,12 @@ export const sendMessage = createAction({
   name: 'sendMessage',
   displayName: 'Send Message',
   description: 'Send an SMS message to a recipient',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends an outbound SMS to a single recipient phone number via smsmode. Use to deliver a one-off text notification or alert. Requires the recipient number (international format, e.g. 33600000001) and the message text. Not idempotent: each call dispatches a new message.',
+    idempotent: false,
+  },
   props: {
     to: Property.ShortText({
       displayName: 'Recipient Phone Number',

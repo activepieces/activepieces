@@ -16,6 +16,12 @@ export const createOpportunityAction = createAction({
   name: 'create_opportunity',
   displayName: 'Create Opportunity',
   description: 'Create a new Opportunity in Capsule CRM.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new sales opportunity in Capsule CRM linked to a party (contact) and a pipeline milestone, both required. Use to log a new deal once you have the target party and milestone IDs. Not idempotent: each call creates a separate opportunity, so repeating it produces duplicates.',
+    idempotent: false,
+  },
   props: {
     partyId: Property.Dropdown({
       displayName: 'Party',

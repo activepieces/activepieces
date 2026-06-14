@@ -6,6 +6,12 @@ export const addOrUpdateContact = createAction({
   name: 'addOrUpdateContact',
   displayName: 'Add or Update Contact',
   description: 'Creates a new contact.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Upserts a contact (lead, client, or partner) in Sperse CRM with personal, business, address, and tracking details. When Match Existing is enabled it locates an existing record by email and full name (or by Contact ID) and updates it, otherwise it inserts a new contact. First or last name is required unless a company name is supplied. Idempotent in match mode: re-sending the same identifying details updates the same record rather than duplicating it.',
+    idempotent: true,
+  },
   auth: sperseAuth,
   props: {
     importType: Property.StaticDropdown({

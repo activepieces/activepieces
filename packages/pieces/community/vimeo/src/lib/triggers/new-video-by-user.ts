@@ -53,6 +53,9 @@ export const newVideoByUser = createTrigger({
   name: 'new_video_by_user',
   displayName: 'New Video by User',
   description: 'Triggers when another specified user adds a video',
+  aiMetadata: {
+    description: 'Fires when a specified Vimeo user (identified by their user ID) publishes a new video. Polls that user\'s videos sorted by date and emits each newly added one, letting an agent watch another account\'s uploads.',
+  },
   auth: vimeoAuth,
   props: {
     userId: Property.ShortText({

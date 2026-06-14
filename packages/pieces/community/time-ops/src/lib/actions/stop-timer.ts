@@ -8,6 +8,8 @@ export const stopTimer = createAction({
   name: 'stop_timer',
   displayName: 'Stop Timer',
   description: 'Stop the currently running timer.',
+  audience: 'both',
+  aiMetadata: { description: 'Stops the currently running timer (open registration) for a given user in TimeOps, closing out the time entry. Use after Start Timer to finalize a live time entry; requires the user id. Not idempotent: it mutates the open registration, and a repeat call with no timer running has no entry to close.', idempotent: false },
   props: {
     userId: Property.Dropdown({
       displayName: 'User',

@@ -13,6 +13,8 @@ export const userCancelSubscriptionAction = createAction({
   name: 'userCancelSubscription',
   displayName: 'Actions - Users - Cancel Subscription',
   description: 'Cancel a subscription to a user.',
+  audience: 'both',
+  aiMetadata: { description: "Cancel a user's active subscription, recording the supplied reason in the audit log. Use activate-subscription to grant one instead. Effectively idempotent on the end state (subscription ends up cancelled), but cancelling when there is no active subscription may error.", idempotent: true },
   props: {
         
   user: Property.Number({

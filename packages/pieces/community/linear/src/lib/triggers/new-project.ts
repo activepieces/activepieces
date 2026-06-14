@@ -7,6 +7,9 @@ export const linearNewProject = createTrigger({
   name: 'new_project',
   displayName: 'New Project',
   description: 'Triggers when a new project is created in Linear',
+  aiMetadata: {
+    description: 'Fires when a new project is created anywhere in the Linear workspace. Represents the newly created project with its details such as name, state, dates, and teams.',
+  },
   props: {},
   sampleData: {
     action: 'create',

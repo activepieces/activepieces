@@ -8,6 +8,9 @@ export const contactPageEngagementUpdated = createTrigger({
   name: 'contact_page_engagement_updated',
   displayName: 'Contact Page Engagement Updated',
   description: 'Triggers when a contact interacts with a Sendr Page again (e.g. replays, re-visits).',
+  aiMetadata: {
+    description: 'Fires on subsequent engagement when a contact interacts with a Sendr Page again (re-visit or replay), delivering the page id/slug/URL, contact attributes, and engagement status. Use it to track repeat interaction after the initial visit.',
+  },
   props: {},
   sampleData: {
     event_type: 'contact_page_engagement:updated',

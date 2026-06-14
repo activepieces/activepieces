@@ -17,6 +17,10 @@ export const dealMatchingFilterTrigger = createTrigger({
 	name: 'deal-matching-filter',
 	displayName: 'Deal Matching Filter',
 	description: 'Trigges when a deal newly matches a Pipedrive filter for the first time.',
+	aiMetadata: {
+		description:
+			'Fires when a deal first becomes a member of a selected Pipedrive filter — that is, the deal newly satisfies the filter conditions. Polls the filter and emits each deal the first time it appears; does not re-fire for deals already in the filter.',
+	},
 	type: TriggerStrategy.POLLING,
 	props: {
 		filterId: filterIdProp('deals', true),

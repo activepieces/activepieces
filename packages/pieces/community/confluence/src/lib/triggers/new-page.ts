@@ -58,6 +58,9 @@ export const newPageTrigger = createTrigger({
 	name: 'new-page',
 	displayName: 'New Page',
 	description: 'Triggers when a new page is created.',
+	aiMetadata: {
+		description: 'Fires when a new page is created in the selected Confluence space. Polls for recently created pages; each event represents one newly created page with its metadata.',
+	},
 	auth: confluenceAuth,
 	type: TriggerStrategy.POLLING,
 	props,

@@ -13,6 +13,9 @@ export const deletedRecord = createTrigger({
     name: 'deleted_record',
     displayName: 'Deleted Record',
     description: 'Fires when a record is deleted from Insightly',
+    aiMetadata: {
+        description: 'Fires when a record disappears from the selected Insightly object type (Contact, Lead, Opportunity, Organization, Project, Task, Event, Product, or Quote), inferring deletion by polling and comparing against previously seen records. A deletion is only reported after the record has been absent for at least 15 minutes, so events are delayed and approximate rather than real-time. Requires the Insightly pod (e.g. "na1") matching your account region.',
+    },
     type: TriggerStrategy.POLLING,
     props: {
         pod: Property.ShortText({

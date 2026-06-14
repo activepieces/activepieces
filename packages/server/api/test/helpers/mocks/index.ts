@@ -31,6 +31,7 @@ import {
     FlowTriggerType,
     FlowVersion,
     FlowVersionState,
+    LATEST_FLOW_SCHEMA_VERSION,
     Folder,
     GitBranchType,
     GitRepo,
@@ -526,6 +527,8 @@ export const createMockFlowVersion = (
         updatedBy: flowVersion?.updatedBy,
         valid: flowVersion?.valid ?? faker.datatype.boolean(),
         notes: flowVersion?.notes ?? [],
+        schemaVersion: flowVersion?.schemaVersion ?? LATEST_FLOW_SCHEMA_VERSION,
+        backupFiles: flowVersion?.backupFiles ?? null,
     }
 }
 
@@ -783,6 +786,7 @@ export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Pr
             apiKey: process.env.OPENAI_API_KEY ?? faker.string.uuid(),
         }),
         config: aiProvider?.config ?? {},
+        enabledForChat: aiProvider?.provider === AIProviderName.ACTIVEPIECES ? true : false,
     }
 
 }

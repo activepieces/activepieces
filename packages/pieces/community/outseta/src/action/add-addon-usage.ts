@@ -9,6 +9,12 @@ export const addAddonUsageAction = createAction({
   displayName: 'Add Usage for Add-on',
   description:
     'Track usage for a metered (usage-based) add-on on an account.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Records a usage amount for a metered (usage-based) add-on on an account's current subscription, resolving the add-on UID against that subscription's active add-ons. Use to report consumption for billing. Requires an active subscription that already includes the chosen add-on, otherwise it errors. Not idempotent: each call appends a usage record that accumulates toward billing.",
+    idempotent: false,
+  },
   props: {
     accountUid: Property.ShortText({
       displayName: 'Account UID',

@@ -10,6 +10,11 @@ export const getMeetingDetails = createAction({
   displayName: 'Get Meeting Details',
   description:
     'Retrieves meeting details including host, participants, timestamps, and source information',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Look up the metadata for one MeetGeek meeting by its meeting ID (host, participants, timestamps, source). Use when an agent needs a meeting\'s context rather than its content. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     meetingId: meetingIdDropdwon,
   },

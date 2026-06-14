@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import mime from 'mime-types';
 
 export const imageToBase64 = createAction({
+  audience: 'human',
   name: 'image_to_base64',
   description: 'Converts an image to an url-like Base64 string',
   displayName: 'Image to Base64',

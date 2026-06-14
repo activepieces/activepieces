@@ -7,6 +7,8 @@ export const saveDepotAction = createAction({
   auth: cmsAuth,
   displayName: 'Save Depot',
   description: 'Save file to Total CMS depot',
+  audience: 'both',
+  aiMetadata: { description: 'Uploads a file into a Total CMS depot (a multi-file collection), identified by the depot CMS ID (slug). Use to add a document or asset to a depot. Not idempotent: each call appends another file to the depot.', idempotent: false },
   props: {
     slug: Property.ShortText({
       displayName: 'CMS ID',

@@ -8,6 +8,8 @@ export const clearRangeAction = createAction({
   name: 'clear_range',
   displayName: 'Clear Cells by Range',
   description: 'Clear a block of cells (range) content or formatting.',
+  audience: 'both',
+  aiMetadata: { description: 'Clear a block of cells in A1 notation, choosing to remove contents only, formatting only, or both. Pick this to wipe cell values or styles in place without deleting the worksheet or shifting cells. Idempotent: clearing the same range repeatedly yields the same emptied state.', idempotent: true },
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,

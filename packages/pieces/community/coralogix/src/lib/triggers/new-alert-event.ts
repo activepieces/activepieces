@@ -11,6 +11,9 @@ export const newAlertEvent = createTrigger({
   displayName: 'New Alert Event',
   description:
     'Triggers when Coralogix sends an alert-event webhook payload to this flow.',
+  aiMetadata: {
+    description: 'Fires when a configured Coralogix alert triggers and posts its outbound webhook to this flow, delivering the alert event (application, subsystem, severity, and matched fields). Requires the generic outbound webhook to be set up on the alert in Coralogix.',
+  },
   props: {
     setupInstructions: Property.MarkDown({
       value: `

@@ -8,6 +8,8 @@ export const addTagsToBlob = createAction({
   name: 'addTagsToBlob',
   displayName: 'Add Tags to Blob',
   description: 'Adds Tags to the Blob at the specified location',
+  audience: 'both',
+  aiMetadata: { description: 'Sets key-value tags on the blob at the given container and blob name. Operates in two modes: by default it replaces all existing tags with the supplied set, or with the keep-existing-tags option it merges the new tags onto the current ones. Use to label or categorize a blob for later tag-based search. Idempotent: applying the same tags yields the same final tag set.', idempotent: true },
   props: {
     container: containerProp,
     blobName: Property.ShortText({

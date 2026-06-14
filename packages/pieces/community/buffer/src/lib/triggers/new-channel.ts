@@ -35,6 +35,10 @@ export const newChannel = createTrigger({
   name: 'new_channel',
   displayName: 'New Channel',
   description: 'Triggers when a new channel is connected to your Buffer organization.',
+  aiMetadata: {
+    description:
+      'Fires when a new social media channel (e.g. a Facebook page, Instagram or X account) is connected to the selected Buffer organization, representing the newly linked channel.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     organizationId: bufferProps.organizationId(),

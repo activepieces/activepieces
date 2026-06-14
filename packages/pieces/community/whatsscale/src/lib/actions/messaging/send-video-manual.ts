@@ -13,6 +13,8 @@ export const sendVideoManualAction = createAction({
   name: 'whatsscale_send_video_manual',
   displayName: 'Send a Video (Manual Entry)',
   description: 'Send a video by entering a phone number or group ID manually.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a video to a recipient typed in directly rather than picked from a list, with an optional caption. Set the chat type to Contact (then a phone number with country code) or Group (then a bare group ID). Pick this when you already hold the raw number/ID; use the contact, group, CRM-contact, or channel video variants when selecting from session lists. Requires a directly downloadable video URL. Not idempotent: each call delivers another video.', idempotent: false },
   props: {
     session: whatsscaleProps.session,
     chatType: Property.StaticDropdown({

@@ -7,6 +7,9 @@ export const newTicketTrigger = createTrigger({
 	name: 'new-ticket',
 	displayName: 'New Ticket',
 	description: 'Triggers when a new ticket is created.',
+	aiMetadata: {
+		description: 'Fires when a new ticket is created in Intercom. Tickets track structured work items such as support requests or tasks. Outputs the newly created ticket object, including its type, state, and custom attributes.',
+	},
 	props: {},
 	type: TriggerStrategy.APP_WEBHOOK,
 	async onEnable(context) {

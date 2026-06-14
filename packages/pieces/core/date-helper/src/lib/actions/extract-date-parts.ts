@@ -9,6 +9,7 @@ import {
 } from '../common';
 
 export const extractDateParts = createAction({
+  audience: 'human',
   name: 'extract_date_parts',
   displayName: 'Extract Date Units',
   description:

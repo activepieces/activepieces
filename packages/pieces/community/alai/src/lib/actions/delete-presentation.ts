@@ -7,6 +7,12 @@ export const deletePresentation = createAction({
   name: 'deletePresentation',
   displayName: 'Delete Presentation',
   description: 'Delete a presentation by its ID.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently delete an Alai presentation by its ID. Use this to remove a deck the user no longer needs. Destructive but idempotent: once deleted, repeating the call with the same ID leaves the same end state. Requires the presentation ID.',
+    idempotent: true,
+  },
   props: {
     presentationId: Property.ShortText({
       displayName: 'Presentation ID',

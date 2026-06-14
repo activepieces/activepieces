@@ -9,12 +9,14 @@ export function createQawafelEventTrigger({
   name,
   displayName,
   description,
+  aiMetadata,
   event,
   sampleData,
 }: {
   name: string;
   displayName: string;
   description: string;
+  aiMetadata: { description: string };
   event: QawafelEventType;
   sampleData: Record<string, unknown>;
 }) {
@@ -24,6 +26,7 @@ export function createQawafelEventTrigger({
     name,
     displayName,
     description,
+    aiMetadata,
     type: TriggerStrategy.WEBHOOK,
     props: {},
     sampleData: {

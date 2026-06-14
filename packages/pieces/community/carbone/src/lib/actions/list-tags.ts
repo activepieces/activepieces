@@ -13,6 +13,11 @@ export const listTagsAction = createAction({
   name: 'carbone_list_tags',
   displayName: 'List Tags',
   description: 'List all tags used to organize your Carbone templates.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Returns all tag names currently used to organize Carbone templates. Use to discover valid tag values before filtering, uploading, or updating templates. Idempotent: read-only lookup with no inputs.',
+    idempotent: true,
+  },
   props: {},
   async run(context) {
     const request: HttpRequest = {

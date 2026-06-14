@@ -8,6 +8,12 @@ export const getAccountAction = createAction({
   displayName: 'Retrieve Account',
   description:
     'Retrieve an account by its UID, or by the email of its primary contact. Returns plan, subscription, billing address, primary contact and add-on details.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches a single Outseta CRM account by its UID or by its primary contact email, returning core fields plus billing address, primary contact, and current subscription/plan/add-on details. Use to read an account by either identifier. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     lookupBy: Property.StaticDropdown({
       displayName: 'Lookup by',

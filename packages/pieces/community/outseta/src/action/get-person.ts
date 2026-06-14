@@ -8,6 +8,12 @@ export const getPersonAction = createAction({
   displayName: 'Retrieve Person',
   description:
     'Retrieve a person by email or by UID, including the linked account.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches a single Outseta CRM person (contact) by email or by UID, returning identity, contact, and mailing-address fields plus the linked account. Use to read a person by either identifier. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     lookupBy: Property.StaticDropdown({
       displayName: 'Lookup by',

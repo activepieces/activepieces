@@ -19,6 +19,7 @@ import { Download, Info, ShieldAlert } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { StepOutputSkeleton } from '@/app/components/step-output-skeleton';
+import { SmartOutputViewer } from '@/components/custom/smart-output-viewer';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -55,11 +56,16 @@ export const FlowStepInputOutput = () => {
     ],
   );
   const isAgent = isRunAgent(selectedStep);
+  const isTrigger =
+    !isNil(selectedStep) && flowStructureUtil.isTrigger(selectedStep.type);
   const [requestedTab, setActiveTab] = useState<RunActiveTab>(
     isAgent ? 'timeline' : 'output',
   );
   const activeTab: RunActiveTab =
-    requestedTab === 'timeline' && !isAgent ? 'output' : requestedTab;
+    (requestedTab === 'timeline' && !isAgent) ||
+    (requestedTab === 'input' && isTrigger)
+      ? 'output'
+      : requestedTab;
   const selectedStepOutput = useMemo(() => {
     return run && selectedStep && run.steps
       ? flowRunUtils.extractStepOutput(
@@ -181,6 +187,10 @@ export const FlowStepInputOutput = () => {
     selectedStep.type === FlowTriggerType.PIECE
       ? (selectedStep.settings.input as Record<string, unknown> | undefined)
       : undefined;
+  const pieceSchema =
+    pieceModel?.actions[stepName ?? '']?.outputSchema ??
+    pieceModel?.triggers[stepName ?? '']?.outputSchema ??
+    null;
   const explanationContext: ErrorExplanationContext = {
     pieceName: stepPieceName,
     pieceVersion: stepPieceVersion,
@@ -217,7 +227,9 @@ export const FlowStepInputOutput = () => {
         >
           <div className="flex items-center justify-between gap-2 shrink-0 mb-2">
             <TabsList className="h-9">
-              <TabsTrigger value="input">{t('Input')}</TabsTrigger>
+              {!isTrigger && (
+                <TabsTrigger value="input">{t('Input')}</TabsTrigger>
+              )}
               {isAgent && (
                 <TabsTrigger value="timeline">{t('Timeline')}</TabsTrigger>
               )}
@@ -226,14 +238,16 @@ export const FlowStepInputOutput = () => {
             <StepDataPanelViewToggle />
           </div>
 
-          <TabsContent value="input">
-            <DataDisplayTabs
-              data={selectedStepOutput.input}
-              title={t('Input')}
-              copyableData={selectedStepOutput.input}
-              downloadFileName={`${selectedStep.name}-input`}
-            />
-          </TabsContent>
+          {!isTrigger && (
+            <TabsContent value="input">
+              <DataDisplayTabs
+                data={selectedStepOutput.input}
+                title={t('Input')}
+                copyableData={selectedStepOutput.input}
+                downloadFileName={`${selectedStep.name}-input`}
+              />
+            </TabsContent>
+          )}
 
           {isAgent && (
             <TabsContent value="timeline">
@@ -252,6 +266,12 @@ export const FlowStepInputOutput = () => {
                 error={friendlyError}
                 explanationContext={explanationContext}
                 pieceDisplayName={pieceModel?.displayName}
+              />
+            ) : status === 'success' ? (
+              <SmartOutputViewer
+                json={parsedOutput}
+                title={t('Output')}
+                pieceSchema={pieceSchema}
               />
             ) : (
               <DataDisplayTabs

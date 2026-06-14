@@ -18,6 +18,10 @@ export const ignitionTrigger = createTrigger({
 	name: 'ignition-trigger',
 	displayName: 'Ignition Status Trigger',
 	description: 'Triggers when vehicle ignition status changes (ON/OFF).',
+	aiMetadata: {
+		description:
+			"Fires via DIMO webhook when a monitored vehicle's ignition status matches the selected state (ON or OFF). Each event represents a single ignition telemetry signal and includes the vehicle token ID, timestamp, a boolean isIgnitionOn flag, and an ON/OFF label. Use to detect when a vehicle is started or shut off (e.g. trip start/end).",
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {
 		vehicleTokenIds: Property.Array({

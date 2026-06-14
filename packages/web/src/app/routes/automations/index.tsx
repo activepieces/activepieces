@@ -84,7 +84,6 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
     rootTables,
     isLoading,
     expandedFolders,
-    loadingFolders,
     toggleFolder,
     loadMoreInFolder,
     rootPage,
@@ -323,7 +322,6 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
             isLoading={isLoading}
             selectedItems={selectedItems}
             expandedFolders={expandedFolders}
-            loadingFolders={loadingFolders}
             projectMembers={projectMembers}
             folders={folders}
             selectableCount={selectableItems.length}

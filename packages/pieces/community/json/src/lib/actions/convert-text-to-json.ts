@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 export const convertTextToJson = createAction({
+  audience: 'human',
   name: 'convert_text_to_json',
   displayName: 'Convert Text to Json',
   description: 'Parses text into JSON.',

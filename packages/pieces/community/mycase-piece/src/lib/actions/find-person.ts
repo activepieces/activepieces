@@ -7,6 +7,8 @@ export const findPerson = createAction({
   name: 'find_person',
   displayName: 'Find Person (Client)',
   description: 'Searches for clients (people) with optional filters',
+  audience: 'both',
+  aiMetadata: { description: 'List or search MyCase clients (individual people), filtering by name, email, phone numbers, or last-updated date. Use to find a person or resolve them to a client ID before linking elsewhere. Read-only and idempotent. Note this returns clients only, not leads or staff.', idempotent: true },
   props: {
     first_name: Property.ShortText({
       displayName: 'First Name',

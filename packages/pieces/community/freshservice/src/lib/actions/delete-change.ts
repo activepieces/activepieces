@@ -9,6 +9,11 @@ export const deleteChange = createAction({
   name: 'delete_change',
   displayName: 'Delete Change',
   description: 'Deletes a change request from Freshservice.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Permanently deletes a change request from Freshservice, identified by change id. Use to remove a change that should no longer exist. Idempotent in effect — once deleted the change stays deleted, though repeat calls on an already-removed id may return a not-found error.',
+    idempotent: true,
+  },
   props: {
     change_id: freshserviceCommon.change(true),
   },

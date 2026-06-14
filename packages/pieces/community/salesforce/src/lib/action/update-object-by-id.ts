@@ -9,6 +9,8 @@ export const UpdateObjectById = createAction({
   name: 'update_object_by_id',
   displayName: 'Update Object (Advanced)',
   description: 'Update object by Id',
+  audience: 'both',
+  aiMetadata: { description: 'Advanced update: patch any Salesforce object record by its ID using a raw JSON field map, for objects without a dedicated update action. Use Update Record for the standard object/record/data form; only the supplied fields change and the record must already exist.', idempotent: false },
   props: {
     object: salesforcesCommon.object,
     id: Property.ShortText({

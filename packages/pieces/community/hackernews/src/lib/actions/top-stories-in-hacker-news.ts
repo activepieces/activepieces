@@ -5,6 +5,11 @@ export const fetchTopStories = createAction({
   name: 'fetch_top_stories', // Must be a unique across the piece, this shouldn't be changed.
   displayName: 'Fetch Top Stories',
   description: 'Fetch top stories from hackernews',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Retrieves the current top stories from Hacker News, returning the first N stories (N set by the number-of-stories input) with their full item details. Use to surface or summarize what is trending on Hacker News right now. Read-only and idempotent; a larger N simply fetches more of the same ranked list.',
+    idempotent: true,
+  },
   props: {
     // Properties to ask from the user, in this ask we will take number of
     number_of_stories: Property.Number({

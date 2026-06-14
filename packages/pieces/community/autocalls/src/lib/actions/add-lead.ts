@@ -8,6 +8,8 @@ export const addLead = createAction({
   name: 'addLead',
   displayName: 'Add lead to a campaign',
   description: "Add lead to an outbound campaign, to be called by an assistant from our platform.",
+  audience: 'both',
+  aiMetadata: { description: 'Enrolls a lead (phone number plus template variables, optionally with secondary contacts) into an Autocalls outbound campaign so its assistant will dial them. Use to queue contacts for a campaign rather than placing a one-off call. Requires a campaign id and phone number; creates a new lead each call (unless duplicates are disallowed), so it is not idempotent.', idempotent: false },
   props: {
     campaign: Property.Dropdown({
       auth: autocallsAuth,

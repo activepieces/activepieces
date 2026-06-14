@@ -5,6 +5,11 @@ export default createAction({
   name: 'get_saved_tracks',
   displayName: 'Get Saved Tracks',
   description: 'Retrieves the list of saved tracks for the current user',
+  audience: 'both',
+  aiMetadata: {
+    description: "Lists the tracks in the current user's Liked Songs library. By default returns one paged page (limit/offset); enable the All option to auto-page through and return every saved track in one call. Read-only and repeatable.",
+    idempotent: true,
+  },
   auth: spotifyCommon.authentication,
   props: {
     offset: Property.Number({

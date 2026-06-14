@@ -6,6 +6,10 @@ export const emailOpenedTrigger = createNotifyWebhookTrigger({
   displayName: 'Email Opened',
   description:
     'Triggers each time a transactional email is opened by the recipient. Fires on every open (not unique).',
+  aiMetadata: {
+    description:
+      'Fires each time a recipient opens a transactional email sent through INBOX Notify. Fires on every open, not only the first, so the same message and recipient can trigger it repeatedly.',
+  },
   sampleData: {
     event: 'Opened',
     eventId: 5,

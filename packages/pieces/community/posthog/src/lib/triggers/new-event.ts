@@ -62,6 +62,9 @@ export const posthogNewEvent = createTrigger({
   name: 'new_event',
   displayName: 'New Event',
   description: 'Triggers when a new event is captured in PostHog',
+  aiMetadata: {
+    description: 'Fires when a new analytics event is captured in the connected PostHog project; polls for recently captured events and emits each one. Optionally filter to a single event name, or leave it empty to fire on every event type.',
+  },
   type: TriggerStrategy.POLLING,
   props,
   sampleData: {

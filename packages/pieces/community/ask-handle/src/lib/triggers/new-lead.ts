@@ -12,6 +12,9 @@ export const newLeadTrigger = createTrigger({
   name: 'new_lead',
   displayName: 'New Lead',
   description: 'Triggers when a new lead is created',
+  aiMetadata: {
+    description: 'Fires when a new lead is captured in AskHandle, carrying the contact details and origin context (page, referrer, device). Use to kick off follow-up when a prospect is registered.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   sampleData: {

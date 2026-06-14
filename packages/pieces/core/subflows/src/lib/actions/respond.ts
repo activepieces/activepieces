@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/shared';
 
 export const response = createAction({
+  audience: 'human',
   name: 'returnResponse',
   displayName: 'Return Response',
   description: 'Return response to the original flow',

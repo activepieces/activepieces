@@ -4,6 +4,7 @@ import {
   OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
+import { copyFile } from './lib/actions/copy-file';
 import { downloadFile } from './lib/actions/download-file';
 import { listFiles } from './lib/actions/list-files';
 import { listFolders } from './lib/actions/list-folders';
@@ -23,6 +24,7 @@ export const microsoftOneDrive = createPiece({
   actions: [
     uploadFile,
     downloadFile,
+    copyFile,
     listFiles,
     listFolders,
     createCustomApiCallAction({

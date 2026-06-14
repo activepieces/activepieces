@@ -1,4 +1,4 @@
-import { apId, FlowActionType, FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, FlowTriggerType, isFlowRunStateTerminal, isNil, McpToolResult, RunEnvironment, SampleDataFileType, StepLocationRelativeToParent, StepOutputStatus, tryCatch, UpdateActionRequest } from '@activepieces/shared'
+import { apId, createKeyForFormInput, FlowActionType, FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, FlowTriggerType, isFlowRunStateTerminal, isNil, isObject, McpToolResult, RunEnvironment, SampleDataFileType, Step, StepLocationRelativeToParent, StepOutputStatus, tryCatch, UpdateActionRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunService, isOutsideRetentionWindow } from '../../flows/flow-run/flow-run-service'
@@ -64,6 +64,8 @@ export async function executeFlowTest({ flowId, projectId, stepName, triggerTest
             },
         })
         flow = updatedFlow
+        warning += '⚠️ This test ran on mock trigger data you supplied, not a real trigger event. A passing test here does NOT prove the live flow works: if the real trigger payload uses different field names or casing than your mock, downstream steps will read empty values in production. Verify your mock keys match a real sample (e.g. trigger the flow once for real, or check the trigger sample shape).\n\n'
+        warning += buildTriggerShapeHint(flow.version.trigger)
     }
 
     const flowRun = await flowRunService(log).test({
@@ -151,6 +153,9 @@ export async function executeAdhocAction({
         requireAuth: action.requireAuth,
         componentType: 'action',
     })
+    if (diagnosis.unknownKeys.length > 0) {
+        return { content: [{ type: 'text', text: `❌ ${diagnosis.parts.join(' ')}` }] }
+    }
     if (diagnosis.missing.length > 0) {
         return { content: [{ type: 'text', text: `❌ Cannot run action: ${diagnosis.parts.join(' ')}` }] }
     }
@@ -270,6 +275,24 @@ export async function executeAdhocAction({
             log.warn({ err, flowId: flow.id }, 'adhoc flow cleanup failed')
         })
     }
+}
+
+const FORMS_PIECE_NAME = '@activepieces/piece-forms'
+
+function buildTriggerShapeHint(trigger: Step): string {
+    if (trigger.type !== FlowTriggerType.PIECE || trigger.settings.pieceName !== FORMS_PIECE_NAME) {
+        return ''
+    }
+    const note = 'Note: the Human Input / Web Form trigger camelCases each field label to build its output key (e.g. "Full Name" → "fullName"). Reference fields as {{trigger[\'output\'].<camelCaseKey>}}, never by the original label.'
+    const input = trigger.settings.input
+    const formInputs = isObject(input) && Array.isArray(input.inputs) ? input.inputs : []
+    const keyLines = formInputs
+        .filter((field): field is { displayName: string } => isObject(field) && typeof field.displayName === 'string')
+        .map((field) => `  - ${createKeyForFormInput(field.displayName)} (from "${field.displayName}")`)
+    if (keyLines.length === 0) {
+        return `${note}\n\n`
+    }
+    return `${note}\nExpected trigger output keys:\n${keyLines.join('\n')}\n\n`
 }
 
 function looksEmpty(output: unknown): boolean {

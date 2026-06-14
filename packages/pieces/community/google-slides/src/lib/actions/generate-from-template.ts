@@ -30,6 +30,8 @@ export const generateFromTemplate = createAction({
     name: 'generate_from_template',
     displayName: 'Generate from template',
     description: 'Generate a new slide from a template',
+    audience: 'both',
+    aiMetadata: { description: 'Create a new Google Slides presentation by copying a template presentation, then substituting its placeholder tokens with supplied values. Use this for mail-merge style document generation from a reusable deck. The template\'s placeholder syntax must be selected (curly braces {{}} or square brackets [[]]); placeholders are discovered from the template\'s text and table cells, and matching is case-sensitive. Not idempotent: each call copies the template into a brand-new presentation file.', idempotent: false },
     auth: googleSlidesAuth,
     props: {
         template_presentation_id: Property.ShortText({

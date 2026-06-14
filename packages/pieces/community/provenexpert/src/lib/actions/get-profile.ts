@@ -28,6 +28,8 @@ export const getProfileAction = createAction({
   name: 'get_profile',
   displayName: 'Get Profile',
   description: 'Retrieves the company and contact details of your ProvenExpert profile.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the company and contact details (company name, email, address, phone, website, public status) of the authenticated ProvenExpert profile. Use to read account/profile information rather than rating or survey data. Takes no input; read-only and idempotent.', idempotent: true },
   props: {},
   async run(context) {
     const response = await provenExpertCommon.apiCall<ProfileResponse>({

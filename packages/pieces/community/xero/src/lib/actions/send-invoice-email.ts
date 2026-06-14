@@ -13,6 +13,12 @@ export const xeroSendInvoiceEmail = createAction({
   name: 'xero_send_invoice_email',
   displayName: 'Send Sales Invoice by Email',
   description: 'Sends a sales invoice via email to a contact.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Email an existing sales invoice to its contact via Xero, using the contact email and branding already on the invoice. Pick this to deliver an invoice that is created and ready to send. Not idempotent: each call sends the email again; the invoice must already exist and be in a sendable state.',
+    idempotent: false,
+  },
   props: {
     tenant_id: props.tenant_id,
     invoice_id: props.sales_invoice_id(true),

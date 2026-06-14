@@ -7,6 +7,8 @@ export const getContentAction = createAction({
   auth: cmsAuth,
   displayName: 'Get Content',
   description: 'Get content from your Total CMS website',
+  audience: 'both',
+  aiMetadata: { description: 'Reads a single Total CMS content item by its CMS ID, where the content type is one of blog, datastore, date, depot, feed, file, gallery, image, ratings, text, toggle, or video. Use to fetch the current value of a known CMS field before displaying or updating it. Requires both the content type and the exact CMS ID (slug); read-only and idempotent.', idempotent: true },
   props: {
     type: Property.StaticDropdown({
       displayName: 'Data Type',

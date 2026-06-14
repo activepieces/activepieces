@@ -47,6 +47,9 @@ export const newChangeTask = createTrigger({
   name: 'new_change_task',
   displayName: 'New Change Task',
   description: 'Triggers when a new task is created on a specific change request.',
+  aiMetadata: {
+    description: 'Fires when a new task is added to one specific change request in Freshservice, representing a newly created unit of work on that change. Scoped to a single change id chosen in setup; polls newest-first by creation time among that change\'s tasks.',
+  },
   props: {
     change_id: freshserviceCommon.change(true),
   },

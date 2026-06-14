@@ -10,6 +10,11 @@ export const sendFromTemplate = createAction({
   name: 'sendFromTemplate',
   displayName: 'Send Email using Template',
   description: 'Sends an email from an existing template.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Sends an email through Maileroo whose body is rendered from a saved template, passing key-value template data to fill its {{ variable }} placeholders (subject also supports these). Choose this over the plain send action when the message content lives in a Maileroo template; supports CC/BCC, reply-to, attachments, and tracking. Requires a numeric template_id from the Templates dashboard, and the sender address must be on a verified domain. Not idempotent: each call dispatches a new email.',
+    idempotent: false,
+  },
   props: {
     from: Property.ShortText({
       displayName: 'From Email',

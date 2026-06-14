@@ -8,6 +8,12 @@ export const updatePersonAction = createAction({
   auth: outsetaAuth,
   displayName: 'Update Person',
   description: 'Update an existing person in Outseta.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing Outseta CRM person identified by UID, setting only the provided fields (email, name, phone, title, mailing address) via a PUT. Use to change a contact when you have its UID; requires at least one field. Idempotent: re-running with the same input leaves the person in the same state.',
+    idempotent: true,
+  },
   props: {
     personUid: Property.ShortText({
       displayName: 'Person UID',

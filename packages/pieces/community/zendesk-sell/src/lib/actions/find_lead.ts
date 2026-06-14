@@ -9,6 +9,8 @@ export const findLead = createAction({
     name: 'find_lead',
     displayName: 'Find Lead',
     description: 'Find a lead by one or more fields.',
+    audience: 'both',
+    aiMetadata: { description: 'Searches Zendesk Sell leads filtered by any combination of first/last name, organization name, email, phone, status, source, or owner, and returns the first match. Use to resolve a lead or check whether one already exists before creating it. Requires at least one search field; returns null data when no match is found. Idempotent — a read-only lookup.', idempotent: true },
     props: {
         first_name: Property.ShortText({
             displayName: 'First Name',

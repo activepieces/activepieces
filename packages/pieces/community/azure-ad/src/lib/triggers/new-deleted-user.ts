@@ -11,6 +11,9 @@ export const newDeletedUserTrigger = createTrigger({
     name: 'new_deleted_user',
     displayName: 'New Deleted User',
     description: 'Triggers when a user is deleted from Microsoft Entra ID.',
+    aiMetadata: {
+        description: 'Fires when a user account is deleted (soft-deleted) from the Microsoft Entra ID (Azure AD) directory, detected by polling the Microsoft Graph users delta endpoint for removed entries. Each event represents one deleted user, identified by its directory object ID.',
+    },
     type: TriggerStrategy.POLLING,
     props: {},
     sampleData: {

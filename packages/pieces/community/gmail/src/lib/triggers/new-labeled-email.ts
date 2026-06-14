@@ -58,6 +58,10 @@ export const gmailNewLabeledEmailTrigger = createTrigger({
   name: 'new_labeled_email',
   displayName: 'New Labeled Email',
   description: 'Triggers when a label is added to an email',
+  aiMetadata: {
+    description:
+      'Fires when the specified label is applied to an email (either newly received with the label or labeled afterward). Each event represents one message that just gained that label, with its parsed contents and label info.',
+  },
   props: {
     label: {
       ...GmailProps.label,

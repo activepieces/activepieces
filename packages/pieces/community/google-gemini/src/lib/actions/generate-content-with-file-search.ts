@@ -5,6 +5,7 @@ import { GoogleGenAI } from '@google/genai';
 import mime from 'mime-types';
 
 export const generateContentWithFileSearchAction = createAction({
+  audience: 'human',
   description: 'Generate content with file search functionality.',
   displayName: 'Generate Content with File Search',
   name: 'generate_content_with_filesearch',

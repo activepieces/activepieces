@@ -7,6 +7,8 @@ export const findMilestone = createAction({
 	name: 'find_milestone',
 	displayName: 'Find Milestone',
 	description: 'Find a milestone by name or due date in a project.',
+	audience: 'both',
+	aiMetadata: { description: 'Searches Teamwork milestones by name or due date, optionally scoped to a single project. Use to locate a milestone and obtain its details/ID. Requires a search term. Idempotent — a read-only search with no side effects.', idempotent: true },
 	auth: teamworkAuth,
 	props: {
 		searchTerm: Property.ShortText({

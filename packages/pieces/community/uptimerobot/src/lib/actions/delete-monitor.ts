@@ -11,6 +11,12 @@ export const deleteMonitorAction = createAction({
   displayName: 'Delete Monitor',
   description:
     'Permanently delete a monitor from UptimeRobot. This cannot be undone.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently deletes a UptimeRobot monitor, identified either by the dropdown selection or by a raw Monitor ID passed from a prior step (the raw ID overrides the dropdown). This is irreversible and destructive, so confirm the target before calling; repeating it on an already-deleted monitor will fail.',
+    idempotent: false,
+  },
   props: {
     monitor: uptimeRobotCommon.monitorDropdownOptional,
     monitor_id_override: Property.ShortText({

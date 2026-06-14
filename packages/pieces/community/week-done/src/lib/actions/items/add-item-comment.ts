@@ -17,6 +17,8 @@ export const addItemCommentAction = createAction({
   name: 'add_item_comment',
   displayName: 'Add Item Comment',
   description: 'Add a comment to an item.',
+  audience: 'both',
+  aiMetadata: { description: 'Post a new comment on a Weekdone item identified by its ID; the user/team/period filters only help locate the item. Requires the comment text. Not idempotent; each call appends a distinct comment.', idempotent: false },
   props: {
     user_id_filter: Property.Dropdown({
       auth: weekdoneAuth,

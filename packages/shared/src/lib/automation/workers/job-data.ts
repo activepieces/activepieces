@@ -242,6 +242,7 @@ export const ExecuteChatAgentJobData = z.object({
     schemaVersion: z.number(),
     jobType: z.literal(WorkerJobType.EXECUTE_CHAT_AGENT),
     conversationId: z.string(),
+    runId: z.string().optional(),
     projectId: z.string().nullable(),
     platformId: z.string(),
     userId: z.string(),

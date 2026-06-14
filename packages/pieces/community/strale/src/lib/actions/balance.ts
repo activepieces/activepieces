@@ -12,6 +12,12 @@ export const checkBalance = createAction({
   displayName: 'Check Balance',
   description:
     'Returns the current wallet balance in EUR cents and formatted EUR. Use this before executing paid capabilities to verify sufficient funds. Requires an API key.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Look up the current Strale wallet balance (EUR cents plus a formatted EUR string). Use this to check available funds before running paid capabilities via Execute Capability. Read-only and idempotent; takes no input but requires an API key.',
+    idempotent: true,
+  },
   props: {},
   async run(context) {
     const response = await httpClient.sendRequest({

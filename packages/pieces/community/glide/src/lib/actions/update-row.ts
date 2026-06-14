@@ -10,6 +10,11 @@ export const updateRowAction = createAction({
   name: 'update-row',
   displayName: 'Update Row',
   description: 'Update an existing row in a Glide Big Table.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Patch an existing row in a Glide Big Table, targeted by table ID and the specific row ID. Supply a JSON object with only the columns to change; omitted columns are left untouched. Requires a known row ID (look one up first via Get Rows if needed). Idempotent — repeating with the same values yields the same row state.',
+    idempotent: true,
+  },
   props: {
     tableId: glideProps.tableId(),
     rowId: Property.ShortText({

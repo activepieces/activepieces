@@ -41,6 +41,10 @@ export const newEventTrigger = createTrigger({
 	name: 'typefully_new_event',
 	displayName: 'New Event',
 	description: 'Triggers when a webhook event is received from Typefully.',
+	aiMetadata: {
+		description:
+			'Fires when Typefully sends a webhook event for a draft, optionally filtered to specific event types (draft created, scheduled, published, status changed, tags changed, or deleted); leave the filter empty to receive every event configured in Typefully. Each firing represents one draft lifecycle event and carries the affected draft. Webhooks must be set up manually in the Typefully dashboard.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {
 		instructions: instructionsMarkdown,

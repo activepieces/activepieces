@@ -8,6 +8,11 @@ export const fraudCheck = createAction({
   name: 'fraudCheck',
   displayName: 'Fraud Check',
   description: 'Calculate fraud probability for a wallet address',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Calculate a ChainAware fraud-probability score for a wallet address on a given network. Choose this when you need a quantified fraud likelihood for a wallet; the optional "Only Fraud" flag narrows the result to fraud-related signals only. Requires the network name and wallet address. Read-only analysis — idempotent.',
+    idempotent: true,
+  },
   props: {
     network: Property.ShortText({
       displayName: 'Network',

@@ -51,6 +51,10 @@ export const newReview = createTrigger({
   name: 'newReview',
   displayName: 'New Review',
   description: 'Triggered when a new review is added',
+  aiMetadata: {
+    description:
+      'Fires when a new app store review is posted for the selected application and collection. Each event represents a single newly created review.',
+  },
   props,
   sampleData: {
     content: '. :)',

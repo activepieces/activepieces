@@ -8,6 +8,8 @@ export const update_visit = createAction({
     auth: simplirouteAuth,
     displayName: 'Update Visit (Complete)',
     description: 'Completely update an existing visit with all fields.',
+    audience: 'both',
+    aiMetadata: { description: 'Fully replace an existing visit (PUT) by ID, requiring title, address, and planned date even for unchanged fields. Idempotent for a fixed payload. Pick this when overwriting the whole visit; use the partial-update action to change only a few fields without resending the rest.', idempotent: true },
     props: {
         visit_id: Property.Number({ displayName: 'visit_id', description: 'ID of the visit to update.', required: true }),
         title: Property.ShortText({ displayName: 'title', description: 'Visit title.', required: true }),

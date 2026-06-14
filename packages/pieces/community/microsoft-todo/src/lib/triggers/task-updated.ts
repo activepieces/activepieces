@@ -53,6 +53,9 @@ export const newOrUpdatedTaskTrigger = createTrigger({
 	name: 'new_or_updated_task',
 	displayName: 'New or Updated Task',
 	description: 'Triggers when a new task is created or an existing task is updated.',
+	aiMetadata: {
+		description: 'Fires when a task in the selected Microsoft To Do task list is created or modified in any way. Each event represents the current state of one task that was added or changed; polls on the task last-modified time, so the same task can fire again whenever it is edited.',
+	},
 	auth: microsoftToDoAuth,
 	props: {
 		task_list_id: Property.Dropdown({

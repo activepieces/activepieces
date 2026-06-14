@@ -7,6 +7,8 @@ export const addVideoToShowcase = createAction({
   name: 'add_video_to_showcase',
   displayName: 'Add Video to Showcase',
   description: 'Adds an existing video to a user\'s showcase',
+  audience: 'both',
+  aiMetadata: { description: 'Adds an existing video the user owns to one of their Vimeo showcases (albums), identified by video ID and showcase ID. Use to organize already-uploaded videos into a curated showcase; it does not upload new content. Idempotent: the video is keyed into the showcase by ID, so re-running with the same pair leaves the membership unchanged. Requires a token with the edit scope.', idempotent: true },
   auth: vimeoAuth,
   props: {
     videoId: userVideoDropdown,

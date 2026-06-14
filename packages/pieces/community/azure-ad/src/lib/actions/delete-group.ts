@@ -8,6 +8,12 @@ export const deleteGroupAction = createAction({
     name: 'delete_group',
     displayName: 'Delete Group',
     description: 'Deletes an Azure AD group by ID.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Permanently deletes an Azure AD group by its object ID, removing its memberships with it. Destructive and not idempotent — a repeat call fails with 404 once the group is gone, so confirm the target with Get Group by ID before deleting.',
+        idempotent: false,
+    },
     props: {
         groupId: groupDropdown,
     },

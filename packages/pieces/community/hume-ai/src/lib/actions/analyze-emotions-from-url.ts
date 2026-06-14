@@ -6,6 +6,11 @@ export const analyzeEmotionsFromUrl = createAction({
   name: 'analyze_emotions_from_url',
   displayName: 'Analyze Emotions from URL',
   description: 'Start a batch emotion analysis job for media files hosted at URLs',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Start an asynchronous Hume AI Expression Measurement batch job over media (image, video, audio) referenced by URL, returning a job ID; results are fetched later with Get Emotion Results. Use to measure emotional expression in hosted media. Accepts up to 100 URLs or archives, with optional model selection, transcription, callback URL, and email notification. Each call queues a new job, so it is not idempotent.',
+    idempotent: false,
+  },
   auth: humeAiAuth,
   props: {
     urls: Property.Array({

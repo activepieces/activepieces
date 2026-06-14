@@ -9,6 +9,11 @@ export const generateSignedUploadUrl = createAction({
   displayName: 'Generate Signed Upload URL',
   description:
     'Generate a pre-signed URL that allows anyone with the link to upload a file directly to S3 without needing AWS credentials.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Generates a time-limited pre-signed upload (PUT) URL for a target key in the configured S3 bucket, letting anyone with the link upload a file directly to S3 without AWS credentials until it expires. Use to delegate an upload to an external client. Generating the URL does not itself create or modify any object and is idempotent (each call returns a freshly signed URL).',
+    idempotent: true,
+  },
   props: {
     key: Property.ShortText({
       displayName: 'File Key',

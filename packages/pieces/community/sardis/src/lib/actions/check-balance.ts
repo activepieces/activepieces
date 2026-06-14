@@ -8,6 +8,12 @@ export const checkBalanceAction = createAction({
   auth: sardisAuth,
   displayName: 'Check Balance',
   description: 'Check wallet balance and spending limits.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Reads the current balance and remaining spending limits for a Sardis wallet on a given token and chain. Use it before sending a payment to confirm sufficient funds and policy headroom. Read-only and idempotent. Requires the wallet ID; token defaults to USDC and chain to Base.',
+    idempotent: true,
+  },
   props: {
     walletId: sardisCommon.walletId,
     token: sardisCommon.token,

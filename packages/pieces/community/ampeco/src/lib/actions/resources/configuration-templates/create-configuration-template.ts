@@ -15,6 +15,8 @@ export const createConfigurationTemplateAction = createAction({
   name: 'createConfigurationTemplate',
   displayName: 'Resources - Configuration Templates - Create Configuration Template',
   description: 'Create new Configuration Template.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new OCPP configuration template, requiring a name and an OCPP version (ocpp 1.6 or ocpp 2.0.1). Not idempotent: each call creates a separate template. Add variables afterward with the Configuration Template Variable Create action; use Update to rename an existing template.', idempotent: false },
   props: {
         
   name: Property.ShortText({

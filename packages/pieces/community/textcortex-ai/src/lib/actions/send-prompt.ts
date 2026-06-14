@@ -9,6 +9,8 @@ export const sendPrompt = createAction({
   name: 'send_prompt',
   displayName: 'Send Prompt',
   description: 'Send a custom prompt to TextCortex AI and generate a completion.',
+  audience: 'both',
+  aiMetadata: { description: 'Send a free-form prompt to TextCortex AI and get back generated text completion(s). Choose this for open-ended generation that does not fit a specialized template (paraphrase, summary, translation, email, code, etc.); selectable model, formality, languages, and number of outputs. Not idempotent: each call generates fresh, non-deterministic text and consumes account credits.', idempotent: false },
   props: {
     text: Property.LongText({
       displayName: 'Text to Complete',

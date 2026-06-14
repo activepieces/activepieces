@@ -28,6 +28,8 @@ export const deleteEmail = createAction({
   name: 'delete_email',
   displayName: 'Delete Email',
   description: 'Permanently delete an email',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes an email (by message UID) from an IMAP folder; this cannot be undone and does not move the message to Trash (use Move Email for that). Use only when irreversible removal is intended. Requires the folder and the UID; destructive and not idempotent since a repeat call cannot find the already-deleted message.', idempotent: false },
   props,
   async run({ auth, propsValue }) {
     const { uid, mailbox } = propsValue;

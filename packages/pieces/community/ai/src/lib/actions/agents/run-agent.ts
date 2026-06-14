@@ -78,6 +78,7 @@ const agentToolArrayItems: ArraySubProps<boolean> = {
 }
 
 export const runAgent = createAction({
+  audience: 'human',
   name: 'run_agent',
   displayName: 'Run Agent',
   description: 'Handles complex, multi-step tasks by reasoning through problems, using tools accurately, and iterating until the job is done.',

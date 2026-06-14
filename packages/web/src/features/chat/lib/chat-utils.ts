@@ -1,4 +1,5 @@
 import {
+  ActionReceiptEvent,
   ChatHistoryMessage,
   isObject,
   PersistedChatMessage,
@@ -21,11 +22,51 @@ function humanizePieceName(raw: string): string {
   );
 }
 
-const TOOL_FALLBACK_LABELS: Record<string, string> = {
-  ap_execute_action: 'Running Action',
-  ap_discover_action_auth: 'Checking Connections',
-  ap_list_across_projects: 'Listing Resources',
-  ap_request_plan_approval: 'Requesting Approval',
+const TOOL_LABELS: Record<string, { active: string; done: string }> = {
+  ap_execute_action: { active: 'Running action', done: 'Ran action' },
+  ap_discover_action_auth: {
+    active: 'Checking connections',
+    done: 'Checked connections',
+  },
+  ap_list_across_projects: {
+    active: 'Listing resources',
+    done: 'Listed resources',
+  },
+  ap_research_pieces: {
+    active: 'Searching integrations',
+    done: 'Searched integrations',
+  },
+  ap_build_flow: { active: 'Building automation', done: 'Built automation' },
+  ap_create_flow: { active: 'Creating automation', done: 'Created automation' },
+  ap_validate_step_config: {
+    active: 'Validating setup',
+    done: 'Validated setup',
+  },
+  ap_validate_flow: {
+    active: 'Validating automation',
+    done: 'Validated automation',
+  },
+  ap_test_flow: { active: 'Testing automation', done: 'Tested automation' },
+  ap_add_step: { active: 'Adding step', done: 'Added step' },
+  ap_update_step: { active: 'Updating step', done: 'Updated step' },
+  ap_update_trigger: {
+    active: 'Updating starting event',
+    done: 'Updated starting event',
+  },
+  ap_manage_notes: { active: 'Adding notes', done: 'Added notes' },
+  ap_list_connections: {
+    active: 'Checking connections',
+    done: 'Checked connections',
+  },
+  ap_get_piece_props: { active: 'Loading settings', done: 'Loaded settings' },
+  ap_resolve_property_options: {
+    active: 'Loading options',
+    done: 'Loaded options',
+  },
+  ap_resolve_property_chain: {
+    active: 'Loading field options',
+    done: 'Loaded field options',
+  },
 };
 
 function cleanMcpToolName(raw: string): string {
@@ -54,7 +95,7 @@ function formatToolName({
   }
 
   const baseName =
-    TOOL_FALLBACK_LABELS[raw] ??
+    TOOL_LABELS[raw]?.active ??
     formatUtils.convertEnumToHumanReadable(raw.replace(/^ap_/, ''));
 
   if (!includeContext) return baseName;
@@ -189,6 +230,7 @@ function persistedPartToUIPart(
       };
     }
     case PersistedChatPartType.BATCH_PROGRESS:
+    case PersistedChatPartType.ACTION_RECEIPT:
       return { type: 'text', text: '' } as ChatUIMessage['parts'][number];
     default: {
       const _exhaustive: never = part;
@@ -254,11 +296,44 @@ function extractQuickRepliesFromHistory(messages: ChatUIMessage[]): string[] {
   return [];
 }
 
+function formatToolDoneTitle({ part }: { part: AnyToolPart }): string {
+  const input = isObject(part.input) ? part.input : undefined;
+  if (input && typeof input.doneTitle === 'string' && input.doneTitle) {
+    return input.doneTitle;
+  }
+  const raw = chatPartUtils.getToolPartName(part);
+  if (raw.startsWith('mcp__')) {
+    return cleanMcpToolName(raw);
+  }
+  return (
+    TOOL_LABELS[raw]?.done ??
+    formatUtils.convertEnumToHumanReadable(raw.replace(/^ap_/, ''))
+  );
+}
+
+function extractReceiptsFromHistory(
+  data: PersistedChatMessage[] | ChatHistoryMessage[],
+): Record<string, ActionReceiptEvent> {
+  const receipts: Record<string, ActionReceiptEvent> = {};
+  if (data.length === 0 || !isPersistedFormat(data)) return receipts;
+  for (const msg of data) {
+    for (const part of msg.parts) {
+      if (part.type === PersistedChatPartType.ACTION_RECEIPT) {
+        const { type: _, output, ...rest } = part;
+        receipts[part.toolCallId] = { ...rest, output: output ?? null };
+      }
+    }
+  }
+  return receipts;
+}
+
 export const chatUtils = {
   formatToolLabel: ({ part }: { part: AnyToolPart }) =>
     formatToolName({ part }),
   formatToolActionName: ({ part }: { part: AnyToolPart }) =>
     formatToolName({ part, includeContext: false }),
+  formatToolDoneTitle,
   mapHistoryToUIMessages,
   extractQuickRepliesFromHistory,
+  extractReceiptsFromHistory,
 };

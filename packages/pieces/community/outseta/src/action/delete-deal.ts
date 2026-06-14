@@ -7,6 +7,12 @@ export const deleteDealAction = createAction({
   auth: outsetaAuth,
   displayName: 'Delete Deal',
   description: 'Delete a deal from the CRM.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently deletes an Outseta CRM deal by its UID. Use to remove a deal you have the UID for. Destructive; repeating the call after the deal is gone will error rather than succeed silently.',
+    idempotent: false,
+  },
   props: {
     dealUid: Property.ShortText({
       displayName: 'Deal UID',

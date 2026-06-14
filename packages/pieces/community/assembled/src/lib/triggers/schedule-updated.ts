@@ -8,6 +8,9 @@ export const scheduleUpdated = createTrigger({
   name: 'schedule_updated',
   displayName: 'Schedule Updated',
   description: 'Triggers when user schedule is modified.',
+  aiMetadata: {
+    description: 'Fires when a user\'s schedule changes in Assembled (for example a shift added or modified), polling for schedule-update events since the last check. Use to react to scheduling changes such as added or edited shifts.',
+  },
   type: TriggerStrategy.POLLING,
   props: {},
   sampleData: {

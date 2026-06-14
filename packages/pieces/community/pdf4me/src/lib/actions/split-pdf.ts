@@ -36,6 +36,11 @@ export const splitPdfAction = createAction({
   name: 'split_pdf',
   displayName: 'Split PDF',
   description: 'Splits a PDF file into multiple documents using one of four split strategies.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Splits a PDF into multiple documents via the PDF4me API using one of four strategies selected by the Split Strategy prop: split after a given page, recurring split every N pages, split by a sequence of page counts, or split by custom ranges; the numeric prop controls the chosen strategy. Use when an agent needs to break one PDF into parts. The PDF file is required. A pure transformation that is idempotent — the same input and settings always produce the same parts with no stored side effect.',
+    idempotent: true,
+  },
   props: {
     file: Property.File({
       displayName: 'PDF File',
