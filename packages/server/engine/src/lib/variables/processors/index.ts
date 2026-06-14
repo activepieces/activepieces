@@ -6,7 +6,7 @@ import { numberProcessor } from './number'
 import { objectProcessor } from './object'
 import { textProcessor } from './text'
 import { ProcessorFn } from './types'
-import { checkboxProcessor } from './checkbox';
+import { checkboxProcessor } from './checkbox'
 
 export const processors: Partial<Record<PropertyType, ProcessorFn>> = {
     JSON: jsonProcessor,
