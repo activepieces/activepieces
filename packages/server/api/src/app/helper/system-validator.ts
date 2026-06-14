@@ -192,9 +192,6 @@ const systemPropValidators: {
 
     // On-call
     [AppSystemProp.PAGE_ONCALL_WEBHOOK]: urlValidator,
-
-    // Console
-    [AppSystemProp.CONSOLE_API_SECRET_KEY]: stringValidator,
 }
 
 

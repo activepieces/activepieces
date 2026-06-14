@@ -34,6 +34,7 @@ import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
 import { chatModule } from './ee/chat/chat.module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
+import { consoleUsageModule } from './ee/console-usage/console-usage-module'
 import { embedSubdomainModule } from './ee/embed-subdomain/embed-subdomain.module'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { globalConnectionModule } from './ee/global-connections/global-connection-module'
@@ -206,6 +207,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await aiProviderService(app.log).setup()
     await app.register(aiProviderModule)
     await app.register(licenseKeysModule)
+    await app.register(consoleUsageModule)
     await app.register(tablesModule)
     await app.register(knowledgeBaseModule)
     await app.register(userModule)

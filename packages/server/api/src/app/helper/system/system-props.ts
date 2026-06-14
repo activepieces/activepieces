@@ -123,7 +123,6 @@ export enum AppSystemProp {
     CONTAINER_TYPE = 'CONTAINER_TYPE',
     FRONTEND_URL = 'FRONTEND_URL',
     PORT = 'PORT',
-    CONSOLE_API_SECRET_KEY = 'CONSOLE_API_SECRET_KEY',
 }
 
 export enum ContainerType {
