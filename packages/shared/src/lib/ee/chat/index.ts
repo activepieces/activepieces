@@ -156,7 +156,6 @@ export type SendChatMessageRequest = z.infer<typeof SendChatMessageRequest>
 export const SimulateChatRequest = z.object({
     userMessage: z.string().min(1).max(51200),
     promptOverride: ChatPromptOverride,
-    conversationId: z.string().optional(),
     modelName: Nullable(z.string()).optional(),
 })
 export type SimulateChatRequest = z.infer<typeof SimulateChatRequest>

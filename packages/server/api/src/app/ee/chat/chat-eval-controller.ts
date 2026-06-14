@@ -21,6 +21,9 @@ import { chatPrompt } from './prompt/chat-prompt'
 
 const SIMULATION_POLL_INTERVAL_MS = 1_500
 const SIMULATION_MAX_ATTEMPTS = 80
+const SIMULATION_TIMEOUT_STATUS = 'TIMEOUT'
+
+type SimulationStatus = ChatConversationStatus | typeof SIMULATION_TIMEOUT_STATUS
 
 export const chatEvalController: FastifyPluginAsyncZod = async (app) => {
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.chatPlaygroundEnabled === true))
@@ -72,7 +75,7 @@ export const chatEvalController: FastifyPluginAsyncZod = async (app) => {
     })
 }
 
-async function waitForSimulationResult({ conversationId, platformId, userId, log }: { conversationId: string, platformId: string, userId: string, log: FastifyBaseLogger }): Promise<{ status: ChatConversationStatus, uiMessages: unknown[] | null }> {
+async function waitForSimulationResult({ conversationId, platformId, userId, log }: { conversationId: string, platformId: string, userId: string, log: FastifyBaseLogger }): Promise<{ status: SimulationStatus, uiMessages: unknown[] | null }> {
     for (let attempt = 0; attempt < SIMULATION_MAX_ATTEMPTS; attempt++) {
         await new Promise((resolve) => setTimeout(resolve, SIMULATION_POLL_INTERVAL_MS))
         const conversation = await chatService(log).getConversationOrThrow({ id: conversationId, platformId, userId })
@@ -84,8 +87,15 @@ async function waitForSimulationResult({ conversationId, platformId, userId, log
             return { status: conversation.status, uiMessages }
         }
     }
+    // Polling exhausted while the run is still streaming — surface a distinct TIMEOUT
+    // status so callers don't mistake an in-progress run for a completed empty result.
     const finalConversation = await chatService(log).getConversationOrThrow({ id: conversationId, platformId, userId })
-    return { status: finalConversation.status, uiMessages: finalConversation.uiMessages ?? null }
+    const uiMessages = finalConversation.uiMessages ?? null
+    if (finalConversation.status === ChatConversationStatus.ERROR || (finalConversation.status === ChatConversationStatus.IDLE && (uiMessages?.length ?? 0) > 0)) {
+        return { status: finalConversation.status, uiMessages }
+    }
+    log.warn({ conversationId }, 'Chat simulation timed out before completing')
+    return { status: SIMULATION_TIMEOUT_STATUS, uiMessages }
 }
 
 const PromptSourcesRoute = {
