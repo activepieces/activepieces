@@ -17,7 +17,7 @@ export const consoleUsageModule: FastifyPluginAsyncZod = async (app) => {
         },
         schedule: {
             type: 'repeated',
-            cron: '0 9 * * *',
+            cron: '0 15 * * *',
         },
     })
 }
