@@ -257,6 +257,20 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             connectionExternalIds: [sourceAppConnection.externalId],
         })
 
+        // Reject up-front (before mutating any flow) when the source connection
+        // can't be deleted because published versions we won't touch still use it.
+        const publishedFlowsUsingConnection = deleteSourceConnection && !applyToPublishedVersions
+            ? await appConnectionHandler(log).countPublishedFlowsReferencingConnection(flows.data, sourceAppConnection.externalId)
+            : 0
+        if (publishedFlowsUsingConnection > 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Cannot delete the old connection because it is still used by published flows that were not updated',
+                },
+            })
+        }
+
         await appConnectionHandler(log).updateFlowsWithAppConnection(flows.data, {
             appConnection: sourceAppConnection,
             newAppConnection: targetAppConnection,
@@ -268,16 +282,6 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
 
         if (!deleteSourceConnection) {
             return
-        }
-
-        const stillReferencedByPublishedFlows = !applyToPublishedVersions && flows.data.some((flow) => !isNil(flow.publishedVersionId))
-        if (stillReferencedByPublishedFlows) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'Cannot delete the old connection because it is still used by published flows that were not updated',
-                },
-            })
         }
 
         await this.delete({

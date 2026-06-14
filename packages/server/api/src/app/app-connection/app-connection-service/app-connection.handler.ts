@@ -1,10 +1,10 @@
-import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, assertNotNullOrUndefined, Flow, FlowOperationType, flowStructureUtil, FlowVersion, FlowVersionState, isNil, PlatformId, PopulatedFlow, ProjectId, UserId } from '@activepieces/shared'
+import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, assertNotNullOrUndefined, Flow, FlowOperationType, flowStructureUtil, FlowVersion, FlowVersionId, FlowVersionState, isNil, PlatformId, PopulatedFlow, ProjectId, UserId } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { ArrayContains } from 'typeorm'
+import { ArrayContains, In } from 'typeorm'
 import { distributedLock } from '../../database/redis-connections'
 import { flowService } from '../../flows/flow/flow.service'
-import { flowVersionService } from '../../flows/flow-version/flow-version.service'
+import { flowVersionRepo, flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { encryptUtils } from '../../helper/encryption'
 import { exceptionHandler } from '../../helper/exception-handler'
 import { projectService } from '../../project/project-service'
@@ -26,6 +26,19 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
             }
             await handleDraftVersion(flow, userId, flow.projectId, project.platformId, appConnection, newAppConnection, log)
         }))
+    },
+
+    async countPublishedFlowsReferencingConnection(flows: PopulatedFlow[], externalId: string): Promise<number> {
+        const publishedVersionIds = flows
+            .map((flow) => flow.publishedVersionId)
+            .filter((id): id is FlowVersionId => !isNil(id))
+        if (publishedVersionIds.length === 0) {
+            return 0
+        }
+        return flowVersionRepo().createQueryBuilder('flow_version')
+            .where({ id: In(publishedVersionIds) })
+            .andWhere('flow_version."connectionIds" && :externalIds', { externalIds: [externalId] })
+            .getCount()
     },
 
     async refresh(connection: AppConnection, projectId: ProjectId, log: FastifyBaseLogger): Promise<AppConnection> {
