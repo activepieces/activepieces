@@ -135,7 +135,7 @@ async function queryDailyExecutionsByPlatform(platformIds: string[], windowStart
     const map = new Map<string, DailyExecutionCount[]>()
     for (const row of rows) {
         const days = map.get(row.platformId) ?? []
-        days.push({ date: row.day, count: parseInt(row.count, 10) })
+        days.push({ date: row.day, count: Number(row.count) })
         map.set(row.platformId, days)
     }
     return map
@@ -149,19 +149,11 @@ async function queryLicenseKeysByPlatform(): Promise<Map<string, string>> {
         .where('platform_plan.licenseKey IS NOT NULL')
         .getRawMany<{ platformId: string, licenseKey: string }>()
 
-    const map = new Map<string, string>()
-    for (const row of rows) {
-        map.set(row.platformId, row.licenseKey)
-    }
-    return map
+    return new Map(rows.map((row): [string, string] => [row.platformId, row.licenseKey]))
 }
 
 function toCountMap(rows: { platformId: string, count: string }[]): Map<string, number> {
-    const map = new Map<string, number>()
-    for (const row of rows) {
-        map.set(row.platformId, parseInt(row.count, 10))
-    }
-    return map
+    return new Map(rows.map((row): [string, number] => [row.platformId, Number(row.count)]))
 }
 
 function buildSnapshotBody({
