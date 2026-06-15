@@ -32,6 +32,7 @@ const RETRY_BASE_DELAY_MS = 1_000
 const MAX_RESPONSE_OUTPUT_TOKENS = 32_000
 const MAX_AUTO_CONTINUATIONS = 3
 const MAX_EMPTY_CONTINUATIONS = 2
+const MAX_STREAM_RETRIES = 1
 const CONTINUE_NUDGE = '[system note — not from the user] Your previous response was cut off by the output token limit before it finished. Continue exactly where you stopped. If a tool call was cut off, re-issue it in FULL. Do not repeat content you already produced.'
 const EMPTY_OUTPUT_NUDGE = '[system note — not from the user] Your previous step produced no visible reply to the user. Continue the task now: either call the next tool, or write your reply to the user. Do not stop silently.'
 
@@ -48,6 +49,13 @@ export function decideLoopAction({ finishReason, producedVisibleOutput, continua
         return 'continue_empty'
     }
     return 'finish'
+}
+
+export function shouldRetryStream({ producedVisibleOutput, streamRetries }: {
+    producedVisibleOutput: boolean
+    streamRetries: number
+}): boolean {
+    return !producedVisibleOutput && streamRetries < MAX_STREAM_RETRIES
 }
 
 type LoopDecision = 'finish' | 'continue_truncation' | 'continue_empty'
@@ -119,6 +127,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             const accumulatedResponseMessages: ModelMessage[] = []
             let continuations = 0
             let emptyContinuations = 0
+            let streamRetries = 0
             let truncatedAfterRetries = false
             let usage: LanguageModelUsage | undefined
             let totalInputTokens = 0
@@ -193,7 +202,18 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 const uiPartsCountBefore = uiParts.length
                 const result = runStreamAttempt(llmMessages)
                 await streamChunksToClient({ result, ctx, userId, conversationId, runId, log })
-                if (abortController.signal.aborted || streamError) break
+                if (abortController.signal.aborted) break
+                if (streamError) {
+                    const producedVisibleOutput = uiParts.length > uiPartsCountBefore
+                    if (shouldRetryStream({ producedVisibleOutput, streamRetries })) {
+                        streamRetries++
+                        log.warn({ conversationId, streamRetries, err: streamError }, 'Chat stream failed before any visible output — retrying the turn')
+                        streamError = null
+                        await delayWithJitter(RETRY_BASE_DELAY_MS)
+                        continue
+                    }
+                    break
+                }
 
                 const [steps, attemptUsage, finishReason] = await Promise.all([
                     result.steps,
@@ -553,10 +573,13 @@ async function retryWithBackoff({ fn, maxAttempts = RETRY_MAX_ATTEMPTS, log }: {
             log?.warn({ err: error, attempt }, 'All retry attempts exhausted')
             return
         }
-        const jitter = Math.random() * 0.5 + 0.75
-        const delayMs = RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1) * jitter
-        await new Promise((resolve) => setTimeout(resolve, delayMs))
+        await delayWithJitter(RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1))
     }
+}
+
+function delayWithJitter(baseMs: number): Promise<void> {
+    const jitter = Math.random() * 0.5 + 0.75
+    return new Promise((resolve) => setTimeout(resolve, baseMs * jitter))
 }
 
 type GateDecision = {
