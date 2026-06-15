@@ -41,6 +41,7 @@ import { distributedLock } from '../../database/redis-connections'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import Paginator, { Order } from '../../helper/pagination/paginator'
+import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { SystemJobName } from '../../helper/system-jobs/common'
@@ -85,15 +86,15 @@ export const flowService = (log: FastifyBaseLogger) => ({
             },
         )
 
-        telemetry(log).trackProject(savedFlow.projectId, {
-            name: TelemetryEventName.CREATED_FLOW,
-            payload: {
-                flowId: savedFlow.id,
-            },
-        })
-            .catch((e) =>
-                log.error({ err: e }, 'Failed to track project telemetry'),
-            )
+        rejectedPromiseHandler(
+            telemetry(log).trackProject(savedFlow.projectId, {
+                name: TelemetryEventName.CREATED_FLOW,
+                payload: {
+                    flowId: savedFlow.id,
+                },
+            }),
+            log,
+        )
 
         log.info({ flowId: savedFlow.id, projectId, displayName: request.displayName }, 'Flow created')
         return {
