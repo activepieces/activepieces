@@ -1,5 +1,92 @@
-import { describe, expect, it } from 'vitest'
-import { egressNetnsInternals } from '../../../src/lib/egress/netns'
+import { ApLogger } from '@activepieces/server-utils'
+import { ActivepiecesError } from '@activepieces/shared'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+
+const spawnWithKill = vi.fn<(args: { cmd: string, args: string[], timeoutMs: number }) => Promise<{ stdout: string, stderr: string }>>()
+
+vi.mock('../../../src/lib/utils/exec', () => ({
+    spawnWithKill: (args: { cmd: string, args: string[], timeoutMs: number }) => spawnWithKill(args),
+}))
+
+import { egressNetns, egressNetnsInternals } from '../../../src/lib/egress/netns'
+
+const noop = () => undefined
+const log: ApLogger = {
+    get level() { return 'silent' },
+    set level(_v) { /* no-op */ },
+    silent: noop,
+    info: noop,
+    warn: noop,
+    error: noop,
+    fatal: noop,
+    debug: noop,
+    trace: noop,
+    child() { return log },
+}
+
+function callArgsLine(call: { cmd: string, args: string[] }): string {
+    return `${call.cmd} ${call.args.join(' ')}`
+}
+
+async function captureRejection(fn: () => Promise<unknown>): Promise<{ rejection: unknown }> {
+    try {
+        await fn()
+        return { rejection: undefined }
+    }
+    catch (rejection) {
+        return { rejection }
+    }
+}
+
+describe('egressNetns.create — fail-loud + rollback', () => {
+    afterEach(() => {
+        spawnWithKill.mockReset()
+    })
+
+    it('throws ActivepiecesError when the `ip` binary is unavailable (does NOT silently no-op)', async () => {
+        // `ip -V` (assertIpAvailable) is the very first call; reject it to simulate a missing binary.
+        spawnWithKill.mockImplementation(async ({ args }) => {
+            if (args[0] === '-V') throw new Error('spawn ip ENOENT')
+            return { stdout: '', stderr: '' }
+        })
+
+        const { rejection } = await captureRejection(() => egressNetns.create({ log }))
+        expect(rejection).toBeInstanceOf(ActivepiecesError)
+        expect((rejection as Error).message).toMatch(/iproute2 "ip" binary not available/)
+    })
+
+    it('throws ActivepiecesError AND rolls back (runs destroy commands) when a create step fails', async () => {
+        spawnWithKill.mockImplementation(async ({ args }) => {
+            // assertIpAvailable + preflightCleanup pass; fail the first real create step (netns add).
+            if (args[0] === '-V') return { stdout: '', stderr: '' }
+            if (args[0] === 'netns' && args[1] === 'add') throw new Error('RTNETLINK answers: Operation not permitted')
+            return { stdout: '', stderr: '' }
+        })
+
+        await expect(egressNetns.create({ log })).rejects.toBeInstanceOf(ActivepiecesError)
+
+        const lines = spawnWithKill.mock.calls.map((c) => callArgsLine(c[0]))
+        // Rollback must have torn down both the netns and the host veth after the failure.
+        expect(lines).toContain('ip netns del ap-egress')
+        expect(lines).toContain('ip link del ap-veth-host')
+    })
+
+    it('returns a working namespace + destroy handle on the happy path', async () => {
+        spawnWithKill.mockResolvedValue({ stdout: '', stderr: '' })
+
+        const ns = await egressNetns.create({ log })
+        expect(ns.netnsName).toBe('ap-egress')
+        expect(ns.gatewayHost).toBe('10.255.0.1')
+
+        const createLines = spawnWithKill.mock.calls.map((c) => callArgsLine(c[0]))
+        expect(createLines).toContain('ip netns add ap-egress')
+
+        spawnWithKill.mockClear()
+        await ns.destroy()
+        const destroyLines = spawnWithKill.mock.calls.map((c) => callArgsLine(c[0]))
+        expect(destroyLines).toEqual(['ip netns del ap-egress', 'ip link del ap-veth-host'])
+    })
+})
 
 describe('egress netns command builder', () => {
     it('creates the namespace, the veth pair, and brings up the /30 link in order', () => {
