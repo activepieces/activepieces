@@ -356,7 +356,7 @@ export const createFlowState = (
             sameStepOperation(operation, prevOp) &&
             now - state.lastCoalesceTimeMs < COALESCE_THRESHOLD_MS
           ) {
-            undoStack = [...undoStack.slice(0, -1), snapshot];
+            // Coalescing: keep the first snapshot from the burst
           } else {
             undoStack = [...undoStack, snapshot];
           }

@@ -177,7 +177,7 @@ const StepSettingsContainer = () => {
       currentValuesRef.current = JSON.parse(JSON.stringify(selectedStep));
       form.reset(selectedStep);
     }
-  }, [undoRedoRevision]);
+  }, [undoRedoRevision, selectedStep, form]);
 
   const showTestPanel = showGenerateSampleData || showStepInputOutFromRun;
 
