@@ -109,11 +109,9 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
                 '--share-net',
                 `--box-id=${boxId}`,
                 '--processes',
-                // isolate defaults RLIMIT_NOFILE to 64, which is far too low for a Node
-                // runtime importing real pieces. Heavy dependency trees (e.g. the AI piece:
-                // ai + 8 @ai-sdk providers + MCP SDK, resolved through bun's isolated-linker
-                // symlink farm) blow past 64 concurrent fds on import and throw EMFILE.
-                `--open-files=${SANDBOX_OPEN_FILES_LIMIT}`,
+                // isolate defaults RLIMIT_NOFILE to 64, too few for Node + heavy piece imports
+                // (e.g. the AI piece). Bounded so a runaway fd leak in untrusted code is still contained.
+                '--open-files=4096',
                 '--chdir=/root',
                 ...envArgs,
                 '--run',

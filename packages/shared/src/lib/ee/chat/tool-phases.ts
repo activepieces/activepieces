@@ -45,12 +45,6 @@ const BUILD_ONLY_TOOL_NAMES = new Set<string>([
 const CHAT_HIDDEN_TOOL_NAMES = new Set<string>([
     'ap_create_flow',
     'ap_run_action',
-    'ap_create_table',
-    'ap_insert_records',
-    'ap_update_record',
-    'ap_delete_records',
-    'ap_manage_fields',
-    'ap_delete_table',
     'ap_set_project_context',
     'ap_setup_guide',
 ])
