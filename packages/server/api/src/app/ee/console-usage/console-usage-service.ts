@@ -15,6 +15,7 @@ const CONSOLE_API_URL = 'https://console.activepieces.com'
 const ERROR_WEBHOOK_URL = 'https://cloud.activepieces.com/api/v1/webhooks/LUZWYN4Y0tpwxxxN4XQaL'
 const REQUEST_TIMEOUT_MS = 30000
 const SNAPSHOT_BATCH_SIZE = 25
+const EXECUTIONS_PROJECT_CHUNK_SIZE = 100
 
 export const consoleUsageService = (log: FastifyBaseLogger) => ({
     /**
@@ -148,12 +149,12 @@ async function queryTeamProjectsByPlatform(platformIds: string[]): Promise<Map<s
 }
 
 /**
- * Counts only production runs because test runs (RunEnvironment.TESTING) are not billable. Mirrors the
- * run-telemetry job: aggregate flow_run bounded only by `created` (+ environment) and grouped by
- * projectId, with NO join to project. Joining on project.platformId is what defeated the
- * flow_run (projectId, environment, created, ...) indexes and tripped the DB statement timeout; a
- * plain created-bounded aggregate plans cleanly. Projects are mapped to platforms in app code, so only
- * the licensed platforms' runs are kept.
+ * Counts only production runs because test runs (RunEnvironment.TESTING) are not billable. Scopes the
+ * scan to the licensed platforms' projects and filters flow_run on projectId — which is what lets
+ * PostgreSQL use the flow_run (projectId, environment, created, ...) indexes. A platformId join leaves
+ * the index unusable (whole-table scan), and an unscoped created-only scan reads every platform's runs
+ * cloud-wide; both trip the DB statement timeout. The projectIds are chunked so each aggregate stays
+ * small and bounded. Projects are mapped back to platforms in app code.
  */
 async function queryDailyExecutionsByPlatform(platformIds: string[], dayStart: string, dayEnd: string): Promise<Map<string, DailyExecutionCount[]>> {
     const projects = await projectRepo()
@@ -164,28 +165,31 @@ async function queryDailyExecutionsByPlatform(platformIds: string[], dayStart: s
         .getRawMany<{ projectId: string, platformId: string }>()
 
     const platformByProject = new Map(projects.map((project): [string, string] => [project.projectId, project.platformId]))
-
-    const rows = await flowRunRepo()
-        .createQueryBuilder('flow_run')
-        .select('flow_run.projectId', 'projectId')
-        .addSelect('to_char(flow_run.created AT TIME ZONE \'UTC\', \'YYYY-MM-DD\')', 'day')
-        .addSelect('COUNT(*)', 'count')
-        .where('flow_run.environment = :environment', { environment: RunEnvironment.PRODUCTION })
-        .andWhere('flow_run.created >= :dayStart', { dayStart })
-        .andWhere('flow_run.created < :dayEnd', { dayEnd })
-        .groupBy('flow_run.projectId')
-        .addGroupBy('to_char(flow_run.created AT TIME ZONE \'UTC\', \'YYYY-MM-DD\')')
-        .getRawMany<{ projectId: string, day: string, count: string }>()
-
     const countsByPlatformDay = new Map<string, Map<string, number>>()
-    for (const row of rows) {
-        const platformId = platformByProject.get(row.projectId)
-        if (!platformId) {
-            continue
+
+    for (const projectIds of chunk(projects.map((project) => project.projectId), EXECUTIONS_PROJECT_CHUNK_SIZE)) {
+        const rows = await flowRunRepo()
+            .createQueryBuilder('flow_run')
+            .select('flow_run.projectId', 'projectId')
+            .addSelect('to_char(flow_run.created AT TIME ZONE \'UTC\', \'YYYY-MM-DD\')', 'day')
+            .addSelect('COUNT(*)', 'count')
+            .where('flow_run.projectId IN (:...projectIds)', { projectIds })
+            .andWhere('flow_run.environment = :environment', { environment: RunEnvironment.PRODUCTION })
+            .andWhere('flow_run.created >= :dayStart', { dayStart })
+            .andWhere('flow_run.created < :dayEnd', { dayEnd })
+            .groupBy('flow_run.projectId')
+            .addGroupBy('to_char(flow_run.created AT TIME ZONE \'UTC\', \'YYYY-MM-DD\')')
+            .getRawMany<{ projectId: string, day: string, count: string }>()
+
+        for (const row of rows) {
+            const platformId = platformByProject.get(row.projectId)
+            if (!platformId) {
+                continue
+            }
+            const dayCounts = countsByPlatformDay.get(platformId) ?? new Map<string, number>()
+            dayCounts.set(row.day, (dayCounts.get(row.day) ?? 0) + Number(row.count))
+            countsByPlatformDay.set(platformId, dayCounts)
         }
-        const dayCounts = countsByPlatformDay.get(platformId) ?? new Map<string, number>()
-        dayCounts.set(row.day, (dayCounts.get(row.day) ?? 0) + Number(row.count))
-        countsByPlatformDay.set(platformId, dayCounts)
     }
 
     const map = new Map<string, DailyExecutionCount[]>()
