@@ -20,6 +20,7 @@ import {
     isNil,
     JobPayload,
     LATEST_JOB_DATA_SCHEMA_VERSION,
+    LogSliceRef,
     PlatformId,
     ProjectId,
     ResumeReason,
@@ -27,7 +28,9 @@ import {
     RunInternalError,
     SampleDataFileType,
     SeekPage,
+    StepOutput,
     StepOutputStatus,
+    StepOutputType,
     StreamStepProgress,
     WorkerJobType,
 } from '@activepieces/shared'
@@ -164,6 +167,9 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 const flowVersion = await flowVersionService(log).getOneOrThrow(oldFlowRun.flowVersionId)
                 const triggerStep = oldFlowRun.steps?.[flowVersion.trigger.name]
                 const triggerFailed = triggerStep?.status === StepOutputStatus.FAILED
+                const triggerPayload = triggerFailed
+                    ? await resolveStepOutput({ step: triggerStep, flowRun: oldFlowRun, log })
+                    : undefined
 
                 await flowRunRepo().update({
                     id: oldFlowRun.id,
@@ -180,7 +186,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     return addToQueue({
                         flowRun: updatedFlowRun,
                         platformId,
-                        payload: triggerStep.output,
+                        payload: triggerPayload,
                         streamStepProgress: StreamStepProgress.NONE,
                         executeTrigger: true,
                         executionType: ExecutionType.BEGIN,
@@ -204,7 +210,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 )
                 const triggerStep = oldFlowRun.steps?.[latestFlowVersion.trigger.name]
                 const triggerFailed = triggerStep?.status === StepOutputStatus.FAILED
-                const payload = triggerStep?.output
+                const payload = await resolveStepOutput({ step: triggerStep, flowRun: oldFlowRun, log })
                 return this.start({
                     flowId: oldFlowRun.flowId,
                     payload,
@@ -635,6 +641,32 @@ function queryBuilderForFlowRun(repo: Repository<FlowRun>): SelectQueryBuilder<F
         .addSelect(['"flowVersion"."displayName"'])
 }
 
+async function resolveStepOutput({ step, flowRun, log }: ResolveStepOutputParams): Promise<unknown> {
+    if (isNil(step)) {
+        return undefined
+    }
+    if (step.outputType !== StepOutputType.SLICE) {
+        return step.output
+    }
+    const ref = step.output as LogSliceRef
+    const file = await fileService(log).getDataOrUndefined({
+        projectId: flowRun.projectId,
+        fileId: ref.fileId,
+        type: FileType.FLOW_RUN_LOG_SLICE,
+    })
+    if (isNil(file)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: {
+                entityType: 'file',
+                entityId: ref.fileId,
+                message: `Trigger output was offloaded to storage but its slice file is missing; flow run ${flowRun.id} cannot be retried without the trigger payload`,
+            },
+        })
+    }
+    return JSON.parse(file.data.toString('utf-8'))
+}
+
 async function readLogsFile(log: FastifyBaseLogger, logsFileId: string, projectId: string): Promise<ExecutioOutputFile | null> {
     const result = await fileService(log).getDataOrUndefined({
         projectId,
@@ -709,6 +741,12 @@ type ListParams = {
 type GetOneParams = {
     id: FlowRunId
     projectId: ProjectId | undefined
+}
+
+type ResolveStepOutputParams = {
+    step: StepOutput | undefined
+    flowRun: FlowRun
+    log: FastifyBaseLogger
 }
 
 type AddToQueueParamsCommon = {
