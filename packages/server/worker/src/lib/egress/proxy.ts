@@ -1,6 +1,7 @@
 import dns from 'node:dns/promises'
 import http from 'node:http'
 import net from 'node:net'
+import { type Duplex } from 'node:stream'
 import { type ApLogger } from '@activepieces/server-utils'
 import { ssrfIpClassifier } from '@activepieces/shared'
 
@@ -181,7 +182,7 @@ function parseForwardUrl(rawUrl: string): URL | null {
     }
 }
 
-function writeSocketStatus({ socket, status, message }: { socket: net.Socket, status: number, message: string }): void {
+function writeSocketStatus({ socket, status, message }: { socket: Duplex, status: number, message: string }): void {
     if (!socket.writable) {
         socket.destroy()
         return
@@ -219,7 +220,7 @@ type ResolvePinParams = {
 
 type ConnectParams = {
     req: http.IncomingMessage
-    clientSocket: net.Socket
+    clientSocket: Duplex
     head: Buffer
     allowList: string[]
     log: ApLogger
