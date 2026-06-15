@@ -104,7 +104,7 @@ export function createSandbox(
             }
         })
 
-        httpServer.listen(options.wsRpcPort ?? 0)
+        httpServer.listen(options.wsRpcPort ?? 0, options.wsRpcHost)
 
         const address = httpServer.address()
         if (typeof address === 'object' && address !== null) {

@@ -31,7 +31,8 @@ function clearInitialConnectWatchdog(): void {
 
 export const workerSocket = {
     init: (sandboxId: string): void => {
-        const wsUrl = `ws://127.0.0.1:${process.env.AP_SANDBOX_WS_PORT ?? '12345'}`
+        const wsHost = process.env.AP_SANDBOX_WS_HOST ?? '127.0.0.1'
+        const wsUrl = `ws://${wsHost}:${process.env.AP_SANDBOX_WS_PORT ?? '12345'}`
         socket = io(wsUrl, buildSocketOptions(sandboxId))
 
         // Without this watchdog, if the parent worker is SIGKILLed (OOM, crash) before
