@@ -1,8 +1,8 @@
 import { Property, ServerContext, createAction } from '@activepieces/pieces-framework';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { amazonS3CombinedAuth, AccessKeyAuthProps, OidcAuthProps } from '../auth';
-import { createS3, createS3WithAssumeRole, MAX_STS_DURATION_SECONDS, MIN_STS_DURATION_SECONDS } from '../common';
+import { amazonS3CombinedAuth, AccessKeyAuthProps, OidcAuthProps, S3AuthProps } from '../auth';
+import { createS3, createS3WithAssumeRole, isOidcAuth, MAX_STS_DURATION_SECONDS, MIN_STS_DURATION_SECONDS } from '../common';
 
 export const generateSignedUrl = createAction({
   auth: amazonS3CombinedAuth,
@@ -28,10 +28,10 @@ export const generateSignedUrl = createAction({
     }),
   },
   async run(context) {
-    const authProps = context.auth.props as AccessKeyAuthProps | OidcAuthProps;
+    const authProps: S3AuthProps = context.auth.props;
     const { key, expiresIn } = context.propsValue;
 
-    const clientUrl = 'roleArn' in authProps
+    const clientUrl = isOidcAuth(authProps)
       ? await createPresignedUrlWithAssumeRole({ auth: authProps, server: context.server, key, expiresIn })
       : await createPresignedUrlWithClient({ auth: authProps, key, expiresIn });
 

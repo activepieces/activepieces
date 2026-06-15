@@ -1,11 +1,27 @@
-import { Property, createTrigger } from '@activepieces/pieces-framework';
-import { TriggerStrategy } from '@activepieces/pieces-framework';
-import { ListObjectsV2CommandInput } from '@aws-sdk/client-s3';
+import { AppConnectionValueForAuthProperty, Property, ServerContext, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { ListObjectsV2CommandInput, S3 } from '@aws-sdk/client-s3';
 import { MarkdownVariant } from '@activepieces/shared';
-import { S3 } from '@aws-sdk/client-s3';
 import dayjs from 'dayjs';
-import { amazonS3CombinedAuth, AccessKeyAuthProps, OidcAuthProps } from '../auth';
+import { amazonS3CombinedAuth, S3AuthProps } from '../auth';
 import { resolveS3Client } from '../common';
+
+const createPolling = (
+  server: ServerContext,
+): Polling<AppConnectionValueForAuthProperty<typeof amazonS3CombinedAuth>, { folderPath?: string }> => ({
+  strategy: DedupeStrategy.TIMEBASED,
+  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
+    const authProps: S3AuthProps = auth.props;
+    const s3 = await resolveS3Client({ authProps, server });
+    const files = await fetchS3FilesForTrigger({
+      s3,
+      bucket: authProps.bucket,
+      folderPath: propsValue.folderPath,
+      isTest: lastFetchEpochMS === 0,
+    });
+    return files.filter((f) => Number.isFinite(f.epochMilliSeconds));
+  },
+});
 
 export const newFile = createTrigger({
   auth: amazonS3CombinedAuth,
@@ -27,24 +43,34 @@ export const newFile = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   onEnable: async (context) => {
-    await context.store.put('lastPoll', Date.now());
+    await pollingHelper.onEnable(createPolling(context.server), {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+    });
   },
-  onDisable: async () => {},
+  onDisable: async (context) => {
+    await pollingHelper.onDisable(createPolling(context.server), {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+    });
+  },
   run: async (context) => {
-    const authProps = context.auth.props as AccessKeyAuthProps | OidcAuthProps;
-    const s3 = await resolveS3Client({ authProps, server: context.server });
-    const lastFetchEpochMS = (await context.store.get<number>('lastPoll')) ?? 0;
-    const items = await fetchS3FilesForTrigger({ s3, bucket: authProps.bucket, folderPath: context.propsValue.folderPath, isTest: false });
-    const validItems = items.filter((f) => Number.isFinite(f.epochMilliSeconds));
-    const newLastEpochMS = validItems.reduce((acc, f) => Math.max(acc, f.epochMilliSeconds), lastFetchEpochMS);
-    await context.store.put('lastPoll', newLastEpochMS);
-    return validItems.filter((f) => f.epochMilliSeconds > lastFetchEpochMS).map((item) => item.data);
+    return pollingHelper.poll(createPolling(context.server), {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+      files: context.files,
+    });
   },
   test: async (context) => {
-    const authProps = context.auth.props as AccessKeyAuthProps | OidcAuthProps;
-    const s3 = await resolveS3Client({ authProps, server: context.server });
-    const items = await fetchS3FilesForTrigger({ s3, bucket: authProps.bucket, folderPath: context.propsValue.folderPath, isTest: true });
-    return items.map((item) => item.data);
+    return pollingHelper.test(createPolling(context.server), {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+      files: context.files,
+    });
   },
   sampleData: {
     Key: 'myfolder/100-3.png',

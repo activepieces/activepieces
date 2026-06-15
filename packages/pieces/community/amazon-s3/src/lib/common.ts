@@ -3,7 +3,7 @@ import { S3 } from '@aws-sdk/client-s3';
 import { SecretsManagerClient } from '@aws-sdk/client-secrets-manager';
 import { AssumeRoleWithWebIdentityCommand, STSClient } from '@aws-sdk/client-sts';
 import { ServerContext } from '@activepieces/pieces-framework';
-import { AccessKeyAuthProps, OidcAuthProps } from './auth';
+import { AccessKeyAuthProps, OidcAuthProps, S3AuthProps } from './auth';
 
 const AWS_STS_AUDIENCE = 'sts.amazonaws.com';
 
@@ -55,30 +55,18 @@ export async function createS3WithAssumeRole({
   });
 }
 
-export async function createSecretsManagerWithAssumeRole({
-  auth,
-  server,
-  region,
-}: {
-  auth: OidcAuthProps;
-  server: ServerContext;
-  region?: string;
-}): Promise<SecretsManagerClient> {
-  const credentials = await getTemporaryCredentials({ auth, server });
-  return new SecretsManagerClient({
-    credentials,
-    region: region ?? auth.region,
-  });
+export function isOidcAuth(authProps: S3AuthProps): authProps is OidcAuthProps {
+  return 'roleArn' in authProps;
 }
 
 export async function resolveS3Client({
   authProps,
   server,
 }: {
-  authProps: AccessKeyAuthProps | OidcAuthProps;
+  authProps: S3AuthProps;
   server: ServerContext;
 }): Promise<S3> {
-  return 'roleArn' in authProps
+  return isOidcAuth(authProps)
     ? createS3WithAssumeRole({ auth: authProps, server })
     : createS3(authProps);
 }
@@ -95,6 +83,16 @@ export async function getTemporaryCredentials({
   if (!auth.roleArn) {
     throw new Error('Role ARN is required for IAM Role authentication');
   }
+  const clampedDuration = Math.min(Math.max(durationSeconds, MIN_STS_DURATION_SECONDS), MAX_STS_DURATION_SECONDS);
+
+  // Scoped by server.token (unique per flow execution) so credentials are never reused
+  // across projects/tenants, only across steps within the same run.
+  const cacheKey = `${server.token}:${auth.roleArn}:${auth.region}:${clampedDuration}`;
+  const cached = credentialsCache.get(cacheKey);
+  if (cached && cached.expiresAtMS - Date.now() > CREDENTIALS_EXPIRY_MARGIN_MS) {
+    return cached.credentials;
+  }
+
   const response = await fetch(`${server.apiUrl}v1/worker/oidc-token`, {
     method: 'POST',
     headers: {
@@ -108,7 +106,6 @@ export async function getTemporaryCredentials({
   }
   const { token } = (await response.json()) as { token: string };
 
-  const clampedDuration = Math.min(Math.max(durationSeconds, MIN_STS_DURATION_SECONDS), MAX_STS_DURATION_SECONDS);
   const sts = new STSClient({ region: auth.region });
   const { Credentials } = await sts.send(
     new AssumeRoleWithWebIdentityCommand({
@@ -121,14 +118,40 @@ export async function getTemporaryCredentials({
   if (!Credentials?.AccessKeyId || !Credentials.SecretAccessKey) {
     throw new Error('Failed to assume role: no credentials returned');
   }
-  return {
+  const credentials = {
     accessKeyId: Credentials.AccessKeyId,
     secretAccessKey: Credentials.SecretAccessKey,
     sessionToken: Credentials.SessionToken,
   };
+  const expiresAtMS = Credentials.Expiration?.getTime() ?? Date.now() + clampedDuration * 1000;
+  sweepExpiredCredentials();
+  credentialsCache.set(cacheKey, { credentials, expiresAtMS });
+  return credentials;
+}
+
+function sweepExpiredCredentials() {
+  const now = Date.now();
+  for (const [key, value] of credentialsCache) {
+    if (value.expiresAtMS <= now) {
+      credentialsCache.delete(key);
+    }
+  }
 }
 
 const DEFAULT_STS_DURATION_SECONDS = 3600;
+const CREDENTIALS_EXPIRY_MARGIN_MS = 5 * 60 * 1000;
+const credentialsCache = new Map<string, CachedCredentials>();
 
 export const MIN_STS_DURATION_SECONDS = 900;
 export const MAX_STS_DURATION_SECONDS = 43200;
+
+type TemporaryCredentials = {
+  accessKeyId: string;
+  secretAccessKey: string;
+  sessionToken: string | undefined;
+};
+
+type CachedCredentials = {
+  credentials: TemporaryCredentials;
+  expiresAtMS: number;
+};

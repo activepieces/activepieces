@@ -45,7 +45,7 @@ Activepieces acts as an OIDC identity provider. AWS trusts this provider and iss
 3. Attach S3 permissions to the role and paste the **Role ARN** below.
 `;
 
-export const AWS_REGIONS = [
+const AWS_REGIONS = [
   {
     label: 'Default',
     value: 'us-east-1',
@@ -265,3 +265,5 @@ export type OidcAuthProps = {
   bucket: string;
   region: string;
 };
+
+export type S3AuthProps = AccessKeyAuthProps | OidcAuthProps;

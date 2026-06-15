@@ -2,8 +2,8 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { GetSecretValueCommand, SecretsManagerClient } from '@aws-sdk/client-secrets-manager';
 import { S3 } from '@aws-sdk/client-s3';
 import * as openpgp from 'openpgp';
-import { amazonS3CombinedAuth, AccessKeyAuthProps, OidcAuthProps } from '../auth';
-import { createS3, createSecretsManagerClient, getTemporaryCredentials } from '../common';
+import { amazonS3CombinedAuth, S3AuthProps } from '../auth';
+import { createS3, createSecretsManagerClient, getTemporaryCredentials, isOidcAuth } from '../common';
 
 export const decryptPgpFile = createAction({
   auth: amazonS3CombinedAuth,
@@ -50,21 +50,19 @@ export const decryptPgpFile = createAction({
     }),
   },
   async run(context) {
-    const authProps = context.auth.props as AccessKeyAuthProps | OidcAuthProps;
+    const authProps: S3AuthProps = context.auth.props;
     const { bucket } = authProps;
     const { key, secretArn, passphraseArn, secretsManagerRegion, allowUnauthenticatedMessages, allowInsecureDecryptionWithSigningKeys } = context.propsValue;
 
     let s3: S3;
     let secretsClient: SecretsManagerClient;
-    if ('roleArn' in authProps) {
-      const oidcProps = authProps;
-      const credentials = await getTemporaryCredentials({ auth: oidcProps, server: context.server });
-      s3 = new S3({ credentials, region: oidcProps.region });
-      secretsClient = new SecretsManagerClient({ credentials, region: secretsManagerRegion || oidcProps.region });
+    if (isOidcAuth(authProps)) {
+      const credentials = await getTemporaryCredentials({ auth: authProps, server: context.server });
+      s3 = new S3({ credentials, region: authProps.region });
+      secretsClient = new SecretsManagerClient({ credentials, region: secretsManagerRegion || authProps.region });
     } else {
-      const accessKeyProps = authProps as AccessKeyAuthProps;
-      const smAuth = secretsManagerRegion ? { ...accessKeyProps, region: secretsManagerRegion } : accessKeyProps;
-      s3 = createS3(accessKeyProps);
+      const smAuth = secretsManagerRegion ? { ...authProps, region: secretsManagerRegion } : authProps;
+      s3 = createS3(authProps);
       secretsClient = createSecretsManagerClient(smAuth);
     }
 
