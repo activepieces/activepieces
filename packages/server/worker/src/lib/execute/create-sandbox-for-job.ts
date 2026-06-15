@@ -140,8 +140,8 @@ function proxyEnv({ proxyPort, gatewayHost }: { proxyPort: number | null, gatewa
     }
     // Never export standard HTTP_PROXY / HTTPS_PROXY env vars: axios's built-in
     // proxy-from-env path sends `GET https://…` absolute-URL requests to an HTTP
-    // proxy instead of issuing CONNECT, which proxy-chain rejects with 400
-    // "Only HTTP protocol is supported". AP_EGRESS_PROXY_URL is a private signal
+    // proxy instead of issuing CONNECT, which the egress proxy rejects with 400
+    // (only absolute http:// forward URLs are supported). AP_EGRESS_PROXY_URL is a private signal
     // read by the engine to install http/https globalAgent + undici ProxyAgent.
     // The proxy binds to the gateway veth IP (loopback is unreachable from the netns).
     return {

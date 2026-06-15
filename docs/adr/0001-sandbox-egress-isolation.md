@@ -53,11 +53,14 @@ inside the Docker image (Tier 3a)**:
 4. All in-sandbox name resolution goes through the proxy via `CONNECT host:443`
    (the proxy resolves); the sandbox never queries an upstream resolver. This
    folds in "Tier 2" and removes the `resolv.conf` machinery entirely.
-5. **Hard condition:** the proxy's upstream connection is **pinned to the IP it
-   validated** — resolve once, validate, dial that IP (custom dialer, or wrap the
-   upstream socket with `request-filtering-agent` as the app-level `safeHttp`
-   already does). Without this the proxy keeps its documented DNS-rebind TOCTOU
-   (`proxy.ts:28-29`), which under Tier 3 becomes the *single* line of defense.
+5. **Hard condition (DONE):** the proxy's upstream connection is **pinned to the
+   IP it validated** — resolve once, validate every A/AAAA record, dial that IP.
+   `proxy.ts` is a small custom forward proxy (Node `http` server + `connect`
+   event) that resolves the hostname once, rejects if any resolved record is
+   blocked, then dials the validated IP for both CONNECT (TLS SNI still tunnels
+   through the client) and plain HTTP-forward (original `Host` header preserved).
+   This closes the DNS-rebind TOCTOU that the previous proxy-chain path left open,
+   which under Tier 3 was the *single* line of defense.
 
 The sandbox's entire reachable universe becomes **one `/30` peer IP** hosting the
 proxy + RPC. Egress restriction is now a **topological fact** (no route exists),
@@ -89,7 +92,7 @@ and stock `ip`/iproute2 primitives in the image.
 | Direct connect to private/metadata IP | iptables (fragile) | no route — blocked | no route — blocked |
 | Bypass via native / non-Node code | weak (hooks miss it) | blocked (no route) | blocked |
 | Private IP behind allowlisted host | proxy filter ✓ | proxy filter ✓ | proxy filter ✓ |
-| DNS rebind (TOCTOU) | open | open | **closed** |
+| DNS rebind (TOCTOU) | open | open | **closed (proxy.ts pins the validated IP)** |
 | Environmental drift (deploy outages) | recurring | gone | gone |
 
 Tier 3 is only complete SSRF protection **with** the IP-pinning condition; the
@@ -125,11 +128,12 @@ create `ap-egress`, veth `/30`, single route, then
 `ip netns exec ap-egress isolate --share-net … curl` reaches an allowlisted host
 and fails closed to a private IP.
 
-**Phase 1 — Proxy IP-pinning (independently shippable, do first).** Close the
-DNS-rebind TOCTOU in `proxy.ts`: resolve once → validate → dial the validated IP
-(or wrap the upstream socket with `request-filtering-agent`). Add a rebind test
-(public at check time, private at connect time → blocked). Valuable on its own
-and de-risks Tier 3.
+**Phase 1 — Proxy IP-pinning (DONE).** Closed the DNS-rebind TOCTOU in
+`proxy.ts`: resolve once → validate every A/AAAA record → dial the validated IP.
+Implemented as a small custom forward proxy (replacing proxy-chain, whose public
+hook could not expose the upstream socket to pin both HTTP-forward and CONNECT).
+Rebind test: validation captures the resolved IP, the resolver is then flipped to
+a private IP, and the test asserts the dial still targets the pinned IP.
 
 **Phase 2 — Proxy-resolved DNS (Tier 2 mechanic).** Route all in-sandbox name
 resolution through the proxy via `CONNECT`-by-hostname; stop the engine from

@@ -1,6 +1,6 @@
 import dns from 'node:dns/promises'
 import http from 'node:http'
-import { AddressInfo, createServer, Server } from 'node:net'
+import net, { AddressInfo, createServer, Server } from 'node:net'
 import { ApLogger } from '@activepieces/server-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { EgressProxy, startEgressProxy } from '../../../src/lib/egress/proxy'
@@ -214,6 +214,63 @@ describe('egress-proxy', () => {
             finally {
                 await closeServer(server)
             }
+        })
+    })
+
+    describe('connect-time IP pinning (DNS-rebind TOCTOU)', () => {
+        afterEach(() => {
+            vi.restoreAllMocks()
+        })
+
+        it('CONNECT: dials the IP validated at lookup time, not whatever the resolver returns at dial time', async () => {
+            // The loopback TCP server is the validated, allowlisted target. We point dns.lookup
+            // at it (127.0.0.1) for the validation step, then prove the upstream socket is opened
+            // to that exact pinned IP — a concurrently-changed resolver cannot redirect the dial.
+            const tcpServer = createServer((s) => s.destroy())
+            await new Promise<void>((r) => tcpServer.listen(0, '127.0.0.1', () => r()))
+            const tcpPort = (tcpServer.address() as AddressInfo).port
+
+            vi.spyOn(dns, 'lookup').mockImplementation(async () => {
+                // After validation captures the resolved IP, flip the resolver to a private IP.
+                // If the proxy re-resolved at dial time it would now connect to 10.0.0.5.
+                vi.mocked(dns.lookup).mockResolvedValue([{ address: '10.0.0.5', family: 4 }] as unknown as dns.LookupAddress)
+                return [{ address: '127.0.0.1', family: 4 }] as unknown as dns.LookupAddress
+            })
+
+            const dialedHosts: string[] = []
+            const realConnect = net.connect.bind(net)
+            vi.spyOn(net, 'connect').mockImplementation((...args: Parameters<typeof net.connect>) => {
+                const first = args[0]
+                if (typeof first === 'number') {
+                    dialedHosts.push(String(args[1]))
+                }
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                return (realConnect as any)(...args)
+            })
+
+            try {
+                proxy = await startEgressProxy({ log, allowList: ['127.0.0.1'] })
+                const res = await connectThroughProxy({
+                    proxyPort: proxy.port,
+                    target: `rebind.example.test:${tcpPort}`,
+                })
+                expect(res.status).toBe(200)
+                expect(dialedHosts).toContain('127.0.0.1')
+                expect(dialedHosts).not.toContain('10.0.0.5')
+            }
+            finally {
+                await closeServer(tcpServer)
+            }
+        })
+
+        it('CONNECT: rejects with 403 when the single validated record is private', async () => {
+            vi.spyOn(dns, 'lookup').mockResolvedValue([{ address: '10.1.2.3', family: 4 }] as unknown as dns.LookupAddress)
+            proxy = await startEgressProxy({ log, allowList: [] })
+            const res = await connectThroughProxy({
+                proxyPort: proxy.port,
+                target: 'private.example.test:443',
+            })
+            expect(res.status).toBe(403)
         })
     })
 
