@@ -3,9 +3,9 @@ import { ApEnvironment, ExecutionMode, isNil, WorkerToApiContract } from '@activ
 import { system, WorkerSystemProp } from '../config/configs'
 import { workerSettings } from '../config/worker-settings'
 import { Sandbox } from '../sandbox/types'
-import { createSandboxForJob } from './create-sandbox-for-job'
+import { createSandboxForJob, EgressContext } from './create-sandbox-for-job'
 
-export function createSandboxManager({ boxId, proxyPort }: { boxId: number, proxyPort: number | null }): SandboxManager {
+export function createSandboxManager({ boxId, egress }: { boxId: number, egress: EgressContext }): SandboxManager {
     let currentSandbox: Sandbox | null = null
 
     return {
@@ -19,7 +19,7 @@ export function createSandboxManager({ boxId, proxyPort }: { boxId: number, prox
                     params.log.error({ err }, 'Error shutting down previous sandbox'),
                 )
             }
-            currentSandbox = createSandboxForJob({ ...params, boxId, reusable: canReuseSandbox(), proxyPort })
+            currentSandbox = createSandboxForJob({ ...params, boxId, reusable: canReuseSandbox(), egress })
             return currentSandbox
         },
         async invalidate(log: ApLogger): Promise<void> {

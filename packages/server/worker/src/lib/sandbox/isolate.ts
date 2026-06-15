@@ -55,7 +55,7 @@ function assertSandboxEnv(env: Record<string, string>): void {
 const isolateBinaryPath = path.resolve(process.cwd(), 'packages/server/api/src/assets', getIsolateExecutableName())
 const etcDir = path.resolve(process.cwd(), 'packages/server/api/src/assets/etc')
 
-export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDirectory: string, boxId: number): SandboxProcessMaker {
+export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDirectory: string, boxId: number, netnsName?: string): SandboxProcessMaker {
     return {
         create: async (params: CreateSandboxProcessParams) => {
             const { sandboxId, mounts, env } = params
@@ -115,9 +115,19 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
                 engineSandboxPath,
             ]
 
-            log.debug({ sandboxId, command: `${isolateBinaryPath} ${args.join(' ')}` }, 'Spawning isolate process')
+            // In STRICT mode the sandbox must run inside the restricted `ap-egress` netns,
+            // whose only route is the /30 veth link to the worker (proxy + WS-RPC). isolate
+            // has no veth/bridge model of its own, so we enter the namespace via `ip netns
+            // exec` and keep --share-net (the child then inherits ap-egress, not the host net).
+            // Only the sandbox spawn is wrapped — the --cleanup/--init fs setup above must run
+            // in the main netns.
+            const [spawnCmd, spawnArgs] = netnsName === undefined
+                ? [isolateBinaryPath, args]
+                : ['ip', ['netns', 'exec', netnsName, isolateBinaryPath, ...args]]
 
-            const child = spawn(isolateBinaryPath, args, {
+            log.debug({ sandboxId, command: `${spawnCmd} ${spawnArgs.join(' ')}` }, 'Spawning isolate process')
+
+            const child = spawn(spawnCmd, spawnArgs, {
                 shell: false,
             })
 

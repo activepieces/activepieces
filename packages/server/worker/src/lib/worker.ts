@@ -26,6 +26,7 @@ import { getApiUrl, system, WorkerSystemProp } from './config/configs'
 import { logger } from './config/logger'
 import { workerSettings } from './config/worker-settings'
 import { EgressStack, startEgressStack } from './egress/lifecycle'
+import { EgressContext } from './execute/create-sandbox-for-job'
 import { getHandler } from './execute/job-registry'
 import { ActiveSandboxInfo, createSandboxManager, SandboxManager } from './execute/sandbox-manager'
 import { JobContext, JobResult, JobResultKind } from './execute/types'
@@ -130,8 +131,12 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
     if (!Number.isInteger(rawConcurrency) || rawConcurrency < 1) {
         logger.warn({ rawConcurrency }, 'Invalid AP_WORKER_CONCURRENCY value, falling back to 1')
     }
-    const proxyPort = egressStack?.proxyPort ?? null
-    sandboxManagers = Array.from({ length: concurrency }, (_, i) => createSandboxManager({ boxId: i + 1, proxyPort }))
+    const egress: EgressContext = {
+        proxyPort: egressStack?.proxyPort ?? null,
+        gatewayHost: egressStack?.gatewayHost ?? null,
+        netnsName: egressStack?.netnsName ?? null,
+    }
+    sandboxManagers = Array.from({ length: concurrency }, (_, i) => createSandboxManager({ boxId: i + 1, egress }))
 
     logger.info({ concurrency }, 'Starting polling workers')
 

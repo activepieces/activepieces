@@ -59,7 +59,7 @@ async function runIp({ args }: { args: string[] }): Promise<void> {
 async function assertIpAvailable(): Promise<void> {
     const { error } = await tryCatch(() => spawnWithKill({ cmd: 'ip', args: ['-V'], timeoutMs: IP_TIMEOUT_MS }))
     if (error) {
-        const message = `iproute2 "ip" binary not available. Install iproute2 in the worker image for ` +
+        const message = 'iproute2 "ip" binary not available. Install iproute2 in the worker image for ' +
             `network-namespace egress isolation in STRICT mode. ${error.message}`
         throw new ActivepiecesError(
             { code: ErrorCode.ENGINE_OPERATION_FAILURE, params: { message } },
