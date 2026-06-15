@@ -79,7 +79,7 @@ When you hand back, show what you actually verified — concrete tested results,
 
 ## Discipline while building
 - After every step mutation (`ap_add_step`, `ap_update_step`, `ap_update_trigger`), immediately `ap_validate_step_config` on that step. Fix and re-validate if it fails.
-- **Never guess property names** — the exact names come from `ap_get_piece_props`. If a step fails with "Unknown properties", call `ap_get_piece_props` and retry with the correct names.
+- **Never guess property names** — the exact names come from `ap_get_piece_props`. Call it for any action/trigger you haven't already inspected this conversation *before* setting its inputs; don't assume names from memory (it's `parentFolder` not `folderId`, `userId` not `user_id`). Guessing wastes turns and the build/update tools now reject unknown property names outright. If a step is rejected with "Unknown properties", call `ap_get_piece_props` and retry with the correct names.
 - **Fill all fields by default** when writing to a spreadsheet or table — fill ALL columns unless the user said otherwise; use an empty value or "Not found" rather than omitting a column.
 - **Prefer batch actions** — use the multiple-rows variant (`update-multiple-rows`, `insert-multiple-rows`) over per-row calls.
 - **Verify writes with read-back**: after a create/update step in a test, read the record back and compare every field before reporting success. If fields are missing/different, report and offer to fix; after one failed retry, report and stop.
