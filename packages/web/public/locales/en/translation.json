@@ -56,6 +56,8 @@
   "Go to step": "Go to step",
   "itemCount": "{count, plural, =1 {1 item} other {# items}}",
   "Item": "Item",
+  "Row": "Row",
+  "Cell": "Cell",
   "Output": "Output",
   "On success": "On success",
   "On failure": "On failure",

@@ -254,6 +254,18 @@ function getSearchableValue(
   if (item.data.type === 'chunk') {
     return item.data.displayName;
   }
+  // A container whose value holds the real object/array (for the type icon +
+  // count) is matched by displayName and by its children's leaf values, which
+  // are searched separately — so don't stringify the whole subtree here every
+  // keystroke (redundant and costly). Containers carrying a primitive value
+  // (e.g. the zipped-view aggregated preview string) keep their value searchable.
+  const isContainerObjectValue =
+    !isNil(item.children) &&
+    item.children.length > 0 &&
+    (isObject(item.data.value) || Array.isArray(item.data.value));
+  if (isContainerObjectValue) {
+    return '';
+  }
   if (!isNil(item.data.value)) {
     return JSON.stringify(item.data.value).toLowerCase();
   } else if (item.data.value === null) {
