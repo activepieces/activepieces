@@ -46,4 +46,4 @@ The engine runs inside [ioi/isolate](https://github.com/ioi/isolate), which crea
 
 ## Network Isolation
 
-Execution mode decides *how* user code runs; `AP_NETWORK_MODE` decides *what it can reach*. See [Network Security](./network-security) for the SSRF guard, egress proxy, and iptables lockdown that layer on top of every sandbox mode.
+Execution mode decides *how* user code runs; `AP_NETWORK_MODE` decides *what it can reach*. See [Network Security](./network-security) for the SSRF guard, egress proxy, and network-namespace isolation that layer on top of every sandbox mode.

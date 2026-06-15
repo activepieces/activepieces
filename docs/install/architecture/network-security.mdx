@@ -29,7 +29,7 @@ Every flow eventually runs **user-supplied code** — Code steps, piece actions,
 Related env vars:
 
 - `AP_SSRF_ALLOW_LIST` — comma-separated IPs that bypass the block (e.g. an internal DB or sidecar).
-- `HTTP_PROXY` / `HTTPS_PROXY` — if set, the engine routes all outbound HTTP(S) through the proxy. Loopback proxy ports are auto-exempted.
+- In `STRICT` mode the egress proxy is wired into the sandbox automatically (via an internal `AP_EGRESS_PROXY_URL` signal). Standard `HTTP_PROXY` / `HTTPS_PROXY` env vars are intentionally **not** propagated into the sandbox, so user code cannot redirect or disable the proxy.
 
 ## How Isolation Works
 
@@ -44,27 +44,27 @@ flowchart LR
         L1check{"IP in blocked<br/>range?"}
     end
 
-    subgraph L2["Layer 2 — Egress proxy (loopback)"]
+    subgraph L2["Layer 2 — Egress proxy (gateway IP)"]
         direction TB
         L2check{"Any A/AAAA<br/>record blocked?"}
     end
 
-    subgraph L3["Layer 3 — iptables lockdown (SANDBOX_PROCESS only)"]
+    subgraph L3["Layer 3 — Network namespace (SANDBOX_PROCESS only)"]
         direction TB
-        L3check{"Destination is<br/>proxy port?"}
+        L3check{"Route exists to<br/>destination?"}
     end
 
     NET(["Public internet"])
     B1["SSRFBlockedError"]
     B2["403 Egress blocked"]
-    B3["Kernel drops packet"]
+    B3["Kernel: no route<br/>(ENETUNREACH)"]
 
     UC --> L1check
     L1check -- yes --> B1
     L1check -- no --> L2check
     L2check -- yes --> B2
     L2check -- no --> L3check
-    L3check -- no --> B3
+    L3check -- "no (only the gateway<br/>proxy is routable)" --> B3
     L3check -- yes --> NET
 
     classDef blocked fill:#fde2e2,stroke:#d33,color:#7a1414
@@ -78,10 +78,10 @@ flowchart LR
     The engine monkey-patches Node's `dns.lookup`, `Socket.prototype.connect`, and `undici`'s global dispatcher. The moment user code resolves a hostname or opens a socket, the guard checks the resulting IP against a blocklist (every non-`unicast` range — RFC1918, loopback, link-local, multicast, cloud metadata). Covers `axios`, `fetch`, `undici`, and raw `http`/`net` in one pass.
   </Step>
   <Step title="Egress proxy (per worker)">
-    The worker spins up a loopback-bound HTTP(S) CONNECT proxy (`proxy-chain`). User code is routed through it by the engine dispatcher. The proxy re-resolves every hostname and checks **every** A/AAAA record — closing the multi-record bypass where one IP is public and another is private.
+    The worker spins up an HTTP(S) CONNECT proxy (`proxy-chain`), bound to the sandbox's gateway IP. User code is routed through it by the engine dispatcher. The proxy re-resolves every hostname and checks **every** A/AAAA record — closing the multi-record bypass where one IP is public and another is private.
   </Step>
-  <Step title="Kernel lockdown (sandboxed modes only)">
-    In isolate-based sandboxing, the worker applies `iptables` rules at boot that restrict egress from sandbox UIDs to the proxy port only. Even if user code finds a way to hit the raw socket layer, the kernel drops the packet.
+  <Step title="Network-namespace isolation (sandboxed modes only)">
+    In isolate-based sandboxing, the worker runs the sandbox inside a dedicated restricted network namespace (`ap-egress`) whose **only** route is a `/30` veth link to the worker's gateway IP — where the proxy and the engine↔worker RPC listen. There is no default route and no NAT, so any direct connection to the internet, a private range, or `169.254.169.254` fails at the kernel with `ENETUNREACH`. Egress is blocked by routing, not a firewall — no `iptables`, no DNS holes.
   </Step>
 </Steps>
 
@@ -89,11 +89,11 @@ flowchart LR
 
 Network Security layers on top of the sandbox execution mode — they are independent choices. The table below shows what is active in `STRICT` mode for each sandbox:
 
-| Sandbox Mode | Engine SSRF guard | Egress proxy | Kernel lockdown |
+| Sandbox Mode | Engine SSRF guard | Egress proxy | Network namespace |
 |---|---|---|---|
-| **No Sandboxing** (`UNSANDBOXED`) | ✅ | ✅ | ❌ — no per-UID separation available |
-| **V8 Sandboxing** (`SANDBOX_CODE_ONLY`) | ✅ | ✅ | ❌ — engine process shares the host UID |
-| **Kernel Namespaces** (`SANDBOX_PROCESS` with `isolate`) | ✅ | ✅ | ✅ — `iptables` rules scoped to sandbox UIDs |
+| **No Sandboxing** (`UNSANDBOXED`) | ✅ | ✅ | ❌ — no isolate namespace available |
+| **V8 Sandboxing** (`SANDBOX_CODE_ONLY`) | ✅ | ✅ | ❌ — engine process shares the host network |
+| **Kernel Namespaces** (`SANDBOX_PROCESS` with `isolate`) | ✅ | ✅ | ✅ — sandbox runs in the `ap-egress` netns; only the gateway is routable |
 
 See [Sandboxing](./sandboxing) for what each sandbox mode isolates at the process level. Network Security is orthogonal: it isolates what the sandbox is allowed to *reach*, regardless of *how* it runs.
 
