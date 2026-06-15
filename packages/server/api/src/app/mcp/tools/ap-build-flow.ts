@@ -123,6 +123,12 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     id: flowId, projectId, userId: null, platformId,
                     operation: { type: FlowOperationType.UPDATE_TRIGGER, request: triggerPayload },
                 })
+                const unknownPropFindings: string[] = []
+                const triggerUnknown = await mcpUtils.detectUnknownInputProps({ pieceName: triggerVersionResult.normalizedPieceName, pieceVersion: triggerVersionResult.pieceVersion, componentName: trigger.triggerName, componentType: 'trigger', input: trigger.input, platformId, log })
+                if (triggerUnknown.unknownKeys.length > 0) {
+                    unknownPropFindings.push(`trigger: ${triggerUnknown.message}`)
+                }
+
                 const skippedSteps: string[] = []
                 let lastTopLevelStepName: string | null = null
 
@@ -178,6 +184,13 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                         },
                     })
 
+                    if (step.type === FlowActionType.PIECE && resolvedPieceName && resolvedPieceVersion && step.actionName) {
+                        const stepUnknown = await mcpUtils.detectUnknownInputProps({ pieceName: resolvedPieceName, pieceVersion: resolvedPieceVersion, componentName: step.actionName, componentType: 'action', input: step.input, platformId, log })
+                        if (stepUnknown.unknownKeys.length > 0) {
+                            unknownPropFindings.push(`${stepName} (${step.displayName}): ${stepUnknown.message}`)
+                        }
+                    }
+
                     if (location === StepLocationRelativeToParent.AFTER) {
                         lastTopLevelStepName = stepName
                     }
@@ -198,6 +211,10 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     validCount,
                     invalidSteps,
                     skippedSteps,
+                    unknownProps: unknownPropFindings,
+                }
+                if (unknownPropFindings.length > 0) {
+                    return { content: [{ type: 'text', text: `❌ Flow "${flowName}" created (id: ${flowId}), but some settings used property names that do NOT exist on the piece and were dropped — the flow does NOT behave as configured. Do NOT tell the user these settings were applied. Fix each with ap_update_step / ap_update_trigger using the correct property names:\n${unknownPropFindings.join('\n')}\nOpen: ${flowUrl}` }], structuredContent: structured }
                 }
                 if (invalidSteps.length === 0 && skippedSteps.length === 0) {
                     return { content: [{ type: 'text', text: `✅ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} ${stepWord}, all valid. Open: ${flowUrl}` }], structuredContent: structured }

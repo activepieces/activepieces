@@ -432,7 +432,16 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, projects
     const phaseTools = chatWorkerTools.createPhaseTools({ onPhaseChange: (phase) => {
         phaseState.phase = phase
     } })
-    const mcpTools = chatMcpClient.withToolTimeouts({ mcpToolSet })
+    const mcpTools = chatWorkerTools.wrapTestFlowGate({
+        mcpTools: chatMcpClient.withToolTimeouts({ mcpToolSet }),
+        checkFlowWrites: async (flowId) => {
+            const response = await ctx.apiClient.executeChatTool({ toolName: '__flow_write_check', toolInput: { flowId }, platformId, userId, conversationId })
+            return response.result
+        },
+        waitForApproval,
+        storePendingGate,
+        log,
+    })
 
     return { ...localTools, ...displayTools, ...crossProjectTools, ...thinkingTools, ...phaseTools, ...(mcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
 }

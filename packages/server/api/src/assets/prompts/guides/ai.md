@@ -16,6 +16,10 @@ Output shape decides how you reference the result. Get this wrong and `{{...}}` 
 
 **The #1 AI gotcha:** `askAi`, `classifyText`, and `summarizeText` return a **raw string** — the whole `['output']` *is* the string: reference `{{step_N['output']}}`, never `{{step_N['output'].text}}`. Only `extractStructuredData` and `run_agent` return objects you dot into. Always confirm with `ap_test_step`.
 
+## Giving Run Agent its own tools
+
+`run_agent` can call other Activepieces pieces as tools. When you configure a piece tool, its `predefinedInput.auth` must be the **bare connection reference string** — exactly `{{connections['<externalId>']}}` — never an object. Do NOT wrap it like `{ "accessToken": "{{connections['…']}}" }`; that breaks OAuth pieces (the piece reads the unwrapped token and finds nothing). For pieces that need no connection (e.g. Webhook, Schedule), omit `auth` entirely. The connection's externalId comes from `ap_list_connections` / the connection picker, the same id you'd use anywhere else.
+
 ## Classify-then-route (the workhorse)
 
 To let AI make a decision the flow branches on:
