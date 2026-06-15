@@ -31,47 +31,52 @@ export const consoleUsageService = (log: FastifyBaseLogger) => ({
      * backfill it, since it only ever looks at yesterday.
      */
     async reportAllPlatforms(): Promise<void> {
-        const licenseKeysByPlatform = await queryLicenseKeysByPlatform()
+        try {
+            const licenseKeysByPlatform = await queryLicenseKeysByPlatform()
 
-        if (licenseKeysByPlatform.size === 0) {
-            return
-        }
+            if (licenseKeysByPlatform.size === 0) {
+                return
+            }
 
-        const platformIds = [...licenseKeysByPlatform.keys()]
-        const dayStart = utcMidnight(1)
-        const dayEnd = utcMidnight(0)
+            const platformIds = [...licenseKeysByPlatform.keys()]
+            const dayStart = utcMidnight(1)
+            const dayEnd = utcMidnight(0)
 
-        // Run the aggregates sequentially rather than in parallel: this is a background report, and
-        // firing all four heavy GROUP BY queries at once would hold several connections from the shared
-        // pool simultaneously, starving live request traffic. One at a time keeps the report to a single
-        // connection so the app server stays responsive while it runs.
-        const activeFlowsByPlatform = await queryActiveFlowsByPlatform(platformIds)
-        const usersByPlatform = await queryUsersByPlatform(platformIds)
-        const teamProjectsByPlatform = await queryTeamProjectsByPlatform(platformIds)
-        const dailyExecutionsByPlatform = await queryDailyExecutionsByPlatform(platformIds, dayStart, dayEnd)
+            // Run the aggregates sequentially rather than in parallel: this is a background report, and
+            // firing all four heavy GROUP BY queries at once would hold several connections from the shared
+            // pool simultaneously, starving live request traffic. One at a time keeps the report to a single
+            // connection so the app server stays responsive while it runs.
+            const activeFlowsByPlatform = await queryActiveFlowsByPlatform(platformIds)
+            const usersByPlatform = await queryUsersByPlatform(platformIds)
+            const teamProjectsByPlatform = await queryTeamProjectsByPlatform(platformIds)
+            const dailyExecutionsByPlatform = await queryDailyExecutionsByPlatform(platformIds, dayStart, dayEnd)
 
-        const reportedAt = new Date().toISOString()
+            const reportedAt = new Date().toISOString()
 
-        for (const batch of chunk([...licenseKeysByPlatform.entries()], SNAPSHOT_BATCH_SIZE)) {
-            const results = await Promise.allSettled(
-                batch.map(([platformId, licenseKey]) => {
-                    const body = buildSnapshotBody({
-                        platformId,
-                        activeFlows: activeFlowsByPlatform.get(platformId) ?? 0,
-                        users: usersByPlatform.get(platformId) ?? 0,
-                        projects: teamProjectsByPlatform.get(platformId) ?? 0,
-                        dailyExecutions: dailyExecutionsByPlatform.get(platformId) ?? [],
-                        reportedAt,
-                    })
-                    return postSnapshot({ body, licenseKey })
-                }),
-            )
+            for (const batch of chunk([...licenseKeysByPlatform.entries()], SNAPSHOT_BATCH_SIZE)) {
+                const results = await Promise.allSettled(
+                    batch.map(([platformId, licenseKey]) => {
+                        const body = buildSnapshotBody({
+                            platformId,
+                            activeFlows: activeFlowsByPlatform.get(platformId) ?? 0,
+                            users: usersByPlatform.get(platformId) ?? 0,
+                            projects: teamProjectsByPlatform.get(platformId) ?? 0,
+                            dailyExecutions: dailyExecutionsByPlatform.get(platformId) ?? [],
+                            reportedAt,
+                        })
+                        return postSnapshot({ body, licenseKey })
+                    }),
+                )
 
-            for (const result of results) {
-                if (result.status === 'rejected') {
-                    exceptionHandler.handle(result.reason, log)
+                for (const result of results) {
+                    if (result.status === 'rejected') {
+                        exceptionHandler.handle(result.reason, log)
+                    }
                 }
             }
+        }
+        catch (error) {
+            exceptionHandler.handle(error, log)
         }
     },
 })
