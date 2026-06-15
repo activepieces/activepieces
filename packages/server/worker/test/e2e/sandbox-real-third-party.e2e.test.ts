@@ -3,10 +3,8 @@ import { chmod, copyFile, mkdtemp, stat } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { iptablesLockdown, IptablesLockdown } from '../../src/lib/egress/iptables-lockdown'
-import { egressInternals } from '../../src/lib/egress/lifecycle'
+import { egressNetns, EgressNetns } from '../../src/lib/egress/netns'
 import { EgressProxy, startEgressProxy } from '../../src/lib/egress/proxy'
-import { sandboxCapacity } from '../../src/lib/sandbox/capacity'
 import { getIsolateExecutableName, isolateProcess } from '../../src/lib/sandbox/isolate'
 import { requireOutboundInternet } from './helpers/outbound-internet-guard'
 import { requireIsolateBinary, requireLinuxPrivileged } from './helpers/privilege-guard'
@@ -14,23 +12,23 @@ import { silentLogger } from './helpers/silent-logger'
 
 /**
  * Reaches out to a curated list of real, public third-party API hosts from inside
- * the production-shaped stack: SANDBOX_PROCESS + STRICT + iptables lockdown +
- * egress proxy + sandbox-resolv-conf-aware DNS allowlist.
+ * the production-shaped netns stack: SANDBOX_PROCESS + STRICT + ap-egress netns +
+ * egress proxy on the gateway veth IP.
  *
- * The purpose is regression coverage for the 2026-05-06 outage class: any future
- * change that breaks DNS / proxy CONNECT / TLS / iptables for the sandbox will
- * fail this suite *before* it ships.
+ * The sandbox has NO route off the /30 and does NO direct DNS — all name resolution
+ * happens at the proxy via CONNECT-by-hostname. Any future change that breaks proxy
+ * CONNECT / TLS / netns routing for the sandbox will fail this suite *before* it ships.
  */
 
 const BOX_ID = 0
-const SANDBOX_UID = sandboxCapacity.firstBoxUid + BOX_ID
+const GATEWAY_HOST = '10.255.0.1'
 const ISOLATE_BINARY_PATH = path.resolve(process.cwd(), 'packages/server/api/src/assets', getIsolateExecutableName())
 
 const PRIVILEGE_SKIP = requireLinuxPrivileged() ?? requireIsolateBinary(ISOLATE_BINARY_PATH)
 
-describe.skipIf(PRIVILEGE_SKIP)('sandbox real third-party connectivity (SANDBOX_PROCESS + STRICT)', () => {
+describe.skipIf(PRIVILEGE_SKIP)('sandbox real third-party connectivity (SANDBOX_PROCESS + STRICT netns)', () => {
+    let ns: EgressNetns
     let proxy: EgressProxy
-    let lockdown: IptablesLockdown | null = null
     let commonDir: string
     let internetSkip: { skip: true, reason: string } | undefined
 
@@ -38,20 +36,13 @@ describe.skipIf(PRIVILEGE_SKIP)('sandbox real third-party connectivity (SANDBOX_
         internetSkip = await requireOutboundInternet()
         if (internetSkip) return
 
+        ns = await egressNetns.create({ log: silentLogger() })
         proxy = await startEgressProxy({
             log: silentLogger(),
+            host: ns.gatewayHost,
+            // Empty user allow list: real public hosts pass the SSRF classifier; the gateway
+            // is reachable by topology. No host is pre-listed — the proxy resolves + validates.
             allowList: [],
-        })
-
-        const sandboxNameservers = await egressInternals.listSandboxResolvConfNameservers()
-        const unionedAllowList = [...new Set(['1.1.1.1', '8.8.8.8', ...sandboxNameservers])]
-
-        lockdown = await iptablesLockdown.apply({
-            log: silentLogger(),
-            proxyPort: proxy.port,
-            firstBoxUid: SANDBOX_UID,
-            numBoxes: 1,
-            nameservers: unionedAllowList,
         })
 
         commonDir = await mkdtemp(path.join(tmpdir(), 'ap-real-3p-'))
@@ -66,16 +57,15 @@ describe.skipIf(PRIVILEGE_SKIP)('sandbox real third-party connectivity (SANDBOX_
     }, 60_000)
 
     afterAll(async () => {
-        if (lockdown) await lockdown.remove()
         if (proxy) await proxy.close()
+        if (ns) await ns.destroy()
     })
 
-    it.skipIf(PRIVILEGE_SKIP)('Group A — at least 80% of curated third-party APIs reach DNS+TLS+HTTP through the proxy', async (ctx) => {
+    it.skipIf(PRIVILEGE_SKIP)('Group A — at least 80% of curated third-party APIs reach TLS+HTTP through the proxy (CONNECT-by-hostname)', async (ctx) => {
         if (internetSkip) ctx.skip()
-        const plan = GROUP_A_HOSTS.flatMap<ProbeAction>((host) => [
-            { type: 'dns-lookup', hostname: host, tag: `${host}:dns` },
-            { type: 'https-head-via-proxy', url: `https://${host}/`, timeoutMs: 8000, tag: `${host}:https` },
-        ])
+        const plan = GROUP_A_HOSTS.map<ProbeAction>((host) =>
+            ({ type: 'https-head-via-proxy', url: `https://${host}/`, timeoutMs: 8000, tag: `${host}:https` }),
+        )
         const result = await runProbeInSandbox({ commonDir, plan, proxyPort: proxy.port })
 
         const successes = countConnectivitySuccesses({ results: result.results, hosts: GROUP_A_HOSTS })
@@ -85,20 +75,13 @@ describe.skipIf(PRIVILEGE_SKIP)('sandbox real third-party connectivity (SANDBOX_
             successes >= MIN_GROUP_A_SUCCESSES,
             `expected >= ${MIN_GROUP_A_SUCCESSES}/${GROUP_A_HOSTS.length} hosts reachable through the proxy; got ${successes}.\n${summary}`,
         ).toBe(true)
-
-        const eaiAgain = result.results.filter((r) => r.code === 'EAI_AGAIN')
-        expect(
-            eaiAgain.length,
-            `EAI_AGAIN must never appear — that is the production outage signature. Hosts: ${eaiAgain.map((r) => r.action.tag).join(', ')}`,
-        ).toBe(0)
     }, 120_000)
 
-    it.skipIf(PRIVILEGE_SKIP)('Group B — multi-record / Cloudflare-fronted hosts resolve and reach origin', async (ctx) => {
+    it.skipIf(PRIVILEGE_SKIP)('Group B — multi-record / Cloudflare-fronted hosts reach origin through the proxy', async (ctx) => {
         if (internetSkip) ctx.skip()
-        const plan = GROUP_B_HOSTS.flatMap<ProbeAction>((host) => [
-            { type: 'dns-lookup', hostname: host, tag: `${host}:dns` },
-            { type: 'https-head-via-proxy', url: `https://${host}/`, timeoutMs: 8000, tag: `${host}:https` },
-        ])
+        const plan = GROUP_B_HOSTS.map<ProbeAction>((host) =>
+            ({ type: 'https-head-via-proxy', url: `https://${host}/`, timeoutMs: 8000, tag: `${host}:https` }),
+        )
         const result = await runProbeInSandbox({ commonDir, plan, proxyPort: proxy.port })
         const successes = countConnectivitySuccesses({ results: result.results, hosts: GROUP_B_HOSTS })
         expect(successes, summarizeFailures({ results: result.results, hosts: GROUP_B_HOSTS })).toBeGreaterThanOrEqual(GROUP_B_HOSTS.length - 1)
@@ -124,15 +107,15 @@ describe.skipIf(PRIVILEGE_SKIP)('sandbox real third-party connectivity (SANDBOX_
         ).toBe(true)
     }, 90_000)
 
-    it.skipIf(PRIVILEGE_SKIP)('Group F — bug repro: STRICT iptables WITHOUT AP_EGRESS_PROXY_URL → fetch fails with EHOSTUNREACH on every host', async (ctx) => {
+    it.skipIf(PRIVILEGE_SKIP)('Group F — bug repro: STRICT netns WITHOUT AP_EGRESS_PROXY_URL → fetch fails (no route) on every host', async (ctx) => {
         if (internetSkip) ctx.skip()
-        // Reproduces the exact symptom users see when STRICT-mode iptables is in effect
-        // but the engine never installed undici's ProxyAgent — typically because
+        // Reproduces the symptom users see when STRICT-mode netns is in effect but the
+        // engine never installed undici's ProxyAgent — typically because
         // AP_EGRESS_PROXY_URL didn't reach the sandbox env. fetch falls back to direct
-        // connect; iptables REJECTs with icmp-host-prohibited; userland reports
-        // EHOSTUNREACH wrapped in "fetch failed". Locking this failure mode in keeps
-        // any future regression that drops the env var while iptables stays armed
-        // failing LOUD against the real kernel + proxy + undici stack.
+        // connect, but ap-egress has no route off the /30, so the connect fails with
+        // ENETUNREACH/EHOSTUNREACH wrapped in "fetch failed". Locking this failure mode
+        // in keeps any future regression that drops the env var while the netns stays in
+        // place failing LOUD against the real netns + proxy + undici stack.
         const plan: ProbeAction[] = GROUP_E_HOSTS.map((host) => ({
             type: 'fetch-via-undici', url: `https://${host}/`, method: 'HEAD', timeoutMs: 4000, tag: `${host}:fetch-noproxy`,
         }))
@@ -142,7 +125,7 @@ describe.skipIf(PRIVILEGE_SKIP)('sandbox real third-party connectivity (SANDBOX_
             expect(r.status, `${r.action.tag} unexpectedly succeeded with no ProxyAgent: ${JSON.stringify(r)}`).toBe('ERR')
             expect(
                 r.code === 'EHOSTUNREACH' || r.code === 'ENETUNREACH' || r.code === 'FETCH_ERR',
-                `${r.action.tag} expected EHOSTUNREACH-class failure (iptables REJECT → icmp-host-prohibited), got: ${JSON.stringify(r)}`,
+                `${r.action.tag} expected no-route failure (netns has no default route), got: ${JSON.stringify(r)}`,
             ).toBe(true)
         }
     }, 60_000)
@@ -167,7 +150,7 @@ describe.skipIf(PRIVILEGE_SKIP)('sandbox real third-party connectivity (SANDBOX_
             else if (r.action.type === 'direct-tcp-connect') {
                 expect(
                     r.status,
-                    `${r.action.tag} must NOT be reachable; iptables should REJECT direct connect`,
+                    `${r.action.tag} must NOT be reachable; ap-egress has no route for a direct connect`,
                 ).not.toBe('OK')
             }
         }
@@ -177,9 +160,8 @@ describe.skipIf(PRIVILEGE_SKIP)('sandbox real third-party connectivity (SANDBOX_
 function countConnectivitySuccesses({ results, hosts }: { results: ProbeResult[], hosts: readonly string[] }): number {
     let n = 0
     for (const host of hosts) {
-        const dnsOk = results.some((r) => r.action.tag === `${host}:dns` && r.status === 'OK')
         const httpsOk = results.some((r) => r.action.tag === `${host}:https` && r.status === 'OK')
-        if (dnsOk && httpsOk) n += 1
+        if (httpsOk) n += 1
     }
     return n
 }
@@ -187,12 +169,10 @@ function countConnectivitySuccesses({ results, hosts }: { results: ProbeResult[]
 function summarizeFailures({ results, hosts }: { results: ProbeResult[], hosts: readonly string[] }): string {
     const lines: string[] = []
     for (const host of hosts) {
-        const dns = results.find((r) => r.action.tag === `${host}:dns`)
         const https = results.find((r) => r.action.tag === `${host}:https`)
-        const dnsLabel = dns?.status === 'OK' ? 'dns:OK' : `dns:${dns?.code ?? dns?.status ?? 'missing'}`
         const httpsLabel = https?.status === 'OK' ? `https:${https.statusCode ?? 'OK'}` : `https:${https?.code ?? https?.status ?? 'missing'}`
-        if (dns?.status !== 'OK' || https?.status !== 'OK') {
-            lines.push(`  ${host} → ${dnsLabel} ${httpsLabel}`)
+        if (https?.status !== 'OK') {
+            lines.push(`  ${host} → ${httpsLabel}`)
         }
     }
     return lines.length > 0 ? `failures:\n${lines.join('\n')}` : 'all hosts succeeded'
@@ -205,13 +185,14 @@ async function runProbeInSandbox({ commonDir, plan, proxyPort, omitProxyUrl }: {
     omitProxyUrl?: boolean
 }): Promise<{ results: ProbeResult[] }> {
     const logger = silentLogger()
-    const maker = isolateProcess(logger, path.join(commonDir, 'egress-probe.js'), commonDir, BOX_ID)
-    const proxyUrl = `http://127.0.0.1:${proxyPort}`
+    const maker = isolateProcess(logger, path.join(commonDir, 'egress-probe.js'), commonDir, BOX_ID, 'ap-egress')
+    const proxyUrl = `http://${GATEWAY_HOST}:${proxyPort}`
     const baseEnv: Record<string, string> = {
         HOME: '/tmp/',
         NODE_PATH: '/usr/src/node_modules',
         AP_EXECUTION_MODE: 'SANDBOX_PROCESS',
         AP_SANDBOX_WS_PORT: '0',
+        AP_SANDBOX_WS_TOKEN: 'e2e-token-aaaaaaaaaaaaaaaaaaaaaaaa',
         AP_BASE_CODE_DIRECTORY: '/root/codes',
         SANDBOX_ID: 'e2e-real-3p',
         AP_NETWORK_MODE: 'STRICT',
