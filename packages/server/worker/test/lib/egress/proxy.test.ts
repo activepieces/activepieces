@@ -309,5 +309,42 @@ describe('egress-proxy', () => {
                 await closeServer(tcpServer)
             }
         })
+
+        it('an upstream reset AFTER establishment never injects HTTP status bytes into the tunnel', async () => {
+            // Upstream accepts, then resets shortly after — simulates an RST mid-tunnel. The
+            // proxy must NOT write a 502 status line into the already-established tunnel (the
+            // client socket now carries opaque TLS bytes); it should just tear the tunnel down.
+            const upstream = createServer((s) => { setTimeout(() => s.destroy(), 50) })
+            await new Promise<void>((r) => upstream.listen(0, '127.0.0.1', () => r()))
+            const upPort = (upstream.address() as AddressInfo).port
+            try {
+                proxy = await startEgressProxy({ log, allowList: ['127.0.0.1'] })
+                const bytesAfterEstablish = await new Promise<string>((resolve) => {
+                    const sock = net.connect(proxy.port, '127.0.0.1')
+                    let established = false
+                    let header = ''
+                    let after = ''
+                    sock.on('data', (d) => {
+                        const s = d.toString('utf8')
+                        if (established) { after += s; return }
+                        header += s
+                        const idx = header.indexOf('\r\n\r\n')
+                        if (idx !== -1) {
+                            established = true
+                            after += header.slice(idx + 4)
+                        }
+                    })
+                    sock.on('close', () => resolve(after))
+                    sock.on('error', () => resolve(after))
+                    sock.write(`CONNECT 127.0.0.1:${upPort} HTTP/1.1\r\nHost: 127.0.0.1:${upPort}\r\n\r\n`)
+                    setTimeout(() => { sock.destroy(); resolve(after) }, 3000)
+                })
+                expect(bytesAfterEstablish).not.toContain('502')
+                expect(bytesAfterEstablish).not.toContain('HTTP/1.1')
+            }
+            finally {
+                await closeServer(upstream)
+            }
+        })
     })
 })

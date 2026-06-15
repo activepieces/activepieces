@@ -110,11 +110,21 @@ async function handleConnect({ req, clientSocket, head, allowList, log, track }:
     // ClientHello inside the tunnel, so dialing by IP stays TLS-safe.
     const upstream = net.connect(target.port, pinnedIp)
     track(upstream)
+    // Once the tunnel is established the client socket carries opaque TLS bytes — writing an
+    // HTTP 502 status line into it would corrupt the stream. So only emit the 502 for a
+    // pre-connect failure; after establishment, an upstream error just tears both ends down.
+    let tunnelEstablished = false
     upstream.on('error', () => {
-        writeSocketStatus({ socket: clientSocket, status: 502, message: 'Egress proxy upstream connect failed' })
+        if (!tunnelEstablished) {
+            writeSocketStatus({ socket: clientSocket, status: 502, message: 'Egress proxy upstream connect failed' })
+        }
+        else {
+            clientSocket.destroy()
+        }
         upstream.destroy()
     })
     upstream.on('connect', () => {
+        tunnelEstablished = true
         clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n')
         if (head.length > 0) upstream.write(head)
         upstream.pipe(clientSocket)
