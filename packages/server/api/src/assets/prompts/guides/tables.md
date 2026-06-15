@@ -21,7 +21,7 @@ Reach for a Table whenever a flow needs to **remember or look up data**:
 
 ## Tools
 
-Always start with `ap_list_tables` to discover existing tables, their field names/types, and row counts — never guess names.
+Tables belong to a project, so a project must be selected before you create or write one — if none is selected yet, call `ap_select_project` first. Always start with `ap_list_tables` to discover existing tables, their field names/types, and row counts — never guess names. Create tables directly with `ap_create_table`; never fall back to raw HTTP / `/api/v1/tables` and never ship a placeholder table id.
 
 | Tool | Use |
 |------|-----|

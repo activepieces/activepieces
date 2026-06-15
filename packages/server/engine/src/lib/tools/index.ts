@@ -1,5 +1,5 @@
 import { Action, DropdownOption, ExecutePropsResult, PieceProperty, PropertyType } from '@activepieces/pieces-framework'
-import { AgentPieceTool, ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FieldControlMode, FlowActionType, isNil, PieceAction, PropertyExecutionType, StepOutputStatus } from '@activepieces/shared'
+import { AgentPieceTool, ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FieldControlMode, FlowActionType, isNil, isObject, isString, PieceAction, PropertyExecutionType, StepOutputStatus } from '@activepieces/shared'
 import { generateText, JSONParseError, LanguageModel, NoObjectGeneratedError, Output, Tool, zodSchema } from 'ai'
 import dayjs from 'dayjs'
 import { z } from 'zod'
@@ -51,7 +51,7 @@ async function resolveProperties(
     model: LanguageModel,
     operation: ExecuteToolOperation,
 ): Promise<Record<string, unknown>> {
-    const auth = operation.predefinedInput?.auth
+    const auth = normalizeAgentToolAuth(operation.predefinedInput?.auth)
     const predefinedInputsFields = operation.predefinedInput?.fields || {}
 
     let result: Record<string, unknown> = {}
@@ -405,6 +405,22 @@ function buildPropertyDetailsSection(propertyDetails: PropertyDetail[]): string 
 **PROPERTY DETAILS**:
 ${sections}
 `
+}
+
+// An agent tool's auth is always meant to be a connection reference string
+// (e.g. "{{connections['id']}}"), but the agent sometimes wraps it in a
+// single-key object like { accessToken: "{{connections['id']}}" }. Unwrap that
+// back to the string so the piece's auth resolves; the props resolver handles
+// the rest. Anything else is passed through untouched.
+export function normalizeAgentToolAuth(auth: unknown): unknown {
+    if (!isObject(auth)) {
+        return auth
+    }
+    const values = Object.values(auth)
+    if (values.length === 1 && isString(values[0])) {
+        return values[0]
+    }
+    return auth
 }
 
 type ConstructToolParams = {

@@ -3,10 +3,14 @@ import {
     ActivepiecesError,
     ChatConfigResponse,
     ChatConversationStatus,
+    chatToolClassification,
     ErrorCode,
     ExecuteChatToolRequest,
     ExecuteChatToolResponse,
+    FlowActionType,
+    flowStructureUtil,
     GetChatConfigRequest,
+    isNil,
     PersistedChatMessage,
     PersistedChatPartType,
     PersistedChatRole,
@@ -17,6 +21,7 @@ import {
 } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
+import { flowService } from '../../flows/flow/flow.service'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { chatApprovalGate } from './chat-approval-gate'
@@ -225,6 +230,26 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
                 })
             }
             return { result: { success: true } }
+        }
+        if (input.toolName === '__flow_write_check') {
+            const flowId = input.toolInput.flowId
+            if (typeof flowId !== 'string' || typeof input.conversationId !== 'string') {
+                return { result: { hasWrites: false } }
+            }
+            const conversation = await chatHelpers.getConversationOrThrow({ id: input.conversationId, platformId: input.platformId, userId: input.userId })
+            if (isNil(conversation.projectId)) {
+                return { result: { hasWrites: false } }
+            }
+            const flow = await flowService(log).getOnePopulated({ id: flowId, projectId: conversation.projectId })
+            if (isNil(flow)) {
+                return { result: { hasWrites: false } }
+            }
+            const writeSteps = flowStructureUtil.getAllSteps(flow.version.trigger)
+                .filter((step) => step.type === FlowActionType.PIECE
+                    && typeof step.settings.actionName === 'string'
+                    && chatToolClassification.isWriteActionName(step.settings.actionName))
+                .map((step) => step.displayName)
+            return { result: { hasWrites: writeSteps.length > 0, flowName: flow.version.displayName, writeSteps } }
         }
         if (input.toolName === '__get_available_connections') {
             const { pieceName } = input.toolInput
