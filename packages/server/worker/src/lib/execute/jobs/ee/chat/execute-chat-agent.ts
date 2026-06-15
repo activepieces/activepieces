@@ -215,6 +215,11 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                     break
                 }
 
+                // The stream attempt succeeded — refresh the retry budget so each turn
+                // (including a later truncation/empty continuation) gets its own one-shot
+                // retry for a dead stream, instead of spending it once for the whole job.
+                streamRetries = 0
+
                 const [steps, attemptUsage, finishReason] = await Promise.all([
                     result.steps,
                     result.usage,
