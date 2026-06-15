@@ -183,6 +183,40 @@ describe('egress-proxy', () => {
         })
     })
 
+    describe('host binding', () => {
+        it('binds to 127.0.0.1 by default and serves requests', async () => {
+            const { server, port } = await startHttpEcho()
+            try {
+                proxy = await startEgressProxy({ log, allowList: ['127.0.0.1'] })
+                const res = await fetchThroughProxy({
+                    proxyPort: proxy.port,
+                    targetUrl: `http://127.0.0.1:${port}/default-host`,
+                    host: `127.0.0.1:${port}`,
+                })
+                expect(res.statusCode).toBe(200)
+            }
+            finally {
+                await closeServer(server)
+            }
+        })
+
+        it('accepts an explicit host option (loopback) and serves requests', async () => {
+            const { server, port } = await startHttpEcho()
+            try {
+                proxy = await startEgressProxy({ log, host: '127.0.0.1', allowList: ['127.0.0.1'] })
+                const res = await fetchThroughProxy({
+                    proxyPort: proxy.port,
+                    targetUrl: `http://127.0.0.1:${port}/explicit-host`,
+                    host: `127.0.0.1:${port}`,
+                })
+                expect(res.statusCode).toBe(200)
+            }
+            finally {
+                await closeServer(server)
+            }
+        })
+    })
+
     describe('HTTPS CONNECT', () => {
         it('refuses CONNECT to private IP', async () => {
             proxy = await startEgressProxy({ log, allowList: [] })

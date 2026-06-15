@@ -4,10 +4,11 @@ import { type ApLogger } from '@activepieces/server-utils'
 import { ssrfIpClassifier } from '@activepieces/shared'
 import { Server as ProxyServer, RequestError } from 'proxy-chain'
 
-export async function startEgressProxy({ log, allowList }: StartOptions): Promise<EgressProxy> {
+export async function startEgressProxy({ log, host, allowList }: StartOptions): Promise<EgressProxy> {
+    const bindHost = host ?? '127.0.0.1'
     const server = new ProxyServer({
         port: 0,
-        host: '127.0.0.1',
+        host: bindHost,
         // proxy-chain expects an empty upstream-override record when the request is allowed through unchanged.
         prepareRequestFunction: async ({ hostname }): Promise<Record<string, never>> => {
             await assertHostnameAllowedOrThrow({ hostname, allowList, log })
@@ -15,7 +16,7 @@ export async function startEgressProxy({ log, allowList }: StartOptions): Promis
         },
     })
     await server.listen()
-    log.info({ port: server.port }, 'Egress proxy listening on loopback')
+    log.info({ host: bindHost, port: server.port }, 'Egress proxy listening')
     return {
         port: server.port,
         close: () => server.close(true),
@@ -25,8 +26,18 @@ export async function startEgressProxy({ log, allowList }: StartOptions): Promis
 async function assertHostnameAllowedOrThrow({ hostname, allowList, log }: AssertHostnameAllowedParams): Promise<void> {
     // Resolve every A/AAAA record and reject if any is blocked. Checking only the first
     // resolved IP is bypassable with a multi-record response where one entry is private.
-    // Residual risk: proxy-chain re-resolves the hostname for the upstream connection,
-    // so a timing-precise DNS rebind between the two lookups is not covered here.
+    //
+    // Residual risk (connect-time IP pinning, ADR 0001 hard condition): proxy-chain 2.7.1
+    // re-resolves the hostname when it opens the upstream connection. Its public hook
+    // (prepareRequestFunction) only lets us override the *upstream proxy* record — it does
+    // not expose the upstream socket, so we cannot dial the exact IP we validated here
+    // without forking proxy-chain or replacing it with a custom CONNECT server (SNI must
+    // still carry the original hostname for TLS to verify). A timing-precise DNS rebind
+    // between this lookup and proxy-chain's connect lookup is therefore NOT closed here.
+    // This is an accepted residual: under the netns model the sandbox has no route to the
+    // internet at all, so the proxy is the single egress door and already rejects
+    // private/loopback/link-local/metadata at validation time. Connect-time pinning is a
+    // documented follow-up (custom proxy) — see ADR 0001 Phase 1.
     const ips = net.isIP(hostname) > 0
         ? [hostname]
         : (await dns.lookup(hostname, { all: true })).map((a) => a.address)
@@ -39,6 +50,7 @@ async function assertHostnameAllowedOrThrow({ hostname, allowList, log }: Assert
 
 type StartOptions = {
     log: ApLogger
+    host?: string
     allowList: string[]
 }
 
