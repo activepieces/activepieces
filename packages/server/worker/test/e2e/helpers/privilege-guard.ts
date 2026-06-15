@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process'
 
-const SKIP_REASON = 'requires Linux + root + iptables binary; run via `npm run test:sandbox-e2e` from repo root'
+const SKIP_REASON = 'requires Linux + root + iproute2 (ip) binary; run via `npm run test:sandbox-e2e` from repo root'
 
 export function requireLinuxPrivileged(): SkipReason | undefined {
     if (process.platform !== 'linux') {
@@ -11,7 +11,7 @@ export function requireLinuxPrivileged(): SkipReason | undefined {
         return { skip: true, reason: `${SKIP_REASON} (uid=${uid})` }
     }
     try {
-        execFileSync('iptables', ['-V'], { stdio: 'pipe' })
+        execFileSync('ip', ['-V'], { stdio: 'pipe' })
     }
     catch (err) {
         return { skip: true, reason: `${SKIP_REASON} (${(err as Error).message})` }

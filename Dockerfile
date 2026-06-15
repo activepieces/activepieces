@@ -22,7 +22,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         unzip \
         curl \
         ca-certificates \
-        iptables \
         iproute2 \
         libcap-dev && \
     yarn config set python /usr/bin/python3 && \
