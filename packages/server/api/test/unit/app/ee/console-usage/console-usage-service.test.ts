@@ -73,21 +73,24 @@ const mockLog = {
 
 const SNAPSHOT_URL = 'https://console.activepieces.com/api/external/usage/snapshot'
 
-// License keys are queried first (and gate the rest); the four scoped count queries run afterwards
-// in declaration order: active flows, users, team projects, per-day executions.
-const mockQueries = ({ licenseKeys = [], activeFlows = [], users = [], projects = [], dailyExecutions = [] }: {
+// License keys are queried first (and gate the rest); the scoped count queries run afterwards in
+// declaration order: active flows, users, team projects, then per-day executions — which itself runs
+// two queries: a project->platform lookup followed by the flow_run aggregate (grouped by projectId).
+const mockQueries = ({ licenseKeys = [], activeFlows = [], users = [], projects = [], executionProjects = [], executionRuns = [] }: {
     licenseKeys?: { platformId: string, licenseKey: string }[]
     activeFlows?: { platformId: string, count: string }[]
     users?: { platformId: string, count: string }[]
     projects?: { platformId: string, count: string }[]
-    dailyExecutions?: { platformId: string, day: string, count: string }[]
+    executionProjects?: { projectId: string, platformId: string }[]
+    executionRuns?: { projectId: string, day: string, count: string }[]
 }): void => {
     mockGetRawMany
         .mockResolvedValueOnce(licenseKeys)
         .mockResolvedValueOnce(activeFlows)
         .mockResolvedValueOnce(users)
         .mockResolvedValueOnce(projects)
-        .mockResolvedValueOnce(dailyExecutions)
+        .mockResolvedValueOnce(executionProjects)
+        .mockResolvedValueOnce(executionRuns)
 }
 
 describe('consoleUsageService', () => {
@@ -129,9 +132,10 @@ describe('consoleUsageService', () => {
                 activeFlows: [{ platformId: 'platform-1', count: '5' }],
                 users: [{ platformId: 'platform-1', count: '10' }],
                 projects: [{ platformId: 'platform-1', count: '3' }],
-                dailyExecutions: [
-                    { platformId: 'platform-1', day: '2026-06-13', count: '40' },
-                    { platformId: 'platform-1', day: '2026-06-14', count: '60' },
+                executionProjects: [{ projectId: 'project-1', platformId: 'platform-1' }],
+                executionRuns: [
+                    { projectId: 'project-1', day: '2026-06-13', count: '40' },
+                    { projectId: 'project-1', day: '2026-06-14', count: '60' },
                 ],
                 licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }],
             })
@@ -171,9 +175,10 @@ describe('consoleUsageService', () => {
                 activeFlows: [{ platformId: 'p1', count: '5' }],
                 users: [{ platformId: 'p1', count: '10' }],
                 projects: [{ platformId: 'p1', count: '3' }],
-                dailyExecutions: [
-                    { platformId: 'p1', day: '2026-06-07', count: '40' },
-                    { platformId: 'p1', day: '2026-06-09', count: '70' },
+                executionProjects: [{ projectId: 'project-1', platformId: 'p1' }],
+                executionRuns: [
+                    { projectId: 'project-1', day: '2026-06-07', count: '40' },
+                    { projectId: 'project-1', day: '2026-06-09', count: '70' },
                 ],
                 licenseKeys: [{ platformId: 'p1', licenseKey: 'key-123' }],
             })
