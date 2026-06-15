@@ -50,7 +50,10 @@ function calledBefore(result: ChatTurnResult, a: string, b: string): AssertionOu
     if (orderA === -1) {
         return { pass: false, reason: `"${a}" was never called` }
     }
-    if (orderB === -1 || orderA < orderB) {
+    if (orderB === -1) {
+        return { pass: false, reason: `"${b}" was never called` }
+    }
+    if (orderA < orderB) {
         return { pass: true, reason: `"${a}" was called before "${b}"` }
     }
     return { pass: false, reason: `"${a}" (order ${orderA}) was not called before "${b}" (order ${orderB})` }

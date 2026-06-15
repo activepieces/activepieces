@@ -88,6 +88,10 @@ describe('transcriptAssertions.calledBefore', () => {
     it('fails when a never ran', () => {
         expect(transcriptAssertions.calledBefore(result, 'ap_test_flow', 'ap_build_flow').pass).toBe(false)
     })
+
+    it('fails when b never ran (no vacuous pass)', () => {
+        expect(transcriptAssertions.calledBefore(result, 'ap_research_pieces', 'ap_test_flow').pass).toBe(false)
+    })
 })
 
 describe('transcriptAssertions.reachedToolWithin', () => {
