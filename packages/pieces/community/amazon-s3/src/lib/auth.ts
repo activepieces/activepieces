@@ -224,11 +224,6 @@ export const amazonS3OidcAuth = PieceAuth.OIDC({
       description: 'The ARN of the IAM role to assume (e.g. arn:aws:iam::123456789012:role/MyRole).',
       required: true,
     }),
-    externalId: Property.ShortText({
-      displayName: 'External ID (Optional)',
-      description: 'External ID for extra security. Configure this in your IAM role trust policy.',
-      required: false,
-    }),
     region: Property.StaticDropdown({
       displayName: 'Region',
       options: {
@@ -267,7 +262,6 @@ export type AccessKeyAuthProps = {
 
 export type OidcAuthProps = {
   roleArn: string | undefined;
-  externalId: string | undefined;
   bucket: string;
   region: string;
 };

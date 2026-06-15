@@ -110,7 +110,6 @@ export async function getTemporaryCredentials({
       RoleArn: auth.roleArn,
       RoleSessionName: 'activepieces-execution',
       WebIdentityToken: token,
-      ...(auth.externalId ? { ExternalId: auth.externalId } : {}),
       DurationSeconds: 3600,
     }),
   );
