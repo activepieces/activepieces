@@ -118,30 +118,49 @@ async function queryTeamProjectsByPlatform(platformIds: string[]): Promise<Map<s
 }
 
 /**
- * Counts only production runs because test runs (RunEnvironment.TESTING) are not billable, and
- * scopes to licensed platforms while bounding on `created` so PostgreSQL hits the
- * flow_run (projectId, environment, ..., created) indexes instead of scanning the whole table.
+ * Counts only production runs because test runs (RunEnvironment.TESTING) are not billable. Mirrors the
+ * run-telemetry job: aggregate flow_run bounded only by `created` (+ environment) and grouped by
+ * projectId, with NO join to project. Joining on project.platformId is what defeated the
+ * flow_run (projectId, environment, created, ...) indexes and tripped the DB statement timeout; a
+ * plain created-bounded aggregate plans cleanly. Projects are mapped to platforms in app code, so only
+ * the licensed platforms' runs are kept.
  */
 async function queryDailyExecutionsByPlatform(platformIds: string[], dayStart: string, dayEnd: string): Promise<Map<string, DailyExecutionCount[]>> {
+    const projects = await projectRepo()
+        .createQueryBuilder('project')
+        .select('project.id', 'projectId')
+        .addSelect('project.platformId', 'platformId')
+        .where('project.platformId IN (:...platformIds)', { platformIds })
+        .getRawMany<{ projectId: string, platformId: string }>()
+
+    const platformByProject = new Map(projects.map((project): [string, string] => [project.projectId, project.platformId]))
+
     const rows = await flowRunRepo()
         .createQueryBuilder('flow_run')
-        .innerJoin('flow_run.project', 'project')
-        .select('project.platformId', 'platformId')
+        .select('flow_run.projectId', 'projectId')
         .addSelect('to_char(flow_run.created AT TIME ZONE \'UTC\', \'YYYY-MM-DD\')', 'day')
         .addSelect('COUNT(*)', 'count')
-        .where('project.platformId IN (:...platformIds)', { platformIds })
-        .andWhere('flow_run.environment = :environment', { environment: RunEnvironment.PRODUCTION })
+        .where('flow_run.environment = :environment', { environment: RunEnvironment.PRODUCTION })
         .andWhere('flow_run.created >= :dayStart', { dayStart })
         .andWhere('flow_run.created < :dayEnd', { dayEnd })
-        .groupBy('project.platformId')
+        .groupBy('flow_run.projectId')
         .addGroupBy('to_char(flow_run.created AT TIME ZONE \'UTC\', \'YYYY-MM-DD\')')
-        .getRawMany<{ platformId: string, day: string, count: string }>()
+        .getRawMany<{ projectId: string, day: string, count: string }>()
+
+    const countsByPlatformDay = new Map<string, Map<string, number>>()
+    for (const row of rows) {
+        const platformId = platformByProject.get(row.projectId)
+        if (!platformId) {
+            continue
+        }
+        const dayCounts = countsByPlatformDay.get(platformId) ?? new Map<string, number>()
+        dayCounts.set(row.day, (dayCounts.get(row.day) ?? 0) + Number(row.count))
+        countsByPlatformDay.set(platformId, dayCounts)
+    }
 
     const map = new Map<string, DailyExecutionCount[]>()
-    for (const row of rows) {
-        const days = map.get(row.platformId) ?? []
-        days.push({ date: row.day, count: Number(row.count) })
-        map.set(row.platformId, days)
+    for (const [platformId, dayCounts] of countsByPlatformDay) {
+        map.set(platformId, [...dayCounts.entries()].map(([date, count]): DailyExecutionCount => ({ date, count })))
     }
     return map
 }
