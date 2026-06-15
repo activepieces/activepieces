@@ -29,6 +29,12 @@ If you'd like to use your own custom Azure app instead of the default app, follo
   - User.RevokeSessions.All
   - offline_access
 
+The **Permissions** dropdown picks which of those scopes are requested for this connection. Tiers are additive (each includes everything above it); every tier also includes \`User.Read.All\` (so the connection can be validated) and \`offline_access\` (so it can refresh):
+  - **Read only (users & directory)** — \`User.Read.All\`, \`Directory.Read.All\`
+  - **User management** — adds \`User.ReadWrite.All\`, \`User.RevokeSessions.All\`
+  - **User & group management** — adds \`Group.ReadWrite.All\`
+  - **Full management (users, groups, licenses)** — adds \`LicenseAssignment.ReadWrite.All\`
+
 Leave **Tenant ID** as \`common\` for the default multi-tenant flow, or set it to your Directory (tenant) ID if your app registration is single-tenant.`;
 
 export const azureAdAuth = PieceAuth.OAuth2({
