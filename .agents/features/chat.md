@@ -20,7 +20,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `packages/server/api/src/app/ee/chat/mcp/chat-mcp.ts` — connects to Activepieces MCP server for project-scoped tools with approval wrapping
 - `packages/server/api/src/app/ee/chat/history/chat-history.ts` — reconstructs chat history from AI SDK `ModelMessage` format
 - `packages/server/api/src/app/ee/chat/prompt/chat-prompt.ts` — builds system prompt from markdown templates in `src/assets/prompts/`
-- `packages/server/api/src/app/ee/chat/chat-sync-job.ts` — fire-and-forget telemetry sync to console.activepieces.com (cloud-only); also exposes `chatAnalyticsBulkSync` for admin bulk sync; falls back to reconstructing messages from raw ModelMessage[] when uiMessages is null
+- `packages/server/api/src/app/ee/chat/chat-sync-job.ts` — fire-and-forget telemetry sync to console.activepieces.com (cloud-only), grouped by platform and authenticated with each platform's license key (from `platform_plan`) as a Bearer token; platforms without a license key are skipped; also exposes `chatAnalyticsBulkSync` for admin bulk sync; falls back to reconstructing messages from raw ModelMessage[] when uiMessages is null
 - `packages/shared/src/lib/ee/chat/index.ts` — shared Zod schemas, types (ChatConversation, request DTOs, ChatHistoryMessage), typed tool outputs (`ChatToolOutputs`); includes `PersistedActionReceiptPartSchema` for persisting action receipts in conversation history; `PersistedToolCallPartSchema` includes optional `title` and `description` fields for UI chip label and conversational status text
 - `packages/web/src/app/routes/chat-with-ai/index.tsx` — main chat page component
 - `packages/web/src/app/routes/chat-with-ai/ai-chat-box.tsx` — chat interface with provider check, message streaming, Zustand store provider; manages suggestion prefill via counter-based key remount on empty-state suggestion clicks
@@ -88,7 +88,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `ap_list_across_projects` — lists flows, tables, runs, or connections across all user-accessible projects
 - `ap_deselect_project` — clears the selected project context
 - `ap_explore_data` — read-only exploration of the user's data (sheets, channels, columns) to build understanding during discovery; never configures the automation
-- `ap_load_guide` — loads an on-demand prompt guide (e.g. `build_flow`) so guidance is only in context when needed
+- `ap_load_guide` — loads an on-demand prompt guide (`build_flow`, `one_time_task`, `error_handling`, `http_fallback`, `control_flow`, `state`, `tables`, `ai`) so guidance is only in context when needed
 - `ap_set_phase` — flips the agent between the `discovery` and `build` tool phases
 
 ## Display Tools
@@ -126,4 +126,4 @@ All chat endpoints require `PrincipalType.USER` authentication at the platform l
 5. Display-tool cards (connection picker, questions) and ad-hoc write actions (`ap_execute_action` previews) pause and emit a gate request to the UI via the stream; flow build/test/publish run without gating
 6. User responds via `POST /tool-approvals/:gateId`, unblocking the gate via Redis pub/sub
 7. On stream completion, assistant messages are appended to the stored conversation
-8. On cloud, `chatAnalyticsTelemetry` pushes the updated conversation to `console.activepieces.com` for monitoring (fire-and-forget, skipped when `CONSOLE_API_SECRET_KEY` is unset); messages are sourced from uiMessages when available, falling back to reconstruction from raw ModelMessage[] for older conversations
+8. On cloud, `chatAnalyticsTelemetry` pushes the updated conversation to `console.activepieces.com` for monitoring (fire-and-forget, authenticated with the platform's license key as a Bearer token and skipped when the platform has no license key); messages are sourced from uiMessages when available, falling back to reconstruction from raw ModelMessage[] for older conversations

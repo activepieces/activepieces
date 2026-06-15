@@ -70,6 +70,42 @@ function formatOptionsHint(options: Array<{ label: string, value: unknown }> | u
     return ` — options: ${values.join(', ')}`
 }
 
+function levenshtein(a: string, b: string): number {
+    const rows = Array.from({ length: a.length + 1 }, (_, i) => [i, ...new Array<number>(b.length).fill(0)])
+    for (let j = 1; j <= b.length; j++) {
+        rows[0][j] = j
+    }
+    for (let i = 1; i <= a.length; i++) {
+        for (let j = 1; j <= b.length; j++) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1
+            rows[i][j] = Math.min(rows[i - 1][j] + 1, rows[i][j - 1] + 1, rows[i - 1][j - 1] + cost)
+        }
+    }
+    return rows[a.length][b.length]
+}
+
+function suggestClosestKey(key: string, validKeys: string[]): string | null {
+    const loweredKey = key.toLowerCase()
+    const containing = validKeys.find((valid) => {
+        const loweredValid = valid.toLowerCase()
+        return loweredValid.includes(loweredKey) || loweredKey.includes(loweredValid)
+    })
+    if (containing) {
+        return containing
+    }
+    const threshold = Math.max(2, Math.floor(key.length / 2))
+    let best: string | null = null
+    let bestDistance = Infinity
+    for (const valid of validKeys) {
+        const distance = levenshtein(loweredKey, valid.toLowerCase())
+        if (distance < bestDistance) {
+            bestDistance = distance
+            best = valid
+        }
+    }
+    return best !== null && bestDistance <= threshold ? best : null
+}
+
 function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentType }: DiagnosePiecePropsParams): DiagnosisResult {
     const missing: string[] = []
     const uiRequired: string[] = []
@@ -109,7 +145,14 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
             .filter(([, prop]) => !NON_INPUT_PROP_TYPES.has(prop.type))
             .map(([name, prop]) => `- ${name} (${prop.type}): ${prop.description ?? prop.displayName}`)
             .join('\n')
-        parts.push(`Unknown properties: ${unknownKeys.map((k) => `'${k}'`).join(', ')}. Valid properties for this action are:\n${validPropDescriptions}\nPlease retry with correct property names.`)
+        const suggestions = unknownKeys
+            .map((key) => {
+                const closest = suggestClosestKey(key, [...validPropKeys])
+                return closest ? `'${key}' → did you mean '${closest}'?` : null
+            })
+            .filter((suggestion): suggestion is string => suggestion !== null)
+        const suggestionLine = suggestions.length > 0 ? `\nSuggestions: ${suggestions.join('; ')}.` : ''
+        parts.push(`Unknown properties: ${unknownKeys.map((k) => `'${k}'`).join(', ')}.${suggestionLine} Valid properties for this action are:\n${validPropDescriptions}\nPlease retry with correct property names.`)
     }
     if (missing.length > 0) {
         parts.push(`Missing required inputs: ${missing.join(', ')}.`)
