@@ -71,6 +71,11 @@ describe.skipIf(PRIVILEGE_SKIP)('sandbox real third-party connectivity (SANDBOX_
         const successes = countConnectivitySuccesses({ results: result.results, hosts: GROUP_A_HOSTS })
         const summary = summarizeFailures({ results: result.results, hosts: GROUP_A_HOSTS })
 
+        // Log which hosts failed even when the 80% threshold still passes, so a systemic
+        // break (e.g. half the hosts down) can't hide silently under the headroom.
+        // eslint-disable-next-line no-console
+        console.log(`[Group A] ${successes}/${GROUP_A_HOSTS.length} hosts reachable through the proxy. ${summary}`)
+
         expect(
             successes >= MIN_GROUP_A_SUCCESSES,
             `expected >= ${MIN_GROUP_A_SUCCESSES}/${GROUP_A_HOSTS.length} hosts reachable through the proxy; got ${successes}.\n${summary}`,
