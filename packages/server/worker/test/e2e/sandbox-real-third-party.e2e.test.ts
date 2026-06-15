@@ -121,11 +121,15 @@ describe.skipIf(PRIVILEGE_SKIP)('sandbox real third-party connectivity (SANDBOX_
         }))
         const result = await runProbeInSandbox({ commonDir, plan, proxyPort: proxy.port, omitProxyUrl: true })
         const failures = result.results.filter((r) => r.action.type === 'fetch-via-undici')
+        const NO_ROUTE_OR_DNS = new Set(['EHOSTUNREACH', 'ENETUNREACH', 'ENOTFOUND', 'EAI_AGAIN', 'FETCH_ERR'])
         for (const r of failures) {
             expect(r.status, `${r.action.tag} unexpectedly succeeded with no ProxyAgent: ${JSON.stringify(r)}`).toBe('ERR')
             expect(
-                r.code === 'EHOSTUNREACH' || r.code === 'ENETUNREACH' || r.code === 'FETCH_ERR',
-                `${r.action.tag} expected no-route failure (netns has no default route), got: ${JSON.stringify(r)}`,
+                NO_ROUTE_OR_DNS.has(r.code ?? ''),
+                // In the netns there is neither a default route NOR a reachable resolver, so a
+                // direct fetch fails either at DNS (getaddrinfo ENOTFOUND/EAI_AGAIN) or at
+                // connect (ENETUNREACH/EHOSTUNREACH). Both prove egress is closed without the proxy.
+                `${r.action.tag} expected no-route/no-DNS failure (netns has no default route and no resolver), got: ${JSON.stringify(r)}`,
             ).toBe(true)
         }
     }, 60_000)

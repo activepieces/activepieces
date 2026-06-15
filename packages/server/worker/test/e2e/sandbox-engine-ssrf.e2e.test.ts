@@ -1,3 +1,4 @@
+import http from 'node:http'
 import net from 'node:net'
 import { chmod, mkdtemp, copyFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -26,6 +27,7 @@ const skip = requireLinuxPrivileged() ?? requireIsolateBinary(ISOLATE_BINARY_PAT
 describe.skipIf(skip)('sandbox engine ssrf-guard — real hooks under netns + proxy', () => {
     let ns: EgressNetns
     let proxy: EgressProxy
+    let httpEcho: { server: http.Server, port: number }
     let echo: { server: net.Server, port: number }
     let wsRpcListener: { server: net.Server, port: number }
     let commonDir: string
@@ -33,6 +35,7 @@ describe.skipIf(skip)('sandbox engine ssrf-guard — real hooks under netns + pr
 
     beforeAll(async () => {
         ns = await egressNetns.create({ log: silentLogger() })
+        httpEcho = await startGatewayHttpEcho(GATEWAY_HOST)
         echo = await startGatewayTcpEcho(GATEWAY_HOST)
         wsRpcListener = await startGatewayTcpEcho(GATEWAY_HOST)
         proxy = await startEgressProxy({
@@ -56,7 +59,7 @@ describe.skipIf(skip)('sandbox engine ssrf-guard — real hooks under netns + pr
             { case: 'blocked-loopback-port', type: 'connect-expect-blocked', host: '127.0.0.1', port: echo.port },
             { case: 'blocked-private-ip', type: 'connect-expect-blocked', host: '10.0.0.1', port: 1234 },
             { case: 'dns-private-ip', type: 'dns-expect-blocked', hostname: '169.254.169.254' },
-            { case: 'http-proxy-allowlisted', type: 'http-via-proxy', url: `http://${GATEWAY_HOST}:${echo.port}/ping`, expectStatus: 200 },
+            { case: 'http-proxy-allowlisted', type: 'http-via-proxy', url: `http://${GATEWAY_HOST}:${httpEcho.port}/ping`, expectStatus: 200 },
             { case: 'http-proxy-blocked-ip', type: 'http-via-proxy', url: 'http://169.254.169.254/latest/meta-data/', expectStatus: 403 },
             { case: 'public-ip-passes-guard', type: 'connect-expect-ok', host: '8.8.8.8', port: 65535 },
         ]
@@ -66,6 +69,7 @@ describe.skipIf(skip)('sandbox engine ssrf-guard — real hooks under netns + pr
 
     afterAll(async () => {
         await proxy?.close()
+        await new Promise<void>((resolve) => httpEcho?.server.close(() => resolve()))
         await new Promise<void>((resolve) => echo?.server.close(() => resolve()))
         await new Promise<void>((resolve) => wsRpcListener?.server.close(() => resolve()))
         await ns?.destroy()
@@ -115,6 +119,17 @@ describe.skipIf(skip)('sandbox engine ssrf-guard — real hooks under netns + pr
         expect(r.ok, `case "${caseName}" outcome=${r.outcome} error=${r.error ?? ''}`).toBe(true)
     }
 })
+
+async function startGatewayHttpEcho(host: string): Promise<{ server: http.Server, port: number }> {
+    const server = http.createServer((_req, res) => {
+        res.writeHead(200, { 'Content-Type': 'text/plain' })
+        res.end('gateway-http-echo')
+    })
+    await new Promise<void>((resolve) => server.listen(0, host, () => resolve()))
+    const address = server.address()
+    if (typeof address !== 'object' || address === null) throw new Error('could not determine gateway http echo port')
+    return { server, port: address.port }
+}
 
 async function startGatewayTcpEcho(host: string): Promise<{ server: net.Server, port: number }> {
     const server = net.createServer((socket) => {

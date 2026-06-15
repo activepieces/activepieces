@@ -52,6 +52,8 @@ function assertSandboxEnv(env: Record<string, string>): void {
     }
 }
 
+const SANDBOX_OPEN_FILES_LIMIT = 4096
+
 const isolateBinaryPath = path.resolve(process.cwd(), 'packages/server/api/src/assets', getIsolateExecutableName())
 const etcDir = path.resolve(process.cwd(), 'packages/server/api/src/assets/etc')
 
@@ -107,6 +109,11 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
                 '--share-net',
                 `--box-id=${boxId}`,
                 '--processes',
+                // isolate defaults RLIMIT_NOFILE to 64, which is far too low for a Node
+                // runtime importing real pieces. Heavy dependency trees (e.g. the AI piece:
+                // ai + 8 @ai-sdk providers + MCP SDK, resolved through bun's isolated-linker
+                // symlink farm) blow past 64 concurrent fds on import and throw EMFILE.
+                `--open-files=${SANDBOX_OPEN_FILES_LIMIT}`,
                 '--chdir=/root',
                 ...envArgs,
                 '--run',
