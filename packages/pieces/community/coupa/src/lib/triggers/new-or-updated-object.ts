@@ -94,6 +94,10 @@ export const newOrUpdatedObject = createTrigger({
   displayName: 'New or Updated Object',
   description:
     'Triggers when a Purchase Order, Supplier, or Contract is created or updated in Coupa.',
+  aiMetadata: {
+    description:
+      'Fires when an object in the selected Coupa module (Purchase Order, Supplier, Contract, or a custom resource) is created or updated, polling on the updated-at timestamp. Each event carries the changed record with standard fields like id, number, status, total, supplier, and updated-at; optional JSON query filters can narrow which records are emitted.',
+  },
   props: {
     module: moduleProperty,
     customResource: customModuleResourceProperty,

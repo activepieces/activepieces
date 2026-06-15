@@ -1,5 +1,6 @@
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { AddAllowedEmbedOriginsRequestBody, ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, ConnectionDeletedEvent, ConnectionUpsertedEvent, Flow, FlowActivatedEvent, FlowCreatedEvent, FlowDeactivatedEvent, FlowDeletedEvent, FlowPublishedEvent, FlowRun, FlowRunFinishedEvent, FlowRunRetriedEvent, FlowRunStartedEvent, FlowUpdatedEvent, Folder, FolderCreatedEvent, FolderDeletedEvent, FolderUpdatedEvent, GitRepoWithoutSensitiveData, isNil, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserEmailVerifiedEvent, UserInvitation, UserPasswordResetEvent, UserSignedInEvent, UserWithMetaInformation } from '@activepieces/shared'
+import { wideEvent } from '@activepieces/server-utils'
+import { AddAllowedEmbedOriginsRequestBody, ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, ConnectionDeletedEvent, ConnectionUpsertedEvent, Flow, FlowActivatedEvent, FlowCreatedEvent, FlowDeactivatedEvent, FlowDeletedEvent, FlowPublishedEvent, FlowRun, FlowRunFinishedEvent, FlowRunRetriedEvent, FlowRunStartedEvent, FlowUpdatedEvent, Folder, FolderCreatedEvent, FolderDeletedEvent, FolderUpdatedEvent, GitRepoWithoutSensitiveData, isNil, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, spreadIfDefined, Template, UserEmailVerifiedEvent, UserInvitation, UserPasswordResetEvent, UserSignedInEvent, UserWithMetaInformation } from '@activepieces/shared'
 import replyFrom from '@fastify/reply-from'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
@@ -34,6 +35,7 @@ import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
 import { chatModule } from './ee/chat/chat.module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
+import { consoleUsageModule } from './ee/console-usage/console-usage-module'
 import { embedSubdomainModule } from './ee/embed-subdomain/embed-subdomain.module'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { globalConnectionModule } from './ee/global-connections/global-connection-module'
@@ -73,6 +75,7 @@ import { AppSystemProp } from './helper/system/system-props'
 import { SystemJobName } from './helper/system-jobs/common'
 import { systemJobHandlers } from './helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from './helper/system-jobs/system-job'
+import { systemSnapshot } from './helper/system-snapshot'
 import { validateEnvPropsOnStartup } from './helper/system-validator'
 import { shutdownTelemetry } from './helper/telemetry.utils'
 import { knowledgeBaseModule } from './knowledge-base/knowledge-base.module'
@@ -148,7 +151,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
     await app.register(rateLimitModule)
     app.addHook('onResponse', async (request, reply) => {
-        // eslint-disable-next-line
+        // eslint-disable-next-line                                                                                                                                                                                                                     
         reply.header('x-request-id', request.id)
     })
     app.addHook('onRequest', async (request, reply) => {
@@ -156,6 +159,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             method: request.method as HTTPMethods,
             url: request.routeOptions.url!,
         })
+        request.log = request.log.child({ route: request.routeOptions.url })
         if (!route) {
             return reply.code(404).send({
                 statusCode: 404,
@@ -166,6 +170,25 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     })
 
     app.addHook('preHandler', authenticationMiddleware)
+
+    // Enrich the current wide-event with tenant identifiers resolved by the auth middleware.
+    // request.principal is set by authenticationMiddleware; for public routes it may be
+    // undefined (the middleware returns early), so we guard with a try/catch.
+    app.addHook('preHandler', (request, _reply, done) => {
+        try {
+            const principal = request.principal
+            wideEvent.set({
+                ...spreadIfDefined('projectId', extractProjectId(principal)),
+                ...spreadIfDefined('platformId', extractPlatformId(principal)),
+                ...spreadIfDefined('principalType', principal?.type),
+            })
+        }
+        catch {
+            // principal getter may throw before auth completes — safe to ignore
+        }
+        done()
+    })
+
     app.addHook('preHandler', authorizationMiddleware)
     app.addHook('preHandler', rbacMiddleware)
 
@@ -207,6 +230,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await aiProviderService(app.log).setup()
     await app.register(aiProviderModule)
     await app.register(licenseKeysModule)
+    await app.register(consoleUsageModule)
     await app.register(tablesModule)
     await app.register(knowledgeBaseModule)
     await app.register(userModule)
@@ -357,6 +381,7 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
     const environment = system.get(AppSystemProp.ENVIRONMENT)
     const pieces = process.env.AP_DEV_PIECES
 
+    systemSnapshot.start({ log: app.log })
     await migrateQueuesAndRunConsumers(app)
     app.log.info('Queues migrated and consumers run')
     if (environment === ApEnvironment.DEVELOPMENT) {
@@ -368,6 +393,14 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
         )
     }
     void startDevPieceWatcher(app)
+}
+
+function extractPlatformId(principal: { platform?: { id?: string } } | null | undefined): string | undefined {
+    return principal?.platform?.id
+}
+
+function extractProjectId(principal: { projectId?: string } | null | undefined): string | undefined {
+    return principal?.projectId
 }
 
 function registerOpenApiSchemas() {

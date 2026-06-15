@@ -1,5 +1,4 @@
 import {
-    BranchExecutionType,
     FlowActionType,
     FlowCreatorType,
     FlowOperationType,
@@ -9,7 +8,6 @@ import {
     McpToolDefinition,
     Permission,
     PieceTrigger,
-    RouterExecutionType,
     StepLocationRelativeToParent,
     UpdateActionRequest,
 } from '@activepieces/shared'
@@ -21,7 +19,7 @@ import { projectService } from '../../project/project-service'
 import { mcpUtils } from './mcp-utils'
 
 const stepSpec = z.object({
-    type: z.enum([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.LOOP_ON_ITEMS, FlowActionType.ROUTER]),
+    type: z.enum([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.LOOP_ON_ITEMS]),
     displayName: z.string(),
     pieceName: z.string().optional(),
     actionName: z.string().optional(),
@@ -55,7 +53,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
     return {
         title: 'ap_build_flow',
         permission: Permission.WRITE_FLOW,
-        description: 'Create a complete flow in one call: trigger + steps. Steps are added sequentially by default (trigger → step_1 → step_2 → ...). To nest steps inside a loop, set parentStepName to the loop step name and stepLocationRelativeToParent to INSIDE_LOOP.',
+        description: 'Create a NEW flow from scratch in one call: trigger + steps. Steps are added sequentially by default (trigger → step_1 → step_2 → ...). To nest steps inside a loop, set parentStepName to the loop step name and stepLocationRelativeToParent to INSIDE_LOOP. ROUTER steps are NOT supported here (branches and conditions cannot be configured in one call) — build the rest of the flow first, then add the router with ap_add_step and configure branches with ap_add_branch / ap_update_branch. For EDITING an existing flow, do NOT rebuild it — use the granular ap_add_step / ap_update_step / ap_update_trigger instead.',
         inputSchema: {
             flowName: z.string().describe('Name for the new flow'),
             trigger: z.object({
@@ -64,7 +62,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                 input: z.record(z.string(), z.unknown()).optional().describe('Trigger input config'),
                 auth: z.string().optional().describe('Connection externalId for trigger auth'),
             }).describe('Trigger configuration'),
-            steps: z.array(stepSpec).describe('Array of steps. By default added sequentially after trigger. Use parentStepName + stepLocationRelativeToParent to nest steps inside loops. Each step supports: PIECE (pieceName+actionName+input), CODE (sourceCode+input), LOOP_ON_ITEMS (loopItems), ROUTER.'),
+            steps: z.array(stepSpec).describe('Array of steps. By default added sequentially after trigger. Use parentStepName + stepLocationRelativeToParent to nest steps inside loops. Each step supports: PIECE (pieceName+actionName+input), CODE (sourceCode+input), LOOP_ON_ITEMS (loopItems). ROUTER is not supported here — add it afterwards with ap_add_step + ap_add_branch.'),
         },
         annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
@@ -125,6 +123,12 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     id: flowId, projectId, userId: null, platformId,
                     operation: { type: FlowOperationType.UPDATE_TRIGGER, request: triggerPayload },
                 })
+                const unknownPropFindings: string[] = []
+                const triggerUnknown = await mcpUtils.detectUnknownInputProps({ pieceName: triggerVersionResult.normalizedPieceName, pieceVersion: triggerVersionResult.pieceVersion, componentName: trigger.triggerName, componentType: 'trigger', input: trigger.input, platformId, log })
+                if (triggerUnknown.unknownKeys.length > 0) {
+                    unknownPropFindings.push(`trigger: ${triggerUnknown.message}`)
+                }
+
                 const skippedSteps: string[] = []
                 let lastTopLevelStepName: string | null = null
 
@@ -180,6 +184,13 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                         },
                     })
 
+                    if (step.type === FlowActionType.PIECE && resolvedPieceName && resolvedPieceVersion && step.actionName) {
+                        const stepUnknown = await mcpUtils.detectUnknownInputProps({ pieceName: resolvedPieceName, pieceVersion: resolvedPieceVersion, componentName: step.actionName, componentType: 'action', input: step.input, platformId, log })
+                        if (stepUnknown.unknownKeys.length > 0) {
+                            unknownPropFindings.push(`${stepName} (${step.displayName}): ${stepUnknown.message}`)
+                        }
+                    }
+
                     if (location === StepLocationRelativeToParent.AFTER) {
                         lastTopLevelStepName = stepName
                     }
@@ -200,6 +211,10 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     validCount,
                     invalidSteps,
                     skippedSteps,
+                    unknownProps: unknownPropFindings,
+                }
+                if (unknownPropFindings.length > 0) {
+                    return { content: [{ type: 'text', text: `❌ Flow "${flowName}" created (id: ${flowId}), but some settings used property names that do NOT exist on the piece and were dropped — the flow does NOT behave as configured. Do NOT tell the user these settings were applied. Fix each with ap_update_step / ap_update_trigger using the correct property names:\n${unknownPropFindings.join('\n')}\nOpen: ${flowUrl}` }], structuredContent: structured }
                 }
                 if (invalidSteps.length === 0 && skippedSteps.length === 0) {
                     return { content: [{ type: 'text', text: `✅ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} ${stepWord}, all valid. Open: ${flowUrl}` }], structuredContent: structured }
@@ -265,20 +280,6 @@ function buildSkeleton({ step, name, resolvedPieceVersion, resolvedPieceName }: 
                 displayName: step.displayName,
                 valid: false,
                 settings: { items: step.loopItems ?? '' },
-            }
-        case FlowActionType.ROUTER:
-            return {
-                type: FlowActionType.ROUTER,
-                name,
-                displayName: step.displayName,
-                valid: false,
-                settings: {
-                    branches: [
-                        { branchName: 'Branch 1', branchType: BranchExecutionType.CONDITION, conditions: [[]] },
-                        { branchName: 'Otherwise', branchType: BranchExecutionType.FALLBACK },
-                    ],
-                    executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
-                },
             }
         default:
             return { type: step.type, name, displayName: step.displayName, valid: false, settings: {} }

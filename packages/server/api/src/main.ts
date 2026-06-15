@@ -1,6 +1,4 @@
-import './instrumentation'
-
-
+import { evlogSetup } from '@activepieces/server-utils'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { appPostBoot } from './app/app'
@@ -37,6 +35,7 @@ const stop = async (app: FastifyInstance): Promise<void> => {
 
     try {
         await app.close()
+        await evlogSetup.flush()
         process.exit(0)
     }
     catch (err) {

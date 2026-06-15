@@ -1,9 +1,9 @@
 import { apDayjsDuration, fileSystemUtils } from '@activepieces/server-utils'
+import { type ApLogger } from '@activepieces/server-utils'
 import { tryCatch } from '@activepieces/shared'
-import { Logger } from 'pino'
 import { CommandOutput, spawnWithKill } from '../../utils/exec'
 
-export const bunRunner = (log: Logger) => ({
+export const bunRunner = (log: ApLogger) => ({
     async install({ path, filtersPath }: InstallParams): Promise<CommandOutput> {
         const filterArgs: string[] = filtersPath
             .map(sanitizeFilterPath)

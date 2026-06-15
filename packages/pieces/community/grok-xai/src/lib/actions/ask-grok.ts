@@ -19,6 +19,7 @@ import {
 import { z } from 'zod';
 
 export const askGrok = createAction({
+  audience: 'human',
   auth: grokAuth,
   name: 'ask_grok',
   displayName: 'Ask Grok',

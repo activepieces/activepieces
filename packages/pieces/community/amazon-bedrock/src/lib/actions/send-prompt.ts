@@ -21,6 +21,7 @@ import {
 } from '../common';
 
 export const sendPrompt = createAction({
+  audience: 'human',
   auth: awsBedrockAuth,
   name: 'send_prompt',
   displayName: 'Ask Bedrock',

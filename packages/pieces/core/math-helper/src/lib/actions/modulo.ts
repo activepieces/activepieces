@@ -5,6 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 
 export const modulo = createAction({
+  audience: 'human',
   name: 'modulo_math',
   auth: PieceAuth.None(),
   displayName: 'Modulo',

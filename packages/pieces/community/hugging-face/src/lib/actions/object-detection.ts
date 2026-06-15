@@ -8,6 +8,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { huggingFaceAuth } from '../auth';
 
 export const objectDetection = createAction({
+  audience: 'human',
   name: 'object_detection',
   auth: huggingFaceAuth,
   displayName: 'Object Detection',

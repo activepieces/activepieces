@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import jimp from 'jimp';
 
 export const compressImage = createAction({
+  audience: 'human',
   name: 'compress_image',
   description: 'Compresses an image',
   displayName: 'Compresses an image',

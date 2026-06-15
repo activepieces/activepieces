@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 
 export const concat = createAction({
+  audience: 'human',
   description: 'Concatenate two or more texts',
   displayName: 'Concatenate',
   name: 'concat',

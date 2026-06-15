@@ -1,7 +1,7 @@
 # Flows Module
 
 ## Summary
-Flows are the core automation primitive in Activepieces. Each flow is a versioned directed graph of trigger and action steps stored as a JSONB tree. The module handles the full lifecycle: draft editing via a single-endpoint operation dispatch, publishing (locking a version and registering the trigger source), enabling/disabling, folder organization, sample data capture for testing, human-input forms/chat interfaces, and the visual builder frontend powered by XYFlow. All 26 flow modification types are dispatched through one endpoint (`POST /v1/flows/:id`) with a discriminated-union body.
+Flows are the core automation primitive in Activepieces. Each flow is a versioned directed graph of trigger and action steps stored as a JSONB tree. The module handles the full lifecycle: draft editing via a single-endpoint operation dispatch, publishing (locking a version and registering the trigger source), enabling/disabling, folder organization, sample data capture for testing, human-input forms/chat interfaces, PNG export of the canvas, and the visual builder frontend powered by XYFlow. All 26 flow modification types are dispatched through one endpoint (`POST /v1/flows/:id`) with a discriminated-union body.
 
 ## Key Files
 - `packages/server/api/src/app/flows/flow/flow.service.ts` — core service (operations, publish, enable/disable)
@@ -22,6 +22,8 @@ Flows are the core automation primitive in Activepieces. Each flow is a versione
 - `packages/web/src/features/flows/utils/flows-utils.tsx` — download, zip, template parsing helpers
 - `packages/web/src/app/builder/index.tsx` — visual flow builder entry point
 - `packages/web/src/app/builder/flow-canvas/` — XYFlow canvas (nodes, edges, drag layer, context menu)
+- `packages/web/src/app/builder/flow-canvas/canvas-controls/` — bottom canvas toolbar (zoom, fit-to-view, minimap, grab/select mode, add-note, orientation toggle, **download flow as PNG**); `use-fit-to-view.ts` owns the viewport-fitting math, `canvas-control-button.tsx` is the shared icon-button
+- `packages/web/src/app/builder/flow-canvas/utils/flow-screenshot-utils.ts` — `flowScreenshotUtils.downloadFlowAsImage` exports the flow canvas to a PNG. Hand-rolled clone-and-rasterize pipeline (avoids html-to-image's slow full-style clone): clones the `.react-flow__viewport`, copies only paint-affecting computed styles in yielding chunks (`sleep()` between chunks to keep the tab responsive), inlines `<img>` sources as data URLs (bounded module-level cache), and embeds the page's web fonts as base64 `@font-face` CSS (computed once per session via `getFontEmbedCSS`, cached in `cachedFontEmbedCss`). The styled clone is serialized into an SVG `<foreignObject>` data URL, decoded off-thread via `Image.decode()`, then composed onto a canvas where the dotted background is redrawn — exported at 2× (`PREFERRED_PIXEL_SCALE`) and clamped to `MAX_IMAGE_DIMENSION` (8192px). PNG is encoded with `canvas.toBlob` (off the main thread). Note nodes and elements tagged with `SCREENSHOT_EXCLUDE_ATTRIBUTE` (e.g. run/test badges in `step-node-badge-container.tsx`) are omitted. Throws on no-capturable-steps / unresolvable-bounds so the caller's `toast.error` fires
 - `packages/web/src/app/builder/state/` — Zustand-based builder state (flow, run, canvas, notes, step form, piece selector)
 - `packages/web/src/app/builder/step-settings/` — step configuration panel and split/drawer layout for the step data panel; `piece-settings/connection-select.tsx` is the per-step connection picker — it renders an inline status indicator for every connection state (Connected / Error / Missing, via `getConnectionStatusDisplay`) alongside a single unified `Cable` reconnect icon button (replacing the old per-state mix of refresh icon + text button). The indicator overlay is `pointer-events-none` so clicking the status label opens the dropdown; only the reconnect button re-enables pointer events and opens the reconnect dialog.
 - `packages/web/src/app/builder/step-data/` — step data panel UI (`step-data-panel-host.tsx` / `StepDataPanelHost`, `step-data-panel-header.tsx`, `step-data-panel-view-toggle.tsx`)
@@ -90,7 +92,7 @@ When LOCK_AND_PUBLISH or CHANGE_STATUS to ENABLED:
 2. Enable trigger source (register webhook/polling/app-event)
 3. Invalidate flow execution cache
 4. Emit WebSocket event
-5. Track telemetry
+5. Track telemetry — `telemetry().trackProject(...)` is fire-and-forget via `rejectedPromiseHandler` (`helper/promise-handler`); failures are logged and never block or fail the publish
 
 When CHANGE_STATUS to DISABLED:
 1. Disable trigger source (unregister webhook/polling)

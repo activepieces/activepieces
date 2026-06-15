@@ -3,11 +3,11 @@ import {
     ActionReceiptEvent,
     BatchItemResult,
     ChatAgentEventType,
+    ChatPhase,
     chatToolClassification,
     chunk,
     isObject,
     SendChatEventRequest,
-    ToolApprovalRequestEvent,
     ToolProgressEvent,
     tryCatch,
 } from '@activepieces/shared'
@@ -43,7 +43,8 @@ async function withToolTimeout<T>({ fn, timeoutMs, toolName }: {
 
 function truncateLargeResult(result: unknown): unknown {
     const serialized = JSON.stringify(result)
-    if (serialized.length <= MAX_RESULT_SIZE_BYTES) return result
+    const byteSize = Buffer.byteLength(serialized, 'utf8')
+    if (byteSize <= MAX_RESULT_SIZE_BYTES) return result
 
     const topLevelArray = findTopLevelArray(result)
     if (topLevelArray) {
@@ -52,7 +53,18 @@ function truncateLargeResult(result: unknown): unknown {
         return {
             content: [{
                 type: 'text',
-                text: `[LARGE RESPONSE] The result contains ${totalCount} items (at ${path}) but the full response is ${Math.round(serialized.length / 1024)}KB which is too large to process. Only the first 3 items are shown as a preview.\n\nTo handle this data, either:\n1. Use a more specific filter to reduce the number of results\n2. Fetch only IDs or metadata fields instead of full content\n3. Process items in smaller batches\n\nPreview (3 of ${totalCount} items):\n${JSON.stringify(preview, null, 2)}`,
+                text: `[LARGE RESPONSE] The result contains ${totalCount} items (at ${path}) but the full response is ${Math.round(byteSize / 1024)}KB which is too large to process. Only the first 3 items are shown as a preview.\n\nTo handle this data, either:\n1. Use a more specific filter to reduce the number of results\n2. Fetch only IDs or metadata fields instead of full content\n3. Process items in smaller batches\n\nPreview (3 of ${totalCount} items):\n${JSON.stringify(preview, null, 2)}`,
+            }],
+        }
+    }
+
+    const shrunk = shrinkLargeValue(result, { maxStringLength: 2_000, maxArrayItems: 20 })
+    const shrunkSerialized = JSON.stringify(shrunk, null, 2)
+    if (Buffer.byteLength(shrunkSerialized, 'utf8') <= MAX_RESULT_SIZE_BYTES) {
+        return {
+            content: [{
+                type: 'text',
+                text: `[LARGE RESPONSE — long values were truncated to fit, structure preserved] The full response was ${Math.round(byteSize / 1024)}KB. Truncated values are marked with "…[truncated]".\n\n${shrunkSerialized}`,
             }],
         }
     }
@@ -60,9 +72,26 @@ function truncateLargeResult(result: unknown): unknown {
     return {
         content: [{
             type: 'text',
-            text: `[LARGE RESPONSE] The response is ${Math.round(serialized.length / 1024)}KB which is too large to process. Retry with a more specific filter, request fewer items, or fetch only IDs/metadata fields instead of full content.`,
+            text: `[LARGE RESPONSE] The response is ${Math.round(byteSize / 1024)}KB which is too large to process even after truncation. Retry with a more specific filter, request fewer items, or fetch only IDs/metadata fields instead of full content.`,
         }],
     }
+}
+
+function shrinkLargeValue(value: unknown, limits: { maxStringLength: number, maxArrayItems: number }): unknown {
+    if (typeof value === 'string') {
+        if (value.length <= limits.maxStringLength) return value
+        return `${value.slice(0, limits.maxStringLength)}…[truncated ${value.length - limits.maxStringLength} chars]`
+    }
+    if (Array.isArray(value)) {
+        const kept = value.slice(0, limits.maxArrayItems).map((item) => shrinkLargeValue(item, limits))
+        return value.length > limits.maxArrayItems
+            ? [...kept, `…and ${value.length - limits.maxArrayItems} more items`]
+            : kept
+    }
+    if (isObject(value)) {
+        return Object.fromEntries(Object.entries(value).map(([key, val]) => [key, shrinkLargeValue(val, limits)]))
+    }
+    return value
 }
 
 function findTopLevelArray(obj: unknown): { array: unknown[], path: string, totalCount: number } | null {
@@ -111,12 +140,6 @@ function createEventEmitter({ sendEvent, userId, conversationId, log }: {
                 maxAttempts: 2,
             })
         },
-        emitToolApprovalRequest(data: ToolApprovalRequestEvent): void {
-            void sendWithRetry({
-                event: { type: ChatAgentEventType.TOOL_APPROVAL_REQUEST, data },
-                maxAttempts: 3,
-            })
-        },
         emitActionPreview(data: ActionPreviewEvent): void {
             void sendWithRetry({
                 event: { type: ChatAgentEventType.ACTION_PREVIEW, data },
@@ -139,25 +162,31 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
     log?: { warn: (obj: Record<string, unknown>, msg: string) => void }
 }): ToolSet {
-    function blockingExecute({ dismissMessage, successKey, toolName }: {
-        dismissMessage: string
-        successKey: string
+    function blockingExecute({ dismissMessage, successKey, toolName, getDisplayName, onApproved }: {
+        dismissMessage: string | ((input: Record<string, unknown>) => string)
+        successKey?: string
         toolName: string
+        getDisplayName?: (input: Record<string, unknown>) => string
+        onApproved?: (params: { input: Record<string, unknown>, payload?: Record<string, unknown> }) => Promise<Record<string, unknown>>
     }) {
         return async (input: Record<string, unknown>, options: ToolExecutionOptions) => {
             if (onGateOpened) {
+                const fallbackName = typeof input['displayName'] === 'string' ? input['displayName'] : toolName
                 await tryCatch(() => onGateOpened({
                     gateId: options.toolCallId,
                     toolName,
-                    displayName: typeof input['displayName'] === 'string' ? input['displayName'] : toolName,
+                    displayName: getDisplayName?.(input) ?? fallbackName,
                     toolInput: input,
                 }))
             }
             const decision = await waitForApproval({ gateId: options.toolCallId, timeoutMs: displayToolTimeoutMs })
             if (!decision.approved) {
-                return { dismissed: true, message: dismissMessage }
+                return { dismissed: true, message: typeof dismissMessage === 'function' ? dismissMessage(input) : dismissMessage }
             }
-            return { [successKey]: true, ...decision.payload }
+            if (onApproved) {
+                return onApproved({ input, payload: decision.payload })
+            }
+            return { [successKey ?? 'approved']: true, ...decision.payload }
         }
     }
 
@@ -169,38 +198,32 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
                 displayName: z.string().describe('Human-readable name (e.g. "Gmail", "Slack")'),
                 status: z.enum(['missing', 'error']).optional().describe('Set to "error" when connection exists but needs reconnecting'),
             }),
-            execute: async (input, options) => {
-                if (onGateOpened) {
-                    await tryCatch(() => onGateOpened({
-                        gateId: options.toolCallId,
-                        toolName: 'ap_show_connection_required',
-                        displayName: input.displayName,
-                        toolInput: input as unknown as Record<string, unknown>,
-                    }))
-                }
-                const decision = await waitForApproval({ gateId: options.toolCallId, timeoutMs: displayToolTimeoutMs })
-                if (!decision.approved) {
-                    return { dismissed: true, message: 'The user chose not to connect this service. Stop and ask: "Would you like me to continue building with a placeholder you can connect later, or would you prefer to stop here?"' }
-                }
-                if (onConnectionSelected && decision.payload) {
-                    const connections = decision.payload['connections']
-                    if (Array.isArray(connections)) {
-                        await Promise.all(connections
-                            .filter((conn): conn is Record<string, unknown> =>
-                                isObject(conn) && typeof conn['connectionExternalId'] === 'string' && !!conn['connectionExternalId'])
-                            .map((conn) => onConnectionSelected({
-                                pieceName: normalizePieceName(typeof conn['piece'] === 'string' ? conn['piece'] : input.piece),
-                                connectionExternalId: conn['connectionExternalId'] as string,
-                                label: typeof conn['displayName'] === 'string' ? conn['displayName'] as string : input.displayName,
-                                projectId: typeof conn['projectId'] === 'string' ? conn['projectId'] as string : '',
-                            })))
+            execute: blockingExecute({
+                toolName: 'ap_show_connection_required',
+                dismissMessage: 'The user chose not to connect this service. Stop and ask: "Would you like me to continue building with a placeholder you can connect later, or would you prefer to stop here?"',
+                onApproved: async ({ input, payload }) => {
+                    const piece = typeof input['piece'] === 'string' ? input['piece'] : ''
+                    const displayName = typeof input['displayName'] === 'string' ? input['displayName'] : piece
+                    if (onConnectionSelected && payload) {
+                        const connections = payload['connections']
+                        if (Array.isArray(connections)) {
+                            await Promise.all(connections
+                                .filter((conn): conn is Record<string, unknown> =>
+                                    isObject(conn) && typeof conn['connectionExternalId'] === 'string' && !!conn['connectionExternalId'])
+                                .map((conn) => onConnectionSelected({
+                                    pieceName: normalizePieceName(typeof conn['piece'] === 'string' ? conn['piece'] : piece),
+                                    connectionExternalId: conn['connectionExternalId'] as string,
+                                    label: typeof conn['displayName'] === 'string' ? conn['displayName'] as string : displayName,
+                                    projectId: typeof conn['projectId'] === 'string' ? conn['projectId'] as string : '',
+                                })))
+                        }
+                        else {
+                            log?.warn({ piece, payload }, 'ap_show_connection_required approved but payload missing connections array')
+                        }
                     }
-                    else {
-                        log?.warn({ piece: input.piece, payload: decision.payload }, 'ap_show_connection_required approved but payload missing connections array')
-                    }
-                }
-                return { connected: true }
-            },
+                    return { connected: true }
+                },
+            }),
         }),
 
         ap_show_connection_picker: tool({
@@ -209,33 +232,24 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
                 piece: z.string().describe('Piece short name'),
                 displayName: z.string().describe('Human-readable piece name'),
             }),
-            execute: async (input, options) => {
-                if (onGateOpened) {
-                    await tryCatch(() => onGateOpened({
-                        gateId: options.toolCallId,
-                        toolName: 'ap_show_connection_picker',
-                        displayName: input.displayName,
-                        toolInput: input as unknown as Record<string, unknown>,
-                    }))
-                }
-                const decision = await waitForApproval({ gateId: options.toolCallId, timeoutMs: displayToolTimeoutMs })
-                if (!decision.approved) {
-                    return { dismissed: true, message: `The user chose not to select a ${input.displayName} account. Do not pick one on their behalf. Ask: "Would you like me to continue building with a placeholder you can connect later, or would you prefer to stop here?"` }
-                }
-                const payload = decision.payload ?? {}
-                const connectionExternalId = payload['connectionExternalId']
-                const label = payload['label']
-                const projectId = payload['projectId']
-                if (typeof connectionExternalId === 'string' && onConnectionSelected) {
-                    await onConnectionSelected({
-                        pieceName: normalizePieceName(input.piece),
-                        connectionExternalId,
-                        label: typeof label === 'string' ? label : connectionExternalId,
-                        projectId: typeof projectId === 'string' ? projectId : '',
-                    })
-                }
-                return { selected: true, label: typeof label === 'string' ? label : 'Connected' }
-            },
+            execute: blockingExecute({
+                toolName: 'ap_show_connection_picker',
+                dismissMessage: (input) => `The user chose not to select a ${typeof input['displayName'] === 'string' ? input['displayName'] : 'service'} account. Do not pick one on their behalf. Ask: "Would you like me to continue building with a placeholder you can connect later, or would you prefer to stop here?"`,
+                onApproved: async ({ input, payload = {} }) => {
+                    const connectionExternalId = payload['connectionExternalId']
+                    const label = payload['label']
+                    const projectId = payload['projectId']
+                    if (typeof connectionExternalId === 'string' && onConnectionSelected) {
+                        await onConnectionSelected({
+                            pieceName: normalizePieceName(typeof input['piece'] === 'string' ? input['piece'] : ''),
+                            connectionExternalId,
+                            label: typeof label === 'string' ? label : connectionExternalId,
+                            projectId: typeof projectId === 'string' ? projectId : '',
+                        })
+                    }
+                    return { selected: true, label: typeof label === 'string' ? label : 'Connected' }
+                },
+            }),
         }),
 
         ap_show_project_picker: tool({
@@ -308,11 +322,12 @@ function createLocalTools({ onSetProjectContext, projects }: {
     }
 }
 
-function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened }: {
+function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, guides }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     eventEmitter: ChatEventEmitter
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean }>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
+    guides: Record<string, string>
 }): ToolSet {
     const executeWithTimeout = (toolName: string, toolInput: Record<string, unknown>) =>
         withToolTimeout({
@@ -424,6 +439,34 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                 return executeWithTimeout('ap_list_across_projects', input)
             },
         }),
+
+        ap_explore_data: tool({
+            description: 'Read-only look at the user\'s real data during discovery — list/get/search/read a sheet\'s rows and columns, channels, records, etc. — to understand what they have and build something that fits. Only runs read actions (never writes). Needs a connection like ap_execute_action; ensure one is selected first. Keep samples small (~20 rows). This is for understanding, NOT for performing the task — use ap_execute_action to actually do things.',
+            inputSchema: z.object({
+                title: z.string().optional().describe('Short human-friendly label, e.g. "Look at sheet", "List channels"'),
+                pieceName: z.string().describe('Piece name, e.g. "@activepieces/piece-google-sheets"'),
+                actionName: z.string().describe('A read action, e.g. "get_rows", "list_channels"'),
+                input: z.record(z.string(), z.unknown()).optional().describe('Input for the read action (keep limits small)'),
+            }),
+            execute: async (toolInput) => {
+                if (!chatToolClassification.isReadActionName(toolInput.actionName)) {
+                    return chatToolClassification.readOnlyRejection(toolInput.actionName)
+                }
+                const rawResult = await executeWithTimeout('ap_explore_data', toolInput)
+                return truncateLargeResult(rawResult)
+            },
+        }),
+
+        ap_load_guide: tool({
+            description: 'Load a detailed playbook into context before that kind of work (silent, internal). Topics: build_flow (constructing/validating/testing an automation), one_time_task (one-shot do-it-now action), error_handling (success/failure branches), http_fallback (calling an API directly when no connection exists), control_flow (routers/conditions & loops — exact operators and gotchas), state (remembering data across runs: Store vs Tables vs Sheets, dedup/idempotency), tables (the built-in Tables database), ai (native AI steps and their output shapes).',
+            inputSchema: z.object({
+                topic: z.enum(['build_flow', 'one_time_task', 'error_handling', 'http_fallback', 'control_flow', 'state', 'tables', 'ai']).describe('Which guide to load'),
+            }),
+            execute: async (toolInput) => {
+                const guide = guides[toolInput.topic]
+                return guide ?? `No guide found for "${toolInput.topic}".`
+            },
+        }),
     }
 }
 
@@ -533,7 +576,7 @@ function isSuccessResult(result: unknown): boolean {
     if (Array.isArray(result['content'])) {
         const first = result['content'][0]
         const text = isObject(first) && typeof first['text'] === 'string' ? first['text'] : ''
-        return !text.startsWith('❌') && !text.startsWith('⏳')
+        return !chatToolClassification.hasFailureTextPrefix(text)
     }
     return false
 }
@@ -551,42 +594,65 @@ function extractResultText(result: unknown): string {
     return JSON.stringify(result)
 }
 
-function createPlanTools({ onPlanApproved, waitForApproval }: {
-    onPlanApproved: () => void
-    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean }>
-}): ToolSet {
-    return {
-        ap_request_plan_approval: tool({
-            description: 'Request user approval for a multi-step plan before executing destructive operations.',
-            inputSchema: z.object({
-                title: z.string().optional().describe('Short human-friendly label for the tool card, e.g. "Review Automation Plan", "Approve Setup"'),
-                planSummary: z.string().describe('A brief 1-3 sentence summary of what you will do'),
-                steps: z.array(z.string()).describe('List of concrete actions'),
-                mode: z.enum(['one_time', 'recurring']).describe('Whether this is a one-time task or a recurring automation. If ambiguous, default to one_time and ask the user.'),
-            }),
-            execute: async (_input, options) => {
-                const decision = await waitForApproval({ gateId: options.toolCallId })
-                if (decision.approved) {
-                    onPlanApproved()
-                    return { success: true, message: 'Plan approved by the user. Execute each step in order now. Call ap_update_plan to update step statuses as you work.' }
-                }
-                return { success: false, message: 'The user rejected this plan. Stop immediately — do not execute any steps. Ask the user what they would like to change or if they want a different approach.' }
-            },
-        }),
+function toolHasExecute(tool: Record<string, unknown>): tool is Record<string, unknown> & { execute: (args: unknown, options?: ToolExecutionOptions) => Promise<unknown> } {
+    return typeof tool['execute'] === 'function'
+}
 
-        ap_update_plan: tool({
-            description: 'Update the status of plan steps. Call this before starting each step (status: executing) and after completing it (status: done or error).',
-            inputSchema: z.object({
-                updates: z.array(z.object({
-                    stepIndex: z.number().describe('Zero-based index of the step in the plan'),
-                    status: z.enum(['pending', 'executing', 'done', 'error']).describe('New status for this step'),
-                })).min(1),
-            }),
-            execute: async () => {
-                return { success: true }
-            },
-        }),
+function wrapTestFlowGate({ mcpTools, checkFlowWrites, waitForApproval, storePendingGate, eventEmitter, log }: {
+    mcpTools: Record<string, unknown>
+    checkFlowWrites: (flowId: string) => Promise<unknown>
+    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean }>
+    storePendingGate: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
+    eventEmitter: ChatEventEmitter
+    log?: { warn: (obj: Record<string, unknown>, msg: string) => void }
+}): Record<string, unknown> {
+    const testFlow = mcpTools['ap_test_flow']
+    if (!isObject(testFlow) || !toolHasExecute(testFlow)) {
+        return mcpTools
     }
+    const originalExecute = testFlow.execute.bind(testFlow)
+    const wrapped = Object.assign({}, testFlow, {
+        execute: async (args: unknown, options?: ToolExecutionOptions) => {
+            const flowId = isObject(args) && typeof args['flowId'] === 'string' ? args['flowId'] : undefined
+            const gateId = options?.toolCallId
+            if (flowId && gateId) {
+                const { data: check, error } = await tryCatch(() => checkFlowWrites(flowId))
+                if (error) {
+                    log?.warn({ err: error, flowId }, 'ap_test_flow write-check failed, running test without confirmation gate')
+                }
+                else if (isObject(check) && check['hasWrites'] === true) {
+                    const writeSteps = Array.isArray(check['writeSteps']) ? check['writeSteps'].filter((s): s is string => typeof s === 'string') : []
+                    const flowName = typeof check['flowName'] === 'string' ? check['flowName'] : 'this flow'
+                    const gateLabel = writeSteps.length > 0
+                        ? `Run a live test of "${flowName}" — performs: ${writeSteps.join(', ')}`
+                        : `Run a live test of "${flowName}"`
+                    // Render the confirmation card in the live session (and persist it for refresh).
+                    // Without the emit the gate would block silently until the approval timeout.
+                    eventEmitter.emitActionPreview({
+                        toolCallId: gateId,
+                        pieceName: '',
+                        actionName: 'ap_test_flow',
+                        actionDisplayName: gateLabel,
+                        input: {},
+                        isBatch: false,
+                    })
+                    await tryCatch(() => storePendingGate({
+                        gateId,
+                        toolName: 'ap_test_flow',
+                        displayName: gateLabel,
+                        toolInput: { flowId, writeSteps },
+                    }))
+                    const decision = await waitForApproval({ gateId })
+                    if (!decision.approved) {
+                        const stepList = writeSteps.length > 0 ? ` It performs real actions: ${writeSteps.join(', ')}.` : ''
+                        return { content: [{ type: 'text', text: `Live test cancelled by the user.${stepList} The user declined a real run that would perform these actions. Do not run it; offer to test with mock trigger data instead, or ask whether to proceed.` }] }
+                    }
+                }
+            }
+            return originalExecute(args, options)
+        },
+    })
+    return { ...mcpTools, ap_test_flow: wrapped }
 }
 
 function createThinkingTools(): ToolSet {
@@ -603,9 +669,25 @@ function createThinkingTools(): ToolSet {
     }
 }
 
+function createPhaseTools({ onPhaseChange }: {
+    onPhaseChange: (phase: ChatPhase) => void
+}): ToolSet {
+    return {
+        ap_set_phase: tool({
+            description: 'Switch your working phase (silent, internal — no thinking status). Start in "discovery" (understanding the goal, reading data). Call this with "build" the moment you begin constructing, editing, testing, or running an automation — e.g. right after you load the build_flow or one_time_task guide. This unlocks the build/execution tools.',
+            inputSchema: z.object({
+                phase: z.enum(['discovery', 'build']).describe('"discovery" while scoping/reading; "build" once you start building or executing'),
+            }),
+            execute: async (input) => {
+                onPhaseChange(input.phase)
+                return { phase: input.phase }
+            },
+        }),
+    }
+}
+
 export type ChatEventEmitter = {
     emitToolProgress(data: ToolProgressEvent): void
-    emitToolApprovalRequest(data: ToolApprovalRequestEvent): void
     emitActionPreview(data: ActionPreviewEvent): void
     emitActionReceipt(data: ActionReceiptEvent): void
 }
@@ -615,10 +697,13 @@ export const chatWorkerTools = {
     createDisplayTools,
     createLocalTools,
     createCrossProjectTools,
-    createPlanTools,
+    wrapTestFlowGate,
     createThinkingTools,
+    createPhaseTools,
     isSuccessResult,
     extractResultText,
+    truncateLargeResult,
+    shrinkLargeValue,
     withToolTimeout,
     TOOL_EXECUTION_TIMEOUT_MS,
 }

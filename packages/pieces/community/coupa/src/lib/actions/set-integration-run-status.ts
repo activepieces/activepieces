@@ -11,6 +11,12 @@ export const setIntegrationRunStatus = createAction({
   displayName: 'Set Integration Run Status',
   description:
     'Updates an integration run status (`run`, `success`, `fail`, `pause`, or `pending`).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Set the status of a Coupa integration run by ID to one of: run, success, fail, pause, or pending — used to report progress of an external integration job back to Coupa. Not idempotent: each call is a status transition, and Coupa may reject transitions that are invalid from the run\'s current state.',
+    idempotent: false,
+  },
   props: {
     integrationRunId: objectIdProperty,
     status: Property.StaticDropdown({

@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-data-mapper",
-  "version": "0.3.15",
+  "version": "0.3.16",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {

@@ -1,7 +1,6 @@
 import { apDayjsDuration } from '@activepieces/server-utils'
 import { apId, ApId, FailedStep, FlowRunStatus, RunEnvironment } from '@activepieces/shared'
 import { Queue } from 'bullmq'
-import { BullMQOtel } from 'bullmq-otel'
 import Redis from 'ioredis'
 import { DistributedStore } from '../../database/redis/distributed-store-factory'
 import { QueueName } from './index'
@@ -18,7 +17,6 @@ export const runsMetadataQueueFactory = ({
         async init(config: RunsMetadataQueueConfig): Promise<void> {
             queueInstance = new Queue<RunsMetadataJobData>(QueueName.RUNS_METADATA, {
                 connection: await createRedisConnection(),
-                telemetry: config.isOtelEnabled ? new BullMQOtel(QueueName.RUNS_METADATA) : undefined,
                 defaultJobOptions: {
                     attempts: 5,
                     backoff: {
@@ -95,7 +93,6 @@ export type RunsMetadataJobData = {
 }
 
 export type RunsMetadataQueueConfig = {
-    isOtelEnabled: boolean
     redisFailedJobRetentionDays: number
     redisFailedJobRetentionMaxCount: number
 }
