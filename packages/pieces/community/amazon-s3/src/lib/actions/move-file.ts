@@ -1,9 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { amazonS3Auth } from '../auth';
-import { createS3 } from '../common';
+import { amazonS3CombinedAuth, AccessKeyAuthProps, OidcAuthProps } from '../auth';
+import { resolveS3Client } from '../common';
 
 export const moveFile = createAction({
-  auth: amazonS3Auth,
+  auth: amazonS3CombinedAuth,
   name: 'moveFile',
   displayName: 'Move File',
   description: 'Move a File to Another Folder',
@@ -25,9 +25,10 @@ export const moveFile = createAction({
     }),
   },
   async run(context) {
-    const { bucket } = context.auth.props;
+    const authProps = context.auth.props as AccessKeyAuthProps | OidcAuthProps;
+    const { bucket } = authProps;
     const { fileKey, folderKey } = context.propsValue;
-    const s3 = createS3(context.auth.props);
+    const s3 = await resolveS3Client({ authProps, server: context.server });
 
     const fileName = fileKey.split('/').pop();
 

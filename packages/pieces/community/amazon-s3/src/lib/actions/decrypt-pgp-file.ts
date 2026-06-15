@@ -1,11 +1,12 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
+import { GetSecretValueCommand, SecretsManagerClient } from '@aws-sdk/client-secrets-manager';
+import { S3 } from '@aws-sdk/client-s3';
 import * as openpgp from 'openpgp';
-import { amazonS3Auth } from '../auth';
-import { createS3, createSecretsManagerClient } from '../common';
+import { amazonS3CombinedAuth, AccessKeyAuthProps, OidcAuthProps } from '../auth';
+import { createS3, createSecretsManagerClient, getTemporaryCredentials } from '../common';
 
 export const decryptPgpFile = createAction({
-  auth: amazonS3Auth,
+  auth: amazonS3CombinedAuth,
   name: 'decrypt-pgp-file',
   displayName: 'Decrypt PGP File',
   description: 'Decrypt a PGP encrypted file from S3 using a private key stored in AWS Secrets Manager',
@@ -49,12 +50,23 @@ export const decryptPgpFile = createAction({
     }),
   },
   async run(context) {
-    const { bucket } = context.auth.props;
+    const authProps = context.auth.props as AccessKeyAuthProps | OidcAuthProps;
+    const { bucket } = authProps;
     const { key, secretArn, passphraseArn, secretsManagerRegion, allowUnauthenticatedMessages, allowInsecureDecryptionWithSigningKeys } = context.propsValue;
-    const { accessKeyId, secretAccessKey, region } = context.auth.props;
 
-    // Create S3 client
-    const s3 = createS3(context.auth.props);
+    let s3: S3;
+    let secretsClient: SecretsManagerClient;
+    if ('roleArn' in authProps) {
+      const oidcProps = authProps;
+      const credentials = await getTemporaryCredentials({ auth: oidcProps, server: context.server });
+      s3 = new S3({ credentials, region: oidcProps.region });
+      secretsClient = new SecretsManagerClient({ credentials, region: secretsManagerRegion || oidcProps.region });
+    } else {
+      const accessKeyProps = authProps as AccessKeyAuthProps;
+      const smAuth = secretsManagerRegion ? { ...accessKeyProps, region: secretsManagerRegion } : accessKeyProps;
+      s3 = createS3(accessKeyProps);
+      secretsClient = createSecretsManagerClient(smAuth);
+    }
 
     // Download the encrypted file from S3
     let encryptedData: Buffer;
@@ -69,16 +81,9 @@ export const decryptPgpFile = createAction({
         throw new Error(`Could not read file ${key} from S3`);
       }
       encryptedData = Buffer.from(base64, 'base64');
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw new Error(`Failed to download file from S3: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-
-    // Create AWS Secrets Manager client
-    const secretsClient = createSecretsManagerClient({
-      accessKeyId: accessKeyId,
-      secretAccessKey: secretAccessKey,
-      region: secretsManagerRegion || region,
-    });
 
     // Fetch the secret key from AWS Secrets Manager
     let privateKeyArmored: string;
@@ -94,20 +99,20 @@ export const decryptPgpFile = createAction({
 
       // Trim whitespace from the key (AWS Secrets Manager might add extra whitespace)
       privateKeyArmored = response.SecretString.trim();
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Provide more specific error messages for common issues
-      if (error.name === 'AccessDeniedException') {
+      if (error instanceof Error && error.name === 'AccessDeniedException') {
         throw new Error(
           `Access denied when retrieving secret ${secretArn}. ` +
           `Please ensure your AWS credentials have the secretsmanager:GetSecretValue permission for this secret.`
         );
       }
-      if (error.name === 'ResourceNotFoundException') {
+      if (error instanceof Error && error.name === 'ResourceNotFoundException') {
         throw new Error(
-          `Secret ${secretArn} not found. Please verify the secret ARN is correct and exists in region ${secretsManagerRegion || region}.`
+          `Secret ${secretArn} not found. Please verify the secret ARN is correct and exists in region ${secretsManagerRegion || authProps.region}.`
         );
       }
-      if (error.name === 'InvalidParameterException') {
+      if (error instanceof Error && error.name === 'InvalidParameterException') {
         throw new Error(
           `Invalid secret ARN: ${secretArn}. Please verify the ARN format is correct.`
         );
@@ -131,20 +136,20 @@ export const decryptPgpFile = createAction({
         }
 
         passphrase = passphraseResponse.SecretString.trim();
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Provide more specific error messages for common issues
-        if (error.name === 'AccessDeniedException') {
+        if (error instanceof Error && error.name === 'AccessDeniedException') {
           throw new Error(
             `Access denied when retrieving passphrase secret ${passphraseArn}. ` +
             `Please ensure your AWS credentials have the secretsmanager:GetSecretValue permission for this secret.`
           );
         }
-        if (error.name === 'ResourceNotFoundException') {
+        if (error instanceof Error && error.name === 'ResourceNotFoundException') {
           throw new Error(
-            `Passphrase secret ${passphraseArn} not found. Please verify the secret ARN is correct and exists in region ${secretsManagerRegion || region}.`
+            `Passphrase secret ${passphraseArn} not found. Please verify the secret ARN is correct and exists in region ${secretsManagerRegion || authProps.region}.`
           );
         }
-        if (error.name === 'InvalidParameterException') {
+        if (error instanceof Error && error.name === 'InvalidParameterException') {
           throw new Error(
             `Invalid passphrase secret ARN: ${passphraseArn}. Please verify the ARN format is correct.`
           );
@@ -212,7 +217,7 @@ export const decryptPgpFile = createAction({
       const decryptedData = new Uint8Array(await decrypted.data);
 
       // Write the decrypted file
-      const fileName = key.split("/").at(-1)?.toLowerCase().replace(/\.(pgp|gpg)$/i, '');
+      const fileName = key.split('/').at(-1)?.toLowerCase().replace(/\.(pgp|gpg)$/i, '');
 
       return await context.files.write({
         fileName: fileName ?? 'decrypted_file',

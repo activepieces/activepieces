@@ -80,6 +80,7 @@ async function resolveProperties(
                 PropertyType.BASIC_AUTH,
                 PropertyType.OAUTH2,
                 PropertyType.CUSTOM_AUTH,
+                PropertyType.OIDC,
                 PropertyType.CUSTOM,
                 PropertyType.MARKDOWN,
             ]
@@ -299,6 +300,7 @@ async function propertyToSchema(propertyName: string, property: PieceProperty, o
         case PropertyType.OAUTH2:
         case PropertyType.BASIC_AUTH:
         case PropertyType.CUSTOM_AUTH:
+        case PropertyType.OIDC:
         case PropertyType.SECRET_TEXT:
             throw new Error(`Unsupported property type: ${property.type}`)
     }

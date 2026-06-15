@@ -13,6 +13,7 @@ import { validatorCompiler } from 'fastify-type-provider-zod'
 import qs from 'qs'
 import { Socket } from 'socket.io'
 import { getAdapter, setupApp } from './app'
+import { oidcDiscoveryController } from './core/security/oidc/oidc-discovery.controller'
 import { websocketService } from './core/websockets.service'
 import { healthModule } from './health/health.module'
 import { embedSecurity } from './helper/embed-security'
@@ -32,10 +33,12 @@ export const setupServer = async (): Promise<FastifyInstance> => {
     app = await setupBaseApp()
 
     // MCP OAuth endpoints at domain root (required by MCP spec)
+    // OIDC discovery endpoints at domain root (required by OIDC spec)
     if (system.isApp()) {
         await app.register(mcpOAuthRootModule)
         await app.register(mcpOAuthHttpController, { prefix: '/mcp' })
         await app.register(mcpPlatformHttpController, { prefix: '/mcp/platform' })
+        await app.register(oidcDiscoveryController)
     }
 
     await app.register(async (apiApp) => {

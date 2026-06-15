@@ -54,11 +54,13 @@ import {
 } from '@/features/connections';
 import { formUtils } from '@/features/pieces';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
 import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';
 import { MutliAuthList, AuthListItem } from './multi-auth-list';
 import { OAuth2ConnectionSettings } from './oauth2-connection-settings';
+import { OIDCConnectionSettings } from './oidc-connection-settings';
 import { SecretTextConnectionSettings } from './secret-text-connection-settings';
 
 function CreateOrEditConnectionSection({
@@ -153,6 +155,10 @@ function CreateOrEditConnectionSection({
               markdown={selectedAuth.authProperty.description}
               variables={{
                 redirectUrl: redirectUrl ?? '',
+                platformId: authenticationSession.getPlatformId() ?? '',
+                projectId: authenticationSession.getProjectId() ?? '',
+                frontendUrl: window.location.origin,
+                frontendHost: window.location.host,
               }}
             ></ApMarkdown>
             {selectedAuth.authProperty.description && (
@@ -282,6 +288,10 @@ function ConnectionSettings({ selectedAuth, piece }: ConnectionSettingsProps) {
         <CustomAuthConnectionSettings
           authProperty={selectedAuth.authProperty}
         />
+      );
+    case PropertyType.OIDC:
+      return (
+        <OIDCConnectionSettings authProperty={selectedAuth.authProperty} />
       );
     case PropertyType.OAUTH2:
       if (isNil(selectedAuth.grantType) || isNil(selectedAuth.oauth2App)) {

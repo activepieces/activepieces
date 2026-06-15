@@ -18,6 +18,7 @@ import {
   BasicAuthProperty,
   CustomAuthProperty,
   InputPropertyMap,
+  OIDCProperty,
   OAuth2Property,
   SecretTextProperty,
   StaticPropsValue,
@@ -44,6 +45,8 @@ export type BaseContext<
 
 type ExtractCustomAuthProps<T> = T extends CustomAuthProperty<infer Props> ? Props : never;
 
+type ExtractOIDCProps<T> = T extends OIDCProperty<infer Props> ? Props : never;
+
 type ExtractOAuth2Props<T> = T extends OAuth2Property<infer Props> ? Props : never;
 
 
@@ -52,10 +55,11 @@ export type AppConnectionValueForAuthProperty<T extends PieceAuthProperty | Piec
   T extends PieceAuthProperty ? AppConnectionValueForSingleAuthProperty<T> :
   T extends undefined ? undefined : never;
 
-type AppConnectionValueForSingleAuthProperty<T extends PieceAuthProperty | undefined> = 
+type AppConnectionValueForSingleAuthProperty<T extends PieceAuthProperty | undefined> =
   T extends SecretTextProperty<boolean> ? AppConnectionValue<AppConnectionType.SECRET_TEXT> :
   T extends BasicAuthProperty ? AppConnectionValue<AppConnectionType.BASIC_AUTH> :
   T extends CustomAuthProperty<any> ? AppConnectionValue<AppConnectionType.CUSTOM_AUTH, StaticPropsValue<ExtractCustomAuthProps<T>>> :
+  T extends OIDCProperty<any> ? AppConnectionValue<AppConnectionType.OIDC, StaticPropsValue<ExtractOIDCProps<T>>> :
   T extends OAuth2Property<any> ? AppConnectionValue<AppConnectionType.OAUTH2, StaticPropsValue<ExtractOAuth2Props<T>>> :
   T extends undefined ? undefined : never;
 type AppWebhookTriggerHookContext<
@@ -79,6 +83,7 @@ type PollingTriggerHookContext<
   PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined,
   TriggerProps extends InputPropertyMap
 > = BaseContext<PieceAuth, TriggerProps> & {
+  server: ServerContext;
   setSchedule(schedule: { cronExpression: string; timezone?: string }): void;
 };
 

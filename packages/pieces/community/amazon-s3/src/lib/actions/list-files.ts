@@ -1,6 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { amazonS3Auth } from '../auth';
-import { createS3 } from '../common';
+import { amazonS3CombinedAuth, AccessKeyAuthProps, OidcAuthProps } from '../auth';
+import { resolveS3Client } from '../common';
 import { ListObjectsV2CommandInput } from '@aws-sdk/client-s3';
 
 interface S3File {
@@ -18,7 +18,7 @@ interface ListFilesResult {
 }
 
 export const listFiles = createAction({
-  auth: amazonS3Auth,
+  auth: amazonS3CombinedAuth,
   name: 'list-files',
   displayName: 'List Files',
   description: 'List all files from an S3 bucket folder/prefix.',
@@ -42,10 +42,11 @@ export const listFiles = createAction({
 
   },
   async run(context) {
-    const s3 = createS3(context.auth.props);
+    const authProps = context.auth.props as AccessKeyAuthProps | OidcAuthProps;
+    const s3 = await resolveS3Client({ authProps, server: context.server });
 
     const params: ListObjectsV2CommandInput = {
-      Bucket: context.auth.props.bucket,
+      Bucket: authProps.bucket,
       MaxKeys: Math.min(Math.max(context.propsValue.maxKeys || 1000, 1), 1000),
     };
 

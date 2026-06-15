@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-amazon-s3",
-  "version": "0.5.10",
+  "version": "0.5.11",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
@@ -8,6 +8,7 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "@aws-sdk/client-s3": "3.974.0",
+    "@aws-sdk/client-sts": "3.974.0",
     "@aws-sdk/client-secrets-manager": "^3.0.0",
     "@aws-sdk/s3-request-presigner": "3.894.0",
     "dayjs": "1.11.9",

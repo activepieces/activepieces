@@ -1,13 +1,16 @@
 import { isNil } from '@activepieces/shared';
 import { S3 } from '@aws-sdk/client-s3';
 import { SecretsManagerClient } from '@aws-sdk/client-secrets-manager';
+import { AssumeRoleWithWebIdentityCommand, STSClient } from '@aws-sdk/client-sts';
+import { ServerContext } from '@activepieces/pieces-framework';
+import { AccessKeyAuthProps, OidcAuthProps } from './auth';
 
-export function createS3(auth: {
-  accessKeyId: string;
-  secretAccessKey: string;
-  region: string | undefined;
-  endpoint: string | undefined;
-}) {
+const AWS_STS_AUDIENCE = 'sts.amazonaws.com';
+
+export function createS3(auth: AccessKeyAuthProps) {
+  if (!auth.accessKeyId || !auth.secretAccessKey) {
+    throw new Error('Access Key ID and Secret Access Key are required');
+  }
   const s3 = new S3({
     credentials: {
       accessKeyId: auth.accessKeyId,
@@ -21,11 +24,10 @@ export function createS3(auth: {
   return s3;
 }
 
-export function createSecretsManagerClient(auth: {
-  accessKeyId: string;
-  secretAccessKey: string;
-  region: string | undefined;
-}) {
+export function createSecretsManagerClient(auth: AccessKeyAuthProps) {
+  if (!auth.accessKeyId || !auth.secretAccessKey) {
+    throw new Error('Access Key ID and Secret Access Key are required');
+  }
   const client = new SecretsManagerClient({
     credentials: {
       accessKeyId: auth.accessKeyId,
@@ -35,4 +37,89 @@ export function createSecretsManagerClient(auth: {
     endpoint: undefined,
   });
   return client;
+}
+
+export async function createS3WithAssumeRole({
+  auth,
+  server,
+}: {
+  auth: OidcAuthProps;
+  server: ServerContext;
+}): Promise<S3> {
+  const credentials = await getTemporaryCredentials({ auth, server });
+  return new S3({
+    credentials,
+    region: auth.region,
+  });
+}
+
+export async function createSecretsManagerWithAssumeRole({
+  auth,
+  server,
+  region,
+}: {
+  auth: OidcAuthProps;
+  server: ServerContext;
+  region?: string;
+}): Promise<SecretsManagerClient> {
+  const credentials = await getTemporaryCredentials({ auth, server });
+  return new SecretsManagerClient({
+    credentials,
+    region: region ?? auth.region,
+  });
+}
+
+export async function resolveS3Client({
+  authProps,
+  server,
+}: {
+  authProps: AccessKeyAuthProps | OidcAuthProps;
+  server: ServerContext;
+}): Promise<S3> {
+  return 'roleArn' in authProps
+    ? createS3WithAssumeRole({ auth: authProps, server })
+    : createS3(authProps);
+}
+
+export async function getTemporaryCredentials({
+  auth,
+  server,
+}: {
+  auth: OidcAuthProps;
+  server: ServerContext;
+}) {
+  if (!auth.roleArn) {
+    throw new Error('Role ARN is required for IAM Role authentication');
+  }
+  const response = await fetch(`${server.apiUrl}v1/worker/oidc-token`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${server.token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ audience: AWS_STS_AUDIENCE }),
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to get OIDC token: ${response.statusText}`);
+  }
+  const { token } = (await response.json()) as { token: string };
+
+  const sts = new STSClient({ region: auth.region });
+  const { Credentials } = await sts.send(
+    new AssumeRoleWithWebIdentityCommand({
+      RoleArn: auth.roleArn,
+      RoleSessionName: 'activepieces-execution',
+      WebIdentityToken: token,
+      ...(auth.externalId ? { ExternalId: auth.externalId } : {}),
+      DurationSeconds: 3600,
+    }),
+  );
+  if (!Credentials?.AccessKeyId || !Credentials.SecretAccessKey) {
+    throw new Error('Failed to assume role: no credentials returned');
+  }
+  return {
+    accessKeyId: Credentials.AccessKeyId,
+    secretAccessKey: Credentials.SecretAccessKey,
+    sessionToken: Credentials.SessionToken,
+  };
 }

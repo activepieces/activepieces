@@ -1,10 +1,11 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { amazonS3Auth } from '../auth';
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { Property, ServerContext, createAction } from '@activepieces/pieces-framework';
+import { GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { amazonS3CombinedAuth, AccessKeyAuthProps, OidcAuthProps } from '../auth';
+import { createS3, createS3WithAssumeRole } from '../common';
 
 export const generateSignedUrl = createAction({
-  auth: amazonS3Auth,
+  auth: amazonS3CombinedAuth,
   name: 'generate-signed-url',
   displayName: 'Generate signed URL',
   description: 'Generate a signed URL for a file in a s3 bucket',
@@ -27,31 +28,43 @@ export const generateSignedUrl = createAction({
     }),
   },
   async run(context) {
-  const { bucket, region, accessKeyId, secretAccessKey } = context.auth.props;
-  const { key, expiresIn } = context.propsValue;
+    const authProps = context.auth.props as AccessKeyAuthProps | OidcAuthProps;
+    const { key, expiresIn } = context.propsValue;
 
-  const clientUrl = await createPresignedUrlWithClient({
-    region,
-    bucket,
-    key,
-    accessKeyId,
-    secretAccessKey,
-    expiresIn
-  });
+    const clientUrl = 'roleArn' in authProps
+      ? await createPresignedUrlWithAssumeRole({ auth: authProps, server: context.server, key, expiresIn })
+      : await createPresignedUrlWithClient({ auth: authProps, key, expiresIn });
 
-    return clientUrl
+    return clientUrl;
   },
 });
 
-const createPresignedUrlWithClient = ({ region, bucket, key, accessKeyId, secretAccessKey, expiresIn }: any) => {
-   const client = new S3Client({ 
-    region,
-    credentials: {
-      accessKeyId,
-      secretAccessKey,
-    },
-  });
-  
-  const command = new GetObjectCommand({ Bucket: bucket, Key: key });
-  return getSignedUrl(client, command, { expiresIn: expiresIn * 60 });
-};
+async function createPresignedUrlWithAssumeRole({
+  auth,
+  server,
+  key,
+  expiresIn,
+}: {
+  auth: OidcAuthProps;
+  server: ServerContext;
+  key: string;
+  expiresIn: number;
+}) {
+  const s3 = await createS3WithAssumeRole({ auth, server });
+  const command = new GetObjectCommand({ Bucket: auth.bucket, Key: key });
+  return getSignedUrl(s3, command, { expiresIn: expiresIn * 60 });
+}
+
+function createPresignedUrlWithClient({
+  auth,
+  key,
+  expiresIn,
+}: {
+  auth: AccessKeyAuthProps;
+  key: string;
+  expiresIn: number;
+}) {
+  const s3 = createS3(auth);
+  const command = new GetObjectCommand({ Bucket: auth.bucket, Key: key });
+  return getSignedUrl(s3, command, { expiresIn: expiresIn * 60 });
+}
