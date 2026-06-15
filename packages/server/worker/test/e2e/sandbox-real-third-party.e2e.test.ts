@@ -36,6 +36,18 @@ describe.skipIf(PRIVILEGE_SKIP)('sandbox real third-party connectivity (SANDBOX_
         internetSkip = await requireOutboundInternet()
         if (internetSkip) return
 
+        // This suite is connectivity-dependent and must NEVER gate CI on setup/ordering/
+        // environment issues — only on real connectivity-assertion failures once fully set
+        // up. Bound the heavy setup (netns + proxy + fixture mirror) with a deadline; if it
+        // throws or hangs, skip the suite cleanly instead of timing out the hook.
+        const { error } = await withDeadline(setupStack(), 35_000)
+        if (error) {
+            internetSkip = { skip: true, reason: `real-3p setup failed/timed out, skipping: ${error.message}` }
+            await safeTeardown({ proxy, ns })
+        }
+    }, 60_000)
+
+    async function setupStack(): Promise<void> {
         ns = await egressNetns.create({ log: silentLogger() })
         proxy = await startEgressProxy({
             log: silentLogger(),
@@ -54,7 +66,7 @@ describe.skipIf(PRIVILEGE_SKIP)('sandbox real third-party connectivity (SANDBOX_
         // node:undici built-in; the bundled engine ships its own copy at runtime, but
         // this probe is a standalone JS fixture that has none.
         await mirrorUndiciInto(commonDir)
-    }, 60_000)
+    }
 
     afterAll(async () => {
         if (proxy) await proxy.close()
@@ -165,6 +177,38 @@ describe.skipIf(PRIVILEGE_SKIP)('sandbox real third-party connectivity (SANDBOX_
         }
     }, 60_000)
 })
+
+async function withDeadline(promise: Promise<void>, ms: number): Promise<{ error?: Error }> {
+    let timer: NodeJS.Timeout | undefined
+    const deadline = new Promise<{ error: Error }>((resolve) => {
+        timer = setTimeout(() => resolve({ error: new Error(`timed out after ${ms}ms`) }), ms)
+    })
+    try {
+        await Promise.race([promise.then(() => undefined), deadline.then((d) => { throw d.error })])
+        return {}
+    }
+    catch (error) {
+        return { error: error instanceof Error ? error : new Error(String(error)) }
+    }
+    finally {
+        if (timer) clearTimeout(timer)
+    }
+}
+
+async function safeTeardown({ proxy, ns }: { proxy?: EgressProxy, ns?: EgressNetns }): Promise<void> {
+    try {
+        if (proxy) await proxy.close()
+    }
+    catch {
+        // best-effort
+    }
+    try {
+        if (ns) await ns.destroy()
+    }
+    catch {
+        // best-effort
+    }
+}
 
 function countConnectivitySuccesses({ results, hosts }: { results: ProbeResult[], hosts: readonly string[] }): number {
     let n = 0

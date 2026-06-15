@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import { chmod, copyFile, mkdtemp, stat } from 'node:fs/promises'
+import { chmod, mkdtemp } from 'node:fs/promises'
 import { createServer, Server as HttpServer } from 'node:http'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -43,9 +43,11 @@ describe.skipIf(skip)('sandbox RPC over netns veth (engine<->worker socket.io)',
         ws = await startWorkerWsServer({ host: GATEWAY_HOST, token: WS_TOKEN })
 
         commonDir = await mkdtemp(path.join(tmpdir(), 'ap-rpc-netns-'))
+        // Bundle the fixture (socket.io-client + engine.io-client/ws inlined) into a single
+        // self-contained file, mirroring how the real engine ships a bundle — so the sandbox
+        // needs no node_modules / module resolution of its own.
         const probeDst = path.join(commonDir, 'rpc-engine-probe.js')
-        await copyFile(path.resolve(__dirname, 'fixtures/rpc-engine-probe.js'), probeDst)
-        await mirrorSocketIoClientInto(commonDir)
+        bundleFixtureOrThrow({ entry: path.resolve(__dirname, 'fixtures/rpc-engine-probe.js'), outFile: probeDst })
         await chmod(commonDir, 0o755)
         await chmod(probeDst, 0o644)
 
@@ -63,7 +65,6 @@ describe.skipIf(skip)('sandbox RPC over netns veth (engine<->worker socket.io)',
                 AP_SANDBOX_WS_TOKEN: WS_TOKEN,
                 AP_BASE_CODE_DIRECTORY: '/root/codes',
                 SANDBOX_ID: 'e2e-rpc-netns',
-                AP_SOCKETIO_REQUIRE_PATH: '/root/common/socket.io-client',
             },
             resourceLimits: { memoryLimitMb: 256, cpuMsPerSec: 4000, timeLimitSeconds: 60 },
         })
@@ -145,27 +146,13 @@ async function startWorkerWsServer({ host, token }: { host: string, token: strin
     }
 }
 
-async function mirrorSocketIoClientInto(commonDir: string): Promise<void> {
-    const root = await locateSocketIoClientRoot()
-    const dest = path.join(commonDir, 'socket.io-client')
-    const r = spawnSync('cp', ['-RL', root + '/.', dest], { encoding: 'utf8' })
-    if (r.status !== 0) throw new Error(`failed to copy socket.io-client from ${root} → ${dest}: ${r.stderr}`)
-    spawnSync('chmod', ['-R', 'a+rX', dest])
-}
-
-async function locateSocketIoClientRoot(): Promise<string> {
-    const globResult = spawnSync('bash', ['-c', 'ls -d /usr/src/app/node_modules/.bun/socket.io-client@*/node_modules/socket.io-client 2>/dev/null | head -1'], { encoding: 'utf8' })
-    const candidates = [globResult.stdout.trim(), '/usr/src/app/node_modules/socket.io-client'].filter((c) => c.length > 0)
-    for (const c of candidates) {
-        try {
-            await stat(path.join(c, 'package.json'))
-            return c
-        }
-        catch {
-            continue
-        }
+function bundleFixtureOrThrow({ entry, outFile }: { entry: string, outFile: string }): void {
+    // `bun build` inlines socket.io-client and its transitive deps (engine.io-client, ws)
+    // into one CJS file — no node_modules / module resolution needed inside the sandbox.
+    const r = spawnSync('bun', ['build', entry, '--target', 'node', '--format', 'cjs', '--outfile', outFile], { encoding: 'utf8' })
+    if (r.status !== 0) {
+        throw new Error(`bun build failed for ${entry} → ${outFile}: ${r.stderr || r.stdout}`)
     }
-    throw new Error(`socket.io-client not found in any of: ${candidates.join(', ')}`)
 }
 
 type WorkerWsServer = {

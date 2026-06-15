@@ -5,12 +5,14 @@
 // answers exactly one `executeOperation` RPC by echoing a marker. This proves the real
 // engine<->worker control channel works topologically through the /30 veth link.
 //
-// socket.io-client is mirrored into the mounted common dir (AP_SOCKETIO_REQUIRE_PATH)
-// because this standalone fixture is not the bundled engine and has no node_modules of
-// its own. The shared RPC wire-format (event name 'rpc', { method, payload } + ack) is
-// inlined here to avoid bundling @activepieces/shared into a fixture.
+// This fixture is bundled with `bun build` (inlining socket.io-client + its transitive
+// deps engine.io-client/ws) into one self-contained file before being mounted into the
+// sandbox — exactly how the real engine ships a single bundled file. The shared RPC
+// wire-format (event name 'rpc', { method, payload } + ack) is inlined here to avoid
+// also bundling @activepieces/shared into the fixture.
 
 const http = require('node:http')
+const { io } = require('socket.io-client')
 
 const RPC_EVENT = 'rpc'
 
@@ -20,9 +22,6 @@ function fail(message) {
 }
 
 function main() {
-    const requirePath = process.env.AP_SOCKETIO_REQUIRE_PATH
-    if (!requirePath) return fail('AP_SOCKETIO_REQUIRE_PATH missing')
-    const { io } = require(requirePath)
 
     const wsHost = process.env.AP_SANDBOX_WS_HOST || '127.0.0.1'
     const wsPort = process.env.AP_SANDBOX_WS_PORT

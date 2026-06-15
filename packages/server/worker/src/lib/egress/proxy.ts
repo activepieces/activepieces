@@ -9,6 +9,15 @@ export async function startEgressProxy({ log, host, allowList }: StartOptions): 
     const bindHost = host ?? '127.0.0.1'
     const server = http.createServer()
 
+    // CONNECT upgrades hand us raw sockets the http server no longer tracks, so
+    // server.close() alone would hang waiting on live tunnels. Track every tunnel socket
+    // and destroy them on close so shutdown is prompt even with open tunnels.
+    const openSockets = new Set<Duplex>()
+    const track = (socket: Duplex): void => {
+        openSockets.add(socket)
+        socket.once('close', () => openSockets.delete(socket))
+    }
+
     server.on('request', (req, res) => {
         handleForwardRequest({ req, res, allowList, log }).catch((err) => {
             log.error({ err: String(err) }, 'Egress proxy forward handler crashed')
@@ -18,7 +27,7 @@ export async function startEgressProxy({ log, host, allowList }: StartOptions): 
     })
 
     server.on('connect', (req, clientSocket, head) => {
-        handleConnect({ req, clientSocket, head, allowList, log }).catch((err) => {
+        handleConnect({ req, clientSocket, head, allowList, log, track }).catch((err) => {
             log.error({ err: String(err) }, 'Egress proxy CONNECT handler crashed')
             writeSocketStatus({ socket: clientSocket, status: 500, message: 'Internal proxy error' })
         })
@@ -46,7 +55,12 @@ export async function startEgressProxy({ log, host, allowList }: StartOptions): 
 
     return {
         port: address.port,
-        close: () => new Promise<void>((resolve) => server.close(() => resolve())),
+        close: () => new Promise<void>((resolve) => {
+            for (const socket of openSockets) socket.destroy()
+            openSockets.clear()
+            server.closeAllConnections()
+            server.close(() => resolve())
+        }),
     }
 }
 
@@ -72,7 +86,8 @@ async function resolveAndPinIp({ hostname, allowList }: ResolvePinParams): Promi
     return ips[0]!
 }
 
-async function handleConnect({ req, clientSocket, head, allowList, log }: ConnectParams): Promise<void> {
+async function handleConnect({ req, clientSocket, head, allowList, log, track }: ConnectParams): Promise<void> {
+    track(clientSocket)
     clientSocket.on('error', () => clientSocket.destroy())
     const target = parseConnectTarget(req.url ?? '')
     if (target === null) {
@@ -94,6 +109,7 @@ async function handleConnect({ req, clientSocket, head, allowList, log }: Connec
     // Dial the validated IP (not the hostname): TLS SNI is carried by the client's own
     // ClientHello inside the tunnel, so dialing by IP stays TLS-safe.
     const upstream = net.connect(target.port, pinnedIp)
+    track(upstream)
     upstream.on('error', () => {
         writeSocketStatus({ socket: clientSocket, status: 502, message: 'Egress proxy upstream connect failed' })
         upstream.destroy()
@@ -224,6 +240,7 @@ type ConnectParams = {
     head: Buffer
     allowList: string[]
     log: ApLogger
+    track: (socket: Duplex) => void
 }
 
 type ForwardParams = {
