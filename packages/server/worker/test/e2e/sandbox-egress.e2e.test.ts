@@ -117,6 +117,7 @@ async function runProbeInSandbox({ commonDir, plan, proxyPort }: {
             NODE_PATH: '/usr/src/node_modules',
             AP_EXECUTION_MODE: 'SANDBOX_PROCESS',
             AP_SANDBOX_WS_PORT: '0',
+            AP_SANDBOX_WS_TOKEN: 'e2e-token',
             AP_BASE_CODE_DIRECTORY: '/root/codes',
             SANDBOX_ID: 'e2e-probe',
             AP_EGRESS_PROXY_URL: proxyUrl,
