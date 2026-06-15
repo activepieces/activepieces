@@ -88,7 +88,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `ap_list_across_projects` — lists flows, tables, runs, or connections across all user-accessible projects
 - `ap_deselect_project` — clears the selected project context
 - `ap_explore_data` — read-only exploration of the user's data (sheets, channels, columns) to build understanding during discovery; never configures the automation
-- `ap_load_guide` — loads an on-demand prompt guide (e.g. `build_flow`) so guidance is only in context when needed
+- `ap_load_guide` — loads an on-demand prompt guide (`build_flow`, `one_time_task`, `error_handling`, `http_fallback`, `control_flow`, `state`, `tables`, `ai`) so guidance is only in context when needed
 - `ap_set_phase` — flips the agent between the `discovery` and `build` tool phases
 
 ## Display Tools

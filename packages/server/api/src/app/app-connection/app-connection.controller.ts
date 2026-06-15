@@ -128,13 +128,15 @@ export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, do
     )
 
     app.post('/replace', ReplaceAppConnectionsRequest, async (request, reply) => {
-        const { sourceAppConnectionId, targetAppConnectionId } = request.body
+        const { sourceAppConnectionId, targetAppConnectionId, deleteSourceConnection, applyToPublishedVersions } = request.body
         await appConnectionService(request.log).replace({
             sourceAppConnectionId,
             targetAppConnectionId,
             projectId: request.projectId,
             platformId: request.principal.platform.id,
             userId: request.principal.id,
+            deleteSourceConnection,
+            applyToPublishedVersions,
         })
         await reply.status(StatusCodes.NO_CONTENT).send()
     })
