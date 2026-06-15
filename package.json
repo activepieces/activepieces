@@ -8,6 +8,7 @@
     "redis-memory-server"
   ],
   "scripts": {
+    "prepare": "husky install || true",
     "prebuild": "node tools/scripts/install-bun.js",
     "serve:frontend": "turbo run serve --filter=web",
     "serve:backend": "turbo run serve --filter=api",
@@ -115,8 +116,6 @@
     "@radix-ui/react-tooltip": "1.1.2",
     "@radix-ui/react-use-controllable-state": "1.2.2",
     "@rollup/wasm-node": "4.21.2",
-    "@segment/analytics-next": "1.72.0",
-    "@segment/analytics-node": "2.2.0",
     "@sendgrid/mail": "8.0.0",
     "@sentry/node": "7.120.0",
     "@sinclair/typebox": "0.34.11",
@@ -256,7 +255,8 @@
     "papaparse": "5.5.3",
     "pg": "8.20.0",
     "pickleparser": "0.1.0",
-    "posthog-js": "1.195.0",
+    "posthog-js": "1.382.0",
+    "posthog-node": "5.36.4",
     "priority-queue-typescript": "1.0.1",
     "prismjs": "1.30.0",
     "qs": "6.14.2",

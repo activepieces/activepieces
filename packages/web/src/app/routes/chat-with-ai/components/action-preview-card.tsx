@@ -38,14 +38,16 @@ export function ActionPreviewCard({
     >
       <div className="px-4 pt-4 pb-3">
         <div className="flex items-start gap-2.5">
-          <div className="shrink-0 mt-0.5">
-            <PieceIconWithPieceName
-              pieceName={pieceName}
-              size="sm"
-              border={false}
-              showTooltip={false}
-            />
-          </div>
+          {preview.pieceName ? (
+            <div className="shrink-0 mt-0.5">
+              <PieceIconWithPieceName
+                pieceName={pieceName}
+                size="sm"
+                border={false}
+                showTooltip={false}
+              />
+            </div>
+          ) : null}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground">
               {preview.isBatch && preview.batchCount !== undefined

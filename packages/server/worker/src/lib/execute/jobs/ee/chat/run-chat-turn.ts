@@ -5,6 +5,8 @@ import { generateText, isLoopFinished, LanguageModel, LanguageModelUsage, ModelM
 const MAX_RESPONSE_OUTPUT_TOKENS = 32_000
 const MAX_AUTO_CONTINUATIONS = 3
 const MAX_EMPTY_CONTINUATIONS = 2
+const MAX_STREAM_RETRIES = 1
+const STREAM_RETRY_BASE_DELAY_MS = 1_000
 const CONTINUE_NUDGE = '[system note — not from the user] Your previous response was cut off by the output token limit before it finished. Continue exactly where you stopped. If a tool call was cut off, re-issue it in FULL. Do not repeat content you already produced.'
 const EMPTY_OUTPUT_NUDGE = '[system note — not from the user] Your previous step produced no visible reply to the user. Continue the task now: either call the next tool, or write your reply to the user. Do not stop silently.'
 
@@ -23,6 +25,13 @@ export function decideLoopAction({ finishReason, producedVisibleOutput, continua
     return 'finish'
 }
 
+export function shouldRetryStream({ producedVisibleOutput, streamRetries }: {
+    producedVisibleOutput: boolean
+    streamRetries: number
+}): boolean {
+    return !producedVisibleOutput && streamRetries < MAX_STREAM_RETRIES
+}
+
 export async function runChatTurn({ model, provider, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks }: RunChatTurnParams): Promise<ChatTurnResult> {
     const drainStream = sinks?.drainStream ?? (async () => {})
     const onProgress = sinks?.onProgress ?? (() => {})
@@ -37,6 +46,7 @@ export async function runChatTurn({ model, provider, systemPrompt, messages, too
     const accumulatedResponseMessages: ModelMessage[] = []
     let continuations = 0
     let emptyContinuations = 0
+    let streamRetries = 0
     let truncatedAfterRetries = false
     let usage: LanguageModelUsage | undefined
     let totalInputTokens = 0
@@ -105,7 +115,23 @@ export async function runChatTurn({ model, provider, systemPrompt, messages, too
         const uiPartsCountBefore = uiParts.length
         const result = runStreamAttempt(llmMessages)
         await drainStream(result)
-        if (abortSignal.aborted || streamError) break
+        if (abortSignal.aborted) break
+        if (streamError) {
+            const producedVisibleOutput = uiParts.length > uiPartsCountBefore
+            if (shouldRetryStream({ producedVisibleOutput, streamRetries })) {
+                streamRetries++
+                log.warn({ streamRetries, err: streamError }, 'Chat stream failed before any visible output — retrying the turn')
+                streamError = null
+                await delayWithJitter(STREAM_RETRY_BASE_DELAY_MS)
+                continue
+            }
+            break
+        }
+
+        // The stream attempt succeeded — refresh the retry budget so each turn
+        // (including a later truncation/empty continuation) gets its own one-shot
+        // retry for a dead stream, instead of spending it once for the whole job.
+        streamRetries = 0
 
         const [steps, attemptUsage, finishReason] = await Promise.all([
             result.steps,
@@ -160,6 +186,11 @@ export async function runChatTurn({ model, provider, systemPrompt, messages, too
         totalOutputTokens,
         toolCalls,
     }
+}
+
+function delayWithJitter(baseMs: number): Promise<void> {
+    const jitter = Math.random() * 0.5 + 0.75
+    return new Promise((resolve) => setTimeout(resolve, baseMs * jitter))
 }
 
 type LoopDecision = 'finish' | 'continue_truncation' | 'continue_empty'
