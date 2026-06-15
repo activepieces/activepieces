@@ -18,9 +18,7 @@ import { createUIMessageStream, generateText, ModelMessage, streamText } from 'a
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { chatMcpClient } from './chat-mcp-client'
 import { chatWorkerTools } from './chat-worker-tools'
-import { runChatTurn } from './run-chat-turn'
-
-export { decideLoopAction, shouldRetryStream } from './run-chat-turn'
+import { delayWithJitter, runChatTurn } from './run-chat-turn'
 
 const BATCH_SIZE = 10
 const BATCH_FLUSH_MS = 50
@@ -449,11 +447,6 @@ async function retryWithBackoff({ fn, maxAttempts = RETRY_MAX_ATTEMPTS, log }: {
         }
         await delayWithJitter(RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1))
     }
-}
-
-function delayWithJitter(baseMs: number): Promise<void> {
-    const jitter = Math.random() * 0.5 + 0.75
-    return new Promise((resolve) => setTimeout(resolve, baseMs * jitter))
 }
 
 type GateDecision = {

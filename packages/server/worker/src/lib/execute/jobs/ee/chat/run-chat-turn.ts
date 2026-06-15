@@ -115,9 +115,9 @@ export async function runChatTurn({ model, provider, systemPrompt, messages, too
         const uiPartsCountBefore = uiParts.length
         const result = runStreamAttempt(llmMessages)
         await drainStream(result)
+        const producedVisibleOutput = uiParts.length > uiPartsCountBefore
         if (abortSignal.aborted) break
         if (streamError) {
-            const producedVisibleOutput = uiParts.length > uiPartsCountBefore
             if (shouldRetryStream({ producedVisibleOutput, streamRetries })) {
                 streamRetries++
                 log.warn({ streamRetries, err: streamError }, 'Chat stream failed before any visible output — retrying the turn')
@@ -144,7 +144,6 @@ export async function runChatTurn({ model, provider, systemPrompt, messages, too
         totalOutputTokens += attemptUsage.outputTokens ?? 0
         lastFinishReason = finishReason
 
-        const producedVisibleOutput = uiParts.length > uiPartsCountBefore
         const decision = decideLoopAction({ finishReason, producedVisibleOutput, continuations, emptyContinuations })
 
         if (decision === 'finish') {
@@ -188,7 +187,7 @@ export async function runChatTurn({ model, provider, systemPrompt, messages, too
     }
 }
 
-function delayWithJitter(baseMs: number): Promise<void> {
+export function delayWithJitter(baseMs: number): Promise<void> {
     const jitter = Math.random() * 0.5 + 0.75
     return new Promise((resolve) => setTimeout(resolve, baseMs * jitter))
 }
