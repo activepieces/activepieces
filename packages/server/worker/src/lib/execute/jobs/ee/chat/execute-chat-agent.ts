@@ -440,6 +440,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, projects
         },
         waitForApproval,
         storePendingGate,
+        eventEmitter,
         log,
     })
 

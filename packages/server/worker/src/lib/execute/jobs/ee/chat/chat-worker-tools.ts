@@ -598,11 +598,12 @@ function toolHasExecute(tool: Record<string, unknown>): tool is Record<string, u
     return typeof tool['execute'] === 'function'
 }
 
-function wrapTestFlowGate({ mcpTools, checkFlowWrites, waitForApproval, storePendingGate, log }: {
+function wrapTestFlowGate({ mcpTools, checkFlowWrites, waitForApproval, storePendingGate, eventEmitter, log }: {
     mcpTools: Record<string, unknown>
     checkFlowWrites: (flowId: string) => Promise<unknown>
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean }>
     storePendingGate: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
+    eventEmitter: ChatEventEmitter
     log?: { warn: (obj: Record<string, unknown>, msg: string) => void }
 }): Record<string, unknown> {
     const testFlow = mcpTools['ap_test_flow']
@@ -622,15 +623,28 @@ function wrapTestFlowGate({ mcpTools, checkFlowWrites, waitForApproval, storePen
                 else if (isObject(check) && check['hasWrites'] === true) {
                     const writeSteps = Array.isArray(check['writeSteps']) ? check['writeSteps'].filter((s): s is string => typeof s === 'string') : []
                     const flowName = typeof check['flowName'] === 'string' ? check['flowName'] : 'this flow'
-                    const stepList = writeSteps.length > 0 ? ` It performs real actions: ${writeSteps.join(', ')}.` : ''
+                    const gateLabel = writeSteps.length > 0
+                        ? `Run a live test of "${flowName}" — performs: ${writeSteps.join(', ')}`
+                        : `Run a live test of "${flowName}"`
+                    // Render the confirmation card in the live session (and persist it for refresh).
+                    // Without the emit the gate would block silently until the approval timeout.
+                    eventEmitter.emitActionPreview({
+                        toolCallId: gateId,
+                        pieceName: '',
+                        actionName: 'ap_test_flow',
+                        actionDisplayName: gateLabel,
+                        input: {},
+                        isBatch: false,
+                    })
                     await tryCatch(() => storePendingGate({
                         gateId,
                         toolName: 'ap_test_flow',
-                        displayName: `Run a live test of "${flowName}"`,
+                        displayName: gateLabel,
                         toolInput: { flowId, writeSteps },
                     }))
                     const decision = await waitForApproval({ gateId })
                     if (!decision.approved) {
+                        const stepList = writeSteps.length > 0 ? ` It performs real actions: ${writeSteps.join(', ')}.` : ''
                         return { content: [{ type: 'text', text: `Live test cancelled by the user.${stepList} The user declined a real run that would perform these actions. Do not run it; offer to test with mock trigger data instead, or ask whether to proceed.` }] }
                     }
                 }

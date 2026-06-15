@@ -86,6 +86,20 @@ function buildToolCallMetaFromGate(gate: {
       },
     };
   }
+  if (gate.toolName === 'ap_test_flow') {
+    return {
+      [gate.gateId]: {
+        actionPreview: {
+          toolCallId: gate.gateId,
+          pieceName: '',
+          actionName: 'ap_test_flow',
+          actionDisplayName: gate.displayName,
+          input: {},
+          isBatch: false,
+        },
+      },
+    };
+  }
   return {};
 }
 
