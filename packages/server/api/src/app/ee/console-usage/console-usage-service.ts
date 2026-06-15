@@ -41,17 +41,14 @@ export const consoleUsageService = (log: FastifyBaseLogger) => ({
         const dayStart = utcMidnight(1)
         const dayEnd = utcMidnight(0)
 
-        const [
-            activeFlowsByPlatform,
-            usersByPlatform,
-            teamProjectsByPlatform,
-            dailyExecutionsByPlatform,
-        ] = await Promise.all([
-            queryActiveFlowsByPlatform(platformIds),
-            queryUsersByPlatform(platformIds),
-            queryTeamProjectsByPlatform(platformIds),
-            queryDailyExecutionsByPlatform(platformIds, dayStart, dayEnd),
-        ])
+        // Run the aggregates sequentially rather than in parallel: this is a background report, and
+        // firing all four heavy GROUP BY queries at once would hold several connections from the shared
+        // pool simultaneously, starving live request traffic. One at a time keeps the report to a single
+        // connection so the app server stays responsive while it runs.
+        const activeFlowsByPlatform = await queryActiveFlowsByPlatform(platformIds)
+        const usersByPlatform = await queryUsersByPlatform(platformIds)
+        const teamProjectsByPlatform = await queryTeamProjectsByPlatform(platformIds)
+        const dailyExecutionsByPlatform = await queryDailyExecutionsByPlatform(platformIds, dayStart, dayEnd)
 
         const reportedAt = new Date().toISOString()
 
@@ -140,14 +137,10 @@ async function queryDailyExecutionsByPlatform(platformIds: string[], dayStart: s
     const platformByProject = new Map(projects.map((project): [string, string] => [project.projectId, project.platformId]))
     const countsByPlatformDay = new Map<string, Map<string, number>>()
 
-    let isFirstChunk = true
     for (const projectIds of chunk(projects.map((project) => project.projectId), EXECUTIONS_PROJECT_CHUNK_SIZE)) {
-        // Throttle between chunks so a large report doesn't monopolise the DB connection pool / Postgres,
-        // leaving capacity for live request traffic while the (background) report runs.
-        if (!isFirstChunk) {
-            await sleep(EXECUTIONS_CHUNK_DELAY_MS)
-        }
-        isFirstChunk = false
+        // Throttle before every chunk so a large report doesn't monopolise the DB connection pool /
+        // Postgres, leaving capacity for live request traffic while the (background) report runs.
+        await sleep(EXECUTIONS_CHUNK_DELAY_MS)
 
         const rows = await flowRunRepo()
             .createQueryBuilder('flow_run')
