@@ -8,6 +8,7 @@
     "redis-memory-server"
   ],
   "scripts": {
+    "prepare": "husky install || true",
     "prebuild": "node tools/scripts/install-bun.js",
     "serve:frontend": "turbo run serve --filter=web",
     "serve:backend": "turbo run serve --filter=api",

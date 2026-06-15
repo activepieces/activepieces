@@ -73,21 +73,24 @@ const mockLog = {
 
 const SNAPSHOT_URL = 'https://console.activepieces.com/api/external/usage/snapshot'
 
-// License keys are queried first (and gate the rest); the four scoped count queries run afterwards
-// in declaration order: active flows, users, team projects, per-day executions.
-const mockQueries = ({ licenseKeys = [], activeFlows = [], users = [], projects = [], dailyExecutions = [] }: {
+// License keys are queried first (and gate the rest); the scoped count queries run afterwards in
+// declaration order: active flows, users, team projects, then per-day executions — which itself runs
+// two queries: a project->platform lookup followed by the flow_run aggregate (grouped by projectId).
+const mockQueries = ({ licenseKeys = [], activeFlows = [], users = [], projects = [], executionProjects = [], executionRuns = [] }: {
     licenseKeys?: { platformId: string, licenseKey: string }[]
     activeFlows?: { platformId: string, count: string }[]
     users?: { platformId: string, count: string }[]
     projects?: { platformId: string, count: string }[]
-    dailyExecutions?: { platformId: string, day: string, count: string }[]
+    executionProjects?: { projectId: string, platformId: string }[]
+    executionRuns?: { projectId: string, day: string, count: string }[]
 }): void => {
     mockGetRawMany
         .mockResolvedValueOnce(licenseKeys)
         .mockResolvedValueOnce(activeFlows)
         .mockResolvedValueOnce(users)
         .mockResolvedValueOnce(projects)
-        .mockResolvedValueOnce(dailyExecutions)
+        .mockResolvedValueOnce(executionProjects)
+        .mockResolvedValueOnce(executionRuns)
 }
 
 describe('consoleUsageService', () => {
@@ -129,9 +132,10 @@ describe('consoleUsageService', () => {
                 activeFlows: [{ platformId: 'platform-1', count: '5' }],
                 users: [{ platformId: 'platform-1', count: '10' }],
                 projects: [{ platformId: 'platform-1', count: '3' }],
-                dailyExecutions: [
-                    { platformId: 'platform-1', day: '2026-06-13', count: '40' },
-                    { platformId: 'platform-1', day: '2026-06-14', count: '60' },
+                executionProjects: [{ projectId: 'project-1', platformId: 'platform-1' }],
+                executionRuns: [
+                    { projectId: 'project-1', day: '2026-06-13', count: '40' },
+                    { projectId: 'project-1', day: '2026-06-14', count: '60' },
                 ],
                 licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }],
             })
@@ -152,6 +156,39 @@ describe('consoleUsageService', () => {
             expect(fetchBody.executions).toBeUndefined()
             expect(fetchBody.key_value).toBeUndefined()
             expect(fetchBody.reported_at).toBeDefined()
+        })
+
+        it('should sum runs across multiple projects of the same platform per day, keeping platforms separate', async () => {
+            mockQueries({
+                licenseKeys: [
+                    { platformId: 'platform-1', licenseKey: 'key-1' },
+                    { platformId: 'platform-2', licenseKey: 'key-2' },
+                ],
+                executionProjects: [
+                    { projectId: 'p1a', platformId: 'platform-1' },
+                    { projectId: 'p1b', platformId: 'platform-1' },
+                    { projectId: 'p2a', platformId: 'platform-2' },
+                ],
+                executionRuns: [
+                    { projectId: 'p1a', day: '2026-06-13', count: '10' },
+                    { projectId: 'p1b', day: '2026-06-13', count: '15' },
+                    { projectId: 'p2a', day: '2026-06-13', count: '7' },
+                ],
+            })
+
+            await consoleUsageService(mockLog).reportAllPlatforms()
+
+            // Snapshots are sent in platform insertion order: platform-1 then platform-2.
+            const body1 = JSON.parse(mockFetch.mock.calls[0][1].body)
+            const body2 = JSON.parse(mockFetch.mock.calls[1][1].body)
+
+            expect(body1.platform_id).toBe('platform-1')
+            // platform-1's two projects accumulate into one per-day total
+            expect(body1.daily_executions).toEqual([{ date: '2026-06-13', count: 25 }])
+
+            expect(body2.platform_id).toBe('platform-2')
+            // platform-2 stays separate
+            expect(body2.daily_executions).toEqual([{ date: '2026-06-13', count: 7 }])
         })
 
         it('should default gauges to zero and send empty daily executions when a platform has no usage', async () => {
