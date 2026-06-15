@@ -27,7 +27,7 @@ export const consoleUsageService = (log: FastifyBaseLogger) => ({
      * window there is no healing margin — if a day's run is missed entirely, the next run won't
      * backfill it, since it only ever looks at yesterday.
      */
-    async reportAllPlatforms(): Promise<void> {
+    async reportAllPlatforms(range?: { from?: string, to?: string }): Promise<void> {
         const licenseKeysByPlatform = await queryLicenseKeysByPlatform()
 
         if (licenseKeysByPlatform.size === 0) {
@@ -35,8 +35,8 @@ export const consoleUsageService = (log: FastifyBaseLogger) => ({
         }
 
         const platformIds = [...licenseKeysByPlatform.keys()]
-        const dayStart = utcMidnight(1)
-        const dayEnd = utcMidnight(0)
+        const entries = [...licenseKeysByPlatform.entries()]
+        const backfill = range?.from && range?.to ? { from: range.from, to: range.to } : null
 
         const [
             activeFlowsByPlatform,
@@ -47,24 +47,21 @@ export const consoleUsageService = (log: FastifyBaseLogger) => ({
             queryActiveFlowsByPlatform(platformIds),
             queryUsersByPlatform(platformIds),
             queryTeamProjectsByPlatform(platformIds),
-            queryDailyExecutionsByPlatform(platformIds, dayStart, dayEnd),
+            queryDailyExecutionsByPlatform(
+                platformIds,
+                backfill ? dayjs.utc(backfill.from).startOf('day').toISOString() : utcMidnight(1),
+                backfill ? dayjs.utc(backfill.to).startOf('day').add(1, 'day').toISOString() : utcMidnight(0),
+            ),
         ])
 
-        const reportedAt = new Date().toISOString()
+        const gauges = { activeFlowsByPlatform, usersByPlatform, teamProjectsByPlatform, dailyExecutionsByPlatform }
+        const tasks = backfill
+            ? buildBackfillTasks({ entries, from: backfill.from, to: backfill.to, ...gauges })
+            : buildDailyTasks({ entries, ...gauges })
 
-        for (const batch of chunk([...licenseKeysByPlatform.entries()], SNAPSHOT_BATCH_SIZE)) {
+        for (const batch of chunk(tasks, SNAPSHOT_BATCH_SIZE)) {
             const results = await Promise.allSettled(
-                batch.map(([platformId, licenseKey]) => {
-                    const body = buildSnapshotBody({
-                        platformId,
-                        activeFlows: activeFlowsByPlatform.get(platformId) ?? 0,
-                        users: usersByPlatform.get(platformId) ?? 0,
-                        projects: teamProjectsByPlatform.get(platformId) ?? 0,
-                        dailyExecutions: dailyExecutionsByPlatform.get(platformId) ?? [],
-                        reportedAt,
-                    })
-                    return postSnapshot({ body, licenseKey })
-                }),
+                batch.map((task) => postSnapshot({ body: task.body, licenseKey: task.licenseKey })),
             )
 
             for (const result of results) {
@@ -190,6 +187,63 @@ function utcMidnight(daysAgo: number): string {
     return dayjs.utc().startOf('day').subtract(daysAgo, 'day').toISOString()
 }
 
+// Daily cron path (unchanged): one snapshot per platform for the previous completed UTC day, with the
+// executions exactly as the window query returned them and `reported_at` stamped as-of now.
+function buildDailyTasks({ entries, activeFlowsByPlatform, usersByPlatform, teamProjectsByPlatform, dailyExecutionsByPlatform }: SnapshotTaskInput): SnapshotTask[] {
+    const reportedAt = new Date().toISOString()
+    return entries.map(([platformId, licenseKey]) => ({
+        licenseKey,
+        body: buildSnapshotBody({
+            platformId,
+            activeFlows: activeFlowsByPlatform.get(platformId) ?? 0,
+            users: usersByPlatform.get(platformId) ?? 0,
+            projects: teamProjectsByPlatform.get(platformId) ?? 0,
+            dailyExecutions: dailyExecutionsByPlatform.get(platformId) ?? [],
+            reportedAt,
+        }),
+    }))
+}
+
+// Backfill path: one snapshot per (platform, day) across [from, to] inclusive, each stamped on its own
+// day so the Console buckets them correctly (it keys days off `reported_at`, not the daily_executions
+// dates). Gauges have no history, so every backfilled day carries the current point-in-time reading.
+function buildBackfillTasks({ entries, from, to, activeFlowsByPlatform, usersByPlatform, teamProjectsByPlatform, dailyExecutionsByPlatform }: SnapshotTaskInput & { from: string, to: string }): SnapshotTask[] {
+    const days = enumerateUtcDays(from, to)
+    const countsByPlatformDay = indexCountsByPlatformDay(dailyExecutionsByPlatform)
+    return days.flatMap((day) =>
+        entries.map(([platformId, licenseKey]) => ({
+            licenseKey,
+            body: buildSnapshotBody({
+                platformId,
+                activeFlows: activeFlowsByPlatform.get(platformId) ?? 0,
+                users: usersByPlatform.get(platformId) ?? 0,
+                projects: teamProjectsByPlatform.get(platformId) ?? 0,
+                dailyExecutions: [{ date: day, count: countsByPlatformDay.get(platformId)?.get(day) ?? 0 }],
+                reportedAt: `${day}T12:00:00.000Z`,
+            }),
+        })),
+    )
+}
+
+function enumerateUtcDays(from: string, to: string): string[] {
+    const days: string[] = []
+    const end = dayjs.utc(to).startOf('day')
+    let cursor = dayjs.utc(from).startOf('day')
+    while (!cursor.isAfter(end)) {
+        days.push(cursor.format('YYYY-MM-DD'))
+        cursor = cursor.add(1, 'day')
+    }
+    return days
+}
+
+function indexCountsByPlatformDay(dailyExecutionsByPlatform: Map<string, DailyExecutionCount[]>): Map<string, Map<string, number>> {
+    const byPlatform = new Map<string, Map<string, number>>()
+    for (const [platformId, days] of dailyExecutionsByPlatform) {
+        byPlatform.set(platformId, new Map(days.map((day): [string, number] => [day.date, day.count])))
+    }
+    return byPlatform
+}
+
 async function postSnapshot({ body, licenseKey }: { body: Record<string, unknown>, licenseKey: string }): Promise<void> {
     const result = await tryCatch(() =>
         fetch(`${CONSOLE_API_URL}/api/external/usage/snapshot`, {
@@ -215,4 +269,17 @@ async function postSnapshot({ body, licenseKey }: { body: Record<string, unknown
 type DailyExecutionCount = {
     date: string
     count: number
+}
+
+type SnapshotTask = {
+    licenseKey: string
+    body: Record<string, unknown>
+}
+
+type SnapshotTaskInput = {
+    entries: [string, string][]
+    activeFlowsByPlatform: Map<string, number>
+    usersByPlatform: Map<string, number>
+    teamProjectsByPlatform: Map<string, number>
+    dailyExecutionsByPlatform: Map<string, DailyExecutionCount[]>
 }

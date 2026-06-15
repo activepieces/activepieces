@@ -166,6 +166,41 @@ describe('consoleUsageService', () => {
             expect(fetchBody.daily_executions).toEqual([])
         })
 
+        it('should backfill one snapshot per day across the from/to range, dated on each day', async () => {
+            mockQueries({
+                activeFlows: [{ platformId: 'p1', count: '5' }],
+                users: [{ platformId: 'p1', count: '10' }],
+                projects: [{ platformId: 'p1', count: '3' }],
+                dailyExecutions: [
+                    { platformId: 'p1', day: '2026-06-07', count: '40' },
+                    { platformId: 'p1', day: '2026-06-09', count: '70' },
+                ],
+                licenseKeys: [{ platformId: 'p1', licenseKey: 'key-123' }],
+            })
+
+            await consoleUsageService(mockLog).reportAllPlatforms({ from: '2026-06-07', to: '2026-06-09' })
+
+            expect(mockFetch).toHaveBeenCalledTimes(3)
+            const byDate = new Map(
+                mockFetch.mock.calls
+                    .map((call) => JSON.parse(call[1].body))
+                    .map((body) => [body.daily_executions[0].date, body]),
+            )
+
+            expect([...byDate.keys()].sort()).toEqual(['2026-06-07', '2026-06-08', '2026-06-09'])
+
+            // Each snapshot is stamped on its own UTC day and carries that day's count (0 with no runs).
+            expect(byDate.get('2026-06-07').daily_executions).toEqual([{ date: '2026-06-07', count: 40 }])
+            expect(byDate.get('2026-06-07').reported_at).toBe('2026-06-07T12:00:00.000Z')
+            expect(byDate.get('2026-06-08').daily_executions).toEqual([{ date: '2026-06-08', count: 0 }])
+            expect(byDate.get('2026-06-09').daily_executions).toEqual([{ date: '2026-06-09', count: 70 }])
+
+            // Gauges have no history, so every backfilled day carries the current reading.
+            expect(byDate.get('2026-06-08').active_flows).toBe(5)
+            expect(byDate.get('2026-06-08').users).toBe(10)
+            expect(byDate.get('2026-06-08').projects).toBe(3)
+        })
+
         it('should handle fetch errors per platform without stopping others', async () => {
             mockQueries({
                 licenseKeys: [

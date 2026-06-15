@@ -104,7 +104,7 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
     })
 
     app.post('/console-usage/report', ReportConsoleUsageRequest, async (req, res) => {
-        await consoleUsageService(req.log).reportAllPlatforms()
+        await consoleUsageService(req.log).reportAllPlatforms(req.body)
         return res.status(StatusCodes.OK).send()
     })
 }
@@ -209,6 +209,15 @@ const SyncAllConversationsRequest = {
 }
 
 const ReportConsoleUsageRequest = {
+    schema: {
+        body: z
+            .object({
+                from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+                to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+            })
+            .refine(({ from, to }) => from <= to, { message: 'from must be on or before to' })
+            .optional(),
+    },
     config: {
         security: securityAccess.public(),
     },
