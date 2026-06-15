@@ -8,6 +8,7 @@ ENV LANG=en_US.UTF-8 \
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         iptables \
+        iproute2 \
         libcap2-bin \
         ca-certificates \
         curl \

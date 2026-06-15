@@ -23,6 +23,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         curl \
         ca-certificates \
         iptables \
+        iproute2 \
         libcap-dev && \
     yarn config set python /usr/bin/python3 && \
     sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && \
