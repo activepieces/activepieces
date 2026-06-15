@@ -21,6 +21,8 @@ export const useHandleKeyPressOnCanvas = () => {
     showMinimap,
     setDraggedNote,
     setDraggedStep,
+    undo,
+    redo,
   ] = useBuilderStateContext((state) => [
     state.selectedNodes,
     state.flowVersion,
@@ -32,6 +34,8 @@ export const useHandleKeyPressOnCanvas = () => {
     state.showMinimap,
     state.setDraggedNote,
     state.setActiveDraggingStep,
+    state.undo,
+    state.redo,
   ]);
 
   const handleKeyDown = useCallback(
@@ -131,6 +135,42 @@ export const useHandleKeyPressOnCanvas = () => {
             }
           });
         },
+        Undo: () => {
+          if (readonly || insideBody) {
+            return;
+          }
+          const targetTag = (e.target as HTMLElement).tagName;
+          if (targetTag === 'INPUT' || targetTag === 'TEXTAREA') {
+            return;
+          }
+          e.stopPropagation();
+          e.preventDefault();
+          undo();
+        },
+        Redo: () => {
+          if (readonly || insideBody) {
+            return;
+          }
+          const targetTag = (e.target as HTMLElement).tagName;
+          if (targetTag === 'INPUT' || targetTag === 'TEXTAREA') {
+            return;
+          }
+          e.stopPropagation();
+          e.preventDefault();
+          redo();
+        },
+        RedoY: () => {
+          if (readonly || insideBody) {
+            return;
+          }
+          const targetTag = (e.target as HTMLElement).tagName;
+          if (targetTag === 'INPUT' || targetTag === 'TEXTAREA') {
+            return;
+          }
+          e.stopPropagation();
+          e.preventDefault();
+          redo();
+        },
       });
     },
     [
@@ -144,6 +184,8 @@ export const useHandleKeyPressOnCanvas = () => {
       showMinimap,
       setDraggedNote,
       setDraggedStep,
+      undo,
+      redo,
     ],
   );
 
@@ -200,5 +242,20 @@ export const CanvasShortcuts: CanvasShortcutsProps = {
     withCtrl: true,
     withShift: false,
     shortcutKey: 'e',
+  },
+  Undo: {
+    withCtrl: true,
+    withShift: false,
+    shortcutKey: 'z',
+  },
+  Redo: {
+    withCtrl: true,
+    withShift: true,
+    shortcutKey: 'z',
+  },
+  RedoY: {
+    withCtrl: true,
+    withShift: false,
+    shortcutKey: 'y',
   },
 };

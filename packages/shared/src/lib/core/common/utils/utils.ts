@@ -40,19 +40,31 @@ export function insertAt<T>(array: T[], index: number, item: T): T[] {
     return [...array.slice(0, index), item, ...array.slice(index)]
 }
 
-export function debounce<T>(func: (...args: T[]) => void, wait: number): (key?: string, ...args: T[]) => void {
-    let timeout: NodeJS.Timeout
-    let currentKey: string | undefined
-    return function (key?: string, ...args: T[]) {
+type DebouncedFn<T> = {
+    (key?: string, ...args: T[]): void
+    cancel: () => void
+}
+
+export function debounce<T>(func: (...args: T[]) => void, wait: number): DebouncedFn<T> {
+    const timeouts = new Map<string | undefined, ReturnType<typeof setTimeout>>()
+    const debouncedFn = function (key?: string, ...args: T[]) {
+        const existing = timeouts.get(key)
+        if (existing) {
+            clearTimeout(existing)
+        }
         const later = () => {
+            timeouts.delete(key)
             func(...args)
         }
-        if (currentKey === key) {
-            clearTimeout(timeout)
+        timeouts.set(key, setTimeout(later, wait))
+    } as DebouncedFn<T>
+    debouncedFn.cancel = () => {
+        for (const [, t] of timeouts) {
+            clearTimeout(t)
         }
-        currentKey = key
-        timeout = setTimeout(later, wait)
+        timeouts.clear()
     }
+    return debouncedFn
 }
 
 

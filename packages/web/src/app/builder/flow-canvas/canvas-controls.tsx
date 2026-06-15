@@ -7,7 +7,9 @@ import {
   Minus,
   MousePointer,
   Plus,
+  Redo2,
   StickyNote,
+  Undo2,
 } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
 
@@ -183,6 +185,12 @@ const CanvasControls = ({
         state.readonly,
       ];
     });
+  const [undo, redo, undoStack, redoStack] = useBuilderStateContext((state) => [
+    state.undo,
+    state.redo,
+    state.undoStack,
+    state.redoStack,
+  ]);
   const spacePressed = useKeyPress('Space');
   const shiftPressed = useKeyPress('Shift');
   const isInGrabMode =
@@ -232,6 +240,37 @@ const CanvasControls = ({
         <div>
           <Separator orientation="vertical" className="h-5"></Separator>
         </div>
+        {!readonly && (
+          <>
+            <CanvasButtonWrapper
+              tooltip={t('Undo') + (isMac() ? ' (⌘+Z)' : ' (Ctrl+Z)')}
+            >
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled={undoStack.length === 0}
+                onClick={undo}
+              >
+                <Undo2 className="size-4" />
+              </Button>
+            </CanvasButtonWrapper>
+            <CanvasButtonWrapper
+              tooltip={t('Redo') + (isMac() ? ' (⇧+⌘+Z)' : ' (Ctrl+Shift+Z)')}
+            >
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled={redoStack.length === 0}
+                onClick={redo}
+              >
+                <Redo2 className="size-4" />
+              </Button>
+            </CanvasButtonWrapper>
+            <div>
+              <Separator orientation="vertical" className="h-5"></Separator>
+            </div>
+          </>
+        )}
         <CanvasButtonWrapper tooltip={t('Grab mode')}>
           <Button
             variant={isInGrabMode ? 'default' : 'ghost'}

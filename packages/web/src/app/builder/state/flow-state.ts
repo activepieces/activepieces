@@ -26,6 +26,55 @@ import { PromiseQueue } from '@/lib/promise-queue';
 import { BuilderState } from '../builder-hooks';
 import { flowCanvasUtils } from '../flow-canvas/utils/flow-canvas-utils';
 
+type FlowSnapshot = {
+  trigger: FlowVersion['trigger'];
+  notes: FlowVersion['notes'];
+  displayName: FlowVersion['displayName'];
+};
+
+const MAX_UNDO_HISTORY = 50;
+const COALESCE_THRESHOLD_MS = 2000;
+
+const UNDOABLE_OPERATIONS: ReadonlySet<FlowOperationType> = new Set([
+  FlowOperationType.UPDATE_TRIGGER,
+  FlowOperationType.UPDATE_ACTION,
+  FlowOperationType.ADD_ACTION,
+  FlowOperationType.DELETE_ACTION,
+  FlowOperationType.MOVE_ACTION,
+  FlowOperationType.DUPLICATE_ACTION,
+  FlowOperationType.DELETE_BRANCH,
+  FlowOperationType.ADD_BRANCH,
+  FlowOperationType.DUPLICATE_BRANCH,
+  FlowOperationType.SET_SKIP_ACTION,
+  FlowOperationType.MOVE_BRANCH,
+  FlowOperationType.UPDATE_NOTE,
+  FlowOperationType.DELETE_NOTE,
+  FlowOperationType.ADD_NOTE,
+]);
+
+const captureSnapshot = (flowVersion: FlowVersion): FlowSnapshot => ({
+  trigger: JSON.parse(JSON.stringify(flowVersion.trigger)),
+  notes: JSON.parse(JSON.stringify(flowVersion.notes)),
+  displayName: flowVersion.displayName,
+});
+
+const sameStepOperation = (
+  op: FlowOperationRequest,
+  prevOp: FlowOperationRequest,
+): boolean => {
+  if (op.type !== prevOp.type) return false;
+  switch (op.type) {
+    case FlowOperationType.UPDATE_ACTION:
+      return op.request.name === (prevOp as typeof op).request.name;
+    case FlowOperationType.UPDATE_TRIGGER:
+      return true;
+    case FlowOperationType.UPDATE_NOTE:
+      return op.request.id === (prevOp as typeof op).request.id;
+    default:
+      return false;
+  }
+};
+
 export type FlowState = {
   flow: PopulatedFlow;
   flowVersion: FlowVersion;
@@ -72,6 +121,14 @@ export type FlowState = {
     selectStepAfter: boolean;
     customLogoUrl?: string;
   }) => string;
+  undoStack: FlowSnapshot[];
+  redoStack: FlowSnapshot[];
+  lastUndoOperation: FlowOperationRequest | null;
+  lastCoalesceTimeMs: number;
+  undoRedoRevision: number;
+  undo: () => void;
+  redo: () => void;
+  clearUndoRedo: () => void;
 };
 export type FlowInitialState = Pick<
   FlowState,
@@ -98,6 +155,11 @@ export const createFlowState = (
     inputSampleData: initialState.inputSampleData,
     flow: initialState.flow,
     flowVersion: initialState.flowVersion,
+    undoStack: [],
+    redoStack: [],
+    lastUndoOperation: null,
+    lastCoalesceTimeMs: 0,
+    undoRedoRevision: 0,
     renameFlowClientSide: (newName: string) => {
       set((state) => {
         return {
@@ -118,7 +180,117 @@ export const createFlowState = (
         };
       });
     },
-    setFlow: (flow: PopulatedFlow) => set({ flow, selectedStep: null }),
+    clearUndoRedo: () => {
+      set({
+        undoStack: [],
+        redoStack: [],
+        lastUndoOperation: null,
+        lastCoalesceTimeMs: 0,
+        undoRedoRevision: 0,
+      });
+    },
+    undo: () => {
+      debouncedAddToFlowUpdatesQueue.cancel();
+      const state = get();
+      if (state.undoStack.length === 0 || state.readonly) return;
+      const currentSnapshot = captureSnapshot(state.flowVersion);
+      const previousSnapshot = state.undoStack[state.undoStack.length - 1];
+      const importOp: FlowOperationRequest = {
+        type: FlowOperationType.IMPORT_FLOW,
+        request: {
+          displayName: previousSnapshot.displayName,
+          trigger: previousSnapshot.trigger,
+          notes: previousSnapshot.notes ?? [],
+          schemaVersion: state.flowVersion.schemaVersion,
+        },
+      };
+      const newFlowVersion = flowOperations.apply(state.flowVersion, importOp);
+      set({
+        flowVersion: newFlowVersion,
+        undoStack: state.undoStack.slice(0, -1),
+        redoStack: [...state.redoStack, currentSnapshot],
+        lastUndoOperation: null,
+        lastCoalesceTimeMs: 0,
+        undoRedoRevision: state.undoRedoRevision + 1,
+        saving: true,
+      });
+      flowUpdatesQueue.add(async () => {
+        try {
+          const { version: serverFlowVersion } = await flowsApi.update(
+            state.flow.id,
+            importOp,
+            true,
+          );
+          set((s) => ({
+            flowVersion: {
+              ...s.flowVersion,
+              id: serverFlowVersion.id,
+              state: serverFlowVersion.state,
+            },
+            saving: flowUpdatesQueue.size() !== 0,
+          }));
+        } catch (error) {
+          console.error(error);
+          flowUpdatesQueue.halt();
+        }
+      });
+    },
+    redo: () => {
+      debouncedAddToFlowUpdatesQueue.cancel();
+      const state = get();
+      if (state.redoStack.length === 0 || state.readonly) return;
+      const currentSnapshot = captureSnapshot(state.flowVersion);
+      const nextSnapshot = state.redoStack[state.redoStack.length - 1];
+      const importOp: FlowOperationRequest = {
+        type: FlowOperationType.IMPORT_FLOW,
+        request: {
+          displayName: nextSnapshot.displayName,
+          trigger: nextSnapshot.trigger,
+          notes: nextSnapshot.notes ?? [],
+          schemaVersion: state.flowVersion.schemaVersion,
+        },
+      };
+      const newFlowVersion = flowOperations.apply(state.flowVersion, importOp);
+      set({
+        flowVersion: newFlowVersion,
+        redoStack: state.redoStack.slice(0, -1),
+        undoStack: [...state.undoStack, currentSnapshot],
+        lastUndoOperation: null,
+        lastCoalesceTimeMs: 0,
+        undoRedoRevision: state.undoRedoRevision + 1,
+        saving: true,
+      });
+      flowUpdatesQueue.add(async () => {
+        try {
+          const { version: serverFlowVersion } = await flowsApi.update(
+            state.flow.id,
+            importOp,
+            true,
+          );
+          set((s) => ({
+            flowVersion: {
+              ...s.flowVersion,
+              id: serverFlowVersion.id,
+              state: serverFlowVersion.state,
+            },
+            saving: flowUpdatesQueue.size() !== 0,
+          }));
+        } catch (error) {
+          console.error(error);
+          flowUpdatesQueue.halt();
+        }
+      });
+    },
+    setFlow: (flow: PopulatedFlow) =>
+      set({
+        flow,
+        selectedStep: null,
+        undoStack: [],
+        redoStack: [],
+        lastUndoOperation: null,
+        lastCoalesceTimeMs: 0,
+        undoRedoRevision: 0,
+      }),
     setSampleDataLocally: ({
       stepName,
       value,
@@ -172,6 +344,29 @@ export const createFlowState = (
           console.warn('Cannot apply operation while readonly');
           return state;
         }
+
+        let undoStack = state.undoStack;
+        let redoStack = state.redoStack;
+        if (UNDOABLE_OPERATIONS.has(operation.type)) {
+          const snapshot = captureSnapshot(state.flowVersion);
+          const prevOp = state.lastUndoOperation;
+          const now = Date.now();
+          if (
+            prevOp &&
+            sameStepOperation(operation, prevOp) &&
+            now - state.lastCoalesceTimeMs < COALESCE_THRESHOLD_MS
+          ) {
+            undoStack = [...undoStack.slice(0, -1), snapshot];
+          } else {
+            undoStack = [...undoStack, snapshot];
+          }
+          if (undoStack.length > MAX_UNDO_HISTORY) {
+            undoStack = undoStack.slice(-MAX_UNDO_HISTORY);
+          }
+          redoStack = [];
+          set({ lastUndoOperation: operation, lastCoalesceTimeMs: now });
+        }
+
         const newFlowVersion = flowOperations.apply(
           state.flowVersion,
           operation,
@@ -257,7 +452,7 @@ export const createFlowState = (
           }
         }
 
-        return { flowVersion: newFlowVersion };
+        return { flowVersion: newFlowVersion, undoStack, redoStack };
       }),
     setVersion: (
       flowVersion: FlowVersion,
@@ -282,6 +477,11 @@ export const createFlowState = (
             ? RightSideBarType.PIECE_SETTINGS
             : RightSideBarType.NONE,
         selectedBranchIndex: null,
+        undoStack: [],
+        redoStack: [],
+        lastUndoOperation: null,
+        lastCoalesceTimeMs: 0,
+        undoRedoRevision: 0,
       }));
     },
     operationListeners: [],

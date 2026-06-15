@@ -60,6 +60,7 @@ const StepSettingsContainer = () => {
     run,
     testPanelView,
     isTestPanelOpen,
+    undoRedoRevision,
   ] = useBuilderStateContext((state) => [
     state.readonly,
     state.exitStepSettings,
@@ -71,6 +72,7 @@ const StepSettingsContainer = () => {
     state.run,
     state.testPanelView,
     state.isTestPanelOpen,
+    state.undoRedoRevision,
   ]);
 
   const { stepMetadata } = stepsHooks.useStepMetadata({
@@ -169,6 +171,13 @@ const StepSettingsContainer = () => {
     //RHF doesn't automatically trigger validation when the form is rendered, so we need to trigger it manually
     form.trigger();
   }, []);
+
+  useEffect(() => {
+    if (undoRedoRevision > 0) {
+      currentValuesRef.current = JSON.parse(JSON.stringify(selectedStep));
+      form.reset(selectedStep);
+    }
+  }, [undoRedoRevision]);
 
   const showTestPanel = showGenerateSampleData || showStepInputOutFromRun;
 

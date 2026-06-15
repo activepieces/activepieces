@@ -15,6 +15,7 @@ import {
     isNil,
     isString,
     parseToJsonIfPossible,
+    debounce,
 } from '../../../../src/lib/core/common/utils/utils'
 
 describe('setAtPath', () => {
@@ -245,5 +246,116 @@ describe('parseToJsonIfPossible', () => {
 
     it('should return non-string values as-is', () => {
         expect(parseToJsonIfPossible(42)).toBe(42)
+    })
+})
+
+describe('debounce', () => {
+    beforeEach(() => {
+        vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+        vi.useRealTimers()
+    })
+
+    it('should call the function after the wait period', () => {
+        const fn = vi.fn()
+        const debounced = debounce(fn, 100)
+
+        debounced('key1', 'arg1')
+        expect(fn).not.toHaveBeenCalled()
+
+        vi.advanceTimersByTime(100)
+        expect(fn).toHaveBeenCalledWith('arg1')
+    })
+
+    it('should reset the timer when called with the same key', () => {
+        const fn = vi.fn()
+        const debounced = debounce(fn, 100)
+
+        debounced('key1', 'arg1')
+        vi.advanceTimersByTime(50)
+        debounced('key1', 'arg2')
+        vi.advanceTimersByTime(50)
+        expect(fn).not.toHaveBeenCalled()
+
+        vi.advanceTimersByTime(50)
+        expect(fn).toHaveBeenCalledTimes(1)
+        expect(fn).toHaveBeenCalledWith('arg2')
+    })
+
+    it('should not reset the timer when called with a different key', () => {
+        const fn = vi.fn()
+        const debounced = debounce(fn, 100)
+
+        debounced('key1', 'arg1')
+        vi.advanceTimersByTime(50)
+        debounced('key2', 'arg2')
+        vi.advanceTimersByTime(50)
+        expect(fn).toHaveBeenCalledTimes(1)
+        expect(fn).toHaveBeenCalledWith('arg1')
+
+        vi.advanceTimersByTime(50)
+        expect(fn).toHaveBeenCalledTimes(2)
+        expect(fn).toHaveBeenCalledWith('arg2')
+    })
+
+    it('cancel() should clear all pending timeouts', () => {
+        const fn = vi.fn()
+        const debounced = debounce(fn, 100)
+
+        debounced('key1', 'arg1')
+        debounced('key2', 'arg2')
+        debounced.cancel()
+
+        vi.advanceTimersByTime(200)
+        expect(fn).not.toHaveBeenCalled()
+    })
+
+    it('cancel() should clear only the pending timeouts, not future ones', () => {
+        const fn = vi.fn()
+        const debounced = debounce(fn, 100)
+
+        debounced('key1', 'arg1')
+        debounced.cancel()
+
+        debounced('key1', 'arg2')
+        vi.advanceTimersByTime(100)
+        expect(fn).toHaveBeenCalledTimes(1)
+        expect(fn).toHaveBeenCalledWith('arg2')
+    })
+
+    it('should handle cancel() when no timeouts are pending', () => {
+        const fn = vi.fn()
+        const debounced = debounce(fn, 100)
+
+        expect(() => debounced.cancel()).not.toThrow()
+    })
+
+    it('multiple keys should each have independent timers', () => {
+        const fn = vi.fn()
+        const debounced = debounce(fn, 100)
+
+        debounced('key1', 'arg1')
+        debounced('key2', 'arg2')
+
+        vi.advanceTimersByTime(100)
+        expect(fn).toHaveBeenCalledTimes(2)
+        expect(fn).toHaveBeenCalledWith('arg1')
+        expect(fn).toHaveBeenCalledWith('arg2')
+    })
+
+    it('same-key calls do not interfere with other key timeouts after cancel()', () => {
+        const fn = vi.fn()
+        const debounced = debounce(fn, 100)
+
+        debounced('key1', 'arg1')
+        debounced('key2', 'arg2')
+        debounced('key1', 'arg3')
+
+        debounced.cancel()
+
+        vi.advanceTimersByTime(200)
+        expect(fn).not.toHaveBeenCalled()
     })
 })

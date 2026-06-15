@@ -83,6 +83,7 @@ export const createRunState = (
       set((state) => {
         get().removeAllStepTestsListeners();
         const isNewRun = state.run?.id !== run.id;
+        const flowVersionChanged = state.flowVersion !== flowVersion;
         const loopsIndexes = flowRunUtils.pinLoopsToIterationsWithFailedStep(
           run,
           state.loopsIndexes,
@@ -96,6 +97,13 @@ export const createRunState = (
           run,
           flowVersion,
           readonly: true,
+          undoStack: flowVersionChanged ? [] : state.undoStack,
+          redoStack: flowVersionChanged ? [] : state.redoStack,
+          lastUndoOperation: flowVersionChanged
+            ? null
+            : state.lastUndoOperation,
+          lastCoalesceTimeMs: flowVersionChanged ? 0 : state.lastCoalesceTimeMs,
+          undoRedoRevision: flowVersionChanged ? 0 : state.undoRedoRevision,
           userManuallySelectedStepDuringRun: isNewRun
             ? false
             : state.userManuallySelectedStepDuringRun,
