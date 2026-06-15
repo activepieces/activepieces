@@ -5,6 +5,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { exceptionHandler } from '../../helper/exception-handler'
+import { sleep } from '../../helper/sleep'
 import { projectRepo } from '../../project/project-repo'
 import { userRepo } from '../../user/user-service'
 import { platformPlanRepo } from '../platform/platform-plan/platform-plan.service'
@@ -15,6 +16,7 @@ const CONSOLE_API_URL = 'https://console.activepieces.com'
 const REQUEST_TIMEOUT_MS = 30000
 const SNAPSHOT_BATCH_SIZE = 25
 const EXECUTIONS_PROJECT_CHUNK_SIZE = 100
+const EXECUTIONS_CHUNK_DELAY_MS = 1000
 
 export const consoleUsageService = (log: FastifyBaseLogger) => ({
     /**
@@ -132,12 +134,21 @@ async function queryDailyExecutionsByPlatform(platformIds: string[], dayStart: s
         .select('project.id', 'projectId')
         .addSelect('project.platformId', 'platformId')
         .where('project.platformId IN (:...platformIds)', { platformIds })
+        .andWhere('project.deleted IS NULL')
         .getRawMany<{ projectId: string, platformId: string }>()
 
     const platformByProject = new Map(projects.map((project): [string, string] => [project.projectId, project.platformId]))
     const countsByPlatformDay = new Map<string, Map<string, number>>()
 
+    let isFirstChunk = true
     for (const projectIds of chunk(projects.map((project) => project.projectId), EXECUTIONS_PROJECT_CHUNK_SIZE)) {
+        // Throttle between chunks so a large report doesn't monopolise the DB connection pool / Postgres,
+        // leaving capacity for live request traffic while the (background) report runs.
+        if (!isFirstChunk) {
+            await sleep(EXECUTIONS_CHUNK_DELAY_MS)
+        }
+        isFirstChunk = false
+
         const rows = await flowRunRepo()
             .createQueryBuilder('flow_run')
             .select('flow_run.projectId', 'projectId')

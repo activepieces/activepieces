@@ -158,6 +158,39 @@ describe('consoleUsageService', () => {
             expect(fetchBody.reported_at).toBeDefined()
         })
 
+        it('should sum runs across multiple projects of the same platform per day, keeping platforms separate', async () => {
+            mockQueries({
+                licenseKeys: [
+                    { platformId: 'platform-1', licenseKey: 'key-1' },
+                    { platformId: 'platform-2', licenseKey: 'key-2' },
+                ],
+                executionProjects: [
+                    { projectId: 'p1a', platformId: 'platform-1' },
+                    { projectId: 'p1b', platformId: 'platform-1' },
+                    { projectId: 'p2a', platformId: 'platform-2' },
+                ],
+                executionRuns: [
+                    { projectId: 'p1a', day: '2026-06-13', count: '10' },
+                    { projectId: 'p1b', day: '2026-06-13', count: '15' },
+                    { projectId: 'p2a', day: '2026-06-13', count: '7' },
+                ],
+            })
+
+            await consoleUsageService(mockLog).reportAllPlatforms()
+
+            // Snapshots are sent in platform insertion order: platform-1 then platform-2.
+            const body1 = JSON.parse(mockFetch.mock.calls[0][1].body)
+            const body2 = JSON.parse(mockFetch.mock.calls[1][1].body)
+
+            expect(body1.platform_id).toBe('platform-1')
+            // platform-1's two projects accumulate into one per-day total
+            expect(body1.daily_executions).toEqual([{ date: '2026-06-13', count: 25 }])
+
+            expect(body2.platform_id).toBe('platform-2')
+            // platform-2 stays separate
+            expect(body2.daily_executions).toEqual([{ date: '2026-06-13', count: 7 }])
+        })
+
         it('should default gauges to zero and send empty daily executions when a platform has no usage', async () => {
             mockQueries({ licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }] })
 
