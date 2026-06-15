@@ -45,7 +45,9 @@ function buildColumns(first: Record<string, unknown>): Column[] | null {
 }
 
 function isTabularArray(items: unknown[]): boolean {
-  if (items.length === 0) return false;
+  // A table compares multiple records side by side; a single row is not tabular
+  // (it reads better as the object's own fields), so require at least two rows.
+  if (items.length < 2) return false;
 
   const first = items[0];
   if (!isObject(first)) return false;
@@ -155,13 +157,29 @@ function OutputTableView({ items }: OutputTableViewProps) {
   );
 }
 
+// Maps a top-level array schema to the schema for a SINGLE item. A "wrapper"
+// schema (single value:'' field naming the whole array) describes each item via
+// its listItems, so return those — passing the wrapper unchanged would resolve
+// value:'' against an item object and drop the listItems entirely. Returns null
+// when there is no usable per-item schema (no schema, or an empty wrapper).
+function toPerItemSchema(
+  schema: OutputSchema | null | undefined,
+): OutputSchema | null {
+  if (isNil(schema)) return null;
+  if (schemaUtils.isWholeOutputSchema(schema)) {
+    const listItems = schema.fields[0]?.listItems ?? [];
+    if (listItems.length === 0) return null;
+    return { fields: listItems, itemLabel: schema.itemLabel };
+  }
+  return schema;
+}
+
 // Chooses the friendly renderer for a top-level array, and the schema to apply.
-// A flat, uniform array reads best as a table — prefer it even when a schema
-// exists (curated schemas describe nested structure, which is never tabular).
-// A "wrapper" schema (single value:'' field naming the whole array) describes
-// each item via its listItems, so rebuild a per-item schema from those — passing
-// the wrapper unchanged would resolve value:'' against an item object and drop
-// the listItems entirely.
+// A single-item array reads best as just its element — render the lone object's
+// fields directly (no table, no "Item N" wrapper). A flat, uniform array of two
+// or more rows reads best as a table, preferred even when a schema exists
+// (curated schemas describe nested structure, which is never tabular). Otherwise
+// fall back to the per-item schema list, or the schemaless list.
 function selectArrayFriendlyView({
   items,
   schema,
@@ -169,23 +187,20 @@ function selectArrayFriendlyView({
   items: unknown[];
   schema?: OutputSchema | null;
 }): ArrayFriendlyView {
+  const first = items[0];
+  if (items.length === 1 && isObject(first)) {
+    const schemaForItem = toPerItemSchema(schema);
+    return schemaForItem
+      ? { kind: 'object', item: first, schema: schemaForItem }
+      : { kind: 'object', item: first };
+  }
   if (isTabularArray(items)) {
     return { kind: 'table' };
   }
-  if (isNil(schema)) {
-    return { kind: 'list' };
-  }
-  if (schemaUtils.isWholeOutputSchema(schema)) {
-    const listItems = schema.fields[0]?.listItems ?? [];
-    if (listItems.length === 0) {
-      return { kind: 'list' };
-    }
-    return {
-      kind: 'schema',
-      schema: { fields: listItems, itemLabel: schema.itemLabel },
-    };
-  }
-  return { kind: 'schema', schema };
+  const perItemSchema = toPerItemSchema(schema);
+  return perItemSchema
+    ? { kind: 'schema', schema: perItemSchema }
+    : { kind: 'list' };
 }
 
 export {
@@ -196,6 +211,7 @@ export {
 };
 
 type ArrayFriendlyView =
+  | { kind: 'object'; item: Record<string, unknown>; schema?: OutputSchema }
   | { kind: 'table' }
   | { kind: 'schema'; schema: OutputSchema }
   | { kind: 'list' };

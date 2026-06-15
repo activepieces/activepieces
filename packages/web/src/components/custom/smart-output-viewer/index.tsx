@@ -133,7 +133,16 @@ function SmartOutputViewer({
       schema: pieceDefinedSchema,
     });
     const friendlyContent =
-      arrayView.kind === 'table' ? (
+      arrayView.kind === 'object' ? (
+        // A single-item array reads best as just its element: show the lone
+        // object's fields directly (curated by the schema if present) — no
+        // table, no "Item N" wrapper.
+        arrayView.schema ? (
+          <OutputFieldList json={arrayView.item} schema={arrayView.schema} />
+        ) : (
+          <OutputGenericFieldList json={arrayView.item} />
+        )
+      ) : arrayView.kind === 'table' ? (
         <OutputTableView items={json} />
       ) : arrayView.kind === 'schema' ? (
         <OutputSchemaArrayList items={json} schema={arrayView.schema} />
