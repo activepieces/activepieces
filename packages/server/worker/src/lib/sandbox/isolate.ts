@@ -51,9 +51,6 @@ function assertSandboxEnv(env: Record<string, string>): void {
         }
     }
 }
-
-const SANDBOX_OPEN_FILES_LIMIT = 4096
-
 const isolateBinaryPath = path.resolve(process.cwd(), 'packages/server/api/src/assets', getIsolateExecutableName())
 const etcDir = path.resolve(process.cwd(), 'packages/server/api/src/assets/etc')
 
