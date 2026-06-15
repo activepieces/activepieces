@@ -2,7 +2,7 @@ import { Property, ServerContext, createAction } from '@activepieces/pieces-fram
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { amazonS3CombinedAuth, AccessKeyAuthProps, OidcAuthProps } from '../auth';
-import { createS3, createS3WithAssumeRole } from '../common';
+import { createS3, createS3WithAssumeRole, MAX_STS_DURATION_SECONDS, MIN_STS_DURATION_SECONDS } from '../common';
 
 export const generateSignedUrl = createAction({
   auth: amazonS3CombinedAuth,
@@ -50,9 +50,19 @@ async function createPresignedUrlWithAssumeRole({
   key: string;
   expiresIn: number;
 }) {
-  const s3 = await createS3WithAssumeRole({ auth, server });
+  const expiresInSeconds = expiresIn * 60;
+  // A URL signed with temporary STS credentials stops working once the session expires,
+  // so the session must outlast the requested URL validity — and STS caps web-identity
+  // sessions at 12h. Beyond that the URL would die silently before its stated expiry.
+  if (expiresInSeconds > MAX_STS_DURATION_SECONDS) {
+    throw new Error(
+      `IAM Role (OIDC) signed URLs can be valid for at most ${MAX_STS_DURATION_SECONDS / 60} minutes (12 hours). Reduce "Expires In", or use Access Key authentication for longer-lived URLs.`,
+    );
+  }
+  const durationSeconds = Math.max(expiresInSeconds, MIN_STS_DURATION_SECONDS);
+  const s3 = await createS3WithAssumeRole({ auth, server, durationSeconds });
   const command = new GetObjectCommand({ Bucket: auth.bucket, Key: key });
-  return getSignedUrl(s3, command, { expiresIn: expiresIn * 60 });
+  return getSignedUrl(s3, command, { expiresIn: expiresInSeconds });
 }
 
 function createPresignedUrlWithClient({

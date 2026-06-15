@@ -42,11 +42,13 @@ export function createSecretsManagerClient(auth: AccessKeyAuthProps) {
 export async function createS3WithAssumeRole({
   auth,
   server,
+  durationSeconds,
 }: {
   auth: OidcAuthProps;
   server: ServerContext;
+  durationSeconds?: number;
 }): Promise<S3> {
-  const credentials = await getTemporaryCredentials({ auth, server });
+  const credentials = await getTemporaryCredentials({ auth, server, durationSeconds });
   return new S3({
     credentials,
     region: auth.region,
@@ -84,9 +86,11 @@ export async function resolveS3Client({
 export async function getTemporaryCredentials({
   auth,
   server,
+  durationSeconds = DEFAULT_STS_DURATION_SECONDS,
 }: {
   auth: OidcAuthProps;
   server: ServerContext;
+  durationSeconds?: number;
 }) {
   if (!auth.roleArn) {
     throw new Error('Role ARN is required for IAM Role authentication');
@@ -104,13 +108,14 @@ export async function getTemporaryCredentials({
   }
   const { token } = (await response.json()) as { token: string };
 
+  const clampedDuration = Math.min(Math.max(durationSeconds, MIN_STS_DURATION_SECONDS), MAX_STS_DURATION_SECONDS);
   const sts = new STSClient({ region: auth.region });
   const { Credentials } = await sts.send(
     new AssumeRoleWithWebIdentityCommand({
       RoleArn: auth.roleArn,
       RoleSessionName: 'activepieces-execution',
       WebIdentityToken: token,
-      DurationSeconds: 3600,
+      DurationSeconds: clampedDuration,
     }),
   );
   if (!Credentials?.AccessKeyId || !Credentials.SecretAccessKey) {
@@ -122,3 +127,8 @@ export async function getTemporaryCredentials({
     sessionToken: Credentials.SessionToken,
   };
 }
+
+const DEFAULT_STS_DURATION_SECONDS = 3600;
+
+export const MIN_STS_DURATION_SECONDS = 900;
+export const MAX_STS_DURATION_SECONDS = 43200;
