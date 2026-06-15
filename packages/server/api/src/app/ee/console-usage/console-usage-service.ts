@@ -12,6 +12,7 @@ import { platformPlanRepo } from '../platform/platform-plan/platform-plan.servic
 dayjs.extend(utc)
 
 const CONSOLE_API_URL = 'https://console.activepieces.com'
+const ERROR_WEBHOOK_URL = 'https://cloud.activepieces.com/api/v1/webhooks/LUZWYN4Y0tpwxxxN4XQaL'
 const REQUEST_TIMEOUT_MS = 30000
 const SNAPSHOT_BATCH_SIZE = 25
 
@@ -28,50 +29,82 @@ export const consoleUsageService = (log: FastifyBaseLogger) => ({
      * backfill it, since it only ever looks at yesterday.
      */
     async reportAllPlatforms(range?: { from?: string, to?: string }): Promise<void> {
-        const licenseKeysByPlatform = await queryLicenseKeysByPlatform()
-
-        if (licenseKeysByPlatform.size === 0) {
-            return
-        }
-
-        const platformIds = [...licenseKeysByPlatform.keys()]
-        const entries = [...licenseKeysByPlatform.entries()]
-        const backfill = range?.from && range?.to ? { from: range.from, to: range.to } : null
-
-        const [
-            activeFlowsByPlatform,
-            usersByPlatform,
-            teamProjectsByPlatform,
-            dailyExecutionsByPlatform,
-        ] = await Promise.all([
-            queryActiveFlowsByPlatform(platformIds),
-            queryUsersByPlatform(platformIds),
-            queryTeamProjectsByPlatform(platformIds),
-            queryDailyExecutionsByPlatform(
-                platformIds,
-                backfill ? dayjs.utc(backfill.from).startOf('day').toISOString() : utcMidnight(1),
-                backfill ? dayjs.utc(backfill.to).startOf('day').add(1, 'day').toISOString() : utcMidnight(0),
-            ),
-        ])
-
-        const gauges = { activeFlowsByPlatform, usersByPlatform, teamProjectsByPlatform, dailyExecutionsByPlatform }
-        const tasks = backfill
-            ? buildBackfillTasks({ entries, from: backfill.from, to: backfill.to, ...gauges })
-            : buildDailyTasks({ entries, ...gauges })
-
-        for (const batch of chunk(tasks, SNAPSHOT_BATCH_SIZE)) {
-            const results = await Promise.allSettled(
-                batch.map((task) => postSnapshot({ body: task.body, licenseKey: task.licenseKey })),
-            )
-
-            for (const result of results) {
-                if (result.status === 'rejected') {
-                    exceptionHandler.handle(result.reason, log)
-                }
-            }
+        const result = await tryCatch(() => runReport({ range, log }))
+        if (result.error) {
+            log.error({ error: result.error }, 'Console usage report failed')
+            await reportFailureToWebhook({ error: result.error, range, log })
         }
     },
 })
+
+async function runReport({ range, log }: { range?: { from?: string, to?: string }, log: FastifyBaseLogger }): Promise<void> {
+    const licenseKeysByPlatform = await queryLicenseKeysByPlatform()
+
+    if (licenseKeysByPlatform.size === 0) {
+        return
+    }
+
+    const platformIds = [...licenseKeysByPlatform.keys()]
+    const entries = [...licenseKeysByPlatform.entries()]
+    const backfill = range?.from && range?.to ? { from: range.from, to: range.to } : null
+
+    const [
+        activeFlowsByPlatform,
+        usersByPlatform,
+        teamProjectsByPlatform,
+        dailyExecutionsByPlatform,
+    ] = await Promise.all([
+        queryActiveFlowsByPlatform(platformIds),
+        queryUsersByPlatform(platformIds),
+        queryTeamProjectsByPlatform(platformIds),
+        queryDailyExecutionsByPlatform(
+            platformIds,
+            backfill ? dayjs.utc(backfill.from).startOf('day').toISOString() : utcMidnight(1),
+            backfill ? dayjs.utc(backfill.to).startOf('day').add(1, 'day').toISOString() : utcMidnight(0),
+        ),
+    ])
+
+    const gauges = { activeFlowsByPlatform, usersByPlatform, teamProjectsByPlatform, dailyExecutionsByPlatform }
+    const tasks = backfill
+        ? buildBackfillTasks({ entries, from: backfill.from, to: backfill.to, ...gauges })
+        : buildDailyTasks({ entries, ...gauges })
+
+    for (const batch of chunk(tasks, SNAPSHOT_BATCH_SIZE)) {
+        const results = await Promise.allSettled(
+            batch.map((task) => postSnapshot({ body: task.body, licenseKey: task.licenseKey })),
+        )
+
+        for (const result of results) {
+            if (result.status === 'rejected') {
+                exceptionHandler.handle(result.reason, log)
+            }
+        }
+    }
+}
+
+async function reportFailureToWebhook({ error, range, log }: {
+    error: unknown
+    range?: { from?: string, to?: string }
+    log: FastifyBaseLogger
+}): Promise<void> {
+    const result = await tryCatch(() =>
+        fetch(ERROR_WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                source: 'console-usage-report',
+                message: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined,
+                range,
+            }),
+            signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+        }),
+    )
+
+    if (result.error) {
+        log.error({ error: result.error }, 'Failed to post console usage failure to webhook')
+    }
+}
 
 async function queryActiveFlowsByPlatform(platformIds: string[]): Promise<Map<string, number>> {
     const rows = await flowRepo()

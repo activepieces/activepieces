@@ -104,7 +104,7 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
     })
 
     app.post('/console-usage/report', ReportConsoleUsageRequest, async (req, res) => {
-        await consoleUsageService(req.log).reportAllPlatforms(req.body)
+        void consoleUsageService(req.log).reportAllPlatforms(req.body)
         return res.status(StatusCodes.OK).send()
     })
 }
