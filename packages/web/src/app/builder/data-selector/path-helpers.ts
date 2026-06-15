@@ -8,8 +8,8 @@ function propertyPathStarter(stepName: string): string {
   return `${stepName}['output']`;
 }
 
-function convertValuePathToPropertyPath(
-  stepName: string,
+function appendValuePathToPropertyPath(
+  basePath: string,
   valuePath: string,
 ): string {
   const segments = pathUtils.parsePath(valuePath);
@@ -18,11 +18,22 @@ function convertValuePathToPropertyPath(
       return `${acc}[${segment}]`;
     }
     return `${acc}['${escapeMentionKey(segment)}']`;
-  }, propertyPathStarter(stepName));
+  }, basePath);
+}
+
+function convertValuePathToPropertyPath(
+  stepName: string,
+  valuePath: string,
+): string {
+  return appendValuePathToPropertyPath(
+    propertyPathStarter(stepName),
+    valuePath,
+  );
 }
 
 export const pathHelpers = {
   escapeMentionKey,
+  appendValuePathToPropertyPath,
   convertValuePathToPropertyPath,
   propertyPathStarter,
 };

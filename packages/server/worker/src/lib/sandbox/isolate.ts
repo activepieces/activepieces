@@ -109,9 +109,6 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
                 '--share-net',
                 `--box-id=${boxId}`,
                 '--processes',
-                // isolate defaults RLIMIT_NOFILE to 64, too few for Node + heavy piece imports
-                // (e.g. the AI piece). Bounded so a runaway fd leak in untrusted code is still contained.
-                '--open-files=4096',
                 '--chdir=/root',
                 ...envArgs,
                 '--run',
