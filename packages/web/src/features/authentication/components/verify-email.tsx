@@ -1,3 +1,4 @@
+import { TelemetryEventName } from '@activepieces/shared';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { MailCheck, MailX } from 'lucide-react';
@@ -6,6 +7,7 @@ import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { FullLogo } from '@/components/custom/full-logo';
 import { LoadingSpinner } from '@/components/custom/spinner';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Card } from '@/components/ui/card';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { usePartnerStack } from '@/hooks/use-partner-stack';
@@ -21,9 +23,14 @@ const VerifyEmail = () => {
   const identityId = searchParams.get('identityId');
   const hasMutated = useRef(false);
   const { reportSignup } = usePartnerStack();
+  const { capture } = useTelemetry();
 
   const { mutate, isPending } = authMutations.useVerifyEmail({
     onSuccess: ({ email, firstName }) => {
+      capture({
+        name: TelemetryEventName.EMAIL_VERIFICATION_COMPLETED,
+        payload: {},
+      });
       reportSignup(email, firstName);
       setTimeout(() => navigate('/sign-in'), 5000);
     },
