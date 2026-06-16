@@ -1,9 +1,22 @@
-import { existsSync, readdirSync } from 'node:fs'
-import { cp, mkdir, rm, writeFile } from 'node:fs/promises'
+import { execFile } from 'node:child_process'
+import { access, cp, mkdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
+import { promisify } from 'node:util'
 import { FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+
+const execFileAsync = promisify(execFile)
+
+async function pathExists(target: string): Promise<boolean> {
+    try {
+        await access(target)
+        return true
+    }
+    catch {
+        return false
+    }
+}
 
 // Assembles the per-project Cloud Functions gen2 source directory: the engine's
 // functions-framework entry (copied from the base gen2 bundle) plus the project's baked
@@ -73,53 +86,36 @@ async function bakeCodeSteps(stagingDir: string, codeSteps: CodeArtifact[]): Pro
     }
 }
 
-// Transplant the worker's prepared piece cache into the source under `engine-cache/`. Pieces are
-// installed by bun as `pieces/<alias>/node_modules/<realName>` symlinks into a shared
-// `node_modules/.bun` store (relative links). We copy BOTH `pieces/` and `node_modules/`
-// preserving symlinks so those relative links still resolve inside the image, then point
-// AP_CUSTOM_PIECES_PATHS at `engine-cache` — the engine resolves a piece at
-// `<customPath>/pieces/<alias>/node_modules/<realName>/src/index.js`.
+// Bake each piece as a hoisted, real-file npm install under
+// `engine-cache/pieces/<alias>/node_modules/`. bun's worker cache uses symlinks into a shared
+// store, which gcloud's source upload strips — so a fresh `npm install` (real files, no symlinks)
+// is what survives the upload and lets the engine resolve the piece + its transitive deps at
+// `<AP_CUSTOM_PIECES_PATHS>/pieces/<alias>/node_modules/<realName>/src/index.js`.
 async function bakePieces(stagingDir: string, pieces: PieceArtifact[], log: FastifyBaseLogger): Promise<string[]> {
     if (pieces.length === 0) {
         return []
     }
-    const cacheCommon = findCacheCommonRoot()
-    if (isNilString(cacheCommon)) {
-        throw new Error('Cannot bake pieces: prepared cache (cache/<version>/common) not found on disk')
-    }
-    const engineCache = path.join(stagingDir, 'engine-cache')
-    await mkdir(engineCache, { recursive: true })
-    // verbatim (symlinks preserved) so bun's relative store links keep resolving inside engine-cache
-    await cp(path.join(cacheCommon, 'pieces'), path.join(engineCache, 'pieces'), { recursive: true, verbatimSymlinks: true })
-    await cp(path.join(cacheCommon, 'node_modules'), path.join(engineCache, 'node_modules'), { recursive: true, verbatimSymlinks: true })
-
-    const baked = pieces
-        .filter((piece) => existsSync(path.join(engineCache, 'pieces', piece.alias, 'node_modules', piece.pieceName, 'src', 'index.js')))
-        .map((piece) => piece.alias)
-    const missing = pieces.filter((piece) => !baked.includes(piece.alias)).map((piece) => piece.alias)
-    if (missing.length > 0) {
-        log.warn({ missing }, '[functionSourceBuilder] some pieces missing src/index.js after copy')
+    const baked: string[] = []
+    for (const piece of pieces) {
+        const dir = path.join(stagingDir, 'engine-cache', 'pieces', piece.alias)
+        await mkdir(dir, { recursive: true })
+        await writeFile(path.join(dir, 'package.json'), JSON.stringify({
+            name: 'ap-baked-piece',
+            version: '1.0.0',
+            dependencies: { [piece.pieceName]: piece.pieceVersion },
+        }, null, 2))
+        await execFileAsync('npm', ['install', '--install-links', '--no-audit', '--no-fund', '--prefix', dir], {
+            timeout: 300_000,
+            maxBuffer: 50 * 1024 * 1024,
+        })
+        if (await pathExists(path.join(dir, 'node_modules', piece.pieceName, 'src', 'index.js'))) {
+            baked.push(piece.alias)
+        }
+        else {
+            log.warn({ alias: piece.alias }, '[functionSourceBuilder] piece missing src/index.js after npm install')
+        }
     }
     return baked
-}
-
-// The prepared cache lives at <repo>/cache/<version>/common (UNSANDBOXED layout). Pick the newest
-// version dir that has both a pieces/ and node_modules/ folder.
-function findCacheCommonRoot(): string | null {
-    const cacheRoot = path.resolve('cache')
-    if (!existsSync(cacheRoot)) {
-        return null
-    }
-    const candidates = readdirSync(cacheRoot, { withFileTypes: true })
-        .filter((entry) => entry.isDirectory())
-        .map((entry) => path.join(cacheRoot, entry.name, 'common'))
-        .filter((common) => existsSync(path.join(common, 'pieces')) && existsSync(path.join(common, 'node_modules')))
-        .sort()
-    return candidates.length > 0 ? candidates[candidates.length - 1] : null
-}
-
-function isNilString(value: string | null): value is null {
-    return value === null
 }
 
 type CodeArtifact = {
