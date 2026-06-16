@@ -62,6 +62,7 @@ const systemPropValidators: {
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: numberValidator,
     [AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS]: stringValidator,
     [AppSystemProp.SENTRY_DSN]: urlValidator,
+    [AppSystemProp.FRONTEND_SENTRY_DSN]: urlValidator,
     [AppSystemProp.RUNS_METADATA_UPDATE_CONCURRENCY]: numberValidator,
     [AppSystemProp.LOKI_PASSWORD]: stringValidator,
     [AppSystemProp.LOKI_URL]: urlValidator,
