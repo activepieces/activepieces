@@ -92,6 +92,7 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
 - `onStart()` → emit FLOW_RUN_STARTED application event
 - `onResume()` → emit FLOW_RUN_RESUMED
 - `onFinish()` → emit FLOW_RUN_FINISHED (terminal states only), notify via WebSocket
+- On run start, project telemetry (`telemetry().trackProject(...)`) is fire-and-forget via `rejectedPromiseHandler` (`helper/promise-handler`); failures are logged and never block the run
 
 ## Frontend Integration
 

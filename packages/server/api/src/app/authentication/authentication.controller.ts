@@ -4,6 +4,7 @@ import { ApplicationEventName,
     SignInRequest,
     SignUpRequest,
     SwitchPlatformRequest,
+    TelemetryEventName,
     UserIdentityProvider,
 } from '@activepieces/shared'
 import { RateLimitOptions } from '@fastify/rate-limit'
@@ -11,8 +12,10 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { applicationEvents } from '../helper/application-events'
 import { networkUtils } from '../helper/network-utils'
+import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
+import { telemetry } from '../helper/telemetry.utils'
 import { platformUtils } from '../platform/platform.utils'
 import { userService } from '../user/user-service'
 import { authenticationService } from './authentication.service'
@@ -65,6 +68,13 @@ export const authenticationController: FastifyPluginAsyncZod = async (
                 action: ApplicationEventName.USER_SIGNED_IN,
                 data: {},
             })
+            rejectedPromiseHandler(telemetry(request.log).trackUser(response.id, {
+                name: TelemetryEventName.SIGNED_IN,
+                payload: {
+                    userId: response.id,
+                    platformId: response.platformId,
+                },
+            }, { platform: response.platformId }), request.log)
         }
 
         return response

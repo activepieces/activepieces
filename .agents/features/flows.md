@@ -92,7 +92,7 @@ When LOCK_AND_PUBLISH or CHANGE_STATUS to ENABLED:
 2. Enable trigger source (register webhook/polling/app-event)
 3. Invalidate flow execution cache
 4. Emit WebSocket event
-5. Track telemetry
+5. Track telemetry — `telemetry().trackProject(...)` is fire-and-forget via `rejectedPromiseHandler` (`helper/promise-handler`); failures are logged and never block or fail the publish
 
 When CHANGE_STATUS to DISABLED:
 1. Disable trigger source (unregister webhook/polling)
