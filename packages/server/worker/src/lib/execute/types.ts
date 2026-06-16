@@ -1,6 +1,6 @@
 import { type ApLogger } from '@activepieces/server-utils'
 import { EngineResponseStatus, JobData, WorkerJobType, WorkerToApiContract } from '@activepieces/shared'
-import { FlowExecutionRuntime, RuntimeProvisioner } from './runtime/types'
+import { FlowExecutionRuntime } from './runtime/types'
 
 export enum JobResultKind {
     FIRE_AND_FORGET = 'FIRE_AND_FORGET',
@@ -10,7 +10,6 @@ export enum JobResultKind {
 export type JobContext = {
     apiClient: WorkerToApiContract
     sandboxManager: FlowExecutionRuntime
-    provisioner: RuntimeProvisioner
     jobId: string
     engineToken: string
     internalApiUrl: string

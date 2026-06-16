@@ -34,6 +34,77 @@ piece-scoped-always-local (§4) are unchanged. In summary:
 The original pull-and-share model is preserved under Considered options as the rejected
 alternative, so the trade-off stays legible.
 
+## Revision 2 (2026-06-16) — collapse to a single `ready()` deep module
+
+This revision supersedes **§1**'s "job handlers untouched" and **§2**'s two-abstraction
+split (and flips the "slim the run seam" Considered option from rejected to adopted).
+
+The original seam exposed **two** caller-facing abstractions — `RuntimeProvisioner.provision()`
+and `FlowExecutionRuntime.acquire()`/`start()` — and every job handler orchestrated
+`provision → check → acquire → start → execute → release`. That sequence, plus the
+flow-scoped/piece-scoped routing, sandbox reuse, and disable-on-missing-piece, leaked to
+every call site (a shallow module).
+
+Replace it with **one per-runtime deep module**: `ready(operation) → Sandbox`. It hides
+the **provision** phase (now an internal step, not a caller-facing op), slot
+**acquisition**, and **start**. Call sites collapse to `ready → execute`.
+
+- `RuntimeProvisioner` and the trivial `worker-pool-provisioner` wrapper are **removed** —
+  provisioning is folded into `ready()`.
+- `cache/provisioner.ts` is **renamed** to the cache **preparer** (the §5 Prepared cache
+  primitive); it stays because Piece-scoped operations still need a direct single-piece
+  local fill in every runtime (§4).
+- On-enable uses the **same** `ready()` (the `ON_ENABLE` engine run), so there is no
+  separate "ensure ready" entrypoint.
+
+The original "slim the seam" option was rejected only on a Phase-1 cost basis ("don't
+rewrite handlers yet"). Now that the seam exists and the split proved leaky, the deeper
+module is adopted deliberately — the handler rewrite is a net simplification.
+
+## Revision 3 (2026-06-16) — socketless engine
+
+This revision **rewrites §6**. The prior model kept the engine **dialing back to the
+invoking worker over socket.io** for run callbacks. That socket is hostile to a
+Lambda/Cloud-Run engine: a function cannot host an inbound listener for the worker, and
+the reverse dial-back forces the worker's WS to be reachable from the execution network.
+**Remove the worker↔engine socket entirely.** The seam (§1, as revised), the abstractions
+(§2–§3), provisioning (§4–§5, §7–§8), and routing (§9) are unchanged.
+
+- **The engine becomes a stateless HTTP request/response service.** Its core stays
+  `execute(operation) → EngineResponse`; a thin HTTP entrypoint wraps it. The **local
+  worker** POSTs the operation to the engine's loopback port; **Cloud Run** POSTs
+  natively; **Lambda** is a thin handler shim over the same `execute()` core. One engine
+  binary, identical invocation contract everywhere. socket.io is deleted from the engine.
+- **Callbacks go engine → API directly**, not through the worker. The four run callbacks
+  (`updateRunProgress`, `uploadRunLog`, `sendFlowResponse`, `updateStepProgress`) become
+  direct HTTP calls authed by the engine's **existing run-scoped `engineToken`**
+  (`PrincipalType.ENGINE`, already carrying `projectId`/`platformId`). The engine already
+  calls the API directly this way for connections/files/tables; these callbacks were the
+  last traffic through the worker, and the worker's handlers were a pure pass-through
+  (`WorkerContract` ≡ `WorkerToApiContract`). The API gains four HTTP routes delegating to
+  the **same** `worker-rpc-service` handlers. The migration is a transport swap at two
+  engine call sites (`flow-run-progress-reporter`, already batched on a 15s flush; and
+  `piece-executor`'s `sendFlowResponse`).
+- **Engine lifecycle leaves the engine.** The socket-disconnect self-exit is removed; the
+  engine carries **no liveness logic**. The local worker `treeKill`s on
+  release/timeout/shutdown; cloud platforms reap natively. This **inverts** the prior
+  "engine must self-terminate" stance — the reaper is now the spawner, not the engine.
+  **Deferred follow-up:** a kernel-enforced backstop (**PR_SET_PDEATHSIG** / PID-namespace)
+  for the case where the worker dies *uncleanly* (OOM-SIGKILL) and never runs `treeKill` —
+  the 2026-05 orphan-OOM failure mode. Until that lands, an unclean worker death can orphan
+  reused fork-mode engines; the backstop (plus an orphan test for the SIGKILL'd-worker case)
+  is required **before cloud / high-density rollout**. The phase-1 test proves no orphan on
+  clean release/shutdown.
+- **Logs ride back in the HTTP response body** (uniform local + cloud — the worker cannot
+  read a remote function's pipes). Crash classification comes from the process exit
+  signal/code locally and the invoke error/5xx in cloud; no streamed stderr channel.
+
+Non-issues confirmed: sync webhooks still resolve via the `workerHandlerId`/`SERVER_ID`
+pubsub key (independent of which worker/function ran the flow); the rotating WS handshake
+token is replaced by a per-spawn bearer token the engine requires on its execute route
+(cloud uses platform IAM + a shared secret); the HTTP body limit must be raised to the old
+`maxHttpBufferSize` for large file payloads.
+
 ## Context
 
 Flow execution today is a fixed local pipeline: the worker polls BullMQ, acquires
@@ -66,29 +137,34 @@ The seam is the existing `Sandbox.execute(EngineOperation) → SandboxResult`
 engine's RPC to the API, the sync-response/pubsub path, and `FlowRun` tracking
 **unchanged**. Only the sandbox implementation is swapped for a remote invoke.
 
-The shared **`FlowExecutionRuntime`** keeps the existing per-slot
-`acquire() → Sandbox` lifecycle. A remote runtime returns a `Sandbox` whose
-`start`/`release`/`isReady` are trivial and whose `execute()` invokes the project's
-deploy unit; `getActiveSandbox()` returns `null` (nothing local to reap). The shared
-job handlers are therefore **untouched** — they still call
-`acquire() → start() → execute() → release()`. The only signature cleanup is dropping
-the worker-pool-specific `boxId`/`proxyPort` from the shared `createRuntime` seam and
-injecting them inside the worker-pool factory.
+The shared **`FlowExecutionRuntime`** exposes a single deep module
+`ready(operation) → Sandbox` (see §2, as amended by Revision 2): it ensures the
+execution target is provisioned, acquires a slot, and starts the sandbox. A remote
+runtime returns a `Sandbox` whose `execute()` invokes the project's deploy unit and
+whose `release()` is trivial; `getActiveSandbox()` returns `null` (nothing local to
+reap). Job handlers collapse to `ready() → execute()` — they no longer orchestrate
+`provision`/`acquire`/`start`. The worker-pool-specific `boxId`/`proxyPort` stay inside
+the worker-pool factory, off the shared seam.
 
 This keeps both tracking layers intact: operational **job tracking** (BullMQ —
 retries, dedup, scheduling, lock extension) and user-facing **run tracking**
 (`FlowRun` in Postgres, updated via the engine's existing `uploadRunLog`).
 
-### 2. Two abstractions, both in-worker
+### 2. One abstraction: the `ready()` deep module (amended by Revision 2)
 
-- **`FlowExecutionRuntime`** (run): per concurrency slot, `acquire() → Sandbox`.
-  Impls: `LocalSandbox` (today's isolate/process), `GcpFunctionRuntime`,
-  `LambdaRuntime`.
-- **`RuntimeProvisioner`** (provision): a single polymorphic `provision()` that makes
-  a flow runnable on the active runtime. Impls: `WorkerPoolProvisioner` (populate the
-  local cache), `GcpFunctionProvisioner`, `LambdaProvisioner` (build image + deploy
-  unit). `provision()` is **not** a no-op for `WORKER_POOL` — "putting things in the
-  cache" and "building the image" are the same verb at different targets.
+Each runtime implements a single deep module on `FlowExecutionRuntime`:
+**`ready(operation) → Sandbox`**, which internally performs **provision** (ensure the
+target is runnable), **acquire** (a concurrency slot), and **start**. Impls:
+`WorkerPoolRuntime` (fill the local cache via the Prepared cache → start a local
+isolate/process sandbox), `GcpFunctionRuntime`, `LambdaRuntime` (ensure the Project
+image + Deploy unit exist → return a remote-invoke sandbox).
+
+Provisioning is therefore an **internal phase**, not a caller-facing operation, and the
+former separate `RuntimeProvisioner` abstraction is removed. The Prepared cache
+primitive (§5) remains, shared by the WORKER_POOL `ready()` **and** by Piece-scoped
+operations, which call it directly for a single-piece local fill (§4). Filling the cache
+and building the image are still the same verb at different targets — but now that verb
+lives *inside* `ready()`.
 
 ### 3. `provision()` is unified, idempotent, and called at two points
 
@@ -153,18 +229,19 @@ contract — a remote `acquire()` returns an object satisfying it).
   The staging build must run under the **cloud's** mode (`UNSANDBOXED`) so the layout
   matches what the cloud engine expects.
 
-### 6. Remote engine connects back to the worker for callbacks only
+### 6. The engine is a socketless HTTP service; callbacks go engine → API directly
 
-For a remote runtime the engine still uses its socket RPC, dialing the **invoking
-worker's** WS over the network (`AP_SANDBOX_WS_HOST` + `AP_SANDBOX_WS_TOKEN`, both
-already configurable). The worker relays to the API exactly as today. The run-critical
-callbacks (`uploadRunLog`, `sendFlowResponse`, `updateRunProgress`, `submitPayloads`)
-are **socket-only** and need no HTTP mirror.
+> Rewritten by **Revision 3 (2026-06-16)**. The original text (engine dials back to the
+> invoking worker's WS for socket-only callbacks) is superseded — see that revision.
 
-Unlike the original model, the engine **no longer pulls flow JSON or code** over this
-socket — they are baked into the image (§7). The socket carries **only** execution
-callbacks. Cost: the worker's WS must be reachable from the execution network, and each
-callback crosses the network (acceptable — they are infrequent).
+The engine carries **no socket**. It is invoked request/response (worker → loopback POST,
+Cloud Run → native POST, Lambda → handler shim over `execute()`) and makes its run
+callbacks (`updateRunProgress`, `uploadRunLog`, `sendFlowResponse`, `updateStepProgress`)
+**directly to the API** over HTTP, authed by its existing run-scoped `engineToken`
+(`PrincipalType.ENGINE`). The worker is no longer in the callback path; the API exposes
+these as HTTP routes that delegate to the same `worker-rpc-service` handlers. No worker WS
+ingress from the execution network is required. Logs return in the HTTP response body;
+crash classification comes from exit signal/code (local) or invoke error (cloud).
 
 ### 7. Artifact model: bake the whole prepared cache into a per-project image
 
@@ -250,9 +327,13 @@ cap — so "unthrottled" cannot mean "unbounded cloud spend."
   mirror of the socket-only engine→worker→API callbacks, loses BullMQ job tracking,
   and is a far larger change. "Replace only the sandbox" + raising worker concurrency
   achieves the same queue fix because the bottleneck was the 5-slot pool, not BullMQ.
-- **Slim the run seam to `execute()` and push acquire/release inside the impl.**
-  Rejected: it forces rewriting every job handler (including the piece-scoped ones
-  that also use `acquire()`), defeating "replace only the sandbox."
+- **Slim the run seam to a single `ready()` deep module (provision + acquire + start
+  hidden).** Initially rejected on Phase-1 cost — it forces rewriting every job handler
+  (including the piece-scoped ones), defeating "replace only the sandbox." **Adopted in
+  Revision 2** once the seam shipped and the two-abstraction split proved leaky: the
+  handler rewrite is a net simplification (`ready → execute`), and the cache preparer
+  (§5) gives piece-scoped ops their single-piece local fill without a caller-facing
+  provisioner.
 - **Dedicated credentialed provisioner service** (workers request builds, a separate
   process deploys). Rejected as the baseline in favor of inline provisioning, which
   is simpler and self-healing via deterministic naming + existence check. The price —
@@ -290,6 +371,7 @@ cap — so "unthrottled" cannot mean "unbounded cloud spend."
   and for test runs, which always run on the local worker sandbox. The cache preparer is
   relocated *out* of `runtime/worker-pool/` to a shared location (it is now runtime-
   agnostic); `sandbox/` stays under `runtime/worker-pool/`.
-- The worker's WS endpoint must be reachable from the execution network (new ingress
-  surface, authed by the existing `AP_SANDBOX_WS_TOKEN`). It serves **only** execution
-  callbacks — not flow/code pulls (those are baked).
+- **No worker ingress from the execution network** (Revision 3). The engine talks only
+  *outbound* to the API (run callbacks, authed by its `engineToken`); nothing dials back
+  to the worker. The worker's only inbound surface is the local loopback execute POST,
+  authed by a per-spawn bearer token.

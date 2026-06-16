@@ -5,12 +5,12 @@ import { CodeArtifact, codeBuilder } from './code/code-builder'
 import { engineInstaller } from './engine/engine-installer'
 import { pieceInstaller } from './pieces/piece-installer'
 
-export const provisioner = (log: ApLogger, apiClient: WorkerToApiContract) => ({
-    async provision({
+export const cachePreparer = (log: ApLogger, apiClient: WorkerToApiContract) => ({
+    async prepare({
         pieces,
         codeSteps,
         cacheRoot,
-    }: ProvisionParams): Promise<void> {
+    }: PrepareParams): Promise<void> {
         await wideEvent.timed({
             name: 'provision',
             fn: async () => {
@@ -66,7 +66,7 @@ export const provisioner = (log: ApLogger, apiClient: WorkerToApiContract) => ({
     },
 })
 
-type ProvisionParams = {
+type PrepareParams = {
     pieces: PiecePackage[]
     codeSteps: CodeArtifact[]
     cacheRoot: string

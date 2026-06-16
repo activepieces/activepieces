@@ -8,8 +8,6 @@ import {
     WorkerJobType,
 } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
-import { GLOBAL_CACHE_ROOT } from '../cache/cache-paths'
-import { provisioner } from '../cache/provisioner'
 import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
 
 export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData, SynchronousJobResult> = {
@@ -17,18 +15,11 @@ export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData, Synchr
     async execute(ctx: JobContext, data: ExecuteValidateAuthJobData): Promise<SynchronousJobResult> {
         const timeoutInSeconds = workerSettings.getSettings().TRIGGER_TIMEOUT_SECONDS
 
-        await provisioner(ctx.log, ctx.apiClient).provision({
-            pieces: [data.piece],
-            codeSteps: [],
-            cacheRoot: GLOBAL_CACHE_ROOT,
-        })
-
-        const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
         try {
-            await sandbox.start({
-                flowVersionId: undefined,
-                platformId: data.platformId,
-                mounts: [],
+            const sandbox = await ctx.sandboxManager.ready({
+                operation: { kind: 'PIECE', piece: data.piece, platformId: data.platformId },
+                log: ctx.log,
+                apiClient: ctx.apiClient,
             })
 
             const result = await sandbox.execute(

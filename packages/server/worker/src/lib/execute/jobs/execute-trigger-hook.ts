@@ -23,20 +23,17 @@ export const executeTriggerHookJob: JobHandler<ExecuteTriggerHookJobData, Synchr
             return { kind: JobResultKind.SYNCHRONOUS, status: EngineResponseStatus.OK, response: undefined }
         }
 
-        const provisioned = await ctx.provisioner.provision({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
-        if (!provisioned) {
-            ctx.log.info({ flowId: data.flowId }, 'Failed to provision pieces for trigger hook, skipping')
-            return { kind: JobResultKind.SYNCHRONOUS, status: EngineResponseStatus.OK, response: undefined }
+        const { data: sandbox, error: readyError } = await tryCatch(() => ctx.sandboxManager.ready({
+            operation: { kind: 'FLOW', flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId },
+            log: ctx.log,
+            apiClient: ctx.apiClient,
+        }))
+        if (readyError) {
+            ctx.log.error({ flowId: data.flowId, error: String(readyError) }, 'Failed to provision pieces for trigger hook')
+            return { kind: JobResultKind.SYNCHRONOUS, status: EngineResponseStatus.INTERNAL_ERROR, response: undefined }
         }
 
-        const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
         const { data: result, error } = await tryCatch(async () => {
-            await sandbox.start({
-                flowVersionId: flowVersion.id,
-                platformId: data.platformId,
-                mounts: [],
-            })
-
             return sandbox.execute(
                 EngineOperationType.EXECUTE_TRIGGER_HOOK,
                 {

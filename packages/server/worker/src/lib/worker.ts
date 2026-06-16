@@ -230,7 +230,6 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
             const ctx: JobContext = {
                 apiClient,
                 sandboxManager: sbManager,
-                provisioner: runtimeFactory.createProvisioner(),
                 jobId: job.jobId,
                 engineToken: job.engineToken,
                 internalApiUrl: apiUrl,

@@ -1,39 +1,7 @@
 import { type ApLogger } from '@activepieces/server-utils'
-import { FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PiecePackage, tryCatch, WorkerToApiContract } from '@activepieces/shared'
-import { GLOBAL_CACHE_ROOT } from '../cache/cache-paths'
+import { FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PiecePackage, WorkerToApiContract } from '@activepieces/shared'
 import { CodeArtifact } from '../cache/code/code-builder'
-import { pieceCache, PieceNotFoundError } from '../cache/pieces/piece-cache'
-import { provisioner } from '../cache/provisioner'
-
-export async function provisionFlowPieces(params: {
-    flowVersion: FlowVersion
-    platformId: string
-    flowId: string
-    projectId: string
-    log: ApLogger
-    apiClient: WorkerToApiContract
-}): Promise<boolean> {
-    const { flowVersion, platformId, flowId, projectId, log, apiClient } = params
-    const { error } = await tryCatch(async () => {
-        const pieces = await extractPiecePackages(flowVersion, platformId, log, apiClient)
-        const codeSteps = extractCodeArtifacts(flowVersion)
-        await provisioner(log, apiClient).provision({ pieces, codeSteps, cacheRoot: GLOBAL_CACHE_ROOT })
-    })
-    if (error) {
-        if (!(error instanceof PieceNotFoundError)) {
-            throw error
-        }
-        log.warn({ error: String(error), flowId }, 'Flow disabled due to missing piece')
-        const { error: disableError } = await tryCatch(
-            () => apiClient.disableFlow({ flowId, projectId }),
-        )
-        if (disableError) {
-            log.error({ error: String(disableError), flowId }, 'Failed to disable flow after missing piece')
-        }
-        return false
-    }
-    return true
-}
+import { pieceCache } from '../cache/pieces/piece-cache'
 
 export async function extractPiecePackages(flowVersion: FlowVersion, platformId: string, log: ApLogger, apiClient: WorkerToApiContract): Promise<PiecePackage[]> {
     const pieceSteps = flowStructureUtil.getAllSteps(flowVersion.trigger)

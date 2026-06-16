@@ -1,7 +1,6 @@
 import { system, WorkerSystemProp } from '../../config/configs'
 import { logger } from '../../config/logger'
-import { ExecutionRuntime, FlowExecutionRuntime, RuntimeProvisioner } from './types'
-import { createWorkerPoolProvisioner } from './worker-pool/worker-pool-provisioner'
+import { ExecutionRuntime, FlowExecutionRuntime } from './types'
 import { createWorkerPoolRuntime } from './worker-pool/worker-pool-runtime'
 
 export const runtimeFactory = {
@@ -18,13 +17,6 @@ export const runtimeFactory = {
             case ExecutionRuntime.WORKER_POOL:
             default:
                 return createWorkerPoolRuntime({ boxId: slot })
-        }
-    },
-    createProvisioner(): RuntimeProvisioner {
-        switch (runtimeFactory.selected()) {
-            case ExecutionRuntime.WORKER_POOL:
-            default:
-                return createWorkerPoolProvisioner()
         }
     },
     concurrencyFor(runtime: ExecutionRuntime): number {

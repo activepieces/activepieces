@@ -4,6 +4,7 @@ import {
     isNil,
     RenewWebhookJobData,
     TriggerHookType,
+    tryCatch,
     WorkerJobType,
 } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
@@ -22,19 +23,17 @@ export const renewWebhookJob: JobHandler<RenewWebhookJobData, FireAndForgetJobRe
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
 
-        const provisioned = await ctx.provisioner.provision({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
-        if (!provisioned) {
-            return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
+        const { data: sandbox, error: readyError } = await tryCatch(() => ctx.sandboxManager.ready({
+            operation: { kind: 'FLOW', flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId },
+            log: ctx.log,
+            apiClient: ctx.apiClient,
+        }))
+        if (readyError) {
+            ctx.log.error({ flowId: data.flowId, error: String(readyError) }, 'Failed to provision flow for renew webhook')
+            return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
         }
 
-        const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
         try {
-            await sandbox.start({
-                flowVersionId: flowVersion.id,
-                platformId: data.platformId,
-                mounts: [],
-            })
-
             await sandbox.execute(
                 EngineOperationType.EXECUTE_TRIGGER_HOOK,
                 {

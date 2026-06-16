@@ -47,19 +47,17 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
 
         const { appWebhookUrl, webhookSecret } = getAppWebhookDetails(flowVersion, ctx.publicApiUrl, settings.APP_WEBHOOK_SECRETS)
 
-        const provisioned = await ctx.provisioner.provision({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
-        if (!provisioned) {
-            return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
+        const { data: sandbox, error: readyError } = await tryCatch(() => ctx.sandboxManager.ready({
+            operation: { kind: 'FLOW', flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId },
+            log: ctx.log,
+            apiClient: ctx.apiClient,
+        }))
+        if (readyError) {
+            ctx.log.error({ flowId: data.flowId, error: String(readyError) }, 'Failed to provision flow for webhook')
+            return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
         }
 
-        const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
         const { data: execResult, error } = await tryCatch(async () => {
-            await sandbox.start({
-                flowVersionId: flowVersion.id,
-                platformId: data.platformId,
-                mounts: [],
-            })
-
             if (data.saveSampleData) {
                 const sampleResult = await sandbox.execute(
                     EngineOperationType.EXECUTE_TRIGGER_HOOK,

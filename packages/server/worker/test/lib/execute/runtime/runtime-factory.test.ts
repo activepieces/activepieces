@@ -1,8 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { createWorkerPoolRuntimeMock, createWorkerPoolProvisionerMock, warnMock } = vi.hoisted(() => ({
+const { createWorkerPoolRuntimeMock, warnMock } = vi.hoisted(() => ({
     createWorkerPoolRuntimeMock: vi.fn(() => ({ kind: 'worker-pool-runtime' })),
-    createWorkerPoolProvisionerMock: vi.fn(() => ({ kind: 'worker-pool-provisioner' })),
     warnMock: vi.fn(),
 }))
 
@@ -17,10 +16,6 @@ vi.mock('../../../../src/lib/config/logger', () => ({
 
 vi.mock('../../../../src/lib/execute/runtime/worker-pool/worker-pool-runtime', () => ({
     createWorkerPoolRuntime: createWorkerPoolRuntimeMock,
-}))
-
-vi.mock('../../../../src/lib/execute/runtime/worker-pool/worker-pool-provisioner', () => ({
-    createWorkerPoolProvisioner: createWorkerPoolProvisionerMock,
 }))
 
 import { runtimeFactory } from '../../../../src/lib/execute/runtime/runtime-factory'
@@ -87,7 +82,7 @@ describe('runtime-factory concurrencyFor', () => {
     })
 })
 
-describe('runtime-factory createRuntime / createProvisioner', () => {
+describe('runtime-factory createRuntime', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         delete process.env.AP_EXECUTION_RUNTIME
@@ -96,10 +91,5 @@ describe('runtime-factory createRuntime / createProvisioner', () => {
     it('createRuntime builds the WORKER_POOL runtime', () => {
         runtimeFactory.createRuntime({ slot: 1 })
         expect(createWorkerPoolRuntimeMock).toHaveBeenCalledWith({ boxId: 1 })
-    })
-
-    it('createProvisioner builds the WORKER_POOL provisioner', () => {
-        runtimeFactory.createProvisioner()
-        expect(createWorkerPoolProvisionerMock).toHaveBeenCalledTimes(1)
     })
 })

@@ -112,12 +112,9 @@ function makeMockContext(apiOverrides?: Record<string, vi.Mock>) {
             ...apiOverrides,
         },
         sandboxManager: {
-            acquire: vi.fn().mockReturnValue(mockSandbox),
+            ready: vi.fn().mockResolvedValue(mockSandbox),
             release: vi.fn(),
             invalidate: vi.fn(),
-        },
-        provisioner: {
-            provision: vi.fn().mockResolvedValue(true),
         },
         engineToken: 'test-token',
         internalApiUrl: 'http://localhost:3000',
@@ -199,7 +196,7 @@ describe('executeFlowJob', () => {
                 expect.objectContaining({ status: FlowRunStatus.FAILED }),
             )
 
-            expect(ctx.sandboxManager.acquire).not.toHaveBeenCalled()
+            expect(ctx.sandboxManager.ready).not.toHaveBeenCalled()
         })
     })
 })

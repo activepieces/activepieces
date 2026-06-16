@@ -34,16 +34,6 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
         }
 
-        const { data: provisioned, error: provisionError } = await tryCatch(() => ctx.provisioner.provision({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient }))
-        if (provisionError) {
-            await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR, toInternalError(RunInternalErrorSource.WORKER, provisionError))
-            throw provisionError
-        }
-        if (!provisioned) {
-            await reportFlowStatus(ctx, data, FlowRunStatus.FAILED)
-            return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
-        }
-
         if (data.executionType === ExecutionType.RESUME && isNil(data.logsFileId)) {
             const resumeError = new ActivepiecesError({
                 code: ErrorCode.RESUME_LOGS_FILE_MISSING,
@@ -53,14 +43,17 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
             throw resumeError
         }
 
-        const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
-        try {
-            await sandbox.start({
-                flowVersionId: flowVersion.id,
-                platformId: data.platformId,
-                mounts: [],
-            })
+        const { data: sandbox, error: readyError } = await tryCatch(() => ctx.sandboxManager.ready({
+            operation: { kind: 'FLOW', flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId },
+            log: ctx.log,
+            apiClient: ctx.apiClient,
+        }))
+        if (readyError) {
+            await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR, toInternalError(RunInternalErrorSource.WORKER, readyError))
+            throw readyError
+        }
 
+        try {
             const operation = buildFlowOperation(ctx, data, flowVersion, timeoutInSeconds)
             const result = await sandbox.execute(
                 EngineOperationType.EXECUTE_FLOW,
