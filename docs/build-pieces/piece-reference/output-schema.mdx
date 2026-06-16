@@ -1,0 +1,129 @@
+---
+title: 'Output Schema'
+icon: 'table-list'
+description: 'Describe how a step output is presented in the builder'
+---
+
+By default, the builder renders a step's output as raw JSON. You can opt in to a friendly,
+labelled presentation by declaring an `outputSchema` on your action or trigger. The schema drives
+both the **Smart Output Viewer** (test step / run details) and the **Data Selector** (variable
+picker), giving users readable labels, formatted values, and nested/tabular views — without
+changing the expression paths used in automations.
+
+The schema is fully type-checked against the `OutputSchema` type exported from
+`@activepieces/pieces-framework`.
+
+## Declare a Schema
+
+Pass `outputSchema` with a flat list of `fields`. Each field maps to a path in the output:
+
+```typescript
+import { createAction } from '@activepieces/pieces-framework';
+
+export const getEmail = createAction({
+  name: 'get_email',
+  displayName: 'Get email',
+  props: {},
+  outputSchema: {
+    fields: [
+      { key: 'subject', label: 'Subject' },
+      { key: 'from', label: 'From', format: 'email' },
+      { key: 'date', label: 'Received', format: 'datetime' },
+      {
+        key: 'attachments',
+        label: 'Attachments',
+        listItems: [
+          { key: 'fileName' },
+          { key: 'size', format: 'filesize' },
+        ],
+      },
+    ],
+  },
+  run: async (context) => {
+    /* ... */
+  },
+});
+```
+
+A field supports an optional `label`, a `value` path override, a `format` (`email`, `url`, `date`,
+`datetime`, `number`, `boolean`, `image`, `html`, `currency`, `filesize`, `duration`), and
+`children` / `listItems` for nested objects and arrays of records.
+
+## Friendly Labels for Opaque Keys
+
+When your output is an object keyed by UUIDs/slugs (`dynamicKey: true`) or an array of records
+(`listItems`), the entries would otherwise show as raw keys or `Item 1`, `Item 2`, … Use `labelKey`
+to point at a property **inside each entry/item** whose value should be shown as the label instead.
+
+<Tip>
+The expression path is never affected — `labelKey` only changes what the user sees. Inserting a
+variable still references the opaque key (`step_1['<uuid>']`) or numeric index. This is ideal when
+keying by UUID: the key stays stable even if the name changes in the external system, so existing
+automations never break.
+</Tip>
+
+**Object keyed by ID:**
+
+```typescript
+outputSchema: {
+  fields: [
+    {
+      key: 'boards',
+      label: 'Boards',
+      dynamicKey: true,
+      labelKey: 'name',
+    },
+  ],
+},
+// run() returns: { boards: { '3f2504e0-...': { name: 'Roadmap', ... } } }
+```
+
+The data selector and output viewer show `Roadmap` instead of the UUID. The inserted expression is
+still `step_1['boards']['3f2504e0-...']`.
+
+**Array of records:**
+
+```typescript
+outputSchema: {
+  fields: [
+    {
+      key: 'items',
+      label: 'Items',
+      labelKey: 'name',
+      listItems: [{ key: 'id' }, { key: 'name' }],
+    },
+  ],
+},
+```
+
+Each element is labelled by its `name` instead of `Item 1`, `Item 2`. When an item has no `name`
+(or it's empty), the label falls back to `Item N`.
+
+<Note>
+`labelKey` is a path relative to each entry/item, so nested label sources work too
+(`labelKey: 'profile.fullName'`). It applies to the expanded (field-list) view; the tabular/column
+view derives its headers from property keys.
+</Note>
+
+## Top-Level Array Output
+
+When your action returns a **top-level array** (e.g. a list of search results), the schema's `fields`
+describe a single item, and they are applied to every element of the array. Use the optional
+`itemLabel` template to label each item — `{dotPath}` placeholders are resolved against that item:
+
+```typescript
+outputSchema: {
+  itemLabel: '{key}: {fields.summary}',
+  fields: [
+    { key: 'key', label: 'Key' },
+    { key: 'summary', label: 'Summary', value: 'fields.summary' },
+    { key: 'status', label: 'Status', value: 'fields.status.name' },
+  ],
+},
+// run() returns: [ { key: 'ADS-69', fields: { summary: 'Booking issue', status: { name: 'To Do' } } }, ... ]
+```
+
+Each item is shown as `ADS-69: Booking issue` and expands to the labelled fields. When the template
+resolves to an empty string, the label falls back to `Item N`. The inserted expression for an item
+is still its index (`step_1[0]`), and each field resolves under it
+(`step_1[0]["fields"]["summary"]`).

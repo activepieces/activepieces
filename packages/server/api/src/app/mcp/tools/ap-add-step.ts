@@ -125,6 +125,12 @@ export const apAddStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogge
                     }
                     if (input !== undefined) {
                         await mcpUtils.fillDefaultsForMissingOptionalProps({ settings: pieceSettings, platformId: project.platformId, log })
+                        if (typeof actionName === 'string' && actionName.length > 0) {
+                            const unknownPropsError = await mcpUtils.rejectUnknownInputProps({ pieceName: versionResult.normalizedPieceName, pieceVersion: versionResult.pieceVersion, componentName: actionName, componentType: 'action', input: pieceSettings.input, platformId: project.platformId, log })
+                            if (unknownPropsError) {
+                                return unknownPropsError
+                            }
+                        }
                     }
                     skeletonAction = {
                         type: FlowActionType.PIECE,

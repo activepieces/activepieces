@@ -1,9 +1,21 @@
 import dnsSync from 'node:dns'
 import { ExecutionMode, NetworkMode, WorkerSettingsResponse } from '@activepieces/shared'
-import pino from 'pino'
+import { ApLogger } from '@activepieces/server-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const log = pino({ level: 'silent' })
+const noop = () => undefined
+const log: ApLogger = {
+    get level() { return 'silent' },
+    set level(_v) { /* no-op */ },
+    silent: noop,
+    info: noop,
+    warn: noop,
+    error: noop,
+    fatal: noop,
+    debug: noop,
+    trace: noop,
+    child() { return log },
+}
 
 vi.mock('../../../src/lib/config/worker-settings', () => ({
     workerSettings: {

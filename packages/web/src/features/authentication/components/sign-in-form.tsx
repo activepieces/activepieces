@@ -6,6 +6,7 @@ import {
   ErrorCode,
   isNil,
   SignInRequest,
+  TelemetryEventName,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
@@ -17,6 +18,7 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
 import { authenticationApi } from '@/api/authentication-api';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -53,6 +55,7 @@ const SignInForm: React.FC = () => {
   const { data: userCreated } = flagsHooks.useFlag(ApFlagId.USER_CREATED);
   const redirectAfterLogin = useRedirectAfterLogin();
   const navigate = useNavigate();
+  const { capture } = useTelemetry();
 
   const { mutate, isPending } = useMutation<
     AuthenticationResponse,
@@ -74,6 +77,10 @@ const SignInForm: React.FC = () => {
         const errorCode: ErrorCode | undefined = (
           error.response?.data as { code: ErrorCode }
         )?.code;
+        capture({
+          name: TelemetryEventName.SIGN_IN_FAILED,
+          payload: { errorCode: errorCode ?? 'UNKNOWN' },
+        });
         if (isNil(errorCode)) {
           form.setError('root.serverError', {
             message: t('Something went wrong, please try again later'),
@@ -122,6 +129,10 @@ const SignInForm: React.FC = () => {
   const onSubmit: SubmitHandler<SignInRequest> = (data) => {
     form.setError('root.serverError', {
       message: undefined,
+    });
+    capture({
+      name: TelemetryEventName.SIGN_IN_SUBMITTED,
+      payload: { method: 'email' },
     });
     mutate(data);
   };

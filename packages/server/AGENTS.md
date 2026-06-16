@@ -8,7 +8,7 @@ Fastify 5 + TypeORM (PostgreSQL) + BullMQ (Redis) + `fastify-type-provider-zod`.
 - **ORM**: TypeORM with PostgreSQL
 - **Job Queues**: BullMQ
 - **Cache/Redis**: ioredis
-- **Observability**: OpenTelemetry
+- **Observability**: evlog (structured wide events, OTLP log drain via AP_OTEL_ENABLED)
 - **Language**: TypeScript (strict)
 
 ## Project Structure

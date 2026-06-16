@@ -34,6 +34,30 @@ describe('chatToolClassification.isReadActionName', () => {
     })
 })
 
+describe('chatToolClassification.isWriteActionName', () => {
+    it.each([
+        'send_channel_message',
+        'create_database_item',
+        'update_row',
+        'delete_record',
+        'insert_multiple_rows',
+        'post_message',
+        'reply_to_email',
+        'forward_message',
+    ])('treats "%s" as a write action', (actionName) => {
+        expect(chatToolClassification.isWriteActionName(actionName)).toBe(true)
+    })
+
+    it.each([
+        'get_rows',
+        'list_channels',
+        'search_messages',
+        'do_thing',
+    ])('treats "%s" as NOT a write action', (actionName) => {
+        expect(chatToolClassification.isWriteActionName(actionName)).toBe(false)
+    })
+})
+
 describe('chatToolClassification.hasFailureTextPrefix', () => {
     it('flags text starting with a failure glyph', () => {
         expect(chatToolClassification.hasFailureTextPrefix('❌ Something went wrong')).toBe(true)

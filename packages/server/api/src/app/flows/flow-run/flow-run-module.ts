@@ -3,6 +3,7 @@ import dayjs from 'dayjs'
 import { FastifyPluginAsync } from 'fastify'
 import { Between } from 'typeorm'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
+import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
@@ -43,8 +44,8 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
                 environment,
                 count: parseInt(count, 10),
             }, 'Tracking flow run created')
-            telemetry(app.log)
-                .trackProject(projectId, {
+            rejectedPromiseHandler(
+                telemetry(app.log).trackProject(projectId, {
                     name: TelemetryEventName.FLOW_RUN_CREATED,
                     payload: {
                         projectId,
@@ -52,10 +53,9 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
                         environment,
                         count: parseInt(count, 10),
                     },
-                })
-                .catch((e) =>
-                    app.log.error(e, '[FlowRunService#Start] telemetry.trackProject'),
-                )
+                }),
+                app.log,
+            )
         }
     })
     await systemJobsSchedule(app.log).upsertJob({
