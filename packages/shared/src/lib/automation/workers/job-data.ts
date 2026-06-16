@@ -260,6 +260,7 @@ export const ExecuteChatAgentJobData = z.object({
         data: z.string(),
     })).optional(),
     promptOverride: ChatPromptOverride.optional(),
+    dryRun: z.boolean().optional(),
 })
 export type ExecuteChatAgentJobData = z.infer<typeof ExecuteChatAgentJobData>
 

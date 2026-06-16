@@ -11,9 +11,8 @@ import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-props'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
+import { platformService } from '../../platform/platform.service'
 import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { chatApprovalGate } from './chat-approval-gate'
 import { chatHelpers } from './chat-helpers'
@@ -36,14 +35,17 @@ export const chatEvalController: FastifyPluginAsyncZod = async (app) => {
     app.post('/eval/simulate', SimulateRoute, async (request, reply) => {
         const log = request.log
         const platformId = request.principal.platform.id
-        const sandboxUserId = system.getOrThrow(AppSystemProp.CHAT_PLAYGROUND_SANDBOX_USER_ID)
-        const sandboxProjectId = system.getOrThrow(AppSystemProp.CHAT_PLAYGROUND_SANDBOX_PROJECT_ID)
         const { userMessage, promptOverride, modelName } = request.body
+
+        // Run as the platform owner with tools disabled (dryRun): the candidate prompt is
+        // evaluated for the agent's decisions/transcript, and nothing is executed — so there
+        // are no side effects and no dedicated sandbox project/user is required.
+        const platform = await platformService(log).getOneOrThrow(platformId)
+        const evalUserId = platform.ownerId
 
         const conversation = await chatService(log).createConversation({
             platformId,
-            userId: sandboxUserId,
-            projectId: sandboxProjectId,
+            userId: evalUserId,
             request: { modelName: modelName ?? null },
         })
 
@@ -57,16 +59,17 @@ export const chatEvalController: FastifyPluginAsyncZod = async (app) => {
                 jobType: WorkerJobType.EXECUTE_CHAT_AGENT,
                 conversationId: conversation.id,
                 runId,
-                projectId: sandboxProjectId,
+                projectId: null,
                 platformId,
-                userId: sandboxUserId,
+                userId: evalUserId,
                 userMessage,
                 modelName: modelName ?? null,
                 promptOverride,
+                dryRun: true,
             },
         })
 
-        const settled = await waitForSimulationResult({ conversationId: conversation.id, platformId, userId: sandboxUserId, log })
+        const settled = await waitForSimulationResult({ conversationId: conversation.id, platformId, userId: evalUserId, log })
         return reply.status(StatusCodes.OK).send({
             conversationId: conversation.id,
             runId,

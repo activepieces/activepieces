@@ -8,9 +8,9 @@
     ],
     "recordedToolCalls": [],
     "model": {
-        "provider": "anthropic",
-        "modelId": "claude-sonnet-4-6",
-        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "claude-sonnet-4-6" }
+        "provider": "openrouter",
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "anthropic/claude-sonnet-4.6" }
     },
     "assertions": [
         { "type": "neverCutOff" },

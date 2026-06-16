@@ -32,7 +32,7 @@ const RETRY_BASE_DELAY_MS = 1_000
 export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_CHAT_AGENT,
     async execute(ctx: JobContext, data: ExecuteChatAgentJobData): Promise<FireAndForgetJobResult> {
-        const { conversationId, runId, platformId, userId, userMessage, modelName, files, promptOverride } = data
+        const { conversationId, runId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun } = data
         const log = ctx.log.child({ conversationId })
 
         const config = await ctx.apiClient.getChatConfig({
@@ -52,9 +52,11 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             log,
         })
 
-        const { mcpClient, mcpToolSet } = await chatMcpClient.connect({
-            mcpCredentials: config.mcpCredentials, conversationId, log,
-        })
+        // In dry-run (prompt playground), tools are not executed and no MCP server is contacted,
+        // so the run has no side effects and needs no sandbox project.
+        const { mcpClient, mcpToolSet } = dryRun
+            ? { mcpClient: null, mcpToolSet: {} }
+            : await chatMcpClient.connect({ mcpCredentials: config.mcpCredentials, conversationId, log })
 
         const sendEventWithRetry = ({ event }: { event: ChatAgentEvent }) =>
             retryWithBackoff({
@@ -83,7 +85,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             const allTools = buildToolSet({
                 ctx, eventEmitter, log, phaseState, mcpToolSet,
                 projects: config.projects, conversationId, runId, platformId, userId,
-                guides: config.guides,
+                guides: config.guides, dryRun: dryRun ?? false,
             })
 
             const thinkingStartTime = Date.now()
@@ -235,7 +237,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
     },
 }
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, projects, conversationId, runId, platformId, userId, guides }: {
+function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, projects, conversationId, runId, platformId, userId, guides, dryRun }: {
     ctx: JobContext
     eventEmitter: ReturnType<typeof chatWorkerTools.createEventEmitter>
     log: JobContext['log']
@@ -247,8 +249,12 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, projects
     platformId: string
     userId: string
     guides: Record<string, string>
+    dryRun: boolean
 }) {
     const executeCrossProjectTool = async (toolName: string, toolInput: Record<string, unknown>) => {
+        if (dryRun) {
+            return { preview: true, message: `Tool "${toolName}" was not executed (prompt playground preview).` }
+        }
         const response = await ctx.apiClient.executeChatTool({ toolName, toolInput, platformId, userId, conversationId })
         return response.result
     }
@@ -261,6 +267,9 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, projects
     }
 
     const waitForApproval = async ({ gateId, timeoutMs }: { gateId: string, timeoutMs?: number }): Promise<GateDecision> => {
+        if (dryRun) {
+            return { approved: true }
+        }
         const deadline = Date.now() + (timeoutMs ?? APPROVAL_TIMEOUT_MS)
         let lastHeartbeat = Date.now()
         while (Date.now() < deadline) {

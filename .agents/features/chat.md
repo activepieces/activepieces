@@ -6,7 +6,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 ## Key Files
 - `packages/server/api/src/app/ee/chat/chat.module.ts` — module registration with `chatEnabled` plan gate
 - `packages/server/api/src/app/ee/chat/chat-controller.ts` — HTTP endpoints (conversations CRUD, messages, tool approvals)
-- `packages/server/api/src/app/ee/chat/chat-eval-controller.ts` — admin eval/playground endpoints (sandbox-gated): prompt-source inspection and simulate-a-turn; requires `chatPlaygroundEnabled`
+- `packages/server/api/src/app/ee/chat/chat-eval-controller.ts` — admin eval/playground endpoints: prompt-source inspection and dry-run simulate-a-turn; requires `chatPlaygroundEnabled`
 - `packages/server/worker/src/lib/execute/jobs/ee/chat/run-chat-turn.ts` — pure dependency-injected streaming-loop core shared by the production worker, the replay eval gate, and the live playground
 - `packages/server/api/src/app/ee/chat/chat-service.ts` — core business logic (conversation management, message streaming)
 - `packages/server/api/src/app/ee/chat/chat-conversation-entity.ts` — ChatConversation TypeORM entity
@@ -114,7 +114,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `GET /v1/chat/conversations/:id/connections?pieceName=` — get available connections for connection picker; falls back to `findConnectionsForPiece` when the Redis cache is empty and stores the result for future calls
 - `GET /v1/chat/conversations/:id/pending-gate` — get pending approval gate for refresh resilience (returns gate info so the frontend can re-show display tool cards)
 - `GET /v1/chat/eval/prompt-sources` — returns the raw prompt template sources (core + project-context + on-demand guides); requires platformAdmin + `chatPlaygroundEnabled`
-- `POST /v1/chat/eval/simulate` — runs a full chat turn with an optional prompt override against the sandbox project, polls until settled, and returns the transcript synchronously (`status` is `IDLE`/`ERROR`/`TIMEOUT`); requires platformAdmin + `chatPlaygroundEnabled`
+- `POST /v1/chat/eval/simulate` — runs a chat turn with an optional prompt override in dry-run mode (tools are not executed, no MCP, runs as the platform owner — no side effects, no sandbox), polls until settled, and returns the transcript synchronously (`status` is `IDLE`/`ERROR`/`TIMEOUT`); requires platformAdmin + `chatPlaygroundEnabled`
 
 - `POST /v1/admin/chat/sync-all` — bulk historical sync of all conversations to console analytics (admin API key required)
 
