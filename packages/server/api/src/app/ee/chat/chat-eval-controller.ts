@@ -116,7 +116,7 @@ function hasAssistantMessage(uiMessages: unknown[] | null): boolean {
 
 const PromptSourcesRoute = {
     config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.SERVICE, PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['chat'],
@@ -126,7 +126,7 @@ const PromptSourcesRoute = {
 
 const SimulateRoute = {
     config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.SERVICE, PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['chat'],
