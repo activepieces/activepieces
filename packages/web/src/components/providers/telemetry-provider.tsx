@@ -5,6 +5,7 @@ import { useDeepCompareEffect } from 'react-use';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
+import { errorReporting } from '@/lib/error-reporting';
 
 interface TelemetryProviderProps {
   children: React.ReactNode;
@@ -73,6 +74,11 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     // Tag events so the shared project separates product from marketing traffic.
     posthog.register({ source_site: 'product' });
   }, [telemetryEnabled]);
+
+  useEffect(() => {
+    errorReporting.init();
+    errorReporting.flushBuffered();
+  }, []);
 
   useDeepCompareEffect(() => {
     if (isNil(currentUser)) {
