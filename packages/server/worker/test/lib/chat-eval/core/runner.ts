@@ -134,12 +134,21 @@ function buildEvalToolSet({ replay, guides, phaseState }: { replay: ReplayExecut
     }
 }
 
+// Render parts in the order the model produced them — text and tool calls interleaved —
+// so the judge sees the real sequence, not all text then all tools.
 function renderTranscript(result: ChatTurnResult): string {
-    const textLines = result.uiParts
-        .filter((part) => part.type === PersistedChatPartType.TEXT)
-        .map((part) => `ASSISTANT: ${'text' in part ? part.text : ''}`)
-    const toolLines = result.toolCalls.map((call) => `TOOL_CALL[#${call.order}] (phase=${call.phase}): ${call.toolName}`)
-    return [...textLines, ...toolLines].join('\n')
+    return result.uiParts
+        .map((part) => {
+            if (part.type === PersistedChatPartType.TEXT) {
+                return `ASSISTANT: ${part.text}`
+            }
+            if (part.type === PersistedChatPartType.TOOL_CALL) {
+                return `TOOL_CALL: ${part.toolName}`
+            }
+            return null
+        })
+        .filter((line): line is string => line !== null)
+        .join('\n')
 }
 
 async function mintInferenceKey(provisionKey: string): Promise<{ apiKey: string, hash: string | null, provisionKey: string }> {

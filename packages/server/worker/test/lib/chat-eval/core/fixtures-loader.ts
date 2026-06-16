@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { ChatEvalFixture } from './fixture'
 
-const FIXTURES_DIR = path.join(__dirname, 'fixtures')
+const FIXTURES_DIR = path.join(__dirname, '..', 'fixtures')
 
 function load(): ChatEvalFixture[] {
     return readdirSync(FIXTURES_DIR)
