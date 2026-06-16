@@ -73,9 +73,17 @@ export const telemetry = (log: FastifyBaseLogger) => ({
     },
 })
 
+export function captureBillingEvent({ licenseKey, event, properties }: CaptureBillingEventParams): void {
+    getPostHog().capture({
+        distinctId: licenseKey,
+        event,
+        properties,
+    })
+}
+
 export async function shutdownTelemetry(): Promise<void> {
-    if (telemetryEnabled) {
-        await getPostHog().shutdown()
+    if (posthogInstance) {
+        await posthogInstance.shutdown()
     }
 }
 
@@ -88,4 +96,16 @@ async function getMetadata() {
         activepiecesEdition: edition,
         source_site: 'product',
     }
+}
+
+type CaptureBillingEventParams = {
+    licenseKey: string
+    event: BillingEvents
+    properties: Record<string, unknown>
+}
+
+export enum BillingEvents {
+    AI_USAGE_PER_RUN = 'ai_usage_per_run',
+    CHAT_MESSAGE = 'chat_message',
+    TOTAL_RUNS_PER_DAY = 'total_runs_per_day',
 }
