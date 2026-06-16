@@ -14,7 +14,6 @@ import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { platformService } from '../../platform/platform.service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
-import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { chatApprovalGate } from './chat-approval-gate'
 import { chatHelpers } from './chat-helpers'
 import { chatService } from './chat-service'
@@ -27,8 +26,6 @@ const SIMULATION_TIMEOUT_STATUS = 'TIMEOUT'
 type SimulationStatus = ChatConversationStatus | typeof SIMULATION_TIMEOUT_STATUS
 
 export const chatEvalController: FastifyPluginAsyncZod = async (app) => {
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.chatPlaygroundEnabled === true))
-
     app.get('/eval/prompt-sources', PromptSourcesRoute, async (_request, reply) => {
         return reply.status(StatusCodes.OK).send(chatPrompt.sources)
     })
