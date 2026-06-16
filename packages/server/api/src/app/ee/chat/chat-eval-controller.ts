@@ -36,7 +36,7 @@ export const chatEvalController: FastifyPluginAsyncZod = async (app) => {
     app.post('/eval/simulate', SimulateRoute, async (request, reply) => {
         const log = request.log
         const platformId = request.principal.platform.id
-        const { userMessage, promptOverride, modelName } = request.body
+        const { userMessage, promptOverride } = request.body
 
         // dryRun runs as the platform owner with tools disabled — no side effects, no sandbox.
         const platform = await platformService(log).getOneOrThrow(platformId)
@@ -45,7 +45,7 @@ export const chatEvalController: FastifyPluginAsyncZod = async (app) => {
         const conversation = await chatService(log).createConversation({
             platformId,
             userId: evalUserId,
-            request: { modelName: modelName ?? null },
+            request: {},
         })
 
         const runId = apId()
@@ -62,7 +62,7 @@ export const chatEvalController: FastifyPluginAsyncZod = async (app) => {
                 platformId,
                 userId: evalUserId,
                 userMessage,
-                modelName: modelName ?? null,
+                modelName: null,
                 promptOverride,
                 dryRun: true,
             },

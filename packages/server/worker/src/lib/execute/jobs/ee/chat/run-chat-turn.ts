@@ -175,10 +175,8 @@ export async function runChatTurn({ model, provider, systemPrompt, messages, too
         usage,
         finishReason: lastFinishReason,
         truncatedAfterRetries,
-        aborted: abortSignal.aborted,
         streamError,
         continuations,
-        emptyContinuations,
         totalInputTokens,
         totalOutputTokens,
         toolCalls,
@@ -232,10 +230,8 @@ export type ChatTurnResult = {
     usage: LanguageModelUsage | undefined
     finishReason: string
     truncatedAfterRetries: boolean
-    aborted: boolean
     streamError: Error | null
     continuations: number
-    emptyContinuations: number
     totalInputTokens: number
     totalOutputTokens: number
     toolCalls: ChatTurnToolCall[]

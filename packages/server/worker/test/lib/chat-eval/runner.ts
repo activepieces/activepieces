@@ -113,7 +113,6 @@ async function runFixture({ fixture }: { fixture: ChatEvalFixture }): Promise<Ru
 export const chatEvalRunner = {
     runFixture,
     resolveAuth,
-    renderTranscript,
 }
 
 type RunFixtureResult = {
