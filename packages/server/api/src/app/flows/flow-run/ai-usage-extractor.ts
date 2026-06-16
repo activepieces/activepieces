@@ -17,9 +17,6 @@ import {
 
 async function extractAiUsage({ steps, flowVersion, stepNameToTest, fetchSlice }: ExtractParams): Promise<AiUsage> {
     const aiStepsByName = buildAiStepsByName(flowVersion)
-    // In single-step test mode the engine seeds every *other* step with its cached sample output (all
-    // marked SUCCEEDED), so only the tested step actually ran this execution. Scope counting to it so
-    // testing one AI step doesn't bill the other AI steps in the flow.
     const executedSteps = isNil(stepNameToTest) ? steps : pickStep({ steps, stepName: stepNameToTest })
     const usages = await collectStepAiUsages({ steps: executedSteps, aiStepsByName, fetchSlice })
     return summarize(usages)
