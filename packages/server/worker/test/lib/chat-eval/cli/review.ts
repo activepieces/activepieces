@@ -1,7 +1,7 @@
 import chalk from 'chalk'
 import Table from 'cli-table3'
 import inquirer from 'inquirer'
-import { evalFormat } from '../eval-format'
+import { evalFormat } from '../core/eval-format'
 import { evalStore, FixtureComparison, RunResult } from './store'
 
 async function review({ run }: { run: RunResult }): Promise<ReviewOutcome> {

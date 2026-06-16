@@ -7,8 +7,8 @@ import { evalPrompts } from './prompts'
 import { replayExecutor, ReplayExecutor } from './replay-executor'
 import { EvalReportEntry } from './report'
 import { transcriptAssertions } from './transcript-assertions'
-import { chatWorkerTools } from '../../../src/lib/execute/jobs/ee/chat/chat-worker-tools'
-import { ChatTurnResult, runChatTurn } from '../../../src/lib/execute/jobs/ee/chat/run-chat-turn'
+import { chatWorkerTools } from '../../../../src/lib/execute/jobs/ee/chat/chat-worker-tools'
+import { ChatTurnResult, runChatTurn } from '../../../../src/lib/execute/jobs/ee/chat/run-chat-turn'
 
 const EVAL_PROJECTS = [{ id: 'eval-project', displayName: 'Eval Project', type: 'TEAM' }]
 

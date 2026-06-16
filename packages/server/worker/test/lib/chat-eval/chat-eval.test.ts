@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { evalFixtures } from './fixtures-loader'
-import { evalFormat } from './eval-format'
-import { chatEvalReport, EvalReportEntry } from './report'
-import { chatEvalRunner } from './runner'
+import { evalFixtures } from './core/fixtures-loader'
+import { evalFormat } from './core/eval-format'
+import { chatEvalReport, EvalReportEntry } from './core/report'
+import { chatEvalRunner } from './core/runner'
 
 const HAS_PROVIDER_KEY = chatEvalRunner.hasProviderKey()
 

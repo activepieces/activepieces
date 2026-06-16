@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
-import { EvalReportEntry } from '../report'
-import { repoRoot } from '../repo-root'
+import { EvalReportEntry } from '../core/report'
+import { repoRoot } from '../core/repo-root'
 
 const STORE_DIR = path.join(repoRoot, '.chat-eval')
 const RUN_FILE = path.join(STORE_DIR, 'last-run.json')

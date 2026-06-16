@@ -1,6 +1,6 @@
 import { chatToolPhases, PersistedChatPart, PersistedChatPartType } from '@activepieces/shared'
 import { ChatEvalAssertion } from './fixture'
-import { ChatTurnResult } from '../../../src/lib/execute/jobs/ee/chat/run-chat-turn'
+import { ChatTurnResult } from '../../../../src/lib/execute/jobs/ee/chat/run-chat-turn'
 
 const ASKED_HOW_PATTERNS = [
     /\bhow (do|would|should|will|might) (you|we|i)\b/i,

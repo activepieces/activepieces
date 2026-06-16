@@ -1,6 +1,6 @@
-import { evalFixtures } from '../fixtures-loader'
-import { evalPrompts } from '../prompts'
-import { chatEvalRunner } from '../runner'
+import { evalFixtures } from '../core/fixtures-loader'
+import { evalPrompts } from '../core/prompts'
+import { chatEvalRunner } from '../core/runner'
 import { evalStore, FixtureComparison, RunResult } from './store'
 
 function deltaOf({ baselinePassed, candidatePassed }: { baselinePassed: boolean, candidatePassed: boolean }): FixtureComparison['delta'] {

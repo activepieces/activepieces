@@ -1,7 +1,7 @@
 import { PersistedChatPart, PersistedChatPartType } from '@activepieces/shared'
 import { describe, expect, it } from 'vitest'
 import { transcriptAssertions } from './transcript-assertions'
-import { ChatTurnResult, ChatTurnToolCall } from '../../../src/lib/execute/jobs/ee/chat/run-chat-turn'
+import { ChatTurnResult, ChatTurnToolCall } from '../../../../src/lib/execute/jobs/ee/chat/run-chat-turn'
 
 function textPart(text: string): PersistedChatPart {
     return { type: PersistedChatPartType.TEXT, text }

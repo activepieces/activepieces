@@ -1,6 +1,6 @@
 import chalk from 'chalk'
 import { Command } from 'commander'
-import { chatEvalRunner } from '../runner'
+import { chatEvalRunner } from '../core/runner'
 import { evalReview } from './review'
 import { evalRun } from './run'
 import { evalStore, RunResult } from './store'
