@@ -1,6 +1,6 @@
 import { chatAiUtils, ContentPartLike } from '@activepieces/server-utils'
 import { AIProviderName, ChatPhase, chatToolPhases, PersistedChatPart, tryCatch } from '@activepieces/shared'
-import { generateText, isLoopFinished, LanguageModel, LanguageModelUsage, ModelMessage, streamText, ToolSet } from 'ai'
+import { generateText, isLoopFinished, LanguageModel, LanguageModelUsage, ModelMessage, StopCondition, streamText, ToolSet } from 'ai'
 
 const MAX_RESPONSE_OUTPUT_TOKENS = 32_000
 const MAX_AUTO_CONTINUATIONS = 3
@@ -32,9 +32,10 @@ export function shouldRetryStream({ producedVisibleOutput, streamRetries }: {
     return !producedVisibleOutput && streamRetries < MAX_STREAM_RETRIES
 }
 
-export async function runChatTurn({ model, provider, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks }: RunChatTurnParams): Promise<ChatTurnResult> {
+export async function runChatTurn({ model, provider, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen }: RunChatTurnParams): Promise<ChatTurnResult> {
     const drainStream = sinks?.drainStream ?? (async () => {})
     const onProgress = sinks?.onProgress ?? (() => {})
+    const loopStopCondition = stopWhen ?? isLoopFinished()
 
     const uiParts: PersistedChatPart[] = []
     const toolCalls: ChatTurnToolCall[] = []
@@ -62,7 +63,7 @@ export async function runChatTurn({ model, provider, systemPrompt, messages, too
         messages: chatAiUtils.stripThinkingBlocks(attemptMessages, provider),
         tools,
         providerOptions: chatAiUtils.buildProviderOptions({ provider, tier }),
-        stopWhen: isLoopFinished(),
+        stopWhen: loopStopCondition,
         prepareStep: ({ steps }) => {
             const lastStep = steps[steps.length - 1]
             const widened = lastStep?.toolCalls?.some((c) => chatToolPhases.isBuildOnlyTool(c.toolName))
@@ -221,6 +222,7 @@ export type RunChatTurnParams = {
     abortSignal: AbortSignal
     log: ChatTurnLogger
     sinks?: ChatTurnSinks
+    stopWhen?: StopCondition<ToolSet> | Array<StopCondition<ToolSet>>
 }
 
 export type ChatTurnResult = {

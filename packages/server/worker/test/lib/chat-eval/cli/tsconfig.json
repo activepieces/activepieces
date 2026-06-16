@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es2022",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "baseUrl": "../../../../../../..",
+    "paths": {
+      "@activepieces/shared": ["packages/shared/src/index.ts"],
+      "@activepieces/server-utils": ["packages/server/utils/src/index.ts"],
+      "@activepieces/pieces-framework": ["packages/pieces/framework/src/index.ts"]
+    }
+  }
+}
