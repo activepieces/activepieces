@@ -70,7 +70,7 @@ export function createSandbox(
     let busy = false
     let killedByShutdown = false
 
-    function createSocketServer(): number {
+    function createSocketServer(): Promise<number> {
         httpServer = createServer()
         io = new SocketIOServer(httpServer, {
             path: '/worker/ws',
@@ -104,13 +104,26 @@ export function createSandbox(
             }
         })
 
-        httpServer.listen(options.wsRpcPort ?? 0, options.wsRpcHost)
-
-        const address = httpServer.address()
-        if (typeof address === 'object' && address !== null) {
-            return address.port
-        }
-        throw new Error('Could not determine socket.io server port')
+        // listen() with a host string defers the bind behind an async DNS lookup, so
+        // httpServer.address() is null until the 'listening' event fires — reading it
+        // synchronously threw 'Could not determine socket.io server port' on every STRICT
+        // start (wsRpcHost = gateway veth IP). Wait for 'listening', and surface bind
+        // failures (e.g. EADDRINUSE on the fixed per-box port) instead of letting them
+        // become an unhandled 'error' event that crashes the worker.
+        const server = httpServer
+        return new Promise<number>((resolve, reject) => {
+            server.once('error', (error) => {
+                reject(new Error(`WS-RPC server failed to bind on ${options.wsRpcHost ?? '0.0.0.0'}:${options.wsRpcPort ?? 0}: ${error.message}`))
+            })
+            server.listen(options.wsRpcPort ?? 0, options.wsRpcHost, () => {
+                const address = server.address()
+                if (typeof address === 'object' && address !== null) {
+                    resolve(address.port)
+                    return
+                }
+                reject(new Error('Could not determine socket.io server port'))
+            })
+        })
     }
 
     function waitForConnection(): Promise<void> {
@@ -147,7 +160,7 @@ export function createSandbox(
             }, 'Starting sandbox')
 
             wsRpcToken = randomBytes(32).toString('hex')
-            const port = createSocketServer()
+            const port = await createSocketServer()
 
             const codeMount = buildCodeMount({ flowVersionId, reusable: options.reusable })
             const customPieceMounts: SandboxMount[] = []

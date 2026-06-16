@@ -130,6 +130,21 @@ describe('createSandbox', () => {
             )
         })
 
+        it('binds to a host-scoped wsRpcHost and resolves a real port (STRICT mode)', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            // wsRpcHost mirrors STRICT mode binding to the gateway veth IP. listen() with a
+            // host defers the bind behind an async DNS lookup, so reading address()
+            // synchronously used to throw 'Could not determine socket.io server port'.
+            sandbox = createSandbox(log, 'sb-host', { ...defaultOptions, wsRpcHost: '127.0.0.1' }, testPM.maker, workerHandlers)
+
+            await expect(sandbox.start(startOptions)).resolves.toBeUndefined()
+
+            const createCall = vi.mocked(testPM.maker.create).mock.calls[0][0]
+            expect(Number(createCall.env.AP_SANDBOX_WS_PORT)).toBeGreaterThan(0)
+        })
+
         it('does not add custom piece mount when platformId is empty', async () => {
             const log = createMockLogger()
             const workerHandlers = createMockWorkerHandlers()
