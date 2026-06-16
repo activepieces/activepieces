@@ -124,6 +124,8 @@ The visual builder (`packages/web/src/app/builder/`) uses XYFlow for the canvas.
 - `notes-state.tsx` — sticky notes overlay
 - `chat-state.ts` — embedded chat drawer state for testing `chat_submission`-trigger flows from the builder
 
+The canvas **Run Flow** / **Test Flow** buttons live in `flow-canvas/widgets/test-flow-widget.tsx`. Starting a manual production run (the "Run Flow" button) requires `WRITE_RUN`: the button is hidden from members without it, mirroring the server-side `WRITE_RUN` check on the `MANUAL_TRIGGER_RUN_STARTED` websocket event (`flow.module.ts`). "Test Flow" runs are membership-only.
+
 ### Canvas Orientation (Horizontal Layout)
 
 The canvas supports two orientations, toggled from the canvas controls (↔ / ↕ button, preference persisted in localStorage): the default top-to-bottom **vertical** layout (unchanged, 232×60 step cards) and a left-to-right **horizontal** layout (compact 80×80 square nodes, step name + piece type below the node, internal step name on hover, branches stacked vertically with labels on the entry lines, loops with a return lane).
