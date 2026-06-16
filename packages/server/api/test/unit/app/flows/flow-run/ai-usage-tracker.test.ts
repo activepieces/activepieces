@@ -202,6 +202,38 @@ describe('aiUsageTracker extractor', () => {
         expect(usage.breakdown).toEqual([{ provider: 'openai', model: 'gpt-4o', messages: 3, toolCalls: 0 }])
     })
 
+    it('counts only the tested step in single-step test mode, ignoring seeded sample-data AI steps', async () => {
+        const flowVersion = flowVersionWith([
+            aiAction({ name: 'step_1', actionName: ASK_AI }),
+            aiAction({ name: 'agent_1', actionName: RUN_AGENT }),
+        ])
+        const usage = await aiUsageExtractor.extractAiUsage({
+            steps: steps({
+                // The tested step that actually executed this run.
+                step_1: {
+                    type: FlowActionType.PIECE,
+                    status: StepOutputStatus.SUCCEEDED,
+                    input: { provider: 'openai', model: 'gpt-4o' },
+                },
+                // Seeded sample data from a prior test: SUCCEEDED with cached agent output, but not run now.
+                agent_1: {
+                    type: FlowActionType.PIECE,
+                    status: StepOutputStatus.SUCCEEDED,
+                    input: { aiProviderModel: { provider: 'anthropic', model: 'claude' } },
+                    output: { status: 'COMPLETED', steps: [toolCallBlock(), toolCallBlock()] },
+                },
+            }),
+            flowVersion,
+            stepNameToTest: 'step_1',
+            fetchSlice: noopFetchSlice,
+        })
+        expect(usage).toEqual({
+            messages: 1,
+            toolCalls: 0,
+            breakdown: [{ provider: 'openai', model: 'gpt-4o', messages: 1, toolCalls: 0 }],
+        })
+    })
+
     it('groups breakdown per provider/model across a multi-model run', async () => {
         const flowVersion = flowVersionWith([
             aiAction({ name: 'step_1', actionName: ASK_AI }),
