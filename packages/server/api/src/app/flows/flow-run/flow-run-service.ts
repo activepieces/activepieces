@@ -422,6 +422,13 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
         return flowRun
     },
+    async getStepsOrNull({ flowRun }: { flowRun: FlowRun }): Promise<Record<string, StepOutput> | null> {
+        if (isNil(flowRun.logsFileId)) {
+            return null
+        }
+        const stateFile = await readLogsFile(log, flowRun.logsFileId, flowRun.projectId)
+        return stateFile?.executionState.steps ?? null
+    },
     async countByStatus(params: CountByStatusParams): Promise<FlowRunCountByStatus[]> {
         let query = flowRunRepo().createQueryBuilder('flow_run')
             .select('flow_run.status', 'status')

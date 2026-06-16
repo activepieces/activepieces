@@ -73,9 +73,13 @@ export const telemetry = (log: FastifyBaseLogger) => ({
     },
 })
 
+export function capturePostHogEvent(event: CaptureEvent): void {
+    getPostHog().capture(event)
+}
+
 export async function shutdownTelemetry(): Promise<void> {
-    if (telemetryEnabled) {
-        await getPostHog().shutdown()
+    if (posthogInstance) {
+        await posthogInstance.shutdown()
     }
 }
 
@@ -88,4 +92,10 @@ async function getMetadata() {
         activepiecesEdition: edition,
         source_site: 'product',
     }
+}
+
+type CaptureEvent = {
+    distinctId: string
+    event: string
+    properties: Record<string, unknown>
 }
