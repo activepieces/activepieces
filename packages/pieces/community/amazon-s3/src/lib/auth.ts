@@ -23,6 +23,8 @@ Activepieces acts as an OIDC identity provider. AWS trusts this provider and iss
    - Provider type: **OpenID Connect**
    - Provider URL: \`{{frontendUrl}}\`
    - Audience: \`sts.amazonaws.com\`
+
+   > AWS fetches \`{{frontendUrl}}/.well-known/openid-configuration\` to discover the OIDC metadata. If your frontend and API run on different domains, make sure the API server is reachable at \`{{frontendUrl}}\` (or that your frontend proxies \`/.well-known/*\` to the API), otherwise \`AssumeRoleWithWebIdentity\` will fail.
 2. Create an IAM Role with this trust policy:
 \`\`\`json
 {

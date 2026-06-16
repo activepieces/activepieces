@@ -1,4 +1,4 @@
-import { AppConnectionValueForAuthProperty, Property, ServerContext, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { ListObjectsV2CommandInput, S3 } from '@aws-sdk/client-s3';
 import { MarkdownVariant } from '@activepieces/shared';
@@ -6,11 +6,12 @@ import dayjs from 'dayjs';
 import { amazonS3CombinedAuth, S3AuthProps } from '../auth';
 import { resolveS3Client } from '../common';
 
-const createPolling = (
-  server: ServerContext,
-): Polling<AppConnectionValueForAuthProperty<typeof amazonS3CombinedAuth>, { folderPath?: string }> => ({
+const polling: Polling<AppConnectionValueForAuthProperty<typeof amazonS3CombinedAuth>, { folderPath?: string }> = {
   strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
+  items: async ({ auth, propsValue, lastFetchEpochMS, server }) => {
+    if (!server) {
+      throw new Error('Server context is required to resolve Amazon S3 credentials');
+    }
     const authProps: S3AuthProps = auth.props;
     const s3 = await resolveS3Client({ authProps, server });
     const files = await fetchS3FilesForTrigger({
@@ -21,7 +22,7 @@ const createPolling = (
     });
     return files.filter((f) => Number.isFinite(f.epochMilliSeconds));
   },
-});
+};
 
 export const newFile = createTrigger({
   auth: amazonS3CombinedAuth,
@@ -43,33 +44,35 @@ export const newFile = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   onEnable: async (context) => {
-    await pollingHelper.onEnable(createPolling(context.server), {
+    await pollingHelper.onEnable(polling, {
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
     });
   },
   onDisable: async (context) => {
-    await pollingHelper.onDisable(createPolling(context.server), {
+    await pollingHelper.onDisable(polling, {
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
     });
   },
   run: async (context) => {
-    return pollingHelper.poll(createPolling(context.server), {
+    return pollingHelper.poll(polling, {
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
       files: context.files,
+      server: context.server,
     });
   },
   test: async (context) => {
-    return pollingHelper.test(createPolling(context.server), {
+    return pollingHelper.test(polling, {
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
       files: context.files,
+      server: context.server,
     });
   },
   sampleData: {
