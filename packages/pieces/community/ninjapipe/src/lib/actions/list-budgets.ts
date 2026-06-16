@@ -8,6 +8,8 @@ export const listBudgets = createAction({
   name: 'list_budgets',
   displayName: 'List Budgets',
   description: 'Retrieves a list of budgets.',
+  audience: 'both',
+  aiMetadata: { description: 'Read-only listing of budgets in NinjaPipe, with optional search text and pagination. Pick this to browse or find budgets; enable Return All to page through every match instead of a single page. Safe to repeat.', idempotent: true },
   props: {
     limit: ninjapipeCommon.limitProperty,
     search: ninjapipeCommon.searchProperty,

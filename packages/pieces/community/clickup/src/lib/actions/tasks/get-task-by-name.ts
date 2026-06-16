@@ -7,6 +7,8 @@ export const getClickupTaskByName = createAction({
   auth: clickupAuth,
   name: 'get_task_by_name',
   description: 'Fetches a task by name in a ClickUp list',
+  audience: 'both',
+  aiMetadata: { description: 'Look up a single ClickUp task by its exact name within a specific list, paging through the list until the first exact-name match is found. Pick this when you know a task name but not its ID; use Get Task if you already have the ID. Read-only and idempotent; matching is exact and case-sensitive, and it errors if no task with that name exists in the list.', idempotent: true },
   displayName: 'Get Task by Name',
   props: {
     workspace_id: clickupCommon.workspace_id(),

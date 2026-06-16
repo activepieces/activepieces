@@ -8,6 +8,9 @@ export const newContactAddedTrigger = createTrigger({
   name: 'new_contact_added',
   displayName: 'New Contact Added',
   description: 'Triggers when a new contact is added.',
+  aiMetadata: {
+    description: 'Fires when a new contact is created in the Kommo CRM account, emitting the full new contact record. Represents a person being added to the CRM, regardless of source.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

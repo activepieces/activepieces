@@ -8,6 +8,8 @@ export const findProject = createAction({
   name: 'find_project',
   displayName: 'Find Project',
   description: 'Find a project in a workspace by its name.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists projects in a Toggl Track workspace, optionally filtered by name, active/inactive/both status, billable, ownership, or template flag; omitting the name returns all matching projects. Use to resolve a project ID before creating tasks or time entries against it. Read-only and idempotent.', idempotent: true },
   props: {
     workspace_id: togglCommon.workspace_id,
     name: Property.ShortText({

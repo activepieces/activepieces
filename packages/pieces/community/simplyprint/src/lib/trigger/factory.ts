@@ -16,6 +16,7 @@ interface FactoryOptions<Payload> {
   name: string;
   displayName: string;
   description: string;
+  aiMetadata?: { description: string };
   // WebhookEvent string the trigger subscribes to (e.g. 'job.done').
   event: string;
   sampleData: Payload;
@@ -34,6 +35,7 @@ export function createWebhookEventTrigger<Payload extends object>(
     name: opts.name,
     displayName: opts.displayName,
     description: opts.description,
+    aiMetadata: opts.aiMetadata,
     type: TriggerStrategy.WEBHOOK,
     props: {},
     sampleData: opts.sampleData,

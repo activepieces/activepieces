@@ -13,6 +13,8 @@ export const deleteUtilityAction = createAction({
   name: 'deleteUtility',
   displayName: 'Resources - Utilities - Delete Utility',
   description: 'Delete a single Utility.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete a single AMPECO utility (electricity provider) record by its numeric ID. Destructive and not reversible. Effectively idempotent once removed, but the first call deletes the utility, so confirm the ID first.', idempotent: false },
   props: {
         
   utility: Property.Number({

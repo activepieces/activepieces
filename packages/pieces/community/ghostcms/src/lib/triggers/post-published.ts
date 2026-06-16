@@ -8,6 +8,9 @@ export const postPublished = createTrigger({
   name: 'post_published',
   displayName: 'Post Published',
   description: 'Triggers when a post is published',
+  aiMetadata: {
+    description: 'Fires when a post is published in the Ghost publication (post.published), i.e. a post transitions to published status and goes live. Payload carries the published post record.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

@@ -8,6 +8,11 @@ export const sendAudio = createAction({
   name: 'send_audio',
   displayName: 'Send Audio',
   description: 'Send an audio message via WhatsApp.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Sends an audio file to a WhatsApp recipient. Supply the audio either as a public URL or as the media ID of a previously uploaded file (use one or the other). Each call delivers a new message, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     businessAccountId: businessAccountIdProp,
     phoneNumberId: phoneNumberIdDropdown,

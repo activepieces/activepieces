@@ -78,7 +78,10 @@ beforeAll(async () => {
                 displayName: 'New Email',
                 description: 'Triggers on new email',
                 requireAuth: false,
-                props: {},
+                props: {
+                    folder: { type: 'SHORT_TEXT', displayName: 'Folder', required: false },
+                    label: { type: 'SHORT_TEXT', displayName: 'Label', required: false },
+                },
             },
             new_attachment: {
                 name: 'new_attachment',
@@ -789,13 +792,14 @@ describe('MCP Tools integration', () => {
             flowId,
             pieceName: '@activepieces/piece-test-email',
             triggerName: 'new_email',
+            input: { folder: 'inbox' },
         })
 
         const addFieldResult = await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
             triggerName: 'new_email',
-            input: { extraField: 'value' },
+            input: { label: 'important' },
         })
         expect(text(addFieldResult)).toContain('✅')
 

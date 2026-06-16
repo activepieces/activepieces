@@ -14,6 +14,8 @@ export const chargePointDeleteCertificateAction = createAction({
   name: 'chargePointDeleteCertificate',
   displayName: 'Actions - Charge Point - Delete Certificate',
   description: 'Delete certificate.',
+  audience: 'both',
+  aiMetadata: { description: 'Send an OCPP DeleteCertificate command to remove a certificate of the chosen type (e.g. V2GRootCertificate, CSMSRootCertificate, ManufacturerRootCertificate) from a charge point. Use to revoke or clean up PKI/ISO 15118 certificates on a station. Deleting an already-absent certificate is a no-op, so repeating it is effectively idempotent.', idempotent: true },
   props: {
         
   chargePoint: Property.Number({

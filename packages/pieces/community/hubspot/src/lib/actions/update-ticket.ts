@@ -11,6 +11,8 @@ export const updateTicketAction = createAction({
     name: 'update-ticket',
     displayName: 'Update Ticket',
     description: 'Updates a ticket in HubSpot.',
+    audience: 'both',
+    aiMetadata: { description: 'Updates properties on an existing support ticket identified by its ticket ID, such as subject, pipeline, stage, or custom fields, then returns the refreshed ticket. Use to modify a known ticket. Idempotent: applying the same property values converges to the same ticket state.', idempotent: true },
     props: {
         ticketId: Property.ShortText({
             displayName: 'Ticket ID',

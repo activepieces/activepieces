@@ -67,6 +67,9 @@ export const getAssistants = createTrigger({
 name: 'getAssistants',
     displayName: 'Updated Assistant',
     description: 'Triggers when assistants are fetched or updated in your Autocalls account.',
+    aiMetadata: {
+      description: 'Polls the Autocalls account and fires for each assistant created or updated since the last check, optionally bounded by start and end date filters. Represents a new or changed assistant record.',
+    },
 props: {
         start: Property.DateTime({
             displayName: 'Start Date',

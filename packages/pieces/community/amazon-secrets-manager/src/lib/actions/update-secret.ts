@@ -11,6 +11,12 @@ export const updateSecret = createAction({
   name: 'updateSecret',
   displayName: 'Update Secret',
   description: 'Updates an existing secret.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Overwrites an existing AWS Secrets Manager secret (identified by name or ARN, selectable from a list or passed directly) with a new text value and optional description. Use when rotating or changing a credential that already exists; the secret must already exist. Repeating with the same value converges to the same stored value, so it is idempotent, though each call records a new version.',
+    idempotent: true,
+  },
   props: {
     secretId: secretIdDropdown,
     secretValue: Property.LongText({

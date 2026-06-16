@@ -8,6 +8,8 @@ export const createPresentationAction = createAction({
   name: 'create-presentation',
   displayName: 'Create Presentation',
   description: 'Creates a new presentation.',
+  audience: 'both',
+  aiMetadata: { description: 'Generates a new AI-built slide deck from a topic prompt, optionally grounded in previously uploaded documents (pass their UUIDs) and styled with a template, tone, verbosity, language, and PowerPoint or PDF output. Use to produce a presentation from scratch; the call blocks while polling until generation finishes (up to ~5 minutes) and creates a new deck on each invocation, so it is not idempotent.', idempotent: false },
   props: {
     plain_text: Property.ShortText({
       displayName: 'Topic',

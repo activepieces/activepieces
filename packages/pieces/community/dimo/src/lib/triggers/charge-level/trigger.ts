@@ -14,6 +14,10 @@ export const chargeLevelTrigger = createTrigger({
 	name: 'charge-level-trigger',
 	displayName: 'Charge Level Trigger',
 	description: 'Triggers when vehicle battery charge level meets the specified condition.',
+	aiMetadata: {
+		description:
+			'Fires via DIMO webhook when a monitored electric/hybrid vehicle reports a traction-battery state-of-charge reading (percent, 0-100) that satisfies the configured comparison operator against the threshold. Each event represents a single charge-level telemetry signal and includes the vehicle token ID, timestamp, charge percentage, and a derived level (High/Medium/Low/Critical) plus low/critical-battery flags. Use to detect a battery falling below or rising above a target charge.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {
 		vehicleTokenIds: Property.Array({

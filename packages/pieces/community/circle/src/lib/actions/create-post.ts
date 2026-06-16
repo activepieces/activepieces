@@ -42,6 +42,8 @@ export const createPost = createAction({
     name: 'create_post',
     displayName: 'Create Post',
     description: 'Creates a new post in a specific space.',
+    audience: 'both',
+    aiMetadata: { description: 'Publishes a new post into a given Circle space, accepting body content as either plain text or a full TipTap JSON document (JSON wins if both are supplied). Use to programmatically add community content; status can be draft, published, or scheduled (a scheduled status needs a future publish time). Creates a new post on each call, so it is not idempotent.', idempotent: false },
     props: {
         space_id: spaceIdDropdown,
         name: Property.ShortText({

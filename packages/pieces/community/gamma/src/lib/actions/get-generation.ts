@@ -9,6 +9,11 @@ export const getGeneration = createAction({
   name: 'getGeneration',
   displayName: 'Get Generation',
   description: 'Given a Generation ID, fetch the status, outputs, metadata, etc.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Fetches the current status, outputs, and metadata of a Gamma generation job by its generation ID (returned from "Generate Gamma"). Use to poll an in-progress generation until it completes and to retrieve the resulting URLs/files. Read-only and idempotent — safe to call repeatedly while waiting for the job to finish.',
+    idempotent: true,
+  },
   props: {
     generationId: Property.ShortText({
       displayName: 'Generation ID',

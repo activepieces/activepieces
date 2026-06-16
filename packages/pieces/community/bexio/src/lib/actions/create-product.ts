@@ -8,6 +8,8 @@ export const createProductAction = createAction({
   name: 'create_product',
   displayName: 'Create Product',
   description: 'Create a new product or service',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new Bexio article (a physical product or a service) with internal code and name, plus optional pricing, taxes, unit, currency, supplier, stock, and dimension details. Not idempotent: each call adds a separate article even if the code repeats, so check for an existing product first to avoid duplicates. Stock-item fields require the stock_edit scope.', idempotent: false },
   props: {
     user_id: Property.Dropdown({
       auth: bexioAuth,

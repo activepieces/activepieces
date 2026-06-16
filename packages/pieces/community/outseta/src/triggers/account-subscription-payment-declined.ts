@@ -4,6 +4,10 @@ export const accountSubscriptionPaymentDeclinedTrigger = createManualWebhookTrig
   name: 'account_subscription_payment_declined',
   displayName: 'Account Subscription Payment Declined',
   description: 'Triggers when a subscription payment is declined for an account in Outseta.',
+  aiMetadata: {
+    description:
+      'Fires when a subscription payment is declined for an account in Outseta (e.g. card failure), delivering the account with its current subscription. Use to drive dunning or past-due recovery flows.',
+  },
   sampleData: {
     Name: 'Acme Corp',
     IsDemo: false,

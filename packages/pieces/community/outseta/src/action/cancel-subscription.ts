@@ -9,6 +9,12 @@ export const cancelSubscriptionAction = createAction({
   displayName: 'Cancel Subscription',
   description:
     'Cancel the current subscription on an account. By default, the subscription expires at the end of the current term. You can also cancel immediately.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Requests cancellation of an account's current subscription, identified by account UID. Defaults to expiring at the end of the current billing term; with cancel-immediately enabled it also forces the account to the Expired stage right away. Use to churn or downgrade an account. Optional cancellation reason and comment can be recorded. Not idempotent: it mutates subscription/account state.",
+    idempotent: false,
+  },
   props: {
     accountUid: accountUidDropdown(),
     cancelImmediately: Property.Checkbox({

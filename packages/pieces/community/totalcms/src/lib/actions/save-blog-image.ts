@@ -12,6 +12,8 @@ export const saveBlogImageAction = createAction({
   auth: cmsAuth,
   displayName: 'Save Blog Post Image',
   description: 'Save image to Total CMS blog post',
+  audience: 'both',
+  aiMetadata: { description: "Sets the featured/main image of a specific blog post in Total CMS, identified by the blog CMS ID (slug) and post permalink, with alt text and thumbnail sizing/crop options. Use to attach or replace a post's primary image. Idempotent: the post holds one such image, so repeating with the same input replaces it rather than accumulating.", idempotent: true },
   props: {
     slug: Property.ShortText({
       displayName: 'CMS ID',

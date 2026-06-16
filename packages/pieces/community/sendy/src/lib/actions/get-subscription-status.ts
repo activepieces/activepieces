@@ -13,6 +13,8 @@ export const statusAction = createAction({
   auth: sendyAuth,
   displayName: 'Get Subscription Status',
   description: 'Get the subscription status of a user',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up the subscription state (e.g. subscribed, unsubscribed, unconfirmed, bounced, complained) of a subscriber, identified by email, within a specific Sendy list. Use to check whether a contact is on a list before acting. Requires the list and a valid email; read-only and idempotent.', idempotent: true },
   props: {
     list: Property.Dropdown({
       auth: sendyAuth,

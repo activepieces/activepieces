@@ -7,6 +7,8 @@ export const getMandate = createAction({
   name: 'get-mandate',
   displayName: 'Get Mandate',
   description: 'Returns a mandate with the stated ID. This endpoint can be called either by the regular `backend token` or the `mandate token` for that mandate.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve a single TrueLayer mandate by its ID, including its current status and details. Use when you have a known mandate ID and need to inspect or poll its state. Read-only and safe to repeat; callable with either a backend bearer token or that mandate\'s mandate token.', idempotent: true },
   props: {
     id: Property.ShortText({
       displayName: 'Mandate ID',

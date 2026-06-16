@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@activepieces/shared": "workspace:*",
+    "evlog": "2.18.1",
     "@ai-sdk/amazon-bedrock": "3.0.97",
     "@ai-sdk/anthropic": "^3.0.0",
     "@ai-sdk/azure": "^3.0.0",
@@ -29,7 +30,6 @@
   },
   "devDependencies": {
     "@types/node": "24.11.0",
-    "pino": "10.1.0",
     "vitest": "3.0.8"
   }
 }

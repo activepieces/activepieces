@@ -15,6 +15,12 @@ export const createDynamicTableAction = createAction({
   description:
     'Create or replace a Snowflake Dynamic Table that automatically refreshes based on a query. ' +
     'Dynamic Tables are a declarative way to define a table whose content is derived from a query, updated on a schedule.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates or replaces a Snowflake Dynamic Table whose contents are derived from a SELECT query and auto-refresh on a target-lag schedule, using a specified warehouse. Use to set up or redefine a declarative, self-refreshing derived table. Effectively idempotent in result via CREATE OR REPLACE (re-running with the same inputs yields the same table definition), though REPLACE drops and recreates the object.',
+    idempotent: true,
+  },
   auth: snowflakeAuth,
   props: {
     database: snowflakeCommonProps.database,

@@ -127,6 +127,10 @@ export const mollieNewRefund = createTrigger({
   name: 'new_refund',
   displayName: 'New Refund',
   description: 'Fires when a payment refund is created',
+  aiMetadata: {
+    description:
+      'Fires when a new refund is created on a specific Mollie payment, representing funds returned to the customer. Requires selecting the payment to monitor; polls that payment\'s refunds and emits each new one.',
+  },
 
   type: TriggerStrategy.POLLING,
 

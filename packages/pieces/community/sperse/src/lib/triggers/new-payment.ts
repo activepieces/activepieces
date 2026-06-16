@@ -7,6 +7,10 @@ export const newPayment = createTrigger({
   name: 'new_payment',
   displayName: 'New Payment',
   description: 'Triggers when a new payment is created',
+  aiMetadata: {
+    description:
+      'Fires when a payment is recorded in Sperse CRM, delivering the related contact, invoice, and transaction details for the payment.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {

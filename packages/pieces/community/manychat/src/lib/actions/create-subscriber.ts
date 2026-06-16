@@ -9,6 +9,8 @@ export const createSubscriberAction = createAction({
 	name: 'createSubscriber',
 	displayName: 'Create Subscriber',
 	description: 'Creates a Unified or a Whatsapp subscriber.',
+	audience: 'both',
+	aiMetadata: { description: 'Creates a new Manychat subscriber from contact details such as name, email, phone, or WhatsApp phone. Use when onboarding a new contact into Manychat. At least one of phone, email, or WhatsApp phone must be provided. Not idempotent: each call creates another subscriber.', idempotent: false },
 	props: {
 		first_name: Property.ShortText({
 			displayName: 'First Name',

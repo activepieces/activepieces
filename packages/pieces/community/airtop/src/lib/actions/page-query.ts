@@ -11,6 +11,11 @@ export const pageQueryAction = createAction({
 	auth: airtopAuth,
 	displayName: 'Page Query',
 	description: 'Query a page to extract data or ask a question given the data on the page.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Uses AI to answer a natural-language prompt about the content of a session window\'s current page, optionally constrained to a JSON output schema and able to follow pagination/scroll to load more content. Use this to extract structured data or ask a question about what is on the page; requires session id, window id, and a prompt. Read-only and idempotent: it analyzes page content without changing it.',
+		idempotent: true,
+	},
 	props: {
 		sessionId: sessionId,
 		windowId: windowId,

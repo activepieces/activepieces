@@ -10,6 +10,12 @@ export const listFilamentsAction = createAction({
   name: 'list_filaments',
   displayName: 'List Filaments',
   description: 'List filament spools in your SimplyPrint account, with optional filters and sort.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists filament spools in the account, with optional filters (material type, brand, color, assigned/unassigned, empty/non-empty, assigned printer) and sort. Use to find spools or check stock before assigning filament or starting a print; leave all filters empty to return every spool. This endpoint has no offset paging, so "limit" (1-100) is the only cap. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     materialType: Property.ShortText({
       displayName: 'Material type filter',

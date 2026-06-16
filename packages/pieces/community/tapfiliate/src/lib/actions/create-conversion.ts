@@ -13,6 +13,8 @@ export const createConversionAction = createAction({
   displayName: 'Create Conversion',
   description:
     'Creates a conversion in Tapfiliate. At least one attribution field is required: Customer ID, Referral Code, Tracking ID, Click ID, Coupon, or Asset ID + Source ID together.',
+  audience: 'both',
+  aiMetadata: { description: 'Records a conversion (e.g. a sale or signup) in Tapfiliate so the responsible affiliate earns commission. Requires an amount plus at least one attribution key — Customer ID, Referral Code, Tracking ID, Click ID, Coupon, or Asset ID together with Source ID — or the call is rejected. Not idempotent: each call appends a new conversion, so guard against duplicate sends.', idempotent: false },
   props: {
     referralCode: Property.ShortText({
       displayName: 'Referral Code',

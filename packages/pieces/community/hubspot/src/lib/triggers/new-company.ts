@@ -73,6 +73,10 @@ export const newCompanyTrigger = createTrigger({
 	name: 'new-company',
 	displayName: 'New Company',
 	description: 'Trigger when a new company is added.',
+	aiMetadata: {
+		description:
+			'Fires when a new company is created in HubSpot. Each event represents one company record with properties such as name, domain, industry, address, employee count, revenue, and lifecycle stage. Polls for companies by creation date; does not fire on updates to existing companies.',
+	},
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,

@@ -11,6 +11,11 @@ export const getTopic = createAction({
   name: 'get-topic',
   displayName: 'Get Topic',
   description: 'Retrieve details for a specific topic.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Fetch a single Hedy topic by its ID (must be prefixed with "topic_"). Use when you already have a topic ID and need its details. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     topicId: commonProps.topicId,
   },

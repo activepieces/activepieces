@@ -7,6 +7,11 @@ export const createEstimateOptionAttachment = createAction({
   name: "create_estimate_option_attachment",
   displayName: "Create estimate option attachment",
   description: "Upload an attachment to an estimate option",
+  audience: 'both',
+  aiMetadata: {
+    description: "Upload a file as an attachment to a specific option of a Housecall Pro estimate, identified by estimate ID and option ID. Not idempotent: each call uploads another attachment, so repeating it creates duplicates.",
+    idempotent: false,
+  },
   props: {
     estimate_id: Property.ShortText({ displayName: "Estimate ID", required: true }),
     option_id: Property.ShortText({ displayName: "Option ID", required: true }),

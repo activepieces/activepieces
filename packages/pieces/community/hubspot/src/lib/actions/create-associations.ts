@@ -15,6 +15,8 @@ export const createAssociationsAction = createAction({
 	name: 'create-associations',
 	displayName: 'Create Associations',
 	description: 'Creates associations between objects',
+	audience: 'both',
+	aiMetadata: { description: 'Link one source HubSpot object (e.g. a company) to one or more target objects using a specific association type, batching the targets. Re-running with the same inputs re-applies the same association without creating duplicates. Use Remove Associations to undo a link.', idempotent: true },
 	props: {
 		fromObjectId: Property.ShortText({
 			displayName: 'From Object ID',

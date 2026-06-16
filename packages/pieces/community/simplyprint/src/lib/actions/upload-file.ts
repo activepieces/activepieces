@@ -26,6 +26,8 @@ export const uploadFileAction = createAction({
   displayName: 'Upload File',
   description:
     'Upload a file or HTTPS URL to SimplyPrint. URL uploads stream with ~95 MiB peak RAM; File uploads are buffered by AP. Files over 95 MiB are chunked automatically. Returns the API file id — pass it to "Add File to Queue" or "Start Print" later.',
+  audience: 'both',
+  aiMetadata: { description: 'Upload a print file (G-code, STL, 3MF) to SimplyPrint, supplied either as a File input or as an HTTPS URL to stream from; the filename extension must be correct since the backend infers type from it. Use this when you only need the file staged for later; to queue or print in one step use the dedicated upload-and-queue or upload-to-folder tools. Not idempotent — each call creates a new uploaded file.', idempotent: false },
   props: {
     file: Property.File({
       displayName: 'File',

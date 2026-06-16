@@ -7,6 +7,12 @@ export const createLink = createAction({
   name: 'create_link',
   displayName: 'Create Link',
   description: 'Create a new shortened link in your Dub workspace.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new Dub short link for a destination URL, optionally with a custom domain, slug, tags, UTM parameters, expiration, password protection, and device-specific redirects. Use when an agent needs to generate a trackable short link. Not idempotent: each call creates a separate link, and if no slug is supplied a new random one is generated, so repeating the call yields duplicate links.',
+    idempotent: false,
+  },
   auth: dubAuth,
   props: {
     url: Property.ShortText({

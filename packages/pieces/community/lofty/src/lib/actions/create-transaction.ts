@@ -9,6 +9,12 @@ export const createTransaction = createAction({
   name: 'createTransaction',
   displayName: 'Create Transaction',
   description: 'Create a transaction for a Lofty lead',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Records a new transaction (e.g. a sale or rental deal with amount, property details, dates, and agent) against an existing Lofty lead. Use when logging a deal for a known lead; requires the lead id (selectable from the account or passed directly). Not idempotent: each call appends another transaction, so repeated calls create duplicates.',
+    idempotent: false,
+  },
   props: {
     leadId: leadIdDropdown,
     transactionDate: Property.ShortText({

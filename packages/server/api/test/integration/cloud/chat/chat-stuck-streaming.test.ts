@@ -44,8 +44,8 @@ describe('Chat conversation stuck in STREAMING status', () => {
         const createResponse = await ctx.post(CONVERSATIONS_URL, { title: 'Will Auto-Recover' })
         const conversationId = createResponse.json().id
 
-        // Set status to STREAMING with an old updated timestamp (simulating worker crash 20 min ago)
-        const twentyMinutesAgo = new Date(Date.now() - 20 * 60 * 1_000).toISOString()
+        // Set status to STREAMING with an old updated timestamp (simulating worker crash 5 min ago, past the 2-min threshold)
+        const twentyMinutesAgo = new Date(Date.now() - 5 * 60 * 1_000).toISOString()
         await db.update('chat_conversation', conversationId, {
             status: ChatConversationStatus.STREAMING,
             updated: twentyMinutesAgo,
@@ -101,11 +101,11 @@ describe('Chat conversation stuck in STREAMING status', () => {
         const createResponse = await ctx.post(CONVERSATIONS_URL, { title: 'Still Running' })
         const conversationId = createResponse.json().id
 
-        // Set status to STREAMING updated 5 minutes ago (within 15-min timeout)
-        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1_000).toISOString()
+        // Set status to STREAMING updated 1 minute ago (within 2-min timeout)
+        const oneMinuteAgo = new Date(Date.now() - 1 * 60 * 1_000).toISOString()
         await db.update('chat_conversation', conversationId, {
             status: ChatConversationStatus.STREAMING,
-            updated: fiveMinutesAgo,
+            updated: oneMinuteAgo,
         })
 
         // Should stay STREAMING — agent might still be running

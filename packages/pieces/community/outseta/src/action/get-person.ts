@@ -8,6 +8,12 @@ export const getPersonAction = createAction({
   auth: outsetaAuth,
   displayName: 'Get Person',
   description: 'Retrieve an Outseta person by selecting them from the dropdown.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches a single Outseta CRM person (contact) by its UID, returning identity, contact, and mailing-address fields. Use to read a person when you already have its UID. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     personUid: personUidDropdown(),
   },

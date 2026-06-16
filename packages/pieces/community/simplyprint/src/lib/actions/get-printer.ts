@@ -10,6 +10,12 @@ export const getPrinterAction = createAction({
   name: 'get_printer',
   displayName: 'Get Printer',
   description: 'Get detailed information about a specific printer.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches the full record for a single printer by its numeric printer ID (state, settings, current job, etc.). Use to inspect or look up one known printer before acting on it; for a fleet-wide snapshot or counts use "Get Farm Overview" or "List Printers" instead. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     printerId: Property.Number({
       displayName: 'Printer ID',

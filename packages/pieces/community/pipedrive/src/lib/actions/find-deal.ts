@@ -16,6 +16,12 @@ export const findDealAction = createAction({
 	name: 'find-deal',
 	displayName: 'Find Deal',
 	description: 'Finds a deal by any field.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Finds a single deal by matching a chosen field to a value (exact match), returning the most recently updated match. Use to locate a deal before reading or updating it; pick the field via Search Field and supply its value. To list deals tied to a specific person, use Find Deals Associated With Person instead. Read-only and idempotent (a temporary search filter is created and removed internally).',
+		idempotent: true,
+	},
 	props: {
 		searchField: searchFieldProp('deal'),
 		searchFieldValue: searchFieldValueProp('deal'),

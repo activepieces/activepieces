@@ -1,11 +1,11 @@
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
-import { networkUtils } from '../../../helper/network-utils'
+import { domainHelper } from '../../../helper/domain-helper'
 
 export const mcpOAuthMetadataController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/.well-known/oauth-authorization-server', PublicMetadataRequest, async (req, reply) => {
-        const issuer = networkUtils.getRequestBaseUrl(req)
+        const issuer = domainHelper.getPublicUrlFromRequest({ req })
         return reply.status(200).header('Access-Control-Allow-Origin', '*').send({
             issuer,
             authorization_endpoint: `${issuer}/authorize`,
@@ -21,7 +21,7 @@ export const mcpOAuthMetadataController: FastifyPluginAsyncZod = async (app) => 
     })
 
     app.get('/.well-known/oauth-protected-resource/mcp', PublicMetadataRequest, async (req, reply) => {
-        const issuer = networkUtils.getRequestBaseUrl(req)
+        const issuer = domainHelper.getPublicUrlFromRequest({ req })
         return reply.status(200).header('Access-Control-Allow-Origin', '*').send({
             resource: `${issuer}/mcp`,
             authorization_servers: [issuer],
@@ -29,7 +29,7 @@ export const mcpOAuthMetadataController: FastifyPluginAsyncZod = async (app) => 
     })
 
     app.get('/.well-known/oauth-protected-resource/mcp/platform', PublicMetadataRequest, async (req, reply) => {
-        const issuer = networkUtils.getRequestBaseUrl(req)
+        const issuer = domainHelper.getPublicUrlFromRequest({ req })
         return reply.status(200).header('Access-Control-Allow-Origin', '*').send({
             resource: `${issuer}/mcp/platform`,
             authorization_servers: [issuer],

@@ -99,6 +99,9 @@ export const newSummarySalesTrigger = createTrigger({
   name: 'new_summary_sales',
   displayName: 'New Summary Sales',
   description: 'Triggers when there is new daily sales data.',
+  aiMetadata: {
+    description: 'Fires when Tenzo records new or updated daily sales data, optionally scoped to a specific location and/or area. Each event represents one day-of-business sales summary including paid sales (with and without tax), promos, comps, included service charges, transaction count, guest count, and a last-modified timestamp. Use it to react to freshly posted or revised daily sales totals.',
+  },
   props: {
     location_id: tenzoCommon.location_id(false),
     area_id: tenzoCommon.area_id(false),

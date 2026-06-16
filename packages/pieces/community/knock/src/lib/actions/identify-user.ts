@@ -8,6 +8,11 @@ export const identifyUser = createAction({
   name: 'identify_user',
   displayName: 'Identify User',
   description: 'Create or update a user in Knock.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates or updates (upserts) a Knock user identified by a stable user ID, setting profile fields such as name, email, phone, avatar, and arbitrary custom properties. Choose this to register or refresh a recipient before sending notifications. Idempotent — repeating with the same user ID and inputs converges to the same user record.',
+    idempotent: true,
+  },
   props: {
     userId: Property.ShortText({
       displayName: 'User ID',

@@ -4,6 +4,10 @@ export const accountDeletedTrigger = createManualWebhookTrigger({
   name: 'account_deleted',
   displayName: 'Account Deleted',
   description: 'Triggers when an account is deleted in Outseta.',
+  aiMetadata: {
+    description:
+      'Fires when a CRM account is deleted in Outseta, delivering the deleted account record so downstream systems can clean up.',
+  },
   sampleData: {
     Name: 'Acme Corp',
     IsDemo: false,

@@ -4,6 +4,10 @@ export const accountSubscriptionAddOnsChangedTrigger = createManualWebhookTrigge
   name: 'account_subscription_addons_changed',
   displayName: 'Account Subscription Add Ons Changed',
   description: 'Triggers when add-ons are changed on an account\'s subscription in Outseta.',
+  aiMetadata: {
+    description:
+      "Fires when the add-ons on an account's current subscription are added, removed, or changed in Outseta, delivering the account with its subscription and the resulting add-on set.",
+  },
   sampleData: {
     Name: 'Acme Corp',
     IsDemo: false,

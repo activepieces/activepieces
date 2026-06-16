@@ -12,6 +12,12 @@ export const createSubscriptionAction = createAction({
   name: 'create_subscription',
   displayName: 'Create Subscription',
   description: 'Start a new subscription for an existing Recurly account.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Starts a new recurring subscription on a given plan for an existing Recurly account, billing in the specified currency. Use to begin charging a customer; the account and plan must already exist (referenced by their codes). Not idempotent: each call creates and begins billing a separate subscription.',
+    idempotent: false,
+  },
   props: {
     accountCode: accountCodeDropdown(
       true,

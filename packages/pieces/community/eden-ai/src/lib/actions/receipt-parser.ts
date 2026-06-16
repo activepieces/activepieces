@@ -31,6 +31,12 @@ export const receiptParserAction = createAction({
   name: 'receipt_parser',
   displayName: 'Receipt Parser',
   description: 'Extract structured data from receipts and documents using Eden AI. Supports general data extraction with bounding boxes.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Extract structured fields from a document referenced by URL via Eden AI data-extraction (OCR) endpoint, routed to a chosen provider. Use it for general field extraction from receipts and similar documents; unlike the invoice parser this takes a public file URL rather than a file upload. Requires a provider and a valid file URL; optionally a password for protected PDFs. Read-only extraction with no side effect, so it is safe to repeat.',
+    idempotent: true,
+  },
   props: {
     provider: Property.Dropdown({
       auth: edenAiAuth,

@@ -54,6 +54,7 @@ export const FlowCanvas = React.memo(
       selectStepByName,
       rightSidebar,
       notes,
+      canvasOrientation,
     ] = useBuilderStateContext((state) => {
       return [
         state.flowVersion,
@@ -64,6 +65,7 @@ export const FlowCanvas = React.memo(
         state.selectStepByName,
         state.rightSidebar,
         state.flowVersion.notes,
+        state.canvasOrientation,
       ];
     });
     const containerRef = useRef<HTMLDivElement>(null);
@@ -84,9 +86,17 @@ export const FlowCanvas = React.memo(
       },
       [setSelectedNodes, selectedStep],
     );
-    const graphKey = createGraphKey(flowVersion, notes, selectedStep ?? '');
+    const graphKey = `${createGraphKey(
+      flowVersion,
+      notes,
+      selectedStep ?? '',
+    )}-${canvasOrientation}`;
     const graph = useMemo(() => {
-      return flowCanvasUtils.createFlowGraph(flowVersion, notes);
+      return flowCanvasUtils.createFlowGraph({
+        version: flowVersion,
+        notes,
+        orientation: canvasOrientation,
+      });
     }, [graphKey]);
     const [contextMenuType, setContextMenuType] = useState<ContextMenuType>(
       ContextMenuType.CANVAS,
@@ -204,6 +214,7 @@ export const FlowCanvas = React.memo(
         <FlowDragLayer>
           <CanvasContextMenu contextMenuType={contextMenuType}>
             <ReactFlow
+              key={`canvas-${canvasOrientation}`}
               className="bg-builder-background"
               onContextMenu={onContextMenu}
               onPaneClick={() => {

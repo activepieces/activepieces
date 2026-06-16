@@ -7,6 +7,8 @@ export const getBlockTransactionId = createAction({
     name: 'get_block_transaction_id',
     displayName: 'Get Block Transaction ID',
     description: 'Returns the transaction at specified index within the block',
+    audience: 'both',
+    aiMetadata: { description: 'Resolves the transaction ID (txid) at a specific positional index within a block, given the block hash and a zero-based index (index 0 is the coinbase transaction). Read-only and idempotent. Use this to map a block position to its txid; the index must be within the block transaction count or the lookup fails.', idempotent: true },
     // category: 'Blocks',
     props: {
         hash: Property.ShortText({

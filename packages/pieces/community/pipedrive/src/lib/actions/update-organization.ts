@@ -16,6 +16,8 @@ export const updateOrganizationAction = createAction({
 	name: 'update-organization',
 	displayName: 'Update Organization',
 	description: 'Updates an existing organization.',
+	audience: 'both',
+	aiMetadata: { description: 'Update fields on an existing organization identified by ID (name, owner, address, visibility, labels, and custom fields). Pick this to modify a known organization; only supplied fields are changed. Re-running with the same inputs yields the same final state.', idempotent: true },
 	props: {
 		organizationId: organizationIdProp(true),
 		name: Property.ShortText({

@@ -12,6 +12,8 @@ export const findSubmissionByFieldValue = createAction({
   name: 'findSubmissionByFieldValue',
   displayName: 'Find Submission by Field Value',
   description: 'Search submissions by field values',
+  audience: 'both',
+  aiMetadata: { description: 'Searches across all accessible Formstack submissions for ones whose field values match a search string, returning paginated results (sortable, optionally annotated with form names). Use to locate submissions by content rather than by known ID. The search value must be at least 3 characters. Read-only and idempotent.', idempotent: true },
   props: {
     search_value: Property.LongText({
       displayName: 'Search Value',

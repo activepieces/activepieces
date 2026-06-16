@@ -8,6 +8,12 @@ export const createAccount = createAction({
   name: 'createAccount',
   displayName: 'Create Account',
   description: 'Create a new account in Front.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new company account in Front with a name plus optional domains, external ID, description and custom fields. Use to register an organization not yet tracked; to edit an existing one use "Update Account" and to look one up use "Find Account". Not idempotent: repeated calls create duplicate accounts.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Account Name',

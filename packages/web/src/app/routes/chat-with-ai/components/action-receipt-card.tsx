@@ -46,13 +46,6 @@ export function ActionReceiptCard({
               <StatusBadge isSuccess={isSuccess} />
             </div>
             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-              {receipt.connectionLabel && (
-                <span className="text-xs text-muted-foreground">
-                  {t('via {connectionLabel}', {
-                    connectionLabel: receipt.connectionLabel,
-                  })}
-                </span>
-              )}
               <span className="text-xs text-muted-foreground">
                 {formattedTimestamp}
               </span>

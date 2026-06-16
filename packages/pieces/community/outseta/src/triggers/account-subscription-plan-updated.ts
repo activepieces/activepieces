@@ -4,6 +4,10 @@ export const accountSubscriptionPlanUpdatedTrigger = createManualWebhookTrigger(
   name: 'account_subscription_plan_updated',
   displayName: 'Account Subscription Plan Updated',
   description: 'Triggers when an account\'s subscription plan is changed in Outseta.',
+  aiMetadata: {
+    description:
+      "Fires when an account's subscription plan changes in Outseta (upgrade or downgrade), delivering the account with its new plan and the prior plan in the activity event data. Use to react to plan migrations.",
+  },
   sampleData: {
     Name: 'Acme Corp',
     IsDemo: false,

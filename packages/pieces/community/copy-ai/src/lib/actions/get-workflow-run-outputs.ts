@@ -8,6 +8,8 @@ export const getWorkflowRunOutputsAction = createAction({
 	name: 'get_workflow_run_outputs',
 	displayName: 'Get Workflow Run Outputs',
 	description: 'Retrieves the outputs of a completed workflow run.',
+	audience: 'both',
+	aiMetadata: { description: 'Fetches the generated outputs of a Copy.ai workflow run, identified by its workflow ID and run ID. Use this once a run has completed (confirm via Get Workflow Run Status) to retrieve the produced content. Read-only and idempotent.', idempotent: true },
 	props: {
 		workflowId: Property.ShortText({
 			displayName: 'Workflow ID',

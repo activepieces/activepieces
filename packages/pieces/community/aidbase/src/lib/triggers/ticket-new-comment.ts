@@ -11,6 +11,10 @@ export const ticketNewComment = createTrigger({
   name: 'ticket_new_comment',
   displayName: 'Ticket New Comment',
   description: 'Fires when a new comment is added to an existing ticket.',
+  aiMetadata: {
+    description:
+      'Fires when a new comment is posted on an existing Aidbase ticket, representing an added reply or note on a support thread. Can be filtered by commenter type (customer User vs. support Agent) and/or ticket form, or left open to fire for all comments.',
+  },
 
   props: {
     ticket_form_id: ticketFormDropdown,

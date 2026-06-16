@@ -4,12 +4,16 @@ import { ChatUIMessage } from './chat-types';
 
 function createStreamingState({
   messageId,
-}: { messageId?: string } = {}): StreamingState {
+  initialParts,
+}: {
+  messageId?: string;
+  initialParts?: ChatUIMessage['parts'];
+} = {}): StreamingState {
   return {
     message: {
       id: messageId ?? `stream-${Date.now()}`,
       role: 'assistant',
-      parts: [],
+      parts: initialParts ? [...initialParts] : [],
     },
     activeTextParts: {},
     activeReasoningParts: {},

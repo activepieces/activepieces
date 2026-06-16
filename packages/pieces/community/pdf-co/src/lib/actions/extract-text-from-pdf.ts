@@ -38,6 +38,12 @@ export const extractTextFromPdf = createAction({
     name: 'extract_text_from_pdf',
     displayName: 'Extract Plain Text from PDF',
     description: 'Extracts plain text content from a PDF document.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Extracts plain text content from a source PDF (referenced by URL), optionally limited to specific pages. Use when an agent needs the raw text of a document for reading or downstream processing. The call only reads the input and returns the text directly, so it is idempotent.',
+        idempotent: true,
+    },
     auth: pdfCoAuth,
     props: {
         url: Property.ShortText({

@@ -9,6 +9,11 @@ export const translateVideoAction = createAction({
 	name: 'translate_video',
 	displayName: 'Translate Video',
 	description: 'Translate a video into 175+ languages with natural voice and lip-sync.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Submits a video-translation job that dubs a source video into a target language with natural voice and lip-sync, optionally audio-only (no face modification). Use to localize an existing video given its URL (direct, Google Drive, or YouTube) and an output language. Processing is asynchronous and each call starts a new job (not idempotent); poll Retrieve Translated Video Status for the result.',
+		idempotent: false,
+	},
 	props: {
 		videoUrl: Property.ShortText({
 			displayName: 'Video URL',

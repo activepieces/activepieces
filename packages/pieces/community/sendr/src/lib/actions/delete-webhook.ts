@@ -8,6 +8,8 @@ export const deleteWebhook = createAction({
   name: 'delete_webhook',
   displayName: 'Delete Webhook',
   description: 'Deletes a registered Sendr webhook by its URL.',
+  audience: 'both',
+  aiMetadata: { description: 'Deletes a registered webhook identified by its URL. Use List Webhooks to find the URL. Idempotent: once removed, repeating the call leaves the webhook absent.', idempotent: true },
   props: {
     webhook: webhookDropdown,
   },

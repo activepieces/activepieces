@@ -9,6 +9,12 @@ export const findOrAddAccountAction = createAction({
   displayName: 'Find or Add Account',
   description:
     'Search for an account by name. If not found, create a new one.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up an Outseta CRM account by exact (case-insensitive) name match and returns it; if no match exists, creates a new account with the supplied name and optional stage, billing address, primary contact, and plan/subscription. Use to ensure an account exists without risking a duplicate. Not idempotent in the create path: a near-but-not-exact name (e.g. extra punctuation or a trailing space) will not match and produces a new account each call.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

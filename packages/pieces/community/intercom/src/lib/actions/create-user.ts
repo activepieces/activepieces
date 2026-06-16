@@ -8,6 +8,8 @@ export const createUserAction = createAction({
 	name: 'create-user',
 	displayName: 'Create User',
 	description: 'Creates a new user.',
+	audience: 'both',
+	aiMetadata: { description: 'Create a new user-role contact in Intercom from email and optional name, external user ID, signup time, and custom attributes. Always creates a record and does not check for an existing match, so it is not idempotent and repeated calls may produce duplicates. To update-if-exists instead, use Create/Update User.', idempotent: false },
 	props: {
 		email: Property.ShortText({
 			displayName: 'Email',

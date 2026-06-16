@@ -13,6 +13,8 @@ export const subscribeMultipleAction = createAction({
   auth: sendyAuth,
   displayName: 'Subscribe Multiple Lists',
   description: 'Add a new subscriber to a multiple lists',
+  audience: 'both',
+  aiMetadata: { description: 'Adds the same subscriber (by email, plus optional name, country, IP, referrer) to several Sendy lists in one call, iterating over each selected list. Use when a contact should join multiple lists at once; for a single list use Subscribe instead. Honors each list\'s double opt-in unless the silent flag forces single opt-in. Effectively an upsert on the email, so re-running with the same input is safe.', idempotent: true },
   props: {
     lists: Property.MultiSelectDropdown({
       auth: sendyAuth,

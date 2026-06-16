@@ -8,6 +8,8 @@ export const addOrRemoveTagOnContactAction = createAction({
 	name: 'add-or-remove-tag-on-contact',
 	displayName: 'Add/Remove Tag on Contact',
 	description: 'Attach or remove a tag from a specific contact.',
+	audience: 'both',
+	aiMetadata: { description: 'Tag or untag a contact by contact ID and tag ID; set the Untag flag to remove rather than add. Mutates the contact, so it is not idempotent. Requires an existing tag ID (use List Tags to discover one).', idempotent: false },
 	props: {
 		contactId: contactIdProp('Contact ID','user', true),
 		tagId: tagIdProp('Tag Name', true),

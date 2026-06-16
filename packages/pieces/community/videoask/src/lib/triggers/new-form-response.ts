@@ -9,6 +9,9 @@ export const newFormResponse = createTrigger({
     name: 'newFormResponse',
     displayName: 'new form response',
     description: 'Trigger when a new form response is submitted',
+    aiMetadata: {
+        description: 'Fires when a respondent submits a new response to a specific VideoAsk form, carrying the contact and their answers along with the form context. Use as the entry point for processing incoming form submissions. Scoped to one form via a registered webhook.',
+    },
     props: {
         organizationId: organizationIdDropdown,
         formId: videoaskIdDropdown,

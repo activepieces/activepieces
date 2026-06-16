@@ -75,6 +75,10 @@ export const newTaskTrigger = createTrigger({
 	name: 'new-task',
 	displayName: 'New Task',
 	description: 'Trigger when a new task is added.',
+	aiMetadata: {
+		description:
+			'Fires when a new task is created in the HubSpot CRM. Each event represents one task record (call, to-do, or email follow-up) with its properties such as subject, type, priority, owner, due timestamp, and associated contacts/companies/deals. Polls for tasks by creation date.',
+	},
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,

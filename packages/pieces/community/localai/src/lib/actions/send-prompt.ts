@@ -25,6 +25,7 @@ Ensure that your API key is valid. \n
 `;
 
 export const askLocalAI = createAction({
+  audience: 'human',
   auth: localaiAuth,
   name: 'ask_localai',
   displayName: 'Ask LocalAI',

@@ -4,6 +4,10 @@ export const dealCreatedTrigger = createManualWebhookTrigger({
   name: 'deal_created',
   displayName: 'Deal Created',
   description: 'Triggers when a new deal is created in Outseta.',
+  aiMetadata: {
+    description:
+      'Fires when a new deal is created in Outseta, delivering the deal (name, amount, pipeline stage) with its linked account and people.',
+  },
   sampleData: {
     Name: 'New Deal',
     Amount: 5000,

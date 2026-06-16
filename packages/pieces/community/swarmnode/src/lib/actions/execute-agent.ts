@@ -10,6 +10,8 @@ export const executeAgentAction = createAction({
     auth:swarmnodeAuth,
     displayName:'Execute Agent',
     description:'Executes an existing AI agent.',
+    audience: 'both',
+    aiMetadata: { description: 'Runs an existing SwarmNode AI agent (selected by agent ID) with a JSON input payload, then polls until the execution completes and returns its result. Use to trigger an agent and get its output in one step; the call blocks until success or times out after ~5 minutes. Each call starts a new execution, so it is not idempotent.', idempotent: false },
     props:{
         agentId:agentIdDropdown,
         payload:Property.Json({

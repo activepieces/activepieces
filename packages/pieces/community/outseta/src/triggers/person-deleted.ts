@@ -4,6 +4,10 @@ export const personDeletedTrigger = createManualWebhookTrigger({
   name: 'person_deleted',
   displayName: 'Person Deleted',
   description: 'Triggers when a person is deleted in Outseta.',
+  aiMetadata: {
+    description:
+      'Fires when a person (contact) is deleted in Outseta, delivering the deleted person record so downstream systems can clean up.',
+  },
   sampleData: {
     Email: 'jane.doe@example.com',
     FirstName: 'Jane',

@@ -9,6 +9,11 @@ export const amazons3UploadFile = createAction({
   name: 'upload-file',
   displayName: 'Upload File',
   description: 'Upload an File to S3',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Uploads a file to the configured S3 bucket, optionally setting a destination filename, content type, and canned ACL (e.g. private vs. public-read). Use to store new content in S3. Not idempotent: when no filename is given a unique timestamp-based key is generated, so each call writes a new object.',
+    idempotent: false,
+  },
   props: {
     file: Property.File({
       displayName: 'File',

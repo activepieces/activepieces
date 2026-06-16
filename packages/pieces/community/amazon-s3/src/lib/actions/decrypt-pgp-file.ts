@@ -9,6 +9,11 @@ export const decryptPgpFile = createAction({
   name: 'decrypt-pgp-file',
   displayName: 'Decrypt PGP File',
   description: 'Decrypt a PGP encrypted file from S3 using a private key stored in AWS Secrets Manager',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Downloads a PGP-encrypted object from the configured S3 bucket and decrypts it using a private key (and optional passphrase) retrieved from AWS Secrets Manager by ARN, returning the decrypted contents as a file. Use when an S3 file is PGP-encrypted and you have the key stored in Secrets Manager. Requires the secret ARN for the private key; idempotent since it only reads and decrypts without modifying anything.',
+    idempotent: true,
+  },
   props: {
     key: Property.ShortText({
       displayName: 'S3 File Key',

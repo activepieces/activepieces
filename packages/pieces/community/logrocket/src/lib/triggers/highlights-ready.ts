@@ -10,6 +10,9 @@ export const highlightsReady = createTrigger({
   name: 'highlightsReady',
   displayName: 'Highlights Ready',
   description: 'Trigger when session highlights are ready. Use this webhook URL when requesting highlights.',
+  aiMetadata: {
+    description: 'Fires when LogRocket finishes generating AI session highlights and POSTs the results back to this webhook. Its URL must be supplied as the Webhook URL of a preceding "Request Highlights" action; the event carries the completed highlights and the matching sessions.',
+  },
   props: {
     markdown: Property.MarkDown({
       value: `

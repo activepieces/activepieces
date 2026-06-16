@@ -8,6 +8,12 @@ export const addPersonToAccountAction = createAction({
   auth: outsetaAuth,
   displayName: 'Add Person to Account',
   description: 'Add an existing person to an existing account.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Links an existing person to an existing account as a member (optionally the primary contact), identified by their UIDs. Use to associate a known contact with a known account. Not idempotent: if the person is already a member of the account the call throws an error instead of succeeding.',
+    idempotent: false,
+  },
   props: {
     accountUid: accountUidDropdown(),
     personUid: personUidDropdown(),

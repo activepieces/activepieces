@@ -8,6 +8,8 @@ export const getDomain = createAction({
   name: 'get_domain',
   displayName: 'Get Domain',
   description: 'Retrieve details about a specific domain.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches details for a single DNS domain on the DigitalOcean account, identified by its exact domain name. Use when you already know the domain name and need its TTL or zone file. Read-only and idempotent.', idempotent: true },
   props: {
     domain_name: Property.ShortText({
       displayName: 'Domain Name',

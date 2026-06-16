@@ -13,12 +13,14 @@ export function createPipelineWebhookTrigger({
   name,
   displayName,
   description,
+  aiMetadata,
   event,
   sampleData,
 }: {
   name: string;
   displayName: string;
   description: string;
+  aiMetadata?: { description: string };
   event: string;
   sampleData: Record<string, unknown>;
 }) {
@@ -27,6 +29,7 @@ export function createPipelineWebhookTrigger({
     name,
     displayName,
     description,
+    aiMetadata,
     type: TriggerStrategy.WEBHOOK,
     props: {
       pipelineKey: pipelineDropdown,
@@ -61,12 +64,14 @@ export function createTeamWebhookTrigger({
   name,
   displayName,
   description,
+  aiMetadata,
   event,
   sampleData,
 }: {
   name: string;
   displayName: string;
   description: string;
+  aiMetadata?: { description: string };
   event: string;
   sampleData: Record<string, unknown>;
 }) {
@@ -75,6 +80,7 @@ export function createTeamWebhookTrigger({
     name,
     displayName,
     description,
+    aiMetadata,
     type: TriggerStrategy.WEBHOOK,
     props: {
       teamKey: teamDropdown,

@@ -14,6 +14,11 @@ export const deleteMultipleTimeEntriesAction = createAction({
   name: 'delete_multiple_time_entries',
   displayName: 'Delete Multiple Time Entries',
   description: 'Deletes multiple time entries (working time or absence) by their IDs and dates.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Deletes a batch of time entries in Beebole, each identified by its numeric time-entry ID plus the date it was logged on. Use to remove previously created entries; per-entry failures are collected rather than aborting unless continue-on-error is disabled. Idempotent in effect: once an entry is deleted, re-running with the same IDs has no further effect (already-removed entries simply fail).',
+    idempotent: true,
+  },
   props: {
     entries: Property.Array({
       displayName: 'Time Entries to Delete',

@@ -11,6 +11,8 @@ export const findTicketAction = createAction({
 	name: 'find-ticket',
 	displayName: 'Find Ticket',
 	description: 'Finds a ticket by searching.',
+	audience: 'both',
+	aiMetadata: { description: 'Searches support tickets via the HubSpot CRM search API, matching on one or two property name/value pairs (exact match, combined as AND), and returns matching tickets. Use to locate a ticket by subject or another property before reading or updating it; prefer Get Ticket when you already have the ticket ID. Read-only and idempotent.', idempotent: true },
 	props: {
 		firstSearchPropertyName: standardObjectPropertiesDropdown(
 			{

@@ -9,6 +9,8 @@ export const createClickupChannelInSpaceFolderOrList = createAction({
   name: 'create_channel_in_space_folder_list',
   description:
     'Creates a channel in a ClickUp workspace in a space, folder or list',
+  audience: 'both',
+  aiMetadata: { description: 'Create a Chat channel attached to a specific location (space, folder, or list) in a ClickUp workspace, set via the location type and ID. Each call creates a new channel, so it is not idempotent. Use this variant when the channel should be tied to a location; use Create Channel for a standalone workspace channel.', idempotent: false },
   displayName: 'Create Channel in Space/Folder/List',
   props: {
     workspace_id: clickupCommon.workspace_id(),

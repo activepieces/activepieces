@@ -12,41 +12,9 @@ import { oneDriveAuth } from '../auth';
 export const oneDriveCommon = {
   getBaseUrl: (cloud?: string | null) => getGraphBaseUrl(cloud) + '/v1.0/me/drive',
 
-  parentFolder: Property.Dropdown({
-    auth: oneDriveAuth,
-    displayName: 'Parent Folder',
-    required: false,
-    refreshers: ['auth'],
-    options: async ({ auth }) => {
-      if (!auth) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Please authenticate first',
-        };
-      }
+  folderDropdown: createFolderDropdown,
 
-      const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
-      const cloud = authProp.props?.['cloud'] as string | undefined;
-      let folders: { id: string; label: string }[] = [];
-
-      try {
-        folders = await getFoldersRecursively(authProp, 'root', '', [], cloud);
-      } catch (e) {
-        throw new Error(`Failed to get folders\nError:${e}`);
-      }
-
-      return {
-        disabled: false,
-        options: folders.map((folder: { id: string; label: string }) => {
-          return {
-            label: folder.label,
-            value: folder.id,
-          };
-        }),
-      };
-    },
-  }),
+  parentFolder: createFolderDropdown({ displayName: 'Parent Folder' }),
    parentFolderInfo : Property.MarkDown({
     value: 
       `**Note**: If you can't find the folder in the dropdown list (which fetches up to 1000 folders), please click on the **(F)** and type the folder ID directly.\n
@@ -104,6 +72,45 @@ export const oneDriveCommon = {
     return files;
   },
 };
+
+function createFolderDropdown({ displayName, description }: { displayName: string; description?: string }) {
+  return Property.Dropdown({
+    auth: oneDriveAuth,
+    displayName,
+    description,
+    required: false,
+    refreshers: ['auth'],
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please authenticate first',
+        };
+      }
+
+      const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+      const cloud = authProp.props?.['cloud'] as string | undefined;
+      let folders: { id: string; label: string }[] = [];
+
+      try {
+        folders = await getFoldersRecursively(authProp, 'root', '', [], cloud);
+      } catch (e) {
+        throw new Error(`Failed to get folders\nError:${e}`);
+      }
+
+      return {
+        disabled: false,
+        options: folders.map((folder: { id: string; label: string }) => {
+          return {
+            label: folder.label,
+            value: folder.id,
+          };
+        }),
+      };
+    },
+  });
+}
 
 async function getFoldersRecursively(
   auth: OAuth2PropertyValue,

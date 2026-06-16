@@ -11,6 +11,11 @@ export const hoverElementAction = createAction({
 	name: 'hover-element',
 	displayName: 'Hover on an Element',
 	description: 'Moves mouse pointer over an element in the browser window.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Moves the mouse pointer over an element in a session window, located by a natural-language description, optionally waiting for navigation afterward. Use this to reveal hover menus, tooltips, or other hover-triggered UI. Requires session id, window id, and an element description; not idempotent since it changes page interaction state and may trigger hover-driven behavior.',
+		idempotent: false,
+	},
 	props: {
 		sessionId: sessionId,
 		windowId: windowId,

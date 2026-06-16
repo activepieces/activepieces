@@ -12,6 +12,12 @@ export const visualClassifierModelPredictAction = createAction({
   auth: clarifaiAuth,
   name: 'visual_classifier_model',
   description: 'Call an visual classifier AI model to recognize concepts',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Runs an image or video through a Clarifai visual classification model and returns the recognized concepts with confidence scores. Use to tag, categorize, or detect content in visual media; supply the model URL and the file as a URL or base64 bytes. Read-only inference, safe to repeat.',
+    idempotent: true,
+  },
   displayName: 'Classify Images or Videos',
   props: {
     modelUrl: CommonClarifaiProps.modelUrl,
@@ -40,6 +46,12 @@ export const imageToTextModelPredictAction = createAction({
   auth: clarifaiAuth,
   name: 'image_text_model',
   description: 'Call an image to text AI model',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Runs an image through a Clarifai image-to-text model and returns the generated text (e.g. a caption or description). Use to describe or extract text from an image; supply the model URL and the file as a URL or base64 bytes. Read-only inference, safe to repeat.',
+    idempotent: true,
+  },
   displayName: 'Image to Text',
   props: {
     modelUrl: CommonClarifaiProps.modelUrl,

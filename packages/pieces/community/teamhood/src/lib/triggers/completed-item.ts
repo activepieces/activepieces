@@ -62,6 +62,10 @@ export const completedItemTrigger = createTrigger({
   name: 'completed_item',
   displayName: 'Item Completed',
   description: 'Fires when a Teamhood item is marked as completed.',
+  aiMetadata: {
+    description:
+      'Fires when a Teamhood item is marked as completed, optionally scoped to a specific workspace and board. Each event represents one item that transitioned to completed since the last poll.',
+  },
   props,
   type: TriggerStrategy.POLLING,
   sampleData: {

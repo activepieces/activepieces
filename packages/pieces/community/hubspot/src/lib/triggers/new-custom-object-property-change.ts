@@ -133,6 +133,10 @@ export const newCustomObjectPropertyChangeTrigger = createTrigger({
 	name: 'new-custom-object-property-change',
 	displayName: 'New Custom Object Property Change',
 	description: 'Triggers when a specified property is updated on a custom object.',
+	aiMetadata: {
+		description:
+			'Fires when the chosen property changes on a record of the selected HubSpot custom object type. Each event represents one custom-object record whose selected property was modified since the last poll, returning the record. Use to react to specific field updates on a custom object rather than every change.',
+	},
 	props: {
 		customObjectType: customObjectDropdown,
 		propertyName: customObjectPropertiesDropdown('Property Name', true, true),

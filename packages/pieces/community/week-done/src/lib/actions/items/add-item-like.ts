@@ -17,6 +17,8 @@ export const addItemLikeAction = createAction({
   name: 'add_item_like',
   displayName: 'Add Item Like',
   description: 'Add a like to an item.',
+  audience: 'both',
+  aiMetadata: { description: 'Add a like (from the authenticated user) to a Weekdone item identified by its ID; the user/team/period filters only help locate the item. Mutates the item, so not idempotent.', idempotent: false },
   props: {
     user_id_filter: Property.Dropdown({
       auth: weekdoneAuth,

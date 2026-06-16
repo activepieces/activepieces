@@ -11,6 +11,8 @@ export const updateFormProduct = createAction({
   name: 'updateFormProduct',
   displayName: 'Update Form Product',
   description: 'Updates an existing form product.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing product on a Paperform form, identified by its SKU, changing only the supplied fields (name, price, quantity, min/max, discountable, image). Use to modify a store item; repeating with the same input yields the same end state, so it is idempotent.', idempotent: true },
   props: {
     formId: paperformCommonProps.formId,
     productSku: paperformCommonProps.productSku,

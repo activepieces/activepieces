@@ -5,6 +5,7 @@ type ManualWebhookTriggerArgs = {
   name: string;
   displayName: string;
   description: string;
+  aiMetadata?: { description: string };
   sampleData?: Record<string, unknown>;
 };
 
@@ -14,6 +15,7 @@ export function createManualWebhookTrigger(args: ManualWebhookTriggerArgs) {
     auth: outsetaAuth,
     displayName: args.displayName,
     description: `${args.description}`,
+    aiMetadata: args.aiMetadata,
     type: TriggerStrategy.WEBHOOK,
     props: {
       instruction: Property.MarkDown({

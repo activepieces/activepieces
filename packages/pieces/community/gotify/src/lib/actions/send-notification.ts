@@ -7,6 +7,8 @@ export const sendNotification = createAction({
   name: 'send_notification',
   displayName: 'Send Notification',
   description: 'Send a notification to gotify',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a push notification (title, message, optional 0-10 priority) to a self-hosted Gotify server via its message API. Choose this to alert a user or channel through their Gotify instance configured in the connection. Not idempotent: each call posts a new message, so repeating it delivers duplicate notifications.', idempotent: false },
   props: {
     title: Property.ShortText({
       displayName: 'Title',

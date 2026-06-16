@@ -7,6 +7,8 @@ export const getPipelineStageDetailsAction = createAction({
 	name: 'get-pipeline-stage-details',
 	displayName: 'Get Pipeline Stage Details',
 	description: 'Finds and retrieves CRM object pipeline stage details.',
+	audience: 'both',
+	aiMetadata: { description: 'Retrieves the configuration of a single pipeline stage (label, order, metadata) for a ticket or deal pipeline, given the object type, pipeline ID, and stage ID. Use to resolve or validate a stage ID before setting a deal or ticket stage. Read-only and idempotent.', idempotent: true },
 	props: {
 		objectType: Property.StaticDropdown({
 			displayName: 'Object Type',

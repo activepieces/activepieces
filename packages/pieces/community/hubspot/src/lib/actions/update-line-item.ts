@@ -16,6 +16,8 @@ export const updateLineItemAction = createAction({
     name: 'update-line-item',
     displayName: 'Update Line Item',
     description: 'Updates a line item in Hubspot.',
+    audience: 'both',
+    aiMetadata: { description: 'Update properties (product, quantity, price, etc.) on an existing HubSpot line item identified by Line Item ID; only supplied fields change. Applying the same values repeatedly is idempotent. Use a find action to obtain the line item ID first.', idempotent: true },
     props: {
         lineItemId: Property.ShortText({
             displayName: 'Line Item ID',

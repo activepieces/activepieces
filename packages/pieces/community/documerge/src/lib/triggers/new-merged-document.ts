@@ -10,6 +10,9 @@ export const newMergedDocument = createTrigger({
   name: 'new_merged_document',
   displayName: 'New Merged Document',
   description: 'Triggers when a merged/populated document is created',
+  aiMetadata: {
+    description: 'Fires when DocuMerge finishes generating a merged/populated document, delivered via a webhook the user configures on a document in their DocuMerge dashboard. The event represents a completed document merge and can carry the merged field data and a temporary download URL.',
+  },
   props: {
     webhookInstructions: Property.MarkDown({
       value: `

@@ -79,3 +79,7 @@ All endpoints are rate-limited via `API_RATE_LIMIT_AUTHN_MAX` / `API_RATE_LIMIT_
 7. `ApFlagId.USER_CREATED` flag saved
 8. Telemetry `SIGNED_UP` event fired
 9. Newsletter subscription attempted (production + non-embedding platforms only)
+
+## Side Effects on Sign-In
+1. `ApplicationEventName.USER_SIGNED_IN` audit event recorded
+2. Telemetry `SIGNED_IN` event fired (email/password sign-in only; SSO/federated not covered)

@@ -8,6 +8,12 @@ export const updateIntegration = createAction({
   displayName: 'Update Gmail Integration',
   description:
     'Update settings for a connected Gmail integration — adjust rate limits, timezone, status, or set as the default sending account. Provide only the fields you want to change.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Update settings on an existing connected Gmail integration by numeric ID: email send rate limits, minimum delay, timezone, connection status, or default-sender flag. Idempotent: only the supplied fields change and re-applying the same values is a no-op. Use List Gmail Integrations to find the ID first.',
+    idempotent: true,
+  },
   props: {
     id: Property.Number({
       displayName: 'Integration ID',

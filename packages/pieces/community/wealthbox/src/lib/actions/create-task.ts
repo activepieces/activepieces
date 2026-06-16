@@ -8,6 +8,8 @@ export const createTask = createAction({
   name: 'create_task',
   displayName: 'Create Task',
   description: 'Creates tasks tied to contacts with due dates and assignment types. Assign follow-up actions when opportunities are created.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a task in Wealthbox with a name and due date, optionally assigned to a user, prioritized, and linked to a record. Use to schedule a follow-up action; the Link To prop chooses whether the task is attached to a Contact, Project, or Opportunity. Requires a name and a due date. Not idempotent: each call creates a separate task.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Task Name',

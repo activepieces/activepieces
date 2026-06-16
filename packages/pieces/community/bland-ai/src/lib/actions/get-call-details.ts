@@ -8,6 +8,12 @@ export const getCallDetails = createAction({
   name: 'get_call_details',
   displayName: 'Get Call Details',
   description: 'Retrieve details for a specific Bland AI call.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches the full record of one Bland AI call by its call ID (status, transcript, summary, recording URL, and post-call data). Use to inspect or poll the outcome of a call after it has been placed. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     callId: Property.ShortText({
       displayName: 'Call ID',

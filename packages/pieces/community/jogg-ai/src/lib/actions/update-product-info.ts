@@ -11,6 +11,12 @@ export const updateProductInfo = createAction({
   name: 'updateProductInfo',
   displayName: 'Update Product Info',
   description: 'Updates existing product information using product ID',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing JoggAI product identified by its product_id, overwriting any supplied fields (name, description, target audience, media); supplied media replaces the product’s existing media rather than appending. Use to modify a product you already created; requires the product_id and at least one field to change. Idempotent: re-sending the same fields leaves the product in the same state.',
+    idempotent: true,
+  },
   auth: joggAiAuth,
   props: {
     product_id: Property.ShortText({

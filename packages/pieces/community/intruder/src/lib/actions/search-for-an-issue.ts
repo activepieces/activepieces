@@ -8,6 +8,12 @@ export const searchForAnIssue = createAction({
   name: 'searchForAnIssue',
   displayName: 'Search For an Issue',
   description: 'Search for issues with optional filters',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists vulnerability issues detected by Intruder, optionally narrowing by issue IDs, target addresses, tag names, severity, or snoozed state; with no filters it returns all issues. Use when an agent needs to review or triage discovered security findings. Idempotent: a read-only search that does not modify any data.',
+    idempotent: true,
+  },
   props: {
     issueIds: Property.Array({
       displayName: 'Issue IDs',

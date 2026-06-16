@@ -8,6 +8,7 @@ const fontOptions = Object.entries(StandardFonts).map(([key, value]) => {
 });
 
 export const addTextToPdf = createAction({
+  audience: 'human',
   name: 'addTextToPdf',
   displayName: 'Add Text to PDF',
   description: 'Stamps one or more text strings at exact pixel distances from the top-left corner.',

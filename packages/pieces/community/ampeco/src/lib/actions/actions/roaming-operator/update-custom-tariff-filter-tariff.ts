@@ -13,6 +13,8 @@ export const updateCustomTariffFilterTariffAction = createAction({
   name: 'updateCustomTariffFilterTariff',
   displayName: 'Actions - Roaming Operator - Update Custom Tariff Filter Tariff',
   description: 'Set the pricing data for a custom tariff filter. This action will update the underling roaming tariff and create a pricing based on it. The pricing can then be utilized by attaching a markup tariff to the tariff map of the custom tariff filter.',
+  audience: 'both',
+  aiMetadata: { description: 'Set the full pricing data (OCPI-style tariff: currency, price components, restrictions, energy mix) for a roaming operator custom tariff filter, updating the underlying roaming tariff. Idempotent: it replaces the tariff filter\'s pricing with the supplied definition, so re-sending the same payload yields the same end state.', idempotent: true },
   props: {
         
   roamingOperator: Property.Number({

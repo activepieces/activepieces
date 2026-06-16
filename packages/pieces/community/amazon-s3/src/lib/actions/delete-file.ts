@@ -7,6 +7,11 @@ export const deleteFile = createAction({
   name: 'deleteFile',
   displayName: 'Delete File',
   description: 'Deletes an existing file.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Deletes a single object from the configured S3 bucket by its full key (path). Use to remove a known file. Idempotent: deleting an already-absent key succeeds without error, so repeating the call has no further effect.',
+    idempotent: true,
+  },
   props: {
     key: Property.ShortText({
       displayName: 'File Path',

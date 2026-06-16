@@ -4,6 +4,10 @@ export const accountSubscriptionRenewalExtendedTrigger = createManualWebhookTrig
   name: 'account_subscription_renewal_extended',
   displayName: 'Account Subscription Renewal Extended',
   description: 'Triggers when a subscription renewal is extended for an account in Outseta.',
+  aiMetadata: {
+    description:
+      "Fires when an account's subscription renewal date is extended in Outseta, delivering the account with its subscription and the new renewal date.",
+  },
   sampleData: {
     Name: 'Acme Corp',
     IsDemo: false,

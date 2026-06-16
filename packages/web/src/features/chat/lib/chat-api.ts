@@ -2,6 +2,7 @@ import {
   type ChatHistoryMessage,
   type PersistedChatMessage,
   ChatConversation,
+  ConnectionOption,
   CreateChatConversationRequest,
   SeekPage,
   UpdateChatConversationRequest,
@@ -54,15 +55,17 @@ async function deleteConversation(id: string): Promise<void> {
 async function sendMessage({
   conversationId,
   content,
+  runId,
   files,
 }: {
   conversationId: string;
   content: string;
+  runId?: string;
   files?: Array<{ name: string; mimeType: string; data: string }>;
-}): Promise<{ conversationId: string }> {
-  return api.post<{ conversationId: string }>(
+}): Promise<{ conversationId: string; runId?: string }> {
+  return api.post<{ conversationId: string; runId?: string }>(
     `/v1/chat/conversations/${conversationId}/messages`,
-    { content, files },
+    { content, runId, files },
   );
 }
 
@@ -91,15 +94,7 @@ async function getPickerConnections({
 }: {
   conversationId: string;
   pieceName: string;
-}): Promise<
-  Array<{
-    externalId: string;
-    label: string;
-    projectId: string;
-    project: string;
-    status: string;
-  }>
-> {
+}): Promise<ConnectionOption[]> {
   return api.get(`/v1/chat/conversations/${conversationId}/connections`, {
     pieceName,
   });

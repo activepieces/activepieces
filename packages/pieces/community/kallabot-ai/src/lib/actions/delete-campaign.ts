@@ -6,6 +6,11 @@ export const deleteCampaignAction = createAction({
     name: 'delete-campaign',
     displayName: 'Delete Campaign',
     description: 'Delete a campaign with optional contact list deletion.',
+    audience: 'both',
+    aiMetadata: {
+        description: 'Permanently delete an outbound campaign by its campaign ID, optionally also deleting its associated contact list. Use it to clean up a campaign that is no longer needed; this is destructive. Idempotent in effect: once the campaign is gone, repeating the call leaves nothing further to delete.',
+        idempotent: true,
+    },
     auth: kallabotAuth,
     props: {
         campaign_id: Property.ShortText({

@@ -47,6 +47,9 @@ export const newContact = createTrigger({
     name: 'new_contact',
     displayName: 'New Contact',
     description: 'Fires when a new contact is created in Zendesk Sell (polls for new records).',
+    aiMetadata: {
+      description: 'Fires when a new contact (person or organization) is created in Zendesk Sell. Each event represents one newly added contact record, discovered by polling sorted by creation time.',
+    },
     props: {
 
     },

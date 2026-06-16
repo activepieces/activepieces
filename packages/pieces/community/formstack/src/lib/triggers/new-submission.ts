@@ -112,6 +112,9 @@ export const newSubmission = createTrigger({
   name: 'newSubmission',
   displayName: 'New Submission',
   description: 'Triggers when a form receives a new submission',
+  aiMetadata: {
+    description: 'Fires when the selected Formstack form receives a new submission, emitting that submission with its field values and metadata. Polls the form for entries newer than the last check.',
+  },
   props: {
     form_id: formIdDropdown,
   },

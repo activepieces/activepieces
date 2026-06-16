@@ -5,6 +5,10 @@ export const newDeliveryEvent = createMailgunWebhookTrigger({
   displayName: 'New Delivery Event',
   description:
     'Triggers when an email is successfully delivered in Mailgun',
+  aiMetadata: {
+    description:
+      'Fires when Mailgun confirms an email was accepted by the recipient mail server (successful delivery). Represents a single delivered message.',
+  },
   eventType: 'delivered',
   testEventFilter: { event: 'delivered' },
   sampleData: {

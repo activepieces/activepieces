@@ -7,6 +7,11 @@ export const getLead = createAction({
   name: "get_lead",
   displayName: "Get Lead",
   description: "Get the lead via ID.",
+  audience: 'both',
+  aiMetadata: {
+    description: "Fetch a single Housecall Pro lead by its lead ID. Read-only and repeatable. Requires a known lead ID.",
+    idempotent: true,
+  },
   props: {
     id: Property.ShortText({
       displayName: "Lead ID",

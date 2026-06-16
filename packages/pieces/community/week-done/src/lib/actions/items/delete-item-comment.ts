@@ -18,6 +18,8 @@ export const deleteItemCommentAction = createAction({
   name: 'delete_item_comment',
   displayName: 'Delete Item Comment',
   description: 'Delete a comment from an item.',
+  audience: 'both',
+  aiMetadata: { description: 'Delete a specific comment from a Weekdone item, identified by both the item ID and the comment ID; the user/team/period filters only help locate the item. Destructive. Not idempotent: a repeat call fails once the comment is gone.', idempotent: false },
   props: {
     user_id_filter: Property.Dropdown({
       auth: weekdoneAuth,

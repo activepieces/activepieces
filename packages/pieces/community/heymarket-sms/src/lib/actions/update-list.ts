@@ -9,6 +9,12 @@ export const updateList = createAction({
   displayName: 'Update List',
   description:
     'Update an existing list in your team by adding or removing members, or updating list properties',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing Heymarket list identified by List ID: rename it and/or add or remove members by phone number (E.164 without the leading plus), or set the full member set via the Members object. List ID and the (possibly unchanged) title are required. Idempotent: re-running with the same inputs converges on the same list membership and name.',
+    idempotent: true,
+  },
   props: {
     list_id: Property.Number({
       displayName: 'List ID',

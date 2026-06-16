@@ -14,6 +14,8 @@ export const topUpPackagesListingAction = createAction({
   name: 'topUpPackagesListing',
   displayName: 'Resources - Top Up Packages - Listing',
   description: 'Get all Top-Up Packages.',
+  audience: 'both',
+  aiMetadata: { description: 'List top-up packages, optionally filtered to only enabled or disabled ones. Read-only and idempotent; use this to discover packages or find a package id before updating or deleting. Enable pagination to fetch all results.', idempotent: true },
   props: {
         
   filter__enabled: Property.ShortText({

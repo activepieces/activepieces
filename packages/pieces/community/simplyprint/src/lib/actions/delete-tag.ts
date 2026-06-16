@@ -10,6 +10,12 @@ export const deleteTagAction = createAction({
   displayName: 'Delete Tag',
   description:
     'Delete a custom tag from the account. The tag is removed from every printer/file/queue item it was attached to.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Deletes a custom tag from the account by its numeric tag ID, detaching it from every printer, file, and queue item it was attached to. Look up the ID via "List Tags" first. Idempotent in effect: the end state is the same whether or not the tag still existed.',
+    idempotent: true,
+  },
   props: {
     tagId: Property.Number({
       displayName: 'Tag ID',

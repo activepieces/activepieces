@@ -14,6 +14,12 @@ export const createCampaignAction = createAction({
   name: 'create_campaign',
   displayName: 'Create Campaign',
   description: 'Create a new email campaign in Elastic Email.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new email campaign in Elastic Email targeting the given mailing lists and/or segments, with sender, subject, template, and an initial status (e.g. draft or active). Use to set up a bulk campaign send; for one-off transactional messages use Send Email instead. Each call creates a separate campaign, so it is not idempotent.',
+    idempotent: false,
+  },
   auth: elasticEmailAuth,
   props: {
     name: Property.ShortText({

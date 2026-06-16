@@ -18,6 +18,12 @@ export const updateEmailTemplate = createAction({
   name: 'update_email_template',
   displayName: 'Update Email Template',
   description: 'Modify an existing email template with new content',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Overwrites an existing Amazon SES email template, replacing its subject and HTML/text content; an optional preserve-unspecified mode keeps the current HTML or text when a field is left blank instead of clearing it. Use to edit a template that already exists, not to create one. Idempotent: repeating the call with the same input leaves the template in the same final state.',
+    idempotent: true,
+  },
   props: {
     templateName: Property.Dropdown({
       auth: amazonSesAuth,

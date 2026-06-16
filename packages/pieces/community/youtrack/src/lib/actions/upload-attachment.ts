@@ -9,6 +9,8 @@ export const uploadAttachmentAction = createAction({
   name: 'upload_attachment',
   displayName: 'Upload Attachment',
   description: 'Uploads one or more files as attachments to an existing issue.',
+  audience: 'both',
+  aiMetadata: { description: 'Attach one or more files to an existing issue, given the issue ID plus a file name and Base64-encoded content for each file. Use to add screenshots, logs, or documents to an issue. Not idempotent: each call appends new attachments.', idempotent: false },
   props: {
     issue: issueDropdown,
     files: Property.Array({

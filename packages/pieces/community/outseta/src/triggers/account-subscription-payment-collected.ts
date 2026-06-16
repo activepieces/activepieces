@@ -4,6 +4,10 @@ export const accountSubscriptionPaymentCollectedTrigger = createManualWebhookTri
   name: 'account_subscription_payment_collected',
   displayName: 'Account Subscription Payment Collected',
   description: 'Triggers when a subscription payment is successfully collected for an account in Outseta.',
+  aiMetadata: {
+    description:
+      'Fires when a subscription payment is successfully collected for an account in Outseta, delivering the account with its current subscription and updated lifetime revenue. Use to confirm successful billing.',
+  },
   sampleData: {
     Name: 'Acme Corp',
     IsDemo: false,

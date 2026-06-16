@@ -9,6 +9,12 @@ export const createOrUpdateContactAction = createAction({
   displayName: 'Create or Update Contact',
   description:
     'Create a new contact or update an existing contact in Omnisend. If a contact with the same email already exists, it will be updated.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Upsert a contact in Omnisend keyed on the email address: creates the contact if new, otherwise updates fields (name, location, tags) and the email subscription status. Use to add subscribers or sync contact data. Idempotent for an existing contact; re-running with the same input has no extra effect, but enabling Send Welcome Message can trigger a one-time welcome email on first creation.',
+    idempotent: true,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

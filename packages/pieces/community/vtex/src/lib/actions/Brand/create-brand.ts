@@ -8,6 +8,12 @@ export const createBrand = createAction({
   name: 'create-brand',
   displayName: 'Create new Brand',
   description: 'Create a new Brand to your catalog',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new brand in a VTEX store catalog; only the brand name is required. Optionally pass a brand ID to set it explicitly. Not idempotent: each call creates a separate brand.',
+    idempotent: false,
+  },
   props: {
     Name: Property.ShortText({
       displayName: 'Name',

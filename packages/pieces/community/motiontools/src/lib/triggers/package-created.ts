@@ -9,6 +9,9 @@ export const packageCreated = createTrigger({
   name: 'packageCreated',
   displayName: 'Package Created',
   description: 'Triggers when a package is created',
+  aiMetadata: {
+    description: 'Fires when a new hailing package is created in MotionTools (the hailing_package.created webhook event). Each event carries the package id, customer, and its initial status/customs status.',
+  },
   props: {
     instructions: Property.MarkDown({
       value: `# Motiontools Webhook Setup

@@ -4,6 +4,7 @@ import {
     PackageType,
     PieceType,
 } from '@activepieces/shared'
+import { wideEvent } from '@activepieces/server-utils'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import * as applicationEventsModule from '../../../../src/app/helper/application-events'
@@ -95,6 +96,22 @@ describe('App connection application events', () => {
         expect(actionsEmitted(sendUserEventSpy)).toEqual([
             ApplicationEventName.CONNECTION_DELETED,
         ])
+    })
+
+    it('records a connection.listed audit on GET /v1/app-connections', async () => {
+        const ctx = await createTestContext(app)
+        const auditSpy = vi.spyOn(wideEvent, 'audit')
+
+        const response = await ctx.get('/v1/app-connections', {
+            projectId: ctx.project.id,
+        })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        expect(auditSpy).toHaveBeenCalledWith(expect.objectContaining({
+            action: 'connection.listed',
+            actor: expect.objectContaining({ type: 'user' }),
+            target: expect.objectContaining({ type: 'project', id: ctx.project.id }),
+        }))
     })
 })
 

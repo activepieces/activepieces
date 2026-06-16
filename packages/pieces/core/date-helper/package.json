@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-date-helper",
-  "version": "0.1.27",
+  "version": "0.1.28",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {

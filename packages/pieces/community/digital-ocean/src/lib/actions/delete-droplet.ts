@@ -8,6 +8,8 @@ export const deleteDroplet = createAction({
   name: 'delete_droplet',
   displayName: 'Delete Droplet',
   description: 'Delete an existing Droplet.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently destroys a single Droplet (virtual machine) on the DigitalOcean account, identified by its numeric Droplet id. Use to tear down compute you no longer need. Destructive; the first call removes the Droplet and later calls on a missing id fail.', idempotent: false },
   props: {
     droplet_id: Property.Dropdown({
       displayName: 'Droplet',

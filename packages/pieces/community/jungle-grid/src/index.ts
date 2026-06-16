@@ -1,34 +1,16 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
+import { cancelJob } from './lib/actions/cancel-job';
 import { estimateJob } from './lib/actions/estimate-job';
+import { getArtifactDownloadUrl } from './lib/actions/get-artifact-download-url';
+import { getJobLogs } from './lib/actions/get-job-logs';
 import { getJobRuntime } from './lib/actions/get-job-runtime';
 import { getJobStatus } from './lib/actions/get-job-status';
+import { listArtifacts } from './lib/actions/list-artifacts';
 import { listJobs } from './lib/actions/list-jobs';
 import { submitJob } from './lib/actions/submit-job';
-import { jungleGridCommon } from './lib/common';
-
-export const jungleGridAuth = PieceAuth.CustomAuth({
-  displayName: 'Connection',
-  description:
-    'Connect with a Jungle Grid API key. Create one under **Developer → API Keys** in your Jungle Grid portal, then paste it below. Keep the default API base URL unless your workspace provides a custom endpoint.',
-  required: true,
-  props: {
-    api_base_url: Property.ShortText({
-      displayName: 'API Base URL',
-      description:
-        'Base URL for the Jungle Grid API. Replace this when your Jungle Grid workspace provides a specific API endpoint.',
-      required: true,
-      defaultValue: jungleGridCommon.defaultBaseUrl,
-    }),
-    api_key: PieceAuth.SecretText({
-      displayName: 'API Key',
-      description:
-        'Your Jungle Grid API key. Create and copy it from **Developer → API Keys** in the portal. It is sent as a Bearer token in the Authorization header.',
-      required: true,
-    }),
-  },
-});
+import { jungleGridAuth } from './lib/auth';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const jungleGrid = createPiece({
   displayName: 'Jungle Grid',
@@ -41,23 +23,24 @@ export const jungleGrid = createPiece({
     PieceCategory.ARTIFICIAL_INTELLIGENCE,
     PieceCategory.DEVELOPER_TOOLS,
   ],
-  authors: ['junglegrid'],
+  authors: ['junglegrid','dejaguarkyng'],
   actions: [
     estimateJob,
     submitJob,
     listJobs,
     getJobStatus,
     getJobRuntime,
+    getJobLogs,
+    listArtifacts,
+    getArtifactDownloadUrl,
+    cancelJob,
     createCustomApiCallAction({
+      baseUrl: () => 'https://api.junglegrid.dev',
       auth: jungleGridAuth,
-      baseUrl: (auth) =>
-        jungleGridCommon.normalizeBaseUrl(
-          auth?.props.api_base_url ?? jungleGridCommon.defaultBaseUrl,
-        ),
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.props.api_key}`,
       }),
-    }),
+    })
   ],
   triggers: [],
 });

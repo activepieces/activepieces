@@ -9,6 +9,8 @@ export const createAttachment = createAction({
   name: 'create_attachment',
   displayName: 'Create Attachment',
   description: 'Creates a new attachment',
+  audience: 'both',
+  aiMetadata: { description: 'Upload a file as an attachment on a specific MeisterTask task, with an optional display name. Use to attach a document or image to a task; requires the task ID and the file. Not idempotent — each call adds another attachment.', idempotent: false },
   props: {
     task_id: meisterTaskCommon.task_id,
     file_url: Property.File({

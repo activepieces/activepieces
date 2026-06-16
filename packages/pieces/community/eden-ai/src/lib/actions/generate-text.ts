@@ -52,6 +52,12 @@ export const generateTextAction = createAction({
   displayName: 'Generate Text',
   description:
     'Generate text completions using various AI providers through Eden AI chat endpoint.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Generate a chat/LLM completion from a prompt through Eden AI, routing to a chosen provider (OpenAI, Anthropic, Google, Meta, Mistral, and others) with optional system prompt, model override, temperature, and fallback providers. Choose it for one-shot text generation when you want provider flexibility behind a single call rather than calling a specific LLM piece directly. Requires a provider and prompt; optionally pass an image URL for vision-capable models. Generative and non-deterministic, but stateless — repeating the call creates no extra side effect.',
+    idempotent: true,
+  },
   props: {
     provider: Property.Dropdown({
       auth: edenAiAuth,   

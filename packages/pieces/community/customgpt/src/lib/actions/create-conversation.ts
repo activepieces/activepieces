@@ -9,6 +9,12 @@ export const createConversation = createAction({
   name: 'createConversation',
   displayName: 'Create Conversation',
   description: 'Create a new conversation in a CustomGPT project',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Opens a new conversation (chat session) inside an existing CustomGPT agent, returning a session identifier used to send messages. Use this before sending the first message in a fresh chat thread; the target agent project is required and the conversation name is optional. Not idempotent: each call starts a new conversation.',
+    idempotent: false,
+  },
   props: {
     projectId: projectId,
     name: Property.ShortText({

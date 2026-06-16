@@ -12,6 +12,10 @@ export const newComment = createTrigger({
   name: 'new_comment',
   displayName: 'New Comment',
   description: 'Triggers when a comment is created',
+  aiMetadata: {
+    description:
+      'Fires when a user posts a new comment on the specified Box file or folder. Each event represents a single created comment, including the comment text, the item it was added to, and the author.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     id: Property.ShortText({

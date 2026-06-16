@@ -7,6 +7,12 @@ export const getLink = createAction({
   name: 'get_link',
   displayName: 'Get Link',
   description: 'Retrieve details of a specific Dub link by its ID, external ID, or domain + key.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches the full details of a single existing Dub link. Choose the lookup mode: by Dub link ID, by your own external ID (prefixed with ext_), or by domain + slug key. Use when an agent has a known identifier and needs the current link record. Idempotent read-only lookup.',
+    idempotent: true,
+  },
   auth: dubAuth,
   props: {
     lookupMethod: Property.StaticDropdown({

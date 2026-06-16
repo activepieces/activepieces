@@ -9,6 +9,8 @@ export const fountainGetOpening = createAction({
   auth: fountainAuth,
   displayName: 'Get Opening',
   description: 'Get details for a specific job opening',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves details for a single job opening (Fountain funnel) by its ID. Use to inspect a specific opening before working with its stages or applicants. Read-only and idempotent.', idempotent: true },
   props: {
     id: Property.Dropdown({
       displayName: 'Opening',

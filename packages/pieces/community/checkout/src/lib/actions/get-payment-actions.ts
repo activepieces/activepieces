@@ -7,6 +7,8 @@ export const getPaymentActionsAction = createAction({
   auth: checkoutComAuth,
   displayName: 'Get Payment Actions',
   description: 'Build full transaction lifecycles for audit logs.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the list of actions (authorization, capture, refund, void, etc.) that have occurred on a single Checkout.com payment, identified by its payment ID (resolved from an order reference). Choose it to reconstruct a transaction\'s lifecycle for audit or status tracking. Read-only and idempotent.', idempotent: true },
   props: {
     reference: Property.ShortText({
       displayName: 'Reference',

@@ -7,6 +7,8 @@ export const getAccount = createAction({
   name: 'get_account',
   displayName: 'Get Account Details',
   description: 'Retrieve details of an account by its ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up a single Pendo account by its unique account ID and returns that account record. Use when you have a specific account identifier and need its metadata/attributes. Read-only and idempotent.', idempotent: true },
   props: {
     accountId: Property.ShortText({
       displayName: 'Account ID',

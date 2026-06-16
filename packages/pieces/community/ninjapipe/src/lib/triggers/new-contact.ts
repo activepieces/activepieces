@@ -8,6 +8,9 @@ export const newContact = createTrigger({
   name: 'new_contact',
   displayName: 'New Contact',
   description: 'Triggers when a new contact is created.',
+  aiMetadata: {
+    description: 'Fires once for each contact newly created in NinjaPipe, detected by polling on the contact creation timestamp. The event payload is the created contact, including its id, email, first_name, last_name, and created_at. Use it to react to brand-new contacts; it does not fire when an existing contact is later updated.',
+  },
   type: TriggerStrategy.POLLING,
   sampleData: { id: '1', email: 'example@ninjapipe.app', first_name: 'Jane', last_name: 'Doe', created_at: '2024-01-01T00:00:00Z' },
   props: {},

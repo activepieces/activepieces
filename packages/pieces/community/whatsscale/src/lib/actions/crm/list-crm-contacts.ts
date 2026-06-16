@@ -13,6 +13,8 @@ export const listCrmContactsAction = createAction({
   displayName: 'List CRM Contacts',
   description:
     'Retrieve a paginated list of CRM contacts with optional filters',
+  audience: 'both',
+  aiMetadata: { description: 'Browse WhatsScale CRM contacts as a paginated list, optionally filtered by tag or a free-text search over name/phone. Read-only; use this to discover or enumerate contacts when you do not have an exact phone (use Find a CRM Contact by Phone) or contact ID (use Get a CRM Contact). Control volume with limit/page.', idempotent: true },
   props: {
     tag: Property.Dropdown<string, false, typeof whatsscaleAuth>({
       auth: whatsscaleAuth,

@@ -8,6 +8,11 @@ export const readFile = createAction({
   name: 'read-file',
   displayName: 'Read File',
   description: 'Read a file from S3 to use it in other steps',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Downloads a single object from the configured S3 bucket by its full key (path) and makes its contents available as a file for later steps. Use to fetch a known file when you have its exact key. Reading the same key repeatedly returns the same content with no side effect (idempotent).',
+    idempotent: true,
+  },
   props: {
     key: Property.ShortText({
       displayName: 'File Path',

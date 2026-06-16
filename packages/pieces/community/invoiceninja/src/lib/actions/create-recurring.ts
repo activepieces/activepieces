@@ -12,7 +12,9 @@ export const createRecurringInvoice = createAction({
     name: 'create_recurring_invoice',
     displayName: 'Create Recurring Invoice',
     description: 'Creates a recurring invoice in Invoice Ninja for billing purposes.',
-    
+    audience: 'both',
+    aiMetadata: { description: 'Creates a recurring invoice for a client in Invoice Ninja from a JSON array of line items (each referencing an existing product_key), set to bill on a chosen frequency for a given number of cycles starting from a next-send date. The frequency can be picked from the preset list or overridden with a numeric frequency id. Requires a valid client id, at least one line item with a known product key, and a next-send date. Not idempotent — each call creates a new recurring invoice.', idempotent: false },
+
     props: {
       client_id: Property.LongText({
         displayName: 'Client ID (alphanumeric)',

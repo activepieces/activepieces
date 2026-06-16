@@ -13,6 +13,8 @@ export const landingPageHeadlines = createAction({
   displayName: 'Landing Page Headlines',
   description:
     'Generate unique and catchy headlines perfect for your product or service',
+  audience: 'both',
+  aiMetadata: { description: 'Generates AI-written landing page headlines via Writesonic from a product name, with optional description and engine/language/copy-count controls. Use when an agent needs hero or marketing headlines for a product or service page. Each call produces fresh generated text and is billed, so it is not idempotent.', idempotent: false },
   props: {
     product_name: Property.ShortText({
       displayName: 'Product Name',

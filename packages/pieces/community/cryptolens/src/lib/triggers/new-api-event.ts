@@ -120,6 +120,9 @@ export const newApiEvent = createTrigger({
   displayName: 'New API Event',
   description:
     'Trigger when a new API event is logged (activation, deactivation, key creation, etc.)',
+  aiMetadata: {
+    description: 'Fires when a new Web API event is logged in Cryptolens, such as a license activation, deactivation, validation, or key creation. Polls the audit log on an interval and can optionally be scoped to a specific product, a specific key, or particular event-state codes.',
+  },
   props,
   sampleData: {
     Id: 1,

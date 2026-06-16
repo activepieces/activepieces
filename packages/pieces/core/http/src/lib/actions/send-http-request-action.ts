@@ -26,6 +26,7 @@ enum AuthType {
 }
 
 export const httpSendRequestAction = createAction({
+  audience: 'human',
   name: 'send_request',
   displayName: 'Send HTTP request',
   description: 'Send HTTP request',

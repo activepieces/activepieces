@@ -2,8 +2,8 @@ import { isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
+import { domainHelper } from '../../../helper/domain-helper'
 import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
-import { networkUtils } from '../../../helper/network-utils'
 import { mcpOAuthClientService } from '../client/mcp-oauth-client.service'
 
 const AUTH_REQUEST_TTL_10_MINUTES_SECONDS = 10 * 60
@@ -48,7 +48,7 @@ export const mcpOAuthAuthorizeController: FastifyPluginAsyncZod = async (app) =>
             audience: JwtAudience.MCP_OAUTH_AUTH_REQUEST,
         })
 
-        const authorizePageUrl = new URL('/mcp-authorize', networkUtils.getRequestBaseUrl(req))
+        const authorizePageUrl = new URL(domainHelper.getPublicUrlFromRequest({ req, path: '/mcp-authorize' }))
         authorizePageUrl.searchParams.set('authRequestId', authRequestToken)
 
         return reply.redirect(authorizePageUrl.toString())

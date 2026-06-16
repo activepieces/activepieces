@@ -9,6 +9,12 @@ export const denyQueueItemAction = createAction({
   name: 'deny_queue_item',
   displayName: 'Deny Queue Item',
   description: 'Deny a pending queue item (remove or send back for revision).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Denies a pending queue item awaiting approval, attaching a required comment shown to the submitter. A "request revision" toggle picks the mode: when set, the item stays as DENIED so the submitter can edit and resubmit; otherwise the item is removed. Use to reject a submission rather than approve it. Idempotent: it drives the item to a fixed denied/removed state.',
+    idempotent: true,
+  },
   props: {
     queueItemId: Property.Number({
       displayName: 'Queue item ID',

@@ -8,6 +8,8 @@ export const sendSms = createAction({
   name: 'sendSms',
   displayName: 'Send SMS to Customer',
   description: "Send an SMS to a customer using a phone number from our platform.",
+  audience: 'both',
+  aiMetadata: { description: 'Sends a single SMS text message to a customer phone number from a selected SMS-capable Autocalls phone number. Use to deliver an outbound text rather than place a call. Requires a sender phone number id, recipient number, and message body (max 300 characters); each call sends a new message, so it is not idempotent.', idempotent: false },
   props: {
     from: Property.Dropdown({
       auth: autocallsAuth,

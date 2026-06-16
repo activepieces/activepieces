@@ -11,6 +11,10 @@ export const taskUpdated = createTrigger({
   name: 'task_updated',
   displayName: 'Task Updated',
   description: 'Triggers when a task is updated',
+  aiMetadata: {
+    description:
+      'Fires when an existing Onfleet task is modified, such as changes to its destination, recipient, scheduled time, notes, or metadata. Represents a mutation to a task that is not a dedicated lifecycle event, useful for keeping external systems in sync with task edits. The payload includes the full updated task object.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   //Create the webhook and save the webhook ID in store for disable behavior

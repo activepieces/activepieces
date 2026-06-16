@@ -17,6 +17,12 @@ export const createItemAction = createAction({
   name: 'create_item',
   displayName: 'Create Item',
   description: 'Create a new item (task) in a Teamhood board.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new task item on a Teamhood board, requiring a workspace, board, and title; optionally set assignee, owner, status, row/swimlane, dates, estimation, budget, progress, tags, and milestone/completed flags. Use to add work into Teamhood. Not idempotent — each call creates a separate item.',
+    idempotent: false,
+  },
   props: {
     workspaceId: workspaceIdDropdown(true),
     boardId: boardIdDropdown(true),

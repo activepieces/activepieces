@@ -8,6 +8,8 @@ export const activateUserAction = createAction({
   name: 'activate_user',
   displayName: 'Activate User',
   description: 'Activate a previously deactivated or pending user',
+  audience: 'both',
+  aiMetadata: { description: 'Transitions an existing Okta user (identified by user ID) to the ACTIVE lifecycle state, optionally emailing them an activation link. Use to re-enable a deactivated or pending account. Idempotent on end-state — re-running leaves the user active, though it may re-send the activation email if that option is on.', idempotent: true },
   props: {
     userId: userIdDropdown(),
     sendEmail: Property.Checkbox({

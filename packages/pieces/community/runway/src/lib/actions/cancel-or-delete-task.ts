@@ -9,6 +9,8 @@ export const cancelOrDeleteTask = createAction({
 	name: 'cancel_or_delete_task',
 	displayName: 'Cancel or Delete Task',
 	description: 'Cancel or delete a task. Running/pending tasks are cancelled, completed tasks are deleted.',
+	audience: 'both',
+	aiMetadata: { description: 'Aborts or removes a Runway task by ID: a running, pending, or throttled task is cancelled, while an already-completed task is deleted. Use when an agent needs to stop a generation in progress or clean up a finished task. Mutating and not idempotent (a repeat call on an already-removed task reports it as already deleted); requires a valid task UUID.', idempotent: false },
 	props: {
 		taskId: Property.ShortText({
 			displayName: 'Task ID',

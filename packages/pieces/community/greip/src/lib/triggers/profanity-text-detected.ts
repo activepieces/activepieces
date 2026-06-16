@@ -9,6 +9,9 @@ export const profanityTextDetectedTrigger = createTrigger({
   name: 'profanity_text_detected',
   displayName: 'Profanity Text Detected',
   description: 'Triggers when Greip detects profanity in a specific text',
+  aiMetadata: {
+    description: 'Fires when Greip detects profanity in submitted text, carrying the bad-word count, risk score, and safety flag. Delivered via a Greip webhook (profanity event) that must be configured manually in the Greip dashboard.',
+  },
   auth: greipAuth,
   props: {
     webhookInstructions: Property.MarkDown({

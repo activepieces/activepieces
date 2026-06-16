@@ -10,6 +10,8 @@ export const unsubscribeContact = createAction({
     name: 'unsubscribe_contact',
     displayName: 'Unsubscribe Contact',
     description: 'Sets a contact\'s status to "Unsubscribed" in a specific list.',
+    audience: 'both',
+    aiMetadata: { description: 'Marks a contact as unsubscribed in a specific EmailOctopus list, looked up by email address. Use to opt a known subscriber out of a list. Requires the list id and the contact email. Idempotent — re-running leaves the contact unsubscribed with no additional effect.', idempotent: true },
     props: {
         list_id: emailOctopusProps.listId(),
         email_address: Property.ShortText({

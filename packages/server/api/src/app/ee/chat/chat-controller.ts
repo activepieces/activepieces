@@ -23,6 +23,7 @@ import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-
 import { chatApprovalGate } from './chat-approval-gate'
 import { chatHelpers } from './chat-helpers'
 import { chatService } from './chat-service'
+import { findConnectionsForPiece } from './tools/chat-tools'
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
 
@@ -81,7 +82,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/conversations/:id/messages', SendMessageRoute, async (request, reply) => {
-        const { content, files } = request.body
+        const { content, runId: clientRunId, files } = request.body
         const log = request.log
         const conversationId = request.params.id
         const userId = request.principal.id
@@ -93,8 +94,24 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             userId,
         })
 
+        if (conversation.status === ChatConversationStatus.STREAMING) {
+            const activeRunId = await chatApprovalGate.getActiveRunId({ conversationId })
+            const cancelPromises = [
+                chatApprovalGate.requestCancel({ conversationId }),
+            ]
+            if (activeRunId) {
+                cancelPromises.push(chatApprovalGate.requestCancel({ conversationId, runId: activeRunId }))
+            }
+            await Promise.all(cancelPromises)
+            await chatHelpers.conversationRepo().update(conversationId, {
+                status: ChatConversationStatus.IDLE,
+            })
+        }
+
         await assertAiCreditsNotExhausted({ platformId, log })
 
+        const runId = typeof clientRunId === 'string' ? clientRunId : apId()
+        await chatApprovalGate.storeActiveRunId({ conversationId, runId })
         await jobQueue(log).add({
             id: apId(),
             type: JobType.ONE_TIME,
@@ -102,6 +119,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                 schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                 jobType: WorkerJobType.EXECUTE_CHAT_AGENT,
                 conversationId,
+                runId,
                 projectId: conversation.projectId ?? null,
                 platformId,
                 userId,
@@ -111,7 +129,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             },
         })
 
-        return reply.status(StatusCodes.OK).send({ conversationId })
+        return reply.status(StatusCodes.OK).send({ conversationId, runId })
     })
 
     app.post('/tool-approvals/:gateId', ToolApprovalRoute, async (request, reply) => {
@@ -128,7 +146,14 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         const platformId = request.principal.platform.id
         const userId = request.principal.id
         await chatService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
-        await chatApprovalGate.requestCancel({ conversationId })
+        const activeRunId = await chatApprovalGate.getActiveRunId({ conversationId })
+        const cancelPromises = [
+            chatApprovalGate.requestCancel({ conversationId }),
+        ]
+        if (activeRunId) {
+            cancelPromises.push(chatApprovalGate.requestCancel({ conversationId, runId: activeRunId }))
+        }
+        await Promise.all(cancelPromises)
         await chatHelpers.conversationRepo().update(conversationId, {
             status: ChatConversationStatus.IDLE,
         })
@@ -149,11 +174,18 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         const platformId = request.principal.platform.id
         const userId = request.principal.id
         await chatService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
-        const connections = await chatApprovalGate.getAvailableConnections({
-            conversationId,
-            pieceName: request.query.pieceName,
-        })
-        return reply.status(StatusCodes.OK).send(connections)
+        const pieceName = request.query.pieceName
+        const cached = await chatApprovalGate.getAvailableConnections({ conversationId, pieceName })
+        if (cached.length > 0) {
+            return reply.status(StatusCodes.OK).send(cached)
+        }
+        const projects = await chatHelpers.getUserProjects({ platformId, userId, log: request.log })
+        const result = await findConnectionsForPiece({ pieceName, projects, platformId, log: request.log })
+        if ('pickConnection' in result) {
+            await chatApprovalGate.storeAvailableConnections({ conversationId, pieceName, connections: result.connections })
+            return reply.status(StatusCodes.OK).send(result.connections)
+        }
+        return reply.status(StatusCodes.OK).send([])
     })
 
 }

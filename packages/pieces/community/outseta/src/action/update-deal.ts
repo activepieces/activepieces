@@ -8,6 +8,12 @@ export const updateDealAction = createAction({
   auth: outsetaAuth,
   displayName: 'Update Deal',
   description: 'Update an existing deal.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing Outseta CRM deal identified by UID, setting only the provided fields (name, pipeline stage, amount, assignee, due date, linked account/person) via a PUT. Use to advance a deal stage or edit its details when you have its UID. Idempotent: re-running with the same input leaves the deal in the same state.',
+    idempotent: true,
+  },
   props: {
     dealUid: dealUidDropdown(),
     name: Property.ShortText({

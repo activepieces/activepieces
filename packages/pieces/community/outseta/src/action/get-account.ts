@@ -8,6 +8,12 @@ export const getAccountAction = createAction({
   auth: outsetaAuth,
   displayName: 'Get Account',
   description: 'Retrieve an Outseta account by selecting it from the dropdown.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches a single Outseta CRM account by its UID, returning core fields plus billing address, primary contact, and current subscription/plan details. Use to read an account when you already have its UID. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     accountUid: accountUidDropdown(),
   },

@@ -702,6 +702,9 @@ export const moxieCRMTriggers = [
     name: 'client_created',
     displayName: 'Client Created',
     description: 'Triggered when a new client is created.',
+    aiMetadata: {
+      description: 'Fires when a new client or prospect record is created in Moxie CRM. Use to start automations when an account is added to the CRM.',
+    },
     eventType: MoxieCRMEventType.CLIENT_CREATED,
     sampleData: MoxieCRMWebhookSampleData.CLIENT_EVENT_SAMPLE_DATA,
   },
@@ -709,6 +712,9 @@ export const moxieCRMTriggers = [
     name: 'client_updated',
     displayName: 'Client Updated',
     description: 'Triggered when an existing client is updated.',
+    aiMetadata: {
+      description: 'Fires when an existing client record is modified in Moxie CRM, such as a change to contact, address, or billing details.',
+    },
     eventType: MoxieCRMEventType.CLIENT_UPDATED,
     sampleData: MoxieCRMWebhookSampleData.CLIENT_EVENT_SAMPLE_DATA,
   },
@@ -716,6 +722,9 @@ export const moxieCRMTriggers = [
     name: 'client_deleted',
     displayName: 'Client Deleted',
     description: 'Triggered when an existing client is deleted.',
+    aiMetadata: {
+      description: 'Fires when a client record is deleted from Moxie CRM. Use to clean up or sync downstream systems when an account is removed.',
+    },
     eventType: MoxieCRMEventType.CLIENT_DELETED,
     sampleData: MoxieCRMWebhookSampleData.CLIENT_EVENT_SAMPLE_DATA,
   },
@@ -723,6 +732,9 @@ export const moxieCRMTriggers = [
     name: 'project_created',
     displayName: 'Project Created',
     description: 'Triggered when a new project is created.',
+    aiMetadata: {
+      description: 'Fires when a new project is created for a client in Moxie CRM. Use to kick off engagement setup automations.',
+    },
     eventType: MoxieCRMEventType.PROJECT_CREATED,
     sampleData: MoxieCRMWebhookSampleData.PROJECT_EVENT_SAMPLE_DATA,
   },
@@ -730,6 +742,9 @@ export const moxieCRMTriggers = [
     name: 'project_updated',
     displayName: 'Project Updated',
     description: 'Triggered when an existing project is updated.',
+    aiMetadata: {
+      description: 'Fires when an existing project is modified in Moxie CRM, such as a change to dates, fee schedule, or portal access.',
+    },
     eventType: MoxieCRMEventType.PROJECT_UPDATED,
     sampleData: MoxieCRMWebhookSampleData.PROJECT_EVENT_SAMPLE_DATA,
   },
@@ -737,6 +752,9 @@ export const moxieCRMTriggers = [
     name: 'project_completed',
     displayName: 'Project Completed',
     description: 'Triggered when an existing project is completed.',
+    aiMetadata: {
+      description: 'Fires when a project is marked complete in Moxie CRM. Use to trigger wrap-up steps such as final invoicing or close-out notifications.',
+    },
     eventType: MoxieCRMEventType.PROJECT_COMPLETED,
     sampleData: MoxieCRMWebhookSampleData.PROJECT_EVENT_SAMPLE_DATA,
   },
@@ -744,6 +762,9 @@ export const moxieCRMTriggers = [
     name: 'task_created',
     displayName: 'Task Created',
     description: 'Triggered when a new task is created.',
+    aiMetadata: {
+      description: 'Fires when a new task (deliverable) is created within a project in Moxie CRM.',
+    },
     eventType: MoxieCRMEventType.TASK_CREATED,
     sampleData: MoxieCRMWebhookSampleData.PROJECT_TASK_EVENT_SAMPLE_DATA,
   },
@@ -751,6 +772,9 @@ export const moxieCRMTriggers = [
     name: 'task_updated',
     displayName: 'Task Updated',
     description: 'Triggered when an existing task is updated.',
+    aiMetadata: {
+      description: 'Fires when an existing task (deliverable) is modified in Moxie CRM, such as a change to status, assignee, or due date.',
+    },
     eventType: MoxieCRMEventType.TASK_UPDATED,
     sampleData: MoxieCRMWebhookSampleData.PROJECT_TASK_EVENT_SAMPLE_DATA,
   },
@@ -758,6 +782,9 @@ export const moxieCRMTriggers = [
     name: 'task_deleted',
     displayName: 'Task Deleted',
     description: 'Triggered when an existing task is deleted.',
+    aiMetadata: {
+      description: 'Fires when a task (deliverable) is deleted from a project in Moxie CRM.',
+    },
     eventType: MoxieCRMEventType.TASK_DELETED,
     sampleData: MoxieCRMWebhookSampleData.PROJECT_TASK_EVENT_SAMPLE_DATA,
   },
@@ -765,6 +792,9 @@ export const moxieCRMTriggers = [
     name: 'client_task_approval',
     displayName: 'Client Task Approval',
     description: 'Triggered when a task is moved to client approval.',
+    aiMetadata: {
+      description: 'Fires when a task (deliverable) is moved into the client-approval stage in Moxie CRM. Use to notify or escalate when work awaits client sign-off.',
+    },
     eventType: MoxieCRMEventType.TASK_APPROVAL,
     sampleData: MoxieCRMWebhookSampleData.PROJECT_TASK_EVENT_SAMPLE_DATA,
   },
@@ -772,6 +802,9 @@ export const moxieCRMTriggers = [
     name: 'form_submitted',
     displayName: 'Form Submitted',
     description: 'Triggered when a new form is submitted.',
+    aiMetadata: {
+      description: 'Fires when a Moxie CRM form (such as an intake or lead form) is submitted. Use to capture inbound leads or client-supplied information.',
+    },
     eventType: MoxieCRMEventType.FORM_SUBMITTED,
     sampleData: MoxieCRMWebhookSampleData.FORM_EVENT_SAMPLE_DATA,
   },
@@ -779,6 +812,9 @@ export const moxieCRMTriggers = [
     name: 'time_entry_created',
     displayName: 'Time Entry Created',
     description: 'Triggered when a new time entry is created.',
+    aiMetadata: {
+      description: 'Fires when a new time entry (timer record) is logged in Moxie CRM against a client, project, or task.',
+    },
     eventType: MoxieCRMEventType.TIME_ENTRY_CREATED,
     sampleData: MoxieCRMWebhookSampleData.TIME_ENTRY_EVENT_SAMPLE_DATA,
   },
@@ -786,6 +822,9 @@ export const moxieCRMTriggers = [
     name: 'time_entry_updated',
     displayName: 'Time Entry Updated',
     description: 'Triggered when an existing time entry is updated.',
+    aiMetadata: {
+      description: 'Fires when an existing time entry (timer record) is modified in Moxie CRM, such as a change to duration or notes.',
+    },
     eventType: MoxieCRMEventType.TIME_ENTRY_UPDATED,
     sampleData: MoxieCRMWebhookSampleData.TIME_ENTRY_EVENT_SAMPLE_DATA,
   },
@@ -793,6 +832,9 @@ export const moxieCRMTriggers = [
     name: 'time_entry_deleted',
     displayName: 'Time Entry Deleted',
     description: 'Triggered when an existing time entry is deleted.',
+    aiMetadata: {
+      description: 'Fires when a time entry (timer record) is deleted in Moxie CRM.',
+    },
     eventType: MoxieCRMEventType.TIME_ENTRY_DELETED,
     sampleData: MoxieCRMWebhookSampleData.TIME_ENTRY_EVENT_SAMPLE_DATA,
   },
@@ -800,6 +842,9 @@ export const moxieCRMTriggers = [
     name: 'meeting_scheduled',
     displayName: 'Meeting Scheduled',
     description: 'Triggered when a new meeting is scheduled.',
+    aiMetadata: {
+      description: 'Fires when a new meeting is scheduled in Moxie CRM, including its confirmed time and conferencing details.',
+    },
     eventType: MoxieCRMEventType.MEETING_SCHEDULED,
     sampleData: MoxieCRMWebhookSampleData.MEETING_EVENT_SAMPLE_DATA,
   },
@@ -807,6 +852,9 @@ export const moxieCRMTriggers = [
     name: 'meeting_updated',
     displayName: 'Meeting Updated',
     description: 'Triggered when an existing meeting is updated.',
+    aiMetadata: {
+      description: 'Fires when an existing meeting is modified in Moxie CRM, such as a reschedule or change to its details.',
+    },
     eventType: MoxieCRMEventType.MEETING_UPDATED,
     sampleData: MoxieCRMWebhookSampleData.MEETING_EVENT_SAMPLE_DATA,
   },
@@ -814,6 +862,9 @@ export const moxieCRMTriggers = [
     name: 'meeting_cancelled',
     displayName: 'Meeting Cancelled',
     description: 'Triggered when a meeting is cancelled.',
+    aiMetadata: {
+      description: 'Fires when a scheduled meeting is cancelled in Moxie CRM.',
+    },
     eventType: MoxieCRMEventType.MEETING_CANCELLED,
     sampleData: MoxieCRMWebhookSampleData.MEETING_EVENT_SAMPLE_DATA,
   },
@@ -821,6 +872,9 @@ export const moxieCRMTriggers = [
     name: 'opportunity_created',
     displayName: 'Opportunity Created',
     description: 'Triggered when a new pipeline opportunity is created.',
+    aiMetadata: {
+      description: 'Fires when a new sales-pipeline opportunity is created in Moxie CRM. Use to start automations on incoming deals.',
+    },
     eventType: MoxieCRMEventType.OPPORTUNITY_CREATED,
     sampleData: MoxieCRMWebhookSampleData.OPPORTUNITY_EVENT_SAMPLE_DATA,
   },
@@ -828,6 +882,9 @@ export const moxieCRMTriggers = [
     name: 'opportunity_updated',
     displayName: 'Opportunity Updated',
     description: 'Triggered when an existing opportunity is updated.',
+    aiMetadata: {
+      description: 'Fires when an existing pipeline opportunity is modified in Moxie CRM, such as a stage change or value update.',
+    },
     eventType: MoxieCRMEventType.OPPORTUNITY_UPDATED,
     sampleData: MoxieCRMWebhookSampleData.OPPORTUNITY_EVENT_SAMPLE_DATA,
   },
@@ -835,6 +892,9 @@ export const moxieCRMTriggers = [
     name: 'opportunity_deleted',
     displayName: 'Opportunity Deleted',
     description: 'Triggered when an existing pipeline opportunity is deleted.',
+    aiMetadata: {
+      description: 'Fires when a pipeline opportunity is deleted from Moxie CRM.',
+    },
     eventType: MoxieCRMEventType.OPPORTUNITY_DELETED,
     sampleData: MoxieCRMWebhookSampleData.OPPORTUNITY_EVENT_SAMPLE_DATA,
   },
@@ -842,6 +902,9 @@ export const moxieCRMTriggers = [
     name: 'invoice_sent',
     displayName: 'Invoice Sent',
     description: 'Triggered when an invoice is sent.',
+    aiMetadata: {
+      description: 'Fires when an invoice is sent to a client in Moxie CRM. Use to track billing or notify on outgoing invoices.',
+    },
     eventType: MoxieCRMEventType.INVOICE_SENT,
     sampleData: MoxieCRMWebhookSampleData.INVOICE_EVENT_SAMPLE_DATA,
   },
@@ -849,6 +912,9 @@ export const moxieCRMTriggers = [
     name: 'payment_received',
     displayName: 'Payment Received',
     description: 'Triggered when a payment is received.',
+    aiMetadata: {
+      description: 'Fires when a payment against an invoice is received in Moxie CRM. Use to reconcile payments or trigger fulfillment.',
+    },
     eventType: MoxieCRMEventType.PAYMENT_RECEIVED,
     sampleData: MoxieCRMWebhookSampleData.INVOICE_EVENT_SAMPLE_DATA,
   },

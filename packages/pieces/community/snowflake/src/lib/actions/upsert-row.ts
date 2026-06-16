@@ -15,6 +15,12 @@ export const upsertRowAction = createAction({
   displayName: 'Upsert Row',
   description:
     'Insert a new row or update an existing one if a row with the same match column value already exists (MERGE INTO).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Inserts a row into a Snowflake table, or updates the existing row when one already matches on the chosen match column, via MERGE INTO. Use when you want create-or-update semantics keyed on a stable identifier instead of separate insert/update logic. The match column must be among the supplied column values, and at least one other column is required. Idempotent when the match column is a stable unique key: repeating the call converges to the same row state.',
+    idempotent: true,
+  },
   auth: snowflakeAuth,
   props: {
     database: snowflakeCommonProps.database,

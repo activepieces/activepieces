@@ -25,6 +25,7 @@ interface AgentGetResponse {
 }
 
 export const agentGet = createAction({
+  audience: 'human',
   auth: straicoAuth,
   name: 'agent_get',
   displayName: 'Get Agent Details',

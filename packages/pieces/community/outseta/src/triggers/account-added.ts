@@ -4,6 +4,10 @@ export const accountAddedTrigger = createManualWebhookTrigger({
   name: 'account_added',
   displayName: 'Account Added',
   description: 'Triggers when a new account is added in Outseta.',
+  aiMetadata: {
+    description:
+      'Fires when a new CRM account is created in Outseta, delivering the account record (name, stage, billing address, primary contact, and any initial subscription).',
+  },
   sampleData: {
     Name: 'Acme Corp',
     InvoiceNotes: '',

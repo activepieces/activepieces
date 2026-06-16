@@ -17,8 +17,6 @@ import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { cn } from '@/lib/utils';
 
-import { StreamingText } from './streaming-text';
-
 export function ThinkingBlock({
   thinkingSteps,
   reasoningText,
@@ -94,7 +92,6 @@ export function ThinkingBlock({
                     : `${step.kind}-${idx}`
                 }
                 step={step}
-                isStreaming={isStreaming}
               />
             ))}
           </div>
@@ -104,42 +101,20 @@ export function ThinkingBlock({
   );
 }
 
-function StepRenderer({
-  step,
-  isStreaming,
-}: {
-  step: ThinkingStep;
-  isStreaming: boolean;
-}) {
+function StepRenderer({ step }: { step: ThinkingStep }) {
   switch (step.kind) {
     case 'reasoning':
       return (
         <div className="py-0.5">
-          {isStreaming ? (
-            <StreamingText
-              text={step.text}
-              isStreaming={true}
-              className="whitespace-pre-wrap break-words text-sm text-muted-foreground leading-relaxed"
-            />
-          ) : (
-            <p className="whitespace-pre-wrap break-words text-sm text-muted-foreground leading-relaxed">
-              {step.text}
-            </p>
-          )}
+          <p className="whitespace-pre-wrap break-words text-sm text-muted-foreground leading-relaxed">
+            {step.text}
+          </p>
         </div>
       );
     case 'thinking-status':
       return (
         <div className="py-0.5">
-          {isStreaming ? (
-            <StreamingText
-              text={step.text}
-              isStreaming={true}
-              className="text-sm text-muted-foreground"
-            />
-          ) : (
-            <p className="text-sm text-muted-foreground">{step.text}</p>
-          )}
+          <p className="text-sm text-muted-foreground">{step.text}</p>
         </div>
       );
     case 'tool':
@@ -186,16 +161,6 @@ function ToolStepRow({
     () => (detailsOpen && output ? tryParseJson(output) : undefined),
     [detailsOpen, output],
   );
-  const connectionLabel = useMemo(() => {
-    if (part.state !== 'output-available' || !part.output) return undefined;
-    const raw =
-      typeof part.output === 'string' ? tryParseJson(part.output) : part.output;
-    if (!raw || typeof raw !== 'object') return undefined;
-    const meta = (raw as Record<string, unknown>)['_meta'];
-    if (!meta || typeof meta !== 'object') return undefined;
-    const label = (meta as Record<string, unknown>)['connectionLabel'];
-    return typeof label === 'string' ? label : undefined;
-  }, [part.state, part.output]);
   const pieceNames = useMemo(
     () => chatPartUtils.extractPieceNames(rawInput),
     [rawInput],
@@ -273,11 +238,6 @@ function ToolStepRow({
                 />
               ))}
             </div>
-            {connectionLabel && (
-              <p className="text-xs text-muted-foreground mt-0.5 ml-1">
-                {t('via {connectionLabel}', { connectionLabel })}
-              </p>
-            )}
           </div>
         )}
         {hasDetails && (

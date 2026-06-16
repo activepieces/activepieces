@@ -7,6 +7,12 @@ export const searchTweets = createAction({
   name: 'search_tweets',
   displayName: 'Search Tweets',
   description: 'Search public X/Twitter posts with X query operators.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches public X/Twitter posts matching a query, which supports keywords, hashtags, exact phrases, from:user, and X search operators. Use to find posts on a topic; set the result type to fetch the latest posts or top engagement-ranked ones, and optionally bound results by a time window. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     query: Property.ShortText({
       displayName: 'Query',

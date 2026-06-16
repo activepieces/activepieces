@@ -35,6 +35,12 @@ export const listPurchases = createAction({
   name: 'purchases_list_purchases',
   displayName: 'List Purchases',
   description: 'Returns a list of all purchases',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves a paginated list of all purchase records in the account; pass a page number to go beyond the first page. For purchases scoped to one subscriber, product, form, or sequence, prefer the dedicated filtered list actions. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     page: purchasesPageNumber,
   },
@@ -49,6 +55,12 @@ export const getPurchaseById = createAction({
   name: 'purchases_get_purchase_by_id',
   displayName: 'Get Purchase By Id',
   description: 'Returns data for a single purchase',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches one purchase record by its ConvertKit purchase ID (not the external transaction ID). Use List Purchases first if only the transaction details are known. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     purchaseId,
   },
@@ -90,6 +102,12 @@ export const createSinglePurchase = createAction({
   name: 'purchases_create_purchase',
   displayName: 'Create Purchase',
   description: 'Creates a new purchase',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Records a purchase with a single product line item against a subscriber email, including transaction ID, status, currency, and amounts. Use Create Multiple Purchases instead when an order contains several products. Not idempotent — repeat calls create duplicate purchase records.',
+    idempotent: false,
+  },
   props: {
     transactionId,
     transactionTime,
@@ -162,6 +180,12 @@ export const createPurchases = createAction({
   name: 'purchases_create_multiple_purchases',
   displayName: 'Create Multiple Purchases',
   description: 'Creates multiple purchases',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Records one purchase transaction containing multiple product line items for a subscriber email. Pick this over Create Purchase for multi-product orders. Not idempotent — repeat calls create duplicate purchase records.',
+    idempotent: false,
+  },
   props: {
     transactionId,
     transactionTime,
@@ -237,6 +261,12 @@ export const listPurchasesForSubscriber = createAction({
   name: 'purchases_list_purchases_for_subscriber',
   displayName: 'List Purchases For Subscriber',
   description: 'Returns a list of all purchases for a subscriber',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists all purchases attributed to one subscriber by numeric subscriber ID. Use Get Subscriber By Email first if only an email address is known. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     subscriberId,
   },
@@ -274,6 +304,12 @@ export const listPurchasesForProduct = createAction({
   name: 'purchases_list_purchases_for_product',
   displayName: 'List Purchases For Product',
   description: 'Returns a list of all purchases for a product',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists all purchases of a specific product by product ID. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     productId,
   },
@@ -300,6 +336,12 @@ export const listPurchasesForForm = createAction({
   name: 'purchases_list_purchases_for_form',
   displayName: 'List Purchases For Form',
   description: 'Returns a list of all purchases for a form',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists all purchases associated with a specific form by form ID. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     formId,
   },
@@ -326,6 +368,12 @@ export const listPurchasesForSequence = createAction({
   name: 'purchases_list_purchases_for_sequence',
   displayName: 'List Purchases For Sequence',
   description: 'Returns a list of all purchases for a sequence',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists all purchases associated with a specific sequence by sequence ID. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     sequenceId,
   },

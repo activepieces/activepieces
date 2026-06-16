@@ -15,6 +15,8 @@ export const updateCompanyAction = createAction({
 	name: 'update-company',
 	displayName: 'Update Company',
 	description: 'Updates a company in Hubspot.',
+	audience: 'both',
+	aiMetadata: { description: 'Update properties on an existing HubSpot company identified by Company ID; only the supplied fields are changed. Applying the same field values repeatedly leaves the record in the same state, so it is idempotent. Use Create Company to add a new record, or a find action to obtain the ID first.', idempotent: true },
 	props: {
 		companyId: Property.ShortText({
 			displayName: 'Company ID',

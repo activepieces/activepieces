@@ -8,6 +8,11 @@ export const sendVideo = createAction({
   name: 'send_video',
   displayName: 'Send Video',
   description: 'Send a video message via WhatsApp.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Sends a video to a WhatsApp recipient, optionally with a caption. Supply the video either as a public URL or as the media ID of a previously uploaded file (use one or the other). Each call delivers a new message, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     businessAccountId: businessAccountIdProp,
     phoneNumberId: phoneNumberIdDropdown,

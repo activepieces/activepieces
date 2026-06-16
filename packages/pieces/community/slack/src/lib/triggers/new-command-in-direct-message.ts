@@ -14,6 +14,10 @@ export const newCommandInDirectMessageTrigger = createTrigger({
   displayName: 'New Command in Direct Message',
   description:
     'Triggers when a specific command is sent to the bot (e.g., @bot command arg1 arg2) via Direct Message.',
+  aiMetadata: {
+    description:
+      'Fires when a direct message (im channel) addressed to the bot contains one of the configured commands (e.g., "@bot help" or "@bot remind"). Only messages in DM channels matching the listed commands fire; bot messages and the user\'s own messages can be optionally ignored. The event payload includes the original message plus a parsed_command object with the recognized command and its arguments.',
+  },
   props: {
     user: userId(true),
     commands: Property.Array({

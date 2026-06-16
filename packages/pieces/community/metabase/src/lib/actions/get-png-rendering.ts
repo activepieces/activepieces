@@ -10,6 +10,12 @@ export const getQuestionPngPreview = createAction({
   displayName: 'Get Question PNG Preview',
   description:
     'Get PNG preview rendering (low resolution) of a Metabase card/question.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches a low-resolution PNG preview image of a saved Metabase question (card) by its ID and saves it as a file. Use when an agent needs a quick visual snapshot of a report rather than the underlying data rows. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     questionId: Property.ShortText({
       displayName: 'Metabase question ID',

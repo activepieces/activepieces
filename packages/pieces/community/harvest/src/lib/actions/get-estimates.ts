@@ -13,6 +13,8 @@ export const getEstimates = createAction({
   auth: harvestAuth,
   displayName: 'Get Estimates',
   description: 'Fetches Estimates',
+  audience: 'both',
+  aiMetadata: { description: 'Lists estimates (quotes) from a Harvest account; with all filters empty it returns every estimate, or narrow by issue-date range, state (draft/open/accepted/declined), client ID, or updated-since timestamp. Use to review or look up quote records. Read-only and idempotent.', idempotent: true },
   props: {
     from: Property.ShortText({
       description: 'Only return estimates with an issue_date on or after the given date. (YYYY-MM-DD)',

@@ -10,6 +10,10 @@ export const taskDeleted = createTrigger({
   name: 'task_deleted',
   displayName: 'Task Deleted',
   description: 'Triggers when a task is deleted',
+  aiMetadata: {
+    description:
+      'Fires when an Onfleet task is permanently removed from the organization. Represents cancellation or cleanup of a task that will no longer be dispatched or completed, useful for reconciling external records. The payload includes the deleted task object or its identifier.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   //Create the webhook and save the webhook ID in store for disable behavior

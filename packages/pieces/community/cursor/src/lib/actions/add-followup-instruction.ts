@@ -15,6 +15,11 @@ export const addFollowupInstruction = createAction({
   name: 'add_followup_instruction',
   displayName: 'Add Followup Instruction to Agent',
   description: 'Adds follow-up instructions to a running cloud agent',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Sends an additional instruction (optionally with images) to an existing Cursor cloud agent identified by its agent id, steering or extending its in-progress work. Use to course-correct or add scope after launching an agent. Each call appends a new instruction, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     agentId: agentDropdown,
     text: Property.LongText({

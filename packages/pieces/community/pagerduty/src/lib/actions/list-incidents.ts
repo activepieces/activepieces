@@ -9,6 +9,12 @@ export const listIncidents = createAction({
   name: 'list_incidents',
   displayName: 'List Incidents',
   description: 'List PagerDuty incidents with optional filters and pagination.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists PagerDuty incidents, optionally narrowed by status, urgency, and a since/until time window, with limit/offset paging (limit clamped to 1-100). Use to find or enumerate incidents; with no filters it returns the most recent incidents. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     statuses: statusesProp,
     urgency: optionalUrgencyProp,

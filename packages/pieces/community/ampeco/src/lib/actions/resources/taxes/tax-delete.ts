@@ -14,6 +14,8 @@ export const taxDeleteAction = createAction({
   name: 'taxDelete',
   displayName: 'Resources - Taxes - Delete',
   description: 'Delete a Tax.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete a tax rate by its numeric ID. Destructive and irreversible; effectively idempotent since deleting an already-removed tax has no further effect, though it may return a not-found error. Confirm the ID before calling.', idempotent: true },
   props: {
         
   tax: Property.Number({

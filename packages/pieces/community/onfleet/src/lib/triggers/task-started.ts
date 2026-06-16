@@ -11,6 +11,10 @@ export const taskStarted = createTrigger({
   name: 'task_started',
   displayName: 'Task Started',
   description: 'Triggers when a task is started',
+  aiMetadata: {
+    description:
+      'Fires when a worker begins an Onfleet task, meaning the assigned driver has started en route to the task destination. Represents the transition of a task into the active in-progress state, useful for starting live-tracking notifications. The payload includes the full task object.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   //Create the webhook and save the webhook ID in store for disable behavior

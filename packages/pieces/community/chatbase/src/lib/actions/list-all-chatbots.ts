@@ -8,6 +8,8 @@ export const listChatbotsAction = createAction({
 	name: 'list_chatbots',
 	displayName: 'List All Chatbots',
 	description: 'Retrieves a list of all chatbots.',
+	audience: 'both',
+	aiMetadata: { description: 'Lists all chatbots in the authenticated Chatbase account. Use when an agent needs to discover available chatbots or resolve a chatbot ID before sending prompts or searching conversations. Takes no input; idempotent read-only listing.', idempotent: true },
 	props: {},
 
 	async run(context) {

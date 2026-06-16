@@ -22,6 +22,12 @@ export const convertPdfToStructuredFormat = createAction({
     name: 'convert_pdf_to_structured_format',
     displayName: 'Convert PDF to JSON/CSV/XML',
     description: 'Convert PDF content into structured formats (JSON, CSV, or XML).',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Converts a source PDF (referenced by URL) into structured data, with the output format selectable between JSON, CSV, or XML. Optional OCR language handles scanned documents. Use when an agent needs machine-readable data extracted from a PDF. Each call generates a new output file and consumes credits, so it is not idempotent.',
+        idempotent: false,
+    },
     auth: pdfCoAuth,
     props: {
         url: Property.ShortText({

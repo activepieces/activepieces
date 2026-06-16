@@ -26,6 +26,12 @@ export const updateContactAction = createAction({
   displayName: 'Update Contact',
   description:
     'Updates an existing INBOX contact. You can add or replace tags and set custom field values.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing INBOX contact identified by its contact id, setting its tags. Use to modify a known contact rather than create one. Requires the contact id; applying the same tags again leaves the contact in the same state.',
+    idempotent: true,
+  },
   props: {
     contactId: useinboxProps.contactDropdown(),
     tags: Property.Array({

@@ -8,6 +8,12 @@ export const createNoteAction = createAction({
   name: 'create_note',
   displayName: 'Create Note',
   description: 'Create a note associated with a person or account in Salesloft.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a note attached to a Salesloft person or account, depending on the chosen associated record type. Use to log context against a contact or company. Requires note content plus the record type and the numeric ID of the target record. Not idempotent — each call appends a new note.',
+    idempotent: false,
+  },
   auth: salesloftAuth,
   props: {
     content: Property.LongText({

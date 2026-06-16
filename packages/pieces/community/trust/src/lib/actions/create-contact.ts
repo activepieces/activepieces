@@ -8,6 +8,12 @@ export const createContactAction = createAction({
   name: 'create_contact',
   displayName: 'Create Contact',
   description: 'Creates a new contact in the system.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new contact in the Trust workspace, optionally with name, email, phone, and a profile image URL. Pick this to register a person before requesting or attaching testimonials; to modify someone who already exists, use Update Contact instead. All fields are optional, and every call creates a new contact record, so repeated calls produce duplicates (not idempotent).',
+    idempotent: false,
+  },
   props: {
     firstname: Property.ShortText({
       displayName: 'First Name',

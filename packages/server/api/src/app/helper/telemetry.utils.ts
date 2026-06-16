@@ -1,7 +1,7 @@
 import { apVersionUtil } from '@activepieces/server-utils'
 import { ProjectId, TelemetryEvent, User, UserId, UserIdentity } from '@activepieces/shared'
-import { Analytics } from '@segment/analytics-node'
 import { FastifyBaseLogger } from 'fastify'
+import { PostHog } from 'posthog-node'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
 import { system } from './system/system'
@@ -9,16 +9,24 @@ import { AppSystemProp } from './system/system-props'
 
 const telemetryEnabled = system.getBoolean(AppSystemProp.TELEMETRY_ENABLED)
 
-const analytics = new Analytics({ writeKey: '42TtMD2Fh9PEIcDO2CagCGFmtoPwOmqK' })
+let posthogInstance: PostHog | null = null
+function getPostHog(): PostHog {
+    if (!posthogInstance) {
+        posthogInstance = new PostHog('phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh', {
+            host: 'https://us.i.posthog.com',
+        })
+    }
+    return posthogInstance
+}
 
 export const telemetry = (log: FastifyBaseLogger) => ({
     async identify(identity: UserIdentity, user?: User, projectId?: ProjectId): Promise<void> {
         if (!telemetryEnabled) {
             return
         }
-        const identify = {
-            userId: user?.id ?? identity.id,
-            traits: {
+        getPostHog().identify({
+            distinctId: user?.id ?? identity.id,
+            properties: {
                 email: identity.email,
                 firstName: identity.firstName,
                 lastName: identity.lastName,
@@ -26,15 +34,14 @@ export const telemetry = (log: FastifyBaseLogger) => ({
                 firstSeenAt: user?.created ?? identity.created,
                 ...(await getMetadata()),
             },
-        }
-        analytics.identify(identify)
+        })
     },
     async trackPlatform(platformId: ProjectId, event: TelemetryEvent): Promise<void> {
         if (!telemetryEnabled) {
             return
         }
         const platform = await platformService(log).getOneOrThrow(platformId)
-        await this.trackUser(platform.ownerId, event)
+        await this.trackUser(platform.ownerId, event, { platform: platformId })
     },
     async trackProject(
         projectId: ProjectId,
@@ -44,28 +51,33 @@ export const telemetry = (log: FastifyBaseLogger) => ({
             return
         }
         const project = await projectService(log).getOne(projectId)
-        this.trackUser(project!.ownerId, event).catch((e) =>
-            log.error({ err: e }, '[telemetry#trackProject] Failed to track user'),
-        )
+        return this.trackUser(project!.ownerId, event, { platform: project!.platformId })
     },
     isEnabled: () => telemetryEnabled,
-    async trackUser(userId: UserId, event: TelemetryEvent): Promise<void> {
+    async trackUser(userId: UserId, event: TelemetryEvent, groups?: Record<string, string>): Promise<void> {
         if (!telemetryEnabled) {
             return
         }
         const payloadEvent = {
-            userId,
+            distinctId: userId,
             event: event.name,
             properties: {
                 ...event.payload,
                 ...(await getMetadata()),
                 datetime: new Date().toISOString(),
             },
+            groups,
         }
         log.info(payloadEvent, '[Telemetry#trackUser] sending event')
-        analytics.track(payloadEvent)
+        getPostHog().capture(payloadEvent)
     },
 })
+
+export async function shutdownTelemetry(): Promise<void> {
+    if (telemetryEnabled) {
+        await getPostHog().shutdown()
+    }
+}
 
 async function getMetadata() {
     const currentVersion = apVersionUtil.getCurrentRelease()
@@ -74,5 +86,6 @@ async function getMetadata() {
         activepiecesVersion: currentVersion,
         activepiecesEnvironment: system.get(AppSystemProp.ENVIRONMENT),
         activepiecesEdition: edition,
+        source_site: 'product',
     }
 }

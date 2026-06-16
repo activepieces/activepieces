@@ -8,6 +8,12 @@ export const subscribeToEmailListAction = createAction({
   auth: outsetaAuth,
   displayName: 'Subscribe to Email List',
   description: "Add a person's email address to a mailing list.",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Subscribes an email address (with optional first/last name) to a specific Outseta email list, creating the person if needed, and can optionally send the list welcome email. Use to add someone to a mailing list. Requires the email list UID and the email. Not idempotent: it creates a subscription record and may send a welcome email.',
+    idempotent: false,
+  },
   props: {
     emailListUid: emailListUidDropdown(),
     email: Property.ShortText({

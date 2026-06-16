@@ -8,6 +8,12 @@ export const updateAccountAction = createAction({
   auth: outsetaAuth,
   displayName: 'Update Account',
   description: 'Update an existing account in Outseta.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing Outseta CRM account identified by UID, setting only the provided fields (name, stage, client identifier, invoice notes, billing address) via a PUT. Use to change account details when you have its UID; requires at least one field. Idempotent: re-running with the same input leaves the account in the same state.',
+    idempotent: true,
+  },
   props: {
     accountUid: accountUidDropdown(),
     name: Property.ShortText({

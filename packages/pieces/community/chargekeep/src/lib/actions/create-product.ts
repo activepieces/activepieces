@@ -6,6 +6,8 @@ export const createProduct = createAction({
   name: 'createProduct',
   displayName: 'Create Product',
   description: 'Creates a new product in the CRM',
+  audience: 'both',
+  aiMetadata: { description: 'Imports a product (General, Event, Subscription, or Digital) into the ChargeKeep/Sperse CRM along with a subscription/pricing option. Use to add a sellable product or plan; requires a product Type, Name, and SKU (the unique product Code), with price/unit/payment-cycle fields needed depending on the type. Because the import is keyed on the SKU, reusing the same code updates that product rather than creating a duplicate.', idempotent: true },
   auth: chargekeepAuth,
   props: {
     productType: Property.StaticDropdown({

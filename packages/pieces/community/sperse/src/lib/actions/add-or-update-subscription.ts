@@ -6,6 +6,12 @@ export const addOrUpdateSubscription = createAction({
   name: 'addOrUpdateSubscription',
   displayName: 'Add or Update Subscription',
   description: 'Creates a new subscription.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Adds or updates a product subscription for a contact in Sperse CRM, setting the payment period (Monthly, Annual, or LifeTime) and recurring-billing flag. Identify the contact by Contact ID or External Contact ID and the product by the required Product Code. Idempotent: it updates the matching subscription rather than creating a duplicate on repeated calls with the same contact and product.',
+    idempotent: true,
+  },
   auth: sperseAuth,
   props: {
     contactId: Property.Number({

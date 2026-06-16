@@ -15,6 +15,8 @@ export const electricityRateEnergyMixReadAction = createAction({
   name: 'electricityRateEnergyMixRead',
   displayName: 'Resources - Electricity Rates - Electricity Rate Energy Mix Read',
   description: 'Get an electricity rate energy mix.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve the energy-source mix (percentages for solar, wind, hydro, nuclear, coal, gas and other sources) of a given electricity rate in AMPECO. Read-only and safe to repeat. Use the energy-mix update action to change these percentages.', idempotent: true },
   props: {
         
   electricityRate: Property.Number({

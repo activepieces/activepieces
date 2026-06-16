@@ -8,6 +8,8 @@ export const createClickupMessageReply = createAction({
   auth: clickupAuth,
   name: 'create_message_reply',
   description: 'Creates a reply to a message in a ClickUp channel',
+  audience: 'both',
+  aiMetadata: { description: 'Post a reply to an existing Chat message in a ClickUp workspace, creating a threaded response under that message. Each call adds a new reply, so repeated calls create duplicates (not idempotent). Use Create Message to start a new top-level message in a channel instead.', idempotent: false },
   displayName: 'Create Message Reply',
   props: {
     workspace_id: clickupCommon.workspace_id(),

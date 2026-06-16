@@ -9,6 +9,12 @@ export const getVerificationResultAction = createAction({
   displayName: 'Get Identity Verification Result',
   description:
     'Fetches the current status and outcome of a person\'s identity check — whether it is still in progress, approved, or declined.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up the current status and decision (in progress, approved, or declined) of a single identity (KYC) verification by its session ID. Use this to poll or read the outcome of a previously started user verification. Requires the verification session ID. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     session_id: Property.ShortText({
       displayName: 'Verification Session ID',

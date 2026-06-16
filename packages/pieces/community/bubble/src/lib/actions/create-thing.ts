@@ -13,6 +13,8 @@ export const bubbleCreateThingAction = createAction({
   name: 'bubble_create_thing',
   displayName: 'Create Thing',
   description: 'Create a thing',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new record ("thing") of a given data type in a Bubble app via the Bubble Data API. Use to add a new entry; supply the type name and a fields object with the values to set. Not idempotent — each call creates a separate record.', idempotent: false },
   props: {
     typename: bubbleCommon.typename,
     fields: bubbleCommon.fields,

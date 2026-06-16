@@ -22,6 +22,11 @@ export const listFiles = createAction({
   name: 'list-files',
   displayName: 'List Files',
   description: 'List all files from an S3 bucket folder/prefix.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Lists objects in the configured S3 bucket, optionally filtered to a folder prefix (empty prefix lists the whole bucket), capped at a maximum count (1-1000, default 1000) and sorted newest-first. Use to discover files or look up an object key before reading, moving, or deleting it. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     prefix: Property.ShortText({
       displayName: 'Folder Path (Optional)',

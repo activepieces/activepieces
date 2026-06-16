@@ -18,6 +18,8 @@ export const findRowAction = createAction({
   displayName: 'Find Row',
   description:
     'Locate a row by specifying a lookup column and value (e.g. find a row where “ID” = 123).',
+  audience: 'both',
+  aiMetadata: { description: 'Search a table for rows where a chosen column matches a given value, returning the matching rows. Pick this to look up rows by content rather than position (use Get Row by ID when the index is known). Applies a temporary column filter and clears it afterward; read-only with respect to data and idempotent.', idempotent: true },
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,

@@ -75,6 +75,10 @@ export const newOrUpdatedProductTrigger = createTrigger({
 	name: 'new-or-updated-product',
 	displayName: 'Product Recently Created or Updated',
 	description: 'Triggers when a product recently created or updated.',
+	aiMetadata: {
+		description:
+			'Fires when a product is created or modified in the HubSpot product library. Each event represents one product record with properties such as name, description, price, and tax. Polls by last-modified date, so both new and edited products trigger it.',
+	},
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,

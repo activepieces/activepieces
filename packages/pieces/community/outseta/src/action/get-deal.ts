@@ -8,6 +8,12 @@ export const getDealAction = createAction({
   auth: outsetaAuth,
   displayName: 'Get Deal',
   description: 'Retrieve a deal by selecting it from the dropdown.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches a single Outseta CRM deal by its UID, returning amount, due date, pipeline stage, and the associated account. Use to read a deal when you already have its UID. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     dealUid: dealUidDropdown(),
   },

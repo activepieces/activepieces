@@ -4,6 +4,10 @@ export const accountBillingInvoiceCreatedTrigger = createManualWebhookTrigger({
   name: 'account_billing_invoice_created',
   displayName: 'Account Billing Invoice Created',
   description: 'Triggers when a new billing invoice is created for an account in Outseta.',
+  aiMetadata: {
+    description:
+      'Fires when a new billing invoice is created for an account in Outseta, delivering the invoice (number, dates, totals, line items, status) and the owning account.',
+  },
   sampleData: {
     Number: 1001,
     BillingInvoiceDate: '2024-02-01T00:00:00',

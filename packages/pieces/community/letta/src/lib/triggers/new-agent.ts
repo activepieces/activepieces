@@ -60,6 +60,9 @@ export const newAgent = createTrigger({
   name: 'newAgent',
   displayName: 'New Agent',
   description: 'Triggers when a new agent is created',
+  aiMetadata: {
+    description: 'Fires when a new agent is created in the Letta project, emitting the newly created agent. Polls the agent list and detects agents whose creation timestamp is later than the last poll.',
+  },
   type: TriggerStrategy.POLLING,
   props: {},
   sampleData: {},

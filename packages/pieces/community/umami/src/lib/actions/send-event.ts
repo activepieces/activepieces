@@ -10,6 +10,12 @@ export const sendEvent = createAction({
   displayName: 'Send Event',
   description:
     'Records a custom event or pageview on a website. Leave the event name blank to track a plain pageview.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Send a tracking hit to Umami for one website: with an event name it records a named custom event (optionally with extra event properties), or with the event name left blank it records a plain pageview. Use to push analytics data into Umami, not to read it. Requires a website ID and a page path. Not idempotent — each call appends a new event.',
+    idempotent: false,
+  },
   props: {
     websiteId: umamiCommon.websiteDropdown,
     url: Property.ShortText({
