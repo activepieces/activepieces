@@ -18,6 +18,18 @@ import type {
 
 const mockGetHandler = vi.fn()
 
+const { currentRelease } = vi.hoisted(() => {
+    const fs = require('node:fs')
+    const path = require('node:path')
+    try {
+        const pkg = JSON.parse(fs.readFileSync(path.resolve(process.cwd(), 'package.json'), 'utf-8'))
+        return { currentRelease: typeof pkg.version === 'string' ? pkg.version : '0.0.0' }
+    }
+    catch {
+        return { currentRelease: '0.0.0' }
+    }
+})
+
 vi.mock('../../src/lib/execute/job-registry', () => ({
     getHandler: (...args: unknown[]) => mockGetHandler(...args),
 }))
@@ -25,8 +37,8 @@ vi.mock('../../src/lib/execute/job-registry', () => ({
 vi.mock('../../src/lib/config/worker-settings', () => ({
     workerSettings: {
         set: vi.fn(),
-        waitForSettings: vi.fn().mockResolvedValue({ PUBLIC_URL: 'http://localhost:3000' }),
-        getSettings: vi.fn().mockReturnValue({ PUBLIC_URL: 'http://localhost:3000' }),
+        waitForSettings: vi.fn().mockResolvedValue({ PUBLIC_URL: 'http://localhost:3000', APP_VERSION: currentRelease }),
+        getSettings: vi.fn().mockReturnValue({ PUBLIC_URL: 'http://localhost:3000', APP_VERSION: currentRelease }),
     },
 }))
 

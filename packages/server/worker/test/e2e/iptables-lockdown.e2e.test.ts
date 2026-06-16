@@ -1,7 +1,7 @@
 import { execFile, spawn } from 'node:child_process'
 import { promisify } from 'node:util'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import { sandboxCapacity } from '../../src/lib/sandbox/capacity'
+import { sandboxCapacity } from '../../src/lib/execute/runtime/worker-pool/sandbox/capacity'
 import { iptablesLockdown, IptablesLockdown } from '../../src/lib/egress/iptables-lockdown'
 import { requireLinuxPrivileged } from './helpers/privilege-guard'
 import { silentLogger } from './helpers/silent-logger'

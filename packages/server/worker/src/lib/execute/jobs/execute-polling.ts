@@ -9,10 +9,9 @@ import {
     TriggerHookType,
     WorkerJobType,
 } from '@activepieces/shared'
-import { flowCache } from '../../cache/flow/flow-cache'
 import { workerSettings } from '../../config/worker-settings'
+import { flowCache } from '../cache/flow/flow-cache'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
-import { provisionFlowPieces } from '../utils/flow-helpers'
 import { getWebhookUrl } from '../utils/webhook-url'
 
 export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResult> = {
@@ -23,7 +22,7 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
         const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionId })
         assertNotNullOrUndefined(flowVersion, 'flowVersion')
 
-        const provisioned = await provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
+        const provisioned = await ctx.provisioner.provision({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
         if (!provisioned) {
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }

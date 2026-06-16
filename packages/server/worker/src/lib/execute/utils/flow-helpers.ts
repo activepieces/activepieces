@@ -1,8 +1,9 @@
 import { type ApLogger } from '@activepieces/server-utils'
 import { FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PiecePackage, tryCatch, WorkerToApiContract } from '@activepieces/shared'
-import { CodeArtifact } from '../../cache/code/code-builder'
-import { pieceCache, PieceNotFoundError } from '../../cache/pieces/piece-cache'
-import { provisioner } from '../../cache/provisioner'
+import { GLOBAL_CACHE_ROOT } from '../cache/cache-paths'
+import { CodeArtifact } from '../cache/code/code-builder'
+import { pieceCache, PieceNotFoundError } from '../cache/pieces/piece-cache'
+import { provisioner } from '../cache/provisioner'
 
 export async function provisionFlowPieces(params: {
     flowVersion: FlowVersion
@@ -16,7 +17,7 @@ export async function provisionFlowPieces(params: {
     const { error } = await tryCatch(async () => {
         const pieces = await extractPiecePackages(flowVersion, platformId, log, apiClient)
         const codeSteps = extractCodeArtifacts(flowVersion)
-        await provisioner(log, apiClient).provision({ pieces, codeSteps })
+        await provisioner(log, apiClient).provision({ pieces, codeSteps, cacheRoot: GLOBAL_CACHE_ROOT })
     })
     if (error) {
         if (!(error instanceof PieceNotFoundError)) {

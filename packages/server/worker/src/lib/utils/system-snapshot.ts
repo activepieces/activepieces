@@ -1,7 +1,7 @@
 import os from 'os'
 import { monitorEventLoopDelay } from 'perf_hooks'
 import { createLogger } from 'evlog'
-import { system, WorkerSystemProp } from '../config/configs'
+import { runtimeFactory } from '../execute/runtime/runtime-factory'
 
 const SNAPSHOT_INTERVAL_MS = 60_000
 const NANOS_PER_MS = 1e6
@@ -15,7 +15,7 @@ export const workerSystemSnapshot = {
         const histogram = monitorEventLoopDelay({ resolution: 100 })
         histogram.enable()
 
-        const concurrency = parseInt(system.get(WorkerSystemProp.WORKER_CONCURRENCY) ?? '1', 10)
+        const concurrency = runtimeFactory.concurrencyFor(runtimeFactory.selected())
 
         const tick = (): void => {
             try {

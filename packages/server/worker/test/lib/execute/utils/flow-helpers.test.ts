@@ -8,13 +8,13 @@ import {
 } from '@activepieces/shared'
 import type { FlowVersion } from '@activepieces/shared'
 import { extractPiecePackages, extractCodeArtifacts, provisionFlowPieces } from '../../../../src/lib/execute/utils/flow-helpers'
-import { PieceNotFoundError } from '../../../../src/lib/cache/pieces/piece-cache'
+import { PieceNotFoundError } from '../../../../src/lib/execute/cache/pieces/piece-cache'
 
 const mockGetPiece = vi.fn()
 const mockProvision = vi.fn()
 
-vi.mock('../../../../src/lib/cache/pieces/piece-cache', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('../../../../src/lib/cache/pieces/piece-cache')>()
+vi.mock('../../../../src/lib/execute/cache/pieces/piece-cache', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../../../../src/lib/execute/cache/pieces/piece-cache')>()
     return {
         ...actual,
         pieceCache: () => ({
@@ -23,7 +23,7 @@ vi.mock('../../../../src/lib/cache/pieces/piece-cache', async (importOriginal) =
     }
 })
 
-vi.mock('../../../../src/lib/cache/provisioner', () => ({
+vi.mock('../../../../src/lib/execute/cache/provisioner', () => ({
     provisioner: () => ({
         provision: mockProvision,
     }),

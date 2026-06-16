@@ -15,7 +15,7 @@ import type { ExecuteFlowJobData, FlowVersion } from '@activepieces/shared'
 
 const mockGetVersion = vi.fn()
 
-vi.mock('../../../../src/lib/cache/flow/flow-cache', () => ({
+vi.mock('../../../../src/lib/execute/cache/flow/flow-cache', () => ({
     flowCache: () => ({
         getVersion: mockGetVersion,
     }),
@@ -25,10 +25,6 @@ vi.mock('../../../../src/lib/config/worker-settings', () => ({
     workerSettings: {
         getSettings: vi.fn().mockReturnValue({ FLOW_TIMEOUT_SECONDS: 600 }),
     },
-}))
-
-vi.mock('../../../../src/lib/execute/utils/flow-helpers', () => ({
-    provisionFlowPieces: vi.fn().mockResolvedValue(true),
 }))
 
 import { executeFlowJob } from '../../../../src/lib/execute/jobs/execute-flow'
@@ -119,6 +115,9 @@ function makeMockContext(apiOverrides?: Record<string, vi.Mock>) {
             acquire: vi.fn().mockReturnValue(mockSandbox),
             release: vi.fn(),
             invalidate: vi.fn(),
+        },
+        provisioner: {
+            provision: vi.fn().mockResolvedValue(true),
         },
         engineToken: 'test-token',
         internalApiUrl: 'http://localhost:3000',

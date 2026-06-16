@@ -36,12 +36,21 @@ vi.mock('../../../src/lib/egress/iptables-lockdown', () => ({
     },
 }))
 
-vi.mock('../../../src/lib/sandbox/capacity', () => ({
+vi.mock('../../../src/lib/execute/runtime/worker-pool/sandbox/capacity', () => ({
     sandboxCapacity: {
         wsRpcPortRange: { first: 10000, last: 10100 },
         firstBoxUid: 60000,
         numBoxes: 50,
     },
+}))
+
+// The sandbox resolv.conf is read from a cwd-relative path in lifecycle.ts, so whether
+// it resolves to a real file depends on the cwd the test runner is launched from. Stub the
+// read to a hard ENOENT so nameserver assertions depend ONLY on the mocked dns.getServers().
+vi.mock('node:fs/promises', () => ({
+    readFile: vi.fn(async () => {
+        throw Object.assign(new Error('ENOENT: sandbox resolv.conf not present in unit test'), { code: 'ENOENT' })
+    }),
 }))
 
 import { workerSettings } from '../../../src/lib/config/worker-settings'

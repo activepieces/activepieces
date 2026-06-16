@@ -12,10 +12,9 @@ import {
     WebhookJobData,
     WorkerJobType,
 } from '@activepieces/shared'
-import { flowCache } from '../../cache/flow/flow-cache'
 import { workerSettings } from '../../config/worker-settings'
+import { flowCache } from '../cache/flow/flow-cache'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
-import { provisionFlowPieces } from '../utils/flow-helpers'
 import { isSandboxTimeout } from '../utils/sandbox-helpers'
 import { getAppWebhookUrl, getWebhookUrl } from '../utils/webhook-url'
 
@@ -48,7 +47,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
 
         const { appWebhookUrl, webhookSecret } = getAppWebhookDetails(flowVersion, ctx.publicApiUrl, settings.APP_WEBHOOK_SECRETS)
 
-        const provisioned = await provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
+        const provisioned = await ctx.provisioner.provision({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
         if (!provisioned) {
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }

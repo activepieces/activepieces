@@ -17,11 +17,10 @@ import {
     tryCatch,
     WorkerJobType,
 } from '@activepieces/shared'
-import { flowCache } from '../../cache/flow/flow-cache'
 import { system, WorkerSystemProp } from '../../config/configs'
 import { workerSettings } from '../../config/worker-settings'
+import { flowCache } from '../cache/flow/flow-cache'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
-import { provisionFlowPieces } from '../utils/flow-helpers'
 
 export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_FLOW,
@@ -35,7 +34,7 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
         }
 
-        const { data: provisioned, error: provisionError } = await tryCatch(() => provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient }))
+        const { data: provisioned, error: provisionError } = await tryCatch(() => ctx.provisioner.provision({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient }))
         if (provisionError) {
             await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR, toInternalError(RunInternalErrorSource.WORKER, provisionError))
             throw provisionError
@@ -46,10 +45,12 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
         }
 
         if (data.executionType === ExecutionType.RESUME && isNil(data.logsFileId)) {
-            throw new ActivepiecesError({
+            const resumeError = new ActivepiecesError({
                 code: ErrorCode.RESUME_LOGS_FILE_MISSING,
                 params: { runId: data.runId },
             }, 'logsFileId is missing for RESUME operation')
+            await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR, toInternalError(RunInternalErrorSource.WORKER, resumeError))
+            throw resumeError
         }
 
         const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })

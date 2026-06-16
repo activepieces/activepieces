@@ -6,10 +6,12 @@ import path from 'node:path'
 import { type ApLogger } from '@activepieces/server-utils'
 import { ActivepiecesError, ErrorCode, ExecutionMode, NetworkMode, tryCatch, WorkerSettingsResponse } from '@activepieces/shared'
 import { workerSettings } from '../config/worker-settings'
-import { isIsolateMode } from '../execute/create-sandbox-for-job'
-import { sandboxCapacity } from '../sandbox/capacity'
+import { isIsolateMode } from '../execute/runtime/worker-pool/create-sandbox-for-job'
+import { sandboxCapacity } from '../execute/runtime/worker-pool/sandbox/capacity'
 import { iptablesLockdown, IptablesLockdown } from './iptables-lockdown'
 import { EgressProxy, startEgressProxy } from './proxy'
+
+let activeProxyPort: number | null = null
 
 export async function startEgressStack({ log, apiUrl }: StartParams): Promise<EgressStack> {
     const settings = workerSettings.getSettings()
@@ -23,10 +25,15 @@ export async function startEgressStack({ log, apiUrl }: StartParams): Promise<Eg
         throw lockdownError
     }
 
+    activeProxyPort = proxy?.port ?? null
     return {
         proxyPort: proxy?.port ?? null,
         shutdown: () => shutdownStack({ proxy, lockdown }),
     }
+}
+
+export function getActiveProxyPort(): number | null {
+    return activeProxyPort
 }
 
 async function maybeStartProxyAllowingApiHost({ log, apiUrl, settings }: StartProxyParams): Promise<EgressProxy | null> {
@@ -100,6 +107,7 @@ async function maybeApplyIptablesLockdown({ log, proxy, settings }: ApplyLockdow
 async function shutdownStack({ proxy, lockdown }: ShutdownParams): Promise<void> {
     if (lockdown) await lockdown.remove()
     if (proxy) await proxy.close()
+    activeProxyPort = null
 }
 
 async function closeProxyQuietly({ log, proxy }: CloseProxyQuietlyParams): Promise<void> {

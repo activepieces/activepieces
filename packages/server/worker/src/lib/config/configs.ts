@@ -46,6 +46,7 @@ export enum WorkerSystemProp {
     LOAD_TRANSLATIONS_FOR_DEV_PIECES = 'AP_LOAD_TRANSLATIONS_FOR_DEV_PIECES',
     WORKER_GROUP_ID = 'AP_WORKER_GROUP_ID',
     WORKER_CONCURRENCY = 'AP_WORKER_CONCURRENCY',
+    EXECUTION_RUNTIME = 'AP_EXECUTION_RUNTIME',
     EXECUTION_MODE = 'AP_EXECUTION_MODE',
     REUSE_SANDBOX = 'AP_REUSE_SANDBOX',
 }
@@ -55,7 +56,11 @@ const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
     [WorkerSystemProp.LOG_LEVEL]: 'info',
     [WorkerSystemProp.LOG_PRETTY]: 'false',
     [WorkerSystemProp.OTEL_ENABLED]: 'false',
-    [WorkerSystemProp.WORKER_CONCURRENCY]: '5',
+    [WorkerSystemProp.EXECUTION_RUNTIME]: 'WORKER_POOL',
+    // No default for WORKER_CONCURRENCY: the runtime-keyed default lives in
+    // runtime-factory.concurrencyFor() so an unset value resolves to the active
+    // runtime's default (WORKER_POOL ⇒ 5). An env default here would mask that and
+    // force every runtime to 5. An explicit AP_WORKER_CONCURRENCY still overrides.
 }
 
 export const system = {
