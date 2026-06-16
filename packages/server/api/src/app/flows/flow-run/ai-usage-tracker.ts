@@ -35,6 +35,7 @@ export const aiUsageTracker = (log: FastifyBaseLogger) => ({
         const usage = await aiUsageExtractor.extractAiUsage({
             steps,
             flowVersion,
+            stepNameToTest: flowRun.stepNameToTest,
             fetchSlice: (ref) => fetchSlice({ log, projectId: flowRun.projectId, ref }),
         })
         if (usage.messages === 0 && usage.toolCalls === 0) {

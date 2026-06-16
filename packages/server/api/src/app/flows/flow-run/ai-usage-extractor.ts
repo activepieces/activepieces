@@ -15,10 +15,19 @@ import {
     StepOutputType,
 } from '@activepieces/shared'
 
-async function extractAiUsage({ steps, flowVersion, fetchSlice }: ExtractParams): Promise<AiUsage> {
+async function extractAiUsage({ steps, flowVersion, stepNameToTest, fetchSlice }: ExtractParams): Promise<AiUsage> {
     const aiStepsByName = buildAiStepsByName(flowVersion)
-    const usages = await collectStepAiUsages({ steps, aiStepsByName, fetchSlice })
+    // In single-step test mode the engine seeds every *other* step with its cached sample output (all
+    // marked SUCCEEDED), so only the tested step actually ran this execution. Scope counting to it so
+    // testing one AI step doesn't bill the other AI steps in the flow.
+    const executedSteps = isNil(stepNameToTest) ? steps : pickStep({ steps, stepName: stepNameToTest })
+    const usages = await collectStepAiUsages({ steps: executedSteps, aiStepsByName, fetchSlice })
     return summarize(usages)
+}
+
+function pickStep({ steps, stepName }: { steps: Record<string, StepOutput>, stepName: string }): Record<string, StepOutput> {
+    const output = steps[stepName]
+    return isNil(output) ? {} : { [stepName]: output }
 }
 
 function flowVersionHasAiStep(flowVersion: FlowVersion): boolean {
@@ -151,6 +160,7 @@ export type AiUsage = {
 type ExtractParams = {
     steps: Record<string, StepOutput>
     flowVersion: FlowVersion
+    stepNameToTest?: string
     fetchSlice: SliceFetcher
 }
 
