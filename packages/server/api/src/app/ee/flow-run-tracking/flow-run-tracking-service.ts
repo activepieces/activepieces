@@ -6,7 +6,7 @@ import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { exceptionHandler } from '../../helper/exception-handler'
 import { sleep } from '../../helper/sleep'
-import { BillingEvents, captureBillingEvent } from '../../helper/telemetry.utils'
+import { BillingEvents, captureBillingEvent, TotalRunsPerDayProperties } from '../../helper/telemetry.utils'
 import { projectRepo } from '../../project/project-repo'
 import { userRepo } from '../../user/user-service'
 import { platformPlanRepo } from '../platform/platform-plan/platform-plan.service'
@@ -197,7 +197,7 @@ function buildSnapshotBody({
     projects: number
     dailyExecutions: DailyExecutionCount[]
     reportedAt: string
-}): Record<string, unknown> {
+}): TotalRunsPerDayProperties {
     return {
         platform_id: platformId,
         active_flows: activeFlows,
