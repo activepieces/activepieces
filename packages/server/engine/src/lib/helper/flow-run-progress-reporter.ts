@@ -9,7 +9,6 @@ import { engineFileApi } from '../engine-file-api'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { utils } from '../utils'
-import { workerSocket } from '../worker-socket'
 
 
 const zstdCompress = promisify(zstdCompressCallback)
@@ -43,7 +42,7 @@ export const flowRunProgressReporter = {
             if (isNil(step)) {
                 return
             }
-            await sendUpdateProgress({
+            await sendUpdateProgress(engineConstants, {
                 step: {
                     name: stepNameToUpdate,
                     path: flowExecutorContext.currentPath.path,
@@ -79,7 +78,7 @@ export const flowRunProgressReporter = {
                     stepName,
                 })
                 if (stepResponse) {
-                    await workerSocket.getWorkerClient().updateStepProgress({
+                    await postRunCallback(engineConstants, 'update-step-progress', {
                         projectId: engineConstants.projectId,
                         stepResponse: {
                             ...stepResponse,
@@ -144,7 +143,7 @@ export const flowRunProgressReporter = {
                 tags: Array.from(flowExecutorContext.tags),
                 stepsCount: flowExecutorContext.stepsCount,
             }
-            await sendLogsUpdate(request)
+            await sendLogsUpdate(engineConstants, request)
         })
     },
     shutdown: async () => {
@@ -180,21 +179,35 @@ async function runFlushLoop(signal: AbortSignal): Promise<void> {
     }
 }
 
-const sendUpdateProgress = async (request: UpdateRunProgressRequest): Promise<void> => {
+const sendUpdateProgress = async (engineConstants: EngineConstants, request: UpdateRunProgressRequest): Promise<void> => {
     const result = await utils.tryCatchAndThrowOnEngineError(() =>
-        workerSocket.getWorkerClient().updateRunProgress(request),
+        postRunCallback(engineConstants, 'update-run-progress', request),
     )
     if (result.error) {
         throw new EngineGenericError('ProgressUpdateError', 'Failed to send updateRunProgress', result.error)
     }
 }
 
-const sendLogsUpdate = async (request: UploadRunLogsRequest): Promise<void> => {
+const sendLogsUpdate = async (engineConstants: EngineConstants, request: UploadRunLogsRequest): Promise<void> => {
     const result = await utils.tryCatchAndThrowOnEngineError(() =>
-        workerSocket.getWorkerClient().uploadRunLog(request),
+        postRunCallback(engineConstants, 'upload-run-log', request),
     )
     if (result.error) {
         throw new EngineGenericError('ProgressUpdateError', 'Failed to send uploadRunLog', result.error)
+    }
+}
+
+const postRunCallback = async (engineConstants: EngineConstants, path: string, body: unknown): Promise<void> => {
+    const response = await fetch(`${engineConstants.internalApiUrl}v1/engine/callbacks/${path}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${engineConstants.engineToken}`,
+        },
+        body: JSON.stringify(body),
+    })
+    if (!response.ok) {
+        throw new EngineGenericError('EngineCallbackError', `Failed engine callback ${path}: ${response.status} ${response.statusText}`)
     }
 }
 

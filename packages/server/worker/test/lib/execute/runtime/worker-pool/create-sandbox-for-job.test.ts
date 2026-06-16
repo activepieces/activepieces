@@ -91,7 +91,6 @@ function buildSettings(overrides: Partial<Settings> = {}): Settings {
 }
 
 const log = { info: vi.fn(), debug: vi.fn(), warn: vi.fn(), error: vi.fn(), child: vi.fn() } as never
-const apiClient = {} as never
 
 describe('createSandboxForJob', () => {
     beforeEach(() => {
@@ -102,7 +101,7 @@ describe('createSandboxForJob', () => {
     describe('baseMounts', () => {
         it('contains exactly /root/common → getGlobalCacheCommonPath()', () => {
             getSettingsMock.mockReturnValue(buildSettings())
-            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, proxyPort: null })
+            createSandboxForJob({ log, boxId: 1, reusable: false, proxyPort: null })
 
             const options = createSandboxMock.mock.calls[0][2]
             expect(options.baseMounts).toEqual([
@@ -112,7 +111,7 @@ describe('createSandboxForJob', () => {
 
         it('never leaks host / or /etc into baseMounts', () => {
             getSettingsMock.mockReturnValue(buildSettings())
-            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, proxyPort: null })
+            createSandboxForJob({ log, boxId: 1, reusable: false, proxyPort: null })
 
             const options = createSandboxMock.mock.calls[0][2]
             for (const mount of options.baseMounts) {
@@ -129,7 +128,7 @@ describe('createSandboxForJob', () => {
             [ExecutionMode.SANDBOX_CODE_AND_PROCESS, 'isolate'],
         ])('uses isolateProcess for %s', (executionMode) => {
             getSettingsMock.mockReturnValue(buildSettings({ EXECUTION_MODE: executionMode }))
-            createSandboxForJob({ log, apiClient, boxId: 7, reusable: false })
+            createSandboxForJob({ log, boxId: 7, reusable: false })
 
             expect(isolateProcessMock).toHaveBeenCalledTimes(1)
             expect(simpleProcessMock).not.toHaveBeenCalled()
@@ -141,7 +140,7 @@ describe('createSandboxForJob', () => {
             [ExecutionMode.SANDBOX_CODE_ONLY, 'simple'],
         ])('uses simpleProcess for %s', (executionMode) => {
             getSettingsMock.mockReturnValue(buildSettings({ EXECUTION_MODE: executionMode }))
-            createSandboxForJob({ log, apiClient, boxId: 3, reusable: false })
+            createSandboxForJob({ log, boxId: 3, reusable: false })
 
             expect(simpleProcessMock).toHaveBeenCalledTimes(1)
             expect(isolateProcessMock).not.toHaveBeenCalled()
@@ -157,7 +156,7 @@ describe('createSandboxForJob', () => {
                 MAX_FILE_SIZE_MB: 50,
                 NETWORK_MODE: NetworkMode.STRICT,
             }))
-            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, proxyPort: 49321 })
+            createSandboxForJob({ log, boxId: 1, reusable: false, proxyPort: 49321 })
 
             const env = createSandboxMock.mock.calls[0][2].env
             expect(env).toMatchObject({
@@ -173,7 +172,7 @@ describe('createSandboxForJob', () => {
 
         it('omits AP_DEV_PIECES when DEV_PIECES is empty', () => {
             getSettingsMock.mockReturnValue(buildSettings({ DEV_PIECES: [] }))
-            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, proxyPort: null })
+            createSandboxForJob({ log, boxId: 1, reusable: false, proxyPort: null })
 
             const env = createSandboxMock.mock.calls[0][2].env
             expect(env.AP_DEV_PIECES).toBeUndefined()
@@ -181,7 +180,7 @@ describe('createSandboxForJob', () => {
 
         it('joins DEV_PIECES with comma', () => {
             getSettingsMock.mockReturnValue(buildSettings({ DEV_PIECES: ['a', 'b', 'c'] }))
-            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, proxyPort: null })
+            createSandboxForJob({ log, boxId: 1, reusable: false, proxyPort: null })
 
             const env = createSandboxMock.mock.calls[0][2].env
             expect(env.AP_DEV_PIECES).toBe('a,b,c')
@@ -195,7 +194,7 @@ describe('createSandboxForJob', () => {
                 getSettingsMock.mockReturnValue(buildSettings({
                     SANDBOX_PROPAGATED_ENV_VARS: ['PROPAGATED_YES', 'PROPAGATED_NO'],
                 }))
-                createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, proxyPort: null })
+                createSandboxForJob({ log, boxId: 1, reusable: false, proxyPort: null })
 
                 const env = createSandboxMock.mock.calls[0][2].env
                 expect(env.PROPAGATED_YES).toBe('forwarded')
@@ -210,14 +209,14 @@ describe('createSandboxForJob', () => {
     describe('parseMemoryLimit', () => {
         it('converts KB string to MB', () => {
             getSettingsMock.mockReturnValue(buildSettings({ SANDBOX_MEMORY_LIMIT: '524288' }))
-            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, proxyPort: null })
+            createSandboxForJob({ log, boxId: 1, reusable: false, proxyPort: null })
 
             expect(createSandboxMock.mock.calls[0][2].memoryLimitMb).toBe(512)
         })
 
         it('defaults to 1024 MB on invalid input', () => {
             getSettingsMock.mockReturnValue(buildSettings({ SANDBOX_MEMORY_LIMIT: 'not-a-number' }))
-            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, proxyPort: null })
+            createSandboxForJob({ log, boxId: 1, reusable: false, proxyPort: null })
 
             expect(createSandboxMock.mock.calls[0][2].memoryLimitMb).toBe(1024)
         })
@@ -225,7 +224,7 @@ describe('createSandboxForJob', () => {
 
     it('forwards reusable flag into createSandbox options', () => {
         getSettingsMock.mockReturnValue(buildSettings())
-        createSandboxForJob({ log, apiClient, boxId: 1, reusable: true, proxyPort: null })
+        createSandboxForJob({ log, boxId: 1, reusable: true, proxyPort: null })
 
         expect(createSandboxMock.mock.calls[0][2].reusable).toBe(true)
     })
@@ -241,7 +240,7 @@ describe('createSandboxForJob', () => {
             // was never (re)started, so the firewall isn't actually armed. Telling the
             // engine it is would install ProxyAgent pointed at nothing.
             getSettingsMock.mockReturnValue(buildSettings({ NETWORK_MODE: NetworkMode.STRICT }))
-            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, proxyPort: null })
+            createSandboxForJob({ log, boxId: 1, reusable: false, proxyPort: null })
 
             const env = createSandboxMock.mock.calls[0][2].env
             expect(env.AP_NETWORK_MODE).toBe(NetworkMode.UNRESTRICTED)
@@ -253,7 +252,7 @@ describe('createSandboxForJob', () => {
             // boot, but iptables is still armed and the proxy is still listening.
             // Engine MUST install ProxyAgent or every fetch fails with EHOSTUNREACH.
             getSettingsMock.mockReturnValue(buildSettings({ NETWORK_MODE: NetworkMode.UNRESTRICTED }))
-            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, proxyPort: 49322 })
+            createSandboxForJob({ log, boxId: 1, reusable: false, proxyPort: 49322 })
 
             const env = createSandboxMock.mock.calls[0][2].env
             expect(env.AP_NETWORK_MODE).toBe(NetworkMode.STRICT)
@@ -269,7 +268,7 @@ describe('createSandboxForJob', () => {
                     NETWORK_MODE: NetworkMode.UNRESTRICTED,
                     SANDBOX_PROPAGATED_ENV_VARS: ['HTTP_PROXY', 'HTTPS_PROXY'],
                 }))
-                createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, proxyPort: 49323 })
+                createSandboxForJob({ log, boxId: 1, reusable: false, proxyPort: 49323 })
 
                 const env = createSandboxMock.mock.calls[0][2].env
                 expect('HTTP_PROXY' in env).toBe(false)

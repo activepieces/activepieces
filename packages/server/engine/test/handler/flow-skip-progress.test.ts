@@ -1,28 +1,29 @@
 import { FlowAction, FlowRunStatus, StepOutputStatus, StreamStepProgress, UpdateRunProgressRequest } from '@activepieces/shared'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { buildPieceAction, generateMockEngineConstants } from './test-helper'
 
-const { updateRunProgressMock } = vi.hoisted(() => ({
-    updateRunProgressMock: vi.fn<(request: UpdateRunProgressRequest) => Promise<void>>().mockResolvedValue(undefined),
-}))
-
-vi.mock('../../src/lib/worker-socket', () => ({
-    workerSocket: {
-        getWorkerClient: () => ({
-            updateRunProgress: updateRunProgressMock,
-            updateStepProgress: vi.fn(),
-            uploadRunLog: vi.fn(),
-            sendFlowResponse: vi.fn(),
-        }),
-    },
-}))
+const { updateRunProgressMock, mockFetch } = vi.hoisted(() => {
+    const updateRunProgressMock = vi.fn<(request: UpdateRunProgressRequest) => Promise<void>>().mockResolvedValue(undefined)
+    const mockFetch = vi.fn(async (url: string, init: { body: string }) => {
+        if (url.includes('/update-run-progress')) {
+            await updateRunProgressMock(JSON.parse(init.body))
+        }
+        return { ok: true, status: 200, json: async () => ({}) }
+    })
+    return { updateRunProgressMock, mockFetch }
+})
 
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 
 describe('flowExecutor — progress events with skipped neighbours', () => {
     beforeEach(() => {
+        vi.stubGlobal('fetch', mockFetch)
         updateRunProgressMock.mockClear()
+    })
+
+    afterEach(() => {
+        vi.unstubAllGlobals()
     })
 
     it('streams SUCCEEDED for the step preceding skipped steps before the next executed step runs', async () => {

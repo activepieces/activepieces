@@ -1,12 +1,11 @@
 import { FlowRunStatus } from '@activepieces/shared'
-import { vi } from 'vitest'
+import { afterEach, beforeEach, vi } from 'vitest'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
-import { workerSocket } from '../../src/lib/worker-socket'
 import { buildPieceAction, generateMockEngineConstants } from './test-helper'
 
-const { mockSendFlowResponse } = vi.hoisted(() => ({
-    mockSendFlowResponse: vi.fn().mockResolvedValue(undefined),
+const { mockFetch } = vi.hoisted(() => ({
+    mockFetch: vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({}) }),
 }))
 
 vi.mock('../../src/lib/piece-context/waitpoint-client', () => ({
@@ -15,21 +14,26 @@ vi.mock('../../src/lib/piece-context/waitpoint-client', () => ({
     },
 }))
 
-vi.mock('../../src/lib/worker-socket', () => ({
-    workerSocket: {
-        getWorkerClient: vi.fn().mockReturnValue({
-            sendFlowResponse: mockSendFlowResponse,
-        }),
-    },
-}))
+function getSendFlowResponseCall(): { url: string, body: unknown } | undefined {
+    const call = mockFetch.mock.calls.find(([url]) => typeof url === 'string' && url.includes('/v1/engine/callbacks/send-flow-response'))
+    if (!call) {
+        return undefined
+    }
+    return { url: call[0], body: JSON.parse(call[1].body) }
+}
 
 describe('flow waitpoint response propagation', () => {
 
     beforeEach(() => {
+        vi.stubGlobal('fetch', mockFetch)
         vi.clearAllMocks()
     })
 
-    it('should send responseToSend via workerSocket when createWaitpoint is used with responseToSend', async () => {
+    afterEach(() => {
+        vi.unstubAllGlobals()
+    })
+
+    it('POSTs responseToSend to the send-flow-response callback when createWaitpoint is used with responseToSend', async () => {
         const responseBody = { hello: 'world' }
         const responseHeaders = { 'x-custom': 'header' }
 
@@ -61,8 +65,9 @@ describe('flow waitpoint response propagation', () => {
             status: FlowRunStatus.PAUSED,
         })
 
-        expect(workerSocket.getWorkerClient).toHaveBeenCalled()
-        expect(mockSendFlowResponse).toHaveBeenCalledWith({
+        const sendFlowResponseCall = getSendFlowResponseCall()
+        expect(sendFlowResponseCall).toBeDefined()
+        expect(sendFlowResponseCall!.body).toEqual({
             workerHandlerId: 'test-handler-id',
             httpRequestId: 'test-request-id',
             runResponse: {
@@ -73,7 +78,7 @@ describe('flow waitpoint response propagation', () => {
         })
     })
 
-    it('should not call sendFlowResponse when triggerPieceName does not match', async () => {
+    it('does not call send-flow-response when triggerPieceName does not match', async () => {
         const action = buildPieceAction({
             name: 'http',
             pieceName: '@activepieces/piece-webhook',
@@ -101,6 +106,6 @@ describe('flow waitpoint response propagation', () => {
         expect(result.verdict).toEqual({
             status: FlowRunStatus.PAUSED,
         })
-        expect(mockSendFlowResponse).not.toHaveBeenCalled()
+        expect(getSendFlowResponseCall()).toBeUndefined()
     })
 })

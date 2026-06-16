@@ -12,7 +12,6 @@ import { waitpointClient } from '../piece-context/waitpoint-client'
 import { agentTools } from '../tools'
 import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
-import { workerSocket } from '../worker-socket'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
 
@@ -158,15 +157,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         const webhookResponse = getResponse(params.hookResponse)
         const isSamePiece = constants.triggerPieceName === action.settings.pieceName
         if (!isNil(webhookResponse) && !isNil(constants.workerHandlerId) && !isNil(constants.httpRequestId) && isSamePiece) {
-            await workerSocket.getWorkerClient().sendFlowResponse({
-                workerHandlerId: constants.workerHandlerId,
-                httpRequestId: constants.httpRequestId,
-                runResponse: {
-                    status: webhookResponse.status ?? 200,
-                    body: webhookResponse.body ?? {},
-                    headers: webhookResponse.headers ?? {},
-                },
-            })
+            await sendFlowResponse({ constants, webhookResponse })
         }
 
         const stepEndTime = performance.now()
@@ -315,4 +306,31 @@ function assertDelayWithinTimeout(resumeDateTime?: string): void {
     if (diffInDays > AP_PAUSED_FLOW_TIMEOUT_DAYS) {
         throw new PausedFlowTimeoutError(undefined, AP_PAUSED_FLOW_TIMEOUT_DAYS)
     }
+}
+
+async function sendFlowResponse({ constants, webhookResponse }: SendFlowResponseParams): Promise<void> {
+    const response = await fetch(`${constants.internalApiUrl}v1/engine/callbacks/send-flow-response`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${constants.engineToken}`,
+        },
+        body: JSON.stringify({
+            workerHandlerId: constants.workerHandlerId,
+            httpRequestId: constants.httpRequestId,
+            runResponse: {
+                status: webhookResponse.status ?? 200,
+                body: webhookResponse.body ?? {},
+                headers: webhookResponse.headers ?? {},
+            },
+        }),
+    })
+    if (!response.ok) {
+        throw new EngineGenericError('SendFlowResponseError', `Failed to send flow response: ${response.status} ${response.statusText}`)
+    }
+}
+
+type SendFlowResponseParams = {
+    constants: EngineConstants
+    webhookResponse: RespondResponse
 }

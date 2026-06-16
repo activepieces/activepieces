@@ -1,5 +1,5 @@
 import { type ApLogger } from '@activepieces/server-utils'
-import { ExecutionMode, maxSocketHttpBufferSizeBytes, NetworkMode, WorkerContract, WorkerToApiContract } from '@activepieces/shared'
+import { ExecutionMode, NetworkMode } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { workerSettings } from '../../../config/worker-settings'
 import { getEnginePath, getGlobalCacheCommonPath, getGlobalCodeCachePath } from '../../cache/cache-paths'
@@ -11,21 +11,13 @@ import { createSandbox } from './sandbox/sandbox'
 
 export function createSandboxForJob(params: {
     log: ApLogger
-    apiClient: WorkerToApiContract
     boxId: number
     reusable: boolean
     proxyPort: number | null
 }): Sandbox {
-    const { log, apiClient, boxId, reusable, proxyPort } = params
+    const { log, boxId, reusable, proxyPort } = params
     const settings = workerSettings.getSettings()
     const sandboxId = nanoid()
-
-    const workerHandlers: WorkerContract = {
-        updateRunProgress: (input) => apiClient.updateRunProgress(input),
-        uploadRunLog: (input) => apiClient.uploadRunLog(input),
-        sendFlowResponse: (input) => apiClient.sendFlowResponse(input),
-        updateStepProgress: (input) => apiClient.updateStepProgress(input),
-    }
 
     const memoryLimitMb = parseMemoryLimit(settings.SANDBOX_MEMORY_LIMIT)
     const processMaker = getProcessMaker(settings.EXECUTION_MODE, log, boxId)
@@ -33,8 +25,6 @@ export function createSandboxForJob(params: {
     const baseMounts: SandboxMount[] = [
         { hostPath: getGlobalCacheCommonPath(), sandboxPath: '/root/common' },
     ]
-
-    const executionMode = settings.EXECUTION_MODE as ExecutionMode
 
     return createSandbox(
         log,
@@ -45,12 +35,13 @@ export function createSandboxForJob(params: {
             cpuMsPerSec: 1000,
             timeLimitSeconds: settings.FLOW_TIMEOUT_SECONDS,
             reusable,
-            maxHttpBufferSizeBytes: maxSocketHttpBufferSizeBytes(settings.MAX_FILE_SIZE_MB),
             baseMounts,
-            wsRpcPort: isIsolateMode(executionMode) ? sandboxCapacity.wsRpcPortForBox(boxId) : undefined,
+            // Each concurrency slot owns a deterministic loopback port (52000 + boxId), which
+            // also lands inside the STRICT-mode iptables ACCEPT range; the engine binds it and
+            // the worker POSTs operations to it.
+            enginePort: sandboxCapacity.wsRpcPortForBox(boxId),
         },
         processMaker,
-        workerHandlers,
     )
 }
 

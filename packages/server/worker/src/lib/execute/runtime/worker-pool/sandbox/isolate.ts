@@ -27,8 +27,8 @@ const REQUIRED_SANDBOX_ENV_KEYS: readonly string[] = [
     'HOME',
     'NODE_PATH',
     'AP_EXECUTION_MODE',
-    'AP_SANDBOX_WS_PORT',
-    'AP_SANDBOX_WS_TOKEN',
+    'AP_ENGINE_PORT',
+    'AP_ENGINE_TOKEN',
     'AP_BASE_CODE_DIRECTORY',
     'SANDBOX_ID',
 ]
@@ -119,13 +119,6 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
 
             const child = spawn(isolateBinaryPath, args, {
                 shell: false,
-            })
-
-            child.stdout?.on('data', (data: Buffer) => {
-                process.stdout.write(data)
-            })
-            child.stderr?.on('data', (data: Buffer) => {
-                process.stderr.write(data)
             })
 
             return child

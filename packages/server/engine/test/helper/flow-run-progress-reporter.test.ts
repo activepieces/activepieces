@@ -3,21 +3,33 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { generateMockEngineConstants } from '../handler/test-helper'
 
-const { uploadRunLogMock, updateRunProgressMock, updateStepProgressMock } = vi.hoisted(() => ({
-    uploadRunLogMock: vi.fn<(request: UploadRunLogsRequest) => Promise<void>>(async () => undefined),
-    updateRunProgressMock: vi.fn<(request: UpdateRunProgressRequest) => Promise<void>>(async () => undefined),
-    updateStepProgressMock: vi.fn<(request: { projectId: string, stepResponse: StepRunResponse }) => Promise<void>>(async () => undefined),
-}))
+const { uploadRunLogMock, updateRunProgressMock, updateStepProgressMock, mockFetch } = vi.hoisted(() => {
+    const uploadRunLogMock = vi.fn<(request: UploadRunLogsRequest) => Promise<void>>(async () => undefined)
+    const updateRunProgressMock = vi.fn<(request: UpdateRunProgressRequest) => Promise<void>>(async () => undefined)
+    const updateStepProgressMock = vi.fn<(request: { projectId: string, stepResponse: StepRunResponse }) => Promise<void>>(async () => undefined)
+    const mockFetch = vi.fn(async (url: string, init: { body: string }) => {
+        const body = JSON.parse(init.body)
+        if (url.includes('/upload-run-log')) {
+            await uploadRunLogMock(body)
+        }
+        else if (url.includes('/update-run-progress')) {
+            await updateRunProgressMock(body)
+        }
+        else if (url.includes('/update-step-progress')) {
+            await updateStepProgressMock(body)
+        }
+        return { ok: true, status: 200, json: async () => ({}) }
+    })
+    return { uploadRunLogMock, updateRunProgressMock, updateStepProgressMock, mockFetch }
+})
 
-vi.mock('../../src/lib/worker-socket', () => ({
-    workerSocket: {
-        getWorkerClient: () => ({
-            uploadRunLog: uploadRunLogMock,
-            updateRunProgress: updateRunProgressMock,
-            updateStepProgress: updateStepProgressMock,
-        }),
-    },
-}))
+beforeEach(() => {
+    vi.stubGlobal('fetch', mockFetch)
+})
+
+afterEach(() => {
+    vi.unstubAllGlobals()
+})
 
 vi.mock('fetch-retry', () => ({
     default: () => async () => new Response(JSON.stringify({ readUrl: 'https://mock.read.url/logs' }), {

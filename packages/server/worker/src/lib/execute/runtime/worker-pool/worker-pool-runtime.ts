@@ -15,17 +15,17 @@ export function createWorkerPoolRuntime({ boxId }: { boxId: number }): FlowExecu
     let currentSandbox: Sandbox | null = null
     const proxyPort = getActiveProxyPort()
 
-    const acquire = (params: { log: ApLogger, apiClient: WorkerToApiContract }): Sandbox => {
+    const acquire = (log: ApLogger): Sandbox => {
         if (canReuseSandbox() && currentSandbox && currentSandbox.isReady()) {
             return currentSandbox
         }
         if (currentSandbox) {
-            params.log.info('Sandbox not ready or not reusable, creating fresh one')
+            log.info('Sandbox not ready or not reusable, creating fresh one')
             currentSandbox.shutdown().catch((err) =>
-                params.log.error({ err }, 'Error shutting down previous sandbox'),
+                log.error({ err }, 'Error shutting down previous sandbox'),
             )
         }
-        currentSandbox = createSandboxForJob({ ...params, boxId, reusable: canReuseSandbox(), proxyPort })
+        currentSandbox = createSandboxForJob({ log, boxId, reusable: canReuseSandbox(), proxyPort })
         return currentSandbox
     }
 
@@ -42,7 +42,7 @@ export function createWorkerPoolRuntime({ boxId }: { boxId: number }): FlowExecu
         async ready({ operation, log, apiClient }): Promise<Sandbox> {
             await provisionForOperation({ operation, log, apiClient })
 
-            const sandbox = acquire({ log, apiClient })
+            const sandbox = acquire(log)
             try {
                 await sandbox.start({
                     flowVersionId: operation.kind === 'FLOW' ? operation.flowVersion.id : undefined,

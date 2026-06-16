@@ -45,33 +45,8 @@ const getPollQueueName = (workerGroupId?: string): string => {
     return workerGroupId ? getWorkerGroupQueueName(workerGroupId) : QueueName.WORKER_JOBS
 }
 
-export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): WorkerToApiContract {
+export function createRunCallbackHandlers(log: FastifyBaseLogger): RunCallbackHandlers {
     return {
-        async poll(input) {
-            log.info({ workerId: input.workerId, workerGroupId }, '[workerRpc#poll] Poll request received')
-            await machineService(log).onConnection(input, workerGroupId)
-            const workerVersion = input.workerProps.version
-            const appVersion = apVersionUtil.getCurrentRelease()
-            if (workerVersion !== appVersion) {
-                log.warn({ workerId: input.workerId, workerVersion, appVersion }, '[workerRpc#poll] Withholding job — worker version does not match app; worker will idle until upgraded')
-                return null
-            }
-            const pollQueueName = getPollQueueName(workerGroupId)
-            const job = await jobBroker(log).poll(pollQueueName)
-            if (job) {
-                log.info({ workerId: input.workerId, jobId: job.jobId, jobType: job.jobData.jobType }, '[workerRpc#poll] Returning job to worker')
-            }
-            else {
-                log.debug({ workerId: input.workerId }, '[workerRpc#poll] No job available, returning null')
-            }
-            return job
-        },
-
-        async completeJob(input) {
-            log.info({ jobId: input.jobId, status: input.status }, '[workerRpc#completeJob] Job completed by worker')
-            await jobBroker(log).completeJob(input)
-        },
-
         async updateRunProgress(input) {
             websocketService.to(input.flowRun.projectId).emit(WebsocketClientEvent.UPDATE_RUN_PROGRESS, input)
         },
@@ -124,6 +99,37 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
 
         async updateStepProgress(input) {
             websocketService.to(input.projectId).emit(WebsocketClientEvent.TEST_STEP_PROGRESS, input)
+        },
+    }
+}
+
+export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): WorkerToApiContract {
+    return {
+        ...createRunCallbackHandlers(log),
+
+        async poll(input) {
+            log.info({ workerId: input.workerId, workerGroupId }, '[workerRpc#poll] Poll request received')
+            await machineService(log).onConnection(input, workerGroupId)
+            const workerVersion = input.workerProps.version
+            const appVersion = apVersionUtil.getCurrentRelease()
+            if (workerVersion !== appVersion) {
+                log.warn({ workerId: input.workerId, workerVersion, appVersion }, '[workerRpc#poll] Withholding job — worker version does not match app; worker will idle until upgraded')
+                return null
+            }
+            const pollQueueName = getPollQueueName(workerGroupId)
+            const job = await jobBroker(log).poll(pollQueueName)
+            if (job) {
+                log.info({ workerId: input.workerId, jobId: job.jobId, jobType: job.jobData.jobType }, '[workerRpc#poll] Returning job to worker')
+            }
+            else {
+                log.debug({ workerId: input.workerId }, '[workerRpc#poll] No job available, returning null')
+            }
+            return job
+        },
+
+        async completeJob(input) {
+            log.info({ jobId: input.jobId, status: input.status }, '[workerRpc#completeJob] Job completed by worker')
+            await jobBroker(log).completeJob(input)
         },
 
         async submitPayloads(input) {
@@ -318,3 +324,5 @@ type PersistInternalErrorParams = {
     logsFileId: string
     internalError: RunInternalError
 }
+
+type RunCallbackHandlers = Pick<WorkerToApiContract, 'updateRunProgress' | 'uploadRunLog' | 'sendFlowResponse' | 'updateStepProgress'>
