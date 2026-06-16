@@ -16,9 +16,9 @@ import {
 } from '@activepieces/shared'
 
 async function extractAiUsage({ steps, flowVersion, fetchSlice }: ExtractParams): Promise<AiUsage> {
-    const stepMeta = buildStepMeta(flowVersion)
-    const contributions = await collectContributions({ steps, stepMeta, fetchSlice })
-    return summarize(contributions)
+    const aiStepsByName = buildAiStepsByName(flowVersion)
+    const usages = await collectStepAiUsages({ steps, aiStepsByName, fetchSlice })
+    return summarize(usages)
 }
 
 function flowVersionHasAiStep(flowVersion: FlowVersion): boolean {
@@ -29,37 +29,37 @@ function isAiPieceStep(step: Step): boolean {
     return step.type === FlowActionType.PIECE && step.settings.pieceName === AI_PIECE_NAME
 }
 
-function buildStepMeta(flowVersion: FlowVersion): Map<string, StepMeta> {
+function buildAiStepsByName(flowVersion: FlowVersion): Map<string, AiStepConfig> {
     return flowStructureUtil.getAllSteps(flowVersion.trigger)
         .filter(isAiPieceStep)
         .reduce((map, step) => map.set(step.name, {
             actionName: step.type === FlowActionType.PIECE ? step.settings.actionName : undefined,
             input: step.type === FlowActionType.PIECE ? asRecord(step.settings.input) : undefined,
-        }), new Map<string, StepMeta>())
+        }), new Map<string, AiStepConfig>())
 }
 
-async function collectContributions({ steps, stepMeta, fetchSlice }: CollectParams): Promise<AiContribution[]> {
-    const contributions: AiContribution[] = []
+async function collectStepAiUsages({ steps, aiStepsByName, fetchSlice }: CollectParams): Promise<AiStepUsage[]> {
+    const usages: AiStepUsage[] = []
     for (const [name, output] of Object.entries(steps)) {
-        const meta = stepMeta.get(name)
-        if (!isNil(meta)) {
-            const contribution = await toContribution({ output, meta, fetchSlice })
-            if (!isNil(contribution)) {
-                contributions.push(contribution)
+        const stepConfig = aiStepsByName.get(name)
+        if (!isNil(stepConfig)) {
+            const usage = await toStepAiUsage({ output, stepConfig, fetchSlice })
+            if (!isNil(usage)) {
+                usages.push(usage)
             }
         }
         if (output.type === FlowActionType.LOOP_ON_ITEMS) {
             const iterations = (output.output as LoopStepResult | undefined)?.iterations ?? []
             for (const iteration of iterations) {
-                contributions.push(...await collectContributions({ steps: iteration, stepMeta, fetchSlice }))
+                usages.push(...await collectStepAiUsages({ steps: iteration, aiStepsByName, fetchSlice }))
             }
         }
     }
-    return contributions
+    return usages
 }
 
-async function toContribution({ output, meta, fetchSlice }: ToContributionParams): Promise<AiContribution | null> {
-    const isAgent = meta.actionName === RUN_AGENT_ACTION_NAME
+async function toStepAiUsage({ output, stepConfig, fetchSlice }: ToStepAiUsageParams): Promise<AiStepUsage | null> {
+    const isAgent = stepConfig.actionName === RUN_AGENT_ACTION_NAME
     let toolCalls = 0
     if (isAgent) {
         const blocks = await resolveAgentBlocks({ output, fetchSlice })
@@ -71,7 +71,7 @@ async function toContribution({ output, meta, fetchSlice }: ToContributionParams
     else if (output.status !== StepOutputStatus.SUCCEEDED) {
         return null
     }
-    const { provider, model } = resolveProviderModel({ output, meta })
+    const { provider, model } = resolveProviderModel({ output, stepConfig })
     return { provider, model, toolCalls }
 }
 
@@ -82,9 +82,9 @@ async function resolveAgentBlocks({ output, fetchSlice }: ResolveAgentBlocksPara
     return (raw as AgentResult | undefined)?.steps ?? []
 }
 
-function resolveProviderModel({ output, meta }: ResolveProviderModelParams): { provider: string, model: string } {
+function resolveProviderModel({ output, stepConfig }: ResolveProviderModelParams): { provider: string, model: string } {
     const fromLog = extractProviderModel(asRecord(output.input))
-    const fromSettings = extractProviderModel(meta.input)
+    const fromSettings = extractProviderModel(stepConfig.input)
     return {
         provider: fromLog.provider ?? fromSettings.provider ?? UNKNOWN,
         model: fromLog.model ?? fromSettings.model ?? UNKNOWN,
@@ -102,20 +102,20 @@ function extractProviderModel(input: Record<string, unknown> | undefined): { pro
     }
 }
 
-function summarize(contributions: AiContribution[]): AiUsage {
-    const breakdown = contributions.reduce((map, contribution) => {
-        const key = `${contribution.provider}|${contribution.model}`
-        const entry = map.get(key) ?? { provider: contribution.provider, model: contribution.model, messages: 0, toolCalls: 0 }
+function summarize(usages: AiStepUsage[]): AiUsage {
+    const breakdown = usages.reduce((map, usage) => {
+        const key = `${usage.provider}|${usage.model}`
+        const entry = map.get(key) ?? { provider: usage.provider, model: usage.model, messages: 0, toolCalls: 0 }
         return map.set(key, {
             provider: entry.provider,
             model: entry.model,
             messages: entry.messages + 1,
-            toolCalls: entry.toolCalls + contribution.toolCalls,
+            toolCalls: entry.toolCalls + usage.toolCalls,
         })
     }, new Map<string, AiUsageBreakdownEntry>())
     return {
-        messages: contributions.length,
-        toolCalls: contributions.reduce((sum, contribution) => sum + contribution.toolCalls, 0),
+        messages: usages.length,
+        toolCalls: usages.reduce((sum, usage) => sum + usage.toolCalls, 0),
         breakdown: [...breakdown.values()],
     }
 }
@@ -156,13 +156,13 @@ type ExtractParams = {
 
 type CollectParams = {
     steps: Record<string, StepOutput>
-    stepMeta: Map<string, StepMeta>
+    aiStepsByName: Map<string, AiStepConfig>
     fetchSlice: SliceFetcher
 }
 
-type ToContributionParams = {
+type ToStepAiUsageParams = {
     output: StepOutput
-    meta: StepMeta
+    stepConfig: AiStepConfig
     fetchSlice: SliceFetcher
 }
 
@@ -173,15 +173,15 @@ type ResolveAgentBlocksParams = {
 
 type ResolveProviderModelParams = {
     output: StepOutput
-    meta: StepMeta
+    stepConfig: AiStepConfig
 }
 
-type StepMeta = {
+type AiStepConfig = {
     actionName: string | undefined
     input: Record<string, unknown> | undefined
 }
 
-type AiContribution = {
+type AiStepUsage = {
     provider: string
     model: string
     toolCalls: number
