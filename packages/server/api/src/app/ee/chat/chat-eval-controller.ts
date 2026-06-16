@@ -2,6 +2,7 @@ import {
     apId,
     ChatConversationStatus,
     LATEST_JOB_DATA_SCHEMA_VERSION,
+    PersistedChatRole,
     PrincipalType,
     SERVICE_KEY_SECURITY_OPENAPI,
     SimulateChatRequest,
@@ -37,9 +38,7 @@ export const chatEvalController: FastifyPluginAsyncZod = async (app) => {
         const platformId = request.principal.platform.id
         const { userMessage, promptOverride, modelName } = request.body
 
-        // Run as the platform owner with tools disabled (dryRun): the candidate prompt is
-        // evaluated for the agent's decisions/transcript, and nothing is executed — so there
-        // are no side effects and no dedicated sandbox project/user is required.
+        // dryRun runs as the platform owner with tools disabled — no side effects, no sandbox.
         const platform = await platformService(log).getOneOrThrow(platformId)
         const evalUserId = platform.ownerId
 
@@ -80,10 +79,8 @@ export const chatEvalController: FastifyPluginAsyncZod = async (app) => {
 }
 
 async function waitForSimulationResult({ conversationId, platformId, userId, log }: { conversationId: string, platformId: string, userId: string, log: FastifyBaseLogger }): Promise<{ status: SimulationStatus, uiMessages: unknown[] | null }> {
-    // Read the row directly rather than via getConversationOrThrow: that helper resets a
-    // >2min-stale STREAMING conversation to IDLE, which would let the poller both race the
-    // staleness threshold and mutate production state. A direct read keeps the poller a
-    // pure observer — a still-running turn stays STREAMING until it genuinely settles.
+    // Read the row directly, not via getConversationOrThrow (which resets a stale STREAMING
+    // conversation to IDLE), so the poller stays a pure observer.
     for (let attempt = 0; attempt < SIMULATION_MAX_ATTEMPTS; attempt++) {
         await new Promise((resolve) => setTimeout(resolve, SIMULATION_POLL_INTERVAL_MS))
         const settled = readSettledState(await chatHelpers.conversationRepo().findOneBy({ id: conversationId, platformId, userId }))
@@ -103,10 +100,18 @@ function readSettledState(conversation: { status: ChatConversationStatus, uiMess
     if (conversation.status === ChatConversationStatus.ERROR) {
         return { status: conversation.status, uiMessages }
     }
-    if (conversation.status === ChatConversationStatus.IDLE && (uiMessages?.length ?? 0) > 0) {
+    // Wait for an assistant turn: the user message is persisted at the start, so IDLE +
+    // messages alone would falsely settle before the assistant responds.
+    if (conversation.status === ChatConversationStatus.IDLE && hasAssistantMessage(uiMessages)) {
         return { status: conversation.status, uiMessages }
     }
     return null
+}
+
+function hasAssistantMessage(uiMessages: unknown[] | null): boolean {
+    return (uiMessages ?? []).some((message) =>
+        typeof message === 'object' && message !== null && 'role' in message && message.role === PersistedChatRole.ASSISTANT,
+    )
 }
 
 const PromptSourcesRoute = {

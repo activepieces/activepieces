@@ -52,8 +52,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             log,
         })
 
-        // In dry-run (prompt playground), tools are not executed and no MCP server is contacted,
-        // so the run has no side effects and needs no sandbox project.
+        // dryRun (playground): skip MCP and don't execute tools, so the run has no side effects.
         const { mcpClient, mcpToolSet } = dryRun
             ? { mcpClient: null, mcpToolSet: {} }
             : await chatMcpClient.connect({ mcpCredentials: config.mcpCredentials, conversationId, log })

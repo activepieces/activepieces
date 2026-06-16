@@ -128,9 +128,7 @@ export async function runChatTurn({ model, provider, systemPrompt, messages, too
             break
         }
 
-        // The stream attempt succeeded — refresh the retry budget so each turn
-        // (including a later truncation/empty continuation) gets its own one-shot
-        // retry for a dead stream, instead of spending it once for the whole job.
+        // Reset on success so each turn gets its own one-shot retry, not one per job.
         streamRetries = 0
 
         const [steps, attemptUsage, finishReason] = await Promise.all([
