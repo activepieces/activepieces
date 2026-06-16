@@ -1,4 +1,4 @@
-import { chunk, FlowStatus, ProjectType, RunEnvironment, tryCatch } from '@activepieces/shared'
+import { chunk, FlowStatus, ProjectType, RunEnvironment } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { FastifyBaseLogger } from 'fastify'
@@ -6,29 +6,26 @@ import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { exceptionHandler } from '../../helper/exception-handler'
 import { sleep } from '../../helper/sleep'
+import { BillingEvents, captureBillingEvent } from '../../helper/telemetry.utils'
 import { projectRepo } from '../../project/project-repo'
 import { userRepo } from '../../user/user-service'
 import { platformPlanRepo } from '../platform/platform-plan/platform-plan.service'
 
 dayjs.extend(utc)
 
-const CONSOLE_API_URL = 'https://console.activepieces.com'
-const REQUEST_TIMEOUT_MS = 30000
-const SNAPSHOT_BATCH_SIZE = 25
 const EXECUTIONS_PROJECT_CHUNK_SIZE = 100
 const EXECUTIONS_CHUNK_DELAY_MS = 1000
 
-export const consoleUsageService = (log: FastifyBaseLogger) => ({
+export const flowRunTrackingService = (log: FastifyBaseLogger) => ({
     /**
-     * Reports per-platform usage to the Console for billing/metering — this is NOT telemetry, so it
-     * is intentionally not gated on AP_TELEMETRY_ENABLED. The license key is both the gate and the
-     * credential: only licensed platforms are reported, and the key is sent as the Bearer token the
-     * Console validates. Unlicensed instances bail before the heavy aggregate queries, so they send
-     * nothing. Only the previous *completed* UTC day is reported (the current, in-progress day is
-     * excluded), so the count is final on first send. Re-running the same day carries the same value,
-     * which the Console stores with a plain idempotent upsert (no max-merge). Note: with a single-day
-     * window there is no healing margin — if a day's run is missed entirely, the next run won't
-     * backfill it, since it only ever looks at yesterday.
+     * Reports per-platform usage to PostHog for billing/metering — this is NOT product telemetry, so it
+     * is intentionally not gated on AP_TELEMETRY_ENABLED. The license key is the gate and the event
+     * identifier: only licensed platforms are reported, keyed by their license key (distinctId), so
+     * unlicensed instances bail before the heavy aggregate queries and send nothing. Only the previous
+     * *completed* UTC day is reported (the current, in-progress day is excluded), so the count is final
+     * on first send. Re-running the same day re-emits the same value. Note: with a single-day window
+     * there is no healing margin — if a day's run is missed entirely, the next run won't backfill it,
+     * since it only ever looks at yesterday.
      */
     async reportAllPlatforms(): Promise<void> {
         try {
@@ -53,26 +50,19 @@ export const consoleUsageService = (log: FastifyBaseLogger) => ({
 
             const reportedAt = new Date().toISOString()
 
-            for (const batch of chunk([...licenseKeysByPlatform.entries()], SNAPSHOT_BATCH_SIZE)) {
-                const results = await Promise.allSettled(
-                    batch.map(([platformId, licenseKey]) => {
-                        const body = buildSnapshotBody({
-                            platformId,
-                            activeFlows: activeFlowsByPlatform.get(platformId) ?? 0,
-                            users: usersByPlatform.get(platformId) ?? 0,
-                            projects: teamProjectsByPlatform.get(platformId) ?? 0,
-                            dailyExecutions: dailyExecutionsByPlatform.get(platformId) ?? [],
-                            reportedAt,
-                        })
-                        return postSnapshot({ body, licenseKey })
+            for (const [platformId, licenseKey] of licenseKeysByPlatform) {
+                captureBillingEvent({
+                    licenseKey,
+                    event: BillingEvents.TOTAL_RUNS_PER_DAY,
+                    properties: buildSnapshotBody({
+                        platformId,
+                        activeFlows: activeFlowsByPlatform.get(platformId) ?? 0,
+                        users: usersByPlatform.get(platformId) ?? 0,
+                        projects: teamProjectsByPlatform.get(platformId) ?? 0,
+                        dailyExecutions: dailyExecutionsByPlatform.get(platformId) ?? [],
+                        reportedAt,
                     }),
-                )
-
-                for (const result of results) {
-                    if (result.status === 'rejected') {
-                        exceptionHandler.handle(result.reason, log)
-                    }
-                }
+                })
             }
         }
         catch (error) {
@@ -220,28 +210,6 @@ function buildSnapshotBody({
 
 function utcMidnight(daysAgo: number): string {
     return dayjs.utc().startOf('day').subtract(daysAgo, 'day').toISOString()
-}
-
-async function postSnapshot({ body, licenseKey }: { body: Record<string, unknown>, licenseKey: string }): Promise<void> {
-    const result = await tryCatch(() =>
-        fetch(`${CONSOLE_API_URL}/api/external/usage/snapshot`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${licenseKey}`,
-            },
-            body: JSON.stringify(body),
-            signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-        }),
-    )
-
-    if (result.error) {
-        throw result.error
-    }
-
-    if (!result.data.ok) {
-        throw new Error(`Console usage snapshot POST failed with status ${result.data.status}`)
-    }
 }
 
 type DailyExecutionCount = {

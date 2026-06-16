@@ -2,18 +2,18 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
-import { consoleUsageService } from './console-usage-service'
+import { flowRunTrackingService } from './flow-run-tracking-service'
 
-export const consoleUsageModule: FastifyPluginAsyncZod = async (app) => {
-    systemJobHandlers.registerJobHandler(SystemJobName.CONSOLE_USAGE_REPORT, async () => {
-        await consoleUsageService(app.log).reportAllPlatforms()
+export const flowRunTrackingModule: FastifyPluginAsyncZod = async (app) => {
+    systemJobHandlers.registerJobHandler(SystemJobName.FLOW_RUN_TRACKING, async () => {
+        await flowRunTrackingService(app.log).reportAllPlatforms()
     })
 
     await systemJobsSchedule(app.log).upsertJob({
         job: {
-            name: SystemJobName.CONSOLE_USAGE_REPORT,
+            name: SystemJobName.FLOW_RUN_TRACKING,
             data: {},
-            jobId: SystemJobName.CONSOLE_USAGE_REPORT,
+            jobId: SystemJobName.FLOW_RUN_TRACKING,
         },
         schedule: {
             type: 'repeated',

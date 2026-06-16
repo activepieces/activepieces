@@ -4,6 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { isNotOneOfTheseEditions } from '../../database/database-common'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
+import { BillingEvents, captureBillingEvent } from '../../helper/telemetry.utils'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
 import { platformPlanRepo } from '../platform/platform-plan/platform-plan.service'
@@ -19,6 +20,14 @@ export const chatAnalyticsTelemetry = (log: FastifyBaseLogger) => ({
         conversation: ChatConversation
     }): void {
         rejectedPromiseHandler(syncConversations({ conversations: [conversation], log }), log)
+    },
+    // Per-assistant-turn billing event sent to PostHog (separate from the Console content sync above).
+    // Carries no conversation content — only the provider/model and the number of tools used in the
+    // turn — and is keyed by the platform's license key, so it covers any licensed platform.
+    sendMessageBillingEvent({ conversation }: {
+        conversation: ChatConversation
+    }): void {
+        rejectedPromiseHandler(emitMessageBillingEvent({ conversation, log }), log)
     },
 })
 
@@ -266,6 +275,39 @@ function resolveModelId({ tierId, provider }: { tierId: string | null, provider:
         return tier.modelId
     }
     return chatHelpers.resolveModelIdForProvider({ tier, provider })
+}
+
+async function emitMessageBillingEvent({ conversation, log }: {
+    conversation: ChatConversation
+    log: FastifyBaseLogger
+}): Promise<void> {
+    const licenseKeyByPlatform = await resolveLicenseKeysByPlatform({ platformIds: [conversation.platformId] })
+    const licenseKey = licenseKeyByPlatform.get(conversation.platformId)
+    if (isNil(licenseKey)) {
+        return
+    }
+
+    const provider = await resolveChatProviderName({ platformId: conversation.platformId, log })
+    const model = resolveModelId({ tierId: conversation.modelName ?? null, provider })
+    const toolsUsed = countToolCallsInLatestTurn(resolveMessages(conversation))
+
+    captureBillingEvent({
+        licenseKey,
+        event: BillingEvents.CHAT_MESSAGE,
+        properties: {
+            provider,
+            model,
+            toolsUsed,
+        },
+    })
+}
+
+// Counts tool calls in the most recent assistant turn — the messages after the last user message —
+// which is the turn that just completed when this fires.
+function countToolCallsInLatestTurn(messages: PersistedChatMessage[]): number {
+    const lastUserIndex = messages.map((message) => message.role).lastIndexOf(PersistedChatRole.USER)
+    const turn = lastUserIndex === -1 ? messages : messages.slice(lastUserIndex + 1)
+    return turn.reduce((sum, message) => sum + message.parts.filter((part) => part.type === PersistedChatPartType.TOOL_CALL).length, 0)
 }
 
 async function resolveChatProviderName({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<AIProviderName | null> {
