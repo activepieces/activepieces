@@ -1,6 +1,6 @@
 {
-  "Manual Trigger": "Manual Trigger",
-  "Manually start your own flow without any extra configurations": "Manually start your own flow without any extra configurations",
+  "Manual Trigger": "手动触发",
+  "Manually start your own flow without any extra configurations": "手动启动您自己的流程而不需要任何额外的配置",
   "Markdown": "Markdown",
-  "Manual triggers are used to start a flow on demand, publish your flow and click (Run Flow) at the start of the flow.": "Manual triggers are used to start a flow on demand, publish your flow and click (Run Flow) at the start of the flow."
+  "Manual triggers are used to start a flow on demand, publish your flow and click (Run Flow) at the start of the flow.": "手动触发器用于在需要时启动流程，发布您的流程，并在流程开始时单击(运行流程)。"
 }
