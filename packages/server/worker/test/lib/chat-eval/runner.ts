@@ -116,7 +116,7 @@ export const chatEvalRunner = {
     renderTranscript,
 }
 
-export type RunFixtureResult = {
+type RunFixtureResult = {
     result: ChatTurnResult
     assertionResults: AssertionResult[]
     divergences: ReplayDivergence[]

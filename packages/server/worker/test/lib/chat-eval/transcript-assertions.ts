@@ -105,7 +105,7 @@ export const transcriptAssertions = {
     runAssertion,
 }
 
-export type AssertionOutcome = {
+type AssertionOutcome = {
     pass: boolean
     reason: string
 }

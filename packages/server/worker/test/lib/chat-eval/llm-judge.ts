@@ -31,7 +31,7 @@ export const llmJudge = {
     create: createJudge,
 }
 
-export type JudgeVerdict = {
+type JudgeVerdict = {
     pass: boolean
     reason: string
 }
