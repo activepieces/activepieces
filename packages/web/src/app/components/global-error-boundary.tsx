@@ -1,20 +1,17 @@
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCcw } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import {
-  ErrorBoundary,
-  FallbackProps,
-  ErrorBoundaryPropsWithComponent,
-} from 'react-error-boundary';
+import { ErrorBoundary } from 'react-error-boundary';
 import { useRouteError } from 'react-router-dom';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { Button } from '@/components/ui/button';
 import { errorReporting } from '@/lib/error-reporting';
 
-let lastComponentStack: string | null = null;
-
-function buildDiagnosticsText(error: unknown): string {
+function buildDiagnosticsText(
+  error: unknown,
+  componentStack?: string | null,
+): string {
   const err =
     error instanceof Error
       ? error
@@ -29,11 +26,17 @@ function buildDiagnosticsText(error: unknown): string {
     err.stack ?? '(no stack)',
     '',
     `Component Stack:`,
-    lastComponentStack ?? '(no component stack)',
+    componentStack ?? '(no component stack)',
   ].join('\n');
 }
 
-const ErrorFallbackContent = ({ error }: { error: unknown }) => {
+const ErrorFallbackContent = ({
+  error,
+  componentStack,
+}: {
+  error: unknown;
+  componentStack?: string | null;
+}) => {
   const [showDetails, setShowDetails] = useState(false);
   const isChunkError = errorReporting.isChunkLoadError(error);
 
@@ -84,13 +87,13 @@ const ErrorFallbackContent = ({ error }: { error: unknown }) => {
           {showDetails && (
             <div className="relative w-full text-left">
               <CopyButton
-                textToCopy={buildDiagnosticsText(error)}
+                textToCopy={buildDiagnosticsText(error, componentStack)}
                 variant="ghost"
                 withoutTooltip
                 className="absolute right-2 top-2 size-7 text-muted-foreground"
               />
               <pre className="max-h-56 overflow-auto rounded-lg border bg-muted/40 p-4 pr-12 font-mono text-xs leading-relaxed text-muted-foreground whitespace-pre-wrap break-words">
-                {buildDiagnosticsText(error)}
+                {buildDiagnosticsText(error, componentStack)}
               </pre>
             </div>
           )}
@@ -100,26 +103,26 @@ const ErrorFallbackContent = ({ error }: { error: unknown }) => {
   );
 };
 
-const GlobalErrorFallback = ({ error }: FallbackProps) => (
-  <ErrorFallbackContent error={error} />
-);
-
-const onError: ErrorBoundaryPropsWithComponent['onError'] = (error, info) => {
-  lastComponentStack = info.componentStack ?? null;
-  errorReporting.report({
-    error,
-    componentStack: info.componentStack,
-    source: 'react-error-boundary',
-  });
-};
-
 export const GlobalErrorBoundary = ({
   children,
 }: {
   children: React.ReactNode;
 }) => {
+  const [componentStack, setComponentStack] = useState<string | null>(null);
   return (
-    <ErrorBoundary FallbackComponent={GlobalErrorFallback} onError={onError}>
+    <ErrorBoundary
+      onError={(error, info) => {
+        setComponentStack(info.componentStack ?? null);
+        errorReporting.report({
+          error,
+          componentStack: info.componentStack,
+          source: 'react-error-boundary',
+        });
+      }}
+      fallbackRender={({ error }) => (
+        <ErrorFallbackContent error={error} componentStack={componentStack} />
+      )}
+    >
       {children}
     </ErrorBoundary>
   );

@@ -19,13 +19,6 @@ function initialize({
     dsn,
     environment,
     release,
-    beforeSend: (event) => {
-      const value = event?.exception?.values?.[0]?.value;
-      if (value && ['EXECUTION_TIMEOUT', 'ENTITY_NOT_FOUND'].includes(value)) {
-        return null;
-      }
-      return event;
-    },
   });
 }
 

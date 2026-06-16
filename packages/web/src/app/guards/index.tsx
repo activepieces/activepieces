@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import {
   RouterProvider,
   createBrowserRouter,
@@ -17,7 +17,6 @@ import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
 import { RouteErrorBoundary } from '../components/global-error-boundary';
 import { ProjectDashboardLayout } from '../components/project-layout';
-import { CrashTestPage } from '../routes/crash-test';
 
 import { DefaultRoute } from './default-route';
 import { TokenCheckerWrapper } from './project-route-wrapper';
@@ -49,9 +48,27 @@ const chatRoutes = [
   { path: '/chat/:conversationId', element: chatElement() },
 ];
 
-const devRoutes = import.meta.env.DEV
-  ? [{ path: '/__crashtest', element: <CrashTestPage /> }]
-  : [];
+const CrashTestPage = import.meta.env.DEV
+  ? lazy(() =>
+      import('../routes/crash-test').then((m) => ({
+        default: m.CrashTestPage,
+      })),
+    )
+  : null;
+
+const devRoutes =
+  import.meta.env.DEV && CrashTestPage
+    ? [
+        {
+          path: '/__crashtest',
+          element: (
+            <Suspense fallback={<RouteLoadingBar />}>
+              <CrashTestPage />
+            </Suspense>
+          ),
+        },
+      ]
+    : [];
 
 const routes = [
   ...devRoutes,

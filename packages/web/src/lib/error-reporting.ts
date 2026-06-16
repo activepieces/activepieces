@@ -85,16 +85,20 @@ function buildCaptureContext(report: FrontendErrorReport) {
   };
 }
 
-function send(report: FrontendErrorReport): void {
-  const error =
-    report.error instanceof Error
-      ? report.error
-      : new Error(String(report.error ?? 'Unknown error'));
+function toError(raw: unknown): Error {
+  return raw instanceof Error ? raw : new Error(String(raw ?? 'Unknown error'));
+}
+
+function dispatch(report: FrontendErrorReport): void {
+  const error = toError(report.error);
   if (isDuplicate(error)) {
     return;
   }
+  sentry.capture(error, buildCaptureContext(report));
+}
 
-  console.error('[frontend-error]', error, {
+function send(report: FrontendErrorReport): void {
+  console.error('[frontend-error]', toError(report.error), {
     source: report.source,
     componentStack: report.componentStack,
   });
@@ -108,7 +112,7 @@ function send(report: FrontendErrorReport): void {
     return;
   }
 
-  sentry.capture(error, buildCaptureContext(report));
+  dispatch(report);
 }
 
 function report(input: FrontendErrorReport): void {
@@ -121,7 +125,7 @@ function flushBuffered(): void {
     return;
   }
   const pending = buffer.splice(0, buffer.length);
-  pending.forEach(send);
+  pending.forEach(dispatch);
 }
 
 export const errorReporting = {
