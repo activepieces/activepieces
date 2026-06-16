@@ -105,7 +105,6 @@ export enum BillingEvents {
 }
 
 export type AiUsagePerRunProperties = {
-    licenseKey: string
     platformId: string
     projectId: string
     edition: ApEdition

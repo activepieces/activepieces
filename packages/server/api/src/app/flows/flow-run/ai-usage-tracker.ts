@@ -45,7 +45,6 @@ export const aiUsageTracker = (log: FastifyBaseLogger) => ({
             licenseKey,
             event: BillingEvents.AI_USAGE_PER_RUN,
             properties: {
-                licenseKey,
                 platformId: project.platformId,
                 projectId: flowRun.projectId,
                 edition: system.getEdition(),
