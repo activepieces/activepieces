@@ -6,6 +6,7 @@ import wav from 'wav';
 import { Writable } from 'stream';
 
 export const textToSpeechAction = createAction({
+  audience: 'human',
   name: 'text-to-speech',
   auth: googleGeminiAuth,
   displayName: 'Text to Speech',

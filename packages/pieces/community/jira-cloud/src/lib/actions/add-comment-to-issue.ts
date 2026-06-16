@@ -9,6 +9,12 @@ export const addCommentToIssueAction = createAction({
 	name: 'add_issue_comment',
 	displayName: 'Add Issue Comment',
 	description: 'Adds a comment to an issue.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Post a new comment on an existing Jira issue. Accepts plain text by default, or raw Atlassian Document Format (ADF) JSON when the ADF flag is set — use the Markdown to Jira Format action to produce ADF from markdown. Not idempotent: each run appends another comment.',
+		idempotent: false,
+	},
 	props: {
 		projectId: getProjectIdDropdown(),
 		issueId: getIssueIdDropdown({ refreshers: ['projectId'] }),

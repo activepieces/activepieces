@@ -8,6 +8,7 @@ import {
 import { baseUrlv0 } from '../common/common';
 
 export const deleteRag = createAction({
+  audience: 'human',
   auth: straicoAuth,
   name: 'delete_rag',
   displayName: 'Delete RAG',

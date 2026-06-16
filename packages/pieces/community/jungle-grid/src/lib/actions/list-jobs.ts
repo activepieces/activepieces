@@ -8,6 +8,12 @@ export const listJobs = createAction({
   name: 'list_jobs',
   displayName: 'List Jobs',
   description: 'List Jungle Grid jobs for the authenticated workspace, optionally filtered by status.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'List jobs in the authenticated Jungle Grid workspace, optionally filtered by status, with cursor-based pagination up to 100 per page. Pick this to find a job ID when none is known or to survey recent activity; if you already have a job ID, Get Job Status is more direct. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     limit: Property.Number({
       displayName: 'Limit',

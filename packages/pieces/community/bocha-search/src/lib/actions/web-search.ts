@@ -8,6 +8,12 @@ export const webSearchAction = createAction({
   name: 'web_search',
   displayName: 'Web Search',
   description: 'Search the web using Bocha.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Runs a Bocha web search for a query and returns matching web pages, optionally with per-result text summaries. Pick this to look up current information on the public web; results can be narrowed by freshness window, capped result count, and include/exclude domain lists (up to 100 domains each, separated by | or ,). Read-only and idempotent — repeating the same query just fetches results again.',
+    idempotent: true,
+  },
   auth: bochaAuth,
   props: {
     query: Property.ShortText({

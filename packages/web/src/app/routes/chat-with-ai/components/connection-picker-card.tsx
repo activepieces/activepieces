@@ -7,7 +7,6 @@ import { t } from 'i18next';
 import { Check, Plus, RefreshCw } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
 
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
 import { Button } from '@/components/ui/button';
@@ -19,12 +18,10 @@ import { authenticationSession } from '@/lib/authentication-session';
 
 import {
   ConnectionPickerData,
+  isConnectionHealthy,
   normalizePieceName,
 } from '../lib/message-parsers';
-
-function isConnectionHealthy(status: AppConnectionStatus): boolean {
-  return status === AppConnectionStatus.ACTIVE;
-}
+import { useConversationId } from '../lib/use-conversation-id';
 
 function connectionStatusLabel(status: AppConnectionStatus): string | null {
   if (status === AppConnectionStatus.ERROR) return t('Expired');
@@ -154,12 +151,7 @@ export function ConnectionPickerCard({
   selectedConnectionLabel,
 }: ConnectionPickerCardProps) {
   const queryClient = useQueryClient();
-  const { conversationId: routerConversationId } = useParams<{
-    conversationId: string;
-  }>();
-  const conversationId =
-    routerConversationId ??
-    window.location.pathname.match(/\/chat\/([^/]+)/)?.[1];
+  const conversationId = useConversationId();
   const pieceName = normalizePieceName(picker.piece);
   const shouldFetch =
     !picker.connections?.length && !!conversationId && isInteractive;

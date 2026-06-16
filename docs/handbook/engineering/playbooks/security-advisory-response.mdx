@@ -9,6 +9,11 @@ A security advisory is the public artifact we publish after a vulnerability is r
 ## Triage
 
 <Steps>
+  <Step title="Acknowledge receipt">
+    Reports arrive through GitHub private vulnerability reporting and appear under repo → **Security** → **Advisories**. Reply in the advisory thread on intake confirming the report was received, with a confidentiality reminder. \
+    Do this first, before reproduction and scoring, so the response is never delayed by triage depth.
+  </Step>
+
   <Step title="Reproduce">
     Reproduce locally before scoring. If it doesn't reproduce, ask the reporter for clarification.
   </Step>
@@ -22,18 +27,19 @@ A security advisory is the public artifact we publish after a vulnerability is r
     Buckets: 0.1–3.9 low, 4.0–6.9 medium, 7.0–8.9 high, 9.0–10 critical.
   </Step>
 
-  <Step title="Acknowledge within 3 business days">
-    Reply to the reporter with severity, expected resolution date, and a confidentiality reminder. Clock starts at the report timestamp.
+  <Step title="Send evaluation within 7 business days">
+    Reply to the reporter with the severity and expected resolution date. Clock starts at the report timestamp.
   </Step>
 </Steps>
 
 ## Private fix
 
 <Steps>
-  <Step title="Open a draft advisory">
-    Repo → **Security** → **Advisories** → **New draft security advisory**. \
+  <Step title="Work from the advisory">
+    A report submitted through private vulnerability reporting already appears as a draft advisory under repo → **Security** → **Advisories**; open it. \
+    For an internally discovered issue with no external reporter, create one with **New draft security advisory**. \
     Set affected versions, severity, and a neutral summary. \
-    Save as draft. You'll fill the rest of the metadata in [Draft advisory](#draft-advisory) later.
+    Keep it as a draft. You'll fill the rest of the metadata in [Draft advisory](#draft-advisory) later.
   </Step>
 
   <Step title="Use a temporary private fork">
@@ -124,6 +130,10 @@ Re-confirm the disclosure date with the reporter before sending.
 
   <Step title="Confirm the advisory reaches admins">
     Confirm the new advisory appears on the platform health page (`/platform/infrastructure/health`). Source feeds cache for 15 minutes, so allow that delay before troubleshooting.
+
+    <Note>
+    Pending the security advisories panel reaching production. Until then, skip this step.
+    </Note>
   </Step>
 
   <Step title="Post the changelog">

@@ -1,4 +1,4 @@
-import { AppConnectionStatus, AppConnectionType, FlowRunStatus, FlowStatus, isNil, isObject, parseToJsonIfPossible, Project, RunEnvironment } from '@activepieces/shared'
+import { AppConnectionStatus, AppConnectionType, chatToolClassification, FlowRunStatus, FlowStatus, isNil, isObject, parseToJsonIfPossible, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { flowService } from '../../../flows/flow/flow.service'
@@ -234,50 +234,14 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             return discoveryResult
         }
         case 'ap_execute_action': {
-            const pieceName = toolInput.pieceName as string
+            return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, log })
+        }
+        case 'ap_explore_data': {
             const actionName = toolInput.actionName as string
-
-            const normalizedPiece = mcpUtils.normalizePieceName(pieceName) ?? pieceName
-            let connectionExternalId: string | undefined
-            let connectionLabel: string | undefined
-            let connectionProjectId: string | undefined
-            if (conversationId) {
-                const selected = await chatApprovalGate.getSelectedConnection({ conversationId, pieceName: normalizedPiece })
-                if (selected) {
-                    connectionExternalId = selected.externalId
-                    connectionLabel = selected.label
-                    connectionProjectId = selected.projectId
-                }
+            if (!chatToolClassification.isReadActionName(actionName)) {
+                return chatToolClassification.readOnlyRejection(actionName)
             }
-
-            const resolvedProjectId = connectionProjectId ?? projects[0]?.id
-            if (!resolvedProjectId) {
-                return { success: false, error: 'No projects available. Create a project first.' }
-            }
-            if (connectionProjectId && !availableProjectIds.includes(connectionProjectId)) {
-                return { success: false, error: `Project ${connectionProjectId} is not accessible.` }
-            }
-
-            let parsedInput = toolInput.input
-            if (typeof parsedInput === 'string') {
-                const parsed = parseToJsonIfPossible(parsedInput)
-                if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-                    parsedInput = parsed as Record<string, unknown>
-                }
-            }
-            const result = await executeAdhocAction({
-                projectId: resolvedProjectId,
-                pieceName,
-                actionName,
-                input: parsedInput as Record<string, unknown> | undefined,
-                connectionExternalId,
-                log,
-            })
-
-            if (connectionLabel && typeof result === 'object' && result !== null) {
-                return { ...(result as Record<string, unknown>), _meta: { connectionLabel, pieceName: normalizedPiece } }
-            }
-            return result
+            return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, log })
         }
         case 'ap_list_across_projects': {
             const resource = toolInput.resource as string
@@ -309,12 +273,69 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
     }
 }
 
+async function runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, log }: {
+    toolInput: Record<string, unknown>
+    projects: Project[]
+    availableProjectIds: string[]
+    conversationId?: string
+    log: FastifyBaseLogger
+}): Promise<unknown> {
+    const pieceName = toolInput.pieceName as string
+    const actionName = toolInput.actionName as string
+
+    const normalizedPiece = mcpUtils.normalizePieceName(pieceName) ?? pieceName
+    let connectionExternalId: string | undefined
+    let connectionLabel: string | undefined
+    let connectionProjectId: string | undefined
+    if (conversationId) {
+        const selected = await chatApprovalGate.getSelectedConnection({ conversationId, pieceName: normalizedPiece })
+        if (selected) {
+            connectionExternalId = selected.externalId
+            connectionLabel = selected.label
+            connectionProjectId = selected.projectId
+        }
+    }
+
+    const resolvedProjectId = connectionProjectId ?? projects[0]?.id
+    if (!resolvedProjectId) {
+        return { success: false, error: 'No projects available. Create a project first.' }
+    }
+    if (connectionProjectId && !availableProjectIds.includes(connectionProjectId)) {
+        return { success: false, error: `Project ${connectionProjectId} is not accessible.` }
+    }
+
+    let parsedInput = toolInput.input
+    if (typeof parsedInput === 'string') {
+        const parsed = parseToJsonIfPossible(parsedInput)
+        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+            parsedInput = parsed as Record<string, unknown>
+        }
+    }
+    const result = await executeAdhocAction({
+        projectId: resolvedProjectId,
+        pieceName,
+        actionName,
+        input: parsedInput as Record<string, unknown> | undefined,
+        connectionExternalId,
+        log,
+    })
+
+    if (connectionLabel && typeof result === 'object' && result !== null) {
+        return { ...(result as Record<string, unknown>), _meta: { connectionLabel, pieceName: normalizedPiece } }
+    }
+    return result
+}
+
 function resolveConnectionInfo({ status, type, value }: { status: AppConnectionStatus, type: AppConnectionType, value: unknown }): { status: AppConnectionStatus, grantedScopes: string[] } {
     if (!OAUTH_TYPES.has(type) || !isObject(value)) {
         return { status, grantedScopes: [] }
     }
     const grantedScopes = typeof value['scope'] === 'string' ? value['scope'].split(/\s+/).filter(Boolean) : []
     if (status !== AppConnectionStatus.ACTIVE) {
+        return { status, grantedScopes }
+    }
+    const hasRefreshToken = typeof value['refresh_token'] === 'string' && value['refresh_token'].length > 0
+    if (hasRefreshToken) {
         return { status, grantedScopes }
     }
     const claimedAtS = typeof value['claimed_at'] === 'number' ? value['claimed_at'] : 0

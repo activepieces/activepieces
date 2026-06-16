@@ -67,7 +67,6 @@ export enum ChatAgentEventType {
     ERROR = 'ERROR',
     TITLE_UPDATE = 'TITLE_UPDATE',
     TOOL_PROGRESS = 'TOOL_PROGRESS',
-    TOOL_APPROVAL_REQUEST = 'TOOL_APPROVAL_REQUEST',
     ACTION_PREVIEW = 'ACTION_PREVIEW',
     ACTION_RECEIPT = 'ACTION_RECEIPT',
 }
@@ -83,12 +82,6 @@ export type ToolProgressEvent = {
         done: boolean
         results: { index: number, success: boolean, output?: unknown, error?: string }[]
     }
-}
-
-export type ToolApprovalRequestEvent = {
-    toolCallId: string
-    toolName: string
-    displayName: string
 }
 
 export type ActionPreviewEvent = {
@@ -120,7 +113,6 @@ export type ChatAgentEvent =
     | { type: ChatAgentEventType.ERROR, data: { message: string, code?: string } }
     | { type: ChatAgentEventType.TITLE_UPDATE, data: { title: string } }
     | { type: ChatAgentEventType.TOOL_PROGRESS, data: ToolProgressEvent }
-    | { type: ChatAgentEventType.TOOL_APPROVAL_REQUEST, data: ToolApprovalRequestEvent }
     | { type: ChatAgentEventType.ACTION_PREVIEW, data: ActionPreviewEvent }
     | { type: ChatAgentEventType.ACTION_RECEIPT, data: ActionReceiptEvent }
 
@@ -146,6 +138,7 @@ export type ChatConfigResponse = {
     tier: { id: string, thinkingBudget: number, modelId: string }
     mcpCredentials: { mcpServerUrl: string, mcpToken: string } | null
     projects: Array<{ id: string, displayName: string, type: string }>
+    guides: Record<string, string>
 }
 
 export type SaveChatMessagesRequest = {

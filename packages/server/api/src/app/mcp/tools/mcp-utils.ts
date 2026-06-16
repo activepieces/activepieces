@@ -1,11 +1,12 @@
 import { PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
-import { BranchOperator, FlowActionType, flowStructureUtil, isNil, isObject, McpServerType, McpToolResult, ProjectScopedMcpServer, singleValueConditions } from '@activepieces/shared'
+import { BranchOperator, EngineResponse, EngineResponseStatus, FlowActionType, flowStructureUtil, isNil, isObject, McpServerType, McpToolResult, ProjectScopedMcpServer, singleValueConditions, tryCatch, WorkerJobType } from '@activepieces/shared'
 import type { RouterAction, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { expressionRewriter } from '../../flows/flow-version/migrations/expression-rewriter'
-import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
+import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
+import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 
 const NON_INPUT_PROP_TYPES = new Set<PropertyType>([
     PropertyType.OAUTH2,
@@ -69,6 +70,42 @@ function formatOptionsHint(options: Array<{ label: string, value: unknown }> | u
     return ` — options: ${values.join(', ')}`
 }
 
+function levenshtein(a: string, b: string): number {
+    const rows = Array.from({ length: a.length + 1 }, (_, i) => [i, ...new Array<number>(b.length).fill(0)])
+    for (let j = 1; j <= b.length; j++) {
+        rows[0][j] = j
+    }
+    for (let i = 1; i <= a.length; i++) {
+        for (let j = 1; j <= b.length; j++) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1
+            rows[i][j] = Math.min(rows[i - 1][j] + 1, rows[i][j - 1] + 1, rows[i - 1][j - 1] + cost)
+        }
+    }
+    return rows[a.length][b.length]
+}
+
+function suggestClosestKey(key: string, validKeys: string[]): string | null {
+    const loweredKey = key.toLowerCase()
+    const containing = validKeys.find((valid) => {
+        const loweredValid = valid.toLowerCase()
+        return loweredValid.includes(loweredKey) || loweredKey.includes(loweredValid)
+    })
+    if (containing) {
+        return containing
+    }
+    const threshold = Math.max(2, Math.floor(key.length / 2))
+    let best: string | null = null
+    let bestDistance = Infinity
+    for (const valid of validKeys) {
+        const distance = levenshtein(loweredKey, valid.toLowerCase())
+        if (distance < bestDistance) {
+            bestDistance = distance
+            best = valid
+        }
+    }
+    return best !== null && bestDistance <= threshold ? best : null
+}
+
 function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentType }: DiagnosePiecePropsParams): DiagnosisResult {
     const missing: string[] = []
     const uiRequired: string[] = []
@@ -108,7 +145,14 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
             .filter(([, prop]) => !NON_INPUT_PROP_TYPES.has(prop.type))
             .map(([name, prop]) => `- ${name} (${prop.type}): ${prop.description ?? prop.displayName}`)
             .join('\n')
-        parts.push(`Unknown properties: ${unknownKeys.map((k) => `'${k}'`).join(', ')}. Valid properties for this action are:\n${validPropDescriptions}\nPlease retry with correct property names.`)
+        const suggestions = unknownKeys
+            .map((key) => {
+                const closest = suggestClosestKey(key, [...validPropKeys])
+                return closest ? `'${key}' → did you mean '${closest}'?` : null
+            })
+            .filter((suggestion): suggestion is string => suggestion !== null)
+        const suggestionLine = suggestions.length > 0 ? `\nSuggestions: ${suggestions.join('; ')}.` : ''
+        parts.push(`Unknown properties: ${unknownKeys.map((k) => `'${k}'`).join(', ')}.${suggestionLine} Valid properties for this action are:\n${validPropDescriptions}\nPlease retry with correct property names.`)
     }
     if (missing.length > 0) {
         parts.push(`Missing required inputs: ${missing.join(', ')}.`)
@@ -123,6 +167,37 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
         parts.push(`This ${componentType} requires authentication.`)
     }
     return { parts, missing, unknownKeys, uiRequired, hasAuth }
+}
+
+async function detectUnknownInputProps({ pieceName, pieceVersion, componentName, componentType, input, platformId, log }: DetectUnknownInputPropsParams): Promise<{ unknownKeys: string[], message: string }> {
+    if (!isObject(input) || Object.keys(input).length === 0) {
+        return { unknownKeys: [], message: '' }
+    }
+    try {
+        const piece = await pieceMetadataService(log).getOrThrow({ platformId, name: pieceName, version: pieceVersion })
+        const component = componentType === 'action' ? piece.actions[componentName] : piece.triggers[componentName]
+        if (isNil(component)) {
+            return { unknownKeys: [], message: '' }
+        }
+        const { unknownKeys, parts } = diagnosePieceProps({ props: component.props, input, pieceAuth: piece.auth, requireAuth: component.requireAuth, componentType })
+        if (unknownKeys.length === 0) {
+            return { unknownKeys: [], message: '' }
+        }
+        const unknownMessage = parts.find((p) => p.startsWith('Unknown properties:')) ?? `Unknown properties: ${unknownKeys.map((k) => `'${k}'`).join(', ')}.`
+        return { unknownKeys, message: unknownMessage }
+    }
+    catch (err) {
+        log.warn({ err, pieceName, componentName }, 'detectUnknownInputProps: failed to fetch piece metadata')
+        return { unknownKeys: [], message: '' }
+    }
+}
+
+async function rejectUnknownInputProps(params: DetectUnknownInputPropsParams): Promise<McpToolResult | null> {
+    const { unknownKeys, message } = await detectUnknownInputProps(params)
+    if (unknownKeys.length === 0) {
+        return null
+    }
+    return { content: [{ type: 'text', text: `❌ ${message}` }] }
 }
 
 const MAX_PROP_DEPTH = 3
@@ -398,6 +473,61 @@ function extractOptionsArray(options: unknown): Array<{ label: string, value: un
 
 const RESOLVE_TIMEOUT_MS = 30_000
 
+async function executePropertyResolution({ pieceName, pieceVersion, actionOrTriggerName, propertyName, auth, input, searchValue, projectId, platformId, log }: {
+    pieceName: string
+    pieceVersion: string
+    actionOrTriggerName: string
+    propertyName: string
+    auth?: string
+    input?: Record<string, unknown>
+    searchValue?: string
+    projectId: string
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<PropertyResolutionResult> {
+    const piecePackage = await getPiecePackageWithoutArchive(log, platformId, { pieceName, pieceVersion })
+    const resolvedInput: Record<string, unknown> = {
+        ...(input ?? {}),
+        ...(auth ? { auth: `{{connections['${auth}']}}` } : {}),
+    }
+
+    const { data: result, error } = await tryCatch(() => withTimeout({
+        promise: userInteractionWatcher.submitAndWaitForResponse<EngineResponse<{
+            options: Array<{ label: string, value: unknown }> | PiecePropertyMap
+            disabled?: boolean
+        }>>({
+            jobType: WorkerJobType.EXECUTE_PROPERTY,
+            platformId,
+            projectId,
+            flowVersion: undefined,
+            propertyName,
+            actionOrTriggerName,
+            input: resolvedInput,
+            sampleData: {},
+            searchValue,
+            piece: piecePackage,
+        }, log),
+        ms: RESOLVE_TIMEOUT_MS,
+    }))
+
+    if (error || result.status !== EngineResponseStatus.OK || isNil(result.response?.options)) {
+        return { status: 'failed', message: error instanceof Error ? error.message : 'Could not resolve options' }
+    }
+
+    const { options } = result.response
+    const optionsArray = extractOptionsArray(options)
+    if (optionsArray !== null) {
+        return {
+            status: 'options',
+            options: optionsArray.map((o) => ({ label: String(o.label ?? ''), value: o.value })),
+        }
+    }
+    if (isObject(options) && !Array.isArray(options)) {
+        return { status: 'dynamic', props: options }
+    }
+    return { status: 'failed', message: 'Unrecognized options format' }
+}
+
 export const mcpUtils = {
     mcpToolError,
     truncate,
@@ -405,6 +535,8 @@ export const mcpUtils = {
     routerInvalidWarning,
     publishedFlowWarning,
     diagnosePieceProps,
+    detectUnknownInputProps,
+    rejectUnknownInputProps,
     buildPropSummaries,
     normalizePieceName,
     lookupPieceComponent,
@@ -418,6 +550,7 @@ export const mcpUtils = {
     withTimeout,
     rewriteAllReferences,
     extractOptionsArray,
+    executePropertyResolution,
     RESOLVE_TIMEOUT_MS,
     STEP_REFERENCE_HINT,
     BRANCH_CONDITIONS_INPUT_SCHEMA,
@@ -425,11 +558,26 @@ export const mcpUtils = {
 
 export type { PropSummary }
 
+export type PropertyResolutionResult =
+    | { status: 'options', options: Array<{ label: string, value: unknown }> }
+    | { status: 'dynamic', props: PiecePropertyMap }
+    | { status: 'failed', message: string }
+
 type FindResolvablePropsParams = {
     props: PropSummary[]
     componentProps: PiecePropertyMap
     auth: string | undefined
     providedInput: Record<string, unknown>
+}
+
+type DetectUnknownInputPropsParams = {
+    pieceName: string
+    pieceVersion: string
+    componentName: string
+    componentType: 'action' | 'trigger'
+    input: unknown
+    platformId: string
+    log: FastifyBaseLogger
 }
 
 type DiagnosePiecePropsParams = {

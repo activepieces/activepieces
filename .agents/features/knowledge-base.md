@@ -8,13 +8,23 @@ The Knowledge Base feature lets users upload documents (PDF, DOCX, TXT, CSV) int
 - `packages/server/api/src/app/knowledge-base/knowledge-base.service.ts` — service: `createFile`, `uploadAndIngest`, `extractChunks`, `storeChunks`, `search`, `listFiles`, `deleteFile`, `getChunkCount`, `listChunks`
 - `packages/server/api/src/app/knowledge-base/knowledge-base-file.entity.ts` — `knowledge_base_file` entity
 - `packages/server/api/src/app/knowledge-base/knowledge-base-chunk.entity.ts` — `knowledge_base_chunk` entity with `vector(768)` embedding column
+- `packages/server/api/src/app/knowledge-base/knowledge-base-schema.ts` — `knowledgeBaseSchema`: `ensure()` (creates the `vector` extension + `knowledge_base_chunk` table when available, never throws) and `isVectorExtensionInstalled()` (cached availability check)
+- `packages/server/api/src/app/knowledge-base/knowledge-base.module.ts` — registers routes + a `preHandler` that returns `FEATURE_DISABLED` when pgvector is unavailable
+- `packages/server/api/src/app/database/seeds/knowledge-base-seed.ts` — runs `knowledgeBaseSchema.ensure()` on every boot
 - `packages/shared/src/lib/automation/knowledge-base/index.ts` — `KnowledgeBaseFile` Zod schema
 - `packages/web/src/features/agents/agent-tools/knowledge-base-dialog/knowledge-base-api.ts` — frontend API client
 - `packages/web/src/features/agents/agent-tools/knowledge-base-dialog/knowledge-base-hooks.ts` — React Query hooks
 - `packages/web/src/features/agents/agent-tools/components/knowledge-base-tool.tsx` — `KnowledgeBaseSection` component rendered in agent tool list
 
 ## Edition Availability
-All editions. Requires `Permission.READ_KNOWLEDGE_BASE` / `Permission.WRITE_KNOWLEDGE_BASE`. Semantic search requires pgvector extension in the PostgreSQL database. Embedding generation requires an AI provider configured via `createCopilotEmbeddingModel` (falls back to text-only search if vector unavailable).
+All editions. Requires `Permission.READ_KNOWLEDGE_BASE` / `Permission.WRITE_KNOWLEDGE_BASE`. Embedding generation requires an AI provider configured via `createCopilotEmbeddingModel`.
+
+## pgvector Availability & Gating
+Knowledge base requires the PostgreSQL `vector` extension. It is **not** created by a migration (the original `AddPgVectorExtension` migration is a no-op, because `CREATE EXTENSION` crash-loops startup on managed Postgres where the app user lacks privileges). Instead:
+
+- **Seed-based, self-healing setup** — `knowledgeBaseSeed` runs `knowledgeBaseSchema.ensure()` on every boot (after migrations, under the migration lock). When the `vector` extension is available it creates the extension + `knowledge_base_chunk` table + indexes in one transaction; otherwise it skips silently. The whole thing is wrapped in `tryCatch`, so a `permission denied` never blocks startup. A deployment that installs pgvector later activates KB on its next restart — no migration or redeploy needed. (PGlite bundles pgvector via `extensions: { vector }`, so CE works out of the box.)
+- **Backend gate** — the KB module `preHandler` calls `knowledgeBaseSchema.isVectorExtensionInstalled()` and throws `ErrorCode.FEATURE_DISABLED` when it's absent. The check is cached once the extension is observed installed (it can only appear at boot via the seed).
+- **Frontend gate** — the `PGVECTOR_AVAILABLE` flag (`ApFlagId`, computed in `flag.service.ts` from `isVectorExtensionInstalled()`) drives the UI: `KnowledgeBaseSection` renders `null` (hides entirely) when the flag is `false`.
 
 ## Domain Terms
 - **KnowledgeBaseFile** — a record linking a project, a stored file (in the `file` table), and a display name

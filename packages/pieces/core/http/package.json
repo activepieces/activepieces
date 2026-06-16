@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-http",
-  "version": "0.11.9",
+  "version": "0.11.10",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {

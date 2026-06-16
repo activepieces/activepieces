@@ -4,6 +4,7 @@ import OpenAI from 'openai';
 import { isLLM } from '../common/common';
 
 export const extractStructuredDataAction = createAction({
+  audience: 'human',
 	auth: openaiAuth,
 	name: 'extract-structured-data',
 	displayName: 'Extract Structured Data from Text',

@@ -8,6 +8,12 @@ export const updateContactAction = createAction({
   name: 'update_contact',
   displayName: 'Update Contact',
   description: 'Updates an existing contact in the system.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Update an existing Trust contact identified by its contact ID; both the ID and the email are required by the API, while name, phone, and profile image URL are optional. Pick this to modify a known contact rather than Create Contact, which would add a duplicate. It overwrites via PUT with the supplied fields, so repeating the same call yields the same state (idempotent).',
+    idempotent: true,
+  },
   props: {
     contactId: Property.ShortText({
       displayName: 'Contact ID',

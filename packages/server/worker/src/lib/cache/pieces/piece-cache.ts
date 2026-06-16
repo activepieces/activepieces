@@ -1,14 +1,11 @@
 import path from 'path'
+import { type ApLogger, wideEvent } from '@activepieces/server-utils'
 import { ApEnvironment, EXACT_VERSION_REGEX, PackageType, PiecePackage, PieceType, WorkerToApiContract } from '@activepieces/shared'
-import { trace } from '@opentelemetry/api'
-import { Logger } from 'pino'
 import { workerSettings } from '../../config/worker-settings'
 import { getGlobalCachePiecesPath } from '../cache-paths'
 import { cacheState, NO_SAVE_GUARD } from '../cache-state'
 
-const tracer = trace.getTracer('piece-cache')
-
-export const pieceCache = (log: Logger, apiClient: WorkerToApiContract) => ({
+export const pieceCache = (log: ApLogger, apiClient: WorkerToApiContract) => ({
     async getPiece({ pieceName, pieceVersion, platformId }: PieceCacheKey): Promise<PiecePackage> {
         const isExactVersion = EXACT_VERSION_REGEX.test(pieceVersion)
 
@@ -19,7 +16,7 @@ export const pieceCache = (log: Logger, apiClient: WorkerToApiContract) => ({
         const cacheKey = `${pieceName}-${pieceVersion}-${platformId}`
         const cache = cacheState(path.join(getGlobalCachePiecesPath(), cacheKey))
 
-        const { state } = await cache.getOrSetCache({
+        const { state, cacheHit } = await cache.getOrSetCache({
             key: cacheKey,
             cacheMiss: (_: string) => {
                 const environment = workerSettings.getSettings().ENVIRONMENT
@@ -33,21 +30,19 @@ export const pieceCache = (log: Logger, apiClient: WorkerToApiContract) => ({
                 return false
             },
             installFn: async () => {
-                return tracer.startActiveSpan('pieceCache.fetchPiece', async (span) => {
-                    try {
-                        span.setAttribute('piece.name', pieceName)
-                        span.setAttribute('piece.version', pieceVersion)
+                return wideEvent.timed({
+                    name: 'pieceFetch',
+                    fn: async () => {
                         const piecePackage = await getPiecePackage({ pieceName, pieceVersion, platformId }, apiClient)
                         log.info({ pieceName, pieceVersion, platformId }, 'Cached piece')
                         return JSON.stringify(piecePackage)
-                    }
-                    finally {
-                        span.end()
-                    }
+                    },
                 })
             },
             skipSave: NO_SAVE_GUARD,
         })
+
+        wideEvent.set({ pieceCacheHit: cacheHit })
 
         return JSON.parse(state as string) as PiecePackage
     },

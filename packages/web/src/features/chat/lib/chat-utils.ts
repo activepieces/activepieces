@@ -32,10 +32,6 @@ const TOOL_LABELS: Record<string, { active: string; done: string }> = {
     active: 'Listing resources',
     done: 'Listed resources',
   },
-  ap_request_plan_approval: {
-    active: 'Requesting approval',
-    done: 'Requested approval',
-  },
   ap_research_pieces: {
     active: 'Searching integrations',
     done: 'Searched integrations',

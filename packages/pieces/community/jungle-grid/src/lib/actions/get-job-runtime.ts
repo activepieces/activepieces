@@ -8,6 +8,12 @@ export const getJobRuntime = createAction({
   name: 'get_job_runtime',
   displayName: 'Get Job Runtime',
   description: 'Get runtime tails, exit code, and runtime availability details for a Jungle Grid job.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieve runtime execution details for a Jungle Grid job by job ID, including log tails, exit code, and whether runtime data is available. Pick this to diagnose how a job actually ran; use Get Job Status for lifecycle state only, or Get Job Logs for fuller paginated log output. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     job_id: jungleGridCommon.jobId,
   },

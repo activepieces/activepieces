@@ -13,6 +13,7 @@ import { isNil, spreadIfDefined } from '@activepieces/shared';
 import { billingIssueMessage, modelDropdown, unauthorizedMessage } from '../common/common';
 const DEFAULT_TOKENS_FOR_THINKING_MODE = 1024;
 export const askClaude = createAction({
+  audience: 'human',
   auth: claudeAuth,
   name: 'ask_claude',
   displayName: 'Ask Claude',

@@ -1,14 +1,10 @@
 import fs, { rm } from 'node:fs/promises'
 import path from 'node:path'
-import { cryptoUtils, fileSystemUtils } from '@activepieces/server-utils'
+import { type ApLogger, cryptoUtils, fileSystemUtils, wideEvent } from '@activepieces/server-utils'
 import { ExecutionMode, FlowVersionState, SourceCode, tryCatch, tryCatchSync } from '@activepieces/shared'
-import { trace } from '@opentelemetry/api'
-import { Logger } from 'pino'
 import { workerSettings } from '../../config/worker-settings'
 import { cacheState, NO_SAVE_GUARD } from '../cache-state'
 import { bunRunner } from './bun-runner'
-
-const tracer = trace.getTracer('code-builder')
 
 const TS_CONFIG_CONTENT = `
 {
@@ -42,7 +38,7 @@ const INVALID_ARTIFACT_TEMPLATE = `
 
 const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '${ERROR_MESSAGE}'
 
-export const codeBuilder = (log: Logger) => ({
+export const codeBuilder = (log: ApLogger) => ({
     getCodesFolder({
         codesFolderPath,
         flowVersionId,
@@ -79,39 +75,32 @@ export const codeBuilder = (log: Logger) => ({
 
                 await fileSystemUtils.threadSafeMkdir(codePath)
 
-                await tracer.startActiveSpan('codeBuilder.installDependencies', async (depSpan) => {
-                    try {
-                        depSpan.setAttribute('code.path', codePath)
+                await wideEvent.timed({
+                    name: 'codeDeps',
+                    fn: async () => {
                         await installDependencies({
                             path: codePath,
                             packageJson: getPackageJson(packageJson),
                         }, log)
                         log.info({ path: codePath }, 'Installed dependencies')
-                    }
-                    finally {
-                        depSpan.end()
-                    }
+                    },
                 })
 
-                await tracer.startActiveSpan('codeBuilder.compileCode', async (compileSpan) => {
-                    try {
-                        compileSpan.setAttribute('code.path', codePath)
+                await wideEvent.timed({
+                    name: 'codeCompile',
+                    fn: async () => {
                         const { error } = await tryCatch(() => compileCode({
                             path: codePath,
                             code,
                         }, log))
                         if (error) {
                             log.info({ codePath, error }, 'Compilation error')
-                            compileSpan.recordException(error instanceof Error ? error : new Error(String(error)))
                             await handleCompilationError({ codePath, error })
                         }
                         else {
                             log.info({ codePath }, 'Compilation success')
                         }
-                    }
-                    finally {
-                        compileSpan.end()
-                    }
+                    },
                 })
 
                 // node_modules is no longer needed after esbuild bundles everything into index.js
@@ -152,7 +141,7 @@ function getPackageJson(packageJson: string): string {
     })
 }
 
-async function installDependencies({ path, packageJson }: InstallDependenciesParams, log: Logger): Promise<void> {
+async function installDependencies({ path, packageJson }: InstallDependenciesParams, log: ApLogger): Promise<void> {
     await fs.writeFile(`${path}/package.json`, packageJson, 'utf8')
     const deps = Object.entries(JSON.parse(packageJson).dependencies ?? {})
     if (deps.length > 0) {
@@ -160,7 +149,7 @@ async function installDependencies({ path, packageJson }: InstallDependenciesPar
     }
 }
 
-async function compileCode({ path, code }: CompileCodeParams, log: Logger): Promise<void> {
+async function compileCode({ path, code }: CompileCodeParams, log: ApLogger): Promise<void> {
     await fs.writeFile(`${path}/tsconfig.json`, TS_CONFIG_CONTENT, {
         encoding: 'utf8',
         flag: 'w',

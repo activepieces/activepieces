@@ -14,6 +14,7 @@ import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const askOpenRouterAction = createAction({
+  audience: 'human',
   name: 'ask-lmm',
   displayName: 'Ask LLM',
   description: 'Ask any model supported by Open Router.',

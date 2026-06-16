@@ -19,6 +19,7 @@ enum FlowExecution {
 }
 
 export const returnResponse = createAction({
+  audience: 'human',
   name: 'return_response',
   displayName: 'Return Response',
   description: 'return a response',

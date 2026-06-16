@@ -28,6 +28,7 @@ interface AgentAddRagResponse {
 }
 
 export const agentAddRag = createAction({
+  audience: 'human',
   auth: straicoAuth,
   name: 'agent-add-rag',
   displayName: 'Add RAG to Agent',

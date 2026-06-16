@@ -2,6 +2,7 @@ import {
   type ChatHistoryMessage,
   type PersistedChatMessage,
   ChatConversation,
+  ConnectionOption,
   CreateChatConversationRequest,
   SeekPage,
   UpdateChatConversationRequest,
@@ -93,15 +94,7 @@ async function getPickerConnections({
 }: {
   conversationId: string;
   pieceName: string;
-}): Promise<
-  Array<{
-    externalId: string;
-    label: string;
-    projectId: string;
-    project: string;
-    status: string;
-  }>
-> {
+}): Promise<ConnectionOption[]> {
   return api.get(`/v1/chat/conversations/${conversationId}/connections`, {
     pieceName,
   });

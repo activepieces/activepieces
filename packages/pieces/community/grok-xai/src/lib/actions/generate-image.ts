@@ -16,6 +16,7 @@ import {
 import { z } from 'zod';
 
 export const generateImage = createAction({
+  audience: 'human',
   auth: grokAuth,
   name: 'generate_image',
   displayName: 'Generate Image',

@@ -142,6 +142,14 @@ export const apUpdateStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                     platformId: project.platformId,
                     log,
                 })
+
+                const { pieceName, pieceVersion, actionName: resolvedActionName } = updatedSettings
+                if (typeof pieceName === 'string' && typeof pieceVersion === 'string' && typeof resolvedActionName === 'string') {
+                    const unknownPropsError = await mcpUtils.rejectUnknownInputProps({ pieceName, pieceVersion, componentName: resolvedActionName, componentType: 'action', input: updatedSettings.input, platformId: project.platformId, log })
+                    if (unknownPropsError) {
+                        return unknownPropsError
+                    }
+                }
             }
 
             const payload = {

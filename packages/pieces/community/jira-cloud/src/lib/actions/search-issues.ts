@@ -9,6 +9,12 @@ export const searchIssues = createAction({
   name: 'search_issues',
   displayName: 'Search Issues',
   description: 'Search for issues with JQL',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Search Jira issues with an arbitrary JQL query, paginating automatically up to a max-results cap (1-5000) and optionally restricting which fields are returned or mapping field IDs to readable names. The go-to tool for finding issues by project, status, assignee, dates, or any JQL-expressible criteria; limit returned fields on large result sets to avoid memory issues. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: jiraCloudAuth,
   props: {
     memoryWarning: Property.MarkDown({

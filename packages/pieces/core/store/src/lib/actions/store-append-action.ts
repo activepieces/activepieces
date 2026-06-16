@@ -43,6 +43,7 @@ async function executeStorageAppend(context: ActionContext<PieceAuthProperty | u
 }
 
 export const storageAppendAction = createAction({
+  audience: 'human',
   name: 'append',
   displayName: 'Append',
   description: 'Append to a value in storage',

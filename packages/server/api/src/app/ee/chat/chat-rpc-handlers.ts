@@ -3,10 +3,14 @@ import {
     ActivepiecesError,
     ChatConfigResponse,
     ChatConversationStatus,
+    chatToolClassification,
     ErrorCode,
     ExecuteChatToolRequest,
     ExecuteChatToolResponse,
+    FlowActionType,
+    flowStructureUtil,
     GetChatConfigRequest,
+    isNil,
     PersistedChatMessage,
     PersistedChatPartType,
     PersistedChatRole,
@@ -17,12 +21,14 @@ import {
 } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
+import { flowService } from '../../flows/flow/flow.service'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { chatApprovalGate } from './chat-approval-gate'
 import { chatCompaction } from './chat-compaction'
 import { buildUserContentWithFiles } from './chat-file-utils'
 import { chatHelpers } from './chat-helpers'
+import { chatHistoryHygiene } from './chat-history-hygiene'
 import { chatAnalyticsTelemetry } from './chat-sync-job'
 import { chatMcp } from './mcp/chat-mcp'
 import { chatPrompt } from './prompt/chat-prompt'
@@ -73,6 +79,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         const previousMessages = conversation.messages as ModelMessage[]
         const newUserMessage: ModelMessage = { role: 'user' as const, content: userContent }
         const allMessages = [...previousMessages, newUserMessage]
+        const llmHistory = chatHistoryHygiene.collapseStaleToolOutputs({ messages: allMessages })
 
         const previousUiMessages = (conversation.uiMessages ?? []) as PersistedChatMessage[]
         const uiMessagesWithUser: PersistedChatMessage[] = [
@@ -85,10 +92,10 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         })
         await chatApprovalGate.clearCancel({ conversationId })
 
-        const estimatedTokens = chatCompaction.estimateTokenCount({ messages: allMessages, systemPromptLength: systemPromptText.length })
+        const estimatedTokens = chatCompaction.estimateTokenCount({ messages: llmHistory, systemPromptLength: systemPromptText.length })
         let compactionState = { summary: conversation.summary ?? null, summarizedUpToIndex: conversation.summarizedUpToIndex ?? null }
 
-        if (chatCompaction.shouldCompact({ estimatedTokens, provider: providerConfig.provider, messageCount: allMessages.length })) {
+        if (chatCompaction.shouldCompact({ estimatedTokens, provider: providerConfig.provider, messageCount: llmHistory.length })) {
             const model = chatAiUtils.createChatModel({
                 provider: providerConfig.provider,
                 auth: providerConfig.auth as Record<string, unknown>,
@@ -96,7 +103,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
                 modelId: resolvedModelId,
             })
             compactionState = await chatCompaction.compactMessages({
-                messages: allMessages,
+                messages: llmHistory,
                 existingSummary: compactionState.summary,
                 summarizedUpToIndex: compactionState.summarizedUpToIndex,
                 provider: providerConfig.provider,
@@ -110,7 +117,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         }
 
         const messagesForLlm = chatCompaction.buildCompactedPayload({
-            messages: allMessages,
+            messages: llmHistory,
             summary: compactionState.summary,
             summarizedUpToIndex: compactionState.summarizedUpToIndex,
             provider: providerConfig.provider,
@@ -130,6 +137,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
                 ? { mcpServerUrl: mcpCredentials.mcpServerUrl, mcpToken: mcpCredentials.mcpToken }
                 : null,
             projects: userProjects.map((p) => ({ id: p.id, displayName: p.displayName, type: p.type })),
+            guides: chatPrompt.guides,
         }
     },
 
@@ -222,6 +230,26 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
                 })
             }
             return { result: { success: true } }
+        }
+        if (input.toolName === '__flow_write_check') {
+            const flowId = input.toolInput.flowId
+            if (typeof flowId !== 'string' || typeof input.conversationId !== 'string') {
+                return { result: { hasWrites: false } }
+            }
+            const conversation = await chatHelpers.getConversationOrThrow({ id: input.conversationId, platformId: input.platformId, userId: input.userId })
+            if (isNil(conversation.projectId)) {
+                return { result: { hasWrites: false } }
+            }
+            const flow = await flowService(log).getOnePopulated({ id: flowId, projectId: conversation.projectId })
+            if (isNil(flow)) {
+                return { result: { hasWrites: false } }
+            }
+            const writeSteps = flowStructureUtil.getAllSteps(flow.version.trigger)
+                .filter((step) => step.type === FlowActionType.PIECE
+                    && typeof step.settings.actionName === 'string'
+                    && chatToolClassification.isWriteActionName(step.settings.actionName))
+                .map((step) => step.displayName)
+            return { result: { hasWrites: writeSteps.length > 0, flowName: flow.version.displayName, writeSteps } }
         }
         if (input.toolName === '__get_available_connections') {
             const { pieceName } = input.toolInput

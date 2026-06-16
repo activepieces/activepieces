@@ -12,6 +12,12 @@ export const getDesign = createAction({
   name: 'get_design',
   displayName: 'Get Design',
   description: 'Get the metadata for one of your designs, including owner information, URLs for editing and viewing, and thumbnail information.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches metadata for a single Canva design by design ID, including owner, edit/view URLs, and thumbnail. Pick this when you already know the design ID; use Find Design first if you only have a title or keywords. Read-only and idempotent; fails with 404 if the design does not exist or is inaccessible.',
+    idempotent: true,
+  },
   props: {
     designId: Property.Dropdown({
       displayName: 'Design',

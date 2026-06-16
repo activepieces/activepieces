@@ -18,6 +18,12 @@ export const listSequences = createAction({
   name: 'sequences_list_sequences',
   displayName: 'List Sequences',
   description: 'Returns a list of all sequences',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists all sequences (automated email courses) in the account with their IDs and names. Use it to find a sequence ID before enrolling subscribers or listing enrollments. Takes no inputs; read-only and idempotent.',
+    idempotent: true,
+  },
   props: {},
   run(context) {
     return fetchSequences(context.auth.secret_text);
@@ -29,6 +35,12 @@ export const addSubscriberToSequence = createAction({
   name: 'sequences_add_subscriber_to_sequence',
   displayName: 'Add Subscriber To Sequence',
   description: 'Add a subscriber to a sequence',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Enrolls an email address in a sequence so it starts receiving that automated email course, optionally setting first name, tags, and custom field values. Effectively idempotent — re-subscribing the same email to the same sequence upserts instead of duplicating the enrollment.',
+    idempotent: true,
+  },
   props: {
     sequenceId: sequenceIdDropdown,
     email: subscriberEmail,
@@ -72,6 +84,12 @@ export const listSubscriptionsToSequence = createAction({
   name: 'sequences_list_subscriptions_to_sequence',
   displayName: 'List Subscriptions To Sequence',
   description: 'List all subscriptions to a sequence',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists all subscriber enrollments for one sequence by sequence ID. Use List Sequences first to find the ID. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     sequenceId: sequenceIdDropdown,
   },

@@ -23,6 +23,12 @@ export const exportDesign = createAction({
   name: 'export_design',
   displayName: 'Export Design',
   description: 'Export a Canva design to various formats (PDF, JPG, PNG, GIF, PPTX, MP4). This creates an asynchronous job with download URLs valid for 24 hours.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Starts an asynchronous export job that renders an existing Canva design as PDF, JPG, PNG, GIF, PPTX, or MP4, with format-specific options (quality, page selection, custom image dimensions, PDF paper size). Pick this when you need downloadable output files from a design; download URLs expire after 24 hours and the job may need to be polled for completion. Not idempotent: each call queues a new export job.',
+    idempotent: false,
+  },
   props: {
     designId: Property.Dropdown({
       displayName: 'Design',
