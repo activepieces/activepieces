@@ -27,7 +27,17 @@ function aiAction({ name, actionName, input }: { name: string, actionName: strin
     }
 }
 
-function flowVersionWith(actions: ReturnType<typeof aiAction>[]): FlowVersion {
+function loopAction({ name, firstLoopAction }: { name: string, firstLoopAction: Record<string, unknown> }) {
+    return {
+        name,
+        type: FlowActionType.LOOP_ON_ITEMS,
+        settings: { items: '{{ [] }}' },
+        firstLoopAction,
+        nextAction: undefined,
+    }
+}
+
+function flowVersionWith(actions: Record<string, unknown>[]): FlowVersion {
     const chained = actions.reduceRight<unknown>((next, action) => ({ ...action, nextAction: next }), undefined)
     return {
         trigger: {
@@ -179,7 +189,7 @@ describe('aiUsageTracker extractor', () => {
     })
 
     it('counts each loop iteration of an AI step', async () => {
-        const flowVersion = flowVersionWith([aiAction({ name: 'step_1', actionName: ASK_AI })])
+        const flowVersion = flowVersionWith([loopAction({ name: 'loop_1', firstLoopAction: aiAction({ name: 'step_1', actionName: ASK_AI }) })])
         const iteration = {
             step_1: {
                 type: FlowActionType.PIECE,
@@ -200,6 +210,96 @@ describe('aiUsageTracker extractor', () => {
         })
         expect(usage.messages).toBe(3)
         expect(usage.breakdown).toEqual([{ provider: 'openai', model: 'gpt-4o', messages: 3, toolCalls: 0 }])
+    })
+
+    it('counts an AI step nested inside loops within loops', async () => {
+        const flowVersion = flowVersionWith([
+            loopAction({
+                name: 'loop_1',
+                firstLoopAction: loopAction({
+                    name: 'loop_2',
+                    firstLoopAction: aiAction({ name: 'step_1', actionName: ASK_AI }),
+                }),
+            }),
+        ])
+        const innerIteration = {
+            step_1: {
+                type: FlowActionType.PIECE,
+                status: StepOutputStatus.SUCCEEDED,
+                input: { provider: 'openai', model: 'gpt-4o' },
+            },
+        }
+        const outerIteration = {
+            loop_2: {
+                type: FlowActionType.LOOP_ON_ITEMS,
+                status: StepOutputStatus.SUCCEEDED,
+                output: { iterations: [innerIteration, innerIteration] },
+            },
+        }
+        const usage = await aiUsageExtractor.extractAiUsage({
+            steps: steps({
+                loop_1: {
+                    type: FlowActionType.LOOP_ON_ITEMS,
+                    status: StepOutputStatus.SUCCEEDED,
+                    output: { iterations: [outerIteration, outerIteration] },
+                },
+            }),
+            flowVersion,
+            fetchSlice: noopFetchSlice,
+        })
+        expect(usage.messages).toBe(4)
+        expect(usage.breakdown).toEqual([{ provider: 'openai', model: 'gpt-4o', messages: 4, toolCalls: 0 }])
+    })
+
+    it('skips loops whose subtree has no AI step', async () => {
+        const flowVersion = flowVersionWith([
+            loopAction({ name: 'loop_1', firstLoopAction: aiAction({ name: 'step_1', actionName: ASK_AI }) }),
+        ])
+        const usage = await aiUsageExtractor.extractAiUsage({
+            steps: steps({
+                loop_2: {
+                    type: FlowActionType.LOOP_ON_ITEMS,
+                    status: StepOutputStatus.SUCCEEDED,
+                    output: {
+                        iterations: [{
+                            other_step: {
+                                type: FlowActionType.PIECE,
+                                status: StepOutputStatus.SUCCEEDED,
+                                input: { provider: 'openai', model: 'gpt-4o' },
+                            },
+                        }],
+                    },
+                },
+            }),
+            flowVersion,
+            fetchSlice: noopFetchSlice,
+        })
+        expect(usage).toEqual({ messages: 0, toolCalls: 0, breakdown: [] })
+    })
+
+    it('counts every iteration of a large AI loop that crosses the event-loop yield threshold', async () => {
+        const flowVersion = flowVersionWith([loopAction({ name: 'loop_1', firstLoopAction: aiAction({ name: 'step_1', actionName: ASK_AI }) })])
+        const iteration = {
+            step_1: {
+                type: FlowActionType.PIECE,
+                status: StepOutputStatus.SUCCEEDED,
+                input: { provider: 'openai', model: 'gpt-4o' },
+            },
+        }
+        const iterationCount = 2500
+        const usage = await aiUsageExtractor.extractAiUsage({
+            steps: steps({
+                loop_1: {
+                    type: FlowActionType.LOOP_ON_ITEMS,
+                    status: StepOutputStatus.SUCCEEDED,
+                    output: { iterations: Array.from({ length: iterationCount }, () => iteration) },
+                },
+            }),
+            flowVersion,
+            fetchSlice: noopFetchSlice,
+        })
+        expect(usage.messages).toBe(iterationCount)
+        expect(usage.breakdown).toEqual([{ provider: 'openai', model: 'gpt-4o', messages: iterationCount, toolCalls: 0 }])
     })
 
     it('counts only the tested step in single-step test mode, ignoring seeded sample-data AI steps', async () => {

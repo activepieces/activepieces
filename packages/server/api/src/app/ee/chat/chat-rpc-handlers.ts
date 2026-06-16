@@ -165,6 +165,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             const conversation = await chatHelpers.conversationRepo().findOneBy({ id: input.conversationId })
             if (conversation) {
                 chatAnalyticsTelemetry(log).sendConversationUpdate({ conversation })
+                chatAnalyticsTelemetry(log).sendMessageBillingEvent({ conversation })
             }
         }
     },

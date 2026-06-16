@@ -4,7 +4,7 @@ const {
     mockGetRawMany,
     mockQueryBuilder,
     mockExceptionHandle,
-    mockFetch,
+    mockCaptureBillingEvent,
 } = vi.hoisted(() => {
     const mockGetRawMany = vi.fn()
     const mockQueryBuilder = {
@@ -21,11 +21,9 @@ const {
         mockGetRawMany,
         mockQueryBuilder,
         mockExceptionHandle: vi.fn(),
-        mockFetch: vi.fn().mockResolvedValue({ ok: true, status: 200 }),
+        mockCaptureBillingEvent: vi.fn(),
     }
 })
-
-vi.stubGlobal('fetch', mockFetch)
 
 const createRepoMock = () => ({
     createQueryBuilder: vi.fn(() => ({ ...mockQueryBuilder, getRawMany: mockGetRawMany })),
@@ -57,7 +55,20 @@ vi.mock('../../../../../src/app/helper/exception-handler', () => ({
     },
 }))
 
-import { consoleUsageService } from '../../../../../src/app/ee/console-usage/console-usage-service'
+vi.mock('../../../../../src/app/helper/sleep', () => ({
+    sleep: vi.fn().mockResolvedValue(undefined),
+}))
+
+vi.mock('../../../../../src/app/helper/telemetry.utils', () => ({
+    captureBillingEvent: mockCaptureBillingEvent,
+    BillingEvents: {
+        AI_USAGE_PER_RUN: 'ai_usage_per_run',
+        CHAT_MESSAGE: 'chat_message',
+        TOTAL_RUNS_PER_DAY: 'total_runs_per_day',
+    },
+}))
+
+import { flowRunTrackingService } from '../../../../../src/app/ee/flow-run-tracking/flow-run-tracking-service'
 
 const mockLog = {
     info: vi.fn(),
@@ -69,9 +80,7 @@ const mockLog = {
     trace: vi.fn(),
     silent: vi.fn(),
     level: 'info',
-} as any
-
-const SNAPSHOT_URL = 'https://console.activepieces.com/api/external/usage/snapshot'
+} as unknown as Parameters<typeof flowRunTrackingService>[0]
 
 // License keys are queried first (and gate the rest); the scoped count queries run afterwards in
 // declaration order: active flows, users, team projects, then per-day executions — which itself runs
@@ -93,27 +102,23 @@ const mockQueries = ({ licenseKeys = [], activeFlows = [], users = [], projects 
         .mockResolvedValueOnce(executionRuns)
 }
 
-describe('consoleUsageService', () => {
+describe('flowRunTrackingService', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        mockFetch.mockReset().mockResolvedValue({ ok: true, status: 200 })
         mockGetRawMany.mockReset().mockResolvedValue([])
     })
 
     describe('reportAllPlatforms', () => {
-        it('should report each license-keyed platform with the license key as the bearer token', async () => {
+        it('should emit a TOTAL_RUNS_PER_DAY billing event per licensed platform keyed by its license key', async () => {
             mockQueries({ licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }] })
 
-            await consoleUsageService(mockLog).reportAllPlatforms()
+            await flowRunTrackingService(mockLog).reportAllPlatforms()
 
-            expect(mockFetch).toHaveBeenCalledTimes(1)
-            expect(mockFetch).toHaveBeenCalledWith(
-                SNAPSHOT_URL,
+            expect(mockCaptureBillingEvent).toHaveBeenCalledTimes(1)
+            expect(mockCaptureBillingEvent).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    method: 'POST',
-                    headers: expect.objectContaining({
-                        'Authorization': 'Bearer key-123',
-                    }),
+                    licenseKey: 'key-123',
+                    event: 'total_runs_per_day',
                 }),
             )
         })
@@ -121,13 +126,13 @@ describe('consoleUsageService', () => {
         it('should skip the heavy aggregate queries and send nothing when no platform has a license key', async () => {
             mockQueries({ licenseKeys: [] })
 
-            await consoleUsageService(mockLog).reportAllPlatforms()
+            await flowRunTrackingService(mockLog).reportAllPlatforms()
 
             expect(mockGetRawMany).toHaveBeenCalledTimes(1)
-            expect(mockFetch).not.toHaveBeenCalled()
+            expect(mockCaptureBillingEvent).not.toHaveBeenCalled()
         })
 
-        it('should build the snapshot body with per-day executions and no key_value field', async () => {
+        it('should build the event properties with per-day executions and no key_value field', async () => {
             mockQueries({
                 activeFlows: [{ platformId: 'platform-1', count: '5' }],
                 users: [{ platformId: 'platform-1', count: '10' }],
@@ -140,10 +145,10 @@ describe('consoleUsageService', () => {
                 licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }],
             })
 
-            await consoleUsageService(mockLog).reportAllPlatforms()
+            await flowRunTrackingService(mockLog).reportAllPlatforms()
 
-            const fetchBody = JSON.parse(mockFetch.mock.calls[0][1].body)
-            expect(fetchBody).toEqual(expect.objectContaining({
+            const properties = mockCaptureBillingEvent.mock.calls[0][0].properties
+            expect(properties).toEqual(expect.objectContaining({
                 platform_id: 'platform-1',
                 active_flows: 5,
                 users: 10,
@@ -153,9 +158,9 @@ describe('consoleUsageService', () => {
                     { date: '2026-06-14', count: 60 },
                 ],
             }))
-            expect(fetchBody.executions).toBeUndefined()
-            expect(fetchBody.key_value).toBeUndefined()
-            expect(fetchBody.reported_at).toBeDefined()
+            expect(properties.executions).toBeUndefined()
+            expect(properties.key_value).toBeUndefined()
+            expect(properties.reported_at).toBeDefined()
         })
 
         it('should sum runs across multiple projects of the same platform per day, keeping platforms separate', async () => {
@@ -176,58 +181,34 @@ describe('consoleUsageService', () => {
                 ],
             })
 
-            await consoleUsageService(mockLog).reportAllPlatforms()
+            await flowRunTrackingService(mockLog).reportAllPlatforms()
 
-            // Snapshots are sent in platform insertion order: platform-1 then platform-2.
-            const body1 = JSON.parse(mockFetch.mock.calls[0][1].body)
-            const body2 = JSON.parse(mockFetch.mock.calls[1][1].body)
+            // Events are emitted in platform insertion order: platform-1 then platform-2.
+            const first = mockCaptureBillingEvent.mock.calls[0][0]
+            const second = mockCaptureBillingEvent.mock.calls[1][0]
 
-            expect(body1.platform_id).toBe('platform-1')
-            // platform-1's two projects accumulate into one per-day total
-            expect(body1.daily_executions).toEqual([{ date: '2026-06-13', count: 25 }])
+            expect(first.licenseKey).toBe('key-1')
+            expect(first.properties.platform_id).toBe('platform-1')
+            expect(first.properties.daily_executions).toEqual([{ date: '2026-06-13', count: 25 }])
 
-            expect(body2.platform_id).toBe('platform-2')
-            // platform-2 stays separate
-            expect(body2.daily_executions).toEqual([{ date: '2026-06-13', count: 7 }])
+            expect(second.licenseKey).toBe('key-2')
+            expect(second.properties.platform_id).toBe('platform-2')
+            expect(second.properties.daily_executions).toEqual([{ date: '2026-06-13', count: 7 }])
         })
 
         it('should default gauges to zero and send empty daily executions when a platform has no usage', async () => {
             mockQueries({ licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }] })
 
-            await consoleUsageService(mockLog).reportAllPlatforms()
+            await flowRunTrackingService(mockLog).reportAllPlatforms()
 
-            const fetchBody = JSON.parse(mockFetch.mock.calls[0][1].body)
-            expect(fetchBody.active_flows).toBe(0)
-            expect(fetchBody.users).toBe(0)
-            expect(fetchBody.projects).toBe(0)
-            expect(fetchBody.daily_executions).toEqual([])
-        })
-
-        it('should handle fetch errors per platform without stopping others', async () => {
-            mockQueries({
-                licenseKeys: [
-                    { platformId: 'p1', licenseKey: 'k1' },
-                    { platformId: 'p2', licenseKey: 'k2' },
-                ],
-            })
-
-            mockFetch
-                .mockRejectedValueOnce(new Error('network error'))
-                .mockResolvedValueOnce({ ok: true, status: 200 })
-
-            await consoleUsageService(mockLog).reportAllPlatforms()
-
-            expect(mockFetch).toHaveBeenCalledTimes(2)
-            expect(mockExceptionHandle).toHaveBeenCalledTimes(1)
-        })
-
-        it('should handle non-ok HTTP responses as errors', async () => {
-            mockQueries({ licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }] })
-            mockFetch.mockResolvedValue({ ok: false, status: 500 })
-
-            await consoleUsageService(mockLog).reportAllPlatforms()
-
-            expect(mockExceptionHandle).toHaveBeenCalledTimes(1)
+            const properties = mockCaptureBillingEvent.mock.calls[0][0].properties
+            expect(properties).toEqual(expect.objectContaining({
+                platform_id: 'platform-1',
+                active_flows: 0,
+                users: 0,
+                projects: 0,
+                daily_executions: [],
+            }))
         })
     })
 })
