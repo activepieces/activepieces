@@ -21,9 +21,6 @@ export const chatAnalyticsTelemetry = (log: FastifyBaseLogger) => ({
     }): void {
         rejectedPromiseHandler(syncConversations({ conversations: [conversation], log }), log)
     },
-    // Per-assistant-turn billing event sent to PostHog (separate from the Console content sync above).
-    // Carries no conversation content — only the provider/model and the number of tools used in the
-    // turn — and is keyed by the platform's license key, so it covers any licensed platform.
     sendMessageBillingEvent({ conversation }: {
         conversation: ChatConversation
     }): void {
@@ -40,9 +37,6 @@ export const chatAnalyticsBulkSync = (log: FastifyBaseLogger) => ({
     },
 })
 
-// Chat analytics ships full conversation content, so it is Cloud-only. On Cloud each platform's
-// conversations are synced under that platform's license key (sent as the Bearer token); platforms
-// without a license key are skipped.
 async function syncConversations({ conversations, log }: {
     conversations: ChatConversation[]
     log: FastifyBaseLogger
@@ -259,10 +253,7 @@ function convertToPersistedFormat(messages: ChatHistoryMessage[]): PersistedChat
     })
 }
 
-// Resolves the exact model id the chat used, verbatim — the Console stores it as-is. The conversation
-// only persists the tier id, so we recompute the model the same way the chat does
-// (chatHelpers.resolveModelIdForProvider), keyed off the platform's routing provider. For the
-// Activepieces/OpenRouter gateways this keeps the full "anthropic/claude-..." slug unchanged.
+
 function resolveModelId({ tierId, provider }: { tierId: string | null, provider: AIProviderName | null }): string | null {
     if (isNil(tierId)) {
         return null
@@ -302,8 +293,6 @@ async function emitMessageBillingEvent({ conversation, log }: {
     })
 }
 
-// Counts tool calls in the most recent assistant turn — the messages after the last user message —
-// which is the turn that just completed when this fires.
 function countToolCallsInLatestTurn(messages: PersistedChatMessage[]): number {
     const lastUserIndex = messages.map((message) => message.role).lastIndexOf(PersistedChatRole.USER)
     const turn = lastUserIndex === -1 ? messages : messages.slice(lastUserIndex + 1)
