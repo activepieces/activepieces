@@ -73,8 +73,12 @@ export const telemetry = (log: FastifyBaseLogger) => ({
     },
 })
 
-export function captureBillingEvent(event: CaptureBillingEventParams): void {
-    getPostHog().capture(event)
+export function captureBillingEvent({ licenseKey, event, properties }: CaptureBillingEventParams): void {
+    getPostHog().capture({
+        distinctId: licenseKey,
+        event,
+        properties,
+    })
 }
 
 export async function shutdownTelemetry(): Promise<void> {
