@@ -11,6 +11,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { RefreshAnalyticsProvider } from '@/features/platform-admin';
 
 import { EmbeddingFontLoader } from './components/embedding-font-loader';
+import { GlobalErrorBoundary } from './components/global-error-boundary';
 import { InitialDataGuard } from './components/initial-data-guard';
 import { ApRouter } from './guards';
 import { queryClient } from './query-client';
@@ -18,27 +19,29 @@ import { queryClient } from './query-client';
 export function App() {
   const { i18n } = useTranslation();
   return (
-    <QueryClientProvider client={queryClient}>
-      <RefreshAnalyticsProvider>
-        <EmbeddingProvider>
-          <InitialDataGuard>
-            <EmbeddingFontLoader>
-              <TelemetryProvider>
-                <TooltipProvider>
-                  <React.Fragment key={i18n.language}>
-                    <ThemeProvider storageKey="vite-ui-theme">
-                      <ApRouter />
-                      <Toaster position="bottom-right" />
-                      <ApErrorDialog />
-                    </ThemeProvider>
-                  </React.Fragment>
-                </TooltipProvider>
-              </TelemetryProvider>
-            </EmbeddingFontLoader>
-          </InitialDataGuard>
-        </EmbeddingProvider>
-      </RefreshAnalyticsProvider>
-    </QueryClientProvider>
+    <GlobalErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <RefreshAnalyticsProvider>
+          <EmbeddingProvider>
+            <InitialDataGuard>
+              <EmbeddingFontLoader>
+                <TelemetryProvider>
+                  <TooltipProvider>
+                    <React.Fragment key={i18n.language}>
+                      <ThemeProvider storageKey="vite-ui-theme">
+                        <ApRouter />
+                        <Toaster position="bottom-right" />
+                        <ApErrorDialog />
+                      </ThemeProvider>
+                    </React.Fragment>
+                  </TooltipProvider>
+                </TelemetryProvider>
+              </EmbeddingFontLoader>
+            </InitialDataGuard>
+          </EmbeddingProvider>
+        </RefreshAnalyticsProvider>
+      </QueryClientProvider>
+    </GlobalErrorBoundary>
   );
 }
 

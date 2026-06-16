@@ -1,4 +1,11 @@
 {
+  "A new version is available": "A new version is available",
+  "The application was updated. Please reload the page to get the latest version.": "The application was updated. Please reload the page to get the latest version.",
+  "An unexpected error occurred and this page could not be displayed. Your data is safe. Please reload the page to continue.": "An unexpected error occurred and this page could not be displayed. Your data is safe. Please reload the page to continue.",
+  "Reload page": "Reload page",
+  "Go to home": "Go to home",
+  "Show technical details": "Show technical details",
+  "Hide technical details": "Hide technical details",
   "0": "0",
   "Support": "Support",
   "Runs": "Runs",
