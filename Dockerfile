@@ -74,6 +74,13 @@ COPY . .
 # Build frontend, engine, server API, and worker
 RUN npx turbo run build --filter=web --filter=@activepieces/engine --filter=api --filter=worker
 
+# The web build emits hidden source maps (vite build.sourcemap='hidden') used to
+# symbolicate production stack traces in PostHog error tracking. Upload them to
+# PostHog here (cloud CI, guarded by a token) BEFORE stripping, then always remove
+# the .map files so source is never served from the shipped image (self-hosted too).
+# TODO(cloud-ci): inject + upload maps with posthog-cli when POSTHOG_CLI_TOKEN is set.
+RUN find dist/packages/web -name '*.map' -delete
+
 # Generate migration manifest (ordered list of migration names) for image-tag-based rollback
 RUN node -e "\
   const {getMigrations} = require('./packages/server/api/dist/src/app/database/postgres-connection');\
