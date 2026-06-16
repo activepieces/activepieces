@@ -11,7 +11,7 @@ export const youtubeDownloadCaptionAction = createAction({
   name: 'download_caption',
   displayName: 'Download Caption',
   description:
-    'Downloads a caption track by caption ID using the YouTube captions.download endpoint.',
+    'Returns a caption track text by caption ID using the YouTube captions.download endpoint.',
   props: {
     captionId: Property.ShortText({
       displayName: 'Caption ID',
@@ -61,19 +61,16 @@ export const youtubeDownloadCaptionAction = createAction({
       queryParams['onBehalfOfContentOwner'] = onBehalfOfContentOwner;
     }
 
-    const response = await httpClient.sendRequest<ArrayBuffer>({
+    const response = await httpClient.sendRequest<string>({
       method: HttpMethod.GET,
       url: `https://www.googleapis.com/youtube/v3/captions/${encodeURIComponent(captionId)}`,
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
       queryParams,
-      responseType: 'arraybuffer',
+      responseType: 'text',
     });
 
-    return await context.files.write({
-      fileName: `youtube-caption-${captionId}.${format ?? 'txt'}`,
-      data: Buffer.from(response.body),
-    });
+    return response.body;
   },
 });
