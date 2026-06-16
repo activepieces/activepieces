@@ -73,6 +73,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 updated,
             },
             {
+                id: ApFlagId.FRONTEND_SENTRY_DSN,
+                value: system.get(AppSystemProp.FRONTEND_SENTRY_DSN) ?? null,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.AGENTS_CONFIGURED,
                 // TODO (@abuaboud): add new check
                 value: true,
