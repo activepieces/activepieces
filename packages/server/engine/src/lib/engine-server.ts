@@ -16,18 +16,26 @@ let server: http.Server | undefined
 
 export const engineServer = {
     start: async (): Promise<void> => {
-        installConsoleCapture()
-
         const port = Number(process.env.AP_ENGINE_PORT)
+        // Loopback by default so the worker-pool sandbox engine is only reachable by its local
+        // worker. A remote function (Cloud Run) must listen on 0.0.0.0 — set AP_ENGINE_HOST.
+        const host = process.env.AP_ENGINE_HOST ?? '127.0.0.1'
+
+        server = http.createServer(engineServer.createRequestListener())
+
+        await listenWithRetry(server, port, host)
+    },
+    // The same request handler powers the standalone server and a Cloud Functions gen2
+    // functions-framework entry point (which provides its own HTTP server). gen2 buffers the
+    // body into req.rawBody, so handleRequest reads that when present.
+    createRequestListener: (): http.RequestListener => {
+        installConsoleCapture()
+        installPeriodicGc()
         const token = process.env.AP_ENGINE_TOKEN
         const maxBodyBytes = maxSocketHttpBufferSizeBytes(Number(process.env.AP_MAX_FILE_SIZE_MB ?? '100'))
-
-        server = http.createServer((req, res) => {
+        return (req, res) => {
             void handleRequest({ req, res, token, maxBodyBytes })
-        })
-
-        await listenWithRetry(server, port)
-        installPeriodicGc()
+        }
     },
     stop: async (): Promise<void> => {
         if (server) {
@@ -86,6 +94,12 @@ function isAuthorized(req: http.IncomingMessage, token: string | undefined): boo
 }
 
 function readBody(req: http.IncomingMessage, maxBytes: number): Promise<Buffer> {
+    // Cloud Functions gen2 (functions-framework) consumes the request stream and exposes the
+    // raw bytes here, so prefer it when present instead of re-reading an empty stream.
+    const rawBody = (req as http.IncomingMessage & { rawBody?: Buffer }).rawBody
+    if (rawBody) {
+        return Promise.resolve(rawBody)
+    }
     return new Promise<Buffer>((resolve, reject) => {
         const chunks: Buffer[] = []
         let size = 0
@@ -106,7 +120,7 @@ function readBody(req: http.IncomingMessage, maxBytes: number): Promise<Buffer> 
 // A fresh engine reuses its slot's deterministic loopback port. When a non-reusable sandbox is
 // recycled, the previous engine may still hold the port for a moment while the worker treeKills
 // it, so we retry the bind until it frees up instead of crashing the new engine.
-function listenWithRetry(httpServer: http.Server, port: number): Promise<void> {
+function listenWithRetry(httpServer: http.Server, port: number, host: string): Promise<void> {
     const deadline = Date.now() + BIND_RETRY_TIMEOUT_MS
     return new Promise<void>((resolve, reject) => {
         const attempt = (): void => {
@@ -118,7 +132,7 @@ function listenWithRetry(httpServer: http.Server, port: number): Promise<void> {
                 reject(error)
             }
             httpServer.once('error', onError)
-            httpServer.listen(port, '127.0.0.1', () => {
+            httpServer.listen(port, host, () => {
                 httpServer.removeListener('error', onError)
                 resolve()
             })

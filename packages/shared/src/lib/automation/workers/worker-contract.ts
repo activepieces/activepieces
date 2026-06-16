@@ -46,6 +46,7 @@ export type WorkerToApiContract = {
     getUsedPieces(input: Record<string, never>): Promise<PiecePackage[]>
     markPieceAsUsed(input: { pieces: PiecePackage[] }): Promise<void>
     disableFlow(input: DisableFlowRequest): Promise<void>
+    ensureFunction(input: EnsureFunctionRequest): Promise<EnsureFunctionResponse>
     sendChatEvent(input: SendChatEventRequest): Promise<void>
     getChatConfig(input: GetChatConfigRequest): Promise<ChatConfigResponse>
     saveChatMessages(input: SaveChatMessagesRequest): Promise<void>
@@ -174,4 +175,13 @@ export type ExecuteChatToolResponse = {
 export type DisableFlowRequest = {
     flowId: string
     projectId: string
+}
+
+export type EnsureFunctionRequest = {
+    projectId: string
+}
+
+export type EnsureFunctionResponse = {
+    url: string
+    engineToken: string
 }

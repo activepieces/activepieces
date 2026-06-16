@@ -1,5 +1,6 @@
 import { system, WorkerSystemProp } from '../../config/configs'
 import { logger } from '../../config/logger'
+import { createCloudFunctionRuntime } from './cloud-function/cloud-function-runtime'
 import { ExecutionRuntime, FlowExecutionRuntime } from './types'
 import { createWorkerPoolRuntime } from './worker-pool/worker-pool-runtime'
 
@@ -14,10 +15,18 @@ export const runtimeFactory = {
     },
     createRuntime({ slot }: { slot: number }): FlowExecutionRuntime {
         switch (runtimeFactory.selected()) {
+            case ExecutionRuntime.CLOUD_FUNCTION:
+                return createCloudFunctionRuntime({ slot })
             case ExecutionRuntime.WORKER_POOL:
             default:
                 return createWorkerPoolRuntime({ boxId: slot })
         }
+    },
+    // Piece-scoped and trigger-hook operations always run on the local worker pool, even under a
+    // remote runtime: they need the local piece cache and have no per-project deploy unit to
+    // invoke (ADR-0002 §4). Only EXECUTE_FLOW routes to the selected runtime.
+    createLocalRuntime({ slot }: { slot: number }): FlowExecutionRuntime {
+        return createWorkerPoolRuntime({ boxId: slot })
     },
     concurrencyFor(runtime: ExecutionRuntime): number {
         const runtimeDefault = RUNTIME_DEFAULT_CONCURRENCY[runtime]
@@ -40,4 +49,7 @@ function isExecutionRuntime(value: string | undefined): value is ExecutionRuntim
 
 const RUNTIME_DEFAULT_CONCURRENCY: Record<ExecutionRuntime, number> = {
     [ExecutionRuntime.WORKER_POOL]: 5,
+    // Remote functions hold no local process, so a worker can fan out many concurrent
+    // in-flight HTTP executions without consuming a sandbox slot per run.
+    [ExecutionRuntime.CLOUD_FUNCTION]: 50,
 }

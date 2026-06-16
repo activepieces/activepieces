@@ -49,6 +49,7 @@ export enum WorkerSystemProp {
     EXECUTION_RUNTIME = 'AP_EXECUTION_RUNTIME',
     EXECUTION_MODE = 'AP_EXECUTION_MODE',
     REUSE_SANDBOX = 'AP_REUSE_SANDBOX',
+    FUNCTION_CALLBACK_URL = 'AP_FUNCTION_CALLBACK_URL',
 }
 
 const defaultValues: Partial<Record<WorkerSystemProp, string>> = {

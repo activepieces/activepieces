@@ -4,6 +4,7 @@ import { Sandbox } from './sandbox-contract'
 
 export enum ExecutionRuntime {
     WORKER_POOL = 'WORKER_POOL',
+    CLOUD_FUNCTION = 'CLOUD_FUNCTION',
 }
 
 export type ActiveSandboxInfo = {

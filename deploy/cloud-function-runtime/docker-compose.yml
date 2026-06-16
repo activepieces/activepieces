@@ -1,0 +1,49 @@
+# End-to-end proof for the CLOUD_FUNCTION execution runtime.
+#
+#   engine    – the engine HTTP function (same image deployed to Cloud Run per project)
+#   mock-api  – minimal Activepieces API stand-in for the engine's run-log callbacks
+#   smoke     – drives the REAL worker runtime (createCloudFunctionRuntime) against `engine`,
+#               executes a flow (manual trigger -> code step) and asserts the output.
+#
+# The `codes` volume is shared so the smoke runner can drop the flow's code artifact where the
+# engine reads it — mirroring how a provisioned function gets its per-flow code.
+services:
+  engine:
+    build:
+      context: ../..
+      dockerfile: packages/server/engine/Dockerfile
+    environment:
+      AP_ENGINE_PORT: "8080"
+      AP_ENGINE_HOST: "0.0.0.0"
+      AP_ENGINE_TOKEN: "smoke-shared-engine-token"
+      AP_EXECUTION_MODE: "UNSANDBOXED"
+      AP_BASE_CODE_DIRECTORY: "/codes"
+    volumes:
+      - codes:/codes
+    expose:
+      - "8080"
+
+  mock-api:
+    build:
+      context: ./mock-api
+    environment:
+      PORT: "3000"
+    expose:
+      - "3000"
+
+  smoke:
+    build:
+      context: ./smoke
+    depends_on:
+      - engine
+      - mock-api
+    environment:
+      ENGINE_URL: "http://engine:8080"
+      ENGINE_TOKEN: "smoke-shared-engine-token"
+      AP_BASE_CODE_DIRECTORY: "/codes"
+      MOCK_API_URL: "http://mock-api:3000"
+    volumes:
+      - codes:/codes
+
+volumes:
+  codes:

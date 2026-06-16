@@ -37,6 +37,7 @@ import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
+import { functionProvisioningService } from '../function-provisioning/function-provisioning.service'
 import { getWorkerGroupQueueName, QueueName, RunsMetadataUpsertData } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
@@ -252,6 +253,10 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
                 },
             })
             log.info({ flowId, projectId }, '[workerRpc#disableFlow] Flow disabled by worker request')
+        },
+
+        async ensureFunction(input) {
+            return functionProvisioningService(log).ensure({ projectId: input.projectId })
         },
 
         async sendChatEvent(input) {

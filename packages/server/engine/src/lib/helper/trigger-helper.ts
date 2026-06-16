@@ -1,5 +1,5 @@
 import { PiecePropertyMap, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework'
-import { assertEqual, AUTHENTICATION_PROPERTY_NAME, EngineGenericError, EventPayload, ExecuteTriggerResponse, FlowTrigger, InvalidCronExpressionError, isNil, PieceTrigger, PropertySettings, ScheduleOptions, TriggerHookType, TriggerSourceScheduleType } from '@activepieces/shared'
+import { assertEqual, AUTHENTICATION_PROPERTY_NAME, EngineGenericError, EventPayload, ExecuteTriggerResponse, FlowTrigger, FlowTriggerType, InvalidCronExpressionError, isNil, PieceTrigger, PropertySettings, ScheduleOptions, TriggerHookType, TriggerSourceScheduleType } from '@activepieces/shared'
 import { isValidCron } from 'cron-validator'
 import { EngineConstants, ResolvedExecuteTriggerOperation } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -19,6 +19,11 @@ type Listener = {
 
 export const triggerHelper = {
     async executeOnStart(trigger: FlowTrigger, constants: EngineConstants, payload: unknown) {
+        // Only piece triggers have onStart hooks. An EMPTY trigger (e.g. a flow invoked
+        // directly without a configured trigger piece) has nothing to start.
+        if (trigger.type !== FlowTriggerType.PIECE) {
+            return
+        }
         const { pieceName, pieceVersion, triggerName, input, propertySettings } = (trigger as PieceTrigger).settings
 
         if (isNil(triggerName)) {

@@ -1,14 +1,11 @@
 import { type ApLogger } from '@activepieces/server-utils'
-import { ApEnvironment, ExecutionMode, isNil, tryCatch, WorkerToApiContract } from '@activepieces/shared'
+import { ApEnvironment, ExecutionMode, isNil } from '@activepieces/shared'
 import { system, WorkerSystemProp } from '../../../config/configs'
 import { workerSettings } from '../../../config/worker-settings'
 import { getActiveProxyPort } from '../../../egress/lifecycle'
-import { GLOBAL_CACHE_ROOT } from '../../cache/cache-paths'
-import { PieceNotFoundError } from '../../cache/pieces/piece-cache'
-import { cachePreparer } from '../../cache/preparer'
-import { extractCodeArtifacts, extractPiecePackages } from '../../utils/flow-helpers'
+import { provisionLocalCache } from '../provision-cache'
 import { Sandbox } from '../sandbox-contract'
-import { ActiveSandboxInfo, FlowExecutionRuntime, ReadyOperation } from '../types'
+import { ActiveSandboxInfo, FlowExecutionRuntime } from '../types'
 import { createSandboxForJob } from './create-sandbox-for-job'
 
 export function createWorkerPoolRuntime({ boxId }: { boxId: number }): FlowExecutionRuntime {
@@ -40,7 +37,7 @@ export function createWorkerPoolRuntime({ boxId }: { boxId: number }): FlowExecu
 
     return {
         async ready({ operation, log, apiClient }): Promise<Sandbox> {
-            await provisionForOperation({ operation, log, apiClient })
+            await provisionLocalCache({ operation, log, apiClient })
 
             const sandbox = acquire(log)
             try {
@@ -80,42 +77,6 @@ export function createWorkerPoolRuntime({ boxId }: { boxId: number }): FlowExecu
                 busy: currentSandbox.isBusy(),
             }
         },
-    }
-}
-
-// WORKER_POOL provisioning = populate the worker's local cache (pieces + code) so the local
-// sandbox can run the operation. This is the provision phase hidden inside ready(): it is
-// idempotent (the underlying installers short-circuit on a cache hit), so calling it per-run
-// and again on enable (via the ON_ENABLE trigger-hook run) is cheap. It throws on any failure
-// so ready() never hands back a sandbox that cannot run the operation; a flow with a missing
-// piece is disabled first, then the error is rethrown. Piece-scoped ops fill exactly one piece.
-async function provisionForOperation({ operation, log, apiClient }: {
-    operation: ReadyOperation
-    log: ApLogger
-    apiClient: WorkerToApiContract
-}): Promise<void> {
-    if (operation.kind === 'PIECE') {
-        await cachePreparer(log, apiClient).prepare({ pieces: [operation.piece], codeSteps: [], cacheRoot: GLOBAL_CACHE_ROOT })
-        return
-    }
-
-    const { flowVersion, platformId, flowId, projectId } = operation
-    const { error } = await tryCatch(async () => {
-        const pieces = await extractPiecePackages(flowVersion, platformId, log, apiClient)
-        const codeSteps = extractCodeArtifacts(flowVersion)
-        await cachePreparer(log, apiClient).prepare({ pieces, codeSteps, cacheRoot: GLOBAL_CACHE_ROOT })
-    })
-    if (error) {
-        if (error instanceof PieceNotFoundError) {
-            log.warn({ error: String(error), flowId }, 'Flow disabled due to missing piece')
-            const { error: disableError } = await tryCatch(
-                () => apiClient.disableFlow({ flowId, projectId }),
-            )
-            if (disableError) {
-                log.error({ error: String(disableError), flowId }, 'Failed to disable flow after missing piece')
-            }
-        }
-        throw error
     }
 }
 

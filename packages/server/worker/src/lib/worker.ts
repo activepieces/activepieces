@@ -14,6 +14,7 @@ import {
     tryCatch,
     WebsocketServerEvent,
     WorkerMachineHealthcheckRequest,
+    WorkerJobType,
     WorkerProps,
     WorkerSettingsResponse,
     WorkerToApiContract,
@@ -28,7 +29,7 @@ import { EgressStack, startEgressStack } from './egress/lifecycle'
 import { pieceInstaller } from './execute/cache/pieces/piece-installer'
 import { getHandler } from './execute/job-registry'
 import { runtimeFactory } from './execute/runtime/runtime-factory'
-import { ActiveSandboxInfo, FlowExecutionRuntime } from './execute/runtime/types'
+import { ActiveSandboxInfo, ExecutionRuntime, FlowExecutionRuntime } from './execute/runtime/types'
 import { JobContext, JobResult, JobResultKind } from './execute/types'
 
 
@@ -48,7 +49,11 @@ let healthServerInstance: ReturnType<typeof createServer> | null = null
 
 let egressStack: EgressStack | null = null
 
-let runtimes: FlowExecutionRuntime[] = []
+// `flowRuntimes` run EXECUTE_FLOW (the selected runtime — worker pool or cloud function).
+// `localRuntimes` run piece-scoped + trigger-hook ops, always on the worker pool (ADR-0002 §4).
+// Under WORKER_POOL the two share the same instances; under CLOUD_FUNCTION they are distinct.
+let flowRuntimes: FlowExecutionRuntime[] = []
+let localRuntimes: FlowExecutionRuntime[] = []
 
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
@@ -100,8 +105,7 @@ export const worker = {
 
     async stop(): Promise<void> {
         polling = false
-        await Promise.all(runtimes.map((runtime) => runtime.shutdown(logger)))
-        runtimes = []
+        await shutdownRuntimes()
         socket?.disconnect()
         socket = null
         healthServerInstance?.close()
@@ -120,25 +124,37 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
 
     const generation = connectionGeneration
 
-    if (runtimes.length > 0) {
-        logger.info({ count: runtimes.length }, 'Shutting down old runtimes before creating new ones')
-        await Promise.all(runtimes.map((runtime) => runtime.shutdown(logger)))
-        runtimes = []
+    if (flowRuntimes.length > 0) {
+        logger.info({ count: flowRuntimes.length }, 'Shutting down old runtimes before creating new ones')
+        await shutdownRuntimes()
     }
 
     const runtime = runtimeFactory.selected()
     const concurrency = runtimeFactory.concurrencyFor(runtime)
-    runtimes = Array.from({ length: concurrency }, (_, i) => runtimeFactory.createRuntime({ slot: i + 1 }))
+    flowRuntimes = Array.from({ length: concurrency }, (_, i) => runtimeFactory.createRuntime({ slot: i + 1 }))
+    // Under WORKER_POOL, EXECUTE_FLOW already runs locally — reuse the same instances so we don't
+    // double the sandbox pool. Under a remote runtime, spin up a dedicated local pool for
+    // piece/trigger-hook ops.
+    localRuntimes = runtime === ExecutionRuntime.WORKER_POOL
+        ? flowRuntimes
+        : Array.from({ length: concurrency }, (_, i) => runtimeFactory.createLocalRuntime({ slot: i + 1 }))
 
     logger.info({ runtime, concurrency }, 'Starting polling workers')
 
-    const workers = runtimes.map((flowRuntime, index) =>
-        pollAndExecute(apiClient, flowRuntime, index, generation),
+    const workers = flowRuntimes.map((flowRuntime, index) =>
+        pollAndExecute(apiClient, flowRuntime, localRuntimes[index], index, generation),
     )
     await Promise.all(workers)
 }
 
-async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: FlowExecutionRuntime, workerIndex: number, generation: number): Promise<void> {
+async function shutdownRuntimes(): Promise<void> {
+    const all = new Set<FlowExecutionRuntime>([...flowRuntimes, ...localRuntimes])
+    await Promise.all([...all].map((runtime) => runtime.shutdown(logger)))
+    flowRuntimes = []
+    localRuntimes = []
+}
+
+async function pollAndExecute(apiClient: WorkerToApiContract, flowRuntime: FlowExecutionRuntime, localRuntime: FlowExecutionRuntime, workerIndex: number, generation: number): Promise<void> {
     const workerLog = logger.child({ workerIndex })
     workerLog.info('Polling worker started')
 
@@ -180,7 +196,7 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: FlowExe
         }, 30_000)
 
         const { data: result, error: execError } = await tryCatch(() =>
-            executeJob(apiClient, job, sbManager),
+            executeJob(apiClient, job, flowRuntime, localRuntime),
         )
 
 
@@ -206,9 +222,12 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: FlowExe
     }
 }
 
-async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest, sbManager: FlowExecutionRuntime): Promise<JobResult> {
+async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest, flowRuntime: FlowExecutionRuntime, localRuntime: FlowExecutionRuntime): Promise<JobResult> {
     const rawData = job.jobData
     const jobData = JobData.parse(rawData)
+    // Only flow execution targets the selected (possibly remote) runtime; everything else —
+    // trigger hooks, polling, webhook renewal, piece metadata — stays on the local worker pool.
+    const sbManager = jobData.jobType === WorkerJobType.EXECUTE_FLOW ? flowRuntime : localRuntime
     const jobLogger = createLogger({
         event: 'job.execute',
         jobId: job.jobId,
@@ -328,7 +347,7 @@ async function buildMachineInfo(): Promise<WorkerMachineHealthcheckRequest> {
 }
 
 async function buildSandboxInfo(): Promise<SandboxInformation[]> {
-    const activeSandboxes = runtimes
+    const activeSandboxes = [...new Set([...flowRuntimes, ...localRuntimes])]
         .map((runtime) => runtime.getActiveSandbox())
         .filter((sandbox): sandbox is ActiveSandboxInfo => !isNil(sandbox))
 

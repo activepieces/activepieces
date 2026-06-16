@@ -105,6 +105,57 @@ token is replaced by a per-spawn bearer token the engine requires on its execute
 (cloud uses platform IAM + a shared secret); the HTTP body limit must be raised to the old
 `maxHttpBufferSize` for large file payloads.
 
+## Revision 4 (2026-06-16) — control-plane provisioning, single path, Cloud Functions gen2
+
+This revision **rewrites §8** (provisioning location) and **narrows §2/§3** to a single,
+non-selectable provisioning path. The seam (§1), the `ready()` deep module (§2), piece-scoped
+locality (§4), the cache preparer (§5), the socketless engine (§6/Rev 3), the bake-everything
+per-project artifact model (§7), and test-stays-local routing (§9) are **unchanged**.
+
+- **Provisioning moves off the worker onto the API server.** §8 put the Cloud Build / deploy
+  calls **inline in the worker**, with deploy creds on every worker (and the original ADR
+  *rejected* a dedicated provisioner). That is **superseded**: the worker calls the control
+  plane over the existing worker RPC — **`ensureFunction(projectId) → { url, engineToken }`** —
+  and the **API server** owns the deploy. This is what the "use the API server + Redis for fast
+  lookup" direction requires, and it removes deploy credentials from the (more numerous,
+  less-trusted) worker fleet.
+- **Fast lookup + multi-server safety live in the API server.** `ensureFunction` is:
+  1. **Redis fast-path** — a single `GET function:provisioned:<projectId>` shared across the
+     whole cluster (hot projects never touch the cloud provider).
+  2. **Distributed lock** — on a miss, `distributedLock` on `function:provision:<projectId>`
+     ensures exactly one node deploys; a double-checked Redis read inside the lock collapses a
+     queue of waiters into one deploy.
+  3. **`describe` probe** — the cold-cache "does it already exist?" check that lets a deploy be
+     skipped when the function already exists (e.g. after a Redis flush). The deploy unit's
+     existence is still the source of truth (§8); the Redis entry is just the fast cache in
+     front of it. The worker additionally keeps a process-lifetime in-memory cache, so repeat
+     jobs skip even the RPC round-trip.
+- **One path, not a selectable provisioner.** An earlier iteration exposed a
+  `AP_FUNCTION_PROVISIONER` switch (STATIC / API / GCP) and a co-located "shared cache" dev
+  mode. Both are **removed**: the worker **always** uses the API provisioner, and the API
+  **always** deploys to the cloud. Local/dev and tests do not use a fake remote — they run on
+  **`WORKER_POOL`** (§9), so the cloud path has exactly one production-shaped code path. (The
+  e2e smoke test stubs the `ensureFunction` RPC to point at a local engine container — a test
+  double of the control-plane call, not a runtime mode.)
+- **The deploy unit is a Cloud Functions (2nd gen) HTTP function**, not a directly-managed
+  Cloud Run service and not gen1. gen2 builds from **source** via Cloud Build (no prebuilt image
+  to push): the deploy ships a tiny **functions-framework** entry that exports the engine's
+  existing HTTP request handler, so the gen2 function speaks the identical `/health` + `/execute`
+  (Bearer) contract the `Sandbox` expects. Existence/skip uses `gcloud functions describe
+  --gen2`. (Substrate note: gen2 *is* Cloud Run underneath; this is about the product surface
+  and the source-built, functions-framework packaging.)
+- **Engine HTTP refinements for the function (extending Rev 3).** The engine's request handler
+  is factored out so it backs both the standalone loopback server and the gen2
+  functions-framework entry; body reading prefers `req.rawBody` (functions-framework buffers the
+  body). The bind host is configurable — **loopback by default** (worker-pool security), set to
+  `0.0.0.0` for the function. An `EMPTY` trigger's `onStart` is a no-op, so a flow can run
+  through the engine without a configured trigger piece.
+- **Rebuild on publish (reaffirms §7/§8).** Because the image bakes the project's pieces + code,
+  publishing changes rebuilds that project's function; the rebuild busts the Redis
+  `function:provisioned:<projectId>` entry so the next run picks up the new function. (The build
+  pipeline that gathers a project's artifacts and the publish-triggered rebuild are the
+  remaining work; the provisioning seam, lock, fast-lookup, and gen2 deploy/skip are in place.)
+
 ## Context
 
 Flow execution today is a fixed local pipeline: the worker polls BullMQ, acquires

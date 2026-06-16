@@ -1,0 +1,11 @@
+# Build context for the engine image is the repo root, but the only file the image needs is the
+# prebuilt bundle. Ignore everything, then re-include the bundle and each of its parent dirs
+# (Docker cannot un-ignore a file whose parent directory is still ignored).
+*
+!dist
+dist/*
+!dist/packages
+dist/packages/*
+!dist/packages/engine
+dist/packages/engine/*
+!dist/packages/engine/main.js

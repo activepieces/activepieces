@@ -121,8 +121,10 @@ function buildFlowOperation(
         timeoutInSeconds,
         platformId: data.platformId,
         engineToken: ctx.engineToken,
-        internalApiUrl: ctx.internalApiUrl,
-        publicApiUrl: ctx.publicApiUrl,
+        // A remote engine function cannot reach the worker's loopback API. When set, point the
+        // engine's run callbacks at a publicly-reachable URL instead (must end with /api/).
+        internalApiUrl: functionCallbackUrl() ?? ctx.internalApiUrl,
+        publicApiUrl: functionCallbackUrl() ?? ctx.publicApiUrl,
     }
 
     if (data.executionType === ExecutionType.RESUME) {
@@ -183,4 +185,8 @@ async function reportFlowStatus(
 
 function isDedicatedWorker(): boolean {
     return !isNil(system.get(WorkerSystemProp.WORKER_GROUP_ID))
+}
+
+function functionCallbackUrl(): string | undefined {
+    return system.get(WorkerSystemProp.FUNCTION_CALLBACK_URL)
 }
