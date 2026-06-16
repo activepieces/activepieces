@@ -32,16 +32,8 @@ function capture(
   Sentry.captureException(error, context);
 }
 
-function setUser(user: Sentry.User | null): void {
-  if (!initialized) {
-    return;
-  }
-  Sentry.setUser(user);
-}
-
 export const sentry = {
   initialize,
   capture,
-  setUser,
   isInitialized: () => initialized,
 };

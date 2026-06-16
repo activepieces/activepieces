@@ -106,6 +106,9 @@ function send(report: FrontendErrorReport): void {
   init();
 
   if (!sentry.isInitialized()) {
+    // Buffer without deduping. The signature is stamped only at dispatch
+    // (i.e. on flush), so startup errors are not pre-marked as seen and then
+    // dropped by the dedup window when flushBuffered() runs moments later.
     if (buffer.length < MAX_BUFFER_SIZE) {
       buffer.push(report);
     }
