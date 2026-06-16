@@ -73,7 +73,7 @@ export const telemetry = (log: FastifyBaseLogger) => ({
     },
 })
 
-export function capturePostHogEvent(event: CaptureEvent): void {
+export function captureBillingEvent(event: CaptureBillingEventParams): void {
     getPostHog().capture(event)
 }
 
@@ -94,8 +94,14 @@ async function getMetadata() {
     }
 }
 
-type CaptureEvent = {
-    distinctId: string
-    event: string
+type CaptureBillingEventParams = {
+    licenseKey: string
+    event: BillingEvents
     properties: Record<string, unknown>
+}
+
+export enum BillingEvents {
+    AI_USAGE_PER_RUN = 'ai_usage_per_run',
+    CHAT_MESSAGE = 'chat_message',
+    TOTAL_RUNS_PER_DAY = 'total_runs_per_day',
 }

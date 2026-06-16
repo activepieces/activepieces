@@ -9,7 +9,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
 import { fileService } from '../../file/file.service'
 import { system } from '../../helper/system/system'
-import { capturePostHogEvent } from '../../helper/telemetry.utils'
+import { BillingEvents, captureBillingEvent } from '../../helper/telemetry.utils'
 import { projectService } from '../../project/project-service'
 import { aiUsageExtractor } from './ai-usage-extractor'
 import { flowRunService } from './flow-run-service'
@@ -40,9 +40,9 @@ export const aiUsageTracker = (log: FastifyBaseLogger) => ({
         if (usage.messages === 0 && usage.toolCalls === 0) {
             return
         }
-        capturePostHogEvent({
-            distinctId: licenseKey,
-            event: AI_USAGE_EVENT_NAME,
+        captureBillingEvent({
+            licenseKey,
+            event: BillingEvents.AI_USAGE_PER_RUN,
             properties: {
                 licenseKey,
                 platformId: project.platformId,
@@ -60,6 +60,7 @@ export const aiUsageTracker = (log: FastifyBaseLogger) => ({
     },
 })
 
+
 async function fetchSlice({ log, projectId, ref }: FetchSliceParams): Promise<unknown> {
     const file = await fileService(log).getDataOrUndefined({
         projectId,
@@ -72,7 +73,6 @@ async function fetchSlice({ log, projectId, ref }: FetchSliceParams): Promise<un
     return JSON.parse(file.data.toString('utf-8'))
 }
 
-const AI_USAGE_EVENT_NAME = 'ai_usage_per_run'
 
 type TrackParams = {
     flowRun: FlowRun
