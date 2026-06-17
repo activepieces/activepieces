@@ -140,6 +140,7 @@ export default defineConfig(({ command, mode }) => {
       outDir: '../../dist/packages/web',
       emptyOutDir: true,
       reportCompressedSize: true,
+      sourcemap: 'hidden',
       commonjsOptions: {
         transformMixedEsModules: true,
       },
