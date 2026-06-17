@@ -76,7 +76,11 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             frontendUrl,
             templates: promptOverride,
         })
-        const guides = promptOverride?.guides ?? chatPrompt.guides
+        // Merge over defaults, not replace: an override carries only the changed guide topics
+        // (the eval fix-flow sends a partial), so a bare assignment would drop every other guide.
+        const guides = promptOverride?.guides
+            ? { ...chatPrompt.guides, ...promptOverride.guides }
+            : chatPrompt.guides
 
         const previousMessages = conversation.messages as ModelMessage[]
         const newUserMessage: ModelMessage = { role: 'user' as const, content: userContent }
