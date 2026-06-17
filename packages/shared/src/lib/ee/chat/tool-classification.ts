@@ -30,6 +30,10 @@ function isReadActionName(actionName: string): boolean {
         && !actionNameMatchesPatterns({ actionName, patterns: WRITE_ACTION_PATTERNS })
 }
 
+function isWriteActionName(actionName: string): boolean {
+    return actionNameMatchesPatterns({ actionName, patterns: WRITE_ACTION_PATTERNS })
+}
+
 function readOnlyRejection(actionName: string): { success: false, error: string } {
     return {
         success: false,
@@ -40,6 +44,7 @@ function readOnlyRejection(actionName: string): { success: false, error: string 
 export const chatToolClassification = {
     requiresActionPreview,
     isReadActionName,
+    isWriteActionName,
     readOnlyRejection,
     hasFailureTextPrefix,
 }

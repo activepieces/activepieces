@@ -1,3 +1,4 @@
+import { wideEvent } from '@activepieces/server-utils'
 import { ApId,
     AppConnectionOwners,
     AppConnectionScope,
@@ -24,6 +25,7 @@ import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { applicationEvents } from '../helper/application-events'
+import { auditEvents } from '../helper/audit-events'
 import { securityHelper } from '../helper/security-helper'
 import { appConnectionService } from './app-connection-service/app-connection-service'
 import { oauth2Util } from './app-connection-service/oauth2/oauth2-util'
@@ -100,6 +102,15 @@ export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, do
             ...appConnections,
             data: appConnections.data.map(appConnectionService(request.log).removeSensitiveData),
         }
+        wideEvent.audit(auditEvents.connectionListed({
+            actor: auditEvents.actorFromPrincipal(request.principal),
+            target: {
+                type: 'project',
+                id: request.projectId,
+                platformId: request.principal.platform.id,
+                connectionCount: appConnectionsWithoutSensitiveData.data.length,
+            },
+        }))
         return appConnectionsWithoutSensitiveData
     },
     )
@@ -117,13 +128,15 @@ export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, do
     )
 
     app.post('/replace', ReplaceAppConnectionsRequest, async (request, reply) => {
-        const { sourceAppConnectionId, targetAppConnectionId } = request.body
+        const { sourceAppConnectionId, targetAppConnectionId, deleteSourceConnection, applyToPublishedVersions } = request.body
         await appConnectionService(request.log).replace({
             sourceAppConnectionId,
             targetAppConnectionId,
             projectId: request.projectId,
             platformId: request.principal.platform.id,
             userId: request.principal.id,
+            deleteSourceConnection,
+            applyToPublishedVersions,
         })
         await reply.status(StatusCodes.NO_CONTENT).send()
     })

@@ -1,6 +1,6 @@
 import net from 'node:net'
+import { type ApLogger } from '@activepieces/server-utils'
 import { tryCatch } from '@activepieces/shared'
-import { Logger } from 'pino'
 import { spawnWithKill } from '../utils/exec'
 
 const CHAIN = 'AP_EGRESS_LOCKDOWN'
@@ -80,7 +80,7 @@ function buildApplyCommandsForFamily({ params, rejectWith, family }: { params: A
     ]
 }
 
-async function preflightCleanup({ log, params }: { log: Logger, params: ApplyParams }): Promise<void> {
+async function preflightCleanup({ log, params }: { log: ApLogger, params: ApplyParams }): Promise<void> {
     for (const family of FAMILIES) {
         for (const args of iptablesLockdown.buildRemoveCommands(params)) {
             const { error } = await tryCatch(() => runRule({ binary: family.binary, args }))
@@ -89,7 +89,7 @@ async function preflightCleanup({ log, params }: { log: Logger, params: ApplyPar
     }
 }
 
-async function removeLockdown({ log, params }: { log: Logger, params: ApplyParams }): Promise<void> {
+async function removeLockdown({ log, params }: { log: ApLogger, params: ApplyParams }): Promise<void> {
     for (const family of FAMILIES) {
         for (const args of iptablesLockdown.buildRemoveCommands(params)) {
             const { error } = await tryCatch(() => runRule({ binary: family.binary, args }))
@@ -130,7 +130,7 @@ type ApplyParams = {
     firstBoxUid: number
     numBoxes: number
     nameservers: string[]
-    log: Logger
+    log: ApLogger
 }
 
 export type IptablesLockdown = {

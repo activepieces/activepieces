@@ -6,7 +6,7 @@ function loadPromptTemplate(filename: string): string {
     return readFileSync(path.resolve(`packages/server/api/src/assets/prompts/${filename}`), 'utf8')
 }
 
-const GUIDE_TOPICS = ['build_flow', 'one_time_task', 'error_handling', 'http_fallback'] as const
+const GUIDE_TOPICS = ['build_flow', 'one_time_task', 'error_handling', 'http_fallback', 'control_flow', 'state', 'tables', 'ai'] as const
 
 const PROMPT_TEMPLATES = {
     system: loadPromptTemplate('chat-system-prompt.md'),

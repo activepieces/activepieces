@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { decideLoopAction } from '../../../../../../src/lib/execute/jobs/ee/chat/execute-chat-agent'
+import { decideLoopAction, shouldRetryStream } from '../../../../../../src/lib/execute/jobs/ee/chat/execute-chat-agent'
 
 describe('decideLoopAction', () => {
     it('finishes when a normal step produced visible output', () => {
@@ -27,5 +27,19 @@ describe('decideLoopAction', () => {
 
     it('treats truncation as higher priority than emptiness', () => {
         expect(decideLoopAction({ finishReason: 'length', producedVisibleOutput: false, continuations: 0, emptyContinuations: 2 })).toBe('continue_truncation')
+    })
+})
+
+describe('shouldRetryStream', () => {
+    it('retries once when the stream fails before any visible output', () => {
+        expect(shouldRetryStream({ producedVisibleOutput: false, streamRetries: 0 })).toBe(true)
+    })
+
+    it('does not retry after the single retry has been used', () => {
+        expect(shouldRetryStream({ producedVisibleOutput: false, streamRetries: 1 })).toBe(false)
+    })
+
+    it('never retries once visible output was already streamed (avoids duplicate content)', () => {
+        expect(shouldRetryStream({ producedVisibleOutput: true, streamRetries: 0 })).toBe(false)
     })
 })

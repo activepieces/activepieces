@@ -17,7 +17,8 @@ import {
 import { OutputArrayList } from './output-array-list';
 import { OutputFieldList } from './output-field-list';
 import { OutputGenericFieldList } from './output-generic-field-list';
-import { isTabularArray, OutputTableView } from './output-table-view';
+import { OutputSchemaArrayList } from './output-schema-array-list';
+import { OutputTableView, selectArrayFriendlyView } from './output-table-view';
 import { OutputSchema } from './types';
 
 function OutputTextDisplay({ text }: { text: string }) {
@@ -127,18 +128,32 @@ function SmartOutputViewer({
   }
 
   if (Array.isArray(json) && json.length > 0) {
-    const tabular = isTabularArray(json);
+    const arrayView = selectArrayFriendlyView({
+      items: json,
+      schema: pieceDefinedSchema,
+    });
+    const friendlyContent =
+      arrayView.kind === 'object' ? (
+        // A single-item array reads best as just its element: show the lone
+        // object's fields directly (curated by the schema if present) — no
+        // table, no "Item N" wrapper.
+        arrayView.schema ? (
+          <OutputFieldList json={arrayView.item} schema={arrayView.schema} />
+        ) : (
+          <OutputGenericFieldList json={arrayView.item} />
+        )
+      ) : arrayView.kind === 'table' ? (
+        <OutputTableView items={json} />
+      ) : arrayView.kind === 'schema' ? (
+        <OutputSchemaArrayList items={json} schema={arrayView.schema} />
+      ) : (
+        <OutputArrayList items={json} />
+      );
     return (
       <OutputViewerShell
         json={json}
         title={title}
-        friendlyContent={
-          tabular ? (
-            <OutputTableView items={json} />
-          ) : (
-            <OutputArrayList items={json} />
-          )
-        }
+        friendlyContent={friendlyContent}
       />
     );
   }

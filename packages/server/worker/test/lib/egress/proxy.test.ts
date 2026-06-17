@@ -1,11 +1,23 @@
 import dns from 'node:dns/promises'
 import http from 'node:http'
 import { AddressInfo, createServer, Server } from 'node:net'
-import pino from 'pino'
+import { ApLogger } from '@activepieces/server-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { EgressProxy, startEgressProxy } from '../../../src/lib/egress/proxy'
 
-const log = pino({ level: 'silent' })
+const noop = () => undefined
+const log: ApLogger = {
+    get level() { return 'silent' },
+    set level(_v) { /* no-op */ },
+    silent: noop,
+    info: noop,
+    warn: noop,
+    error: noop,
+    fatal: noop,
+    debug: noop,
+    trace: noop,
+    child() { return log },
+}
 
 type AnyServer = http.Server | Server
 

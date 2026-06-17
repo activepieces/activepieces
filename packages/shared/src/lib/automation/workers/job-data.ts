@@ -130,7 +130,6 @@ const ExecuteFlowJobDataCommon = z.object({
     stepNameToTest: z.string().optional(),
     sampleData: z.record(z.string(), z.unknown()).optional(),
     logsFileId: z.string(),
-    traceContext: z.record(z.string(), z.string()).optional(),
 })
 
 export const BeginExecuteFlowJobData = ExecuteFlowJobDataCommon.extend({
@@ -162,7 +161,6 @@ export const WebhookJobData = z.object({
     jobType: z.literal(WorkerJobType.EXECUTE_WEBHOOK),
     parentRunId: z.string().optional(),
     failParentOnFailure: z.boolean().optional(),
-    traceContext: z.record(z.string(), z.string()).optional(),
 })
 export type WebhookJobData = z.infer<typeof WebhookJobData>
 

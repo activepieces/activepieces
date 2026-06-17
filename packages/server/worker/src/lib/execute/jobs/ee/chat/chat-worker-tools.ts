@@ -458,9 +458,9 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
         }),
 
         ap_load_guide: tool({
-            description: 'Load a detailed playbook into context before that kind of work (silent, internal). Topics: build_flow (constructing/validating/testing an automation), one_time_task (one-shot do-it-now action), error_handling (success/failure branches), http_fallback (calling an API directly when no connection exists).',
+            description: 'Load a detailed playbook into context before that kind of work (silent, internal). Topics: build_flow (constructing/validating/testing an automation), one_time_task (one-shot do-it-now action), error_handling (success/failure branches), http_fallback (calling an API directly when no connection exists), control_flow (routers/conditions & loops — exact operators and gotchas), state (remembering data across runs: Store vs Tables vs Sheets, dedup/idempotency), tables (the built-in Tables database), ai (native AI steps and their output shapes).',
             inputSchema: z.object({
-                topic: z.enum(['build_flow', 'one_time_task', 'error_handling', 'http_fallback']).describe('Which guide to load'),
+                topic: z.enum(['build_flow', 'one_time_task', 'error_handling', 'http_fallback', 'control_flow', 'state', 'tables', 'ai']).describe('Which guide to load'),
             }),
             execute: async (toolInput) => {
                 const guide = guides[toolInput.topic]
@@ -594,6 +594,67 @@ function extractResultText(result: unknown): string {
     return JSON.stringify(result)
 }
 
+function toolHasExecute(tool: Record<string, unknown>): tool is Record<string, unknown> & { execute: (args: unknown, options?: ToolExecutionOptions) => Promise<unknown> } {
+    return typeof tool['execute'] === 'function'
+}
+
+function wrapTestFlowGate({ mcpTools, checkFlowWrites, waitForApproval, storePendingGate, eventEmitter, log }: {
+    mcpTools: Record<string, unknown>
+    checkFlowWrites: (flowId: string) => Promise<unknown>
+    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean }>
+    storePendingGate: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
+    eventEmitter: ChatEventEmitter
+    log?: { warn: (obj: Record<string, unknown>, msg: string) => void }
+}): Record<string, unknown> {
+    const testFlow = mcpTools['ap_test_flow']
+    if (!isObject(testFlow) || !toolHasExecute(testFlow)) {
+        return mcpTools
+    }
+    const originalExecute = testFlow.execute.bind(testFlow)
+    const wrapped = Object.assign({}, testFlow, {
+        execute: async (args: unknown, options?: ToolExecutionOptions) => {
+            const flowId = isObject(args) && typeof args['flowId'] === 'string' ? args['flowId'] : undefined
+            const gateId = options?.toolCallId
+            if (flowId && gateId) {
+                const { data: check, error } = await tryCatch(() => checkFlowWrites(flowId))
+                if (error) {
+                    log?.warn({ err: error, flowId }, 'ap_test_flow write-check failed, running test without confirmation gate')
+                }
+                else if (isObject(check) && check['hasWrites'] === true) {
+                    const writeSteps = Array.isArray(check['writeSteps']) ? check['writeSteps'].filter((s): s is string => typeof s === 'string') : []
+                    const flowName = typeof check['flowName'] === 'string' ? check['flowName'] : 'this flow'
+                    const gateLabel = writeSteps.length > 0
+                        ? `Run a live test of "${flowName}" — performs: ${writeSteps.join(', ')}`
+                        : `Run a live test of "${flowName}"`
+                    // Render the confirmation card in the live session (and persist it for refresh).
+                    // Without the emit the gate would block silently until the approval timeout.
+                    eventEmitter.emitActionPreview({
+                        toolCallId: gateId,
+                        pieceName: '',
+                        actionName: 'ap_test_flow',
+                        actionDisplayName: gateLabel,
+                        input: {},
+                        isBatch: false,
+                    })
+                    await tryCatch(() => storePendingGate({
+                        gateId,
+                        toolName: 'ap_test_flow',
+                        displayName: gateLabel,
+                        toolInput: { flowId, writeSteps },
+                    }))
+                    const decision = await waitForApproval({ gateId })
+                    if (!decision.approved) {
+                        const stepList = writeSteps.length > 0 ? ` It performs real actions: ${writeSteps.join(', ')}.` : ''
+                        return { content: [{ type: 'text', text: `Live test cancelled by the user.${stepList} The user declined a real run that would perform these actions. Do not run it; offer to test with mock trigger data instead, or ask whether to proceed.` }] }
+                    }
+                }
+            }
+            return originalExecute(args, options)
+        },
+    })
+    return { ...mcpTools, ap_test_flow: wrapped }
+}
+
 function createThinkingTools(): ToolSet {
     return {
         ap_update_thinking_status: tool({
@@ -636,6 +697,7 @@ export const chatWorkerTools = {
     createDisplayTools,
     createLocalTools,
     createCrossProjectTools,
+    wrapTestFlowGate,
     createThinkingTools,
     createPhaseTools,
     isSuccessResult,

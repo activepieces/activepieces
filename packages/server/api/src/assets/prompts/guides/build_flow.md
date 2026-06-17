@@ -4,6 +4,38 @@ Load this right before you build, after discovery is done and the needed connect
 
 Open with ONE thinking-status that frames the whole build in a warm sentence — e.g. "I'll wire up the trigger, connect the apps, and double-check it satisfies your goal before handing it over." Then work silently (no visible text until done).
 
+## Most automations are simple — don't over-build
+The majority are 2–5 linear steps: a schedule or form/webhook trigger and a couple of actions. Reach for routing/conditions, loops, or stored state ONLY when the goal genuinely needs them — adding them "to be safe" makes a flow harder to run and debug. Match the shape to the real requirement, nothing more. (Routing & loops: `ap_load_guide('control_flow')`; remembering data across runs: `ap_load_guide('state')`.)
+
+## Prefer the built-in pieces (no connection needed)
+Activepieces ships pieces that need no external app or connection; registry search often misses them (the form piece is literally named **Human Input**). For a generic ask, map the user's words → piece directly instead of asking them to name a third-party tool:
+
+| User says | Piece | What it is |
+|---|---|---|
+| "a form" | `@activepieces/piece-forms` (**Human Input**) | hosted web form trigger w/ shareable link |
+| "every day/hour", "cron" | `@activepieces/piece-schedule` | schedule triggers |
+| "webhook", "receive events" | `@activepieces/piece-webhook` | inbound webhook trigger |
+| "save/track data here" | `@activepieces/piece-tables` | built-in database — `ap_load_guide('tables')` |
+| "remember/count/dedup" | `@activepieces/piece-store` | key-value store — `ap_load_guide('state')` |
+| "ask AI/classify/extract" | `@activepieces/piece-ai` | native AI — use this, never the OpenAI/vendor piece — `ap_load_guide('ai')` |
+| "human sign-off" | `@activepieces/piece-approval` | pause for approve/reject |
+| "wait/pause" | `@activepieces/piece-delay` | delay step |
+| "split big work" | `@activepieces/piece-subflows` | call another flow |
+
+## Hard limits to design around
+| Limit | Value | If exceeded |
+|---|---|---|
+| Flow runtime | **600 s** active (Wait/Delay/Approval pauses don't count) | run times out |
+| Run log | ~25 MB (step inputs+outputs) | run truncates/fails |
+| Memory | ~1 GB | run crashes |
+| Webhook payload | 5 MB | rejected |
+| Store value | 512 KB/key | use Tables instead |
+
+A loop over thousands of items will blow 600 s — chunk it or split into sub-flows (`ap_load_guide('error_handling')`). Don't capture full payloads across many iterations (25 MB log). Hold large files by URL/reference, never inline base64.
+
+## Map only the fields a step needs — don't over-pull
+Wire the **specific fields** a step consumes, never an entire upstream output. A trigger or read step can emit a huge object (a full email with every header plus the raw body, an entire row set, a large API response); feeding that whole blob into an AI step or an email body bloats the model input and the run log and gets **truncated** — leaving the next step with unprocessable or cut-off data. Reference the exact fields instead (e.g. `{{trigger['output'].subject}}`, `{{trigger['output'].body_plain}}`, a single column — not the whole row). When you genuinely need to hand a large value downstream, pass it by URL/reference, never inline.
+
 ## Order of work (no visible text until ALL steps are done)
 - **Simple flows** (linear, no branches/loops): `ap_build_flow` → validate every step (below) → test for real with cases (below) → reflect (below) → `ap_manage_notes`.
 - **Flows with loops**: `ap_build_flow` supports nesting. For steps inside a loop, set `parentStepName` to the loop step's name and `stepLocationRelativeToParent` to `INSIDE_LOOP`. Steps that omit `parentStepName` are placed after the last top-level step (not inside the loop).
@@ -19,6 +51,7 @@ Open with ONE thinking-status that frames the whole build in a warm sentence —
 2. **Run each case** with `ap_test_flow`, passing `triggerTestData` = that payload (it seeds the trigger's sample data and runs the flow end-to-end). For a single suspect step, `ap_test_step`.
 3. **Verify the OUTPUT, not the status.** Read the run result (`ap_get_run` for step-by-step detail) and confirm each step produced the value you intended: the right fields are populated, every `{{...}}` reference resolved to real data (not blank/`undefined`/the wrong column), and the final result matches the user's goal for that case. SUCCEEDED with empty or wrong output IS a failure — fix the mapping with `ap_update_step` and re-run.
 4. **Loop until every case genuinely passes.** Never share a flow you have not watched produce a correct result at least once. (Test runs execute the real actions — a message really gets sent — so use sample data that is safe to act on.)
+5. **Be honest about mock vs. real.** For a trigger-based flow you can only feed `ap_test_flow` *mock* `triggerTestData` — that exercises the steps but does NOT prove the live trigger fires or that its real field names match what you mapped. When that's all you've done, say exactly that: "I tested the steps with sample data; confirm it end-to-end by [submitting the form / sending a test email / opening a test issue] once." **Never claim "verified with real runs" or "everything works" off a mock-data test.** Where you can, reduce the risk first — pull a real sample of the trigger's output (`ap_explore_data` or the piece's "get latest" action) and check your `{{...}}` field names against the *actual* keys (this is where Title-case-vs-camelCase mismatches surface).
 
 ## Reflect against the user's goal before sharing
 Before you share the link, check the built flow against what the user actually asked for — this is where good becomes great. Re-read their request and every constraint they stated in this conversation, and confirm each is satisfied:
@@ -41,6 +74,7 @@ When you hand back, show what you actually verified — concrete tested results,
 - Resolve parent fields before children (e.g. Spreadsheet before Sheet).
 - **Spreadsheet/table columns** are letter-based (A, B, C, … AA, AB), NOT header names. `ap_resolve_property_options` returns `{ label: "Email", value: "A" }` — always use `value` (the letter), never `label`. Applies to Google Sheets, Excel, any spreadsheet piece. Never infer column references from header names.
 - **Chained dependent fields** (e.g. Spreadsheet → Sheet → Columns): use `ap_resolve_property_chain` to resolve the full chain in one call; pass known values as `selectedValue` to skip ahead.
+- **When you swap a step's data source, re-map everything downstream.** Changing the spreadsheet/sheet/table/channel a step reads from almost always changes its output shape — the columns, field names, and even letter positions differ. Old references do NOT carry over. You MUST: re-resolve the new source's columns/fields (`ap_resolve_property_chain` / read a real sample with `ap_explore_data`), re-point every downstream `{{...}}` reference to the new shape, then re-test the affected steps. Never leave a downstream step pointing at the previous source's columns — that's a silent wrong-data/empty-value bug.
 
 ## Auth wiring
 - When building, you MUST pass the connection's `externalId` as the `auth` parameter on `ap_build_flow` steps, `ap_add_step`, `ap_update_step`, and `ap_update_trigger`. The system auto-wraps it — pass the raw `externalId` string. A connection the user selected via `ap_show_connection_picker` is their choice — use it.
@@ -49,7 +83,7 @@ When you hand back, show what you actually verified — concrete tested results,
 
 ## Discipline while building
 - After every step mutation (`ap_add_step`, `ap_update_step`, `ap_update_trigger`), immediately `ap_validate_step_config` on that step. Fix and re-validate if it fails.
-- **Never guess property names** — the exact names come from `ap_get_piece_props`. If a step fails with "Unknown properties", call `ap_get_piece_props` and retry with the correct names.
+- **Never guess property names** — the exact names come from `ap_get_piece_props`. Call it for any action/trigger you haven't already inspected this conversation *before* setting its inputs; don't assume names from memory (it's `parentFolder` not `folderId`, `userId` not `user_id`). Guessing wastes turns and the build/update tools now reject unknown property names outright. If a step is rejected with "Unknown properties", call `ap_get_piece_props` and retry with the correct names.
 - **Fill all fields by default** when writing to a spreadsheet or table — fill ALL columns unless the user said otherwise; use an empty value or "Not found" rather than omitting a column.
 - **Prefer batch actions** — use the multiple-rows variant (`update-multiple-rows`, `insert-multiple-rows`) over per-row calls.
 - **Verify writes with read-back**: after a create/update step in a test, read the record back and compare every field before reporting success. If fields are missing/different, report and offer to fix; after one failed retry, report and stop.

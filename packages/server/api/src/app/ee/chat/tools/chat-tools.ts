@@ -334,6 +334,10 @@ function resolveConnectionInfo({ status, type, value }: { status: AppConnectionS
     if (status !== AppConnectionStatus.ACTIVE) {
         return { status, grantedScopes }
     }
+    const hasRefreshToken = typeof value['refresh_token'] === 'string' && value['refresh_token'].length > 0
+    if (hasRefreshToken) {
+        return { status, grantedScopes }
+    }
     const claimedAtS = typeof value['claimed_at'] === 'number' ? value['claimed_at'] : 0
     const expiresInS = typeof value['expires_in'] === 'number' ? value['expires_in'] : 0
     if (claimedAtS > 0 && expiresInS > 0) {
