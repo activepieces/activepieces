@@ -1,7 +1,6 @@
 import {
 	AppConnectionValueForAuthProperty,
 	createAction,
-	PiecePropValueSchema,
 	Property,
 } from '@activepieces/pieces-framework';
 import {
@@ -14,6 +13,7 @@ import { google } from 'googleapis';
 import { includeTeamDrivesProp } from '../common/props';
 import { createGoogleClient, getAccessToken, googleSheetsAuth } from '../common/common';
 import { AppConnectionType, isNil } from '@activepieces/shared';
+import { createSpreadsheetActionOutputSchema } from '../output-schemas';
 
 export const createSpreadsheetAction = createAction({
 	auth: googleSheetsAuth,
@@ -96,6 +96,7 @@ export const createSpreadsheetAction = createAction({
 			},
 		}),
 	},
+	outputSchema: createSpreadsheetActionOutputSchema,
 	async run(context) {
 		const { title, folder } = context.propsValue;
 		const response = await createSpreadsheet(context.auth, title, folder);

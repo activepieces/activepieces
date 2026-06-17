@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { gmailAuth, createGoogleClient } from '../auth';
 import { google } from 'googleapis';
 import { convertAttachment, parseStream } from '../common/data';
+import { gmailGetMailActionOutputSchema } from '../output-schemas';
 
 export const gmailGetEmailAction = createAction({
   auth: gmailAuth,
@@ -21,6 +22,7 @@ export const gmailGetEmailAction = createAction({
       required: true,
     }),
   },
+  outputSchema: gmailGetMailActionOutputSchema,
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
 

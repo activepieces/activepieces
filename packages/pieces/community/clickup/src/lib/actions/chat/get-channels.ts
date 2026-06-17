@@ -7,6 +7,7 @@ import {
 import { callClickUpApi3, clickupCommon } from '../../common';
 import { clickupAuth } from '../../auth';
 import { z } from 'zod';
+import { getChannelsOutputSchema } from '../../output-schemas';
 
 export const getClickupChannels = createAction({
   auth: clickupAuth,
@@ -31,6 +32,7 @@ export const getClickupChannels = createAction({
     }),
   },
 
+  outputSchema: getChannelsOutputSchema,
   async run(configValue) {
     await propsValidation.validateZod(configValue.propsValue, {
       limit: z

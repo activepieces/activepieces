@@ -2,6 +2,7 @@ import { googleDriveAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
 import { common } from '../common';
+import { searchFolderActionOutputSchema } from '../output-schemas';
 
 export const googleDriveSearchFolder = createAction({
   auth: googleDriveAuth,
@@ -57,6 +58,7 @@ export const googleDriveSearchFolder = createAction({
     parentFolder: common.properties.parentFolder,
     include_team_drives: common.properties.include_team_drives,
   },
+  outputSchema: searchFolderActionOutputSchema,
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
 

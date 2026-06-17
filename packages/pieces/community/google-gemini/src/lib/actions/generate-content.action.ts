@@ -4,6 +4,7 @@ import { defaultLLM, getGeminiModelOptions } from '../common/common';
 import { GenerateContentParameters, GoogleGenAI } from '@google/genai';
 import { isEmpty, MarkdownVariant } from '@activepieces/shared';
 import mime from 'mime-types';
+import { generateContentActionOutputSchema } from '../output-schemas';
 
 export const generateContentAction = createAction({
   audience: 'human',
@@ -103,6 +104,7 @@ export const generateContentAction = createAction({
 			},
 		}),
 	},
+	outputSchema: generateContentActionOutputSchema,
 	async run({ auth, propsValue }) {
 		const { model, prompt, toolType } = propsValue;
 		const toolProperties = propsValue.toolProperties ?? {};

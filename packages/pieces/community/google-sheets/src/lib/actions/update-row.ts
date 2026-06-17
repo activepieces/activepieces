@@ -5,6 +5,7 @@ import { getWorkSheetName } from '../triggers/helpers';
 import { google } from 'googleapis';
 import {  isString } from '@activepieces/shared';
 import { commonProps, isFirstRowHeaderProp, rowValuesProp } from '../common/props';
+import { updateRowActionOutputSchema } from '../output-schemas';
 
 export const updateRowAction = createAction({
   auth: googleSheetsAuth,
@@ -27,6 +28,7 @@ export const updateRowAction = createAction({
     first_row_headers: isFirstRowHeaderProp(),
     values: rowValuesProp(),
   },
+  outputSchema: updateRowActionOutputSchema,
   async run(context) {
     const inputSpreadsheetId = context.propsValue.spreadsheetId;
     const inputSheetId = context.propsValue.sheetId;

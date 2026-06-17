@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { google, calendar_v3 } from 'googleapis';
 import { googleCalendarCommon, googleCalendarAuth, createGoogleClient } from '../common';
 import dayjs from 'dayjs';
+import { eventOutputSchema } from '../output-schemas';
 
 export const updateEventAction = createAction({
   displayName: 'Update Event',
@@ -59,6 +60,7 @@ export const updateEventAction = createAction({
       required: false,
     }),
   },
+  outputSchema: eventOutputSchema,
   async run(context) {
     const {
       calendar_id,

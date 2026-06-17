@@ -2,6 +2,7 @@ import { googleDriveAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
 import { common } from '../common';
+import { getFileOrFolderByIdActionOutputSchema } from '../output-schemas';
 
 export const googleDriveGetResourceById = createAction({
   auth: googleDriveAuth,
@@ -18,6 +19,7 @@ export const googleDriveGetResourceById = createAction({
     }),
     include_team_drives: common.properties.include_team_drives,
   },
+  outputSchema: getFileOrFolderByIdActionOutputSchema,
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
     const drive = google.drive({ version: 'v3', auth: authClient });

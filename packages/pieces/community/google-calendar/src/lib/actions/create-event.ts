@@ -3,6 +3,7 @@ import { googleCalendarCommon, googleCalendarAuth, createGoogleClient } from '..
 import dayjs from 'dayjs';
 import { google } from 'googleapis';
 import { randomUUID } from 'crypto';
+import { eventOutputSchema } from '../output-schemas';
 
 export const createEvent = createAction({
   auth: googleCalendarAuth,
@@ -83,6 +84,7 @@ export const createEvent = createAction({
       required: false,
     }),
   },
+  outputSchema: eventOutputSchema,
   async run(configValue) {
     // docs: https://developers.google.com/calendar/api/v3/reference/events/insert
     const {

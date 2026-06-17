@@ -4,6 +4,7 @@ import { google } from 'googleapis';
 import { convertAttachment, parseStream } from '../common/data';
 import { GmailProps } from '../common/props';
 import { GmailLabel } from '../common/models';
+import { gmailSearchMailActionOutputSchema } from '../output-schemas';
 
 export const gmailSearchMailAction = createAction({
   auth: gmailAuth,
@@ -64,6 +65,7 @@ export const gmailSearchMailAction = createAction({
       defaultValue: 10,
     }),
   },
+  outputSchema: gmailSearchMailActionOutputSchema,
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
 

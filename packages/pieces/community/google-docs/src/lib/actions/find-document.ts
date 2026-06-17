@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
 import { folderIdProp } from '../common/props';
+import { findDocumentActionOutputSchema } from '../output-schemas';
 
 export const findDocumentAction = createAction({
 	auth: googleDocsAuth,
@@ -51,6 +52,7 @@ export const findDocumentAction = createAction({
 			},
 		}),
 	},
+	outputSchema: findDocumentActionOutputSchema,
 	async run(context) {
 		const { name: documentName, folderId, createIfNotFound, newDocumentProps } = context.propsValue;
 		const newDocumentContent = newDocumentProps?.['content'] as string;

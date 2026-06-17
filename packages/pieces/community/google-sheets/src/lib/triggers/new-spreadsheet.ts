@@ -10,6 +10,7 @@ import dayjs from 'dayjs';
 import { google, drive_v3 } from 'googleapis';
 import { includeTeamDrivesProp } from '../common/props';
 import { createGoogleClient, GoogleSheetsAuthValue } from '../common/common';
+import { newSpreadsheetTriggerOutputSchema } from '../output-schemas';
 
 type Props = {
 	includeTeamDrives?: boolean;
@@ -63,6 +64,7 @@ export const newSpreadsheetTrigger = createTrigger({
 	props: {
 		includeTeamDrives: includeTeamDrivesProp(),
 	},
+	outputSchema: newSpreadsheetTriggerOutputSchema,
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, {
 			auth: context.auth,

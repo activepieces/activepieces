@@ -12,6 +12,7 @@ import {
   getFirstFiveOrAll,
 } from '../common/data';
 import { google } from 'googleapis';
+import { gmailNewEmailReceivedTriggerOutputSchema } from '../output-schemas';
 
 export const gmailNewEmailTrigger = createTrigger({
   auth: gmailAuth,
@@ -29,6 +30,7 @@ export const gmailNewEmailTrigger = createTrigger({
     label: GmailProps.label,
     category: GmailProps.category,
   },
+  outputSchema: gmailNewEmailReceivedTriggerOutputSchema,
   sampleData: {},
   type: TriggerStrategy.POLLING,
   async onEnable(context) {

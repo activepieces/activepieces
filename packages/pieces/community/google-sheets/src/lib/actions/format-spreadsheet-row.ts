@@ -4,6 +4,7 @@ import { googleSheetsAuth } from '../common/common';
 import { commonProps } from '../common/props';
 import { google } from 'googleapis';
 import { isNil } from '@activepieces/shared';
+import { formatRowActionOutputSchema } from '../output-schemas';
 
 export const formatRowAction = createAction({
 	auth: googleSheetsAuth,
@@ -52,6 +53,7 @@ export const formatRowAction = createAction({
 			required: false,
 		}),
 	},
+	outputSchema: formatRowActionOutputSchema,
 	async run(context) {
 		const { spreadsheetId, sheetId, startingRow,endingRow, bgColor, textColor, italic, bold, strikethrough } =
 			context.propsValue;

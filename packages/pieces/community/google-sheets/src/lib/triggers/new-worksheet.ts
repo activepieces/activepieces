@@ -4,6 +4,7 @@ import { google } from 'googleapis';
 import { isNil } from '@activepieces/shared';
 import { includeTeamDrivesProp, spreadsheetIdProp } from '../common/props';
 import { createGoogleClient } from '../common/common';
+import { newWorksheetTriggerOutputSchema } from '../output-schemas';
 
 export const newWorksheetTrigger = createTrigger({
 	auth: googleSheetsAuth,
@@ -19,6 +20,7 @@ export const newWorksheetTrigger = createTrigger({
 		includeTeamDrives: includeTeamDrivesProp(),
 		spreadsheetId: spreadsheetIdProp('Spreadsheet', '',true),
 	},
+	outputSchema: newWorksheetTriggerOutputSchema,
 	async onEnable(context) {
 		const ids: number[] = [];
 		const authClient = await createGoogleClient(context.auth);

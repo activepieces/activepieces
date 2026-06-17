@@ -12,6 +12,7 @@ import {
 } from '../common/common';
 import { commonProps, isFirstRowHeaderProp, rowValuesProp } from '../common/props';
 import { getWorkSheetName } from '../triggers/helpers';
+import { insertRowAtTopActionOutputSchema } from '../output-schemas';
 
 export const insertRowAtTopAction = createAction({
 	auth: googleSheetsAuth,
@@ -36,6 +37,7 @@ export const insertRowAtTopAction = createAction({
 		}),
 		values: rowValuesProp(),
 	},
+	outputSchema: insertRowAtTopActionOutputSchema,
 	async run({ auth, propsValue }) {
 		const {
 			spreadsheetId: inputSpreadsheetId,

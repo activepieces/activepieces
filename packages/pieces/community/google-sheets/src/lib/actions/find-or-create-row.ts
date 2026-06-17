@@ -15,6 +15,7 @@ import {
 } from '../common/common';
 import { columnNameProp, commonProps, isFirstRowHeaderProp, rowValuesProp } from '../common/props';
 import { getWorkSheetName, mapRowsToColumnLabels } from '../triggers/helpers';
+import { findOrCreateRowActionOutputSchema } from '../output-schemas';
 
 export const findOrCreateRowAction = createAction({
 	auth: googleSheetsAuth,
@@ -55,6 +56,7 @@ export const findOrCreateRowAction = createAction({
 		}),
 		values: rowValuesProp(),
 	},
+	outputSchema: findOrCreateRowActionOutputSchema,
 	async run({ auth, propsValue }) {
 		const {
 			spreadsheetId: inputSpreadsheetId,

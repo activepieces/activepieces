@@ -5,6 +5,7 @@ import Mail, { Attachment } from 'nodemailer/lib/mailer';
 import { gmailAuth, createGoogleClient, getUserEmail } from '../auth';
 import { google } from 'googleapis';
 import { GmailProps } from '../common/props';
+import { createDraftReplyActionOutputSchema } from '../output-schemas';
 
 export const gmailCreateDraftReplyAction = createAction({
   auth: gmailAuth,
@@ -84,6 +85,7 @@ export const gmailCreateDraftReplyAction = createAction({
       required: false,
     }),
   },
+  outputSchema: createDraftReplyActionOutputSchema,
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
 

@@ -6,6 +6,7 @@ import {
   assertNotNullOrUndefined,
   ExecutionType,
 } from '@activepieces/shared';
+import { requestApprovalMessageActionOutputSchema } from '../output-schemas';
 
 export const telegramRequestApprovalMessageAction = createAction({
   auth: telegramBotAuth,
@@ -37,6 +38,7 @@ export const telegramRequestApprovalMessageAction = createAction({
       defaultValue: 'Disapprove',
     }),
   },
+  outputSchema: requestApprovalMessageActionOutputSchema,
   async run(context) {
     if (context.executionType === ExecutionType.BEGIN) {
       const token = context.auth.secret_text;

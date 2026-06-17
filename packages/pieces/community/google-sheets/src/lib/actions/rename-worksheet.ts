@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { includeTeamDrivesProp, sheetIdProp, spreadsheetIdProp } from '../common/props';
 import { google } from 'googleapis';
 import { createGoogleClient } from '../common/common';
+import { renameWorksheetActionOutputSchema } from '../output-schemas';
 
 export const renameWorksheetAction = createAction({
     auth: googleSheetsAuth,
@@ -24,6 +25,7 @@ export const renameWorksheetAction = createAction({
             required:true
         })
     },
+    outputSchema: renameWorksheetActionOutputSchema,
     async run(context) {
         const authClient = await createGoogleClient(context.auth);
         const sheets = google.sheets({ version: 'v4', auth: authClient });

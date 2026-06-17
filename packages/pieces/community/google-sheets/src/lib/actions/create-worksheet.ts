@@ -3,6 +3,7 @@ import { createGoogleClient } from '../common/common';
 import { googleSheetsAuth } from '../common/common';
 import { includeTeamDrivesProp, spreadsheetIdProp } from '../common/props';
 import { google } from 'googleapis';
+import { createWorksheetActionOutputSchema } from '../output-schemas';
 
 export const createWorksheetAction = createAction({
   auth: googleSheetsAuth,
@@ -29,6 +30,7 @@ export const createWorksheetAction = createAction({
     })
    
   },
+  outputSchema: createWorksheetActionOutputSchema,
   async run(context){
     const {spreadsheetId,title} = context.propsValue;
     const headers = context.propsValue.headers as string[] ?? [];

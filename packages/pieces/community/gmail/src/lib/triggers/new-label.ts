@@ -3,6 +3,7 @@ import { gmailAuth, createGoogleClient } from '../auth';
 import { google } from 'googleapis';
 import { getFirstFiveOrAll } from '../common/data';
 import { isNil } from '@activepieces/shared';
+import { newLabelTriggerOutputSchema } from '../output-schemas';
 
 const TRIGGER_KEY = 'labels';
 
@@ -16,6 +17,7 @@ export const gmailNewLabelTrigger = createTrigger({
       'Fires when a new label is created in the connected Gmail account. Each event represents one newly added label not seen on a prior poll.',
   },
   props: {},
+  outputSchema: newLabelTriggerOutputSchema,
   sampleData: {},
   type: TriggerStrategy.POLLING,
   async onEnable(context) {

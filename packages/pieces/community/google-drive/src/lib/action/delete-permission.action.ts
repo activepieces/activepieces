@@ -1,6 +1,7 @@
 import { Property, createAction } from "@activepieces/pieces-framework";
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { google } from 'googleapis';
+import { deletePermissionsActionOutputSchema } from '../output-schemas';
 
 export const deletePermission = createAction({
     auth: googleDriveAuth,
@@ -51,6 +52,7 @@ export const deletePermission = createAction({
             }
         }),
     },
+    outputSchema: deletePermissionsActionOutputSchema,
     async run (context) {
         const [fileId, user_email] = [context.propsValue.fileId, context.propsValue.user_email];
         const authClient = await createGoogleClient(context.auth);

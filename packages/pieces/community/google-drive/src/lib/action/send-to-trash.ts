@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { common } from '../common';
 import { google } from 'googleapis';
+import { trashGdriveFileActionOutputSchema } from '../output-schemas';
 
 export const googleDriveTrashFile = createAction({
   auth: googleDriveAuth,
@@ -18,6 +19,7 @@ export const googleDriveTrashFile = createAction({
     }),
     include_team_drives: common.properties.include_team_drives,
   },
+  outputSchema: trashGdriveFileActionOutputSchema,
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
 

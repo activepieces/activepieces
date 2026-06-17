@@ -10,6 +10,7 @@ import {
 import { google } from 'googleapis';
 import { getWorkSheetName } from '../triggers/helpers';
 import { commonProps } from '../common/props';
+import { createColumnActionOutputSchema } from '../output-schemas';
 
 export const createColumnAction = createAction({
 	auth: googleSheetsAuth,
@@ -35,6 +36,7 @@ export const createColumnAction = createAction({
 			required: false,
 		}),
 	},
+	outputSchema: createColumnActionOutputSchema,
 	async run(context) {
 		const { spreadsheetId, sheetId, columnName, columnIndex } = context.propsValue;
 
