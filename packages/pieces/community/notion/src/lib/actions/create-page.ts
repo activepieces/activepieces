@@ -10,6 +10,12 @@ export const createPage = createAction({
   displayName: 'Create Page',
   description:
     'Create a new Notion page as a sub-page with custom title and content. Perfect for organizing documentation, notes, or creating structured page hierarchies.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new standalone page nested under an existing parent page, with a title and optional body content. Use when an agent must add free-form document pages (notes, docs) rather than database rows; requires the parent page id. Not idempotent: each call creates a new page even with identical title.',
+    idempotent: false,
+  },
   props: {
     pageId: notionCommon.page,
     title: Property.ShortText({

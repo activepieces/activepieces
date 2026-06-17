@@ -9,6 +9,12 @@ export const asknewsChatCompletion = createAction({
   displayName: 'Chat Completion',
   description:
     'Get chat completions from a news-infused AI assistant powered by OpenAI API',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends a user message (with an optional system prompt) to AskNews’ chat-completion endpoint, returning an LLM answer grounded in real-time news with optional inline citations and references. Choose this for natural-language Q&A about current events rather than retrieving raw articles. Generative and non-deterministic, so repeated calls may return different text.',
+    idempotent: false,
+  },
   props: {
     userMessage: Property.LongText({
       displayName: 'User Message',

@@ -15,6 +15,7 @@ const SUPPORTED_FILE_TYPES = [
 ];
 
 export const fileUpload = createAction({
+  audience: 'human',
   auth: straicoAuth,
   name: 'file_upload',
   displayName: 'Upload File',

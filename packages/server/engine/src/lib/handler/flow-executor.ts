@@ -53,7 +53,7 @@ export const flowExecutor = {
                 stepNameToUpdate: trigger.name,
                 startTime: dayjs().toISOString(),
             })
-            executionState = applyLogSizeLimitIfExceeded(executionState, trigger)
+            executionState = await applyLogSizeLimitIfExceeded(executionState, trigger)
             if (executionState.verdict.status !== FlowRunStatus.RUNNING) {
                 return executionState
             }
@@ -77,7 +77,6 @@ export const flowExecutor = {
 
         while (!isNil(currentAction)) {
             if (currentAction.skip && !testSingleStepMode) {
-                previousAction = currentAction
                 currentAction = currentAction.nextAction
                 continue
             }
@@ -96,8 +95,14 @@ export const flowExecutor = {
                 executionState: flowExecutionContext,
                 constants,
             })
-
-            flowExecutionContext = applyLogSizeLimitIfExceeded(flowExecutionContext, currentAction)
+            if (!testSingleStepMode) {
+                flowExecutionContext = await runContinueOnFailureBranchIfNeeded({
+                    action: currentAction,
+                    executionState: flowExecutionContext,
+                    constants,
+                })
+            }
+            flowExecutionContext = await applyLogSizeLimitIfExceeded(flowExecutionContext, currentAction)
 
             const shouldBreakExecution = flowExecutionContext.verdict.status !== FlowRunStatus.RUNNING || testSingleStepMode
             previousAction = currentAction
@@ -122,14 +127,46 @@ export const flowExecutor = {
     },
 }
 
-const applyLogSizeLimitIfExceeded = (
+async function runContinueOnFailureBranchIfNeeded({ action, executionState, constants }: {
+    action: FlowAction
+    executionState: FlowExecutorContext
+    constants: EngineConstants
+}): Promise<FlowExecutorContext> {
+    if (action.type !== FlowActionType.CODE && action.type !== FlowActionType.PIECE) {
+        return executionState
+    }
+    const cofEnabled = action.settings.errorHandlingOptions?.continueOnFailure?.value
+    if (!cofEnabled) {
+        return executionState
+    }
+    const branches = action.continueOnFailureBranches
+    if (isNil(branches?.onSuccess) && isNil(branches?.onFailure)) {
+        return executionState
+    }
+    if (executionState.verdict.status !== FlowRunStatus.RUNNING) {
+        return executionState
+    }
+    const stepOutput = executionState.getStepOutput(action.name)
+    const stepFailed = stepOutput?.status === StepOutputStatus.FAILED
+    const branchHead = stepFailed ? branches?.onFailure : branches?.onSuccess
+    if (isNil(branchHead)) {
+        return executionState
+    }
+    return flowExecutor.execute({
+        action: branchHead,
+        executionState,
+        constants,
+    })
+}
+
+const applyLogSizeLimitIfExceeded = async (
     flowExecutionContext: FlowExecutorContext,
     action: FlowAction | FlowTrigger,
-): FlowExecutorContext => {
+): Promise<FlowExecutorContext> => {
     if (loggingUtils.isWithinSizeLimit(flowExecutionContext.steps)) {
         return flowExecutionContext
     }
-    return flowExecutionContext
+    const failed = await flowExecutionContext
         .upsertStep(action.name, GenericStepOutput.create({
             input: flowExecutionContext.getStepOutput(action.name)?.input,
             type: action.type,
@@ -137,12 +174,12 @@ const applyLogSizeLimitIfExceeded = (
             output: undefined,
         })
             .setErrorMessage(`Flow run data size exceeded the maximum allowed size of ${loggingUtils.maxLogSizeMb} MB`))
-        .setVerdict({
-            status: FlowRunStatus.LOG_SIZE_EXCEEDED,
-            failedStep: {
-                name: action.name,
-                displayName: action.displayName,
-                message: 'Flow run logs size exceeded',
-            },
-        })
+    return failed.setVerdict({
+        status: FlowRunStatus.LOG_SIZE_EXCEEDED,
+        failedStep: {
+            name: action.name,
+            displayName: action.displayName,
+            message: 'Flow run logs size exceeded',
+        },
+    })
 }

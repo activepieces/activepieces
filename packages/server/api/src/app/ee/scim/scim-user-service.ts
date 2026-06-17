@@ -1,6 +1,7 @@
 import { cryptoUtils } from '@activepieces/server-utils'
 import {
     CreateScimUserRequest,
+    isEnumValue,
     isNil,
     parseScimFilter,
     PlatformRole,
@@ -228,8 +229,18 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
             )
         }
 
+        let addOperationFields: {
+            platformRole?: PlatformRole
+            firstName?: string
+            lastName?: string
+            externalId?: string
+            active?: boolean
+        } | undefined = undefined
+
+        // Different providers do patch operations differently some use 'replace' some use 'add'
         for (const operation of request.Operations) {
             const op = operation.op.toLowerCase()
+
             if (op === 'replace') {
                 const value = operation.value as Record<string, unknown>
                 if (!isNil(value)) {
@@ -251,9 +262,42 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
                     })
                 }
             }
+            else if ( op === 'add') {
+                const path = operation.path as string
+                addOperationFields = addOperationFields ?? {}
+
+                if (path === `${SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA}.platformRole` && !isEnumValue(PlatformRole, operation.value as string)) {
+                    throw new Error(`Invalid platform role: ${operation.value}`)
+                }
+                switch (path) {
+                    case `${SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA}:platformRole`:
+                        addOperationFields['platformRole'] = operation.value as PlatformRole
+                        break
+                    case 'name.givenName':
+                        addOperationFields['firstName'] = operation.value as string
+                        break
+                    case 'name.familyName':
+                        addOperationFields['lastName'] = operation.value as string
+                        break
+                    case 'externalId':
+                        addOperationFields['externalId'] = operation.value as string
+                        break
+                    case 'active':
+                        addOperationFields['active'] = operation.value as boolean
+                        break
+                }
+            }
         }
 
-        const updatedUser = await userService(log).getOrThrow({ id: userId })
+        let updatedUser: User | undefined
+        if (!isNil(addOperationFields)) {
+            const { platformRole, firstName, lastName, externalId, active } = addOperationFields
+            await userService(log).update({ platformId, id: userId, platformRole, externalId, status: isNil(active) ? undefined : active ? UserStatus.ACTIVE : UserStatus.INACTIVE })
+            updatedUser = await userService(log).getOrThrow({ id: userId })
+            await userIdentityService(log).update(updatedUser.identityId, { firstName, lastName })
+        }
+
+        updatedUser = updatedUser ?? await userService(log).getOrThrow({ id: userId })
         const identity = await userIdentityService(log).getBasicInformation(updatedUser.identityId)
         return toScimUserResource(updatedUser, identity.email, identity.firstName, identity.lastName)
     },
@@ -281,7 +325,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
 })
 
 function toScimUserResource(
-    user: Pick<User, 'id' | 'externalId' | 'created' | 'updated' | 'status'>,
+    user: Pick<User, 'id' | 'externalId' | 'created' | 'updated' | 'status' | 'platformRole'>,
     email: string,
     firstName: string,
     lastName: string,
@@ -300,6 +344,9 @@ function toScimUserResource(
             primary: true,
         }],
         active: user.status === UserStatus.ACTIVE,
+        [SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA]: {
+            platformRole: user.platformRole,
+        },
         meta: {
             resourceType: 'User',
             created: user.created,

@@ -3,10 +3,12 @@ import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import {
     apId,
     FlowActionType,
+    FlowCreatorType,
     FlowRunStatus,
-    McpServer,
+    McpServerType,
     PackageType,
     PieceType,
+    ProjectScopedMcpServer,
     RunEnvironment,
     StepLocationRelativeToParent,
 } from '@activepieces/shared'
@@ -20,7 +22,7 @@ import { apListFlowsTool } from '../../../../src/app/mcp/tools/ap-list-flows'
 import { apBuildFlowTool } from '../../../../src/app/mcp/tools/ap-build-flow'
 import { apCreateFlowTool } from '../../../../src/app/mcp/tools/ap-create-flow'
 import { apFlowStructureTool } from '../../../../src/app/mcp/tools/ap-flow-structure'
-import { apListPiecesTool } from '../../../../src/app/mcp/tools/ap-list-pieces'
+import { apResearchPiecesTool } from '../../../../src/app/mcp/tools/ap-research-pieces'
 import { apAddStepTool } from '../../../../src/app/mcp/tools/ap-add-step'
 import { apUpdateStepTool } from '../../../../src/app/mcp/tools/ap-update-step'
 import { apRenameFlowTool } from '../../../../src/app/mcp/tools/ap-rename-flow'
@@ -38,6 +40,8 @@ import { apListRunsTool } from '../../../../src/app/mcp/tools/ap-list-runs'
 import { apGetRunTool } from '../../../../src/app/mcp/tools/ap-get-run'
 import { apRunActionTool } from '../../../../src/app/mcp/tools/ap-run-action'
 import { mcpUtils } from '../../../../src/app/mcp/tools/mcp-utils'
+import { flowService } from '../../../../src/app/flows/flow/flow.service'
+import { StatusCodes } from 'http-status-codes'
 
 let app: FastifyInstance
 let mockLog: FastifyBaseLogger
@@ -74,7 +78,10 @@ beforeAll(async () => {
                 displayName: 'New Email',
                 description: 'Triggers on new email',
                 requireAuth: false,
-                props: {},
+                props: {
+                    folder: { type: 'SHORT_TEXT', displayName: 'Folder', required: false },
+                    label: { type: 'SHORT_TEXT', displayName: 'Label', required: false },
+                },
             },
             new_attachment: {
                 name: 'new_attachment',
@@ -145,14 +152,16 @@ afterAll(async () => {
     await teardownTestEnvironment()
 })
 
-function makeMcp(projectId: string): McpServer {
+function makeMcp(projectId: string): ProjectScopedMcpServer {
     return {
         id: apId(),
         created: new Date().toISOString(),
         updated: new Date().toISOString(),
         projectId,
+        platformId: null,
+        type: McpServerType.PROJECT,
         token: apId(),
-        enabledTools: null,
+        disabledTools: null,
     }
 }
 
@@ -160,8 +169,8 @@ function text(result: { content: Array<{ type: 'text', text: string }> }): strin
     return result.content.map(c => c.text).join('\n')
 }
 
-async function createFlowAndGetId(mcp: McpServer, flowName: string): Promise<string> {
-    const result = await apCreateFlowTool(mcp, mockLog).execute({ flowName })
+async function createFlowAndGetId(mcp: ProjectScopedMcpServer, flowName: string): Promise<string> {
+    const result = await apCreateFlowTool({ mcp }, mockLog).execute({ flowName })
     const match = text(result).match(/\(id: (\S+?)\)/)
     if (!match) throw new Error(`Could not extract flowId from: ${text(result)}`)
     return match[1]
@@ -172,8 +181,8 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        await apCreateFlowTool(mcp, mockLog).execute({ flowName: 'Flow Alpha' })
-        await apCreateFlowTool(mcp, mockLog).execute({ flowName: 'Flow Beta' })
+        await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'Flow Alpha' })
+        await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'Flow Beta' })
 
         const result = await apListFlowsTool(mcp, mockLog).execute({})
 
@@ -186,7 +195,7 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        const result = await apCreateFlowTool(mcp, mockLog).execute({ flowName: 'My Test Flow' })
+        const result = await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'My Test Flow' })
 
         expect(text(result)).toContain('✅')
         expect(text(result)).toContain('My Test Flow')
@@ -209,11 +218,11 @@ describe('MCP Tools integration', () => {
         expect(text(result)).toContain('unconfigured')
     })
 
-    it('4. ap_list_pieces — lists pieces matching search query', async () => {
+    it('4. ap_research_pieces — lists pieces matching search query', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        const result = await apListPiecesTool(mcp, mockLog).execute({ searchQuery: 'test-email' })
+        const result = await apResearchPiecesTool(mcp, mockLog).execute({ searchQuery: 'test-email' })
 
         expect(text(result)).toContain('✅')
         expect(text(result).toLowerCase()).toContain('test-email')
@@ -231,7 +240,6 @@ describe('MCP Tools integration', () => {
             stepType: FlowActionType.PIECE,
             displayName: 'Send Email',
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
         })
 
         expect(text(result)).toContain('✅')
@@ -254,7 +262,6 @@ describe('MCP Tools integration', () => {
             stepType: FlowActionType.PIECE,
             displayName: 'Send Email',
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
         })
 
         // Update the step: set skip=true. The step is still invalid (no actionName configured)
@@ -479,7 +486,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -514,7 +520,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -525,7 +530,6 @@ describe('MCP Tools integration', () => {
             stepType: FlowActionType.PIECE,
             displayName: 'Unconfigured Piece',
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
         })
 
         const result = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
@@ -545,7 +549,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -578,7 +581,7 @@ describe('MCP Tools integration', () => {
         expect(text(result)).toContain('✅')
         expect(text(result)).toContain('folder')
         expect(text(result)).toContain('DROPDOWN')
-        expect(text(result)).toContain('Dynamic dropdown')
+        expect(text(result)).toContain('ap_resolve_property_options')
     })
 
     it('23. ap_get_piece_props — schema includes all fields regardless of auth', async () => {
@@ -611,7 +614,7 @@ describe('MCP Tools integration', () => {
 
         expect(text(result)).toContain('✅')
         expect(text(result)).not.toContain('DROPDOWN')
-        expect(text(result)).not.toContain('Dynamic dropdown')
+        expect(text(result)).not.toContain('ap_resolve_property_options')
     })
 
     it('25. ap_get_piece_props — with auth and invalid piece returns error before resolution', async () => {
@@ -662,7 +665,7 @@ describe('MCP Tools integration', () => {
 
     // ── Fix 1: Step output reference format ───────────────────────────
 
-    it('28. ap_flow_structure — reference hint uses {{stepName.field}} without .output.', async () => {
+    it('28. ap_flow_structure — reference hint uses {{stepName[\'output\'].field}} bracket notation', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
         const flowId = await createFlowAndGetId(mcp, 'Reference Format Test')
@@ -670,28 +673,27 @@ describe('MCP Tools integration', () => {
         const result = await apFlowStructureTool(mcp, mockLog).execute({ flowId })
         const output = text(result)
 
-        expect(output).toContain('{{stepName.field}}')
+        expect(output).toContain('{{stepName[\'output\'].field}}')
         expect(output).not.toContain('{{stepName.output.field}}')
-        expect(output).not.toContain('{{trigger.output.')
     })
 
-    it('29. ap_update_step — input description uses {{stepName.field}} not {{stepName.output.field}}', async () => {
+    it('29. ap_update_step — input description uses {{stepName[\'output\'].field}} bracket notation', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
         const tool = apUpdateStepTool(mcp, mockLog)
         const inputDesc = tool.inputSchema.input.description ?? ''
 
-        expect(inputDesc).toContain('{{stepName.field}}')
+        expect(inputDesc).toContain('{{stepName[\'output\'].field}}')
         expect(inputDesc).not.toContain('{{stepName.output.field}}')
     })
 
-    it('30. ap_update_trigger — input description uses {{stepName.field}} not {{stepName.output.field}}', async () => {
+    it('30. ap_update_trigger — input description uses {{stepName[\'output\'].field}} bracket notation', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
         const tool = apUpdateTriggerTool(mcp, mockLog)
         const inputDesc = tool.inputSchema.input.description ?? ''
 
-        expect(inputDesc).toContain('{{stepName.field}}')
+        expect(inputDesc).toContain('{{stepName[\'output\'].field}}')
         expect(inputDesc).not.toContain('{{stepName.output.field}}')
     })
 
@@ -703,7 +705,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -739,7 +740,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -749,7 +749,6 @@ describe('MCP Tools integration', () => {
         const renameResult = await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
             displayName: 'Renamed Trigger',
         })
@@ -768,7 +767,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
             input: { customField: 'should-be-discarded' },
         })
@@ -776,7 +774,6 @@ describe('MCP Tools integration', () => {
         const switchResult = await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_attachment',
         })
         expect(text(switchResult)).toContain('✅')
@@ -794,16 +791,15 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
+            input: { folder: 'inbox' },
         })
 
         const addFieldResult = await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
-            input: { extraField: 'value' },
+            input: { label: 'important' },
         })
         expect(text(addFieldResult)).toContain('✅')
 
@@ -864,7 +860,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -896,7 +891,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -957,7 +951,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1041,7 +1034,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1123,7 +1115,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1131,7 +1122,6 @@ describe('MCP Tools integration', () => {
             await apUpdateTriggerTool(mcp, mockLog).execute({
                 flowId,
                 pieceName: '@activepieces/piece-test-email',
-                pieceVersion: '~0.1.0',
                 triggerName: 'new_email',
                 displayName: `Attempt ${i + 1}`,
             })
@@ -1151,11 +1141,10 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        const result = await apBuildFlowTool(mcp, mockLog).execute({
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
             flowName: 'Build Test 1',
             trigger: {
                 pieceName: '@activepieces/piece-test-email',
-                pieceVersion: '~0.1.0',
                 triggerName: 'new_email',
             },
             steps: [
@@ -1177,11 +1166,10 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        const result = await apBuildFlowTool(mcp, mockLog).execute({
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
             flowName: 'Build Test 2',
             trigger: {
                 pieceName: '@activepieces/piece-test-email',
-                pieceVersion: '~0.1.0',
                 triggerName: 'new_email',
             },
             steps: [
@@ -1225,11 +1213,10 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        const result = await apBuildFlowTool(mcp, mockLog).execute({
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
             flowName: 'Build Test Partial',
             trigger: {
                 pieceName: '@activepieces/piece-test-email',
-                pieceVersion: '~0.1.0',
                 triggerName: 'new_email',
             },
             steps: [
@@ -1243,7 +1230,6 @@ describe('MCP Tools integration', () => {
                     type: FlowActionType.PIECE,
                     displayName: 'Invalid Piece',
                     pieceName: '@activepieces/piece-test-email',
-                    pieceVersion: '~0.1.0',
                 },
             ],
         })
@@ -1257,11 +1243,10 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        const result = await apBuildFlowTool(mcp, mockLog).execute({
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
             flowName: 'Build Test Empty',
             trigger: {
                 pieceName: '@activepieces/piece-test-email',
-                pieceVersion: '~0.1.0',
                 triggerName: 'new_email',
             },
             steps: [],
@@ -1275,11 +1260,10 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        const result = await apBuildFlowTool(mcp, mockLog).execute({
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
             flowName: 'Build Test Lifecycle',
             trigger: {
                 pieceName: '@activepieces/piece-test-email',
-                pieceVersion: '~0.1.0',
                 triggerName: 'new_email',
             },
             steps: [
@@ -1311,7 +1295,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1336,7 +1319,7 @@ describe('MCP Tools integration', () => {
         expect(output).toContain('sourceCode:')
         expect(output).toContain('inputs.name')
         expect(output).toContain('input:')
-        expect(output).toContain('{{trigger.from}}')
+        expect(output).toContain("{{trigger['output'].from}}")
     })
 
     it('51. ap_flow_structure — shows LOOP step loopItems expression', async () => {
@@ -1347,7 +1330,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1368,7 +1350,7 @@ describe('MCP Tools integration', () => {
         const result = await apFlowStructureTool(mcp, mockLog).execute({ flowId })
         const output = text(result)
 
-        expect(output).toContain('loopItems: {{trigger.items}}')
+        expect(output).toContain("loopItems: {{trigger['output'].items}}")
     })
 
     it('52. ap_flow_structure — shows router branch conditions', async () => {
@@ -1379,7 +1361,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1407,7 +1388,7 @@ describe('MCP Tools integration', () => {
 
         expect(output).toContain('VIP')
         expect(output).toContain('conditions:')
-        expect(output).toContain('{{trigger.type}}')
+        expect(output).toContain("{{trigger['output'].type}}")
         expect(output).toContain('TEXT_EXACTLY_MATCHES')
         expect(output).toContain('vip')
     })
@@ -1422,7 +1403,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1441,7 +1421,7 @@ describe('MCP Tools integration', () => {
             input: {},
         })
 
-        const dupResult = await apDuplicateFlowTool(mcp, mockLog).execute({ flowId })
+        const dupResult = await apDuplicateFlowTool({ mcp }, mockLog).execute({ flowId })
         const dupOutput = text(dupResult)
 
         expect(dupOutput).toContain('✅')
@@ -1463,7 +1443,7 @@ describe('MCP Tools integration', () => {
         const mcp = makeMcp(ctx.project.id)
         const flowId = await createFlowAndGetId(mcp, 'Source Flow')
 
-        const dupResult = await apDuplicateFlowTool(mcp, mockLog).execute({
+        const dupResult = await apDuplicateFlowTool({ mcp }, mockLog).execute({
             flowId,
             name: 'My Custom Copy',
         })
@@ -1476,7 +1456,7 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        const result = await apDuplicateFlowTool(mcp, mockLog).execute({ flowId: 'nonexistent123' })
+        const result = await apDuplicateFlowTool({ mcp }, mockLog).execute({ flowId: 'nonexistent123' })
 
         expect(text(result)).toContain('❌')
         expect(text(result)).toContain('not found')
@@ -1490,13 +1470,12 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
         const structBefore = text(await apFlowStructureTool(mcp, mockLog).execute({ flowId }))
 
-        await apDuplicateFlowTool(mcp, mockLog).execute({ flowId })
+        await apDuplicateFlowTool({ mcp }, mockLog).execute({ flowId })
 
         const structAfter = text(await apFlowStructureTool(mcp, mockLog).execute({ flowId }))
 
@@ -1512,7 +1491,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1540,7 +1518,7 @@ describe('MCP Tools integration', () => {
             input: {},
         })
 
-        const dupResult = await apDuplicateFlowTool(mcp, mockLog).execute({ flowId })
+        const dupResult = await apDuplicateFlowTool({ mcp }, mockLog).execute({ flowId })
         const copyFlowId = text(dupResult).match(/Copy: ".*?" \(id: (\S+?)\)/)?.[1]
         expect(copyFlowId).toBeDefined()
 
@@ -1562,7 +1540,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1593,7 +1570,7 @@ describe('MCP Tools integration', () => {
         const structure = await apFlowStructureTool(mcp, mockLog).execute({ flowId })
         const output = text(structure)
         expect(output).toContain('VIP Branch')
-        expect(output).toContain('{{trigger.type}}')
+        expect(output).toContain("{{trigger['output'].type}}")
         expect(output).toContain('TEXT_EXACTLY_MATCHES')
     })
 
@@ -1605,7 +1582,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1639,7 +1615,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1671,7 +1646,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1702,7 +1676,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1733,7 +1706,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1764,7 +1736,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1794,7 +1765,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1842,7 +1812,7 @@ describe('MCP Tools integration', () => {
         expect(output).toContain('Inner Code')
         expect(output).toContain('step_2')
         expect(output).toContain('branch 0')
-        expect(output).toContain('{{trigger.status}}')
+        expect(output).toContain("{{trigger['output'].status}}")
     })
 
     it('66. ap_update_branch — handles complex multi-group conditions', async () => {
@@ -1853,7 +1823,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -1921,9 +1890,9 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        await apCreateFlowTool(mcp, mockLog).execute({ flowName: 'Flow 1' })
-        await apCreateFlowTool(mcp, mockLog).execute({ flowName: 'Flow 2' })
-        await apCreateFlowTool(mcp, mockLog).execute({ flowName: 'Flow 3' })
+        await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'Flow 1' })
+        await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'Flow 2' })
+        await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'Flow 3' })
 
         const result = await apListFlowsTool(mcp, mockLog).execute({ limit: 2 })
         const output = text(result)
@@ -1936,9 +1905,9 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        await apCreateFlowTool(mcp, mockLog).execute({ flowName: 'Alpha Flow' })
-        await apCreateFlowTool(mcp, mockLog).execute({ flowName: 'Beta Flow' })
-        await apCreateFlowTool(mcp, mockLog).execute({ flowName: 'Alpha Two' })
+        await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'Alpha Flow' })
+        await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'Beta Flow' })
+        await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'Alpha Two' })
 
         const result = await apListFlowsTool(mcp, mockLog).execute({ name: 'Alpha' })
         const output = text(result)
@@ -1994,7 +1963,6 @@ describe('MCP Tools integration', () => {
         await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
-            pieceVersion: '~0.1.0',
             triggerName: 'new_email',
         })
 
@@ -2335,7 +2303,7 @@ describe('MCP Tools integration', () => {
 
         expect(text(result)).toContain('❌')
         expect(text(result)).toContain('not found')
-        expect(text(result)).toContain('ap_list_pieces')
+        expect(text(result)).toContain('ap_research_pieces')
     })
 
     it('85. ap_run_action — returns error for non-existent action on a valid piece', async () => {
@@ -2417,7 +2385,7 @@ describe('MCP Tools integration', () => {
     // on that platform (pieceType: CUSTOM) are discoverable. Without the
     // platformId filter, `pieceCache.filterPieceBasedOnType` drops them.
 
-    it('90. ap_list_pieces — includes CUSTOM pieces belonging to the caller\'s platform', async () => {
+    it('90. ap_research_pieces — includes CUSTOM pieces belonging to the caller\'s platform', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
@@ -2441,7 +2409,7 @@ describe('MCP Tools integration', () => {
         })
         await db.save('piece_metadata', privatePiece)
 
-        const result = await apListPiecesTool(mcp, mockLog).execute({
+        const result = await apResearchPiecesTool(mcp, mockLog).execute({
             searchQuery: 'private-custom',
         })
 
@@ -2487,7 +2455,7 @@ describe('MCP Tools integration', () => {
         expect(text(result)).toContain('do_thing')
     })
 
-    it('92. ap_list_pieces — does NOT include CUSTOM pieces from a different platform', async () => {
+    it('92. ap_research_pieces — does NOT include CUSTOM pieces from a different platform', async () => {
         // Two independent projects on two different platforms. Each platform's
         // private piece must stay invisible to the other.
         const ctxA = await createTestContext(app)
@@ -2514,7 +2482,7 @@ describe('MCP Tools integration', () => {
         })
         await db.save('piece_metadata', privateOfB)
 
-        const result = await apListPiecesTool(mcpA, mockLog).execute({
+        const result = await apResearchPiecesTool(mcpA, mockLog).execute({
             searchQuery: 'private-only-b',
         })
 
@@ -2522,5 +2490,76 @@ describe('MCP Tools integration', () => {
         // (which also wouldn't contain the piece name) would falsely pass.
         expect(text(result)).toContain('✅')
         expect(text(result)).not.toContain('@activepieces/piece-private-only-b')
+    })
+
+    // ── Flow attribution (createdBy / ownerId) ───────────────────────
+
+    it('ap_create_flow — stamps createdBy=MCP and ownerId=connected user', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apCreateFlowTool({ mcp, userId: ctx.user.id }, mockLog).execute({ flowName: 'Attributed Flow' })
+        const flowId = text(result).match(/\(id: (\S+?)\)/)?.[1]
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId!, projectId: ctx.project.id })
+
+        expect(flow.createdBy).toEqual({ type: FlowCreatorType.MCP, id: mcp.id })
+        expect(flow.ownerId).toBe(ctx.user.id)
+    })
+
+    it('ap_build_flow — stamps createdBy=MCP and ownerId=connected user', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apBuildFlowTool({ mcp, userId: ctx.user.id }, mockLog).execute({
+            flowName: 'Built Attributed Flow',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [],
+        })
+        const flowId = text(result).match(/\(id: (\S+?)\)/)?.[1]
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId!, projectId: ctx.project.id })
+
+        expect(flow.createdBy).toEqual({ type: FlowCreatorType.MCP, id: mcp.id })
+        expect(flow.ownerId).toBe(ctx.user.id)
+    })
+
+    it('ap_duplicate_flow — copy inherits MCP attribution, not the source flow owner', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const context = { mcp, userId: ctx.user.id }
+        const sourceResult = await apCreateFlowTool(context, mockLog).execute({ flowName: 'Dup Source' })
+        const sourceId = text(sourceResult).match(/\(id: (\S+?)\)/)?.[1]
+
+        const dupResult = await apDuplicateFlowTool(context, mockLog).execute({ flowId: sourceId!, name: 'Dup Copy' })
+        const copyId = text(dupResult).match(/Copy: ".*?" \(id: (\S+?)\)/)?.[1]
+        const copy = await flowService(mockLog).getOnePopulatedOrThrow({ id: copyId!, projectId: ctx.project.id })
+
+        expect(copy.createdBy).toEqual({ type: FlowCreatorType.MCP, id: mcp.id })
+        expect(copy.ownerId).toBe(ctx.user.id)
+    })
+
+    it('REST POST /v1/flows — createdBy is null (human-created)', async () => {
+        const ctx = await createTestContext(app)
+
+        const response = await ctx.post('/v1/flows', {
+            displayName: 'Hand-built Flow',
+            projectId: ctx.project.id,
+        }, { query: { projectId: ctx.project.id } })
+
+        expect(response.statusCode).toBe(StatusCodes.CREATED)
+        expect(response.json().createdBy ?? null).toBeNull()
+    })
+
+    it('REST POST /v1/flows — createdBy cannot be injected through the request body', async () => {
+        const ctx = await createTestContext(app)
+
+        const response = await ctx.post('/v1/flows', {
+            displayName: 'Spoof Attempt',
+            projectId: ctx.project.id,
+            createdBy: { type: FlowCreatorType.MCP, id: apId() },
+        }, { query: { projectId: ctx.project.id } })
+
+        expect(response.statusCode).toBe(StatusCodes.CREATED)
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: response.json().id, projectId: ctx.project.id })
+        expect(flow.createdBy ?? null).toBeNull()
     })
 })

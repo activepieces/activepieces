@@ -7,6 +7,12 @@ export const getManyRowsAction = createAction({
     auth: googleSheetsAuth,
     displayName: 'Get All Rows',
     description: 'Get all the rows from a specific sheet.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Reads every row from a worksheet in a single call, optionally keyed by header names. Use when an agent needs the full contents of a sheet rather than a search or a single row; be mindful of size on large sheets. Read-only and idempotent.',
+        idempotent: true,
+    },
     props: {
         ...commonProps,
         first_row_headers: isFirstRowHeaderProp()
@@ -21,7 +27,7 @@ export const getManyRowsAction = createAction({
             auth:context.auth,
             sheetId: sheetId as number,
             spreadsheetId: spreadsheetId as string,
-            rowIndex_s:undefined,
+            rowIndex_s: first_row_headers ? 2 : undefined,
             rowIndex_e:undefined,
             headerRow: 1,
           });

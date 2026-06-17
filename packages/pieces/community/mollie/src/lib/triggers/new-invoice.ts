@@ -10,6 +10,10 @@ export const mollieNewInvoice = createTrigger({
   name: 'new_invoice',
   displayName: 'New Invoice',
   description: 'Fires when a new invoice is generated',
+  aiMetadata: {
+    description:
+      'Fires when Mollie generates a new sales invoice (via the sales-invoice.created webhook), representing a billing document issued to the merchant for Mollie fees and charges. Use to automate invoice handling or bookkeeping.',
+  },
 
   type: TriggerStrategy.WEBHOOK,
 

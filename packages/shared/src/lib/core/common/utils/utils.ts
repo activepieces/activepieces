@@ -4,6 +4,13 @@ export function isString(str: unknown): str is string {
     return str != null && typeof str === 'string'
 }
 
+export function truncateString({ value, maxLength, suffix = '…' }: { value: string, maxLength: number, suffix?: string }): string {
+    if (value.length <= maxLength) {
+        return value
+    }
+    return value.slice(0, maxLength) + suffix
+}
+
 export function isNil<T>(value: T | null | undefined): value is null | undefined {
     return value === null || value === undefined
 }

@@ -5,6 +5,7 @@ import { modelDropdown, parseMistralError } from '../common/props';
 import { mistralRequest } from '../common/request';
 
 export const createChatCompletion = createAction({
+  audience: 'human',
 	auth: mistralAuth,
 	name: 'create_chat_completion',
 	displayName: 'Ask Mistral',

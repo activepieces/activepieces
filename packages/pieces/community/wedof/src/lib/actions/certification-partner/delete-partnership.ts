@@ -8,6 +8,12 @@ export const deletePartnership = createAction({
   name: 'deletePartnership',
   displayName: "Supprimer un partenariat",
   description: "Supprime un partenariat à l'état Demande à compléter",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Permanently delete a certification partnership (identified by certification certifInfo and partner SIRET). The API only allows deletion while the partnership is in the 'request to complete' state, so it may fail otherwise. Destructive and not idempotent; use the get action to inspect a partnership and the reset action to revert its state instead.",
+    idempotent: false,
+  },
   props: {
     certifInfo: Property.ShortText({
       displayName: 'N° certifInfo',

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { RunInternalError } from '../flow-run/execution/execution-output'
 import { FlowRunStatus } from '../flow-run/execution/flow-execution'
 import { StepOutput } from '../flow-run/execution/step-output'
 import { FailedStep, FlowRun } from '../flow-run/flow-run'
@@ -20,6 +21,7 @@ export const UploadRunLogsRequest = z.object({
     finishTime: z.string().optional(),
     stepResponse: StepRunResponse.optional(),
     stepsCount: z.number().optional(),
+    internalError: RunInternalError.optional(),
 })
 
 export type UploadRunLogsRequest = z.infer<typeof UploadRunLogsRequest>
@@ -31,24 +33,16 @@ export const UpdateStepProgressRequest = z.object({
 })
 export type UpdateStepProgressRequest = z.infer<typeof UpdateStepProgressRequest>
 
-export const UploadLogsQueryParams = z.object({
+export const FileTransportQueryParams = z.object({
     token: z.string(),
 })
-export type UploadLogsQueryParams = z.infer<typeof UploadLogsQueryParams>
+export type FileTransportQueryParams = z.infer<typeof FileTransportQueryParams>
 
-export enum UploadLogsBehavior {
-    UPLOAD_DIRECTLY = 'UPLOAD_DIRECTLY',
-    REDIRECT_TO_S3 = 'REDIRECT_TO_S3',
-}
-
-export const UploadLogsToken = z.object({
-    logsFileId: z.string(),
-    projectId: z.string(),
-    flowRunId: z.string(),
-    behavior: z.nativeEnum(UploadLogsBehavior),
+export const FileReadToken = z.object({
+    fileId: z.string(),
+    fileType: z.string().optional(),
 })
-
-export type UploadLogsToken = z.infer<typeof UploadLogsToken>
+export type FileReadToken = z.infer<typeof FileReadToken>
 
 export const SendFlowResponseRequest = z.object({
     workerHandlerId: z.string(),

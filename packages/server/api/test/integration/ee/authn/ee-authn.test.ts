@@ -1,12 +1,6 @@
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import {
-    createMockCustomDomain,
-    mockAndSaveBasicSetup,
-} from '../../../../test/helpers/mocks'
-import { db } from '../../../helpers/db'
 import { createMockSignUpRequest } from '../../../helpers/mocks/authn'
 
 
@@ -50,42 +44,5 @@ describe('Authentication API', () => {
             expect(responseBody?.projectId).toBeNull()
             expect(responseBody?.token).toBeDefined()
         })
-    })
-
-    it('should fail signup on custom domain when no project exists', async () => {
-    // arrange
-
-        const { mockPlatform } = await mockAndSaveBasicSetup({
-            platform: {
-                emailAuthEnabled: true,
-                enforceAllowedAuthDomains: false,
-            },
-            plan: {
-                ssoEnabled: false,
-            },
-        })
-        const mockCustomDomain = createMockCustomDomain({
-            platformId: mockPlatform.id,
-        })
-        await db.save('custom_domain', mockCustomDomain)
-
-        const mockedUpEmail = faker.internet.email()
-        const mockSignUpRequest = createMockSignUpRequest({ email: mockedUpEmail })
-
-        // act
-        const response = await app?.inject({
-            method: 'POST',
-            url: '/api/v1/authentication/sign-up',
-            headers: {
-                Host: mockCustomDomain.domain,
-            },
-            body: mockSignUpRequest,
-        })
-
-        // assert
-        expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
-        const responseBody = response?.json()
-
-        expect(responseBody?.code).toBe('INVITATION_ONLY_SIGN_UP')
     })
 })

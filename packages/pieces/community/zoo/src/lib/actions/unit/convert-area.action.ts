@@ -6,6 +6,8 @@ export const convertAreaAction = createAction({
   name: 'convert_area',
   displayName: 'Convert Area',
   description: 'Convert area measurements between different units',
+  audience: 'both',
+  aiMetadata: { description: 'Convert a single area value between units such as square meters/feet/inches/yards/kilometers/miles, hectares, and acres. Use only for area; other quantities have their own dedicated convert actions. Read-only calculation that returns the same result for the same inputs.', idempotent: true },
   auth: zooAuth,
   // category: 'Unit Conversion',
   props: {

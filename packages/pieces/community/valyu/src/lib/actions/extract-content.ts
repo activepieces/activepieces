@@ -7,6 +7,8 @@ export const extractContentAction = createAction({
   name: 'extract_content',
   displayName: 'Extract Content',
   description: 'Extract clean, structured content from web pages with optional AI-powered summarization.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches and extracts clean text content from a list of 1-10 web page URLs you already have. Optionally adds AI processing via the summary mode (none, a default summary, custom summary instructions, or structured JSON extraction against a supplied schema). Use when you have specific URLs to read rather than a query to search; read-only fetch, so repeating the same request is safe.', idempotent: true },
   auth: valyuAuth,
   props: {
     urls: Property.Array({

@@ -25,6 +25,10 @@ export const rssNewItemTrigger = createTrigger({
   name: 'new-item',
   displayName: 'New Item In Feed',
   description: 'Runs when a new item is added in the RSS feed',
+  aiMetadata: {
+    description:
+      'Fires when a new entry is published in a single monitored RSS/Atom feed. Polls the configured feed URL and emits each newly detected item (deduplicated by item id and publish date), representing a freshly published article, post, or update from that feed.',
+  },
   type: TriggerStrategy.POLLING,
   sampleData: sampleData,
   auth: PieceAuth.None(),

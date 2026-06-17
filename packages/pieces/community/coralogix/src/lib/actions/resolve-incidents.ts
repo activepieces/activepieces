@@ -8,6 +8,8 @@ export const resolveIncidents = createAction({
   name: 'resolveIncidents',
   displayName: 'Resolve Incidents',
   description: 'Mark one or more Coralogix incidents as resolved.',
+  audience: 'both',
+  aiMetadata: { description: 'Marks one or more Coralogix incidents as resolved by incident ID; choose this for incidents that were actually fixed (use Close Incidents for false positives or noise). Idempotent: re-resolving already-resolved incidents yields the same state.', idempotent: true },
   requireAuth: true,
   props: {
     incidentIds: Property.Array({

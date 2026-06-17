@@ -15,6 +15,8 @@ export const updateProductAction = createAction({
     name: 'update-product',
     displayName: 'Update Product',
     description: 'Updates a product in Hubspot.',
+    audience: 'both',
+    aiMetadata: { description: 'Updates properties on an existing product identified by its product ID, such as name, price, description, or tax, then returns the refreshed product. Use to modify a known product in the product library. Idempotent: applying the same property values converges to the same product state.', idempotent: true },
     props: {
         productId:Property.ShortText({
             displayName:'Product ID',

@@ -60,6 +60,7 @@ export const spreadsheetIdProp = (displayName: string, description: string, requ
 					fields: 'nextPageToken, files(id, name)',
 					supportsAllDrives: true,
 					includeItemsFromAllDrives: includeTeamDrives ? true : false,
+					corpora: includeTeamDrives ? 'allDrives' : 'user',
 				});
 				const fileList: drive_v3.Schema$FileList = response.data;
 

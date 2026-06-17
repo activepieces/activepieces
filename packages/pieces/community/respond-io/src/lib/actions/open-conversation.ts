@@ -9,6 +9,8 @@ export const openConversation = createAction({
   name: 'open_conversation',
   displayName: 'Open Conversation',
   description: 'Mark a conversation as open in Respond.io.',
+  audience: 'both',
+  aiMetadata: { description: 'Sets a contact\'s conversation status to open in Respond.io, identified by the contact identifier. Use to (re)open a conversation so it appears in active queues. Idempotent — opening an already-open conversation leaves it open.', idempotent: true },
   props: {
     identifier: contactIdentifierDropdown,
   },

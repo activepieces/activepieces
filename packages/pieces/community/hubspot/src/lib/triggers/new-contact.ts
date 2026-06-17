@@ -75,6 +75,10 @@ export const newContactTrigger = createTrigger({
 	name: 'new-contact',
 	displayName: 'New Contact',
 	description: 'Trigger when new contact is available.',
+	aiMetadata: {
+		description:
+			'Fires when a new contact is created in HubSpot. Each event represents one contact record with its properties such as name, email, company, phone, lifecycle stage, and address. Polls for contacts by creation date; does not fire on updates to existing contacts.',
+	},
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,

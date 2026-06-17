@@ -128,6 +128,9 @@ export const eventCancelled = createTrigger({
   name: 'event_cancelled',
   displayName: 'Event Cancelled',
   description: 'Fires when an event is canceled or deleted.',
+  aiMetadata: {
+    description: 'Fires when an event in the selected calendar transitions to a cancelled (or deleted) state, detected by polling. Each fired item is the cancelled event; can optionally be filtered by cancellation reason (deleted, attendee declined, rescheduled, other) and scoped to a single specific event.',
+  },
   props: {
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
     specific_event: Property.Checkbox({

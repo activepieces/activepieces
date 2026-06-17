@@ -21,6 +21,8 @@ export const chargePointStartChargingSessionWithoutEvseAction = createAction({
   name: 'chargePointStartChargingSessionWithoutEvse',
   displayName: 'Actions - Charge Point -  Start Charging Session Without EVSE',
   description: 'Start a charging session.',
+  audience: 'both',
+  aiMetadata: { description: 'Remotely start a charging session on a charge point without targeting a specific EVSE, letting the station pick the connector (an optional connectorId can be supplied). Use for single-connector stations or when the EVSE is not known in advance; prefer the start-charging-session action when you need to target a specific EVSE. Each call begins a new session, so it is not idempotent.', idempotent: false },
   props: {
     chargePoint: Property.Number({
       displayName: 'Charge Point',

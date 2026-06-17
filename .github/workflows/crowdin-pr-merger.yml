@@ -15,19 +15,19 @@ jobs:
     
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Cache dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v5
         with:
           path: ~/.bun/install/cache
           key: bun-${{ hashFiles('bun.lock', 'package.json') }}
           restore-keys: bun-
 
       - name: Setup nodejs
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v6
         with:
           node-version: 24
 
@@ -40,7 +40,7 @@ jobs:
         run: bun install
       
       - name: Add label to PR
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             github.rest.issues.addLabels({
@@ -95,7 +95,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update PR branch from base
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.CROWDIN_PRS }}
           script: |
@@ -115,7 +115,7 @@ jobs:
             }
 
       - name: Wait until PR is mergeable
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.CROWDIN_PRS }}
           script: |
@@ -143,7 +143,7 @@ jobs:
             core.setFailed('PR did not become up-to-date in time');
 
       - name: Merge PR
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.CROWDIN_PRS }}
           script: |
@@ -155,7 +155,7 @@ jobs:
             });
 
       - name: Delete branch after merge
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         if: success()
         with:
           github-token: ${{ secrets.CROWDIN_PRS }}

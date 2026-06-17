@@ -1,8 +1,6 @@
 import { ApFlagId } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { db } from '../../../helpers/db'
-import { createMockCustomDomain } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -46,42 +44,39 @@ describe('Flags API', () => {
             expect(theme.colors.primary.default).toBe('#ff0000')
         })
 
-        it('should resolve platform from custom domain when unauthenticated', async () => {
+        it('should apply platform theme color overrides on top of the generated theme', async () => {
             const ctx = await createTestContext(app!, {
                 platform: {
-                    primaryColor: '#00ff00',
-                    name: 'Domain Platform',
-                    fullLogoUrl: 'https://example.com/domain-logo.png',
-                    favIconUrl: 'https://example.com/domain-favicon.ico',
-                    logoIconUrl: 'https://example.com/domain-icon.svg',
+                    primaryColor: '#ff0000',
+                    themeColors: {
+                        danger: '#e82c51',
+                        selection: '#fbb67e',
+                        primary: {
+                            dark: '#ca6716',
+                        },
+                        success: {
+                            default: '#00a367',
+                        },
+                    },
                 },
                 plan: {
                     customAppearanceEnabled: true,
                 },
             })
 
-            const mockCustomDomain = createMockCustomDomain({
-                platformId: ctx.platform.id,
-                domain: 'custom.example.com',
-            })
-            await db.save('custom_domain', mockCustomDomain)
+            const response = await ctx.get('/v1/flags')
 
-            const response = await app?.inject({
-                method: 'GET',
-                url: '/api/v1/flags',
-                headers: {
-                    Host: 'custom.example.com',
-                },
-            })
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            const theme = response.json()[ApFlagId.THEME]
 
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            const body = response?.json()
-
-            expect(body).toHaveProperty(ApFlagId.THEME)
-            const theme = body[ApFlagId.THEME]
-            expect(theme.websiteName).toBe('Domain Platform')
-            expect(theme.logos.fullLogoUrl).toBe('https://example.com/domain-logo.png')
-            expect(theme.colors.primary.default).toBe('#00ff00')
+            expect(theme.colors.danger).toBe('#e82c51')
+            expect(theme.colors.selection).toBe('#fbb67e')
+            expect(theme.colors.primary.dark).toBe('#ca6716')
+            expect(theme.colors.success).toStrictEqual({ default: '#00a367', light: '#3cad71' })
+            // non-overridden colors keep their generated values
+            expect(theme.colors.primary.default).toBe('#ff0000')
+            expect(theme.colors['blue-link']).toBe('#1890ff')
         })
+
     })
 })

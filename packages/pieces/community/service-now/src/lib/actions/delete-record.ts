@@ -12,6 +12,12 @@ export const deleteRecordAction = createAction({
   name: 'delete_record',
   displayName: 'Delete Record',
   description: 'Delete a record from a specified table',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently deletes a record from any ServiceNow table, identified by its sys_id (chosen from the record dropdown or passed manually). Use to remove a specific known record; this is destructive and cannot be undone. Requires the table and the record sys_id.',
+    idempotent: false,
+  },
   props: {
     table: tableDropdown,
     record: recordDropdown,

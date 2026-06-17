@@ -8,6 +8,8 @@ export const googleDriveGetResourceById = createAction({
   name: 'get-file-or-folder-by-id',
   displayName: 'Get File Information',
   description: 'Get a file folder for files/sub-folders',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches metadata for a single file or folder in Google Drive by its exact ID (name, MIME type, parents, etc.). Use when an agent already has a file/folder ID and needs its details. Read-only and idempotent. Requires the resource ID, not a name or path.', idempotent: true },
   props: {
     id: Property.ShortText({
       displayName: 'File / Folder Id',

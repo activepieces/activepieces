@@ -9,6 +9,11 @@ export const deleteUser = createAction({
   name: 'delete_user',
   displayName: 'Delete User',
   description: 'Deletes a specific user in the Vault (requires Add/Update Users authorization)',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Permanently deletes a Vault user identified by user ID; requires Add/Update Users authorization and an explicit confirmation flag before it will proceed. Use to deprovision a user. Effectively idempotent: once the user is gone, repeating the call has no further effect (it targets a stable ID, not a create).',
+    idempotent: true,
+  },
   props: {
     userId: userIdDropdown,
     confirmDeletion: Property.Checkbox({

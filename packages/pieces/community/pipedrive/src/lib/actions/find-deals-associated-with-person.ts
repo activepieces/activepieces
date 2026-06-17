@@ -16,6 +16,12 @@ export const findDealsAssociatedWithPersonAction = createAction({
 	name: 'find-deals-associated-with-person',
 	displayName: 'Find Deals Associated With Person',
 	description: 'Finds multiple deals related to a specific person.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Lists all deals linked to a given person, identified by their numeric person ID, sorted by most recently updated. Use when you already have a person and need their associated deals; to look up a deal by a field value instead, use Find Deal. Read-only and idempotent.',
+		idempotent: true,
+	},
 	props: {
 		personId: personIdProp(true), 
 	},

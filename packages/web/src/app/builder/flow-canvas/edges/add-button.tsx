@@ -13,12 +13,14 @@ import { ApButtonData } from '../utils/types';
 
 const ApAddButton = React.memo((props: ApButtonData) => {
   const [isStepInsideDropZone, setIsStepInsideDropzone] = useState(false);
-  const [activeDraggingStep, readonly, isPieceSelectorOpen] =
+  const [activeDraggingStep, readonly, isPieceSelectorOpen, canvasOrientation] =
     useBuilderStateContext((state) => [
       state.activeDraggingStep,
       state.readonly,
       state.openedPieceSelectorStepNameOrAddButtonId === props.edgeId,
+      state.canvasOrientation,
     ]);
+  const isHorizontal = canvasOrientation === 'horizontal';
 
   const { setNodeRef } = useDroppable({
     id: props.edgeId,
@@ -53,10 +55,26 @@ const ApAddButton = React.memo((props: ApButtonData) => {
         >
           <div
             style={{
-              width: flowCanvasConsts.AP_NODE_SIZE.STEP.width + 'px',
-              height: flowCanvasConsts.AP_NODE_SIZE.STEP.height + 'px',
-              left: `${-flowCanvasConsts.AP_NODE_SIZE.STEP.width / 2}px`,
-              top: `${-flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEPS / 2}px`,
+              width:
+                flowCanvasConsts.STEP_NODE_SIZE[canvasOrientation].width + 'px',
+              height:
+                flowCanvasConsts.STEP_NODE_SIZE[canvasOrientation].height +
+                'px',
+              left: isHorizontal
+                ? `${
+                    -flowCanvasConsts.ORIENTATION_LAYOUT.horizontal
+                      .spaceAlongBetweenSteps / 2
+                  }px`
+                : `${
+                    -flowCanvasConsts.STEP_NODE_SIZE[canvasOrientation].width /
+                    2
+                  }px`,
+              top: isHorizontal
+                ? `${
+                    -flowCanvasConsts.STEP_NODE_SIZE[canvasOrientation].height /
+                    2
+                  }px`
+                : `${-flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEPS / 2}px`,
             }}
             className={cn(' absolute    rounded-md box-content ')}
             ref={setNodeRef}

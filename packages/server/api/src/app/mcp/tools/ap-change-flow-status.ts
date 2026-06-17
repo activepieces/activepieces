@@ -48,6 +48,15 @@ export const apChangeFlowStatusTool = (mcp: ProjectScopedMcpServer, log: Fastify
                 }
             }
 
+            if (status === FlowStatus.DISABLED && flow.status === FlowStatus.DISABLED) {
+                return {
+                    content: [{
+                        type: 'text',
+                        text: `✅ Flow "${flow.version.displayName}" is already disabled.`,
+                    }],
+                }
+            }
+
             const operation: FlowOperationRequest = {
                 type: FlowOperationType.CHANGE_STATUS,
                 request: { status },

@@ -18,6 +18,10 @@ export const tirePressureTrigger = createTrigger({
 	name: 'tire-pressure-trigger',
 	displayName: 'Tire Pressure Trigger',
 	description: 'Triggers when vehicle tire pressure meets the specified condition.',
+	aiMetadata: {
+		description:
+			'Fires via DIMO webhook when a monitored vehicle reports a tire-pressure reading (kPa) for the selected wheel position (front/rear, left/right) that satisfies the configured comparison operator against the threshold. Each event represents a single tire-pressure telemetry signal and includes the vehicle token ID, timestamp, pressure in kPa/PSI/bar, and a derived Low/Normal/High status. Use to detect under- or over-inflated tires.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {
 		vehicleTokenIds: Property.Array({

@@ -31,6 +31,12 @@ import { getManyRowsAction } from './lib/actions/get-many-rows';
 import { renameWorksheetAction } from './lib/actions/rename-worksheet';
 import { deleteWorksheetAction } from './lib/actions/delete-worksheet';
 import { formatRowAction } from './lib/actions/format-spreadsheet-row';
+import { findOrCreateRowAction } from './lib/actions/find-or-create-row';
+import { findOrCreateWorksheetAction } from './lib/actions/find-or-create-worksheet';
+import { insertRowAtTopAction } from './lib/actions/insert-row-at-top';
+import { clearRowsAction } from './lib/actions/clear-rows';
+import { readDataRangeAction } from './lib/actions/read-data-range';
+import { deleteMultipleRowsAction } from './lib/actions/delete-multiple-rows';
 
 export const googleSheets = createPiece({
 	minimumSupportedRelease: '0.71.4',
@@ -50,20 +56,26 @@ export const googleSheets = createPiece({
 	],
 	actions: [
 		insertRowAction,
+		insertRowAtTopAction,
 		insertMultipleRowsAction,
 		updateRowAction,
 		updateMultipleRowsAction,
 		deleteRowAction,
+		deleteMultipleRowsAction,
 		findRowsAction,
+		findOrCreateRowAction,
 		createSpreadsheetAction,
 		createWorksheetAction,
+		findOrCreateWorksheetAction,
 		clearSheetAction,
+		clearRowsAction,
 		deleteWorksheetAction,
 		renameWorksheetAction,
 		formatRowAction,
 		findRowByNumAction,
 		getRowsAction,
 		getManyRowsAction,
+		readDataRangeAction,
 		findSpreadsheets,
 		findWorksheetAction,
 		copyWorksheetAction,

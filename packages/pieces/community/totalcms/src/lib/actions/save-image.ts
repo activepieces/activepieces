@@ -12,6 +12,8 @@ export const saveImageAction = createAction({
   auth: cmsAuth,
   displayName: 'Save Image',
   description: 'Save image to Total CMS',
+  audience: 'both',
+  aiMetadata: { description: 'Sets a single image-type CMS field in Total CMS, identified by its CMS ID (slug), with alt text, output extension (jpg/png), and thumbnail sizing/crop options. Use to set or replace the image stored at a given CMS ID. Idempotent: the field holds one image keyed on the slug, so repeating with the same input replaces it.', idempotent: true },
   props: {
     slug: Property.ShortText({
       displayName: 'CMS ID',

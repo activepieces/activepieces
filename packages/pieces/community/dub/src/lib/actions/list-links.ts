@@ -6,6 +6,12 @@ export const listLinks = createAction({
   name: 'list_links',
   displayName: 'List Links',
   description: 'Retrieve a paginated list of links in your Dub workspace.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists short links in the Dub workspace, with optional filters by domain, tag names, user, archived status, and a free-text search over URL/title/slug; leave filters empty to return all links. Use when an agent needs to discover links or find a link ID without already knowing an identifier. Supports pagination and sorting. Idempotent read-only query.',
+    idempotent: true,
+  },
   auth: dubAuth,
   props: {
     domain: Property.ShortText({

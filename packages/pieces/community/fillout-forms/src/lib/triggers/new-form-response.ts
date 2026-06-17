@@ -13,6 +13,9 @@ export const newFormResponse = createTrigger({
   displayName: 'New Form Response',
   description:
     'Triggers when a new submission is received for a selected Fillout form.',
+  aiMetadata: {
+    description: 'Fires when a new submission is received for the selected Fillout form, delivering the submitted answers, calculations, and metadata. Use to start a workflow whenever someone completes the form.',
+  },
   props: {
     formId: formIdDropdown,
   },

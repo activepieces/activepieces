@@ -11,6 +11,10 @@ export const taskCreated = createTrigger({
   name: 'task_created',
   displayName: 'Task Created',
   description: 'Triggers when a task is created',
+  aiMetadata: {
+    description:
+      'Fires when a new task (a delivery or pickup) is created in Onfleet, whether via the API, dashboard, or import. Represents the entry of a new job into the system before it is necessarily assigned to a worker, useful for logging incoming orders or initiating downstream fulfillment. The payload includes the full task object with destination, recipients, and scheduling.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   //Create the webhook and save the webhook ID in store for disable behavior

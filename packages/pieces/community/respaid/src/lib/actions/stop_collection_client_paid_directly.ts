@@ -8,6 +8,8 @@ export const stopCollectionClientPaidDirectly = createAction({
   name: 'stop_collection_client_paid_directly',
   displayName: 'Stop Collection for Direct Full Payment',
   description: 'Stops the collection process for a case and mark it as paid directly to the creditor.',
+  audience: 'both',
+  aiMetadata: { description: 'Halts the Respaid collection process for a single case and marks the debt as paid in full directly to the creditor (outside Respaid). Use when a debtor settled the invoice with the creditor directly. The case must be identified by either unique_identifier or email (one is required); it mutates case state, so it is not idempotent.', idempotent: false },
   auth: respaidAuth,
   props: {
     unique_identifier: Property.ShortText({

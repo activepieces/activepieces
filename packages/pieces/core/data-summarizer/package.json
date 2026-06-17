@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-data-summarizer",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {

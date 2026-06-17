@@ -19,6 +19,10 @@ export const newDatabaseItem = createTrigger({
   name: 'new_database_item',
   displayName: 'New Database Item',
   description: 'Triggers when an item is added to a database.',
+  aiMetadata: {
+    description:
+      'Fires when a new item (row) is created in the selected Notion database, emitting the new page. Use to start a workflow whenever a record is added to a specific database.',
+  },
   props: {
     database_id: notionCommon.database_id,
   },

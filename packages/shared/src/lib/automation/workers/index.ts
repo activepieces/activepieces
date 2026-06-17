@@ -19,6 +19,24 @@ export enum NetworkMode {
 }
 
 
+export const SandboxInformation = z.object({
+    sandboxId: z.string(),
+    boxId: z.number(),
+    busy: z.boolean(),
+    memoryUsageBytes: z.number(),
+})
+
+export type SandboxInformation = z.infer<typeof SandboxInformation>
+export const WorkerProps = z.object({
+    EXECUTION_MODE: z.string().optional(),
+    WORKER_CONCURRENCY: z.string().optional(),
+    SANDBOX_MEMORY_LIMIT: z.string().optional(),
+    REUSE_SANDBOX: z.string().optional(),
+    version: z.string().optional(),
+})
+
+export type WorkerProps = z.infer<typeof WorkerProps>
+
 export const MachineInformation = z.object({
     cpuUsagePercentage: z.number(),
     diskInfo: z.object({
@@ -28,11 +46,12 @@ export const MachineInformation = z.object({
         percentage: z.number(),
     }),
     workerId: z.string(),
-    workerProps: z.record(z.string(), z.string()),
+    workerProps: WorkerProps,
     ramUsagePercentage: z.number(),
     totalAvailableRamInBytes: z.number(),
     totalCpuCores: z.number(),
     ip: z.string(),
+    sandboxes: z.array(SandboxInformation).default([]),
 })
 
 export type MachineInformation = z.infer<typeof MachineInformation>
@@ -99,7 +118,6 @@ export const WorkerSettingsResponse = z.object({
     LOKI_USERNAME: z.string().optional(),
     BETTERSTACK_HOST: z.string().optional(),
     BETTERSTACK_TOKEN: z.string().optional(),
-    OTEL_ENABLED: z.boolean(),
     HYPERDX_TOKEN: z.string().optional(),
     FILE_STORAGE_LOCATION: z.string(),
     S3_USE_SIGNED_URLS: z.string(),
@@ -109,6 +127,7 @@ export const WorkerSettingsResponse = z.object({
     NETWORK_MODE: z.enum(NetworkMode),
     SSRF_ALLOW_LIST: z.array(z.string()),
     PAGE_ONCALL_WEBHOOK: z.string().optional(),
+    APP_VERSION: z.string().optional(),
 })
 
 export type WorkerSettingsResponse = z.infer<typeof WorkerSettingsResponse>

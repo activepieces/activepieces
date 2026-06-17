@@ -16,7 +16,7 @@ export const executionJournal = {
 
     getStateAtPath({ path, steps }: GetStateAtPathParams): Record<string, StepOutput> {
         let target = steps
-    
+
         for (const [parentStepName, iteration] of path) {
             const step = target[parentStepName]
             if (!step) {
@@ -41,7 +41,7 @@ export const executionJournal = {
      */
     getOrCreateStateAtPath({ path, steps }: GetStateAtPathParams): Record<string, StepOutput> {
         let target = steps
-    
+
         for (const [parentStepName, iteration] of path) {
             let step = target[parentStepName]
             if (!step ) {
@@ -55,7 +55,7 @@ export const executionJournal = {
             if (!iterationOutput ) {
                 loopStepOutput = loopStepOutput.setItemAndIndex({ item: undefined, index: iteration }).addIteration()
                 iterationOutput = loopStepOutput.output?.iterations[iteration] ?? {}
-            } 
+            }
             target[parentStepName] = loopStepOutput
             target = iterationOutput
         }
@@ -77,7 +77,7 @@ export const executionJournal = {
             if (isNil(status)) {
                 lastStepWithStatus = stepName
                 return
-            } 
+            }
             if (step.status === status) {
                 lastStepWithStatus = stepName
                 return

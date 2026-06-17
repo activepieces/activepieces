@@ -15,6 +15,11 @@ export const createSessionAction = createAction({
 	auth: airtopAuth,
 	displayName: 'Create Session',
 	description: 'Starts a new browser session in Airtop.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Starts a new Airtop cloud browser session, optionally loading a saved profile, Chrome extensions, captcha solving, and either the built-in Airtop proxy or a custom proxy (simple URL, country/sticky, authenticated, or per-domain). Use this as the first step before opening windows or interacting with pages. Not idempotent: each call provisions a new billable session with its own id.',
+		idempotent: false,
+	},
 	props: {
 		profileName: Property.ShortText({
 			displayName: 'Profile Name',

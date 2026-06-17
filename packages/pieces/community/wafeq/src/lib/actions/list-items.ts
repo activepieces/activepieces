@@ -10,6 +10,12 @@ export const listItems = createAction({
   displayName: 'List Items',
   description:
     'List products and services from your Wafeq catalog. Useful for syncing your catalog to a spreadsheet or another system.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists catalog items (products and services) from Wafeq, with optional filters for external_id and a created-date range. Choose this to export the catalog or look up item IDs; all filters are optional, so an unfiltered call returns the full catalog up to the result limit. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     external_id: Property.ShortText({
       displayName: 'Your Reference ID (optional)',

@@ -9,6 +9,8 @@ export const getFileAction = createAction({
   name: 'get_file',
   displayName: 'Get File',
   description: 'Get file',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch the full document tree and metadata of a Figma design file by its file key (the alphanumeric segment in a Figma file URL). Use to read a file\'s structure, pages, layers, and properties. Read-only and idempotent.', idempotent: true },
   props: {
     file_key: Property.ShortText({
       displayName: 'File Key',

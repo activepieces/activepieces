@@ -7,6 +7,9 @@ export const subscriptionCompleteTrigger = createTrigger({
   name: 'subscription_complete',
   displayName: 'Subscription Complete',
   description: 'Triggers when a subscription is run to completion',
+  aiMetadata: {
+    description: 'Fires when a recurring subscription reaches the end of its term and runs to completion in Pinch Payments (all scheduled payments done), as distinct from being cancelled early. Use to react when a finite billing plan finishes.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

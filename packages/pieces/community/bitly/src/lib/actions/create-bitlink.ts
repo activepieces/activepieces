@@ -9,6 +9,8 @@ export const createBitlinkAction = createAction({
   name: 'create_bitlink',
   displayName: 'Create Bitlink',
   description: 'Shorten a long URL with optional customization.',
+  audience: 'both',
+  aiMetadata: { description: 'Shortens a long URL into a Bitlink, optionally setting title, tags, custom branded domain, and mobile app deeplinks. Use to create a trackable short link from a destination URL (must start with http:// or https://). Not idempotent: each call creates a link, though Bitly may return an existing Bitlink for the same URL unless Force New Link is enabled.', idempotent: false },
   props: {
     long_url: Property.ShortText({
       displayName: 'Long URL',

@@ -7,6 +7,11 @@ export const dispatchJobToEmployees = createAction({
   name: "dispatch_job_to_employees",
   displayName: "Dispatch job to employees",
   description: "Dispatch a job to employees",
+  audience: 'both',
+  aiMetadata: {
+    description: "Dispatch a Housecall Pro job to a set of employees, identified by job ID and an array of employee IDs. The call sets the dispatched employees for the job, so re-sending the same list is idempotent.",
+    idempotent: true,
+  },
   props: {
     job_id: Property.ShortText({
       displayName: "Job ID",

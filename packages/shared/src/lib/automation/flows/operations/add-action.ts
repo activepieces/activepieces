@@ -111,10 +111,40 @@ function handleRouter(parentStep: RouterAction, request: AddActionRequest): Step
     return parentStep
 }
 
+function handleContinueOnFailureBranches(parentStep: Step, request: AddActionRequest): Step {
+    if (parentStep.type !== FlowActionType.CODE && parentStep.type !== FlowActionType.PIECE) {
+        throw new ActivepiecesError({
+            code: ErrorCode.FLOW_OPERATION_INVALID,
+            params: {
+                message: `Continue-on-failure branches are only available on Code and Piece actions, got ${parentStep.type}`,
+            },
+        })
+    }
+    const branches = parentStep.continueOnFailureBranches ?? {}
+    if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_ON_SUCCESS_BRANCH) {
+        branches.onSuccess = createAction(request.action, {
+            nextAction: branches.onSuccess,
+        })
+    }
+    else if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_ON_FAILURE_BRANCH) {
+        branches.onFailure = createAction(request.action, {
+            nextAction: branches.onFailure,
+        })
+    }
+    parentStep.continueOnFailureBranches = branches
+    return parentStep
+}
+
 function _addAction(flowVersion: FlowVersion, request: AddActionRequest): FlowVersion {
     return flowStructureUtil.transferFlow(flowVersion, (parentStep: Step) => {
         if (parentStep.name !== request.parentStep) {
             return parentStep
+        }
+        if (
+            request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_ON_SUCCESS_BRANCH ||
+            request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_ON_FAILURE_BRANCH
+        ) {
+            return handleContinueOnFailureBranches(parentStep, request)
         }
         switch (parentStep.type) {
             case FlowActionType.LOOP_ON_ITEMS:

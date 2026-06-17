@@ -396,7 +396,7 @@ describe('Resume flow run', () => {
         expect(waitpoint!.status).toBe('COMPLETED')
     })
 
-    it('markParentRunAsFailed should pre-complete when parent has NOT paused yet', async () => {
+    it('markParentRunAsFailed should drop the failure when parent has no PENDING waitpoint (regression: subflow retry must not hijack a future pause)', async () => {
         const flow = createMockFlow({ projectId: ctx.project.id })
         await db.save('flow', flow)
 
@@ -415,7 +415,7 @@ describe('Resume flow run', () => {
         })
         await db.save('flow_run', parentRun)
 
-        await waitpointService(app.log).complete({
+        const result = await waitpointService(app.log).complete({
             flowRunId: parentRun.id,
             projectId: ctx.project.id,
             waitpointId: apId(),
@@ -426,39 +426,14 @@ describe('Resume flow run', () => {
             },
         })
 
-        const waitpoint = await db.findOneBy<{ status: string }>('waitpoint', { flowRunId: parentRun.id })
-        expect(waitpoint).not.toBeNull()
-        expect(waitpoint!.status).toBe('COMPLETED')
+        expect(result.completedExisting).toBe(false)
+        expect(result.waitpoint).toBeNull()
 
-        await distributedStore.merge(redisMetadataKey(parentRun.id), {
-            id: parentRun.id,
-            projectId: ctx.project.id,
-            flowId: flow.id,
-            flowVersionId: flowVersion.id,
-            environment: RunEnvironment.PRODUCTION,
-            status: FlowRunStatus.RUNNING,
-        })
-
-        const preCompletedWaitpoint = await db.findOneBy<{ id: string }>('waitpoint', { flowRunId: parentRun.id })
-        expect(preCompletedWaitpoint).not.toBeNull()
-
-        const handlers = createHandlers(app.log)
-        await handlers.uploadRunLog({
-            runId: parentRun.id,
-            projectId: ctx.project.id,
-            status: FlowRunStatus.PAUSED,
-        })
-
-        await waitForCondition(async () => {
-            const wp = await db.findOneBy('waitpoint', { flowRunId: parentRun.id })
-            return wp === null
-        })
-
-        const waitpointAfter = await db.findOneBy('waitpoint', { flowRunId: parentRun.id })
-        expect(waitpointAfter).toBeNull()
+        const waitpoint = await db.findOneBy('waitpoint', { flowRunId: parentRun.id })
+        expect(waitpoint).toBeNull()
     })
 
-    it('should not create orphaned waitpoint when parent is already in terminal state', async () => {
+    it('should drop stale resume signal when parent is already in terminal state and not produce a buffered waitpoint', async () => {
         const flow = createMockFlow({ projectId: ctx.project.id })
         await db.save('flow', flow)
 
@@ -477,7 +452,7 @@ describe('Resume flow run', () => {
         })
         await db.save('flow_run', parentRun)
 
-        await waitpointService(app.log).complete({
+        const result = await waitpointService(app.log).complete({
             flowRunId: parentRun.id,
             projectId: ctx.project.id,
             waitpointId: apId(),
@@ -487,11 +462,8 @@ describe('Resume flow run', () => {
                 executionType: ExecutionType.RESUME,
             },
         })
-
-        const waitpoint = await db.findOneBy('waitpoint', { flowRunId: parentRun.id })
-        expect(waitpoint).not.toBeNull()
-
-        await waitpointService(app.log).deleteByFlowRunId(parentRun.id)
+        expect(result.completedExisting).toBe(false)
+        expect(result.waitpoint).toBeNull()
 
         await waitpointService(app.log).handleResumeSignal({
             flowRunId: parentRun.id,

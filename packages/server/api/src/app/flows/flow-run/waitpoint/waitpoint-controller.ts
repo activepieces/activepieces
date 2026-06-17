@@ -2,7 +2,7 @@ import { CreateWaitpointRequest, CreateWaitpointResponse } from '@activepieces/s
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
-import { domainHelper } from '../../../ee/custom-domains/domain-helper'
+import { domainHelper } from '../../../helper/domain-helper'
 import { waitpointService } from './waitpoint-service'
 
 export const waitpointController: FastifyPluginAsyncZod = async (app) => {

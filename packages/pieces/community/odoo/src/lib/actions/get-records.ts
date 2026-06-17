@@ -9,6 +9,8 @@ export default createAction({
     auth: odooAuth,
     displayName: 'Custom Search and read records',
     description: 'Records can be listed and filtered',
+    audience: 'both',
+    aiMetadata: { description: 'Searches and reads records from any Odoo model via the XML-RPC search_read call, returning the chosen fields with optional offset/limit paging. Supply a model name and an optional Odoo domain (a list of [field, operator, value] criteria); an empty domain returns all records of the model. Read-only and idempotent. Use this generic reader when no model-specific get action fits.', idempotent: true },
     props: {
         // Properties to ask from the user, in this ask we will take number of
         model: Property.ShortText({

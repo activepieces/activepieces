@@ -9,6 +9,12 @@ export const createWorksheetAction = createAction({
   name: 'create-worksheet',
   displayName: 'Create Worksheet',
   description:'Create a new blank worksheet with a title.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Adds a new worksheet (tab) to an existing spreadsheet, optionally seeding a header row. Use when an agent needs another tab within a spreadsheet. Not idempotent — each call adds a separate worksheet even if a tab with the same title already exists.',
+    idempotent: false,
+  },
   props: {
     includeTeamDrives: includeTeamDrivesProp(),
     spreadsheetId: spreadsheetIdProp('Spreadsheet',''),

@@ -11,6 +11,8 @@ export const saveFileAsPdf = createAction({
   auth: googleDriveAuth,
   name: 'save_file_as_pdf',
   description: 'Save a document as PDF in a Google Drive folder',
+  audience: 'both',
+  aiMetadata: { description: 'Exports a Google document to PDF and saves it as a new file in a target Drive folder. Use to produce a PDF rendition of a Google Doc/Sheet/Slides for sharing or archival. Requires the source document ID and destination folder ID. Not idempotent: each call creates a new PDF file.', idempotent: false },
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

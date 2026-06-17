@@ -96,6 +96,10 @@ export const updatedDeal = createTrigger({
 	name: 'updated_deal',
 	displayName: 'Updated Deal',
 	description: 'Triggers when a deal is updated.',
+	aiMetadata: {
+		description:
+			'Fires when any field of an existing deal changes in Pipedrive, such as its value, status, owner, stage, or custom fields. Can optionally be scoped to changes on a specific deal, pipeline, or stage. Use to react to edits on sales opportunities in the CRM.',
+	},
 	props: {
 		filter_by: Property.StaticDropdown({
 			displayName: 'Filter by',

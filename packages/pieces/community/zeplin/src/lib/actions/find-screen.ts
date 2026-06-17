@@ -9,6 +9,8 @@ export const findScreen = createAction({
   name: 'findScreen',
   displayName: 'Find Screen',
   description: 'Find a screen by name or retrieve all screens in a project',
+  audience: 'both',
+  aiMetadata: { description: 'List screens within a given Zeplin project (by project ID). With a screen name it filters to partial (case-insensitive) title matches; with the name left empty it returns all screens in the project. Use to resolve a screen ID before creating notes or updating a screen. Read-only and idempotent. Note: if the name filter matches nothing, it falls back to returning all screens.', idempotent: true },
   props: {
     projectId: project_idProp,
     screenName: Property.ShortText({

@@ -34,7 +34,7 @@
   "Finds a branch by name and returns its details.": "Finds a branch by name and returns its details.",
   "Finds an issue based title.": "Finds an issue based title.",
   "Finds a user by their login name.": "Finds a user by their login name.",
-  "Create a GitHub Gist": "Create a GitHub Gist",
+  "Create a GitHub Gist. Requires an OAuth connection — Gists cannot be created with GitHub App authentication.": "Create a GitHub Gist. Requires an OAuth connection — Gists cannot be created with GitHub App authentication.",
   "Make a custom API call to a specific endpoint": "将一个自定义 API 调用到一个特定的终点",
   "Repository": "Repository",
   "Title": "标题",

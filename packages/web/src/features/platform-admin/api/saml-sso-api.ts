@@ -8,6 +8,11 @@ type SsoDomainState = {
 };
 
 export const samlSsoApi = {
+  discover(domain: string) {
+    return api.post<{ platformId: string | null }>('/v1/authn/saml/discover', {
+      domain,
+    });
+  },
   updateSsoDomain(ssoDomain: string | null) {
     return api.post<SsoDomainState>('/v1/authn/saml/sso-domain', {
       ssoDomain,

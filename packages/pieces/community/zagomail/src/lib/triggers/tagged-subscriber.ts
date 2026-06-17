@@ -15,6 +15,9 @@ export const taggedSubscriber = createTrigger({
   name: 'taggedSubscriber',
   displayName: 'Tagged Subscriber',
   description: 'Trigers when subscriber is tagged with a tag.',
+  aiMetadata: {
+    description: 'Fires when a subscriber is tagged in Zagomail with the specific tag configured on this trigger, representing that contact being labeled or segmented. The event payload includes the subscriber UID, list UID, tag ID, email, and status.',
+  },
   props: {
     tagName: Property.ShortText({
       displayName: 'Tag Name',

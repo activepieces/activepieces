@@ -13,6 +13,9 @@ export const recordUpdatedTrigger = createTrigger({
 	displayName: 'Record Updated',
 	description:
 		'Triggers when an existing record is updated (people, companies, deals, etc.).',
+	aiMetadata: {
+		description: 'Fires when an existing record in the selected Attio object type is updated. Can optionally be narrowed to updates involving a specific attribute, and further to when that attribute equals a given value. Represents a change to a CRM entity.',
+	},
 	auth: attioAuth,
 	props: {
 		objectTypeId: objectTypeIdDropdown({

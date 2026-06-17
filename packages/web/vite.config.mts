@@ -29,36 +29,59 @@ export default defineConfig(({ command, mode }) => {
           },
           ws: true,
         },
+        '/ingest': {
+          target: 'http://127.0.0.1:3000',
+          secure: false,
+          changeOrigin: true,
+        },
         '^/mcp(/|$)': {
           target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
+          headers: {
+            'X-Forwarded-Host': 'localhost:4200',
+          },
           rewrite: (p: string) => p,
         },
         '/.well-known': {
           target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
+          headers: {
+            'X-Forwarded-Host': 'localhost:4200',
+          },
         },
         '/register': {
           target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
+          headers: {
+            'X-Forwarded-Host': 'localhost:4200',
+          },
         },
         '/authorize': {
           target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
+          headers: {
+            'X-Forwarded-Host': 'localhost:4200',
+          },
         },
         '/token': {
           target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
+          headers: {
+            'X-Forwarded-Host': 'localhost:4200',
+          },
         },
         '/revoke': {
           target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
+          headers: {
+            'X-Forwarded-Host': 'localhost:4200',
+          },
         },
       },
       port: 4200,
@@ -117,6 +140,7 @@ export default defineConfig(({ command, mode }) => {
       outDir: '../../dist/packages/web',
       emptyOutDir: true,
       reportCompressedSize: true,
+      sourcemap: 'hidden',
       commonjsOptions: {
         transformMixedEsModules: true,
       },

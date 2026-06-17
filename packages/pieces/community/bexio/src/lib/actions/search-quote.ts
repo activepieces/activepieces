@@ -7,6 +7,8 @@ export const searchQuoteAction = createAction({
   name: 'search_quote',
   displayName: 'Search Quote',
   description: 'Search for quotes using various criteria',
+  audience: 'both',
+  aiMetadata: { description: 'Searches Bexio quotes (offers) by one or more field criteria (document number, contact, status, totals, dates, valid-until, etc.) with operators such as contains, equals, or comparison, with ordering and paging. Use to locate quotes before referencing or following up on them; pick Search Invoice or Search Order for those document types. Read-only and idempotent.', idempotent: true },
   props: {
     search_criteria: Property.Array({
       displayName: 'Search Criteria',

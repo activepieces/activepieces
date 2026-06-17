@@ -15,6 +15,8 @@ export const electricityRatesListingAction = createAction({
   name: 'electricityRatesListing',
   displayName: 'Resources - Electricity Rates - Electricity Rates Listing',
   description: 'Get all Electricity rates.',
+  audience: 'both',
+  aiMetadata: { description: 'List electricity rates configured in AMPECO, optionally filtered by utility id or rate type (e.g. admin_defined, octopus_go, agile_octopus). Read-only and safe to repeat. Enable pagination to retrieve all matching rates; otherwise one page is returned. Use to discover rate ids before reading or updating a specific rate.', idempotent: true },
   props: {
         
   filter__utilityId: Property.Number({

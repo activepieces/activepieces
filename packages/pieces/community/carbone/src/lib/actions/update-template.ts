@@ -15,6 +15,11 @@ export const updateTemplateAction = createAction({
   name: 'carbone_update_template',
   displayName: 'Update Template Metadata',
   description: 'Update the metadata of an existing Carbone template.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Updates metadata (name, comment, category, tags, deploy/expire timestamps) on an existing Carbone template or version identified by its ID; only the fields supplied are changed and tags are replaced wholesale. Use to rename, recategorize, or schedule deployment/expiry of a stored template. Idempotent: repeating the call with the same fields leaves the template in the same end state.',
+    idempotent: true,
+  },
   props: {
     templateId: carboneProps.templateDropdown({
       displayName: 'Template ID or Version ID',

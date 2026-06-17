@@ -1,6 +1,23 @@
-import { Field, FieldType, PopulatedRecord } from '@activepieces/shared'
+import { Field, FieldType, McpToolResult, PopulatedRecord, tryCatch } from '@activepieces/shared'
 import { z } from 'zod'
 import { fieldService } from '../../tables/field/field.service'
+import { tableService } from '../../tables/table/table.service'
+
+export async function resolveInternalTableId({ projectId, tableId }: { projectId: string, tableId: string }): Promise<string | null> {
+    const byId = await tryCatch(() => tableService.getOneOrThrow({ projectId, id: tableId }))
+    if (!byId.error) {
+        return byId.data.id
+    }
+    const byExternalId = await tryCatch(() => tableService.getOneByExternalIdOrThrow({ projectId, externalId: tableId }))
+    if (!byExternalId.error) {
+        return byExternalId.data.id
+    }
+    return null
+}
+
+export function tableNotFoundError(tableId: string): McpToolResult {
+    return { content: [{ type: 'text', text: `❌ Table "${tableId}" not found. Use ap_list_tables to see available tables.` }] }
+}
 
 export async function resolveFieldNamesForTable(
     projectId: string,

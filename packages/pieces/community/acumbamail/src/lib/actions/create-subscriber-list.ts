@@ -13,6 +13,12 @@ export const createSubscriberListAction = createAction({
   name: 'acumbamail_create_subscriber_list',
   displayName: 'Create Subscriber List',
   description: 'Creates a new subscriber list.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new Acumbamail subscriber list, requiring a list name and the sender email shown to subscribers when campaigns go out (company name, address, and phone are optional). Use when a contact list does not yet exist and must be provisioned before adding subscribers or sending campaigns. Not idempotent: each call creates a separate list even with the same name.',
+    idempotent: false,
+  },
   props: {
     listname: Property.ShortText({
       displayName: 'List Name',

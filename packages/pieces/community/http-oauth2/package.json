@@ -1,13 +1,13 @@
 {
   "name": "@activepieces/piece-http-oauth2",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "axios": "1.15.0",
+    "axios": "1.15.2",
     "form-data": "4.0.4",
     "https-proxy-agent": "7.0.4",
     "tslib": "2.6.2"

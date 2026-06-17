@@ -75,6 +75,10 @@ export const newTicketTrigger = createTrigger({
 	name: 'new-ticket',
 	displayName: 'New Ticket',
 	description: 'Trigger when new ticket is available.',
+	aiMetadata: {
+		description:
+			'Fires when a new support ticket is created in HubSpot. Polls the CRM tickets API for tickets sorted by creation date and emits each newly created ticket, including default ticket properties (subject, content, source type, pipeline, pipeline stage, priority, owner, etc.) plus any additional properties configured. Represents a freshly opened customer service case or request.',
+	},
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,

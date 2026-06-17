@@ -9,6 +9,12 @@ export const validateEmail = createAction({
   displayName: 'Validate Email',
   description:
     'Validate an email address using Mailgun validation service. Requires a Mailgun account with email validation enabled.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Check whether a single email address is deliverable via Mailgun email verification, optionally enabling mailbox-provider lookup for higher accuracy. Use to screen an address before sending or storing it. Requires email validation enabled on the Mailgun account. Idempotent: a read-only lookup that does not change anything.',
+    idempotent: true,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email Address',

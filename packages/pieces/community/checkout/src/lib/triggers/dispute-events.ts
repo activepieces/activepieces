@@ -6,6 +6,9 @@ export const disputeEventsTrigger = createTrigger({
   name: 'dispute_events',
   displayName: 'Dispute Events',
   description: 'Notify operations upon dispute opening or resolution.',
+  aiMetadata: {
+    description: 'Fires when a Checkout.com dispute (chargeback) event occurs for one of the event types you subscribe to, such as evidence required, canceled, expired, resolved, lost, or won. Use it to react to dispute lifecycle changes, for example to alert operations when a dispute opens or is resolved.',
+  },
   auth: checkoutComAuth,
   props: {
     eventTypes: Property.MultiSelectDropdown({

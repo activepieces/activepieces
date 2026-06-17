@@ -1,5 +1,6 @@
 import {
   CustomAuthProps,
+  OIDCAuthProps,
   OAuth2Props,
   PieceAuthProperty,
   PieceMetadataModel,
@@ -101,8 +102,9 @@ export const newConnectionUtils = {
     grantType,
     oauth2App,
     redirectUrl,
+    projectId: projectIdOverride,
   }: DefaultValuesParams): Partial<UpsertAppConnectionRequestBody> {
-    const projectId = authenticationSession.getProjectId();
+    const projectId = projectIdOverride ?? authenticationSession.getProjectId();
     assertNotNullOrUndefined(projectId, 'projectId');
     if (!auth) {
       throw new Error(`Unsupported property type: ${auth}`);
@@ -140,6 +142,19 @@ export const newConnectionUtils = {
           type: AppConnectionType.CUSTOM_AUTH,
           value: {
             type: AppConnectionType.CUSTOM_AUTH,
+            props: formUtils.getDefaultValueForProperties({
+              props: auth.props ?? {},
+              existingInput: {},
+            }),
+          },
+        };
+      }
+      case PropertyType.OIDC: {
+        return {
+          ...commmonProps,
+          type: AppConnectionType.OIDC,
+          value: {
+            type: AppConnectionType.OIDC,
             props: formUtils.getDefaultValueForProperties({
               props: auth.props ?? {},
               existingInput: {},
@@ -209,7 +224,9 @@ export const newConnectionUtils = {
     }
   },
 
-  extractDefaultPropsValues(props: CustomAuthProps | OAuth2Props | undefined) {
+  extractDefaultPropsValues(
+    props: CustomAuthProps | OIDCAuthProps | OAuth2Props | undefined,
+  ) {
     if (!props) {
       return {};
     }
@@ -231,16 +248,21 @@ export const newConnectionUtils = {
   },
 };
 
-export const isConnectionNameUnique = async (
-  isGlobalConnection: boolean,
-  displayName: string,
-) => {
+export const isConnectionNameUnique = async ({
+  isGlobalConnection,
+  displayName,
+  projectId,
+}: {
+  isGlobalConnection: boolean;
+  displayName: string;
+  projectId?: string;
+}) => {
   const connections = isGlobalConnection
     ? await globalConnectionsApi.list({
         limit: 10000,
       })
     : await appConnectionsApi.list({
-        projectId: authenticationSession.getProjectId()!,
+        projectId: projectId ?? authenticationSession.getProjectId()!,
         limit: 10000,
       });
   const existingConnection = connections.data.find(
@@ -257,4 +279,5 @@ type DefaultValuesParams = {
   auth: PieceAuthProperty;
   oauth2App: OAuth2App | null;
   grantType: OAuth2GrantType | null;
+  projectId?: string;
 };

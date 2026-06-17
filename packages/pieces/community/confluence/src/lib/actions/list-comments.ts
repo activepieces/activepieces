@@ -9,6 +9,8 @@ export const listCommentsAction = createAction({
 	name: 'list-comments',
 	displayName: 'List Comments',
 	description: 'Lists footer and/or inline comments on a page.',
+	audience: 'both',
+	aiMetadata: { description: 'Lists comments on a Confluence page; a comment-type selector controls whether it returns footer comments, inline comments, or both (fetched separately and returned under footer/inline keys). Body representation (storage, view, or atlas doc) is selectable. Use to read or enumerate a page\'s comments. Read-only and idempotent.', idempotent: true },
 	props: {
 		spaceId: spaceIdProp,
 		pageId: pageIdProp,

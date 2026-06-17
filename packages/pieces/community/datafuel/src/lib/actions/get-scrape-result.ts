@@ -9,6 +9,11 @@ export const getScrapeAction = createAction({
 	auth: dataFuelAuth,
 	displayName: 'Get Scrape Result',
 	description: 'Retrieves the deatils about scrape.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Looks up the result of a previously submitted scrape or crawl job by its job ID, optionally including the markdown content and the AI-extracted JSON result. Use to fetch the output of a job started by Crawl Website or Scrape Website. Requires a valid job ID; this is a read-only lookup and is idempotent.',
+		idempotent: true,
+	},
 	props: {
 		jobId: Property.ShortText({
 			displayName: 'Job ID',

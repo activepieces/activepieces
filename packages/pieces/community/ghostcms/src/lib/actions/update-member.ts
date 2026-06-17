@@ -8,6 +8,8 @@ export const updateMember = createAction({
   name: 'update_member',
   displayName: 'Update Member',
   description: 'Update a member',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing Ghost member identified by member id, changing any supplied fields (email, name, note, newsletter subscriptions); omitted fields are left unchanged. Use to edit a known member. Requires the target member id. Idempotent: re-applying the same field values yields the same member state.', idempotent: true },
   auth: ghostAuth,
   props: {
     member: common.properties.member(),

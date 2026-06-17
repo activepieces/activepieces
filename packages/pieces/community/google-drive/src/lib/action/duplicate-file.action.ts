@@ -8,6 +8,8 @@ export const duplicateFileAction = createAction({
   auth: googleDriveAuth,
   name: 'duplicate_file',
   description: 'Duplicate a file from Google Drive. Returns the new file ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Copies an existing Drive file into a target folder under a new name, optionally converting it to a Google Sheet or Google Doc. Use to clone a file or create an editable Google-format copy. Requires the source file ID and destination folder ID. Not idempotent: each call creates a new copy.', idempotent: false },
   props: {
     fileId: Property.ShortText({
       displayName: 'File ID',

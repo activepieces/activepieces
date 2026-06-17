@@ -8,6 +8,8 @@ export const add_visit_items = createAction({
     auth: simplirouteAuth,
     displayName: 'Add Visit Items',
     description: 'Add items to an existing visit.',
+    audience: 'both',
+    aiMetadata: { description: 'Append one or more line items (products/cargo) to an existing visit identified by visit_id. Not idempotent: each call adds items, so re-running duplicates them. Use only after the visit exists.', idempotent: false },
     props: {
         visit_id: Property.Number({ displayName: 'visit_id', description: 'ID of the visit to add items to.', required: true }),
         items: Property.Array({ 

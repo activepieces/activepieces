@@ -41,6 +41,12 @@ export const detectLanguageAction = createAction({
   name: 'detect_language',
   displayName: 'Detect Language of Text',
   description: 'Detect the language used in a text using Eden AI. Supports multiple providers and models.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Detect the language(s) of a text with confidence scores via Eden AI, routed to a chosen provider. Use it to identify the language of incoming text before branching, translating, or routing. Requires a provider and the text. Read-only analysis with no side effect, so it is safe to repeat.',
+    idempotent: true,
+  },
   props: {
     provider: Property.Dropdown({
       auth: edenAiAuth,

@@ -35,6 +35,12 @@ export const transcribe = createAction({
   requireAuth: true,
   displayName: 'Transcribe',
   description: 'Transcribe an audio or video file using AssemblyAI.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Submits an audio or video file (by URL or prior upload) to AssemblyAI for speech-to-text transcription, optionally with extra speech models like speaker diarization, PII redaction, and sentiment. Can either wait synchronously until the transcript is ready or return immediately and continue via webhook (the wait-until-ready and webhook-URL modes are mutually exclusive). Use this to start a new transcription job; each call creates a new transcript, so it is not idempotent.',
+    idempotent: false,
+  },
   props: transcribeProps,
   async run(context: TranscribeContext) {
     const client = getAssemblyAIClient(context);

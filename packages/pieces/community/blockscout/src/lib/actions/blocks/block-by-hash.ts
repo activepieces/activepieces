@@ -5,6 +5,8 @@ export const getBlockByHash = createAction({
   name: 'get_block_by_hash',
   displayName: 'Get Block by Hash or Number',
   description: 'Get block info by its hash or block number',
+  audience: 'both',
+  aiMetadata: { description: 'Look up a single Ethereum block by either its hash or its block number and return its details (miner, timestamp, gas, transaction count). Read-only; accepts both identifier forms. Use this when you know which block you want; to browse recent blocks without an identifier use Get Blocks.', idempotent: true },
   // category: 'Blocks',
   props: {
     blockIdentifier: Property.ShortText({

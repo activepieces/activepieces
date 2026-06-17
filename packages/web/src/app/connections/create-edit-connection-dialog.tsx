@@ -54,11 +54,13 @@ import {
 } from '@/features/connections';
 import { formUtils } from '@/features/pieces';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
 import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';
 import { MutliAuthList, AuthListItem } from './multi-auth-list';
 import { OAuth2ConnectionSettings } from './oauth2-connection-settings';
+import { OIDCConnectionSettings } from './oidc-connection-settings';
 import { SecretTextConnectionSettings } from './secret-text-connection-settings';
 
 function CreateOrEditConnectionSection({
@@ -70,6 +72,7 @@ function CreateOrEditConnectionSection({
   selectedAuth,
   onTryAnotherMethodButtonClicked,
   showTryAnotherMethodButton,
+  projectId: projectIdOverride,
 }: CreateOrEditConnectionSectionProps) {
   const formSchema = formUtils.buildConnectionSchema(
     selectedAuth.authProperty,
@@ -87,6 +90,7 @@ function CreateOrEditConnectionSection({
   const { data: redirectUrl } = flagsHooks.useFlag<string>(
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
   );
+  const { data: publicUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
   const form = useForm<ConnectionFormValues>({
     defaultValues: {
       request: {
@@ -98,6 +102,7 @@ function CreateOrEditConnectionSection({
           oauth2App: selectedAuth.oauth2App,
           grantType: selectedAuth.grantType,
           redirectUrl: redirectUrl ?? '',
+          projectId: projectIdOverride ?? undefined,
         }),
         ...(isGlobalConnection ? { scope: AppConnectionScope.PLATFORM } : {}),
         projectIds: reconnectConnection?.projectIds ?? [],
@@ -123,6 +128,14 @@ function CreateOrEditConnectionSection({
       form,
       setOpen,
     });
+
+  // The OIDC issuer the server signs into the token's `iss` claim is derived from the
+  // server's configured public URL (AP_FRONTEND_URL), exposed here as the PUBLIC_URL flag —
+  // NOT the browser origin, which can differ behind a proxy/custom host and would make the
+  // provider URL the user registers in AWS mismatch the token issuer.
+  const publicOrigin = publicUrl ?? window.location.origin;
+  const oidcIssuerUrl = publicOrigin.replace(/\/$/, '');
+  const oidcIssuerHost = oidcIssuerUrl.replace(/^https?:\/\//, '');
 
   return (
     <>
@@ -151,6 +164,10 @@ function CreateOrEditConnectionSection({
               markdown={selectedAuth.authProperty.description}
               variables={{
                 redirectUrl: redirectUrl ?? '',
+                platformId: authenticationSession.getPlatformId() ?? '',
+                projectId: authenticationSession.getProjectId() ?? '',
+                frontendUrl: oidcIssuerUrl,
+                frontendHost: oidcIssuerHost,
               }}
             ></ApMarkdown>
             {selectedAuth.authProperty.description && (
@@ -281,6 +298,10 @@ function ConnectionSettings({ selectedAuth, piece }: ConnectionSettingsProps) {
           authProperty={selectedAuth.authProperty}
         />
       );
+    case PropertyType.OIDC:
+      return (
+        <OIDCConnectionSettings authProperty={selectedAuth.authProperty} />
+      );
     case PropertyType.OAUTH2:
       if (isNil(selectedAuth.grantType) || isNil(selectedAuth.oauth2App)) {
         return <div>Error: Grant type and OAuth2 app are required</div>;
@@ -357,6 +378,7 @@ function CreateOrEditConnectionDialog({
   reconnectConnection,
   isGlobalConnection,
   externalIdComingFromSdk,
+  projectId: projectIdOverride,
 }: ConnectionDialogProps) {
   const { data: piecesOAuth2AppsMap, isPending: loadingPiecesOAuth2AppsMap } =
     oauthAppsQueries.usePiecesOAuth2AppsMap();
@@ -391,6 +413,7 @@ function CreateOrEditConnectionDialog({
             reconnectConnection={reconnectConnection}
             isGlobalConnection={isGlobalConnection}
             externalIdComingFromSdk={externalIdComingFromSdk}
+            projectId={projectIdOverride}
           />
         )}
       </DialogContent>
@@ -481,6 +504,7 @@ type ConnectionDialogProps = {
   reconnectConnection: AppConnectionWithoutSensitiveData | null;
   isGlobalConnection: boolean;
   externalIdComingFromSdk?: string | null;
+  projectId?: string | null;
 };
 
 type CreateOrEditConnectionDialogContentProps = {
@@ -493,6 +517,7 @@ type CreateOrEditConnectionDialogContentProps = {
     open: boolean,
     connection?: AppConnectionWithoutSensitiveData,
   ) => void;
+  projectId?: string | null;
 };
 
 type CreateOrEditConnectionSectionProps =

@@ -11,6 +11,8 @@ export const getContactAction = createAction({
 	name: 'get-contact',
 	displayName: 'Get Contact',
 	description: 'Gets a contact.',
+	audience: 'both',
+	aiMetadata: { description: 'Fetches a single contact by its HubSpot contact ID, returning default and any requested additional properties. Use when you already have the contact ID; to look one up by email instead, use a search-based action. Read-only and idempotent.', idempotent: true },
 	props: {
 		contactId: Property.ShortText({
 			displayName: 'Contact ID',

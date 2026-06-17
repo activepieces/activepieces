@@ -14,6 +14,10 @@ export const newBranchTrigger = createTrigger({
   name: 'new_branch',
   displayName: 'New Branch',
   description: 'Triggers when a new branch is created.',
+  aiMetadata: {
+    description:
+      'Fires when a new branch is created in the chosen repository (GitHub create events of ref type branch; tag creations are ignored). Represents the appearance of a new branch.',
+  },
   props: {
     repository: githubCommon.repositoryDropdown,
   },
@@ -35,7 +39,7 @@ export const newBranchTrigger = createTrigger({
     const { repo, owner } = context.propsValue.repository!;
 
     const response = await githubApiCall<{ id: number }>({
-      accessToken: context.auth.access_token,
+      auth: context.auth,
       method: HttpMethod.POST,
       resourceUri: `/repos/${owner}/${repo}/hooks`,
       body: {
@@ -63,7 +67,7 @@ export const newBranchTrigger = createTrigger({
 
     if (webhook !== null && webhook !== undefined) {
       await githubApiCall({
-        accessToken: context.auth.access_token,
+        auth: context.auth,
         method: HttpMethod.DELETE,
         resourceUri: `/repos/${webhook.owner}/${webhook.repo}/hooks/${webhook.webhookId}`,
       });

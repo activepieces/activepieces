@@ -9,6 +9,8 @@ export const createNote = createAction({
   name: 'createNote',
   displayName: 'Create Note',
   description: 'Create a note on a screen in Zeplin',
+  audience: 'both',
+  aiMetadata: { description: 'Add a comment/annotation note pinned to a specific position on a Zeplin screen, identified by project ID and screen ID. Use to leave design feedback or markup at given X/Y coordinates with a chosen highlight color. Not idempotent: each call creates a new note even with identical content.', idempotent: false },
   props: {
     projectId: project_idProp,
     screenId: screen_idProp,

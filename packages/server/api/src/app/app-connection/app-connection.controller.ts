@@ -1,6 +1,9 @@
+import { wideEvent } from '@activepieces/server-utils'
 import { ApId,
     AppConnectionOwners,
     AppConnectionScope,
+    AppConnectionStatus,
+    AppConnectionType,
     AppConnectionWithoutSensitiveData,
     ApplicationEventName,
     GetOAuth2AuthorizationUrlRequestBody,
@@ -8,6 +11,7 @@ import { ApId,
     ListAppConnectionOwnersRequestQuery,
     ListAppConnectionsRequestQuery,
     Permission,
+    PLACEHOLDER_CONNECTION_TYPE,
     PrincipalType,
     ReplaceAppConnectionsRequestBody,
     SeekPage,
@@ -21,6 +25,7 @@ import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { applicationEvents } from '../helper/application-events'
+import { auditEvents } from '../helper/audit-events'
 import { securityHelper } from '../helper/security-helper'
 import { appConnectionService } from './app-connection-service/app-connection-service'
 import { oauth2Util } from './app-connection-service/oauth2/oauth2-util'
@@ -28,19 +33,30 @@ import { AppConnectionEntity } from './app-connection.entity'
 
 export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, done) => {
     app.post('/', UpsertAppConnectionRequest, async (request, reply) => {
-        const appConnection = await appConnectionService(request.log).upsert({
+        const ownerId = await securityHelper.getUserIdFromRequest(request)
+        const baseUpsert = {
             platformId: request.principal.platform.id,
             projectIds: [request.projectId],
-            type: request.body.type,
             externalId: request.body.externalId,
-            value: request.body.value,
             displayName: request.body.displayName,
             pieceName: request.body.pieceName,
-            ownerId: await securityHelper.getUserIdFromRequest(request),
+            ownerId,
             scope: AppConnectionScope.PROJECT,
             metadata: request.body.metadata,
             pieceVersion: request.body.pieceVersion,
-        })
+        }
+        const appConnection = request.body.type === PLACEHOLDER_CONNECTION_TYPE
+            ? await appConnectionService(request.log).upsert({
+                ...baseUpsert,
+                type: AppConnectionType.NO_AUTH,
+                value: { type: AppConnectionType.NO_AUTH },
+                status: AppConnectionStatus.MISSING,
+            })
+            : await appConnectionService(request.log).upsert({
+                ...baseUpsert,
+                type: request.body.type,
+                value: request.body.value,
+            })
         applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.CONNECTION_UPSERTED,
             data: {
@@ -86,6 +102,15 @@ export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, do
             ...appConnections,
             data: appConnections.data.map(appConnectionService(request.log).removeSensitiveData),
         }
+        wideEvent.audit(auditEvents.connectionListed({
+            actor: auditEvents.actorFromPrincipal(request.principal),
+            target: {
+                type: 'project',
+                id: request.projectId,
+                platformId: request.principal.platform.id,
+                connectionCount: appConnectionsWithoutSensitiveData.data.length,
+            },
+        }))
         return appConnectionsWithoutSensitiveData
     },
     )
@@ -103,13 +128,15 @@ export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, do
     )
 
     app.post('/replace', ReplaceAppConnectionsRequest, async (request, reply) => {
-        const { sourceAppConnectionId, targetAppConnectionId } = request.body
+        const { sourceAppConnectionId, targetAppConnectionId, deleteSourceConnection, applyToPublishedVersions } = request.body
         await appConnectionService(request.log).replace({
             sourceAppConnectionId,
             targetAppConnectionId,
             projectId: request.projectId,
             platformId: request.principal.platform.id,
             userId: request.principal.id,
+            deleteSourceConnection,
+            applyToPublishedVersions,
         })
         await reply.status(StatusCodes.NO_CONTENT).send()
     })
@@ -143,6 +170,7 @@ export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, do
             redirectUrl: request.body.redirectUrl,
             props: request.body.props,
             projectId: request.projectId,
+            scopes: request.body.scopes,
         })
     })
     done()

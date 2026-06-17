@@ -6,6 +6,7 @@ import {
     isNil,
     PrincipalType,
     PROFILE_PICTURE_ALLOWED_TYPES,
+    SERVICE_KEY_SECURITY_OPENAPI,
     UpdateMeResponse,
     UserWithBadges,
 } from '@activepieces/shared'
@@ -60,6 +61,9 @@ export const usersController: FastifyPluginAsyncZod = async (app) => {
 
 const GetUserByIdRequest = {
     schema: {
+        tags: ['users'],
+        description: 'Get a user by id',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: z.object({
             id: ApId,
         }),
@@ -68,7 +72,7 @@ const GetUserByIdRequest = {
         },
     },
     config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER]),
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
 }
 

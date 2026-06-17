@@ -13,6 +13,9 @@ export const newItemInBoardTrigger = createTrigger({
   name: 'monday_new_item_in_board',
   displayName: 'New Item in Board',
   description: 'Triggers when a new item is created in board.',
+  aiMetadata: {
+    description: 'Fires when a new item (row) is created on the selected monday.com board, enriching the payload with the new item\'s column values. Represents an item-creation event scoped to one board.',
+  },
   props: {
     workspace_id: mondayCommon.workspace_id(true),
     board_id: mondayCommon.board_id(true),

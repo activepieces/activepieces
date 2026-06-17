@@ -1,12 +1,13 @@
 {
   "name": "@activepieces/piece-xml",
-  "version": "0.1.13",
+  "version": "0.1.15",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
+    "fast-xml-parser": "5.7.0",
     "json2xml": "0.1.3",
     "tslib": "2.6.2"
   },

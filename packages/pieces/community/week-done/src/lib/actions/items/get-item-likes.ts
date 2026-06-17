@@ -17,6 +17,8 @@ export const getItemLikesAction = createAction({
   name: 'get_item_likes',
   displayName: 'Get Item Likes',
   description: 'Get likes for an item.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve the list of likes on a specific Weekdone item by its ID; the user/team/period filters only help locate the item. Read-only and idempotent.', idempotent: true },
   props: {
     user_id_filter: Property.Dropdown({
       auth: weekdoneAuth,

@@ -9,6 +9,8 @@ export const removeLabelFromEmailAction = createAction({
 	name: 'removeLabelFromEmail',
 	displayName: 'Remove Label from Email',
 	description: 'Removes a category (label) from an email message.',
+	audience: 'both',
+	aiMetadata: { description: 'Removes one or more Outlook categories (labels) from a specific message, leaving any other categories intact. Use this to untag or reclassify an email. Idempotent: re-running with the same categories yields the same final label set.', idempotent: true },
 	props: {
 		messageId: messageIdDropdown({
 			displayName: 'Email',

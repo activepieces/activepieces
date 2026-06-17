@@ -7,6 +7,11 @@ export const getJob = createAction({
   name: "get_job",
   displayName: "Get a Job",
   description: "Retrieves a single job by ID from Housecall Pro.",
+  audience: 'both',
+  aiMetadata: {
+    description: "Fetch one Housecall Pro job by its job ID, optionally expanding attachments and/or appointments. Read-only and repeatable. Use when you already have a job ID; to discover jobs by customer, status, or date range use Get Jobs instead.",
+    idempotent: true,
+  },
   props: {
     job_id: Property.ShortText({
       displayName: "Job ID",

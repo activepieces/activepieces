@@ -13,6 +13,7 @@ export enum WebsocketClientEvent {
     RESOURCE_LOCKED = 'RESOURCE_LOCKED',
     RESOURCE_UNLOCKED = 'RESOURCE_UNLOCKED',
     PRESENCE_UPDATED = 'PRESENCE_UPDATED',
+    CHAT_MESSAGE_CHUNK = 'CHAT_MESSAGE_CHUNK',
 }
 
 export enum WebsocketServerEvent {

@@ -7,6 +7,9 @@ export const documentUpdated = createTrigger({
   name: 'documentUpdated',
   displayName: 'Document Updated',
   description: 'Triggers when a document is updated.',
+  aiMetadata: {
+    description: 'Fires when a PandaDoc document is updated, optionally scoped to specific templates, folders, and/or update types (content, recipients, settings, status, fields, name, or metadata changes). Represents an edit to an existing document.',
+  },
   auth: pandadocAuth,
   props: {
     template_filter: Property.MultiSelectDropdown({

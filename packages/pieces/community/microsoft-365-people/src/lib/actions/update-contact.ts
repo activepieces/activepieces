@@ -8,6 +8,8 @@ export const updateContact = createAction({
   name: 'updateContact',
   displayName: 'Update a Contact',
   description: 'Modify fields of an existing contact.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates fields of an existing Microsoft 365 People (Outlook) contact identified by its contact ID; only the properties you supply are changed (omitted fields are left untouched). Use to edit a known contact rather than create a new one. Not strictly idempotent because each call issues a fresh server-side write, though repeating with the same values yields the same end state.', idempotent: false },
   props: {
     contactId: microsoft365PeopleCommon.contactDropdown(),
     ...microsoft365PeopleCommon.contactProperties(),

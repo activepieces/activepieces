@@ -15,6 +15,8 @@ export const partnerUpdateAction = createAction({
   name: 'partnerUpdate',
   displayName: 'Resources - Partners - Update',
   description: 'Update a partner.',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing AMPECO partner identified by its numeric ID, changing fields such as name, address, contact details, billing, bank details, or permission options. A partial PATCH that applies only the fields you supply. Use partner create for a new partner.', idempotent: false },
   props: {
         
   partner: Property.Number({

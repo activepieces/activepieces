@@ -8,6 +8,12 @@ export const createDocumentGroupFromTemplateAndSendInviteAction = createAction({
   displayName: 'Create Document Group From Template Group & Send Invite',
   description:
     'Creates a new document group from a template group and sends an invite to one or more signers.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new SignNow document group from a document-group template and sends a multi-step group invite to its signers, returning the group ID and per-document IDs. Use when several documents must be signed together as a package; for a single document use the document-template invite actions instead. Requires the document-group template ID, a group name, and one signer entry per recipient (email, role name, permitted action of sign/approve/view, and signing step); signers sharing a step act in parallel and each may target a specific document or all of them. Each call creates a new group and dispatches invites, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     template_id: Property.ShortText({
       displayName: 'Document Group Template ID',

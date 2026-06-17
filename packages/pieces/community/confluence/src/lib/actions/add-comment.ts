@@ -9,6 +9,8 @@ export const addCommentAction = createAction({
 	name: 'add-comment',
 	displayName: 'Add Comment to Page',
 	description: 'Adds a footer comment to a page.',
+	audience: 'both',
+	aiMetadata: { description: 'Posts a new footer comment on a Confluence page, with the comment body given in storage (XHTML) format (plain text is accepted). Use to leave a top-level comment on a page; to respond to an existing comment use Reply to Comment instead. Not idempotent: each call adds another comment.', idempotent: false },
 	props: {
 		spaceId: spaceIdProp,
 		pageId: pageIdProp,

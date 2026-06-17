@@ -16,6 +16,8 @@ export const findPersonAction = createAction({
 	name: 'find-person',
 	displayName: 'Find Person',
 	description: 'Finds a person.',
+	audience: 'both',
+	aiMetadata: { description: 'Look up a single person by an exact value in a chosen field (e.g. email, phone, name, or a custom field). Pick this when you need to resolve a person record to its ID or details before acting on it. Effectively read-only (it creates and removes a temporary search filter) and returns the most recently updated match.', idempotent: true },
 	props: {
 		searchField: searchFieldProp('person'),
 		searchFieldValue: searchFieldValueProp('person'),

@@ -9,6 +9,11 @@ export const createFolderAction = createAction({
   name: 'microsoft_sharepoint_create_folder',
   displayName: 'Create Folder',
   description: 'Creates a new folder at path you specify.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a folder at a given path inside a SharePoint document library (drive), creating it relative to a parent folder path or the drive root. Use to provision a destination folder before uploading or moving files. Requires the target site and drive; the folder is keyed on its path, so re-running with the same path leaves the existing folder in place rather than producing a duplicate.',
+    idempotent: true,
+  },
   props: {
     siteId: microsoftSharePointCommon.siteId,
     driveId: microsoftSharePointCommon.driveId,

@@ -138,6 +138,9 @@ export const newEventMatchingSearch = createTrigger({
   displayName: 'New Event Matching Search',
   description:
     'Fires when a new event is created that matches a specified search term.',
+  aiMetadata: {
+    description: 'Fires when a newly created event in the selected calendar matches a required search term (matched across title, description, location, and attendees by default, or restricted to chosen fields). Each fired item is the matching new event; can also be filtered by event type.',
+  },
   props: {
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
     search_term: Property.ShortText({

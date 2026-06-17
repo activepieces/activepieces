@@ -66,6 +66,9 @@ export const newAttachmentTrigger = createTrigger({
   displayName: 'New Attachment',
   description:
     'Triggers when a new attachment is uploaded to the selected page.',
+  aiMetadata: {
+    description: 'Fires when a new attachment is uploaded to the selected Confluence page. Each event represents one newly added attachment (first version); new versions of an existing attachment do not fire this.',
+  },
   auth: confluenceAuth,
   type: TriggerStrategy.POLLING,
   props,

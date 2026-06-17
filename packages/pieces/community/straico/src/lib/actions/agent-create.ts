@@ -36,6 +36,7 @@ interface AgentCreateResponse {
 }
 
 export const agentCreate = createAction({
+  audience: 'human',
   auth: straicoAuth,
   name: 'agent-create',
   displayName: 'Create Agent',

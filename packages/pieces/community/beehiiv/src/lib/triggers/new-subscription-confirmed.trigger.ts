@@ -12,6 +12,9 @@ export const newSubscriptionConfirmedTrigger = createTrigger({
 	name: 'beehiiv_new_subscription_confirmed',
 	displayName: 'New Subscription Confirmation',
 	description: 'Triggers when a new subscriber confirms their subscription.',
+	aiMetadata: {
+		description: 'Fires when a subscriber confirms their subscription to the selected beehiiv publication (subscription.confirmed event), after any double opt-in step, emitting the confirmed subscription record.',
+	},
 	props: {
 		publicationId: publicationId,
 	},

@@ -10,6 +10,8 @@ export const findDatabaseRecord = createAction({
 	name: 'findDatabaseRecord',
 	displayName: 'Find Database Record',
 	description: 'Finds a record in table.',
+	audience: 'both',
+	aiMetadata: { description: 'Searches a chosen table of a Softr database for the first record where the selected field exactly equals (IS) the given value, returning a found flag and the matched record. Use to look up a record by a field value before updating or deleting it. Read-only and idempotent; matches only a single record (limit 1).', idempotent: true },
 	props: {
 		databaseId: databaseIdDropdown,
 		tableId: tableIdDropdown,

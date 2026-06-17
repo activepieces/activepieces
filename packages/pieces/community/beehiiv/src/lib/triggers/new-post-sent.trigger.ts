@@ -12,6 +12,9 @@ export const newPostSentTrigger = createTrigger({
 	name: 'beehiiv_new_post_sent',
 	displayName: 'New Post Sent',
 	description: 'Triggers when a new post is sent.',
+	aiMetadata: {
+		description: 'Fires when a post is sent (published/delivered) in the selected beehiiv publication, emitting the post with its title, slug, audience, status, and URLs.',
+	},
 	props: {
 		publicationId: publicationId,
 	},

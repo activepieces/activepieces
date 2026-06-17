@@ -12,6 +12,8 @@ export const saveBlogGalleryAction = createAction({
   auth: cmsAuth,
   displayName: 'Save Blog Post Gallery Image',
   description: 'Save image to Total CMS blog post gallery',
+  audience: 'both',
+  aiMetadata: { description: 'Uploads an image into the gallery of a specific blog post in Total CMS, identified by the blog CMS ID (slug) and post permalink, with alt text and thumbnail sizing/crop options. Use to add a photo to a post gallery. Not idempotent: each call appends another image to the gallery.', idempotent: false },
   props: {
     slug: Property.ShortText({
       displayName: 'CMS ID',

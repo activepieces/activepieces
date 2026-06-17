@@ -10,6 +10,9 @@ export const newMeeting = createTrigger({
   displayName: 'New Meeting',
   description: `Triggers when a meeting analysis is completed and highlights are available.
 `,
+  aiMetadata: {
+    description: 'Fires when MeetGeek finishes analyzing a meeting (or uploaded recording) and its highlights, transcript, and summary become available. The payload carries the meeting ID, which can be passed to the get-meeting / transcript / summary / highlights actions. Requires manually configuring the webhook URL in the MeetGeek Public API integrations settings.',
+  },
   props: {
     instruction: Property.MarkDown({
       value: `## Configuration

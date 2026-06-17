@@ -8,7 +8,7 @@
   "Mode": "Modo",
   "Wait for Response": "Espere a la respuesta",
   "Response": "Respuesta",
-  "The flow to execute": "El flujo a ejecutar",
+  "The flow to execute. Only published flows with a \"Callable Flow\" trigger appear here — unpublished or disabled subflows are hidden.": "El flujo a ejecutar. Sólo los flujos publicados con un disparador de \"flujo llamable\" aparecen aquí — los subflujos no publicados o desactivados están ocultos.",
   "Choose Simple for key-value or Advanced for JSON.": "Elija Simple para el valor de clave o avanzado para JSON.",
   "Simple": "Simple",
   "Advanced": "Avanzado",

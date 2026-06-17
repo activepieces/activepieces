@@ -7,6 +7,8 @@ export const listContainers = createAction({
   name: 'listContainers',
   displayName: 'List Containers',
   description: 'List Containers in the Azure Blob Storage account',
+  audience: 'both',
+  aiMetadata: { description: 'Lists the containers in an Azure Blob Storage account. Use to discover available containers before reading or writing blobs; optionally narrow results with a name prefix and toggle inclusion of deleted or system containers. Read-only and idempotent.', idempotent: true },
   props: {
     includeDeleted: Property.Checkbox({
       displayName: 'Include Deleted Containers',

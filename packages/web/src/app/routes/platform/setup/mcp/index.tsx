@@ -101,10 +101,10 @@ export default function PlatformMcpPage() {
                   )}
                 </p>
                 <McpTools
-                  enabledTools={mcpServer.enabledTools}
+                  disabledTools={mcpServer.disabledTools}
                   isPending={isToolsUpdating}
-                  onUpdateEnabledTools={(tools) =>
-                    updateTools({ enabledTools: tools })
+                  onUpdateDisabledTools={(tools) =>
+                    updateTools({ disabledTools: tools })
                   }
                 />
               </div>

@@ -16,6 +16,8 @@ export const createPdf = createAction({
 	name: 'create_pdf',
 	displayName: 'Create PDF',
 	description: 'Generates a PDF document from a specified template.',
+	audience: 'both',
+	aiMetadata: { description: 'Render a PDF document from a Placid template by filling its layers with provided data; choose this to produce a PDF asset from a template. Requires a template UUID. By default the render is queued and returns immediately; enabling create_now blocks and polls until the PDF finishes. Not idempotent — each call queues a new render job.', idempotent: false },
 	props: {
 		template: pdfTemplateDropdown,
 		layers: templateLayersProperty('pdf'),

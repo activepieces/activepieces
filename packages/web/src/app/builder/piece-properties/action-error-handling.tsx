@@ -1,5 +1,6 @@
 import { FlowAction, FlowTrigger } from '@activepieces/shared';
 import { t } from 'i18next';
+import { ShieldAlert } from 'lucide-react';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
@@ -27,8 +28,16 @@ const ActionErrorHandlingForm = React.memo(
   }: ActionErrorHandlingFormProps) => {
     const form = useFormContext<FlowAction | FlowTrigger>();
 
+    if (hideContinueOnFailure === true && hideRetryOnFailure === true) {
+      return null;
+    }
+
     return (
-      <div className={cn('grid', GAP_SIZE_FOR_STEP_SETTINGS)}>
+      <div className={cn('flex flex-col mt-2', GAP_SIZE_FOR_STEP_SETTINGS)}>
+        <div className="text-xs font-semibold  tracking-wide text-muted-foreground flex items-center gap-1">
+          <ShieldAlert className="w-4 h-4" />
+          <span>{t('Error handling')}</span>
+        </div>
         {hideContinueOnFailure !== true && (
           <FormField
             name="settings.errorHandlingOptions.continueOnFailure.value"
@@ -47,11 +56,11 @@ const ActionErrorHandlingForm = React.memo(
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <span className="ml-2">{t('Continue on Failure')}</span>
+                  <span className="ml-2">{t('Add Error Handler')}</span>
                 </FormLabel>
                 <ReadMoreDescription
                   text={t(
-                    'Enable this option to skip this step and continue the flow normally if it fails.',
+                    'Adds Success and Failure branches, errors go into Failure.',
                   )}
                 />
               </FormItem>
@@ -79,9 +88,7 @@ const ActionErrorHandlingForm = React.memo(
                   <span className="ml-2">{t('Retry on Failure')}</span>
                 </FormLabel>
                 <ReadMoreDescription
-                  text={t(
-                    'Automatically retry up to four attempts when failed.',
-                  )}
+                  text={t('Retries up to 4 times before failing the step.')}
                 />
               </FormItem>
             )}

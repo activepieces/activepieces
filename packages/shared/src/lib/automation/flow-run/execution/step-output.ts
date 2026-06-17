@@ -15,8 +15,9 @@ type BaseStepOutputParams<T extends FlowActionType | FlowTriggerType, OUTPUT> = 
     status: StepOutputStatus
     input: unknown
     output?: OUTPUT
+    outputType?: StepOutputType
     duration?: number
-    errorMessage?: unknown
+    errorMessage?: string
 }
 
 export class GenericStepOutput<T extends FlowActionType | FlowTriggerType, OUTPUT> {
@@ -24,14 +25,16 @@ export class GenericStepOutput<T extends FlowActionType | FlowTriggerType, OUTPU
     status: StepOutputStatus
     input: unknown
     output?: OUTPUT
+    outputType?: StepOutputType
     duration?: number
-    errorMessage?: unknown
+    errorMessage?: string
 
     constructor(step: BaseStepOutputParams<T, OUTPUT>) {
         this.type = step.type
         this.status = step.status
         this.input = step.input
         this.output = step.output
+        this.outputType = step.outputType
         this.duration = step.duration
         this.errorMessage = step.errorMessage
     }
@@ -50,7 +53,7 @@ export class GenericStepOutput<T extends FlowActionType | FlowTriggerType, OUTPU
         })
     }
 
-    setErrorMessage(errorMessage: unknown): GenericStepOutput<T, OUTPUT> {
+    setErrorMessage(errorMessage: string): GenericStepOutput<T, OUTPUT> {
         return new GenericStepOutput<T, OUTPUT>({
             ...this,
             errorMessage,
@@ -83,6 +86,23 @@ export class GenericStepOutput<T extends FlowActionType | FlowTriggerType, OUTPU
         })
     }
 }
+
+export enum StepOutputType {
+    SLICE = 'slice',
+}
+
+/**
+ * Payload stored in `StepOutput.output` when the host step has `outputType: StepOutputType.SLICE`.
+ * Distinguished structurally by the step's `outputType` field, so the ref itself
+ * carries no marker.
+ */
+export type LogSliceRef = {
+    fileId: string
+    size: number
+    url: string
+}
+
+export const FLOW_RUN_LOG_MANIFEST_V2 = 2
 
 export type BaseStepOutput = GenericStepOutput<FlowActionType | FlowTriggerType, unknown>
 

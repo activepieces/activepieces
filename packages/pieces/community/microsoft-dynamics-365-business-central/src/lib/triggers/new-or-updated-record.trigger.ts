@@ -52,6 +52,10 @@ export const newOrUpdatedRecordTrigger = createTrigger({
   name: 'new-or-updated-record',
   displayName: 'New or Updated Record',
   description: 'Triggers when a new record is added or modified.',
+  aiMetadata: {
+    description:
+      'Fires when a record of the selected entity type is created or modified in a Microsoft Dynamics 365 Business Central company. Polls periodically and detects changes by the record lastModifiedDateTime, so updates to existing records emit the event too — there is no separate created-only mode.',
+  },
   type: TriggerStrategy.POLLING,
   sampleData: {},
   props: {

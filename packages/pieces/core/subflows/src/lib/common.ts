@@ -1,4 +1,4 @@
-import { FlowStatus, FlowTriggerType, isNil, PopulatedFlow } from "@activepieces/shared";
+import { FlowTriggerType, isNil, PopulatedFlow } from "@activepieces/shared";
 import { FlowsContext, ListFlowsContextParams } from "@activepieces/pieces-framework";
 
 
@@ -15,14 +15,13 @@ export type CallableFlowResponse = {
 
 export const MOCK_CALLBACK_IN_TEST_FLOW_URL = 'MOCK';
 
-export async function listEnabledFlowsWithSubflowTrigger({
+export async function listFlowsWithSubflowTrigger({
     flowsContext,
     params,
-}: ListParams) {
+}: ListParams): Promise<PopulatedFlow[]> {
     const allFlows = (await flowsContext.list(params)).data;
     const flows = allFlows.filter(
         (flow) =>
-            flow.status === FlowStatus.ENABLED &&
             flow.version.trigger.type === FlowTriggerType.PIECE &&
             flow.version.trigger.settings.pieceName ==
             '@activepieces/piece-subflows'
@@ -43,7 +42,7 @@ export async function findFlowByExternalIdOrThrow({
         }));
     }
     const externalIds = [externalId];
-    const allFlows = await listEnabledFlowsWithSubflowTrigger({
+    const allFlows = await listFlowsWithSubflowTrigger({
         flowsContext,
         params: {
             externalIds

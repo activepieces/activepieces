@@ -45,10 +45,13 @@ type VerifyEmailTemplateData = BaseEmailTemplateData<'verify-email', {
 }>
 
 type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
-    issueUrl: string
+    runUrl: string
+    projectName: string
     flowName: string
-    isIssue: string
     createdAt: string
+    failedStepDisplayName: string
+    failedStepNumber: string
+    failedStepMessage: string
 }>
 
 type BadgeAwardedTemplateData = BaseEmailTemplateData<'badge-awarded', {

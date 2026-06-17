@@ -71,12 +71,12 @@ export const PlatformPlan = z.object({
     agentsEnabled: z.boolean(),
     aiProvidersEnabled: z.boolean(),
     chatEnabled: z.boolean(),
+    dataManipulationEnabled: z.boolean(),
     managePiecesEnabled: z.boolean(),
     manageTemplatesEnabled: z.boolean(),
     customAppearanceEnabled: z.boolean(),
     teamProjectsLimit: z.nativeEnum(TeamProjectsLimit),
     projectRolesEnabled: z.boolean(),
-    customDomainsEnabled: z.boolean(),
     globalConnectionsEnabled: z.boolean(),
     customRolesEnabled: z.boolean(),
     apiKeysEnabled: z.boolean(),
@@ -101,6 +101,8 @@ export const PlatformPlan = z.object({
     })),
     /** @deprecated use workerGroupId instead — will be removed in 0.83.0 */
     canary: z.boolean(),
+    /** @deprecated custom domains have been removed; column kept for backwards compatibility with existing DBs */
+    customDomainsEnabled: z.boolean(),
     workerGroupId: Nullable(z.string()),
 })
 export type PlatformPlan = z.infer<typeof PlatformPlan>
@@ -109,11 +111,38 @@ export const PlatformPlanLimits = PlatformPlan.omit({ id: true, platformId: true
 export type PlatformPlanLimits = z.infer<typeof PlatformPlanLimits>
 export type PlatformPlanWithOnlyLimits = Omit<PlatformPlanLimits, 'stripeSubscriptionStartDate' | 'stripeSubscriptionEndDate' | 'stripeBillingCycle'>
 
+export const HEX_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/
+
+const hexColor = z.string().regex(HEX_COLOR_PATTERN, 'invalidHexColor')
+
+export const PlatformThemeColors = z.object({
+    avatar: hexColor.optional(),
+    'blue-link': hexColor.optional(),
+    danger: hexColor.optional(),
+    selection: hexColor.optional(),
+    primary: z.object({
+        dark: hexColor.optional(),
+        light: hexColor.optional(),
+        medium: hexColor.optional(),
+    }).optional(),
+    warn: z.object({
+        default: hexColor.optional(),
+        light: hexColor.optional(),
+        dark: hexColor.optional(),
+    }).optional(),
+    success: z.object({
+        default: hexColor.optional(),
+        light: hexColor.optional(),
+    }).optional(),
+})
+export type PlatformThemeColors = z.infer<typeof PlatformThemeColors>
+
 export const Platform = z.object({
     ...BaseModelSchema,
     ownerId: ApId,
     name: z.string(),
     primaryColor: z.string(),
+    themeColors: Nullable(PlatformThemeColors),
     logoIconUrl: z.string(),
     fullLogoUrl: z.string(),
     favIconUrl: z.string(),
@@ -126,8 +155,10 @@ export const Platform = z.object({
     */
     filteredPieceBehavior: z.nativeEnum(FilteredPieceBehavior),
     cloudAuthEnabled: z.boolean(),
+    googleAuthEnabled: z.boolean(),
     enforceAllowedAuthDomains: z.boolean(),
     allowedAuthDomains: z.array(z.string()),
+    allowedEmbedOrigins: z.array(z.string()),
     ssoDomain: Nullable(z.string()),
     ssoDomainVerification: Nullable(SsoDomainVerification),
     federatedAuthProviders: FederatedAuthnProviderConfig,
@@ -135,6 +166,7 @@ export const Platform = z.object({
     pinnedPieces: z.array(z.string()),
 })
 export type Platform = z.infer<typeof Platform>
+export type PlatformWithoutFederatedAuth = Omit<Platform, 'federatedAuthProviders'>
 
 export const PlatformWithoutSensitiveData = z.object({
     federatedAuthProviders: Nullable(FederatedAuthnProviderConfigWithoutSensitiveData),
@@ -146,14 +178,17 @@ export const PlatformWithoutSensitiveData = z.object({
     ownerId: ApId,
     name: z.string(),
     primaryColor: z.string(),
+    themeColors: Nullable(PlatformThemeColors),
     logoIconUrl: z.string(),
     fullLogoUrl: z.string(),
     favIconUrl: z.string(),
     filteredPieceNames: z.array(z.string()),
     filteredPieceBehavior: z.nativeEnum(FilteredPieceBehavior),
     cloudAuthEnabled: z.boolean(),
+    googleAuthEnabled: z.boolean(),
     enforceAllowedAuthDomains: z.boolean(),
     allowedAuthDomains: z.array(z.string()),
+    allowedEmbedOrigins: z.array(z.string()),
     ssoDomain: Nullable(z.string()),
     ssoDomainVerification: Nullable(SsoDomainVerification),
     emailAuthEnabled: z.boolean(),

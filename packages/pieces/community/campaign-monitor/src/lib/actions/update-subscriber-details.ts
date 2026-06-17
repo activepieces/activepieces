@@ -10,6 +10,12 @@ export const updateSubscriberDetailsAction = createAction({
   name: 'update_subscriber_details',
   displayName: 'Update Subscriber',
   description: 'Update an existing subscriber in a list.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing subscriber, identified by their current email address, in a specific Campaign Monitor list under a client — changing name, phone, custom fields, and tracking/SMS consent. Choose this to modify a contact already on a list rather than to add one. Idempotent: it keys on the email and overwrites the same record, so repeating with identical input leaves the subscriber in the same state.',
+    idempotent: true,
+  },
   props: {
     clientId: clientId,
     listId: listId,

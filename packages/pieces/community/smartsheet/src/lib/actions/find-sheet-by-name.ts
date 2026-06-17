@@ -8,6 +8,8 @@ export const findSheetByName = createAction({
   name: 'find_sheet_by_name',
   displayName: 'Find Sheet(s)',
   description: 'Fetches existings sheets matching provided filter criteria.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists the sheets the account can access in Smartsheet. Leaving the name filter empty returns all sheets, while supplying a name filters to partial (or exact) matches. Use to resolve a sheet name to its sheet ID or to enumerate available sheets before another action; results can be filtered by access level and modification date. Read-only and idempotent.', idempotent: true },
   props: {
     // Search options
     sheet_name: Property.ShortText({

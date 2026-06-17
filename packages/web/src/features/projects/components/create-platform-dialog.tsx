@@ -1,3 +1,4 @@
+import { SAFE_STRING_PATTERN } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { SubmitHandler, useForm } from 'react-hook-form';
@@ -58,6 +59,10 @@ function CreatePlatformDialogForm({
             maxLength: {
               value: 100,
               message: t('Platform name is too long'),
+            },
+            pattern: {
+              value: new RegExp(SAFE_STRING_PATTERN),
+              message: t('Platform name cannot contain "." or "/"'),
             },
           }}
           render={({ field }) => (

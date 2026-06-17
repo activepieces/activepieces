@@ -9,6 +9,8 @@ export const createCampaignAction = createAction({
   name: 'create_campaign',
   displayName: 'Create Campaign',
   description: 'Creates a draft campaign in Sender',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new draft email campaign in a Sender account targeting one or more subscriber groups, with subject, sender name, reply-to, and content type. Use to set up a campaign for later sending (it is not sent here). Not idempotent: each call creates a separate draft, so repeating produces duplicates. Content type must be one of "editor", "html", or "text".', idempotent: false },
   props: {
     title: Property.ShortText({
       displayName: 'Campaign Name',

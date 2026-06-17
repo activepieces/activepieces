@@ -22,6 +22,10 @@ export const stripeUpdatedSubscription = createTrigger({
   name: 'updated_subscription',
   displayName: 'Updated Subscription',
   description: 'Fires when an existing subscription is changed.',
+  aiMetadata: {
+    description:
+      'Fires when an existing subscription is updated in Stripe (the customer.subscription.updated event), emitting the changed subscription. Optional filters narrow firing to a target new status or a specific customer ID. Use to react to plan changes, status transitions, or quantity updates.',
+  },
   props: {
     status: Property.StaticDropdown({
       displayName: 'New Status',

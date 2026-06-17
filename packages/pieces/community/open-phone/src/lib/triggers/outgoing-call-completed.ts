@@ -13,6 +13,9 @@ export const outgoingCallCompleted = createTrigger({
   name: 'outgoing_call_completed',
   displayName: 'Outgoing Call Completed',
   description: 'Fires when an outbound call ends. Useful for call logging.',
+  aiMetadata: {
+    description: 'Fires when an outbound (workspace-initiated) call ends, delivering the completed call details. Incoming calls are filtered out, so this only represents calls placed from the OpenPhone number. Use for call logging or post-call automation. Can be scoped to a specific OpenPhone number or all numbers.',
+  },
   props: {
     phoneNumbers: phoneNumberDropdown,
   },

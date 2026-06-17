@@ -1,9 +1,7 @@
-import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { CircleHelp, RefreshCcw } from 'lucide-react';
+import { CircleHelp } from 'lucide-react';
 import { useEffect, useState, useCallback } from 'react';
 
-import { Button } from '@/components/ui/button';
 import {
   Popover,
   PopoverContent,
@@ -19,7 +17,6 @@ import {
   RunStatusCategory,
 } from '@/features/flow-runs/hooks/flow-run-hooks';
 import { formatUtils } from '@/lib/format-utils';
-import { cn } from '@/lib/utils';
 
 const DONUT_SIZE = 20;
 const DONUT_RADIUS = 6;
@@ -41,47 +38,59 @@ function MiniDonut({
       height={DONUT_SIZE}
       viewBox={`0 0 ${DONUT_SIZE} ${DONUT_SIZE}`}
     >
-      {categories.map((cat) => {
-        const segmentLength = (cat.count / total) * DONUT_CIRCUMFERENCE;
-        const offset = DONUT_CIRCUMFERENCE - accumulated;
-        accumulated += segmentLength;
-        return (
-          <circle
-            key={cat.label}
-            cx={DONUT_CENTER}
-            cy={DONUT_CENTER}
-            r={DONUT_RADIUS}
-            fill="none"
-            stroke={cat.color}
-            strokeWidth={DONUT_STROKE}
-            strokeDasharray={`${segmentLength} ${
-              DONUT_CIRCUMFERENCE - segmentLength
-            }`}
-            strokeDashoffset={offset}
-            transform={`rotate(-90 ${DONUT_CENTER} ${DONUT_CENTER})`}
-          />
-        );
-      })}
+      {total === 0 ? (
+        <circle
+          cx={DONUT_CENTER}
+          cy={DONUT_CENTER}
+          r={DONUT_RADIUS}
+          fill="none"
+          stroke="var(--muted-foreground)"
+          strokeWidth={DONUT_STROKE}
+          opacity={0.4}
+        />
+      ) : (
+        categories.map((cat) => {
+          const segmentLength = (cat.count / total) * DONUT_CIRCUMFERENCE;
+          const offset = DONUT_CIRCUMFERENCE - accumulated;
+          accumulated += segmentLength;
+          return (
+            <circle
+              key={cat.label}
+              cx={DONUT_CENTER}
+              cy={DONUT_CENTER}
+              r={DONUT_RADIUS}
+              fill="none"
+              stroke={cat.color}
+              strokeWidth={DONUT_STROKE}
+              strokeDasharray={`${segmentLength} ${
+                DONUT_CIRCUMFERENCE - segmentLength
+              }`}
+              strokeDashoffset={offset}
+              transform={`rotate(-90 ${DONUT_CENTER} ${DONUT_CENTER})`}
+            />
+          );
+        })
+      )}
     </svg>
   );
 }
 
 function RunsStatusChart() {
-  const { categories, total, isLoading } = flowRunQueries.useRunStats();
+  const { categories, total, refetch } = flowRunQueries.useRunStats();
   const [open, setOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setOpen(true), 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const handleOpenChange = useCallback((v: boolean) => {
-    setOpen(v);
-    if (!v) {
-      setIsVisible(false);
-    }
-  }, []);
+  const handleOpenChange = useCallback(
+    (v: boolean) => {
+      setOpen(v);
+      if (v) {
+        refetch();
+      } else {
+        setIsVisible(false);
+      }
+    },
+    [refetch],
+  );
 
   useEffect(() => {
     if (open) {
@@ -89,7 +98,6 @@ function RunsStatusChart() {
     }
   }, [open]);
 
-  if (isLoading || categories.length === 0) return;
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
@@ -117,89 +125,52 @@ function RunsStatusChart() {
             </p>
           </div>
 
-          {total > 0 && (
-            <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted">
-              {categories.map((cat) => (
-                <div
-                  key={cat.label}
-                  style={{
-                    width: isVisible ? `${(cat.count / total) * 100}%` : '0%',
-                    backgroundColor: cat.color,
-                    transition: 'width 600ms ease-out',
-                  }}
-                />
-              ))}
-            </div>
-          )}
-
-          <div className="flex flex-col gap-1.5">
-            {categories.map((cat) => (
-              <div
-                key={cat.label}
-                className="flex items-center justify-between text-xs"
-              >
-                <div className="flex items-center gap-2">
+          {total === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              {t('There are no runs')}
+            </p>
+          ) : (
+            <>
+              <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted">
+                {categories.map((cat) => (
                   <div
-                    className="size-2.5 rounded-full"
-                    style={{ backgroundColor: cat.color }}
+                    key={cat.label}
+                    style={{
+                      width: isVisible ? `${(cat.count / total) * 100}%` : '0%',
+                      backgroundColor: cat.color,
+                      transition: 'width 600ms ease-out',
+                    }}
                   />
-                  <span>
-                    {formatUtils.convertEnumToHumanReadable(cat.label)}
-                  </span>
-                </div>
-                <span className="font-medium tabular-nums">
-                  {formatUtils.formatNumberCompact(cat.count)}
-                </span>
+                ))}
               </div>
-            ))}
-          </div>
+
+              <div className="flex flex-col gap-1.5">
+                {categories.map((cat) => (
+                  <div
+                    key={cat.label}
+                    className="flex items-center justify-between text-xs"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="size-2.5 rounded-full"
+                        style={{ backgroundColor: cat.color }}
+                      />
+                      <span>
+                        {formatUtils.convertEnumToHumanReadable(cat.label)}
+                      </span>
+                    </div>
+                    <span className="font-medium tabular-nums">
+                      {formatUtils.formatNumberCompact(cat.count)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </PopoverContent>
     </Popover>
   );
 }
 
-function RunsRefreshButton({
-  statsRefetch,
-  tableRefetch,
-  dataUpdatedAt,
-}: {
-  statsRefetch: () => void;
-  tableRefetch: () => void;
-  dataUpdatedAt: number;
-}) {
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const handleRefresh = useCallback(() => {
-    setIsRefreshing(true);
-    statsRefetch();
-    tableRefetch();
-    setTimeout(() => setIsRefreshing(false), 1000);
-  }, [statsRefetch, tableRefetch]);
-
-  return (
-    <div className="flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md text-sm text-muted-foreground">
-      <span>
-        {t('Updated')} {dayjs(dataUpdatedAt).format('MMM DD, hh:mm A')}
-      </span>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-          >
-            <RefreshCcw
-              className={cn('h-3.5 w-3.5', isRefreshing && 'animate-spin')}
-            />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>{t('Refresh data')}</TooltipContent>
-      </Tooltip>
-    </div>
-  );
-}
-
-export { RunsStatusChart, RunsRefreshButton };
+export { RunsStatusChart };

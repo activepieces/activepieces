@@ -112,7 +112,6 @@ function makeMockContext(apiOverrides?: Record<string, vi.Mock>) {
             debug: vi.fn(),
         },
         apiClient: {
-            getPayloadFile: vi.fn(),
             uploadRunLog: vi.fn(),
             ...apiOverrides,
         },
@@ -134,18 +133,6 @@ describe('executeFlowJob', () => {
     })
 
     describe('payload pass-through (no worker-side fetch)', () => {
-        it('does not call getPayloadFile in the worker — payload resolution is deferred to the engine', async () => {
-            const ctx = makeMockContext()
-            const data = makeResumeJobData({
-                executionType: ExecutionType.BEGIN,
-                payload: { type: 'ref', fileId: 'huge-file-1' },
-            })
-
-            await executeFlowJob.execute(ctx, data)
-
-            expect(ctx.apiClient.getPayloadFile).not.toHaveBeenCalled()
-        })
-
         it('forwards the JobPayload ref unchanged to the engine for BEGIN', async () => {
             const ctx = makeMockContext()
             const data = makeResumeJobData({
@@ -175,7 +162,6 @@ describe('executeFlowJob', () => {
             expect(operation.resumePayload).toEqual({ type: 'ref', fileId: 'resume-payload-1' })
             expect(operation.logsFileId).toBe('logs-file-1')
             expect(operation.executionState).toBeUndefined()
-            expect(ctx.apiClient.getPayloadFile).not.toHaveBeenCalled()
         })
     })
 

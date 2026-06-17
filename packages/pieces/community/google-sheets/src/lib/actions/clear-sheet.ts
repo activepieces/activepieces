@@ -7,6 +7,12 @@ export const clearSheetAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'clear_sheet',
 	description: 'Clears all rows on an existing sheet.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Deletes all data rows from a worksheet, optionally preserving the header row. Use when an agent needs to empty a sheet before repopulating it. Idempotent — clearing an already-empty sheet leaves it empty; this is destructive and removes all existing row content.',
+		idempotent: true,
+	},
 	displayName: 'Clear Sheet',
 	props: {
 		...commonProps,

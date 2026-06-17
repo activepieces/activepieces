@@ -1,10 +1,7 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  OAuth2PropertyValue,
-  PieceAuth,
-  createPiece,
-} from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
+import { githubAuthHelpers, GithubAuthValue } from './lib/common/auth-helpers';
 import { githubCreateIssueAction } from './lib/actions/create-issue';
 import { githubUnlockIssueAction } from './lib/actions/unlock-issue';
 import { githubTriggers } from './lib/trigger';
@@ -58,7 +55,9 @@ export const github = createPiece({
       baseUrl: () => 'https://api.github.com',
       auth: githubAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        Authorization: `Bearer ${await githubAuthHelpers.getBearerToken(
+          auth as GithubAuthValue
+        )}`,
       }),
     }),
   ],

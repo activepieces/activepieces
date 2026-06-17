@@ -62,6 +62,9 @@ export const formCompletedTrigger = createTrigger({
   name: 'form_completed',
   displayName: 'Form Completed',
   description: 'Triggers when a form is completed by an end user.',
+  aiMetadata: {
+    description: 'Fires when an end user fully completes the selected Feathery form (only completed submissions, unlike the new-submission trigger which also includes partial ones). Each event represents one completed submission with its field values and user ID.',
+  },
   props: {
     form_id: Property.Dropdown({
       displayName: 'Form',

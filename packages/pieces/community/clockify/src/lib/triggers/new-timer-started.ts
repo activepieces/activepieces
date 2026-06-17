@@ -12,6 +12,10 @@ export const newTimerStartedTrigger = createTrigger({
 	name: 'new-timer-started',
 	displayName: 'New Timer Started',
 	description: 'Triggers when a new entry is started and running.',
+	aiMetadata: {
+		description:
+			'Fires when a timer is started and begins running on the specified workspace, emitting the newly started time entry. Use to react to live timers as they begin.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {
 		workspaceId: workspaceId({

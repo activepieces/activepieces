@@ -12,6 +12,12 @@ export const listSubscriptionsAction = createAction({
   name: 'list_subscriptions',
   displayName: 'List Subscriptions',
   description: 'Browse subscriptions in Recurly, with an option to filter by account and state.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists subscriptions in Recurly, optionally scoped to a single account and/or filtered by state (active, canceled, expired, future, paused, or all when state is left empty). Use to find subscriptions or check what a customer is subscribed to; leaving the account code empty lists across all accounts. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     accountCode: accountCodeDropdown(
       false,

@@ -16,6 +16,8 @@ export const send_iMessage = createAction({
     name: 'send_imessage',
     displayName: 'Send iMessage',
     description: 'Send an iMessage',
+    audience: 'both',
+    aiMetadata: { description: 'Sends an outbound iMessage through Contiguity to a recipient phone number, optionally with attachments (up to 10 HTTPS file URLs) and an SMS/RCS fallback that can trigger when iMessage is unsupported and/or fails. Choose this to message Apple/iMessage recipients; the recipient number must be in E.164 format and the message body is required. Not idempotent: each call dispatches a new message.', idempotent: false },
     props: {
         to: Property.ShortText({
             displayName: 'To',

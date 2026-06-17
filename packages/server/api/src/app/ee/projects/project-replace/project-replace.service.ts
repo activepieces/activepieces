@@ -1,4 +1,4 @@
-import { memoryLock } from '@activepieces/server-utils'
+import { apVersionUtil, memoryLock } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
     apId,
@@ -37,7 +37,6 @@ import { ArrayContains, In } from 'typeorm'
 import { appConnectionsRepo } from '../../../app-connection/app-connection-service/app-connection-service'
 import { flowFolderService } from '../../../flows/folder/folder.service'
 import { encryptUtils } from '../../../helper/encryption'
-import { apVersionUtil } from '../../../helper/system/system-props'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { pieceInstallService } from '../../../pieces/piece-install-service'
 import { fieldService } from '../../../tables/field/field.service'
@@ -130,7 +129,7 @@ async function runInstallPhase({ platformId, request, log }: InstallPhaseParams)
 async function runPreflight({ platformId, projectId, request, log }: PreflightParams): Promise<ProjectReplacePreflightError[]> {
     const errors: ProjectReplacePreflightError[] = []
 
-    const destVersion = await apVersionUtil.getCurrentRelease()
+    const destVersion = apVersionUtil.getCurrentRelease()
     checkApVersion({ sourceVersion: request.sourceActivepiecesVersion, destVersion, errors })
 
     for (const piece of request.requiredPieces) {

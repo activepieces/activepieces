@@ -4,6 +4,10 @@ export const newOpportunityTrigger = capsuleCrmCreateTrigger({
   name: 'new_opportunity',
   displayName: 'New Opportunity',
   description: 'Fires when a new opportunity is created.',
+  aiMetadata: {
+    description:
+      'Fires when a new opportunity (deal) is created in Capsule CRM, delivering the created opportunity record. Use to react to newly added deals entering the pipeline.',
+  },
   event: 'opportunity/created',
   sampleData: {
     event: 'opportunity/created',

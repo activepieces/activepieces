@@ -9,6 +9,12 @@ export const githubCreateCommentOnAIssue = createAction({
   displayName: 'Create comment on a issue',
   description:
     'Adds a comment to the specified issue (also works with pull requests)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Posts a comment on an issue (or pull request, which shares the issue number space) in a repository. Use to add a reply or note to an existing issue/PR identified by its number. Not idempotent: each call appends a new comment.',
+    idempotent: false,
+  },
   props: {
     repository: githubCommon.repositoryDropdown,
     issue_number: Property.Number({
@@ -27,7 +33,7 @@ export const githubCreateCommentOnAIssue = createAction({
     const { owner, repo } = propsValue.repository!;
 
     const response = await githubApiCall({
-      accessToken: auth.access_token,
+      auth,
       method: HttpMethod.POST,
       resourceUri: `/repos/${owner}/${repo}/issues/${issue_number}/comments`,
       body: {

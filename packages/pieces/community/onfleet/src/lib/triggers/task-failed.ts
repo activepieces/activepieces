@@ -10,6 +10,10 @@ export const taskFailed = createTrigger({
   name: 'task_failed',
   displayName: 'Task Failed',
   description: 'Triggers when a task has failed',
+  aiMetadata: {
+    description:
+      'Fires when a worker marks an Onfleet task as failed, meaning the delivery or pickup could not be completed (for example, recipient unavailable or wrong address). Represents an unsuccessful task completion, useful for triggering retries, refunds, or customer follow-up. The payload includes the full task object with completion details such as the failure reason and notes.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   //Create the webhook and save the webhook ID in store for disable behavior

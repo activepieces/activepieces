@@ -8,6 +8,8 @@ export const sendMessage = createAction({
   name: 'send_message',
   displayName: 'Send Message',
   description: 'Send SMS/MMS from your OpenPhone number to a recipient',
+  audience: 'both',
+  aiMetadata: { description: 'Sends an SMS/MMS text message from one of the workspace\'s OpenPhone numbers to a recipient. Choose this to programmatically text a contact or phone number. Requires the sending OpenPhone number (E.164 like +15555555555 or a phone-number ID) and exactly one recipient number in E.164 format; content must be 1-1600 characters. Not idempotent — each call sends a new message.', idempotent: false },
   props: {
     content: Property.LongText({
       displayName: 'Message Content',

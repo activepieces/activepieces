@@ -12,6 +12,10 @@ export const taskFinishedWithErrorTrigger = createTrigger({
   name: 'task_finished_with_error',
   displayName: 'Task Finished with Error',
   description: 'Triggers when a robot task run fails with an error.',
+  aiMetadata: {
+    description:
+      'Fires when a task run for the selected Browse AI robot finishes in a failed/error state, delivering the failed task record. Use to detect and react to scrapes that did not complete successfully.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     robotId: robotIdDropdown,

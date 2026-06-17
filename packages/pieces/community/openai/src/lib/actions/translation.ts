@@ -10,6 +10,7 @@ import mime from 'mime-types';
 import { baseUrl } from '../common/common';
 
 export const translateAction = createAction({
+  audience: 'human',
   name: 'translate',
   displayName: 'Translate Audio',
   description: 'Translate audio to text using whisper-1 model',
@@ -44,11 +45,7 @@ export const translateAction = createAction({
         ...headers,
       },
     };
-    try {
-      const response = await httpClient.sendRequest(request);
-      return response.body;
-    } catch (e) {
-      throw new Error(`Error while execution:\n${e}`);
-    }
+    const response = await httpClient.sendRequest(request);
+    return response.body;
   },
 });

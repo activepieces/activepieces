@@ -9,6 +9,12 @@ export const declareCertificationFolderToRetake = createAction({
   name: 'declareCertificationFolderToRetake',
   displayName: 'Passer un dossier de certification à l’état : à repasser',
   description: "Change l'état d'un dossier de certification vers : à repasser",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Transition a Wedof certification folder into the 'toRetake' state when the candidate must resit the exam, optionally recording the detailed result, European language level, re-exam dates, place, and type. Pick this for a retake rather than declaring success/failure outright; it follows the certification-folder state machine and is not idempotent. Requires the folder's externalId.",
+    idempotent: false,
+  },
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de certification',

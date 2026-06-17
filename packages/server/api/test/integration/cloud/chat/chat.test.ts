@@ -84,6 +84,28 @@ describe('Chat Conversations API', () => {
         })
     })
 
+    describe('List conversations performance', () => {
+        it('does not return messages or uiMessages in list response', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+
+            await ctx.post(CONVERSATIONS_URL, { title: 'Lightweight List Test' })
+
+            const response = await ctx.get(CONVERSATIONS_URL)
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            const body = response.json()
+            expect(body.data).toHaveLength(1)
+
+            const conv = body.data[0]
+            expect(conv.id).toBeDefined()
+            expect(conv.title).toBe('Lightweight List Test')
+            expect(conv.status).toBeDefined()
+            expect(conv.created).toBeDefined()
+            expect(conv.messages).toBeUndefined()
+            expect(conv.uiMessages).toBeUndefined()
+            expect(conv.summary).toBeUndefined()
+        })
+    })
+
     describe('Cross-user isolation', () => {
         it('user B cannot GET a conversation created by user A on the same platform', async () => {
             const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
@@ -253,67 +275,4 @@ describe('Chat Conversations API', () => {
         })
     })
 
-    describe('Set project context', () => {
-        it('sets projectId to the user\'s own project and returns the updated conversation', async () => {
-            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
-
-            const createResponse = await ctx.post(CONVERSATIONS_URL, { title: 'Project Chat' })
-            expect(createResponse.statusCode).toBe(StatusCodes.CREATED)
-            const conversationId = createResponse.json().id
-
-            const setResponse = await ctx.post(`${CONVERSATIONS_URL}/${conversationId}/project-context`, {
-                projectId: ctx.project.id,
-            })
-            expect(setResponse.statusCode).toBe(StatusCodes.OK)
-            const body = setResponse.json()
-            expect(body.projectId).toBe(ctx.project.id)
-        })
-
-        it('clears projectId by setting it to null', async () => {
-            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
-
-            const createResponse = await ctx.post(CONVERSATIONS_URL, { title: 'Project Chat' })
-            expect(createResponse.statusCode).toBe(StatusCodes.CREATED)
-            const conversationId = createResponse.json().id
-
-            await ctx.post(`${CONVERSATIONS_URL}/${conversationId}/project-context`, {
-                projectId: ctx.project.id,
-            })
-
-            const clearResponse = await ctx.post(`${CONVERSATIONS_URL}/${conversationId}/project-context`, {
-                projectId: null,
-            })
-            expect(clearResponse.statusCode).toBe(StatusCodes.OK)
-            expect(clearResponse.json().projectId).toBeNull()
-        })
-
-        it('rejects setting projectId to a project from another platform', async () => {
-            const ctxA = await createTestContext(app, { plan: { chatEnabled: true } })
-            const ctxB = await createTestContext(app, { plan: { chatEnabled: true } })
-
-            const createResponse = await ctxA.post(CONVERSATIONS_URL, { title: 'My Chat' })
-            expect(createResponse.statusCode).toBe(StatusCodes.CREATED)
-            const conversationId = createResponse.json().id
-
-            // User A tries to associate a project that belongs to platform B
-            const setResponse = await ctxA.post(`${CONVERSATIONS_URL}/${conversationId}/project-context`, {
-                projectId: ctxB.project.id,
-            })
-            expect(setResponse.statusCode).toBe(StatusCodes.NOT_FOUND)
-        })
-
-        it('returns 404 when setting project context on a conversation owned by another user', async () => {
-            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
-            const memberCtx = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.VIEWER })
-
-            const createResponse = await ctx.post(CONVERSATIONS_URL, { title: 'Owner Chat' })
-            expect(createResponse.statusCode).toBe(StatusCodes.CREATED)
-            const conversationId = createResponse.json().id
-
-            const setResponse = await memberCtx.post(`${CONVERSATIONS_URL}/${conversationId}/project-context`, {
-                projectId: ctx.project.id,
-            })
-            expect(setResponse.statusCode).toBe(StatusCodes.NOT_FOUND)
-        })
-    })
 })

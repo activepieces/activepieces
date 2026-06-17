@@ -27,7 +27,7 @@ export const McpServerEntity = new EntitySchema<McpServerWithSchema>({
             type: String,
             nullable: false,
         },
-        enabledTools: {
+        disabledTools: {
             type: 'jsonb',
             nullable: true,
         },

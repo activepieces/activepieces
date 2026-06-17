@@ -1,10 +1,12 @@
 import { PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
-import { BranchOperator, FlowActionType, flowStructureUtil, isNil, isObject, singleValueConditions } from '@activepieces/shared'
+import { BranchOperator, EngineResponse, EngineResponseStatus, FlowActionType, flowStructureUtil, isNil, isObject, McpServerType, McpToolResult, ProjectScopedMcpServer, singleValueConditions, tryCatch, WorkerJobType } from '@activepieces/shared'
 import type { RouterAction, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
+import { expressionRewriter } from '../../flows/flow-version/migrations/expression-rewriter'
+import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
+import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 
 const NON_INPUT_PROP_TYPES = new Set<PropertyType>([
     PropertyType.OAUTH2,
@@ -14,18 +16,39 @@ const NON_INPUT_PROP_TYPES = new Set<PropertyType>([
     PropertyType.MARKDOWN,
 ])
 
+const INTERNAL_INPUT_KEYS = new Set(['auth'])
+
 const RESOLVABLE_PROP_TYPES = new Set<PropertyType>([
     PropertyType.DROPDOWN,
     PropertyType.MULTI_SELECT_DROPDOWN,
     PropertyType.DYNAMIC,
 ])
 
-const STEP_REFERENCE_HINT = 'Use {{stepName.field}} to reference prior steps (no .output. in path).'
+const STEP_REFERENCE_HINT = 'Reference a prior step\'s output with {{stepName[\'output\'].field}} (output is nested under [\'output\'], e.g. {{trigger[\'output\'].body.email}}, {{send_email[\'output\'].id}}). For a continue-on-failure step\'s error, use {{stepName[\'error\'].message}}.'
 
-function mcpToolError(prefix: string, err: unknown): { content: [{ type: 'text', text: string }] } {
+function mcpToolError(prefix: string, err: unknown): McpToolResult {
+    const entityDetail = extractEntityNotFoundDetail(err)
+    if (entityDetail) {
+        return { content: [{ type: 'text', text: `❌ ${prefix}: ${entityDetail} not found. Check the ID or name and try again.` }], isError: true }
+    }
     const raw = err instanceof Error ? err.message : String(err)
     const message = sanitizeErrorMessage(raw)
-    return { content: [{ type: 'text', text: `❌ ${prefix}: ${message}` }] }
+    return { content: [{ type: 'text', text: `❌ ${prefix}: ${message}` }], isError: true }
+}
+
+function extractEntityNotFoundDetail(err: unknown): string | null {
+    if (!isObject(err)) return null
+    const error = (err as Record<string, unknown>).error
+    if (!isObject(error)) return null
+    const typed = error as Record<string, unknown>
+    if (typed.code !== 'ENTITY_NOT_FOUND') return null
+    if (!isObject(typed.params)) return null
+    const params = typed.params as Record<string, unknown>
+    if (typeof params.message === 'string') return params.message
+    const entityType = typeof params.entityType === 'string' ? params.entityType : null
+    const entityId = typeof params.entityId === 'string' ? params.entityId : null
+    if (entityType) return `${entityType}${entityId ? ` "${entityId}"` : ''}`
+    return entityId ? `"${entityId}"` : null
 }
 
 function sanitizeErrorMessage(message: string): string {
@@ -47,14 +70,52 @@ function formatOptionsHint(options: Array<{ label: string, value: unknown }> | u
     return ` — options: ${values.join(', ')}`
 }
 
+function levenshtein(a: string, b: string): number {
+    const rows = Array.from({ length: a.length + 1 }, (_, i) => [i, ...new Array<number>(b.length).fill(0)])
+    for (let j = 1; j <= b.length; j++) {
+        rows[0][j] = j
+    }
+    for (let i = 1; i <= a.length; i++) {
+        for (let j = 1; j <= b.length; j++) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1
+            rows[i][j] = Math.min(rows[i - 1][j] + 1, rows[i][j - 1] + 1, rows[i - 1][j - 1] + cost)
+        }
+    }
+    return rows[a.length][b.length]
+}
+
+function suggestClosestKey(key: string, validKeys: string[]): string | null {
+    const loweredKey = key.toLowerCase()
+    const containing = validKeys.find((valid) => {
+        const loweredValid = valid.toLowerCase()
+        return loweredValid.includes(loweredKey) || loweredKey.includes(loweredValid)
+    })
+    if (containing) {
+        return containing
+    }
+    const threshold = Math.max(2, Math.floor(key.length / 2))
+    let best: string | null = null
+    let bestDistance = Infinity
+    for (const valid of validKeys) {
+        const distance = levenshtein(loweredKey, valid.toLowerCase())
+        if (distance < bestDistance) {
+            bestDistance = distance
+            best = valid
+        }
+    }
+    return best !== null && bestDistance <= threshold ? best : null
+}
+
 function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentType }: DiagnosePiecePropsParams): DiagnosisResult {
     const missing: string[] = []
     const uiRequired: string[] = []
     const allProps: string[] = []
+    const validPropKeys = new Set<string>()
     for (const [propName, prop] of Object.entries(props)) {
         if (NON_INPUT_PROP_TYPES.has(prop.type)) {
             continue
         }
+        validPropKeys.add(propName)
         allProps.push(`${propName} (${prop.type}${prop.required ? ', required' : ''})`)
         if (prop.required) {
             const value = input[propName]
@@ -71,24 +132,72 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
             }
         }
     }
+
+    const unknownKeys = Object.keys(input).filter((key) => !validPropKeys.has(key) && !INTERNAL_INPUT_KEYS.has(key))
+
     const hasAuth = pieceAuth !== undefined && pieceAuth !== null && requireAuth
     if (hasAuth && !input.auth) {
         missing.push('auth (connection required — use ap_list_connections)')
     }
     const parts: string[] = []
+    if (unknownKeys.length > 0) {
+        const validPropDescriptions = Object.entries(props)
+            .filter(([, prop]) => !NON_INPUT_PROP_TYPES.has(prop.type))
+            .map(([name, prop]) => `- ${name} (${prop.type}): ${prop.description ?? prop.displayName}`)
+            .join('\n')
+        const suggestions = unknownKeys
+            .map((key) => {
+                const closest = suggestClosestKey(key, [...validPropKeys])
+                return closest ? `'${key}' → did you mean '${closest}'?` : null
+            })
+            .filter((suggestion): suggestion is string => suggestion !== null)
+        const suggestionLine = suggestions.length > 0 ? `\nSuggestions: ${suggestions.join('; ')}.` : ''
+        parts.push(`Unknown properties: ${unknownKeys.map((k) => `'${k}'`).join(', ')}.${suggestionLine} Valid properties for this action are:\n${validPropDescriptions}\nPlease retry with correct property names.`)
+    }
     if (missing.length > 0) {
         parts.push(`Missing required inputs: ${missing.join(', ')}.`)
     }
     if (uiRequired.length > 0) {
         parts.push(`These inputs require selection from your account and must be configured in the Activepieces UI: ${uiRequired.join(', ')}.`)
     }
-    if (allProps.length > 0) {
+    if (allProps.length > 0 && unknownKeys.length === 0) {
         parts.push(`Expected inputs: ${allProps.join(', ')}.`)
     }
     if (hasAuth && !input.auth) {
         parts.push(`This ${componentType} requires authentication.`)
     }
-    return { parts, missing, uiRequired, hasAuth }
+    return { parts, missing, unknownKeys, uiRequired, hasAuth }
+}
+
+async function detectUnknownInputProps({ pieceName, pieceVersion, componentName, componentType, input, platformId, log }: DetectUnknownInputPropsParams): Promise<{ unknownKeys: string[], message: string }> {
+    if (!isObject(input) || Object.keys(input).length === 0) {
+        return { unknownKeys: [], message: '' }
+    }
+    try {
+        const piece = await pieceMetadataService(log).getOrThrow({ platformId, name: pieceName, version: pieceVersion })
+        const component = componentType === 'action' ? piece.actions[componentName] : piece.triggers[componentName]
+        if (isNil(component)) {
+            return { unknownKeys: [], message: '' }
+        }
+        const { unknownKeys, parts } = diagnosePieceProps({ props: component.props, input, pieceAuth: piece.auth, requireAuth: component.requireAuth, componentType })
+        if (unknownKeys.length === 0) {
+            return { unknownKeys: [], message: '' }
+        }
+        const unknownMessage = parts.find((p) => p.startsWith('Unknown properties:')) ?? `Unknown properties: ${unknownKeys.map((k) => `'${k}'`).join(', ')}.`
+        return { unknownKeys, message: unknownMessage }
+    }
+    catch (err) {
+        log.warn({ err, pieceName, componentName }, 'detectUnknownInputProps: failed to fetch piece metadata')
+        return { unknownKeys: [], message: '' }
+    }
+}
+
+async function rejectUnknownInputProps(params: DetectUnknownInputPropsParams): Promise<McpToolResult | null> {
+    const { unknownKeys, message } = await detectUnknownInputProps(params)
+    if (unknownKeys.length === 0) {
+        return null
+    }
+    return { content: [{ type: 'text', text: `❌ ${message}` }] }
 }
 
 const MAX_PROP_DEPTH = 3
@@ -113,7 +222,7 @@ function buildPropSummaries(props: PiecePropertyMap, depth = 0): PropSummary[] {
                 summary.options = prop.options.options.map((o: { label: string, value: unknown }) => ({ label: o.label, value: o.value }))
             }
             if (prop.type === PropertyType.DROPDOWN || prop.type === PropertyType.MULTI_SELECT_DROPDOWN) {
-                summary.note = 'Dynamic dropdown — options load from your account via API. Configure in the Activepieces UI, or provide a known value.'
+                summary.note = 'Resolve with ap_resolve_property_options. Use the returned value (ID), not label.'
             }
             if (prop.type === PropertyType.DYNAMIC) {
                 summary.note = 'DYNAMIC — call ap_get_piece_props with auth+input to resolve sub-fields.'
@@ -138,24 +247,34 @@ function normalizePieceName(pieceName: string | undefined): string | undefined {
     return `@activepieces/piece-${normalized}`
 }
 
-async function lookupPieceComponent({ pieceName, componentName, componentType, projectId, log }: LookupPieceComponentParams): Promise<LookupPieceComponentResult> {
+async function lookupPieceComponent({ pieceName, componentName, componentType, projectId, platformId, log }: LookupPieceComponentParams): Promise<LookupPieceComponentResult> {
     const normalized = normalizePieceName(pieceName)
     if (isNil(normalized)) {
         return { error: mcpToolError('Validation failed', new Error('pieceName is required')) }
     }
-    // Resolve platformId so private (CUSTOM) pieces on this platform are findable by
-    // every tool that uses this helper (ap_add_step, ap_update_step, ap_get_piece_props,
-    // ap_validate_step_config, ap_run_action, etc.).
-    const project = await projectService(log).getOneOrThrow(projectId)
-    const piece = await pieceMetadataService(log).get({ name: normalized, projectId, platformId: project.platformId })
+    // platformId is needed so private (CUSTOM) pieces on this platform are discoverable.
+    let resolvedPlatformId: string
+    if (!isNil(platformId)) {
+        resolvedPlatformId = platformId
+    }
+    else if (!isNil(projectId)) {
+        resolvedPlatformId = (await projectService(log).getOneOrThrow(projectId)).platformId
+    }
+    else {
+        return { error: mcpToolError('Validation failed', new Error('Either platformId or projectId is required to look up a piece')) }
+    }
+    const piece = await pieceMetadataService(log).get({ name: normalized, projectId, platformId: resolvedPlatformId })
     if (isNil(piece)) {
-        return { error: { content: [{ type: 'text', text: `❌ Piece "${normalized}" not found. Use ap_list_pieces to get valid piece names.` }] } }
+        return { error: { content: [{ type: 'text', text: `❌ Piece "${normalized}" not found. Use ap_research_pieces to get valid piece names.` }] } }
     }
     const componentMap = componentType === 'action' ? piece.actions : piece.triggers
     const label = componentType === 'action' ? 'Action' : 'Trigger'
     const component = componentMap[componentName]
     if (isNil(component)) {
-        return { error: { content: [{ type: 'text', text: `❌ ${label} "${componentName}" not found in "${normalized}". Available: ${Object.keys(componentMap).join(', ')}` }] } }
+        const available = Object.keys(componentMap)
+        const suggestion = available.find((name) => name.includes(componentName))
+        const hint = suggestion ? ` Did you mean "${suggestion}"?` : ''
+        return { error: { content: [{ type: 'text', text: `❌ ${label} "${componentName}" not found in "${normalized}".${hint} Available: ${available.join(', ')}` }] } }
     }
     return { piece, component, pieceName: normalized }
 }
@@ -175,9 +294,9 @@ const SINGLE_VALUE_OPERATORS_HINT = singleValueConditions.join(', ')
 const BRANCH_CONDITIONS_INPUT_SCHEMA = z.array(
     z.array(
         z.object({
-            firstValue: z.string().min(1, 'firstValue must be a non-empty string or template expression (e.g. {{trigger.field}})').describe('Left-hand value (template expressions like {{step_1.field}} are allowed). Must be non-empty.'),
+            firstValue: z.string().min(1, 'firstValue must be a non-empty string or template expression (e.g. {{trigger[\'output\'].field}})').describe('Left-hand value (template expressions like {{step_1[\'output\'].field}} are allowed). Must be non-empty.'),
             operator: z.enum(Object.values(BranchOperator) as [BranchOperator, ...BranchOperator[]]).optional().describe(`Comparison operator. Single-value operators (no secondValue needed): ${SINGLE_VALUE_OPERATORS_HINT}.`),
-            secondValue: z.string().min(1, 'secondValue must be a non-empty string when provided').optional().describe('Right-hand value — required (and non-empty) for all operators except single-value ones.'),
+            secondValue: z.string().min(1, 'secondValue must be a non-empty string when provided').optional().describe('Right-hand value (template expressions like {{step_1[\'output\'].field}} are allowed) — required (and non-empty) for all operators except single-value ones.'),
             caseSensitive: z.boolean().optional().describe('For text operators: whether to match case sensitively'),
         }).superRefine((cond, ctx) => {
             if (cond.operator !== undefined
@@ -276,6 +395,139 @@ async function fillDefaultsForMissingOptionalProps({ settings, platformId, log }
     }
 }
 
+function buildErrorHandlingOptions({ continueOnFailure, retryOnFailure }: {
+    continueOnFailure?: boolean
+    retryOnFailure?: boolean
+}): { continueOnFailure: { value: boolean }, retryOnFailure: { value: boolean } } {
+    return {
+        continueOnFailure: { value: continueOnFailure ?? false },
+        retryOnFailure: { value: retryOnFailure ?? false },
+    }
+}
+
+async function resolveLatestPieceVersion({ pieceName, projectId, platformId, log }: {
+    pieceName: string
+    projectId: string
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<ResolveLatestPieceVersionResult> {
+    const normalized = normalizePieceName(pieceName)
+    if (isNil(normalized)) {
+        return { error: mcpToolError('Validation failed', new Error('pieceName is required')) }
+    }
+    const piece = await pieceMetadataService(log).get({ name: normalized, projectId, platformId })
+    if (isNil(piece)) {
+        return { error: { content: [{ type: 'text', text: `❌ Piece "${normalized}" not found. Use ap_research_pieces to get valid piece names.` }] } }
+    }
+    return { pieceVersion: `~${piece.version}`, normalizedPieceName: normalized }
+}
+
+function withTimeout<T>({ promise, ms }: { promise: Promise<T>, ms: number }): Promise<T> {
+    let timer: ReturnType<typeof setTimeout>
+    return Promise.race([
+        promise.finally(() => clearTimeout(timer)),
+        new Promise<never>((_resolve, reject) => {
+            timer = setTimeout(() => reject(new Error(`Timed out after ${ms}ms`)), ms)
+        }),
+    ])
+}
+
+async function resolvePlatformId({ mcp, log }: { mcp: ProjectScopedMcpServer, log: FastifyBaseLogger }): Promise<string> {
+    if (mcp.platformId) {
+        return mcp.platformId
+    }
+    const project = await projectService(log).getOneOrThrow(mcp.projectId)
+    return project.platformId
+}
+
+function isProjectScoped(mcp: ProjectScopedMcpServer): boolean {
+    return mcp.type === McpServerType.PROJECT
+}
+
+function rewriteAllReferences<C = unknown>({ input, loopItems, conditions, trigger }: {
+    input?: Record<string, unknown>
+    loopItems?: string
+    conditions?: C
+    trigger: Step
+}): { input?: Record<string, unknown>, loopItems?: string, conditions?: C } {
+    const stepNames = flowStructureUtil.getAllSteps(trigger).map(s => s.name)
+    return {
+        input: input ? expressionRewriter.rewriteDeep(input, stepNames, true) : undefined,
+        loopItems: loopItems != null ? expressionRewriter.rewriteStepReferences({ input: loopItems, stepNames, idempotent: true }) : loopItems,
+        conditions: conditions ? expressionRewriter.rewriteDeep(conditions, stepNames, true) : conditions,
+    }
+}
+
+function extractOptionsArray(options: unknown): Array<{ label: string, value: unknown }> | null {
+    if (Array.isArray(options)) return options
+
+    if (isObject(options)) {
+        const obj = options as Record<string, unknown>
+        if (Array.isArray(obj.options)) {
+            return obj.options as Array<{ label: string, value: unknown }>
+        }
+    }
+
+    return null
+}
+
+const RESOLVE_TIMEOUT_MS = 30_000
+
+async function executePropertyResolution({ pieceName, pieceVersion, actionOrTriggerName, propertyName, auth, input, searchValue, projectId, platformId, log }: {
+    pieceName: string
+    pieceVersion: string
+    actionOrTriggerName: string
+    propertyName: string
+    auth?: string
+    input?: Record<string, unknown>
+    searchValue?: string
+    projectId: string
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<PropertyResolutionResult> {
+    const piecePackage = await getPiecePackageWithoutArchive(log, platformId, { pieceName, pieceVersion })
+    const resolvedInput: Record<string, unknown> = {
+        ...(input ?? {}),
+        ...(auth ? { auth: `{{connections['${auth}']}}` } : {}),
+    }
+
+    const { data: result, error } = await tryCatch(() => withTimeout({
+        promise: userInteractionWatcher.submitAndWaitForResponse<EngineResponse<{
+            options: Array<{ label: string, value: unknown }> | PiecePropertyMap
+            disabled?: boolean
+        }>>({
+            jobType: WorkerJobType.EXECUTE_PROPERTY,
+            platformId,
+            projectId,
+            flowVersion: undefined,
+            propertyName,
+            actionOrTriggerName,
+            input: resolvedInput,
+            sampleData: {},
+            searchValue,
+            piece: piecePackage,
+        }, log),
+        ms: RESOLVE_TIMEOUT_MS,
+    }))
+
+    if (error || result.status !== EngineResponseStatus.OK || isNil(result.response?.options)) {
+        return { status: 'failed', message: error instanceof Error ? error.message : 'Could not resolve options' }
+    }
+
+    const { options } = result.response
+    const optionsArray = extractOptionsArray(options)
+    if (optionsArray !== null) {
+        return {
+            status: 'options',
+            options: optionsArray.map((o) => ({ label: String(o.label ?? ''), value: o.value })),
+        }
+    }
+    if (isObject(options) && !Array.isArray(options)) {
+        return { status: 'dynamic', props: options }
+    }
+    return { status: 'failed', message: 'Unrecognized options format' }
+}
+
 export const mcpUtils = {
     mcpToolError,
     truncate,
@@ -283,23 +535,49 @@ export const mcpUtils = {
     routerInvalidWarning,
     publishedFlowWarning,
     diagnosePieceProps,
+    detectUnknownInputProps,
+    rejectUnknownInputProps,
     buildPropSummaries,
     normalizePieceName,
     lookupPieceComponent,
     findResolvableProps,
     validateAuth,
     fillDefaultsForMissingOptionalProps,
+    buildErrorHandlingOptions,
+    resolveLatestPieceVersion,
+    resolvePlatformId,
+    isProjectScoped,
+    withTimeout,
+    rewriteAllReferences,
+    extractOptionsArray,
+    executePropertyResolution,
+    RESOLVE_TIMEOUT_MS,
     STEP_REFERENCE_HINT,
     BRANCH_CONDITIONS_INPUT_SCHEMA,
 }
 
 export type { PropSummary }
 
+export type PropertyResolutionResult =
+    | { status: 'options', options: Array<{ label: string, value: unknown }> }
+    | { status: 'dynamic', props: PiecePropertyMap }
+    | { status: 'failed', message: string }
+
 type FindResolvablePropsParams = {
     props: PropSummary[]
     componentProps: PiecePropertyMap
     auth: string | undefined
     providedInput: Record<string, unknown>
+}
+
+type DetectUnknownInputPropsParams = {
+    pieceName: string
+    pieceVersion: string
+    componentName: string
+    componentType: 'action' | 'trigger'
+    input: unknown
+    platformId: string
+    log: FastifyBaseLogger
 }
 
 type DiagnosePiecePropsParams = {
@@ -313,6 +591,7 @@ type DiagnosePiecePropsParams = {
 type DiagnosisResult = {
     parts: string[]
     missing: string[]
+    unknownKeys: string[]
     uiRequired: string[]
     hasAuth: boolean
 }
@@ -334,16 +613,19 @@ type LookupPieceComponentParams = {
     pieceName: string
     componentName: string
     componentType: 'action' | 'trigger'
-    projectId: string
+    projectId: string | undefined
+    platformId?: string
     log: FastifyBaseLogger
 }
 
 type LookupPieceComponentResult =
     | { piece: PieceMetadataModel, component: { props: PiecePropertyMap, requireAuth: boolean, name: string, displayName: string, description: string }, pieceName: string, error?: never }
-    | { error: { content: [{ type: 'text', text: string }] }, piece?: never, component?: never, pieceName?: never }
-
-type McpToolResult = { content: [{ type: 'text', text: string }] }
+    | { error: McpToolResult, piece?: never, component?: never, pieceName?: never }
 
 type ResolveRouterStepResult =
     | { routerStep: RouterAction, error?: never }
     | { error: McpToolResult, routerStep?: never }
+
+type ResolveLatestPieceVersionResult =
+    | { pieceVersion: string, normalizedPieceName: string, error?: never }
+    | { error: McpToolResult, pieceVersion?: never, normalizedPieceName?: never }

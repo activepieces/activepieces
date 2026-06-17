@@ -1,6 +1,7 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { convertJsonToXml } from './lib/actions/convert-json-to-xml';
+import { convertXmlToJson } from './lib/actions/convert-xml-to-json';
 
 export const xml = createPiece({
   displayName: 'XML',
@@ -11,6 +12,6 @@ export const xml = createPiece({
   categories: [PieceCategory.CORE],
   auth: PieceAuth.None(),
   authors: ["Willianwg","kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
-  actions: [convertJsonToXml],
+  actions: [convertJsonToXml, convertXmlToJson],
   triggers: [],
 });

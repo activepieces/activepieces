@@ -8,6 +8,9 @@ export const phoneCallEnded = createTrigger({
     name: 'phoneCallEnded',
     displayName: 'Phone Call Ended',
     description: 'Triggers when a phone call ends, with extracted variables.',
+    aiMetadata: {
+      description: 'Fires via webhook when a call handled by the selected Autocalls assistant ends, delivering the call outcome including duration, status, the input and extracted variables, and the full transcript.',
+    },
     props: {
         assistant: Property.Dropdown({
             auth: autocallsAuth,

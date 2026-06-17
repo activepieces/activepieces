@@ -12,6 +12,10 @@ export const caseAddedOrUpdated = createTrigger({
   name: 'case_added_or_updated',
   displayName: 'Case Added or Updated',
   description: 'Triggers when a case has been added or updated',
+  aiMetadata: {
+    description:
+      'Fires whenever a case (matter) is created or modified in MyCase, delivering the full case payload including case number, name, description, practice area, stage, status, key dates, and outstanding balance. Use to react to new matters or changes in an existing case.',
+  },
   props: {},
   sampleData: {
     id: 12345,

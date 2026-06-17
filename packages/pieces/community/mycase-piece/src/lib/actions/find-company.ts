@@ -7,6 +7,8 @@ export const findCompany = createAction({
   name: 'find_company',
   displayName: 'Find Company',
   description: 'Searches for companies with optional filters',
+  audience: 'both',
+  aiMetadata: { description: 'Read-only search of MyCase companies by name, email, phone, fax, or an updated-after timestamp. Use to resolve a company ID before associating it with a case or a billing contact. Returns matches without modifying anything; if you instead want to guarantee a company exists, use Find or Create Company.', idempotent: true },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

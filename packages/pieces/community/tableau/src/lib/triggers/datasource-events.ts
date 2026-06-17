@@ -6,6 +6,9 @@ export const datasourceEventTrigger = createTrigger({
   name: 'datasource_event',
   displayName: 'Datasource Event',
   description: 'Triggers when a datasource event occurs (created, updated, or deleted)',
+  aiMetadata: {
+    description: 'Fires when a datasource lifecycle event happens on the Tableau site — one of created, updated, or deleted, selected via the Event Type. Represents a single datasource change and carries the affected datasource\'s name and ID.',
+  },
   auth: tableauAuth,
   type: TriggerStrategy.WEBHOOK,
   props: {

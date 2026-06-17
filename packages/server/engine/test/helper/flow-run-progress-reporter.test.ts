@@ -1,11 +1,12 @@
-import { FlowRunStatus, StreamStepProgress, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { FlowActionType, FlowRunStatus, GenericStepOutput, StepOutputStatus, StepRunResponse, StreamStepProgress, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { generateMockEngineConstants } from '../handler/test-helper'
 
-const { uploadRunLogMock, updateRunProgressMock } = vi.hoisted(() => ({
+const { uploadRunLogMock, updateRunProgressMock, updateStepProgressMock } = vi.hoisted(() => ({
     uploadRunLogMock: vi.fn<(request: UploadRunLogsRequest) => Promise<void>>(async () => undefined),
     updateRunProgressMock: vi.fn<(request: UpdateRunProgressRequest) => Promise<void>>(async () => undefined),
+    updateStepProgressMock: vi.fn<(request: { projectId: string, stepResponse: StepRunResponse }) => Promise<void>>(async () => undefined),
 }))
 
 vi.mock('../../src/lib/worker-socket', () => ({
@@ -13,13 +14,16 @@ vi.mock('../../src/lib/worker-socket', () => ({
         getWorkerClient: () => ({
             uploadRunLog: uploadRunLogMock,
             updateRunProgress: updateRunProgressMock,
-            updateStepProgress: vi.fn(),
+            updateStepProgress: updateStepProgressMock,
         }),
     },
 }))
 
 vi.mock('fetch-retry', () => ({
-    default: () => async () => new Response(null, { status: 200 }),
+    default: () => async () => new Response(JSON.stringify({ readUrl: 'https://mock.read.url/logs' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+    }),
 }))
 
 import { flowRunProgressReporter } from '../../src/lib/helper/flow-run-progress-reporter'
@@ -27,7 +31,9 @@ import { flowRunProgressReporter } from '../../src/lib/helper/flow-run-progress-
 const buildUpdateParams = ({ status }: { status: FlowRunStatus }) => {
     const engineConstants = generateMockEngineConstants({
         streamStepProgress: StreamStepProgress.NONE,
-        logsUploadUrl: 'http://127.0.0.1:65535/upload',
+        engineToken: 'mock-engine-token',
+        internalApiUrl: 'http://127.0.0.1:65535/',
+        logsFileId: 'logs-1',
     })
     const flowExecutorContext = new FlowExecutorContext()
     flowExecutorContext.verdict = status === FlowRunStatus.RUNNING
@@ -108,5 +114,90 @@ describe('flow-run-progress-reporter backup ordering', () => {
         await flowRunProgressReporter.sendUpdate(buildUpdateParams({ status: FlowRunStatus.RUNNING }))
         await flowRunProgressReporter.backup()
         expect(lastUploadStatus()).toBe(FlowRunStatus.RUNNING)
+    })
+})
+
+describe('flow-run-progress-reporter slicing in single-step test mode', () => {
+    beforeEach(() => {
+        uploadRunLogMock.mockClear()
+        updateRunProgressMock.mockClear()
+    })
+
+    afterEach(async () => {
+        await flowRunProgressReporter.shutdown()
+    })
+
+    it('does not slice step outputs when slicingEnabled is false', async () => {
+        const engineConstants = generateMockEngineConstants({
+            streamStepProgress: StreamStepProgress.WEBSOCKET,
+            engineToken: 'mock-engine-token',
+            internalApiUrl: 'http://127.0.0.1:65535/',
+            logsFileId: 'logs-1',
+            stepNameToTest: 'step_emit_big',
+        })
+
+        let flowExecutorContext = FlowExecutorContext.empty({
+            engineApi: { engineToken: engineConstants.engineToken, internalApiUrl: engineConstants.internalApiUrl },
+            slicingEnabled: false,
+        })
+        flowExecutorContext.verdict = { status: FlowRunStatus.SUCCEEDED, stopResponse: undefined }
+
+        const big = { big: 'x'.repeat(40_000) }
+        flowExecutorContext = await flowExecutorContext.upsertStep('step_emit_big', GenericStepOutput.create({
+            type: FlowActionType.CODE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: big,
+        }))
+
+        const stored = flowExecutorContext.steps['step_emit_big']
+        expect(stored.outputType).toBeUndefined()
+        expect(stored.output).toEqual(big)
+
+        flowRunProgressReporter.init()
+        await flowRunProgressReporter.sendUpdate({ engineConstants, flowExecutorContext })
+        await flowRunProgressReporter.backup()
+
+        const stepResponse = uploadRunLogMock.mock.calls.at(-1)![0].stepResponse
+        expect(stepResponse!.output).toEqual(big)
+    })
+
+    it('streams the original payload via updateStepProgress even when upsertStep slices the output', async () => {
+        const engineConstants = generateMockEngineConstants({
+            streamStepProgress: StreamStepProgress.WEBSOCKET,
+            engineToken: 'mock-engine-token',
+            internalApiUrl: 'http://127.0.0.1:65535/',
+            logsFileId: 'logs-1',
+        })
+
+        let flowExecutorContext = FlowExecutorContext.empty({
+            engineApi: { engineToken: engineConstants.engineToken, internalApiUrl: engineConstants.internalApiUrl },
+            slicingEnabled: true,
+        })
+
+        const seedStep = GenericStepOutput.create({
+            type: FlowActionType.PIECE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: undefined,
+        }) as GenericStepOutput<FlowActionType.PIECE, unknown>
+
+        // Seed the journal so we can read it back and inspect what was stored
+        flowExecutorContext = await flowExecutorContext.upsertStep('streaming_step', seedStep)
+
+        const outputContext = flowRunProgressReporter.createOutputContext({
+            engineConstants,
+            flowExecutorContext,
+            stepName: 'streaming_step',
+            stepOutput: seedStep,
+        })
+
+        const big = { big: 'x'.repeat(40_000) }
+        await outputContext.update({ data: big })
+
+        const lastCall = updateStepProgressMock.mock.calls.at(-1)
+        expect(lastCall).toBeDefined()
+        // The live UI update must carry the actual payload, never the LogSliceRef
+        expect(lastCall![0].stepResponse.output).toEqual(big)
     })
 })

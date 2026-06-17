@@ -54,6 +54,10 @@ export const courcePassed = createTrigger({
   name: 'courcePassed',
   displayName: 'Course Passed',
   description: 'Trigger when a user passes a course',
+  aiMetadata: {
+    description:
+      'Fires when a user passes a course in SkyPrep, emitting that passed course-progress record. Scoped to a single course when a course ID is supplied, or watches completions across all courses when left empty.',
+  },
   props,
   sampleData: {
     id: 21869068,

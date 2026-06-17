@@ -8,6 +8,9 @@ export const newGroupTrigger = createTrigger({
   name: 'new_group',
   displayName: 'New Group',
   description: 'Fires when a new group/list is created',
+  aiMetadata: {
+    description: 'Fires when a new subscriber group/list is created in the connected Sender account, representing the newly created group.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

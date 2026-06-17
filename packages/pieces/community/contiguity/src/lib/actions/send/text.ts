@@ -15,6 +15,8 @@ export const sendText = createAction({
     name: 'send_text',
     displayName: 'Send SMS/MMS',
     description: 'Send a text message',
+    audience: 'both',
+    aiMetadata: { description: 'Sends an outbound SMS (or MMS when attachments are supplied) through Contiguity to a recipient phone number. Choose this to deliver a text notification or message; the recipient number must be in E.164 format, and the body can be empty only when attachments (up to 3 HTTPS file URLs) are provided. Not idempotent: each call dispatches a new message.', idempotent: false },
     props: {
         to: Property.ShortText({
             displayName: 'To',

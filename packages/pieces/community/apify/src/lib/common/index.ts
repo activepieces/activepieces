@@ -293,7 +293,7 @@ export const createBuildProperty = () => Property.ShortText({
 });
 
 export const createMemoryProperty = (runType: RunType) => Property.StaticDropdown({
-  displayName: 'Memory',
+  displayName: 'Memory (MB)',
   description: `Memory limit for the run, in megabytes. The amount of memory can be set to one of the available options. By default, the run uses a memory limit specified in the ${runType === RunType.ACTOR ? 'default run configuration for the Actor' : 'task settings'}.`,
   required: false,
   options: {

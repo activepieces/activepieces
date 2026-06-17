@@ -14,6 +14,10 @@ export const newMilestoneTrigger = createTrigger({
   name: 'new_milestone',
   displayName: 'New Milestone',
   description: 'Triggers when a new milestone is created.',
+  aiMetadata: {
+    description:
+      'Fires when a new milestone is created in the chosen repository (milestone event with action created; other milestone changes are ignored). Represents a newly opened milestone.',
+  },
   props: {
     repository: githubCommon.repositoryDropdown,
   },
@@ -43,7 +47,7 @@ export const newMilestoneTrigger = createTrigger({
     const { repo, owner } = context.propsValue.repository!;
 
     const response = await githubApiCall<{ id: number }>({
-      accessToken: context.auth.access_token,
+      auth: context.auth,
       method: HttpMethod.POST,
       resourceUri: `/repos/${owner}/${repo}/hooks`,
       body: {
@@ -73,7 +77,7 @@ export const newMilestoneTrigger = createTrigger({
     );
     if (webhook !== null && webhook !== undefined) {
       await githubApiCall({
-        accessToken: context.auth.access_token,
+        auth: context.auth,
         method: HttpMethod.DELETE,
         resourceUri: `/repos/${webhook.owner}/${webhook.repo}/hooks/${webhook.webhookId}`,
       });

@@ -16,12 +16,14 @@ export const formBricksRegisterTrigger = ({
   displayName,
   eventType,
   description,
+  aiMetadata,
   sampleData,
 }: {
   name: string;
   displayName: string;
   eventType: string;
   description: string;
+  aiMetadata?: { description: string };
   sampleData: unknown;
 }) =>
   createTrigger({
@@ -29,6 +31,7 @@ export const formBricksRegisterTrigger = ({
     name: `formbricks_trigger_${name}`,
     displayName,
     description,
+    aiMetadata,
     props: {
       survey_id: Property.MultiSelectDropdown({
         auth: formBricksAuth,

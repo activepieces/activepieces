@@ -9,6 +9,12 @@ export const createBusinessProfileAction = createAction({
   displayName: 'Create Business Profile',
   description:
     'Creates a new business profile in AiPrise. The returned profile can then be used to run document checks or other business verifications.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new business (company) profile in AiPrise from supplied details (name, tax ID, addresses, contacts, etc.); the resulting profile is the entity you later run business verifications or document checks against. Use this as the setup step before Start Business Verification or Run Business Document Check. Only the business name is required. Not idempotent — each call creates a separate profile, even with identical input.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Business Name',

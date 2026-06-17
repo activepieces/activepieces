@@ -14,10 +14,11 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
     async createForPause(params: CreateForPauseParams): Promise<CreateForPauseResult> {
         const preCompleted = await waitpointRepo().findOneBy({
             flowRunId: params.flowRunId,
+            stepName: params.stepName,
             status: WaitpointStatus.COMPLETED,
         })
         if (!isNil(preCompleted)) {
-            log.info({ flowRunId: params.flowRunId, existingStatus: preCompleted.status }, '[waitpointService#createForPause] Waitpoint already pre-completed')
+            log.info({ flowRunId: params.flowRunId, stepName: params.stepName, existingStatus: preCompleted.status }, '[waitpointService#createForPause] Waitpoint already pre-completed for this step')
             return { inserted: false, waitpoint: preCompleted }
         }
 
@@ -77,47 +78,20 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                 .where({ id: params.waitpointId, flowRunId: params.flowRunId, status: WaitpointStatus.PENDING })
                 .getOne()
 
-            if (!isNil(pending)) {
-                const updated: Waitpoint = {
-                    ...pending,
-                    status: WaitpointStatus.COMPLETED,
-                    resumePayload: params.resumePayload,
-                    workerHandlerId: params.workerHandlerId ?? pending.workerHandlerId,
-                }
-                await repo.save(updated)
-                log.info({ flowRunId: params.flowRunId }, '[waitpointService#complete] Completed existing PENDING waitpoint')
-                return { completedExisting: true, waitpoint: updated }
+            if (isNil(pending)) {
+                log.info({ flowRunId: params.flowRunId, waitpointId: params.waitpointId }, '[waitpointService#complete] No pending waitpoint matches; dropping stale resume signal')
+                return { completedExisting: false, waitpoint: null }
             }
 
-            const existing = await repo.findOneBy({ flowRunId: params.flowRunId })
-            if (!isNil(existing) && existing.status === WaitpointStatus.COMPLETED) {
-                log.info({ flowRunId: params.flowRunId }, '[waitpointService#complete] Waitpoint already completed, skipping pre-complete')
-                return { completedExisting: false, waitpoint: existing }
+            const updated: Waitpoint = {
+                ...pending,
+                status: WaitpointStatus.COMPLETED,
+                resumePayload: params.resumePayload,
+                workerHandlerId: params.workerHandlerId ?? pending.workerHandlerId,
             }
-
-            await repo
-                .createQueryBuilder()
-                .insert()
-                .into('waitpoint')
-                .values({
-                    id: apId(),
-                    flowRunId: params.flowRunId,
-                    projectId: params.projectId,
-                    stepName: '',
-                    type: PauseType.WEBHOOK,
-                    status: WaitpointStatus.COMPLETED,
-                    resumeDateTime: null,
-                    responseToSend: null,
-                    workerHandlerId: params.workerHandlerId ?? null,
-                    httpRequestId: null,
-                    resumePayload: params.resumePayload,
-                })
-                .orIgnore()
-                .execute()
-
-            const preCompleted = await repo.findOneByOrFail({ flowRunId: params.flowRunId, stepName: '' })
-            log.info({ flowRunId: params.flowRunId }, '[waitpointService#complete] Pre-completed waitpoint (resume arrived before pause)')
-            return { completedExisting: false, waitpoint: preCompleted }
+            await repo.save(updated)
+            log.info({ flowRunId: params.flowRunId }, '[waitpointService#complete] Completed existing PENDING waitpoint')
+            return { completedExisting: true, waitpoint: updated }
         })
     },
 
@@ -148,8 +122,12 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         }
 
         if (flowRunStatus === FlowRunStatus.RUNNING || flowRunStatus === FlowRunStatus.QUEUED) {
-            await this.complete({ flowRunId, projectId, waitpointId, resumePayload, workerHandlerId })
-            log.info({ flowRunId }, '[waitpointService#handleResumeSignal] Resume signal buffered (pre-completed)')
+            const { completedExisting } = await this.complete({ flowRunId, projectId, waitpointId, resumePayload, workerHandlerId })
+            if (!completedExisting) {
+                log.info({ flowRunId, waitpointId }, '[waitpointService#handleResumeSignal] Stale resume signal during RUNNING/QUEUED, ignoring')
+                return false
+            }
+            log.info({ flowRunId }, '[waitpointService#handleResumeSignal] Marked PENDING waitpoint COMPLETED while flow still RUNNING/QUEUED; runsMetadataQueue will trigger resume on PAUSED upload')
             return true
         }
 

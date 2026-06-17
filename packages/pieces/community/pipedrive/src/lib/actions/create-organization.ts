@@ -16,6 +16,12 @@ export const createOrganizationAction = createAction({
 	name: 'create-organization',
 	displayName: 'Create Organization',
 	description: 'Creates a new organization.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Creates a new organization (company) with a required name and optional owner, address, visibility, labels, and custom fields. Use to add a company record (use Update Organization to edit one, or Find Organization to check for an existing match). Not idempotent: each call creates a separate organization, so guard against duplicates.',
+		idempotent: false,
+	},
 	props: {
 		name: Property.ShortText({
 			displayName: 'Name',

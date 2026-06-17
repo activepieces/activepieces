@@ -8,6 +8,8 @@ export const updateContractStatus = createAction({
     name: 'update_contract_status',
     displayName: 'Update Contract Status',
     description: 'Change the status of a contract workspace (e.g., amend, putOnHold, resume, close).',
+    audience: 'both',
+    aiMetadata: { description: 'Perform a status-change action on a contract workspace in a SAP Ariba Contracts realm, identified by contract ID and acting on behalf of a user (requires realm, user, and password adapter). The action prop selects the transition: amend, completeAmendment, putOnHold, resume, or close (amend also takes an amendment type and reason). Not idempotent: each call drives a state transition that depends on the contract\'s current status.', idempotent: false },
     props: {
         realm: Property.ShortText({
             displayName: 'Realm',

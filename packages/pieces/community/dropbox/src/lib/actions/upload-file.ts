@@ -10,6 +10,8 @@ export const dropboxUploadFile = createAction({
   auth: dropboxAuth,
   name: 'upload_dropbox_file',
   description: 'Upload a file',
+  audience: 'both',
+  aiMetadata: { description: 'Uploads a file (provided as a URL or base64 file object) to the given Dropbox path in add mode. Use to store binary or arbitrary file content; prefer the create-text-file action when the source is plain text. Not idempotent: each call uploads, so repeating it can create autorenamed duplicates rather than overwriting.', idempotent: false },
   displayName: 'Upload file',
   props: {
     path: Property.ShortText({

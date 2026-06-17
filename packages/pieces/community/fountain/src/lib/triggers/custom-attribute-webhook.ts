@@ -27,6 +27,9 @@ export const fountainCustomAttributeWebhook = createTrigger({
   name: 'custom_attribute_webhook',
   displayName: 'Custom Attribute Webhook',
   description: 'Triggers when Fountain worker custom attribute values change',
+  aiMetadata: {
+    description: 'Fires when the value of a monitored worker custom attribute changes in Fountain, carrying both the previous and new state of that attribute for the affected worker. Requires the webhook to be registered on the specific custom attribute in Fountain settings.',
+  },
   props: {
     setup: Property.MarkDown({
       value: setupMarkdown,

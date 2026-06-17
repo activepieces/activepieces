@@ -6,11 +6,9 @@ type PieceDisplayNameProps = {
 };
 
 const PieceDisplayName = ({ pieceName, fallback }: PieceDisplayNameProps) => {
-  const { pieceModel } = piecesHooks.usePiece({
-    name: pieceName,
-  });
+  const { summary } = piecesHooks.usePieceSummary({ name: pieceName });
 
-  return <span>{pieceModel?.displayName || fallback || pieceName}</span>;
+  return <span>{summary?.displayName || fallback || pieceName}</span>;
 };
 
 export { PieceDisplayName };

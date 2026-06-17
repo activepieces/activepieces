@@ -16,6 +16,8 @@ export const downloadAttachmentAction = createAction({
 	name: 'download-attachment',
 	displayName: 'Download Attachment',
 	description: 'Downloads an attachment file by its ID and returns it as a file.',
+	audience: 'both',
+	aiMetadata: { description: 'Downloads a Confluence attachment by its attachment ID, resolving the download link from the attachment metadata and returning the binary as a file plus the attachment details. Use to retrieve the actual file contents of an attachment (use List Attachments first to discover IDs). Read-only and idempotent.', idempotent: true },
 	props: {
 		attachmentId: Property.ShortText({
 			displayName: 'Attachment ID',

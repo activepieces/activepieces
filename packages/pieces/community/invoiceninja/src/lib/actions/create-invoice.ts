@@ -12,7 +12,9 @@ export const createInvoice = createAction({
   name: 'create_invoice',
   displayName: 'Create Invoice',
   description: 'Creates an invoice in Invoice Ninja for billing purposes.',
-  
+  audience: 'both',
+  aiMetadata: { description: 'Creates an invoice for a client in Invoice Ninja from a JSON array of line items (each referencing an existing product_key, whose price and tax are looked up), with optional discount, notes, and due date. Can optionally email the invoice to the client and/or mark it as sent on creation. Requires a valid client id and at least one line item with a known product key. Not idempotent — each call creates a new invoice.', idempotent: false },
+
   props: {
     client_id: Property.LongText({
       displayName: 'Client ID (alphanumeric)',

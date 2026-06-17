@@ -95,7 +95,10 @@ export const globalConnectionsMutations = {
         currentName,
       }) => {
         if (
-          !(await isConnectionNameUnique(true, displayName)) &&
+          !(await isConnectionNameUnique({
+            isGlobalConnection: true,
+            displayName,
+          })) &&
           displayName !== currentName
         ) {
           throw new ConnectionNameAlreadyExists();

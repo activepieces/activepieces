@@ -14,6 +14,8 @@ export const requestApprovalInMail = createAction({
   displayName: 'Request Approval in Email',
   description:
     'Send approval request email and then wait until the email is approved or disapproved',
+  audience: 'both',
+  aiMetadata: { description: 'Sends an email containing Approve/Disapprove links to one recipient, then pauses the flow until they click one of the links, resuming with the decision. Use this as a human-in-the-loop approval gate before proceeding. Not idempotent: each call sends a new email and creates a new pending waitpoint.', idempotent: false },
   props: {
     recipients: Property.ShortText({
       displayName: 'To Email Address',

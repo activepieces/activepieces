@@ -20,6 +20,8 @@ export const createContact = createAction({
   name: 'create_contact',
   displayName: 'Create Contact',
   description: 'Create a new contact.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new contact in the GoHighLevel/LeadConnector location with optional name, email, phone, company, address, tags, and source. Use to add a lead or person to the CRM. Not idempotent — each call creates a separate contact, so de-duplicate beforehand if needed.', idempotent: false },
   props: {
     firstName: Property.ShortText({
       displayName: 'First Name',

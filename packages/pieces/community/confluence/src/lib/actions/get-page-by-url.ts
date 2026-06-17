@@ -9,6 +9,8 @@ export const getPageByUrlAction = createAction({
 	displayName: 'Get Page by URL',
 	description:
 		'Fetches a page by its Confluence web URL (extracts the page ID automatically).',
+	audience: 'both',
+	aiMetadata: { description: 'Fetches a single Confluence page when you have its web URL rather than its numeric ID, parsing the page ID out of the URL automatically. Use instead of Get Page Content when the agent only has a copy-pasted page link. The body representation (storage, view, atlas doc, or none) is selectable. Read-only and idempotent.', idempotent: true },
 	props: {
 		url: Property.ShortText({
 			displayName: 'Page URL',

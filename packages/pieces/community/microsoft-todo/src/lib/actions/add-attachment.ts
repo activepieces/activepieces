@@ -8,6 +8,8 @@ export const addAttachmentAction = createAction({
     name: 'add_attachment',
     displayName: 'Add an Attachment',
     description: 'Adds an attachment to a task.',
+    audience: 'both',
+    aiMetadata: { description: 'Upload a file as an attachment onto a specific Microsoft To Do task, identified by task list id and task id. Handles both small files (inline upload) and larger ones (chunked upload session) automatically; files must be 25 MB or smaller. Use to attach a document to a task. Not idempotent — each call adds another attachment even if the same file was already attached.', idempotent: false },
     props: {
         task_list_id: Property.Dropdown({
    auth: microsoftToDoAuth,

@@ -13,6 +13,8 @@ export const googleDriveUploadFile = createAction({
   auth: googleDriveAuth,
   name: 'upload_gdrive_file',
   description: 'Upload a file in your Google Drive',
+  audience: 'both',
+  aiMetadata: { description: 'Uploads a binary file (from a URL or base64 input) into Google Drive, optionally inside a parent folder. Use to store an existing file or attachment in Drive; the MIME type is inferred from the file extension. Not idempotent: each call creates a new file.', idempotent: false },
   displayName: 'Upload file',
   props: {
     fileName: Property.ShortText({

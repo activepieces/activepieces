@@ -2,6 +2,7 @@ import {
   AgentKnowledgeBaseTool,
   AgentTool,
   AIProviderName,
+  ApFlagId,
   KnowledgeBaseSourceType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -14,6 +15,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { PROVIDER_EMBEDDING_MODELS } from '@/features/agents';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 
 import { AgentKnowledgeBaseDialog } from '../knowledge-base-dialog';
@@ -93,6 +95,13 @@ export const KnowledgeBaseSection = ({
     ? PROVIDER_EMBEDDING_MODELS[selectedProvider]
     : undefined;
   const supportsEmbeddings = !!embeddingModel;
+  const { data: pgvectorAvailable } = flagsHooks.useFlag<boolean>(
+    ApFlagId.PGVECTOR_AVAILABLE,
+  );
+
+  if (pgvectorAvailable === false) {
+    return null;
+  }
 
   return (
     <div className="mt-6">

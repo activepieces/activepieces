@@ -16,6 +16,12 @@ export const updatePersonAction = createAction({
 	name: 'update-person',
 	displayName: 'Update Person',
 	description: 'Updates an existing person.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Updates fields on an existing person identified by their person ID, such as name, emails, phones, owner, organization, and custom fields; only supplied fields change. Use to edit a contact you have the ID for (use Create Person to add one, or Find Person to locate it). Idempotent: repeating the same update converges to the same person state.',
+		idempotent: true,
+	},
 	props: {
 		personId: personIdProp(true),
 		name: Property.ShortText({

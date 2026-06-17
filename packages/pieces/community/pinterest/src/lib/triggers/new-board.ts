@@ -100,6 +100,10 @@ export const newBoard = createTrigger({
   name: 'newBoard',
   displayName: 'New Board',
   description: 'Fires when a new board is created in the account.',
+  aiMetadata: {
+    description:
+      "Fires when a new board is created in the authenticated Pinterest account, emitting the board record. Polls the account's boards and detects ones created since the last check, optionally filtered by privacy.",
+  },
   props: {
     ad_account_id: adAccountIdDropdown,
     privacy_filter: Property.StaticDropdown({

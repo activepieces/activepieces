@@ -18,7 +18,9 @@ export function ChatPage() {
 
   const [messages, setMessages] = useState<Messages>([]);
   const [chatSessionId, setChatSessionId] = useState<string | null>(null);
-  const { data: flow, isLoading } = flowHooks.useGetFlow(flowId ?? '');
+  const { data: flow, isLoading } = flowHooks.useGetFlow({
+    flowId: flowId ?? '',
+  });
   useEffect(() => {
     if (!chatSessionId) {
       setChatSessionId(nanoid());

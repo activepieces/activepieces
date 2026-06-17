@@ -10,6 +10,8 @@ export const findRecentMeetingAction = createAction({
 	name: 'find_recent_meeting',
 	displayName: 'Find Recent Meeting',
 	description: 'Retrieves the latest meeting for a user.',
+	audience: 'both',
+	aiMetadata: { description: "Returns the most recently transcribed Fireflies meeting for the authenticated account, including its full transcript and summary. Use when the agent wants the latest meeting without knowing its ID; takes no inputs. Returns a found:false result when the account has no recent meeting. Read-only and idempotent.", idempotent: true },
 	props: {},
 	async run(context) {
 		const userResponse = await httpClient.sendRequest<{

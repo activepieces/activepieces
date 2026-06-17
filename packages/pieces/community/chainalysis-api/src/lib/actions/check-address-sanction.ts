@@ -5,6 +5,8 @@ export const checkAddressSanction = createAction({
   name: 'checkAddressSanction',
   displayName: 'Check Address Sanctions',
   description: 'Check if an address is sanctioned',
+  audience: 'both',
+  aiMetadata: { description: 'Screens a single blockchain address against Chainalysis sanctions data to determine whether it is associated with a sanctioned entity. Use this when you need to verify the sanctions/compliance status of a wallet address before transacting or onboarding. Takes one address string; this is a read-only lookup and is safe to repeat.', idempotent: true },
   auth: chainalysisApiAuth,
   requireAuth: true,
   props: {

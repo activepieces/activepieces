@@ -17,6 +17,7 @@ export const woocommerceRegisterTrigger = ({
   topic,
   displayName,
   description,
+  aiMetadata,
   sampleData,
   testDataEndpoint,
 }: {
@@ -24,6 +25,7 @@ export const woocommerceRegisterTrigger = ({
   topic: string;
   displayName: string;
   description: string;
+  aiMetadata: { description: string };
   sampleData: unknown;
   testDataEndpoint: string;
 }) =>
@@ -32,6 +34,7 @@ export const woocommerceRegisterTrigger = ({
     name: `$woocommerce_trigger_${name}`,
     displayName,
     description,
+    aiMetadata,
     props: {},
     sampleData,
     type: TriggerStrategy.WEBHOOK,

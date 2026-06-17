@@ -10,6 +10,8 @@ export const createSubscriber = createAction({
 	name: 'createSubscriber',
 	displayName: 'Create Subscriber',
 	description: 'Creates a new subscriber in a list.',
+	audience: 'both',
+	aiMetadata: { description: 'Adds a new subscriber to a specific Zagomail list, identified by its list UID, populating the list custom fields you provide. Use to enroll a contact into a mailing list. Not idempotent: each call creates another subscriber record, so guard against duplicates if re-running.', idempotent: false },
 	props: {
 		listUId: listUId,
 		fields: listFields(true),

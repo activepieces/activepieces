@@ -15,6 +15,8 @@ export const partnerContractsListingAction = createAction({
   name: 'partnerContractsListing',
   displayName: 'Resources - Partner Contracts - Listing',
   description: 'Get all Partner Contracts.',
+  audience: 'both',
+  aiMetadata: { description: 'List all AMPECO partner contracts, optionally auto-paginating across pages to gather every result. Use to discover contract IDs or survey existing partner agreements before reading or creating one; for a known single contract use the partner contract read action. Read-only and idempotent.', idempotent: true },
   props: {
         
     per_page: Property.Number({

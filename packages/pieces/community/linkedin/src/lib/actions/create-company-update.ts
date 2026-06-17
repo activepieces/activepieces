@@ -13,6 +13,12 @@ export const createCompanyUpdate = createAction({
   name: 'create_company_update',
   displayName: 'Create Company Update',
   description: 'Create a new company update for Company Page',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Publishes a new post to a LinkedIn organization (company) page, with optional image and link preview; posts are always public. Use this to share content on behalf of a company rather than a personal profile, and requires the target organization id plus admin access to that page. Not idempotent: each call creates a separate post, so repeating it with the same text produces a duplicate.',
+    idempotent: false,
+  },
   props: {
     company: linkedinCommon.company,
     imageUrl: linkedinCommon.imageUrl,

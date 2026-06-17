@@ -9,6 +9,8 @@ export const addLabelToEmailAction = createAction({
 	name: 'addLabelToEmail',
 	displayName: 'Add Label to Email',
 	description: 'Adds a category (label) to an email message.',
+	audience: 'both',
+	aiMetadata: { description: 'Adds one or more Outlook categories (labels) to a specific message, merging them with any categories already present. Use this to tag or classify an email. Idempotent: re-adding the same categories leaves the message unchanged since duplicates are de-duplicated.', idempotent: true },
 	props: {
 		messageId: messageIdDropdown({
 			displayName: 'Email',

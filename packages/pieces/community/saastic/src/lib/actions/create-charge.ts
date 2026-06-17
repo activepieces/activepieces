@@ -18,6 +18,8 @@ export const createCharge = createAction({
   name: 'create_charge',
   displayName: 'Create a Customer Charge',
   description: 'Creates a customer charge.',
+  audience: 'both',
+  aiMetadata: { description: 'Records a charge against a customer in Saastic (revenue/churn analytics over Stripe), identifying the customer by email and logging an amount in the smallest currency unit. Use to feed revenue events into Saastic analytics. Not idempotent — each call appends a new charge, so repeating the same input records duplicate charges. Requires a valid customer email.', idempotent: false },
 
   props: {
     email: Property.LongText({

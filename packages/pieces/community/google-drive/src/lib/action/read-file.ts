@@ -7,6 +7,8 @@ export const readFile = createAction({
   name: 'read-file',
   displayName: 'Read File Content',
   description: 'Read a selected file from google drive file',
+  audience: 'both',
+  aiMetadata: { description: 'Downloads the content of a Drive file by its file ID and returns it as a usable file reference. Use to retrieve a file an agent already knows the ID of (e.g. from a trigger or search). Read-only and idempotent. Requires the exact file ID, not a name.', idempotent: true },
   props: {
     fileId: Property.ShortText({
       displayName: 'File ID',

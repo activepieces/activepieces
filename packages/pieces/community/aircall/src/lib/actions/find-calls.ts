@@ -9,6 +9,8 @@ export const findCalls = createAction({
   name: 'findCalls',
   displayName: 'Find Call',
   description: 'Finds specific call based on provided filter.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches Aircall calls and returns the single most recent match, optionally narrowed by direction (inbound/outbound), phone number, and tag IDs; with no filters it returns the latest call overall. Use to look up a call before commenting, tagging, or fetching its full details. Read-only and idempotent.', idempotent: true },
   props: {
     direction: Property.StaticDropdown({
       displayName: 'Call Direction',

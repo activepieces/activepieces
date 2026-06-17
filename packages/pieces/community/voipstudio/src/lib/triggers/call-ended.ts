@@ -10,6 +10,10 @@ export const callEnded = createTrigger({
   name: 'callEnded',
   displayName: 'Call Ended',
   description: 'Triggered when a call ends or is terminated',
+  aiMetadata: {
+    description:
+      'Fires when a VoIPstudio call hangs up or is otherwise terminated, representing the completion of a call along with its duration and termination cause. Requires the Call Ended webhook event to be enabled in the VoIPstudio integrations panel.',
+  },
   props: {
     instruction: Property.MarkDown({
       value: `

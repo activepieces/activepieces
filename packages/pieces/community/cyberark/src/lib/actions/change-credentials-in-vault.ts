@@ -10,6 +10,11 @@ export const changeCredentialsInVault = createAction({
   displayName: 'Change Credentials in the Vault',
   description:
     'Sets account credentials and changes them in the Vault. This will not affect credentials on the target device.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Sets a new credential value for a stored CyberArk account (by account ID) and updates it in the Vault only — it does NOT change the credential on the target device, so the Vault may end up out of sync with the managed system. Use when you need to record a known credential in the Vault. Not idempotent: each call writes a new Vault password version.',
+    idempotent: false,
+  },
   props: {
     accountId: accountIdDropdown,
     newCredentials: Property.ShortText({

@@ -11,6 +11,7 @@ import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const firstDayOfPreviousMonthAction = createAction({
+  audience: 'human',
   name: 'first_day_of_previous_month',
   displayName: 'First Day of Previous Month',
   description: 'Get the date and time of the first day of the previous month',

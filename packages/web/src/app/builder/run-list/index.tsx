@@ -71,10 +71,22 @@ const RunsList = React.memo(() => {
     },
   });
 
+  const dedupedRuns: FlowRun[] = useMemo(() => {
+    const seen = new Set<string>();
+    return (runs?.pages.flatMap((page) => page.data) ?? []).filter((run) => {
+      if (seen.has(run.id)) {
+        return false;
+      }
+      seen.add(run.id);
+      return true;
+    });
+  }, [runs]);
+
   const allViewedRuns: RunsListItem[] = useMemo(() => {
-    const allRuns = (runs?.pages.flatMap((page) => page.data) ?? []).map(
-      (run) => ({ type: 'flowRun' as const, run }),
-    );
+    const allRuns = dedupedRuns.map((run) => ({
+      type: 'flowRun' as const,
+      run,
+    }));
     if (hasNextPage) {
       return [
         ...allRuns,
@@ -82,7 +94,7 @@ const RunsList = React.memo(() => {
       ];
     }
     return allRuns;
-  }, [runs, hasNextPage]);
+  }, [dedupedRuns, hasNextPage]);
 
   return (
     <div className="h-full w-full flex flex-col">
@@ -93,12 +105,11 @@ const RunsList = React.memo(() => {
 
       {isError && <div>{t('Error, please try again.')}</div>}
 
-      {runs &&
-        runs.pages.flatMap((page) => page.data).length === 0 &&
-        !isLoading &&
-        !isRefetching && <CardListEmpty message={t('No runs found')} />}
+      {runs && dedupedRuns.length === 0 && !isLoading && !isRefetching && (
+        <CardListEmpty message={t('No runs found')} />
+      )}
 
-      {runs && runs.pages.flatMap((page) => page.data).length > 0 && (
+      {runs && dedupedRuns.length > 0 && (
         <VirtualizedScrollArea
           className="w-full grow max-w-[calc(100%-6px)]"
           items={allViewedRuns}

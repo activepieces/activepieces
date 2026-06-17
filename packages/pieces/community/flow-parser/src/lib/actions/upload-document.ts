@@ -9,6 +9,8 @@ export const uploadDocument = createAction({
   name: 'upload_document',
   displayName: 'Upload Document',
   description: 'Upload a new document to FlowParser for processing',
+  audience: 'both',
+  aiMetadata: { description: 'Uploads a document file to FlowParser, which queues it for OCR/parsing and returns its document ID; use this to ingest a file before its parsed data becomes available (typically via the parsed-document triggers). Requires the file binary as input. Not idempotent — each call creates a new document and uploading the same file again produces a separate document.', idempotent: false },
   props: {
     file: Property.File({
       displayName: 'File',

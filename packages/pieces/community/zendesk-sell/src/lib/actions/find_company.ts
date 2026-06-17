@@ -8,6 +8,8 @@ export const findCompany = createAction({
     name: 'find_company',
     displayName: 'Find Company',
     description: 'Finds a company (organization contact) by name, email, or phone.',
+    audience: 'both',
+    aiMetadata: { description: 'Searches Zendesk Sell for an organization-type contact (a company) by name, email, or phone and returns the first match; the search is automatically scoped to organization contacts only. Use to resolve a company record as distinct from an individual contact. Requires at least one search field; returns null data when no match is found. Idempotent — a read-only lookup.', idempotent: true },
     props: {
         name: Property.ShortText({
             displayName: 'Company Name',

@@ -10,6 +10,8 @@ export const listLinksAction = createAction({
   displayName: 'List Links',
   description:
     'Retrieve all links on a domain, with pagination and date-range filters.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists short links on a Short.io domain, with optional filters by folder, link ID, exact or before/after creation date, sort order, and a page token for paginating large result sets. Use to enumerate or search a domain\'s links, or to fetch the next page of a prior result. Requires a domain; read-only and idempotent.', idempotent: true },
   props: {
     domain: {
       ...domainIdDropdown,

@@ -7,6 +7,8 @@ export const getTransactionOutspends = createAction({
   name: 'get_transaction_outspends',
   displayName: 'Get All Transaction Output Spend Statuses',
   description: 'Get the spending status of all outputs in a transaction',
+  audience: 'both',
+  aiMetadata: { description: 'Check the spent/unspent status of every output of a transaction at once, by its transaction ID. Pick this to survey all outputs; use Get Transaction Output Spend Status to check a single output by index. Read-only.', idempotent: true },
   // category: 'Transactions',
   props: {
     txid: Property.ShortText({

@@ -8,6 +8,7 @@ import {
 import { baseUrlv0 } from '../common/common';
 
 export const listRags = createAction({
+  audience: 'human',
   auth: straicoAuth,
   name: 'list_rags',
   displayName: 'List RAGs',

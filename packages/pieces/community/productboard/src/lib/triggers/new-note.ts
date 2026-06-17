@@ -10,6 +10,9 @@ export const newNote = createTrigger({
     name: 'new_note',
     displayName: 'New Note',
     description: 'Triggers when a new note is created in Productboard',
+    aiMetadata: {
+        description: 'Fires when a new note is created in Productboard (note.created webhook event), representing newly captured customer feedback or external input.',
+    },
     auth: productboardAuth,
     type: TriggerStrategy.WEBHOOK,
     props: {},

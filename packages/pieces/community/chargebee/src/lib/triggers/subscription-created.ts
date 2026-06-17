@@ -15,6 +15,10 @@ export const subscriptionCreated = createTrigger({
   name: 'subscription_created',
   displayName: 'Subscription Created',
   description: 'Triggers when a new subscription is created for a customer.',
+  aiMetadata: {
+    description:
+      'Fires when Chargebee records a subscription_created event — a new subscription has been created for a customer. The payload carries the subscription along with its customer and (if applicable) invoice.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {

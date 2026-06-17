@@ -7,6 +7,12 @@ export const readDocument = createAction({
   auth: googleDocsAuth,
   name: 'read_document',
   description: 'Read a document from Google Docs',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches the full content and structure of a Google Docs document by its ID. Use when an agent needs to inspect, summarize, or extract text from a known document. Requires the document ID (not a name or URL); read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

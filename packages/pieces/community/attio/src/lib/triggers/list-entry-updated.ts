@@ -12,6 +12,9 @@ export const listEntryUpdatedTrigger = createTrigger({
 	name: 'list_entry_updated',
 	displayName: 'List Entry Updated',
 	description: 'Triggers when an existing entry is updated.',
+	aiMetadata: {
+		description: 'Fires when an existing entry in the selected Attio list is updated (e.g. its list-specific attribute values change). Represents a change to a record\'s entry within a list; scoped to one list chosen per trigger.',
+	},
 	auth: attioAuth,
 	props: {
 		listId: listIdDropdown({

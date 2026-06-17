@@ -8,6 +8,8 @@ export const updateCompany = createAction({
   name: 'update_company',
   displayName: 'Update Company',
   description: 'Updates a company by ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing company (CRM account) identified by Company ID, applying only the fields you supply (name, contact details, address, status, owner, notes, custom fields); omitted fields are left unchanged. Requires a valid company ID; repeating with the same values is safe.', idempotent: true },
   props: {
     companyId: ninjapipeCommon.companyDropdownRequired,
     name: Property.ShortText({ displayName: 'Name', required: false }),

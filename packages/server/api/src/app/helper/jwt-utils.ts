@@ -28,6 +28,7 @@ export enum JwtAudience {
     USER_INVITATION = 'USER_INVITATION',
     MCP_OAUTH_ACCESS = 'MCP_OAUTH_ACCESS',
     MCP_OAUTH_AUTH_REQUEST = 'MCP_OAUTH_AUTH_REQUEST',
+    FILE_READ = 'FILE_READ',
 }
 
 const ONE_WEEK = 7 * 24 * 3600
@@ -45,12 +46,13 @@ export const jwtUtils = {
         keyId = KEY_ID,
         algorithm = ALGORITHM,
         audience,
+        issuer,
     }: SignParams): Promise<string> {
         const signOptions: SignOptions = {
             algorithm,
             keyid: keyId,
             expiresIn: expiresInSeconds,
-            issuer: ISSUER,
+            issuer: issuer ?? ISSUER,
             ...spreadIfDefined('audience', audience),
         }
         return new Promise((resolve, reject) => {
@@ -139,6 +141,7 @@ type SignParams = {
     algorithm?: JwtSignAlgorithm
     keyId?: string
     audience?: JwtAudience
+    issuer?: string
 }
 
 type VerifyParams = {

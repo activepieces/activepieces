@@ -8,6 +8,8 @@ export const OOO = createAction({
   name: 'OOO',
   displayName: 'Create OOO Request',
   description: 'Create an Out of Office request in Assembled.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a time-off (out-of-office) request for a user in Assembled over the given start/end window, requiring the user ID and an activity type ID (a UUID from the activity types endpoint). A mock mode prop can return a fabricated response without hitting the API for testing. Each call submits a new request, so repeating it creates duplicates.', idempotent: false },
   props: {
     mock_mode: Property.Checkbox({
       displayName: 'Mock Mode',

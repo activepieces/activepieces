@@ -55,12 +55,15 @@ export const appConnectionsApi = {
     );
   },
   getOAuth2AuthorizationUrl(
-    request: Omit<GetOAuth2AuthorizationUrlRequestBody, 'projectId'>,
+    request: Omit<GetOAuth2AuthorizationUrlRequestBody, 'projectId'> & {
+      projectId?: string;
+    },
   ): Promise<GetOAuth2AuthorizationUrlResponse> {
-    const projectId = authenticationSession.getProjectId();
+    const { projectId: projectIdOverride, ...rest } = request;
+    const projectId = projectIdOverride ?? authenticationSession.getProjectId();
     return api.post<GetOAuth2AuthorizationUrlResponse>(
       '/v1/app-connections/oauth2/authorization-url',
-      { ...request, projectId },
+      { ...rest, projectId },
     );
   },
 };

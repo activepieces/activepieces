@@ -8,6 +8,8 @@ export const updateLead = createAction({
   name: 'updateLead',
   displayName: 'Update Lead',
   description: 'Update a lead.',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing lead identified by its Bookedin lead ID. Supply any of the individual contact fields (first/last name, email, phone) and handling status, and/or pass a raw JSON payload for complex updates that merges over those fields. Use it to edit a known lead; only the fields you provide are changed. Idempotent — re-applying the same values yields the same lead state.', idempotent: true },
   auth: bookedinAuth,
   props: {
     lead_id: leadIdDropdown,

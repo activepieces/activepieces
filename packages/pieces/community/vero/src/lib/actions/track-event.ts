@@ -8,6 +8,12 @@ export const trackEvent = createAction({
   name: 'trackEvent',
   displayName: 'Track Event',
   description: 'Track a custom event for a user',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Records a custom analytics event in Vero for a user (identified by user ID and email), with an event name and optional event data and metadata. Use to log a user action that can drive campaigns or segmentation. Each call appends a new event occurrence, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     userId: Property.ShortText({
       displayName: 'User ID',

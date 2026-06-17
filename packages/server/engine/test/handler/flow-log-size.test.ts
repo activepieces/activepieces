@@ -109,7 +109,7 @@ describe('flow executor log size exceeded', () => {
                 }),
             }
 
-            const executionState = FreshContext.empty().upsertStep(triggerName, GenericStepOutput.create({
+            const executionState = await FreshContext.empty().upsertStep(triggerName, GenericStepOutput.create({
                 type: FlowTriggerType.EMPTY,
                 status: StepOutputStatus.SUCCEEDED,
                 input: {},

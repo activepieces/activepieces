@@ -7,6 +7,8 @@ export const deleteRedditPost = createAction({
   name: 'deleteRedditPost',
   displayName: 'Delete Post',
   description: 'Delete a specific Reddit post by ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Deletes a post owned by the authenticated account, identified by post ID. Use it to permanently remove a post you previously created. Requires the post ID (with or without the t3_ prefix). Idempotent — once deleted, repeating the call leaves the same end state.', idempotent: true },
   props: {
     post_id: Property.ShortText({
       displayName: 'Post ID',

@@ -7,6 +7,8 @@ export const saveBlogPostAction = createAction({
   auth: cmsAuth,
   displayName: 'Save Blog Post',
   description: 'Save blog content to Total CMS',
+  audience: 'both',
+  aiMetadata: { description: 'Creates or overwrites a blog post in a Total CMS blog, identified by the blog CMS ID (slug) plus a permalink, writing fields such as title, summary, content, author, categories, tags, and draft/featured/archived flags. Use to publish or edit a post. The permalink is the post key: reusing an existing permalink overwrites that post rather than creating a new one, so repeating the call with the same permalink and values is idempotent.', idempotent: true },
   props: {
     slug: Property.ShortText({
       displayName: 'CMS ID',

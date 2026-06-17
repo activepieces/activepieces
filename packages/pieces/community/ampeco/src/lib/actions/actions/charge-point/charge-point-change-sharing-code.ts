@@ -20,6 +20,8 @@ export const chargePointChangeSharingCodeAction = createAction({
   name: 'chargePointChangeSharingCode',
   displayName: 'Actions - Charge Point - Change Sharing Code',
   description: 'Change sharing code for the Charge Point.',
+  audience: 'both',
+  aiMetadata: { description: 'Set or clear the sharing code that grants non-owner users access to a personal charge point; passing an empty code deletes the current one. Use to manage guest access on a home/personal charger. Setting the same code repeatedly yields the same end state, so it is effectively idempotent.', idempotent: true },
   props: {
     chargePoint: Property.Number({
       displayName: 'Charge Point',

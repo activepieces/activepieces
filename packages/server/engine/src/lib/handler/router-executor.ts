@@ -13,12 +13,31 @@ export const routerExecuter: BaseExecutor<RouterAction> = {
         executionState,
         constants,
     }) {
-        const { censoredInput, resolvedInput } = await constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<RouterActionSettings>({
-            unresolvedInput: {
-                ...action.settings,
-            },
-            executionState,
-        })
+        const stepStartTime = performance.now()
+        const { data: resolved, error: resolveError } = await utils.tryCatchAndThrowOnEngineError(() =>
+            constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<RouterActionSettings>({
+                unresolvedInput: {
+                    ...action.settings,
+                },
+                executionState,
+            }),
+        )
+        if (resolveError) {
+            const errorMessage = utils.formatError(resolveError)
+            const failedStepOutput = RouterStepOutput.init({ input: {} })
+                .setStatus(StepOutputStatus.FAILED)
+                .setErrorMessage(errorMessage)
+                .setDuration(performance.now() - stepStartTime)
+            return (await executionState.upsertStep(action.name, failedStepOutput)).setVerdict({
+                status: FlowRunStatus.FAILED,
+                failedStep: {
+                    name: action.name,
+                    displayName: action.displayName,
+                    message: errorMessage,
+                },
+            })
+        }
+        const { censoredInput, resolvedInput } = resolved
 
         switch (resolvedInput.executionType) {
             case RouterExecutionType.EXECUTE_ALL_MATCH:
@@ -63,7 +82,7 @@ async function handleRouterExecution({ action, executionState, constants, censor
             evaluation: evaluatedConditions[index],
         })),
     }).setDuration(stepEndTime - stepStartTime)
-    executionState = executionState.upsertStep(action.name, routerOutput)
+    executionState = await executionState.upsertStep(action.name, routerOutput)
 
     const { data: executionStateResult, error: executionStateError } = await utils.tryCatchAndThrowOnEngineError(async () => {
         for (let i = 0; i < resolvedInput.branches.length; i++) {
@@ -90,7 +109,7 @@ async function handleRouterExecution({ action, executionState, constants, censor
     })
     if (executionStateError) {
         const failedStepOutput = routerOutput.setStatus(StepOutputStatus.FAILED)
-        return executionState.upsertStep(action.name, failedStepOutput).setVerdict({ status: FlowRunStatus.FAILED, failedStep: {
+        return (await executionState.upsertStep(action.name, failedStepOutput)).setVerdict({ status: FlowRunStatus.FAILED, failedStep: {
             name: action.name,
             displayName: action.displayName,
             message: utils.formatError(executionStateError),

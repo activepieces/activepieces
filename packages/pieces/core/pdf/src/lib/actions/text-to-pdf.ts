@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 
 export const textToPdf = createAction({
+  audience: 'human',
   name: 'textToPdf',
   displayName: 'Text to PDF',
   description: 'Convert text to PDF',

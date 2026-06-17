@@ -7,6 +7,8 @@ export const createCollectAction = createAction({
   name: 'create_collect',
   displayName: 'Create Collect',
   description: `Add a product to a collection.`,
+  audience: 'both',
+  aiMetadata: { description: 'Add a product to a custom collection in Shopify by linking a product ID and collection ID (a "collect"). Use to organize a product into a manual collection; requires both IDs. Each call creates a new link, so repeating it may produce duplicate collects.', idempotent: false },
   props: {
     id: Property.Number({
       displayName: 'Product',

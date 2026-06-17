@@ -1,4 +1,6 @@
+import { SAFE_STRING_PATTERN } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
+import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { Navigate } from 'react-router-dom';
@@ -9,6 +11,7 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AuthLayout } from '@/features/authentication/components/auth-form-template';
+import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 
@@ -31,9 +34,14 @@ function CreatePlatformForm() {
       authenticationSession.saveResponse(data, false);
       redirectAfterLogin();
     },
-    onError: () => {
+    onError: (error) => {
+      const isBadRequest =
+        api.isError(error) &&
+        error.response?.status === HttpStatusCode.BadRequest;
       form.setError('root.serverError', {
-        message: t('Something went wrong, please try again later'),
+        message: isBadRequest
+          ? t('Platform name cannot contain "." or "/"')
+          : t('Something went wrong, please try again later'),
       });
     },
   });
@@ -54,6 +62,10 @@ function CreatePlatformForm() {
             maxLength: {
               value: 100,
               message: t('Platform name is too long'),
+            },
+            pattern: {
+              value: new RegExp(SAFE_STRING_PATTERN),
+              message: t('Platform name cannot contain "." or "/"'),
             },
           }}
           render={({ field }) => (
@@ -102,10 +114,7 @@ function CreatePlatformPage() {
   return (
     <AuthLayout>
       <div className="mb-6 text-center">
-        <h1
-          className="text-2xl font-bold tracking-tight"
-          style={{ fontFamily: "'Sentient', serif" }}
-        >
+        <h1 className="text-2xl font-bold tracking-tight font-sentient">
           {t('Create your platform')}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">

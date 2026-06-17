@@ -7,6 +7,8 @@ export const runBqlQuery = createAction({
     name: 'run_bql_query',
     displayName: 'Run BQL Query',
     description: 'Execute Browser Query Language (BQL) GraphQL-based queries for advanced browser automation',
+    audience: 'both',
+    aiMetadata: { description: 'Runs a raw Browser Query Language (BQL) GraphQL query against a headless Chromium browser for advanced automation such as navigation, clicking, typing, and multi-step scripted browser flows. Use when the simpler screenshot/scrape/PDF actions cannot express the interaction; requires a valid BQL query string and supports session options like stealth, proxy, and cookies. Not idempotent: the query can perform stateful browser actions and side-effecting navigation, so repeating it may not yield the same result.', idempotent: false },
     auth: browserlessAuth,
     props: {
         query: Property.LongText({

@@ -6,6 +6,8 @@ export const detectAiContent = createAction({
   name: 'detect_ai_content',
   displayName: 'Detect AI Content',
   description: 'Detect AI-generated content in text',
+  audience: 'both',
+  aiMetadata: { description: 'Analyzes a block of text and scores how likely it was AI-generated, using the DetectingAI detection API. Use to verify whether submitted or scraped content is human-written vs. machine-generated. Requires the text to check; a detection-model version (v1 or v2) can be selected. Read-only analysis — calling it again with the same text returns the same assessment without side effects.', idempotent: true },
   auth: detectingAiAuth,
   requireAuth: true,
   props: {

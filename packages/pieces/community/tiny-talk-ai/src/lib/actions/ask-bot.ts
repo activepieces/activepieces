@@ -6,6 +6,8 @@ export const askBotAction = createAction({
     auth: tinyTalkAiAuth,
     displayName: 'Ask Bot',
     description: 'Sends message to selected bot.',
+    audience: 'both',
+    aiMetadata: { description: 'Sends a user message to a specific TinyTalk AI bot and returns the bot\'s generated reply as text. Choose this to query a configured conversational bot; requires the target bot\'s ID (from the bot\'s Details page) and the question prompt. Not idempotent: each call produces a fresh generation.', idempotent: false },
     props: {
         botId: Property.ShortText({
             displayName: 'Bot ID',

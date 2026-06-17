@@ -8,6 +8,7 @@ import { workerSocket } from '../../src/lib/worker-socket'
 describe('workerSocket — STRICT-mode handshake', () => {
     const originalNetworkMode = process.env['AP_NETWORK_MODE']
     const originalWsPort = process.env['AP_SANDBOX_WS_PORT']
+    const originalWsToken = process.env['AP_SANDBOX_WS_TOKEN']
     const originalHttpAgent = http.globalAgent
 
     let httpServer: http.Server
@@ -19,6 +20,7 @@ describe('workerSocket — STRICT-mode handshake', () => {
         io = new SocketIOServer(httpServer, { path: '/worker/ws' })
         await new Promise<void>((resolve) => httpServer.listen(0, '127.0.0.1', () => resolve()))
         wsPort = (httpServer.address() as { port: number }).port
+        process.env['AP_SANDBOX_WS_TOKEN'] = 'test-token-aaaaaaaaaaaaaaaaaaaaaaaa'
     })
 
     afterEach(async () => {
@@ -28,6 +30,8 @@ describe('workerSocket — STRICT-mode handshake', () => {
         else process.env['AP_NETWORK_MODE'] = originalNetworkMode
         if (originalWsPort === undefined) delete process.env['AP_SANDBOX_WS_PORT']
         else process.env['AP_SANDBOX_WS_PORT'] = originalWsPort
+        if (originalWsToken === undefined) delete process.env['AP_SANDBOX_WS_TOKEN']
+        else process.env['AP_SANDBOX_WS_TOKEN'] = originalWsToken
         await io.close()
         await new Promise<void>((resolve) => httpServer.close(() => resolve()))
     })
@@ -43,33 +47,39 @@ describe('workerSocket — STRICT-mode handshake', () => {
         process.env['AP_SANDBOX_WS_PORT'] = String(wsPort)
         http.globalAgent = new HttpProxyAgent('http://127.0.0.1:1') // unreachable proxy by design
 
-        const connection = new Promise<string>((resolve, reject) => {
+        const connection = new Promise<{ sandboxId: string, connectionToken: string }>((resolve, reject) => {
             const timer = setTimeout(() => reject(new Error('sandbox did not connect')), 5_000)
             io.on('connection', (socket) => {
                 clearTimeout(timer)
-                resolve(socket.handshake.auth.sandboxId as string)
+                resolve({
+                    sandboxId: socket.handshake.auth.sandboxId as string,
+                    connectionToken: socket.handshake.auth.connectionToken as string,
+                })
             })
         })
 
         workerSocket.init('test-sandbox')
 
-        await expect(connection).resolves.toBe('test-sandbox')
+        await expect(connection).resolves.toEqual({
+            sandboxId: 'test-sandbox',
+            connectionToken: 'test-token-aaaaaaaaaaaaaaaaaaaaaaaa',
+        })
     })
 
     it('does not pin an agent outside STRICT mode', async () => {
         delete process.env['AP_NETWORK_MODE']
         process.env['AP_SANDBOX_WS_PORT'] = String(wsPort)
 
-        const connection = new Promise<void>((resolve, reject) => {
+        const connection = new Promise<string>((resolve, reject) => {
             const timer = setTimeout(() => reject(new Error('sandbox did not connect')), 5_000)
-            io.on('connection', () => {
+            io.on('connection', (socket) => {
                 clearTimeout(timer)
-                resolve()
+                resolve(socket.handshake.auth.connectionToken as string)
             })
         })
 
         workerSocket.init('test-sandbox-unrestricted')
 
-        await expect(connection).resolves.toBeUndefined()
+        await expect(connection).resolves.toBe('test-token-aaaaaaaaaaaaaaaaaaaaaaaa')
     })
 })

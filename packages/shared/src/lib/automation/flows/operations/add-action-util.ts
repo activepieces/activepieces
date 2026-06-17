@@ -29,6 +29,11 @@ function replaceOldStepNameWithNewOne({
     oldStepName,
     newStepName,
 }: ReplaceOldStepNameWithNewOneProps): string {
+    // TODO: replace this naive /{{(.*?)}}/g tokenizer with `extractMustacheTokens`
+    // from @activepieces/shared. The lazy regex stops at the first `}}`, so a token
+    // whose content contains `}}` (e.g. a string literal) is truncated and the
+    // trailing step name is not renamed on duplicate/paste. Swap deferred — needs
+    // duplicate/paste re-testing in the builder before landing.
     const regex = /{{(.*?)}}/g // Regular expression to match strings inside {{ }}
     return input.replace(regex, (match, content) => {
         // Replace the content inside {{ }} using the provided function

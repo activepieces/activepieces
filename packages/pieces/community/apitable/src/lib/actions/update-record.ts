@@ -12,6 +12,12 @@ export const updateRecordAction = createAction({
 	name: 'apitable_update_record',
 	displayName: 'Update Record',
 	description: 'Updates an existing record in datasheet.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Updates the field values of an existing record in an AITable datasheet, identified by its record ID. Use when an agent needs to modify a row it can already locate. Idempotent: re-applying the same field values to the same record ID yields the same result with no extra side effect.',
+		idempotent: true,
+	},
 	props: {
 		space_id: APITableCommon.space_id,
 		datasheet_id: APITableCommon.datasheet_id,

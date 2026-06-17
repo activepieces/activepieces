@@ -19,6 +19,7 @@ import {
 } from '@activepieces/shared';
 import { useMutation, useQueries, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import semver from 'semver';
 
@@ -131,6 +132,25 @@ export const piecesHooks = {
         staleTime: Infinity,
       })),
     });
+  },
+  usePieceSummariesByNames: ({ names }: UseMultiplePiecesProps) => {
+    const { pieces, isLoading } = piecesHooks.usePieces({});
+    const summaries = useMemo(() => {
+      if (!pieces) return [];
+      const byName = new Map(pieces.map((p) => [p.name, p]));
+      return names
+        .map((name) => byName.get(name))
+        .filter((p): p is PieceMetadataModelSummary => !!p);
+    }, [pieces, names]);
+    return { summaries, isLoading };
+  },
+  usePieceSummary: ({ name }: { name: string }) => {
+    const { pieces, isLoading } = piecesHooks.usePieces({});
+    const summary = useMemo(
+      () => pieces?.find((p) => p.name === name),
+      [pieces, name],
+    );
+    return { summary, isLoading };
   },
   usePieces: ({
     searchQuery,

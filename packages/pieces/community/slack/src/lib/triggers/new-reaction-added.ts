@@ -13,6 +13,10 @@ export const newReactionAdded = createTrigger({
   name: 'new_reaction_added',
   displayName: 'New Reaction',
   description: 'Triggers when a new reaction is added to a message',
+  aiMetadata: {
+    description:
+      'Fires when an emoji reaction is added to a message in the Slack workspace. Can be optionally filtered to specific emojis, a specific user, or specific channels. The event payload identifies the user who added the reaction, the emoji name, and the message item it was added to.',
+  },
   props: {
     info: multiSelectChannelInfo,
     emojis: Property.Array({

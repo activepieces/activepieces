@@ -1,5 +1,6 @@
 import {
     ActivepiecesError,
+    ApEdition,
     ApId,
     BulkActionOnRunsRequestBody,
     BulkArchiveActionOnRunsRequestBody,
@@ -10,18 +11,24 @@ import {
     FlowRun,
     isNil,
     ListFlowRunsRequestQuery,
+    omit,
     Permission,
+    PlatformRole,
     PrincipalType,
     RetryFlowRequestBody,
     RunEnvironment,
+    RunInternalErrorSource,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
+import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { system } from '../../helper/system/system'
+import { userService } from '../../user/user-service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunService } from './flow-run-service'
 
@@ -35,6 +42,7 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
             tags: request.query.tags,
             status: request.query.status,
             failedStepName: request.query.failedStepName,
+            failedStepMessage: request.query.failedStepMessage,
             cursor: request.query.cursor ?? null,
             limit: Number(request.query.limit ?? DEFAULT_PAGING_LIMIT),
             createdAfter: request.query.createdAfter,
@@ -62,7 +70,9 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
                 projectId: request.projectId,
                 id: request.params.id,
             })
-            await reply.send(flowRun)
+            const internalErrorEnabled = flowRun.internalError?.source === RunInternalErrorSource.ENGINE || system.getEdition() !== ApEdition.CLOUD
+            const canViewInternalError = internalErrorEnabled && await isRequesterPlatformAdmin(request)
+            await reply.send(canViewInternalError ? flowRun : omit(flowRun, ['internalError']))
         },
     )
 
@@ -110,6 +120,7 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
             createdAfter: req.body.createdAfter,
             createdBefore: req.body.createdBefore,
             failedStepName: req.body.failedStepName,
+            failedStepMessage: req.body.failedStepMessage,
         })
     })
 
@@ -123,9 +134,18 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
             createdAfter: req.body.createdAfter,
             createdBefore: req.body.createdBefore,
             failedStepName: req.body.failedStepName,
+            failedStepMessage: req.body.failedStepMessage,
         })
     })
 
+}
+
+async function isRequesterPlatformAdmin(request: FastifyRequest): Promise<boolean> {
+    if (request.principal.type !== PrincipalType.USER) {
+        return false
+    }
+    const user = await userService(request.log).getOneOrFail({ id: request.principal.id })
+    return user.platformRole === PlatformRole.ADMIN
 }
 
 const FlowRunFilteredWithNoSteps = FlowRun.omit({ steps: true })

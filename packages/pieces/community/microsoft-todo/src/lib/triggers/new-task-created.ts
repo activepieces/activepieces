@@ -53,6 +53,9 @@ export const newTaskCreatedTrigger = createTrigger({
 	name: 'new_task_created',
 	displayName: 'New Task',
 	description: 'Triggers when a new task is created.',
+	aiMetadata: {
+		description: 'Fires when a new task is created in the selected Microsoft To Do task list. Each event represents one newly added task in that list; polls on the task creation time.',
+	},
 	auth: microsoftToDoAuth,
 	props: {
 		task_list_id: Property.Dropdown({

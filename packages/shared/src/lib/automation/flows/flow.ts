@@ -20,6 +20,18 @@ export enum FlowOperationStatus {
     DISABLING = 'DISABLING',
 }
 
+export const FlowCreatorType = {
+    MCP: 'MCP',
+    AGENT: 'AGENT',
+} as const
+export type FlowCreatorType = typeof FlowCreatorType[keyof typeof FlowCreatorType]
+
+export const FlowCreator = z.discriminatedUnion('type', [
+    z.object({ type: z.literal(FlowCreatorType.MCP), id: ApId }),
+    z.object({ type: z.literal(FlowCreatorType.AGENT), id: ApId }),
+])
+export type FlowCreator = z.infer<typeof FlowCreator>
+
 export const flowExecutionStateKey = (flowId: FlowId) => `flow-execution-state:${flowId}`
 
 export type FlowExecutionState = {
@@ -43,6 +55,7 @@ export const Flow = z.object({
     operationStatus: z.nativeEnum(FlowOperationStatus),
     timeSavedPerRun: Nullable(z.number()),
     templateId: Nullable(z.string()),
+    createdBy: Nullable(FlowCreator),
 })
 
 export type Flow = z.infer<typeof Flow>

@@ -5,6 +5,10 @@ export const recipientCompleted = createEnvelopeEventTrigger({
   displayName: 'Person Signed Document',
   description:
     'Triggers when a specific person completes their signature on the document.',
+  aiMetadata: {
+    description:
+      'Fires when a specific recipient completes their signature on a DocuSign envelope. Represents one signer finishing (the payload identifies the recipient); the envelope may still be awaiting other recipients, unlike the envelope-completed event.',
+  },
   docusignEvent: 'recipient-completed',
   sampleData: {
     event: 'recipient-completed',

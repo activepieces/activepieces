@@ -7,6 +7,8 @@ export const trackAction = createAction({
   auth: dittofeedAuth,
   displayName: 'Track Event',
   description: 'Track an event for a user.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a track event to Dittofeed recording a named action a user performed (e.g. "Purchase Completed", "Signup"), optionally with event properties. Use to log user behavior that can drive segmentation and messaging campaigns. Requires a userId and event name; each call appends a new event with a unique messageId, so it is not idempotent.', idempotent: false },
   props: {
     userId: Property.ShortText({
       displayName: 'User ID',

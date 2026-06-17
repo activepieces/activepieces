@@ -10,6 +10,11 @@ export const createCustomer = createAction({
   name: 'create_customer',
   displayName: 'Create Customer',
   description: 'Creates a new customer in Housecall Pro.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Create a new Housecall Pro customer record with contact details, tags, and optional inline addresses. Not idempotent: each call creates a separate customer, so repeating it can produce duplicates. At least one of first name, last name, email, mobile/home/work number is required. To change an existing customer use Update Customer.',
+    idempotent: false,
+  },
   props: {
     info:Property.MarkDown({
       value:'At least one of: First Name, Last Name, Email, Mobile Number, Home Number, Work Number is required.',

@@ -1,7 +1,5 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { HttpError } from '@activepieces/pieces-common';
-import FormData from 'form-data';
-import { checkEmail, sendFormData } from './common/send-utils';
+import { HttpError, HttpMethod, httpClient } from '@activepieces/pieces-common';
 
 const markdown = `
 For Sending API key, follow these steps:
@@ -48,13 +46,20 @@ export const mailerooAuth = PieceAuth.CustomAuth({
 
     if (auth.keyType === 'sending') {
       try {
-        const formData = new FormData();
-        formData.append('from', PLACEHOLDER_STRING);
-        formData.append('to', PLACEHOLDER_STRING);
-        formData.append('subject', PLACEHOLDER_STRING);
-        formData.append('plain', PLACEHOLDER_STRING);
-
-        await sendFormData('send', formData, auth.apiKey);
+        await httpClient.sendRequest({
+          method: HttpMethod.POST,
+          url: 'https://smtp.maileroo.com/api/v2/emails',
+          body: {
+            from: { address: PLACEHOLDER_STRING },
+            to: [{ address: PLACEHOLDER_STRING }],
+            subject: PLACEHOLDER_STRING,
+            plain: PLACEHOLDER_STRING,
+          },
+          headers: {
+            'X-API-Key': auth.apiKey,
+            'Content-Type': 'application/json',
+          },
+        });
       } catch (e) {
         const status = (e as HttpError).response.status;
 
@@ -76,8 +81,15 @@ export const mailerooAuth = PieceAuth.CustomAuth({
         valid: true,
       };
     } else {
-      // Need a different implementation because the response for verification key is different
-      const result = await checkEmail(PLACEHOLDER_STRING, auth.apiKey);
+      const result = await httpClient.sendRequest({
+        url: 'https://verify.maileroo.net/check',
+        method: HttpMethod.POST,
+        body: { email_address: PLACEHOLDER_STRING },
+        headers: {
+          'X-API-Key': auth.apiKey,
+          'Content-Type': 'application/json',
+        },
+      });
 
       if (result.status === 200 && result.body.error_code !== '0401') {
         return {

@@ -7,6 +7,8 @@ export const fetchPostComments = createAction({
   name: 'fetchPostComments',
   displayName: 'Fetch Post Comments',
   description: 'Fetch comments from a specific Reddit post.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the threaded comments of one Reddit post identified by its ID, including nested replies. Use it to read discussion on a known post; the sort option (new, top, hot, best, old, controversial) and a limit on top-level comments are configurable. Accepts the post ID with or without the t3_ prefix. Read-only and idempotent.', idempotent: true },
   props: {
     post_id: Property.ShortText({
       displayName: 'Post ID',

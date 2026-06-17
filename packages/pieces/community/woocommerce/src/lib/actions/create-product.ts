@@ -12,6 +12,12 @@ export const wooCreateProduct = createAction({
   name: 'Create Product',
   displayName: 'Create Product',
   description: 'Create a Product',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new product in a WooCommerce store with a name, type (simple, grouped, external, or variable), regular price, descriptions, category IDs, and image URLs (categories and images are comma-separated lists). Use when an agent needs to add a catalog item. Not idempotent: each call creates a new product.',
+    idempotent: false,
+  },
   auth: wooAuth,
   props: {
     name: Property.ShortText({

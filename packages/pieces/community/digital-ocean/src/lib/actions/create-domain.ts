@@ -8,6 +8,8 @@ export const createDomain = createAction({
   name: 'create_domain',
   displayName: 'Create Domain',
   description: 'Add a new domain to your DigitalOcean account.',
+  audience: 'both',
+  aiMetadata: { description: 'Registers a new DNS domain on the authenticated DigitalOcean account; optionally creates an apex A record when an IP address is supplied. Use when onboarding a domain to DigitalOcean DNS. Not idempotent — re-running with an existing domain name fails, and each successful call mutates account state.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Domain Name',

@@ -19,6 +19,8 @@ export const searchPagesAction = createAction({
 	displayName: 'Search Content (CQL)',
 	description:
 		'Search Confluence content with CQL (Confluence Query Language). Example: `type = "page" AND space = "DOCS" AND title ~ "release"`.',
+	audience: 'both',
+	aiMetadata: { description: 'Searches Confluence content using a CQL (Confluence Query Language) expression, paginating until the max-results cap is reached. Use for flexible, multi-criteria or keyword search across pages/blogposts/comments (by type, space, title, label, date, text); use Find Page by Title for exact-title lookups instead. Requires a valid CQL string. Read-only and idempotent.', idempotent: true },
 	props: {
 		cql: Property.LongText({
 			displayName: 'CQL',

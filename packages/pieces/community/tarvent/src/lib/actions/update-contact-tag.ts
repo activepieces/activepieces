@@ -7,6 +7,8 @@ export const updateContactTags = createAction({
   name: 'tarvent_update_contact_tag',
   displayName: 'Add/Remove Contact Tag',
   description: 'Adds or removes a tag from contact.',
+  audience: 'both',
+  aiMetadata: { description: 'Adds or removes one or more tags on a Tarvent contact, with the direction (add vs. remove) chosen by the action input. Use to label or unlabel a contact for segmentation. Idempotent: re-running with the same tags and direction leaves the contact in the same tagged state.', idempotent: true },
   props: {
     audienceId: tarventCommon.audienceId(true, 'If specified, the trigger will only fire if contact is in the selected audience.'),
     contactId: tarventCommon.contactId,

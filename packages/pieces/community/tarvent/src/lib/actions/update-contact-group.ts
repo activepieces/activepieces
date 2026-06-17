@@ -7,6 +7,8 @@ export const updateContactGroup = createAction({
   name: 'tarvent_update_contact_group',
   displayName: 'Add/Remove Contact From Audience Group',
   description: 'Adds or removes a contact from an audience group.',
+  audience: 'both',
+  aiMetadata: { description: 'Adds or removes a Tarvent contact from a specific audience group, with the direction (add vs. remove) chosen by the action input. Use to manage group membership for segmentation. Idempotent: re-running with the same group and direction leaves membership unchanged.', idempotent: true },
   props: {
     audienceId: tarventCommon.audienceId(true, ''),
     groupId: tarventCommon.audienceGroupId(true, ''),

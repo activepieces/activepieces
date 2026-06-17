@@ -8,6 +8,12 @@ export const githubLockIssueAction = createAction({
   name: 'lockIssue',
   displayName: 'Lock issue',
   description: 'Locks the specified issue',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Locks an issue (by number) so only collaborators can comment, optionally recording a lock reason (off-topic, too heated, resolved, or spam). Use to freeze discussion on an issue or pull request. Idempotent: re-locking an already-locked issue leaves it locked.',
+    idempotent: true,
+  },
   props: {
     repository: githubCommon.repositoryDropdown,
     issue_number: Property.Number({
@@ -42,7 +48,7 @@ export const githubLockIssueAction = createAction({
     const { owner, repo } = propsValue.repository!;
 
     const response = await githubApiCall({
-      accessToken: auth.access_token,
+      auth,
       method: HttpMethod.PUT,
       resourceUri: `/repos/${owner}/${repo}/issues/${issue_number}/lock`,
       body: {

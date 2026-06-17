@@ -17,6 +17,12 @@ export const updateDealAction = createAction({
 	name: 'update-deal',
 	displayName: 'Update Deal',
 	description: 'Updates an existing deal.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Updates fields on an existing deal identified by its deal ID, such as title, value, stage, status, owner, or linked person/organization; only supplied fields are changed. Use to modify a deal you already know the ID of (use Create Deal to add a new one, or Find Deal to locate one first). Idempotent: repeating the same update converges to the same deal state.',
+		idempotent: true,
+	},
 	props: {
 		dealId: dealIdProp(true),
 		title: Property.ShortText({

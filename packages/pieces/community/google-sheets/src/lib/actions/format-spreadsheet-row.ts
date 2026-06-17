@@ -9,6 +9,12 @@ export const formatRowAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'format-row',
 	description: 'Format one or multiple rows in specific spreadsheet.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Applies cell formatting (background color, text color, bold, italic, strikethrough) to a range of rows in a worksheet, leaving cell values untouched. Use when an agent needs to style rows rather than change data. Colors are given as HEX codes; idempotent — re-applying the same formatting produces the same appearance.',
+		idempotent: true,
+	},
 	displayName: 'Format Row(s)',
 	props: {
 		...commonProps,

@@ -27,6 +27,7 @@ export const BulkActionOnRunsRequestBody = z.object({
     createdAfter: z.string().optional(),
     createdBefore: z.string().optional(),
     failedStepName: z.string().optional(),
+    failedStepMessage: z.string().optional(),
 })
 
 export type BulkActionOnRunsRequestBody = z.infer<typeof BulkActionOnRunsRequestBody>
@@ -55,6 +56,7 @@ export const BulkArchiveActionOnRunsRequestBody = z.object({
     createdAfter: z.string().optional(),
     createdBefore: z.string().optional(),
     failedStepName: z.string().optional(),
+    failedStepMessage: z.string().optional(),
 })
 
 export type BulkArchiveActionOnRunsRequestBody = z.infer<typeof BulkArchiveActionOnRunsRequestBody>

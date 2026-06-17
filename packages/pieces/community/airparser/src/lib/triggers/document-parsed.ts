@@ -14,6 +14,9 @@ export const documentParsedTrigger = createTrigger({
   name: 'document_parsed',
   displayName: 'Document Parsed',
   description: 'Triggers when a new document is parsed in a specific inbox.',
+  aiMetadata: {
+    description: 'Fires when Airparser finishes parsing a document in the selected inbox (the doc.parsed event), signaling that extracted data is ready to retrieve. Requires a webhook to be configured manually in the Airparser account.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     inboxId: inboxIdDropdown,

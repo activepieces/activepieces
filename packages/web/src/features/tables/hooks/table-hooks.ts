@@ -34,6 +34,32 @@ export const tableMutations = {
 };
 
 export const tableHooks = {
+  createTableWithDefaults: async ({
+    name,
+    folderId,
+    projectId,
+  }: {
+    name: string;
+    folderId?: string;
+    projectId: string;
+  }): Promise<Table> => {
+    const table = await tablesApi.create({
+      projectId,
+      name,
+      folderId:
+        !folderId || folderId === UncategorizedFolderId ? undefined : folderId,
+    });
+    const field = await fieldsApi.create({
+      name: 'Name',
+      type: FieldType.TEXT,
+      tableId: table.id,
+    });
+    await recordsApi.create({
+      records: [[{ fieldId: field.id, value: '' }]],
+      tableId: table.id,
+    });
+    return table;
+  },
   useCreateTable: (folderId: string) => {
     const projectId = authenticationSession.getProjectId() ?? '';
     const navigate = useNavigate();
@@ -41,28 +67,11 @@ export const tableHooks = {
     const [searchParams] = useSearchParams();
     return useMutation({
       mutationFn: async (data: { name: string }) => {
-        const table = await tablesApi.create({
-          projectId,
+        return tableHooks.createTableWithDefaults({
           name: data.name,
-          folderId: folderId === UncategorizedFolderId ? undefined : folderId,
+          folderId,
+          projectId,
         });
-        const field = await fieldsApi.create({
-          name: 'Name',
-          type: FieldType.TEXT,
-          tableId: table.id,
-        });
-        await recordsApi.create({
-          records: [
-            ...Array.from({ length: 1 }, () => [
-              {
-                fieldId: field.id,
-                value: '',
-              },
-            ]),
-          ],
-          tableId: table.id,
-        });
-        return table;
       },
       onSuccess: (table) => {
         queryClient.invalidateQueries({
@@ -157,14 +166,19 @@ export const tableHooks = {
     templates,
     projectId,
     maxRecords,
+    folderId,
   }: {
     templates: SharedTemplate[];
     projectId: string;
     maxRecords?: number;
+    folderId?: string;
   }): Promise<Table[]> => {
     if (templates.length === 0) {
       return [];
     }
+
+    const targetFolderId =
+      !folderId || folderId === UncategorizedFolderId ? undefined : folderId;
 
     const allTablesToImport: Array<{
       table: Table;
@@ -183,6 +197,7 @@ export const tableHooks = {
           name: tableTemplate.name,
           externalId: tableTemplate.externalId,
           fields: tableTemplate.fields,
+          folderId: targetFolderId,
         });
 
         allTablesToImport.push({

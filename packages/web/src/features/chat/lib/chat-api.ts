@@ -1,9 +1,10 @@
 import {
   type ChatHistoryMessage,
+  type PersistedChatMessage,
   ChatConversation,
+  ConnectionOption,
   CreateChatConversationRequest,
   SeekPage,
-  SetProjectContextRequest,
   UpdateChatConversationRequest,
 } from '@activepieces/shared';
 
@@ -34,8 +35,8 @@ async function getConversation(id: string): Promise<ChatConversation> {
 
 async function getMessages(
   conversationId: string,
-): Promise<{ data: ChatHistoryMessage[] }> {
-  return api.get<{ data: ChatHistoryMessage[] }>(
+): Promise<{ data: PersistedChatMessage[] | ChatHistoryMessage[] }> {
+  return api.get<{ data: PersistedChatMessage[] | ChatHistoryMessage[] }>(
     `/v1/chat/conversations/${conversationId}/messages`,
   );
 }
@@ -51,14 +52,61 @@ async function deleteConversation(id: string): Promise<void> {
   return api.delete<void>(`/v1/chat/conversations/${id}`);
 }
 
-async function setProjectContext(
-  conversationId: string,
-  request: SetProjectContextRequest,
-): Promise<ChatConversation> {
-  return api.post<ChatConversation>(
-    `/v1/chat/conversations/${conversationId}/project-context`,
-    request,
+async function sendMessage({
+  conversationId,
+  content,
+  runId,
+  files,
+}: {
+  conversationId: string;
+  content: string;
+  runId?: string;
+  files?: Array<{ name: string; mimeType: string; data: string }>;
+}): Promise<{ conversationId: string; runId?: string }> {
+  return api.post<{ conversationId: string; runId?: string }>(
+    `/v1/chat/conversations/${conversationId}/messages`,
+    { content, runId, files },
   );
+}
+
+async function approveToolCall({
+  gateId,
+  approved,
+  payload,
+}: {
+  gateId: string;
+  approved: boolean;
+  payload?: Record<string, unknown>;
+}): Promise<void> {
+  return api.post<void>(`/v1/chat/tool-approvals/${gateId}`, {
+    approved,
+    payload,
+  });
+}
+
+async function cancelConversation(conversationId: string): Promise<void> {
+  return api.post<void>(`/v1/chat/conversations/${conversationId}/cancel`);
+}
+
+async function getPickerConnections({
+  conversationId,
+  pieceName,
+}: {
+  conversationId: string;
+  pieceName: string;
+}): Promise<ConnectionOption[]> {
+  return api.get(`/v1/chat/conversations/${conversationId}/connections`, {
+    pieceName,
+  });
+}
+
+async function getPendingGate(conversationId: string): Promise<{
+  gateId: string;
+  toolName: string;
+  displayName: string;
+  toolInput: Record<string, unknown>;
+} | null> {
+  return api.get(`/v1/chat/conversations/${conversationId}/pending-gate`);
 }
 
 export const chatApi = {
@@ -68,5 +116,9 @@ export const chatApi = {
   getMessages,
   updateConversation,
   deleteConversation,
-  setProjectContext,
+  sendMessage,
+  approveToolCall,
+  cancelConversation,
+  getPickerConnections,
+  getPendingGate,
 };

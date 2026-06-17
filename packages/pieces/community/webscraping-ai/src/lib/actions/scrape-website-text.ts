@@ -7,6 +7,12 @@ export const scrapeWebsiteText = createAction({
   displayName: 'Scrape Website Text',
   description:
     'Returns the visible text content of a webpage specified by the URL.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches a web page (rendering JavaScript) and returns its visible text with HTML stripped out, in plain, JSON, or XML form. Choose this when you want clean readable content for summarizing or feeding to an LLM, rather than the raw HTML or a single extracted answer. Requires the target URL; optional proxy/country/device/header controls tune the fetch, and JSON output can additionally return extracted links. Read-only and idempotent (a GET-style request that does not alter the target site).',
+    idempotent: true,
+  },
   props: webscrapingAiCommon.getPageTextProperties,
   async run({ auth: apiKey, propsValue }) {
     const { textFormat, headers, returnLinks, ...rest } = propsValue;

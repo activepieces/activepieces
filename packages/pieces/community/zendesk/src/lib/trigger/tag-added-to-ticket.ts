@@ -36,6 +36,9 @@ export const tagAddedToTicket = createTrigger({
   name: 'tag_added_to_ticket',
   displayName: 'Tag Added to Ticket',
   description: 'Fires when a ticket update includes the specified tag. Requires a Zendesk Trigger with Notify active webhook.',
+  aiMetadata: {
+    description: 'Fires when a ticket update carries a tag, delivered via a registered webhook. If a specific tag is configured, fires only when that tag is present on the updated ticket; if left empty, fires on any ticket update that has at least one tag. Requires a Zendesk Trigger configured to notify the active webhook.',
+  },
   auth: zendeskAuth,
   props: {
     specific_tag: Property.ShortText({

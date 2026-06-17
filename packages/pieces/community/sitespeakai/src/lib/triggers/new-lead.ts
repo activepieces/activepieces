@@ -39,6 +39,10 @@ export const newLead = createTrigger({
     name: 'newLead',
     displayName: 'New Lead',
     description: 'Triggers when a new lead with an email address is created in SiteSpeakAI.',
+    aiMetadata: {
+      description:
+        'Fires when a SiteSpeakAI chatbot captures a new lead that includes an email address. Polls the selected chatbot for newly created leads; each event represents one captured visitor contact.',
+    },
     props,
     sampleData: {
         id: 'lead_12345',

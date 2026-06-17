@@ -20,6 +20,7 @@ import { DictionaryInput } from '@/components/custom/dictionary-input';
 import { Button } from '@/components/ui/button';
 import {
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -113,25 +114,54 @@ export const UpsertProviderConfigForm = ({
       )}
 
       {provider === AIProviderName.AZURE && (
-        <FormField
-          control={form.control}
-          name="config.resourceName"
-          render={({ field }) => (
-            <FormItem className="grid space-y-3">
-              <FormLabel htmlFor="resourceName">{t('Resource Name')}</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  required
-                  id="resourceName"
-                  placeholder={'your-resource-name'}
-                  disabled={isLoading}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <>
+          <FormField
+            control={form.control}
+            name="config.resourceName"
+            render={({ field }) => (
+              <FormItem className="grid space-y-3">
+                <FormLabel htmlFor="resourceName">
+                  {t('Resource Name')}
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    required
+                    id="resourceName"
+                    placeholder={'your-resource-name'}
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="config.apiVersion"
+            render={({ field }) => (
+              <FormItem className="grid space-y-3">
+                <FormLabel htmlFor="apiVersion">{t('API Version')}</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    value={field.value ?? ''}
+                    id="apiVersion"
+                    placeholder={'2024-10-21'}
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <FormDescription>
+                  {t(
+                    'Optional. Leave empty to use the default. Some Azure resources require a different version, e.g. 2023-03-15-preview.',
+                  )}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </>
       )}
 
       {provider === AIProviderName.CLOUDFLARE_GATEWAY && (

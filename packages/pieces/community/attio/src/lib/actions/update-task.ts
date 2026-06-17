@@ -10,6 +10,8 @@ export const updateTaskAction = createAction({
 	name: 'update_task',
 	displayName: 'Update Task',
 	description: 'Update an existing task in Attio.',
+	audience: 'both',
+	aiMetadata: { description: 'Updates an existing task by ID, changing any supplied fields: content, deadline, completion status, linked record, or assignee email. At least one field must be provided. Choose this to modify a task you already know the ID of. Idempotent — re-applying the same values leaves the task in the same state.', idempotent: true },
 	props: {
 		task_id: taskIdDropdown({
 			displayName: 'Task',

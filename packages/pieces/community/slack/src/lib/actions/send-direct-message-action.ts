@@ -20,6 +20,8 @@ export const slackSendDirectMessageAction = createAction({
   name: 'send_direct_message',
   displayName: 'Send Message To A User',
   description: 'Send message to a user',
+  audience: 'both',
+  aiMetadata: { description: 'Send a direct message to a single user by user ID, with optional Block Kit blocks, custom username/icon, and link unfurling. Each call posts a new DM, so it is not idempotent. Use this to message one person privately; use Send Message To A Channel to post in a channel.', idempotent: false },
   props: {
     userId: userId(true),
     text,

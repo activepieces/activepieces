@@ -20,6 +20,12 @@ export const createSpreadsheetAction = createAction({
 	name: 'create-spreadsheet',
 	displayName: 'Create Spreadsheet',
 	description: 'Creates a blank spreadsheet.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Creates a new, empty Google Sheets spreadsheet with the given title, optionally inside a specified Drive folder. Use when an agent needs a fresh spreadsheet to populate. Not idempotent — each call creates a separate spreadsheet even if the title is identical.',
+		idempotent: false,
+	},
 	props: {
 		title: Property.ShortText({
 			displayName: 'Title',
@@ -54,6 +60,7 @@ export const createSpreadsheetAction = createAction({
 							q: "mimeType='application/vnd.google-apps.folder' and trashed = false",
 							includeItemsFromAllDrives: includeTeamDrives || isServiceAccountWithoutImpersonation ? 'true' : 'false',
 							supportsAllDrives: 'true',
+							corpora: includeTeamDrives || isServiceAccountWithoutImpersonation ? 'allDrives' : 'user',
 						},
 						authentication: {
 							type: AuthenticationType.BEARER_TOKEN,

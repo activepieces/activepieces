@@ -9,6 +9,8 @@ export const generateDocumentAction = createAction({
 	name: 'generateDocument',
 	displayName: 'Generate Document',
 	description: 'Generates a new document using a specified template.',
+	audience: 'both',
+	aiMetadata: { description: 'Generate a PDF document in PDFMonkey from a template, merging in a JSON payload of data; optionally set a custom filename, attach metadata, and choose draft vs pending status. Use to produce a PDF from structured data. Each call creates a new document, so it is not idempotent.', idempotent: false },
 	props: {
 		document_template_id: templateIdDropdown,
 		payload: Property.Json({

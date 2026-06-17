@@ -10,6 +10,9 @@ import { webflowGetCollectionItem } from './lib/actions/get-collection-item';
 import { webflowRefundOrder } from './lib/actions/refund-order';
 import { webflowUnfulfillOrder } from './lib/actions/unfulfill-order';
 import { webflowUpdateCollectionItem } from './lib/actions/update-collection-item';
+import { webflowPublishCollectionItem } from './lib/actions/publish-collection-item';
+import { webflowListSites } from './lib/actions/list-sites';
+import { webflowListCollections } from './lib/actions/list-collections';
 import { webflowNewSubmission } from './lib/triggers/new-form-submitted';
 
 export const webflowAuth = PieceAuth.OAuth2({
@@ -27,6 +30,7 @@ export const webflow = createPiece({
 	logoUrl: 'https://cdn.activepieces.com/pieces/webflow.png',
 	categories: [PieceCategory.MARKETING],
 	authors: [
+		'Angelebeats',
 		'Ahmad-AbuOsbeh',
 		'TaskMagicKyle',
 		'kishanprmr',
@@ -45,6 +49,9 @@ export const webflow = createPiece({
 		webflowUnfulfillOrder,
 		webflowRefundOrder,
 		webflowFindOrder,
+		webflowPublishCollectionItem,
+		webflowListSites,
+		webflowListCollections,
 		createCustomApiCallAction({
 			baseUrl: () => 'https://api.webflow.com',
 			auth: webflowAuth,

@@ -50,6 +50,9 @@ export const newBlogPostTrigger = createTrigger({
 	name: 'new-blog-post',
 	displayName: 'New Blog Post',
 	description: 'Triggers when a new blog post is published in the selected space.',
+	aiMetadata: {
+		description: 'Fires when a new blog post is created in the selected Confluence space. Each event represents one newly published blog post with its metadata.',
+	},
 	auth: confluenceAuth,
 	type: TriggerStrategy.POLLING,
 	props,

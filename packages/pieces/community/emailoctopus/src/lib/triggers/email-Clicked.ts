@@ -18,6 +18,9 @@ export const emailClicked = createTrigger({
   name: 'emailClicked',
   displayName: 'Email Clicked',
   description: 'Triggers when a link inside a specific campaign email is clicked.',
+  aiMetadata: {
+    description: 'Fires when a recipient clicks a link inside an EmailOctopus campaign email (a contact.clicked webhook event), representing a click-through engagement. Can be scoped to a single campaign id, or left unfiltered to catch clicks across all campaigns.',
+  },
   props: {
     campaign_id: emailOctopusProps.campaignId(),
      liveMarkdown: Property.MarkDown({

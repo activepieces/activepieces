@@ -10,7 +10,13 @@ export const gmailSearchMailAction = createAction({
   name: 'gmail_search_mail',
   displayName: 'Find Email',
   description:
-    'Find emails using advanced search criteria. At least one search filter (from, to, subject, label, category, date, content, or attachment) is required.',
+    'Find emails using advanced search criteria. If no filters are provided, the latest emails are returned.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches the mailbox for emails matching combinable filters (sender, recipient, subject, body text, label, category, date range, attachment presence/name) and returns the matched messages with parsed contents. Use this to locate messages or discover their IDs before reading or replying; with no filters it returns the most recent emails. Bound results with Max Results (1-500, default 10). Idempotent: a read-only search that does not modify the mailbox.',
+    idempotent: true,
+  },
   props: {
     from: GmailProps.from,
     to: GmailProps.to,
@@ -114,10 +120,6 @@ export const gmailSearchMailAction = createAction({
 
     const searchQuery = queryParts.join(' ');
 
-    if (!searchQuery.trim()) {
-      throw new Error('Please provide at least one search criterion');
-    }
-
     const maxResults = Math.min(
       Math.max(context.propsValue.max_results || 10, 1),
       500
@@ -126,7 +128,7 @@ export const gmailSearchMailAction = createAction({
     try {
       const searchResponse = await gmail.users.messages.list({
         userId: 'me',
-        q: searchQuery,
+        ...(searchQuery.trim() ? { q: searchQuery } : {}),
         maxResults: maxResults,
         includeSpamTrash: context.propsValue.include_spam_trash,
       });

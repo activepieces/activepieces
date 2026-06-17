@@ -1,69 +1,53 @@
 import { t } from 'i18next';
-import {
-  Database,
-  Lightbulb,
-  Settings,
-  ShieldCheck,
-  Sparkles,
-  Zap,
-} from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 
-import { PromptSuggestion } from '@/components/prompt-kit/prompt-suggestion';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { userHooks } from '@/hooks/user-hooks';
+import { cn } from '@/lib/utils';
 
-export function EmptyState({ incognito }: { incognito: boolean }) {
-  const greeting = incognito
-    ? t('Private Chat')
-    : t('What would you like to work on?');
-
-  return (
-    <motion.div
-      className="flex items-center gap-3"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-    >
-      <Sparkles className="h-7 w-7 text-primary shrink-0" />
-      <h2
-        className="text-[28px] font-bold leading-tight bg-[length:200%_100%] animate-[shimmer_3s_ease-in-out_infinite] bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent"
-        style={{ textWrap: 'balance' }}
-      >
-        {greeting}
-      </h2>
-    </motion.div>
-  );
-}
-
-export function SuggestionCards({
-  onSend,
+export function EmptyState({
+  onSuggestionClick,
+  incognito,
+  showFlowCards,
+  hasInput,
 }: {
-  onSend: (text: string, files?: File[]) => void;
+  onSuggestionClick: (text: string) => void;
+  incognito: boolean;
+  showFlowCards: boolean;
+  hasInput: boolean;
 }) {
-  const suggestions = [
-    { icon: Zap, text: t('Automate a task') },
-    { icon: ShieldCheck, text: t('Handle approvals') },
-    { icon: Database, text: t('Check my data') },
-    { icon: Lightbulb, text: t('Brainstorm ideas') },
-  ];
+  const { data: currentUser } = userHooks.useCurrentUser();
+  const firstName = currentUser?.firstName ?? '';
 
   return (
-    <div className="flex flex-wrap justify-center gap-2 mt-3">
-      {suggestions.map((s, i) => (
-        <motion.div
-          key={s.text}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.3 + i * 0.08 }}
+    <div className="pt-8 pb-6">
+      <div className="max-w-3xl mx-auto px-6">
+        <Greeting firstName={firstName} incognito={incognito} />
+      </div>
+      {!incognito && (
+        <div
+          className={cn(
+            'grid transition-all duration-300 ease-out',
+            hasInput
+              ? 'grid-rows-[0fr] opacity-0'
+              : 'grid-rows-[1fr] opacity-100',
+          )}
         >
-          <PromptSuggestion onClick={() => onSend(s.text)}>
-            <s.icon className="h-3.5 w-3.5" />
-            {s.text}
-          </PromptSuggestion>
-        </motion.div>
-      ))}
+          <div className="overflow-hidden">
+            {showFlowCards && (
+              <FlowCards onSuggestionClick={onSuggestionClick} />
+            )}
+            <div className="max-w-3xl mx-auto px-6">
+              <Separator className="my-6" />
+              <TextSuggestions onSuggestionClick={onSuggestionClick} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -108,3 +92,242 @@ export function MessageSkeletons() {
     </div>
   );
 }
+
+function Greeting({
+  firstName,
+  incognito,
+}: {
+  firstName: string;
+  incognito: boolean;
+}) {
+  return (
+    <motion.div
+      className="flex flex-col items-start gap-3.5"
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
+      <h1 className="text-4xl font-bold leading-tight text-balance font-sentient">
+        {incognito ? (
+          t('Private Chat')
+        ) : firstName ? (
+          <>
+            {t("Let's get")}
+            <br />
+            {t('unbusy, {name}?', { name: firstName })} 👋
+          </>
+        ) : (
+          <>{t("Let's get unbusy?")} 👋</>
+        )}
+      </h1>
+      {!incognito && (
+        <p className="text-base text-muted-foreground">
+          {t('I can do all your work, just name it!')}
+        </p>
+      )}
+    </motion.div>
+  );
+}
+
+function FlowCards({
+  onSuggestionClick,
+}: {
+  onSuggestionClick: (text: string) => void;
+}) {
+  return (
+    <div
+      className="mt-6 flex gap-4 overflow-x-auto scrollbar-none pb-1"
+      style={{
+        paddingLeft: 'max(1.5rem, calc((100% - 48rem) / 2 + 1.5rem))',
+        paddingRight: 'max(1.5rem, calc((100% - 48rem) / 2 + 1.5rem))',
+      }}
+    >
+      {FLOW_CARDS.map((card, i) => (
+        <motion.button
+          key={card.title}
+          type="button"
+          className={cn(
+            'shrink-0 text-left cursor-pointer group',
+            card.wide ? 'w-[380px]' : 'w-[245px]',
+          )}
+          onClick={() => onSuggestionClick(card.description)}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 + i * 0.1 }}
+        >
+          <div
+            className={cn(
+              'h-[245px] rounded-xl overflow-hidden relative',
+              !card.wide && 'aspect-square',
+            )}
+          >
+            <img
+              src={card.bgImage}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <img
+              src={card.image}
+              alt={card.title}
+              loading="lazy"
+              className="absolute inset-0 m-auto w-[79%] h-[69%] object-contain transition-transform duration-300 ease-out group-hover:scale-105"
+            />
+          </div>
+          <h3 className="mt-3 text-sm font-semibold group-hover:text-primary transition-colors">
+            {t(card.title)}
+          </h3>
+          <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
+            {t(card.description)}
+          </p>
+        </motion.button>
+      ))}
+    </div>
+  );
+}
+
+function TextSuggestions({
+  onSuggestionClick,
+}: {
+  onSuggestionClick: (text: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      {TEXT_SUGGESTIONS.map((suggestion, i) => (
+        <motion.button
+          key={suggestion.title}
+          type="button"
+          className="flex items-center gap-4 rounded-xl p-2 text-left hover:bg-accent transition-colors cursor-pointer"
+          onClick={() => onSuggestionClick(suggestion.description)}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.3 + i * 0.05 }}
+        >
+          <div className="w-24 h-16 shrink-0 rounded-xl bg-muted flex items-center justify-center p-2.5">
+            <img
+              src={suggestion.icon}
+              alt=""
+              loading="lazy"
+              className={cn(
+                'max-w-full max-h-full object-contain',
+                suggestion.darkIcon && 'dark:hidden',
+              )}
+            />
+            {suggestion.darkIcon && (
+              <img
+                src={suggestion.darkIcon}
+                alt=""
+                loading="lazy"
+                className="max-w-full max-h-full object-contain hidden dark:block"
+              />
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-medium">{t(suggestion.title)}</h3>
+            <p className="text-xs text-muted-foreground truncate">
+              {t(suggestion.description)}
+            </p>
+          </div>
+        </motion.button>
+      ))}
+    </div>
+  );
+}
+
+const FLOW_CARDS: FlowCardData[] = [
+  {
+    title: 'Cleanup Spam Emails',
+    description:
+      'Find promotional emails from the last week and move them to spam automatically',
+    image: '/chat-suggestions/card-cleanup-spam.svg',
+    bgImage: '/chat-suggestions/card-background-1.svg',
+  },
+  {
+    title: 'Lead Enrichment',
+    description: 'Enrich my leads with person and company info automatically',
+    image: '/chat-suggestions/card-lead-enrichment.svg',
+    bgImage: '/chat-suggestions/card-background-2.svg',
+  },
+  {
+    title: 'Triage Support Tickets',
+    description:
+      'Classify incoming support emails and forward each to the right person automatically',
+    image: '/chat-suggestions/card-triage-support.svg',
+    bgImage: '/chat-suggestions/card-background-3.svg',
+    wide: true,
+  },
+];
+
+const TEXT_SUGGESTIONS: TextSuggestionData[] = [
+  {
+    icon: '/chat-suggestions/icon-route-emails.svg',
+    title: 'Route Incoming Emails',
+    description:
+      'Classify every incoming email by topic and route it to the right person automatically.',
+  },
+  {
+    icon: '/chat-suggestions/icon-sync-contacts.svg',
+    title: 'Sync Contacts to CRM',
+    description:
+      'Sync new contacts from a spreadsheet into my CRM automatically.',
+  },
+  {
+    icon: '/chat-suggestions/icon-plan-crm.svg',
+    title: 'Plan Daily Tasks',
+    description:
+      "Check my deals, find today's top priorities, and build a clear task list for the day.",
+  },
+  {
+    icon: '/chat-suggestions/icon-summarize-emails.svg',
+    darkIcon: '/chat-suggestions/icon-summarize-emails-dark.svg',
+    title: 'Summarize Daily Emails',
+    description:
+      "Scan my inbox, find the emails I haven't replied to yet, and flag them for me.",
+  },
+  {
+    icon: '/chat-suggestions/icon-slack-bot.svg',
+    title: 'Build a Slack Bot',
+    description:
+      "Answer my team's questions on Slack using our internal knowledge base.",
+  },
+  {
+    icon: '/chat-suggestions/icon-screen-candidates.svg',
+    darkIcon: '/chat-suggestions/icon-screen-candidates-dark.svg',
+    title: 'Screen Job Candidates',
+    description:
+      'Score candidates from a spreadsheet based on their info and write the scores back.',
+  },
+  {
+    icon: '/chat-suggestions/icon-lead-enrichment.svg',
+    title: 'Lead Enrichment',
+    description:
+      'Enrich my leads with full person and company info automatically.',
+  },
+  {
+    icon: '/chat-suggestions/icon-cleanup-spam.svg',
+    darkIcon: '/chat-suggestions/icon-cleanup-spam-dark.svg',
+    title: 'Cleanup Spam Emails',
+    description:
+      'Find promotional emails from the last week and move them to spam automatically.',
+  },
+  {
+    icon: '/chat-suggestions/icon-triage-support.svg',
+    title: 'Triage Support Tickets',
+    description:
+      'Read open support tickets, classify by type and urgency, and tag them for the team.',
+  },
+];
+
+type FlowCardData = {
+  title: string;
+  description: string;
+  image: string;
+  bgImage: string;
+  wide?: boolean;
+};
+
+type TextSuggestionData = {
+  icon: string;
+  darkIcon?: string;
+  title: string;
+  description: string;
+};

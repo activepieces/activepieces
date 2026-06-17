@@ -10,6 +10,8 @@ export const findWorkflowAction = createAction({
 	name: 'find-workflow',
 	displayName: 'Find Workflow',
 	description: 'Finds workflow based on title.',
+	audience: 'both',
+	aiMetadata: { description: 'Searches Skyvern workflows by title, paging through all results and returning every match. Use to resolve a workflow title into its workflow ID before calling Run Workflow. Read-only and idempotent.', idempotent: true },
 	props: {
 		title: Property.ShortText({
 			displayName: 'Workflow Title',

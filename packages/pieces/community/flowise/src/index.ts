@@ -29,6 +29,8 @@ export const flowisePredict = createAction({
   name: 'make_prediction',
   displayName: 'Make Prediction',
   description: 'Run Flowise Predict',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a question/input to a specific Flowise chatflow by its Chatflow ID and returns the prediction, optionally passing prior conversation history and runtime override config. Use to invoke a deployed Flowise AI workflow (chatbot, RAG, agent) for inference. Requires the target Chatflow ID; not idempotent since each call generates a fresh model response.', idempotent: false },
   auth: flowiseAuth,
   props: {
     chatflow_id: Property.ShortText({

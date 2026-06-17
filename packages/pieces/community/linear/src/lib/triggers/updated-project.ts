@@ -8,6 +8,9 @@ export const linearUpdatedProject = createTrigger({
   name: 'updated_project',
   displayName: 'Project Status Updated',
   description: 'Triggers when the status of an Linear project is updated',
+  aiMetadata: {
+    description: 'Fires when a Linear project status changes, optionally filtered to specific teams or a target status. Represents the project after the status change.',
+  },
   props: {
     team_ids: props.team_ids(false),
     project_status: props.project_statuses(false),

@@ -14,6 +14,8 @@ export const drupalCallServiceAction = createAction({
   name: 'drupal-call-service',
   displayName: 'Call Service',
   description: 'Call a service on the Drupal site',
+  audience: 'both',
+  aiMetadata: { description: 'Executes a named server-side service (e.g. an ECA/orchestration action) exposed by the Drupal site, passing a dynamic configuration object whose fields are defined by the chosen service. Use to invoke custom Drupal-side logic that has no dedicated action here. The service must be discoverable via the site\'s orchestration endpoint; because it runs arbitrary server logic, treat each call as potentially side-effecting and not idempotent.', idempotent: false },
   props: {
     service: Property.Dropdown({
       displayName: 'Service',

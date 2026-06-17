@@ -7,11 +7,38 @@ export const generateGamma = createAction({
   name: 'generateGamma',
   displayName: 'Generate Gamma',
   description: 'Create a new Gamma generation job.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Starts an asynchronous Gamma generation job from input text, producing a presentation, document, social post, or webpage (set via the format prop). Use to kick off AI content creation; the job runs in the background, so follow up with "Get Generation" using the returned generation ID to poll for completion and outputs. Requires input text (1-400,000 chars); not idempotent — each call queues a new generation and consumes credits.',
+    idempotent: false,
+  },
   props: {
+    folderId: Property.Dropdown({
+      displayName: 'Folder',
+      description: 'The folder to save the generated gamma into.',
+      required: false,
+      refreshers: ['auth'],
+      auth: gammaAuth,
+      options: async ({ auth }) => {
+        if (!auth) return { disabled: true, options: [], placeholder: 'Connect your account first' };
+        try {
+          const response = await httpClient.sendRequest<{ data: { id: string; name: string }[] }>({
+            method: HttpMethod.GET,
+            url: 'https://public-api.gamma.app/v1.0/folders',
+            headers: { 'X-API-KEY': auth.props.apiKey },
+          });
+          return {
+            options: (response.body.data ?? []).map((f) => ({ label: f.name, value: f.id })),
+          };
+        } catch {
+          return { disabled: true, options: [], placeholder: 'Failed to load folders' };
+        }
+      },
+    }),
     inputText: Property.LongText({
       displayName: 'Input Text',
       description:
-        'Text used to generate your gamma (1-750,000 characters).',
+        'Text used to generate your gamma (1-400,000 characters).',
       required: true,
     }),
     textMode: Property.StaticDropdown({
@@ -35,6 +62,7 @@ export const generateGamma = createAction({
           { label: 'Presentation', value: 'presentation' },
           { label: 'Document', value: 'document' },
           { label: 'Social', value: 'social' },
+          { label: 'Webpage', value: 'webpage' },
         ],
       },
     }),
@@ -121,6 +149,7 @@ export const generateGamma = createAction({
       imageOptions,
       cardOptions,
       sharingOptions,
+      folderId,
     } = context.propsValue;
 
 
@@ -145,12 +174,13 @@ export const generateGamma = createAction({
       body['cardOptions'] = cardOptions;
     if (sharingOptions && Object.keys(sharingOptions).length > 0)
       body['sharingOptions'] = sharingOptions;
+    if (folderId) body['folderIds'] = [folderId];
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: 'https://public-api.gamma.app/v0.2/generations',
+      url: 'https://public-api.gamma.app/v1.0/generations',
       headers: {
-        'X-API-KEY': context.auth.props.apiKey, 
+        'X-API-KEY': context.auth.props.apiKey,
         'Content-Type': 'application/json',
       },
       body: body,

@@ -12,6 +12,12 @@ export const updateLead = createAction({
   name: 'updateLead',
   displayName: 'Update Lead',
   description: 'Updates an existing lead.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing lead in Copper CRM, identified by lead ID, overwriting name, email, phone numbers, and address with the supplied values. Use to modify a known lead; requires the target lead ID. Idempotent: re-applying the same values leaves the record in the same state.',
+    idempotent: true,
+  },
   props: {
     leadId: leadDropdown(['auth']),
     fields: Property.DynamicProperties({

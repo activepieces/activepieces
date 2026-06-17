@@ -1,4 +1,3 @@
-import { Trigger } from '@activepieces/pieces-framework';
 import { githubRegisterTrigger } from './register-trigger';
 import { newBranchTrigger } from './new-branch';
 import { newCollaboratorTrigger } from './new-collaborator';

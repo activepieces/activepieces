@@ -131,4 +131,32 @@ export const systemUsage = {
         if (cgroupCores) return cgroupCores
         return os.availableParallelism?.() ?? os.cpus().length
     },
+
+    async getProcessTreeMemoryBytes(pid: number): Promise<number> {
+        const { data, error } = await tryCatch(async () => {
+            const { list } = await si.processes()
+            const childrenByParent = new Map<number, number[]>()
+            const rssBytesByPid = new Map<number, number>()
+            for (const proc of list) {
+                rssBytesByPid.set(proc.pid, proc.memRss * 1024)
+                const siblings = childrenByParent.get(proc.parentPid) ?? []
+                siblings.push(proc.pid)
+                childrenByParent.set(proc.parentPid, siblings)
+            }
+
+            let total = 0
+            const queue = [pid]
+            const visited = new Set<number>()
+            while (queue.length > 0) {
+                const current = queue.shift()!
+                if (visited.has(current)) continue
+                visited.add(current)
+                total += rssBytesByPid.get(current) ?? 0
+                queue.push(...(childrenByParent.get(current) ?? []))
+            }
+            return total
+        })
+        if (error) return 0
+        return data
+    },
 }

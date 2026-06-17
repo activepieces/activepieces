@@ -48,11 +48,11 @@ const EventDestinationActions = ({
           </EventDestinationDialog>
 
           <ConfirmationDeleteDialog
-            title={t('Delete Destination')}
+            title={t('Delete destination')}
             message={t(
-              'Deleting this destination will stop all event notifications to this endpoint.',
+              'Deleting this destination will stop all event notifications to its webhook.',
             )}
-            entityName="destination"
+            entityName={t('destination')}
             buttonText={t('Delete')}
             showToast
             mutationFn={async () => {

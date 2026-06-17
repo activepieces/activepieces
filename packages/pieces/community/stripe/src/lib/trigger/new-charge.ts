@@ -16,6 +16,10 @@ export const stripeNewCharge = createTrigger({
   name: 'new_charge',
   displayName: 'New Charge',
   description: 'Fires when a charge is successfully completed.',
+  aiMetadata: {
+    description:
+      'Fires when a charge is successfully completed in Stripe (the charge.succeeded event), emitting the charge record. Use to react to a successful card charge; note this is the charge-level event, distinct from the New Payment trigger which fires on a succeeded payment intent.',
+  },
   props: {},
   sampleData: {
     id: 'ch_3MmlLrLkdIwHu7ix0snN0B15',

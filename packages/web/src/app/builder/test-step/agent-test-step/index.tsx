@@ -8,7 +8,7 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 
-import { JsonViewer } from '@/components/custom/json-viewer';
+import { DataDisplayTabs } from '@/app/builder/data-display/data-display-tabs';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AgentTimeline } from '@/features/agents';
 
@@ -40,7 +40,7 @@ export const AgentTestStep = ({
   return (
     <div className="flex flex-col justify-center w-full items-start">
       <Tabs defaultValue="timeline" className="w-full">
-        <TabsList className="w-[250px] grid grid-cols-2">
+        <TabsList className="w-full grid grid-cols-2">
           <TabsTrigger value="timeline">{t('Timeline')}</TabsTrigger>
           <TabsTrigger value="output">{t('Output')}</TabsTrigger>
         </TabsList>
@@ -48,7 +48,10 @@ export const AgentTestStep = ({
           <AgentTimeline agentResult={agentResult} />
         </TabsContent>
         <TabsContent value="output">
-          <JsonViewer json={errorMessage ?? agentResult} title={t('Output')} />
+          <DataDisplayTabs
+            data={errorMessage ?? agentResult}
+            title={t('Output')}
+          />
         </TabsContent>
       </Tabs>
     </div>

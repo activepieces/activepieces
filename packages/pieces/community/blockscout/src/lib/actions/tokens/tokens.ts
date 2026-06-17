@@ -5,6 +5,8 @@ export const getTokens = createAction({
   name: 'get_tokens',
   displayName: 'Get Tokens',
   description: 'Get list of tokens',
+  audience: 'both',
+  aiMetadata: { description: 'List tokens tracked on the chain (ERC-20/721/1155), takes no inputs. Read-only. Use this to browse or discover tokens when you do not have a specific contract address; once you have an address use Get Token by Address for its details.', idempotent: true },
 
   // category: 'Tokens',
   props: {},

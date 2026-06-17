@@ -8,6 +8,12 @@ export const searchStories = createAction({
   name: 'searchStories',
   displayName: 'Search Stories (Narrative Clusters)',
   description: 'Filter and search for top news narratives and story clusters',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches AskNews for top news narratives and story clusters (grouped multi-article events) rather than individual articles. The query is optional: with no query it returns top trending stories filtered by category/sort, and with a query it filters to matching narratives via keyword, semantic, or hybrid matching. Choose this for the big-picture narrative view over a topic. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     query: Property.ShortText({
       displayName: 'Query',

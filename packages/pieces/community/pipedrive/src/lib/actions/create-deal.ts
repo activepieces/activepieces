@@ -17,6 +17,12 @@ export const createDealAction = createAction({
 	name: 'create-deal',
 	displayName: 'Create Deal',
 	description: 'Creates a new deal.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Creates a new deal with a required title and optional value, currency, pipeline/stage, status, owner, and linked person/organization. Use to add a sales opportunity to a pipeline (use Update Deal to edit one, or Add Product to Deal to attach line items). Not idempotent: each call creates a separate deal, so guard against duplicates.',
+		idempotent: false,
+	},
 	props: {
 		title: Property.ShortText({
 			displayName: 'Title',

@@ -17,6 +17,10 @@ export const appointmentScheduledTrigger = createTrigger({
 	name: 'new_appointment',
 	displayName: 'New Appointment',
 	description: 'Triggers when a new appointment is scheduled.',
+	aiMetadata: {
+		description:
+			'Fires when a new appointment is scheduled in Acuity, emitting the new appointment details. Can be scoped to a specific calendar and/or appointment type; events outside the configured scope are ignored.',
+	},
 	props: {
 		calendarId: calendarIdDropdown({
 			displayName: 'Calendar',

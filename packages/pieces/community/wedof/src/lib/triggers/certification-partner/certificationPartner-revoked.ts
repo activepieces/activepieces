@@ -7,6 +7,10 @@ export const certificationPartnerRevoked = createTrigger({
   name: 'certificationPartnerRevoked',
   displayName: 'Partenariat révoqué',
   description: "Se déclenche Lorsqu'un partenariat est révoqué",
+  aiMetadata: {
+    description:
+      "Fires when a certification partnership (partenariat) is revoked in Wedof, permanently ending the partner organisation's authorisation to manage certification folders for the certifier. The payload describes the partnership webhook event and links to the organisation involved.",
+  },
   props: {},
   sampleData: {
     id: 0,

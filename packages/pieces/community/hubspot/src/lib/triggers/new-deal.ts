@@ -75,6 +75,10 @@ export const newDealTrigger = createTrigger({
 	name: 'new-deal',
 	displayName: 'New Deal',
 	description: 'Trigger when a new deal is added.',
+	aiMetadata: {
+		description:
+			'Fires when a new deal is created in HubSpot. Each event represents one deal record with properties such as deal name, type, amount, close date, owner, forecast, and associated contacts. Polls for deals by creation date; does not fire on updates to existing deals.',
+	},
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,

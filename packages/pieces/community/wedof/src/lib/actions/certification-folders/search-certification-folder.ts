@@ -9,6 +9,12 @@ export const searchCertificationFolder = createAction({
     name: 'searchCertificationFolder',
     displayName: 'Rechercher un ou plusieurs dossiers de certifications',
     description: 'Liste les dossiers de certifications en fonction des critères sélectionnés',
+    audience: 'both',
+    aiMetadata: {
+      description:
+        'Search and list Wedof certification folders matching filters such as free-text query, folder/training state, period, funding type, SIRET, tags, CDC accrochage status, and survey status, with sorting, pagination, and JSON or CSV output. Pick this to discover folders or find a folder id; it is read-only and idempotent. Use the get-certification-folder action when you already have a single folder externalId.',
+      idempotent: true,
+    },
     props: {
         query: Property.ShortText({
             displayName: 'Recherche',

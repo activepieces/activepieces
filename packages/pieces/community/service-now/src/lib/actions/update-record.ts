@@ -23,6 +23,12 @@ export const updateRecordAction = createAction({
   name: 'update_record',
   displayName: 'Update Record',
   description: 'Update an existing record in a specified table',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates field values on an existing record in any ServiceNow table, identified by its sys_id (pick from the record dropdown or pass a raw sys_id manually). Use to change status, reassign, or edit fields on a known record. Idempotent: applying the same field values to the same sys_id repeatedly leaves the record in the same state. Requires the table and the record sys_id plus the fields to set.',
+    idempotent: true,
+  },
   props: {
     table: tableDropdown,
     record: recordDropdown,

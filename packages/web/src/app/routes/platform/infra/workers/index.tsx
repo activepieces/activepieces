@@ -35,6 +35,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { useTimeAgo } from '@/hooks/use-time-ago';
 import { cn } from '@/lib/utils';
 
+import { SandboxesPopover } from './sandboxes-popover';
 import { WorkerConfigsPopover } from './worker-configs-popover';
 
 export default function WorkersPage() {
@@ -179,6 +180,8 @@ function WorkerCard({ worker, index, isCloud }: WorkerCardProps) {
   const usedRamBytes = totalAvailableRamInBytes * (ramUsagePercentage / 100);
   const usedDiskBytes = diskInfo.used;
 
+  const sandboxes = worker.information.sandboxes ?? [];
+
   const version = workerProps.version ?? 'v0.39.4';
 
   return (
@@ -232,6 +235,7 @@ function WorkerCard({ worker, index, isCloud }: WorkerCardProps) {
               {t(worker.status.toLowerCase())}
             </Badge>
             <WorkerConfigsPopover workerProps={workerProps} />
+            <SandboxesPopover sandboxes={sandboxes} />
           </div>
         </div>
       </CardHeader>

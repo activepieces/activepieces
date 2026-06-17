@@ -15,6 +15,8 @@ const commonAuthProps = {
 
 export const BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE = 'both_client_credentials_and_authorization_code'
 
+export const PLACEHOLDER_CONNECTION_TYPE = 'PLACEHOLDER'
+
 export enum OAuth2GrantType {
     AUTHORIZATION_CODE = 'authorization_code',
     CLIENT_CREDENTIALS = 'client_credentials',
@@ -30,6 +32,15 @@ export const UpsertCustomAuthRequest = z.object({
     }),
 }).describe('Custom Auth')
 
+export const UpsertOIDCRequest = z.object({
+    ...commonAuthProps,
+    type: z.literal(AppConnectionType.OIDC),
+    value: z.object({
+        type: z.literal(AppConnectionType.OIDC),
+        props: propsSchema,
+    }),
+}).describe('OIDC')
+
 export const UpsertNoAuthRequest = z.object({
     ...commonAuthProps,
     type: z.literal(AppConnectionType.NO_AUTH),
@@ -37,6 +48,11 @@ export const UpsertNoAuthRequest = z.object({
         type: z.literal(AppConnectionType.NO_AUTH),
     }),
 }).describe('No Auth')
+
+export const UpsertPlaceholderConnectionRequest = z.object({
+    ...commonAuthProps,
+    type: z.literal(PLACEHOLDER_CONNECTION_TYPE),
+}).describe('Placeholder')
 
 const commonOAuth2ValueProps = {
     client_id: z.string().min(1),
@@ -108,7 +124,9 @@ export const UpsertAppConnectionRequestBody = z.union([
     UpsertPlatformOAuth2Request,
     UpsertBasicAuthRequest,
     UpsertCustomAuthRequest,
+    UpsertOIDCRequest,
     UpsertNoAuthRequest,
+    UpsertPlaceholderConnectionRequest,
 ])
 
 export type UpsertCloudOAuth2Request = z.infer<typeof UpsertCloudOAuth2Request>
@@ -117,7 +135,9 @@ export type UpsertOAuth2Request = z.infer<typeof UpsertOAuth2Request>
 export type UpsertSecretTextRequest = z.infer<typeof UpsertSecretTextRequest>
 export type UpsertBasicAuthRequest = z.infer<typeof UpsertBasicAuthRequest>
 export type UpsertCustomAuthRequest = z.infer<typeof UpsertCustomAuthRequest>
+export type UpsertOIDCRequest = z.infer<typeof UpsertOIDCRequest>
 export type UpsertNoAuthRequest = z.infer<typeof UpsertNoAuthRequest>
+export type UpsertPlaceholderConnectionRequest = z.infer<typeof UpsertPlaceholderConnectionRequest>
 export type UpsertAppConnectionRequestBody = z.infer<typeof UpsertAppConnectionRequestBody>
 
 
@@ -150,6 +170,7 @@ export const UpsertGlobalConnectionRequestBody =
         UpsertPlatformOAuth2Request.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
         UpsertBasicAuthRequest.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
         UpsertCustomAuthRequest.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
+        UpsertOIDCRequest.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
         UpsertNoAuthRequest.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
     ])
 export type UpsertGlobalConnectionRequestBody = z.infer<typeof UpsertGlobalConnectionRequestBody>
@@ -160,6 +181,7 @@ export const GetOAuth2AuthorizationUrlRequestBody = z.object({
     projectId: z.string().optional(),
     clientId: z.string(),
     redirectUrl: z.string(),
+    scopes: z.array(z.string()).optional(),
     props: z.record(z.string(), z.unknown()).optional(),
 })
 export type GetOAuth2AuthorizationUrlRequestBody = z.infer<typeof GetOAuth2AuthorizationUrlRequestBody>
@@ -174,6 +196,8 @@ export const ReplaceAppConnectionsRequestBody = z.object({
     sourceAppConnectionId: z.string(),
     targetAppConnectionId: z.string(),
     projectId: z.string(),
+    deleteSourceConnection: z.boolean().optional().default(false),
+    applyToPublishedVersions: z.boolean().optional().default(false),
 })
 export type ReplaceAppConnectionsRequestBody = z.infer<typeof ReplaceAppConnectionsRequestBody>
 

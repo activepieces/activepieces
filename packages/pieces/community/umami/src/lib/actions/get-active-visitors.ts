@@ -9,6 +9,12 @@ export const getActiveVisitors = createAction({
   displayName: 'Get Active Visitors',
   description:
     'Returns the number of people currently browsing a website in real time.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetch the current real-time count of active visitors on one Umami-tracked website. Use for "how many people are on the site right now"; for historical totals use Get Website Stats instead. Requires only a website ID. Read-only and idempotent, though the live count naturally changes between calls.',
+    idempotent: true,
+  },
   props: {
     websiteId: umamiCommon.websiteDropdown,
   },

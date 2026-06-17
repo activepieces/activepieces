@@ -8,6 +8,12 @@ export const findClientAction = createAction({
 	name: 'find_client',
 	displayName: 'Find Client',
 	description: 'Finds client based on seach term.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Searches the Acuity client list by a required search term matched against first name, last name, or phone number, returning matches with a found flag. Use to look up an existing client before booking or updating. Read-only and idempotent.',
+		idempotent: true,
+	},
 	props: {
 		search: Property.ShortText({
 			displayName: 'Search Term',

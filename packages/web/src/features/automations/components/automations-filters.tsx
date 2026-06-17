@@ -8,11 +8,8 @@ import { t } from 'i18next';
 import {
   Filter,
   FolderIcon,
-  FolderPlus,
   Link2,
-  Loader2,
   Search,
-  Sparkles,
   Table2,
   ToggleLeft,
   User,
@@ -32,7 +29,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
@@ -41,6 +37,7 @@ import { TemplatesBrowseDialog } from '@/features/templates';
 import { formatUtils } from '@/lib/format-utils';
 import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
+import { CreateNewMenu } from './create-new-menu';
 import { MultiSelectFilter } from './multi-select-filter';
 
 type AutomationsFiltersProps = {
@@ -295,111 +292,36 @@ export const AutomationsFilters = ({
               </DropdownMenu>
             )}
 
-            <DropdownMenu open={isCreatingFlow || isCreatingTable || undefined}>
-              <DropdownMenuTrigger asChild>
-                <AnimatedIconButton
-                  icon={PlusIcon}
-                  iconSize={16}
-                  size="sm"
-                  className="h-9"
-                >
-                  {t('Create New')}
-                </AnimatedIconButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <PermissionNeededTooltip
-                  hasPermission={userHasPermissionToWriteFlow}
-                >
-                  <DropdownMenuItem
-                    disabled={
-                      !userHasPermissionToWriteFlow ||
-                      isCreatingFlow ||
-                      isCreatingTable
-                    }
-                    onSelect={(e) => {
-                      e.preventDefault();
-                      onCreateFlow();
-                    }}
-                    className="cursor-pointer"
-                  >
-                    {isCreatingFlow ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Workflow className="h-4 w-4 mr-2" />
-                    )}
-                    {isCreatingFlow ? t('Creating...') : t('New Flow')}
-                  </DropdownMenuItem>
-                </PermissionNeededTooltip>
-                <PermissionNeededTooltip
-                  hasPermission={userHasPermissionToWriteFlow}
-                >
-                  <DropdownMenuItem
-                    disabled={
-                      !userHasPermissionToWriteFlow ||
-                      isCreatingFlow ||
-                      isCreatingTable
-                    }
-                    onSelect={() => {
-                      if (embedState.isEmbedded) {
-                        setIsTemplatesBrowseDialogOpen(true);
-                      } else {
-                        navigate('/templates');
-                      }
-                    }}
-                    className="cursor-pointer"
-                  >
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    {t('Start from Template')}
-                  </DropdownMenuItem>
-                </PermissionNeededTooltip>
-                {!embedState.hideTables && (
-                  <PermissionNeededTooltip
-                    hasPermission={userHasPermissionToWriteTable}
-                  >
-                    <DropdownMenuItem
-                      disabled={
-                        !userHasPermissionToWriteTable ||
-                        isCreatingFlow ||
-                        isCreatingTable
-                      }
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        onCreateTable();
-                      }}
-                      className="cursor-pointer"
-                    >
-                      {isCreatingTable ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <Table2 className="h-4 w-4 mr-2" />
-                      )}
-                      {isCreatingTable ? t('Creating...') : t('New Table')}
-                    </DropdownMenuItem>
-                  </PermissionNeededTooltip>
-                )}
-                {!embedState.hideFolders && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <PermissionNeededTooltip
-                      hasPermission={userHasPermissionToWriteFolder}
-                    >
-                      <DropdownMenuItem
-                        disabled={
-                          !userHasPermissionToWriteFolder ||
-                          isCreatingFlow ||
-                          isCreatingTable
-                        }
-                        onClick={onCreateFolder}
-                        className="cursor-pointer"
-                      >
-                        <FolderPlus className="h-4 w-4 mr-2" />
-                        {t('New Folder')}
-                      </DropdownMenuItem>
-                    </PermissionNeededTooltip>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <CreateNewMenu
+              scope="root"
+              align="end"
+              userHasPermissionToWriteFlow={userHasPermissionToWriteFlow}
+              userHasPermissionToWriteTable={userHasPermissionToWriteTable}
+              userHasPermissionToWriteFolder={userHasPermissionToWriteFolder}
+              isCreatingFlow={isCreatingFlow}
+              isCreatingTable={isCreatingTable}
+              onCreateFlow={onCreateFlow}
+              onCreateTable={onCreateTable}
+              onCreateFolder={onCreateFolder}
+              onImportFlow={onImportFlow}
+              onImportTable={onImportTable}
+              onSelectTemplate={() => {
+                if (embedState.isEmbedded) {
+                  setIsTemplatesBrowseDialogOpen(true);
+                } else {
+                  navigate('/templates');
+                }
+              }}
+            >
+              <AnimatedIconButton
+                icon={PlusIcon}
+                iconSize={16}
+                size="sm"
+                className="h-9"
+              >
+                {t('Create New')}
+              </AnimatedIconButton>
+            </CreateNewMenu>
           </div>
         </div>
       </div>

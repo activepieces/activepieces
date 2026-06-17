@@ -10,6 +10,12 @@ export const linkIssuesAction = createAction({
 	name: 'link-issues',
 	displayName: 'Link Issues',
 	description: 'Creates a link between two issues.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Creates a typed link between two Jira Data Center/Server issues (e.g. blocks, relates to, duplicates), using a link-type ID and the two issue IDs/keys. Use to relate one issue to another. Not idempotent — repeating the call adds another link of that type.',
+		idempotent: false,
+	},
 	props: {
 		firstIssueId: issueIdOrKeyProp('First Issue', true),
 		issueLinkTypeId: issueLinkTypeIdProp('Link Type', true),

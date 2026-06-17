@@ -10,6 +10,8 @@ export const listAutomationsAction = createAction({
 	name: 'list_automations',
 	displayName: 'List Automations',
 	description: 'Retrieves a list of automations for a publication.',
+	audience: 'both',
+	aiMetadata: { description: 'Lists the automations configured for a beehiiv publication. When neither page nor limit is set it auto-paginates and returns all automations; otherwise it returns the requested page. Use to discover automation IDs before enrolling subscribers. Read-only and idempotent.', idempotent: true },
 	props: {
 		publicationId: publicationId,
 		limit: Property.Number({

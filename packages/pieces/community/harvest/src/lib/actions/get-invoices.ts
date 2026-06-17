@@ -13,6 +13,8 @@ export const getInvoices = createAction({
   auth: harvestAuth,
   displayName: 'Get Invoices',
   description: 'Fetches invoices',
+  audience: 'both',
+  aiMetadata: { description: 'Lists invoices from a Harvest account; with all filters empty it returns every invoice, or narrow by issue-date range, state (draft/open/paid/closed), client ID, project ID, or updated-since timestamp. Use to look up billing/invoice records or check payment status. Read-only and idempotent.', idempotent: true },
   props: {
     from: Property.ShortText({
       description: 'Only return invoices with an issue_date on or after the given date. (YYYY-MM-DD)',

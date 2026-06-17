@@ -1,4 +1,4 @@
-import { apId, FlowActionType, FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, FlowTriggerType, isFlowRunStateTerminal, isNil, RunEnvironment, SampleDataFileType, StepLocationRelativeToParent, StepOutputStatus, tryCatch, UpdateActionRequest } from '@activepieces/shared'
+import { apId, createKeyForFormInput, FlowActionType, FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, FlowTriggerType, isFlowRunStateTerminal, isNil, isObject, McpToolResult, RunEnvironment, SampleDataFileType, Step, StepLocationRelativeToParent, StepOutputStatus, tryCatch, UpdateActionRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunService, isOutsideRetentionWindow } from '../../flows/flow-run/flow-run-service'
@@ -17,7 +17,7 @@ export async function executeFlowTest({ flowId, projectId, stepName, triggerTest
     stepName?: string
     triggerTestData?: Record<string, unknown>
     log: FastifyBaseLogger
-}): Promise<{ content: [{ type: 'text', text: string }] }> {
+}): Promise<McpToolResult> {
     let flow = await flowService(log).getOnePopulated({ id: flowId, projectId })
     if (isNil(flow)) {
         return { content: [{ type: 'text', text: '❌ Flow not found' }] }
@@ -27,6 +27,7 @@ export async function executeFlowTest({ flowId, projectId, stepName, triggerTest
         return { content: [{ type: 'text', text: '❌ Flow trigger is not configured. Use ap_update_trigger to set up the trigger before testing.' }] }
     }
 
+    const usedMockTriggerData = !isNil(triggerTestData)
     let warning = ''
     if (stepName) {
         const step = flowStructureUtil.getStep(stepName, flow.version.trigger)
@@ -64,6 +65,8 @@ export async function executeFlowTest({ flowId, projectId, stepName, triggerTest
             },
         })
         flow = updatedFlow
+        warning += '⚠️ This test ran on mock trigger data you supplied, not a real trigger event. A passing test here does NOT prove the live flow works: if the real trigger payload uses different field names or casing than your mock, downstream steps will read empty values in production. Verify your mock keys match a real sample (e.g. trigger the flow once for real, or check the trigger sample shape). When reporting this to the user, describe it as "tested with sample data" — NEVER claim it was "verified with real runs".\n\n'
+        warning += buildTriggerShapeHint(flow.version.trigger)
     }
 
     const flowRun = await flowRunService(log).test({
@@ -92,7 +95,7 @@ export async function executeFlowTest({ flowId, projectId, stepName, triggerTest
         }
     }
 
-    return { content: [{ type: 'text', text: warning + formatRunResult(completedRun) }] }
+    return { content: [{ type: 'text', text: warning + formatRunResult(completedRun) }], structuredContent: { usedMockTriggerData } }
 }
 
 export async function executeAdhocAction({
@@ -111,7 +114,7 @@ export async function executeAdhocAction({
     input?: Record<string, unknown>
     connectionExternalId?: string
     log: FastifyBaseLogger
-}): Promise<{ content: [{ type: 'text', text: string }] }> {
+}): Promise<McpToolResult> {
     const authError = mcpUtils.validateAuth(connectionExternalId)
     if (authError) {
         return authError
@@ -139,6 +142,11 @@ export async function executeAdhocAction({
         ...(connectionExternalId !== undefined && { auth: `{{connections['${connectionExternalId}']}}` }),
     }
 
+    // createCustomApiCallAction wraps url in DynamicProperties, expecting { url: string } not a flat string
+    if (actionName === 'custom_api_call' && typeof resolvedInput.url === 'string') {
+        resolvedInput.url = { url: resolvedInput.url }
+    }
+
     const diagnosis = mcpUtils.diagnosePieceProps({
         props: action.props,
         input: resolvedInput,
@@ -146,6 +154,9 @@ export async function executeAdhocAction({
         requireAuth: action.requireAuth,
         componentType: 'action',
     })
+    if (diagnosis.unknownKeys.length > 0) {
+        return { content: [{ type: 'text', text: `❌ ${diagnosis.parts.join(' ')}` }] }
+    }
     if (diagnosis.missing.length > 0) {
         return { content: [{ type: 'text', text: `❌ Cannot run action: ${diagnosis.parts.join(' ')}` }] }
     }
@@ -197,7 +208,7 @@ export async function executeAdhocAction({
             actionName: action.name,
             input: resolvedInput,
             propertySettings: {},
-            errorHandlingOptions: { continueOnFailure: { value: false }, retryOnFailure: { value: false } },
+            errorHandlingOptions: mcpUtils.buildErrorHandlingOptions({}),
         }
         await mcpUtils.fillDefaultsForMissingOptionalProps({ settings: pieceSettings, platformId: project.platformId, log })
 
@@ -267,6 +278,40 @@ export async function executeAdhocAction({
     }
 }
 
+const FORMS_PIECE_NAME = '@activepieces/piece-forms'
+
+function buildTriggerShapeHint(trigger: Step): string {
+    if (trigger.type !== FlowTriggerType.PIECE || trigger.settings.pieceName !== FORMS_PIECE_NAME) {
+        return ''
+    }
+    const note = 'Note: the Human Input / Web Form trigger camelCases each field label to build its output key (e.g. "Full Name" → "fullName"). Reference fields as {{trigger[\'output\'].<camelCaseKey>}}, never by the original label.'
+    const input = trigger.settings.input
+    const formInputs = isObject(input) && Array.isArray(input.inputs) ? input.inputs : []
+    const keyLines = formInputs
+        .filter((field): field is { displayName: string } => isObject(field) && typeof field.displayName === 'string')
+        .map((field) => `  - ${createKeyForFormInput(field.displayName)} (from "${field.displayName}")`)
+    if (keyLines.length === 0) {
+        return `${note}\n\n`
+    }
+    return `${note}\nExpected trigger output keys:\n${keyLines.join('\n')}\n\n`
+}
+
+function looksEmpty(output: unknown): boolean {
+    if (output === undefined || output === null) return true
+    if (Array.isArray(output) && output.length === 0) return true
+    if (typeof output === 'object' && output !== null) {
+        const obj = output as Record<string, unknown>
+        if (obj.found === false) return true
+        if (Array.isArray(obj.messages) && obj.messages.length === 0) return true
+        if (Array.isArray(obj.results) && obj.results.length === 0) return true
+        if (typeof obj.results === 'object' && obj.results !== null) {
+            const results = obj.results as Record<string, unknown>
+            if (Array.isArray(results.messages) && results.messages.length === 0 && results.count === 0) return true
+        }
+    }
+    return false
+}
+
 function formatAdhocActionResult(run: FlowRun, stepName: string, displayName: string): string {
     const steps = run.steps
     if (isNil(steps) || typeof steps !== 'object') {
@@ -284,12 +329,16 @@ function formatAdhocActionResult(run: FlowRun, stepName: string, displayName: st
         const outStr = output === undefined
             ? '(no output)'
             : typeof output === 'string' ? output : JSON.stringify(output)
-        return `✅ ${displayName} completed (run ${run.id}).\n\n${mcpUtils.truncate(outStr, 4000)}`
+        const base = `✅ ${displayName} completed (run ${run.id}).\n\n${outStr}`
+        if (looksEmpty(output)) {
+            return `${base}\n\nNote: No results matched. If the user expected data, try broader parameters (e.g., wider date range, fewer filters).`
+        }
+        return base
     }
     const errStr = errorMessage === undefined
         ? `status: ${String(status)}`
         : typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage)
-    return `❌ ${displayName} failed (run ${run.id}): ${mcpUtils.truncate(errStr, 2000)}`
+    return `❌ ${displayName} failed (run ${run.id}): ${errStr}\n\nRetry suggestion: Check the error above. If it mentions missing criteria, try adding a broad filter (e.g., after_date with a recent date, or a common search term). If it mentions auth, verify the connection.`
 }
 
 export async function pollForRunCompletion(log: FastifyBaseLogger, runId: string, projectId: string): Promise<FlowRun> {
@@ -368,11 +417,11 @@ function formatStepOutput(name: string, step: unknown): string {
 
     if (status === StepOutputStatus.FAILED && errorMessage !== undefined) {
         const errStr = typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage)
-        parts.push(`    Error: ${mcpUtils.truncate(errStr, 300)}`)
+        parts.push(`    Error: ${errStr}`)
     }
     else if (output !== undefined) {
         const outStr = typeof output === 'string' ? output : JSON.stringify(output)
-        parts.push(`    Output: ${mcpUtils.truncate(outStr, 500)}`)
+        parts.push(`    Output: ${outStr}`)
     }
 
     return parts.join('\n')

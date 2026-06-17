@@ -14,12 +14,14 @@ export const clickupRegisterTrigger = ({
   displayName,
   eventType,
   description,
+  aiMetadata,
   sampleData,
 }: {
   name: string;
   displayName: string;
   eventType: ClickupEventType;
   description: string;
+  aiMetadata?: { description: string };
   sampleData: unknown;
 }) =>
   createTrigger({
@@ -27,6 +29,7 @@ export const clickupRegisterTrigger = ({
     name: `clickup_trigger_${name}`,
     displayName,
     description,
+    aiMetadata,
     props: {
       workspace_id: clickupCommon.workspace_id(true),
       space_id: clickupCommon.space_id(false), // Optional, depends on workspace

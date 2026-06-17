@@ -9,6 +9,12 @@ export const getBusinessInputDataAction = createAction({
   displayName: "Get Business's Submitted Verification Data",
   description:
     'Returns the company information provided during a business verification — such as company name, registration number, directors, and ownership details.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves the company data submitted for a single business verification session — name, registration number, directors, ownership, etc. Use this when you need the business\'s submitted input itself rather than the pass/fail decision (see Get Business Verification Result for the outcome). Requires the verification session ID. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     session_id: Property.ShortText({
       displayName: 'Verification Session ID',

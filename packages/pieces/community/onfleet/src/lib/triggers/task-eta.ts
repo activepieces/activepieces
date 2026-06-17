@@ -11,6 +11,10 @@ export const taskEta = createTrigger({
   displayName: 'Task ETA',
   description:
     'Triggers when a task worker ETA less than or equal to threshold value provided, in seconds',
+  aiMetadata: {
+    description:
+      "Fires when the estimated time of arrival for the worker assigned to an Onfleet task drops to or below the configured threshold (in seconds). Represents an imminent-arrival event based on the worker's predicted ETA, useful for sending advance notifications to recipients. The payload includes the task ID, the estimated arrival time, the assigned worker, and the full task object.",
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   //Create the webhook and save the webhook ID in store for disable behavior

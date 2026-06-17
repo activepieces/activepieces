@@ -8,7 +8,13 @@ export const findNotesAction = createAction({
     auth: pipedriveAuth,
     name: 'find-notes',
     displayName: 'Find Notes',
-    description: 'Finds notes by Deal, Lead, Person, or Organization ID.', 
+    description: 'Finds notes by Deal, Lead, Person, or Organization ID.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Lists notes attached to a single parent record, chosen via the Search By dropdown (Deal, Lead, Person, or Organization) plus that record\'s ID, sorted newest-updated first. Use to retrieve the notes on a known object; to fetch one specific note by its own ID, use Retrieve a Note. Read-only and idempotent.',
+        idempotent: true,
+    },
     props: {
         objectType: Property.StaticDropdown({
             displayName: 'Search By',

@@ -1,8 +1,12 @@
 import { isNil, McpServerType, PopulatedMcpServer, TelemetryEventName, tryCatch } from '@activepieces/shared'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
-import { FastifyBaseLogger } from 'fastify'
+import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { repoFactory } from '../../core/db/repo-factory'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { ChatConversationEntity } from '../../ee/chat/chat-conversation-entity'
+import { CONVERSATION_ID_HEADER } from '../../ee/chat/mcp/chat-mcp'
+import { domainHelper } from '../../helper/domain-helper'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { telemetry } from '../../helper/telemetry.utils'
 import { mcpServerService } from '../mcp-service'
@@ -47,29 +51,27 @@ function registerMcpEndpoint(app: Parameters<FastifyPluginAsyncZod>[0], scope: M
         const [type, token] = authHeader?.split(' ') ?? []
 
         if (type !== 'Bearer' || isNil(token)) {
-            return reply.status(401).send({
-                error: 'unauthorized',
-                message: 'Authorization: Bearer <token> required',
-            })
+            return unauthorized({ req, reply, scope, message: 'Authorization: Bearer <token> required' })
         }
 
         const identity = await resolveIdentity({ token, scope, log: req.log })
         if (isNil(identity)) {
-            return reply.status(401).send({
-                error: 'unauthorized',
-                message: 'Invalid or expired access token',
-            })
+            return unauthorized({ req, reply, scope, message: 'Invalid or expired access token', invalidToken: true })
         }
 
         const { mcp, userId } = await resolveMcpAndUser({ identity, log: req.log })
         if (isNil(mcp)) {
-            return reply.status(401).send({
-                error: 'unauthorized',
-                message: 'Invalid project or token.',
-            })
+            return unauthorized({ req, reply, scope, message: 'Invalid project or token.', invalidToken: true })
         }
 
-        const { server } = await mcpServerService(req.log).buildServer({ mcp, userId })
+        const conversationId = req.headers[CONVERSATION_ID_HEADER] as string | undefined
+        const conversationProjectId = conversationId && userId
+            ? await resolveConversationProjectId({ conversationId, userId, log: req.log })
+            : null
+        const serverMcp = conversationProjectId
+            ? await mcpServerService(req.log).getPopulatedByProjectId(conversationProjectId) ?? mcp
+            : mcp
+        const { server } = await mcpServerService(req.log).buildServer({ mcp: serverMcp, userId })
 
         const transport = new StreamableHTTPServerTransport({
             sessionIdGenerator: undefined,
@@ -82,6 +84,27 @@ function registerMcpEndpoint(app: Parameters<FastifyPluginAsyncZod>[0], scope: M
 
         await server.connect(transport)
         await transport.handleRequest(req.raw, reply.raw, req.body)
+    })
+}
+
+function unauthorized({ req, reply, scope, message, invalidToken }: {
+    req: FastifyRequest
+    reply: FastifyReply
+    scope: McpServerType
+    message: string
+    invalidToken?: boolean
+}): FastifyReply {
+    const resourcePath = scope === McpServerType.PLATFORM ? 'mcp/platform' : 'mcp'
+    const resourceMetadataUrl = domainHelper.getPublicUrlFromRequest({
+        req,
+        path: `/.well-known/oauth-protected-resource/${resourcePath}`,
+    })
+    const challenge = invalidToken
+        ? `Bearer error="invalid_token", resource_metadata="${resourceMetadataUrl}"`
+        : `Bearer resource_metadata="${resourceMetadataUrl}"`
+    return reply.status(401).header('WWW-Authenticate', challenge).send({
+        error: 'unauthorized',
+        message,
     })
 }
 
@@ -102,7 +125,7 @@ async function resolveIdentity({ token, scope, log }: { token: string, scope: Mc
     return null
 }
 
-async function resolveMcpAndUser({ identity, log }: { identity: ResolvedIdentity, log: FastifyBaseLogger }): Promise<{ mcp: PopulatedMcpServer | null, userId: string | null }> {
+async function resolveMcpAndUser({ identity, log }: { identity: ResolvedIdentity, log: FastifyBaseLogger }): Promise<{ mcp: PopulatedMcpServer | null, userId?: string }> {
     try {
         if (identity.type === McpServerType.PLATFORM) {
             rejectedPromiseHandler(telemetry(log).trackPlatform(identity.platformId, {
@@ -127,13 +150,34 @@ async function resolveMcpAndUser({ identity, log }: { identity: ResolvedIdentity
     }
     catch (err) {
         log.debug({ err }, 'Failed to resolve MCP server')
-        return { mcp: null, userId: null }
+        return { mcp: null }
     }
 }
 
 type ResolvedIdentity =
     | { type: McpServerType.PROJECT, projectId: string, userId: string }
     | { type: McpServerType.PLATFORM, platformId: string, userId: string }
+
+const chatConversationRepo = repoFactory(ChatConversationEntity)
+
+async function resolveConversationProjectId({ conversationId, userId, log }: {
+    conversationId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<string | null> {
+    const { data: conversation, error } = await tryCatch(async () =>
+        chatConversationRepo().findOne({ where: { id: conversationId, userId }, select: ['projectId'] }),
+    )
+    if (error) {
+        log.warn({ err: error, conversationId }, 'DB error resolving conversation project')
+        return null
+    }
+    if (!conversation) {
+        log.debug({ conversationId }, 'Conversation not found for project resolution')
+        return null
+    }
+    return conversation.projectId ?? null
+}
 
 const McpEndpointConfig = {
     config: { security: securityAccess.public() },

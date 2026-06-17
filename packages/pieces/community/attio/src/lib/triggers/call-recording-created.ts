@@ -12,6 +12,9 @@ export const callRecordingCreatedTrigger = createTrigger({
 	name: 'call_recording_created',
 	displayName: 'Call Recording Created',
 	description: 'Triggers when a call recording finishes and its media upload is complete.',
+	aiMetadata: {
+		description: 'Fires when a call recording finishes and its media upload completes in Attio, across all meetings in the workspace. Represents a newly available recording whose transcript can then be fetched.',
+	},
 	props: {},
 	type: TriggerStrategy.WEBHOOK,
 	sampleData: {

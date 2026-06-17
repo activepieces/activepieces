@@ -10,6 +10,9 @@ export const newTaskCreated = createTrigger({
   name: 'newTaskCreated',
   displayName: 'New Task Created',
   description: 'Triggers when a new task is created',
+  aiMetadata: {
+    description: 'Fires when a new task is created in Bigin CRM, via a Tasks.create webhook. Represents a newly added piece of follow-up work.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,

@@ -18,6 +18,10 @@ export const gmailNewEmailTrigger = createTrigger({
   name: 'gmail_new_email_received',
   displayName: 'New Email',
   description: 'Triggers when new mail is found in your Gmail inbox',
+  aiMetadata: {
+    description:
+      'Fires when a new email arrives in the connected Gmail account, optionally narrowed by sender, recipient, subject, label, or category filters. Each event represents one newly received message with its parsed contents and thread.',
+  },
   props: {
     subject: GmailProps.subject,
     from: GmailProps.from,
