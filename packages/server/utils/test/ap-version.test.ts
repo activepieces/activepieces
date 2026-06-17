@@ -29,10 +29,11 @@ describe('apVersionUtil.getCurrentRelease', () => {
         expect(apVersionUtil.getCurrentRelease()).toBe('1.2.3')
     })
 
-    // The fallback is a known correctness hazard: the worker version gate compares
-    // worker vs app release with `!==`, so two independent processes that both fall
-    // back to '0.0.0' compare equal and the gate passes even though neither version
-    // was actually read. These tests pin the fallback so a regression is loud.
+    // The fallback constant matters: the pre-0.85.4 gate used a raw `!==`, so two
+    // processes that both fell back to '0.0.0' compared equal and the gate passed
+    // even though neither version was actually read. `versionsAreCompatible` now
+    // fails closed on UNKNOWN_VERSION (tested below); these tests pin the fallback
+    // so a regression in getCurrentRelease stays loud.
     it('falls back to 0.0.0 when package.json is missing', async () => {
         const apVersionUtil = await loadApVersionUtil()
         expect(apVersionUtil.getCurrentRelease()).toBe('0.0.0')
