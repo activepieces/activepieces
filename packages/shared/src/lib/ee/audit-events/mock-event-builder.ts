@@ -17,6 +17,7 @@ import {
     FlowUpdatedEvent,
     FolderEvent,
     ProjectReleaseEvent,
+    ProjectReplacedEvent,
     ProjectRoleEvent,
     SigningKeyEvent,
     SignUpEvent,
@@ -251,6 +252,36 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
                         type: 'PROJECT',
                         projectId: projectId ?? apId(),
                     },
+                },
+            }
+            return mock
+        }
+        case ApplicationEventName.PROJECT_REPLACED: {
+            const mock: ProjectReplacedEvent = {
+                ...baseEnvelope,
+                action: ApplicationEventName.PROJECT_REPLACED,
+                data: {
+                    sourceActivepiecesVersion: '0.0.0',
+                    applied: {
+                        flowsCreated: 1,
+                        flowsUpdated: 0,
+                        flowsDeleted: 0,
+                        flowsUnchanged: 0,
+                        tablesCreated: 0,
+                        tablesUpdated: 0,
+                        tablesDeleted: 0,
+                        tablesUnchanged: 0,
+                        foldersCreated: 0,
+                        foldersUpdated: 0,
+                        foldersDeleted: 0,
+                        foldersUnchanged: 0,
+                        connectionsCreated: 0,
+                        connectionsUpdated: 0,
+                        connectionsUnchanged: 0,
+                    },
+                    failedCount: 0,
+                    outcome: 'SUCCESS',
+                    durationMs: 1234,
                 },
             }
             return mock
