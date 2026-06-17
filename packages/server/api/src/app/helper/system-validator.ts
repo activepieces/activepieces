@@ -77,6 +77,7 @@ const systemPropValidators: {
     [AppSystemProp.FRONTEND_URL]: urlValidator,
     [AppSystemProp.CONTAINER_TYPE]: enumValidator(Object.values(ContainerType)),
     [AppSystemProp.PORT]: numberValidator,
+    [AppSystemProp.CONSOLE_API_SECRET_KEY]: stringValidator,
     // AppSystemProp
     [AppSystemProp.API_KEY]: stringValidator,
     [AppSystemProp.TEMPLATES_API_KEY]: stringValidator,

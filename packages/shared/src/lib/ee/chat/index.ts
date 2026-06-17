@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { ChatPromptOverride } from '../../automation/workers/job-data'
 import { BaseModelSchema, Nullable } from '../../core/common'
 import { formErrors } from '../../form-errors'
 
@@ -151,6 +152,17 @@ export const SendChatMessageRequest = z.object({
     { message: formErrors.messageRequiresContentOrFiles },
 )
 export type SendChatMessageRequest = z.infer<typeof SendChatMessageRequest>
+
+export const SimulateChatRequest = z.object({
+    platformId: z.string(),
+    userMessage: z.string().min(1).max(51200).optional(),
+    userMessages: z.array(z.string().min(1).max(51200)).min(1).optional(),
+    promptOverride: ChatPromptOverride.optional(),
+}).refine(
+    (val) => val.userMessage !== undefined || (val.userMessages !== undefined && val.userMessages.length > 0),
+    { message: formErrors.messageRequiresContentOrFiles },
+)
+export type SimulateChatRequest = z.infer<typeof SimulateChatRequest>
 
 export type ChatHistoryToolCall = {
     toolCallId: string

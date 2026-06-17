@@ -68,6 +68,9 @@ scratch.md
 # environment variables
 .env*
 
+# chat-eval CLI cache + decision log
+.chat-eval/
+
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
 
