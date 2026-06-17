@@ -1,6 +1,8 @@
 import {
+    ActivepiecesError,
     apId,
     ChatConversationStatus,
+    ErrorCode,
     isNil,
     LATEST_JOB_DATA_SCHEMA_VERSION,
     PersistedChatRole,
@@ -62,8 +64,16 @@ const chatEvalController: FastifyPluginAsyncZod = async (app) => {
         const { platformId, userMessage, userMessages, promptOverride } = request.body
         const turns = userMessages ?? [userMessage as string]
 
-        // dryRun runs as the platform owner with tools disabled — no side effects.
-        const platform = await platformService(log).getOneOrThrow(platformId)
+        // dryRun runs as the platform owner with tools disabled — no side effects. Gate it behind
+        // the same chatEnabled plan flag the production chat path requires, so the eval can't run the
+        // chat loop for a platform that isn't entitled to it.
+        const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
+        if (!platform.plan.chatEnabled) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FEATURE_DISABLED,
+                params: { message: 'Chat is disabled for this platform' },
+            })
+        }
         const evalUserId = platform.ownerId
 
         const conversation = await chatService(log).createConversation({

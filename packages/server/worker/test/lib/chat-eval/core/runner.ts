@@ -28,7 +28,10 @@ const silentLog = {
 
 // A provisioning key can't call /chat/completions; it can only mint inference keys
 // (the same exchange AP does in openrouter-api.ts). Mint once, reuse, delete on cleanup.
-let mintedKey: { apiKey: string, hash: string | null, provisionKey: string } | null = null
+// Memoize the in-flight PROMISE (not the resolved value): concurrent Promise.all fixtures call
+// resolveAuth() simultaneously, so a value-level `?? await mint()` would mint a key per caller and
+// leak all but the last. Sharing the promise mints exactly one; clear it on failure so a retry mints.
+let mintedKeyPromise: Promise<MintedKey> | null = null
 
 function hasProviderKey(): boolean {
     return Boolean(process.env[OPENROUTER_INFERENCE_ENV] || process.env[OPENROUTER_PROVISION_ENV])
@@ -43,18 +46,22 @@ async function resolveAuth(): Promise<Record<string, unknown> | null> {
     if (!provisionKey) {
         return null
     }
-    mintedKey = mintedKey ?? await mintInferenceKey(provisionKey)
-    return { apiKey: mintedKey.apiKey }
+    mintedKeyPromise = mintedKeyPromise ?? mintInferenceKey(provisionKey).catch((err) => {
+        mintedKeyPromise = null
+        throw err
+    })
+    return { apiKey: (await mintedKeyPromise).apiKey }
 }
 
 async function cleanupAuth(): Promise<void> {
-    if (mintedKey?.hash) {
-        await tryCatch(() => fetch(`${OPENROUTER_BASE_URL}/keys/${mintedKey?.hash}`, {
+    const minted = mintedKeyPromise ? await mintedKeyPromise.catch(() => null) : null
+    if (minted?.hash) {
+        await tryCatch(() => fetch(`${OPENROUTER_BASE_URL}/keys/${minted.hash}`, {
             method: 'DELETE',
-            headers: { Authorization: `Bearer ${mintedKey?.provisionKey}` },
+            headers: { Authorization: `Bearer ${minted.provisionKey}` },
         }))
     }
-    mintedKey = null
+    mintedKeyPromise = null
 }
 
 async function evaluateFixture({ fixture, systemPrompt, guides }: { fixture: ChatEvalFixture, systemPrompt?: string, guides?: Record<string, string> }): Promise<EvalReportEntry> {
@@ -158,7 +165,7 @@ function renderTranscript(result: ChatTurnResult): string {
         .join('\n')
 }
 
-async function mintInferenceKey(provisionKey: string): Promise<{ apiKey: string, hash: string | null, provisionKey: string }> {
+async function mintInferenceKey(provisionKey: string): Promise<MintedKey> {
     const res = await fetch(`${OPENROUTER_BASE_URL}/keys`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${provisionKey}`, 'Content-Type': 'application/json' },
@@ -176,3 +183,5 @@ export const chatEvalRunner = {
     hasProviderKey,
     cleanupAuth,
 }
+
+type MintedKey = { apiKey: string, hash: string | null, provisionKey: string }
