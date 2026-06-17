@@ -90,6 +90,7 @@ function CreateOrEditConnectionSection({
   const { data: redirectUrl } = flagsHooks.useFlag<string>(
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
   );
+  const { data: publicUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
   const form = useForm<ConnectionFormValues>({
     defaultValues: {
       request: {
@@ -128,6 +129,14 @@ function CreateOrEditConnectionSection({
       setOpen,
     });
 
+  // The OIDC issuer the server signs into the token's `iss` claim is derived from the
+  // server's configured public URL (AP_FRONTEND_URL), exposed here as the PUBLIC_URL flag —
+  // NOT the browser origin, which can differ behind a proxy/custom host and would make the
+  // provider URL the user registers in AWS mismatch the token issuer.
+  const publicOrigin = publicUrl ?? window.location.origin;
+  const oidcIssuerUrl = publicOrigin.replace(/\/$/, '');
+  const oidcIssuerHost = oidcIssuerUrl.replace(/^https?:\/\//, '');
+
   return (
     <>
       <DialogHeader className="mb-0">
@@ -157,8 +166,8 @@ function CreateOrEditConnectionSection({
                 redirectUrl: redirectUrl ?? '',
                 platformId: authenticationSession.getPlatformId() ?? '',
                 projectId: authenticationSession.getProjectId() ?? '',
-                frontendUrl: window.location.origin,
-                frontendHost: window.location.host,
+                frontendUrl: oidcIssuerUrl,
+                frontendHost: oidcIssuerHost,
               }}
             ></ApMarkdown>
             {selectedAuth.authProperty.description && (
