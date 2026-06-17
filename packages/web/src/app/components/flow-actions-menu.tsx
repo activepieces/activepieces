@@ -1,5 +1,7 @@
 import {
+  ApEdition,
   FlowOperationType,
+  FlowPriority,
   FlowVersion,
   FlowVersionState,
   GitBranchType,
@@ -16,6 +18,7 @@ import {
   Import,
   Pencil,
   Share2,
+  SignalHigh,
   Trash2,
   UploadCloud,
   User,
@@ -24,6 +27,7 @@ import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { EditionGuard } from '@/app/components/edition-guard';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { LoadingSpinner } from '@/components/custom/spinner';
@@ -36,6 +40,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { MoveToFolderDialog } from '@/features/automations/components/move-to-folder-dialog';
 import { RenameDialog } from '@/features/automations/components/rename-dialog';
+import { SetPriorityDialog } from '@/features/automations/components/set-priority-dialog';
 import { flowHooks, flowsApi } from '@/features/flows';
 import { ChangeOwnerDialog } from '@/features/flows/components/change-owner-dialog';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
@@ -107,6 +112,10 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   const [renameValue, setRenameValue] = useState(flowVersion.displayName);
   const [isMoveOpen, setIsMoveOpen] = useState(false);
   const [folderToMoveId, setFolderToMoveId] = useState('');
+  const [isPriorityOpen, setIsPriorityOpen] = useState(false);
+  const [priorityValue, setPriorityValue] = useState<FlowPriority | null>(
+    flow.priority ?? null,
+  );
   const { folders } = foldersHooks.useFolders();
 
   const { mutate: renameFlow, isPending: isRenamePending } = useMutation({
@@ -134,6 +143,20 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
       toast.success(t('Moved flow successfully'));
     },
   });
+
+  const { mutate: setPriorityFlow, isPending: isPriorityPending } = useMutation(
+    {
+      mutationFn: async () =>
+        flowsApi.update(flow.id, {
+          type: FlowOperationType.UPDATE_PRIORITY,
+          request: { priority: priorityValue },
+        }),
+      onSuccess: () => {
+        setIsPriorityOpen(false);
+        toast.success(t('Flow priority has been updated.'));
+      },
+    },
+  );
 
   const { mutate: duplicateFlow, isPending: isDuplicatePending } = useMutation({
     mutationFn: async () => {
@@ -279,6 +302,29 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
               </ChangeOwnerDialog>
             </PermissionNeededTooltip>
           )}
+          {!readonly && (
+            <EditionGuard allowedEditions={[ApEdition.ENTERPRISE]}>
+              <PermissionNeededTooltip
+                hasPermission={userHasPermissionToUpdateFlow}
+              >
+                <DropdownMenuItem
+                  disabled={!userHasPermissionToUpdateFlow}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setOpen(false);
+                    setPriorityValue(flow.priority ?? null);
+                    setIsPriorityOpen(true);
+                  }}
+                >
+                  <div className="flex cursor-pointer flex-row gap-2 items-center">
+                    <SignalHigh className="h-4 w-4" />
+                    <span>{t('Set Priority')}</span>
+                  </div>
+                </DropdownMenuItem>
+              </PermissionNeededTooltip>
+            </EditionGuard>
+          )}
           {!embedState.hideDuplicateFlow && (
             <PermissionNeededTooltip
               hasPermission={userHasPermissionToUpdateFlow}
@@ -417,6 +463,14 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
         onFolderChange={setFolderToMoveId}
         onConfirm={() => moveFlow()}
         isMoving={isMovePending}
+      />
+      <SetPriorityDialog
+        open={isPriorityOpen}
+        onOpenChange={setIsPriorityOpen}
+        value={priorityValue}
+        onChange={setPriorityValue}
+        onConfirm={() => setPriorityFlow()}
+        isSaving={isPriorityPending}
       />
     </>
   );

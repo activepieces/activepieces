@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { Nullable } from '../../../core/common'
 import { Metadata } from '../../../core/common/metadata'
 import { BranchCondition, CodeActionSchema, CodeActionSettings, LoopOnItemsActionSchema, LoopOnItemsActionSettings, PieceActionSchema, PieceActionSettings, RouterActionSchema, RouterActionSettings } from '../actions/action'
-import { FlowStatus } from '../flow'
+import { FlowPriority, FlowStatus } from '../flow'
 import { FlowVersion, FlowVersionState } from '../flow-version'
 import { Note } from '../note'
 import { SampleDataSetting, SaveSampleDataRequest } from '../sample-data'
@@ -48,6 +48,7 @@ export enum FlowOperationType {
     SAVE_SAMPLE_DATA = 'SAVE_SAMPLE_DATA',
     UPDATE_MINUTES_SAVED = 'UPDATE_MINUTES_SAVED',
     UPDATE_OWNER = 'UPDATE_OWNER',
+    UPDATE_PRIORITY = 'UPDATE_PRIORITY',
     UPDATE_NOTE = 'UPDATE_NOTE',
     DELETE_NOTE = 'DELETE_NOTE',
     ADD_NOTE = 'ADD_NOTE',
@@ -211,6 +212,11 @@ export const UpdateOwnerRequest = z.object({
     ownerId: z.string(),
 })
 export type UpdateOwnerRequest = z.infer<typeof UpdateOwnerRequest>
+
+export const UpdatePriorityRequest = z.object({
+    priority: Nullable(FlowPriority),
+})
+export type UpdatePriorityRequest = z.infer<typeof UpdatePriorityRequest>
 export const FlowOperationRequest = z.union([
     z.object({
         type: z.literal(FlowOperationType.MOVE_ACTION),
@@ -300,6 +306,10 @@ export const FlowOperationRequest = z.union([
         type: z.literal(FlowOperationType.UPDATE_OWNER),
         request: UpdateOwnerRequest,
     }).describe('Update Owner'),
+    z.object({
+        type: z.literal(FlowOperationType.UPDATE_PRIORITY),
+        request: UpdatePriorityRequest,
+    }).describe('Update Priority'),
     z.object({
         type: z.literal(FlowOperationType.UPDATE_NOTE),
         request: UpdateNoteRequest,

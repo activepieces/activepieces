@@ -75,6 +75,10 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             type: String,
             nullable: true,
         },
+        priority: {
+            type: String,
+            nullable: true,
+        },
     },
     indices: [
         {

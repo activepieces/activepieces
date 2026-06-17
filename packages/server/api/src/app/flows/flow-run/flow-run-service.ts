@@ -35,6 +35,7 @@ import { StatusCodes } from 'http-status-codes'
 import pLimit from 'p-limit'
 import { ArrayContains, In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -627,6 +628,10 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
         jobPayload = await payloadOffloader.maybeOffloadPayload(log, params.payload, params.flowRun.projectId, params.platformId)
     }
 
+    const priority = params.flowRun.environment === RunEnvironment.PRODUCTION
+        ? (await flowRepo().findOneBy({ id: params.flowRun.flowId }))?.priority
+        : undefined
+
     await jobQueue(log).add({
         id: params.flowRun.id,
         type: JobType.ONE_TIME,
@@ -650,6 +655,7 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
             logsUploadUrl,
             logsFileId,
             traceContext,
+            priority,
         },
     })
     return params.flowRun

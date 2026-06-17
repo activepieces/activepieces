@@ -231,6 +231,7 @@ async function handleAsync(params: AsyncWebhookParams): Promise<EngineHttpRespon
                     parentRunId,
                     failParentOnFailure,
                     traceContext,
+                    priority: flow.priority,
                 },
                 dependOnJobId: !isNil(parentRunId) && failParentOnFailure ? parentRunId : undefined,
             })

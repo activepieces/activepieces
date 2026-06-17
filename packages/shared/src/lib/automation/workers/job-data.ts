@@ -4,6 +4,7 @@ import { isNil } from '../../core/common'
 import { ProgressUpdateType, TriggerHookType, TriggerPayload } from '../engine'
 import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
+import { FlowPriority } from '../flows/flow'
 import { FlowVersion } from '../flows/flow-version'
 import { FlowTriggerType } from '../flows/triggers/trigger'
 import { PiecePackage } from '../pieces/piece'
@@ -47,6 +48,14 @@ function getExecuteFlowPriority(environment: RunEnvironment, synchronousHandlerI
 }
 
 export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
+    if (
+        (job.jobType === WorkerJobType.EXECUTE_FLOW
+            || job.jobType === WorkerJobType.EXECUTE_WEBHOOK
+            || job.jobType === WorkerJobType.EXECUTE_POLLING)
+        && !isNil(job.priority)
+    ) {
+        return job.priority
+    }
     switch (job.jobType) {
         case WorkerJobType.EXECUTE_POLLING:
         case WorkerJobType.RENEW_WEBHOOK:
@@ -106,6 +115,7 @@ export const PollingJobData = z.object({
     flowId: z.string(),
     triggerType: z.nativeEnum(FlowTriggerType),
     jobType: z.literal(WorkerJobType.EXECUTE_POLLING),
+    priority: FlowPriority.nullish(),
 })
 export type PollingJobData = z.infer<typeof PollingJobData>
 
@@ -129,6 +139,7 @@ export const ExecuteFlowJobData = z.object({
     logsUploadUrl: z.string(),
     logsFileId: z.string(),
     traceContext: z.record(z.string(), z.string()).optional(),
+    priority: FlowPriority.nullish(),
 })
 export type ExecuteFlowJobData = z.infer<typeof ExecuteFlowJobData>
 
@@ -147,6 +158,7 @@ export const WebhookJobData = z.object({
     parentRunId: z.string().optional(),
     failParentOnFailure: z.boolean().optional(),
     traceContext: z.record(z.string(), z.string()).optional(),
+    priority: FlowPriority.nullish(),
 })
 export type WebhookJobData = z.infer<typeof WebhookJobData>
 

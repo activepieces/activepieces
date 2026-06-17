@@ -11,6 +11,9 @@ export enum FlowStatus {
     DISABLED = 'DISABLED',
 }
 
+export const FlowPriority = z.enum(['critical', 'high', 'medium', 'low', 'veryLow', 'lowest'])
+export type FlowPriority = z.infer<typeof FlowPriority>
+
 export enum FlowOperationStatus {
     NONE = 'NONE',
     DELETING = 'DELETING',
@@ -43,6 +46,7 @@ export const Flow = z.object({
     operationStatus: z.nativeEnum(FlowOperationStatus),
     timeSavedPerRun: Nullable(z.number()),
     templateId: Nullable(z.string()),
+    priority: Nullable(FlowPriority),
 })
 
 export type Flow = z.infer<typeof Flow>

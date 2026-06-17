@@ -399,6 +399,13 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 })
                 break
             }
+
+            case FlowOperationType.UPDATE_PRIORITY: {
+                await flowRepo().update(id, {
+                    priority: operation.request.priority,
+                })
+                break
+            }
             case FlowOperationType.ADD_NOTE:
             case FlowOperationType.UPDATE_NOTE:
             case FlowOperationType.DELETE_NOTE: {
