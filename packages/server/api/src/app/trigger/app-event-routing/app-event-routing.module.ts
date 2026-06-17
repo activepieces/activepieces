@@ -147,7 +147,6 @@ export const appEventRoutingController: FastifyPluginAsyncZod = async (
                         }),
                         flowVersionIdToRun,
                         execute: flow.status === FlowStatus.ENABLED,
-                        priority: flow.priority,
                     },
                 })
             })

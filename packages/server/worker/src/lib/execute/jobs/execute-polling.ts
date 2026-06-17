@@ -63,7 +63,6 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
                         payloads: triggerResult.output,
                         environment: RunEnvironment.PRODUCTION,
                         progressUpdateType: ProgressUpdateType.NONE,
-                        priority: data.priority,
                     })
                 }
             }

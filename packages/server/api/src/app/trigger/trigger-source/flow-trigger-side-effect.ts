@@ -21,7 +21,6 @@ import {
     WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { flowRepo } from '../../flows/flow/flow.repo'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { projectService } from '../../project/project-service'
@@ -186,7 +185,6 @@ async function handlePollingTrigger({ engineHelperResponse, flowId, flowVersionI
     }
     const scheduleOptions = engineHelperResponse.response?.scheduleOptions ?? defaultScheduleOptions
     const platformId = await projectService(log).getPlatformId(projectId)
-    const flow = await flowRepo().findOneBy({ id: flowId })
     await jobQueue(log).add({
         id: flowVersionId,
         type: JobType.REPEATING,
@@ -198,7 +196,6 @@ async function handlePollingTrigger({ engineHelperResponse, flowId, flowVersionI
             triggerType: FlowTriggerType.PIECE,
             jobType: WorkerJobType.EXECUTE_POLLING,
             platformId,
-            priority: flow?.priority,
         },
         scheduleOptions,
     })

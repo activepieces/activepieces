@@ -113,9 +113,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   const [isMoveOpen, setIsMoveOpen] = useState(false);
   const [folderToMoveId, setFolderToMoveId] = useState('');
   const [isPriorityOpen, setIsPriorityOpen] = useState(false);
-  const [priorityValue, setPriorityValue] = useState<FlowPriority | null>(
-    flow.priority ?? null,
-  );
+  const [priorityValue, setPriorityValue] = useState<FlowPriority | null>(null);
   const { folders } = foldersHooks.useFolders();
 
   const { mutate: renameFlow, isPending: isRenamePending } = useMutation({
@@ -313,7 +311,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                     e.preventDefault();
                     e.stopPropagation();
                     setOpen(false);
-                    setPriorityValue(flow.priority ?? null);
+                    setPriorityValue(null);
                     setIsPriorityOpen(true);
                   }}
                 >

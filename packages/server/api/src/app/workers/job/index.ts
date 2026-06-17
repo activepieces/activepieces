@@ -1,6 +1,5 @@
 import {
     EngineOperationType,
-    FlowPriority,
     JobData,
     ProgressUpdateType,
     RunEnvironment,
@@ -55,7 +54,6 @@ export const SubmitPayloadsRequest = z.object({
     parentRunId: z.string().optional(),
     failParentOnFailure: z.boolean().optional(),
     platformId: z.string(),
-    priority: FlowPriority.nullish(),
 })
 
 export type SubmitPayloadsRequest = z.infer<typeof SubmitPayloadsRequest>

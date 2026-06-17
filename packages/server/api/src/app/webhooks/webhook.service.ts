@@ -231,7 +231,6 @@ async function handleAsync(params: AsyncWebhookParams): Promise<EngineHttpRespon
                     parentRunId,
                     failParentOnFailure,
                     traceContext,
-                    priority: flow.priority,
                 },
                 dependOnJobId: !isNil(parentRunId) && failParentOnFailure ? parentRunId : undefined,
             })
@@ -302,7 +301,6 @@ async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse
                 progressUpdateType: ProgressUpdateType.WEBHOOK_RESPONSE,
                 parentRunId,
                 failParentOnFailure,
-                priority: flow.priority,
             })
 
             span.setAttribute('webhook.runId', createdRun.id)

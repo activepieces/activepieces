@@ -8,7 +8,6 @@ import {
     ErrorCode,
     ExecutionType,
     FlowId,
-    FlowPriority,
     FlowRetryStrategy,
     FlowRun,
     FlowRunId,
@@ -300,7 +299,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         platformId,
         stepNameToTest,
         environment,
-        priority,
     }: StartParams): Promise<FlowRun> {
         return tracer.startActiveSpan('flowRun.start', {
             attributes: {
@@ -336,7 +334,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     synchronousHandlerId,
                     httpRequestId,
                     progressUpdateType,
-                    priority,
                 }, log)
 
                 span.setAttribute('flowRun.queued', true)
@@ -653,7 +650,6 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
             logsUploadUrl,
             logsFileId,
             traceContext,
-            priority: params.priority,
         },
     })
     return params.flowRun
@@ -766,7 +762,6 @@ type AddToQueueParams = {
     httpRequestId: string | undefined
     progressUpdateType: ProgressUpdateType
     sampleData?: Record<string, unknown>
-    priority?: FlowPriority | null
 }
 
 
@@ -786,7 +781,6 @@ type StartParams = {
     httpRequestId: string | undefined
     progressUpdateType: ProgressUpdateType
     sampleData?: Record<string, unknown>
-    priority?: FlowPriority | null
 }
 
 

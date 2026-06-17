@@ -25,6 +25,8 @@ export enum FlowOperationStatus {
 
 export const flowExecutionStateKey = (flowId: FlowId) => `flow-execution-state:${flowId}`
 
+export const flowPriorityRedisKey = (flowId: FlowId) => `flow-priority:${flowId}`
+
 export type FlowExecutionState = {
     exists: false
 } | {
@@ -46,7 +48,6 @@ export const Flow = z.object({
     operationStatus: z.nativeEnum(FlowOperationStatus),
     timeSavedPerRun: Nullable(z.number()),
     templateId: Nullable(z.string()),
-    priority: Nullable(FlowPriority),
 })
 
 export type Flow = z.infer<typeof Flow>
