@@ -150,7 +150,7 @@ export const outseta = createPiece({
     // Custom API call
     createCustomApiCallAction({
       auth: outsetaAuth,
-      baseUrl: (auth) => `${auth.props.domain}/api/v1`,
+      baseUrl: (auth) => `${auth?.props?.domain}/api/v1`,
       authMapping: async (auth) => {
         const { apiKey, apiSecret } = auth.props;
         return {

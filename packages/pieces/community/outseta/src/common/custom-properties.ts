@@ -1,5 +1,6 @@
 import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { OutsetaClient } from './client';
+import { outsetaAuth } from 'src/auth';
 
 export function customPropertiesProp(entityType: CustomPropertyEntity) {
   return Property.DynamicProperties({
@@ -7,6 +8,7 @@ export function customPropertiesProp(entityType: CustomPropertyEntity) {
     description:
       `Custom properties defined on ${entityType} in your Outseta workspace. The widget for each field is automatically inferred from the property's ControlType (text, date, single-select, multi-select).`,
     required: false,
+    auth:outsetaAuth,
     refreshers: [],
     props: async ({ auth }) => {
       const a = auth as AuthShape | undefined;
