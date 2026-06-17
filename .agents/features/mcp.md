@@ -47,7 +47,8 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `ap_flow_structure` — get flow definition and structure
 - `ap_read_step_code` — read full source code of a CODE step
 - `ap_validate_flow`, `ap_validate_step_config` — validation helpers
-- `ap_research_pieces`, `ap_get_piece_props` — piece discovery and schema
+- `ap_research_pieces` — piece discovery
+- `ap_get_piece_props` — action/trigger input schema, AI description + idempotency hint, and output field paths (from a declared output schema, or derived from a trigger's sample data)
 - `ap_resolve_property_options`, `ap_resolve_property_chain` — dropdown/property resolution
 - `ap_list_connections` — list app connections
 - `ap_list_ai_models` — list AI providers and models

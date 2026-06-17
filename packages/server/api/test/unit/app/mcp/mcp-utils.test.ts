@@ -54,3 +54,51 @@ describe('mcpUtils.diagnosePieceProps — unknown property suggestions', () => {
         expect(diagnosis.unknownKeys).toEqual([])
     })
 })
+
+describe('mcpUtils.flattenOutputSchemaFields — declared output schema → reference paths', () => {
+    it('flattens nested objects, arrays, formats, and dynamic keys', () => {
+        const paths = mcpUtils.flattenOutputSchemaFields([
+            { key: 'id', format: 'number' },
+            { key: 'author', children: [{ key: 'name' }, { key: 'email', format: 'email' }] },
+            { key: 'messages', listItems: [{ key: 'text' }] },
+            { key: 'dyn', dynamicKey: true },
+        ])
+        expect(paths).toEqual([
+            'id (number)',
+            'author.name',
+            'author.email (email)',
+            'messages[].text',
+            'dyn (dynamic key)',
+        ])
+    })
+
+    it('returns an empty list when there are no fields', () => {
+        expect(mcpUtils.flattenOutputSchemaFields([])).toEqual([])
+    })
+
+    it('emits the boundary node instead of silently dropping a subtree past max depth', () => {
+        const paths = mcpUtils.flattenOutputSchemaFields([
+            { key: 'l1', children: [{ key: 'l2', children: [{ key: 'l3', children: [{ key: 'l4', children: [{ key: 'l5', children: [{ key: 'l6', format: 'number' }] }] }] }] }] },
+        ])
+        expect(paths).toContain('l1.l2.l3.l4.l5')
+    })
+})
+
+describe('mcpUtils.deriveFieldPathsFromSample — trigger sample data → reference paths', () => {
+    it('derives typed paths from a nested sample object with arrays', () => {
+        const paths = mcpUtils.deriveFieldPathsFromSample({
+            action: 'opened',
+            issue: { id: 5, title: 'Bug', user: { login: 'octocat' } },
+            labels: [{ name: 'bug' }],
+        })
+        expect(paths).toContain('action (string)')
+        expect(paths).toContain('issue.id (number)')
+        expect(paths).toContain('issue.title (string)')
+        expect(paths).toContain('issue.user.login (string)')
+        expect(paths).toContain('labels[].name (string)')
+    })
+
+    it('returns an empty list for an empty sample object', () => {
+        expect(mcpUtils.deriveFieldPathsFromSample({})).toEqual([])
+    })
+})
