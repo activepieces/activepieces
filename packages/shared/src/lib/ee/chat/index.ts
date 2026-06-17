@@ -154,9 +154,14 @@ export const SendChatMessageRequest = z.object({
 export type SendChatMessageRequest = z.infer<typeof SendChatMessageRequest>
 
 export const SimulateChatRequest = z.object({
-    userMessage: z.string().min(1).max(51200),
+    platformId: z.string(),
+    userMessage: z.string().min(1).max(51200).optional(),
+    userMessages: z.array(z.string().min(1).max(51200)).min(1).optional(),
     promptOverride: ChatPromptOverride.optional(),
-})
+}).refine(
+    (val) => val.userMessage !== undefined || (val.userMessages !== undefined && val.userMessages.length > 0),
+    { message: formErrors.messageRequiresContentOrFiles },
+)
 export type SimulateChatRequest = z.infer<typeof SimulateChatRequest>
 
 export type ChatHistoryToolCall = {
