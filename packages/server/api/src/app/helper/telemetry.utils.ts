@@ -1,5 +1,5 @@
 import { apVersionUtil } from '@activepieces/server-utils'
-import { ProjectId, TelemetryEvent, User, UserId, UserIdentity } from '@activepieces/shared'
+import { AIProviderName, ApEdition, FlowRunStatus, ProjectId, RunEnvironment, TelemetryEvent, User, UserId, UserIdentity } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { PostHog } from 'posthog-node'
 import { platformService } from '../platform/platform.service'
@@ -73,9 +73,17 @@ export const telemetry = (log: FastifyBaseLogger) => ({
     },
 })
 
+export function captureBillingEvent({ licenseKey, event, properties }: CaptureBillingEventParams): void {
+    getPostHog().capture({
+        distinctId: licenseKey,
+        event,
+        properties,
+    })
+}
+
 export async function shutdownTelemetry(): Promise<void> {
-    if (telemetryEnabled) {
-        await getPostHog().shutdown()
+    if (posthogInstance) {
+        await posthogInstance.shutdown()
     }
 }
 
@@ -89,3 +97,43 @@ async function getMetadata() {
         source_site: 'product',
     }
 }
+
+export enum BillingEvents {
+    AI_USAGE_PER_RUN = 'ai_usage_per_run',
+    CHAT_MESSAGE = 'chat_message',
+    TOTAL_RUNS_PER_DAY = 'total_runs_per_day',
+}
+
+export type AiUsagePerRunProperties = {
+    platformId: string
+    projectId: string
+    edition: ApEdition
+    flowRunId: string
+    flowId: string
+    status: FlowRunStatus
+    environment: RunEnvironment
+    messages: number
+    toolCalls: number
+    breakdown: Array<{ provider: string, model: string, messages: number, toolCalls: number }>
+}
+
+export type TotalRunsPerDayProperties = {
+    platform_id: string
+    active_flows: number
+    projects: number
+    users: number
+    daily_executions: Array<{ date: string, count: number }>
+    reported_at: string
+}
+
+export type ChatMessageProperties = {
+    provider: AIProviderName | null
+    model: string | null
+    toolsUsed: number
+}
+
+type CaptureBillingEventParams = { licenseKey: string } & (
+    | { event: BillingEvents.AI_USAGE_PER_RUN, properties: AiUsagePerRunProperties }
+    | { event: BillingEvents.TOTAL_RUNS_PER_DAY, properties: TotalRunsPerDayProperties }
+    | { event: BillingEvents.CHAT_MESSAGE, properties: ChatMessageProperties }
+)

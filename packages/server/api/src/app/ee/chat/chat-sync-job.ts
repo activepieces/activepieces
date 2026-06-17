@@ -4,6 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { isNotOneOfTheseEditions } from '../../database/database-common'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
+import { BillingEvents, captureBillingEvent } from '../../helper/telemetry.utils'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
 import { platformPlanRepo } from '../platform/platform-plan/platform-plan.service'
@@ -20,6 +21,11 @@ export const chatAnalyticsTelemetry = (log: FastifyBaseLogger) => ({
     }): void {
         rejectedPromiseHandler(syncConversations({ conversations: [conversation], log }), log)
     },
+    sendMessageBillingEvent({ conversation }: {
+        conversation: ChatConversation
+    }): void {
+        rejectedPromiseHandler(emitMessageBillingEvent({ conversation, log }), log)
+    },
 })
 
 export const chatAnalyticsBulkSync = (log: FastifyBaseLogger) => ({
@@ -31,9 +37,6 @@ export const chatAnalyticsBulkSync = (log: FastifyBaseLogger) => ({
     },
 })
 
-// Chat analytics ships full conversation content, so it is Cloud-only. On Cloud each platform's
-// conversations are synced under that platform's license key (sent as the Bearer token); platforms
-// without a license key are skipped.
 async function syncConversations({ conversations, log }: {
     conversations: ChatConversation[]
     log: FastifyBaseLogger
@@ -250,10 +253,7 @@ function convertToPersistedFormat(messages: ChatHistoryMessage[]): PersistedChat
     })
 }
 
-// Resolves the exact model id the chat used, verbatim — the Console stores it as-is. The conversation
-// only persists the tier id, so we recompute the model the same way the chat does
-// (chatHelpers.resolveModelIdForProvider), keyed off the platform's routing provider. For the
-// Activepieces/OpenRouter gateways this keeps the full "anthropic/claude-..." slug unchanged.
+
 function resolveModelId({ tierId, provider }: { tierId: string | null, provider: AIProviderName | null }): string | null {
     if (isNil(tierId)) {
         return null
@@ -266,6 +266,37 @@ function resolveModelId({ tierId, provider }: { tierId: string | null, provider:
         return tier.modelId
     }
     return chatHelpers.resolveModelIdForProvider({ tier, provider })
+}
+
+async function emitMessageBillingEvent({ conversation, log }: {
+    conversation: ChatConversation
+    log: FastifyBaseLogger
+}): Promise<void> {
+    const licenseKeyByPlatform = await resolveLicenseKeysByPlatform({ platformIds: [conversation.platformId] })
+    const licenseKey = licenseKeyByPlatform.get(conversation.platformId)
+    if (isNil(licenseKey)) {
+        return
+    }
+
+    const provider = await resolveChatProviderName({ platformId: conversation.platformId, log })
+    const model = resolveModelId({ tierId: conversation.modelName ?? null, provider })
+    const toolsUsed = countToolCallsInLatestTurn(resolveMessages(conversation))
+
+    captureBillingEvent({
+        licenseKey,
+        event: BillingEvents.CHAT_MESSAGE,
+        properties: {
+            provider,
+            model,
+            toolsUsed,
+        },
+    })
+}
+
+function countToolCallsInLatestTurn(messages: PersistedChatMessage[]): number {
+    const lastUserIndex = messages.map((message) => message.role).lastIndexOf(PersistedChatRole.USER)
+    const turn = lastUserIndex === -1 ? messages : messages.slice(lastUserIndex + 1)
+    return turn.reduce((sum, message) => sum + message.parts.filter((part) => part.type === PersistedChatPartType.TOOL_CALL).length, 0)
 }
 
 async function resolveChatProviderName({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<AIProviderName | null> {

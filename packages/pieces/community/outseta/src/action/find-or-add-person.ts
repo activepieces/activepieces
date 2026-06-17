@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
+import { customPropertiesProp, mergeCustomProperties } from '../common/custom-properties';
 
 export const findOrAddPersonAction = createAction({
   name: 'find_or_add_person',
@@ -60,6 +61,7 @@ export const findOrAddPersonAction = createAction({
       displayName: 'Country',
       required: false,
     }),
+    customProperties: customPropertiesProp('Person'),
   },
   async run(context) {
     const client = new OutsetaClient({
@@ -68,11 +70,9 @@ export const findOrAddPersonAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    const searchResult = await client.get<any>(
-      `/api/v1/crm/people?Email=${encodeURIComponent(context.propsValue.email)}&$top=100`
+    const items = await client.getAllPages<any>(
+      `/api/v1/crm/people?Email=${encodeURIComponent(context.propsValue.email)}`
     );
-
-    const items = searchResult?.items ?? searchResult?.Items ?? [];
     const exactMatch = items.find(
       (item: any) =>
         item.Email?.toLowerCase() === context.propsValue.email.toLowerCase()
@@ -100,6 +100,8 @@ export const findOrAddPersonAction = createAction({
       if (context.propsValue.country) address['Country'] = context.propsValue.country;
       body['MailingAddress'] = address;
     }
+
+    mergeCustomProperties(body, context.propsValue.customProperties);
 
     const newPerson = await client.post<any>('/api/v1/crm/people', body);
     return { created: true, person: newPerson };
