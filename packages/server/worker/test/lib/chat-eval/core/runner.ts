@@ -69,11 +69,18 @@ async function evaluateFixture({ fixture, systemPrompt, guides }: { fixture: Cha
         ...transcriptAssertions.runAssertion(transcript.result, assertion),
     }))
     const judge = llmJudge.create({ provider: fixture.model.provider, modelId: fixture.model.modelId, auth })
-    const verdicts = await Promise.all(fixture.judge.map(async (dimension) => ({
-        dimension: dimension.dimension,
-        expectedLabel: dimension.expectedLabel,
-        ...await judge.judge({ dimension: dimension.dimension, rubric: dimension.rubric, transcript: transcript.text }),
-    })))
+    const verdicts = await Promise.all(fixture.judge.map(async (dimension) => {
+        const verdict = await judge.judge({ dimension: dimension.dimension, rubric: dimension.rubric, transcript: transcript.text })
+        // "pass" = the judge's label matched what this dimension EXPECTS. A capability fixture can
+        // expect FAIL (documenting a known limitation), so a literal PASS-only check would peg it
+        // permanently red and hide whether a prompt change moved it.
+        return {
+            dimension: dimension.dimension,
+            expectedLabel: dimension.expectedLabel,
+            pass: verdict.pass === (dimension.expectedLabel === 'pass'),
+            reason: verdict.reason,
+        }
+    }))
 
     return {
         id: fixture.id,

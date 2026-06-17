@@ -13,7 +13,7 @@ function render({ entries }: { entries: EvalReportEntry[] }): string {
     for (const entry of entries) {
         const status = entry.passed ? chalk.green('PASS') : chalk.red('FAIL')
         lines.push(`  ${entry.passed ? chalk.green('●') : chalk.red('●')} ${chalk.bold(entry.id)} ${chalk.dim(`[${entry.kind}]`)} ${status}`)
-        for (const check of [...entry.assertions.map((a) => ({ name: a.label, pass: a.pass, reason: a.reason })), ...entry.judge.map((v) => ({ name: v.dimension, pass: v.pass, reason: v.reason }))]) {
+        for (const check of [...entry.assertions.map((a) => ({ name: a.label, pass: a.pass, reason: a.reason })), ...entry.judge.map((v) => ({ name: v.expectedLabel === 'fail' ? `${v.dimension} (expect FAIL)` : v.dimension, pass: v.pass, reason: v.reason }))]) {
             const detail = check.pass ? '' : chalk.red(`  ${evalFormat.truncate({ text: check.reason, max: 72 })}`)
             lines.push(`      ${check.pass ? chalk.green('✓') : chalk.red('✗')} ${check.name}${detail}`)
         }

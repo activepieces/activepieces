@@ -114,7 +114,8 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `GET /v1/chat/conversations/:id/connections?pieceName=` — get available connections for connection picker; falls back to `findConnectionsForPiece` when the Redis cache is empty and stores the result for future calls
 - `GET /v1/chat/conversations/:id/pending-gate` — get pending approval gate for refresh resilience (returns gate info so the frontend can re-show display tool cards)
 - `GET /v1/chat/eval/prompt-sources` — returns the raw prompt template sources (core + project-context + on-demand guides); requires platformAdmin
-- `POST /v1/chat/eval/simulate` — runs a chat turn with an optional prompt override in dry-run mode (tools are not executed, no MCP, runs as the platform owner — no side effects, no sandbox), polls until settled, and returns the transcript synchronously (`status` is `IDLE`/`ERROR`/`TIMEOUT`); requires platformAdmin
+- `POST /v1/chat/eval/simulate` — replays one or more user turns (`userMessages[]`, or legacy single `userMessage`) sequentially in one ephemeral conversation with an optional prompt override in dry-run mode (tools are not executed, no MCP, runs as the platform owner — no side effects, no sandbox), polls until each turn settles, and returns the full transcript synchronously (`status` is `IDLE`/`ERROR`/`TIMEOUT`); the `promptOverride.guides` is shallow-merged over the defaults so a partial override keeps the untouched guides; requires platformAdmin
+- `GET /v1/chat/eval/sandbox-platform` — returns `{ platformId }` for the oldest platform on the instance, so a caller replaying a foreign conversation (e.g. the console in dev, whose conversations reference a cloud platform absent locally) can resolve a local platform to sandbox the dry-run in; requires platformAdmin
 
 - `POST /v1/admin/chat/sync-all` — bulk historical sync of all conversations to console analytics (admin API key required)
 
