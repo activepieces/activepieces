@@ -1,10 +1,9 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import {
   createAction,
-  OAuth2PropertyValue,
   Property,
 } from '@activepieces/pieces-framework';
-import { getAccessToken, youtubeAuth } from '../common/auth';
+import { youtubeAuth } from '../common/auth';
 
 export const youtubeListCaptionsAction = createAction({
   auth: youtubeAuth,
@@ -32,15 +31,9 @@ export const youtubeListCaptionsAction = createAction({
     }),
   },
   async run(context) {
-    const {
-      captionIds,
-      onBehalfOfContentOwner,
-      videoId,
-    } = context.propsValue;
+    const { captionIds, onBehalfOfContentOwner, videoId } = context.propsValue;
 
-    const accessToken = await getAccessToken(
-      context.auth as OAuth2PropertyValue
-    );
+    const accessToken = context.auth.access_token;
 
     const queryParams: Record<string, string> = {
       part: 'id,snippet',

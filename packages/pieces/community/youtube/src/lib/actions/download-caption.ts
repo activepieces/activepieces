@@ -1,17 +1,16 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import {
   createAction,
-  OAuth2PropertyValue,
   Property,
 } from '@activepieces/pieces-framework';
-import { getAccessToken, youtubeAuth } from '../common/auth';
+import { youtubeAuth } from '../common/auth';
 
 export const youtubeDownloadCaptionAction = createAction({
   auth: youtubeAuth,
   name: 'download_caption',
   displayName: 'Download Caption',
   description:
-    'Returns a caption track text by caption ID using the YouTube captions.download endpoint.',
+    'Returns a caption track text by caption ID using the YouTube captions.download endpoint. Requires permission to edit the video, so it only works for captions on videos the authenticated user owns. Auto-generated (asr) caption tracks cannot be downloaded and will return a 403.',
   props: {
     captionId: Property.ShortText({
       displayName: 'Caption ID',
@@ -49,9 +48,7 @@ export const youtubeDownloadCaptionAction = createAction({
     const { captionId, format, targetLanguage, onBehalfOfContentOwner } =
       context.propsValue;
 
-    const accessToken = await getAccessToken(
-      context.auth as OAuth2PropertyValue
-    );
+    const accessToken = context.auth.access_token;
 
     const queryParams: Record<string, string> = {
       alt: 'media',

@@ -1,10 +1,6 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import {
-  createAction,
-  OAuth2PropertyValue,
-  Property,
-} from '@activepieces/pieces-framework';
-import { getAccessToken, youtubeAuth } from '../common/auth';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { youtubeAuth } from '../common/auth';
 
 export const youtubeSearchAction = createAction({
   auth: youtubeAuth,
@@ -42,12 +38,14 @@ export const youtubeSearchAction = createAction({
     }),
     forDeveloper: Property.Checkbox({
       displayName: 'For Developer',
-      description: 'Restrict results to videos uploaded via your developer project.',
+      description:
+        'Restrict results to videos uploaded via your developer project.',
       required: false,
     }),
     forMine: Property.Checkbox({
       displayName: 'For Mine',
-      description: 'Restrict results to videos owned by the authenticated user.',
+      description:
+        'Restrict results to videos owned by the authenticated user.',
       required: false,
     }),
     onBehalfOfContentOwner: Property.ShortText({
@@ -101,12 +99,14 @@ export const youtubeSearchAction = createAction({
     }),
     publishedAfter: Property.DateTime({
       displayName: 'Published After',
-      description: 'Only include resources created at or after this datetime (RFC 3339).',
+      description:
+        'Only include resources created at or after this datetime (RFC 3339).',
       required: false,
     }),
     publishedBefore: Property.DateTime({
       displayName: 'Published Before',
-      description: 'Only include resources created before or at this datetime (RFC 3339).',
+      description:
+        'Only include resources created before or at this datetime (RFC 3339).',
       required: false,
     }),
     maxResults: Property.Number({
@@ -126,7 +126,8 @@ export const youtubeSearchAction = createAction({
     }),
     relevanceLanguage: Property.ShortText({
       displayName: 'Relevance Language',
-      description: 'ISO 639-1 language code (for example: en, es, ja, zh-Hans).',
+      description:
+        'ISO 639-1 language code (for example: en, es, ja, zh-Hans).',
       required: false,
     }),
     topicId: Property.ShortText({
@@ -294,7 +295,8 @@ export const youtubeSearchAction = createAction({
       videoType,
     } = context.propsValue;
 
-    const chosenType = type === 'any' || !type ? 'video,channel,playlist' : type;
+    const chosenType =
+      type === 'any' || !type ? 'video,channel,playlist' : type;
 
     const hasVideoOnlyFilter = Boolean(
       eventType ||
@@ -313,13 +315,13 @@ export const youtubeSearchAction = createAction({
     );
 
     if (hasVideoOnlyFilter && chosenType !== 'video') {
-      throw new Error(
-        'Video-only filters require Type to be set to "Video".'
-      );
+      throw new Error('Video-only filters require Type to be set to "Video".');
     }
 
     if ((location && !locationRadius) || (!location && locationRadius)) {
-      throw new Error('Location and Location Radius must be provided together.');
+      throw new Error(
+        'Location and Location Radius must be provided together.'
+      );
     }
 
     const ownershipFilters = [forContentOwner, forDeveloper, forMine].filter(
@@ -334,7 +336,9 @@ export const youtubeSearchAction = createAction({
 
     if (forContentOwner) {
       if (chosenType !== 'video') {
-        throw new Error('For Content Owner requires Type to be set to "Video".');
+        throw new Error(
+          'For Content Owner requires Type to be set to "Video".'
+        );
       }
       if (!onBehalfOfContentOwner) {
         throw new Error(
@@ -371,9 +375,7 @@ export const youtubeSearchAction = createAction({
       }
     }
 
-    const accessToken = await getAccessToken(
-      context.auth as OAuth2PropertyValue
-    );
+    const accessToken = context.auth.access_token;
 
     const queryParams: Record<string, string> = {
       part: 'snippet',

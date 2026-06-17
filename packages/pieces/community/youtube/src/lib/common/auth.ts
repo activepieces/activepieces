@@ -1,5 +1,4 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
-import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
 
 export const youtubeAuth = PieceAuth.OAuth2({
   description: `
@@ -31,7 +30,3 @@ export const youtubeAuth = PieceAuth.OAuth2({
     'https://www.googleapis.com/auth/youtube.force-ssl'
   ],
 });
-
-export async function getAccessToken(auth: OAuth2PropertyValue): Promise<string> {
-  return auth.access_token;
-}

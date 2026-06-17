@@ -1,12 +1,13 @@
-import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { getAccessToken, youtubeAuth } from '../common/auth';
+import { youtubeAuth } from '../common/auth';
 
 export const youtubeListPlaylistItemsAction = createAction({
   auth: youtubeAuth,
   name: 'list_playlist_items',
   displayName: 'List Playlist Items',
-  description: 'Returns videos in a YouTube playlist. You can filter by playlist ID or by specific item IDs.',
+  description:
+    'Returns videos in a YouTube playlist. You can filter by playlist ID or by specific item IDs.',
   props: {
     playlistId: Property.ShortText({
       displayName: 'Playlist ID',
@@ -22,7 +23,8 @@ export const youtubeListPlaylistItemsAction = createAction({
     }),
     maxResults: Property.Number({
       displayName: 'Max Results',
-      description: 'Maximum number of items to return. Acceptable values are 0–50. Defaults to 50.',
+      description:
+        'Maximum number of items to return. Acceptable values are 0–50. Defaults to 50.',
       required: false,
       defaultValue: 50,
     }),
@@ -40,15 +42,31 @@ export const youtubeListPlaylistItemsAction = createAction({
     }),
   },
   async run(context) {
-    const { playlistId, itemIds, maxResults, pageToken, videoId } = context.propsValue;
+    const { playlistId, itemIds, maxResults, pageToken, videoId } =
+      context.propsValue;
 
     if (!playlistId && !itemIds) {
       throw new Error('You must provide either a Playlist ID or Item IDs.');
     }
 
-    const accessToken = await getAccessToken(
-      context.auth as OAuth2PropertyValue
-    );
+    if (playlistId && itemIds) {
+      throw new Error('Provide either a Playlist ID or Item IDs, not both.');
+    }
+
+    if (videoId && !playlistId) {
+      throw new Error(
+        'Filter by Video ID can only be used together with a Playlist ID.'
+      );
+    }
+
+    if (maxResults !== undefined && maxResults !== null) {
+      const maxResultsNumber = Math.trunc(Number(maxResults));
+      if (maxResultsNumber < 0 || maxResultsNumber > 50) {
+        throw new Error('Max Results must be between 0 and 50.');
+      }
+    }
+
+    const accessToken = context.auth.access_token;
 
     const queryParams: Record<string, string> = {
       part: 'snippet,contentDetails,status',
@@ -57,7 +75,7 @@ export const youtubeListPlaylistItemsAction = createAction({
     if (playlistId) queryParams['playlistId'] = playlistId;
     if (itemIds) queryParams['id'] = itemIds;
     if (maxResults !== undefined && maxResults !== null)
-      queryParams['maxResults'] = String(maxResults);
+      queryParams['maxResults'] = String(Math.trunc(Number(maxResults)));
     if (pageToken) queryParams['pageToken'] = pageToken;
     if (videoId) queryParams['videoId'] = videoId;
 
