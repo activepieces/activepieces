@@ -1,6 +1,6 @@
 import { createServer } from 'http'
 import os from 'os'
-import { apVersionUtil, systemUsage, wideEvent } from '@activepieces/server-utils'
+import { apVersionUtil, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
     ConsumeJobRequest,
@@ -34,6 +34,22 @@ import { JobContext, JobResult, JobResultKind } from './execute/types'
 const AP_VERSION = apVersionUtil.getCurrentRelease()
 
 const VERSION_MISMATCH_POLL_PAUSE_MS = 10_000
+
+let pagedForUnreadableWorkerVersion = false
+
+function pageOnceForUnreadableWorkerVersion(workerLog: typeof logger): void {
+    if (pagedForUnreadableWorkerVersion) {
+        return
+    }
+    pagedForUnreadableWorkerVersion = true
+    onCallService(workerLog, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page({
+        code: 'WORKER_VERSION_READ_FAILED',
+        message: 'Worker could not read its release version from package.json (reported as 0.0.0); polling is paused and will NOT self-heal on reconnect until the deployment is fixed (check cwd/packaging)',
+        params: { workerVersion: AP_VERSION },
+    }).catch((pageError) => {
+        workerLog.error({ pageError }, 'Failed to send on-call page for unreadable worker version')
+    })
+}
 
 let socket: Socket | null = null
 let polling = false
@@ -147,8 +163,17 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
 
     while (polling && connectionGeneration === generation) {
         const appVersion = workerSettings.getSettings().APP_VERSION
-        if (appVersion !== AP_VERSION) {
-            workerLog.warn({ appVersion, workerVersion: AP_VERSION }, 'Connected app version mismatch — pausing polling until reconnect to a compatible app')
+        if (!apVersionUtil.versionsAreCompatible({ versionA: appVersion, versionB: AP_VERSION })) {
+            const versionUnreadable = appVersion === UNKNOWN_VERSION || AP_VERSION === UNKNOWN_VERSION
+            if (versionUnreadable) {
+                workerLog.error({ appVersion, workerVersion: AP_VERSION }, 'Pausing polling — a release version could not be read from package.json (reported as 0.0.0); this will NOT self-heal on reconnect, check the worker/app deployment (cwd/packaging)')
+            }
+            else {
+                workerLog.warn({ appVersion, workerVersion: AP_VERSION }, 'Connected app version mismatch — pausing polling until reconnect to a compatible app')
+            }
+            if (AP_VERSION === UNKNOWN_VERSION) {
+                pageOnceForUnreadableWorkerVersion(workerLog)
+            }
             await sleep(VERSION_MISMATCH_POLL_PAUSE_MS)
             continue
         }
