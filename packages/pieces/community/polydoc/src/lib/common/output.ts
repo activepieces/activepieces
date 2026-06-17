@@ -62,5 +62,7 @@ function toBuffer(body: unknown): Buffer {
   if (typeof body === 'string') {
     return Buffer.from(body, 'binary');
   }
-  return Buffer.alloc(0);
+  throw new Error(
+    'PolyDoc returned an unexpected response body for a binary delivery; expected file bytes.'
+  );
 }

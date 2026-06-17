@@ -80,7 +80,12 @@ function buildScreenshot(opts: JsonObject): JsonObject | undefined {
   if (opts['encoding'] === 'base64') {
     shot['encoding'] = 'base64';
   }
-  if (typeof opts['viewportWidth'] === 'number' && typeof opts['viewportHeight'] === 'number') {
+  const hasViewportWidth = typeof opts['viewportWidth'] === 'number';
+  const hasViewportHeight = typeof opts['viewportHeight'] === 'number';
+  if (hasViewportWidth !== hasViewportHeight) {
+    throw new Error('Both viewport width and height are required to set a custom viewport.');
+  }
+  if (hasViewportWidth && hasViewportHeight) {
     const viewport: JsonObject = {
       width: opts['viewportWidth'],
       height: opts['viewportHeight'],

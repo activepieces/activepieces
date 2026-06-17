@@ -48,9 +48,10 @@ export const polydocAuth = PieceAuth.CustomAuth({
       if (status === 401) {
         return { valid: false, error: 'Invalid PolyDoc API key.' };
       }
+      const detail = status ? `the API returned HTTP ${status}` : 'the API was unreachable';
       return {
         valid: false,
-        error: 'Could not reach the PolyDoc API. Check your API key and try again.',
+        error: `Could not validate the PolyDoc API key (${detail}). Check the key and try again.`,
       };
     }
   },
