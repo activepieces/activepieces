@@ -1,6 +1,7 @@
 import { ProgressUpdateType } from '../engine/engine-operation'
 import { GetFlowVersionForWorkerRequest, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateStepProgressRequest, UploadRunLogsRequest } from '../engine/requests'
 import { FlowRun, RunEnvironment } from '../flow-run/flow-run'
+import { FlowPriority } from '../flows/flow'
 import { FlowVersion } from '../flows/flow-version'
 import { PiecePackage } from '../pieces/piece'
 import { ConsumeJobRequest, ConsumeJobResponse, WorkerMachineHealthcheckRequest } from './index'
@@ -14,6 +15,7 @@ export type SubmitPayloadsRequest = {
     progressUpdateType: ProgressUpdateType
     parentRunId?: string
     failParentOnFailure?: boolean
+    priority?: FlowPriority | null
 }
 
 export type SavePayloadRequest = {

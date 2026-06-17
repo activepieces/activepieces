@@ -117,7 +117,7 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
         },
 
         async submitPayloads(input) {
-            const { flowVersionId, projectId, payloads, httpRequestId, progressUpdateType, environment, parentRunId, failParentOnFailure } = input
+            const { flowVersionId, projectId, payloads, httpRequestId, progressUpdateType, environment, parentRunId, failParentOnFailure, priority } = input
 
             const flowVersion = await flowVersionService(log).getOne(flowVersionId)
             if (!flowVersion) {
@@ -143,6 +143,7 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
                         executeTrigger: false,
                         parentRunId,
                         failParentOnFailure,
+                        priority,
                     }),
                 ),
             )

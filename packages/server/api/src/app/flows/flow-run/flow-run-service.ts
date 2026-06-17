@@ -8,6 +8,7 @@ import {
     ErrorCode,
     ExecutionType,
     FlowId,
+    FlowPriority,
     FlowRetryStrategy,
     FlowRun,
     FlowRunId,
@@ -35,7 +36,6 @@ import { StatusCodes } from 'http-status-codes'
 import pLimit from 'p-limit'
 import { ArrayContains, In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
-import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -300,6 +300,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         platformId,
         stepNameToTest,
         environment,
+        priority,
     }: StartParams): Promise<FlowRun> {
         return tracer.startActiveSpan('flowRun.start', {
             attributes: {
@@ -335,6 +336,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     synchronousHandlerId,
                     httpRequestId,
                     progressUpdateType,
+                    priority,
                 }, log)
 
                 span.setAttribute('flowRun.queued', true)
@@ -628,10 +630,6 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
         jobPayload = await payloadOffloader.maybeOffloadPayload(log, params.payload, params.flowRun.projectId, params.platformId)
     }
 
-    const priority = params.flowRun.environment === RunEnvironment.PRODUCTION
-        ? (await flowRepo().findOneBy({ id: params.flowRun.flowId }))?.priority
-        : undefined
-
     await jobQueue(log).add({
         id: params.flowRun.id,
         type: JobType.ONE_TIME,
@@ -655,7 +653,7 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
             logsUploadUrl,
             logsFileId,
             traceContext,
-            priority,
+            priority: params.priority,
         },
     })
     return params.flowRun
@@ -768,6 +766,7 @@ type AddToQueueParams = {
     httpRequestId: string | undefined
     progressUpdateType: ProgressUpdateType
     sampleData?: Record<string, unknown>
+    priority?: FlowPriority | null
 }
 
 
@@ -787,6 +786,7 @@ type StartParams = {
     httpRequestId: string | undefined
     progressUpdateType: ProgressUpdateType
     sampleData?: Record<string, unknown>
+    priority?: FlowPriority | null
 }
 
 
