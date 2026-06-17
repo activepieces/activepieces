@@ -10,8 +10,8 @@ export const researchAction = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Perform comprehensive research on a topic: Sofya decomposes the query into sub-queries, searches and reads multiple sources in parallel, then synthesizes a structured report with citations. Best for open-ended or comparative questions that need coverage from many angles; for simple lookups use Search instead. Costs 25 credits. Read-only.',
-    idempotent: true,
+      'Perform comprehensive research on a topic: Sofya decomposes the query into sub-queries, searches and reads multiple sources in parallel, then synthesizes a structured report with citations. Best for open-ended or comparative questions that need coverage from many angles; for simple lookups use Search instead. Costs 25 credits. Not idempotent: it selects sources and synthesizes a report at request time, so repeated calls with the same query can differ.',
+    idempotent: false,
   },
   auth: sofyaAuth,
   props: {

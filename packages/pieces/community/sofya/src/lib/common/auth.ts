@@ -23,7 +23,22 @@ export const sofyaAuth = PieceAuth.SecretText({
       });
       return { valid: true };
     } catch (e) {
-      return { valid: false, error: 'Invalid API Key' };
+      const response = isRecord(e) ? e['response'] : undefined;
+      const status =
+        isRecord(response) && typeof response['status'] === 'number'
+          ? response['status']
+          : undefined;
+      if (status === 401 || status === 403) {
+        return { valid: false, error: 'Invalid API Key' };
+      }
+      return {
+        valid: false,
+        error: 'Could not connect to Sofya. Please try again.',
+      };
     }
   },
 });
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
