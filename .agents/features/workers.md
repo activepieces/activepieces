@@ -6,7 +6,8 @@ Workers are separate Node processes that poll the app for jobs and execute flows
 ## Key Files
 - `packages/server/api/src/app/workers/machine/machine-controller.ts` — Socket.IO listeners (`FETCH_WORKER_SETTINGS`, `DISCONNECT`); registers the RPC server per connection
 - `packages/server/api/src/app/workers/machine/machine-service.ts` — `onConnection` / `onDisconnect`, `buildSettingsResponse` (emits `APP_VERSION`), worker listing
-- `packages/server/api/src/app/workers/rpc/worker-rpc-service.ts` — `createHandlers()`: `poll` (with version gate), `completeJob`, `extendLock`, progress/log RPCs
+- `packages/server/api/src/app/workers/rpc/worker-rpc-service.ts` — `createHandlers()`: `poll` (with version gate), `completeJob`, `extendLock`, `getFlowVersion`, progress/log RPCs
+- `packages/server/api/src/app/workers/rpc/get-flow-version-for-worker.ts` — fetches a flow version, loads its flow, and applies schema migrations before returning it to the worker
 - `packages/server/worker/src/lib/worker.ts` — worker lifecycle (`worker.start/stop`), `pollAndExecute` loop (with version gate), `getWorkerProps`
 - `packages/server/worker/src/lib/config/worker-settings.ts` — caches the `WorkerSettingsResponse` fetched on connect
 - `packages/server/utils/src/ap-version.ts` — `apVersionUtil.getCurrentRelease()`; both sides read the deploy-root `package.json` version
@@ -25,7 +26,8 @@ Workers are separate Node processes that poll the app for jobs and execute flows
 1. Worker connects → emits `FETCH_WORKER_SETTINGS`; app's `machineService.onConnection` returns `WorkerSettingsResponse` (incl. `APP_VERSION`) and registers `createHandlers` for the socket.
 2. Worker caches settings and spawns `concurrency` `pollAndExecute` loops.
 3. Each loop calls `apiClient.poll(machineInfo)`; the app's `poll` handler returns the next job for the worker's queue, or `null`.
-4. On job: worker executes in a sandbox, periodically `extendLock`, then `completeJob`.
+4. Workers can also fetch flow versions through `getFlowVersion`; the app hydrates the latest schema version before returning the flow version to the worker.
+5. On job: worker executes in a sandbox, periodically `extendLock`, then `completeJob`.
 5. On disconnect, `connectionGeneration++` stops the loops; Socket.IO auto-reconnects and the cycle repeats.
 
 > **Payload resolution is engine-side, not worker-side.** Jobs carry a `JobPayload` (`inline` value or `ref` `fileId`). The worker forwards it unchanged into the engine operation; the engine hydrates a `ref` via the file-download path (direct bytes or an S3 signed-link redirect). There is no worker→API payload-fetch RPC — the contract exposes no `getPayloadFile`.
