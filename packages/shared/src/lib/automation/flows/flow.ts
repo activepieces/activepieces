@@ -18,7 +18,18 @@ export enum FlowOperationStatus {
     DISABLING = 'DISABLING',
 }
 
+export enum FlowPriority {
+    CRITICAL = 'critical',
+    HIGH = 'high',
+    MEDIUM = 'medium',
+    LOW = 'low',
+    VERY_LOW = 'veryLow',
+    LOWEST = 'lowest',
+}
+
 export const flowExecutionStateKey = (flowId: FlowId) => `flow-execution-state:${flowId}`
+
+export const flowPriorityRedisKey = (flowId: FlowId) => `flow-priority:${flowId}`
 
 export type FlowExecutionState = {
     exists: false
@@ -48,6 +59,7 @@ export const PopulatedFlow = Type.Composite([
     Type.Object({
         version: FlowVersion,
         triggerSource: Type.Optional(Type.Pick(TriggerSource, ['schedule'])),
+        priority: Type.Optional(Type.Union([Type.Enum(FlowPriority), Type.Null()])),
     }),
 ])
 

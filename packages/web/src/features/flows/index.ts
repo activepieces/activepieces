@@ -7,6 +7,7 @@ export { FlowVersionStateDot } from './components/flow-version-state-dot';
 export { ImportFlowDialog } from './components/import-flow-dialog';
 export { MoveFlowDialog } from './components/move-flow-dialog';
 export { RenameFlowDialog } from './components/rename-flow-dialog';
+export { SetPriorityDialog } from './components/set-priority-dialog';
 export { ShareTemplateDialog } from './components/share-template-dialog';
 export { flowHooks } from './hooks/flow-hooks';
 export { sampleDataHooks } from './hooks/sample-data-hooks';

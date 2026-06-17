@@ -11,6 +11,8 @@ import {
     FlowOperationStatus,
     FlowOperationType,
     flowPieceUtil,
+    FlowPriority,
+    flowPriorityRedisKey,
     FlowStatus,
     FlowVersion,
     FlowVersionId,
@@ -34,6 +36,7 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In, IsNull, Not } from 'typeorm'
 import { transaction } from '../../core/db/transaction'
+import { distributedStore } from '../../database/redis-connections'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import Paginator, { Order } from '../../helper/pagination/paginator'
@@ -292,12 +295,15 @@ export const flowService = (log: FastifyBaseLogger) => ({
             simulate: undefined,
         })
 
+        const priority = await distributedStore.get<FlowPriority>(flowPriorityRedisKey(id))
+
         return {
             ...flow,
             version: flowVersion,
             triggerSource: triggerSource ? {
                 schedule: triggerSource.schedule,
             } : undefined,
+            priority: priority ?? undefined,
         }
     },
 
@@ -403,6 +409,16 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 await flowRepo().update(id, {
                     ownerId: operation.request.ownerId,
                 })
+                break
+            }
+
+            case FlowOperationType.UPDATE_PRIORITY: {
+                if (isNil(operation.request.priority)) {
+                    await distributedStore.delete(flowPriorityRedisKey(id))
+                }
+                else {
+                    await distributedStore.put(flowPriorityRedisKey(id), operation.request.priority)
+                }
                 break
             }
             case FlowOperationType.ADD_NOTE:
