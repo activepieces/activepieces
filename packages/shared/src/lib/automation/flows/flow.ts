@@ -18,7 +18,18 @@ export enum FlowOperationStatus {
     DISABLING = 'DISABLING',
 }
 
+export enum FlowPriority {
+    CRITICAL = 'critical',
+    HIGH = 'high',
+    MEDIUM = 'medium',
+    LOW = 'low',
+    VERY_LOW = 'veryLow',
+    LOWEST = 'lowest',
+}
+
 export const flowExecutionStateKey = (flowId: FlowId) => `flow-execution-state:${flowId}`
+
+export const flowPriorityRedisKey = (flowId: FlowId) => `flow-priority:${flowId}`
 
 export type FlowExecutionState = {
     exists: false

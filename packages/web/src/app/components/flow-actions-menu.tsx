@@ -1,4 +1,5 @@
 import {
+  ApEdition,
   GitBranchType,
   FlowOperationType,
   FlowVersion,
@@ -16,6 +17,7 @@ import {
   Import,
   Pencil,
   Share2,
+  SignalHigh,
   Trash2,
   UploadCloud,
   User,
@@ -23,6 +25,7 @@ import {
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import { EditionGuard } from '@/app/components/edition-guard';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { LoadingSpinner } from '@/components/custom/spinner';
@@ -40,6 +43,7 @@ import {
   RenameFlowDialog,
   flowHooks,
   MoveFlowDialog,
+  SetPriorityDialog,
   ShareTemplateDialog,
 } from '@/features/flows';
 import { projectMembersHooks } from '@/features/members';
@@ -246,6 +250,26 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
               </DropdownMenuItem>
             </ChangeOwnerDialog>
           </PermissionNeededTooltip>
+        )}
+        {!readonly && (
+          <EditionGuard allowedEditions={[ApEdition.ENTERPRISE]}>
+            <PermissionNeededTooltip
+              hasPermission={userHasPermissionToUpdateFlow}
+            >
+              <SetPriorityDialog flow={flow}>
+                <DropdownMenuItem
+                  disabled={!userHasPermissionToUpdateFlow}
+                  onSelect={(e) => e.preventDefault()}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex cursor-pointer  flex-row gap-2 items-center">
+                    <SignalHigh className="h-4 w-4" />
+                    <span>{t('Set Priority')}</span>
+                  </div>
+                </DropdownMenuItem>
+              </SetPriorityDialog>
+            </PermissionNeededTooltip>
+          </EditionGuard>
         )}
         {!embedState.hideDuplicateFlow && (
           <PermissionNeededTooltip

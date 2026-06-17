@@ -2,7 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { Nullable } from '../../../core/common'
 import { Metadata } from '../../../core/common/metadata'
 import { BranchCondition, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, RouterActionSchema } from '../actions/action'
-import { FlowStatus } from '../flow'
+import { FlowPriority, FlowStatus } from '../flow'
 import { FlowVersion, FlowVersionState } from '../flow-version'
 import { Note } from '../note'
 import { SaveSampleDataRequest } from '../sample-data'
@@ -47,6 +47,7 @@ export enum FlowOperationType {
     SAVE_SAMPLE_DATA = 'SAVE_SAMPLE_DATA',
     UPDATE_MINUTES_SAVED = 'UPDATE_MINUTES_SAVED',
     UPDATE_OWNER = 'UPDATE_OWNER',
+    UPDATE_PRIORITY = 'UPDATE_PRIORITY',
     UPDATE_NOTE = 'UPDATE_NOTE',
     DELETE_NOTE = 'DELETE_NOTE',
     ADD_NOTE = 'ADD_NOTE',
@@ -201,6 +202,11 @@ export const UpdateOwnerRequest = Type.Object({
     ownerId: Type.String(),
 })
 export type UpdateOwnerRequest = Static<typeof UpdateOwnerRequest>
+
+export const UpdatePriorityRequest = Type.Object({
+    priority: Nullable(Type.Enum(FlowPriority)),
+})
+export type UpdatePriorityRequest = Static<typeof UpdatePriorityRequest>
 export const FlowOperationRequest = Type.Union([
     Type.Object(
         {
@@ -392,6 +398,15 @@ export const FlowOperationRequest = Type.Union([
         },
         {
             title: 'Update Owner',
+        },
+    ),
+    Type.Object(
+        {
+            type: Type.Literal(FlowOperationType.UPDATE_PRIORITY),
+            request: UpdatePriorityRequest,
+        },
+        {
+            title: 'Update Priority',
         },
     ),
     Type.Object(

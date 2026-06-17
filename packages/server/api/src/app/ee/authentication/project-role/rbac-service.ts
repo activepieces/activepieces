@@ -103,6 +103,7 @@ export const rbacService = (log: FastifyBaseLogger) => ({
             case FlowOperationType.DUPLICATE_BRANCH:
             case FlowOperationType.UPDATE_METADATA:
             case FlowOperationType.UPDATE_OWNER:
+            case FlowOperationType.UPDATE_PRIORITY:
             case FlowOperationType.SET_SKIP_ACTION:
             case FlowOperationType.MOVE_BRANCH: 
             case FlowOperationType.ADD_NOTE:

@@ -1,5 +1,5 @@
 import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
-import { ActivepiecesError, ApId, ApplicationEventName,
+import { ActivepiecesError, ApEdition, ApId, ApplicationEventName,
     CountFlowsRequest,
     CreateFlowRequest,
     ErrorCode,
@@ -33,6 +33,7 @@ import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-r
 import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
 import { applicationEvents } from '../../helper/application-events'
+import { system } from '../../helper/system/system'
 import { userService } from '../../user/user-service'
 import { migrateFlowVersionTemplate } from '../flow-version/migrations'
 import { FlowEntity } from './flow.entity'
@@ -99,6 +100,15 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     }, async (request) => {
         const userId = await authenticationUtils.extractUserIdFromRequest(request)
         await assertUserHasPermissionToFlow(request.principal, request.projectId, request.body.type, request.log)
+
+        if (request.body.type === FlowOperationType.UPDATE_PRIORITY && system.getEdition() !== ApEdition.ENTERPRISE) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'Flow priority is only available in the enterprise edition',
+                },
+            })
+        }
 
         const flow = await flowService(request.log).getOnePopulatedOrThrow({
             id: request.params.id,

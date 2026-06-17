@@ -1,9 +1,9 @@
 import { apDayjsDuration, AppSystemProp, getPlatformQueueName, memoryLock, QueueName } from '@activepieces/server-common'
-import { ApId, getDefaultJobPriority, isNil, JOB_PRIORITY, WorkerJobType } from '@activepieces/shared'
+import { ApId, FlowPriority, flowPriorityRedisKey, getDefaultJobPriority, isNil, JOB_PRIORITY, JobData, WorkerJobType } from '@activepieces/shared'
 import { Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
-import { redisConnections } from '../../database/redis-connections'
+import { distributedStore, redisConnections } from '../../database/redis-connections'
 import { dedicatedWorkers } from '../../ee/platform/platform-plan/platform-dedicated-workers'
 import { system } from '../../helper/system/system'
 import { AddJobParams, JobType } from './queue-manager'
@@ -63,7 +63,7 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
                     name: data.flowVersionId,
                     data,
                     opts: {
-                        priority: JOB_PRIORITY[getDefaultJobPriority(data)],
+                        priority: await getJobPriority(data),
                     },
                 })
                 break
@@ -79,7 +79,7 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
                     await redisConnection.sadd(CHILD_RUNS_KEY(dependOnJobId), JSON.stringify(childRunData))
                 }
                 await queue.add(params.id, data, {
-                    priority: JOB_PRIORITY[getDefaultJobPriority(data)],
+                    priority: await getJobPriority(data),
                     delay: !isNil(dependOnJobId) ? apDayjsDuration(1, 'year').asMilliseconds() : params.delay,
                     jobId: params.id,
                     removeOnFail: data.jobType === WorkerJobType.EVENT_DESTINATION,
@@ -183,6 +183,22 @@ async function ensureQueueExists({ log, queueName }: { log: FastifyBaseLogger, q
             return queue
         },
     })
+}
+
+const FLOW_EXECUTION_JOB_TYPES = new Set<WorkerJobType>([
+    WorkerJobType.EXECUTE_FLOW,
+    WorkerJobType.EXECUTE_WEBHOOK,
+    WorkerJobType.EXECUTE_POLLING,
+])
+
+async function getJobPriority(data: JobData): Promise<number> {
+    if (FLOW_EXECUTION_JOB_TYPES.has(data.jobType) && 'flowId' in data) {
+        const flowPriority = await distributedStore.get<FlowPriority>(flowPriorityRedisKey(data.flowId))
+        if (!isNil(flowPriority)) {
+            return JOB_PRIORITY[flowPriority]
+        }
+    }
+    return JOB_PRIORITY[getDefaultJobPriority(data)]
 }
 
 async function getQueueName(platformId: string | null, log: FastifyBaseLogger): Promise<string> {
