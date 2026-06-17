@@ -23,6 +23,7 @@ import {
   RouterExecutionType,
   UpsertCloudOAuth2Request,
   UpsertCustomAuthRequest,
+  UpsertOIDCRequest,
   UpsertBasicAuthRequest,
   UpsertNoAuthRequest,
   UpsertOAuth2Request,
@@ -144,6 +145,7 @@ function getDefaultPropertyValue({
     }
     case PropertyType.OAUTH2:
     case PropertyType.CUSTOM_AUTH:
+    case PropertyType.OIDC:
     case PropertyType.BASIC_AUTH:
     case PropertyType.SECRET_TEXT:
     case PropertyType.CUSTOM: {
@@ -285,6 +287,13 @@ const CUSTOM_AUTH_VALUE_PROPS = z.object({
   }),
 });
 
+const OIDC_VALUE_PROPS = z.object({
+  value: z.object({
+    type: z.literal(AppConnectionType.OIDC),
+    props: z.record(z.string(), z.unknown()),
+  }),
+});
+
 function extendUpsertSchema(
   upsertSchema: ZodObject<z.ZodRawShape>,
   names: ReturnType<typeof connectionNameSchema>,
@@ -314,6 +323,22 @@ function extendCustomAuthUpsertSchema(
         .extend(PROJECT_FORM_EXTRAS_SCHEMA.shape)
     : base.extend(PROJECT_FORM_EXTRAS_SCHEMA.shape);
   return withExtras.extend(CUSTOM_AUTH_VALUE_PROPS.shape);
+}
+
+function extendOIDCUpsertSchema(
+  names: ReturnType<typeof connectionNameSchema>,
+  isGlobalConnection: boolean,
+) {
+  const omit = isGlobalConnection
+    ? GLOBAL_NAME_AND_VALUE_OMIT
+    : PROJECT_NAME_AND_VALUE_OMIT;
+  const base = UpsertOIDCRequest.omit(omit).extend(names.shape);
+  const withExtras = isGlobalConnection
+    ? base
+        .extend(GLOBAL_CONNECTION_EXTRAS_SCHEMA.shape)
+        .extend(PROJECT_FORM_EXTRAS_SCHEMA.shape)
+    : base.extend(PROJECT_FORM_EXTRAS_SCHEMA.shape);
+  return withExtras.extend(OIDC_VALUE_PROPS.shape);
 }
 
 function buildOAuth2RequestSchema(
@@ -371,6 +396,7 @@ function buildFallbackConnectionSchema(options: {
       extendUpsertSchema(UpsertPlatformOAuth2Request, names, isGlobal),
       extendUpsertSchema(UpsertBasicAuthRequest, names, isGlobal),
       extendCustomAuthUpsertSchema(names, isGlobal),
+      extendOIDCUpsertSchema(names, isGlobal),
       extendUpsertSchema(UpsertNoAuthRequest, names, isGlobal),
     ]),
   });
@@ -383,6 +409,18 @@ function buildCustomAuthValueSchema(auth: PieceAuthProperty) {
   return z.object({
     value: z.object({
       type: z.literal(AppConnectionType.CUSTOM_AUTH),
+      props: piecePropertiesUtils.buildSchema(auth.props, undefined),
+    }),
+  });
+}
+
+function buildOIDCValueSchema(auth: PieceAuthProperty) {
+  if (auth.type !== PropertyType.OIDC) {
+    throw new Error('buildOIDCValueSchema expects OIDC');
+  }
+  return z.object({
+    value: z.object({
+      type: z.literal(AppConnectionType.OIDC),
       props: piecePropertiesUtils.buildSchema(auth.props, undefined),
     }),
   });
@@ -421,6 +459,16 @@ function buildConnectionSchema(
       return z.object({
         request: extendUpsertSchema(
           UpsertCustomAuthRequest.omit({ value: true }),
+          names,
+          isGlobalConnection,
+        ).extend(valueShape.shape),
+      });
+    }
+    case PropertyType.OIDC: {
+      const valueShape = buildOIDCValueSchema(auth);
+      return z.object({
+        request: extendUpsertSchema(
+          UpsertOIDCRequest.omit({ value: true }),
           names,
           isGlobalConnection,
         ).extend(valueShape.shape),
