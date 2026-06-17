@@ -6,8 +6,7 @@ export const newPersonEventTrigger = createTrigger({
   name: 'new_person_event',
   auth: outsetaAuth,
   displayName: 'New Person Event',
-  description:
-    "Triggers on any person-scoped event (lifecycle, login, email engagement, list subscription, segment, support ticket). The webhook payload is always a Person object — event-specific details such as the email message, list, segment or ticket are in the Person's ActivityEventData field.",
+  description: 'Triggers on person-scoped events (lifecycle, login, email engagement, list, segment, support ticket).',
   type: TriggerStrategy.WEBHOOK,
   aiMetadata: {
     description:
@@ -15,8 +14,14 @@ export const newPersonEventTrigger = createTrigger({
   },
   props: {
     setup: Property.MarkDown({
-      value:
-        "**Setup:** Copy this trigger's webhook URL `{{webhookUrl}}`. In Outseta go to **Settings → Notifications → Add Notification**, select each event you chose below, and paste the URL as the callback. If you selected multiple events, create one notification per event — all pointing to this same URL.\n\n**Payload shape:** every person-scoped event in Outseta sends a **Person** object as the webhook body, regardless of the specific event. Email engagement, list, segment, login and support-ticket details for the triggering event are nested in `ActivityEventData`.\n\n**Filtering:** Outseta payloads do not include event-type metadata, so the flow fires on every webhook hitting this URL. The selection below drives the test() sample data and tells you which Outseta notifications to configure — it is not a runtime filter. Configure only the Outseta notifications you actually want for this URL.",
+      value: `
+- In Outseta, go to **Settings → Notifications → Add Notification**.
+- Select the person event and paste the webhook URL in the callback field:
+  \`\`\`text
+  {{webhookUrl}}
+  \`\`\`
+- Create one notification per event, all pointing to this same URL.
+`,
     }),
     eventSubTypes: Property.StaticMultiSelectDropdown({
       displayName: 'Events',

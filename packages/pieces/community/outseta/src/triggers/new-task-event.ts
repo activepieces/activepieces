@@ -6,8 +6,7 @@ export const newTaskEventTrigger = createTrigger({
   name: 'new_task_event',
   auth: outsetaAuth,
   displayName: 'New Task Event',
-  description:
-    "Triggers on Outseta Task lifecycle events (creation, update). The webhook payload is a Task object — event-specific details are in the Task's ActivityEventData field.",
+  description: 'Triggers on task lifecycle events (created, updated).',
   type: TriggerStrategy.WEBHOOK,
   aiMetadata: {
     description:
@@ -15,8 +14,14 @@ export const newTaskEventTrigger = createTrigger({
   },
   props: {
     setup: Property.MarkDown({
-      value:
-        "**Setup:** Copy this trigger's webhook URL `{{webhookUrl}}`. In Outseta go to **Settings → Notifications → Add Notification**, select each event you chose below, and paste the URL as the callback. If you selected multiple events, create one notification per event — all pointing to this same URL.\n\n**Payload shape:** every Task event in Outseta sends a **Task** object as the webhook body. Event-specific details are nested in `ActivityEventData`.\n\n**Filtering:** Outseta payloads do not include event-type metadata, so the flow fires on every webhook hitting this URL. The selection below drives the test() sample data and tells you which Outseta notifications to configure — it is not a runtime filter. Configure only the Outseta notifications you actually want for this URL.",
+      value: `
+- In Outseta, go to **Settings → Notifications → Add Notification**.
+- Select the task event and paste the webhook URL in the callback field:
+  \`\`\`text
+  {{webhookUrl}}
+  \`\`\`
+- Create one notification per event, all pointing to this same URL.
+`,
     }),
     eventSubTypes: Property.StaticMultiSelectDropdown({
       displayName: 'Events',

@@ -6,8 +6,7 @@ export const newAddOnEventTrigger = createTrigger({
   name: 'new_add_on_event',
   auth: outsetaAuth,
   displayName: 'New Add-On Event',
-  description:
-    "Triggers on Outseta Add-On catalog events (creation or update of a billing add-on in your Outseta configuration). The webhook payload is an Add-On object — event-specific details are in the Add-On's ActivityEventData field. Note: this fires when an admin edits the add-on catalog in Outseta, not when a customer's subscription add-ons change (use New Account Event → Account Subscription Add Ons Changed for that).",
+  description: 'Triggers when an add-on is created or updated in the Outseta catalog.',
   type: TriggerStrategy.WEBHOOK,
   aiMetadata: {
     description:
@@ -15,8 +14,14 @@ export const newAddOnEventTrigger = createTrigger({
   },
   props: {
     setup: Property.MarkDown({
-      value:
-        "**Setup:** Copy this trigger's webhook URL `{{webhookUrl}}`. In Outseta go to **Settings → Notifications → Add Notification**, select each event you chose below, and paste the URL as the callback. If you selected multiple events, create one notification per event — all pointing to this same URL.\n\n**Payload shape:** every Add-On event in Outseta sends an **Add-On** object as the webhook body. Event-specific details are nested in `ActivityEventData`.\n\n**Filtering:** Outseta payloads do not include event-type metadata, so the flow fires on every webhook hitting this URL. The selection below drives the test() sample data and tells you which Outseta notifications to configure — it is not a runtime filter. Configure only the Outseta notifications you actually want for this URL.",
+      value: `
+- In Outseta, go to **Settings → Notifications → Add Notification**.
+- Select the add-on event and paste the webhook URL in the callback field:
+  \`\`\`text
+  {{webhookUrl}}
+  \`\`\`
+- Create one notification per event, all pointing to this same URL.
+`,
     }),
     eventSubTypes: Property.StaticMultiSelectDropdown({
       displayName: 'Events',

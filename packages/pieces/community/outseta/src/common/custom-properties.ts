@@ -1,6 +1,6 @@
 import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { OutsetaClient } from './client';
-import { outsetaAuth } from 'src/auth';
+import { outsetaAuth } from '../auth';
 
 export function customPropertiesProp(entityType: CustomPropertyEntity) {
   return Property.DynamicProperties({

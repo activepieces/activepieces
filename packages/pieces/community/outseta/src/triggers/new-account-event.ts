@@ -6,8 +6,7 @@ export const newAccountEventTrigger = createTrigger({
   name: 'new_account_event',
   auth: outsetaAuth,
   displayName: 'New Account Event',
-  description:
-    "Triggers on any account-scoped event (account lifecycle, account stage, billing information, subscription, invoice). The webhook payload is always an Account object — event-specific details such as the invoice or amount for a payment event are in the Account's ActivityEventData field.",
+  description: 'Triggers on account-scoped events (lifecycle, stage, billing, subscription, invoice).',
   type: TriggerStrategy.WEBHOOK,
   aiMetadata: {
     description:
@@ -15,8 +14,14 @@ export const newAccountEventTrigger = createTrigger({
   },
   props: {
     setup: Property.MarkDown({
-      value:
-        "**Setup:** Copy this trigger's webhook URL `{{webhookUrl}}`. In Outseta go to **Settings → Notifications → Add Notification**, select each event you chose below, and paste the URL as the callback. If you selected multiple events, create one notification per event — all pointing to this same URL.\n\n**Payload shape:** every account-scoped event in Outseta sends an **Account** object as the webhook body, regardless of the specific event. Subscription, billing and invoice details for the triggering event are nested in `ActivityEventData`.\n\n**Filtering:** Outseta payloads do not include event-type metadata, so the flow fires on every webhook hitting this URL. The selection below drives the test() sample data and tells you which Outseta notifications to configure — it is not a runtime filter. Configure only the Outseta notifications you actually want for this URL.",
+      value: `
+- In Outseta, go to **Settings → Notifications → Add Notification**.
+- Select the account event and paste the webhook URL in the callback field:
+  \`\`\`text
+  {{webhookUrl}}
+  \`\`\`
+- Create one notification per event, all pointing to this same URL.
+`,
     }),
     eventSubTypes: Property.StaticMultiSelectDropdown({
       displayName: 'Events',
